@@ -24,6 +24,7 @@ import { Menu, Settings, LogOut, Tv, Map, Network, BookOpen, Calendar as Calenda
 import { MinhasTarefasSheet } from "@/components/todo/MinhasTarefasSheet";
 import { useTarefasCount } from "@/hooks/useTarefasCount";
 import Index from "./pages/Index";
+import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Performance from "./pages/Performance";
@@ -278,6 +279,7 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/home" element={<Home />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/forbidden" element={<Forbidden />} />
 
