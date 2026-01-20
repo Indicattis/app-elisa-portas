@@ -9,7 +9,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { SpaceParticles } from '@/components/SpaceParticles';
-import logoEmpresa from '/lovable-uploads/8a65a7c4-6922-4d04-be9a-0ddd0393a735.png';
+import logoEmpresa from '@/assets/logo-empresa.png';
 
 const menuItems = [
   { label: 'Minhas Vendas', icon: ShoppingCart, path: '/vendas/minhas-vendas' },
