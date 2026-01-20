@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, DollarSign, Factory, Truck, Target } from 'lucide-react';
 import { SpaceParticles } from '@/components/SpaceParticles';
@@ -12,48 +13,101 @@ const menuItems = [
 
 export default function DirecaoHub() {
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
+    <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
+      {/* Partículas espaciais de fundo */}
       <SpaceParticles />
       
-      <div className="relative z-10 min-h-screen flex flex-col">
-        {/* Header */}
-        <header className="sticky top-0 z-20 px-4 py-4 bg-black/80 backdrop-blur-md border-b border-primary/10">
-          <div className="max-w-7xl mx-auto flex items-center gap-4">
-            <button
-              onClick={() => navigate('/home')}
-              className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-white/80" />
-            </button>
-            <h1 className="text-lg font-semibold text-white">Direção</h1>
-          </div>
-        </header>
+      {/* Botão de voltar */}
+      <button
+        onClick={() => navigate('/home')}
+        className="absolute top-6 left-6 z-20 p-3 rounded-lg bg-primary/5 hover:bg-primary/10 
+                   border border-primary/10 transition-all duration-300"
+        style={{
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? 'translateX(0)' : 'translateX(-20px)',
+          transition: 'all 0.5s ease 100ms'
+        }}
+      >
+        <ArrowLeft className="w-5 h-5 text-white/80" />
+      </button>
 
-        {/* Conteúdo */}
-        <main className="flex-1 flex items-center justify-center p-4">
-          <div className="max-w-md mx-auto flex flex-col gap-3">
-            {menuItems.map((item) => (
+      {/* ========== VERSÃO MOBILE ========== */}
+      <div className="md:hidden relative z-10 flex flex-col items-center justify-center px-6 py-10 w-full max-w-md">
+        {/* Lista de botões */}
+        <div className="w-full flex flex-col gap-3">
+          {menuItems.map((item, index) => {
+            const Icon = item.icon;
+            const delay = 100 + index * 80;
+            
+            return (
               <button
-                key={item.path}
+                key={item.label}
                 onClick={() => navigate(item.path)}
-                className="w-full py-4 px-5 rounded-xl
-                           bg-primary/5 border border-primary/10
-                           hover:bg-primary/10
-                           flex items-center gap-4
+                className="w-full h-14 rounded-lg
+                           bg-gradient-to-r from-blue-500 to-blue-700
+                           hover:from-blue-400 hover:to-blue-600
+                           active:scale-[0.98]
+                           flex items-center gap-4 px-5
                            text-white font-medium 
-                           backdrop-blur-xl
+                           shadow-lg shadow-blue-500/20
+                           border border-blue-400/30
                            transition-all duration-300"
+                style={{
+                  opacity: mounted ? 1 : 0,
+                  transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
+                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
+                }}
               >
-                <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700">
-                  <item.icon className="w-5 h-5" />
-                </div>
-                <span>{item.label}</span>
+                <Icon className="w-6 h-6" strokeWidth={1.5} />
+                <span className="text-sm font-medium">{item.label}</span>
               </button>
-            ))}
-          </div>
-        </main>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ========== VERSÃO DESKTOP ========== */}
+      <div className="hidden md:flex relative z-10 flex-col items-center justify-center">
+        {/* Grid de botões */}
+        <div className="grid grid-cols-3 gap-4 max-w-2xl">
+          {menuItems.map((item, index) => {
+            const Icon = item.icon;
+            const delay = 200 + index * 100;
+            
+            return (
+              <button
+                key={item.label}
+                onClick={() => navigate(item.path)}
+                className="w-44 h-28 rounded-xl
+                           bg-gradient-to-br from-blue-500 to-blue-700
+                           hover:from-blue-400 hover:to-blue-600
+                           flex flex-col items-center justify-center gap-2
+                           text-white font-medium 
+                           shadow-lg shadow-blue-500/30
+                           hover:shadow-xl hover:shadow-blue-500/50
+                           hover:scale-105
+                           border border-blue-400/30
+                           transition-all duration-300"
+                style={{
+                  opacity: mounted ? 1 : 0,
+                  transform: mounted ? 'translateY(0)' : 'translateY(30px)',
+                  transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
+                }}
+              >
+                <Icon className="w-8 h-8" strokeWidth={1.5} />
+                <span className="text-sm font-medium text-center px-2">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
