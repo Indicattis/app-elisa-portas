@@ -6,7 +6,9 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck, FileDown, Printer } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck, FileDown, Printer, ClipboardList } from "lucide-react";
+import { FichaVisitaUpload } from "@/components/pedidos/FichaVisitaUpload";
+import { toast as sonnerToast } from "sonner";
 import { baixarPedidoProducaoPDF, imprimirPedidoProducaoPDF, type PedidoProducaoPDFData } from "@/utils/pedidoProducaoPDFGenerator";
 import {
   Breadcrumb,
@@ -60,6 +62,8 @@ interface Pedido {
   venda_id?: string;
   linhas: PedidoLinha[];
   ordens: Ordem[];
+  ficha_visita_url?: string | null;
+  ficha_visita_nome?: string | null;
   venda?: {
     id: string;
     cliente_nome: string;
@@ -763,6 +767,62 @@ export default function PedidoView() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Ficha de Visita Técnica */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <ClipboardList className="w-4 h-4" />
+            Ficha de Visita Técnica
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FichaVisitaUpload
+            fichaUrl={pedido.ficha_visita_url}
+            fichaNome={pedido.ficha_visita_nome}
+            onFichaChange={async (url, nome) => {
+              const { error } = await supabase
+                .from('pedidos_producao')
+                .update({ ficha_visita_url: url, ficha_visita_nome: nome })
+                .eq('id', pedido.id);
+              
+              if (error) {
+                sonnerToast.error('Erro ao salvar ficha de visita');
+                console.error(error);
+                return;
+              }
+              
+              setPedido(prev => prev ? { ...prev, ficha_visita_url: url, ficha_visita_nome: nome } : null);
+              sonnerToast.success('Ficha de visita anexada com sucesso');
+            }}
+            onFichaRemove={async () => {
+              // Extrair nome do arquivo da URL para deletar do storage
+              if (pedido.ficha_visita_url) {
+                const urlParts = pedido.ficha_visita_url.split('/');
+                const fileName = urlParts[urlParts.length - 1];
+                
+                await supabase.storage
+                  .from('fichas-visita-tecnica')
+                  .remove([fileName]);
+              }
+              
+              const { error } = await supabase
+                .from('pedidos_producao')
+                .update({ ficha_visita_url: null, ficha_visita_nome: null })
+                .eq('id', pedido.id);
+              
+              if (error) {
+                sonnerToast.error('Erro ao remover ficha de visita');
+                console.error(error);
+                return;
+              }
+              
+              setPedido(prev => prev ? { ...prev, ficha_visita_url: null, ficha_visita_nome: null } : null);
+              sonnerToast.success('Ficha de visita removida');
+            }}
+          />
+        </CardContent>
+      </Card>
 
       {/* Produtos da Venda */}
       {pedido.venda?.produtos && pedido.venda.produtos.length > 0 && (
