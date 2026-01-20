@@ -144,7 +144,7 @@ export default function ControleEstoqueMinimalista() {
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all
                        ${filterStatus === "todos" 
                          ? "bg-blue-500 text-white" 
-                         : "bg-white/5 text-white/60 hover:bg-white/10"}`}
+                         : "bg-primary/5 text-white/60 hover:bg-primary/10"}`}
           >
             Todos ({itemsComStatus.length})
           </button>
@@ -188,7 +188,7 @@ export default function ControleEstoqueMinimalista() {
             placeholder="Buscar por nome, descrição ou categoria..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/5 border border-white/10 
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-primary/5 border border-primary/10 
                        text-white placeholder:text-white/40 text-sm
                        focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50
                        transition-all"
@@ -225,8 +225,8 @@ export default function ControleEstoqueMinimalista() {
             return (
               <div
                 key={item.id}
-                className={`p-4 rounded-xl bg-white/5 border transition-all duration-200
-                           hover:bg-white/10 ${statusConfig.border}`}
+                className={`p-4 rounded-xl bg-primary/5 border transition-all duration-200
+                           hover:bg-primary/10 ${statusConfig.border}`}
               >
                 {/* Header do card */}
                 <div className="flex items-start justify-between gap-2 mb-3">

@@ -122,17 +122,17 @@ export default function MeusOrcamentos() {
     >
       {/* Cards de estatísticas */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl text-center">
+        <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 backdrop-blur-xl text-center">
           <Clock className="w-5 h-5 text-blue-400 mx-auto mb-2" />
           <p className="text-2xl font-bold text-white">{pendentes}</p>
           <p className="text-xs text-white/60">Pendentes</p>
         </div>
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl text-center">
+        <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 backdrop-blur-xl text-center">
           <CheckCircle className="w-5 h-5 text-green-400 mx-auto mb-2" />
           <p className="text-2xl font-bold text-white">{aprovados}</p>
           <p className="text-xs text-white/60">Aprovados</p>
         </div>
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl text-center">
+        <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 backdrop-blur-xl text-center">
           <XCircle className="w-5 h-5 text-red-400 mx-auto mb-2" />
           <p className="text-2xl font-bold text-white">{reprovados}</p>
           <p className="text-xs text-white/60">Reprovados</p>
@@ -148,7 +148,7 @@ export default function MeusOrcamentos() {
             className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
               statusFiltro === opt.value 
                 ? 'bg-blue-500 text-white' 
-                : 'bg-white/5 text-white/70 hover:bg-white/10'
+                : 'bg-primary/5 text-white/70 hover:bg-primary/10'
             }`}
           >
             {opt.label}
@@ -171,8 +171,8 @@ export default function MeusOrcamentos() {
               <div
                 key={orcamento.id}
                 onClick={() => navigate(`/dashboard/orcamentos/${orcamento.id}`)}
-                className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl
-                           hover:bg-white/10 transition-colors cursor-pointer"
+                className="bg-primary/5 border border-primary/10 rounded-xl p-4 backdrop-blur-xl
+                           hover:bg-primary/10 transition-colors cursor-pointer"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">

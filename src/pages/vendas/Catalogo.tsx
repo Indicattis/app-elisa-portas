@@ -38,7 +38,7 @@ export default function Catalogo() {
             placeholder="Buscar produtos..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+            className="pl-10 bg-primary/5 border-primary/10 text-white placeholder:text-white/40"
           />
         </div>
 
@@ -50,7 +50,7 @@ export default function Catalogo() {
               className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
                 categoriaFiltro === '' 
                   ? 'bg-blue-500 text-white' 
-                  : 'bg-white/5 text-white/70 hover:bg-white/10'
+                  : 'bg-primary/5 text-white/70 hover:bg-primary/10'
               }`}
             >
               Todos
@@ -62,7 +62,7 @@ export default function Catalogo() {
                 className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
                   categoriaFiltro === cat 
                     ? 'bg-blue-500 text-white' 
-                    : 'bg-white/5 text-white/70 hover:bg-white/10'
+                    : 'bg-primary/5 text-white/70 hover:bg-primary/10'
                 }`}
               >
                 {cat}
@@ -82,8 +82,8 @@ export default function Catalogo() {
           produtos.map((produto) => (
             <div
               key={produto.id}
-              className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-xl
-                         hover:bg-white/10 hover:border-blue-500/30 transition-all group"
+              className="bg-primary/5 border border-primary/10 rounded-xl overflow-hidden backdrop-blur-xl
+                         hover:bg-primary/10 hover:border-blue-500/30 transition-all group"
             >
               {/* Imagem */}
               <div className="aspect-square bg-white/5 relative overflow-hidden">
