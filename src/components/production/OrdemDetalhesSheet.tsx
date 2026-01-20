@@ -27,6 +27,7 @@ import { gerarPDFEtiquetaProducao, gerarPDFEtiquetasProducaoMultiplas } from "@/
 import { RetornarProducaoModal } from "./RetornarProducaoModal";
 import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
 import { AvisoFaltaModal } from "./AvisoFaltaModal";
+import { formatarTamanho, formatarDimensoes } from "@/utils/formatters";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
 
@@ -672,7 +673,7 @@ export function OrdemDetalhesSheet({
                             )}
                             {primeiraLinha.largura && primeiraLinha.altura && (
                               <div className="text-xs text-muted-foreground">
-                                <span className="font-medium">Dimensões:</span> {primeiraLinha.largura} x {primeiraLinha.altura}
+                                <span className="font-medium">Dimensões:</span> {formatarDimensoes(primeiraLinha.largura, primeiraLinha.altura)}
                               </div>
                             )}
                           </div>
@@ -708,7 +709,7 @@ export function OrdemDetalhesSheet({
                                 
                                 <div className="mt-1.5 flex items-center gap-3 text-sm text-muted-foreground">
                                   <span>Qtd: {linha.quantidade}</span>
-                                  {linha.tamanho && <span>{linha.tamanho}</span>}
+                                  {linha.tamanho && <span>{formatarTamanho(linha.tamanho)}</span>}
                                   {getEtiquetasRecomendadas(linha) !== null && (
                                     <Badge variant="outline" className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/30">
                                       <Tags className="h-3 w-3 mr-1" />
@@ -769,7 +770,7 @@ export function OrdemDetalhesSheet({
                       
                       <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
                         <span>Qtd: {linha.quantidade}</span>
-                        {linha.tamanho && <span>Tamanho: {linha.tamanho}</span>}
+                        {linha.tamanho && <span>Tamanho: {formatarTamanho(linha.tamanho)}</span>}
                         {getEtiquetasRecomendadas(linha) !== null && (
                           <Badge variant="outline" className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/30">
                             <Tags className="h-3 w-3 mr-1" />

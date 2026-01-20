@@ -69,7 +69,7 @@ function drawTag(
 
   // Dimensions (if available)
   if (tag.largura && tag.altura) {
-    const dimensoes = `Dimensões: ${tag.largura}m x ${tag.altura}m`;
+    const dimensoes = `Dimensões: ${tag.largura.toFixed(2)}m x ${tag.altura.toFixed(2)}m`;
     doc.text(dimensoes, px, py + 42);
   } else {
     doc.setTextColor(150, 150, 150);
@@ -187,7 +187,7 @@ export function gerarPDFEtiquetaIndividual(tag: TagIndividual): jsPDF {
 
   // Dimensions (6pt)
   if (tag.largura && tag.altura) {
-    doc.text(`${tag.largura}m x ${tag.altura}m`, px, py + 14);
+    doc.text(`${tag.largura.toFixed(2)}m x ${tag.altura.toFixed(2)}m`, px, py + 14);
   } else {
     doc.setTextColor(150, 150, 150);
     doc.text('N/A', px, py + 14);
@@ -279,13 +279,16 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
   }
   
   // Produto e tamanho unificados em uma única linha
-  const produtoComTamanho = tag.tamanho 
-    ? `${tag.nomeProduto} - ${tag.tamanho}m` 
+  const tamanhoFormatado = tag.tamanho 
+    ? `${parseFloat(String(tag.tamanho).replace(',', '.')).toFixed(2)}m`
+    : null;
+  const produtoComTamanho = tamanhoFormatado 
+    ? `${tag.nomeProduto} - ${tamanhoFormatado}` 
     : tag.nomeProduto;
   drawTableRow('PRODUTO', produtoComTamanho, true);
   
   if (tag.largura && tag.altura) {
-    drawTableRow('DIMENSÕES', `${tag.largura}m x ${tag.altura}m`);
+    drawTableRow('DIMENSÕES', `${tag.largura.toFixed(2)}m x ${tag.altura.toFixed(2)}m`);
   }
   
   if (tag.corNome || tag.tipoPintura) {
