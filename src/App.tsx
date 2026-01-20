@@ -158,6 +158,14 @@ import ContasReceber from "./pages/ContasReceber";
 import ContasPagar from "./pages/ContasPagar";
 import ContasPagarNova from "./pages/ContasPagarNova";
 
+// Hub de Vendas Minimalista
+import VendasHub from "./pages/vendas/VendasHub";
+import MinhasVendas from "./pages/vendas/MinhasVendas";
+import MeusClientes from "./pages/vendas/MeusClientes";
+import CatalogoMinimalista from "./pages/vendas/Catalogo";
+import MeusOrcamentos from "./pages/vendas/MeusOrcamentos";
+import MeusParceiros from "./pages/vendas/MeusParceiros";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -282,6 +290,14 @@ const App = () => (
                 <Route path="/home" element={<Home />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/forbidden" element={<Forbidden />} />
+
+                {/* Hub de Vendas Minimalista */}
+                <Route path="/vendas" element={<ProtectedRoute><VendasHub /></ProtectedRoute>} />
+                <Route path="/vendas/minhas-vendas" element={<ProtectedRoute><MinhasVendas /></ProtectedRoute>} />
+                <Route path="/vendas/meus-clientes" element={<ProtectedRoute><MeusClientes /></ProtectedRoute>} />
+                <Route path="/vendas/catalogo" element={<ProtectedRoute><CatalogoMinimalista /></ProtectedRoute>} />
+                <Route path="/vendas/meus-orcamentos" element={<ProtectedRoute><MeusOrcamentos /></ProtectedRoute>} />
+                <Route path="/vendas/meus-parceiros" element={<ProtectedRoute><MeusParceiros /></ProtectedRoute>} />
 
                 {/* Hub da Fábrica - usa autenticação própria com CPF */}
                 <Route path="/hub-fabrica" element={<HubFabrica />} />

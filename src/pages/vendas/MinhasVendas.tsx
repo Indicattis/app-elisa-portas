@@ -10,6 +10,15 @@ import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
+interface Venda {
+  id: string;
+  cliente_nome: string | null;
+  valor_venda: number | null;
+  data_venda: string;
+  comprovante_url: string | null;
+  pedidos_producao: { status: string } | null;
+}
+
 export default function MinhasVendas() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -27,11 +36,11 @@ export default function MinhasVendas() {
         .from('vendas')
         .select(`
           id,
-          nome_cliente,
+          cliente_nome,
           valor_venda,
           data_venda,
-          status,
-          venda_faturada
+          comprovante_url,
+          pedidos_producao!left(status)
         `)
         .eq('atendente_id', user.id)
         .gte('data_venda', inicioMes.toISOString())
@@ -39,14 +48,15 @@ export default function MinhasVendas() {
         .order('data_venda', { ascending: false });
       
       if (error) throw error;
-      return data || [];
+      return (data || []) as unknown as Venda[];
     },
     enabled: !!user?.id
   });
 
   const totalVendas = vendas?.length || 0;
   const valorTotal = vendas?.reduce((acc, v) => acc + (v.valor_venda || 0), 0) || 0;
-  const vendasFaturadas = vendas?.filter(v => v.venda_faturada).length || 0;
+  // Considera "faturada" se tiver comprovante de pagamento anexado
+  const vendasFaturadas = vendas?.filter(v => v.comprovante_url).length || 0;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -55,21 +65,23 @@ export default function MinhasVendas() {
     }).format(value);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null) => {
     switch (status) {
-      case 'concluida': return 'bg-green-500/20 text-green-400 border-green-500/30';
-      case 'em_andamento': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      case 'cancelada': return 'bg-red-500/20 text-red-400 border-red-500/30';
+      case 'concluido': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'em_producao': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      case 'cancelado': return 'bg-red-500/20 text-red-400 border-red-500/30';
+      case 'pendente': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
     }
   };
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: string | null) => {
     switch (status) {
-      case 'concluida': return 'Concluída';
-      case 'em_andamento': return 'Em Andamento';
-      case 'cancelada': return 'Cancelada';
-      default: return status;
+      case 'concluido': return 'Concluído';
+      case 'em_producao': return 'Em Produção';
+      case 'cancelado': return 'Cancelado';
+      case 'pendente': return 'Pendente';
+      default: return status || 'Aguardando';
     }
   };
 
@@ -120,7 +132,7 @@ export default function MinhasVendas() {
               <TrendingUp className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <p className="text-sm text-white/60">Faturadas</p>
+              <p className="text-sm text-white/60">Com Comprovante</p>
               <p className="text-2xl font-bold text-white">{vendasFaturadas}</p>
             </div>
           </div>
@@ -134,39 +146,43 @@ export default function MinhasVendas() {
             <Skeleton key={i} className="h-20 bg-white/5" />
           ))
         ) : vendas && vendas.length > 0 ? (
-          vendas.map((venda) => (
-            <div
-              key={venda.id}
-              onClick={() => navigate(`/dashboard/vendas/${venda.id}`)}
-              className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm
-                         hover:bg-white/10 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-1">
-                    <span className={`text-xs px-2 py-0.5 rounded-full border ${getStatusColor(venda.status || '')}`}>
-                      {getStatusLabel(venda.status || '')}
-                    </span>
-                    {venda.venda_faturada && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
-                        Faturada
+          vendas.map((venda) => {
+            const status = venda.pedidos_producao?.status || null;
+            
+            return (
+              <div
+                key={venda.id}
+                onClick={() => navigate(`/dashboard/vendas/${venda.id}`)}
+                className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm
+                           hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className={`text-xs px-2 py-0.5 rounded-full border ${getStatusColor(status)}`}>
+                        {getStatusLabel(status)}
                       </span>
-                    )}
+                      {venda.comprovante_url && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                          Pago
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-white font-medium">{venda.cliente_nome || 'Cliente não informado'}</h3>
+                    <p className="text-sm text-white/60">
+                      {format(new Date(venda.data_venda), "dd 'de' MMMM", { locale: ptBR })}
+                    </p>
                   </div>
-                  <h3 className="text-white font-medium">{venda.nome_cliente}</h3>
-                  <p className="text-sm text-white/60">
-                    {format(new Date(venda.data_venda), "dd 'de' MMMM", { locale: ptBR })}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-white">
-                    {formatCurrency(venda.valor_venda || 0)}
-                  </p>
-                  <Eye className="w-4 h-4 text-white/40 ml-auto mt-2" />
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-white">
+                      {formatCurrency(venda.valor_venda || 0)}
+                    </p>
+                    <Eye className="w-4 h-4 text-white/40 ml-auto mt-2" />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="text-center py-12">
             <ShoppingCart className="w-12 h-12 text-white/20 mx-auto mb-4" />

@@ -5,7 +5,7 @@ import { ShoppingCart, Factory, Shield, Truck, Building2 } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
 
 const menuItems = [
-  { label: "Vendas", icon: ShoppingCart, path: "/dashboard/vendas", angle: 0 },
+  { label: "Vendas", icon: ShoppingCart, path: "/vendas", angle: 0 },
   { label: "Fábrica", icon: Factory, path: "/hub-fabrica", angle: 72 },
   { label: "Direção", icon: Shield, path: "/dashboard/direcao", angle: 144 },
   { label: "Logística", icon: Truck, path: "/dashboard/logistica", angle: 216 },
