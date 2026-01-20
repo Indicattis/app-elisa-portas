@@ -188,6 +188,14 @@ import GestaoFabricaDirecao from "./pages/direcao/GestaoFabricaDirecao";
 import GestaoInstalacaoDirecao from "./pages/direcao/GestaoInstalacaoDirecao";
 import MetasDirecao from "./pages/direcao/MetasDirecao";
 
+// Hub de Logística Minimalista
+import LogisticaHub from "./pages/logistica/LogisticaHub";
+import ExpedicaoMinimalista from "./pages/logistica/ExpedicaoMinimalista";
+import FrotaMinimalista from "./pages/logistica/FrotaMinimalista";
+import InstalacoesHub from "./pages/logistica/InstalacoesHub";
+import EquipesMinimalista from "./pages/logistica/EquipesMinimalista";
+import CronogramaMinimalista from "./pages/logistica/CronogramaMinimalista";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -342,6 +350,14 @@ const App = () => (
                 <Route path="/direcao/gestao-fabrica" element={<ProtectedRoute><GestaoFabricaDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/gestao-instalacao" element={<ProtectedRoute><GestaoInstalacaoDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/metas" element={<ProtectedRoute><MetasDirecao /></ProtectedRoute>} />
+
+                {/* Hub de Logística Minimalista */}
+                <Route path="/logistica" element={<ProtectedRoute><LogisticaHub /></ProtectedRoute>} />
+                <Route path="/logistica/expedicao" element={<ProtectedRoute><ExpedicaoMinimalista /></ProtectedRoute>} />
+                <Route path="/logistica/frota" element={<ProtectedRoute><FrotaMinimalista /></ProtectedRoute>} />
+                <Route path="/logistica/instalacoes" element={<ProtectedRoute><InstalacoesHub /></ProtectedRoute>} />
+                <Route path="/logistica/instalacoes/equipes" element={<ProtectedRoute><EquipesMinimalista /></ProtectedRoute>} />
+                <Route path="/logistica/instalacoes/cronograma" element={<ProtectedRoute><CronogramaMinimalista /></ProtectedRoute>} />
 
                 {/* Hub da Fábrica Legado - usa autenticação própria com CPF */}
                 <Route path="/hub-fabrica" element={<HubFabrica />} />
