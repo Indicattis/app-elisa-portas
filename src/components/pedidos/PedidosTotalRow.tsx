@@ -15,24 +15,12 @@ function calcularTotaisPortas(pedidos: any[]) {
   let totalG = 0;
 
   pedidos.forEach(pedido => {
-    const produtos = getProdutosFromPedido(pedido);
-    produtos.forEach((produto: any) => {
-      if (produto.tipo_produto === 'porta_enrolar') {
-        const largura = produto.largura || 0;
-        const altura = produto.altura || 0;
-        const quantidade = produto.quantidade || 1;
-        // Valores já estão em metros - área em m²
-        const area = largura * altura;
-        
-        for (let i = 0; i < quantidade; i++) {
-          if (area <= 25) {
-            totalP++;
-          } else {
-            totalG++;
-          }
-        }
-      }
-    });
+    // Usar valores pré-calculados das ordens de soldagem
+    const ordemSoldagem = pedido.ordens?.soldagem;
+    if (ordemSoldagem) {
+      totalP += ordemSoldagem.qtd_portas_p || 0;
+      totalG += ordemSoldagem.qtd_portas_g || 0;
+    }
   });
 
   return { totalP, totalG };
@@ -58,16 +46,11 @@ function calcularTotalMetragemQuadrada(pedidos: any[]) {
   let total = 0;
   
   pedidos.forEach(pedido => {
-    const produtos = getProdutosFromPedido(pedido);
-    produtos.forEach((produto: any) => {
-      if (produto.tipo_produto === 'porta_enrolar') {
-        const largura = produto.largura || 0;
-        const altura = produto.altura || 0;
-        const quantidade = produto.quantidade || 1;
-        // Valores já estão em metros no banco de dados
-        total += largura * altura * quantidade;
-      }
-    });
+    // Usar valor pré-calculado das ordens de pintura
+    const ordemPintura = pedido.ordens?.pintura;
+    if (ordemPintura) {
+      total += ordemPintura.metragem_quadrada || 0;
+    }
   });
   
   return total;

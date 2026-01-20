@@ -128,11 +128,11 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             .limit(1)
             .maybeSingle();
 
-          // Buscar status das ordens de produção
+          // Buscar status das ordens de produção (incluindo campos de métricas)
           const [soldagem, perfiladeira, separacao, qualidade, pintura] = await Promise.all([
             supabase
               .from('ordens_soldagem')
-              .select('id, status, responsavel_id, pausada, justificativa_pausa')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa, qtd_portas_p, qtd_portas_g')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
             supabase
@@ -152,7 +152,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               .maybeSingle(),
             supabase
               .from('ordens_pintura')
-              .select('id, status, responsavel_id, pausada, justificativa_pausa')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa, metragem_quadrada')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
           ]);
@@ -226,6 +226,10 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               linhas_concluidas: linhasConcluidas,
               pausada: result.data?.pausada || false,
               justificativa_pausa: result.data?.justificativa_pausa || null,
+              // Campos de métricas
+              qtd_portas_p: result.data?.qtd_portas_p || 0,
+              qtd_portas_g: result.data?.qtd_portas_g || 0,
+              metragem_quadrada: result.data?.metragem_quadrada || 0,
             };
           };
 
