@@ -103,11 +103,7 @@ export default function Home() {
                            hover:scale-110 
                            cursor-pointer
                            border border-blue-400/30
-                           transition-all duration-300
-                           animate-float"
-                style={{
-                  animationDelay: `${index * 2}s`
-                }}
+                           transition-all duration-300"
               >
                 <Icon className="w-7 h-7" strokeWidth={1.5} />
                 <span className="text-xs font-medium tracking-wide">{item.label}</span>
