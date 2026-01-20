@@ -103,11 +103,10 @@ export default {
 					'0%': { opacity: '0', transform: 'translateY(20px)' },
 					'100%': { opacity: '1', transform: 'translateY(0)' }
 				},
-				'float': {
-					'0%, 100%': { transform: 'translateY(0px) translateX(0px)' },
-					'33%': { transform: 'translateY(-8px) translateX(4px)' },
-					'66%': { transform: 'translateY(4px) translateX(-2px)' }
-				},
+			'float': {
+				'0%, 100%': { transform: 'translateY(0px)' },
+				'50%': { transform: 'translateY(-6px)' }
+			},
 				'orbit-in': {
 					'0%': { opacity: '0', transform: 'translate(-50%, -50%) scale(0.2)' },
 					'100%': { opacity: '1', transform: 'translate(var(--orbit-x), var(--orbit-y)) scale(1)' }
