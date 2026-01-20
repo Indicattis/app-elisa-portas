@@ -57,7 +57,7 @@ export function useValidacaoLinhasPorPorta(
     
     return {
       portaKey: virtualKey,
-      portaDescricao: `${porta.largura}m × ${porta.altura}m`,
+      portaDescricao: `${porta.largura?.toFixed(2) || 0}m × ${porta.altura?.toFixed(2) || 0}m`,
       separacao,
       solda,
       perfiladeira,

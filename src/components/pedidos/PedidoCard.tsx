@@ -468,10 +468,7 @@ export function PedidoCard({
         altura = parsed.altura;
       }
       
-      // Converter cm para m se necessário (valores > 100 provavelmente são cm)
-      if (largura > 100) largura = largura / 100;
-      if (altura > 100) altura = altura / 100;
-      
+      // Valores já estão em metros no banco de dados
       const quantidade = p.quantidade || 1;
       total += largura * altura * quantidade;
     });
