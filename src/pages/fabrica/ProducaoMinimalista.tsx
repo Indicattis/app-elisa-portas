@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useProducaoAuth } from "@/hooks/useProducaoAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Hammer, Boxes, Package, Sparkles, CheckSquare, Truck, History } from "lucide-react";
@@ -28,14 +28,14 @@ const iconMap: Record<string, any> = {
 
 export default function ProducaoMinimalista() {
   const navigate = useNavigate();
-  const { user } = useProducaoAuth();
+  const { user } = useAuth();
   const { data: ordensCount } = useOrdensCount();
 
   // Buscar rotas da interface producao que o usuário tem acesso
   const { data: routes = [], isLoading } = useQuery({
-    queryKey: ['producao-routes-minimalista', user?.user_id],
+    queryKey: ['producao-routes-minimalista', user?.id],
     queryFn: async () => {
-      if (!user?.user_id) return [];
+      if (!user?.id) return [];
       
       const { data: routesData, error } = await supabase
         .from('app_routes')
@@ -50,7 +50,7 @@ export default function ProducaoMinimalista() {
       const accessibleRoutes = [];
       for (const route of routesData || []) {
         const { data: hasAccess } = await supabase.rpc('has_route_access', {
-          _user_id: user.user_id,
+          _user_id: user.id,
           _route_key: route.key
         });
         if (hasAccess) {
@@ -59,7 +59,7 @@ export default function ProducaoMinimalista() {
       }
       return accessibleRoutes as ProducaoRoute[];
     },
-    enabled: !!user?.user_id
+    enabled: !!user?.id
   });
 
   const getIcon = (iconName?: string) => {
