@@ -137,7 +137,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               .maybeSingle(),
             supabase
               .from('ordens_perfiladeira')
-              .select('id, status, responsavel_id, pausada, justificativa_pausa')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa, metragem_linear')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
             supabase
@@ -230,6 +230,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               qtd_portas_p: result.data?.qtd_portas_p || 0,
               qtd_portas_g: result.data?.qtd_portas_g || 0,
               metragem_quadrada: result.data?.metragem_quadrada || 0,
+              metragem_linear: result.data?.metragem_linear || 0,
             };
           };
 

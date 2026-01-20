@@ -30,13 +30,11 @@ function calcularTotalMetragemLinear(pedidos: any[]) {
   let total = 0;
   
   pedidos.forEach(pedido => {
-    const linhas = pedido.linhas_perfiladeira || [];
-    linhas.forEach((linha: any) => {
-      const tamanho = linha.tamanho || '0';
-      const metros = parseFloat(tamanho.replace(',', '.')) || 0;
-      const quantidade = linha.quantidade || 1;
-      total += metros * quantidade;
-    });
+    // Usar valor pré-calculado da ordem de perfiladeira
+    const ordemPerfiladeira = pedido.ordens?.perfiladeira;
+    if (ordemPerfiladeira) {
+      total += ordemPerfiladeira.metragem_linear || 0;
+    }
   });
   
   return total;
