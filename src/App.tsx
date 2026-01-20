@@ -171,6 +171,13 @@ import FabricaHub from "./pages/fabrica/FabricaHub";
 import PedidosProducaoMinimalista from "./pages/fabrica/PedidosProducaoMinimalista";
 import ControleEstoqueMinimalista from "./pages/fabrica/ControleEstoqueMinimalista";
 import ProducaoMinimalista from "./pages/fabrica/ProducaoMinimalista";
+import SoldaMinimalista from "./pages/fabrica/producao/SoldaMinimalista";
+import PerfiladeiraMinimalista from "./pages/fabrica/producao/PerfiladeiraMinimalista";
+import SeparacaoMinimalista from "./pages/fabrica/producao/SeparacaoMinimalista";
+import QualidadeMinimalista from "./pages/fabrica/producao/QualidadeMinimalista";
+import PinturaMinimalista from "./pages/fabrica/producao/PinturaMinimalista";
+import CarregamentoMinimalista from "./pages/fabrica/producao/CarregamentoMinimalista";
+import TerceirizacaoMinimalista from "./pages/fabrica/producao/TerceirizacaoMinimalista";
 
 // Hub da Direção Minimalista
 import DirecaoHub from "./pages/direcao/DirecaoHub";
@@ -318,6 +325,13 @@ const App = () => (
                 <Route path="/fabrica/pedidos-producao" element={<ProtectedRoute><PedidosProducaoMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/controle-estoque" element={<ProtectedRoute><ControleEstoqueMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/producao" element={<ProtectedRoute><ProducaoMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/solda" element={<ProtectedRoute><SoldaMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/perfiladeira" element={<ProtectedRoute><PerfiladeiraMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/separacao" element={<ProtectedRoute><SeparacaoMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/qualidade" element={<ProtectedRoute><QualidadeMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/pintura" element={<ProtectedRoute><PinturaMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/carregamento" element={<ProtectedRoute><CarregamentoMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/terceirizacao" element={<ProtectedRoute><TerceirizacaoMinimalista /></ProtectedRoute>} />
 
                 {/* Hub da Direção Minimalista */}
                 <Route path="/direcao" element={<ProtectedRoute><DirecaoHub /></ProtectedRoute>} />
