@@ -9,7 +9,7 @@ const menuItems = [
   { label: "Fábrica", icon: Factory, path: "/fabrica", angle: 72 },
   { label: "Direção", icon: Shield, path: "/direcao", angle: 144 },
   { label: "Logística", icon: Truck, path: "/logistica", angle: 216 },
-  { label: "Administrativo", icon: Building2, path: "/dashboard/administrativo", angle: 288 }
+  { label: "Administrativo", icon: Building2, path: "/administrativo", angle: 288 }
 ];
 
 const getOrbitPosition = (angle: number, radius: number) => {
