@@ -1,11 +1,11 @@
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PedidosTotalRowProps {
   pedidos: any[];
 }
 
 function getProdutosFromPedido(pedido: any): any[] {
-  // Tentar diferentes caminhos para acessar produtos_vendas
   const vendas = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
   return vendas?.produtos_vendas || pedido.produtos_vendas || [];
 }
@@ -86,28 +86,52 @@ function calcularTotaisOrdens(pedidos: any[]) {
   };
 
   pedidos.forEach(pedido => {
-    // Ordens de soldagem
     const ordensSoldagem = pedido.ordens_soldagem || [];
     totais.soldagem += ordensSoldagem.length;
 
-    // Ordens de perfiladeira
     const ordensPerfiladeira = pedido.ordens_perfiladeira || [];
     totais.perfiladeira += ordensPerfiladeira.length;
 
-    // Ordens de separação
     const ordensSeparacao = pedido.ordens_separacao || [];
     totais.separacao += ordensSeparacao.length;
 
-    // Ordens de qualidade
     const ordensQualidade = pedido.ordens_qualidade || [];
     totais.qualidade += ordensQualidade.length;
 
-    // Ordens de pintura
     const ordensPintura = pedido.ordens_pintura || [];
     totais.pintura += ordensPintura.length;
   });
 
   return totais;
+}
+
+function calcularCoresUnicas(pedidos: any[]): { nome: string; codigo_hex: string }[] {
+  const coresMap = new Map<string, { nome: string; codigo_hex: string }>();
+  
+  pedidos.forEach(pedido => {
+    const produtos = getProdutosFromPedido(pedido);
+    produtos.forEach((produto: any) => {
+      if (produto.tipo_produto === 'porta_enrolar' && produto.cor_nome) {
+        const key = produto.cor_nome.toLowerCase();
+        if (!coresMap.has(key)) {
+          coresMap.set(key, {
+            nome: produto.cor_nome,
+            codigo_hex: produto.cor_codigo_hex || '#888888'
+          });
+        }
+      }
+    });
+  });
+  
+  return Array.from(coresMap.values());
+}
+
+function isAcoGalvanizado(nome: string): boolean {
+  const nomeNormalizado = nome.toLowerCase().trim();
+  return nomeNormalizado.includes('galvanizado') || 
+         nomeNormalizado.includes('aço') || 
+         nomeNormalizado.includes('aco') ||
+         nomeNormalizado.includes('natural');
 }
 
 export function PedidosTotalRow({ pedidos }: PedidosTotalRowProps) {
@@ -117,110 +141,173 @@ export function PedidosTotalRow({ pedidos }: PedidosTotalRowProps) {
   const ordensStats = calcularTotaisOrdens(pedidos);
   const totalMetragemLinear = calcularTotalMetragemLinear(pedidos);
   const totalMetragemQuadrada = calcularTotalMetragemQuadrada(pedidos);
+  const coresUnicas = calcularCoresUnicas(pedidos);
 
   return (
-    <div
-      className="bg-muted/50 border-t-2 border-primary/20 rounded-md px-2 py-2 mt-2"
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '24px 24px 1fr 50px 50px 75px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px',
-        gap: '4px',
-        alignItems: 'center',
-      }}
-    >
-      {/* Drag Handle placeholder */}
-      <div />
-      
-      {/* Avatar placeholder */}
-      <div />
-      
-      {/* Label TOTAL */}
-      <div className="flex items-center">
-        <span className="font-bold text-sm text-foreground">
-          TOTAL ({pedidos.length} pedidos)
-        </span>
-      </div>
+    <TooltipProvider>
+      <div
+        className="bg-muted/50 border-t-2 border-primary/20 rounded-md px-2 py-2 mt-2"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '24px 24px 1fr 50px 50px 75px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px',
+          gap: '4px',
+          alignItems: 'center',
+        }}
+      >
+        {/* Drag Handle placeholder */}
+        <div />
+        
+        {/* Avatar placeholder */}
+        <div />
+        
+        {/* Label TOTAL */}
+        <div className="flex items-center">
+          <span className="font-bold text-sm text-foreground">
+            TOTAL ({pedidos.length} pedidos)
+          </span>
+        </div>
 
-      {/* Metragem Linear Total */}
-      <div className="text-center">
-        <span className="text-[10px] font-bold text-blue-600">
-          {totalMetragemLinear > 0 ? `${totalMetragemLinear.toFixed(0)}m` : '—'}
-        </span>
-      </div>
+        {/* Metragem Linear Total */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="text-center cursor-help">
+              <span className="text-[10px] font-bold text-blue-600">
+                {totalMetragemLinear > 0 ? `${totalMetragemLinear.toFixed(0)}m` : '—'}
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs">Total metragem linear (perfiladeira)</p>
+          </TooltipContent>
+        </Tooltip>
 
-      {/* Metragem Quadrada Total */}
-      <div className="text-center">
-        <span className="text-[10px] font-bold text-green-600">
-          {totalMetragemQuadrada > 0 ? `${totalMetragemQuadrada.toFixed(1)}m²` : '—'}
-        </span>
+        {/* Metragem Quadrada Total */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="text-center cursor-help">
+              <span className="text-[10px] font-bold text-green-600">
+                {totalMetragemQuadrada > 0 ? `${totalMetragemQuadrada.toFixed(1)}m²` : '—'}
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs">Total área das portas</p>
+          </TooltipContent>
+        </Tooltip>
+        
+        {/* Data Carregamento placeholder */}
+        <div />
+        
+        {/* Portas P/G */}
+        <div className="flex items-center justify-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge className="bg-blue-500 hover:bg-blue-500 text-white text-[10px] px-1.5 py-0 h-5 font-bold cursor-help">
+                {totalP}P
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Portas pequenas (≤9m²)</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge className="bg-orange-500 hover:bg-orange-500 text-white text-[10px] px-1.5 py-0 h-5 font-bold cursor-help">
+                {totalG}G
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Portas grandes (&gt;9m²)</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+        
+        {/* Tipo Entrega placeholder */}
+        <div />
+        
+        {/* Cores - agora exibe quantidade */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center gap-1 cursor-help">
+              {coresUnicas.length > 0 ? (
+                <>
+                  {coresUnicas.slice(0, 2).map((cor, idx) => (
+                    <div 
+                      key={idx}
+                      className="h-4 flex-1 border border-border"
+                      style={{ 
+                        backgroundColor: isAcoGalvanizado(cor.nome) ? 'transparent' : cor.codigo_hex,
+                        borderRadius: '10px',
+                        maxWidth: '30px'
+                      }}
+                    />
+                  ))}
+                  {coresUnicas.length > 2 && (
+                    <span className="text-[9px] font-bold text-muted-foreground">+{coresUnicas.length - 2}</span>
+                  )}
+                </>
+              ) : (
+                <span className="text-muted-foreground text-[10px]">—</span>
+              )}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="space-y-1">
+              <p className="text-xs font-bold">{coresUnicas.length} cores diferentes</p>
+              {coresUnicas.map((cor, idx) => (
+                <div key={idx} className="flex items-center gap-2 text-xs">
+                  <div 
+                    className="h-3 w-3 rounded-full border"
+                    style={{ backgroundColor: isAcoGalvanizado(cor.nome) ? 'transparent' : cor.codigo_hex }}
+                  />
+                  <span>{cor.nome}</span>
+                </div>
+              ))}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+        
+        {/* Soldagem */}
+        <div className="flex items-center justify-center">
+          <span className="text-[11px] font-bold text-orange-500">
+            {ordensStats.soldagem}
+          </span>
+        </div>
+        
+        {/* Perfiladeira */}
+        <div className="flex items-center justify-center">
+          <span className="text-[11px] font-bold text-blue-500">
+            {ordensStats.perfiladeira}
+          </span>
+        </div>
+        
+        {/* Separação */}
+        <div className="flex items-center justify-center">
+          <span className="text-[11px] font-bold text-purple-500">
+            {ordensStats.separacao}
+          </span>
+        </div>
+        
+        {/* Qualidade */}
+        <div className="flex items-center justify-center">
+          <span className="text-[11px] font-bold text-green-500">
+            {ordensStats.qualidade}
+          </span>
+        </div>
+        
+        {/* Pintura */}
+        <div className="flex items-center justify-center">
+          <span className="text-[11px] font-bold text-pink-500">
+            {ordensStats.pintura}
+          </span>
+        </div>
+        
+        {/* Tempo placeholder */}
+        <div />
+        
+        {/* Ações placeholder */}
+        <div />
       </div>
-      
-      {/* Data Carregamento placeholder */}
-      <div />
-      
-      {/* Portas P/G */}
-      <div className="flex items-center justify-center gap-1">
-        {totalP > 0 && (
-          <Badge className="bg-blue-500 hover:bg-blue-500 text-white text-[10px] px-1.5 py-0 h-5 font-bold">
-            {totalP}P
-          </Badge>
-        )}
-        {totalG > 0 && (
-          <Badge className="bg-orange-500 hover:bg-orange-500 text-white text-[10px] px-1.5 py-0 h-5 font-bold">
-            {totalG}G
-          </Badge>
-        )}
-        {totalP === 0 && totalG === 0 && (
-          <span className="text-muted-foreground text-xs">-</span>
-        )}
-      </div>
-      
-      {/* Tipo Entrega placeholder */}
-      <div />
-      
-      {/* Cores placeholder */}
-      <div />
-      
-      {/* Soldagem */}
-      <div className="flex items-center justify-center">
-        <span className="text-[11px] font-bold text-orange-500">
-          {ordensStats.soldagem}
-        </span>
-      </div>
-      
-      {/* Perfiladeira */}
-      <div className="flex items-center justify-center">
-        <span className="text-[11px] font-bold text-blue-500">
-          {ordensStats.perfiladeira}
-        </span>
-      </div>
-      
-      {/* Separação */}
-      <div className="flex items-center justify-center">
-        <span className="text-[11px] font-bold text-purple-500">
-          {ordensStats.separacao}
-        </span>
-      </div>
-      
-      {/* Qualidade */}
-      <div className="flex items-center justify-center">
-        <span className="text-[11px] font-bold text-green-500">
-          {ordensStats.qualidade}
-        </span>
-      </div>
-      
-      {/* Pintura */}
-      <div className="flex items-center justify-center">
-        <span className="text-[11px] font-bold text-pink-500">
-          {ordensStats.pintura}
-        </span>
-      </div>
-      
-      {/* Tempo placeholder */}
-      <div />
-      
-      {/* Ações placeholder */}
-      <div />
-    </div>
+    </TooltipProvider>
   );
 }
