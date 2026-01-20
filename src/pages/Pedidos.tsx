@@ -310,7 +310,8 @@ export default function Pedidos() {
                   </div> : (
                     <>
                       <PedidosDraggableList 
-                        pedidos={pedidosPaginados} 
+                        pedidos={pedidosPaginados}
+                        pedidosParaTotais={pedidosFiltrados}
                         etapa={etapa} 
                         isAberto={etapa === 'aberto'} 
                         viewMode={viewMode} 
