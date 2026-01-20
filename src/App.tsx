@@ -161,6 +161,7 @@ import ContasPagarNova from "./pages/ContasPagarNova";
 // Hub de Vendas Minimalista
 import VendasHub from "./pages/vendas/VendasHub";
 import MinhasVendas from "./pages/vendas/MinhasVendas";
+import VendaNovaMinimalista from "./pages/vendas/VendaNovaMinimalista";
 import MeusClientes from "./pages/vendas/MeusClientes";
 import CatalogoMinimalista from "./pages/vendas/Catalogo";
 import MeusOrcamentos from "./pages/vendas/MeusOrcamentos";
@@ -329,6 +330,7 @@ const App = () => (
                 {/* Hub de Vendas Minimalista */}
                 <Route path="/vendas" element={<ProtectedRoute><VendasHub /></ProtectedRoute>} />
                 <Route path="/vendas/minhas-vendas" element={<ProtectedRoute><MinhasVendas /></ProtectedRoute>} />
+                <Route path="/vendas/minhas-vendas/nova" element={<ProtectedRoute><VendaNovaMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/meus-clientes" element={<ProtectedRoute><MeusClientes /></ProtectedRoute>} />
                 <Route path="/vendas/catalogo" element={<ProtectedRoute><CatalogoMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/meus-orcamentos" element={<ProtectedRoute><MeusOrcamentos /></ProtectedRoute>} />

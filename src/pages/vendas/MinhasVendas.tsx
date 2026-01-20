@@ -91,7 +91,7 @@ export default function MinhasVendas() {
       subtitle={format(mesAtual, "MMMM 'de' yyyy", { locale: ptBR })}
       headerActions={
         <Button 
-          onClick={() => navigate('/dashboard/vendas/nova')}
+          onClick={() => navigate('/vendas/minhas-vendas/nova')}
           className="bg-blue-600 hover:bg-blue-700"
           size="sm"
         >
@@ -188,7 +188,7 @@ export default function MinhasVendas() {
             <ShoppingCart className="w-12 h-12 text-white/20 mx-auto mb-4" />
             <p className="text-white/60">Nenhuma venda encontrada neste mês</p>
             <Button 
-              onClick={() => navigate('/dashboard/vendas/nova')}
+              onClick={() => navigate('/vendas/minhas-vendas/nova')}
               variant="outline"
               className="mt-4 border-white/20 text-white hover:bg-white/10"
             >
