@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, Calendar, CalendarDays, LogOut } from "lucide-react";
+import { ArrowLeft, Calendar, CalendarDays, LogOut } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,8 +12,7 @@ import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/Calenda
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
 import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { DndContext, MouseSensor, TouchSensor, useSensors, useSensor, DragEndEvent } from "@dnd-kit/core";
-import { format, addDays, startOfWeek, addMonths, startOfMonth } from "date-fns";
+import { format, addDays, startOfWeek, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { useQueryClient } from "@tanstack/react-query";
@@ -33,20 +32,13 @@ export default function ExpedicaoMinimalista() {
   const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [editingOrdem, setEditingOrdem] = useState<OrdemCarregamento | null>(null);
 
-  const { ordens, isLoading, updateOrdem, deleteOrdem } = useOrdensCarregamentoCalendario(currentDate, viewType);
+  const { ordens, isLoading, updateOrdem } = useOrdensCarregamentoCalendario(currentDate, viewType);
 
-  const mouseSensor = useSensor(MouseSensor, {
-    activationConstraint: { distance: 10 },
-  });
-  const touchSensor = useSensor(TouchSensor, {
-    activationConstraint: { delay: 200, tolerance: 5 },
-  });
-  const sensors = useSensors(mouseSensor, touchSensor);
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekEnd = addDays(weekStart, 6);
 
   const handlePreviousWeek = () => setCurrentDate(prev => addDays(prev, -7));
   const handleNextWeek = () => setCurrentDate(prev => addDays(prev, 7));
-  const handlePreviousMonth = () => setCurrentDate(prev => addMonths(prev, -1));
-  const handleNextMonth = () => setCurrentDate(prev => addMonths(prev, 1));
   const handleToday = () => {
     if (viewType === 'month') {
       setCurrentDate(startOfMonth(new Date()));
@@ -55,8 +47,8 @@ export default function ExpedicaoMinimalista() {
     }
   };
 
-  const handleUpdateOrdem = (id: string, data: any) => {
-    updateOrdem({ id, data });
+  const handleUpdateOrdem = async (params: { id: string; data: Partial<OrdemCarregamento> }) => {
+    await updateOrdem(params);
   };
 
   const handleEdit = (ordem: OrdemCarregamento) => {
@@ -66,10 +58,14 @@ export default function ExpedicaoMinimalista() {
 
   const handleSaveEdit = async (data: any) => {
     if (editingOrdem) {
-      updateOrdem({ id: editingOrdem.id, data });
+      await updateOrdem({ id: editingOrdem.id, data });
       setEditDrawerOpen(false);
       setEditingOrdem(null);
     }
+  };
+
+  const handleOrdemCriada = () => {
+    queryClient.invalidateQueries({ queryKey: ['ordens-carregamento-disponiveis'] });
   };
 
   const handleOrdemDropped = () => {
@@ -96,23 +92,9 @@ export default function ExpedicaoMinimalista() {
     setDetailsOpen(true);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const ordemId = active.id as string;
-    const novaData = over.id as string;
-
-    if (novaData && ordemId) {
-      updateOrdem({ 
-        id: ordemId, 
-        data: { data_carregamento: novaData } 
-      });
-    }
+  const handleMonthChange = (date: Date) => {
+    setCurrentDate(date);
   };
-
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-  const weekEnd = addDays(weekStart, 6);
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative">
@@ -176,76 +158,62 @@ export default function ExpedicaoMinimalista() {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
           ) : (
-            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-              <div className="max-w-7xl mx-auto space-y-4">
-                {/* Calendário */}
+            <div className="max-w-7xl mx-auto space-y-4">
+              {/* Calendário */}
+              <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+                <CardContent className="p-4">
+                  {isMobile ? (
+                    <CalendarioSemanalExpedicaoMobile
+                      startDate={weekStart}
+                      ordens={ordens || []}
+                      onPreviousWeek={handlePreviousWeek}
+                      onNextWeek={handleNextWeek}
+                      onToday={handleToday}
+                      onDayClick={() => {}}
+                      onEdit={handleEdit}
+                      onRemoverDoCalendario={handleRemoverDoCalendario}
+                      onUpdateOrdem={handleUpdateOrdem}
+                      onOrdemAdded={handleOrdemCriada}
+                    />
+                  ) : viewType === 'week' ? (
+                    <CalendarioSemanalExpedicaoDesktop
+                      startDate={weekStart}
+                      ordens={ordens || []}
+                      onPreviousWeek={handlePreviousWeek}
+                      onNextWeek={handleNextWeek}
+                      onToday={handleToday}
+                      onUpdateOrdem={handleUpdateOrdem}
+                      onEdit={handleEdit}
+                      onRemoverDoCalendario={handleRemoverDoCalendario}
+                      onOrdemCriada={handleOrdemCriada}
+                      onOrdemDropped={handleOrdemDropped}
+                      onOrdemClick={handleOrdemClick}
+                    />
+                  ) : (
+                    <CalendarioMensalExpedicaoDesktop
+                      currentMonth={currentDate}
+                      ordens={ordens || []}
+                      onMonthChange={handleMonthChange}
+                      onUpdateOrdem={handleUpdateOrdem}
+                      onEdit={handleEdit}
+                      onRemoverDoCalendario={handleRemoverDoCalendario}
+                      onOrdemCriada={handleOrdemCriada}
+                      onOrdemDropped={handleOrdemDropped}
+                      onOrdemClick={handleOrdemClick}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Ordens Disponíveis */}
+              {!isMobile && (
                 <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-                  <CardContent className="p-4 relative">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={viewType === 'week' ? handlePreviousWeek : handlePreviousMonth}
-                      className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-black/50 hover:bg-black/70 text-white"
-                    >
-                      <ChevronLeft className="h-5 w-5" />
-                    </Button>
-
-                    {isMobile ? (
-                      <CalendarioSemanalExpedicaoMobile
-                        currentDate={currentDate}
-                        ordens={ordens || []}
-                        onDayClick={(date) => console.log('Day clicked:', date)}
-                        onEditOrdem={handleEdit}
-                        onRemoverDoCalendario={handleRemoverDoCalendario}
-                        onOrdemDropped={handleOrdemDropped}
-                        onUpdateOrdem={handleUpdateOrdem}
-                        onOrdemClick={handleOrdemClick}
-                      />
-                    ) : viewType === 'week' ? (
-                      <CalendarioSemanalExpedicaoDesktop
-                        currentDate={currentDate}
-                        ordens={ordens || []}
-                        onDayClick={(date) => console.log('Day clicked:', date)}
-                        onEditOrdem={handleEdit}
-                        onRemoverDoCalendario={handleRemoverDoCalendario}
-                        onOrdemDropped={handleOrdemDropped}
-                        onUpdateOrdem={handleUpdateOrdem}
-                        onOrdemClick={handleOrdemClick}
-                      />
-                    ) : (
-                      <CalendarioMensalExpedicaoDesktop
-                        currentDate={currentDate}
-                        ordens={ordens || []}
-                        onDayClick={(date) => console.log('Day clicked:', date)}
-                        onEditOrdem={handleEdit}
-                        onRemoverDoCalendario={handleRemoverDoCalendario}
-                        onOrdemDropped={handleOrdemDropped}
-                        onUpdateOrdem={handleUpdateOrdem}
-                        onOrdemClick={handleOrdemClick}
-                      />
-                    )}
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={viewType === 'week' ? handleNextWeek : handleNextMonth}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-black/50 hover:bg-black/70 text-white"
-                    >
-                      <ChevronRight className="h-5 w-5" />
-                    </Button>
+                  <CardContent className="p-4">
+                    <OrdensCarregamentoDisponiveis onRefresh={handleRefresh} />
                   </CardContent>
                 </Card>
-
-                {/* Ordens Disponíveis */}
-                {!isMobile && (
-                  <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-                    <CardContent className="p-4">
-                      <OrdensCarregamentoDisponiveis onRefresh={handleRefresh} />
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </DndContext>
+              )}
+            </div>
           )}
         </main>
       </div>
