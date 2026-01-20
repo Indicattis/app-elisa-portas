@@ -23,6 +23,7 @@ const getOrbitPosition = (angle: number, radius: number) => {
 export default function Home() {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 100);
@@ -59,11 +60,16 @@ export default function Home() {
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const delay = 100 + index * 80;
+            const isHovered = hoveredIndex === index;
+            const hasHover = hoveredIndex !== null;
+            const isOther = hasHover && !isHovered;
             
             return (
               <button
                 key={item.label}
                 onClick={() => navigate(item.path)}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
                 className="w-full h-14 rounded-lg
                            bg-gradient-to-r from-blue-500 to-blue-700
                            hover:from-blue-400 hover:to-blue-600
@@ -74,9 +80,12 @@ export default function Home() {
                            border border-blue-400/30
                            transition-all duration-300"
                 style={{
-                  opacity: mounted ? 1 : 0,
-                  transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
-                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
+                  opacity: mounted ? (isOther ? 0.4 : 1) : 0,
+                  transform: mounted 
+                    ? `translateX(0) scale(${isOther ? 0.95 : 1})` 
+                    : 'translateX(-30px)',
+                  filter: isOther ? 'blur(2px)' : 'none',
+                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${mounted ? '0ms' : delay + 'ms'}`
                 }}
               >
                 <Icon className="w-6 h-6" strokeWidth={1.5} />
@@ -129,6 +138,9 @@ export default function Home() {
           const pos = getOrbitPosition(item.angle, 190);
           const Icon = item.icon;
           const delay = 200 + index * 120;
+          const isHovered = hoveredIndex === index;
+          const hasHover = hoveredIndex !== null;
+          const isOther = hasHover && !isHovered;
           
           return (
             <div
@@ -137,15 +149,19 @@ export default function Home() {
               style={{
                 left: '50%',
                 top: '50%',
-                transition: `all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`,
-                opacity: mounted ? 1 : 0,
+                transition: `all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)`,
+                opacity: mounted ? (isOther ? 0.35 : 1) : 0,
                 transform: mounted 
-                  ? `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px))`
+                  ? `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px)) scale(${isOther ? 0.95 : 1})`
                   : 'translate(-50%, -50%) scale(0.2)',
+                filter: isOther ? 'blur(3px)' : 'none',
+                transitionDelay: mounted ? '0ms' : `${delay}ms`,
               }}
             >
               <button
                 onClick={() => navigate(item.path)}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
                 className="w-24 h-24 rounded-full 
                            bg-gradient-to-br from-blue-500 to-blue-700
                            hover:from-blue-400 hover:to-blue-600
