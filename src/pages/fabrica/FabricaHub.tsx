@@ -1,31 +1,20 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { ArrowLeft, Package, Boxes } from "lucide-react";
 import logoEmpresa from "@/assets/logo-empresa.png";
-import { ShoppingCart, Factory, Shield, Truck, Building2 } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
 
 const menuItems = [
-  { label: "Vendas", icon: ShoppingCart, path: "/vendas", angle: 0 },
-  { label: "Fábrica", icon: Factory, path: "/fabrica", angle: 72 },
-  { label: "Direção", icon: Shield, path: "/dashboard/direcao", angle: 144 },
-  { label: "Logística", icon: Truck, path: "/dashboard/logistica", angle: 216 },
-  { label: "Administrativo", icon: Building2, path: "/dashboard/administrativo", angle: 288 }
+  { label: 'Pedidos em Produção', icon: Package, path: '/fabrica/pedidos-producao' },
+  { label: 'Controle de Estoque', icon: Boxes, path: '/fabrica/controle-estoque' },
 ];
 
-const getOrbitPosition = (angle: number, radius: number) => {
-  const rad = ((angle - 90) * Math.PI) / 180;
-  return {
-    x: Math.cos(rad) * radius,
-    y: Math.sin(rad) * radius
-  };
-};
-
-export default function Home() {
+export default function FabricaHub() {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 100);
+    const timer = setTimeout(() => setMounted(true), 50);
     return () => clearTimeout(timer);
   }, []);
 
@@ -34,6 +23,20 @@ export default function Home() {
       {/* Partículas espaciais de fundo */}
       <SpaceParticles />
       
+      {/* Botão de voltar */}
+      <button
+        onClick={() => navigate('/home')}
+        className="absolute top-6 left-6 z-20 p-3 rounded-lg bg-white/5 hover:bg-white/10 
+                   border border-white/10 transition-all duration-300"
+        style={{
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? 'translateX(0)' : 'translateX(-20px)',
+          transition: 'all 0.5s ease 100ms'
+        }}
+      >
+        <ArrowLeft className="w-5 h-5 text-white/80" />
+      </button>
+
       {/* ========== VERSÃO MOBILE ========== */}
       <div className="md:hidden relative z-10 flex flex-col items-center px-6 py-10 w-full max-w-md">
         {/* Logo */}
@@ -88,34 +91,18 @@ export default function Home() {
       </div>
 
       {/* ========== VERSÃO DESKTOP ========== */}
-      <div className="hidden md:flex relative z-10 w-[600px] h-[600px] items-center justify-center">
-        
-        {/* Anel decorativo da órbita */}
-        <div 
-          className="absolute w-[420px] h-[420px] rounded-full border border-blue-500/20 transition-all duration-1000"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'scale(1)' : 'scale(0.5)'
-          }}
-        />
-        <div 
-          className="absolute w-[380px] h-[380px] rounded-full border border-blue-500/10 transition-all duration-1000 delay-100"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'scale(1)' : 'scale(0.5)'
-          }}
-        />
-        
+      <div className="hidden md:flex relative z-10 flex-col items-center">
         {/* Logo central */}
         <div 
-          className="absolute z-10 transition-all duration-700"
+          className="mb-10"
           style={{
             opacity: mounted ? 1 : 0,
-            transform: mounted ? 'scale(1)' : 'scale(0.8)'
+            transform: mounted ? 'scale(1)' : 'scale(0.8)',
+            transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}
         >
           <div className="relative">
-            <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full animate-pulse" />
+            <div className="absolute inset-0 bg-blue-500/30 blur-3xl rounded-full animate-pulse" />
             <img 
               src={logoEmpresa} 
               alt="Logo" 
@@ -123,48 +110,39 @@ export default function Home() {
             />
           </div>
         </div>
-        
-        {/* Botões orbitais */}
-        {menuItems.map((item, index) => {
-          const pos = getOrbitPosition(item.angle, 190);
-          const Icon = item.icon;
-          const delay = 200 + index * 120;
-          
-          return (
-            <div
-              key={item.label}
-              className="absolute"
-              style={{
-                left: '50%',
-                top: '50%',
-                transition: `all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`,
-                opacity: mounted ? 1 : 0,
-                transform: mounted 
-                  ? `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px))`
-                  : 'translate(-50%, -50%) scale(0.2)',
-              }}
-            >
+
+        {/* Grid de botões */}
+        <div className="grid grid-cols-2 gap-4 max-w-lg">
+          {menuItems.map((item, index) => {
+            const Icon = item.icon;
+            const delay = 200 + index * 100;
+            
+            return (
               <button
+                key={item.label}
                 onClick={() => navigate(item.path)}
-                className="w-24 h-24 rounded-full 
+                className="w-44 h-28 rounded-xl
                            bg-gradient-to-br from-blue-500 to-blue-700
                            hover:from-blue-400 hover:to-blue-600
-                           flex flex-col items-center justify-center gap-1.5
+                           flex flex-col items-center justify-center gap-2
                            text-white font-medium 
                            shadow-lg shadow-blue-500/30
                            hover:shadow-xl hover:shadow-blue-500/50
-                           hover:scale-110 
-                           cursor-pointer
+                           hover:scale-105
                            border border-blue-400/30
                            transition-all duration-300"
+                style={{
+                  opacity: mounted ? 1 : 0,
+                  transform: mounted ? 'translateY(0)' : 'translateY(30px)',
+                  transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
+                }}
               >
-                <Icon className="w-7 h-7" strokeWidth={1.5} />
-                <span className="text-xs font-medium tracking-wide">{item.label}</span>
+                <Icon className="w-8 h-8" strokeWidth={1.5} />
+                <span className="text-sm font-medium text-center px-2">{item.label}</span>
               </button>
-            </div>
-          );
-        })}
-        
+            );
+          })}
+        </div>
       </div>
     </div>
   );

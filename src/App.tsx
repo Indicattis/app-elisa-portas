@@ -166,6 +166,11 @@ import CatalogoMinimalista from "./pages/vendas/Catalogo";
 import MeusOrcamentos from "./pages/vendas/MeusOrcamentos";
 import MeusParceiros from "./pages/vendas/MeusParceiros";
 
+// Hub da Fábrica Minimalista
+import FabricaHub from "./pages/fabrica/FabricaHub";
+import PedidosProducaoMinimalista from "./pages/fabrica/PedidosProducaoMinimalista";
+import ControleEstoqueMinimalista from "./pages/fabrica/ControleEstoqueMinimalista";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -299,7 +304,12 @@ const App = () => (
                 <Route path="/vendas/meus-orcamentos" element={<ProtectedRoute><MeusOrcamentos /></ProtectedRoute>} />
                 <Route path="/vendas/meus-parceiros" element={<ProtectedRoute><MeusParceiros /></ProtectedRoute>} />
 
-                {/* Hub da Fábrica - usa autenticação própria com CPF */}
+                {/* Hub da Fábrica Minimalista */}
+                <Route path="/fabrica" element={<ProtectedRoute><FabricaHub /></ProtectedRoute>} />
+                <Route path="/fabrica/pedidos-producao" element={<ProtectedRoute><PedidosProducaoMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/controle-estoque" element={<ProtectedRoute><ControleEstoqueMinimalista /></ProtectedRoute>} />
+
+                {/* Hub da Fábrica Legado - usa autenticação própria com CPF */}
                 <Route path="/hub-fabrica" element={<HubFabrica />} />
                 <Route path="/hub-fabrica/login" element={<ProducaoLogin />} />
                 <Route path="/hub-fabrica/forbidden" element={<ForbiddenProducao />} />
