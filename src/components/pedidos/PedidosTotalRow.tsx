@@ -4,12 +4,18 @@ interface PedidosTotalRowProps {
   pedidos: any[];
 }
 
+function getProdutosFromPedido(pedido: any): any[] {
+  // Tentar diferentes caminhos para acessar produtos_vendas
+  const vendas = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
+  return vendas?.produtos_vendas || pedido.produtos_vendas || [];
+}
+
 function calcularTotaisPortas(pedidos: any[]) {
   let totalP = 0;
   let totalG = 0;
 
   pedidos.forEach(pedido => {
-    const produtos = pedido.produtos_vendas || [];
+    const produtos = getProdutosFromPedido(pedido);
     produtos.forEach((produto: any) => {
       if (produto.tipo_produto === 'porta_enrolar') {
         const largura = produto.largura || 0;
@@ -29,6 +35,45 @@ function calcularTotaisPortas(pedidos: any[]) {
   });
 
   return { totalP, totalG };
+}
+
+function calcularTotalMetragemLinear(pedidos: any[]) {
+  let total = 0;
+  
+  pedidos.forEach(pedido => {
+    const linhas = pedido.linhas_perfiladeira || [];
+    linhas.forEach((linha: any) => {
+      const tamanho = linha.tamanho || '0';
+      const metros = parseFloat(tamanho.replace(',', '.')) || 0;
+      const quantidade = linha.quantidade || 1;
+      total += metros * quantidade;
+    });
+  });
+  
+  return total;
+}
+
+function calcularTotalMetragemQuadrada(pedidos: any[]) {
+  let total = 0;
+  
+  pedidos.forEach(pedido => {
+    const produtos = getProdutosFromPedido(pedido);
+    produtos.forEach((produto: any) => {
+      if (produto.tipo_produto === 'porta_enrolar') {
+        let largura = produto.largura || 0;
+        let altura = produto.altura || 0;
+        
+        // Converter cm para m se necessário
+        if (largura > 100) largura = largura / 100;
+        if (altura > 100) altura = altura / 100;
+        
+        const quantidade = produto.quantidade || 1;
+        total += largura * altura * quantidade;
+      }
+    });
+  });
+  
+  return total;
 }
 
 function calcularTotaisOrdens(pedidos: any[]) {
@@ -70,13 +115,15 @@ export function PedidosTotalRow({ pedidos }: PedidosTotalRowProps) {
 
   const { totalP, totalG } = calcularTotaisPortas(pedidos);
   const ordensStats = calcularTotaisOrdens(pedidos);
+  const totalMetragemLinear = calcularTotalMetragemLinear(pedidos);
+  const totalMetragemQuadrada = calcularTotalMetragemQuadrada(pedidos);
 
   return (
     <div
       className="bg-muted/50 border-t-2 border-primary/20 rounded-md px-2 py-2 mt-2"
       style={{
         display: 'grid',
-        gridTemplateColumns: '24px 24px 1fr 75px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px',
+        gridTemplateColumns: '24px 24px 1fr 50px 50px 75px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px',
         gap: '4px',
         alignItems: 'center',
       }}
@@ -91,6 +138,20 @@ export function PedidosTotalRow({ pedidos }: PedidosTotalRowProps) {
       <div className="flex items-center">
         <span className="font-bold text-sm text-foreground">
           TOTAL ({pedidos.length} pedidos)
+        </span>
+      </div>
+
+      {/* Metragem Linear Total */}
+      <div className="text-center">
+        <span className="text-[10px] font-bold text-blue-600">
+          {totalMetragemLinear > 0 ? `${totalMetragemLinear.toFixed(0)}m` : '—'}
+        </span>
+      </div>
+
+      {/* Metragem Quadrada Total */}
+      <div className="text-center">
+        <span className="text-[10px] font-bold text-green-600">
+          {totalMetragemQuadrada > 0 ? `${totalMetragemQuadrada.toFixed(1)}m²` : '—'}
         </span>
       </div>
       
