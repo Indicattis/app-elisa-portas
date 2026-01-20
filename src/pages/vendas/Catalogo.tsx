@@ -82,7 +82,7 @@ export default function Catalogo() {
           produtos.map((produto) => (
             <div
               key={produto.id}
-              className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm
+              className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-xl
                          hover:bg-white/10 hover:border-blue-500/30 transition-all group"
             >
               {/* Imagem */}

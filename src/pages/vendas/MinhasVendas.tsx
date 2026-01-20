@@ -102,7 +102,7 @@ export default function MinhasVendas() {
     >
       {/* Cards de estatísticas */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm">
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-blue-500/20">
               <ShoppingCart className="w-5 h-5 text-blue-400" />
@@ -114,7 +114,7 @@ export default function MinhasVendas() {
           </div>
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm">
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-green-500/20">
               <DollarSign className="w-5 h-5 text-green-400" />
@@ -126,7 +126,7 @@ export default function MinhasVendas() {
           </div>
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm">
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-purple-500/20">
               <TrendingUp className="w-5 h-5 text-purple-400" />
@@ -153,7 +153,7 @@ export default function MinhasVendas() {
               <div
                 key={venda.id}
                 onClick={() => navigate(`/dashboard/vendas/${venda.id}`)}
-                className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm
+                className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl
                            hover:bg-white/10 transition-colors cursor-pointer"
               >
                 <div className="flex items-center justify-between">
