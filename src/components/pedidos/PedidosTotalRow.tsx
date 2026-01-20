@@ -21,10 +21,11 @@ function calcularTotaisPortas(pedidos: any[]) {
         const largura = produto.largura || 0;
         const altura = produto.altura || 0;
         const quantidade = produto.quantidade || 1;
-        const area = (largura / 100) * (altura / 100);
+        // Valores já estão em metros - área em m²
+        const area = largura * altura;
         
         for (let i = 0; i < quantidade; i++) {
-          if (area <= 9) {
+          if (area <= 25) {
             totalP++;
           } else {
             totalG++;
@@ -60,14 +61,10 @@ function calcularTotalMetragemQuadrada(pedidos: any[]) {
     const produtos = getProdutosFromPedido(pedido);
     produtos.forEach((produto: any) => {
       if (produto.tipo_produto === 'porta_enrolar') {
-        let largura = produto.largura || 0;
-        let altura = produto.altura || 0;
-        
-        // Converter cm para m se necessário
-        if (largura > 100) largura = largura / 100;
-        if (altura > 100) altura = altura / 100;
-        
+        const largura = produto.largura || 0;
+        const altura = produto.altura || 0;
         const quantidade = produto.quantidade || 1;
+        // Valores já estão em metros no banco de dados
         total += largura * altura * quantidade;
       }
     });
@@ -207,7 +204,7 @@ export function PedidosTotalRow({ pedidos }: PedidosTotalRowProps) {
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
-              <p className="text-xs">Portas pequenas (≤9m²)</p>
+              <p className="text-xs">Portas pequenas (≤25m²)</p>
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -217,7 +214,7 @@ export function PedidosTotalRow({ pedidos }: PedidosTotalRowProps) {
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
-              <p className="text-xs">Portas grandes (&gt;9m²)</p>
+              <p className="text-xs">Portas grandes (&gt;25m²)</p>
             </TooltipContent>
           </Tooltip>
         </div>
