@@ -1072,7 +1072,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
       // Chamar função RPC que deleta tudo
       const { error } = await supabase.rpc('deletar_pedido_completo', {
-        pedido_uuid: pedidoId
+        p_pedido_id: pedidoId
       });
 
       if (error) throw error;

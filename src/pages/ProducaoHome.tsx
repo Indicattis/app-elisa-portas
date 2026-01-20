@@ -5,9 +5,8 @@ import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Hammer, Boxes, Package, Sparkles, CheckSquare, Truck, BarChart3, Trophy, Medal, History } from "lucide-react";
+import { Hammer, Boxes, Package, Sparkles, CheckSquare, Truck, BarChart3, History } from "lucide-react";
 import { useOrdensCount } from "@/hooks/useOrdensCount";
-import { RankingPorSetor } from "@/components/producao/RankingPorSetor";
 interface ProducaoRoute {
   key: string;
   path: string;
@@ -23,9 +22,7 @@ const iconMap: Record<string, any> = {
   Sparkles,
   CheckSquare,
   Truck,
-  BarChart3,
-  Trophy,
-  Medal
+  BarChart3
 };
 export default function ProducaoHome() {
   const navigate = useNavigate();
@@ -110,9 +107,6 @@ export default function ProducaoHome() {
           Meu Histórico
         </Button>
       </div>
-
-      {/* Rankings de Produção por Setor */}
-      
 
       {/* Acesso aos Painéis */}
       <div className="space-y-3">
