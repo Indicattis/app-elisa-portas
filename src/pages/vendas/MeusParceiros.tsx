@@ -89,8 +89,8 @@ export default function MeusParceiros() {
       <div className="grid grid-cols-3 gap-4 mb-6">
         <button
           onClick={() => setTipoFiltro(tipoFiltro === 'autorizado' ? '' : 'autorizado')}
-          className={`bg-white/5 border rounded-xl p-4 backdrop-blur-sm text-center transition-all ${
-            tipoFiltro === 'autorizado' ? 'border-blue-500/50 bg-blue-500/10' : 'border-white/10 hover:bg-white/10'
+          className={`bg-primary/5 border rounded-xl p-4 backdrop-blur-sm text-center transition-all ${
+            tipoFiltro === 'autorizado' ? 'border-blue-500/50 bg-blue-500/10' : 'border-primary/10 hover:bg-primary/10'
           }`}
         >
           <Store className="w-5 h-5 text-blue-400 mx-auto mb-2" />
@@ -100,8 +100,8 @@ export default function MeusParceiros() {
         
         <button
           onClick={() => setTipoFiltro(tipoFiltro === 'representante' ? '' : 'representante')}
-          className={`bg-white/5 border rounded-xl p-4 backdrop-blur-sm text-center transition-all ${
-            tipoFiltro === 'representante' ? 'border-purple-500/50 bg-purple-500/10' : 'border-white/10 hover:bg-white/10'
+          className={`bg-primary/5 border rounded-xl p-4 backdrop-blur-sm text-center transition-all ${
+            tipoFiltro === 'representante' ? 'border-purple-500/50 bg-purple-500/10' : 'border-primary/10 hover:bg-primary/10'
           }`}
         >
           <Users className="w-5 h-5 text-purple-400 mx-auto mb-2" />
@@ -111,8 +111,8 @@ export default function MeusParceiros() {
         
         <button
           onClick={() => setTipoFiltro(tipoFiltro === 'franqueado' ? '' : 'franqueado')}
-          className={`bg-white/5 border rounded-xl p-4 backdrop-blur-sm text-center transition-all ${
-            tipoFiltro === 'franqueado' ? 'border-green-500/50 bg-green-500/10' : 'border-white/10 hover:bg-white/10'
+          className={`bg-primary/5 border rounded-xl p-4 backdrop-blur-sm text-center transition-all ${
+            tipoFiltro === 'franqueado' ? 'border-green-500/50 bg-green-500/10' : 'border-primary/10 hover:bg-primary/10'
           }`}
         >
           <Building2 className="w-5 h-5 text-green-400 mx-auto mb-2" />
@@ -137,8 +137,8 @@ export default function MeusParceiros() {
               <div
                 key={parceiro.id}
                 onClick={() => navigate(`/dashboard/parceiros/${parceiro.tipo_parceiro}/${parceiro.id}`)}
-                className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm
-                           hover:bg-white/10 transition-colors cursor-pointer"
+                className="bg-primary/5 border border-primary/10 rounded-xl p-4 backdrop-blur-sm
+                           hover:bg-primary/10 transition-colors cursor-pointer"
               >
                 <div className="flex items-start gap-4">
                   <div className={`p-2 rounded-lg ${getTipoColor(parceiro.tipo_parceiro as TipoParceiro).split(' ').slice(0, 2).join(' ')}`}>

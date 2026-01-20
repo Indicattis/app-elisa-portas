@@ -115,7 +115,7 @@ export default function MetasDirecao() {
         {colaboradores?.map((colaborador) => (
           <div
             key={colaborador.user_id}
-            className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-colors cursor-pointer"
+            className="bg-primary/5 border border-primary/10 rounded-lg p-4 hover:bg-primary/10 transition-colors cursor-pointer"
             onClick={() => navigate(`/hub-fabrica/metas/${colaborador.user_id}`)}
           >
             {/* Mobile Layout */}

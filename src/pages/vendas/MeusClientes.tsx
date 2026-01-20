@@ -71,7 +71,7 @@ export default function MeusClientes() {
           placeholder="Buscar por nome, CPF/CNPJ ou telefone..."
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+          className="pl-10 bg-primary/5 border-primary/10 text-white placeholder:text-white/40"
         />
       </div>
 
@@ -86,8 +86,8 @@ export default function MeusClientes() {
             <div
               key={cliente.id}
               onClick={() => navigate(`/dashboard/clientes`)}
-              className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl
-                         hover:bg-white/10 transition-colors cursor-pointer group"
+              className="bg-primary/5 border border-primary/10 rounded-xl p-4 backdrop-blur-xl
+                         hover:bg-primary/10 transition-colors cursor-pointer group"
             >
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-blue-500/20 group-hover:bg-blue-500/30 transition-colors">
