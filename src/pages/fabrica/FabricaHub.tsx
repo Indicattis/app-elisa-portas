@@ -1,11 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Package, Boxes } from "lucide-react";
+import { ArrowLeft, Package, Boxes, Factory } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
 
 const menuItems = [
   { label: 'Pedidos em Produção', icon: Package, path: '/fabrica/pedidos-producao' },
   { label: 'Controle de Estoque', icon: Boxes, path: '/fabrica/controle-estoque' },
+  { label: 'Produção', icon: Factory, path: '/fabrica/producao' },
 ];
 
 export default function FabricaHub() {
