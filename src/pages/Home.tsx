@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
 import { ShoppingCart, Factory, Shield, Truck, Building2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { SpaceParticles } from "@/components/SpaceParticles";
 
 const menuItems = [
@@ -22,6 +24,7 @@ const getOrbitPosition = (angle: number, radius: number) => {
 
 export default function Home() {
   const navigate = useNavigate();
+  const { userRole } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -30,8 +33,34 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
+  const getUserInitials = (nome: string) => {
+    const parts = nome.split(" ");
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return nome.substring(0, 2).toUpperCase();
+  };
+
   return (
     <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
+      {/* Tag flutuante de perfil */}
+      {userRole && (
+        <div 
+          className="fixed top-4 right-4 z-50 transition-all duration-700"
+          style={{
+            opacity: mounted ? 1 : 0,
+            transform: mounted ? 'translateY(0) scale(1)' : 'translateY(-20px) scale(0.8)'
+          }}
+        >
+          <Avatar className="w-12 h-12 border-2 border-white/20 shadow-lg shadow-black/50">
+            <AvatarImage src={userRole.foto_perfil_url || undefined} alt={userRole.nome} />
+            <AvatarFallback className="bg-blue-500/30 text-white font-medium">
+              {getUserInitials(userRole.nome)}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+      )}
+
       {/* Partículas espaciais de fundo */}
       <SpaceParticles slowMode={hoveredIndex !== null} />
       
