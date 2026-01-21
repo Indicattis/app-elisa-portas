@@ -89,7 +89,7 @@ export function SpaceParticles({ slowMode = false }: SpaceParticlesProps) {
     };
 
     const animate = () => {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+      ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       const speedMultiplier = slowModeRef.current ? 0.15 : 1;
