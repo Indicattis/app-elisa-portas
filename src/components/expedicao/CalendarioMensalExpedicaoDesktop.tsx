@@ -1,5 +1,5 @@
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { NeoInstalacao } from "@/types/neoInstalacao";
 import { DroppableDayExpedicao } from "./DroppableDayExpedicao";
 import { OrdemCarregamentoCard } from "./OrdemCarregamentoCard";
+import { NeoInstalacaoCard } from "./NeoInstalacaoCard";
 import { CalendarioLegendas } from "./CalendarioLegendas";
 import { toast } from "sonner";
 
@@ -17,6 +18,7 @@ interface CalendarioMensalExpedicaoDesktopProps {
   neoInstalacoes?: NeoInstalacao[];
   onMonthChange: (date: Date) => void;
   onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
+  onUpdateNeoInstalacao?: (params: { id: string; data: Partial<NeoInstalacao> }) => Promise<void>;
   onEdit?: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario?: (id: string) => void;
   onOrdemCriada?: () => void;
@@ -31,6 +33,7 @@ export const CalendarioMensalExpedicaoDesktop = ({
   neoInstalacoes = [],
   onMonthChange,
   onUpdateOrdem,
+  onUpdateNeoInstalacao,
   onEdit,
   onRemoverDoCalendario,
   onOrdemCriada,
@@ -39,6 +42,7 @@ export const CalendarioMensalExpedicaoDesktop = ({
   readOnly = false,
 }: CalendarioMensalExpedicaoDesktopProps) => {
   const [activeOrdem, setActiveOrdem] = useState<OrdemCarregamento | null>(null);
+  const [activeNeo, setActiveNeo] = useState<NeoInstalacao | null>(null);
 
   // Configurar sensores para mobile e desktop
   const mouseSensor = useSensor(MouseSensor);
@@ -52,8 +56,12 @@ export const CalendarioMensalExpedicaoDesktop = ({
 
   const handleDragStart = (event: DragStartEvent) => {
     const data = event.active.data.current;
-    if (data?.ordem) {
+    if (data?.type === 'neo_instalacao' && data?.neoInstalacao) {
+      setActiveNeo(data.neoInstalacao as NeoInstalacao);
+      setActiveOrdem(null);
+    } else if (data?.ordem) {
       setActiveOrdem(data.ordem);
+      setActiveNeo(null);
     }
   };
 
@@ -61,24 +69,52 @@ export const CalendarioMensalExpedicaoDesktop = ({
     const { active, over } = event;
     
     setActiveOrdem(null);
+    setActiveNeo(null);
 
     if (!over || active.id === over.id) return;
 
     const novaData = over.data.current?.date as Date;
     if (!novaData) return;
 
+    const dataFormatada = format(novaData, "yyyy-MM-dd");
+
     try {
-      const ordemId = active.id as string;
-      const dataFormatada = format(novaData, "yyyy-MM-dd");
+      const activeData = active.data.current;
       
-      await onUpdateOrdem({
-        id: ordemId,
-        data: {
-          data_carregamento: dataFormatada,
-          status: 'agendada',
-        },
-      });
-      toast.success("Data de carregamento atualizada");
+      // Verifica se é uma neo instalação
+      if (activeData?.type === 'neo_instalacao' && activeData?.neoInstalacao) {
+        const neo = activeData.neoInstalacao as NeoInstalacao;
+        
+        if (neo.data_instalacao) {
+          const dataAtual = new Date(neo.data_instalacao);
+          if (isSameDay(dataAtual, novaData)) return;
+        }
+
+        if (onUpdateNeoInstalacao) {
+          await onUpdateNeoInstalacao({
+            id: neo.id,
+            data: {
+              data_instalacao: dataFormatada,
+            },
+          });
+          toast.success("Data da instalação atualizada");
+        }
+        return;
+      }
+
+      // Se não for neo instalação, trata como ordem de carregamento
+      const ordemId = active.id as string;
+      
+      if (onUpdateOrdem) {
+        await onUpdateOrdem({
+          id: ordemId,
+          data: {
+            data_carregamento: dataFormatada,
+            status: 'agendada',
+          },
+        });
+        toast.success("Data de carregamento atualizada");
+      }
     } catch (error) {
       console.error("Erro:", error);
       toast.error("Erro ao atualizar data");
@@ -194,13 +230,15 @@ export const CalendarioMensalExpedicaoDesktop = ({
 
       {/* Overlay durante o arrasto */}
       <DragOverlay>
-        {activeOrdem && (
+        {activeOrdem ? (
           <div className="opacity-80">
-            <OrdemCarregamentoCard
-              ordem={activeOrdem}
-            />
+            <OrdemCarregamentoCard ordem={activeOrdem} />
           </div>
-        )}
+        ) : activeNeo ? (
+          <div className="opacity-80">
+            <NeoInstalacaoCard neoInstalacao={activeNeo} />
+          </div>
+        ) : null}
       </DragOverlay>
     </DndContext>
   );

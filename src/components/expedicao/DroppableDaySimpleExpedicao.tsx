@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { NeoInstalacao } from "@/types/neoInstalacao";
 import { DraggableOrdemCarregamento } from "./DraggableOrdemCarregamento";
-import { NeoInstalacaoCard } from "./NeoInstalacaoCard";
+import { DraggableNeoInstalacao } from "./DraggableNeoInstalacao";
 import { AdicionarOrdemCalendarioModal } from "./AdicionarOrdemCalendarioModal";
 import { Button } from "@/components/ui/button";
 
@@ -128,7 +128,11 @@ export const DroppableDaySimpleExpedicao = ({
             />
           ))}
           {neoNoDia.map((neo) => (
-            <NeoInstalacaoCard key={neo.id} neoInstalacao={neo} />
+            <DraggableNeoInstalacao
+              key={neo.id}
+              neoInstalacao={neo}
+              disableDrag={readOnly}
+            />
           ))}
         </div>
       </div>

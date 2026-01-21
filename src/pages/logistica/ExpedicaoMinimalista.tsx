@@ -37,7 +37,7 @@ export default function ExpedicaoMinimalista() {
   const [neoModalOpen, setNeoModalOpen] = useState(false);
 
   const { ordens, isLoading, updateOrdem } = useOrdensCarregamentoCalendario(currentDate, viewType);
-  const { neoInstalacoes, createNeoInstalacao, deleteNeoInstalacao } = useNeoInstalacoes(currentDate, viewType);
+  const { neoInstalacoes, createNeoInstalacao, updateNeoInstalacao, deleteNeoInstalacao } = useNeoInstalacoes(currentDate, viewType);
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -209,6 +209,9 @@ export default function ExpedicaoMinimalista() {
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
                       onUpdateOrdem={handleUpdateOrdem}
+                      onUpdateNeoInstalacao={async (params) => {
+                        await updateNeoInstalacao(params);
+                      }}
                       onEdit={handleEdit}
                       onRemoverDoCalendario={handleRemoverDoCalendario}
                       onOrdemCriada={handleOrdemCriada}
@@ -222,6 +225,9 @@ export default function ExpedicaoMinimalista() {
                       neoInstalacoes={neoInstalacoes || []}
                       onMonthChange={handleMonthChange}
                       onUpdateOrdem={handleUpdateOrdem}
+                      onUpdateNeoInstalacao={async (params) => {
+                        await updateNeoInstalacao(params);
+                      }}
                       onEdit={handleEdit}
                       onRemoverDoCalendario={handleRemoverDoCalendario}
                       onOrdemCriada={handleOrdemCriada}

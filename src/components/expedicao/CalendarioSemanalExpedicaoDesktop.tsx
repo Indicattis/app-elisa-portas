@@ -8,6 +8,7 @@ import { NeoInstalacao } from "@/types/neoInstalacao";
 import { Button } from "@/components/ui/button";
 import { DroppableDaySimpleExpedicao } from "./DroppableDaySimpleExpedicao";
 import { DraggableOrdemCarregamento } from "./DraggableOrdemCarregamento";
+import { DraggableNeoInstalacao } from "./DraggableNeoInstalacao";
 import { CalendarioLegendas } from "./CalendarioLegendas";
 import { toast } from "sonner";
 
@@ -19,6 +20,7 @@ interface CalendarioSemanalExpedicaoDesktopProps {
   onNextWeek: () => void;
   onToday: () => void;
   onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
+  onUpdateNeoInstalacao?: (params: { id: string; data: Partial<NeoInstalacao> }) => Promise<void>;
   onEdit?: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario?: (id: string) => void;
   onOrdemCriada?: () => void;
@@ -35,6 +37,7 @@ export const CalendarioSemanalExpedicaoDesktop = ({
   onNextWeek,
   onToday,
   onUpdateOrdem,
+  onUpdateNeoInstalacao,
   onEdit,
   onRemoverDoCalendario,
   onOrdemCriada,
@@ -43,6 +46,7 @@ export const CalendarioSemanalExpedicaoDesktop = ({
   readOnly = false,
 }: CalendarioSemanalExpedicaoDesktopProps) => {
   const [activeOrdem, setActiveOrdem] = useState<OrdemCarregamento | null>(null);
+  const [activeNeo, setActiveNeo] = useState<NeoInstalacao | null>(null);
 
   // Configurar sensores para mobile e desktop
   const mouseSensor = useSensor(MouseSensor);
@@ -61,8 +65,12 @@ export const CalendarioSemanalExpedicaoDesktop = ({
 
   const handleDragStart = (event: DragStartEvent) => {
     const data = event.active.data.current;
-    if (data?.ordem) {
+    if (data?.type === 'neo_instalacao' && data?.neoInstalacao) {
+      setActiveNeo(data.neoInstalacao as NeoInstalacao);
+      setActiveOrdem(null);
+    } else if (data?.ordem) {
       setActiveOrdem(data.ordem as OrdemCarregamento);
+      setActiveNeo(null);
     }
   };
 
@@ -70,13 +78,40 @@ export const CalendarioSemanalExpedicaoDesktop = ({
     const { active, over } = event;
     
     setActiveOrdem(null);
+    setActiveNeo(null);
 
     if (!over) return;
 
     const novaData = over.data.current?.date as Date;
     if (!novaData) return;
 
+    const dataFormatada = format(novaData, "yyyy-MM-dd");
+
     try {
+      const activeData = active.data.current;
+      
+      // Verifica se é uma neo instalação
+      if (activeData?.type === 'neo_instalacao' && activeData?.neoInstalacao) {
+        const neo = activeData.neoInstalacao as NeoInstalacao;
+        
+        if (neo.data_instalacao) {
+          const dataAtual = new Date(neo.data_instalacao);
+          if (isSameDay(dataAtual, novaData)) return;
+        }
+
+        if (onUpdateNeoInstalacao) {
+          await onUpdateNeoInstalacao({
+            id: neo.id,
+            data: {
+              data_instalacao: dataFormatada,
+            },
+          });
+          toast.success("Data da instalação atualizada");
+        }
+        return;
+      }
+
+      // Se não for neo instalação, trata como ordem de carregamento
       const ordemId = active.id as string;
       const ordem = ordens.find((o) => o.id === ordemId);
       if (!ordem) return;
@@ -86,16 +121,16 @@ export const CalendarioSemanalExpedicaoDesktop = ({
         if (isSameDay(dataAtual, novaData)) return;
       }
 
-      const dataFormatada = format(novaData, "yyyy-MM-dd");
-
-      await onUpdateOrdem({
-        id: ordemId,
-        data: {
-          data_carregamento: dataFormatada,
-          status: 'agendada',
-        },
-      });
-      toast.success("Data de carregamento atualizada");
+      if (onUpdateOrdem) {
+        await onUpdateOrdem({
+          id: ordemId,
+          data: {
+            data_carregamento: dataFormatada,
+            status: 'agendada',
+          },
+        });
+        toast.success("Data de carregamento atualizada");
+      }
     } catch (error) {
       console.error("Erro:", error);
       toast.error("Erro ao atualizar data");
@@ -182,9 +217,11 @@ export const CalendarioSemanalExpedicaoDesktop = ({
       <DragOverlay>
         {activeOrdem ? (
           <div className="opacity-80">
-            <DraggableOrdemCarregamento
-              ordem={activeOrdem}
-            />
+            <DraggableOrdemCarregamento ordem={activeOrdem} />
+          </div>
+        ) : activeNeo ? (
+          <div className="opacity-80">
+            <DraggableNeoInstalacao neoInstalacao={activeNeo} />
           </div>
         ) : null}
       </DragOverlay>
