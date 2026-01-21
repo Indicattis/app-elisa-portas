@@ -31,6 +31,7 @@ export function usePedidosContadores() {
   const { data: contadores = {} } = useQuery({
     queryKey: ['pedidos-contadores'],
     queryFn: async () => {
+      // Buscar pedidos
       const { data, error } = await supabase
         .from('pedidos_producao')
         .select('etapa_atual')
@@ -55,6 +56,16 @@ export function usePedidosContadores() {
           counts[etapa]++;
         }
       });
+
+      // Buscar neo_instalações não concluídas para adicionar ao contador de instalações
+      const { count: neoCount, error: neoError } = await supabase
+        .from('neo_instalacoes')
+        .select('*', { count: 'exact', head: true })
+        .eq('concluida', false);
+
+      if (!neoError && neoCount) {
+        counts.instalacoes += neoCount;
+      }
 
       return counts;
     },

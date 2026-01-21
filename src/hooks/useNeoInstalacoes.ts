@@ -1,0 +1,290 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { useEffect } from "react";
+import { NeoInstalacao, CriarNeoInstalacaoData } from "@/types/neoInstalacao";
+
+export const useNeoInstalacoes = (
+  currentDate: Date,
+  periodo: 'week' | 'month' = 'week'
+) => {
+  const queryClient = useQueryClient();
+
+  // Calcular intervalo de datas baseado no período
+  const getDateRange = () => {
+    if (periodo === 'week') {
+      return {
+        inicio: format(startOfWeek(currentDate, { weekStartsOn: 0 }), 'yyyy-MM-dd'),
+        fim: format(endOfWeek(currentDate, { weekStartsOn: 0 }), 'yyyy-MM-dd'),
+      };
+    } else {
+      return {
+        inicio: format(startOfMonth(currentDate), 'yyyy-MM-dd'),
+        fim: format(endOfMonth(currentDate), 'yyyy-MM-dd'),
+      };
+    }
+  };
+
+  const { inicio, fim } = getDateRange();
+
+  const { data: neoInstalacoes = [], isLoading } = useQuery({
+    queryKey: ["neo_instalacoes_calendario", inicio, fim],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("neo_instalacoes")
+        .select("*")
+        .gte("data_instalacao", inicio)
+        .lte("data_instalacao", fim)
+        .eq("concluida", false)
+        .order("data_instalacao", { ascending: true });
+
+      if (error) throw error;
+
+      // Buscar cores das equipes
+      const { data: equipes } = await supabase
+        .from("equipes_instalacao")
+        .select("id, nome, cor")
+        .eq("ativa", true);
+
+      const equipesMap = new Map(equipes?.map(e => [e.id, e]) || []);
+      
+      return (data || []).map(item => ({
+        ...item,
+        _tipo: 'neo_instalacao' as const,
+        equipe: item.equipe_id 
+          ? equipesMap.get(item.equipe_id) || null 
+          : null
+      })) as NeoInstalacao[];
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (dados: CriarNeoInstalacaoData) => {
+      const { data: user } = await supabase.auth.getUser();
+      
+      const { data, error } = await supabase
+        .from("neo_instalacoes")
+        .insert({
+          ...dados,
+          status: 'agendada',
+          created_by: user.user?.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_calendario"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_listagem"] });
+      toast.success("Neo instalação criada com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Erro ao criar neo instalação:", error);
+      toast.error("Erro ao criar neo instalação");
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<NeoInstalacao> }) => {
+      const { data: updated, error } = await supabase
+        .from("neo_instalacoes")
+        .update({
+          ...data,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return updated;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_calendario"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_listagem"] });
+    },
+    onError: (error) => {
+      console.error("Erro ao atualizar neo instalação:", error);
+      toast.error("Erro ao atualizar neo instalação");
+    },
+  });
+
+  const concluirMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { data: user } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from("neo_instalacoes")
+        .update({
+          concluida: true,
+          concluida_em: new Date().toISOString(),
+          concluida_por: user.user?.id,
+          status: 'concluida',
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_calendario"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_listagem"] });
+      toast.success("Neo instalação concluída com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Erro ao concluir neo instalação:", error);
+      toast.error("Erro ao concluir neo instalação");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("neo_instalacoes")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_calendario"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_listagem"] });
+      toast.success("Neo instalação excluída com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Erro ao deletar neo instalação:", error);
+      toast.error("Erro ao excluir neo instalação");
+    },
+  });
+
+  // Subscription em tempo real
+  useEffect(() => {
+    const channel = supabase
+      .channel('neo-instalacoes-calendar-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'neo_instalacoes'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_calendario", inicio, fim] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [inicio, fim, queryClient]);
+
+  return {
+    neoInstalacoes,
+    isLoading,
+    createNeoInstalacao: createMutation.mutateAsync,
+    updateNeoInstalacao: updateMutation.mutateAsync,
+    concluirNeoInstalacao: concluirMutation.mutateAsync,
+    deleteNeoInstalacao: deleteMutation.mutateAsync,
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isConcluindo: concluirMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+  };
+};
+
+// Hook para listagem geral (usado na gestão de fábrica)
+export const useNeoInstalacoesListagem = () => {
+  const queryClient = useQueryClient();
+
+  const { data: neoInstalacoes = [], isLoading } = useQuery({
+    queryKey: ["neo_instalacoes_listagem"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("neo_instalacoes")
+        .select("*")
+        .eq("concluida", false)
+        .order("data_instalacao", { ascending: true });
+
+      if (error) throw error;
+
+      // Buscar cores das equipes
+      const { data: equipes } = await supabase
+        .from("equipes_instalacao")
+        .select("id, nome, cor")
+        .eq("ativa", true);
+
+      const equipesMap = new Map(equipes?.map(e => [e.id, e]) || []);
+      
+      return (data || []).map(item => ({
+        ...item,
+        _tipo: 'neo_instalacao' as const,
+        equipe: item.equipe_id 
+          ? equipesMap.get(item.equipe_id) || null 
+          : null
+      })) as NeoInstalacao[];
+    },
+  });
+
+  const concluirMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { data: user } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from("neo_instalacoes")
+        .update({
+          concluida: true,
+          concluida_em: new Date().toISOString(),
+          concluida_por: user.user?.id,
+          status: 'concluida',
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_calendario"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_listagem"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos_contadores"] });
+      toast.success("Neo instalação concluída com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Erro ao concluir neo instalação:", error);
+      toast.error("Erro ao concluir neo instalação");
+    },
+  });
+
+  // Subscription em tempo real
+  useEffect(() => {
+    const channel = supabase
+      .channel('neo-instalacoes-listagem-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'neo_instalacoes'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_listagem"] });
+          queryClient.invalidateQueries({ queryKey: ["pedidos_contadores"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  return {
+    neoInstalacoes,
+    isLoading,
+    concluirNeoInstalacao: concluirMutation.mutateAsync,
+    isConcluindo: concluirMutation.isPending,
+  };
+};

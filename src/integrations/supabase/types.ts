@@ -2576,6 +2576,71 @@ export type Database = {
         }
         Relationships: []
       }
+      neo_instalacoes: {
+        Row: {
+          cidade: string
+          concluida: boolean
+          concluida_em: string | null
+          concluida_por: string | null
+          created_at: string
+          created_by: string | null
+          data_instalacao: string | null
+          descricao: string | null
+          equipe_id: string | null
+          equipe_nome: string | null
+          estado: string
+          hora: string | null
+          id: string
+          nome_cliente: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cidade: string
+          concluida?: boolean
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_instalacao?: string | null
+          descricao?: string | null
+          equipe_id?: string | null
+          equipe_nome?: string | null
+          estado: string
+          hora?: string | null
+          id?: string
+          nome_cliente: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cidade?: string
+          concluida?: boolean
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_instalacao?: string | null
+          descricao?: string | null
+          equipe_id?: string | null
+          equipe_nome?: string | null
+          estado?: string
+          hora?: string | null
+          id?: string
+          nome_cliente?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "neo_instalacoes_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes_instalacao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notas_fiscais: {
         Row: {
           aliquota_iss: number | null
