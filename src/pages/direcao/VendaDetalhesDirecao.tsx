@@ -191,7 +191,7 @@ export default function VendaDetalhesDirecao() {
       headerActions={
         isAdmin && (
           <Button 
-            onClick={() => navigate(`/dashboard/vendas/${id}/editar`)}
+            onClick={() => navigate(`/direcao/vendas/${id}/editar`)}
             size="sm"
             className="bg-primary/20 hover:bg-primary/30 border border-primary/30"
           >
