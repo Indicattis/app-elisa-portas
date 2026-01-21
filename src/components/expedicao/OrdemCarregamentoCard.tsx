@@ -24,41 +24,37 @@ export const OrdemCarregamentoCard = ({
   const tipoEntrega = ordem.venda?.tipo_entrega;
   const tipoCarregamento = ordem.tipo_carregamento;
 
-  // Nova lógica de cores
+  // Lógica de cores
   const getCardStyles = () => {
-    // Sem responsável definido - Amarelo
-    if (!tipoCarregamento) {
-      return {
-        backgroundColor: 'rgb(234 179 8 / 0.15)',
-        borderColor: 'rgb(234 179 8 / 0.5)',
-      };
-    }
-
-    // Entrega - Cinza
+    // Entrega - Verde
     if (tipoEntrega === 'entrega') {
       return {
-        backgroundColor: 'rgb(107 114 128 / 0.15)',
-        borderColor: 'rgb(107 114 128 / 0.5)',
+        backgroundColor: 'rgb(34 197 94 / 0.15)',
+        borderColor: 'rgb(34 197 94 / 0.5)',
       };
     }
 
-    // Instalação com Elisa - Vermelho
+    // Instalação com Elisa - Azul
     if (tipoCarregamento === 'elisa') {
-      return {
-        backgroundColor: 'rgb(239 68 68 / 0.15)',
-        borderColor: 'rgb(239 68 68 / 0.5)',
-      };
-    }
-
-    // Instalação com Autorizado - Azul
-    if (tipoCarregamento === 'autorizados') {
       return {
         backgroundColor: 'rgb(59 130 246 / 0.15)',
         borderColor: 'rgb(59 130 246 / 0.5)',
       };
     }
 
-    return {};
+    // Instalação com Autorizado - Amarelo
+    if (tipoCarregamento === 'autorizados') {
+      return {
+        backgroundColor: 'rgb(234 179 8 / 0.15)',
+        borderColor: 'rgb(234 179 8 / 0.5)',
+      };
+    }
+
+    // Fallback (não deve ocorrer com validação obrigatória)
+    return {
+      backgroundColor: 'rgb(107 114 128 / 0.15)',
+      borderColor: 'rgb(107 114 128 / 0.5)',
+    };
   };
 
   // Obter nome do responsável
