@@ -3,7 +3,12 @@ import { useFaturamentoMensal } from "@/hooks/useFaturamentoMensal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp } from "lucide-react";
 
-export function FaturamentoMensalGrid() {
+interface FaturamentoMensalGridProps {
+  onMonthClick?: (monthIndex: number) => void;
+  selectedMonth?: number | null;
+}
+
+export function FaturamentoMensalGrid({ onMonthClick, selectedMonth }: FaturamentoMensalGridProps) {
   const { data: faturamento, isLoading } = useFaturamentoMensal();
 
   const formatCurrency = (value: number) => {
@@ -30,9 +35,9 @@ export function FaturamentoMensalGrid() {
           <TrendingUp className="h-4 w-4 text-white/60" />
           <h3 className="text-sm font-medium text-white/60">Faturamento {new Date().getFullYear()}</h3>
         </div>
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {Array.from({ length: 12 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full bg-white/5" />
+            <Skeleton key={i} className="h-20 w-full bg-blue-500/10" />
           ))}
         </div>
       </div>
@@ -45,32 +50,29 @@ export function FaturamentoMensalGrid() {
         <TrendingUp className="h-4 w-4 text-white/60" />
         <h3 className="text-sm font-medium text-white/60">Faturamento {new Date().getFullYear()}</h3>
       </div>
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {faturamento?.map((mes, index) => {
           const isCurrentMonth = index === currentMonth;
-          const hasValue = mes.valor > 0;
+          const isSelected = selectedMonth === index;
           
           return (
             <Card 
               key={mes.mes} 
+              onClick={() => onMonthClick?.(index)}
               className={`
-                border transition-all
-                ${isCurrentMonth 
-                  ? 'bg-blue-500/20 border-blue-500/40' 
-                  : hasValue 
-                    ? 'bg-primary/5 border-primary/10' 
-                    : 'bg-primary/5 border-primary/10 opacity-50'
-                }
+                bg-blue-600/20 border-blue-500/30 cursor-pointer transition-all hover:bg-blue-500/30 hover:border-blue-400/50
+                ${isSelected ? 'ring-2 ring-blue-400 bg-blue-500/40' : ''}
+                ${isCurrentMonth && !isSelected ? 'border-blue-400/50' : ''}
               `}
             >
-              <CardContent className="p-2 text-center">
-                <p className={`text-[10px] uppercase font-medium ${isCurrentMonth ? 'text-blue-400' : 'text-white/40'}`}>
+              <CardContent className="p-3 text-center">
+                <p className={`text-xs uppercase font-medium ${isCurrentMonth ? 'text-blue-300' : 'text-blue-400/70'}`}>
                   {mes.mes}
                 </p>
-                <p className={`text-sm font-bold ${isCurrentMonth ? 'text-blue-300' : 'text-white'}`}>
+                <p className="text-lg font-bold text-white">
                   {formatCurrency(mes.valor)}
                 </p>
-                <p className="text-[9px] text-white/30">
+                <p className="text-[10px] text-blue-300/50">
                   {mes.numero_vendas} venda{mes.numero_vendas !== 1 ? 's' : ''}
                 </p>
               </CardContent>

@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import * as XLSX from 'xlsx';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, setMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
 import { supabase } from '@/integrations/supabase/client';
@@ -63,10 +63,31 @@ export default function VendasDirecao() {
   });
   const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
   const [atendentes, setAtendentes] = useState<any[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [sortConfig, setSortConfig] = useState<{
     column: string | null;
     direction: 'asc' | 'desc' | null;
   }>({ column: null, direction: null });
+
+  // Handler para clique no mês do grid
+  const handleMonthClick = useCallback((monthIndex: number) => {
+    const year = new Date().getFullYear();
+    const monthDate = setMonth(new Date(year, 0, 1), monthIndex);
+    const from = startOfMonth(monthDate);
+    const to = endOfMonth(monthDate);
+    
+    if (selectedMonth === monthIndex) {
+      // Se clicar no mesmo mês, reseta para o mês atual
+      setSelectedMonth(null);
+      setDateRange({
+        from: startOfMonth(new Date()),
+        to: endOfMonth(new Date())
+      });
+    } else {
+      setSelectedMonth(monthIndex);
+      setDateRange({ from, to });
+    }
+  }, [selectedMonth]);
 
   // Hook de configuração de colunas
   const {
@@ -370,7 +391,10 @@ export default function VendasDirecao() {
       headerActions={headerActions}
     >
       {/* Grid Faturamento Mensal */}
-      <FaturamentoMensalGrid />
+      <FaturamentoMensalGrid 
+        onMonthClick={handleMonthClick}
+        selectedMonth={selectedMonth}
+      />
 
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-3 gap-3 mb-6">
