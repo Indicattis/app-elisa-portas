@@ -322,7 +322,7 @@ export function PedidoCard({
         data: ordemCarregamento
       } = await supabase
         .from('ordens_carregamento')
-        .select('data_carregamento, carregamento_concluido')
+        .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento')
         .eq('pedido_id', pedido.id)
         .maybeSingle();
 
@@ -332,7 +332,9 @@ export function PedidoCard({
       return {
         concluido,
         temData,
-        dataCarregamento: ordemCarregamento?.data_carregamento || null
+        dataCarregamento: ordemCarregamento?.data_carregamento || null,
+        responsavelNome: ordemCarregamento?.responsavel_carregamento_nome || null,
+        tipoCarregamento: ordemCarregamento?.tipo_carregamento || null
       };
     },
     enabled: pedido.etapa_atual === 'aguardando_coleta' || pedido.etapa_atual === 'aguardando_instalacao'
@@ -958,7 +960,7 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: '24px 24px 1fr 24px 50px 50px 75px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}>
+            <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: '24px 24px 1fr 24px 50px 50px 95px 80px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}>
               {/* Col 1: Drag Handle */}
               <div>
                 {dragHandleProps ? (
@@ -1068,10 +1070,26 @@ export function PedidoCard({
                         </span>
                       );
                     }
+                    
+                    // Verificar se está atrasado (data no passado e não concluído)
+                    const dataCarreg = new Date(dataCarregamento);
+                    const hoje = new Date();
+                    hoje.setHours(0, 0, 0, 0);
+                    dataCarreg.setHours(0, 0, 0, 0);
+                    const atrasado = dataCarreg < hoje && !carregamentoConcluido;
+                    
                     return (
                       <div className="flex flex-col items-center leading-tight">
-                        <span className="text-[9px] font-medium text-green-600">Agendado</span>
-                        <span className="text-xs font-bold text-green-600">
+                        <span className={cn(
+                          "text-[9px] font-medium",
+                          atrasado ? "text-red-600" : "text-green-600"
+                        )}>
+                          {atrasado ? "Atrasado" : "Agendado"}
+                        </span>
+                        <span className={cn(
+                          "text-xs font-bold",
+                          atrasado ? "text-red-600" : "text-green-600"
+                        )}>
                           {format(new Date(dataCarregamento), "dd/MM/yy")}
                         </span>
                       </div>
@@ -1088,6 +1106,40 @@ export function PedidoCard({
                   }
                   
                   return <span className="text-[9px] text-muted-foreground/50">—</span>;
+                })()}
+              </div>
+              
+              {/* Col 7: Responsável Carregamento */}
+              <div className="text-center overflow-hidden">
+                {(() => {
+                  const responsavelNome = carregamentoCompleto?.responsavelNome;
+                  const tipoCarregamento = carregamentoCompleto?.tipoCarregamento;
+                  
+                  if (!responsavelNome) {
+                    return <span className="text-[9px] text-muted-foreground/50">—</span>;
+                  }
+                  
+                  // Definir cor baseado no tipo
+                  const corClasse = tipoCarregamento === 'elisa' 
+                    ? 'text-blue-600' 
+                    : tipoCarregamento === 'autorizados' 
+                      ? 'text-amber-600' 
+                      : 'text-green-600';
+                  
+                  return (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className={cn("text-[10px] font-medium truncate block cursor-help", corClasse)}>
+                          {responsavelNome.length > 10 
+                            ? `${responsavelNome.substring(0, 10)}...` 
+                            : responsavelNome}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">{responsavelNome}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
                 })()}
               </div>
               
