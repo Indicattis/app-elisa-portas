@@ -432,7 +432,8 @@ export function PedidoCard({
     const area = largura * altura; // área em m²
     const quantidade = p.quantidade || 1;
     const tamanhoCategoria = area > 25 ? 'G' : 'P';
-    const peso = p.peso_total || p.peso_porta || p.peso || null;
+    // Calcular peso da porta: (((largura * altura * 12) * 2) * 0.3)
+    const peso = largura > 0 && altura > 0 ? (((largura * altura * 12) * 2) * 0.3) : null;
     
     for (let i = 0; i < quantidade; i++) {
       listaPortasInfo.push({ tamanho: tamanhoCategoria, largura, altura, area, peso });
