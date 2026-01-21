@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Package, Boxes, Factory } from "lucide-react";
+import { Package, Boxes, Factory } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
+import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 
 const menuItems = [
   { label: 'Pedidos em Produção', icon: Package, path: '/fabrica/pedidos-producao' },
@@ -20,22 +21,17 @@ export default function FabricaHub() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
+      {/* Breadcrumb */}
+      <AnimatedBreadcrumb 
+        items={[
+          { label: "Home", path: "/home" },
+          { label: "Fábrica" }
+        ]} 
+        mounted={mounted} 
+      />
+
       {/* Partículas espaciais de fundo */}
       <SpaceParticles />
-      
-      {/* Botão de voltar */}
-      <button
-        onClick={() => navigate('/home')}
-        className="absolute top-6 left-6 z-20 p-3 rounded-lg bg-primary/5 hover:bg-primary/10 
-                   border border-primary/10 transition-all duration-300"
-        style={{
-          opacity: mounted ? 1 : 0,
-          transform: mounted ? 'translateX(0)' : 'translateX(-20px)',
-          transition: 'all 0.5s ease 100ms'
-        }}
-      >
-        <ArrowLeft className="w-5 h-5 text-white/80" />
-      </button>
 
       {/* ========== VERSÃO MOBILE ========== */}
       <div className="md:hidden relative z-10 flex flex-col items-center justify-center px-6 py-10 w-full max-w-md">
