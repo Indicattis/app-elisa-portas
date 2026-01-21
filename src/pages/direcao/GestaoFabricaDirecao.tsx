@@ -2,7 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat } from "lucide-react";
 import { CriarPedidoTesteModal } from "@/components/pedidos/CriarPedidoTesteModal";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
@@ -24,6 +24,7 @@ const ETAPA_ICONS = {
   aguardando_pintura: Paintbrush,
   aguardando_coleta: Package,
   aguardando_instalacao: Wrench,
+  instalacoes: HardHat,
   finalizado: CheckCircle2
 };
 
