@@ -9,11 +9,12 @@ interface DroppableDayExpedicaoProps {
   currentMonth: Date;
   ordens: OrdemCarregamento[];
   onDayClick: (date: Date) => void;
-  onEdit: (ordem: OrdemCarregamento) => void;
-  onRemoverDoCalendario: (id: string) => void;
+  onEdit?: (ordem: OrdemCarregamento) => void;
+  onRemoverDoCalendario?: (id: string) => void;
   onOrdemDropped?: () => void;
-  onUpdateOrdem: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
+  onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
+  readOnly?: boolean;
 }
 
 export const DroppableDayExpedicao = ({
@@ -26,6 +27,7 @@ export const DroppableDayExpedicao = ({
   onOrdemDropped,
   onUpdateOrdem,
   onOrdemClick,
+  readOnly = false,
 }: DroppableDayExpedicaoProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id: format(date, "yyyy-MM-dd"),
@@ -45,56 +47,55 @@ export const DroppableDayExpedicao = ({
   });
 
   return (
-    <>
-      <div
-        ref={setNodeRef}
-        className={`min-h-[120px] p-2 border-r border-b transition-colors ${
-          isOver
-            ? "bg-primary/10"
-            : isToday
-            ? "bg-primary/5 border-primary/30"
-            : !isCurrentMonth
-            ? "bg-muted/30 opacity-50"
-            : isWeekendDay
-            ? "bg-muted/20"
-            : "bg-background"
-        }`}
-      >
-        <div className="flex items-start justify-between mb-2">
-          <span
-            className={`text-sm font-medium ${
-              isToday
-                ? "text-primary font-bold"
-                : !isCurrentMonth
-                ? "text-muted-foreground"
-                : "text-foreground"
-            }`}
-          >
-            {format(date, "d")}
-          </span>
-          {isCurrentMonth && (
-            <AddOrdemPopover
-              date={date}
-              onUpdateOrdem={onUpdateOrdem}
-              onOrdemAdded={onOrdemDropped}
-              size="icon"
-              className="h-5 w-5"
-            />
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          {ordensNoDia.map((ordem) => (
-            <DraggableOrdemCarregamento
-              key={ordem.id}
-              ordem={ordem}
-              onClick={onOrdemClick}
-              onEdit={onEdit}
-              onRemoverDoCalendario={onRemoverDoCalendario}
-            />
-          ))}
-        </div>
+    <div
+      ref={setNodeRef}
+      className={`min-h-[120px] p-2 border-r border-b transition-colors ${
+        isOver
+          ? "bg-primary/10"
+          : isToday
+          ? "bg-primary/5 border-primary/30"
+          : !isCurrentMonth
+          ? "bg-muted/30 opacity-50"
+          : isWeekendDay
+          ? "bg-muted/20"
+          : "bg-background"
+      }`}
+    >
+      <div className="flex items-start justify-between mb-2">
+        <span
+          className={`text-sm font-medium ${
+            isToday
+              ? "text-primary font-bold"
+              : !isCurrentMonth
+              ? "text-muted-foreground"
+              : "text-foreground"
+          }`}
+        >
+          {format(date, "d")}
+        </span>
+        {isCurrentMonth && !readOnly && onUpdateOrdem && (
+          <AddOrdemPopover
+            date={date}
+            onUpdateOrdem={onUpdateOrdem}
+            onOrdemAdded={onOrdemDropped}
+            size="icon"
+            className="h-5 w-5"
+          />
+        )}
       </div>
-    </>
+
+      <div className="space-y-1.5">
+        {ordensNoDia.map((ordem) => (
+          <DraggableOrdemCarregamento
+            key={ordem.id}
+            ordem={ordem}
+            onClick={onOrdemClick}
+            onEdit={readOnly ? undefined : onEdit}
+            onRemoverDoCalendario={readOnly ? undefined : onRemoverDoCalendario}
+            disableDrag={readOnly}
+          />
+        ))}
+      </div>
+    </div>
   );
 };

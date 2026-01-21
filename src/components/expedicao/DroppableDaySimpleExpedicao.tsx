@@ -9,11 +9,12 @@ interface DroppableDaySimpleExpedicaoProps {
   date: Date;
   ordens: OrdemCarregamento[];
   onDayClick: (date: Date) => void;
-  onEdit: (ordem: OrdemCarregamento) => void;
-  onRemoverDoCalendario: (id: string) => void;
+  onEdit?: (ordem: OrdemCarregamento) => void;
+  onRemoverDoCalendario?: (id: string) => void;
   onOrdemDropped?: () => void;
-  onUpdateOrdem: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
+  onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
+  readOnly?: boolean;
 }
 
 export const DroppableDaySimpleExpedicao = ({
@@ -25,6 +26,7 @@ export const DroppableDaySimpleExpedicao = ({
   onOrdemDropped,
   onUpdateOrdem,
   onOrdemClick,
+  readOnly = false,
 }: DroppableDaySimpleExpedicaoProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id: format(date, "yyyy-MM-dd"),
@@ -44,25 +46,25 @@ export const DroppableDaySimpleExpedicao = ({
   });
 
   return (
-    <>
-      <div
-        ref={setNodeRef}
-        className={`min-h-[200px] p-3 border rounded-lg transition-colors ${
-          isOver
-            ? "border-primary bg-primary/10"
-            : isToday
-            ? "border-primary/50 bg-primary/5"
-            : isWeekendDay
-            ? "bg-muted/20"
-            : "bg-background"
-        }`}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="text-center">
-            <p className={`text-xs font-medium ${isToday ? "text-primary" : "text-muted-foreground"}`}>
-              {format(date, "EEE", { locale: ptBR })}
-            </p>
-          </div>
+    <div
+      ref={setNodeRef}
+      className={`min-h-[200px] p-3 border rounded-lg transition-colors ${
+        isOver
+          ? "border-primary bg-primary/10"
+          : isToday
+          ? "border-primary/50 bg-primary/5"
+          : isWeekendDay
+          ? "bg-muted/20"
+          : "bg-background"
+      }`}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-center">
+          <p className={`text-xs font-medium ${isToday ? "text-primary" : "text-muted-foreground"}`}>
+            {format(date, "EEE", { locale: ptBR })}
+          </p>
+        </div>
+        {!readOnly && onUpdateOrdem && (
           <AddOrdemPopover
             date={date}
             onUpdateOrdem={onUpdateOrdem}
@@ -70,20 +72,21 @@ export const DroppableDaySimpleExpedicao = ({
             size="icon"
             className="h-6 w-6"
           />
-        </div>
-
-        <div className="space-y-2">
-          {ordensNoDia.map((ordem) => (
-            <DraggableOrdemCarregamento
-              key={ordem.id}
-              ordem={ordem}
-              onClick={onOrdemClick}
-              onEdit={onEdit}
-              onRemoverDoCalendario={onRemoverDoCalendario}
-            />
-          ))}
-        </div>
+        )}
       </div>
-    </>
+
+      <div className="space-y-2">
+        {ordensNoDia.map((ordem) => (
+          <DraggableOrdemCarregamento
+            key={ordem.id}
+            ordem={ordem}
+            onClick={onOrdemClick}
+            onEdit={readOnly ? undefined : onEdit}
+            onRemoverDoCalendario={readOnly ? undefined : onRemoverDoCalendario}
+            disableDrag={readOnly}
+          />
+        ))}
+      </div>
+    </div>
   );
 };

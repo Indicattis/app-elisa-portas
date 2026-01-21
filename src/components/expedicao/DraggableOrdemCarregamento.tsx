@@ -8,6 +8,7 @@ interface DraggableOrdemCarregamentoProps {
   onClick?: (ordem: OrdemCarregamento) => void;
   onEdit?: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario?: (id: string) => void;
+  disableDrag?: boolean;
 }
 
 export const DraggableOrdemCarregamento = ({
@@ -15,18 +16,20 @@ export const DraggableOrdemCarregamento = ({
   onClick,
   onEdit,
   onRemoverDoCalendario,
+  disableDrag = false,
 }: DraggableOrdemCarregamentoProps) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: ordem.id,
     data: {
       ordem,
     },
+    disabled: disableDrag,
   });
 
   const style = {
     transform: CSS.Translate.toString(transform),
     opacity: isDragging ? 0.5 : 1,
-    cursor: isDragging ? "grabbing" : "grab",
+    cursor: disableDrag ? "pointer" : isDragging ? "grabbing" : "grab",
   };
 
   return (
@@ -36,7 +39,7 @@ export const DraggableOrdemCarregamento = ({
         onClick={onClick}
         onEdit={onEdit}
         onRemoverDoCalendario={onRemoverDoCalendario}
-        dragListeners={listeners}
+        dragListeners={disableDrag ? undefined : listeners}
       />
     </div>
   );
