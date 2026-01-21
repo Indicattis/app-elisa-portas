@@ -960,7 +960,7 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: '24px 24px 1fr 24px 50px 50px 95px 80px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}>
+            <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: '24px 24px 1fr 70px 24px 50px 50px 95px 80px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}>
               {/* Col 1: Drag Handle */}
               <div>
                 {dragHandleProps ? (
@@ -1010,6 +1010,30 @@ export function PedidoCard({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{venda?.cliente_nome}</p>
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Col 4: Cidade/Estado */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center text-center">
+                    {pedido.endereco_cidade || pedido.endereco_estado ? (
+                      <span className="text-[10px] text-muted-foreground truncate">
+                        {pedido.endereco_cidade && pedido.endereco_estado 
+                          ? `${pedido.endereco_cidade}/${pedido.endereco_estado}`
+                          : pedido.endereco_cidade || pedido.endereco_estado}
+                      </span>
+                    ) : (
+                      <span className="text-[9px] text-muted-foreground/50">—</span>
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">
+                    {pedido.endereco_cidade && pedido.endereco_estado
+                      ? `${pedido.endereco_cidade}, ${pedido.endereco_estado}`
+                      : pedido.endereco_cidade || pedido.endereco_estado || 'Localização não informada'}
+                  </p>
                 </TooltipContent>
               </Tooltip>
 
