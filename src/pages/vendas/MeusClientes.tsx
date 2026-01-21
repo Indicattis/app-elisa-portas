@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { Plus, Search, Users, Phone, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,11 +8,13 @@ import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { NovoClienteMinimalistaModal } from '@/components/clientes/NovoClienteMinimalistaModal';
 
 export default function MeusClientes() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [busca, setBusca] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
 
   const { data: clientes, isLoading } = useQuery({
     queryKey: ['meus-clientes', user?.id],
@@ -60,7 +60,7 @@ export default function MeusClientes() {
       ]}
       headerActions={
         <Button 
-          onClick={() => navigate('/dashboard/clientes')}
+          onClick={() => setModalOpen(true)}
           className="bg-blue-600 hover:bg-blue-700"
           size="sm"
         >
@@ -135,7 +135,7 @@ export default function MeusClientes() {
               {busca ? 'Nenhum cliente encontrado' : 'Você ainda não tem clientes'}
             </p>
             <Button 
-              onClick={() => navigate('/dashboard/clientes')}
+              onClick={() => setModalOpen(true)}
               variant="outline"
               className="mt-4 border-white/20 text-white hover:bg-white/10"
             >
@@ -145,6 +145,12 @@ export default function MeusClientes() {
           </div>
         )}
       </div>
+
+      {/* Modal de novo cliente */}
+      <NovoClienteMinimalistaModal 
+        open={modalOpen} 
+        onOpenChange={setModalOpen}
+      />
     </MinimalistLayout>
   );
 }
