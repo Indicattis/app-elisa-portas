@@ -318,15 +318,12 @@ export default function VendasDirecao() {
         return <span className="text-white/60">{venda.estado}</span>;
       case 'vendedor':
         return (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={venda.atendente?.foto_perfil_url} />
-              <AvatarFallback className="text-[10px] bg-blue-500/20 text-blue-400">
-                {venda.atendente?.nome?.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-white/80 text-sm">{venda.atendente?.nome}</span>
-          </div>
+          <Avatar className="h-7 w-7">
+            <AvatarImage src={venda.atendente?.foto_perfil_url} />
+            <AvatarFallback className="text-[10px] bg-blue-500/20 text-blue-400">
+              {venda.atendente?.nome?.substring(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
         );
       case 'produtos':
         return <ProductIconsSummary venda={venda} />;
@@ -427,34 +424,23 @@ export default function VendasDirecao() {
   };
 
   const headerActions = (
-    <div className="flex gap-2">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white">
-            <Download className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10">
-          <DropdownMenuItem onClick={handleExportarPDF} className="text-white hover:bg-white/10">
-            <FileText className="h-4 w-4 mr-2" />
-            Exportar PDF
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleExportarExcel} className="text-white hover:bg-white/10">
-            <FileSpreadsheet className="h-4 w-4 mr-2" />
-            Exportar Excel
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <div className="p-1 rounded-lg bg-white/5 border border-white/10">
-        <Button 
-          onClick={() => navigate('/dashboard/vendas/nova')} 
-          size="sm"
-          className="bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 border-0 shadow-lg shadow-blue-500/20"
-        >
-          <Plus className="h-4 w-4" />
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white">
+          <Download className="h-4 w-4" />
         </Button>
-      </div>
-    </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10">
+        <DropdownMenuItem onClick={handleExportarPDF} className="text-white hover:bg-white/10">
+          <FileText className="h-4 w-4 mr-2" />
+          Exportar PDF
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleExportarExcel} className="text-white hover:bg-white/10">
+          <FileSpreadsheet className="h-4 w-4 mr-2" />
+          Exportar Excel
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 
   if (isLoading) {
