@@ -5,7 +5,8 @@ import { SpaceParticles } from "@/components/SpaceParticles";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useOrdensMinhaEquipe } from "@/hooks/useOrdensMinhaEquipe";
+import { useInstalacoesMinhaEquipeCalendario } from "@/hooks/useInstalacoesMinhaEquipeCalendario";
+import { useNeoInstalacoesMinhaEquipe } from "@/hooks/useNeoInstalacoesMinhaEquipe";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
 import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
@@ -15,6 +16,7 @@ import { format, addDays, startOfWeek, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { useAuth } from "@/hooks/useAuth";
+import { InstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 
 export default function CronogramaMinimalista() {
   const navigate = useNavigate();
@@ -23,16 +25,65 @@ export default function CronogramaMinimalista() {
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<'week' | 'month'>('week');
-  const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
+  const [selectedItem, setSelectedItem] = useState<OrdemCarregamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
+  // Hook para instalações da equipe (da tabela instalacoes)
   const { 
-    ordens, 
-    isLoading, 
+    instalacoes,
+    isLoading: isLoadingInstalacoes, 
     equipeNome,
     equipeCor,
     temEquipe 
-  } = useOrdensMinhaEquipe(currentDate, viewType);
+  } = useInstalacoesMinhaEquipeCalendario(currentDate, viewType);
+
+  // Hook para neo instalações da equipe
+  const { 
+    neoInstalacoes,
+    isLoading: isLoadingNeo 
+  } = useNeoInstalacoesMinhaEquipe(currentDate, viewType);
+
+  const isLoading = isLoadingInstalacoes || isLoadingNeo;
+
+  // Converter instalações para formato de OrdemCarregamento para compatibilidade com calendário
+  const ordensFromInstalacoes: OrdemCarregamento[] = instalacoes.map(inst => ({
+    id: inst.id,
+    pedido_id: null,
+    venda_id: inst.venda_id || null,
+    nome_cliente: inst.nome_cliente || inst.venda?.cliente_nome || 'Cliente',
+    data_carregamento: inst.data_instalacao || null,
+    hora_carregamento: inst.hora || null,
+    hora: inst.hora || null,
+    tipo_carregamento: null,
+    status: inst.status || 'pendente',
+    observacoes: inst.observacoes || null,
+    responsavel_carregamento_id: null,
+    responsavel_carregamento_nome: null,
+    latitude: null,
+    longitude: null,
+    geocode_precision: null,
+    last_geocoded_at: null,
+    carregamento_concluido: false,
+    carregamento_concluido_em: null,
+    carregamento_concluido_por: null,
+    created_at: null,
+    updated_at: null,
+    created_by: null,
+    venda: inst.venda ? {
+      id: inst.venda.id,
+      cliente_nome: inst.venda.cliente_nome,
+      cliente_telefone: inst.venda.cliente_telefone || null,
+      cliente_email: inst.venda.cliente_email || null,
+      estado: inst.venda.estado || null,
+      cidade: inst.venda.cidade || null,
+      cep: inst.venda.cep || null,
+      bairro: inst.venda.bairro || null,
+      data_prevista_entrega: null,
+      tipo_entrega: null,
+    } : undefined,
+    _corEquipe: inst._corEquipe,
+    _isInstalacao: true
+  } as OrdemCarregamento));
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -48,7 +99,7 @@ export default function CronogramaMinimalista() {
   };
 
   const handleOrdemClick = (ordem: OrdemCarregamento) => {
-    setSelectedOrdem(ordem);
+    setSelectedItem(ordem);
     setDetailsOpen(true);
   };
 
@@ -215,7 +266,8 @@ export default function CronogramaMinimalista() {
                   {isMobile ? (
                     <CalendarioSemanalExpedicaoMobile
                       startDate={weekStart}
-                      ordens={ordens || []}
+                      ordens={ordensFromInstalacoes}
+                      neoInstalacoes={neoInstalacoes}
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
@@ -225,7 +277,8 @@ export default function CronogramaMinimalista() {
                   ) : viewType === 'week' ? (
                     <CalendarioSemanalExpedicaoDesktop
                       startDate={weekStart}
-                      ordens={ordens || []}
+                      ordens={ordensFromInstalacoes}
+                      neoInstalacoes={neoInstalacoes}
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
@@ -235,7 +288,8 @@ export default function CronogramaMinimalista() {
                   ) : (
                     <CalendarioMensalExpedicaoDesktop
                       currentMonth={currentDate}
-                      ordens={ordens || []}
+                      ordens={ordensFromInstalacoes}
+                      neoInstalacoes={neoInstalacoes}
                       onMonthChange={handleMonthChange}
                       onOrdemClick={handleOrdemClick}
                       readOnly
@@ -250,7 +304,7 @@ export default function CronogramaMinimalista() {
 
       {/* Detalhes da Ordem (somente visualização) */}
       <OrdemCarregamentoDetails
-        ordem={selectedOrdem}
+        ordem={selectedItem}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
       />
