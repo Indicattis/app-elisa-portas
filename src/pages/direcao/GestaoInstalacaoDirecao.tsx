@@ -9,7 +9,7 @@ const menuItems = [
     title: "Calendário Expedição",
     description: "Agendamento de carregamentos",
     icon: Truck,
-    path: "/hub-fabrica/instalacoes/agendamento",
+    path: "/direcao/calendario-expedicao",
   },
   {
     title: "Cronograma",
