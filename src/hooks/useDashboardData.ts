@@ -27,7 +27,7 @@ export const useSalesData = () => {
 
       const { data, error } = await supabase
         .from('vendas')
-        .select('data_venda, valor_venda, valor_frete')
+        .select('data_venda, valor_venda, valor_frete, valor_credito')
         .gte('data_venda', primeiroDiaDoMes.toISOString())
         .lte('data_venda', ultimoDiaDoMes.toISOString());
 
@@ -36,15 +36,15 @@ export const useSalesData = () => {
         throw error;
       }
 
-      // Agrupar por data e somar valores (excluindo frete)
+      // Agrupar por data e somar valores (valor_venda - frete + crédito/acréscimo)
       const vendasPorDia = (data || []).reduce((acc: { [key: string]: { valor: number; numero_vendas: number } }, venda: any) => {
         const dataKey = venda.data_venda.split('T')[0];
         if (!acc[dataKey]) {
           acc[dataKey] = { valor: 0, numero_vendas: 0 };
         }
-        // Valor sem frete
-        const valorSemFrete = Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0);
-        acc[dataKey].valor += valorSemFrete;
+        // Valor = valor_venda - frete + crédito/acréscimo
+        const valorCalculado = Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0) + Number(venda.valor_credito || 0);
+        acc[dataKey].valor += valorCalculado;
         acc[dataKey].numero_vendas += 1;
         return acc;
       }, {});
@@ -74,6 +74,7 @@ export const useSellersRanking = () => {
         .select(`
           valor_venda,
           valor_frete,
+          valor_credito,
           atendente_id,
           admin_users!inner(nome, foto_perfil_url)
         `)
@@ -85,7 +86,7 @@ export const useSellersRanking = () => {
         throw error;
       }
 
-      // Agrupar por atendente e somar valores (excluindo frete)
+      // Agrupar por atendente e somar valores (valor_venda - frete + crédito/acréscimo)
       const vendasPorAtendente = (data || []).reduce((acc: { [key: string]: any }, venda: any) => {
         const atendenteId = venda.atendente_id;
         if (!acc[atendenteId]) {
@@ -96,9 +97,9 @@ export const useSellersRanking = () => {
             numero_vendas: 0
           };
         }
-        // Valor sem frete
-        const valorSemFrete = Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0);
-        acc[atendenteId].total_vendas += valorSemFrete;
+        // Valor = valor_venda - frete + crédito/acréscimo
+        const valorCalculado = Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0) + Number(venda.valor_credito || 0);
+        acc[atendenteId].total_vendas += valorCalculado;
         acc[atendenteId].numero_vendas += 1;
         return acc;
       }, {});
