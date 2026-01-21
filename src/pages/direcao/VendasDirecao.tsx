@@ -430,7 +430,7 @@ export default function VendasDirecao() {
     <div className="flex gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+          <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white">
             <Download className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -445,13 +445,15 @@ export default function VendasDirecao() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Button 
-        onClick={() => navigate('/dashboard/vendas/nova')} 
-        size="sm"
-        className="bg-blue-600 hover:bg-blue-500"
-      >
-        <Plus className="h-4 w-4" />
-      </Button>
+      <div className="p-1 rounded-lg bg-white/5 border border-white/10">
+        <Button 
+          onClick={() => navigate('/dashboard/vendas/nova')} 
+          size="sm"
+          className="bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 border-0 shadow-lg shadow-blue-500/20"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 
@@ -493,33 +495,39 @@ export default function VendasDirecao() {
 
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-          <CardContent className="p-3 flex items-center justify-between">
+        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+          <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-700/10 flex items-center justify-between">
             <div>
               <p className="text-[10px] sm:text-xs text-white/60">Vendas</p>
               <p className="text-xl sm:text-2xl font-bold text-white">{stats.totalVendas}</p>
             </div>
-            <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-white/40" />
-          </CardContent>
-        </Card>
-        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-          <CardContent className="p-3 flex items-center justify-between">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
+            </div>
+          </div>
+        </div>
+        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+          <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-700/10 flex items-center justify-between">
             <div>
               <p className="text-[10px] sm:text-xs text-white/60">Valor</p>
               <p className="text-base sm:text-xl font-bold text-white">{formatCurrency(stats.totalValor)}</p>
             </div>
-            <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-white/40" />
-          </CardContent>
-        </Card>
-        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-          <CardContent className="p-3 flex items-center justify-between">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
+            </div>
+          </div>
+        </div>
+        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+          <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-700/10 flex items-center justify-between">
             <div>
-              <p className="text-[10px] sm:text-xs text-white/60">Portas de Enrolar</p>
+              <p className="text-[10px] sm:text-xs text-white/60">Portas</p>
               <p className="text-xl sm:text-2xl font-bold text-white">{stats.totalPortasEnrolar}</p>
             </div>
-            <Package className="h-4 w-4 sm:h-5 sm:w-5 text-white/40" />
-          </CardContent>
-        </Card>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <Package className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -530,13 +538,13 @@ export default function VendasDirecao() {
             placeholder="Buscar cliente, telefone, cidade..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 bg-primary/5 border-primary/10 text-white placeholder:text-white/40"
+            className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-blue-500/50"
           />
         </div>
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="bg-primary/5 border-primary/10 text-white hover:bg-primary/10">
+            <Button variant="outline" className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white">
               <CalendarIcon className="mr-2 h-4 w-4" />
               {dateRange?.from ? (
                 dateRange.to ? (
@@ -551,7 +559,7 @@ export default function VendasDirecao() {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 bg-zinc-900 border-primary/10" align="end">
+          <PopoverContent className="w-auto p-0 bg-zinc-900 border-white/10" align="end">
             <Calendar
               initialFocus
               mode="range"
@@ -566,10 +574,10 @@ export default function VendasDirecao() {
         </Popover>
 
         <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
-          <SelectTrigger className="w-[180px] bg-primary/5 border-primary/10 text-white">
+          <SelectTrigger className="w-[180px] bg-white/5 border-white/10 text-white/70 hover:bg-white/10">
             <SelectValue placeholder="Vendedor" />
           </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-primary/10">
+          <SelectContent className="bg-zinc-900 border-white/10">
             <SelectItem value="todos" className="text-white">Todos</SelectItem>
             {atendentes.map(atendente => (
               <SelectItem key={atendente.user_id} value={atendente.user_id} className="text-white">
@@ -590,57 +598,59 @@ export default function VendasDirecao() {
       </div>
 
       {/* Tabela */}
-      <div className="bg-primary/5 border border-primary/10 rounded-xl overflow-hidden backdrop-blur-xl">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-primary/10 hover:bg-transparent">
-              {visibleColumns.map(column => (
-                <TableHead 
-                  key={column.id}
-                  className={`text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
-                  onClick={() => handleSort(column.id)}
-                >
-                  <div className={`flex items-center gap-1 ${column.id === 'valor' ? 'justify-end' : ''}`}>
-                    {column.label}
-                    {sortConfig.column === column.id ? (
-                      sortConfig.direction === 'asc' 
-                        ? <ArrowUp className="h-3 w-3 text-blue-400" />
-                        : <ArrowDown className="h-3 w-3 text-blue-400" />
-                    ) : (
-                      <ArrowUpDown className="h-3 w-3 opacity-30" />
-                    )}
-                  </div>
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedVendas.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-white/40">
-                  Nenhuma venda encontrada
-                </TableCell>
+      <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+        <div className="rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-white/10 hover:bg-transparent">
+                {visibleColumns.map(column => (
+                  <TableHead 
+                    key={column.id}
+                    className={`text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
+                    onClick={() => handleSort(column.id)}
+                  >
+                    <div className={`flex items-center gap-1 ${column.id === 'valor' || column.id === 'frete' || column.id === 'instalacao' || column.id === 'desconto' || column.id === 'acrescimo' ? 'justify-end' : column.id === 'faturada' ? 'justify-center' : ''}`}>
+                      {column.label}
+                      {sortConfig.column === column.id ? (
+                        sortConfig.direction === 'asc' 
+                          ? <ArrowUp className="h-3 w-3 text-blue-400" />
+                          : <ArrowDown className="h-3 w-3 text-blue-400" />
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-30" />
+                      )}
+                    </div>
+                  </TableHead>
+                ))}
               </TableRow>
-            ) : (
-              sortedVendas.map((venda) => (
-                <TableRow 
-                  key={venda.id} 
-                  className="border-primary/10 hover:bg-primary/5 cursor-pointer"
-                  onClick={() => navigate(`/direcao/vendas/${venda.id}`)}
-                >
-                  {visibleColumns.map(column => (
-                    <TableCell 
-                      key={column.id}
-                      className={`${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
-                    >
-                      {renderCell(venda, column.id)}
-                    </TableCell>
-                  ))}
+            </TableHeader>
+            <TableBody>
+              {sortedVendas.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-white/40">
+                    Nenhuma venda encontrada
+                  </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                sortedVendas.map((venda) => (
+                  <TableRow 
+                    key={venda.id} 
+                    className="border-white/5 hover:bg-white/5 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/direcao/vendas/${venda.id}`)}
+                  >
+                    {visibleColumns.map(column => (
+                      <TableCell 
+                        key={column.id}
+                        className={`${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
+                      >
+                        {renderCell(venda, column.id)}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </MinimalistLayout>
   );
