@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { SpaceParticles } from '@/components/SpaceParticles';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
+import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 
 const menuItems = [
   { label: 'Minhas Vendas', icon: ShoppingCart, path: '/vendas/minhas-vendas' },
@@ -38,6 +39,9 @@ export default function VendasHub() {
         ]} 
         mounted={mounted} 
       />
+
+      {/* Menu de Perfil Flutuante */}
+      <FloatingProfileMenu mounted={mounted} />
 
       {/* Botão Voltar */}
       <button

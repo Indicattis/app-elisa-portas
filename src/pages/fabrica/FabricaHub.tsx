@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Package, Boxes, Factory, ArrowLeft } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
+import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 
 const menuItems = [
   { label: 'Pedidos em Produção', icon: Package, path: '/fabrica/pedidos-producao' },
@@ -29,6 +30,9 @@ export default function FabricaHub() {
         ]} 
         mounted={mounted} 
       />
+
+      {/* Menu de Perfil Flutuante */}
+      <FloatingProfileMenu mounted={mounted} />
 
       {/* Botão Voltar */}
       <button

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Truck, Car, CalendarDays, ArrowLeft } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
+import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 
 const menuItems = [
   { label: "Expedição", icon: Truck, path: "/logistica/expedicao" },
@@ -29,6 +30,9 @@ export default function LogisticaHub() {
         ]} 
         mounted={mounted} 
       />
+
+      {/* Menu de Perfil Flutuante */}
+      <FloatingProfileMenu mounted={mounted} />
 
       {/* Botão Voltar */}
       <button

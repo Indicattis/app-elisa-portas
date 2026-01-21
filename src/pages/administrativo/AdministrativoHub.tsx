@@ -4,6 +4,7 @@ import { DollarSign, Users, ShoppingCart, FileText, Package, Lock, ArrowLeft } f
 import { SpaceParticles } from "@/components/SpaceParticles";
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
+import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 
 const menuItems = [
   { label: "Financeiro", icon: DollarSign, path: "/administrativo/financeiro", ativo: false },
@@ -44,6 +45,9 @@ export default function AdministrativoHub() {
         ]} 
         mounted={mounted} 
       />
+
+      {/* Menu de Perfil Flutuante */}
+      <FloatingProfileMenu mounted={mounted} />
 
       {/* Botão Voltar */}
       <button

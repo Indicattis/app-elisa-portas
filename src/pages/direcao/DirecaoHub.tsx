@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, DollarSign, Factory, Truck, Target, ArrowLeft } from 'lucide-react';
 import { SpaceParticles } from '@/components/SpaceParticles';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
+import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 
 const menuItems = [
   { label: 'Vendas', icon: ShoppingCart, path: '/direcao/vendas' },
@@ -31,6 +32,9 @@ export default function DirecaoHub() {
         ]} 
         mounted={mounted} 
       />
+
+      {/* Menu de Perfil Flutuante */}
+      <FloatingProfileMenu mounted={mounted} />
 
       {/* Botão Voltar */}
       <button
