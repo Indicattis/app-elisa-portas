@@ -363,20 +363,10 @@ export default function FaturamentoDirecao() {
           : <span className="text-white/30">-</span>;
       case 'expedicao':
         if (venda.tipo_entrega === 'instalacao') {
-          return (
-            <div className="flex items-center gap-1.5 justify-center">
-              <Hammer className="h-4 w-4 text-orange-400" />
-              <span className="text-orange-400 text-xs">Instalação</span>
-            </div>
-          );
+          return <Hammer className="h-4 w-4 text-orange-400 mx-auto" />;
         }
         if (venda.tipo_entrega === 'entrega') {
-          return (
-            <div className="flex items-center gap-1.5 justify-center">
-              <Truck className="h-4 w-4 text-blue-400" />
-              <span className="text-blue-400 text-xs">Entrega</span>
-            </div>
-          );
+          return <Truck className="h-4 w-4 text-blue-400 mx-auto" />;
         }
         return <span className="text-white/30">-</span>;
       case 'desconto':
