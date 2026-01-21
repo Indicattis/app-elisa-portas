@@ -6,10 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Search, Calendar, Package, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { OrdemCarregamento, AgendarCarregamentoData } from "@/types/ordemCarregamento";
+import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { toast } from "sonner";
-import { AgendarCarregamentoModal } from "./AgendarCarregamentoModal";
-import { useOrdensCarregamento } from "@/hooks/useOrdensCarregamento";
+import { AdicionarOrdemCalendarioModal } from "./AdicionarOrdemCalendarioModal";
 
 interface OrdensCarregamentoDisponiveisProps {
   onRefresh?: () => void;
@@ -21,8 +20,6 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
   const [searchTerm, setSearchTerm] = useState("");
   const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemCarregamento | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-
-  const { agendarCarregamento } = useOrdensCarregamento();
 
   useEffect(() => {
     fetchOrdensDisponiveis();
@@ -77,20 +74,34 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
     setModalOpen(true);
   };
 
-  const handleConfirmAgendar = async (data: AgendarCarregamentoData) => {
-    if (!ordemSelecionada) return;
+  const handleConfirmAgendar = async (params: {
+    ordemId: string;
+    data_carregamento: string;
+    hora: string;
+    tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro';
+    responsavel_carregamento_id: string | null;
+    responsavel_carregamento_nome: string;
+  }) => {
+    const { error } = await supabase
+      .from("ordens_carregamento")
+      .update({
+        data_carregamento: params.data_carregamento,
+        hora: params.hora,
+        tipo_carregamento: params.tipo_carregamento,
+        responsavel_carregamento_id: params.responsavel_carregamento_id,
+        responsavel_carregamento_nome: params.responsavel_carregamento_nome,
+        status: 'agendada',
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", params.ordemId);
 
-    try {
-      await agendarCarregamento({ id: ordemSelecionada.id, data });
-      toast.success("Carregamento agendado com sucesso!");
-      fetchOrdensDisponiveis();
-      onRefresh?.();
-      setModalOpen(false);
-      setOrdemSelecionada(null);
-    } catch (error) {
-      console.error("Erro ao agendar:", error);
-      toast.error("Erro ao agendar carregamento");
-    }
+    if (error) throw error;
+
+    toast.success("Carregamento agendado com sucesso!");
+    fetchOrdensDisponiveis();
+    onRefresh?.();
+    setModalOpen(false);
+    setOrdemSelecionada(null);
   };
 
   // Filtrar ordens por termo de busca
@@ -289,11 +300,12 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
         </CardContent>
       </Card>
 
-      <AgendarCarregamentoModal
+      <AdicionarOrdemCalendarioModal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        ordem={ordemSelecionada}
+        dataSelecionada={new Date()}
         onConfirm={handleConfirmAgendar}
+        ordemPreSelecionada={ordemSelecionada}
       />
     </>
   );
