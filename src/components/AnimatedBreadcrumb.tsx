@@ -16,8 +16,8 @@ export function AnimatedBreadcrumb({ items, mounted = true }: AnimatedBreadcrumb
 
   return (
     <div
-      className="fixed top-4 left-1/2 -translate-x-1/2 z-40
-                 flex items-center gap-1 px-2 py-1.5
+      className="hidden md:flex fixed top-4 left-1/2 -translate-x-1/2 z-40
+                 items-center gap-1 px-2 py-1.5
                  bg-white/5 backdrop-blur-xl border border-white/10 rounded-full"
       style={{
         opacity: mounted ? 1 : 0,
