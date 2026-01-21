@@ -14,20 +14,45 @@ export function usePedidoAutoAvanco() {
 
   const verificarOrdensProducaoConcluidas = async (pedidoId: string): Promise<boolean> => {
     try {
-      // Buscar todas as linhas de ordens de produção (solda, perfiladeira, separação)
-      const { data: linhas, error } = await supabase
+      // 1. Buscar todas as linhas de ordens de produção (solda, perfiladeira, separação)
+      const { data: linhas, error: linhasError } = await supabase
         .from('linhas_ordens')
         .select('concluida')
         .eq('pedido_id', pedidoId)
         .in('tipo_ordem', ['soldagem', 'perfiladeira', 'separacao']);
 
-      if (error) throw error;
+      if (linhasError) throw linhasError;
       
       // Se não há linhas, considerar como concluída
       if (!linhas || linhas.length === 0) return true;
 
       // Verificar se todas as linhas estão concluídas
-      return linhas.every(linha => linha.concluida === true);
+      const todasLinhasConcluidas = linhas.every(linha => linha.concluida === true);
+      if (!todasLinhasConcluidas) {
+        console.log('[Auto-Avanço] Nem todas as linhas estão concluídas');
+        return false;
+      }
+
+      // 2. Verificar se as ordens de cada setor estão formalmente concluídas
+      const tabelas = ['ordens_soldagem', 'ordens_perfiladeira', 'ordens_separacao'] as const;
+      
+      for (const tabela of tabelas) {
+        const { data: ordens, error } = await supabase
+          .from(tabela)
+          .select('status')
+          .eq('pedido_id', pedidoId)
+          .eq('historico', false);
+        
+        if (error) throw error;
+        
+        // Se há ordens pendentes neste setor, não avançar
+        if (ordens && ordens.length > 0 && ordens.some(o => o.status !== 'concluido')) {
+          console.log(`[Auto-Avanço] Ordem em ${tabela} ainda não concluída formalmente`);
+          return false;
+        }
+      }
+
+      return true;
     } catch (error) {
       console.error('Erro ao verificar ordens de produção:', error);
       return false;
