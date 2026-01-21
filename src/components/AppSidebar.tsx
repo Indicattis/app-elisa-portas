@@ -326,23 +326,23 @@ export function AppSidebar() {
         </SidebarMenuSubButton>
       </SidebarMenuSubItem>;
   };
-  return <Sidebar collapsible="offcanvas" className="border-r">
-      <div className="flex gap-2 px-2 py-2 border-b">
-        <button onClick={() => navigate('/dashboard')} className="flex items-center justify-center px-2 py-1.5 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground transition-colors" title="Home">
+  return <Sidebar collapsible="offcanvas" className="border-r border-white/10 bg-black/90 backdrop-blur-xl">
+      <div className="flex gap-2 px-2 py-2 border-b border-white/10">
+        <button onClick={() => navigate('/dashboard')} className="flex items-center justify-center px-2 py-1.5 rounded-md bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-colors" title="Home">
           <img src={currentLogo} alt="Home" className="h-5 w-5 object-contain" />
         </button>
         <div className="relative flex-1">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/50" />
           <Input
             placeholder="Buscar..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-8 pl-7 pr-7 text-xs"
+            className="h-8 pl-7 pr-7 text-xs bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-primary/50"
           />
           {searchTerm && (
             <button
               onClick={() => setSearchTerm("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -350,13 +350,13 @@ export function AppSidebar() {
         </div>
       </div>
 
-      <SidebarContent>
+      <SidebarContent className="sidebar-minimalist">
         <ScrollArea className="flex-1 px-2">
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
                 {isLoading ? <div className="flex items-center justify-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
                   </div> : filteredRouteTree.map(route => renderRouteItem(route, 0))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -364,22 +364,20 @@ export function AppSidebar() {
         </ScrollArea>
       </SidebarContent>
 
-      <SidebarFooter className="p-2 space-y-1.5">
-        
-
+      <SidebarFooter className="p-2 space-y-1.5 border-t border-white/10">
         {/* Botões de acesso rápido a outras interfaces */}
         <div className="space-y-1">
-          <Link to="/direcao" className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-xs font-medium">
-            <Factory className="h-3.5 w-3.5" />
-            <span>Hub da Fábrica</span>
+          <Link to="/home" className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-gradient-to-r from-blue-500/20 to-blue-600/20 hover:from-blue-500/30 hover:to-blue-600/30 text-white border border-white/10 transition-colors text-xs font-medium">
+            <Home className="h-3.5 w-3.5" />
+            <span>Hub Principal</span>
           </Link>
           
-          <Link to="/paineis" className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-xs font-medium">
+          <Link to="/paineis" className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-white/5 hover:bg-white/10 text-white/80 border border-white/10 transition-colors text-xs font-medium">
             <Tv className="h-4 w-4" />
             <span>Painéis</span>
           </Link>
           
-          <Link to="/todo" className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-xs font-medium">
+          <Link to="/todo" className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-white/5 hover:bg-white/10 text-white/80 border border-white/10 transition-colors text-xs font-medium">
             <ClipboardList className="h-3.5 w-3.5" />
             <span>Tarefas</span>
           </Link>

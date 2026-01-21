@@ -226,15 +226,15 @@ const queryClient = new QueryClient({
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full bg-black text-white dashboard-minimalist">
         <AppSidebar />
 
-        <SidebarInset className="flex-1 flex flex-col">
-          <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border/50">
-            <div className="h-12 flex items-center justify-between px-4 w-full">
+        <SidebarInset className="flex-1 flex flex-col bg-black">
+          <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/10">
+            <div className="h-14 flex items-center justify-between px-4 w-full">
               <div className="flex items-center">
-                <SidebarTrigger className="-ml-1" />
-                <div className="h-4 w-px bg-border mx-3" />
+                <SidebarTrigger className="-ml-1 text-white hover:bg-white/10" />
+                <div className="h-4 w-px bg-white/20 mx-3" />
               </div>
               
               <div className="flex items-center gap-2 md:gap-3">
@@ -243,7 +243,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <main className="flex-1 p-4 sm:p-6">
+          <main className="flex-1 p-4 sm:p-6 overflow-auto">
             <ErrorBoundary>
               {children}
             </ErrorBoundary>
@@ -269,15 +269,15 @@ function HeaderUserInfo() {
     <>
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
-          <Avatar className="h-8 w-8">
+          <Avatar className="h-8 w-8 border border-white/20">
             <AvatarImage src={userRole?.foto_perfil_url} alt="Foto de perfil" />
-            <AvatarFallback className="text-xs">
+            <AvatarFallback className="text-xs bg-primary/20 text-white">
               {getUserInitials(user.email || '')}
             </AvatarFallback>
           </Avatar>
           <div className="hidden md:flex flex-col text-sm">
-            <span className="font-medium leading-none">{user.email}</span>
-            <span className="text-xs text-muted-foreground capitalize leading-none mt-1">
+            <span className="font-medium leading-none text-white">{user.email}</span>
+            <span className="text-xs text-white/60 capitalize leading-none mt-1">
               {userRole?.role?.replace("_", " ")}
             </span>
           </div>
@@ -287,7 +287,7 @@ function HeaderUserInfo() {
           <Button 
             variant="ghost" 
             size="sm" 
-            className="relative"
+            className="relative text-white hover:bg-white/10"
             onClick={() => setTarefasOpen(true)}
           >
             <CheckSquare className="h-4 w-4" />
@@ -301,13 +301,13 @@ function HeaderUserInfo() {
             )}
           </Button>
 
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="ghost" size="sm" asChild className="text-white hover:bg-white/10">
             <NavLink to="/admin">
               <Settings className="h-4 w-4" />
             </NavLink>
           </Button>
           
-          <Button variant="ghost" size="sm" onClick={signOut}>
+          <Button variant="ghost" size="sm" onClick={signOut} className="text-white hover:bg-white/10">
             <LogOut className="h-4 w-4" />
           </Button>
         </div>
