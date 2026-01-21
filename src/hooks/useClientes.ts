@@ -60,10 +60,10 @@ export function useClientes() {
         .from("canais_aquisicao")
         .select("id, nome");
       
-      // Buscar usuários para mapear vendedores
+      // Buscar usuários para mapear vendedores (usando user_id pois created_by armazena o auth.users id)
       const { data: usersData } = await supabase
         .from("admin_users")
-        .select("id, nome, foto_perfil_url");
+        .select("id, nome, foto_perfil_url, user_id");
       
       // Buscar totais de vendas por cliente
       const { data: vendasData } = await supabase
@@ -90,7 +90,7 @@ export function useClientes() {
       });
       
       const canaisMap = new Map(canaisData?.map(c => [c.id, c]) || []);
-      const usersMap = new Map(usersData?.map(u => [u.id, u]) || []);
+      const usersMap = new Map(usersData?.map(u => [u.user_id, u]) || []);
       
       const clientes = (clientesData || []).map((cliente: any) => ({
         ...cliente,
