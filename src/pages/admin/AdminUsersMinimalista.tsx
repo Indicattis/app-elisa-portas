@@ -4,25 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
 import { ResetPasswordModal } from "@/components/ResetPasswordModal";
-import { Search, Edit, Save, X, Loader2, KeyRound, FileDown, ImageIcon } from "lucide-react";
+import { UserDetailsModal } from "@/components/admin/UserDetailsModal";
+import { Search, Edit, Save, X, Loader2, KeyRound, FileDown } from "lucide-react";
 import { baixarUsuariosPDF } from "@/utils/usuariosPDFGenerator";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 interface AdminUser {
   id: string;
@@ -51,7 +41,7 @@ export default function AdminUsersMinimalista() {
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
   const [resetPasswordUser, setResetPasswordUser] = useState<AdminUser | null>(null);
-  const [avatarEditUser, setAvatarEditUser] = useState<AdminUser | null>(null);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const { toast } = useToast();
 
   const { data: systemRoles = [], isLoading: loadingRoles } = useQuery({
@@ -320,7 +310,8 @@ export default function AdminUsersMinimalista() {
             {filteredUsers.map((user) => (
               <div
                 key={user.id}
-                className="p-4 hover:bg-white/5 transition-colors"
+                className="p-4 hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={() => setSelectedUser(user)}
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 flex-shrink-0">
@@ -415,7 +406,10 @@ export default function AdminUsersMinimalista() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEdit(user)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(user);
+                          }}
                           className="text-white/60 hover:text-white hover:bg-white/10"
                         >
                           <Edit className="w-4 h-4" />
@@ -423,7 +417,10 @@ export default function AdminUsersMinimalista() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setResetPasswordUser(user)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setResetPasswordUser(user);
+                          }}
                           className="text-white/60 hover:text-white hover:bg-white/10"
                         >
                           <KeyRound className="w-4 h-4" />
@@ -437,6 +434,13 @@ export default function AdminUsersMinimalista() {
           </div>
         </div>
       </div>
+
+      <UserDetailsModal
+        open={!!selectedUser}
+        onOpenChange={(open) => !open && setSelectedUser(null)}
+        user={selectedUser}
+        roleLabel={selectedUser ? (roleLabelsMap[selectedUser.role] || selectedUser.role) : ""}
+      />
 
       {resetPasswordUser && (
         <ResetPasswordModal
