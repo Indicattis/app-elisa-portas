@@ -127,7 +127,7 @@ export function PedidosTotalRow({ pedidos }: PedidosTotalRowProps) {
         className="bg-muted/50 border-t-2 border-primary/20 rounded-md px-2 py-2 mt-2"
         style={{
           display: 'grid',
-          gridTemplateColumns: '24px 24px 1fr 24px 50px 50px 75px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px',
+          gridTemplateColumns: '24px 24px 1fr 24px 50px 50px 95px 80px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px',
           gap: '4px',
           alignItems: 'center',
         }}
@@ -177,6 +177,9 @@ export function PedidosTotalRow({ pedidos }: PedidosTotalRowProps) {
         </Tooltip>
         
         {/* Data Carregamento placeholder */}
+        <div />
+        
+        {/* Responsável placeholder */}
         <div />
         
         {/* Portas P/G */}
