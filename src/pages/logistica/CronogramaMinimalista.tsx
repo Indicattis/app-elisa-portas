@@ -1,320 +1,325 @@
-import { useState } from "react";
-import { Calendar, Download, ChevronLeft, ChevronRight, CalendarDays, Menu, Settings } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Calendar, CalendarDays, ArrowLeft, LogOut, AlertCircle } from "lucide-react";
+import { SpaceParticles } from "@/components/SpaceParticles";
+import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CronogramaInstalacao } from "@/components/cronograma/CronogramaInstalacao";
-import { CronogramaInstalacaoMensal } from "@/components/cronograma/CronogramaInstalacaoMensal";
-import { GerenciarEquipes } from "@/components/cronograma/GerenciarEquipes";
-import { useOrdensInstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
-import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
-import { format, addDays, startOfWeek, addMonths, startOfMonth } from "date-fns";
+import { Card, CardContent } from "@/components/ui/card";
+import { useOrdensMinhaEquipe } from "@/hooks/useOrdensMinhaEquipe";
+import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
+import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrdemCarregamentoDrawer";
+import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
+import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
+import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { format, addDays, startOfWeek, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { baixarCronogramaPDF } from "@/utils/cronogramaPDFGenerator";
+import { OrdemCarregamento } from "@/types/ordemCarregamento";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { MinimalistLayout } from "@/components/MinimalistLayout";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function CronogramaMinimalista() {
-  const [equipesModalOpen, setEquipesModalOpen] = useState(false);
-  const [weekStartDate, setWeekStartDate] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
-  const [equipesSelecionadas, setEquipesSelecionadas] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
-  const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const { signOut } = useAuth();
+  const queryClient = useQueryClient();
+  
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewType, setViewType] = useState<'week' | 'month'>('week');
+  const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
+  const [editingOrdem, setEditingOrdem] = useState<OrdemCarregamento | null>(null);
 
-  const { instalacoes, isLoading } = useOrdensInstalacaoCalendario(weekStartDate, viewMode);
-  const { equipes, loading: equipesLoading } = useEquipesInstalacao();
+  const { 
+    ordens, 
+    isLoading, 
+    updateOrdem, 
+    equipeNome,
+    equipeCor,
+    temEquipe 
+  } = useOrdensMinhaEquipe(currentDate, viewType);
 
-  const equipesFiltradas = equipesSelecionadas.length > 0 
-    ? equipes.filter(eq => equipesSelecionadas.includes(eq.id))
-    : equipes;
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekEnd = addDays(weekStart, 6);
 
-  const toggleEquipe = (equipeId: string) => {
-    setEquipesSelecionadas(prev =>
-      prev.includes(equipeId)
-        ? prev.filter(id => id !== equipeId)
-        : [...prev, equipeId]
-    );
-  };
-
-  const limparFiltros = () => {
-    setEquipesSelecionadas([]);
-  };
-
-  const handleDownloadPDF = () => {
-    const toastId = toast.loading("Gerando PDF do cronograma...");
-    try {
-      baixarCronogramaPDF({
-        instalacoes,
-        equipes: equipesFiltradas,
-        weekStart: weekStartDate
-      });
-      toast.success("PDF gerado com sucesso!", { id: toastId });
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      toast.error("Erro ao gerar PDF do cronograma", { id: toastId });
-    }
-  };
-
-  const handlePreviousWeek = () => {
-    if (viewMode === 'month') {
-      setWeekStartDate(prev => addMonths(prev, -1));
-    } else {
-      setWeekStartDate(prev => addDays(prev, -7));
-    }
-  };
-
-  const handleNextWeek = () => {
-    if (viewMode === 'month') {
-      setWeekStartDate(prev => addMonths(prev, 1));
-    } else {
-      setWeekStartDate(prev => addDays(prev, 7));
-    }
-  };
-
+  const handlePreviousWeek = () => setCurrentDate(prev => addDays(prev, -7));
+  const handleNextWeek = () => setCurrentDate(prev => addDays(prev, 7));
   const handleToday = () => {
-    if (viewMode === 'month') {
-      setWeekStartDate(startOfMonth(new Date()));
+    if (viewType === 'month') {
+      setCurrentDate(startOfMonth(new Date()));
     } else {
-      setWeekStartDate(startOfWeek(new Date(), { weekStartsOn: 1 }));
+      setCurrentDate(startOfWeek(new Date(), { weekStartsOn: 1 }));
     }
   };
 
-  const weekEnd = addDays(weekStartDate, 6);
+  const handleUpdateOrdem = async (params: { id: string; data: Partial<OrdemCarregamento> }) => {
+    await updateOrdem(params);
+  };
 
-  const periodLabel = viewMode === 'week' 
-    ? `${format(weekStartDate, "dd/MM", { locale: ptBR })} - ${format(weekEnd, "dd/MM/yyyy", { locale: ptBR })}`
-    : format(weekStartDate, "MMMM 'de' yyyy", { locale: ptBR });
+  const handleEdit = (ordem: OrdemCarregamento) => {
+    setEditingOrdem(ordem);
+    setEditDrawerOpen(true);
+  };
 
-  if (isLoading || equipesLoading) {
+  const handleSaveEdit = async (data: any) => {
+    if (editingOrdem) {
+      await updateOrdem({ id: editingOrdem.id, data });
+      setEditDrawerOpen(false);
+      setEditingOrdem(null);
+    }
+  };
+
+  const handleOrdemCriada = () => {
+    queryClient.invalidateQueries({ queryKey: ['ordens_minha_equipe'] });
+  };
+
+  const handleOrdemDropped = () => {
+    queryClient.invalidateQueries({ queryKey: ['ordens_minha_equipe'] });
+  };
+
+  const handleRemoverDoCalendario = (ordemId: string) => {
+    updateOrdem({ 
+      id: ordemId, 
+      data: { 
+        data_carregamento: null, 
+        status: 'pendente' 
+      } 
+    });
+    toast.success("Ordem removida do calendário");
+  };
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['ordens_minha_equipe'] });
+  };
+
+  const handleOrdemClick = (ordem: OrdemCarregamento) => {
+    setSelectedOrdem(ordem);
+    setDetailsOpen(true);
+  };
+
+  const handleMonthChange = (date: Date) => {
+    setCurrentDate(date);
+  };
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  // Se não tem equipe, mostrar mensagem
+  if (!isLoading && !temEquipe) {
     return (
-      <MinimalistLayout
-        title="Cronograma"
-        backPath="/logistica/instalacoes"
-        breadcrumbItems={[
-          { label: "Home", path: "/home" },
-          { label: "Logística", path: "/logistica" },
-          { label: "Instalações", path: "/logistica/instalacoes" },
-          { label: "Cronograma" }
-        ]}
-      >
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+      <div className="min-h-screen bg-black text-white overflow-hidden relative">
+        <AnimatedBreadcrumb 
+          items={[
+            { label: "Home", path: "/home" },
+            { label: "Logística", path: "/logistica" },
+            { label: "Instalações", path: "/logistica/instalacoes" },
+            { label: "Cronograma" }
+          ]} 
+          mounted={mounted} 
+        />
+        <SpaceParticles />
+        
+        <div className="relative z-10 min-h-screen flex flex-col pt-14">
+          <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-primary/10">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => navigate('/logistica/instalacoes')}
+                  className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5 text-white/80" />
+                </button>
+                <h1 className="text-lg font-semibold text-white">Cronograma</h1>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="text-white/80 hover:text-white hover:bg-primary/10"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          </header>
+
+          <main className="flex-1 p-4 flex items-center justify-center">
+            <Card className="bg-primary/5 border-primary/10 p-8 text-center max-w-md">
+              <CardContent className="pt-6">
+                <AlertCircle className="h-16 w-16 mx-auto text-yellow-500 mb-4" />
+                <h2 className="text-xl font-semibold text-white mb-2">
+                  Sem equipe vinculada
+                </h2>
+                <p className="text-white/60 mb-6">
+                  Você não está vinculado a nenhuma equipe de instalação.
+                  Entre em contato com o administrador para ser adicionado a uma equipe.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/logistica/instalacoes')}
+                  className="bg-primary/10 border-primary/20 text-white hover:bg-primary/20"
+                >
+                  Voltar
+                </Button>
+              </CardContent>
+            </Card>
+          </main>
         </div>
-      </MinimalistLayout>
+      </div>
     );
   }
 
   return (
-    <MinimalistLayout
-      title="Cronograma"
-      subtitle={periodLabel}
-      backPath="/logistica/instalacoes"
-      breadcrumbItems={[
-        { label: "Home", path: "/home" },
-        { label: "Logística", path: "/logistica" },
-        { label: "Instalações", path: "/logistica/instalacoes" },
-        { label: "Cronograma" }
-      ]}
-    >
-      {/* Controles */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToday}
-            className="bg-primary/5 border-primary/10 text-white hover:bg-primary/10"
-          >
-            Hoje
-          </Button>
-          <div className="flex items-center gap-1 bg-primary/5 border border-primary/10 rounded-lg p-1">
-            <Button
-              variant={viewMode === 'week' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => {
-                setViewMode('week');
-                setWeekStartDate(startOfWeek(new Date(), { weekStartsOn: 1 }));
-              }}
-              className={viewMode === 'week' 
-                ? "bg-blue-500 hover:bg-blue-600 text-white" 
-                : "text-white/60 hover:text-white hover:bg-primary/10"}
-            >
-              <Calendar className="h-4 w-4 mr-1" />
-              Semana
-            </Button>
-            <Button
-              variant={viewMode === 'month' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => {
-                setViewMode('month');
-                setWeekStartDate(startOfMonth(new Date()));
-              }}
-              className={viewMode === 'month' 
-                ? "bg-blue-500 hover:bg-blue-600 text-white" 
-                : "text-white/60 hover:text-white hover:bg-primary/10"}
-            >
-              <CalendarDays className="h-4 w-4 mr-1" />
-              Mês
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownloadPDF}
-            className="bg-primary/5 border-primary/10 text-white hover:bg-primary/10"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            PDF
-          </Button>
-
-          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-            <SheetTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="bg-primary/5 border-primary/10 text-white hover:bg-primary/10"
+    <div className="min-h-screen bg-black text-white overflow-hidden relative">
+      <AnimatedBreadcrumb 
+        items={[
+          { label: "Home", path: "/home" },
+          { label: "Logística", path: "/logistica" },
+          { label: "Instalações", path: "/logistica/instalacoes" },
+          { label: "Cronograma" }
+        ]} 
+        mounted={mounted} 
+      />
+      <SpaceParticles />
+      
+      <div className="relative z-10 min-h-screen flex flex-col pt-14">
+        {/* Header */}
+        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-primary/10">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate('/logistica/instalacoes')}
+                className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
               >
-                <Menu className="h-4 w-4 mr-2" />
-                Filtros
-                {equipesSelecionadas.length > 0 && (
-                  <span className="ml-2 px-1.5 py-0.5 text-xs bg-blue-500 rounded-full">
-                    {equipesSelecionadas.length}
-                  </span>
-                )}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-80 bg-zinc-900 border-primary/10">
-              <SheetHeader>
-                <SheetTitle className="text-white">Filtros e Opções</SheetTitle>
-                <SheetDescription className="text-white/60">
-                  Configure a visualização do cronograma
-                </SheetDescription>
-              </SheetHeader>
-
-              <div className="space-y-6 mt-6">
-                {/* Filtrar Equipes */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm font-semibold text-white">Filtrar por Equipes</Label>
-                    {equipesSelecionadas.length > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={limparFiltros}
-                        className="h-auto p-1 text-xs text-white/60 hover:text-white"
-                      >
-                        Limpar
-                      </Button>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    {equipes.map((equipe) => (
-                      <div key={equipe.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={equipe.id}
-                          checked={equipesSelecionadas.includes(equipe.id)}
-                          onCheckedChange={() => toggleEquipe(equipe.id)}
-                          className="border-white/30 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                        />
-                        <Label
-                          htmlFor={equipe.id}
-                          className="flex items-center gap-2 cursor-pointer text-white/80"
-                        >
-                          <div
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: equipe.cor || '#888' }}
-                          />
-                          {equipe.nome}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
+                <ArrowLeft className="w-5 h-5 text-white/80" />
+              </button>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-semibold text-white">Cronograma</h1>
+                  {equipeNome && (
+                    <span 
+                      className="text-xs px-2 py-0.5 rounded-full"
+                      style={{ 
+                        backgroundColor: equipeCor ? `${equipeCor}20` : 'rgba(59, 130, 246, 0.2)',
+                        color: equipeCor || '#3B82F6',
+                        border: `1px solid ${equipeCor || '#3B82F6'}40`
+                      }}
+                    >
+                      {equipeNome}
+                    </span>
+                  )}
                 </div>
-
-                <Separator className="bg-white/10" />
-
-                {/* Ações */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-semibold text-white">Ações</Label>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start bg-primary/5 border-primary/10 text-white hover:bg-primary/10" 
-                    onClick={() => {
-                      setEquipesModalOpen(true);
-                      setMenuOpen(false);
-                    }}
-                  >
-                    <Settings className="h-4 w-4 mr-2" />
-                    Gerenciar Equipes
-                  </Button>
-                </div>
+                <p className="text-xs text-white/60">
+                  {viewType === 'week' 
+                    ? `${format(weekStart, "dd/MM", { locale: ptBR })} - ${format(weekEnd, "dd/MM/yyyy", { locale: ptBR })}`
+                    : format(currentDate, "MMMM 'de' yyyy", { locale: ptBR })
+                  }
+                </p>
               </div>
-            </SheetContent>
-          </Sheet>
-        </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewType(viewType === 'week' ? 'month' : 'week')}
+                className="text-white/80 hover:text-white hover:bg-primary/10"
+              >
+                {viewType === 'week' ? <CalendarDays className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleToday}
+                className="text-white/80 hover:text-white hover:bg-primary/10 text-xs"
+              >
+                Hoje
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="text-white/80 hover:text-white hover:bg-primary/10"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        {/* Conteúdo */}
+        <main className="flex-1 p-4 overflow-auto">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div className="max-w-7xl mx-auto space-y-4">
+              {/* Calendário */}
+              <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+                <CardContent className="p-4">
+                  {isMobile ? (
+                    <CalendarioSemanalExpedicaoMobile
+                      startDate={weekStart}
+                      ordens={ordens || []}
+                      onPreviousWeek={handlePreviousWeek}
+                      onNextWeek={handleNextWeek}
+                      onToday={handleToday}
+                      onDayClick={() => {}}
+                      onEdit={handleEdit}
+                      onRemoverDoCalendario={handleRemoverDoCalendario}
+                      onUpdateOrdem={handleUpdateOrdem}
+                      onOrdemAdded={handleOrdemCriada}
+                    />
+                  ) : viewType === 'week' ? (
+                    <CalendarioSemanalExpedicaoDesktop
+                      startDate={weekStart}
+                      ordens={ordens || []}
+                      onPreviousWeek={handlePreviousWeek}
+                      onNextWeek={handleNextWeek}
+                      onToday={handleToday}
+                      onUpdateOrdem={handleUpdateOrdem}
+                      onEdit={handleEdit}
+                      onRemoverDoCalendario={handleRemoverDoCalendario}
+                      onOrdemCriada={handleOrdemCriada}
+                      onOrdemDropped={handleOrdemDropped}
+                      onOrdemClick={handleOrdemClick}
+                    />
+                  ) : (
+                    <CalendarioMensalExpedicaoDesktop
+                      currentMonth={currentDate}
+                      ordens={ordens || []}
+                      onMonthChange={handleMonthChange}
+                      onUpdateOrdem={handleUpdateOrdem}
+                      onEdit={handleEdit}
+                      onRemoverDoCalendario={handleRemoverDoCalendario}
+                      onOrdemCriada={handleOrdemCriada}
+                      onOrdemDropped={handleOrdemDropped}
+                      onOrdemClick={handleOrdemClick}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </main>
       </div>
 
-      {/* Calendário */}
-      <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl relative">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-white text-base flex items-center justify-between">
-            <span>{viewMode === 'week' ? 'Visualização Semanal' : 'Visualização Mensal'}</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="relative px-12">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handlePreviousWeek}
-            className="absolute left-1 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-primary/10 hover:bg-primary/20 text-white border border-primary/10"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          
-          <div key={weekStartDate.toISOString()} className="animate-fade-in">
-            {viewMode === 'week' ? (
-              <CronogramaInstalacao
-                currentWeek={weekStartDate}
-                onEditPonto={() => {}}
-                equipesFiltradas={equipesFiltradas}
-              />
-            ) : (
-              <CronogramaInstalacaoMensal
-                currentMonth={weekStartDate}
-                onEditPonto={() => {}}
-                equipesFiltradas={equipesFiltradas}
-              />
-            )}
-          </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleNextWeek}
-            className="absolute right-1 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-primary/10 hover:bg-primary/20 text-white border border-primary/10"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
-        </CardContent>
-      </Card>
-
-      <GerenciarEquipes 
-        open={equipesModalOpen}
-        onOpenChange={setEquipesModalOpen}
+      {/* Detalhes da Ordem */}
+      <OrdemCarregamentoDetails
+        ordem={selectedOrdem}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
       />
-    </MinimalistLayout>
+
+      {/* Drawer de Edição */}
+      <EditarOrdemCarregamentoDrawer
+        ordem={editingOrdem}
+        open={editDrawerOpen}
+        onOpenChange={setEditDrawerOpen}
+        onSave={handleSaveEdit}
+      />
+    </div>
   );
 }
