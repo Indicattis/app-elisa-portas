@@ -11,7 +11,7 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { useOrdensSemDataCarregamento } from "@/hooks/useOrdensSemDataCarregamento";
 import { useVeiculos } from "@/hooks/useVeiculos";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Search, Package, MapPin, Check } from "lucide-react";
+import { Loader2, Search, Package, MapPin, Check, Ruler } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -110,6 +110,25 @@ export function AdicionarOrdemCalendarioModal({
     } finally {
       setLoadingResponsaveis(false);
     }
+  };
+
+  // Formatar tamanhos das portas de enrolar
+  const formatarTamanhosPortas = (ordem: OrdemCarregamento): string | null => {
+    const produtos = ordem.venda?.produtos;
+    if (!produtos || produtos.length === 0) return null;
+
+    const portasEnrolar = produtos.filter(p => 
+      p.tipo_produto?.toLowerCase().includes('porta') && 
+      (p.largura || p.altura || p.tamanho)
+    );
+
+    if (portasEnrolar.length === 0) return null;
+
+    return portasEnrolar.map(p => {
+      if (p.tamanho) return p.tamanho;
+      if (p.largura && p.altura) return `${p.largura}m × ${p.altura}m`;
+      return null;
+    }).filter(Boolean).join(', ');
   };
 
   // Filtrar ordens por termo de busca
@@ -258,6 +277,12 @@ export function AdicionarOrdemCalendarioModal({
                                   {ordem.venda.cidade}/{ordem.venda.estado}
                                 </span>
                               )}
+                              {formatarTamanhosPortas(ordem) && (
+                                <span className="flex items-center gap-1">
+                                  <Ruler className="h-3 w-3" />
+                                  {formatarTamanhosPortas(ordem)}
+                                </span>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -286,15 +311,22 @@ export function AdicionarOrdemCalendarioModal({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">{ordemSelecionada.nome_cliente}</p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                    <Package className="h-3 w-3" />
-                    {ordemSelecionada.pedido?.numero_pedido || 'N/A'}
+                  <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground mt-1">
+                    <span className="flex items-center gap-1">
+                      <Package className="h-3 w-3" />
+                      {ordemSelecionada.pedido?.numero_pedido || 'N/A'}
+                    </span>
                     {ordemSelecionada.venda?.cidade && (
-                      <>
-                        <span className="mx-1">•</span>
+                      <span className="flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
                         {ordemSelecionada.venda.cidade}/{ordemSelecionada.venda.estado}
-                      </>
+                      </span>
+                    )}
+                    {formatarTamanhosPortas(ordemSelecionada) && (
+                      <span className="flex items-center gap-1">
+                        <Ruler className="h-3 w-3" />
+                        {formatarTamanhosPortas(ordemSelecionada)}
+                      </span>
                     )}
                   </div>
                 </div>
