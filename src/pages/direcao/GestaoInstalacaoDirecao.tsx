@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Truck, CalendarDays, ClipboardList, HardHat } from "lucide-react";
+import { Truck, HardHat } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 
@@ -16,18 +16,6 @@ const menuItems = [
     description: "Agendamento de carregamentos",
     icon: Truck,
     path: "/direcao/calendario-expedicao",
-  },
-  {
-    title: "Cronograma",
-    description: "Cronograma de instalações",
-    icon: CalendarDays,
-    path: "/hub-fabrica/instalacoes/cronograma",
-  },
-  {
-    title: "Controle",
-    description: "Controle de instalações",
-    icon: ClipboardList,
-    path: "/hub-fabrica/instalacoes/controle",
   },
 ];
 
