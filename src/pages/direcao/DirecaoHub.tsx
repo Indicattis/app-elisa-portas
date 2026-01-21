@@ -75,35 +75,34 @@ export default function DirecaoHub() {
       </div>
 
       {/* ========== VERSÃO DESKTOP ========== */}
-      <div className="hidden md:flex relative z-10 flex-col items-center justify-center">
-        {/* Grid de botões */}
-        <div className="grid grid-cols-3 gap-4 max-w-2xl">
+      <div className="hidden md:flex relative z-10 flex-col items-center justify-center px-6 py-10 w-full max-w-md">
+        {/* Lista de botões */}
+        <div className="w-full flex flex-col gap-3">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
-            const delay = 200 + index * 100;
+            const delay = 100 + index * 80;
             
             return (
               <button
                 key={item.label}
                 onClick={() => navigate(item.path)}
-                className="w-44 h-28 rounded-xl
-                           bg-gradient-to-br from-blue-500 to-blue-700
+                className="w-full h-14 rounded-lg
+                           bg-gradient-to-r from-blue-500 to-blue-700
                            hover:from-blue-400 hover:to-blue-600
-                           flex flex-col items-center justify-center gap-2
+                           active:scale-[0.98]
+                           flex items-center gap-4 px-5
                            text-white font-medium 
-                           shadow-lg shadow-blue-500/30
-                           hover:shadow-xl hover:shadow-blue-500/50
-                           hover:scale-105
+                           shadow-lg shadow-blue-500/20
                            border border-blue-400/30
                            transition-all duration-300"
                 style={{
                   opacity: mounted ? 1 : 0,
-                  transform: mounted ? 'translateY(0)' : 'translateY(30px)',
-                  transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
+                  transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
+                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
                 }}
               >
-                <Icon className="w-8 h-8" strokeWidth={1.5} />
-                <span className="text-sm font-medium text-center px-2">{item.label}</span>
+                <Icon className="w-6 h-6" strokeWidth={1.5} />
+                <span className="text-sm font-medium">{item.label}</span>
               </button>
             );
           })}
