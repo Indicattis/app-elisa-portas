@@ -39,16 +39,22 @@ export function usePedidoAutoAvanco() {
       for (const tabela of tabelas) {
         const { data: ordens, error } = await supabase
           .from(tabela)
-          .select('status')
+          .select('status, pausada')
           .eq('pedido_id', pedidoId)
           .eq('historico', false);
         
         if (error) throw error;
         
-        // Se há ordens pendentes neste setor, não avançar
-        if (ordens && ordens.length > 0 && ordens.some(o => o.status !== 'concluido')) {
-          console.log(`[Auto-Avanço] Ordem em ${tabela} ainda não concluída formalmente`);
-          return false;
+        // Se há ordens pausadas ou não concluídas neste setor, não avançar
+        if (ordens && ordens.length > 0) {
+          if (ordens.some(o => o.pausada === true)) {
+            console.log(`[Auto-Avanço] Ordem em ${tabela} está pausada - bloqueando avanço`);
+            return false;
+          }
+          if (ordens.some(o => o.status !== 'concluido')) {
+            console.log(`[Auto-Avanço] Ordem em ${tabela} ainda não concluída formalmente`);
+            return false;
+          }
         }
       }
 
