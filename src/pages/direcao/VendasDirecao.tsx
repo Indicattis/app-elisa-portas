@@ -13,7 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet } from 'lucide-react';
+import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +63,10 @@ export default function VendasDirecao() {
   });
   const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
   const [atendentes, setAtendentes] = useState<any[]>([]);
+  const [sortConfig, setSortConfig] = useState<{
+    column: string | null;
+    direction: 'asc' | 'desc' | null;
+  }>({ column: null, direction: null });
 
   // Hook de configuração de colunas
   const {
@@ -187,6 +191,52 @@ export default function VendasDirecao() {
 
     return result;
   }, [vendas, searchTerm, dateRange, selectedAtendente]);
+
+  // Ordenação das vendas
+  const sortedVendas = useMemo(() => {
+    if (!sortConfig.column || !sortConfig.direction) {
+      return filteredVendas;
+    }
+    
+    return [...filteredVendas].sort((a, b) => {
+      const getValue = (venda: any) => {
+        switch (sortConfig.column) {
+          case 'data': return new Date(venda.data_venda).getTime();
+          case 'cliente': return venda.cliente_nome?.toLowerCase() || '';
+          case 'cidade': return venda.cidade?.toLowerCase() || '';
+          case 'estado': return venda.estado?.toLowerCase() || '';
+          case 'vendedor': return venda.atendente?.nome?.toLowerCase() || '';
+          case 'valor': return (venda.valor_venda || 0) + (venda.valor_credito || 0);
+          case 'previsao': return venda.data_prevista_entrega 
+            ? new Date(venda.data_prevista_entrega).getTime() 
+            : 0;
+          case 'telefone': return venda.cliente_telefone || '';
+          case 'produtos': return venda.produtos?.length || 0;
+          default: return '';
+        }
+      };
+      
+      const aVal = getValue(a);
+      const bVal = getValue(b);
+      
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filteredVendas, sortConfig]);
+
+  // Função para alternar ordenação
+  const handleSort = useCallback((columnId: string) => {
+    setSortConfig(current => {
+      if (current.column !== columnId) {
+        return { column: columnId, direction: 'asc' };
+      }
+      if (current.direction === 'asc') {
+        return { column: columnId, direction: 'desc' };
+      }
+      return { column: null, direction: null };
+    });
+  }, []);
 
   const stats = useMemo(() => {
     if (!filteredVendas) return { totalVendas: 0, totalValor: 0, totalProdutos: 0 };
@@ -425,22 +475,32 @@ export default function VendasDirecao() {
               {visibleColumns.map(column => (
                 <TableHead 
                   key={column.id}
-                  className={`text-white/60 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
+                  className={`text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
+                  onClick={() => handleSort(column.id)}
                 >
-                  {column.label}
+                  <div className={`flex items-center gap-1 ${column.id === 'valor' ? 'justify-end' : ''}`}>
+                    {column.label}
+                    {sortConfig.column === column.id ? (
+                      sortConfig.direction === 'asc' 
+                        ? <ArrowUp className="h-3 w-3 text-blue-400" />
+                        : <ArrowDown className="h-3 w-3 text-blue-400" />
+                    ) : (
+                      <ArrowUpDown className="h-3 w-3 opacity-30" />
+                    )}
+                  </div>
                 </TableHead>
               ))}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredVendas.length === 0 ? (
+            {sortedVendas.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-white/40">
                   Nenhuma venda encontrada
                 </TableCell>
               </TableRow>
             ) : (
-              filteredVendas.map((venda) => (
+              sortedVendas.map((venda) => (
                 <TableRow 
                   key={venda.id} 
                   className="border-primary/10 hover:bg-primary/5 cursor-pointer"
