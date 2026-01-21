@@ -9,6 +9,7 @@ interface MinimalistLayoutProps {
   backPath?: string;
   children: ReactNode;
   headerActions?: ReactNode;
+  showParticles?: boolean;
 }
 
 export function MinimalistLayout({ 
@@ -16,14 +17,15 @@ export function MinimalistLayout({
   subtitle, 
   backPath = '/vendas', 
   children,
-  headerActions 
+  headerActions,
+  showParticles = false
 }: MinimalistLayoutProps) {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative">
-      {/* Partículas espaciais de fundo */}
-      <SpaceParticles />
+      {/* Partículas espaciais de fundo - apenas se showParticles = true */}
+      {showParticles && <SpaceParticles />}
       
       {/* Container principal */}
       <div className="relative z-10 min-h-screen flex flex-col">
