@@ -46,6 +46,8 @@ interface Venda {
   valor_venda: number;
   valor_instalacao?: number;
   valor_frete?: number;
+  valor_credito?: number;
+  percentual_credito?: number;
   forma_pagamento?: string;
   data_venda: string;
   data_prevista_entrega?: string;
@@ -356,7 +358,7 @@ export default function VendaView() {
       </Card>
 
       {/* Resumo Financeiro */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Valor Total</CardTitle>
@@ -387,6 +389,21 @@ export default function VendaView() {
           </CardHeader>
           <CardContent>
             <p className="text-xl font-semibold">{formatCurrency(venda.valor_frete || 0)}</p>
+          </CardContent>
+        </Card>
+        <Card className={(venda.valor_credito ?? 0) > 0 ? "border-amber-500/30 bg-amber-500/5" : ""}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Crédito</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className={`text-xl font-semibold ${(venda.valor_credito ?? 0) > 0 ? "text-amber-600" : ""}`}>
+              {formatCurrency(venda.valor_credito || 0)}
+            </p>
+            {(venda.percentual_credito ?? 0) > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                ({venda.percentual_credito?.toFixed(2)}%)
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
