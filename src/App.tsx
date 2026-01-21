@@ -188,6 +188,7 @@ import VendaDetalhesDirecao from "./pages/direcao/VendaDetalhesDirecao";
 import FaturamentoDirecao from "./pages/direcao/FaturamentoDirecao";
 import GestaoFabricaDirecao from "./pages/direcao/GestaoFabricaDirecao";
 import GestaoInstalacaoDirecao from "./pages/direcao/GestaoInstalacaoDirecao";
+import CalendarioExpedicaoDirecao from "./pages/direcao/CalendarioExpedicaoDirecao";
 import MetasDirecao from "./pages/direcao/MetasDirecao";
 import VendaEditarDirecao from "./pages/direcao/VendaEditarDirecao";
 
@@ -360,6 +361,7 @@ const App = () => (
                 <Route path="/direcao/faturamento" element={<ProtectedRoute><FaturamentoDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/gestao-fabrica" element={<ProtectedRoute><GestaoFabricaDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/gestao-instalacao" element={<ProtectedRoute><GestaoInstalacaoDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/calendario-expedicao" element={<ProtectedRoute><CalendarioExpedicaoDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/metas" element={<ProtectedRoute><MetasDirecao /></ProtectedRoute>} />
 
                 {/* Hub de Logística Minimalista */}
