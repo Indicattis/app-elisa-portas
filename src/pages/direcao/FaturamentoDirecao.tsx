@@ -57,6 +57,8 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'acrescimo', label: 'Acréscimo', defaultVisible: true },
   { id: 'instalacao', label: 'Instalação', defaultVisible: true },
   { id: 'frete', label: 'Frete', defaultVisible: true },
+  { id: 'custo_porta', label: 'Custo Porta', defaultVisible: true },
+  { id: 'custo_pintura', label: 'Custo Pintura', defaultVisible: true },
   { id: 'valor', label: 'Valor', defaultVisible: true },
   { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
   { id: 'faturada', label: 'Faturada', defaultVisible: true },
@@ -147,7 +149,9 @@ export default function FaturamentoDirecao() {
             valor_produto,
             quantidade,
             faturamento,
-            desconto_valor
+            desconto_valor,
+            custo_produto,
+            custo_pintura
           )
         `)
         .order("data_venda", { ascending: false });
@@ -246,6 +250,10 @@ export default function FaturamentoDirecao() {
             return venda.valor_instalacao || 0;
           case 'frete':
             return venda.valor_frete || 0;
+          case 'custo_porta':
+            return (venda.portas || []).reduce((sum: number, p: any) => sum + (p.custo_produto || 0), 0);
+          case 'custo_pintura':
+            return (venda.portas || []).reduce((sum: number, p: any) => sum + (p.custo_pintura || 0), 0);
           case 'valor':
             return (venda.valor_venda || 0) + (venda.valor_credito || 0);
           case 'tempo_sem_faturar':
@@ -317,7 +325,7 @@ export default function FaturamentoDirecao() {
   };
 
   const getColumnResponsiveClass = (columnId: string) => {
-    const hiddenOnMobile = ['cidade', 'previsao', 'expedicao', 'desconto', 'acrescimo', 'instalacao', 'frete', 'tempo_sem_faturar'];
+    const hiddenOnMobile = ['cidade', 'previsao', 'expedicao', 'desconto', 'acrescimo', 'instalacao', 'frete', 'custo_porta', 'custo_pintura', 'tempo_sem_faturar'];
     if (hiddenOnMobile.includes(columnId)) {
       return 'hidden md:table-cell';
     }
@@ -325,7 +333,7 @@ export default function FaturamentoDirecao() {
   };
 
   const getColumnAlignment = (columnId: string) => {
-    const rightAligned = ['valor', 'frete', 'instalacao', 'desconto', 'acrescimo'];
+    const rightAligned = ['valor', 'frete', 'instalacao', 'desconto', 'acrescimo', 'custo_porta', 'custo_pintura'];
     const centerAligned = ['faturada', 'expedicao', 'tempo_sem_faturar'];
     if (rightAligned.includes(columnId)) return 'text-right';
     if (centerAligned.includes(columnId)) return 'text-center';
@@ -336,15 +344,12 @@ export default function FaturamentoDirecao() {
     switch (columnId) {
       case 'vendedor':
         return (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={venda.atendente_foto || undefined} />
-              <AvatarFallback className="text-[10px] bg-blue-500/20 text-blue-400">
-                {venda.atendente_nome?.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-white/80 text-sm truncate max-w-[100px]">{venda.atendente_nome}</span>
-          </div>
+          <Avatar className="h-6 w-6">
+            <AvatarImage src={venda.atendente_foto || undefined} />
+            <AvatarFallback className="text-[10px] bg-blue-500/20 text-blue-400">
+              {venda.atendente_nome?.substring(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
         );
       case 'cliente':
         return <span className="text-white font-medium">{venda.cliente_nome}</span>;
@@ -390,6 +395,16 @@ export default function FaturamentoDirecao() {
       case 'frete':
         return venda.valor_frete && venda.valor_frete > 0
           ? <span className="text-white/80">{formatCurrency(venda.valor_frete)}</span>
+          : <span className="text-white/30">-</span>;
+      case 'custo_porta':
+        const custoPorta = (venda.portas || []).reduce((sum: number, p: any) => sum + (p.custo_produto || 0), 0);
+        return custoPorta > 0
+          ? <span className="text-white/80">{formatCurrency(custoPorta)}</span>
+          : <span className="text-white/30">-</span>;
+      case 'custo_pintura':
+        const custoPintura = (venda.portas || []).reduce((sum: number, p: any) => sum + (p.custo_pintura || 0), 0);
+        return custoPintura > 0
+          ? <span className="text-white/80">{formatCurrency(custoPintura)}</span>
           : <span className="text-white/30">-</span>;
       case 'valor':
         return <span className="text-white font-medium">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</span>;
