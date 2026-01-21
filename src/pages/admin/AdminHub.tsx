@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, Briefcase, Building2, Users, LogOut, LayoutDashboard, Tv } from "lucide-react";
+import { Shield, Briefcase, Building2, Users, LogOut, LayoutDashboard, Tv, ArrowLeft } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -54,6 +54,22 @@ export default function AdminHub() {
         ]} 
         mounted={mounted} 
       />
+
+      {/* Botão Voltar */}
+      <button
+        onClick={() => navigate('/home')}
+        className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
+                   hover:bg-white/10 transition-all duration-300"
+        style={{
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? 'translateX(0)' : 'translateX(-20px)',
+          transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 100ms'
+        }}
+      >
+        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20">
+          <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+        </div>
+      </button>
 
       <SpaceParticles />
 
