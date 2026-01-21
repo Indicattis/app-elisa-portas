@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, CalendarDays, ArrowLeft } from "lucide-react";
+import { Users, CalendarDays, ArrowLeft, HardHat } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 
 const menuItems = [
+  {
+    label: "Ordens de Instalação",
+    icon: HardHat,
+    path: "/logistica/instalacoes/ordens-instalacoes",
+  },
   {
     label: "Gestão de Equipes",
     icon: Users,
