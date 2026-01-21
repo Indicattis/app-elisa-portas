@@ -13,7 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer } from 'lucide-react';
+import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -462,23 +462,33 @@ export default function VendasDirecao() {
   };
 
   const headerActions = (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white">
-          <Download className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10">
-        <DropdownMenuItem onClick={handleExportarPDF} className="text-white hover:bg-white/10">
-          <FileText className="h-4 w-4 mr-2" />
-          Exportar PDF
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleExportarExcel} className="text-white hover:bg-white/10">
-          <FileSpreadsheet className="h-4 w-4 mr-2" />
-          Exportar Excel
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex items-center gap-2">
+      <Button 
+        variant="outline" 
+        size="sm" 
+        className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+        onClick={() => navigate('/direcao/vendas/clientes')}
+      >
+        <Users className="h-4 w-4" />
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white">
+            <Download className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10">
+          <DropdownMenuItem onClick={handleExportarPDF} className="text-white hover:bg-white/10">
+            <FileText className="h-4 w-4 mr-2" />
+            Exportar PDF
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleExportarExcel} className="text-white hover:bg-white/10">
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Exportar Excel
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 
   if (isLoading) {
