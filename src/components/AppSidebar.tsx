@@ -369,7 +369,7 @@ export function AppSidebar() {
 
         {/* Botões de acesso rápido a outras interfaces */}
         <div className="space-y-1">
-          <Link to="/hub-fabrica" className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-xs font-medium">
+          <Link to="/direcao" className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-xs font-medium">
             <Factory className="h-3.5 w-3.5" />
             <span>Hub da Fábrica</span>
           </Link>
