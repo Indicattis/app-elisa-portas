@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, Briefcase, Building2, Users, ArrowLeft, LogOut, LayoutDashboard, Tv } from "lucide-react";
+import { Shield, Briefcase, Building2, Users, LogOut, LayoutDashboard, Tv } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 
 const menuItems = [
   { label: "Permissões", icon: Shield, path: "/admin/permissions" },
@@ -44,7 +45,16 @@ export default function AdminHub() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
+    <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
+      {/* Breadcrumb */}
+      <AnimatedBreadcrumb 
+        items={[
+          { label: "Home", path: "/home" },
+          { label: "Admin" }
+        ]} 
+        mounted={mounted} 
+      />
+
       <SpaceParticles />
 
       {/* Avatar flutuante */}
@@ -103,74 +113,79 @@ export default function AdminHub() {
         </div>
       )}
 
-      <div className="relative z-10 min-h-screen flex flex-col">
-        {/* Botão voltar */}
-        <button
-          onClick={() => navigate("/home")}
-          className="fixed top-6 left-6 z-50 p-3 rounded-lg bg-primary/5 hover:bg-primary/10 
-                     border border-primary/10 transition-all duration-300"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? "translateX(0)" : "translateX(-20px)",
-            transition: "all 0.5s ease 100ms",
-          }}
-        >
-          <ArrowLeft className="w-5 h-5 text-white/80" />
-        </button>
-
-        {/* Título */}
-        <div
-          className="pt-20 pb-8 text-center"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? "translateY(0)" : "translateY(-20px)",
-            transition: "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s",
-          }}
-        >
-          <h1 className="text-3xl font-bold text-white mb-2">Administração</h1>
-          <p className="text-white/60 text-sm">Configurações e controle do sistema</p>
-        </div>
-
-        {/* Menu - Mobile */}
-        <div className="md:hidden flex-1 flex flex-col justify-center px-6 pb-20 gap-4">
+      {/* ========== VERSÃO MOBILE ========== */}
+      <div className="md:hidden relative z-10 flex flex-col items-center justify-center px-6 py-10 w-full max-w-md">
+        <div className="w-full flex flex-col gap-3">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
+            const delay = 100 + index * 80;
+            
             return (
-              <button
+              <div
                 key={item.path}
-                onClick={() => navigate(item.path)}
-                className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold text-lg shadow-lg shadow-blue-500/20 active:scale-95 transition-all duration-200 flex items-center gap-4"
+                className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
+                           transition-all duration-300"
                 style={{
                   opacity: mounted ? 1 : 0,
-                  transform: mounted ? "translateX(0)" : "translateX(-40px)",
-                  transition: `all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.15 + index * 0.08}s`,
+                  transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
+                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
                 }}
               >
-                <Icon className="w-6 h-6" />
-                {item.label}
-              </button>
+                <button
+                  onClick={() => navigate(item.path)}
+                  className="w-full h-12 rounded-lg
+                             bg-gradient-to-r from-blue-500 to-blue-700
+                             hover:from-blue-400 hover:to-blue-600
+                             active:scale-[0.98]
+                             flex items-center gap-4 px-5
+                             text-white font-medium 
+                             shadow-lg shadow-blue-500/20
+                             border border-blue-400/30
+                             transition-all duration-300"
+                >
+                  <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </button>
+              </div>
             );
           })}
         </div>
+      </div>
 
-        {/* Menu - Desktop */}
-        <div className="hidden md:flex flex-1 flex-col justify-center items-center pb-20 gap-4 max-w-md mx-auto w-full px-6">
+      {/* ========== VERSÃO DESKTOP ========== */}
+      <div className="hidden md:flex relative z-10 flex-col items-center justify-center">
+        <div className="grid grid-cols-2 gap-4 max-w-lg">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
+            const delay = 200 + index * 100;
+            
             return (
-              <button
+              <div
                 key={item.path}
-                onClick={() => navigate(item.path)}
-                className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-semibold text-lg shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center gap-4"
+                className="p-2 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10
+                           hover:bg-white/10 transition-all duration-300"
                 style={{
                   opacity: mounted ? 1 : 0,
-                  transform: mounted ? "translateY(0)" : "translateY(20px)",
-                  transition: `all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.15 + index * 0.08}s`,
+                  transform: mounted ? 'translateY(0)' : 'translateY(30px)',
+                  transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
                 }}
               >
-                <Icon className="w-6 h-6" />
-                {item.label}
-              </button>
+                <button
+                  onClick={() => navigate(item.path)}
+                  className="w-40 h-24 rounded-xl
+                             bg-gradient-to-br from-blue-500 to-blue-700
+                             hover:from-blue-400 hover:to-blue-600
+                             flex flex-col items-center justify-center gap-2
+                             text-white font-medium 
+                             shadow-lg shadow-blue-500/30
+                             hover:shadow-xl hover:shadow-blue-500/50
+                             border border-blue-400/30
+                             transition-all duration-300"
+                >
+                  <Icon className="w-7 h-7" strokeWidth={1.5} />
+                  <span className="text-sm font-medium text-center px-2">{item.label}</span>
+                </button>
+              </div>
             );
           })}
         </div>
