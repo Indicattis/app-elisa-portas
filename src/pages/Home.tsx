@@ -45,9 +45,7 @@ export default function Home() {
   }, [viewMode]);
 
   const toggleViewMode = () => {
-    setMounted(false);
     setViewMode(prev => prev === 'orbit' ? 'list' : 'orbit');
-    setTimeout(() => setMounted(true), 50);
   };
 
   // Fechar menu ao clicar fora
@@ -408,22 +406,16 @@ export default function Home() {
       {/* Botão toggle de visualização (apenas desktop) */}
       <button
         onClick={toggleViewMode}
-        className="hidden md:flex fixed bottom-8 left-1/2 -translate-x-1/2 z-50 
-                   p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
-                   hover:bg-white/10 transition-all duration-300"
-        style={{
-          opacity: mounted ? 1 : 0,
-          transform: mounted ? 'translateY(0)' : 'translateY(20px)',
-          transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 500ms'
-        }}
+        className="hidden md:flex fixed bottom-8 left-1/2 z-50 
+                   px-4 py-2 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
+                   hover:bg-white/10 transition-colors duration-300
+                   items-center gap-2 text-white/70 hover:text-white"
+        style={{ transform: 'translateX(-50%)' }}
       >
-        <div className="px-4 py-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 
-                        text-white shadow-lg shadow-blue-500/20 flex items-center gap-2">
-          {viewMode === 'orbit' ? <List className="w-4 h-4" strokeWidth={1.5} /> : <Orbit className="w-4 h-4" strokeWidth={1.5} />}
-          <span className="text-sm font-medium">
-            {viewMode === 'orbit' ? 'Modo Lista' : 'Modo Órbita'}
-          </span>
-        </div>
+        {viewMode === 'orbit' ? <List className="w-4 h-4" strokeWidth={1.5} /> : <Orbit className="w-4 h-4" strokeWidth={1.5} />}
+        <span className="text-sm font-medium">
+          {viewMode === 'orbit' ? 'Modo Lista' : 'Modo Órbita'}
+        </span>
       </button>
     </div>
   );
