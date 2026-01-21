@@ -1,0 +1,408 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  DollarSign, 
+  Package, 
+  Truck, 
+  Wrench, 
+  User, 
+  MapPin, 
+  Calendar, 
+  CreditCard, 
+  FileText,
+  Edit,
+  ExternalLink
+} from "lucide-react";
+
+interface Produto {
+  id: string;
+  tipo_produto: string;
+  largura: number;
+  altura: number;
+  quantidade: number;
+  valor_unitario: number;
+  valor_total: number;
+  desconto_percentual: number;
+  catalogo_cores?: { nome: string; codigo_hex: string } | null;
+}
+
+interface Atendente {
+  id: string;
+  nome: string;
+  foto_perfil_url: string | null;
+}
+
+interface Venda {
+  id: string;
+  data_venda: string;
+  valor_venda: number;
+  valor_produtos: number | null;
+  valor_instalacao: number | null;
+  valor_frete: number | null;
+  forma_pagamento: string | null;
+  previsao_entrega: string | null;
+  publico_alvo: string | null;
+  cliente_nome: string;
+  cliente_telefone: string | null;
+  cliente_email: string | null;
+  cpf_cliente: string | null;
+  estado: string | null;
+  cidade: string | null;
+  bairro: string | null;
+  cep: string | null;
+  endereco: string | null;
+  observacoes_venda: string | null;
+  comprovante_url: string | null;
+  atendente_id: string | null;
+  produtos?: Produto[];
+  atendente?: Atendente;
+}
+
+export default function VendaDetalhesDirecao() {
+  const { id } = useParams<{ id: string }>();
+  const [venda, setVenda] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const { isAdmin } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (id) {
+      fetchVendaDetails();
+    }
+  }, [id]);
+
+  const fetchVendaDetails = async () => {
+    if (!id) return;
+    
+    try {
+      setLoading(true);
+
+      // Buscar venda com produtos e atendente
+      const { data: vendaData, error: vendaError } = await supabase
+        .from("vendas")
+        .select(`
+          *,
+          produtos:produtos_vendas(
+            id,
+            tipo_produto,
+            largura,
+            altura,
+            quantidade,
+            valor_unitario,
+            valor_total,
+            desconto_percentual,
+            catalogo_cores(nome, codigo_hex)
+          ),
+          atendente:admin_users!vendas_atendente_id_fkey(
+            id,
+            nome,
+            foto_perfil_url
+          )
+        `)
+        .eq("id", id)
+        .single();
+
+      if (vendaError) throw vendaError;
+      setVenda(vendaData);
+    } catch (error) {
+      console.error("Erro ao buscar detalhes da venda:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao carregar detalhes da venda",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("pt-BR");
+  };
+
+  const getTipoProdutoBadge = (tipo: string) => {
+    const tipos: Record<string, { label: string; color: string }> = {
+      'porta_enrolar': { label: 'Porta Enrolar', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+      'porta_seccionada': { label: 'Porta Seccionada', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+      'porta_rapida': { label: 'Porta Rápida', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+      'servico': { label: 'Serviço', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
+      'acessorio': { label: 'Acessório', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
+    };
+    const info = tipos[tipo] || { label: tipo, color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' };
+    return <Badge className={`${info.color} border`}>{info.label}</Badge>;
+  };
+
+  if (loading) {
+    return (
+      <MinimalistLayout title="Detalhes da Venda" backPath="/direcao/vendas">
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-white/60">Carregando detalhes da venda...</p>
+          </div>
+        </div>
+      </MinimalistLayout>
+    );
+  }
+
+  if (!venda) {
+    return (
+      <MinimalistLayout title="Detalhes da Venda" backPath="/direcao/vendas">
+        <div className="text-center py-8">
+          <p className="text-white/60">Venda não encontrada</p>
+          <Button onClick={() => navigate("/direcao/vendas")} className="mt-4">
+            Voltar para Vendas
+          </Button>
+        </div>
+      </MinimalistLayout>
+    );
+  }
+
+  const cardClass = "bg-primary/5 border border-primary/10 backdrop-blur-xl rounded-xl p-4";
+
+  return (
+    <MinimalistLayout 
+      title="Detalhes da Venda" 
+      backPath="/direcao/vendas"
+      headerActions={
+        isAdmin && (
+          <Button 
+            onClick={() => navigate(`/dashboard/vendas/${id}/editar`)}
+            size="sm"
+            className="bg-primary/20 hover:bg-primary/30 border border-primary/30"
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Editar
+          </Button>
+        )
+      }
+    >
+      <div className="space-y-6">
+        {/* Cards financeiros */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className={`${cardClass} border-l-4 border-l-green-500`}>
+            <div className="flex items-center gap-2 text-white/60 text-sm mb-1">
+              <DollarSign className="w-4 h-4" />
+              Valor Total
+            </div>
+            <p className="text-xl font-bold text-green-400">{formatCurrency(venda.valor_venda)}</p>
+          </div>
+          
+          <div className={`${cardClass} border-l-4 border-l-blue-500`}>
+            <div className="flex items-center gap-2 text-white/60 text-sm mb-1">
+              <Package className="w-4 h-4" />
+              Produtos
+            </div>
+            <p className="text-xl font-bold text-blue-400">{formatCurrency(venda.valor_produtos || 0)}</p>
+          </div>
+          
+          <div className={`${cardClass} border-l-4 border-l-orange-500`}>
+            <div className="flex items-center gap-2 text-white/60 text-sm mb-1">
+              <Wrench className="w-4 h-4" />
+              Instalação
+            </div>
+            <p className="text-xl font-bold text-orange-400">{formatCurrency(venda.valor_instalacao || 0)}</p>
+          </div>
+          
+          <div className={`${cardClass} border-l-4 border-l-purple-500`}>
+            <div className="flex items-center gap-2 text-white/60 text-sm mb-1">
+              <Truck className="w-4 h-4" />
+              Frete
+            </div>
+            <p className="text-xl font-bold text-purple-400">{formatCurrency(venda.valor_frete || 0)}</p>
+          </div>
+        </div>
+
+        {/* Produtos */}
+        {venda.produtos && venda.produtos.length > 0 && (
+          <div className={cardClass}>
+            <h3 className="text-white font-medium mb-4 flex items-center gap-2">
+              <Package className="w-5 h-5 text-primary" />
+              Produtos da Venda ({venda.produtos.length})
+            </h3>
+            <div className="space-y-3">
+              {venda.produtos.map((produto) => (
+                <div 
+                  key={produto.id} 
+                  className="bg-primary/5 border border-primary/10 rounded-lg p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+                >
+                  <div className="flex items-start gap-3">
+                    {getTipoProdutoBadge(produto.tipo_produto)}
+                    <div>
+                      <div className="flex items-center gap-2 text-white/80 text-sm">
+                        <span>Qtd: {produto.quantidade}x</span>
+                        {produto.largura > 0 && produto.altura > 0 && (
+                          <span className="text-white/60">
+                            ({produto.largura.toFixed(2)} x {produto.altura.toFixed(2)}m)
+                          </span>
+                        )}
+                      </div>
+                      {produto.catalogo_cores && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <div 
+                            className="w-3 h-3 rounded-full border border-white/20" 
+                            style={{ backgroundColor: produto.catalogo_cores.codigo_hex }}
+                          />
+                          <span className="text-xs text-white/60">{produto.catalogo_cores.nome}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white font-medium">{formatCurrency(produto.valor_total)}</p>
+                    {produto.desconto_percentual > 0 && (
+                      <p className="text-xs text-orange-400">-{produto.desconto_percentual}% desconto</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Grid cliente e informações */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Cliente */}
+          <div className={cardClass}>
+            <h3 className="text-white font-medium mb-4 flex items-center gap-2">
+              <User className="w-5 h-5 text-primary" />
+              Cliente
+            </h3>
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs text-white/60 uppercase tracking-wide">Nome</p>
+                <p className="text-white">{venda.cliente_nome}</p>
+              </div>
+              {venda.cliente_telefone && (
+                <div>
+                  <p className="text-xs text-white/60 uppercase tracking-wide">Telefone</p>
+                  <p className="text-white">{venda.cliente_telefone}</p>
+                </div>
+              )}
+              {venda.cliente_email && (
+                <div>
+                  <p className="text-xs text-white/60 uppercase tracking-wide">Email</p>
+                  <p className="text-white">{venda.cliente_email}</p>
+                </div>
+              )}
+              {venda.cpf_cliente && (
+                <div>
+                  <p className="text-xs text-white/60 uppercase tracking-wide">CPF/CNPJ</p>
+                  <p className="text-white">{venda.cpf_cliente}</p>
+                </div>
+              )}
+              {(venda.cidade || venda.estado) && (
+                <div className="flex items-center gap-2 text-white/80 pt-2 border-t border-primary/10">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  <span>{[venda.cidade, venda.estado].filter(Boolean).join(' - ')}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Informações da Venda */}
+          <div className={cardClass}>
+            <h3 className="text-white font-medium mb-4 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              Informações
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-white/60">
+                  <Calendar className="w-4 h-4" />
+                  Data da Venda
+                </div>
+                <p className="text-white">{formatDate(venda.data_venda)}</p>
+              </div>
+              {venda.previsao_entrega && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-white/60">
+                    <Truck className="w-4 h-4" />
+                    Previsão Entrega
+                  </div>
+                  <p className="text-white">{formatDate(venda.previsao_entrega)}</p>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-white/60">
+                  <CreditCard className="w-4 h-4" />
+                  Pagamento
+                </div>
+                <p className="text-white">{venda.forma_pagamento || 'Não informado'}</p>
+              </div>
+              {venda.publico_alvo && (
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Público Alvo</span>
+                  <Badge variant="outline" className="text-white/80 border-primary/30">
+                    {venda.publico_alvo}
+                  </Badge>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Vendedor */}
+        {venda.atendente && (
+          <div className={cardClass}>
+            <h3 className="text-white font-medium mb-3">Vendedor Responsável</h3>
+            <div className="flex items-center gap-3">
+              {venda.atendente.foto_perfil_url ? (
+                <img 
+                  src={venda.atendente.foto_perfil_url} 
+                  alt={venda.atendente.nome}
+                  className="w-10 h-10 rounded-full object-cover border border-primary/20"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <User className="w-5 h-5 text-primary" />
+                </div>
+              )}
+              <span className="text-white">{venda.atendente.nome}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Comprovante */}
+        {venda.comprovante_url && (
+          <div className={cardClass}>
+            <h3 className="text-white font-medium mb-3">Comprovante</h3>
+            <a 
+              href={venda.comprovante_url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Ver comprovante anexado
+            </a>
+          </div>
+        )}
+
+        {/* Observações */}
+        {venda.observacoes_venda && (
+          <div className={cardClass}>
+            <h3 className="text-white font-medium mb-3">Observações</h3>
+            <p className="text-white/80 bg-primary/5 p-3 rounded-lg border border-primary/10">
+              {venda.observacoes_venda}
+            </p>
+          </div>
+        )}
+      </div>
+    </MinimalistLayout>
+  );
+}

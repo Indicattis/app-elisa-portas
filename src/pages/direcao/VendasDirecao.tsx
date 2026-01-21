@@ -534,7 +534,7 @@ export default function VendasDirecao() {
                 <TableRow 
                   key={venda.id} 
                   className="border-primary/10 hover:bg-primary/5 cursor-pointer"
-                  onClick={() => navigate(`/dashboard/vendas/${venda.id}`)}
+                  onClick={() => navigate(`/direcao/vendas/${venda.id}`)}
                 >
                   {visibleColumns.map(column => (
                     <TableCell 
