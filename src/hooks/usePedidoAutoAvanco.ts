@@ -58,6 +58,22 @@ export function usePedidoAutoAvanco() {
         }
       }
 
+      // 3. Verificar se há linhas com problema
+      const { data: linhasComProblema, error: linhasProblemaError } = await supabase
+        .from('linhas_ordens')
+        .select('id')
+        .eq('pedido_id', pedidoId)
+        .eq('com_problema', true)
+        .in('tipo_ordem', ['soldagem', 'perfiladeira', 'separacao'])
+        .limit(1);
+
+      if (linhasProblemaError) throw linhasProblemaError;
+
+      if (linhasComProblema && linhasComProblema.length > 0) {
+        console.log('[Auto-Avanço] Há linhas com problema - bloqueando avanço');
+        return false;
+      }
+
       return true;
     } catch (error) {
       console.error('Erro ao verificar ordens de produção:', error);

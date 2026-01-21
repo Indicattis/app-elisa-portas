@@ -16,6 +16,10 @@ interface LinhaOrdem {
   estoque_id?: string;
   largura?: number;
   altura?: number;
+  com_problema?: boolean;
+  problema_descricao?: string;
+  problema_reportado_em?: string;
+  problema_reportado_por?: string;
 }
 
 interface ObservacaoVisita {
@@ -465,11 +469,25 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         tempo_conclusao_segundos = Math.floor((agora.getTime() - captura.getTime()) / 1000);
       }
 
+      // Marcar todas as linhas da ordem como concluídas
+      const { error: linhasError } = await supabase
+        .from('linhas_ordens')
+        .update({ 
+          concluida: true, 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('ordem_id', ordemId)
+        .eq('tipo_ordem', tipoOrdem);
+
+      if (linhasError) {
+        console.error('Erro ao marcar linhas como concluídas:', linhasError);
+      }
+
       // Atualizar ordem como concluída E enviar para histórico
       const { error } = await supabase
         .from(tabelaOrdem)
         .update({ 
-          status: 'concluido', 
+          status: 'concluido',
           data_conclusao: new Date().toISOString(),
           tempo_conclusao_segundos,
           historico: true, // Enviar diretamente para histórico
@@ -623,9 +641,112 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     },
   });
 
-  // Modificar capturarOrdem para lidar com ordens pausadas
-  // A lógica já está no capturarOrdem existente, mas precisamos resetar os campos de pausa
-  // Isso é feito automaticamente quando capturada - adicionamos ao update
+  // Marcar linha com problema (Falta/Problema)
+  const marcarLinhaComProblema = useMutation({
+    mutationFn: async ({ linhaId, ordemId, descricao }: { linhaId: string; ordemId: string; descricao: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      const tabelaOrdem = TABELA_MAP[tipoOrdem] as 'ordens_separacao' | 'ordens_perfiladeira' | 'ordens_soldagem';
+
+      // 1. Marcar a linha com problema
+      const { error: linhaError } = await supabase
+        .from('linhas_ordens')
+        .update({
+          com_problema: true,
+          problema_descricao: descricao,
+          problema_reportado_em: new Date().toISOString(),
+          problema_reportado_por: user.id,
+        })
+        .eq('id', linhaId);
+
+      if (linhaError) throw linhaError;
+
+      // 2. Buscar ordem para calcular tempo trabalhado até agora
+      const { data: ordem, error: ordemError } = await supabase
+        .from(tabelaOrdem)
+        .select('capturada_em, tempo_acumulado_segundos')
+        .eq('id', ordemId)
+        .single();
+
+      if (ordemError) throw ordemError;
+      if (!ordem) throw new Error('Ordem não encontrada');
+
+      // 3. Calcular tempo trabalhado nesta sessão
+      let tempoSessao = 0;
+      if (ordem.capturada_em) {
+        const captura = new Date(ordem.capturada_em);
+        const agora = new Date();
+        tempoSessao = Math.floor((agora.getTime() - captura.getTime()) / 1000);
+      }
+
+      const tempoTotal = (ordem.tempo_acumulado_segundos || 0) + tempoSessao;
+
+      // 4. Pausar a ordem automaticamente
+      const { error: pausaError } = await supabase
+        .from(tabelaOrdem)
+        .update({
+          pausada: true,
+          pausada_em: new Date().toISOString(),
+          justificativa_pausa: `Falta/Problema em item: ${descricao}`,
+          tempo_acumulado_segundos: tempoTotal,
+          responsavel_id: null, // Liberar a ordem
+        })
+        .eq('id', ordemId);
+
+      if (pausaError) throw pausaError;
+
+      return { linhaId, ordemId };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao', tipoOrdem] });
+      toast({
+        title: "Problema registrado",
+        description: "O item foi marcado com problema e a ordem foi pausada.",
+      });
+    },
+    onError: (error: Error) => {
+      console.error('Erro ao marcar linha com problema:', error);
+      toast({
+        title: "Erro ao registrar problema",
+        description: error.message || "Não foi possível registrar o problema.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Resolver problema de uma linha
+  const resolverProblemaLinha = useMutation({
+    mutationFn: async ({ linhaId }: { linhaId: string }) => {
+      const { error } = await supabase
+        .from('linhas_ordens')
+        .update({
+          com_problema: false,
+          problema_descricao: null,
+          problema_reportado_em: null,
+          problema_reportado_por: null,
+        })
+        .eq('id', linhaId);
+
+      if (error) throw error;
+      return linhaId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao', tipoOrdem] });
+      toast({
+        title: "Problema resolvido",
+        description: "O item foi marcado como disponível.",
+      });
+    },
+    onError: (error: Error) => {
+      console.error('Erro ao resolver problema:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível resolver o problema.",
+        variant: "destructive",
+      });
+    },
+  });
 
   return {
     ordens,
@@ -636,5 +757,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     concluirOrdem,
     enviarParaHistorico,
     pausarOrdem,
+    marcarLinhaComProblema,
+    resolverProblemaLinha,
   };
 }

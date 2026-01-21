@@ -27,6 +27,7 @@ import { gerarPDFEtiquetaProducao, gerarPDFEtiquetasProducaoMultiplas } from "@/
 import { RetornarProducaoModal } from "./RetornarProducaoModal";
 import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
 import { AvisoFaltaModal } from "./AvisoFaltaModal";
+import { InformarFaltaLinhaModal } from "./InformarFaltaLinhaModal";
 import { formatarTamanho, formatarDimensoes } from "@/utils/formatters";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
@@ -44,6 +45,8 @@ interface LinhaOrdem {
   altura?: number;
   estoque_id?: string;
   requer_pintura?: boolean;
+  com_problema?: boolean;
+  problema_descricao?: string;
 }
 
 interface ObservacaoVisita {
@@ -108,6 +111,8 @@ interface OrdemDetalhesSheetProps {
   onRetornarProducao?: () => void;
   onPausarOrdem?: (ordemId: string, justificativa: string) => Promise<void>;
   isPausing?: boolean;
+  onMarcarLinhaProblema?: (linhaId: string, ordemId: string, descricao: string) => void;
+  isMarkingProblem?: boolean;
 }
 
 const TIPO_LABELS: Record<TipoOrdem, string> = {
@@ -143,18 +148,24 @@ export function OrdemDetalhesSheet({
   onRetornarProducao,
   onPausarOrdem,
   isPausing = false,
+  onMarcarLinhaProblema,
+  isMarkingProblem = false,
 }: OrdemDetalhesSheetProps) {
   const { user } = useAuth();
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const [retornarModalOpen, setRetornarModalOpen] = useState(false);
   const [avisoFaltaModalOpen, setAvisoFaltaModalOpen] = useState(false);
+  const [linhaProblemaModalOpen, setLinhaProblemaModalOpen] = useState(false);
+  const [linhaSelecionada, setLinhaSelecionada] = useState<LinhaOrdem | null>(null);
   const { buscarDadosOrdem } = useOrdemPDFData();
   const { calcularEtiquetasLinha } = useEtiquetasProducao();
   const { encontrarRegraAplicavel, encontrarRegraPorNome } = useRegrasEtiquetas();
   
   const linhas = ordem?.linhas || [];
   const linhasConcluidas = linhas.filter(l => l.concluida).length;
+  const linhasComProblema = linhas.filter(l => l.com_problema).length;
   const todasConcluidas = linhas.length === 0 || linhas.every(l => l.concluida);
+  const temLinhaComProblema = linhasComProblema > 0;
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
   
   const { tempoDecorrido, deveAnimar } = useCronometroOrdem({
@@ -443,7 +454,7 @@ export function OrdemDetalhesSheet({
           </div>
           
           {/* Botão de concluir no header quando todos os itens estão marcados */}
-          {todasConcluidas && linhas.length > 0 && podeMarcarLinhas && ordem.status !== 'concluido' && ordem.status !== 'pronta' && (
+          {todasConcluidas && linhas.length > 0 && podeMarcarLinhas && ordem.status !== 'concluido' && ordem.status !== 'pronta' && !temLinhaComProblema && (
             <div className="mt-4">
               {tipoOrdem === 'pintura' ? (
                 <Button
@@ -464,6 +475,16 @@ export function OrdemDetalhesSheet({
                   {isUpdating ? "Concluindo..." : "Concluir Ordem"}
                 </Button>
               )}
+            </div>
+          )}
+
+          {/* Alerta quando há linha com problema */}
+          {temLinhaComProblema && podeMarcarLinhas && ordem.status !== 'concluido' && ordem.status !== 'pronta' && (
+            <div className="mt-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
+              <div className="flex items-center gap-2 text-red-700 dark:text-red-300 text-sm font-medium">
+                <AlertTriangle className="h-4 w-4" />
+                {linhasComProblema} {linhasComProblema === 1 ? 'item com problema' : 'itens com problema'} - não é possível concluir
+              </div>
             </div>
           )}
         </div>
@@ -743,58 +764,100 @@ export function OrdemDetalhesSheet({
               ) : (
                 // Renderização normal para outras ordens
                 linhas.map((linha) => (
-                  <Label
+                  <div
                     key={linha.id}
-                    htmlFor={`checkbox-${linha.id}`}
-                    className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                    className={`p-4 rounded-lg border bg-card transition-colors ${
+                      linha.com_problema 
+                        ? 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/20' 
+                        : 'hover:bg-accent/50'
+                    }`}
                   >
-                    <Checkbox
-                      id={`checkbox-${linha.id}`}
-                      checked={linha.concluida}
-                      onCheckedChange={(checked) => onMarcarLinha(linha.id, checked as boolean)}
-                      disabled={ordem.status === 'concluido' || ordem.status === 'pronta' || isUpdating || !podeMarcarLinhas}
-                      className="mt-1"
-                    />
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        {linha.concluida ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
-                        ) : (
-                          <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    <Label
+                      htmlFor={`checkbox-${linha.id}`}
+                      className="flex items-start gap-4 cursor-pointer"
+                    >
+                      <Checkbox
+                        id={`checkbox-${linha.id}`}
+                        checked={linha.concluida}
+                        onCheckedChange={(checked) => onMarcarLinha(linha.id, checked as boolean)}
+                        disabled={ordem.status === 'concluido' || ordem.status === 'pronta' || isUpdating || !podeMarcarLinhas || linha.com_problema}
+                        className="mt-1"
+                      />
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          {linha.com_problema ? (
+                            <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                          ) : linha.concluida ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+                          ) : (
+                            <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                          )}
+                          <span className={`text-base font-medium ${
+                            linha.com_problema 
+                              ? 'text-red-700 dark:text-red-300' 
+                              : linha.concluida 
+                                ? 'line-through text-muted-foreground' 
+                                : ''
+                          }`}>
+                            {linha.item}
+                          </span>
+                        </div>
+                        
+                        {/* Mostrar descrição do problema se houver */}
+                        {linha.com_problema && linha.problema_descricao && (
+                          <div className="mt-2 p-2 rounded bg-red-100 dark:bg-red-900/30 text-sm text-red-700 dark:text-red-300">
+                            <strong>Problema:</strong> {linha.problema_descricao}
+                          </div>
                         )}
-                        <span className={`text-base font-medium ${linha.concluida ? 'line-through text-muted-foreground' : ''}`}>
-                          {linha.item}
-                        </span>
+                        
+                        <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
+                          <span>Qtd: {linha.quantidade}</span>
+                          {linha.tamanho && <span>Tamanho: {formatarTamanho(linha.tamanho)}</span>}
+                          {getEtiquetasRecomendadas(linha) !== null && (
+                            <Badge variant="outline" className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/30">
+                              <Tags className="h-3 w-3 mr-1" />
+                              {getEtiquetasRecomendadas(linha)} etiq.
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       
-                      <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>Qtd: {linha.quantidade}</span>
-                        {linha.tamanho && <span>Tamanho: {formatarTamanho(linha.tamanho)}</span>}
-                        {getEtiquetasRecomendadas(linha) !== null && (
-                          <Badge variant="outline" className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/30">
-                            <Tags className="h-3 w-3 mr-1" />
-                            {getEtiquetasRecomendadas(linha)} etiq.
-                          </Badge>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {/* Botão de informar falta - apenas para o responsável e linhas não concluídas */}
+                        {isResponsavel && !linha.concluida && !linha.com_problema && (tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira' || tipoOrdem === 'soldagem') && onMarcarLinhaProblema && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-11 w-11 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setLinhaSelecionada(linha);
+                              setLinhaProblemaModalOpen(true);
+                            }}
+                            title="Informar falta/problema"
+                          >
+                            <AlertTriangle className="h-5 w-5" />
+                          </Button>
+                        )}
+                        
+                        {isResponsavel && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-11 w-11 p-0 flex-shrink-0"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleImprimirEtiqueta(linha);
+                            }}
+                            title="Imprimir etiqueta"
+                          >
+                            <Printer className="h-5 w-5" />
+                          </Button>
                         )}
                       </div>
-                    </div>
-                    
-                    {isResponsavel && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-11 w-11 p-0 flex-shrink-0"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleImprimirEtiqueta(linha);
-                        }}
-                        title="Imprimir etiqueta"
-                      >
-                        <Printer className="h-5 w-5" />
-                      </Button>
-                    )}
-                  </Label>
+                    </Label>
+                  </div>
                 ))
               )}
 
@@ -882,7 +945,7 @@ export function OrdemDetalhesSheet({
           />
         )}
 
-        {/* Modal de Aviso de Falta */}
+        {/* Modal de Aviso de Falta (ordem inteira) */}
       {(tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira' || tipoOrdem === 'soldagem') && ordem && onPausarOrdem && (
         <AvisoFaltaModal
           open={avisoFaltaModalOpen}
@@ -893,6 +956,25 @@ export function OrdemDetalhesSheet({
             onOpenChange(false);
           }}
           isPausing={isPausing}
+        />
+      )}
+
+      {/* Modal de Informar Falta por Linha */}
+      {linhaSelecionada && onMarcarLinhaProblema && (
+        <InformarFaltaLinhaModal
+          open={linhaProblemaModalOpen}
+          onOpenChange={(open) => {
+            setLinhaProblemaModalOpen(open);
+            if (!open) setLinhaSelecionada(null);
+          }}
+          nomeItem={linhaSelecionada.item}
+          onConfirm={async (descricao) => {
+            onMarcarLinhaProblema(linhaSelecionada.id, ordem.id, descricao);
+            setLinhaProblemaModalOpen(false);
+            setLinhaSelecionada(null);
+            onOpenChange(false);
+          }}
+          isSubmitting={isMarkingProblem}
         />
       )}
       </SheetContent>

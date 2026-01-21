@@ -2348,6 +2348,7 @@ export type Database = {
       linhas_ordens: {
         Row: {
           altura: number | null
+          com_problema: boolean | null
           concluida: boolean | null
           concluida_em: string | null
           concluida_por: string | null
@@ -2361,6 +2362,9 @@ export type Database = {
           ordem_id: string | null
           pedido_id: string
           pedido_linha_id: string | null
+          problema_descricao: string | null
+          problema_reportado_em: string | null
+          problema_reportado_por: string | null
           produto_venda_id: string | null
           quantidade: number
           tamanho: string | null
@@ -2370,6 +2374,7 @@ export type Database = {
         }
         Insert: {
           altura?: number | null
+          com_problema?: boolean | null
           concluida?: boolean | null
           concluida_em?: string | null
           concluida_por?: string | null
@@ -2383,6 +2388,9 @@ export type Database = {
           ordem_id?: string | null
           pedido_id: string
           pedido_linha_id?: string | null
+          problema_descricao?: string | null
+          problema_reportado_em?: string | null
+          problema_reportado_por?: string | null
           produto_venda_id?: string | null
           quantidade?: number
           tamanho?: string | null
@@ -2392,6 +2400,7 @@ export type Database = {
         }
         Update: {
           altura?: number | null
+          com_problema?: boolean | null
           concluida?: boolean | null
           concluida_em?: string | null
           concluida_por?: string | null
@@ -2405,6 +2414,9 @@ export type Database = {
           ordem_id?: string | null
           pedido_id?: string
           pedido_linha_id?: string | null
+          problema_descricao?: string | null
+          problema_reportado_em?: string | null
+          problema_reportado_por?: string | null
           produto_venda_id?: string | null
           quantidade?: number
           tamanho?: string | null
