@@ -138,9 +138,9 @@ export default function Auth() {
               {/* CPF field */}
               <div className="space-y-2">
                 <Input 
-                  type="text"
+                  type="password"
                   inputMode="numeric"
-                  placeholder="000.000.000-00"
+                  placeholder="•••.•••.•••-••"
                   value={cpf}
                   onChange={handleCpfChange}
                   className="text-center text-lg tracking-wider bg-white/5 border-primary/20 text-white placeholder:text-white/30 focus:ring-2 focus:ring-primary/30"
