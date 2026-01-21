@@ -45,6 +45,7 @@ export function usePedidosContadores() {
         aguardando_pintura: 0,
         aguardando_coleta: 0,
         aguardando_instalacao: 0,
+        instalacoes: 0,
         finalizado: 0,
       };
 

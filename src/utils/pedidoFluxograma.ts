@@ -37,6 +37,11 @@ export const FLUXOGRAMA_ETAPAS: Record<EtapaPedido, FluxogramaEtapa> = {
     label: 'Expedição Instalação',
     color: 'bg-cyan-500'
   },
+  instalacoes: {
+    id: 'instalacoes',
+    label: 'Instalações',
+    color: 'bg-teal-500'
+  },
   finalizado: {
     id: 'finalizado',
     label: 'Finalizado',
@@ -100,6 +105,7 @@ export function determinarFluxograma(pedido: any): FluxogramaEtapa[] {
     baseFlow.push(FLUXOGRAMA_ETAPAS.aguardando_coleta);
   } else if (tipoEntrega === 'instalacao') {
     baseFlow.push(FLUXOGRAMA_ETAPAS.aguardando_instalacao);
+    baseFlow.push(FLUXOGRAMA_ETAPAS.instalacoes);
   }
   
   // Finalizado é sempre a última etapa

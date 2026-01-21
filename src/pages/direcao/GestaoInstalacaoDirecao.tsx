@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Truck, CalendarDays, ClipboardList } from "lucide-react";
+import { Truck, CalendarDays, ClipboardList, HardHat } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 
 const menuItems = [
+  {
+    title: "Ordens de Instalação",
+    description: "Gerenciar instalações em andamento",
+    icon: HardHat,
+    path: "/direcao/gestao-instalacao/ordens-instalacoes",
+  },
   {
     title: "Calendário Expedição",
     description: "Agendamento de carregamentos",

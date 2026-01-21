@@ -5,6 +5,7 @@ export type EtapaPedido =
   | 'aguardando_pintura'
   | 'aguardando_coleta'
   | 'aguardando_instalacao'
+  | 'instalacoes'
   | 'finalizado';
 
 export interface PedidoCheckbox {
@@ -90,6 +91,12 @@ export const ETAPAS_CONFIG: Record<EtapaPedido, {
       { id: 'cliente_contatado', label: 'Cliente contatado', required: true }
     ]
   },
+  instalacoes: {
+    label: 'Instalações',
+    color: 'bg-teal-500',
+    icon: 'HardHat',
+    checkboxes: []
+  },
   finalizado: {
     label: 'Finalizado',
     color: 'bg-green-500',
@@ -105,6 +112,7 @@ export const ORDEM_ETAPAS: EtapaPedido[] = [
   'aguardando_pintura',
   'aguardando_coleta',
   'aguardando_instalacao',
+  'instalacoes',
   'finalizado'
 ];
 
