@@ -378,7 +378,15 @@ export default function VendasDirecao() {
 
   if (isLoading) {
     return (
-      <MinimalistLayout title="Vendas" backPath="/direcao">
+      <MinimalistLayout 
+        title="Vendas" 
+        backPath="/direcao"
+        breadcrumbItems={[
+          { label: "Home", path: "/home" },
+          { label: "Direção", path: "/direcao" },
+          { label: "Vendas" }
+        ]}
+      >
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
         </div>
@@ -391,6 +399,11 @@ export default function VendasDirecao() {
       title="Vendas" 
       subtitle="Todas as vendas do período"
       backPath="/direcao"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Direção", path: "/direcao" },
+        { label: "Vendas" }
+      ]}
       headerActions={headerActions}
     >
       {/* Grid Faturamento Mensal */}

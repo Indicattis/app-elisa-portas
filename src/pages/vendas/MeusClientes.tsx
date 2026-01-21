@@ -53,6 +53,11 @@ export default function MeusClientes() {
     <MinimalistLayout 
       title="Meus Clientes" 
       subtitle={`${clientesFiltrados.length} cliente${clientesFiltrados.length !== 1 ? 's' : ''}`}
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Vendas", path: "/vendas" },
+        { label: "Meus Clientes" }
+      ]}
       headerActions={
         <Button 
           onClick={() => navigate('/dashboard/clientes')}

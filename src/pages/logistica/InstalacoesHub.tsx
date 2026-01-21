@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, CalendarDays, ArrowLeft } from "lucide-react";
+import { Users, CalendarDays } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
+import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 
 const menuItems = [
   {
@@ -19,27 +21,28 @@ const menuItems = [
 
 export default function InstalacoesHub() {
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative">
+      {/* Breadcrumb */}
+      <AnimatedBreadcrumb 
+        items={[
+          { label: "Home", path: "/home" },
+          { label: "Logística", path: "/logistica" },
+          { label: "Instalações" }
+        ]} 
+        mounted={mounted} 
+      />
+
       <SpaceParticles />
       
-      <div className="relative z-10 min-h-screen flex flex-col">
-        {/* Header */}
-        <header className="sticky top-0 z-20 px-4 py-4 bg-black/80 backdrop-blur-md border-b border-primary/10">
-          <div className="max-w-7xl mx-auto flex items-center gap-4">
-            <button
-              onClick={() => navigate('/logistica')}
-              className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-white/80" />
-            </button>
-            <div>
-              <h1 className="text-lg font-semibold text-white">Instalações</h1>
-              <p className="text-sm text-white/60">Selecione a área</p>
-            </div>
-          </div>
-        </header>
+      <div className="relative z-10 min-h-screen flex flex-col pt-14">
 
         {/* Conteúdo */}
         <main className="flex-1 flex items-center justify-center p-4">

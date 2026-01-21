@@ -1,7 +1,7 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
 import { SpaceParticles } from './SpaceParticles';
+import { AnimatedBreadcrumb, BreadcrumbItem } from './AnimatedBreadcrumb';
 
 interface MinimalistLayoutProps {
   title: string;
@@ -10,6 +10,7 @@ interface MinimalistLayoutProps {
   children: ReactNode;
   headerActions?: ReactNode;
   showParticles?: boolean;
+  breadcrumbItems?: BreadcrumbItem[];
 }
 
 export function MinimalistLayout({ 
@@ -18,27 +19,33 @@ export function MinimalistLayout({
   backPath = '/vendas', 
   children,
   headerActions,
-  showParticles = false
+  showParticles = false,
+  breadcrumbItems
 }: MinimalistLayoutProps) {
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative">
+      {/* Breadcrumb animado */}
+      {breadcrumbItems && breadcrumbItems.length > 0 && (
+        <AnimatedBreadcrumb items={breadcrumbItems} mounted={mounted} />
+      )}
+
       {/* Partículas espaciais de fundo - apenas se showParticles = true */}
       {showParticles && <SpaceParticles />}
       
       {/* Container principal */}
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header minimalista */}
-        <header className="sticky top-0 z-20 px-4 py-4 bg-black/80 backdrop-blur-md border-b border-primary/10">
+        <header className="sticky top-0 z-20 px-4 py-4 bg-black/80 backdrop-blur-md border-b border-primary/10 mt-14">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate(backPath)}
-                className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-white/80" />
-              </button>
               <div>
                 <h1 className="text-lg font-semibold text-white">{title}</h1>
                 {subtitle && (

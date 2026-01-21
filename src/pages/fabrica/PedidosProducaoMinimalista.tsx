@@ -214,7 +214,15 @@ export default function PedidosProducaoMinimalista() {
   };
 
   return (
-    <MinimalistLayout title="Gestão de Pedidos" backPath="/fabrica">
+    <MinimalistLayout 
+      title="Gestão de Pedidos" 
+      backPath="/fabrica"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Fábrica", path: "/fabrica" },
+        { label: "Pedidos em Produção" }
+      ]}
+    >
       {/* Dashboard de Portas por Etapa */}
       <div className="mb-6">
         <PortasPorEtapa />

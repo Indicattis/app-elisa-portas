@@ -109,6 +109,11 @@ export default function MeusOrcamentos() {
     <MinimalistLayout 
       title="Meus Orçamentos" 
       subtitle={format(mesAtual, "MMMM 'de' yyyy", { locale: ptBR })}
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Vendas", path: "/vendas" },
+        { label: "Meus Orçamentos" }
+      ]}
       headerActions={
         <Button 
           onClick={() => navigate('/dashboard/orcamentos/novo')}

@@ -116,6 +116,11 @@ export default function PedidosAdminMinimalista() {
       title="Pedidos" 
       subtitle={`${pedidosFiltrados.length} pedidos em aberto`}
       backPath="/administrativo"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Administrativo", path: "/administrativo" },
+        { label: "Pedidos" }
+      ]}
     >
       {/* Header com botão de refresh */}
       <div className="flex items-center justify-between mb-4">

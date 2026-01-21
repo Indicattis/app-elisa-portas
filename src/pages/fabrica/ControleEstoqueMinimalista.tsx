@@ -134,7 +134,15 @@ export default function ControleEstoqueMinimalista() {
   };
 
   return (
-    <MinimalistLayout title="Controle de Estoque" backPath="/fabrica">
+    <MinimalistLayout 
+      title="Controle de Estoque" 
+      backPath="/fabrica"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Fábrica", path: "/fabrica" },
+        { label: "Controle de Estoque" }
+      ]}
+    >
       {/* Header com filtros */}
       <div className="mb-6 space-y-4">
         {/* Contadores de status */}

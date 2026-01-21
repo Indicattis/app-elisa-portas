@@ -84,6 +84,11 @@ export default function MeusParceiros() {
     <MinimalistLayout 
       title="Meus Parceiros" 
       subtitle={`${parceirosFiltrados.length} parceiro${parceirosFiltrados.length !== 1 ? 's' : ''}`}
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Vendas", path: "/vendas" },
+        { label: "Meus Parceiros" }
+      ]}
     >
       {/* Cards de contagem */}
       <div className="grid grid-cols-3 gap-4 mb-6">

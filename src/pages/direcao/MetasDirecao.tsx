@@ -51,6 +51,11 @@ export default function MetasDirecao() {
       title="Metas de Produção" 
       subtitle="Desempenho dos colaboradores"
       backPath="/direcao"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Direção", path: "/direcao" },
+        { label: "Metas" }
+      ]}
     >
       {/* Period Info */}
       <div className="mb-6">

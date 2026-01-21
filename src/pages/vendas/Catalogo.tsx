@@ -29,6 +29,11 @@ export default function Catalogo() {
     <MinimalistLayout 
       title="Catálogo" 
       subtitle={`${produtos?.length || 0} produto${(produtos?.length || 0) !== 1 ? 's' : ''}`}
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Vendas", path: "/vendas" },
+        { label: "Catálogo" }
+      ]}
     >
       {/* Filtros */}
       <div className="space-y-4 mb-6">
