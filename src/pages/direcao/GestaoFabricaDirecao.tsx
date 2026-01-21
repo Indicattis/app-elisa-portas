@@ -7,8 +7,10 @@ import { CriarPedidoTesteModal } from "@/components/pedidos/CriarPedidoTesteModa
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
+import { useNeoInstalacoesListagem } from "@/hooks/useNeoInstalacoes";
 import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
 import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMinimalista";
+import { NeoInstalacaoCardGestao } from "@/components/pedidos/NeoInstalacaoCardGestao";
 import { PortasPorEtapa } from "@/components/producao/dashboard/PortasPorEtapa";
 import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
@@ -41,6 +43,7 @@ export default function GestaoFabricaDirecao() {
   const [modalPedidoTesteAberto, setModalPedidoTesteAberto] = useState(false);
   const ITENS_POR_PAGINA = 25;
   const contadores = usePedidosContadores();
+  const { neoInstalacoes, concluirNeoInstalacao, isConcluindo } = useNeoInstalacoesListagem();
   const {
     pedidos,
     isLoading,
@@ -153,7 +156,12 @@ export default function GestaoFabricaDirecao() {
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
     queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+    queryClient.invalidateQueries({ queryKey: ['neo_instalacoes_listagem'] });
     toast({ title: "Atualizado", description: "Lista de pedidos atualizada com sucesso" });
+  };
+
+  const handleConcluirNeoInstalacao = async (id: string) => {
+    await concluirNeoInstalacao(id);
   };
 
   const handleArquivar = async (pedidoId: string) => {
@@ -305,6 +313,27 @@ export default function GestaoFabricaDirecao() {
                   </div>
                 ) : (
                   <>
+                    {/* Neo Instalações - apenas na etapa instalacoes */}
+                    {etapa === 'instalacoes' && neoInstalacoes.length > 0 && (
+                      <div className="mb-4 space-y-2">
+                        <h3 className="text-sm font-medium text-white/70 mb-2">Instalações Avulsas ({neoInstalacoes.length})</h3>
+                        <div className="space-y-1">
+                          {neoInstalacoes.map((neo) => (
+                            <NeoInstalacaoCardGestao
+                              key={neo.id}
+                              neoInstalacao={neo}
+                              viewMode={viewMode}
+                              onConcluir={handleConcluirNeoInstalacao}
+                              isConcluindo={isConcluindo}
+                            />
+                          ))}
+                        </div>
+                        {pedidosFiltrados.length > 0 && (
+                          <h3 className="text-sm font-medium text-white/70 mt-4 mb-2">Pedidos ({pedidosFiltrados.length})</h3>
+                        )}
+                      </div>
+                    )}
+                    
                     <PedidosDraggableList 
                       pedidos={pedidosPaginados}
                       pedidosParaTotais={pedidosFiltrados}

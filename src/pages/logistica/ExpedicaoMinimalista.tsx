@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, CalendarDays, ArrowLeft, LogOut } from "lucide-react";
+import { Calendar, CalendarDays, ArrowLeft, LogOut, Plus } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useOrdensCarregamentoCalendario } from "@/hooks/useOrdensCarregamentoCalendario";
+import { useNeoInstalacoes } from "@/hooks/useNeoInstalacoes";
 import { OrdensCarregamentoDisponiveis } from "@/components/expedicao/OrdensCarregamentoDisponiveis";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
 import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrdemCarregamentoDrawer";
+import { CriarNeoInstalacaoModal } from "@/components/expedicao/CriarNeoInstalacaoModal";
 import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
 import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
@@ -16,10 +18,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addDays, startOfWeek, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
+import { CriarNeoInstalacaoData } from "@/types/neoInstalacao";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-
 export default function ExpedicaoMinimalista() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -32,8 +34,10 @@ export default function ExpedicaoMinimalista() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [editingOrdem, setEditingOrdem] = useState<OrdemCarregamento | null>(null);
+  const [neoModalOpen, setNeoModalOpen] = useState(false);
 
   const { ordens, isLoading, updateOrdem } = useOrdensCarregamentoCalendario(currentDate, viewType);
+  const { neoInstalacoes, createNeoInstalacao, deleteNeoInstalacao } = useNeoInstalacoes(currentDate, viewType);
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -135,6 +139,15 @@ export default function ExpedicaoMinimalista() {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setNeoModalOpen(true)}
+                className="text-white/80 hover:text-white hover:bg-primary/10 text-xs"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Neo Instalação
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -243,6 +256,15 @@ export default function ExpedicaoMinimalista() {
         open={editDrawerOpen}
         onOpenChange={setEditDrawerOpen}
         onSave={handleSaveEdit}
+      />
+
+      {/* Modal Neo Instalação */}
+      <CriarNeoInstalacaoModal
+        open={neoModalOpen}
+        onOpenChange={setNeoModalOpen}
+        onConfirm={async (dados: CriarNeoInstalacaoData) => {
+          await createNeoInstalacao(dados);
+        }}
       />
     </div>
   );
