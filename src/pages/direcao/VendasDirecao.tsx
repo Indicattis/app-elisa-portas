@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useColumnConfig, ColumnConfig } from '@/hooks/useColumnConfig';
 import { ProductIconsSummary } from '@/components/vendas/ProductIconsSummary';
 import { ColumnManager } from '@/components/ColumnManager';
-
+import { FaturamentoMensalGrid } from '@/components/vendas/FaturamentoMensalGrid';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -369,6 +369,9 @@ export default function VendasDirecao() {
       backPath="/direcao"
       headerActions={headerActions}
     >
+      {/* Grid Faturamento Mensal */}
+      <FaturamentoMensalGrid />
+
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
