@@ -1,14 +1,17 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, Users, Phone, Mail } from 'lucide-react';
+import { Plus, Search, Users, Phone, Mail, Target } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import { NovoClienteMinimalistaModal } from '@/components/clientes/NovoClienteMinimalistaModal';
+
+const META_CR = 500;
 
 export default function MeusClientes() {
   const navigate = useNavigate();
@@ -31,7 +34,8 @@ export default function MeusClientes() {
           cidade,
           estado,
           created_at,
-          cpf_cnpj
+          cpf_cnpj,
+          tipo_cliente
         `)
         .eq('created_by', user.id)
         .eq('ativo', true)
@@ -42,6 +46,14 @@ export default function MeusClientes() {
     },
     enabled: !!user?.id
   });
+
+  // Calcular estatísticas de CR
+  const estatisticasCR = useMemo(() => {
+    const total = clientes?.length || 0;
+    const totalCR = clientes?.filter(c => c.tipo_cliente === 'CR').length || 0;
+    const percentual = META_CR > 0 ? (totalCR / META_CR) * 100 : 0;
+    return { total, totalCR, percentual };
+  }, [clientes]);
 
   const clientesFiltrados = clientes?.filter(cliente => 
     cliente.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -69,6 +81,39 @@ export default function MeusClientes() {
         </Button>
       }
     >
+      {/* Card de Meta CR */}
+      <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 mb-6">
+        <div className="p-4 rounded-lg">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <Target className="h-5 w-5 text-emerald-400" />
+              </div>
+              <div>
+                <h3 className="text-white font-medium">Meta de Clientes CR</h3>
+                <p className="text-xs text-white/50">Clientes Recorrentes</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-2xl font-bold text-white">{estatisticasCR.totalCR}</span>
+              <span className="text-white/40 text-lg">/{META_CR}</span>
+            </div>
+          </div>
+          <Progress 
+            value={Math.min(estatisticasCR.percentual, 100)} 
+            className="h-2.5" 
+          />
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-sm text-white/60">
+              {estatisticasCR.percentual.toFixed(1)}% da meta
+            </p>
+            <p className="text-sm text-white/40">
+              {estatisticasCR.total} clientes no total
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Busca */}
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
