@@ -1,19 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, CalendarDays } from "lucide-react";
+import { Users, CalendarDays, ArrowLeft } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 
 const menuItems = [
   {
-    title: "Gestão de Equipes",
-    description: "Gerenciar equipes de instalação",
+    label: "Gestão de Equipes",
     icon: Users,
     path: "/logistica/instalacoes/equipes",
   },
   {
-    title: "Cronograma",
-    description: "Cronograma de instalações",
+    label: "Cronograma",
     icon: CalendarDays,
     path: "/logistica/instalacoes/cronograma",
   },
@@ -29,7 +27,7 @@ export default function InstalacoesHub() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
+    <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
       {/* Breadcrumb */}
       <AnimatedBreadcrumb 
         items={[
@@ -40,37 +38,100 @@ export default function InstalacoesHub() {
         mounted={mounted} 
       />
 
-      <SpaceParticles />
-      
-      <div className="relative z-10 min-h-screen flex flex-col pt-14">
+      {/* Botão Voltar */}
+      <button
+        onClick={() => navigate('/logistica')}
+        className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
+                   hover:bg-white/10 transition-all duration-300"
+        style={{
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? 'translateX(0)' : 'translateX(-20px)',
+          transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 100ms'
+        }}
+      >
+        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20">
+          <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+        </div>
+      </button>
 
-        {/* Conteúdo */}
-        <main className="flex-1 flex items-center justify-center p-4">
-          <div className="flex flex-col items-center gap-3 w-full max-w-md">
-            {menuItems.map((item) => (
-              <button
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                className="w-full max-w-[300px] h-16 rounded-xl
-                           bg-gradient-to-br from-blue-500 to-blue-700
-                           hover:from-blue-400 hover:to-blue-600
-                           flex items-center gap-4 px-4
-                           text-white font-medium 
-                           shadow-lg shadow-blue-500/30
-                           hover:shadow-xl hover:shadow-blue-500/50
-                           hover:scale-105
-                           border border-blue-400/30
+      <SpaceParticles />
+
+      {/* ========== VERSÃO MOBILE ========== */}
+      <div className="md:hidden relative z-10 flex flex-col items-center justify-center px-6 py-10 w-full max-w-md">
+        <div className="w-full flex flex-col gap-3">
+          {menuItems.map((item, index) => {
+            const Icon = item.icon;
+            const delay = 100 + index * 80;
+            
+            return (
+              <div
+                key={item.label}
+                className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
                            transition-all duration-300"
+                style={{
+                  opacity: mounted ? 1 : 0,
+                  transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
+                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
+                }}
               >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
-                <div className="flex flex-col items-start text-left">
-                  <span>{item.title}</span>
-                  <span className="text-xs font-normal opacity-80">{item.description}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </main>
+                <button
+                  onClick={() => navigate(item.path)}
+                  className="w-full h-12 rounded-lg
+                             bg-gradient-to-r from-blue-500 to-blue-700
+                             hover:from-blue-400 hover:to-blue-600
+                             active:scale-[0.98]
+                             flex items-center gap-4 px-5
+                             text-white font-medium 
+                             shadow-lg shadow-blue-500/20
+                             border border-blue-400/30
+                             transition-all duration-300"
+                >
+                  <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ========== VERSÃO DESKTOP ========== */}
+      <div className="hidden md:flex relative z-10 flex-col items-center justify-center px-6 py-10 w-full max-w-md">
+        <div className="w-full flex flex-col gap-3">
+          {menuItems.map((item, index) => {
+            const Icon = item.icon;
+            const delay = 100 + index * 80;
+            
+            return (
+              <div
+                key={item.label}
+                className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
+                           transition-all duration-300"
+                style={{
+                  opacity: mounted ? 1 : 0,
+                  transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
+                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
+                }}
+              >
+                <button
+                  onClick={() => navigate(item.path)}
+                  className="w-full h-12 rounded-lg
+                             bg-gradient-to-r from-blue-500 to-blue-700
+                             hover:from-blue-400 hover:to-blue-600
+                             active:scale-[0.98]
+                             flex items-center gap-4 px-5
+                             text-white font-medium 
+                             shadow-lg shadow-blue-500/20
+                             border border-blue-400/30
+                             transition-all duration-300"
+                >
+                  <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
