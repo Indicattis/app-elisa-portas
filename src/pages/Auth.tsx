@@ -101,8 +101,8 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-black">
-      {/* Animated background */}
-      <SpaceParticles />
+      {/* Subtle animated background */}
+      <SpaceParticles slowMode />
       
       <div className="min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
         {/* Logo */}
