@@ -4,6 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
+import { NeoInstalacao } from "@/types/neoInstalacao";
 import { Button } from "@/components/ui/button";
 import { DroppableDaySimpleExpedicao } from "./DroppableDaySimpleExpedicao";
 import { DraggableOrdemCarregamento } from "./DraggableOrdemCarregamento";
@@ -13,6 +14,7 @@ import { toast } from "sonner";
 interface CalendarioSemanalExpedicaoDesktopProps {
   startDate: Date;
   ordens: OrdemCarregamento[];
+  neoInstalacoes?: NeoInstalacao[];
   onPreviousWeek: () => void;
   onNextWeek: () => void;
   onToday: () => void;
@@ -28,6 +30,7 @@ interface CalendarioSemanalExpedicaoDesktopProps {
 export const CalendarioSemanalExpedicaoDesktop = ({
   startDate,
   ordens,
+  neoInstalacoes = [],
   onPreviousWeek,
   onNextWeek,
   onToday,
@@ -147,6 +150,7 @@ export const CalendarioSemanalExpedicaoDesktop = ({
             key={day.toISOString()}
             date={day}
             ordens={ordens}
+            neoInstalacoes={neoInstalacoes}
             onDayClick={handleDayClick}
             onEdit={readOnly ? undefined : onEdit}
             onRemoverDoCalendario={readOnly ? undefined : onRemoverDoCalendario}

@@ -1,16 +1,19 @@
 import { useState } from "react";
-import { format, isSameDay, isWeekend } from "date-fns";
+import { format, isSameDay, isWeekend, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
+import { NeoInstalacao } from "@/types/neoInstalacao";
 import { OrdemCarregamentoCard } from "./OrdemCarregamentoCard";
+import { NeoInstalacaoCard } from "./NeoInstalacaoCard";
 import { AdicionarOrdemCalendarioModal } from "./AdicionarOrdemCalendarioModal";
 
 interface DiaCardExpedicaoProps {
   date: Date;
   ordens: OrdemCarregamento[];
+  neoInstalacoes?: NeoInstalacao[];
   onDayClick: (date: Date) => void;
   onEdit?: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario?: (id: string) => void;
@@ -22,6 +25,7 @@ interface DiaCardExpedicaoProps {
 export const DiaCardExpedicao = ({
   date,
   ordens,
+  neoInstalacoes = [],
   onDayClick,
   onEdit,
   onRemoverDoCalendario,
@@ -38,6 +42,11 @@ export const DiaCardExpedicao = ({
   const ordensNoDia = ordens.filter((ordem) => {
     if (!ordem.data_carregamento) return false;
     return isSameDay(new Date(ordem.data_carregamento), date);
+  });
+
+  const neoNoDia = neoInstalacoes.filter((neo) => {
+    if (!neo.data_instalacao) return false;
+    return isSameDay(parseISO(neo.data_instalacao), date);
   });
 
   const handleConfirmModal = async (params: {
@@ -101,20 +110,25 @@ export const DiaCardExpedicao = ({
 
         {/* Lista de ordens */}
         <div className="flex-1 space-y-2 overflow-y-auto">
-          {ordensNoDia.length === 0 ? (
+          {ordensNoDia.length === 0 && neoNoDia.length === 0 ? (
             <div className="text-center py-4 text-xs text-muted-foreground">
               Nenhuma ordem
             </div>
           ) : (
-            ordensNoDia.map((ordem) => (
-              <OrdemCarregamentoCard
-                key={ordem.id}
-                ordem={ordem}
-                onClick={onOrdemClick}
-                onEdit={onEdit}
-                onRemoverDoCalendario={onRemoverDoCalendario}
-              />
-            ))
+            <>
+              {ordensNoDia.map((ordem) => (
+                <OrdemCarregamentoCard
+                  key={ordem.id}
+                  ordem={ordem}
+                  onClick={onOrdemClick}
+                  onEdit={onEdit}
+                  onRemoverDoCalendario={onRemoverDoCalendario}
+                />
+              ))}
+              {neoNoDia.map((neo) => (
+                <NeoInstalacaoCard key={neo.id} neoInstalacao={neo} />
+              ))}
+            </>
           )}
         </div>
       </Card>

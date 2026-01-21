@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
+import { NeoInstalacao } from "@/types/neoInstalacao";
 import { DroppableDayExpedicao } from "./DroppableDayExpedicao";
 import { OrdemCarregamentoCard } from "./OrdemCarregamentoCard";
 import { CalendarioLegendas } from "./CalendarioLegendas";
@@ -13,6 +14,7 @@ import { toast } from "sonner";
 interface CalendarioMensalExpedicaoDesktopProps {
   currentMonth: Date;
   ordens: OrdemCarregamento[];
+  neoInstalacoes?: NeoInstalacao[];
   onMonthChange: (date: Date) => void;
   onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
   onEdit?: (ordem: OrdemCarregamento) => void;
@@ -26,6 +28,7 @@ interface CalendarioMensalExpedicaoDesktopProps {
 export const CalendarioMensalExpedicaoDesktop = ({
   currentMonth,
   ordens,
+  neoInstalacoes = [],
   onMonthChange,
   onUpdateOrdem,
   onEdit,
@@ -161,6 +164,7 @@ export const CalendarioMensalExpedicaoDesktop = ({
               date={day}
               currentMonth={currentMonth}
               ordens={ordens}
+              neoInstalacoes={neoInstalacoes}
               onDayClick={handleDayClick}
               onEdit={readOnly ? undefined : onEdit}
               onRemoverDoCalendario={readOnly ? undefined : onRemoverDoCalendario}

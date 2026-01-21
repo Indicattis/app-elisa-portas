@@ -314,7 +314,7 @@ export default function GestaoFabricaDirecao() {
                 ) : (
                   <>
                     {/* Neo Instalações - apenas na etapa instalacoes */}
-                    {etapa === 'instalacoes' && neoInstalacoes.length > 0 && (
+                    {etapaAtiva === 'instalacoes' && neoInstalacoes.length > 0 && (
                       <div className="mb-4 space-y-2">
                         <h3 className="text-sm font-medium text-white/70 mb-2">Instalações Avulsas ({neoInstalacoes.length})</h3>
                         <div className="space-y-1">
