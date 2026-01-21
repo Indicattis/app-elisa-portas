@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Truck, CalendarDays, ClipboardList, ArrowLeft } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
@@ -25,55 +26,63 @@ const menuItems = [
 
 export default function GestaoInstalacaoDirecao() {
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
+    <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
       <SpaceParticles />
       
-      <div className="relative z-10 min-h-screen flex flex-col">
-        {/* Header */}
-        <header className="sticky top-0 z-20 px-4 py-4 bg-black/80 backdrop-blur-md border-b border-primary/10">
-          <div className="max-w-7xl mx-auto flex items-center gap-4">
-            <button
-              onClick={() => navigate('/direcao')}
-              className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-white/80" />
-            </button>
-            <div>
-              <h1 className="text-lg font-semibold text-white">Gestão de Instalações</h1>
-              <p className="text-sm text-white/60">Selecione a área</p>
-            </div>
-          </div>
-        </header>
+      {/* Botão de voltar */}
+      <button
+        onClick={() => navigate('/direcao')}
+        className="absolute top-6 left-6 z-20 p-3 rounded-lg bg-primary/5 hover:bg-primary/10 
+                   border border-primary/10 transition-all duration-300"
+        style={{
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? 'translateX(0)' : 'translateX(-20px)',
+          transition: 'all 0.5s ease 100ms'
+        }}
+      >
+        <ArrowLeft className="w-5 h-5 text-white/80" />
+      </button>
 
-        {/* Conteúdo */}
-        <main className="flex-1 flex items-center justify-center p-4">
-          <div className="flex flex-col items-center gap-3 w-full max-w-md">
-            {menuItems.map((item) => (
+      {/* Lista de botões centralizada */}
+      <div className="relative z-10 flex flex-col items-center justify-center px-6 py-10 w-full max-w-md">
+        <div className="w-full flex flex-col gap-3">
+          {menuItems.map((item, index) => {
+            const Icon = item.icon;
+            const delay = 100 + index * 80;
+            
+            return (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className="w-full max-w-[300px] h-16 rounded-xl
-                           bg-gradient-to-br from-blue-500 to-blue-700
+                className="w-full h-14 rounded-lg
+                           bg-gradient-to-r from-blue-500 to-blue-700
                            hover:from-blue-400 hover:to-blue-600
-                           flex items-center gap-4 px-4
+                           active:scale-[0.98]
+                           flex items-center gap-4 px-5
                            text-white font-medium 
-                           shadow-lg shadow-blue-500/30
-                           hover:shadow-xl hover:shadow-blue-500/50
-                           hover:scale-105
+                           shadow-lg shadow-blue-500/20
                            border border-blue-400/30
                            transition-all duration-300"
+                style={{
+                  opacity: mounted ? 1 : 0,
+                  transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
+                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
+                }}
               >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
-                <div className="flex flex-col items-start text-left">
-                  <span>{item.title}</span>
-                  <span className="text-xs font-normal opacity-80">{item.description}</span>
-                </div>
+                <Icon className="w-6 h-6" strokeWidth={1.5} />
+                <span className="text-sm font-medium">{item.title}</span>
               </button>
-            ))}
-          </div>
-        </main>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
