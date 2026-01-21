@@ -80,6 +80,7 @@ interface Ordem {
     numero_pedido: string;
     cliente_nome: string;
     venda_id?: string;
+    observacoes?: string;
     vendas?: {
       observacoes_venda?: string;
     };
@@ -593,6 +594,21 @@ export function OrdemDetalhesSheet({
                   </div>
                 </CollapsibleContent>
               </Collapsible>
+            </>
+          )}
+
+          {ordem.pedido?.observacoes && (
+            <>
+              <Separator />
+              <div className="space-y-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <span className="text-sm font-medium flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                  <Package className="h-4 w-4" />
+                  Observações Gerais do Pedido
+                </span>
+                <p className="text-sm text-muted-foreground whitespace-pre-line">
+                  {ordem.pedido.observacoes}
+                </p>
+              </div>
             </>
           )}
 

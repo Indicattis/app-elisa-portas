@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck, FileDown, Printer, ClipboardList } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck, FileDown, Printer, ClipboardList, MessageSquare } from "lucide-react";
 import { FichaVisitaUpload } from "@/components/pedidos/FichaVisitaUpload";
 import { toast as sonnerToast } from "sonner";
 import { baixarPedidoProducaoPDF, imprimirPedidoProducaoPDF, type PedidoProducaoPDFData } from "@/utils/pedidoProducaoPDFGenerator";
@@ -64,6 +65,7 @@ interface Pedido {
   ordens: Ordem[];
   ficha_visita_url?: string | null;
   ficha_visita_nome?: string | null;
+  observacoes?: string | null;
   venda?: {
     id: string;
     cliente_nome: string;
@@ -115,6 +117,9 @@ export default function PedidoView() {
   const [linhasEditadas, setLinhasEditadas] = useState<Map<string, PedidoLinhaUpdate>>(new Map());
   const [salvando, setSalvando] = useState(false);
   const [mostrarModalAvancar, setMostrarModalAvancar] = useState(false);
+  const [editandoObservacoes, setEditandoObservacoes] = useState(false);
+  const [observacoesTemp, setObservacoesTemp] = useState('');
+  const [salvandoObservacoes, setSalvandoObservacoes] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -479,6 +484,32 @@ export default function PedidoView() {
     }
   };
 
+  const handleSalvarObservacoes = async () => {
+    if (!pedido) return;
+    
+    setSalvandoObservacoes(true);
+    try {
+      const { error } = await supabase
+        .from('pedidos_producao')
+        .update({ observacoes: observacoesTemp || null })
+        .eq('id', pedido.id);
+      
+      if (error) {
+        toast({ variant: "destructive", title: "Erro", description: "Erro ao salvar observações" });
+        return;
+      }
+      
+      setPedido(prev => prev ? { ...prev, observacoes: observacoesTemp || null } : null);
+      setEditandoObservacoes(false);
+      sonnerToast.success('Observações salvas com sucesso');
+    } catch (error) {
+      console.error('Erro ao salvar observações:', error);
+      toast({ variant: "destructive", title: "Erro", description: "Erro ao salvar observações" });
+    } finally {
+      setSalvandoObservacoes(false);
+    }
+  };
+
   const getEtapaLabel = (etapa: string) => {
     const etapas: Record<string, string> = {
       aberto: "Aberto",
@@ -821,6 +852,68 @@ export default function PedidoView() {
               sonnerToast.success('Ficha de visita removida');
             }}
           />
+        </CardContent>
+      </Card>
+
+      {/* Observações Gerais do Pedido */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              Observações Gerais do Pedido
+            </CardTitle>
+            {!editandoObservacoes && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  setObservacoesTemp(pedido.observacoes || '');
+                  setEditandoObservacoes(true);
+                }}
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Essas observações serão exibidas nas ordens de produção
+          </p>
+        </CardHeader>
+        <CardContent>
+          {editandoObservacoes ? (
+            <div className="space-y-3">
+              <Textarea
+                value={observacoesTemp}
+                onChange={(e) => setObservacoesTemp(e.target.value)}
+                placeholder="Digite observações importantes para a produção..."
+                rows={4}
+                className="resize-none"
+              />
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setEditandoObservacoes(false)}
+                  disabled={salvandoObservacoes}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={handleSalvarObservacoes}
+                  disabled={salvandoObservacoes}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {salvandoObservacoes ? 'Salvando...' : 'Salvar'}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground whitespace-pre-line">
+              {pedido.observacoes || 'Nenhuma observação registrada. Clique no ícone de edição para adicionar.'}
+            </p>
+          )}
         </CardContent>
       </Card>
 

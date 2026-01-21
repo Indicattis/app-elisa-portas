@@ -100,6 +100,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
             venda_id,
             prioridade_etapa,
             em_backlog,
+            observacoes,
             vendas(
               data_prevista_entrega,
               observacoes_venda,
@@ -194,6 +195,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
             numero_pedido: ordem.pedido.numero_pedido,
             cliente_nome: ordem.pedido.cliente_nome,
             venda_id: ordem.pedido.venda_id,
+            observacoes: ordem.pedido.observacoes,
             vendas: primeiraVenda,
             produtos: primeiraVenda?.produtos || [],
           };
