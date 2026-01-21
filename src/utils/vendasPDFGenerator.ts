@@ -26,7 +26,7 @@ interface VendasRelatorioPDFData {
   stats: {
     totalVendas: number;
     totalValor: number;
-    totalProdutos: number;
+    totalPortasEnrolar: number;
   };
   filtros: FiltrosAtivos;
 }
@@ -112,12 +112,12 @@ export const generateVendasRelatorioPDF = (data: VendasRelatorioPDFData) => {
     yPos + 12
   );
   
-  // Card 3: Total de Produtos
+  // Card 3: Total de Portas de Enrolar
   doc.setFontSize(10);
   doc.rect(cardX3, yPos, cardWidth, 15, 'F');
-  doc.text('Total de Produtos', cardX3 + 2, yPos + 6);
+  doc.text('Portas de Enrolar', cardX3 + 2, yPos + 6);
   doc.setFontSize(14);
-  doc.text(data.stats.totalProdutos.toString(), cardX3 + 2, yPos + 12);
+  doc.text(data.stats.totalPortasEnrolar.toString(), cardX3 + 2, yPos + 12);
   
   yPos += 20;
   
