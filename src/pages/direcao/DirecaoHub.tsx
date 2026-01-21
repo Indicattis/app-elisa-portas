@@ -44,17 +44,9 @@ export default function DirecaoHub() {
             const delay = 100 + index * 80;
             
             return (
-              <button
+              <div
                 key={item.label}
-                onClick={() => navigate(item.path)}
-                className="w-full h-14 rounded-lg
-                           bg-gradient-to-r from-blue-500 to-blue-700
-                           hover:from-blue-400 hover:to-blue-600
-                           active:scale-[0.98]
-                           flex items-center gap-4 px-5
-                           text-white font-medium 
-                           shadow-lg shadow-blue-500/20
-                           border border-blue-400/30
+                className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
                            transition-all duration-300"
                 style={{
                   opacity: mounted ? 1 : 0,
@@ -62,9 +54,22 @@ export default function DirecaoHub() {
                   transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
                 }}
               >
-                <Icon className="w-6 h-6" strokeWidth={1.5} />
-                <span className="text-sm font-medium">{item.label}</span>
-              </button>
+                <button
+                  onClick={() => navigate(item.path)}
+                  className="w-full h-12 rounded-lg
+                             bg-gradient-to-r from-blue-500 to-blue-700
+                             hover:from-blue-400 hover:to-blue-600
+                             active:scale-[0.98]
+                             flex items-center gap-4 px-5
+                             text-white font-medium 
+                             shadow-lg shadow-blue-500/20
+                             border border-blue-400/30
+                             transition-all duration-300"
+                >
+                  <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </button>
+              </div>
             );
           })}
         </div>
@@ -79,17 +84,9 @@ export default function DirecaoHub() {
             const delay = 100 + index * 80;
             
             return (
-              <button
+              <div
                 key={item.label}
-                onClick={() => navigate(item.path)}
-                className="w-full h-14 rounded-lg
-                           bg-gradient-to-r from-blue-500 to-blue-700
-                           hover:from-blue-400 hover:to-blue-600
-                           active:scale-[0.98]
-                           flex items-center gap-4 px-5
-                           text-white font-medium 
-                           shadow-lg shadow-blue-500/20
-                           border border-blue-400/30
+                className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
                            transition-all duration-300"
                 style={{
                   opacity: mounted ? 1 : 0,
@@ -97,9 +94,22 @@ export default function DirecaoHub() {
                   transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
                 }}
               >
-                <Icon className="w-6 h-6" strokeWidth={1.5} />
-                <span className="text-sm font-medium">{item.label}</span>
-              </button>
+                <button
+                  onClick={() => navigate(item.path)}
+                  className="w-full h-12 rounded-lg
+                             bg-gradient-to-r from-blue-500 to-blue-700
+                             hover:from-blue-400 hover:to-blue-600
+                             active:scale-[0.98]
+                             flex items-center gap-4 px-5
+                             text-white font-medium 
+                             shadow-lg shadow-blue-500/20
+                             border border-blue-400/30
+                             transition-all duration-300"
+                >
+                  <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </button>
+              </div>
             );
           })}
         </div>
