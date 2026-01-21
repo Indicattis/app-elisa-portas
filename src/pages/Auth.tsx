@@ -100,9 +100,9 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-black">
-      {/* Subtle animated background */}
-      <SpaceParticles slowMode />
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950">
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent" />
       
       <div className="min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
         {/* Logo */}
