@@ -192,19 +192,9 @@ export default function Home() {
             const isOther = hasHover && !isHovered;
             
             return (
-              <button
+              <div
                 key={item.label}
-                onClick={() => navigate(item.path)}
-                onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
-                className="w-full h-14 rounded-lg
-                           bg-gradient-to-r from-blue-500 to-blue-700
-                           hover:from-blue-400 hover:to-blue-600
-                           active:scale-[0.98]
-                           flex items-center gap-4 px-5
-                           text-white font-medium 
-                           shadow-lg shadow-blue-500/20
-                           border border-blue-400/30
+                className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
                            transition-all duration-300"
                 style={{
                   opacity: mounted ? (isOther ? 0.4 : 1) : 0,
@@ -215,9 +205,24 @@ export default function Home() {
                   transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${mounted ? '0ms' : delay + 'ms'}`
                 }}
               >
-                <Icon className="w-6 h-6" strokeWidth={1.5} />
-                <span className="text-sm font-medium">{item.label}</span>
-              </button>
+                <button
+                  onClick={() => navigate(item.path)}
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  className="w-full h-12 rounded-lg
+                             bg-gradient-to-r from-blue-500 to-blue-700
+                             hover:from-blue-400 hover:to-blue-600
+                             active:scale-[0.98]
+                             flex items-center gap-4 px-5
+                             text-white font-medium 
+                             shadow-lg shadow-blue-500/20
+                             border border-blue-400/30
+                             transition-all duration-300"
+                >
+                  <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </button>
+              </div>
             );
           })}
         </div>
@@ -263,7 +268,7 @@ export default function Home() {
         
         {/* Botões orbitais */}
         {menuItems.map((item, index) => {
-          const pos = getOrbitPosition(item.angle, 190);
+          const pos = getOrbitPosition(item.angle, 200);
           const Icon = item.icon;
           const delay = 200 + index * 120;
           const isHovered = hoveredIndex === index;
@@ -286,25 +291,28 @@ export default function Home() {
                 transitionDelay: mounted ? '0ms' : `${delay}ms`,
               }}
             >
-              <button
-                onClick={() => navigate(item.path)}
-                onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
-                className="w-24 h-24 rounded-full 
-                           bg-gradient-to-br from-blue-500 to-blue-700
-                           hover:from-blue-400 hover:to-blue-600
-                           flex flex-col items-center justify-center gap-1.5
-                           text-white font-medium 
-                           shadow-lg shadow-blue-500/30
-                           hover:shadow-xl hover:shadow-blue-500/50
-                           hover:scale-110 
-                           cursor-pointer
-                           border border-blue-400/30
-                           transition-all duration-300"
-              >
-                <Icon className="w-7 h-7" strokeWidth={1.5} />
-                <span className="text-xs font-medium tracking-wide">{item.label}</span>
-              </button>
+              {/* Container fosco */}
+              <div className="p-2 rounded-full bg-white/5 backdrop-blur-xl border border-white/10
+                              hover:bg-white/10 transition-all duration-300">
+                <button
+                  onClick={() => navigate(item.path)}
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  className="w-20 h-20 rounded-full 
+                             bg-gradient-to-br from-blue-500 to-blue-700
+                             hover:from-blue-400 hover:to-blue-600
+                             flex flex-col items-center justify-center gap-1
+                             text-white font-medium 
+                             shadow-lg shadow-blue-500/30
+                             hover:shadow-xl hover:shadow-blue-500/50
+                             cursor-pointer
+                             border border-blue-400/30
+                             transition-all duration-300"
+                >
+                  <Icon className="w-6 h-6" strokeWidth={1.5} />
+                  <span className="text-[10px] font-medium tracking-wide">{item.label}</span>
+                </button>
+              </div>
             </div>
           );
         })}
