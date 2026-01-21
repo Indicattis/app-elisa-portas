@@ -84,7 +84,7 @@ export default function VendaDetalhesDirecao() {
     try {
       setLoading(true);
 
-      // Buscar venda com produtos e atendente
+      // Buscar venda com produtos
       const { data: vendaData, error: vendaError } = await supabase
         .from("vendas")
         .select(`
@@ -99,15 +99,25 @@ export default function VendaDetalhesDirecao() {
             valor_total,
             desconto_percentual,
             catalogo_cores(nome, codigo_hex)
-          ),
-          atendente:admin_users!vendas_atendente_id_fkey(
-            id,
-            nome,
-            foto_perfil_url
           )
         `)
         .eq("id", id)
         .single();
+
+      if (vendaError) throw vendaError;
+      
+      // Buscar atendente separadamente se existir atendente_id
+      if (vendaData?.atendente_id) {
+        const { data: atendenteData } = await supabase
+          .from("admin_users")
+          .select("id, nome, foto_perfil_url")
+          .eq("id", vendaData.atendente_id)
+          .single();
+        
+        setVenda({ ...vendaData, atendente: atendenteData });
+      } else {
+        setVenda(vendaData);
+      }
 
       if (vendaError) throw vendaError;
       setVenda(vendaData);
