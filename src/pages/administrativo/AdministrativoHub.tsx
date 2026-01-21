@@ -38,22 +38,18 @@ export default function AdministrativoHub() {
       <SpaceParticles />
       
       {/* Botão Voltar */}
-      <div 
-        className="absolute top-6 left-6 z-20"
+      <button
+        onClick={() => navigate('/home')}
+        className="absolute top-6 left-6 z-20 p-3 rounded-lg bg-primary/5 hover:bg-primary/10 
+                   border border-primary/10 transition-all duration-300"
         style={{
           opacity: mounted ? 1 : 0,
           transform: mounted ? 'translateX(0)' : 'translateX(-20px)',
           transition: 'all 0.5s ease 100ms'
         }}
       >
-        <button
-          onClick={() => navigate('/home')}
-          className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="text-sm font-medium">Voltar</span>
-        </button>
-      </div>
+        <ArrowLeft className="w-5 h-5 text-white/80" />
+      </button>
 
       {/* ========== VERSÃO MOBILE ========== */}
       <div className="md:hidden relative z-10 flex flex-col items-center px-6 py-10 w-full max-w-md">
