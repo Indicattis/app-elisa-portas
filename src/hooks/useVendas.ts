@@ -86,7 +86,8 @@ export function useVendas() {
             *,
             cor:catalogo_cores(nome, codigo_hex)
           ),
-          atendente:admin_users!atendente_id(nome, foto_perfil_url)
+          atendente:admin_users!atendente_id(nome, foto_perfil_url),
+          notas_fiscais(id, status, tipo)
         `)
         .order('data_venda', { ascending: false });
       

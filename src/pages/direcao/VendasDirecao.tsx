@@ -13,7 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +47,11 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'vendedor', label: 'Vendedor', defaultVisible: true },
   { id: 'produtos', label: 'Produtos', defaultVisible: true },
   { id: 'previsao', label: 'Previsão Entrega', defaultVisible: false },
+  { id: 'frete', label: 'Frete', defaultVisible: false },
+  { id: 'instalacao', label: 'Instalação', defaultVisible: false },
+  { id: 'desconto', label: 'Desconto', defaultVisible: false },
+  { id: 'acrescimo', label: 'Acréscimo', defaultVisible: false },
+  { id: 'faturada', label: 'Faturada', defaultVisible: false },
   { id: 'valor', label: 'Valor', defaultVisible: true },
 ];
 
@@ -233,6 +238,13 @@ export default function VendasDirecao() {
             : 0;
           case 'telefone': return venda.cliente_telefone || '';
           case 'produtos': return venda.produtos?.length || 0;
+          case 'frete': return venda.valor_frete || 0;
+          case 'instalacao': return venda.valor_instalacao || 0;
+          case 'desconto': return venda.produtos?.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0) || 0;
+          case 'acrescimo': return venda.valor_credito || 0;
+          case 'faturada': 
+            const notas = venda.notas_fiscais || [];
+            return notas.some((nf: any) => nf.status === 'autorizada' || nf.status === 'emitida') ? 1 : 0;
           default: return '';
         }
       };
@@ -277,6 +289,18 @@ export default function VendasDirecao() {
 
   // Função para renderizar célula baseado no ID da coluna
   const renderCell = useCallback((venda: any, columnId: string) => {
+    // Calcular desconto total dos produtos
+    const calcularDescontoTotal = () => {
+      if (!venda.produtos) return 0;
+      return venda.produtos.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
+    };
+
+    // Verificar se foi faturada (tem nota fiscal autorizada/emitida)
+    const isFaturada = () => {
+      const notas = venda.notas_fiscais || [];
+      return notas.some((nf: any) => nf.status === 'autorizada' || nf.status === 'emitida');
+    };
+
     switch (columnId) {
       case 'data':
         return (
@@ -315,6 +339,46 @@ export default function VendasDirecao() {
             }
           </span>
         );
+      case 'frete':
+        return (
+          <span className="text-white/60">
+            {venda.valor_frete ? formatCurrency(venda.valor_frete) : '-'}
+          </span>
+        );
+      case 'instalacao':
+        return (
+          <span className="text-white/60">
+            {venda.valor_instalacao ? formatCurrency(venda.valor_instalacao) : '-'}
+          </span>
+        );
+      case 'desconto':
+        const desconto = calcularDescontoTotal();
+        return (
+          <span className={desconto > 0 ? "text-red-400" : "text-white/60"}>
+            {desconto > 0 ? `-${formatCurrency(desconto)}` : '-'}
+          </span>
+        );
+      case 'acrescimo':
+        return (
+          <span className={venda.valor_credito > 0 ? "text-green-400" : "text-white/60"}>
+            {venda.valor_credito > 0 ? `+${formatCurrency(venda.valor_credito)}` : '-'}
+          </span>
+        );
+      case 'faturada':
+        const faturada = isFaturada();
+        return (
+          <div className="flex justify-center">
+            {faturada ? (
+              <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
+                <Check className="w-3 h-3 text-green-400" />
+              </div>
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center">
+                <X className="w-3 h-3 text-white/30" />
+              </div>
+            )}
+          </div>
+        );
       case 'valor':
         return (
           <span className="text-white font-medium">
@@ -326,12 +390,6 @@ export default function VendasDirecao() {
     }
   }, []);
 
-  // Estilo de alinhamento por coluna
-  const getColumnAlignment = (columnId: string) => {
-    if (columnId === 'valor') return 'text-right';
-    return 'text-left';
-  };
-
   // Classes responsivas por coluna
   const getColumnResponsiveClass = (columnId: string) => {
     switch (columnId) {
@@ -341,9 +399,30 @@ export default function VendasDirecao() {
         return 'hidden md:table-cell';
       case 'vendedor':
       case 'previsao':
+      case 'frete':
+      case 'instalacao':
+      case 'desconto':
+      case 'acrescimo':
+      case 'faturada':
         return 'hidden lg:table-cell';
       default:
         return '';
+    }
+  };
+
+  // Estilo de alinhamento por coluna
+  const getColumnAlignment = (columnId: string) => {
+    switch (columnId) {
+      case 'valor':
+      case 'frete':
+      case 'instalacao':
+      case 'desconto':
+      case 'acrescimo':
+        return 'text-right';
+      case 'faturada':
+        return 'text-center';
+      default:
+        return 'text-left';
     }
   };
 
