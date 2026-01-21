@@ -1017,22 +1017,34 @@ export function PedidoCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center justify-center text-center">
-                    {pedido.endereco_cidade || pedido.endereco_estado ? (
-                      <span className="text-[10px] text-muted-foreground truncate">
-                        {pedido.endereco_cidade && pedido.endereco_estado 
-                          ? `${pedido.endereco_cidade}/${pedido.endereco_estado}`
-                          : pedido.endereco_cidade || pedido.endereco_estado}
-                      </span>
-                    ) : (
-                      <span className="text-[9px] text-muted-foreground/50">—</span>
-                    )}
+                    {(() => {
+                      const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
+                      const cidade = pedido.endereco_cidade || vendaData?.cidade;
+                      const estado = pedido.endereco_estado || vendaData?.estado;
+                      
+                      if (cidade || estado) {
+                        return (
+                          <span className="text-[10px] text-muted-foreground truncate">
+                            {cidade && estado 
+                              ? `${cidade}/${estado}`
+                              : cidade || estado}
+                          </span>
+                        );
+                      }
+                      return <span className="text-[9px] text-muted-foreground/50">—</span>;
+                    })()}
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="text-xs">
-                    {pedido.endereco_cidade && pedido.endereco_estado
-                      ? `${pedido.endereco_cidade}, ${pedido.endereco_estado}`
-                      : pedido.endereco_cidade || pedido.endereco_estado || 'Localização não informada'}
+                    {(() => {
+                      const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
+                      const cidade = pedido.endereco_cidade || vendaData?.cidade;
+                      const estado = pedido.endereco_estado || vendaData?.estado;
+                      return cidade && estado
+                        ? `${cidade}, ${estado}`
+                        : cidade || estado || 'Localização não informada';
+                    })()}
                   </p>
                 </TooltipContent>
               </Tooltip>
