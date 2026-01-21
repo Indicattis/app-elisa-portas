@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Usar o email real do usuário
+    // Usar o email real do usuário (com trim para remover caracteres invisíveis)
     if (!adminUser.email) {
       console.error('Usuário sem email cadastrado:', adminUser)
       return new Response(
@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    const email = adminUser.email
+    const email = adminUser.email.trim()
     const password = 'Producao@2024'
 
     console.log('[AUDIT] Configurando autenticação para:', email, '- Setor:', adminUser.setor, '- Role:', adminUser.role)
