@@ -39,21 +39,19 @@ import {
 
 // Definição das colunas disponíveis
 const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
-  { id: 'data', label: 'Data', defaultVisible: true },
-  { id: 'cliente', label: 'Cliente', defaultVisible: true },
-  { id: 'telefone', label: 'Telefone', defaultVisible: false },
-  { id: 'cidade', label: 'Cidade', defaultVisible: true },
-  { id: 'estado', label: 'Estado', defaultVisible: false },
   { id: 'vendedor', label: 'Vendedor', defaultVisible: true },
+  { id: 'cliente', label: 'Cliente', defaultVisible: true },
+  { id: 'data', label: 'Data', defaultVisible: true },
+  { id: 'cidade', label: 'Cidade', defaultVisible: true },
+  { id: 'previsao', label: 'Previsão Entrega', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
-  { id: 'previsao', label: 'Previsão Entrega', defaultVisible: false },
-  { id: 'frete', label: 'Frete', defaultVisible: false },
-  { id: 'instalacao', label: 'Instalação', defaultVisible: false },
-  { id: 'desconto', label: 'Desconto', defaultVisible: false },
-  { id: 'acrescimo', label: 'Acréscimo', defaultVisible: false },
-  { id: 'faturada', label: 'Faturada', defaultVisible: false },
-  { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
+  { id: 'desconto', label: 'Desconto', defaultVisible: true },
+  { id: 'acrescimo', label: 'Acréscimo', defaultVisible: true },
+  { id: 'instalacao', label: 'Instalação', defaultVisible: true },
+  { id: 'frete', label: 'Frete', defaultVisible: true },
   { id: 'valor', label: 'Valor', defaultVisible: true },
+  { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
+  { id: 'faturada', label: 'Faturada', defaultVisible: true },
 ];
 
 // Função para formatar tempo decorrido
