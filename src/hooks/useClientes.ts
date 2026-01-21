@@ -22,6 +22,8 @@ export interface Cliente {
   ativo: boolean;
   created_at: string;
   updated_at: string;
+  created_by?: string | null;
+  vendedor?: { id: string; nome: string } | null;
   total_vendas?: number;
   numero_vendas?: number;
   ultima_compra?: string | null;
@@ -58,6 +60,11 @@ export function useClientes() {
         .from("canais_aquisicao")
         .select("id, nome");
       
+      // Buscar usuários para mapear vendedores
+      const { data: usersData } = await supabase
+        .from("admin_users")
+        .select("id, nome");
+      
       // Buscar totais de vendas por cliente
       const { data: vendasData } = await supabase
         .from("vendas")
@@ -83,11 +90,15 @@ export function useClientes() {
       });
       
       const canaisMap = new Map(canaisData?.map(c => [c.id, c]) || []);
+      const usersMap = new Map(usersData?.map(u => [u.id, u]) || []);
       
       const clientes = (clientesData || []).map((cliente: any) => ({
         ...cliente,
         canal_aquisicao: cliente.canal_aquisicao_id 
           ? canaisMap.get(cliente.canal_aquisicao_id) || null 
+          : null,
+        vendedor: cliente.created_by 
+          ? usersMap.get(cliente.created_by) || null 
           : null,
         total_vendas: totaisVendas.get(cliente.id) || 0,
         numero_vendas: numeroVendas.get(cliente.id) || 0,
