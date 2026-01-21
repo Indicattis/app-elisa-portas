@@ -260,7 +260,7 @@ export default function VendasDirecao() {
   }, []);
 
   const stats = useMemo(() => {
-    if (!filteredVendas) return { totalVendas: 0, totalValor: 0, totalProdutos: 0 };
+    if (!filteredVendas) return { totalVendas: 0, totalValor: 0, totalPortasEnrolar: 0 };
     
     return {
       totalVendas: filteredVendas.length,
@@ -268,7 +268,10 @@ export default function VendasDirecao() {
         const valorSemFrete = (v.valor_venda || 0) - (v.valor_frete || 0) + (v.valor_credito || 0);
         return sum + valorSemFrete;
       }, 0),
-      totalProdutos: filteredVendas.reduce((sum, v) => sum + (v.produtos?.length || 0), 0),
+      totalPortasEnrolar: filteredVendas.reduce((sum, v) => {
+        const portasEnrolar = v.produtos?.filter((p: any) => p.tipo_produto === 'porta_enrolar') || [];
+        return sum + portasEnrolar.reduce((acc: number, p: any) => acc + (p.quantidade || 1), 0);
+      }, 0),
     };
   }, [filteredVendas]);
 
@@ -419,8 +422,8 @@ export default function VendasDirecao() {
         <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
           <CardContent className="p-3 flex items-center justify-between">
             <div>
-              <p className="text-[10px] sm:text-xs text-white/60">Itens</p>
-              <p className="text-xl sm:text-2xl font-bold text-white">{stats.totalProdutos}</p>
+              <p className="text-[10px] sm:text-xs text-white/60">Portas de Enrolar</p>
+              <p className="text-xl sm:text-2xl font-bold text-white">{stats.totalPortasEnrolar}</p>
             </div>
             <Package className="h-4 w-4 sm:h-5 sm:w-5 text-white/40" />
           </CardContent>
