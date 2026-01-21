@@ -59,6 +59,12 @@ export const OrdemCarregamentoCard = ({
 
   // Obter nome do responsável
   const getResponsavelNome = () => {
+    // Se tem nome do responsável definido, usa ele
+    if (ordem.responsavel_carregamento_nome) {
+      return ordem.responsavel_carregamento_nome;
+    }
+    
+    // Fallback para tipo genérico
     if (!tipoCarregamento) return 'Sem responsável';
     
     if (tipoEntrega === 'entrega') {
