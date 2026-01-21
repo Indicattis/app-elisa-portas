@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
-import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft } from "lucide-react";
+import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { SpaceParticles } from "@/components/SpaceParticles";
@@ -127,6 +127,17 @@ export default function Home() {
               >
                 <LayoutDashboard className="w-4 h-4" />
                 <span className="text-sm">Dashboard</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  navigate('/admin');
+                  setProfileMenuOpen(false);
+                }}
+                className="w-full px-3 py-2 flex items-center gap-3 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                <span className="text-sm">Admin</span>
               </button>
 
               <button
