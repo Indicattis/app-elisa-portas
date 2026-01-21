@@ -257,4 +257,98 @@ All colors MUST be HSL.
   .scrollbar-hide::-webkit-scrollbar {
     display: none;  /* Chrome, Safari and Opera */
   }
+
+  /* Dashboard Minimalist Theme */
+  .dashboard-minimalist {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 217 91% 53% / 0.05;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 100%;
+    --muted: 0 0% 100% / 0.1;
+    --muted-foreground: 0 0% 100% / 0.6;
+    --border: 0 0% 100% / 0.1;
+    --input: 0 0% 100% / 0.05;
+    --accent: 217 91% 53% / 0.1;
+    --accent-foreground: 0 0% 100%;
+  }
+
+  .dashboard-minimalist .card,
+  .dashboard-minimalist [class*="Card"] {
+    @apply bg-primary/5 border-primary/10 backdrop-blur-xl;
+  }
+
+  .dashboard-minimalist h1,
+  .dashboard-minimalist h2,
+  .dashboard-minimalist h3,
+  .dashboard-minimalist h4 {
+    @apply text-white;
+  }
+
+  .dashboard-minimalist p,
+  .dashboard-minimalist label,
+  .dashboard-minimalist span:not(.badge):not([class*="Badge"]) {
+    @apply text-white/80;
+  }
+
+  .dashboard-minimalist .text-muted-foreground {
+    @apply text-white/60;
+  }
+
+  .dashboard-minimalist .text-foreground {
+    @apply text-white;
+  }
+
+  .dashboard-minimalist table,
+  .dashboard-minimalist th,
+  .dashboard-minimalist td {
+    @apply text-white border-white/10;
+  }
+
+  .dashboard-minimalist thead {
+    @apply bg-white/5;
+  }
+
+  .dashboard-minimalist tbody tr:hover {
+    @apply bg-white/5;
+  }
+
+  .dashboard-minimalist input,
+  .dashboard-minimalist textarea,
+  .dashboard-minimalist select {
+    @apply bg-white/5 border-white/10 text-white placeholder:text-white/40;
+  }
+
+  .dashboard-minimalist input:focus,
+  .dashboard-minimalist textarea:focus,
+  .dashboard-minimalist select:focus {
+    @apply border-primary/50 ring-primary/20;
+  }
+
+  .dashboard-minimalist .badge,
+  .dashboard-minimalist [class*="Badge"] {
+    @apply border-white/20;
+  }
+
+  /* Sidebar minimalist styles */
+  .sidebar-minimalist {
+    @apply text-white;
+  }
+
+  .sidebar-minimalist [data-sidebar="menu-button"] {
+    @apply text-white/80 hover:bg-white/10 hover:text-white;
+  }
+
+  .sidebar-minimalist [data-sidebar="menu-button"][data-active="true"] {
+    @apply bg-blue-500/20 text-blue-400 border-l-2 border-blue-500;
+  }
+
+  .sidebar-minimalist [data-sidebar="menu-sub-button"] {
+    @apply text-white/70 hover:bg-white/10 hover:text-white;
+  }
+
+  .sidebar-minimalist [data-sidebar="menu-sub-button"][data-active="true"] {
+    @apply bg-blue-500/20 text-blue-400;
+  }
 }
