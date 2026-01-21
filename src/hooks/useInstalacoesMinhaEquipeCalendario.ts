@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
-import { InstalacaoCalendario } from "./useOrdensInstalacaoCalendario";
+import { OrdemCarregamento } from "@/types/ordemCarregamento";
 
 export const useInstalacoesMinhaEquipeCalendario = (
   currentDate: Date,
@@ -80,14 +80,14 @@ export const useInstalacoesMinhaEquipeCalendario = (
 
   const { inicio, fim } = getDateRange();
 
-  // Buscar instalações da equipe diretamente da tabela instalacoes
-  const { data: instalacoes = [], isLoading: isLoadingInstalacoes } = useQuery({
-    queryKey: ["instalacoes_minha_equipe_calendario", equipeData?.id, inicio, fim],
+  // Buscar ordens de carregamento da equipe
+  const { data: ordens = [], isLoading: isLoadingOrdens } = useQuery({
+    queryKey: ["ordens_minha_equipe_calendario", equipeData?.id, inicio, fim],
     queryFn: async () => {
       if (!equipeData?.id) return [];
 
       const { data, error } = await supabase
-        .from("instalacoes")
+        .from("ordens_carregamento")
         .select(`
           *,
           venda:vendas(
@@ -98,33 +98,33 @@ export const useInstalacoesMinhaEquipeCalendario = (
             estado,
             cidade,
             cep,
-            bairro
+            bairro,
+            tipo_entrega
           )
         `)
-        .eq("responsavel_instalacao_id", equipeData.id)
-        .eq("instalacao_concluida", false)
-        .not("data_instalacao", "is", null)
-        .gte("data_instalacao", inicio)
-        .lte("data_instalacao", fim)
-        .order("data_instalacao", { ascending: true });
+        .eq("responsavel_carregamento_id", equipeData.id)
+        .neq("status", "concluida")
+        .not("data_carregamento", "is", null)
+        .gte("data_carregamento", inicio)
+        .lte("data_carregamento", fim)
+        .order("data_carregamento", { ascending: true });
 
       if (error) {
-        console.error("Erro ao buscar instalações da equipe:", error);
+        console.error("Erro ao buscar ordens da equipe:", error);
         throw error;
       }
 
       return (data || []).map(item => ({
         ...item,
-        equipe: equipeData,
         _corEquipe: equipeData.cor
-      })) as InstalacaoCalendario[];
+      })) as unknown as OrdemCarregamento[];
     },
     enabled: !!equipeData?.id,
   });
 
   return {
-    instalacoes,
-    isLoading: isLoadingEquipe || isLoadingInstalacoes,
+    ordens: ordens as OrdemCarregamento[],
+    isLoading: isLoadingEquipe || isLoadingOrdens,
     equipeId: equipeData?.id || null,
     equipeNome: equipeData?.nome || null,
     equipeCor: equipeData?.cor || null,

@@ -16,7 +16,7 @@ import { format, addDays, startOfWeek, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { useAuth } from "@/hooks/useAuth";
-import { InstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
+
 
 export default function CronogramaMinimalista() {
   const navigate = useNavigate();
@@ -28,10 +28,10 @@ export default function CronogramaMinimalista() {
   const [selectedItem, setSelectedItem] = useState<OrdemCarregamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  // Hook para instalações da equipe (da tabela instalacoes)
+  // Hook para ordens de carregamento da equipe
   const { 
-    instalacoes,
-    isLoading: isLoadingInstalacoes, 
+    ordens,
+    isLoading: isLoadingOrdens, 
     equipeNome,
     equipeCor,
     temEquipe 
@@ -43,47 +43,7 @@ export default function CronogramaMinimalista() {
     isLoading: isLoadingNeo 
   } = useNeoInstalacoesMinhaEquipe(currentDate, viewType);
 
-  const isLoading = isLoadingInstalacoes || isLoadingNeo;
-
-  // Converter instalações para formato de OrdemCarregamento para compatibilidade com calendário
-  const ordensFromInstalacoes: OrdemCarregamento[] = instalacoes.map(inst => ({
-    id: inst.id,
-    pedido_id: null,
-    venda_id: inst.venda_id || null,
-    nome_cliente: inst.nome_cliente || inst.venda?.cliente_nome || 'Cliente',
-    data_carregamento: inst.data_instalacao || null,
-    hora_carregamento: inst.hora || null,
-    hora: inst.hora || null,
-    tipo_carregamento: null,
-    status: inst.status || 'pendente',
-    observacoes: inst.observacoes || null,
-    responsavel_carregamento_id: null,
-    responsavel_carregamento_nome: null,
-    latitude: null,
-    longitude: null,
-    geocode_precision: null,
-    last_geocoded_at: null,
-    carregamento_concluido: false,
-    carregamento_concluido_em: null,
-    carregamento_concluido_por: null,
-    created_at: null,
-    updated_at: null,
-    created_by: null,
-    venda: inst.venda ? {
-      id: inst.venda.id,
-      cliente_nome: inst.venda.cliente_nome,
-      cliente_telefone: inst.venda.cliente_telefone || null,
-      cliente_email: inst.venda.cliente_email || null,
-      estado: inst.venda.estado || null,
-      cidade: inst.venda.cidade || null,
-      cep: inst.venda.cep || null,
-      bairro: inst.venda.bairro || null,
-      data_prevista_entrega: null,
-      tipo_entrega: null,
-    } : undefined,
-    _corEquipe: inst._corEquipe,
-    _isInstalacao: true
-  } as OrdemCarregamento));
+  const isLoading = isLoadingOrdens || isLoadingNeo;
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -266,7 +226,7 @@ export default function CronogramaMinimalista() {
                   {isMobile ? (
                     <CalendarioSemanalExpedicaoMobile
                       startDate={weekStart}
-                      ordens={ordensFromInstalacoes}
+                      ordens={ordens}
                       neoInstalacoes={neoInstalacoes}
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
@@ -277,7 +237,7 @@ export default function CronogramaMinimalista() {
                   ) : viewType === 'week' ? (
                     <CalendarioSemanalExpedicaoDesktop
                       startDate={weekStart}
-                      ordens={ordensFromInstalacoes}
+                      ordens={ordens}
                       neoInstalacoes={neoInstalacoes}
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
@@ -288,7 +248,7 @@ export default function CronogramaMinimalista() {
                   ) : (
                     <CalendarioMensalExpedicaoDesktop
                       currentMonth={currentDate}
-                      ordens={ordensFromInstalacoes}
+                      ordens={ordens}
                       neoInstalacoes={neoInstalacoes}
                       onMonthChange={handleMonthChange}
                       onOrdemClick={handleOrdemClick}
