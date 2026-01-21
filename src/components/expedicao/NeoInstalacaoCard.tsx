@@ -13,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MoreVertical, MapPin, Calendar, Clock, Trash2, CheckCircle } from "lucide-react";
+import { MoreVertical, MapPin, Info, Edit, XCircle, CheckCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NeoInstalacao } from "@/types/neoInstalacao";
@@ -35,120 +35,126 @@ export const NeoInstalacaoCard = ({
 }: NeoInstalacaoCardProps) => {
   const corEquipe = neoInstalacao.equipe?.cor || "#6366f1";
 
+  // Estilo igual ao de instalação Elisa (Azul)
+  const getCardStyles = () => {
+    return {
+      backgroundColor: 'rgb(59 130 246 / 0.15)',
+      borderColor: 'rgb(59 130 246 / 0.5)',
+    };
+  };
+
+  // Nome do responsável (equipe)
+  const getResponsavelNome = () => {
+    return neoInstalacao.equipe_nome || 'Sem equipe';
+  };
+
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Card
-            className="p-2 cursor-pointer hover:shadow-md transition-all border-l-4 group"
-            style={{ borderLeftColor: corEquipe }}
-            onClick={() => onClick?.(neoInstalacao)}
-            {...dragListeners}
+    <Card 
+      className="relative h-[35px] p-2 border transition-all duration-200 cursor-pointer hover:opacity-80"
+      style={getCardStyles()}
+      onClick={() => onClick?.(neoInstalacao)}
+    >
+      <div className="flex items-center justify-between gap-2 h-[19px]">
+        <div className="flex items-center gap-2 flex-1 min-w-0 cursor-grab active:cursor-grabbing" {...dragListeners}>
+          <Badge 
+            variant="outline" 
+            className="text-[9px] px-1 py-0 h-4 shrink-0 bg-purple-500/20 text-purple-300 border-purple-400/50"
           >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <Badge 
-                    variant="outline" 
-                    className="text-[10px] px-1.5 py-0 bg-purple-50 text-purple-700 border-purple-200"
+            Avulso
+          </Badge>
+          <h4 className="font-semibold text-xs truncate">{neoInstalacao.nome_cliente}</h4>
+          <Badge 
+            variant="secondary" 
+            className="text-[9px] px-1 py-0 h-4 shrink-0"
+            style={{ 
+              backgroundColor: `${corEquipe}30`,
+              color: corEquipe,
+              borderColor: `${corEquipe}50`
+            }}
+          >
+            {getResponsavelNome()}
+          </Badge>
+        </div>
+
+        <div className="flex items-center gap-1 shrink-0">
+          {(onConcluir || onRemover) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="icon" className="h-5 w-5 p-0">
+                  <MoreVertical className="h-3 w-3 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                {onConcluir && (
+                  <DropdownMenuItem 
+                    onClick={() => onConcluir(neoInstalacao.id)}
+                    className="text-green-600"
                   >
-                    Avulso
-                  </Badge>
-                  <span className="font-medium text-sm truncate">
+                    <CheckCircle className="h-3.5 w-3.5 mr-2" />
+                    Concluir
+                  </DropdownMenuItem>
+                )}
+                {onRemover && (
+                  <DropdownMenuItem 
+                    onClick={() => onRemover(neoInstalacao.id)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <XCircle className="h-3.5 w-3.5 mr-2" />
+                    Remover do calendário
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  className="p-0.5 hover:bg-accent rounded-md transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-sm">
+                <div className="space-y-2">
+                  <div className="font-semibold text-[11px] border-b border-border pb-1">
                     {neoInstalacao.nome_cliente}
-                  </span>
+                  </div>
+
+                  <div className="flex items-center gap-1 text-[10px]">
+                    <span className="font-medium text-purple-400">Instalação Avulsa</span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">
+                      {getResponsavelNome()}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-1 text-[10px]">
+                    <MapPin className="h-3 w-3 flex-shrink-0" />
+                    <span>{neoInstalacao.cidade}/{neoInstalacao.estado}</span>
+                  </div>
+
+                  {neoInstalacao.data_instalacao && (
+                    <div className="text-[10px] text-muted-foreground">
+                      Data: {format(parseISO(neoInstalacao.data_instalacao), "dd/MM/yyyy", { locale: ptBR })}
+                      {neoInstalacao.hora && ` às ${neoInstalacao.hora.substring(0, 5)}`}
+                    </div>
+                  )}
+
+                  {neoInstalacao.descricao && (
+                    <div className="pt-1 border-t border-border/50">
+                      <p className="text-[9px] font-medium mb-1">Descrição:</p>
+                      <p className="text-[9px] text-muted-foreground">{neoInstalacao.descricao}</p>
+                    </div>
+                  )}
                 </div>
-
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Badge 
-                    variant="secondary" 
-                    className="text-[10px] px-1.5 py-0"
-                    style={{ 
-                      backgroundColor: `${corEquipe}20`,
-                      color: corEquipe,
-                      borderColor: corEquipe
-                    }}
-                  >
-                    {neoInstalacao.equipe_nome || "Sem equipe"}
-                  </Badge>
-                </div>
-              </div>
-
-              {(onConcluir || onRemover) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {onConcluir && (
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onConcluir(neoInstalacao.id);
-                        }}
-                        className="text-green-600"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Concluir
-                      </DropdownMenuItem>
-                    )}
-                    {onRemover && (
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRemover(neoInstalacao.id);
-                        }}
-                        className="text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Remover
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-          </Card>
-        </TooltipTrigger>
-        <TooltipContent side="right" className="max-w-xs">
-          <div className="space-y-2">
-            <div className="font-semibold">{neoInstalacao.nome_cliente}</div>
-            
-            <div className="flex items-center gap-2 text-sm">
-              <MapPin className="h-3 w-3" />
-              <span>{neoInstalacao.cidade}/{neoInstalacao.estado}</span>
-            </div>
-
-            {neoInstalacao.data_instalacao && (
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="h-3 w-3" />
-                <span>
-                  {format(parseISO(neoInstalacao.data_instalacao), "dd/MM/yyyy", { locale: ptBR })}
-                </span>
-              </div>
-            )}
-
-            {neoInstalacao.hora && (
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-3 w-3" />
-                <span>{neoInstalacao.hora.substring(0, 5)}</span>
-              </div>
-            )}
-
-            {neoInstalacao.descricao && (
-              <div className="text-sm text-muted-foreground border-t pt-2 mt-2">
-                {neoInstalacao.descricao}
-              </div>
-            )}
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </div>
+    </Card>
   );
 };
