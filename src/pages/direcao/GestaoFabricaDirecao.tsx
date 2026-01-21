@@ -2,7 +2,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2 } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical } from "lucide-react";
+import { CriarPedidoTesteModal } from "@/components/pedidos/CriarPedidoTesteModal";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
@@ -36,6 +37,7 @@ export default function GestaoFabricaDirecao() {
   const [corPintura, setCorPintura] = useState('todas');
   const [mostrarProntos, setMostrarProntos] = useState(false);
   const [paginaAtual, setPaginaAtual] = useState(1);
+  const [modalPedidoTesteAberto, setModalPedidoTesteAberto] = useState(false);
   const ITENS_POR_PAGINA = 25;
   const contadores = usePedidosContadores();
   const {
@@ -162,9 +164,20 @@ export default function GestaoFabricaDirecao() {
   };
 
   const headerActions = (
-    <Button variant="outline" onClick={handleRefresh} size="sm" className="bg-primary/5 border-primary/10 text-white hover:bg-primary/10">
-      <RefreshCw className="h-4 w-4" />
-    </Button>
+    <div className="flex items-center gap-2">
+      <Button 
+        variant="outline" 
+        onClick={() => setModalPedidoTesteAberto(true)} 
+        size="sm" 
+        className="bg-amber-500/10 border-amber-500/20 text-amber-400 hover:bg-amber-500/20"
+      >
+        <FlaskConical className="h-4 w-4 mr-2" />
+        Pedido Teste
+      </Button>
+      <Button variant="outline" onClick={handleRefresh} size="sm" className="bg-primary/5 border-primary/10 text-white hover:bg-primary/10">
+        <RefreshCw className="h-4 w-4" />
+      </Button>
+    </div>
   );
 
   return (
@@ -365,6 +378,15 @@ export default function GestaoFabricaDirecao() {
           </TabsContent>
         ))}
       </Tabs>
+
+      <CriarPedidoTesteModal
+        open={modalPedidoTesteAberto}
+        onOpenChange={setModalPedidoTesteAberto}
+        onSuccess={() => {
+          handleRefresh();
+          setModalPedidoTesteAberto(false);
+        }}
+      />
     </MinimalistLayout>
   );
 }
