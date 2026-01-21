@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { format, isSameDay, isWeekend } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { OrdemCarregamentoCard } from "./OrdemCarregamentoCard";
-import { AddOrdemPopover } from "./AddOrdemPopover";
+import { AdicionarOrdemCalendarioModal } from "./AdicionarOrdemCalendarioModal";
 
 interface DiaCardExpedicaoProps {
   date: Date;
@@ -26,6 +29,8 @@ export const DiaCardExpedicao = ({
   onOrdemAdded,
   onOrdemClick,
 }: DiaCardExpedicaoProps) => {
+  const [modalOpen, setModalOpen] = useState(false);
+
   const hoje = new Date();
   const isToday = isSameDay(date, hoje);
   const isWeekendDay = isWeekend(date);
@@ -34,6 +39,31 @@ export const DiaCardExpedicao = ({
     if (!ordem.data_carregamento) return false;
     return isSameDay(new Date(ordem.data_carregamento), date);
   });
+
+  const handleConfirmModal = async (params: {
+    ordemId: string;
+    data_carregamento: string;
+    hora: string;
+    tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro';
+    responsavel_carregamento_id: string | null;
+    responsavel_carregamento_nome: string;
+  }) => {
+    if (!onUpdateOrdem) return;
+
+    await onUpdateOrdem({
+      id: params.ordemId,
+      data: {
+        data_carregamento: params.data_carregamento,
+        hora: params.hora,
+        tipo_carregamento: params.tipo_carregamento,
+        responsavel_carregamento_id: params.responsavel_carregamento_id,
+        responsavel_carregamento_nome: params.responsavel_carregamento_nome,
+        status: 'agendada'
+      }
+    });
+
+    onOrdemAdded?.();
+  };
 
   return (
     <>
@@ -58,13 +88,14 @@ export const DiaCardExpedicao = ({
           </div>
 
           {onUpdateOrdem && (
-            <AddOrdemPopover
-              date={date}
-              onUpdateOrdem={onUpdateOrdem}
-              onOrdemAdded={onOrdemAdded}
+            <Button
+              variant="ghost"
               size="icon"
               className="h-7 w-7"
-            />
+              onClick={() => setModalOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           )}
         </div>
 
@@ -87,6 +118,13 @@ export const DiaCardExpedicao = ({
           )}
         </div>
       </Card>
+
+      <AdicionarOrdemCalendarioModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        dataSelecionada={date}
+        onConfirm={handleConfirmModal}
+      />
     </>
   );
 };
