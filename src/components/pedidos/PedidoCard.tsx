@@ -367,6 +367,7 @@ export function PedidoCard({
 
   // Identificar características do pedido
   const temPintura = produtos.some((p: any) => p.valor_pintura > 0);
+  const temTerceirizacao = produtos.some((p: any) => p.tipo_fabricacao === 'terceirizado' || p.tipo_produto === 'porta_social');
   const tipoEntrega = venda?.tipo_entrega;
   const isInstalacao = tipoEntrega === 'instalacao';
   const isEntrega = tipoEntrega === 'entrega';
@@ -955,7 +956,7 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: '24px 24px 1fr 50px 50px 75px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}>
+            <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: '24px 24px 1fr 24px 50px 50px 75px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}>
               {/* Col 1: Drag Handle */}
               <div>
                 {dragHandleProps ? (
@@ -998,13 +999,31 @@ export function PedidoCard({
                       }
                     }}
                   >
-                    {venda?.cliente_nome}
+                    {venda?.cliente_nome && venda.cliente_nome.length > 20 
+                      ? `${venda.cliente_nome.substring(0, 20)}...` 
+                      : venda?.cliente_nome}
                   </h3>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{venda?.cliente_nome}</p>
                 </TooltipContent>
               </Tooltip>
+
+              {/* Col 4: Terceirização */}
+              {temTerceirizacao ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center justify-center">
+                      <span className="text-xs font-bold text-orange-500 bg-orange-500/10 rounded px-1.5 py-0.5">T</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Possui itens de terceirização</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <div />
+              )}
 
               {/* Col 4: Metragem Linear (m) */}
               <Tooltip>
