@@ -357,6 +357,7 @@ export default function ClientesDirecao() {
                 <TableHead className="text-white/60 font-medium hidden md:table-cell">Contato</TableHead>
                 <TableHead className="text-white/60 font-medium hidden lg:table-cell">Cidade/UF</TableHead>
                 <TableHead className="text-white/60 font-medium hidden xl:table-cell">Canal</TableHead>
+                <TableHead className="text-white/60 font-medium hidden lg:table-cell">Vendedor</TableHead>
                 <TableHead className="text-white/60 font-medium text-center">Vendas</TableHead>
                 <TableHead className="text-white/60 font-medium text-right hidden sm:table-cell">Total</TableHead>
                 <TableHead className="text-white/60 font-medium text-center hidden lg:table-cell">Última</TableHead>
@@ -366,7 +367,7 @@ export default function ClientesDirecao() {
             <TableBody>
               {clientesFiltrados.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-white/40">
+                  <TableCell colSpan={10} className="text-center py-8 text-white/40">
                     Nenhum cliente encontrado
                   </TableCell>
                 </TableRow>
@@ -413,6 +414,9 @@ export default function ClientesDirecao() {
                     </TableCell>
                     <TableCell className="text-white/60 text-xs hidden xl:table-cell">
                       {cliente.canal_aquisicao?.nome || '-'}
+                    </TableCell>
+                    <TableCell className="text-white/60 text-xs hidden lg:table-cell">
+                      {cliente.vendedor?.nome || '-'}
                     </TableCell>
                     <TableCell className="text-center text-white/70">
                       {cliente.numero_vendas || 0}
