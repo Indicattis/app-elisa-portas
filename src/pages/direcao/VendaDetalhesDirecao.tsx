@@ -95,7 +95,7 @@ export default function VendaDetalhesDirecao() {
             largura,
             altura,
             quantidade,
-            valor_unitario,
+            valor_produto,
             valor_total,
             desconto_percentual,
             catalogo_cores(nome, codigo_hex)
