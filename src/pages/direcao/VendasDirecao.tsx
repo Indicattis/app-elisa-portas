@@ -345,19 +345,9 @@ export default function VendasDirecao() {
       case 'expedicao':
         const tipoEntrega = venda.tipo_entrega;
         if (tipoEntrega === 'instalacao') {
-          return (
-            <div className="flex items-center gap-1">
-              <Hammer className="w-5 h-5 text-orange-400" />
-              <span className="text-xs text-white/60">Instalação</span>
-            </div>
-          );
+          return <Hammer className="h-4 w-4 text-orange-400 mx-auto" />;
         } else if (tipoEntrega === 'entrega') {
-          return (
-            <div className="flex items-center gap-1">
-              <Truck className="w-5 h-5 text-blue-400" />
-              <span className="text-xs text-white/60">Entrega</span>
-            </div>
-          );
+          return <Truck className="h-4 w-4 text-blue-400 mx-auto" />;
         }
         return <span className="text-white/30">-</span>;
       case 'previsao':
