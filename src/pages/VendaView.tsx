@@ -358,7 +358,7 @@ export default function VendaView() {
       </Card>
 
       {/* Resumo Financeiro */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-6">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Valor Total</CardTitle>
@@ -404,6 +404,16 @@ export default function VendaView() {
                 ({venda.percentual_credito?.toFixed(2)}%)
               </p>
             )}
+          </CardContent>
+        </Card>
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Valor Final</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-primary">
+              {formatCurrency((venda.valor_venda || 0) - (venda.valor_credito || 0))}
+            </p>
           </CardContent>
         </Card>
       </div>
