@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import * as XLSX from 'xlsx';
-import { format, startOfMonth, endOfMonth, setMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, setMonth, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,8 +52,22 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'desconto', label: 'Desconto', defaultVisible: false },
   { id: 'acrescimo', label: 'Acréscimo', defaultVisible: false },
   { id: 'faturada', label: 'Faturada', defaultVisible: false },
+  { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
   { id: 'valor', label: 'Valor', defaultVisible: true },
 ];
+
+// Função para formatar tempo decorrido
+const formatarTempoSemFaturar = (dias: number): string => {
+  if (dias === 0) return 'Hoje';
+  if (dias === 1) return '1 dia';
+  if (dias < 7) return `${dias} dias`;
+  if (dias < 30) {
+    const semanas = Math.floor(dias / 7);
+    return semanas === 1 ? '1 sem.' : `${semanas} sem.`;
+  }
+  const meses = Math.floor(dias / 30);
+  return meses === 1 ? '1 mês' : `${meses} meses`;
+};
 
 export default function VendasDirecao() {
   const navigate = useNavigate();
@@ -245,6 +259,11 @@ export default function VendasDirecao() {
           case 'faturada': 
             const produtos = venda.produtos || [];
             return produtos.some((p: any) => p.faturamento === true) ? 1 : 0;
+          case 'tempo_sem_faturar':
+            const produtosTempo = venda.produtos || [];
+            const estaFaturada = produtosTempo.some((p: any) => p.faturamento === true);
+            if (estaFaturada) return 0;
+            return differenceInDays(new Date(), new Date(venda.data_venda));
           default: return '';
         }
       };
@@ -376,6 +395,19 @@ export default function VendasDirecao() {
             )}
           </div>
         );
+      case 'tempo_sem_faturar':
+        if (isFaturada()) {
+          return <span className="text-white/30">-</span>;
+        }
+        const diasSemFaturar = differenceInDays(new Date(), new Date(venda.data_venda));
+        const tempoFormatado = formatarTempoSemFaturar(diasSemFaturar);
+        // Cor baseada na urgência
+        const corTempo = diasSemFaturar >= 30 
+          ? 'text-red-400' 
+          : diasSemFaturar >= 14 
+            ? 'text-amber-400' 
+            : 'text-white/60';
+        return <span className={corTempo}>{tempoFormatado}</span>;
       case 'valor':
         return (
           <span className="text-white font-medium">
@@ -401,6 +433,7 @@ export default function VendasDirecao() {
       case 'desconto':
       case 'acrescimo':
       case 'faturada':
+      case 'tempo_sem_faturar':
         return 'hidden lg:table-cell';
       default:
         return '';
@@ -417,6 +450,7 @@ export default function VendasDirecao() {
       case 'acrescimo':
         return 'text-right';
       case 'faturada':
+      case 'tempo_sem_faturar':
         return 'text-center';
       default:
         return 'text-left';
