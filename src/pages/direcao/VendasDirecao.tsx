@@ -13,7 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X } from 'lucide-react';
+import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,7 +45,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'cidade', label: 'Cidade', defaultVisible: true },
   { id: 'estado', label: 'Estado', defaultVisible: false },
   { id: 'vendedor', label: 'Vendedor', defaultVisible: true },
-  { id: 'produtos', label: 'Produtos', defaultVisible: true },
+  { id: 'expedicao', label: 'Expedição', defaultVisible: true },
   { id: 'previsao', label: 'Previsão Entrega', defaultVisible: false },
   { id: 'frete', label: 'Frete', defaultVisible: false },
   { id: 'instalacao', label: 'Instalação', defaultVisible: false },
@@ -251,7 +251,7 @@ export default function VendasDirecao() {
             ? new Date(venda.data_prevista_entrega).getTime() 
             : 0;
           case 'telefone': return venda.cliente_telefone || '';
-          case 'produtos': return venda.produtos?.length || 0;
+          case 'expedicao': return venda.tipo_entrega || '';
           case 'frete': return venda.valor_frete || 0;
           case 'instalacao': return venda.valor_instalacao || 0;
           case 'desconto': return venda.produtos?.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0) || 0;
@@ -344,8 +344,24 @@ export default function VendasDirecao() {
             </AvatarFallback>
           </Avatar>
         );
-      case 'produtos':
-        return <ProductIconsSummary venda={venda} />;
+      case 'expedicao':
+        const tipoEntrega = venda.tipo_entrega;
+        if (tipoEntrega === 'instalacao') {
+          return (
+            <div className="flex items-center gap-1">
+              <Hammer className="w-5 h-5 text-orange-400" />
+              <span className="text-xs text-white/60">Instalação</span>
+            </div>
+          );
+        } else if (tipoEntrega === 'entrega') {
+          return (
+            <div className="flex items-center gap-1">
+              <Truck className="w-5 h-5 text-blue-400" />
+              <span className="text-xs text-white/60">Entrega</span>
+            </div>
+          );
+        }
+        return <span className="text-white/30">-</span>;
       case 'previsao':
         return (
           <span className="text-white/60">
