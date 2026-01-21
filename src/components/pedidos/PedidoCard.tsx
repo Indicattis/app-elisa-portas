@@ -416,7 +416,7 @@ export function PedidoCard({
 
   // Calcular lista de portas P (pequenas ≤25m²) e G (grandes >25m²) com dimensões
   const portasEnrolar = produtos.filter((p: any) => p.tipo_produto === 'porta_enrolar');
-  const listaPortasInfo: { tamanho: 'P' | 'G'; largura: number; altura: number; area: number }[] = [];
+  const listaPortasInfo: { tamanho: 'P' | 'G'; largura: number; altura: number; area: number; peso?: number }[] = [];
   portasEnrolar.forEach((p: any) => {
     // Primeiro tenta usar os campos numéricos, senão faz parse do campo tamanho
     let largura = p.largura || 0;
@@ -432,9 +432,10 @@ export function PedidoCard({
     const area = largura * altura; // área em m²
     const quantidade = p.quantidade || 1;
     const tamanhoCategoria = area > 25 ? 'G' : 'P';
+    const peso = p.peso_total || p.peso_porta || p.peso || null;
     
     for (let i = 0; i < quantidade; i++) {
-      listaPortasInfo.push({ tamanho: tamanhoCategoria, largura, altura, area });
+      listaPortasInfo.push({ tamanho: tamanhoCategoria, largura, altura, area, peso });
     }
   });
   const portasPequenas = listaPortasInfo.filter(p => p.tamanho === 'P').length;
@@ -1113,6 +1114,9 @@ export function PedidoCard({
                         <TooltipContent side="top" className="z-[100]">
                           <p className="font-medium">{porta.largura.toFixed(2)}m × {porta.altura.toFixed(2)}m</p>
                           <p className="text-xs text-muted-foreground">{porta.area.toFixed(2)} m²</p>
+                          {porta.peso && porta.peso > 0 && (
+                            <p className="text-xs text-muted-foreground">Peso: {porta.peso.toFixed(1)} kg</p>
+                          )}
                         </TooltipContent>
                       </Tooltip>
                     ))}
