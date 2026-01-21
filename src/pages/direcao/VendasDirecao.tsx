@@ -1,8 +1,10 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVendas } from '@/hooks/useVendas';
 import { useAuth } from '@/hooks/useAuth';
+import { useColumnConfig, ColumnConfig } from '@/hooks/useColumnConfig';
 import { ProductIconsSummary } from '@/components/vendas/ProductIconsSummary';
+import { ColumnManager } from '@/components/ColumnManager';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,11 +21,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import * as XLSX from 'xlsx';
-import { Badge } from '@/components/ui/badge';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
-import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { generateVendasRelatorioPDF } from '@/utils/vendasPDFGenerator';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +36,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+// Definição das colunas disponíveis
+const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
+  { id: 'data', label: 'Data', defaultVisible: true },
+  { id: 'cliente', label: 'Cliente', defaultVisible: true },
+  { id: 'telefone', label: 'Telefone', defaultVisible: false },
+  { id: 'cidade', label: 'Cidade', defaultVisible: true },
+  { id: 'estado', label: 'Estado', defaultVisible: false },
+  { id: 'vendedor', label: 'Vendedor', defaultVisible: true },
+  { id: 'produtos', label: 'Produtos', defaultVisible: true },
+  { id: 'previsao', label: 'Previsão Entrega', defaultVisible: false },
+  { id: 'valor', label: 'Valor', defaultVisible: true },
+];
 
 export default function VendasDirecao() {
   const navigate = useNavigate();
@@ -50,6 +63,16 @@ export default function VendasDirecao() {
   });
   const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
   const [atendentes, setAtendentes] = useState<any[]>([]);
+
+  // Hook de configuração de colunas
+  const {
+    columns,
+    visibleColumns,
+    visibleIds,
+    toggleColumn,
+    setColumnOrder,
+    resetColumns
+  } = useColumnConfig('direcao_vendas_columns', COLUNAS_DISPONIVEIS);
 
   useEffect(() => {
     const fetchAtendentes = async () => {
@@ -177,6 +200,78 @@ export default function VendasDirecao() {
       totalProdutos: filteredVendas.reduce((sum, v) => sum + (v.produtos?.length || 0), 0),
     };
   }, [filteredVendas]);
+
+  // Função para renderizar célula baseado no ID da coluna
+  const renderCell = useCallback((venda: any, columnId: string) => {
+    switch (columnId) {
+      case 'data':
+        return (
+          <span className="text-white/80">
+            {format(new Date(venda.data_venda), 'dd/MM/yy', { locale: ptBR })}
+          </span>
+        );
+      case 'cliente':
+        return <span className="text-white font-medium">{venda.cliente_nome}</span>;
+      case 'telefone':
+        return <span className="text-white/60">{venda.cliente_telefone || '-'}</span>;
+      case 'cidade':
+        return <span className="text-white/60">{venda.cidade}/{venda.estado}</span>;
+      case 'estado':
+        return <span className="text-white/60">{venda.estado}</span>;
+      case 'vendedor':
+        return (
+          <div className="flex items-center gap-2">
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={venda.atendente?.foto_perfil_url} />
+              <AvatarFallback className="text-[10px] bg-blue-500/20 text-blue-400">
+                {venda.atendente?.nome?.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-white/80 text-sm">{venda.atendente?.nome}</span>
+          </div>
+        );
+      case 'produtos':
+        return <ProductIconsSummary venda={venda} />;
+      case 'previsao':
+        return (
+          <span className="text-white/60">
+            {venda.data_prevista_entrega 
+              ? format(new Date(venda.data_prevista_entrega), 'dd/MM/yy', { locale: ptBR })
+              : '-'
+            }
+          </span>
+        );
+      case 'valor':
+        return (
+          <span className="text-white font-medium">
+            {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
+          </span>
+        );
+      default:
+        return null;
+    }
+  }, []);
+
+  // Estilo de alinhamento por coluna
+  const getColumnAlignment = (columnId: string) => {
+    if (columnId === 'valor') return 'text-right';
+    return 'text-left';
+  };
+
+  // Classes responsivas por coluna
+  const getColumnResponsiveClass = (columnId: string) => {
+    switch (columnId) {
+      case 'cidade':
+      case 'estado':
+      case 'telefone':
+        return 'hidden md:table-cell';
+      case 'vendedor':
+      case 'previsao':
+        return 'hidden lg:table-cell';
+      default:
+        return '';
+    }
+  };
 
   const headerActions = (
     <div className="flex gap-2">
@@ -311,6 +406,15 @@ export default function VendasDirecao() {
             ))}
           </SelectContent>
         </Select>
+
+        {/* Botão de configuração de colunas */}
+        <ColumnManager
+          columns={columns}
+          visibleIds={visibleIds}
+          onToggle={toggleColumn}
+          onReorder={setColumnOrder}
+          onReset={resetColumns}
+        />
       </div>
 
       {/* Tabela */}
@@ -318,18 +422,20 @@ export default function VendasDirecao() {
         <Table>
           <TableHeader>
             <TableRow className="border-primary/10 hover:bg-transparent">
-              <TableHead className="text-white/60">Data</TableHead>
-              <TableHead className="text-white/60">Cliente</TableHead>
-              <TableHead className="text-white/60 hidden md:table-cell">Cidade</TableHead>
-              <TableHead className="text-white/60 hidden lg:table-cell">Vendedor</TableHead>
-              <TableHead className="text-white/60">Produtos</TableHead>
-              <TableHead className="text-white/60 text-right">Valor</TableHead>
+              {visibleColumns.map(column => (
+                <TableHead 
+                  key={column.id}
+                  className={`text-white/60 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
+                >
+                  {column.label}
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredVendas.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-white/40">
+                <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-white/40">
                   Nenhuma venda encontrada
                 </TableCell>
               </TableRow>
@@ -340,32 +446,14 @@ export default function VendasDirecao() {
                   className="border-primary/10 hover:bg-primary/5 cursor-pointer"
                   onClick={() => navigate(`/dashboard/vendas/${venda.id}`)}
                 >
-                  <TableCell className="text-white/80">
-                    {format(new Date(venda.data_venda), 'dd/MM/yy', { locale: ptBR })}
-                  </TableCell>
-                  <TableCell className="text-white font-medium">
-                    {venda.cliente_nome}
-                  </TableCell>
-                  <TableCell className="text-white/60 hidden md:table-cell">
-                    {venda.cidade}/{venda.estado}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={venda.atendente?.foto_perfil_url} />
-                        <AvatarFallback className="text-[10px] bg-blue-500/20 text-blue-400">
-                          {venda.atendente?.nome?.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-white/80 text-sm">{venda.atendente?.nome}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <ProductIconsSummary venda={venda} />
-                  </TableCell>
-                  <TableCell className="text-right text-white font-medium">
-                    {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
-                  </TableCell>
+                  {visibleColumns.map(column => (
+                    <TableCell 
+                      key={column.id}
+                      className={`${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
+                    >
+                      {renderCell(venda, column.id)}
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))
             )}
