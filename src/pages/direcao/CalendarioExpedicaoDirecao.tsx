@@ -6,6 +6,7 @@ import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useOrdensCarregamentoCalendario } from "@/hooks/useOrdensCarregamentoCalendario";
+import { useNeoInstalacoes } from "@/hooks/useNeoInstalacoes";
 import { OrdensCarregamentoDisponiveis } from "@/components/expedicao/OrdensCarregamentoDisponiveis";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
 import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrdemCarregamentoDrawer";
@@ -34,6 +35,7 @@ export default function CalendarioExpedicaoDirecao() {
   const [editingOrdem, setEditingOrdem] = useState<OrdemCarregamento | null>(null);
 
   const { ordens, isLoading, updateOrdem } = useOrdensCarregamentoCalendario(currentDate, viewType);
+  const { neoInstalacoes } = useNeoInstalacoes(currentDate, viewType);
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -179,6 +181,7 @@ export default function CalendarioExpedicaoDirecao() {
                     <CalendarioSemanalExpedicaoMobile
                       startDate={weekStart}
                       ordens={ordens || []}
+                      neoInstalacoes={neoInstalacoes || []}
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
@@ -192,6 +195,7 @@ export default function CalendarioExpedicaoDirecao() {
                     <CalendarioSemanalExpedicaoDesktop
                       startDate={weekStart}
                       ordens={ordens || []}
+                      neoInstalacoes={neoInstalacoes || []}
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
@@ -206,6 +210,7 @@ export default function CalendarioExpedicaoDirecao() {
                     <CalendarioMensalExpedicaoDesktop
                       currentMonth={currentDate}
                       ordens={ordens || []}
+                      neoInstalacoes={neoInstalacoes || []}
                       onMonthChange={handleMonthChange}
                       onUpdateOrdem={handleUpdateOrdem}
                       onEdit={handleEdit}
