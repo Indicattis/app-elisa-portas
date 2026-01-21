@@ -231,7 +231,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 
         <SidebarInset className="flex-1 flex flex-col bg-black">
           <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/10">
-            <div className="h-14 flex items-center justify-between px-4 w-full">
+            <div className="h-12 flex items-center justify-between px-4 w-full">
               <div className="flex items-center">
                 <SidebarTrigger className="-ml-1 text-white hover:bg-white/10" />
                 <div className="h-4 w-px bg-white/20 mx-3" />
