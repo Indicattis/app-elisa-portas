@@ -1,12 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useClientes, useCreateCliente, useUpdateCliente, useDeleteCliente, Cliente, ClienteFormData, TipoCliente } from '@/hooks/useClientes';
 import { useCanaisAquisicao } from '@/hooks/useCanaisAquisicao';
+import { useColumnConfig, ColumnConfig } from '@/hooks/useColumnConfig';
+import { ColumnManager } from '@/components/ColumnManager';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { ClienteForm } from '@/components/clientes/ClienteForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -42,10 +43,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, User, RefreshCw, Pencil, Trash2, X, Phone, Mail } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { Search, User, Pencil, Trash2, X, Phone, Mail, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 const TIPOS_CLIENTE_CONFIG: Record<TipoCliente, { label: string; color: string }> = {
   'CE': { label: 'CE', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
@@ -56,6 +56,19 @@ const ESTADOS_BR = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
   'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
   'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
+
+const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
+  { id: 'tag', label: 'Tag', defaultVisible: true },
+  { id: 'nome', label: 'Nome', defaultVisible: true },
+  { id: 'contato', label: 'Contato', defaultVisible: true },
+  { id: 'cidade', label: 'Cidade/UF', defaultVisible: true },
+  { id: 'canal', label: 'Canal', defaultVisible: true },
+  { id: 'vendedor', label: 'Vendedor', defaultVisible: true },
+  { id: 'vendas', label: 'Vendas', defaultVisible: true },
+  { id: 'total', label: 'Total', defaultVisible: true },
+  { id: 'ultima', label: 'Última Compra', defaultVisible: true },
+  { id: 'acoes', label: 'Ações', defaultVisible: true },
 ];
 
 const formatarTempoDesdeUltimaCompra = (dataUltimaCompra: string | null): string => {
@@ -92,6 +105,20 @@ export default function ClientesDirecao() {
   const [clienteEditando, setClienteEditando] = useState<Cliente | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clienteParaExcluir, setClienteParaExcluir] = useState<Cliente | null>(null);
+  
+  const [sortConfig, setSortConfig] = useState<{
+    column: string | null;
+    direction: 'asc' | 'desc' | null;
+  }>({ column: null, direction: null });
+
+  const {
+    columns,
+    visibleColumns,
+    visibleIds,
+    toggleColumn,
+    setColumnOrder,
+    resetColumns
+  } = useColumnConfig('direcao_clientes_columns', COLUNAS_DISPONIVEIS);
 
   // Calcular clientes CR por vendedor
   const clientesCRPorVendedor = useMemo(() => {
@@ -139,6 +166,36 @@ export default function ClientesDirecao() {
     });
   }, [clientes, searchTerm, filtroEstado, filtroCanal, filtroTipo, filtroVendedor]);
 
+  const handleSort = useCallback((columnId: string) => {
+    setSortConfig(current => {
+      if (current.column !== columnId) return { column: columnId, direction: 'asc' };
+      if (current.direction === 'asc') return { column: columnId, direction: 'desc' };
+      return { column: null, direction: null };
+    });
+  }, []);
+
+  const clientesOrdenados = useMemo(() => {
+    if (!sortConfig.column || !sortConfig.direction) return clientesFiltrados;
+    
+    return [...clientesFiltrados].sort((a, b) => {
+      const getValue = (cliente: Cliente) => {
+        switch (sortConfig.column) {
+          case 'nome': return cliente.nome?.toLowerCase() || '';
+          case 'cidade': return cliente.cidade?.toLowerCase() || '';
+          case 'vendas': return cliente.numero_vendas || 0;
+          case 'total': return cliente.total_vendas || 0;
+          case 'ultima': return cliente.ultima_compra ? new Date(cliente.ultima_compra).getTime() : 0;
+          default: return '';
+        }
+      };
+      const aVal = getValue(a);
+      const bVal = getValue(b);
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [clientesFiltrados, sortConfig]);
+
   const totalClientes = clientes?.length || 0;
 
   const limparFiltros = () => {
@@ -148,6 +205,128 @@ export default function ClientesDirecao() {
     setFiltroTipo('todos');
     setFiltroVendedor('todos');
   };
+
+  const getColumnResponsiveClass = (columnId: string) => {
+    switch (columnId) {
+      case 'contato': return 'hidden md:table-cell';
+      case 'cidade': return 'hidden lg:table-cell';
+      case 'canal': return 'hidden xl:table-cell';
+      case 'vendedor': return 'hidden lg:table-cell';
+      case 'total': return 'hidden sm:table-cell';
+      case 'ultima': return 'hidden lg:table-cell';
+      default: return '';
+    }
+  };
+
+  const getColumnAlignment = (columnId: string) => {
+    switch (columnId) {
+      case 'vendas': return 'text-center';
+      case 'total': return 'text-right';
+      case 'ultima': return 'text-center';
+      case 'acoes': return 'text-right';
+      case 'vendedor': return 'text-center';
+      default: return '';
+    }
+  };
+
+  const renderCell = useCallback((cliente: Cliente, columnId: string) => {
+    switch (columnId) {
+      case 'tag':
+        return cliente.tipo_cliente ? (
+          <Badge 
+            variant="outline" 
+            className={`text-[10px] px-1.5 py-0.5 ${TIPOS_CLIENTE_CONFIG[cliente.tipo_cliente as TipoCliente]?.color || ''}`}
+          >
+            {cliente.tipo_cliente}
+          </Badge>
+        ) : (
+          <span className="text-white/30">-</span>
+        );
+      case 'nome':
+        return <span className="text-white font-medium">{cliente.nome}</span>;
+      case 'contato':
+        return (
+          <div className="flex flex-col gap-0.5">
+            {cliente.telefone && (
+              <span className="text-white/70 text-xs flex items-center gap-1">
+                <Phone className="h-3 w-3" />
+                {cliente.telefone}
+              </span>
+            )}
+            {cliente.email && (
+              <span className="text-white/50 text-xs flex items-center gap-1">
+                <Mail className="h-3 w-3" />
+                {cliente.email}
+              </span>
+            )}
+            {!cliente.telefone && !cliente.email && <span className="text-white/30">-</span>}
+          </div>
+        );
+      case 'cidade':
+        return (
+          <span className="text-white/70">
+            {cliente.cidade && cliente.estado 
+              ? `${cliente.cidade}/${cliente.estado}` 
+              : cliente.cidade || cliente.estado || '-'}
+          </span>
+        );
+      case 'canal':
+        return <span className="text-white/60 text-xs">{cliente.canal_aquisicao?.nome || '-'}</span>;
+      case 'vendedor':
+        return cliente.vendedor ? (
+          <div className="flex justify-center">
+            <Avatar className="h-7 w-7">
+              <AvatarImage src={cliente.vendedor.foto_perfil_url || undefined} />
+              <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                {cliente.vendedor.nome?.charAt(0)?.toUpperCase() || '?'}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+        ) : (
+          <span className="text-white/30 text-center block">-</span>
+        );
+      case 'vendas':
+        return <span className="text-white/70">{cliente.numero_vendas || 0}</span>;
+      case 'total':
+        return (
+          <span className="text-white font-medium">
+            {(cliente.total_vendas || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          </span>
+        );
+      case 'ultima':
+        return <span className="text-white/60 text-xs">{formatarTempoDesdeUltimaCompra(cliente.ultima_compra)}</span>;
+      case 'acoes':
+        return (
+          <div className="flex items-center justify-end gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-white/50 hover:text-white hover:bg-white/10"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditarCliente(cliente);
+              }}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-white/50 hover:text-red-400 hover:bg-red-500/10"
+              onClick={(e) => {
+                e.stopPropagation();
+                setClienteParaExcluir(cliente);
+                setDeleteDialogOpen(true);
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  }, []);
 
   const handleNovoCliente = () => {
     setClienteEditando(null);
@@ -187,14 +366,13 @@ export default function ClientesDirecao() {
   };
 
   const headerActions = (
-    <Button
-      size="sm"
-      onClick={handleNovoCliente}
-      className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border-0"
-    >
-      <Plus className="h-4 w-4 mr-1" />
-      <span className="hidden sm:inline">Novo Cliente</span>
-    </Button>
+    <ColumnManager
+      columns={columns}
+      visibleIds={visibleIds}
+      onToggle={toggleColumn}
+      onReorder={setColumnOrder}
+      onReset={resetColumns}
+    />
   );
 
   if (isLoading) {
@@ -353,119 +531,64 @@ export default function ClientesDirecao() {
           <Table>
             <TableHeader>
               <TableRow className="border-white/10 hover:bg-transparent">
-                <TableHead className="text-white/60 font-medium">Tag</TableHead>
-                <TableHead className="text-white/60 font-medium">Nome</TableHead>
-                <TableHead className="text-white/60 font-medium hidden md:table-cell">Contato</TableHead>
-                <TableHead className="text-white/60 font-medium hidden lg:table-cell">Cidade/UF</TableHead>
-                <TableHead className="text-white/60 font-medium hidden xl:table-cell">Canal</TableHead>
-                <TableHead className="text-white/60 font-medium hidden lg:table-cell">Vendedor</TableHead>
-                <TableHead className="text-white/60 font-medium text-center">Vendas</TableHead>
-                <TableHead className="text-white/60 font-medium text-right hidden sm:table-cell">Total</TableHead>
-                <TableHead className="text-white/60 font-medium text-center hidden lg:table-cell">Última</TableHead>
-                <TableHead className="text-white/60 font-medium text-right">Ações</TableHead>
+                {visibleColumns.map(col => (
+                  <TableHead 
+                    key={col.id}
+                    onClick={() => col.id !== 'acoes' && handleSort(col.id)}
+                    className={cn(
+                      "text-white/60 font-medium",
+                      col.id !== 'acoes' && "cursor-pointer hover:text-white/80",
+                      getColumnResponsiveClass(col.id),
+                      getColumnAlignment(col.id)
+                    )}
+                  >
+                    <div className={cn(
+                      "flex items-center gap-1",
+                      getColumnAlignment(col.id) === 'text-center' && "justify-center",
+                      getColumnAlignment(col.id) === 'text-right' && "justify-end"
+                    )}>
+                      {col.label}
+                      {col.id !== 'acoes' && (
+                        sortConfig.column === col.id ? (
+                          sortConfig.direction === 'asc' ? (
+                            <ArrowUp className="h-3 w-3" />
+                          ) : (
+                            <ArrowDown className="h-3 w-3" />
+                          )
+                        ) : (
+                          <ArrowUpDown className="h-3 w-3 opacity-30" />
+                        )
+                      )}
+                    </div>
+                  </TableHead>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clientesFiltrados.length === 0 ? (
+              {clientesOrdenados.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8 text-white/40">
+                  <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-white/40">
                     Nenhum cliente encontrado
                   </TableCell>
                 </TableRow>
               ) : (
-                clientesFiltrados.map(cliente => (
+                clientesOrdenados.map(cliente => (
                   <TableRow 
                     key={cliente.id} 
                     className="border-white/5 hover:bg-white/5 cursor-pointer"
                     onClick={() => handleEditarCliente(cliente)}
                   >
-                    <TableCell>
-                      {cliente.tipo_cliente ? (
-                        <Badge 
-                          variant="outline" 
-                          className={`text-[10px] px-1.5 py-0.5 ${TIPOS_CLIENTE_CONFIG[cliente.tipo_cliente as TipoCliente]?.color || ''}`}
-                        >
-                          {cliente.tipo_cliente}
-                        </Badge>
-                      ) : (
-                        <span className="text-white/30">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-white font-medium">{cliente.nome}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <div className="flex flex-col gap-0.5">
-                        {cliente.telefone && (
-                          <span className="text-white/70 text-xs flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {cliente.telefone}
-                          </span>
+                    {visibleColumns.map(col => (
+                      <TableCell 
+                        key={col.id} 
+                        className={cn(
+                          getColumnResponsiveClass(col.id),
+                          getColumnAlignment(col.id)
                         )}
-                        {cliente.email && (
-                          <span className="text-white/50 text-xs flex items-center gap-1">
-                            <Mail className="h-3 w-3" />
-                            {cliente.email}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-white/70 hidden lg:table-cell">
-                      {cliente.cidade && cliente.estado 
-                        ? `${cliente.cidade}/${cliente.estado}` 
-                        : cliente.cidade || cliente.estado || '-'}
-                    </TableCell>
-                    <TableCell className="text-white/60 text-xs hidden xl:table-cell">
-                      {cliente.canal_aquisicao?.nome || '-'}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {cliente.vendedor ? (
-                        <div className="flex justify-center">
-                          <Avatar className="h-7 w-7">
-                            <AvatarImage src={cliente.vendedor.foto_perfil_url || undefined} />
-                            <AvatarFallback className="bg-primary/20 text-primary text-xs">
-                              {cliente.vendedor.nome?.charAt(0)?.toUpperCase() || '?'}
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
-                      ) : (
-                        <span className="text-white/30 text-center block">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center text-white/70">
-                      {cliente.numero_vendas || 0}
-                    </TableCell>
-                    <TableCell className="text-right text-white font-medium hidden sm:table-cell">
-                      {(cliente.total_vendas || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    </TableCell>
-                    <TableCell className="text-center text-white/60 text-xs hidden lg:table-cell">
-                      {formatarTempoDesdeUltimaCompra(cliente.ultima_compra)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-white/50 hover:text-white hover:bg-white/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditarCliente(cliente);
-                          }}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-white/50 hover:text-red-400 hover:bg-red-500/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setClienteParaExcluir(cliente);
-                            setDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                      >
+                        {renderCell(cliente, col.id)}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))
               )}
