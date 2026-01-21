@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useOrdensMinhaEquipe } from "@/hooks/useOrdensMinhaEquipe";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
-import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrdemCarregamentoDrawer";
 import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
 import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
@@ -15,27 +14,21 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addDays, startOfWeek, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function CronogramaMinimalista() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { signOut } = useAuth();
-  const queryClient = useQueryClient();
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<'week' | 'month'>('week');
   const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
-  const [editingOrdem, setEditingOrdem] = useState<OrdemCarregamento | null>(null);
 
   const { 
     ordens, 
     isLoading, 
-    updateOrdem, 
     equipeNome,
     equipeCor,
     temEquipe 
@@ -52,46 +45,6 @@ export default function CronogramaMinimalista() {
     } else {
       setCurrentDate(startOfWeek(new Date(), { weekStartsOn: 1 }));
     }
-  };
-
-  const handleUpdateOrdem = async (params: { id: string; data: Partial<OrdemCarregamento> }) => {
-    await updateOrdem(params);
-  };
-
-  const handleEdit = (ordem: OrdemCarregamento) => {
-    setEditingOrdem(ordem);
-    setEditDrawerOpen(true);
-  };
-
-  const handleSaveEdit = async (data: any) => {
-    if (editingOrdem) {
-      await updateOrdem({ id: editingOrdem.id, data });
-      setEditDrawerOpen(false);
-      setEditingOrdem(null);
-    }
-  };
-
-  const handleOrdemCriada = () => {
-    queryClient.invalidateQueries({ queryKey: ['ordens_minha_equipe'] });
-  };
-
-  const handleOrdemDropped = () => {
-    queryClient.invalidateQueries({ queryKey: ['ordens_minha_equipe'] });
-  };
-
-  const handleRemoverDoCalendario = (ordemId: string) => {
-    updateOrdem({ 
-      id: ordemId, 
-      data: { 
-        data_carregamento: null, 
-        status: 'pendente' 
-      } 
-    });
-    toast.success("Ordem removida do calendário");
-  };
-
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['ordens_minha_equipe'] });
   };
 
   const handleOrdemClick = (ordem: OrdemCarregamento) => {
@@ -256,7 +209,7 @@ export default function CronogramaMinimalista() {
             </div>
           ) : (
             <div className="max-w-7xl mx-auto space-y-4">
-              {/* Calendário */}
+              {/* Calendário - Modo Somente Visualização */}
               <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
                 <CardContent className="p-4">
                   {isMobile ? (
@@ -267,10 +220,7 @@ export default function CronogramaMinimalista() {
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
                       onDayClick={() => {}}
-                      onEdit={handleEdit}
-                      onRemoverDoCalendario={handleRemoverDoCalendario}
-                      onUpdateOrdem={handleUpdateOrdem}
-                      onOrdemAdded={handleOrdemCriada}
+                      onOrdemClick={handleOrdemClick}
                     />
                   ) : viewType === 'week' ? (
                     <CalendarioSemanalExpedicaoDesktop
@@ -279,24 +229,16 @@ export default function CronogramaMinimalista() {
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
-                      onUpdateOrdem={handleUpdateOrdem}
-                      onEdit={handleEdit}
-                      onRemoverDoCalendario={handleRemoverDoCalendario}
-                      onOrdemCriada={handleOrdemCriada}
-                      onOrdemDropped={handleOrdemDropped}
                       onOrdemClick={handleOrdemClick}
+                      readOnly
                     />
                   ) : (
                     <CalendarioMensalExpedicaoDesktop
                       currentMonth={currentDate}
                       ordens={ordens || []}
                       onMonthChange={handleMonthChange}
-                      onUpdateOrdem={handleUpdateOrdem}
-                      onEdit={handleEdit}
-                      onRemoverDoCalendario={handleRemoverDoCalendario}
-                      onOrdemCriada={handleOrdemCriada}
-                      onOrdemDropped={handleOrdemDropped}
                       onOrdemClick={handleOrdemClick}
+                      readOnly
                     />
                   )}
                 </CardContent>
@@ -306,19 +248,11 @@ export default function CronogramaMinimalista() {
         </main>
       </div>
 
-      {/* Detalhes da Ordem */}
+      {/* Detalhes da Ordem (somente visualização) */}
       <OrdemCarregamentoDetails
         ordem={selectedOrdem}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
-      />
-
-      {/* Drawer de Edição */}
-      <EditarOrdemCarregamentoDrawer
-        ordem={editingOrdem}
-        open={editDrawerOpen}
-        onOpenChange={setEditDrawerOpen}
-        onSave={handleSaveEdit}
       />
     </div>
   );

@@ -16,12 +16,13 @@ interface CalendarioSemanalExpedicaoDesktopProps {
   onPreviousWeek: () => void;
   onNextWeek: () => void;
   onToday: () => void;
-  onUpdateOrdem: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
-  onEdit: (ordem: OrdemCarregamento) => void;
-  onRemoverDoCalendario: (id: string) => void;
+  onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
+  onEdit?: (ordem: OrdemCarregamento) => void;
+  onRemoverDoCalendario?: (id: string) => void;
   onOrdemCriada?: () => void;
   onOrdemDropped?: () => void;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
+  readOnly?: boolean;
 }
 
 export const CalendarioSemanalExpedicaoDesktop = ({
@@ -36,6 +37,7 @@ export const CalendarioSemanalExpedicaoDesktop = ({
   onOrdemCriada,
   onOrdemDropped,
   onOrdemClick,
+  readOnly = false,
 }: CalendarioSemanalExpedicaoDesktopProps) => {
   const [activeOrdem, setActiveOrdem] = useState<OrdemCarregamento | null>(null);
 
@@ -101,6 +103,68 @@ export const CalendarioSemanalExpedicaoDesktop = ({
     // Implementar modal de criação se necessário
   };
 
+  const calendarContent = (
+    <div className="space-y-4 w-full">
+      {/* Navegação da semana */}
+      <div className="flex items-center justify-between gap-4">
+        <Button variant="outline" size="icon" onClick={onPreviousWeek}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+
+        <div className="text-center">
+          <p className="text-sm font-medium">
+            {format(weekStart, "dd 'de' MMMM", { locale: ptBR })} -{" "}
+            {format(addDays(weekStart, 6), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+          </p>
+          <Button variant="link" size="sm" onClick={onToday} className="h-auto p-0 text-xs">
+            Ir para hoje
+          </Button>
+        </div>
+
+        <Button variant="outline" size="icon" onClick={onNextWeek}>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Legendas */}
+      <CalendarioLegendas />
+
+      {/* Grid de dias */}
+      <div className="grid grid-cols-7 gap-4">
+        {/* Headers dos dias */}
+        {weekDays.map((day, index) => (
+          <div key={`header-${index}`} className="text-center pb-2 border-b">
+            <p className="text-sm font-semibold">{weekDayNames[index]}</p>
+            <p className="text-xs text-muted-foreground">
+              {format(day, "dd/MM")}
+            </p>
+          </div>
+        ))}
+
+        {/* Dias com ordens */}
+        {weekDays.map((day) => (
+          <DroppableDaySimpleExpedicao
+            key={day.toISOString()}
+            date={day}
+            ordens={ordens}
+            onDayClick={handleDayClick}
+            onEdit={readOnly ? undefined : onEdit}
+            onRemoverDoCalendario={readOnly ? undefined : onRemoverDoCalendario}
+            onOrdemDropped={readOnly ? undefined : onOrdemDropped}
+            onUpdateOrdem={readOnly ? undefined : onUpdateOrdem}
+            onOrdemClick={onOrdemClick}
+            readOnly={readOnly}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
+  // Se readOnly, não usar DndContext (desabilita drag & drop)
+  if (readOnly) {
+    return calendarContent;
+  }
+
   return (
     <DndContext
       sensors={sensors}
@@ -108,70 +172,18 @@ export const CalendarioSemanalExpedicaoDesktop = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="space-y-4 w-full">
-        {/* Navegação da semana */}
-        <div className="flex items-center justify-between gap-4">
-          <Button variant="outline" size="icon" onClick={onPreviousWeek}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-
-          <div className="text-center">
-            <p className="text-sm font-medium">
-              {format(weekStart, "dd 'de' MMMM", { locale: ptBR })} -{" "}
-              {format(addDays(weekStart, 6), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-            </p>
-            <Button variant="link" size="sm" onClick={onToday} className="h-auto p-0 text-xs">
-              Ir para hoje
-            </Button>
-          </div>
-
-          <Button variant="outline" size="icon" onClick={onNextWeek}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Legendas */}
-        <CalendarioLegendas />
-
-        {/* Grid de dias */}
-        <div className="grid grid-cols-7 gap-4">
-          {/* Headers dos dias */}
-          {weekDays.map((day, index) => (
-            <div key={`header-${index}`} className="text-center pb-2 border-b">
-              <p className="text-sm font-semibold">{weekDayNames[index]}</p>
-              <p className="text-xs text-muted-foreground">
-                {format(day, "dd/MM")}
-              </p>
-            </div>
-          ))}
-
-          {/* Dias com ordens */}
-          {weekDays.map((day) => (
-            <DroppableDaySimpleExpedicao
-              key={day.toISOString()}
-              date={day}
-              ordens={ordens}
-              onDayClick={handleDayClick}
-              onEdit={onEdit}
-              onRemoverDoCalendario={onRemoverDoCalendario}
-              onOrdemDropped={onOrdemDropped}
-              onUpdateOrdem={onUpdateOrdem}
-              onOrdemClick={onOrdemClick}
+      {calendarContent}
+      
+      {/* Overlay de drag */}
+      <DragOverlay>
+        {activeOrdem ? (
+          <div className="opacity-80">
+            <DraggableOrdemCarregamento
+              ordem={activeOrdem}
             />
-          ))}
-        </div>
-
-        {/* Overlay de drag */}
-        <DragOverlay>
-          {activeOrdem ? (
-            <div className="opacity-80">
-              <DraggableOrdemCarregamento
-                ordem={activeOrdem}
-              />
-            </div>
-          ) : null}
-        </DragOverlay>
-      </div>
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 };

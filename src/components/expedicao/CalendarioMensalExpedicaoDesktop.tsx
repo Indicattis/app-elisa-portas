@@ -14,12 +14,13 @@ interface CalendarioMensalExpedicaoDesktopProps {
   currentMonth: Date;
   ordens: OrdemCarregamento[];
   onMonthChange: (date: Date) => void;
-  onUpdateOrdem: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
-  onEdit: (ordem: OrdemCarregamento) => void;
-  onRemoverDoCalendario: (id: string) => void;
+  onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
+  onEdit?: (ordem: OrdemCarregamento) => void;
+  onRemoverDoCalendario?: (id: string) => void;
   onOrdemCriada?: () => void;
   onOrdemDropped?: () => void;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
+  readOnly?: boolean;
 }
 
 export const CalendarioMensalExpedicaoDesktop = ({
@@ -32,6 +33,7 @@ export const CalendarioMensalExpedicaoDesktop = ({
   onOrdemCriada,
   onOrdemDropped,
   onOrdemClick,
+  readOnly = false,
 }: CalendarioMensalExpedicaoDesktopProps) => {
   const [activeOrdem, setActiveOrdem] = useState<OrdemCarregamento | null>(null);
 
@@ -99,82 +101,92 @@ export const CalendarioMensalExpedicaoDesktop = ({
     // Implementar modal de criação se necessário
   };
 
+  const calendarContent = (
+    <div className="space-y-4">
+      {/* Navegação do mês */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => onMonthChange(subMonths(currentMonth, 1))}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          
+          <h2 className="text-lg font-semibold text-foreground min-w-[200px] text-center">
+            {format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR })}
+          </h2>
+
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => onMonthChange(addMonths(currentMonth, 1))}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onMonthChange(new Date())}
+        >
+          Ir para hoje
+        </Button>
+      </div>
+
+      {/* Legendas */}
+      <CalendarioLegendas />
+
+      {/* Grid do calendário */}
+      <div className="rounded-lg overflow-hidden bg-muted/20 border border-border">
+        {/* Cabeçalho dos dias da semana */}
+        <div className="grid grid-cols-7 border-b border-border bg-muted/40">
+          {weekDays.map((day) => (
+            <div
+              key={day}
+              className="p-3 text-center text-sm font-semibold text-foreground"
+            >
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Grid de dias */}
+        <div className="grid grid-cols-7">
+          {days.map((day) => (
+            <DroppableDayExpedicao
+              key={day.toISOString()}
+              date={day}
+              currentMonth={currentMonth}
+              ordens={ordens}
+              onDayClick={handleDayClick}
+              onEdit={readOnly ? undefined : onEdit}
+              onRemoverDoCalendario={readOnly ? undefined : onRemoverDoCalendario}
+              onOrdemDropped={readOnly ? undefined : onOrdemDropped}
+              onUpdateOrdem={readOnly ? undefined : onUpdateOrdem}
+              onOrdemClick={onOrdemClick}
+              readOnly={readOnly}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Se readOnly, não usar DndContext (desabilita drag & drop)
+  if (readOnly) {
+    return calendarContent;
+  }
+
   return (
     <DndContext
       sensors={sensors}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="space-y-4">
-        {/* Navegação do mês */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => onMonthChange(subMonths(currentMonth, 1))}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            
-            <h2 className="text-lg font-semibold text-foreground min-w-[200px] text-center">
-              {format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR })}
-            </h2>
-
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => onMonthChange(addMonths(currentMonth, 1))}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onMonthChange(new Date())}
-          >
-            Ir para hoje
-          </Button>
-        </div>
-
-        {/* Legendas */}
-        <CalendarioLegendas />
-
-        {/* Grid do calendário */}
-        <div className="rounded-lg overflow-hidden bg-muted/20 border border-border">
-          {/* Cabeçalho dos dias da semana */}
-          <div className="grid grid-cols-7 border-b border-border bg-muted/40">
-            {weekDays.map((day) => (
-              <div
-                key={day}
-                className="p-3 text-center text-sm font-semibold text-foreground"
-              >
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* Grid de dias */}
-          <div className="grid grid-cols-7">
-            {days.map((day) => (
-              <DroppableDayExpedicao
-                key={day.toISOString()}
-                date={day}
-                currentMonth={currentMonth}
-                ordens={ordens}
-                onDayClick={handleDayClick}
-                onEdit={onEdit}
-                onRemoverDoCalendario={onRemoverDoCalendario}
-                onOrdemDropped={onOrdemDropped}
-                onUpdateOrdem={onUpdateOrdem}
-                onOrdemClick={onOrdemClick}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
+      {calendarContent}
 
       {/* Overlay durante o arrasto */}
       <DragOverlay>

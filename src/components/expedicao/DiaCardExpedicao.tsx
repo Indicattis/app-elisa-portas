@@ -13,6 +13,7 @@ interface DiaCardExpedicaoProps {
   onRemoverDoCalendario?: (id: string) => void;
   onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
   onOrdemAdded?: () => void;
+  onOrdemClick?: (ordem: OrdemCarregamento) => void;
 }
 
 export const DiaCardExpedicao = ({
@@ -23,6 +24,7 @@ export const DiaCardExpedicao = ({
   onRemoverDoCalendario,
   onUpdateOrdem,
   onOrdemAdded,
+  onOrdemClick,
 }: DiaCardExpedicaoProps) => {
   const hoje = new Date();
   const isToday = isSameDay(date, hoje);
@@ -77,6 +79,7 @@ export const DiaCardExpedicao = ({
               <OrdemCarregamentoCard
                 key={ordem.id}
                 ordem={ordem}
+                onClick={onOrdemClick}
                 onEdit={onEdit}
                 onRemoverDoCalendario={onRemoverDoCalendario}
               />

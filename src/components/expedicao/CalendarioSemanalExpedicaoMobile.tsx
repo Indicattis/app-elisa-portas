@@ -12,10 +12,11 @@ interface CalendarioSemanalExpedicaoMobileProps {
   onNextWeek: () => void;
   onToday: () => void;
   onDayClick: (date: Date) => void;
-  onEdit: (ordem: OrdemCarregamento) => void;
-  onRemoverDoCalendario: (id: string) => void;
+  onEdit?: (ordem: OrdemCarregamento) => void;
+  onRemoverDoCalendario?: (id: string) => void;
   onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
   onOrdemAdded?: () => void;
+  onOrdemClick?: (ordem: OrdemCarregamento) => void;
 }
 
 export const CalendarioSemanalExpedicaoMobile = ({
@@ -29,6 +30,7 @@ export const CalendarioSemanalExpedicaoMobile = ({
   onRemoverDoCalendario,
   onUpdateOrdem,
   onOrdemAdded,
+  onOrdemClick,
 }: CalendarioSemanalExpedicaoMobileProps) => {
   const weekStart = startOfWeek(startDate, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -68,6 +70,7 @@ export const CalendarioSemanalExpedicaoMobile = ({
             onRemoverDoCalendario={onRemoverDoCalendario}
             onUpdateOrdem={onUpdateOrdem}
             onOrdemAdded={onOrdemAdded}
+            onOrdemClick={onOrdemClick}
           />
         ))}
       </div>
