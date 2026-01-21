@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -8,14 +8,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, TrendingUp, CalendarIcon, CheckCircle2, Clock } from "lucide-react";
+import { Search, DollarSign, CalendarIcon, CheckCircle2, Clock, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DateRange } from "react-day-picker";
-import { ProductIconsSummary } from "@/components/vendas/ProductIconsSummary";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { useColumnConfig, ColumnConfig } from "@/hooks/useColumnConfig";
+import { ColumnManager } from "@/components/ColumnManager";
 import {
   Table,
   TableBody,
@@ -37,9 +38,42 @@ interface Venda {
   valor_venda: number;
   valor_credito?: number;
   valor_frete: number;
+  valor_instalacao?: number;
+  data_prevista_entrega?: string | null;
+  tipo_entrega?: string | null;
   frete_aprovado?: boolean;
   portas?: any[];
 }
+
+// Definição das colunas disponíveis
+const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
+  { id: 'vendedor', label: 'Vendedor', defaultVisible: true },
+  { id: 'cliente', label: 'Cliente', defaultVisible: true },
+  { id: 'data', label: 'Data', defaultVisible: true },
+  { id: 'cidade', label: 'Cidade', defaultVisible: true },
+  { id: 'previsao', label: 'Previsão Entrega', defaultVisible: true },
+  { id: 'expedicao', label: 'Expedição', defaultVisible: true },
+  { id: 'desconto', label: 'Desconto', defaultVisible: true },
+  { id: 'acrescimo', label: 'Acréscimo', defaultVisible: true },
+  { id: 'instalacao', label: 'Instalação', defaultVisible: true },
+  { id: 'frete', label: 'Frete', defaultVisible: true },
+  { id: 'valor', label: 'Valor', defaultVisible: true },
+  { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
+  { id: 'faturada', label: 'Faturada', defaultVisible: true },
+];
+
+// Função para formatar tempo decorrido
+const formatarTempoSemFaturar = (dias: number): string => {
+  if (dias === 0) return 'Hoje';
+  if (dias === 1) return '1 dia';
+  if (dias < 7) return `${dias} dias`;
+  if (dias < 30) {
+    const semanas = Math.floor(dias / 7);
+    return semanas === 1 ? '1 sem.' : `${semanas} sem.`;
+  }
+  const meses = Math.floor(dias / 30);
+  return meses === 1 ? '1 mês' : `${meses} meses`;
+};
 
 export default function FaturamentoDirecao() {
   const [vendas, setVendas] = useState<Venda[]>([]);
@@ -52,7 +86,20 @@ export default function FaturamentoDirecao() {
   const [activeTab, setActiveTab] = useState<'todas' | 'faturadas' | 'nao_faturadas'>('todas');
   const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
   const [atendentes, setAtendentes] = useState<any[]>([]);
+  const [sortConfig, setSortConfig] = useState<{
+    column: string | null;
+    direction: 'asc' | 'desc' | null;
+  }>({ column: null, direction: null });
   const navigate = useNavigate();
+
+  const {
+    columns,
+    visibleColumns,
+    visibleIds,
+    toggleColumn,
+    setColumnOrder,
+    resetColumns
+  } = useColumnConfig('direcao_faturamento_columns', COLUNAS_DISPONIVEIS);
 
   const isFaturada = (venda: Venda) => {
     const portas = venda.portas || [];
@@ -89,6 +136,9 @@ export default function FaturamentoDirecao() {
           valor_venda,
           valor_credito,
           valor_frete,
+          valor_instalacao,
+          data_prevista_entrega,
+          tipo_entrega,
           frete_aprovado,
           produtos_vendas (
             id,
@@ -96,7 +146,8 @@ export default function FaturamentoDirecao() {
             descricao,
             valor_produto,
             quantidade,
-            faturamento
+            faturamento,
+            desconto_valor
           )
         `)
         .order("data_venda", { ascending: false });
@@ -165,6 +216,77 @@ export default function FaturamentoDirecao() {
     });
   }, [vendas, activeTab, selectedAtendente, searchTerm]);
 
+  // Ordenação das vendas
+  const sortedVendas = useMemo(() => {
+    if (!sortConfig.column || !sortConfig.direction) {
+      return filteredVendas;
+    }
+
+    return [...filteredVendas].sort((a, b) => {
+      const getValue = (venda: Venda) => {
+        switch (sortConfig.column) {
+          case 'data':
+            return new Date(venda.data_venda).getTime();
+          case 'cliente':
+            return venda.cliente_nome?.toLowerCase() || '';
+          case 'vendedor':
+            return venda.atendente_nome.toLowerCase();
+          case 'cidade':
+            return venda.cidade?.toLowerCase() || '';
+          case 'previsao':
+            return venda.data_prevista_entrega ? new Date(venda.data_prevista_entrega).getTime() : 0;
+          case 'expedicao':
+            return venda.tipo_entrega || '';
+          case 'desconto':
+            const desconto = (venda.portas || []).reduce((sum: number, p: any) => sum + (p.desconto_valor || 0), 0);
+            return desconto;
+          case 'acrescimo':
+            return venda.valor_credito || 0;
+          case 'instalacao':
+            return venda.valor_instalacao || 0;
+          case 'frete':
+            return venda.valor_frete || 0;
+          case 'valor':
+            return (venda.valor_venda || 0) + (venda.valor_credito || 0);
+          case 'tempo_sem_faturar':
+            if (isFaturada(venda)) return -1;
+            return differenceInDays(new Date(), new Date(venda.data_venda));
+          case 'faturada':
+            return isFaturada(venda) ? 1 : 0;
+          default:
+            return 0;
+        }
+      };
+
+      const aValue = getValue(a);
+      const bValue = getValue(b);
+
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortConfig.direction === 'asc' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+
+      return 0;
+    });
+  }, [filteredVendas, sortConfig]);
+
+  const handleSort = useCallback((columnId: string) => {
+    setSortConfig(prev => {
+      if (prev.column !== columnId) {
+        return { column: columnId, direction: 'asc' };
+      }
+      if (prev.direction === 'asc') {
+        return { column: columnId, direction: 'desc' };
+      }
+      return { column: null, direction: null };
+    });
+  }, []);
+
   const stats = useMemo(() => {
     const faturadas = filteredVendas.filter(isFaturada);
     const naoFaturadas = filteredVendas.filter(v => !isFaturada(v));
@@ -182,6 +304,111 @@ export default function FaturamentoDirecao() {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
+  };
+
+  const getSortIcon = (columnId: string) => {
+    if (sortConfig.column !== columnId) {
+      return <ArrowUpDown className="h-3 w-3 ml-1 opacity-50" />;
+    }
+    if (sortConfig.direction === 'asc') {
+      return <ArrowUp className="h-3 w-3 ml-1 text-blue-400" />;
+    }
+    return <ArrowDown className="h-3 w-3 ml-1 text-blue-400" />;
+  };
+
+  const getColumnResponsiveClass = (columnId: string) => {
+    const hiddenOnMobile = ['cidade', 'previsao', 'expedicao', 'desconto', 'acrescimo', 'instalacao', 'frete', 'tempo_sem_faturar'];
+    if (hiddenOnMobile.includes(columnId)) {
+      return 'hidden md:table-cell';
+    }
+    return '';
+  };
+
+  const getColumnAlignment = (columnId: string) => {
+    const rightAligned = ['valor', 'frete', 'instalacao', 'desconto', 'acrescimo'];
+    const centerAligned = ['faturada', 'expedicao', 'tempo_sem_faturar'];
+    if (rightAligned.includes(columnId)) return 'text-right';
+    if (centerAligned.includes(columnId)) return 'text-center';
+    return 'text-left';
+  };
+
+  const renderCell = (venda: Venda, columnId: string) => {
+    switch (columnId) {
+      case 'vendedor':
+        return (
+          <div className="flex items-center gap-2">
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={venda.atendente_foto || undefined} />
+              <AvatarFallback className="text-[10px] bg-blue-500/20 text-blue-400">
+                {venda.atendente_nome?.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-white/80 text-sm truncate max-w-[100px]">{venda.atendente_nome}</span>
+          </div>
+        );
+      case 'cliente':
+        return <span className="text-white font-medium">{venda.cliente_nome}</span>;
+      case 'data':
+        return <span className="text-white/80">{format(new Date(venda.data_venda), 'dd/MM/yy', { locale: ptBR })}</span>;
+      case 'cidade':
+        return <span className="text-white/60">{venda.cidade}{venda.estado ? `/${venda.estado}` : ''}</span>;
+      case 'previsao':
+        return venda.data_prevista_entrega 
+          ? <span className="text-white/80">{format(new Date(venda.data_prevista_entrega), 'dd/MM/yy', { locale: ptBR })}</span>
+          : <span className="text-white/30">-</span>;
+      case 'expedicao':
+        if (venda.tipo_entrega === 'instalacao') {
+          return (
+            <div className="flex items-center gap-1.5 justify-center">
+              <Hammer className="h-4 w-4 text-orange-400" />
+              <span className="text-orange-400 text-xs">Instalação</span>
+            </div>
+          );
+        }
+        if (venda.tipo_entrega === 'entrega') {
+          return (
+            <div className="flex items-center gap-1.5 justify-center">
+              <Truck className="h-4 w-4 text-blue-400" />
+              <span className="text-blue-400 text-xs">Entrega</span>
+            </div>
+          );
+        }
+        return <span className="text-white/30">-</span>;
+      case 'desconto':
+        const desconto = (venda.portas || []).reduce((sum: number, p: any) => sum + (p.desconto_valor || 0), 0);
+        return desconto > 0 
+          ? <span className="text-red-400">-{formatCurrency(desconto)}</span>
+          : <span className="text-white/30">-</span>;
+      case 'acrescimo':
+        return venda.valor_credito && venda.valor_credito > 0
+          ? <span className="text-green-400">+{formatCurrency(venda.valor_credito)}</span>
+          : <span className="text-white/30">-</span>;
+      case 'instalacao':
+        return venda.valor_instalacao && venda.valor_instalacao > 0
+          ? <span className="text-white/80">{formatCurrency(venda.valor_instalacao)}</span>
+          : <span className="text-white/30">-</span>;
+      case 'frete':
+        return venda.valor_frete && venda.valor_frete > 0
+          ? <span className="text-white/80">{formatCurrency(venda.valor_frete)}</span>
+          : <span className="text-white/30">-</span>;
+      case 'valor':
+        return <span className="text-white font-medium">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</span>;
+      case 'tempo_sem_faturar':
+        if (isFaturada(venda)) {
+          return <span className="text-green-400/60 text-xs">Faturada</span>;
+        }
+        const dias = differenceInDays(new Date(), new Date(venda.data_venda));
+        let colorClass = 'text-white/60';
+        if (dias >= 30) colorClass = 'text-red-400';
+        else if (dias >= 14) colorClass = 'text-amber-400';
+        return <span className={`${colorClass} text-xs`}>{formatarTempoSemFaturar(dias)}</span>;
+      case 'faturada':
+        return isFaturada(venda) 
+          ? <Check className="h-4 w-4 text-green-400 mx-auto" />
+          : <X className="h-4 w-4 text-white/30 mx-auto" />;
+      default:
+        return null;
+    }
   };
 
   if (loading) {
@@ -315,6 +542,14 @@ export default function FaturamentoDirecao() {
             ))}
           </SelectContent>
         </Select>
+
+        <ColumnManager
+          columns={columns}
+          visibleIds={visibleIds}
+          onToggle={toggleColumn}
+          onReorder={setColumnOrder}
+          onReset={resetColumns}
+        />
       </div>
 
       {/* Tabela */}
@@ -322,62 +557,42 @@ export default function FaturamentoDirecao() {
         <Table>
           <TableHeader>
             <TableRow className="border-primary/10 hover:bg-transparent">
-              <TableHead className="text-white/60">Data</TableHead>
-              <TableHead className="text-white/60">Cliente</TableHead>
-              <TableHead className="text-white/60 hidden md:table-cell">Vendedor</TableHead>
-              <TableHead className="text-white/60">Produtos</TableHead>
-              <TableHead className="text-white/60">Status</TableHead>
-              <TableHead className="text-white/60 text-right">Valor</TableHead>
+              {visibleColumns.map((column) => (
+                <TableHead 
+                  key={column.id}
+                  className={`text-white/60 cursor-pointer hover:text-white/80 transition-colors ${getColumnResponsiveClass(column.id)} ${getColumnAlignment(column.id)}`}
+                  onClick={() => handleSort(column.id)}
+                >
+                  <div className={`flex items-center ${getColumnAlignment(column.id) === 'text-right' ? 'justify-end' : getColumnAlignment(column.id) === 'text-center' ? 'justify-center' : ''}`}>
+                    {column.label}
+                    {getSortIcon(column.id)}
+                  </div>
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredVendas.length === 0 ? (
+            {sortedVendas.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-white/40">
+                <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-white/40">
                   Nenhuma venda encontrada
                 </TableCell>
               </TableRow>
             ) : (
-              filteredVendas.map((venda) => (
+              sortedVendas.map((venda) => (
                 <TableRow 
                   key={venda.id} 
                   className="border-primary/10 hover:bg-primary/5 cursor-pointer"
                   onClick={() => navigate(`/dashboard/vendas/${venda.id}`)}
                 >
-                  <TableCell className="text-white/80">
-                    {format(new Date(venda.data_venda), 'dd/MM/yy', { locale: ptBR })}
-                  </TableCell>
-                  <TableCell className="text-white font-medium">
-                    {venda.cliente_nome}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={venda.atendente_foto || undefined} />
-                        <AvatarFallback className="text-[10px] bg-blue-500/20 text-blue-400">
-                          {venda.atendente_nome?.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-white/80 text-sm">{venda.atendente_nome}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <ProductIconsSummary venda={venda} />
-                  </TableCell>
-                  <TableCell>
-                    {isFaturada(venda) ? (
-                      <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                        Faturada
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
-                        Pendente
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right text-white font-medium">
-                    {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
-                  </TableCell>
+                  {visibleColumns.map((column) => (
+                    <TableCell 
+                      key={column.id}
+                      className={`${getColumnResponsiveClass(column.id)} ${getColumnAlignment(column.id)}`}
+                    >
+                      {renderCell(venda, column.id)}
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))
             )}
