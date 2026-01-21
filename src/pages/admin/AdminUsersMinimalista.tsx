@@ -1,0 +1,452 @@
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { AvatarUpload } from "@/components/AvatarUpload";
+import { AddUserDialog } from "@/components/AddUserDialog";
+import { ResetPasswordModal } from "@/components/ResetPasswordModal";
+import { Search, Edit, Save, X, Loader2, KeyRound, FileDown, ImageIcon } from "lucide-react";
+import { baixarUsuariosPDF } from "@/utils/usuariosPDFGenerator";
+import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+interface AdminUser {
+  id: string;
+  user_id: string;
+  email: string;
+  nome: string;
+  role: string;
+  setor: "vendas" | "marketing" | "instalacoes" | "fabrica" | "administrativo" | null;
+  cpf: string | null;
+  data_nascimento: string | null;
+  ativo: boolean;
+  foto_perfil_url: string | null;
+  eh_colaborador: boolean;
+  salario: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export default function AdminUsersMinimalista() {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("todos");
+  const [filterSetor, setFilterSetor] = useState<string>("todos");
+  const [filterRole, setFilterRole] = useState<string>("todos");
+  const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
+  const [resetPasswordUser, setResetPasswordUser] = useState<AdminUser | null>(null);
+  const [avatarEditUser, setAvatarEditUser] = useState<AdminUser | null>(null);
+  const { toast } = useToast();
+
+  const { data: systemRoles = [], isLoading: loadingRoles } = useQuery({
+    queryKey: ["system-roles-active"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("system_roles")
+        .select("key, label")
+        .eq("ativo", true)
+        .order("ordem", { ascending: true });
+
+      if (error) throw error;
+      return data as { key: string; label: string }[];
+    },
+  });
+
+  const roleLabelsMap = systemRoles.reduce((acc, role) => {
+    acc[role.key] = role.label;
+    return acc;
+  }, {} as Record<string, string>);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error("Erro ao buscar usuários:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao carregar usuários",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (user: AdminUser) => {
+    setEditingUser(user.id);
+    setEditForm({
+      nome: user.nome,
+      role: user.role,
+      setor: user.setor,
+      cpf: user.cpf,
+      data_nascimento: user.data_nascimento,
+      ativo: user.ativo,
+      eh_colaborador: user.eh_colaborador,
+    });
+  };
+
+  const handleSave = async (userId: string) => {
+    try {
+      const cpfNumerico = editForm.cpf ? editForm.cpf.replace(/\D/g, "") : null;
+
+      const { error } = await supabase
+        .from("admin_users")
+        .update({
+          nome: editForm.nome,
+          role: editForm.role,
+          setor: editForm.setor,
+          cpf: cpfNumerico,
+          data_nascimento: editForm.data_nascimento,
+          ativo: editForm.ativo,
+          eh_colaborador: editForm.eh_colaborador,
+        })
+        .eq("id", userId);
+
+      if (error) throw error;
+
+      setEditingUser(null);
+      setEditForm({});
+      fetchUsers();
+
+      toast({
+        title: "Sucesso",
+        description: "Usuário atualizado com sucesso",
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar usuário:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao atualizar usuário",
+      });
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingUser(null);
+    setEditForm({});
+  };
+
+  const handleAvatarUpdate = (userId: string, newAvatarUrl: string | null) => {
+    setUsers((prevUsers) =>
+      prevUsers.map((user) =>
+        user.user_id === userId ? { ...user, foto_perfil_url: newAvatarUrl } : user
+      )
+    );
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((word) => word.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.role.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus =
+      filterStatus === "todos" ||
+      (filterStatus === "ativo" && user.ativo) ||
+      (filterStatus === "inativo" && !user.ativo);
+
+    const matchesSetor = filterSetor === "todos" || user.setor === filterSetor;
+    const matchesRole = filterRole === "todos" || user.role === filterRole;
+
+    return matchesSearch && matchesStatus && matchesSetor && matchesRole;
+  });
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterStatus("todos");
+    setFilterSetor("todos");
+    setFilterRole("todos");
+  };
+
+  const hasActiveFilters =
+    searchTerm || filterStatus !== "todos" || filterSetor !== "todos" || filterRole !== "todos";
+
+  const handleDownloadPDF = () => {
+    baixarUsuariosPDF({
+      usuarios: filteredUsers.map((u) => ({
+        id: u.id,
+        nome: u.nome,
+        email: u.email,
+        cpf: u.cpf,
+        data_nascimento: u.data_nascimento,
+        role: u.role,
+        setor: u.setor,
+        ativo: u.ativo,
+        created_at: u.created_at,
+      })),
+      roleLabelsMap,
+    });
+  };
+
+  if (loading) {
+    return (
+      <MinimalistLayout title="Usuários" subtitle="Carregando..." backPath="/admin">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        </div>
+      </MinimalistLayout>
+    );
+  }
+
+  return (
+    <MinimalistLayout
+      title="Usuários"
+      subtitle="Gerencie usuários e permissões do sistema"
+      backPath="/admin"
+      headerActions={
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleDownloadPDF}
+            className="border-white/20 text-white hover:bg-white/10"
+          >
+            <FileDown className="w-4 h-4 mr-2" />
+            PDF
+          </Button>
+          <AddUserDialog onUserAdded={fetchUsers} />
+        </div>
+      }
+    >
+      <div className="space-y-4">
+        {/* Filtros */}
+        <div className="bg-primary/5 border border-primary/10 backdrop-blur-xl rounded-lg p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[200px] max-w-[300px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <Input
+                placeholder="Buscar por nome, email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+              />
+            </div>
+
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[130px] bg-white/5 border-white/10 text-white">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="ativo">Ativos</SelectItem>
+                <SelectItem value="inativo">Inativos</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterSetor} onValueChange={setFilterSetor}>
+              <SelectTrigger className="w-[150px] bg-white/5 border-white/10 text-white">
+                <SelectValue placeholder="Setor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos setores</SelectItem>
+                <SelectItem value="vendas">Vendas</SelectItem>
+                <SelectItem value="marketing">Marketing</SelectItem>
+                <SelectItem value="instalacoes">Instalações</SelectItem>
+                <SelectItem value="fabrica">Fábrica</SelectItem>
+                <SelectItem value="administrativo">Administrativo</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterRole} onValueChange={setFilterRole}>
+              <SelectTrigger className="w-[170px] bg-white/5 border-white/10 text-white">
+                <SelectValue placeholder="Função" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todas funções</SelectItem>
+                {systemRoles.map((role) => (
+                  <SelectItem key={role.key} value={role.key}>
+                    {role.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="text-white/60 hover:text-white hover:bg-white/10"
+              >
+                <X className="w-4 h-4 mr-1" />
+                Limpar
+              </Button>
+            )}
+          </div>
+
+          <div className="mt-3 text-sm text-white/60">
+            {filteredUsers.length} de {users.length} usuários
+          </div>
+        </div>
+
+        {/* Lista de Usuários */}
+        <div className="bg-primary/5 border border-primary/10 backdrop-blur-xl rounded-lg overflow-hidden">
+          <div className="divide-y divide-primary/10">
+            {filteredUsers.map((user) => (
+              <div
+                key={user.id}
+                className="p-4 hover:bg-white/5 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 flex-shrink-0">
+                    <AvatarUpload
+                      userId={user.user_id}
+                      currentAvatarUrl={user.foto_perfil_url}
+                      userName={user.nome}
+                      onAvatarUpdate={(url) => handleAvatarUpdate(user.user_id, url)}
+                      compact
+                    />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      {editingUser === user.id ? (
+                        <Input
+                          value={editForm.nome || ""}
+                          onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
+                          className="h-8 bg-white/5 border-white/10 text-white max-w-[200px]"
+                        />
+                      ) : (
+                        <span className="font-medium text-white truncate">{user.nome}</span>
+                      )}
+                      <Badge
+                        variant={user.ativo ? "default" : "secondary"}
+                        className={
+                          user.ativo
+                            ? "bg-green-500/20 text-green-400"
+                            : "bg-white/10 text-white/40"
+                        }
+                      >
+                        {user.ativo ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-white/60 truncate">{user.email}</p>
+                  </div>
+
+                  <div className="hidden md:flex items-center gap-4 text-sm">
+                    <div className="text-white/60">
+                      {editingUser === user.id ? (
+                        <Select
+                          value={editForm.role}
+                          onValueChange={(value) => setEditForm({ ...editForm, role: value })}
+                        >
+                          <SelectTrigger className="h-8 w-[150px] bg-white/5 border-white/10 text-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {systemRoles.map((role) => (
+                              <SelectItem key={role.key} value={role.key}>
+                                {role.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant="outline" className="text-white/60 border-white/20">
+                          {roleLabelsMap[user.role] || user.role}
+                        </Badge>
+                      )}
+                    </div>
+
+                    {user.setor && (
+                      <Badge variant="secondary" className="capitalize bg-white/10 text-white/60">
+                        {user.setor}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {editingUser === user.id ? (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSave(user.id)}
+                          className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                        >
+                          <Save className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleCancel}
+                          className="text-white/60 hover:text-white hover:bg-white/10"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(user)}
+                          className="text-white/60 hover:text-white hover:bg-white/10"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setResetPasswordUser(user)}
+                          className="text-white/60 hover:text-white hover:bg-white/10"
+                        >
+                          <KeyRound className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {resetPasswordUser && (
+        <ResetPasswordModal
+          open={!!resetPasswordUser}
+          onOpenChange={() => setResetPasswordUser(null)}
+          userId={resetPasswordUser.user_id}
+          userEmail={resetPasswordUser.email}
+          userName={resetPasswordUser.nome}
+        />
+      )}
+    </MinimalistLayout>
+  );
+}
