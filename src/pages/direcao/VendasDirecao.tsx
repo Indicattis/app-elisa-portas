@@ -243,8 +243,8 @@ export default function VendasDirecao() {
           case 'desconto': return venda.produtos?.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0) || 0;
           case 'acrescimo': return venda.valor_credito || 0;
           case 'faturada': 
-            const notas = venda.notas_fiscais || [];
-            return notas.some((nf: any) => nf.status === 'autorizada' || nf.status === 'emitida') ? 1 : 0;
+            const produtos = venda.produtos || [];
+            return produtos.some((p: any) => p.faturamento === true) ? 1 : 0;
           default: return '';
         }
       };
@@ -295,10 +295,10 @@ export default function VendasDirecao() {
       return venda.produtos.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
     };
 
-    // Verificar se foi faturada (tem nota fiscal autorizada/emitida)
+    // Verificar se foi faturada (produtos com faturamento = true)
     const isFaturada = () => {
-      const notas = venda.notas_fiscais || [];
-      return notas.some((nf: any) => nf.status === 'autorizada' || nf.status === 'emitida');
+      if (!venda.produtos || venda.produtos.length === 0) return false;
+      return venda.produtos.some((p: any) => p.faturamento === true);
     };
 
     switch (columnId) {
