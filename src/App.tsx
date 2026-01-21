@@ -137,12 +137,12 @@ import ProducaoHome from "./pages/ProducaoHome";
 import ProducaoMeuHistorico from "./pages/ProducaoMeuHistorico";
 import ProducaoControle from "./pages/ProducaoControle";
 import Ordens from "./pages/Ordens";
-import AdminHome from "./pages/admin/AdminHome";
-import AdminPermissions from "./pages/admin/AdminPermissions";
-import AdminRoles from "./pages/admin/AdminRoles";
-import CompanySettings from "./pages/admin/CompanySettings";
-import CompanyList from "./pages/admin/CompanyList";
-import CompanyEdit from "./pages/admin/CompanyEdit";
+import AdminHub from "./pages/admin/AdminHub";
+import AdminPermissionsMinimalista from "./pages/admin/AdminPermissionsMinimalista";
+import AdminRolesMinimalista from "./pages/admin/AdminRolesMinimalista";
+import AdminCompaniesMinimalista from "./pages/admin/AdminCompaniesMinimalista";
+import AdminCompanyEditMinimalista from "./pages/admin/AdminCompanyEditMinimalista";
+import AdminUsersMinimalista from "./pages/admin/AdminUsersMinimalista";
 import ParceiroHome from "./pages/ParceiroHome";
 import ComprasHome from "./pages/ComprasHome";
 import MetasColaboradores from "./pages/MetasColaboradores";
@@ -730,16 +730,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/admin/users"
-                  element={
-                    <ProtectedRoute routeKey="users">
-                      <AdminLayout>
-                        <Users />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Rota de users movida para rotas admin minimalistas */}
                 <Route
                   path="/dashboard/administrativo/financeiro/faturamento"
                   element={
@@ -1533,14 +1524,12 @@ const App = () => (
                   }
                 />
 
-                {/* Rotas Admin */}
+                {/* Rotas Admin Minimalistas */}
                 <Route
                   path="/admin"
                   element={
                     <ProtectedRoute routeKey="admin">
-                      <AdminLayout>
-                        <AdminHome />
-                      </AdminLayout>
+                      <AdminHub />
                     </ProtectedRoute>
                   }
                 />
@@ -1548,9 +1537,7 @@ const App = () => (
                   path="/admin/permissions"
                   element={
                     <ProtectedRoute routeKey="admin_permissions">
-                      <AdminLayout>
-                        <AdminPermissions />
-                      </AdminLayout>
+                      <AdminPermissionsMinimalista />
                     </ProtectedRoute>
                   }
                 />
@@ -1558,9 +1545,7 @@ const App = () => (
                   path="/admin/roles"
                   element={
                     <ProtectedRoute routeKey="admin_roles">
-                      <AdminLayout>
-                        <AdminRoles />
-                      </AdminLayout>
+                      <AdminRolesMinimalista />
                     </ProtectedRoute>
                   }
                 />
@@ -1568,9 +1553,7 @@ const App = () => (
                   path="/admin/companies"
                   element={
                     <ProtectedRoute routeKey="admin_companies">
-                      <AdminLayout>
-                        <CompanyList />
-                      </AdminLayout>
+                      <AdminCompaniesMinimalista />
                     </ProtectedRoute>
                   }
                 />
@@ -1578,9 +1561,15 @@ const App = () => (
                   path="/admin/companies/:id"
                   element={
                     <ProtectedRoute routeKey="admin_companies">
-                      <AdminLayout>
-                        <CompanyEdit />
-                      </AdminLayout>
+                      <AdminCompanyEditMinimalista />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/users"
+                  element={
+                    <ProtectedRoute routeKey="users">
+                      <AdminUsersMinimalista />
                     </ProtectedRoute>
                   }
                 />
