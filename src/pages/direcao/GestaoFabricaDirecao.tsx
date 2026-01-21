@@ -172,6 +172,11 @@ export default function GestaoFabricaDirecao() {
       title="Gestão de Fábrica" 
       subtitle="Acompanhe o progresso dos pedidos"
       backPath="/direcao"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Direção", path: "/direcao" },
+        { label: "Gestão de Fábrica" }
+      ]}
       headerActions={headerActions}
     >
       {/* Portas por Etapa (Hoje) */}

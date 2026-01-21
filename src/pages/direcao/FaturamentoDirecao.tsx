@@ -186,7 +186,15 @@ export default function FaturamentoDirecao() {
 
   if (loading) {
     return (
-      <MinimalistLayout title="Faturamento" backPath="/direcao">
+      <MinimalistLayout 
+        title="Faturamento" 
+        backPath="/direcao"
+        breadcrumbItems={[
+          { label: "Home", path: "/home" },
+          { label: "Direção", path: "/direcao" },
+          { label: "Faturamento" }
+        ]}
+      >
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
         </div>
@@ -199,6 +207,11 @@ export default function FaturamentoDirecao() {
       title="Faturamento" 
       subtitle="Gestão de vendas para faturar"
       backPath="/direcao"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Direção", path: "/direcao" },
+        { label: "Faturamento" }
+      ]}
     >
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-3 gap-3 mb-6">

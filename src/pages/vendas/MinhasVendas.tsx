@@ -89,6 +89,11 @@ export default function MinhasVendas() {
     <MinimalistLayout 
       title="Minhas Vendas" 
       subtitle={format(mesAtual, "MMMM 'de' yyyy", { locale: ptBR })}
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Vendas", path: "/vendas" },
+        { label: "Minhas Vendas" }
+      ]}
       headerActions={
         <Button 
           onClick={() => navigate('/vendas/minhas-vendas/nova')}

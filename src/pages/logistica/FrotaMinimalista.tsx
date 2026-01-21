@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Edit, Trash2, Droplet, ArrowLeft, LogOut } from "lucide-react";
 import { SpaceParticles } from "@/components/SpaceParticles";
+import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -40,11 +41,22 @@ export default function FrotaMinimalista() {
     }
   };
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative">
+      <AnimatedBreadcrumb 
+        items={[
+          { label: "Home", path: "/home" },
+          { label: "Logística", path: "/logistica" },
+          { label: "Frota" }
+        ]} 
+        mounted={mounted} 
+      />
       <SpaceParticles />
       
-      <div className="relative z-10 min-h-screen flex flex-col">
+      <div className="relative z-10 min-h-screen flex flex-col pt-14">
         {/* Header */}
         <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-primary/10">
           <div className="max-w-7xl mx-auto flex items-center justify-between">

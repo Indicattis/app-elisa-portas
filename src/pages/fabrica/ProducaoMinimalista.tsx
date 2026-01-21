@@ -101,7 +101,15 @@ export default function ProducaoMinimalista() {
 
   if (isLoading) {
     return (
-      <MinimalistLayout title="Produção" backPath="/fabrica">
+      <MinimalistLayout 
+        title="Produção" 
+        backPath="/fabrica"
+        breadcrumbItems={[
+          { label: "Home", path: "/home" },
+          { label: "Fábrica", path: "/fabrica" },
+          { label: "Produção" }
+        ]}
+      >
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
         </div>
@@ -119,6 +127,11 @@ export default function ProducaoMinimalista() {
       title="Produção" 
       subtitle="Acesse os painéis de produção"
       backPath="/fabrica"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Fábrica", path: "/fabrica" },
+        { label: "Produção" }
+      ]}
       headerActions={headerActions}
     >
       {/* Grid de Cards */}
