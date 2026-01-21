@@ -41,7 +41,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Users, RefreshCw, Pencil, Trash2, X, Phone, Mail } from 'lucide-react';
+import { Plus, Search, User, RefreshCw, Pencil, Trash2, X, Phone, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -85,11 +85,40 @@ export default function ClientesDirecao() {
   const [filtroEstado, setFiltroEstado] = useState<string>('todos');
   const [filtroCanal, setFiltroCanal] = useState<string>('todos');
   const [filtroTipo, setFiltroTipo] = useState<string>('todos');
+  const [filtroVendedor, setFiltroVendedor] = useState<string>('todos');
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [clienteEditando, setClienteEditando] = useState<Cliente | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clienteParaExcluir, setClienteParaExcluir] = useState<Cliente | null>(null);
+
+  // Calcular clientes CR por vendedor
+  const clientesCRPorVendedor = useMemo(() => {
+    const vendedoresMap = new Map<string, { nome: string; totalCR: number; total: number }>();
+    
+    clientes?.forEach(cliente => {
+      if (cliente.created_by && cliente.vendedor) {
+        const atual = vendedoresMap.get(cliente.created_by) || { 
+          nome: cliente.vendedor.nome, 
+          totalCR: 0,
+          total: 0
+        };
+        atual.total++;
+        if (cliente.tipo_cliente === 'CR') {
+          atual.totalCR++;
+        }
+        vendedoresMap.set(cliente.created_by, atual);
+      }
+    });
+    
+    return Array.from(vendedoresMap.entries()).map(([id, data]) => ({
+      id,
+      nome: data.nome,
+      totalCR: data.totalCR,
+      total: data.total,
+      meta: 500
+    })).sort((a, b) => b.totalCR - a.totalCR);
+  }, [clientes]);
 
   const clientesFiltrados = useMemo(() => {
     if (!clientes) return [];
@@ -103,21 +132,20 @@ export default function ClientesDirecao() {
       const matchEstado = filtroEstado === 'todos' || cliente.estado === filtroEstado;
       const matchCanal = filtroCanal === 'todos' || cliente.canal_aquisicao_id === filtroCanal;
       const matchTipo = filtroTipo === 'todos' || cliente.tipo_cliente === filtroTipo;
+      const matchVendedor = filtroVendedor === 'todos' || cliente.created_by === filtroVendedor;
       
-      return matchBusca && matchEstado && matchCanal && matchTipo;
+      return matchBusca && matchEstado && matchCanal && matchTipo && matchVendedor;
     });
-  }, [clientes, searchTerm, filtroEstado, filtroCanal, filtroTipo]);
+  }, [clientes, searchTerm, filtroEstado, filtroCanal, filtroTipo, filtroVendedor]);
 
   const totalClientes = clientes?.length || 0;
-  const totalCR = clientes?.filter(c => c.tipo_cliente === 'CR').length || 0;
-  const metaTotalClientes = 10000;
-  const metaCR = 1000;
 
   const limparFiltros = () => {
     setSearchTerm('');
     setFiltroEstado('todos');
     setFiltroCanal('todos');
     setFiltroTipo('todos');
+    setFiltroVendedor('todos');
   };
 
   const handleNovoCliente = () => {
@@ -200,53 +228,53 @@ export default function ClientesDirecao() {
       ]}
       headerActions={headerActions}
     >
-      {/* Cards de Metas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
-          <div className="p-4 rounded-lg">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <Users className="h-4 w-4 text-blue-400" />
+      {/* Cards de Meta por Vendedor - 500 CR cada */}
+      {clientesCRPorVendedor.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+          {clientesCRPorVendedor.map(vendedor => (
+            <div 
+              key={vendedor.id} 
+              className={`p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border transition-colors cursor-pointer ${
+                filtroVendedor === vendedor.id ? 'border-emerald-500/50' : 'border-white/10 hover:border-white/20'
+              }`}
+              onClick={() => setFiltroVendedor(filtroVendedor === vendedor.id ? 'todos' : vendedor.id)}
+            >
+              <div className="p-4 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                      <User className="h-4 w-4 text-emerald-400" />
+                    </div>
+                    <span className="text-sm text-white/70 truncate">{vendedor.nome}</span>
+                  </div>
+                  <span className="text-xl font-bold text-white shrink-0 ml-2">{vendedor.totalCR}</span>
                 </div>
-                <span className="text-sm text-white/70">Meta: 10.000 Clientes</span>
-              </div>
-              <span className="text-xl font-bold text-white">{totalClientes.toLocaleString()}</span>
-            </div>
-            <Progress value={(totalClientes / metaTotalClientes) * 100} className="h-2" />
-            <p className="text-xs text-white/50 mt-2">
-              {((totalClientes / metaTotalClientes) * 100).toFixed(1)}% da meta
-            </p>
-          </div>
-        </div>
-
-        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
-          <div className="p-4 rounded-lg">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <RefreshCw className="h-4 w-4 text-emerald-400" />
+                <Progress 
+                  value={Math.min((vendedor.totalCR / vendedor.meta) * 100, 100)} 
+                  className="h-2" 
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-xs text-white/50">
+                    {((vendedor.totalCR / vendedor.meta) * 100).toFixed(1)}% da meta
+                  </p>
+                  <p className="text-xs text-white/40">
+                    {vendedor.total} clientes
+                  </p>
                 </div>
-                <span className="text-sm text-white/70">Meta: 1.000 Clientes CR</span>
               </div>
-              <span className="text-xl font-bold text-white">{totalCR.toLocaleString()}</span>
             </div>
-            <Progress value={(totalCR / metaCR) * 100} className="h-2" />
-            <p className="text-xs text-white/50 mt-2">
-              {((totalCR / metaCR) * 100).toFixed(1)}% da meta
-            </p>
-          </div>
+          ))}
         </div>
-      </div>
+      )}
 
       {/* Card de Filtros */}
       <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 mb-6">
         <div className="p-4 rounded-lg">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-            <div className="relative md:col-span-2">
+            <div className="relative md:col-span-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
               <Input
-                placeholder="Buscar por nome, CPF/CNPJ ou telefone..."
+                placeholder="Buscar..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
@@ -283,13 +311,25 @@ export default function ClientesDirecao() {
               </SelectTrigger>
               <SelectContent className="bg-zinc-900 border-white/10">
                 <SelectItem value="todos" className="text-white">Todos Tipos</SelectItem>
-                <SelectItem value="CE" className="text-white">CE - Cliente Eventual</SelectItem>
-                <SelectItem value="CR" className="text-white">CR - Cliente Recorrente</SelectItem>
+                <SelectItem value="CE" className="text-white">CE - Eventual</SelectItem>
+                <SelectItem value="CR" className="text-white">CR - Recorrente</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filtroVendedor} onValueChange={setFiltroVendedor}>
+              <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectValue placeholder="Vendedor" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-white/10">
+                <SelectItem value="todos" className="text-white">Todos Vendedores</SelectItem>
+                {clientesCRPorVendedor.map(v => (
+                  <SelectItem key={v.id} value={v.id} className="text-white">{v.nome}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
-          {(searchTerm || filtroEstado !== 'todos' || filtroCanal !== 'todos' || filtroTipo !== 'todos') && (
+          {(searchTerm || filtroEstado !== 'todos' || filtroCanal !== 'todos' || filtroTipo !== 'todos' || filtroVendedor !== 'todos') && (
             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/10">
               <span className="text-xs text-white/50">{clientesFiltrados.length} resultados</span>
               <Button
