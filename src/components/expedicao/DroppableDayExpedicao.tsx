@@ -3,7 +3,9 @@ import { useDroppable } from "@dnd-kit/core";
 import { format, isSameDay, isSameMonth, isToday as isTodayFn, isWeekend, parseISO } from "date-fns";
 import { Plus } from "lucide-react";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
+import { NeoInstalacao } from "@/types/neoInstalacao";
 import { DraggableOrdemCarregamento } from "./DraggableOrdemCarregamento";
+import { NeoInstalacaoCard } from "./NeoInstalacaoCard";
 import { AdicionarOrdemCalendarioModal } from "./AdicionarOrdemCalendarioModal";
 import { Button } from "@/components/ui/button";
 
@@ -11,6 +13,7 @@ interface DroppableDayExpedicaoProps {
   date: Date;
   currentMonth: Date;
   ordens: OrdemCarregamento[];
+  neoInstalacoes?: NeoInstalacao[];
   onDayClick: (date: Date) => void;
   onEdit?: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario?: (id: string) => void;
@@ -24,6 +27,7 @@ export const DroppableDayExpedicao = ({
   date,
   currentMonth,
   ordens,
+  neoInstalacoes = [],
   onDayClick,
   onEdit,
   onRemoverDoCalendario,
@@ -49,6 +53,11 @@ export const DroppableDayExpedicao = ({
   const ordensNoDia = ordens.filter((ordem) => {
     if (!ordem.data_carregamento) return false;
     return isSameDay(parseISO(ordem.data_carregamento), date);
+  });
+
+  const neoNoDia = neoInstalacoes.filter((neo) => {
+    if (!neo.data_instalacao) return false;
+    return isSameDay(parseISO(neo.data_instalacao), date);
   });
 
   const handleConfirmModal = async (params: {
@@ -126,6 +135,9 @@ export const DroppableDayExpedicao = ({
               onRemoverDoCalendario={readOnly ? undefined : onRemoverDoCalendario}
               disableDrag={readOnly}
             />
+          ))}
+          {neoNoDia.map((neo) => (
+            <NeoInstalacaoCard key={neo.id} neoInstalacao={neo} />
           ))}
         </div>
       </div>

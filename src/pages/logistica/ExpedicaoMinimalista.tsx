@@ -204,6 +204,7 @@ export default function ExpedicaoMinimalista() {
                     <CalendarioSemanalExpedicaoDesktop
                       startDate={weekStart}
                       ordens={ordens || []}
+                      neoInstalacoes={neoInstalacoes || []}
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
@@ -218,6 +219,7 @@ export default function ExpedicaoMinimalista() {
                     <CalendarioMensalExpedicaoDesktop
                       currentMonth={currentDate}
                       ordens={ordens || []}
+                      neoInstalacoes={neoInstalacoes || []}
                       onMonthChange={handleMonthChange}
                       onUpdateOrdem={handleUpdateOrdem}
                       onEdit={handleEdit}
