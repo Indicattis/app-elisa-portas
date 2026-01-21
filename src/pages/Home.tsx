@@ -5,7 +5,7 @@ import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboar
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { SpaceParticles } from "@/components/SpaceParticles";
-
+import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 const menuItems = [
   { label: "Vendas", icon: ShoppingCart, path: "/vendas", angle: 0 },
   { label: "Fábrica", icon: Factory, path: "/fabrica", angle: 72 },
@@ -67,6 +67,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
+      {/* Breadcrumb animado */}
+      <AnimatedBreadcrumb 
+        items={[{ label: "Home" }]} 
+        mounted={mounted} 
+      />
+
       {/* Tag flutuante de perfil */}
       {userRole && (
         <div 
