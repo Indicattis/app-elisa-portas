@@ -1,0 +1,223 @@
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { 
+  Mail, 
+  Phone, 
+  Calendar, 
+  Building2, 
+  CreditCard, 
+  User,
+  Clock,
+  DollarSign
+} from "lucide-react";
+
+interface AdminUser {
+  id: string;
+  user_id: string;
+  email: string;
+  nome: string;
+  role: string;
+  setor: "vendas" | "marketing" | "instalacoes" | "fabrica" | "administrativo" | null;
+  cpf: string | null;
+  data_nascimento: string | null;
+  ativo: boolean;
+  foto_perfil_url: string | null;
+  eh_colaborador: boolean;
+  salario: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface UserDetailsModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  user: AdminUser | null;
+  roleLabel: string;
+}
+
+export function UserDetailsModal({ open, onOpenChange, user, roleLabel }: UserDetailsModalProps) {
+  if (!user) return null;
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((word) => word.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const formatCPF = (cpf: string | null) => {
+    if (!cpf) return "Não informado";
+    const cleaned = cpf.replace(/\D/g, "");
+    if (cleaned.length !== 11) return cpf;
+    return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "Não informado";
+    try {
+      return format(new Date(dateString), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    } catch {
+      return "Data inválida";
+    }
+  };
+
+  const formatDateTime = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+    } catch {
+      return "Data inválida";
+    }
+  };
+
+  const formatCurrency = (value: number | null) => {
+    if (value === null) return "Não informado";
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  };
+
+  const setorLabels: Record<string, string> = {
+    vendas: "Vendas",
+    marketing: "Marketing",
+    instalacoes: "Instalações",
+    fabrica: "Fábrica",
+    administrativo: "Administrativo",
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px] bg-background border-border">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">Detalhes do Usuário</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Header com Avatar e Info Principal */}
+          <div className="flex items-center gap-4 pb-4 border-b border-border">
+            <Avatar className="w-16 h-16">
+              <AvatarImage src={user.foto_perfil_url || undefined} alt={user.nome} />
+              <AvatarFallback className="bg-primary/20 text-primary text-lg font-semibold">
+                {getInitials(user.nome)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-xl font-semibold text-foreground truncate">{user.nome}</h3>
+              <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge
+                  variant={user.ativo ? "default" : "secondary"}
+                  className={
+                    user.ativo
+                      ? "bg-green-500/20 text-green-600 dark:text-green-400"
+                      : "bg-muted text-muted-foreground"
+                  }
+                >
+                  {user.ativo ? "Ativo" : "Inativo"}
+                </Badge>
+                {user.eh_colaborador && (
+                  <Badge variant="outline" className="border-primary/30 text-primary">
+                    Colaborador
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Informações em Grid */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Função */}
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <User className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Função</p>
+                <p className="text-sm font-medium text-foreground">{roleLabel}</p>
+              </div>
+            </div>
+
+            {/* Setor */}
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Building2 className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Setor</p>
+                <p className="text-sm font-medium text-foreground">
+                  {user.setor ? setorLabels[user.setor] || user.setor : "Não definido"}
+                </p>
+              </div>
+            </div>
+
+            {/* Email */}
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Mail className="w-4 h-4 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">Email</p>
+                <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
+              </div>
+            </div>
+
+            {/* CPF */}
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <CreditCard className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">CPF</p>
+                <p className="text-sm font-medium text-foreground">{formatCPF(user.cpf)}</p>
+              </div>
+            </div>
+
+            {/* Data de Nascimento */}
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Calendar className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Nascimento</p>
+                <p className="text-sm font-medium text-foreground">{formatDate(user.data_nascimento)}</p>
+              </div>
+            </div>
+
+            {/* Salário */}
+            {user.eh_colaborador && (
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <DollarSign className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Salário</p>
+                  <p className="text-sm font-medium text-foreground">{formatCurrency(user.salario)}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Datas de Sistema */}
+          <div className="pt-4 border-t border-border">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock className="w-3 h-3" />
+              <span>Criado em {formatDateTime(user.created_at)}</span>
+              <span className="mx-2">•</span>
+              <span>Atualizado em {formatDateTime(user.updated_at)}</span>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
