@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   Select,
   SelectContent,
@@ -415,8 +416,19 @@ export default function ClientesDirecao() {
                     <TableCell className="text-white/60 text-xs hidden xl:table-cell">
                       {cliente.canal_aquisicao?.nome || '-'}
                     </TableCell>
-                    <TableCell className="text-white/60 text-xs hidden lg:table-cell">
-                      {cliente.vendedor?.nome || '-'}
+                    <TableCell className="hidden lg:table-cell">
+                      {cliente.vendedor ? (
+                        <div className="flex justify-center">
+                          <Avatar className="h-7 w-7">
+                            <AvatarImage src={cliente.vendedor.foto_perfil_url || undefined} />
+                            <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                              {cliente.vendedor.nome?.charAt(0)?.toUpperCase() || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+                      ) : (
+                        <span className="text-white/30 text-center block">-</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-center text-white/70">
                       {cliente.numero_vendas || 0}

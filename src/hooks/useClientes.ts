@@ -23,7 +23,7 @@ export interface Cliente {
   created_at: string;
   updated_at: string;
   created_by?: string | null;
-  vendedor?: { id: string; nome: string } | null;
+  vendedor?: { id: string; nome: string; foto_perfil_url?: string | null } | null;
   total_vendas?: number;
   numero_vendas?: number;
   ultima_compra?: string | null;
@@ -63,7 +63,7 @@ export function useClientes() {
       // Buscar usuários para mapear vendedores
       const { data: usersData } = await supabase
         .from("admin_users")
-        .select("id, nome");
+        .select("id, nome, foto_perfil_url");
       
       // Buscar totais de vendas por cliente
       const { data: vendasData } = await supabase
