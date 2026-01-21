@@ -107,14 +107,15 @@ export default function AdminHub() {
         {/* Botão voltar */}
         <button
           onClick={() => navigate("/home")}
-          className="fixed top-4 left-4 z-50 p-3 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
+          className="fixed top-6 left-6 z-50 p-3 rounded-lg bg-primary/5 hover:bg-primary/10 
+                     border border-primary/10 transition-all duration-300"
           style={{
             opacity: mounted ? 1 : 0,
             transform: mounted ? "translateX(0)" : "translateX(-20px)",
-            transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            transition: "all 0.5s ease 100ms",
           }}
         >
-          <ArrowLeft className="w-5 h-5 text-white" />
+          <ArrowLeft className="w-5 h-5 text-white/80" />
         </button>
 
         {/* Título */}
