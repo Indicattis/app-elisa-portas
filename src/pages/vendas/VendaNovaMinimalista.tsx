@@ -92,6 +92,7 @@ export default function VendaNovaMinimalista() {
     pago_na_instalacao: false,
     parcelas_dinheiro: 1,
     valor_entrada_dinheiro: 0,
+    data_entrada_dinheiro: undefined,
     restante_na_instalacao: false,
     comprovante_file: null
   });
