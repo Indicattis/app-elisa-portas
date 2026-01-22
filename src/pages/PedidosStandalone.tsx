@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, ArrowLeft, LogOut, HardHat } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, ArrowLeft, LogOut, HardHat, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
@@ -26,6 +26,7 @@ const ETAPA_ICONS: Record<EtapaPedido, React.ComponentType<{ className?: string 
   aguardando_coleta: Package,
   aguardando_instalacao: Wrench,
   instalacoes: HardHat,
+  correcoes: AlertTriangle,
   finalizado: CheckCircle2
 };
 export default function PedidosStandalone() {

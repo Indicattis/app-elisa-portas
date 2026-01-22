@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useOrdensCarregamentoCalendario } from "@/hooks/useOrdensCarregamentoCalendario";
 import { useNeoInstalacoes } from "@/hooks/useNeoInstalacoes";
+import { useNeoCorrecoes } from "@/hooks/useNeoCorrecoes";
 import { OrdensCarregamentoDisponiveis } from "@/components/expedicao/OrdensCarregamentoDisponiveis";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
 import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrdemCarregamentoDrawer";
 import { CriarNeoInstalacaoModal } from "@/components/expedicao/CriarNeoInstalacaoModal";
+import { CriarNeoCorrecaoModal } from "@/components/expedicao/CriarNeoCorrecaoModal";
 import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
 import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
@@ -19,6 +21,7 @@ import { format, addDays, startOfWeek, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { CriarNeoInstalacaoData } from "@/types/neoInstalacao";
+import { CriarNeoCorrecaoData } from "@/types/neoCorrecao";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,9 +38,11 @@ export default function ExpedicaoMinimalista() {
   const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [editingOrdem, setEditingOrdem] = useState<OrdemCarregamento | null>(null);
   const [neoModalOpen, setNeoModalOpen] = useState(false);
+  const [neoCorrecaoModalOpen, setNeoCorrecaoModalOpen] = useState(false);
 
   const { ordens, isLoading, updateOrdem } = useOrdensCarregamentoCalendario(currentDate, viewType);
   const { neoInstalacoes, createNeoInstalacao, updateNeoInstalacao, deleteNeoInstalacao } = useNeoInstalacoes(currentDate, viewType);
+  const { neoCorrecoes, createNeoCorrecao, updateNeoCorrecao, deleteNeoCorrecao } = useNeoCorrecoes(currentDate, viewType);
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -151,6 +156,15 @@ export default function ExpedicaoMinimalista() {
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={() => setNeoCorrecaoModalOpen(true)}
+                className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 text-xs"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Neo Correção
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setViewType(viewType === 'week' ? 'month' : 'week')}
                 className="text-white/80 hover:text-white hover:bg-primary/10"
               >
@@ -210,7 +224,7 @@ export default function ExpedicaoMinimalista() {
                       onToday={handleToday}
                       onUpdateOrdem={handleUpdateOrdem}
                       onUpdateNeoInstalacao={async (params) => {
-                        await updateNeoInstalacao(params);
+                        await updateNeoInstalacao.mutate(params);
                       }}
                       onEdit={handleEdit}
                       onRemoverDoCalendario={handleRemoverDoCalendario}
@@ -226,7 +240,7 @@ export default function ExpedicaoMinimalista() {
                       onMonthChange={handleMonthChange}
                       onUpdateOrdem={handleUpdateOrdem}
                       onUpdateNeoInstalacao={async (params) => {
-                        await updateNeoInstalacao(params);
+                        await updateNeoInstalacao.mutate(params);
                       }}
                       onEdit={handleEdit}
                       onRemoverDoCalendario={handleRemoverDoCalendario}
@@ -271,7 +285,16 @@ export default function ExpedicaoMinimalista() {
         open={neoModalOpen}
         onOpenChange={setNeoModalOpen}
         onConfirm={async (dados: CriarNeoInstalacaoData) => {
-          await createNeoInstalacao(dados);
+          await createNeoInstalacao.mutate(dados);
+        }}
+      />
+
+      {/* Modal Neo Correção */}
+      <CriarNeoCorrecaoModal
+        open={neoCorrecaoModalOpen}
+        onOpenChange={setNeoCorrecaoModalOpen}
+        onConfirm={async (dados: CriarNeoCorrecaoData) => {
+          await createNeoCorrecao.mutate(dados);
         }}
       />
     </div>

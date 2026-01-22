@@ -47,6 +47,7 @@ export function usePedidosContadores() {
         aguardando_coleta: 0,
         aguardando_instalacao: 0,
         instalacoes: 0,
+        correcoes: 0,
         finalizado: 0,
       };
 
@@ -65,6 +66,16 @@ export function usePedidosContadores() {
 
       if (!neoError && neoCount) {
         counts.instalacoes += neoCount;
+      }
+
+      // Buscar neo_correções não concluídas para adicionar ao contador de correções
+      const { count: neoCorrecaoCount, error: neoCorrecaoError } = await supabase
+        .from('neo_correcoes')
+        .select('*', { count: 'exact', head: true })
+        .eq('concluida', false);
+
+      if (!neoCorrecaoError && neoCorrecaoCount) {
+        counts.correcoes += neoCorrecaoCount;
       }
 
       return counts;

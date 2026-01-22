@@ -2,15 +2,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle } from "lucide-react";
 import { CriarPedidoTesteModal } from "@/components/pedidos/CriarPedidoTesteModal";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
 import { useNeoInstalacoesListagem } from "@/hooks/useNeoInstalacoes";
+import { useNeoCorrecoesListagem } from "@/hooks/useNeoCorrecoes";
 import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
 import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMinimalista";
 import { NeoInstalacaoCardGestao } from "@/components/pedidos/NeoInstalacaoCardGestao";
+import { NeoCorrecaoCardGestao } from "@/components/pedidos/NeoCorrecaoCardGestao";
 import { PortasPorEtapa } from "@/components/producao/dashboard/PortasPorEtapa";
 import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
@@ -27,6 +29,7 @@ const ETAPA_ICONS = {
   aguardando_coleta: Package,
   aguardando_instalacao: Wrench,
   instalacoes: HardHat,
+  correcoes: AlertTriangle,
   finalizado: CheckCircle2
 };
 
@@ -44,6 +47,7 @@ export default function GestaoFabricaDirecao() {
   const ITENS_POR_PAGINA = 25;
   const contadores = usePedidosContadores();
   const { neoInstalacoes, concluirNeoInstalacao, isConcluindo } = useNeoInstalacoesListagem();
+  const { neoCorrecoes, concluirNeoCorrecao } = useNeoCorrecoesListagem();
   const {
     pedidos,
     isLoading,
@@ -157,7 +161,12 @@ export default function GestaoFabricaDirecao() {
     queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
     queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
     queryClient.invalidateQueries({ queryKey: ['neo_instalacoes_listagem'] });
+    queryClient.invalidateQueries({ queryKey: ['neo_correcoes_listagem'] });
     toast({ title: "Atualizado", description: "Lista de pedidos atualizada com sucesso" });
+  };
+
+  const handleConcluirNeoCorrecao = async (id: string) => {
+    await concluirNeoCorrecao.mutateAsync(id);
   };
 
   const handleConcluirNeoInstalacao = async (id: string) => {
@@ -307,7 +316,7 @@ export default function GestaoFabricaDirecao() {
                   <div className="text-center py-8 text-white/60">
                     Carregando...
                   </div>
-                ) : pedidosFiltrados.length === 0 && !(etapaAtiva === 'instalacoes' && neoInstalacoes.length > 0) ? (
+                ) : pedidosFiltrados.length === 0 && !(etapaAtiva === 'instalacoes' && neoInstalacoes.length > 0) && !(etapaAtiva === 'correcoes' && neoCorrecoes.length > 0) ? (
                   <div className="text-center py-8 text-white/60">
                     {searchTerm ? 'Nenhum pedido encontrado' : 'Nenhum pedido nesta etapa'}
                   </div>
@@ -325,6 +334,26 @@ export default function GestaoFabricaDirecao() {
                               viewMode={viewMode}
                               onConcluir={handleConcluirNeoInstalacao}
                               isConcluindo={isConcluindo}
+                            />
+                          ))}
+                        </div>
+                        {pedidosFiltrados.length > 0 && (
+                          <h3 className="text-sm font-medium text-white/70 mt-4 mb-2">Pedidos ({pedidosFiltrados.length})</h3>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Neo Correções - apenas na etapa correcoes */}
+                    {etapaAtiva === 'correcoes' && neoCorrecoes.length > 0 && (
+                      <div className="mb-4 space-y-2">
+                        <h3 className="text-sm font-medium text-white/70 mb-2">Correções Avulsas ({neoCorrecoes.length})</h3>
+                        <div className="space-y-1">
+                          {neoCorrecoes.map((neo) => (
+                            <NeoCorrecaoCardGestao
+                              key={neo.id}
+                              neoCorrecao={neo}
+                              viewMode={viewMode}
+                              onConcluir={handleConcluirNeoCorrecao}
                             />
                           ))}
                         </div>
