@@ -25,10 +25,13 @@ export function calcularLimitesDesconto(
   formaPagamento: string,
   vendaPresencial: boolean
 ): DescontoLimits {
-  const limiteBase = formaPagamento === 'a_vista' ? 5 : 0;
-  const limitePresencial = vendaPresencial ? 5 : 0;
+  // 5% para pagamento que não seja cartão de crédito (à vista, boleto, dinheiro)
+  const limiteBase = formaPagamento !== 'cartao_credito' ? 5 : 0;
+  // 3% adicional para venda presencial
+  const limitePresencial = vendaPresencial ? 3 : 0;
   const limiteTotal = limiteBase + limitePresencial;
-  const limiteMaximo = 15;
+  // Máximo de 5% adicional com senha = 13% total
+  const limiteMaximo = 13;
 
   return {
     limiteBase,
@@ -97,8 +100,8 @@ export function validarDesconto(
   
   const excedente = percentualDesconto - limites.limiteTotal;
   const dentroDoLimite = excedente <= 0;
-  const requerSenha = excedente > 0;
-  const excedeLimiteMaximo = false; // Sem limite máximo
+  const requerSenha = excedente > 0 && percentualDesconto <= limites.limiteMaximo;
+  const excedeLimiteMaximo = percentualDesconto > limites.limiteMaximo;
 
   return {
     totalVenda,
@@ -131,19 +134,16 @@ export function formatarDesconto(
 export function getTipoAutorizacaoNecessaria(
   validacao: DescontoCalculation
 ): 'responsavel_setor' | 'master' | null {
-  // Dentro do limite - não requer senha
+  // Excede limite máximo - não permitido nem com senha
+  if (validacao.excedeLimiteMaximo) {
+    return 'master';
+  }
+  
+  // Dentro do limite sem senha - não requer autorização
   if (validacao.dentroDoLimite) {
     return null;
   }
   
-  // Calcular quanto excedeu o limite permitido
-  const excedente = validacao.excedente;
-  
-  // Excedeu até 5% - requer senha do responsável do setor
-  if (excedente <= 5) {
-    return 'responsavel_setor';
-  }
-  
-  // Excedeu mais de 5% - requer senha master
-  return 'master';
+  // Excedeu o limite básico mas está dentro do máximo (até +5%) - requer senha do responsável
+  return 'responsavel_setor';
 }
