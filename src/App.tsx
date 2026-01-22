@@ -355,17 +355,17 @@ const App = () => (
 
                 {/* Hub da Fábrica Minimalista */}
                 <Route path="/fabrica" element={<ProtectedRoute routeKey="fabrica_hub"><FabricaHub /></ProtectedRoute>} />
-                <Route path="/fabrica/pedidos-producao" element={<ProtectedRoute routeKey="fabrica_hub"><PedidosProducaoMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/controle-estoque" element={<ProtectedRoute routeKey="fabrica_hub"><ControleEstoqueMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao" element={<ProtectedRoute routeKey="fabrica_hub"><ProducaoMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/solda" element={<ProtectedRoute routeKey="fabrica_hub"><SoldaMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/perfiladeira" element={<ProtectedRoute routeKey="fabrica_hub"><PerfiladeiraMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/separacao" element={<ProtectedRoute routeKey="fabrica_hub"><SeparacaoMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/qualidade" element={<ProtectedRoute routeKey="fabrica_hub"><QualidadeMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/pintura" element={<ProtectedRoute routeKey="fabrica_hub"><PinturaMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/carregamento" element={<ProtectedRoute routeKey="fabrica_hub"><CarregamentoMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/terceirizacao" element={<ProtectedRoute routeKey="fabrica_hub"><TerceirizacaoMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/meu-historico" element={<ProtectedRoute routeKey="fabrica_hub"><MeuHistoricoMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/pedidos-producao" element={<ProtectedRoute routeKey="fabrica_pedidos"><PedidosProducaoMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/controle-estoque" element={<ProtectedRoute routeKey="fabrica_estoque"><ControleEstoqueMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao" element={<ProtectedRoute routeKey="fabrica_producao"><ProducaoMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/solda" element={<ProtectedRoute routeKey="fabrica_solda"><SoldaMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/perfiladeira" element={<ProtectedRoute routeKey="fabrica_perfiladeira"><PerfiladeiraMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/separacao" element={<ProtectedRoute routeKey="fabrica_separacao"><SeparacaoMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/qualidade" element={<ProtectedRoute routeKey="fabrica_qualidade"><QualidadeMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/pintura" element={<ProtectedRoute routeKey="fabrica_pintura"><PinturaMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/carregamento" element={<ProtectedRoute routeKey="fabrica_carregamento"><CarregamentoMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/terceirizacao" element={<ProtectedRoute routeKey="fabrica_terceirizacao"><TerceirizacaoMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/meu-historico" element={<ProtectedRoute routeKey="fabrica_meu_historico"><MeuHistoricoMinimalista /></ProtectedRoute>} />
 
                 {/* Hub da Direção Minimalista */}
                 <Route path="/direcao" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoHub /></ProtectedRoute>} />
