@@ -7,6 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   ArrowLeft, 
   CalendarIcon, 
@@ -16,7 +17,10 @@ import {
   Palette, 
   TrendingUp,
   DollarSign,
-  Target
+  Target,
+  ChevronDown,
+  ChevronUp,
+  Plus
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -24,7 +28,7 @@ import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
-import { useFaturamentoPorProduto } from "@/hooks/useFaturamentoPorProduto";
+import { useFaturamentoDetalhado } from "@/hooks/useFaturamentoDetalhado";
 import { supabase } from "@/integrations/supabase/client";
 
 const formatCurrency = (value: number) => {
@@ -41,6 +45,9 @@ const getTipoProdutoLabel = (tipo: string) => {
     'pintura_epoxi': 'Pintura Epóxi',
     'manutencao': 'Manutenção',
     'acessorios': 'Acessórios',
+    'acessorio': 'Acessórios',
+    'adicionais': 'Adicionais',
+    'adicional': 'Adicionais',
   };
   return labels[tipo] || tipo;
 };
@@ -52,9 +59,15 @@ const getTipoProdutoIcon = (tipo: string) => {
     'pintura_epoxi': { icon: Palette, color: 'text-purple-400' },
     'manutencao': { icon: Wrench, color: 'text-cyan-400' },
     'acessorios': { icon: Package, color: 'text-blue-400' },
+    'acessorio': { icon: Package, color: 'text-blue-400' },
+    'adicionais': { icon: Plus, color: 'text-emerald-400' },
+    'adicional': { icon: Plus, color: 'text-emerald-400' },
   };
   return icons[tipo] || { icon: Package, color: 'text-white/60' };
 };
+
+// Tipos que podem ser expandidos
+const tiposExpandiveis = ['acessorios', 'acessorio', 'adicionais', 'adicional', 'manutencao', 'pintura_epoxi'];
 
 export default function FaturamentoProdutosMinimalista() {
   const navigate = useNavigate();
@@ -65,8 +78,9 @@ export default function FaturamentoProdutosMinimalista() {
   });
   const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
   const [atendentes, setAtendentes] = useState<any[]>([]);
+  const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set());
 
-  const { data: produtos = [], isLoading } = useFaturamentoPorProduto({
+  const { data: produtos = [], isLoading } = useFaturamentoDetalhado({
     dateRange,
     selectedAtendente,
     filterPublico: "todos"
@@ -87,6 +101,16 @@ export default function FaturamentoProdutosMinimalista() {
       .select('user_id, nome')
       .order('nome');
     if (data) setAtendentes(data);
+  };
+
+  const toggleExpanded = (tipo: string) => {
+    const newExpanded = new Set(expandedTypes);
+    if (newExpanded.has(tipo)) {
+      newExpanded.delete(tipo);
+    } else {
+      newExpanded.add(tipo);
+    }
+    setExpandedTypes(newExpanded);
   };
 
   const totais = produtos.reduce(
@@ -258,36 +282,106 @@ export default function FaturamentoProdutosMinimalista() {
               </Popover>
             </div>
 
-            {/* Cards por Tipo de Produto */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+            {/* Cards por Tipo de Produto - Expansíveis */}
+            <div className="space-y-3 mb-6">
               {produtos.map((produto) => {
                 const { icon: Icon, color } = getTipoProdutoIcon(produto.tipo_produto);
                 const margem = produto.valor_total > 0 
                   ? (produto.lucro_total / produto.valor_total) * 100 
                   : 0;
+                const isExpandable = tiposExpandiveis.includes(produto.tipo_produto);
+                const isExpanded = expandedTypes.has(produto.tipo_produto);
+                const hasDetails = produto.detalhes && produto.detalhes.length > 0;
                 
                 return (
-                  <div 
-                    key={produto.tipo_produto}
-                    className="p-4 rounded-xl bg-white/5 border border-white/10"
+                  <Collapsible 
+                    key={produto.tipo_produto} 
+                    open={isExpanded}
+                    onOpenChange={() => isExpandable && hasDetails && toggleExpanded(produto.tipo_produto)}
                   >
-                    <div className="flex items-center gap-2 mb-2">
-                      <Icon className={cn("h-5 w-5", color)} />
-                      <span className="text-sm font-medium text-white/80">
-                        {getTipoProdutoLabel(produto.tipo_produto)}
-                      </span>
+                    <div className="rounded-xl bg-white/5 border border-white/10 overflow-hidden">
+                      <CollapsibleTrigger asChild>
+                        <button
+                          className={cn(
+                            "w-full p-4 flex items-center justify-between transition-all",
+                            isExpandable && hasDetails ? "cursor-pointer hover:bg-white/5" : "cursor-default"
+                          )}
+                          disabled={!isExpandable || !hasDetails}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className={cn("p-2 rounded-lg bg-white/5", color)}>
+                              <Icon className="h-5 w-5" />
+                            </div>
+                            <div className="text-left">
+                              <p className="font-medium text-white">
+                                {getTipoProdutoLabel(produto.tipo_produto)}
+                              </p>
+                              <p className="text-sm text-white/50">{produto.quantidade} itens</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-6">
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-blue-400">{formatCurrency(produto.valor_total)}</p>
+                              <p className={cn(
+                                "text-sm font-medium",
+                                margem >= 20 ? "text-emerald-400" : margem >= 10 ? "text-amber-400" : "text-red-400"
+                              )}>
+                                {margem.toFixed(1)}% margem
+                              </p>
+                            </div>
+                            {isExpandable && hasDetails && (
+                              <div className="text-white/40">
+                                {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      </CollapsibleTrigger>
+                      
+                      <CollapsibleContent>
+                        <div className="border-t border-white/10 bg-white/[0.02]">
+                          <div className="p-4 space-y-2">
+                            {produto.detalhes.map((detalhe, idx) => {
+                              const margemDetalhe = detalhe.valor_total > 0 
+                                ? (detalhe.lucro_total / detalhe.valor_total) * 100 
+                                : 0;
+                              
+                              return (
+                                <div 
+                                  key={detalhe.id || idx}
+                                  className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    {/* Círculo de cor para pintura */}
+                                    {produto.tipo_produto === 'pintura_epoxi' && detalhe.cor_hex && (
+                                      <div 
+                                        className="w-6 h-6 rounded-full border-2 border-white/20"
+                                        style={{ backgroundColor: detalhe.cor_hex }}
+                                      />
+                                    )}
+                                    <div>
+                                      <p className="text-sm font-medium text-white">{detalhe.nome}</p>
+                                      <p className="text-xs text-white/50">{detalhe.quantidade} unidades</p>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-sm font-semibold text-blue-400">{formatCurrency(detalhe.valor_total)}</p>
+                                    <p className={cn(
+                                      "text-xs",
+                                      margemDetalhe >= 20 ? "text-emerald-400" : margemDetalhe >= 10 ? "text-amber-400" : "text-white/50"
+                                    )}>
+                                      {detalhe.lucro_total > 0 ? `${formatCurrency(detalhe.lucro_total)} lucro` : '-'}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </CollapsibleContent>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-lg font-bold text-white">{formatCurrency(produto.valor_total)}</p>
-                      <p className={cn(
-                        "text-sm font-medium",
-                        margem >= 20 ? "text-emerald-400" : margem >= 10 ? "text-amber-400" : "text-red-400"
-                      )}>
-                        {margem.toFixed(1)}% margem
-                      </p>
-                      <p className="text-xs text-white/50">{produto.quantidade} itens</p>
-                    </div>
-                  </div>
+                  </Collapsible>
                 );
               })}
             </div>
