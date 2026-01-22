@@ -29,7 +29,7 @@ import { PinturaRapidaModal } from '@/components/vendas/PinturaRapidaModal';
 import { validarDesconto, getTipoAutorizacaoNecessaria } from '@/utils/descontoVendasRules';
 import { useAuth } from '@/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PagamentoSection, PagamentoData } from '@/components/vendas/PagamentoSection';
+import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from '@/components/vendas/PagamentoSection';
 import { ClienteVendaSection } from '@/components/vendas/ClienteVendaSection';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 
@@ -84,18 +84,7 @@ export default function VendaNovaMinimalista() {
   const [pinturaRapidaOpen, setPinturaRapidaOpen] = useState(false);
   const [portaRecemAdicionada, setPortaRecemAdicionada] = useState<{largura: number, altura: number} | null>(null);
 
-  const [pagamentoData, setPagamentoData] = useState<PagamentoData>({
-    metodo_pagamento: '',
-    empresa_receptora_id: '',
-    quantidade_parcelas: 1,
-    intervalo_boletos: 30,
-    pago_na_instalacao: false,
-    parcelas_dinheiro: 1,
-    valor_entrada_dinheiro: 0,
-    data_entrada_dinheiro: undefined,
-    restante_na_instalacao: false,
-    comprovante_file: null
-  });
+  const [pagamentoData, setPagamentoData] = useState<PagamentoData>(createEmptyPagamentoData());
 
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
@@ -408,7 +397,7 @@ export default function VendaNovaMinimalista() {
       await createVenda({ 
         vendaData: {
           ...formData,
-          forma_pagamento: pagamentoData.metodo_pagamento,
+          forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
           data_venda: dataVenda ? dataVenda.toISOString() : new Date().toISOString(),
         }, 
         portas,
@@ -436,9 +425,9 @@ export default function VendaNovaMinimalista() {
       await createVenda({ 
         vendaData: {
           ...formData,
-          forma_pagamento: pagamentoData.metodo_pagamento,
+          forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
           data_venda: dataVenda ? dataVenda.toISOString() : new Date().toISOString(),
-        }, 
+        },
         portas: produtosComDesconto,
         pagamentoData,
         autorizacaoDesconto: {
@@ -553,11 +542,8 @@ export default function VendaNovaMinimalista() {
 
         {/* Forma de Pagamento */}
         <PagamentoSection
-          pagamentoData={pagamentoData}
+          paymentData={pagamentoData}
           onChange={setPagamentoData}
-          tipoEntrega={formData.tipo_entrega || 'instalacao'}
-          vendaPresencial={formData.venda_presencial || false}
-          dataVenda={dataVenda}
           valorTotal={portas.reduce((acc, p) => {
             const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
             const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);

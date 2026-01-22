@@ -1,439 +1,289 @@
-import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Upload, X, CreditCard, Banknote, QrCode, Wallet, CalendarIcon } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { MetodoPagamentoCard, MetodoPagamento, createEmptyMetodo } from "./MetodoPagamentoCard";
+import { useEffect } from "react";
 
 export interface PagamentoData {
-  metodo_pagamento: 'boleto' | 'a_vista' | 'cartao_credito' | 'dinheiro' | '';
-  empresa_receptora_id: string;
-  quantidade_parcelas: number;
-  intervalo_boletos: number;
-  pago_na_instalacao: boolean;
-  parcelas_dinheiro: 1 | 2;
-  valor_entrada_dinheiro: number;
-  data_entrada_dinheiro: Date | undefined;
-  restante_na_instalacao: boolean;
-  comprovante_file: File | null;
+  usar_dois_metodos: boolean;
+  metodos: [MetodoPagamento, MetodoPagamento];
 }
 
+export const createEmptyPagamentoData = (): PagamentoData => ({
+  usar_dois_metodos: false,
+  metodos: [createEmptyMetodo(), createEmptyMetodo()]
+});
+
 interface PagamentoSectionProps {
-  pagamentoData: PagamentoData;
+  paymentData: PagamentoData;
   onChange: (data: PagamentoData) => void;
-  tipoEntrega: string;
-  vendaPresencial: boolean;
-  dataVenda: Date | undefined;
   valorTotal: number;
 }
 
-export function PagamentoSection({
-  pagamentoData,
-  onChange,
-  tipoEntrega,
-  vendaPresencial,
-  dataVenda,
-  valorTotal
-}: PagamentoSectionProps) {
-  const [previewVencimentos, setPreviewVencimentos] = useState<string[]>([]);
-
-  // Buscar empresas emissoras
-  const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas-emissoras'],
+export function PagamentoSection({ paymentData, onChange, valorTotal }: PagamentoSectionProps) {
+  const { data: empresas = [], isLoading: isLoadingEmpresas } = useQuery({
+    queryKey: ['empresas-emissoras-ativas'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('empresas_emissoras')
         .select('id, nome')
         .eq('ativo', true)
-        .order('nome');
+        .order('padrao', { ascending: false });
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
 
-  // Calcular preview de vencimentos para boleto
+  // Auto-set empresa padrão quando empresas carregam
   useEffect(() => {
-    if (pagamentoData.metodo_pagamento === 'boleto' && dataVenda && pagamentoData.quantidade_parcelas > 0 && pagamentoData.intervalo_boletos > 0) {
-      const vencimentos: string[] = [];
-      for (let i = 1; i <= pagamentoData.quantidade_parcelas; i++) {
-        const dataVenc = addDays(dataVenda, pagamentoData.intervalo_boletos * i);
-        vencimentos.push(format(dataVenc, "dd/MM/yyyy", { locale: ptBR }));
+    if (empresas.length > 0) {
+      const empresaPadrao = empresas[0];
+      let needsUpdate = false;
+      const newMetodos = [...paymentData.metodos] as [MetodoPagamento, MetodoPagamento];
+      
+      if (!paymentData.metodos[0].empresa_receptora_id && paymentData.metodos[0].tipo) {
+        newMetodos[0] = { ...newMetodos[0], empresa_receptora_id: empresaPadrao.id };
+        needsUpdate = true;
       }
-      setPreviewVencimentos(vencimentos);
+      if (!paymentData.metodos[1].empresa_receptora_id && paymentData.metodos[1].tipo) {
+        newMetodos[1] = { ...newMetodos[1], empresa_receptora_id: empresaPadrao.id };
+        needsUpdate = true;
+      }
+      
+      if (needsUpdate) {
+        onChange({ ...paymentData, metodos: newMetodos });
+      }
+    }
+  }, [empresas, paymentData.metodos[0].tipo, paymentData.metodos[1].tipo]);
+
+  const handleMetodo1Change = (metodo: MetodoPagamento) => {
+    const newMetodos: [MetodoPagamento, MetodoPagamento] = [metodo, paymentData.metodos[1]];
+    
+    // Se estiver usando 2 métodos, recalcular o valor restante
+    if (paymentData.usar_dois_metodos) {
+      const valorRestante = Math.max(0, valorTotal - metodo.valor);
+      newMetodos[1] = { ...newMetodos[1], valor: valorRestante };
     } else {
-      setPreviewVencimentos([]);
+      // Se for método único, o valor é o total
+      newMetodos[0] = { ...metodo, valor: valorTotal };
     }
-  }, [pagamentoData.metodo_pagamento, pagamentoData.quantidade_parcelas, pagamentoData.intervalo_boletos, dataVenda]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    onChange({ ...pagamentoData, comprovante_file: file });
+    
+    onChange({ ...paymentData, metodos: newMetodos });
   };
 
-  const handleRemoveFile = () => {
-    onChange({ ...pagamentoData, comprovante_file: null });
+  const handleMetodo2Change = (metodo: MetodoPagamento) => {
+    const newMetodos: [MetodoPagamento, MetodoPagamento] = [paymentData.metodos[0], metodo];
+    onChange({ ...paymentData, metodos: newMetodos });
   };
 
-  const calcularValorParcela = () => {
-    if (pagamentoData.metodo_pagamento === 'boleto') {
-      return valorTotal / pagamentoData.quantidade_parcelas;
+  const handleToggleDoisMetodos = (checked: boolean) => {
+    if (checked) {
+      // Ativando 2 métodos - zerar valores para usuário definir
+      onChange({
+        usar_dois_metodos: true,
+        metodos: [
+          { ...paymentData.metodos[0], valor: 0 },
+          createEmptyMetodo()
+        ]
+      });
+    } else {
+      // Desativando 2 métodos - método 1 recebe valor total
+      onChange({
+        usar_dois_metodos: false,
+        metodos: [
+          { ...paymentData.metodos[0], valor: valorTotal },
+          createEmptyMetodo()
+        ]
+      });
     }
-    if (pagamentoData.metodo_pagamento === 'cartao_credito') {
-      return valorTotal / pagamentoData.quantidade_parcelas;
-    }
-    if (pagamentoData.metodo_pagamento === 'dinheiro' && pagamentoData.parcelas_dinheiro === 2) {
-      return valorTotal - pagamentoData.valor_entrada_dinheiro;
-    }
-    return valorTotal;
   };
+
+  // Calcular preview de parcelas para boleto e cartão
+  const calcularPreviewParcelas = (metodo: MetodoPagamento) => {
+    if (!metodo.data_pagamento || metodo.valor <= 0) return [];
+    
+    const parcelas: { numero: number; data: Date; valor: number }[] = [];
+    
+    if (metodo.tipo === 'boleto') {
+      const valorParcela = metodo.valor / metodo.parcelas_boleto;
+      for (let i = 0; i < metodo.parcelas_boleto; i++) {
+        parcelas.push({
+          numero: i + 1,
+          data: addDays(metodo.data_pagamento, metodo.intervalo_boletos * i),
+          valor: valorParcela
+        });
+      }
+    } else if (metodo.tipo === 'cartao_credito') {
+      const valorParcela = metodo.valor / metodo.parcelas_cartao;
+      for (let i = 0; i < metodo.parcelas_cartao; i++) {
+        parcelas.push({
+          numero: i + 1,
+          data: addDays(metodo.data_pagamento, 30 * i),
+          valor: valorParcela
+        });
+      }
+    }
+    
+    return parcelas;
+  };
+
+  const metodo1 = paymentData.metodos[0];
+  const metodo2 = paymentData.metodos[1];
+  const valorMetodo1 = paymentData.usar_dois_metodos ? metodo1.valor : valorTotal;
+  const valorMetodo2 = paymentData.usar_dois_metodos ? Math.max(0, valorTotal - metodo1.valor) : 0;
+  const valoresConferem = !paymentData.usar_dois_metodos || (metodo1.valor + valorMetodo2 === valorTotal);
 
   return (
-    <Card>
-      <CardHeader className="pb-3 pt-4">
-        <CardTitle className="text-base font-semibold">Forma de Pagamento</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Seleção do Método de Pagamento */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <button
-            type="button"
-            onClick={() => onChange({ ...pagamentoData, metodo_pagamento: 'boleto' })}
-            className={`p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-colors ${
-              pagamentoData.metodo_pagamento === 'boleto' 
-                ? 'border-primary bg-primary/5' 
-                : 'border-border hover:border-primary/50'
-            }`}
-          >
-            <Banknote className="h-6 w-6" />
-            <span className="text-sm font-medium">Boleto</span>
-          </button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Forma de Pagamento</h3>
+        <Badge variant="outline" className="text-base">
+          Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorTotal)}
+        </Badge>
+      </div>
 
-          <button
-            type="button"
-            onClick={() => onChange({ ...pagamentoData, metodo_pagamento: 'a_vista' })}
-            className={`p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-colors ${
-              pagamentoData.metodo_pagamento === 'a_vista' 
-                ? 'border-primary bg-primary/5' 
-                : 'border-border hover:border-primary/50'
-            }`}
-          >
-            <QrCode className="h-6 w-6" />
-            <span className="text-sm font-medium">À Vista</span>
-            <span className="text-xs text-muted-foreground">PIX, Débito</span>
-          </button>
+      {/* Toggle para 2 métodos */}
+      <div className="flex items-center space-x-2 p-3 border rounded-lg bg-muted/50">
+        <Checkbox
+          id="usar-dois-metodos"
+          checked={paymentData.usar_dois_metodos}
+          onCheckedChange={handleToggleDoisMetodos}
+        />
+        <Label htmlFor="usar-dois-metodos" className="cursor-pointer">
+          Usar 2 formas de pagamento (ex: entrada + restante)
+        </Label>
+      </div>
 
-          <button
-            type="button"
-            onClick={() => onChange({ ...pagamentoData, metodo_pagamento: 'cartao_credito' })}
-            className={`p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-colors ${
-              pagamentoData.metodo_pagamento === 'cartao_credito' 
-                ? 'border-primary bg-primary/5' 
-                : 'border-border hover:border-primary/50'
-            }`}
-          >
-            <CreditCard className="h-6 w-6" />
-            <span className="text-sm font-medium">Cartão Crédito</span>
-          </button>
+      {/* Método 1 */}
+      <MetodoPagamentoCard
+        metodo={{ ...metodo1, valor: valorMetodo1 }}
+        onChange={handleMetodo1Change}
+        empresas={empresas}
+        isLoadingEmpresas={isLoadingEmpresas}
+        titulo={paymentData.usar_dois_metodos ? "Método 1 (Entrada)" : "Método de Pagamento"}
+        valorFixo={!paymentData.usar_dois_metodos}
+        valorLabel={paymentData.usar_dois_metodos ? "Valor da Entrada *" : "Valor Total"}
+      />
 
-          <button
-            type="button"
-            onClick={() => onChange({ ...pagamentoData, metodo_pagamento: 'dinheiro' })}
-            className={`p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-colors ${
-              pagamentoData.metodo_pagamento === 'dinheiro' 
-                ? 'border-primary bg-primary/5' 
-                : 'border-border hover:border-primary/50'
-            } ${vendaPresencial ? 'ring-2 ring-yellow-500/50' : ''}`}
-          >
-            <Wallet className="h-6 w-6" />
-            <span className="text-sm font-medium">Dinheiro</span>
-            {vendaPresencial && <span className="text-xs text-yellow-600">Recomendado</span>}
-          </button>
+      {/* Preview parcelas método 1 */}
+      {(metodo1.tipo === 'boleto' || metodo1.tipo === 'cartao_credito') && metodo1.data_pagamento && valorMetodo1 > 0 && (
+        <div className="border rounded-lg p-3 bg-muted/30">
+          <p className="text-sm font-medium mb-2">
+            Parcelas {metodo1.tipo === 'boleto' ? 'do Boleto' : 'do Cartão'} (Método 1):
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {calcularPreviewParcelas({ ...metodo1, valor: valorMetodo1 }).map((p) => (
+              <div key={p.numero} className="text-xs p-2 bg-background rounded border">
+                <span className="font-medium">{p.numero}ª:</span>{' '}
+                {format(p.data, "dd/MM/yy", { locale: ptBR })} -{' '}
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.valor)}
+              </div>
+            ))}
+          </div>
         </div>
+      )}
 
-        {vendaPresencial && pagamentoData.metodo_pagamento !== 'dinheiro' && pagamentoData.metodo_pagamento !== '' && (
-          <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded-lg">
-            <p className="text-sm text-yellow-700 dark:text-yellow-400">
-              ⚠️ Para vendas presenciais, é recomendado usar pagamento em dinheiro.
-            </p>
-          </div>
-        )}
+      {/* Método 2 (se ativo) */}
+      {paymentData.usar_dois_metodos && (
+        <>
+          <MetodoPagamentoCard
+            metodo={{ ...metodo2, valor: valorMetodo2 }}
+            onChange={handleMetodo2Change}
+            empresas={empresas}
+            isLoadingEmpresas={isLoadingEmpresas}
+            titulo="Método 2 (Restante)"
+            valorFixo={true}
+            valorLabel="Valor Restante"
+          />
 
-        {/* Opções específicas por método */}
-        {pagamentoData.metodo_pagamento === 'boleto' && (
-          <div className="space-y-4 pt-2 border-t">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Quantidade de Boletos *</Label>
-                <Select 
-                  value={pagamentoData.quantidade_parcelas.toString()} 
-                  onValueChange={(val) => onChange({ ...pagamentoData, quantidade_parcelas: parseInt(val) })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
-                      <SelectItem key={n} value={n.toString()}>{n} boleto{n > 1 ? 's' : ''}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Intervalo (dias) *</Label>
-                <Select 
-                  value={pagamentoData.intervalo_boletos.toString()} 
-                  onValueChange={(val) => onChange({ ...pagamentoData, intervalo_boletos: parseInt(val) })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7">7 dias</SelectItem>
-                    <SelectItem value="14">14 dias</SelectItem>
-                    <SelectItem value="15">15 dias</SelectItem>
-                    <SelectItem value="21">21 dias</SelectItem>
-                    <SelectItem value="28">28 dias</SelectItem>
-                    <SelectItem value="30">30 dias</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Empresa que Recebe *</Label>
-                <Select 
-                  value={pagamentoData.empresa_receptora_id} 
-                  onValueChange={(val) => onChange({ ...pagamentoData, empresa_receptora_id: val })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {empresas.map(emp => (
-                      <SelectItem key={emp.id} value={emp.id}>{emp.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {/* Preview parcelas método 2 */}
+          {(metodo2.tipo === 'boleto' || metodo2.tipo === 'cartao_credito') && metodo2.data_pagamento && valorMetodo2 > 0 && (
+            <div className="border rounded-lg p-3 bg-muted/30">
+              <p className="text-sm font-medium mb-2">
+                Parcelas {metodo2.tipo === 'boleto' ? 'do Boleto' : 'do Cartão'} (Método 2):
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {calcularPreviewParcelas({ ...metodo2, valor: valorMetodo2 }).map((p) => (
+                  <div key={p.numero} className="text-xs p-2 bg-background rounded border">
+                    <span className="font-medium">{p.numero}ª:</span>{' '}
+                    {format(p.data, "dd/MM/yy", { locale: ptBR })} -{' '}
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.valor)}
+                  </div>
+                ))}
               </div>
             </div>
+          )}
+        </>
+      )}
 
-            {/* Preview dos vencimentos */}
-            {previewVencimentos.length > 0 && (
-              <div className="p-3 bg-muted/50 rounded-lg">
-                <p className="text-sm font-medium mb-2">Vencimentos:</p>
-                <div className="flex flex-wrap gap-2">
-                  {previewVencimentos.map((data, i) => (
-                    <Badge key={i} variant="outline">
-                      {i + 1}ª: {data} - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(calcularValorParcela())}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {pagamentoData.metodo_pagamento === 'a_vista' && (
-          <div className="space-y-4 pt-2 border-t">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Empresa que Recebe *</Label>
-                <Select 
-                  value={pagamentoData.empresa_receptora_id} 
-                  onValueChange={(val) => onChange({ ...pagamentoData, empresa_receptora_id: val })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {empresas.map(emp => (
-                      <SelectItem key={emp.id} value={emp.id}>{emp.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Comprovante de Pagamento *</Label>
-                {pagamentoData.comprovante_file ? (
-                  <div className="flex items-center gap-2 p-2 border rounded-lg">
-                    <span className="text-sm flex-1 truncate">{pagamentoData.comprovante_file.name}</span>
-                    <Button type="button" variant="ghost" size="sm" onClick={handleRemoveFile}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <Input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={handleFileChange}
-                      className="cursor-pointer"
-                    />
-                  </div>
-                )}
-              </div>
+      {/* Resumo do pagamento */}
+      {(metodo1.tipo || (paymentData.usar_dois_metodos && metodo2.tipo)) && (
+        <div className="border rounded-lg p-4 space-y-3 bg-card">
+          <h4 className="font-medium">Resumo do Pagamento</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Total da Venda:</span>
+              <span className="font-medium">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorTotal)}
+              </span>
             </div>
-          </div>
-        )}
-
-        {pagamentoData.metodo_pagamento === 'cartao_credito' && (
-          <div className="space-y-4 pt-2 border-t">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Número de Parcelas *</Label>
-                <Select 
-                  value={pagamentoData.quantidade_parcelas.toString()} 
-                  onValueChange={(val) => onChange({ ...pagamentoData, quantidade_parcelas: parseInt(val) })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
-                      <SelectItem key={n} value={n.toString()}>{n}x de {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorTotal / n)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Empresa que Recebe *</Label>
-                <Select 
-                  value={pagamentoData.empresa_receptora_id} 
-                  onValueChange={(val) => onChange({ ...pagamentoData, empresa_receptora_id: val })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {empresas.map(emp => (
-                      <SelectItem key={emp.id} value={emp.id}>{emp.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            
+            <div className="border-t pt-2 space-y-1">
+              {metodo1.tipo && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {paymentData.usar_dois_metodos ? 'Método 1' : 'Pagamento'} ({
+                      metodo1.tipo === 'boleto' ? `Boleto ${metodo1.parcelas_boleto}x` :
+                      metodo1.tipo === 'cartao_credito' ? `Cartão ${metodo1.parcelas_cartao}x` :
+                      metodo1.tipo === 'a_vista' ? 'À Vista' : 'Dinheiro'
+                    }):
+                  </span>
+                  <span>
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorMetodo1)}
+                    {metodo1.data_pagamento && (
+                      <span className="text-muted-foreground ml-2">
+                        em {format(metodo1.data_pagamento, "dd/MM/yyyy", { locale: ptBR })}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
+              
+              {paymentData.usar_dois_metodos && metodo2.tipo && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    Método 2 ({
+                      metodo2.tipo === 'boleto' ? `Boleto ${metodo2.parcelas_boleto}x` :
+                      metodo2.tipo === 'cartao_credito' ? `Cartão ${metodo2.parcelas_cartao}x` :
+                      metodo2.tipo === 'a_vista' ? 'À Vista' : 'Dinheiro'
+                    }):
+                  </span>
+                  <span>
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorMetodo2)}
+                    {metodo2.data_pagamento && (
+                      <span className="text-muted-foreground ml-2">
+                        em {format(metodo2.data_pagamento, "dd/MM/yyyy", { locale: ptBR })}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
             </div>
 
-            {tipoEntrega === 'instalacao' && (
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="pago_instalacao"
-                  checked={pagamentoData.pago_na_instalacao}
-                  onCheckedChange={(checked) => onChange({ ...pagamentoData, pago_na_instalacao: !!checked })}
-                />
-                <Label htmlFor="pago_instalacao" className="cursor-pointer">
-                  Pagamento será feito no dia da instalação
-                </Label>
-              </div>
-            )}
-
-            {pagamentoData.pago_na_instalacao && (
-              <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg">
-                <p className="text-sm text-blue-700 dark:text-blue-400">
-                  ℹ️ As parcelas serão geradas automaticamente quando a entrega/instalação for concluída.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {pagamentoData.metodo_pagamento === 'dinheiro' && (
-          <div className="space-y-4 pt-2 border-t">
-            <div className="space-y-3">
-              <Label>Quantidade de Parcelas</Label>
-              <RadioGroup
-                value={pagamentoData.parcelas_dinheiro.toString()}
-                onValueChange={(val) => onChange({ ...pagamentoData, parcelas_dinheiro: parseInt(val) as 1 | 2 })}
-                className="flex gap-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="1" id="dinheiro_1" />
-                  <Label htmlFor="dinheiro_1" className="cursor-pointer">1 parcela (à vista)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="2" id="dinheiro_2" />
-                  <Label htmlFor="dinheiro_2" className="cursor-pointer">2 parcelas</Label>
-                </div>
-              </RadioGroup>
+            <div className="border-t pt-2">
+              {valoresConferem ? (
+                <Badge variant="default" className="bg-green-600">✓ Valores conferem</Badge>
+              ) : (
+                <Badge variant="destructive">⚠ Valores não conferem com o total</Badge>
+              )}
             </div>
-
-            {pagamentoData.parcelas_dinheiro === 2 && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>Valor de Entrada *</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={pagamentoData.valor_entrada_dinheiro || ''}
-                      onChange={(e) => onChange({ ...pagamentoData, valor_entrada_dinheiro: parseFloat(e.target.value) || 0 })}
-                      placeholder="R$ 0,00"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Data da Entrada</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !pagamentoData.data_entrada_dinheiro && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {pagamentoData.data_entrada_dinheiro 
-                            ? format(pagamentoData.data_entrada_dinheiro, "dd/MM/yyyy", { locale: ptBR }) 
-                            : "Selecione a data"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={pagamentoData.data_entrada_dinheiro}
-                          onSelect={(date) => onChange({ ...pagamentoData, data_entrada_dinheiro: date })}
-                          initialFocus
-                          locale={ptBR}
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Saldo Restante</Label>
-                    <div className="h-9 px-3 py-2 border rounded-md bg-muted">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorTotal - pagamentoData.valor_entrada_dinheiro)}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="restante_instalacao"
-                    checked={pagamentoData.restante_na_instalacao}
-                    onCheckedChange={(checked) => onChange({ ...pagamentoData, restante_na_instalacao: !!checked })}
-                  />
-                  <Label htmlFor="restante_instalacao" className="cursor-pointer">
-                    Restante será pago na instalação/entrega
-                  </Label>
-                </div>
-              </div>
-            )}
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </div>
   );
 }
