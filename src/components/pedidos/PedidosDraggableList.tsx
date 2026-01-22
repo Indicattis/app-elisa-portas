@@ -31,6 +31,7 @@ interface PedidosDraggableListProps {
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
   onArquivar?: (pedidoId: string) => Promise<void>;
   onDeletar?: (pedidoId: string) => Promise<void>;
+  enableDragAndDrop?: boolean; // Habilita drag-and-drop e botões de prioridade (apenas em "Em Produção")
 }
 
 interface SortableItemProps {
@@ -107,6 +108,7 @@ export function PedidosDraggableList({
   onMoverPrioridade,
   onArquivar,
   onDeletar,
+  enableDragAndDrop = true,
 }: PedidosDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   
@@ -154,6 +156,37 @@ export function PedidosDraggableList({
   const activePedido = activeId
     ? pedidos.find((p) => p.id === activeId)
     : null;
+
+  // Se drag-and-drop desabilitado, renderiza lista simples sem arrastar e sem botões de prioridade
+  if (!enableDragAndDrop) {
+    return (
+      <>
+        <div className={
+          viewMode === 'list' 
+            ? "space-y-1" 
+            : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+        }>
+          {pedidos.map((pedido, index) => (
+            <PedidoCard
+              key={pedido.id}
+              pedido={pedido}
+              isAberto={isAberto}
+              viewMode={viewMode}
+              onMoverEtapa={onMoverEtapa}
+              onRetrocederEtapa={onRetrocederEtapa}
+              onArquivar={onArquivar}
+              onDeletar={onDeletar}
+              posicao={index + 1}
+              total={pedidos.length}
+              // Sem dragHandleProps - não há arrastar
+              // Sem onMoverPrioridade - não há botões de prioridade
+            />
+          ))}
+        </div>
+        {viewMode === 'list' && <PedidosTotalRow pedidos={pedidosParaTotais || pedidos} />}
+      </>
+    );
+  }
 
   return (
     <DndContext
