@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, DollarSign, Factory, Truck, Target, ArrowLeft } from 'lucide-react';
-import { SpaceParticles } from '@/components/SpaceParticles';
+
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 
@@ -52,8 +52,6 @@ export default function DirecaoHub() {
         </div>
       </button>
 
-      {/* Partículas espaciais de fundo */}
-      <SpaceParticles />
 
       {/* ========== VERSÃO MOBILE ========== */}
       <div className="md:hidden relative z-10 flex flex-col items-center justify-center px-6 py-10 w-full max-w-md">

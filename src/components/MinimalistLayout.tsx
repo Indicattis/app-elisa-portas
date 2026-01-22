@@ -1,6 +1,6 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SpaceParticles } from './SpaceParticles';
+
 import { AnimatedBreadcrumb, BreadcrumbItem } from './AnimatedBreadcrumb';
 
 interface MinimalistLayoutProps {
@@ -9,7 +9,7 @@ interface MinimalistLayoutProps {
   backPath?: string;
   children: ReactNode;
   headerActions?: ReactNode;
-  showParticles?: boolean;
+  
   breadcrumbItems?: BreadcrumbItem[];
 }
 
@@ -19,7 +19,6 @@ export function MinimalistLayout({
   backPath = '/vendas', 
   children,
   headerActions,
-  showParticles = false,
   breadcrumbItems
 }: MinimalistLayoutProps) {
   const navigate = useNavigate();
@@ -37,8 +36,6 @@ export function MinimalistLayout({
         <AnimatedBreadcrumb items={breadcrumbItems} mounted={mounted} />
       )}
 
-      {/* Partículas espaciais de fundo - apenas se showParticles = true */}
-      {showParticles && <SpaceParticles />}
       
       {/* Container principal */}
       <div className="relative z-10 min-h-screen flex flex-col">

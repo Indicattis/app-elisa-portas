@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { DollarSign, Users, ShoppingCart, FileText, Package, Lock, ArrowLeft } from "lucide-react";
-import { SpaceParticles } from "@/components/SpaceParticles";
+
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
@@ -65,7 +65,7 @@ export default function AdministrativoHub() {
         </div>
       </button>
 
-      <SpaceParticles />
+      
 
       {/* ========== VERSÃO MOBILE ========== */}
       <div className="md:hidden relative z-10 flex flex-col items-center px-6 py-10 w-full max-w-md">

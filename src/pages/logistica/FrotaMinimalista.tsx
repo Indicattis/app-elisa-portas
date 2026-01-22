@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Edit, Trash2, Droplet, ArrowLeft, LogOut } from "lucide-react";
-import { SpaceParticles } from "@/components/SpaceParticles";
+
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,7 +54,7 @@ export default function FrotaMinimalista() {
         ]} 
         mounted={mounted} 
       />
-      <SpaceParticles />
+      
       
       <div className="relative z-10 min-h-screen flex flex-col pt-14">
         {/* Header */}

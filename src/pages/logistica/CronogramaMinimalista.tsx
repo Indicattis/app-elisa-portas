@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, CalendarDays, ArrowLeft, LogOut, AlertCircle } from "lucide-react";
-import { SpaceParticles } from "@/components/SpaceParticles";
+
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -83,7 +83,6 @@ export default function CronogramaMinimalista() {
           ]} 
           mounted={mounted} 
         />
-        <SpaceParticles />
         
         <div className="relative z-10 min-h-screen flex flex-col pt-14">
           <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-primary/10">
@@ -145,7 +144,7 @@ export default function CronogramaMinimalista() {
         ]} 
         mounted={mounted} 
       />
-      <SpaceParticles />
+      
       
       <div className="relative z-10 min-h-screen flex flex-col pt-14">
         {/* Header */}
