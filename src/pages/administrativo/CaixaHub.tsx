@@ -1,18 +1,36 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Receipt, Coins, Wallet, Lock, ArrowLeft } from "lucide-react";
+import { Wallet, HandCoins, BadgeDollarSign, Lock, ArrowLeft } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 
 const menuItems = [
-  { label: "Faturamento", icon: Receipt, path: "/administrativo/financeiro/faturamento", ativo: true },
-  { label: "Custos", icon: Coins, path: "/administrativo/financeiro/custos", ativo: true },
-  { label: "Caixa", icon: Wallet, path: "/administrativo/financeiro/caixa", ativo: true },
+  { 
+    label: "Gestão de Caixa", 
+    icon: Wallet, 
+    path: "/administrativo/financeiro/caixa/gestao", 
+    ativo: true,
+    description: "Controle de depósitos e movimentações"
+  },
+  { 
+    label: "Contas a Receber", 
+    icon: HandCoins, 
+    path: "/administrativo/financeiro/caixa/contas-a-receber", 
+    ativo: true,
+    description: "Gestão de parcelas e recebimentos"
+  },
+  { 
+    label: "Contas a Pagar", 
+    icon: BadgeDollarSign, 
+    path: "/administrativo/financeiro/caixa/contas-a-pagar", 
+    ativo: true,
+    description: "Gestão de pagamentos e despesas"
+  },
 ];
 
-export default function FinanceiroHub() {
+export default function CaixaHub() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
@@ -40,7 +58,8 @@ export default function FinanceiroHub() {
         items={[
           { label: "Home", path: "/home" },
           { label: "Administrativo", path: "/administrativo" },
-          { label: "Financeiro" }
+          { label: "Financeiro", path: "/administrativo/financeiro" },
+          { label: "Caixa" }
         ]} 
         mounted={mounted} 
       />
@@ -50,7 +69,7 @@ export default function FinanceiroHub() {
 
       {/* Botão Voltar */}
       <button
-        onClick={() => navigate('/administrativo')}
+        onClick={() => navigate('/administrativo/financeiro')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
                    hover:bg-white/10 transition-all duration-300"
         style={{
@@ -59,7 +78,7 @@ export default function FinanceiroHub() {
           transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 100ms'
         }}
       >
-        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20">
+        <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-lg shadow-purple-500/20">
           <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
         </div>
       </button>
@@ -87,18 +106,21 @@ export default function FinanceiroHub() {
               >
                 <button
                   onClick={() => handleClick(item)}
-                  className={`w-full h-12 rounded-lg
+                  className={`w-full h-14 rounded-lg
                              flex items-center gap-4 px-5
                              font-medium 
                              border transition-all duration-300
                              ${item.ativo 
-                               ? 'bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 active:scale-[0.98] text-white shadow-lg shadow-blue-500/20 border-blue-400/30' 
+                               ? 'bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-400 hover:to-purple-600 active:scale-[0.98] text-white shadow-lg shadow-purple-500/20 border-purple-400/30' 
                                : 'bg-white/5 text-white/50 border-white/10 cursor-not-allowed'
                              }`}
                 >
                   <Icon className="w-5 h-5" strokeWidth={1.5} />
-                  <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
-                  {!item.ativo && <Lock className="w-4 h-4" />}
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm font-medium">{item.label}</span>
+                    <span className="text-[10px] text-white/60">{item.description}</span>
+                  </div>
+                  {!item.ativo && <Lock className="w-4 h-4 ml-auto" />}
                 </button>
               </div>
             );
@@ -129,11 +151,11 @@ export default function FinanceiroHub() {
               >
                 <button
                   onClick={() => handleClick(item)}
-                  className={`w-36 h-28 rounded-xl
-                             flex flex-col items-center justify-center gap-3
+                  className={`w-44 h-32 rounded-xl
+                             flex flex-col items-center justify-center gap-2
                              font-medium border transition-all duration-300
                              ${item.ativo 
-                               ? 'bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 hover:shadow-xl hover:shadow-blue-500/50 text-white shadow-lg shadow-blue-500/30 border-blue-400/30 cursor-pointer' 
+                               ? 'bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-400 hover:to-purple-600 hover:shadow-xl hover:shadow-purple-500/50 text-white shadow-lg shadow-purple-500/30 border-purple-400/30 cursor-pointer' 
                                : 'bg-white/5 text-white/50 border-white/10 cursor-not-allowed'
                              }`}
                 >
@@ -144,6 +166,7 @@ export default function FinanceiroHub() {
                     )}
                   </div>
                   <span className="text-xs font-medium tracking-wide">{item.label}</span>
+                  <span className="text-[10px] text-white/60 text-center px-2">{item.description}</span>
                 </button>
               </div>
             );
