@@ -37,22 +37,25 @@ export function usePedidoAutoAvanco() {
       const tabelas = ['ordens_soldagem', 'ordens_perfiladeira', 'ordens_separacao'] as const;
       
       for (const tabela of tabelas) {
+        // Buscar TODAS as ordens (independente de histórico) para verificar pausadas
         const { data: ordens, error } = await supabase
           .from(tabela)
-          .select('status, pausada')
-          .eq('pedido_id', pedidoId)
-          .eq('historico', false);
+          .select('status, pausada, historico')
+          .eq('pedido_id', pedidoId);
         
         if (error) throw error;
         
-        // Se há ordens pausadas ou não concluídas neste setor, não avançar
         if (ordens && ordens.length > 0) {
+          // Verificar ordens pausadas (independente de histórico)
           if (ordens.some(o => o.pausada === true)) {
             console.log(`[Auto-Avanço] Ordem em ${tabela} está pausada - bloqueando avanço`);
             return false;
           }
-          if (ordens.some(o => o.status !== 'concluido')) {
-            console.log(`[Auto-Avanço] Ordem em ${tabela} ainda não concluída formalmente`);
+          
+          // Verificar ordens ativas (não histórico) que não estão concluídas
+          const ordensAtivas = ordens.filter(o => !o.historico);
+          if (ordensAtivas.some(o => o.status !== 'concluido')) {
+            console.log(`[Auto-Avanço] Ordem ativa em ${tabela} ainda não concluída formalmente`);
             return false;
           }
         }
