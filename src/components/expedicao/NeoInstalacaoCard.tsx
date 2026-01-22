@@ -73,13 +73,7 @@ export const NeoInstalacaoCard = ({
     >
       <div className="flex items-center justify-between gap-2 h-[19px]">
         <div className="flex items-center gap-2 flex-1 min-w-0 cursor-grab active:cursor-grabbing" {...dragListeners}>
-          <Badge 
-            variant="outline" 
-            className="text-[9px] px-1 py-0 h-4 shrink-0 bg-orange-500/20 text-orange-300 border-orange-400/50"
-          >
-            Avulso
-          </Badge>
-          <h4 className="font-semibold text-xs truncate">{neoInstalacao.nome_cliente}</h4>
+          <h4 className="font-semibold text-xs truncate text-orange-200">{neoInstalacao.nome_cliente}</h4>
           <Badge 
             variant="secondary" 
             className="text-[9px] px-1 py-0 h-4 shrink-0"

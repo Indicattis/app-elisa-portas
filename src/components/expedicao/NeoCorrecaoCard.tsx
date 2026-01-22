@@ -73,14 +73,7 @@ export const NeoCorrecaoCard = ({
     >
       <div className="flex items-center justify-between gap-2 h-[19px]">
         <div className="flex items-center gap-2 flex-1 min-w-0 cursor-grab active:cursor-grabbing" {...dragListeners}>
-          <Badge 
-            variant="outline" 
-            className="text-[9px] px-1 py-0 h-4 shrink-0 bg-purple-500/20 text-purple-300 border-purple-400/50 flex items-center gap-0.5"
-          >
-            <AlertTriangle className="h-2.5 w-2.5" />
-            Correção
-          </Badge>
-          <h4 className="font-semibold text-xs truncate">{neoCorrecao.nome_cliente}</h4>
+          <h4 className="font-semibold text-xs truncate text-purple-200">{neoCorrecao.nome_cliente}</h4>
           <Badge 
             variant="secondary" 
             className="text-[9px] px-1 py-0 h-4 shrink-0"
