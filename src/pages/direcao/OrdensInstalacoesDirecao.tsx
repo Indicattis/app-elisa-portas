@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
-import { SpaceParticles } from "@/components/SpaceParticles";
+
 import { useOrdensInstalacao, OrdemInstalacao } from "@/hooks/useOrdensInstalacao";
 import { cn } from "@/lib/utils";
 
@@ -127,7 +127,7 @@ export default function OrdensInstalacoesDirecao() {
 
   return (
     <MinimalistLayout title="Ordens de Instalação">
-      <SpaceParticles />
+      
       
       <div className="min-h-screen p-4 md:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-6">

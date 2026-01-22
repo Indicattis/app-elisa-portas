@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shield, Briefcase, Building2, Users, LogOut, LayoutDashboard, Tv, ArrowLeft } from "lucide-react";
-import { SpaceParticles } from "@/components/SpaceParticles";
+
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
@@ -71,7 +71,7 @@ export default function AdminHub() {
         </div>
       </button>
 
-      <SpaceParticles />
+      
 
       {/* Avatar flutuante */}
       {user && (

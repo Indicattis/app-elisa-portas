@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Package, Boxes, Factory, ArrowLeft } from "lucide-react";
-import { SpaceParticles } from "@/components/SpaceParticles";
+
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 
@@ -50,8 +50,6 @@ export default function FabricaHub() {
         </div>
       </button>
 
-      {/* Partículas espaciais de fundo */}
-      <SpaceParticles />
 
       {/* ========== VERSÃO MOBILE ========== */}
       <div className="md:hidden relative z-10 flex flex-col items-center justify-center px-6 py-10 w-full max-w-md">

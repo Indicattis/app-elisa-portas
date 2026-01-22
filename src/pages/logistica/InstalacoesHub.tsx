@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, CalendarDays, ArrowLeft, HardHat } from "lucide-react";
-import { SpaceParticles } from "@/components/SpaceParticles";
+
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 
 const menuItems = [
@@ -59,7 +59,7 @@ export default function InstalacoesHub() {
         </div>
       </button>
 
-      <SpaceParticles />
+      
 
       {/* ========== VERSÃO MOBILE ========== */}
       <div className="md:hidden relative z-10 flex flex-col items-center justify-center px-6 py-10 w-full max-w-md">
