@@ -209,6 +209,7 @@ export default function GestaoFabricaDirecao() {
         { label: "Gestão de Fábrica" }
       ]}
       headerActions={headerActions}
+      fullWidth
     >
       {/* Portas por Etapa (Hoje) */}
       <div className="mb-6">
@@ -283,7 +284,7 @@ export default function GestaoFabricaDirecao() {
 
         {ORDEM_ETAPAS.map(etapa => (
           <TabsContent key={etapa} value={etapa} className="mt-4">
-            <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+            <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl w-full max-w-none">
               <CardHeader className="pb-3 px-4 py-4">
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                   <CardTitle className="text-lg flex items-center gap-2 text-white">

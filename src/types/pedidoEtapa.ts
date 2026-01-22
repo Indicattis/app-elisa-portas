@@ -84,7 +84,7 @@ export const ETAPAS_CONFIG: Record<EtapaPedido, {
     ]
   },
   aguardando_instalacao: {
-    label: 'Aguardando Instalação',
+    label: 'Expedição Instalação',
     color: 'bg-cyan-500',
     icon: 'Wrench',
     checkboxes: [
