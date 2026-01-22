@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
-import { Plus, CalendarIcon, Percent, CheckCircle2, ShieldCheck, Lock } from 'lucide-react';
+import { Plus, CalendarIcon, Percent, CheckCircle2, ShieldCheck, Lock, Package, CreditCard, FileText, Truck, Wrench } from 'lucide-react';
 import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { ProdutosVendaTable } from '@/components/vendas/ProdutosVendaTable';
 import { VendaResumo } from '@/components/vendas/VendaResumo';
@@ -444,10 +444,188 @@ export default function VendaNovaMinimalista() {
     }
   };
 
-  // Classes minimalistas para Cards
-  const cardClass = "bg-white/5 border-white/10 backdrop-blur-xl";
-  const labelClass = "text-xs font-medium text-white/70";
-  const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-white/40";
+  // Estilos sofisticados baseados em /home
+  const sectionWrapperClass = "p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10";
+  const cardClass = "bg-transparent border-0 shadow-none";
+  const labelClass = "text-xs font-medium text-white/60 uppercase tracking-wide";
+  const inputClass = "h-10 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-lg focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all";
+  const textareaClass = "bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-lg focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none";
+
+  // Botão estilo Home com gradiente
+  const GradientButton = ({ 
+    children, 
+    onClick, 
+    variant = 'blue',
+    className = '',
+    type = 'button',
+    disabled = false,
+    size = 'default'
+  }: { 
+    children: React.ReactNode; 
+    onClick?: () => void; 
+    variant?: 'blue' | 'amber' | 'outline' | 'ghost';
+    className?: string;
+    type?: 'button' | 'submit';
+    disabled?: boolean;
+    size?: 'sm' | 'default';
+  }) => {
+    const baseClass = size === 'sm' ? "h-9 px-4 text-sm" : "h-11 px-5";
+    
+    if (variant === 'outline') {
+      return (
+        <button
+          type={type}
+          onClick={onClick}
+          disabled={disabled}
+          className={cn(
+            baseClass,
+            "rounded-lg font-medium border border-white/20 bg-white/5 text-white/80",
+            "hover:bg-white/10 hover:text-white hover:border-white/30",
+            "transition-all duration-200 disabled:opacity-50",
+            className
+          )}
+        >
+          {children}
+        </button>
+      );
+    }
+
+    if (variant === 'ghost') {
+      return (
+        <button
+          type={type}
+          onClick={onClick}
+          disabled={disabled}
+          className={cn(
+            baseClass,
+            "rounded-lg font-medium text-white/60",
+            "hover:bg-white/5 hover:text-white",
+            "transition-all duration-200 disabled:opacity-50",
+            className
+          )}
+        >
+          {children}
+        </button>
+      );
+    }
+    
+    const gradientClass = variant === 'amber' 
+      ? "bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 border-amber-300/50 shadow-lg shadow-amber-500/20"
+      : "bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30 shadow-lg shadow-blue-500/20";
+    
+    return (
+      <button
+        type={type}
+        onClick={onClick}
+        disabled={disabled}
+        className={cn(
+          baseClass,
+          "rounded-lg font-medium text-white border",
+          "hover:scale-[1.02] hover:shadow-xl",
+          "transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100",
+          gradientClass,
+          className
+        )}
+      >
+        {children}
+      </button>
+    );
+  };
+
+  // Componente de Seção com título elegante
+  const Section = ({ 
+    title, 
+    icon: Icon, 
+    children 
+  }: { 
+    title: string; 
+    icon: React.ElementType; 
+    children: React.ReactNode;
+  }) => (
+    <div className={sectionWrapperClass}>
+      <div className="px-4 py-3 border-b border-white/5">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/20">
+            <Icon className="w-4 h-4 text-blue-400" />
+          </div>
+          <h3 className="text-sm font-semibold text-white tracking-wide">{title}</h3>
+        </div>
+      </div>
+      <div className="p-4">
+        {children}
+      </div>
+    </div>
+  );
+
+  // Botão de produto sofisticado
+  const ProductButton = ({ 
+    label, 
+    onClick 
+  }: { 
+    label: string; 
+    onClick: () => void;
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex items-center gap-2 h-10 px-4 rounded-lg
+                 bg-white/5 border border-white/10 text-white/70
+                 hover:bg-white/10 hover:text-white hover:border-white/20
+                 transition-all duration-200"
+    >
+      <Plus className="w-4 h-4 text-blue-400 group-hover:text-blue-300" />
+      <span className="text-sm font-medium">{label}</span>
+    </button>
+  );
+
+  // Checkbox sofisticado
+  const SophisticatedCheckbox = ({
+    id,
+    checked,
+    onCheckedChange,
+    label,
+    description
+  }: {
+    id: string;
+    checked: boolean;
+    onCheckedChange: (checked: boolean) => void;
+    label: string;
+    description?: string;
+  }) => (
+    <label
+      htmlFor={id}
+      className={cn(
+        "flex items-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200",
+        "border-2",
+        checked
+          ? "bg-blue-500/10 border-blue-500/40"
+          : "bg-white/5 border-white/10 hover:border-white/20"
+      )}
+    >
+      <div className={cn(
+        "flex items-center justify-center w-5 h-5 rounded border-2 transition-all",
+        checked
+          ? "bg-blue-500 border-blue-500"
+          : "bg-transparent border-white/30"
+      )}>
+        {checked && (
+          <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+        )}
+      </div>
+      <Checkbox 
+        id={id}
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        className="sr-only"
+      />
+      <div className="flex-1">
+        <span className="text-sm font-medium text-white">{label}</span>
+        {description && (
+          <span className="text-xs text-white/50 ml-2">{description}</span>
+        )}
+      </div>
+    </label>
+  );
 
   return (
     <MinimalistLayout 
@@ -483,16 +661,13 @@ export default function VendaNovaMinimalista() {
           }}
           disabled={isFromOrcamento}
         />
+
         {/* Produtos */}
-        <Card className={cardClass}>
-          <CardHeader className="pb-3 pt-4">
-            <CardTitle className="text-base font-semibold text-white">Produtos</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 pb-4">
+        <Section title="Produtos" icon={Package}>
+          <div className="space-y-4">
             <div className="flex gap-2 flex-wrap">
-              <Button 
-                type="button"
-                size="sm"
+              <ProductButton 
+                label="Porta de Enrolar"
                 onClick={() => {
                   setProdutoEditando(undefined);
                   setIndexEditando(undefined);
@@ -500,15 +675,9 @@ export default function VendaNovaMinimalista() {
                   setPermitirTrocaTipo(false);
                   setDialogOpen(true);
                 }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Porta de Enrolar
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-primary/30 text-white hover:bg-primary/10"
+              />
+              <ProductButton 
+                label="Porta Social"
                 onClick={() => {
                   setProdutoEditando(undefined);
                   setIndexEditando(undefined);
@@ -516,15 +685,9 @@ export default function VendaNovaMinimalista() {
                   setPermitirTrocaTipo(false);
                   setDialogOpen(true);
                 }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Porta Social
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-primary/30 text-white hover:bg-primary/10"
+              />
+              <ProductButton 
+                label="Pintura Eletrostática"
                 onClick={() => {
                   setProdutoEditando(undefined);
                   setIndexEditando(undefined);
@@ -532,15 +695,9 @@ export default function VendaNovaMinimalista() {
                   setPermitirTrocaTipo(false);
                   setDialogOpen(true);
                 }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Pintura Eletrostática
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-primary/30 text-white hover:bg-primary/10"
+              />
+              <ProductButton 
+                label="Serviço"
                 onClick={() => {
                   setProdutoEditando(undefined);
                   setIndexEditando(undefined);
@@ -548,20 +705,11 @@ export default function VendaNovaMinimalista() {
                   setPermitirTrocaTipo(false);
                   setDialogOpen(true);
                 }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Serviço
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-primary/30 text-white hover:bg-primary/10"
+              />
+              <ProductButton 
+                label="Catálogo"
                 onClick={() => setAcessoriosModalOpen(true)}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Catálogo
-              </Button>
+              />
             </div>
             
             <ProdutoVendaForm 
@@ -597,8 +745,8 @@ export default function VendaNovaMinimalista() {
               onUpdateQuantidade={handleUpdateQuantidade}
               onRemoverDesconto={handleRemoverDesconto}
             />
-          </CardContent>
-        </Card>
+          </div>
+        </Section>
 
         {/* Forma de Pagamento */}
         <PagamentoSection
@@ -613,12 +761,9 @@ export default function VendaNovaMinimalista() {
         />
 
         {/* Dados Adicionais */}
-        <Card className={cardClass}>
-          <CardHeader className="pb-3 pt-4">
-            <CardTitle className="text-base font-semibold text-white">Dados Adicionais</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3 pb-4">
-            <div className="space-y-1">
+        <Section title="Dados Adicionais" icon={FileText}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
               <Label htmlFor="valor_frete" className={labelClass}>Frete (R$)</Label>
               <Input
                 id="valor_frete"
@@ -628,11 +773,11 @@ export default function VendaNovaMinimalista() {
                 value={formData.valor_frete}
                 onChange={(e) => setFormData(prev => ({ ...prev, valor_frete: parseFloat(e.target.value) || 0 }))}
                 placeholder="0,00"
-                className={cn("h-9", inputClass)}
+                className={inputClass}
               />
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-2">
               <Label htmlFor="data_prevista_entrega" className={labelClass}>Previsão Entrega *</Label>
               <Input
                 id="data_prevista_entrega"
@@ -640,11 +785,10 @@ export default function VendaNovaMinimalista() {
                 value={formData.data_prevista_entrega}
                 onChange={(e) => setFormData(prev => ({ ...prev, data_prevista_entrega: e.target.value }))}
                 min={new Date().toISOString().split('T')[0]}
-                className={cn("h-9", inputClass)}
+                className={inputClass}
                 required
               />
             </div>
-
 
             <div className="space-y-2 md:col-span-3">
               <Label className={labelClass}>Tipo de Entrega *</Label>
@@ -657,59 +801,69 @@ export default function VendaNovaMinimalista() {
                 <label
                   htmlFor="tipo-instalacao"
                   className={cn(
-                    "flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 cursor-pointer transition-all duration-200",
-                    "hover:scale-[1.02] hover:shadow-md",
+                    "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200",
+                    "border-2",
                     formData.tipo_entrega === "instalacao"
-                      ? "border-primary bg-primary/20 text-primary font-medium"
-                      : "border-primary/20 bg-primary/5 hover:border-primary/50 text-white/80"
+                      ? "bg-blue-500/10 border-blue-500/40 shadow-lg shadow-blue-500/10"
+                      : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
                   )}
                 >
                   <RadioGroupItem value="instalacao" id="tipo-instalacao" className="sr-only" />
-                  <span className="text-sm">🔧 Instalação</span>
+                  <Wrench className={cn(
+                    "w-5 h-5",
+                    formData.tipo_entrega === "instalacao" ? "text-blue-400" : "text-white/50"
+                  )} />
+                  <span className={cn(
+                    "text-sm font-medium",
+                    formData.tipo_entrega === "instalacao" ? "text-white" : "text-white/70"
+                  )}>Instalação</span>
                 </label>
                 <label
                   htmlFor="tipo-entrega"
                   className={cn(
-                    "flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 cursor-pointer transition-all duration-200",
-                    "hover:scale-[1.02] hover:shadow-md",
+                    "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200",
+                    "border-2",
                     formData.tipo_entrega === "entrega"
-                      ? "border-primary bg-primary/20 text-primary font-medium"
-                      : "border-primary/20 bg-primary/5 hover:border-primary/50 text-white/80"
+                      ? "bg-blue-500/10 border-blue-500/40 shadow-lg shadow-blue-500/10"
+                      : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
                   )}
                 >
                   <RadioGroupItem value="entrega" id="tipo-entrega" className="sr-only" />
-                  <span className="text-sm">🚚 Entrega</span>
+                  <Truck className={cn(
+                    "w-5 h-5",
+                    formData.tipo_entrega === "entrega" ? "text-blue-400" : "text-white/50"
+                  )} />
+                  <span className={cn(
+                    "text-sm font-medium",
+                    formData.tipo_entrega === "entrega" ? "text-white" : "text-white/70"
+                  )}>Entrega</span>
                 </label>
               </RadioGroup>
             </div>
 
-            <div className="space-y-1 md:col-span-3">
+            <div className="space-y-2 md:col-span-3">
               <Label htmlFor="observacoes_venda" className={labelClass}>Observações</Label>
               <Textarea
                 id="observacoes_venda"
                 value={formData.observacoes_venda}
                 onChange={(e) => setFormData(prev => ({ ...prev, observacoes_venda: e.target.value }))}
-                rows={2}
-                placeholder="Informações adicionais"
-                className={cn("resize-none", inputClass)}
+                rows={3}
+                placeholder="Informações adicionais sobre a venda..."
+                className={textareaClass}
               />
             </div>
 
             <div className="md:col-span-3">
-              <div className="flex items-center space-x-2 p-2.5 border rounded-md border-primary/10 bg-primary/5">
-                <Checkbox 
-                  id="venda_presencial"
-                  checked={formData.venda_presencial}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, venda_presencial: checked as boolean }))}
-                />
-                <Label htmlFor="venda_presencial" className="cursor-pointer flex-1 text-xs text-white/80">
-                  <span className="font-medium">Venda Presencial</span>
-                  <span className="text-white/60 ml-1.5">(+5% limite de desconto)</span>
-                </Label>
-              </div>
+              <SophisticatedCheckbox
+                id="venda_presencial"
+                checked={formData.venda_presencial}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, venda_presencial: checked as boolean }))}
+                label="Venda Presencial"
+                description="+5% limite de desconto"
+              />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </Section>
 
         {/* Resumo */}
         {portas.length > 0 && (
@@ -733,63 +887,63 @@ export default function VendaNovaMinimalista() {
               
               if (validacao.dentroDoLimite) {
                 return (
-                  <Card className="border-green-500/30 bg-green-500/10">
-                    <CardContent className="py-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-500/20">
-                          <CheckCircle2 className="w-4 h-4 text-green-400" />
+                  <div className={cn(sectionWrapperClass, "border-green-500/30")}>
+                    <div className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-500/20">
+                          <CheckCircle2 className="w-5 h-5 text-green-400" />
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-green-300">Venda Dentro do Limite</p>
-                          <p className="text-xs text-green-400/80">
+                          <p className="text-xs text-green-400/70">
                             Desconto: {validacao.percentualDesconto.toFixed(1)}% (limite: {validacao.limitePermitido.toFixed(0)}%)
                           </p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 );
               }
               
               if (tipoAutorizacao === 'responsavel_setor') {
                 return (
-                  <Card className="border-amber-500/30 bg-amber-500/10">
-                    <CardContent className="py-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500/20">
-                          <ShieldCheck className="w-4 h-4 text-amber-400" />
+                  <div className={cn(sectionWrapperClass, "border-amber-500/30")}>
+                    <div className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20">
+                          <ShieldCheck className="w-5 h-5 text-amber-400" />
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-semibold text-amber-300">Autorização do Líder Necessária</p>
-                          <p className="text-xs text-amber-400/80">
+                          <p className="text-xs text-amber-400/70">
                             Desconto: {validacao.percentualDesconto.toFixed(1)}% (excede {validacao.excedente.toFixed(1)}%, limite: {validacao.limitePermitido.toFixed(0)}%)
                           </p>
                         </div>
-                        <Badge className="bg-amber-500 text-xs h-5">Responsável</Badge>
+                        <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs">Responsável</Badge>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 );
               }
               
               if (tipoAutorizacao === 'master') {
                 return (
-                  <Card className="border-orange-500/30 bg-orange-500/10">
-                    <CardContent className="py-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/20">
-                          <ShieldCheck className="w-4 h-4 text-orange-400" />
+                  <div className={cn(sectionWrapperClass, "border-orange-500/30")}>
+                    <div className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-orange-500/20">
+                          <ShieldCheck className="w-5 h-5 text-orange-400" />
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-semibold text-orange-300">Autorização Master Necessária</p>
-                          <p className="text-xs text-orange-400/80">
+                          <p className="text-xs text-orange-400/70">
                             Desconto: {validacao.percentualDesconto.toFixed(1)}% (excede {validacao.excedente.toFixed(1)}%, limite: {validacao.limitePermitido.toFixed(0)}%)
                           </p>
                         </div>
-                        <Badge className="bg-orange-500 text-xs h-5">Master</Badge>
+                        <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/30 text-xs">Master</Badge>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 );
               }
               
@@ -797,62 +951,60 @@ export default function VendaNovaMinimalista() {
             })()}
             
             {formData.valor_entrada > 0 && (
-              <Card className={cardClass}>
-                <CardContent className="py-3">
-                  <div className="grid grid-cols-2 gap-3">
+              <div className={sectionWrapperClass}>
+                <div className="p-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-white/60 mb-0.5">Valor de Entrada:</p>
-                      <p className="text-base font-semibold text-green-400">R$ {formData.valor_entrada.toFixed(2)}</p>
+                      <p className="text-xs text-white/50 uppercase tracking-wide mb-1">Valor de Entrada</p>
+                      <p className="text-lg font-bold text-green-400">R$ {formData.valor_entrada.toFixed(2)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/60 mb-0.5">Valor a Receber:</p>
-                      <p className="text-base font-semibold text-orange-400">R$ {formData.valor_a_receber?.toFixed(2)}</p>
+                      <p className="text-xs text-white/50 uppercase tracking-wide mb-1">Valor a Receber</p>
+                      <p className="text-lg font-bold text-orange-400">R$ {formData.valor_a_receber?.toFixed(2)}</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
           </>
         )}
 
         {/* Ações */}
-        <div className="flex justify-end gap-2 pt-2">
-          <Button 
-            type="button" 
-            size="sm" 
-            variant="outline" 
+        <div className="flex flex-wrap justify-end gap-3 pt-4">
+          <GradientButton 
+            variant="ghost"
             onClick={() => navigate('/vendas/minhas-vendas')}
-            className="border-primary/30 text-white hover:bg-primary/10"
           >
             Cancelar
-          </Button>
+          </GradientButton>
+          
           {portas.length > 0 && valorCredito === 0 && (
-            <Button 
-              type="button"
-              size="sm"
+            <GradientButton 
               variant="outline"
               onClick={() => setDescontoModalOpen(true)}
-              className="border-primary/30 text-white hover:bg-primary/10"
             >
-              <Percent className="w-3.5 h-3.5 mr-1.5" />
+              <Percent className="w-4 h-4 mr-2" />
               Adicionar Desconto
-            </Button>
+            </GradientButton>
           )}
+          
           {portas.length > 0 && validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial).dentroDoLimite && !portas.some(p => (p.desconto_valor || 0) > 0 || (p.desconto_percentual || 0) > 0) && (
-            <Button 
-              type="button"
-              size="sm"
+            <GradientButton 
               variant="outline"
-              className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
               onClick={() => setCreditoModalOpen(true)}
             >
-              <Plus className="w-3.5 h-3.5 mr-1.5" />
+              <Plus className="w-4 h-4 mr-2" />
               {valorCredito > 0 ? 'Editar Crédito' : 'Adicionar Crédito'}
-            </Button>
+            </GradientButton>
           )}
-          <Button type="submit" size="sm" disabled={isCreating || portas.length === 0}>
+          
+          <GradientButton 
+            type="submit" 
+            variant="blue"
+            disabled={isCreating || portas.length === 0}
+          >
             {isCreating ? 'Criando...' : 'Criar Venda'}
-          </Button>
+          </GradientButton>
         </div>
       </form>
 
