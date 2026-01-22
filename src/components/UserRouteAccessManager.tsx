@@ -12,7 +12,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Loader2, Search, ChevronRight, ChevronDown, Folder, FolderOpen } from "lucide-react";
+import { Loader2, Search, ChevronRight, ChevronDown, Folder, FolderOpen, Home, Globe } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface AppRoute {
   key: string;
@@ -40,7 +41,7 @@ export function UserRouteAccessManager() {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const [selectedInterface, setSelectedInterface] = useState<string>('dashboard');
+  const [selectedInterface, setSelectedInterface] = useState<string>('minimalista');
   const [searchTerm, setSearchTerm] = useState("");
 
   // Função para construir árvore de rotas
@@ -303,21 +304,35 @@ export function UserRouteAccessManager() {
       );
     }
 
+    // Verificar se é a rota /home (acesso universal)
+    const isHomeRoute = node.key === 'home';
+
     return (
       <div 
         className="flex items-center gap-2 p-2 hover:bg-muted/50 rounded"
         style={{ paddingLeft: `${paddingLeft + 20}px` }}
       >
-        <Checkbox
-          id={`route-${node.key}`}
-          checked={hasAccess(node.key)}
-          onCheckedChange={(checked) => handleToggle(node.key, checked as boolean)}
-        />
+        {isHomeRoute ? (
+          <Globe className="h-4 w-4 text-green-500" />
+        ) : (
+          <Checkbox
+            id={`route-${node.key}`}
+            checked={hasAccess(node.key)}
+            onCheckedChange={(checked) => handleToggle(node.key, checked as boolean)}
+          />
+        )}
         <label
           htmlFor={`route-${node.key}`}
           className="flex-1 text-sm cursor-pointer"
         >
-          <div className="font-medium">{node.label}</div>
+          <div className="font-medium flex items-center gap-2">
+            {node.label}
+            {isHomeRoute && (
+              <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30 text-[10px] px-1.5 py-0">
+                Acesso Universal
+              </Badge>
+            )}
+          </div>
           <div className="text-xs text-muted-foreground">{node.path}</div>
           {node.description && (
             <div className="text-xs text-muted-foreground">{node.description}</div>
@@ -338,7 +353,11 @@ export function UserRouteAccessManager() {
       <CardContent className="space-y-6">
       {/* Tabs de Interface */}
       <Tabs value={selectedInterface} onValueChange={setSelectedInterface}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="minimalista" className="flex items-center gap-1">
+            <Home className="h-3 w-3" />
+            Minimalista
+          </TabsTrigger>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="instalacoes">Instalações</TabsTrigger>
           <TabsTrigger value="producao">Produção</TabsTrigger>
