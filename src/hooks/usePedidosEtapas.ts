@@ -498,6 +498,31 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               throw new Error(`Todas as ordens de produção devem estar concluídas antes de avançar. Pendentes: ${detalhes}`);
             }
           }
+          
+          // Verificar se há ordens pausadas ou não concluídas nas tabelas principais
+          const tabelasOrdens = ['ordens_soldagem', 'ordens_perfiladeira', 'ordens_separacao'] as const;
+          
+          for (const tabela of tabelasOrdens) {
+            const { data: ordens } = await supabase
+              .from(tabela)
+              .select('status, pausada, numero_ordem, historico')
+              .eq('pedido_id', pedidoId);
+            
+            if (ordens && ordens.length > 0) {
+              // Bloquear se houver qualquer ordem pausada (independente de histórico)
+              const ordemPausada = ordens.find(o => o.pausada === true);
+              if (ordemPausada) {
+                throw new Error(`A ordem ${ordemPausada.numero_ordem} está pausada. Retome ou cancele antes de avançar.`);
+              }
+              
+              // Bloquear se houver ordem ativa (não histórico) não concluída
+              const ordensAtivas = ordens.filter(o => !o.historico);
+              const ordemNaoConcluida = ordensAtivas.find(o => o.status !== 'concluido');
+              if (ordemNaoConcluida) {
+                throw new Error(`A ordem ${ordemNaoConcluida.numero_ordem} ainda não foi concluída.`);
+              }
+            }
+          }
         }
 
       // Fechar etapa atual
