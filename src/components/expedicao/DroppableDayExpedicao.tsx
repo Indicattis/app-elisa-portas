@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { format, isSameDay, isSameMonth, isToday as isTodayFn, isWeekend, parseISO } from "date-fns";
 import { Plus } from "lucide-react";
@@ -9,7 +9,10 @@ import { DraggableOrdemCarregamento } from "./DraggableOrdemCarregamento";
 import { DraggableNeoInstalacao } from "./DraggableNeoInstalacao";
 import { DraggableNeoCorrecao } from "./DraggableNeoCorrecao";
 import { AdicionarOrdemCalendarioModal } from "./AdicionarOrdemCalendarioModal";
+import { VerMaisCardsPopover } from "./VerMaisCardsPopover";
 import { Button } from "@/components/ui/button";
+
+const MAX_VISIBLE_CARDS = 3;
 
 interface DroppableDayExpedicaoProps {
   date: Date;
@@ -81,6 +84,25 @@ export const DroppableDayExpedicao = ({
     return isSameDay(parseISO(neo.data_correcao), date);
   });
 
+  // Combine all items and slice to show only first MAX_VISIBLE_CARDS
+  const { visibleOrdens, visibleNeo, visibleNeoCorrecoes, totalHidden } = useMemo(() => {
+    const allItems: Array<{ type: 'ordem' | 'neo' | 'correcao'; item: OrdemCarregamento | NeoInstalacao | NeoCorrecao }> = [
+      ...ordensNoDia.map(item => ({ type: 'ordem' as const, item })),
+      ...neoNoDia.map(item => ({ type: 'neo' as const, item })),
+      ...neoCorrecoesNoDia.map(item => ({ type: 'correcao' as const, item })),
+    ];
+
+    const totalCount = allItems.length;
+    const visibleItems = allItems.slice(0, MAX_VISIBLE_CARDS);
+    
+    return {
+      visibleOrdens: visibleItems.filter(i => i.type === 'ordem').map(i => i.item as OrdemCarregamento),
+      visibleNeo: visibleItems.filter(i => i.type === 'neo').map(i => i.item as NeoInstalacao),
+      visibleNeoCorrecoes: visibleItems.filter(i => i.type === 'correcao').map(i => i.item as NeoCorrecao),
+      totalHidden: totalCount - MAX_VISIBLE_CARDS,
+    };
+  }, [ordensNoDia, neoNoDia, neoCorrecoesNoDia]);
+
   const handleConfirmModal = async (params: {
     ordemId: string;
     data_carregamento: string;
@@ -147,7 +169,7 @@ export const DroppableDayExpedicao = ({
         </div>
 
         <div className="space-y-1.5">
-          {ordensNoDia.map((ordem) => (
+          {visibleOrdens.map((ordem) => (
             <DraggableOrdemCarregamento
               key={ordem.id}
               ordem={ordem}
@@ -157,7 +179,7 @@ export const DroppableDayExpedicao = ({
               disableDrag={readOnly}
             />
           ))}
-          {neoNoDia.map((neo) => (
+          {visibleNeo.map((neo) => (
             <DraggableNeoInstalacao
               key={neo.id}
               neoInstalacao={neo}
@@ -167,7 +189,7 @@ export const DroppableDayExpedicao = ({
               disableDrag={readOnly}
             />
           ))}
-          {neoCorrecoesNoDia.map((neo) => (
+          {visibleNeoCorrecoes.map((neo) => (
             <DraggableNeoCorrecao
               key={neo.id}
               neoCorrecao={neo}
@@ -177,6 +199,25 @@ export const DroppableDayExpedicao = ({
               disableDrag={readOnly}
             />
           ))}
+
+          {/* Ver mais button */}
+          <VerMaisCardsPopover
+            date={date}
+            ordens={ordensNoDia}
+            neoInstalacoes={neoNoDia}
+            neoCorrecoes={neoCorrecoesNoDia}
+            totalHidden={totalHidden}
+            onEdit={onEdit}
+            onRemoverDoCalendario={onRemoverDoCalendario}
+            onOrdemClick={onOrdemClick}
+            onOpenNeoInstalacaoDetails={onOpenNeoInstalacaoDetails}
+            onOpenNeoCorrecaoDetails={onOpenNeoCorrecaoDetails}
+            onExcluirNeoInstalacao={onExcluirNeoInstalacao}
+            onExcluirNeoCorrecao={onExcluirNeoCorrecao}
+            onEditarNeoInstalacao={onEditarNeoInstalacao}
+            onEditarNeoCorrecao={onEditarNeoCorrecao}
+            readOnly={readOnly}
+          />
         </div>
       </div>
 
