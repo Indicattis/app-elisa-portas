@@ -42,7 +42,16 @@ export default function AdminCompanyEditMinimalista() {
 
   if (isLoading) {
     return (
-      <MinimalistLayout title="Carregando..." backPath="/admin/companies">
+      <MinimalistLayout 
+        title="Carregando..." 
+        backPath="/admin/companies"
+        breadcrumbItems={[
+          { label: "Home", path: "/home" },
+          { label: "Admin", path: "/admin" },
+          { label: "Empresas", path: "/admin/companies" },
+          { label: "..." }
+        ]}
+      >
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
         </div>
@@ -52,7 +61,16 @@ export default function AdminCompanyEditMinimalista() {
 
   if (!isNewCompany && !empresa) {
     return (
-      <MinimalistLayout title="Empresa não encontrada" backPath="/admin/companies">
+      <MinimalistLayout 
+        title="Empresa não encontrada" 
+        backPath="/admin/companies"
+        breadcrumbItems={[
+          { label: "Home", path: "/home" },
+          { label: "Admin", path: "/admin" },
+          { label: "Empresas", path: "/admin/companies" },
+          { label: "Erro" }
+        ]}
+      >
         <div className="flex items-center justify-center min-h-[400px]">
           <p className="text-white/60">Empresa não encontrada</p>
         </div>
@@ -65,6 +83,12 @@ export default function AdminCompanyEditMinimalista() {
       title={isNewCompany ? "Nova Empresa" : "Editar Empresa"}
       subtitle={isNewCompany ? "Cadastrar nova empresa emissora" : empresa?.nome}
       backPath="/admin/companies"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Admin", path: "/admin" },
+        { label: "Empresas", path: "/admin/companies" },
+        { label: isNewCompany ? "Nova" : "Editar" }
+      ]}
     >
       <div className="bg-primary/5 border border-primary/10 backdrop-blur-xl rounded-lg p-6">
         <div className="[&_label]:text-white/80 [&_input]:bg-white/5 [&_input]:border-white/10 [&_input]:text-white [&_input]:placeholder:text-white/40 [&_select]:bg-white/5 [&_select]:border-white/10 [&_select]:text-white [&_h3]:text-white [&_h4]:text-white [&_.card]:bg-transparent [&_.card]:border-white/10">
