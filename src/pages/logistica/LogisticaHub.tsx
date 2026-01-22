@@ -6,7 +6,7 @@ import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 
 const menuItems = [
-  { label: "Expedição", icon: Truck, path: "/logistica/expedicao" },
+  { label: "Calendário", icon: Truck, path: "/logistica/expedicao" },
   { label: "Frota", icon: Car, path: "/logistica/frota" },
   { label: "Instalações", icon: CalendarDays, path: "/logistica/instalacoes" },
 ];
