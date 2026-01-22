@@ -23,6 +23,12 @@ export interface NeoCorrecao {
     nome: string;
     cor: string | null;
   } | null;
+  // Dados do criador (join)
+  criador?: {
+    id: string;
+    nome: string;
+    foto_perfil_url: string | null;
+  } | null;
 }
 
 export interface CriarNeoCorrecaoData {

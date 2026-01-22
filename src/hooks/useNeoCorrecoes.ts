@@ -220,10 +220,30 @@ export const useNeoCorrecoesListagem = () => {
 
       const equipesMap = new Map(equipes?.map(e => [e.id, e]) || []);
 
+      // Buscar dados dos criadores
+      const createdByIds = [...new Set((correcoes || []).map(item => item.created_by).filter(Boolean))];
+      const { data: usuarios } = createdByIds.length > 0 
+        ? await supabase
+            .from("admin_users")
+            .select("user_id, nome, foto_perfil_url")
+            .in("user_id", createdByIds)
+        : { data: [] };
+
+      const usuariosMap = new Map((usuarios || []).map(u => [u.user_id, u]));
+
       const correcoesEnriquecidas: NeoCorrecao[] = (correcoes || []).map(correcao => ({
         ...correcao,
         _tipo: 'neo_correcao' as const,
-        equipe: correcao.equipe_id ? equipesMap.get(correcao.equipe_id) || null : null
+        equipe: correcao.equipe_id ? equipesMap.get(correcao.equipe_id) || null : null,
+        criador: correcao.created_by
+          ? usuariosMap.get(correcao.created_by)
+            ? {
+                id: usuariosMap.get(correcao.created_by)!.user_id,
+                nome: usuariosMap.get(correcao.created_by)!.nome,
+                foto_perfil_url: usuariosMap.get(correcao.created_by)!.foto_perfil_url
+              }
+            : null
+          : null
       }));
 
       return correcoesEnriquecidas;
