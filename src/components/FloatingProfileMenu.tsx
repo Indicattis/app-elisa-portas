@@ -1,8 +1,24 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, PanelLeft, Settings } from 'lucide-react';
+import { LogOut, LayoutDashboard, PanelLeft, Settings, Lock } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+// Mapeamento de rotas para route_keys
+const routeKeyMap: Record<string, string> = {
+  '/painels': 'paineis',
+  '/dashboard': 'dashboard',
+  '/admin': 'admin',
+};
+
+// Definir itens do menu
+const menuItems = [
+  { label: 'Painéis', icon: PanelLeft, path: '/painels' },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+  { label: 'Admin', icon: Settings, path: '/admin' },
+];
 
 interface FloatingProfileMenuProps {
   mounted?: boolean;
@@ -10,7 +26,7 @@ interface FloatingProfileMenuProps {
 
 export function FloatingProfileMenu({ mounted = true }: FloatingProfileMenuProps) {
   const navigate = useNavigate();
-  const { userRole, signOut } = useAuth();
+  const { user, userRole, signOut, hasBypassPermissions } = useAuth();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -30,6 +46,30 @@ export function FloatingProfileMenu({ mounted = true }: FloatingProfileMenuProps
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [profileMenuOpen]);
+
+  // Buscar permissões do usuário para os itens do menu
+  const { data: userAccess } = useQuery({
+    queryKey: ['user-profile-menu-access', user?.id, hasBypassPermissions],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const routeKeys = Object.values(routeKeyMap);
+      const { data } = await supabase
+        .from('user_route_access')
+        .select('route_key')
+        .eq('user_id', user.id)
+        .eq('can_access', true)
+        .in('route_key', routeKeys);
+      return data?.map(r => r.route_key) || [];
+    },
+    enabled: !!user?.id && !hasBypassPermissions,
+  });
+
+  const hasAccess = (path: string): boolean => {
+    if (hasBypassPermissions) return true;
+    const routeKey = routeKeyMap[path];
+    if (!routeKey) return true;
+    return userAccess?.includes(routeKey) || false;
+  };
 
   const getUserInitials = (nome: string) => {
     const parts = nome.split(" ");
@@ -85,38 +125,36 @@ export function FloatingProfileMenu({ mounted = true }: FloatingProfileMenuProps
         </div>
 
         <div className="py-1">
-          <button
-            onClick={() => {
-              navigate('/painels');
-              setProfileMenuOpen(false);
-            }}
-            className="w-full px-3 py-2 flex items-center gap-3 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-          >
-            <PanelLeft className="w-4 h-4" />
-            <span className="text-sm">Painéis</span>
-          </button>
-
-          <button
-            onClick={() => {
-              navigate('/dashboard');
-              setProfileMenuOpen(false);
-            }}
-            className="w-full px-3 py-2 flex items-center gap-3 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            <span className="text-sm">Dashboard</span>
-          </button>
-
-          <button
-            onClick={() => {
-              navigate('/admin');
-              setProfileMenuOpen(false);
-            }}
-            className="w-full px-3 py-2 flex items-center gap-3 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-          >
-            <Settings className="w-4 h-4" />
-            <span className="text-sm">Admin</span>
-          </button>
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const canAccess = hasAccess(item.path);
+            
+            return (
+              <button
+                key={item.path}
+                onClick={() => {
+                  if (canAccess) {
+                    navigate(item.path);
+                    setProfileMenuOpen(false);
+                  }
+                }}
+                disabled={!canAccess}
+                className={`w-full px-3 py-2 flex items-center gap-3 transition-colors
+                  ${canAccess 
+                    ? 'text-white/70 hover:text-white hover:bg-white/10 cursor-pointer' 
+                    : 'text-zinc-600 cursor-not-allowed'
+                  }`}
+              >
+                <div className="relative">
+                  <Icon className={`w-4 h-4 ${!canAccess ? 'opacity-50' : ''}`} />
+                  {!canAccess && (
+                    <Lock className="w-2.5 h-2.5 absolute -bottom-0.5 -right-0.5 text-zinc-500" />
+                  )}
+                </div>
+                <span className="text-sm">{item.label}</span>
+              </button>
+            );
+          })}
 
           <button
             onClick={handleLogout}
