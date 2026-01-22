@@ -94,9 +94,11 @@ export default function PedidosProducaoMinimalista() {
     if (searchTerm.trim()) {
       const termo = searchTerm.toLowerCase();
       filtrados = filtrados.filter(
-        (p) =>
-          p.numero_pedido?.toLowerCase().includes(termo) ||
-          p.vendas?.cliente_nome?.toLowerCase().includes(termo)
+        (p) => {
+          const numeroPedido = p.numero_pedido?.toString() || '';
+          const clienteNome = p.vendas?.cliente_nome?.toLowerCase() || '';
+          return numeroPedido.includes(termo) || clienteNome.includes(termo);
+        }
       );
     }
 
