@@ -1797,6 +1797,30 @@ export type Database = {
           },
         ]
       }
+      etapa_responsaveis: {
+        Row: {
+          created_at: string | null
+          etapa: string
+          id: string
+          responsavel_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          etapa: string
+          id?: string
+          responsavel_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          etapa?: string
+          id?: string
+          responsavel_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       eventos_calendario: {
         Row: {
           categoria: string
