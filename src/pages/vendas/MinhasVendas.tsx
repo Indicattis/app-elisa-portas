@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Eye, TrendingUp, ShoppingCart, DollarSign } from 'lucide-react';
+import { Plus, Eye, TrendingUp, ShoppingCart, DollarSign, FileCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface Venda {
   id: string;
@@ -55,7 +55,6 @@ export default function MinhasVendas() {
 
   const totalVendas = vendas?.length || 0;
   const valorTotal = vendas?.reduce((acc, v) => acc + (v.valor_venda || 0), 0) || 0;
-  // Considera "faturada" se tiver comprovante de pagamento anexado
   const vendasFaturadas = vendas?.filter(v => v.comprovante_url).length || 0;
 
   const formatCurrency = (value: number) => {
@@ -71,7 +70,7 @@ export default function MinhasVendas() {
       case 'em_producao': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
       case 'cancelado': return 'bg-red-500/20 text-red-400 border-red-500/30';
       case 'pendente': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+      default: return 'bg-blue-500/10 text-blue-300/70 border-blue-500/20';
     }
   };
 
@@ -85,6 +84,10 @@ export default function MinhasVendas() {
     }
   };
 
+  // Estilos sofisticados com azul
+  const cardClass = "p-1.5 rounded-xl bg-gradient-to-br from-blue-500/5 to-blue-900/10 backdrop-blur-xl border border-blue-500/20";
+  const statCardInner = "p-4 flex items-center gap-4";
+
   return (
     <MinimalistLayout 
       title="Minhas Vendas" 
@@ -95,49 +98,52 @@ export default function MinhasVendas() {
         { label: "Minhas Vendas" }
       ]}
       headerActions={
-        <Button 
+        <button 
           onClick={() => navigate('/vendas/minhas-vendas/nova')}
-          className="bg-blue-600 hover:bg-blue-700"
-          size="sm"
+          className="h-10 px-5 rounded-lg font-medium text-white border
+                     bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30 
+                     shadow-lg shadow-blue-500/30
+                     hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/40
+                     transition-all duration-200 flex items-center gap-2"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4" />
           Nova Venda
-        </Button>
+        </button>
       }
     >
       {/* Cards de estatísticas */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 backdrop-blur-xl">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/20">
-              <ShoppingCart className="w-5 h-5 text-blue-400" />
+        <div className={cardClass}>
+          <div className={statCardInner}>
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/30">
+              <ShoppingCart className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-sm text-white/60">Total de Vendas</p>
+              <p className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider">Total de Vendas</p>
               <p className="text-2xl font-bold text-white">{totalVendas}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 backdrop-blur-xl">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-500/20">
-              <DollarSign className="w-5 h-5 text-green-400" />
+        <div className={cardClass}>
+          <div className={statCardInner}>
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-700 shadow-lg shadow-green-500/30">
+              <DollarSign className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-sm text-white/60">Valor Total</p>
+              <p className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider">Valor Total</p>
               <p className="text-2xl font-bold text-white">{formatCurrency(valorTotal)}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 backdrop-blur-xl">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-purple-500/20">
-              <TrendingUp className="w-5 h-5 text-purple-400" />
+        <div className={cardClass}>
+          <div className={statCardInner}>
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 shadow-lg shadow-purple-500/30">
+              <FileCheck className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-sm text-white/60">Com Comprovante</p>
+              <p className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider">Com Comprovante</p>
               <p className="text-2xl font-bold text-white">{vendasFaturadas}</p>
             </div>
           </div>
@@ -148,7 +154,7 @@ export default function MinhasVendas() {
       <div className="space-y-3">
         {isLoading ? (
           Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 bg-white/5" />
+            <Skeleton key={i} className="h-20 bg-blue-500/5 border border-blue-500/10" />
           ))
         ) : vendas && vendas.length > 0 ? (
           vendas.map((venda) => {
@@ -158,48 +164,58 @@ export default function MinhasVendas() {
               <div
                 key={venda.id}
                 onClick={() => navigate(`/dashboard/vendas/${venda.id}`)}
-                className="bg-primary/5 border border-primary/10 rounded-xl p-4 backdrop-blur-xl
-                           hover:bg-primary/10 transition-colors cursor-pointer"
+                className="p-1.5 rounded-xl bg-gradient-to-br from-blue-500/5 to-blue-900/10 backdrop-blur-xl border border-blue-500/20
+                           hover:from-blue-500/10 hover:to-blue-800/15 hover:border-blue-400/30 hover:shadow-lg hover:shadow-blue-500/10
+                           transition-all duration-200 cursor-pointer group"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className={`text-xs px-2 py-0.5 rounded-full border ${getStatusColor(status)}`}>
-                        {getStatusLabel(status)}
-                      </span>
-                      {venda.comprovante_url && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
-                          Pago
+                <div className="p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${getStatusColor(status)}`}>
+                          {getStatusLabel(status)}
                         </span>
-                      )}
+                        {venda.comprovante_url && (
+                          <span className="text-xs px-2.5 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 font-medium">
+                            Pago
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-blue-100 font-medium group-hover:text-white transition-colors">
+                        {venda.cliente_nome || 'Cliente não informado'}
+                      </h3>
+                      <p className="text-sm text-blue-300/60">
+                        {format(new Date(venda.data_venda), "dd 'de' MMMM", { locale: ptBR })}
+                      </p>
                     </div>
-                    <h3 className="text-white font-medium">{venda.cliente_nome || 'Cliente não informado'}</h3>
-                    <p className="text-sm text-white/60">
-                      {format(new Date(venda.data_venda), "dd 'de' MMMM", { locale: ptBR })}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-white">
-                      {formatCurrency(venda.valor_venda || 0)}
-                    </p>
-                    <Eye className="w-4 h-4 text-white/40 ml-auto mt-2" />
+                    <div className="text-right flex flex-col items-end">
+                      <p className="text-lg font-bold text-white">
+                        {formatCurrency(venda.valor_venda || 0)}
+                      </p>
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 mt-2 group-hover:bg-blue-500/20 transition-colors">
+                        <Eye className="w-4 h-4 text-blue-400" />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             );
           })
         ) : (
-          <div className="text-center py-12">
-            <ShoppingCart className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <p className="text-white/60">Nenhuma venda encontrada neste mês</p>
-            <Button 
+          <div className={cn(cardClass, "text-center py-12")}>
+            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 mx-auto mb-4">
+              <ShoppingCart className="w-8 h-8 text-blue-400/50" />
+            </div>
+            <p className="text-blue-200/60 mb-4">Nenhuma venda encontrada neste mês</p>
+            <button 
               onClick={() => navigate('/vendas/minhas-vendas/nova')}
-              variant="outline"
-              className="mt-4 border-white/20 text-white hover:bg-white/10"
+              className="h-10 px-5 rounded-lg font-medium border border-blue-500/30 bg-blue-500/10 text-blue-300
+                         hover:bg-blue-500/20 hover:text-blue-200 hover:border-blue-400/50
+                         transition-all duration-200 inline-flex items-center gap-2"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4" />
               Criar primeira venda
-            </Button>
+            </button>
           </div>
         )}
       </div>
