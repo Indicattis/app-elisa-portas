@@ -18,7 +18,7 @@ export default function Home() {
   const navigate = useNavigate();
   const { userRole, signOut } = useAuth();
   const [mounted, setMounted] = useState(false);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -173,40 +173,27 @@ export default function Home() {
 
         {/* Lista de botões */}
         <div className="w-full flex flex-col gap-3">
-          {menuItems.map((item, index) => {
+        {menuItems.map((item, index) => {
             const Icon = item.icon;
             const delay = 100 + index * 80;
-            const isHovered = hoveredIndex === index;
-            const hasHover = hoveredIndex !== null;
-            const isOther = hasHover && !isHovered;
             
             return (
               <div
                 key={item.label}
-                className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
-                           transition-all duration-300"
+                className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10"
                 style={{
-                  opacity: mounted ? (isOther ? 0.4 : 1) : 0,
-                  transform: mounted 
-                    ? `translateX(0) scale(${isOther ? 0.95 : 1})` 
-                    : 'translateX(-30px)',
-                  filter: isOther ? 'blur(2px)' : 'none',
+                  opacity: mounted ? 1 : 0,
+                  transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
                   transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${mounted ? '0ms' : delay + 'ms'}`
                 }}
               >
                 <button
                   onClick={() => navigate(item.path)}
-                  onMouseEnter={() => setHoveredIndex(index)}
-                  onMouseLeave={() => setHoveredIndex(null)}
                   className="w-full h-12 rounded-lg
                              bg-gradient-to-r from-blue-500 to-blue-700
-                             hover:from-blue-400 hover:to-blue-600
-                             active:scale-[0.98]
                              flex items-center gap-4 px-5
                              text-white font-medium 
-                             shadow-lg shadow-blue-500/20
-                             border border-blue-400/30
-                             transition-all duration-300"
+                             border border-blue-400/30"
                 >
                   <Icon className="w-5 h-5" strokeWidth={1.5} />
                   <span className="text-sm font-medium">{item.label}</span>
