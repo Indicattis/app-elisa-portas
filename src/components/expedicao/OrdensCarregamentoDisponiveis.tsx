@@ -9,10 +9,54 @@ import { supabase } from "@/integrations/supabase/client";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { toast } from "sonner";
 import { AdicionarOrdemCalendarioModal } from "./AdicionarOrdemCalendarioModal";
+import { cn } from "@/lib/utils";
 
 interface OrdensCarregamentoDisponiveisProps {
   onRefresh?: () => void;
 }
+
+// Parse de strings como "5.19x4.93" ou "5,19x4,93"
+const parseTamanhoString = (tamanhoStr: string | null) => {
+  if (!tamanhoStr) return { largura: 0, altura: 0 };
+  const normalizado = tamanhoStr.replace(/,/g, '.');
+  const partes = normalizado.toLowerCase().split('x');
+  if (partes.length === 2) {
+    return { 
+      largura: parseFloat(partes[0]) || 0, 
+      altura: parseFloat(partes[1]) || 0 
+    };
+  }
+  return { largura: 0, altura: 0 };
+};
+
+// Calcular lista de portas P/G
+const getPortasInfo = (ordem: OrdemCarregamento) => {
+  const produtos = ordem.venda?.produtos || [];
+  const portasEnrolar = produtos.filter(p => p.tipo_produto === 'porta_enrolar');
+  const lista: { tamanho: 'P' | 'G'; largura: number; altura: number; area: number; peso: number | null }[] = [];
+  
+  portasEnrolar.forEach(p => {
+    let largura = p.largura || 0;
+    let altura = p.altura || 0;
+    
+    if (largura === 0 && altura === 0 && p.tamanho) {
+      const parsed = parseTamanhoString(p.tamanho);
+      largura = parsed.largura;
+      altura = parsed.altura;
+    }
+    
+    const area = largura * altura;
+    const quantidade = p.quantidade || 1;
+    const tamanhoCategoria = area > 25 ? 'G' : 'P';
+    const peso = largura > 0 && altura > 0 ? (((largura * altura * 12) * 2) * 0.3) : null;
+    
+    for (let i = 0; i < quantidade; i++) {
+      lista.push({ tamanho: tamanhoCategoria, largura, altura, area, peso });
+    }
+  });
+  
+  return lista;
+};
 
 export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoDisponiveisProps) => {
   const [ordens, setOrdens] = useState<OrdemCarregamento[]>([]);
@@ -44,6 +88,11 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
             data_prevista_entrega,
             tipo_entrega,
             produtos:produtos_vendas(
+              tipo_produto,
+              tamanho,
+              largura,
+              altura,
+              quantidade,
               cor:catalogo_cores(
                 nome,
                 codigo_hex
@@ -164,6 +213,7 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
                   <tr className="text-xs">
                     <th className="text-left font-medium p-2 min-w-[150px]">Cliente</th>
                     <th className="text-left font-medium p-2 min-w-[100px]">Pedido</th>
+                    <th className="text-center font-medium p-2 min-w-[80px]">Portas</th>
                     <th className="text-left font-medium p-2 min-w-[120px]">Localização</th>
                     <th className="text-left font-medium p-2 min-w-[120px]">Cores</th>
                     <th className="text-left font-medium p-2 min-w-[100px]">Serviço</th>
@@ -173,13 +223,13 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                      <td colSpan={7} className="p-8 text-center text-muted-foreground">
                         Carregando ordens...
                       </td>
                     </tr>
                   ) : ordensFiltradas.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                      <td colSpan={7} className="p-8 text-center text-muted-foreground">
                         Nenhuma ordem disponível
                       </td>
                     </tr>
@@ -189,6 +239,7 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
                       const maxCoresVisiveis = 5;
                       const coresVisiveis = cores.slice(0, maxCoresVisiveis);
                       const coresRestantes = cores.length - maxCoresVisiveis;
+                      const portasInfo = getPortasInfo(ordem);
 
                       return (
                         <tr key={ordem.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
@@ -200,6 +251,46 @@ export const OrdensCarregamentoDisponiveis = ({ onRefresh }: OrdensCarregamentoD
                               <Package className="h-3 w-3 flex-shrink-0" />
                               <span className="truncate">{ordem.pedido?.numero_pedido || 'N/A'}</span>
                             </div>
+                          </td>
+                          <td className="p-2">
+                            <TooltipProvider>
+                              <div className="flex items-center justify-center gap-0.5 flex-wrap">
+                                {portasInfo.slice(0, 6).map((porta, idx) => (
+                                  <Tooltip key={idx}>
+                                    <TooltipTrigger asChild>
+                                      <Badge 
+                                        variant="outline" 
+                                        className={cn(
+                                          "text-[9px] px-1 py-0 h-4 text-white cursor-default",
+                                          porta.tamanho === 'P' 
+                                            ? "bg-blue-500 border-blue-500"
+                                            : "bg-orange-500 border-orange-500"
+                                        )}
+                                      >
+                                        {porta.tamanho}
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{porta.largura.toFixed(2)}m × {porta.altura.toFixed(2)}m</p>
+                                      <p className="text-xs text-muted-foreground">{porta.area.toFixed(2)} m²</p>
+                                      {porta.peso && <p className="text-xs">Peso: {porta.peso.toFixed(1)} kg</p>}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                ))}
+                                {portasInfo.length > 6 && (
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <span className="text-[9px] text-muted-foreground">+{portasInfo.length - 6}</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{portasInfo.filter(p => p.tamanho === 'P').length} pequena(s) (≤25m²)</p>
+                                      <p>{portasInfo.filter(p => p.tamanho === 'G').length} grande(s) ({'>'}25m²)</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                                {portasInfo.length === 0 && <span className="text-muted-foreground text-[10px]">—</span>}
+                              </div>
+                            </TooltipProvider>
                           </td>
                           <td className="p-2">
                             {ordem.venda && (
