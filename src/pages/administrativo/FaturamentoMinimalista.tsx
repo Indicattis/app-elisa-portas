@@ -9,10 +9,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, DollarSign, TrendingUp, CalendarIcon, ArrowLeft, Download, CheckCircle2, Clock } from "lucide-react";
+import { 
+  Search, 
+  DollarSign, 
+  TrendingUp, 
+  CalendarIcon, 
+  ArrowLeft, 
+  Download, 
+  CheckCircle2, 
+  Clock,
+  Truck,
+  Wrench,
+  Paintbrush,
+  Target,
+  Calculator
+} from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
@@ -20,8 +33,9 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
+import { ColumnManager } from "@/components/ColumnManager";
+import { useColumnConfig, ColumnConfig } from "@/hooks/useColumnConfig";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
-import { ProductIconsSummary } from "@/components/vendas/ProductIconsSummary";
 
 interface Venda {
   id: string;
@@ -48,6 +62,18 @@ interface Venda {
   produtos?: any[];
 }
 
+const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
+  { id: 'data', label: 'Data', defaultVisible: true },
+  { id: 'cliente', label: 'Cliente', defaultVisible: true },
+  { id: 'atendente', label: 'Atendente', defaultVisible: true },
+  { id: 'tipo_entrega', label: 'Tipo Entrega', defaultVisible: true },
+  { id: 'valor_frete', label: 'Frete', defaultVisible: true },
+  { id: 'valor_instalacao', label: 'Instalação', defaultVisible: true },
+  { id: 'lucro_total', label: 'Lucro', defaultVisible: true },
+  { id: 'valor_total', label: 'Valor Total', defaultVisible: true },
+  { id: 'status', label: 'Status', defaultVisible: true },
+];
+
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -69,6 +95,15 @@ export default function FaturamentoMinimalista() {
   const [activeTab, setActiveTab] = useState<'todas' | 'faturadas' | 'nao_faturadas'>('todas');
   const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
   const [atendentes, setAtendentes] = useState<any[]>([]);
+
+  const {
+    columns,
+    visibleColumns,
+    visibleIds,
+    toggleColumn,
+    setColumnOrder,
+    resetColumns
+  } = useColumnConfig('faturamento_minimalista_columns', COLUNAS_DISPONIVEIS);
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 100);
@@ -192,6 +227,11 @@ export default function FaturamentoMinimalista() {
     return portas.every((p: any) => p.faturamento === true);
   };
 
+  const calcularLucroTotal = (venda: Venda) => {
+    const portas = venda.portas || [];
+    return portas.reduce((acc: number, p: any) => acc + (p.lucro_item || 0), 0);
+  };
+
   const filteredVendas = vendas.filter(venda => {
     if (activeTab === 'faturadas' && !isFaturada(venda)) return false;
     if (activeTab === 'nao_faturadas' && isFaturada(venda)) return false;
@@ -205,16 +245,54 @@ export default function FaturamentoMinimalista() {
     return matchesSearch;
   });
 
-  const vendasFaturadas = filteredVendas.filter(isFaturada);
+  const vendasFaturadas = vendas.filter(isFaturada);
+  const vendasPendentes = vendas.filter(v => !isFaturada(v));
   
   const faturamentoTotal = filteredVendas.reduce((acc, v) => 
     acc + ((v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0)), 0);
   
-  const lucroBrutoTotal = vendasFaturadas.reduce((acc, v) => {
+  const vendasParaLucros = filteredVendas.filter(isFaturada);
+  
+  const lucroBrutoTotal = vendasParaLucros.reduce((acc, v) => {
     const portas = v.portas || [];
     const lucroItens = portas.reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
     return acc + lucroItens + (v.valor_instalacao || 0);
   }, 0);
+
+  // Indicadores do período
+  const indicadores = {
+    faturamentoTotal: filteredVendas.reduce((acc, v) => 
+      acc + (v.valor_venda || 0) + (v.valor_credito || 0), 0),
+    
+    quantidadePortas: filteredVendas.reduce((acc, v) => {
+      const portas = v.portas || [];
+      return acc + portas.filter((p: any) => 
+        ['porta', 'porta_enrolar'].includes(p.tipo_produto)
+      ).reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
+    }, 0),
+    
+    lucroPortas: vendasParaLucros.reduce((acc, v) => {
+      const portas = v.portas || [];
+      return acc + portas
+        .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
+        .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+    }, 0),
+    
+    lucroPintura: vendasParaLucros.reduce((acc, v) => {
+      const portas = v.portas || [];
+      return acc + portas
+        .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
+        .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+    }, 0),
+    
+    lucroInstalacoes: vendasParaLucros.reduce((acc, v) => 
+      acc + (v.valor_instalacao || 0), 0),
+    
+    fretesTotais: filteredVendas.reduce((acc, v) => 
+      acc + (v.valor_frete || 0), 0),
+    
+    lucroBrutoTotal,
+  };
 
   const handleGeneratePDF = () => {
     if (filteredVendas.length > 1000) {
@@ -228,26 +306,13 @@ export default function FaturamentoMinimalista() {
 
     const stats = {
       faturamentoTotal,
-      custosProducao: vendasFaturadas.reduce((acc, v) => acc + (v.custo_produto || 0), 0),
-      custosPintura: vendasFaturadas.reduce((acc, v) => acc + (v.custo_pintura || 0), 0),
+      custosProducao: vendasParaLucros.reduce((acc, v) => acc + (v.custo_produto || 0), 0),
+      custosPintura: vendasParaLucros.reduce((acc, v) => acc + (v.custo_pintura || 0), 0),
       instalacoesTotais: filteredVendas.reduce((acc, v) => acc + (v.valor_instalacao || 0), 0),
       fretesTotais: filteredVendas.reduce((acc, v) => acc + (v.valor_frete || 0), 0),
-      quantidadePortas: filteredVendas.reduce((acc, v) => {
-        const portas = v.portas || [];
-        return acc + portas.reduce((sum: number, p: any) => sum + (p.quantidade || 0), 0);
-      }, 0),
-      lucroPintura: vendasFaturadas.reduce((acc, v) => {
-        const portas = v.portas || [];
-        return acc + portas
-          .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
-          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
-      }, 0),
-      lucroPortas: vendasFaturadas.reduce((acc, v) => {
-        const portas = v.portas || [];
-        return acc + portas
-          .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
-          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
-      }, 0),
+      quantidadePortas: indicadores.quantidadePortas,
+      lucroPintura: indicadores.lucroPintura,
+      lucroPortas: indicadores.lucroPortas,
       lucroBrutoTotal,
     };
 
@@ -265,6 +330,87 @@ export default function FaturamentoMinimalista() {
       title: "PDF gerado com sucesso!",
       description: "O arquivo foi baixado automaticamente.",
     });
+  };
+
+  const renderCell = (venda: Venda, columnId: string) => {
+    switch(columnId) {
+      case 'data':
+        return (
+          <span className="text-white/80">
+            {format(new Date(venda.data_venda), "dd/MM/yyyy", { locale: ptBR })}
+          </span>
+        );
+      case 'cliente':
+        return (
+          <span className="text-white font-medium">
+            {venda.cliente_nome || "Não informado"}
+          </span>
+        );
+      case 'atendente':
+        return (
+          <div className="flex items-center gap-2">
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={venda.atendente_foto || undefined} />
+              <AvatarFallback className="text-xs bg-white/20 text-white">
+                {venda.atendente_nome.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-white/80 text-sm">{venda.atendente_nome}</span>
+          </div>
+        );
+      case 'tipo_entrega':
+        return (venda.valor_instalacao || 0) > 0 ? (
+          <div className="flex items-center gap-1.5 text-emerald-400">
+            <Wrench className="h-4 w-4" />
+            <span className="text-xs">Instalação</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 text-blue-400">
+            <Truck className="h-4 w-4" />
+            <span className="text-xs">Entrega</span>
+          </div>
+        );
+      case 'valor_frete':
+        return (
+          <span className="text-white/80">
+            {formatCurrency(venda.valor_frete || 0)}
+          </span>
+        );
+      case 'valor_instalacao':
+        return (
+          <span className="text-white/80">
+            {formatCurrency(venda.valor_instalacao || 0)}
+          </span>
+        );
+      case 'lucro_total':
+        return isFaturada(venda) ? (
+          <span className="text-emerald-400 font-medium">
+            {formatCurrency(calcularLucroTotal(venda))}
+          </span>
+        ) : (
+          <span className="text-white/30">-</span>
+        );
+      case 'valor_total':
+        return (
+          <span className="text-white font-semibold">
+            {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
+          </span>
+        );
+      case 'status':
+        return isFaturada(venda) ? (
+          <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+            <CheckCircle2 className="h-3 w-3 mr-1" />
+            Faturada
+          </Badge>
+        ) : (
+          <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
+            <Clock className="h-3 w-3 mr-1" />
+            Pendente
+          </Badge>
+        );
+      default:
+        return null;
+    }
   };
 
   if (loading) {
@@ -320,13 +466,22 @@ export default function FaturamentoMinimalista() {
             <h1 className="text-3xl font-bold">Faturamento</h1>
             <p className="text-white/60">Controle de vendas e faturamento</p>
           </div>
-          <Button 
-            onClick={handleGeneratePDF}
-            className="bg-white/10 hover:bg-white/20 border border-white/20"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Exportar PDF
-          </Button>
+          <div className="flex gap-2">
+            <ColumnManager
+              columns={columns}
+              visibleIds={visibleIds}
+              onToggle={toggleColumn}
+              onReorder={setColumnOrder}
+              onReset={resetColumns}
+            />
+            <Button 
+              onClick={handleGeneratePDF}
+              className="bg-white/10 hover:bg-white/20 border border-white/20"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Exportar PDF
+            </Button>
+          </div>
         </div>
 
         {/* Summary Cards */}
@@ -358,8 +513,8 @@ export default function FaturamentoMinimalista() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">
-                {filteredVendas.length > 0 
-                  ? `${((vendasFaturadas.length / filteredVendas.length) * 100).toFixed(1)}%`
+                {vendas.length > 0 
+                  ? `${((vendasFaturadas.length / vendas.length) * 100).toFixed(1)}%`
                   : '0%'}
               </div>
               <p className="text-xs text-white/50">vendas faturadas</p>
@@ -367,10 +522,87 @@ export default function FaturamentoMinimalista() {
           </Card>
         </div>
 
+        {/* Indicadores do Período */}
+        <Card className="bg-white/5 border-white/10">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base text-white/80 flex items-center gap-2">
+              <Calculator className="h-4 w-4 text-blue-400" />
+              Indicadores do Período
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+              <div className="text-center p-3 rounded-lg bg-white/5">
+                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                  <DollarSign className="h-3 w-3 text-blue-400" />
+                  Faturamento
+                </div>
+                <p className="text-blue-400 font-bold text-lg">
+                  {formatCurrency(indicadores.faturamentoTotal)}
+                </p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-white/5">
+                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                  <Target className="h-3 w-3 text-purple-400" />
+                  Qtd Portas
+                </div>
+                <p className="text-purple-400 font-bold text-lg">
+                  {indicadores.quantidadePortas}
+                </p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-white/5">
+                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                  <TrendingUp className="h-3 w-3 text-emerald-400" />
+                  Lucro Portas
+                </div>
+                <p className="text-emerald-400 font-bold text-lg">
+                  {formatCurrency(indicadores.lucroPortas)}
+                </p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-white/5">
+                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                  <Paintbrush className="h-3 w-3 text-orange-400" />
+                  Lucro Pintura
+                </div>
+                <p className="text-orange-400 font-bold text-lg">
+                  {formatCurrency(indicadores.lucroPintura)}
+                </p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-white/5">
+                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                  <Wrench className="h-3 w-3 text-cyan-400" />
+                  Instalações
+                </div>
+                <p className="text-cyan-400 font-bold text-lg">
+                  {formatCurrency(indicadores.lucroInstalacoes)}
+                </p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-white/5">
+                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                  <Truck className="h-3 w-3 text-amber-400" />
+                  Fretes
+                </div>
+                <p className="text-amber-400 font-bold text-lg">
+                  {formatCurrency(indicadores.fretesTotais)}
+                </p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-white/5">
+                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                  <TrendingUp className="h-3 w-3 text-green-400" />
+                  Lucro Bruto
+                </div>
+                <p className="text-green-400 font-bold text-lg">
+                  {formatCurrency(indicadores.lucroBrutoTotal)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Filters */}
         <Card className="bg-white/5 border-white/10">
           <CardContent className="pt-6">
-            <div className="flex flex-col lg:flex-row gap-4 mb-4">
+            <div className="flex flex-col lg:flex-row gap-4 mb-6">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/50" />
                 <Input
@@ -385,10 +617,10 @@ export default function FaturamentoMinimalista() {
                 <SelectTrigger className="w-[200px] bg-white/5 border-white/20 text-white">
                   <SelectValue placeholder="Atendente" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos atendentes</SelectItem>
+                <SelectContent className="bg-zinc-900 border-white/10">
+                  <SelectItem value="todos" className="text-white">Todos atendentes</SelectItem>
                   {atendentes.map((at) => (
-                    <SelectItem key={at.user_id} value={at.user_id}>{at.nome}</SelectItem>
+                    <SelectItem key={at.user_id} value={at.user_id} className="text-white">{at.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -417,7 +649,7 @@ export default function FaturamentoMinimalista() {
                     )}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 bg-zinc-900 border-white/10" align="start">
                   <Calendar
                     initialFocus
                     mode="range"
@@ -431,40 +663,74 @@ export default function FaturamentoMinimalista() {
               </Popover>
             </div>
 
-            {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="mb-4">
-              <TabsList className="bg-white/5">
-                <TabsTrigger value="todas" className="data-[state=active]:bg-white/20">
-                  Todas ({filteredVendas.length})
-                </TabsTrigger>
-                <TabsTrigger value="faturadas" className="data-[state=active]:bg-white/20">
-                  <CheckCircle2 className="h-4 w-4 mr-1" />
-                  Faturadas ({vendasFaturadas.length})
-                </TabsTrigger>
-                <TabsTrigger value="nao_faturadas" className="data-[state=active]:bg-white/20">
-                  <Clock className="h-4 w-4 mr-1" />
-                  Pendentes ({filteredVendas.length - vendasFaturadas.length})
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            {/* Botões de Filtro Centralizados */}
+            <div className="flex justify-center gap-2 mb-6">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setActiveTab('todas')}
+                className={cn(
+                  "rounded-full px-5 py-2 transition-all",
+                  activeTab === 'todas' 
+                    ? "bg-white/20 text-white" 
+                    : "text-white/50 hover:text-white hover:bg-white/10"
+                )}
+              >
+                Todas ({vendas.length})
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setActiveTab('faturadas')}
+                className={cn(
+                  "rounded-full px-5 py-2 transition-all",
+                  activeTab === 'faturadas' 
+                    ? "bg-emerald-500/20 text-emerald-400" 
+                    : "text-white/50 hover:text-emerald-400 hover:bg-emerald-500/10"
+                )}
+              >
+                <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                Faturadas ({vendasFaturadas.length})
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setActiveTab('nao_faturadas')}
+                className={cn(
+                  "rounded-full px-5 py-2 transition-all",
+                  activeTab === 'nao_faturadas' 
+                    ? "bg-amber-500/20 text-amber-400" 
+                    : "text-white/50 hover:text-amber-400 hover:bg-amber-500/10"
+                )}
+              >
+                <Clock className="h-4 w-4 mr-1.5" />
+                Pendentes ({vendasPendentes.length})
+              </Button>
+            </div>
 
             {/* Table */}
             <div className="rounded-md border border-white/10 overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/10 hover:bg-white/5">
-                    <TableHead className="text-white/70">Data</TableHead>
-                    <TableHead className="text-white/70">Cliente</TableHead>
-                    <TableHead className="text-white/70">Atendente</TableHead>
-                    <TableHead className="text-white/70">Produtos</TableHead>
-                    <TableHead className="text-white/70 text-right">Valor Total</TableHead>
-                    <TableHead className="text-white/70 text-center">Status</TableHead>
+                    {visibleColumns.map(column => (
+                      <TableHead 
+                        key={column.id} 
+                        className={cn(
+                          "text-white/70",
+                          ['valor_frete', 'valor_instalacao', 'lucro_total', 'valor_total'].includes(column.id) && "text-right",
+                          column.id === 'status' && "text-center"
+                        )}
+                      >
+                        {column.label}
+                      </TableHead>
+                    ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredVendas.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-white/50 py-8">
+                      <TableCell colSpan={visibleColumns.length} className="text-center text-white/50 py-8">
                         Nenhuma venda encontrada no período
                       </TableCell>
                     </TableRow>
@@ -475,40 +741,17 @@ export default function FaturamentoMinimalista() {
                         className="border-white/10 hover:bg-white/5 cursor-pointer"
                         onClick={() => navigate(`/dashboard/administrativo/financeiro/faturamento/${venda.id}/edit`)}
                       >
-                        <TableCell className="text-white/80">
-                          {format(new Date(venda.data_venda), "dd/MM/yyyy", { locale: ptBR })}
-                        </TableCell>
-                        <TableCell className="text-white font-medium">
-                          {venda.cliente_nome || "Não informado"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={venda.atendente_foto || undefined} />
-                              <AvatarFallback className="text-xs bg-white/20 text-white">
-                                {venda.atendente_nome.substring(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-white/80 text-sm">{venda.atendente_nome}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <ProductIconsSummary venda={{ produtos: venda.portas || [] }} />
-                        </TableCell>
-                        <TableCell className="text-right text-white font-medium">
-                          {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {isFaturada(venda) ? (
-                            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-                              Faturada
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
-                              Pendente
-                            </Badge>
-                          )}
-                        </TableCell>
+                        {visibleColumns.map(column => (
+                          <TableCell 
+                            key={column.id}
+                            className={cn(
+                              ['valor_frete', 'valor_instalacao', 'lucro_total', 'valor_total'].includes(column.id) && "text-right",
+                              column.id === 'status' && "text-center"
+                            )}
+                          >
+                            {renderCell(venda, column.id)}
+                          </TableCell>
+                        ))}
                       </TableRow>
                     ))
                   )}
