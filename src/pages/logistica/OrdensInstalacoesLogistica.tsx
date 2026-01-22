@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowLeft, CheckCircle2, Phone, MapPin, Calendar, User, Ruler, Package, RefreshCw, Search, Filter } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Phone, MapPin, Calendar, User, Ruler, Package, RefreshCw, Search, Filter, Hammer, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,12 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 
 import { useOrdensInstalacao, OrdemInstalacao } from "@/hooks/useOrdensInstalacao";
+import { useNeoInstalacoesListagem } from "@/hooks/useNeoInstalacoes";
+import { useNeoCorrecoesListagem } from "@/hooks/useNeoCorrecoes";
+import { NeoInstalacaoCardGestao } from "@/components/pedidos/NeoInstalacaoCardGestao";
+import { NeoCorrecaoCardGestao } from "@/components/pedidos/NeoCorrecaoCardGestao";
+import { NeoInstalacao } from "@/types/neoInstalacao";
+import { NeoCorrecao } from "@/types/neoCorrecao";
 import { cn } from "@/lib/utils";
 
 export default function OrdensInstalacoesLogistica() {
@@ -35,8 +41,31 @@ export default function OrdensInstalacoesLogistica() {
     open: false,
     ordem: null
   });
+  const [confirmNeoInstalacaoDialog, setConfirmNeoInstalacaoDialog] = useState<{ 
+    open: boolean; 
+    neoInstalacao: NeoInstalacao | null 
+  }>({ open: false, neoInstalacao: null });
+  const [confirmNeoCorrecaoDialog, setConfirmNeoCorrecaoDialog] = useState<{ 
+    open: boolean; 
+    neoCorrecao: NeoCorrecao | null 
+  }>({ open: false, neoCorrecao: null });
 
   const { ordens, isLoading, concluirOrdem, isConcluindo } = useOrdensInstalacao();
+  
+  const { 
+    neoInstalacoes, 
+    isLoading: isLoadingNeoInstalacoes, 
+    concluirNeoInstalacao, 
+    isConcluindo: isConcluindoNeoInstalacao 
+  } = useNeoInstalacoesListagem();
+
+  const { 
+    neoCorrecoes, 
+    isLoading: isLoadingNeoCorrecoes, 
+    concluirNeoCorrecao 
+  } = useNeoCorrecoesListagem();
+  
+  const isConcluindoNeoCorrecao = concluirNeoCorrecao.isPending;
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
@@ -119,6 +148,26 @@ export default function OrdensInstalacoesLogistica() {
     }
   };
 
+  const handleConcluirNeoInstalacao = async () => {
+    if (!confirmNeoInstalacaoDialog.neoInstalacao) return;
+    try {
+      await concluirNeoInstalacao(confirmNeoInstalacaoDialog.neoInstalacao.id);
+      setConfirmNeoInstalacaoDialog({ open: false, neoInstalacao: null });
+    } catch (error) {
+      console.error("Erro ao concluir neo instalação:", error);
+    }
+  };
+
+  const handleConcluirNeoCorrecao = async () => {
+    if (!confirmNeoCorrecaoDialog.neoCorrecao) return;
+    try {
+      await concluirNeoCorrecao.mutateAsync(confirmNeoCorrecaoDialog.neoCorrecao.id);
+      setConfirmNeoCorrecaoDialog({ open: false, neoCorrecao: null });
+    } catch (error) {
+      console.error("Erro ao concluir neo correção:", error);
+    }
+  };
+
   const breadcrumbItems = [
     { label: "Logística", href: "/logistica" },
     { label: "Instalações", href: "/logistica/instalacoes" },
@@ -152,7 +201,9 @@ export default function OrdensInstalacoesLogistica() {
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Ordens de Instalação</h1>
                 <p className="text-muted-foreground text-sm">
-                  {ordensFiltradas.length} {ordensFiltradas.length === 1 ? 'instalação pendente' : 'instalações pendentes'}
+                  {ordensFiltradas.length} instalações de pedidos
+                  {neoInstalacoes.length > 0 && `, ${neoInstalacoes.length} avulsas`}
+                  {neoCorrecoes.length > 0 && `, ${neoCorrecoes.length} correções`}
                 </p>
               </div>
 
@@ -367,6 +418,68 @@ export default function OrdensInstalacoesLogistica() {
               })
             )}
           </div>
+
+          {/* Seção: Neo Instalações (Avulsas) */}
+          {neoInstalacoes.length > 0 && (
+            <div className={cn(
+              "space-y-4 mt-8 transition-all duration-500 delay-300",
+              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            )}>
+              <div className="flex items-center gap-2">
+                <Hammer className="h-5 w-5 text-blue-500" />
+                <h2 className="text-lg font-semibold">Instalações Avulsas</h2>
+                <Badge variant="secondary" className="bg-blue-500/20 text-blue-500">
+                  {neoInstalacoes.length}
+                </Badge>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {neoInstalacoes.map((neo) => (
+                  <NeoInstalacaoCardGestao
+                    key={neo.id}
+                    neoInstalacao={neo}
+                    viewMode="grid"
+                    onConcluir={() => setConfirmNeoInstalacaoDialog({ 
+                      open: true, 
+                      neoInstalacao: neo 
+                    })}
+                    isConcluindo={isConcluindoNeoInstalacao}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Seção: Neo Correções (Avulsas) */}
+          {neoCorrecoes.length > 0 && (
+            <div className={cn(
+              "space-y-4 mt-8 transition-all duration-500 delay-400",
+              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            )}>
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-purple-500" />
+                <h2 className="text-lg font-semibold">Correções Avulsas</h2>
+                <Badge variant="secondary" className="bg-purple-500/20 text-purple-500">
+                  {neoCorrecoes.length}
+                </Badge>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {neoCorrecoes.map((neo) => (
+                  <NeoCorrecaoCardGestao
+                    key={neo.id}
+                    neoCorrecao={neo}
+                    viewMode="grid"
+                    onConcluir={() => setConfirmNeoCorrecaoDialog({ 
+                      open: true, 
+                      neoCorrecao: neo 
+                    })}
+                    isConcluindo={isConcluindoNeoCorrecao}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -389,6 +502,62 @@ export default function OrdensInstalacoesLogistica() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleConcluir}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Confirmar Conclusão
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog de Confirmação - Neo Instalação */}
+      <AlertDialog 
+        open={confirmNeoInstalacaoDialog.open} 
+        onOpenChange={(open) => setConfirmNeoInstalacaoDialog({ open, neoInstalacao: null })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Concluir Instalação Avulsa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja marcar esta instalação avulsa como concluída?
+              <br /><br />
+              <strong>Cliente:</strong> {confirmNeoInstalacaoDialog.neoInstalacao?.nome_cliente}
+              <br /><br />
+              A instalação será movida para <strong>"Finalizado"</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConcluirNeoInstalacao}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Confirmar Conclusão
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog de Confirmação - Neo Correção */}
+      <AlertDialog 
+        open={confirmNeoCorrecaoDialog.open} 
+        onOpenChange={(open) => setConfirmNeoCorrecaoDialog({ open, neoCorrecao: null })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Concluir Correção Avulsa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja marcar esta correção avulsa como concluída?
+              <br /><br />
+              <strong>Cliente:</strong> {confirmNeoCorrecaoDialog.neoCorrecao?.nome_cliente}
+              <br /><br />
+              A correção será movida para <strong>"Finalizado"</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConcluirNeoCorrecao}
               className="bg-green-600 hover:bg-green-700"
             >
               Confirmar Conclusão
