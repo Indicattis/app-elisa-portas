@@ -114,11 +114,12 @@ export default function GestaoFabricaDirecao() {
     let filtered = pedidos;
 
     if (searchTerm.trim()) {
-      const termo = searchTerm.toLowerCase();
+      const termo = searchTerm.toLowerCase().trim();
       filtered = filtered.filter((pedido: any) => {
         const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
         const clienteNome = vendaData?.cliente_nome?.toLowerCase() || '';
-        return clienteNome.includes(termo);
+        const numeroPedido = pedido.numero_pedido?.toString() || '';
+        return clienteNome.includes(termo) || numeroPedido.includes(termo);
       });
     }
 
