@@ -205,6 +205,8 @@ export default function ExpedicaoMinimalista() {
                     <CalendarioSemanalExpedicaoMobile
                       startDate={weekStart}
                       ordens={ordens || []}
+                      neoInstalacoes={neoInstalacoes || []}
+                      neoCorrecoes={neoCorrecoes || []}
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
@@ -219,12 +221,16 @@ export default function ExpedicaoMinimalista() {
                       startDate={weekStart}
                       ordens={ordens || []}
                       neoInstalacoes={neoInstalacoes || []}
+                      neoCorrecoes={neoCorrecoes || []}
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
                       onUpdateOrdem={handleUpdateOrdem}
                       onUpdateNeoInstalacao={async (params) => {
                         await updateNeoInstalacao(params);
+                      }}
+                      onUpdateNeoCorrecao={async (params) => {
+                        await updateNeoCorrecao(params);
                       }}
                       onEdit={handleEdit}
                       onRemoverDoCalendario={handleRemoverDoCalendario}
@@ -237,10 +243,14 @@ export default function ExpedicaoMinimalista() {
                       currentMonth={currentDate}
                       ordens={ordens || []}
                       neoInstalacoes={neoInstalacoes || []}
+                      neoCorrecoes={neoCorrecoes || []}
                       onMonthChange={handleMonthChange}
                       onUpdateOrdem={handleUpdateOrdem}
                       onUpdateNeoInstalacao={async (params) => {
                         await updateNeoInstalacao(params);
+                      }}
+                      onUpdateNeoCorrecao={async (params) => {
+                        await updateNeoCorrecao(params);
                       }}
                       onEdit={handleEdit}
                       onRemoverDoCalendario={handleRemoverDoCalendario}

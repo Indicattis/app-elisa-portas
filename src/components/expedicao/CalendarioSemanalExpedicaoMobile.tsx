@@ -1,5 +1,6 @@
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { NeoInstalacao } from "@/types/neoInstalacao";
+import { NeoCorrecao } from "@/types/neoCorrecao";
 import { DiaCardExpedicao } from "./DiaCardExpedicao";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -10,6 +11,7 @@ interface CalendarioSemanalExpedicaoMobileProps {
   startDate: Date;
   ordens: OrdemCarregamento[];
   neoInstalacoes?: NeoInstalacao[];
+  neoCorrecoes?: NeoCorrecao[];
   onPreviousWeek: () => void;
   onNextWeek: () => void;
   onToday: () => void;
@@ -25,6 +27,7 @@ export const CalendarioSemanalExpedicaoMobile = ({
   startDate,
   ordens,
   neoInstalacoes = [],
+  neoCorrecoes = [],
   onPreviousWeek,
   onNextWeek,
   onToday,
@@ -69,6 +72,7 @@ export const CalendarioSemanalExpedicaoMobile = ({
             date={day}
             ordens={ordens}
             neoInstalacoes={neoInstalacoes}
+            neoCorrecoes={neoCorrecoes}
             onDayClick={onDayClick}
             onEdit={onEdit}
             onRemoverDoCalendario={onRemoverDoCalendario}

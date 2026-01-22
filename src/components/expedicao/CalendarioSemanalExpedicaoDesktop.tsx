@@ -5,10 +5,12 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { NeoInstalacao } from "@/types/neoInstalacao";
+import { NeoCorrecao } from "@/types/neoCorrecao";
 import { Button } from "@/components/ui/button";
 import { DroppableDaySimpleExpedicao } from "./DroppableDaySimpleExpedicao";
 import { DraggableOrdemCarregamento } from "./DraggableOrdemCarregamento";
 import { DraggableNeoInstalacao } from "./DraggableNeoInstalacao";
+import { DraggableNeoCorrecao } from "./DraggableNeoCorrecao";
 import { CalendarioLegendas } from "./CalendarioLegendas";
 import { toast } from "sonner";
 
@@ -16,11 +18,13 @@ interface CalendarioSemanalExpedicaoDesktopProps {
   startDate: Date;
   ordens: OrdemCarregamento[];
   neoInstalacoes?: NeoInstalacao[];
+  neoCorrecoes?: NeoCorrecao[];
   onPreviousWeek: () => void;
   onNextWeek: () => void;
   onToday: () => void;
   onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
   onUpdateNeoInstalacao?: (params: { id: string; data: Partial<NeoInstalacao> }) => Promise<void>;
+  onUpdateNeoCorrecao?: (params: { id: string; data: Partial<NeoCorrecao> }) => Promise<void>;
   onEdit?: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario?: (id: string) => void;
   onOrdemCriada?: () => void;
@@ -33,11 +37,13 @@ export const CalendarioSemanalExpedicaoDesktop = ({
   startDate,
   ordens,
   neoInstalacoes = [],
+  neoCorrecoes = [],
   onPreviousWeek,
   onNextWeek,
   onToday,
   onUpdateOrdem,
   onUpdateNeoInstalacao,
+  onUpdateNeoCorrecao,
   onEdit,
   onRemoverDoCalendario,
   onOrdemCriada,
@@ -47,6 +53,7 @@ export const CalendarioSemanalExpedicaoDesktop = ({
 }: CalendarioSemanalExpedicaoDesktopProps) => {
   const [activeOrdem, setActiveOrdem] = useState<OrdemCarregamento | null>(null);
   const [activeNeo, setActiveNeo] = useState<NeoInstalacao | null>(null);
+  const [activeNeoCorrecao, setActiveNeoCorrecao] = useState<NeoCorrecao | null>(null);
 
   // Configurar sensores para mobile e desktop
   const mouseSensor = useSensor(MouseSensor);
@@ -68,9 +75,15 @@ export const CalendarioSemanalExpedicaoDesktop = ({
     if (data?.type === 'neo_instalacao' && data?.neoInstalacao) {
       setActiveNeo(data.neoInstalacao as NeoInstalacao);
       setActiveOrdem(null);
+      setActiveNeoCorrecao(null);
+    } else if (data?.type === 'neo_correcao' && data?.neoCorrecao) {
+      setActiveNeoCorrecao(data.neoCorrecao as NeoCorrecao);
+      setActiveOrdem(null);
+      setActiveNeo(null);
     } else if (data?.ordem) {
       setActiveOrdem(data.ordem as OrdemCarregamento);
       setActiveNeo(null);
+      setActiveNeoCorrecao(null);
     }
   };
 
@@ -79,6 +92,7 @@ export const CalendarioSemanalExpedicaoDesktop = ({
     
     setActiveOrdem(null);
     setActiveNeo(null);
+    setActiveNeoCorrecao(null);
 
     if (!over) return;
 
@@ -111,7 +125,28 @@ export const CalendarioSemanalExpedicaoDesktop = ({
         return;
       }
 
-      // Se não for neo instalação, trata como ordem de carregamento
+      // Verifica se é uma neo correção
+      if (activeData?.type === 'neo_correcao' && activeData?.neoCorrecao) {
+        const neo = activeData.neoCorrecao as NeoCorrecao;
+        
+        if (neo.data_correcao) {
+          const dataAtual = new Date(neo.data_correcao);
+          if (isSameDay(dataAtual, novaData)) return;
+        }
+
+        if (onUpdateNeoCorrecao) {
+          await onUpdateNeoCorrecao({
+            id: neo.id,
+            data: {
+              data_correcao: dataFormatada,
+            },
+          });
+          toast.success("Data da correção atualizada");
+        }
+        return;
+      }
+
+      // Se não for neo instalação/correção, trata como ordem de carregamento
       const ordemId = active.id as string;
       const ordem = ordens.find((o) => o.id === ordemId);
       if (!ordem) return;
@@ -186,6 +221,7 @@ export const CalendarioSemanalExpedicaoDesktop = ({
             date={day}
             ordens={ordens}
             neoInstalacoes={neoInstalacoes}
+            neoCorrecoes={neoCorrecoes}
             onDayClick={handleDayClick}
             onEdit={readOnly ? undefined : onEdit}
             onRemoverDoCalendario={readOnly ? undefined : onRemoverDoCalendario}
@@ -222,6 +258,10 @@ export const CalendarioSemanalExpedicaoDesktop = ({
         ) : activeNeo ? (
           <div className="opacity-80">
             <DraggableNeoInstalacao neoInstalacao={activeNeo} />
+          </div>
+        ) : activeNeoCorrecao ? (
+          <div className="opacity-80">
+            <DraggableNeoCorrecao neoCorrecao={activeNeoCorrecao} />
           </div>
         ) : null}
       </DragOverlay>
