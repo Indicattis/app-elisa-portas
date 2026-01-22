@@ -1,20 +1,18 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { DollarSign, Users, ShoppingCart, FileText, Package, Lock, ArrowLeft } from "lucide-react";
+import { Receipt, Coins, Wallet, Lock, ArrowLeft } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 
 const menuItems = [
-  { label: "Financeiro", icon: DollarSign, path: "/administrativo/financeiro", ativo: true },
-  { label: "RH/DP", icon: Users, path: "/administrativo/rh-dp", ativo: false },
-  { label: "Compras & Suprimentos", icon: ShoppingCart, path: "/administrativo/compras", ativo: false },
-  { label: "Fiscal & Contábil", icon: FileText, path: "/administrativo/controladoria", ativo: false },
-  { label: "Pedidos", icon: Package, path: "/administrativo/pedidos", ativo: true },
+  { label: "Faturamento", icon: Receipt, path: "/administrativo/financeiro/faturamento", ativo: true },
+  { label: "Custos", icon: Coins, path: "/administrativo/financeiro/custos", ativo: true },
+  { label: "Caixa", icon: Wallet, path: "/administrativo/financeiro/caixa", ativo: false },
 ];
 
-export default function AdministrativoHub() {
+export default function FinanceiroHub() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
@@ -41,7 +39,8 @@ export default function AdministrativoHub() {
       <AnimatedBreadcrumb 
         items={[
           { label: "Home", path: "/home" },
-          { label: "Administrativo" }
+          { label: "Administrativo", path: "/administrativo" },
+          { label: "Financeiro" }
         ]} 
         mounted={mounted} 
       />
@@ -51,7 +50,7 @@ export default function AdministrativoHub() {
 
       {/* Botão Voltar */}
       <button
-        onClick={() => navigate('/home')}
+        onClick={() => navigate('/administrativo')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
                    hover:bg-white/10 transition-all duration-300"
         style={{
@@ -64,8 +63,6 @@ export default function AdministrativoHub() {
           <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
         </div>
       </button>
-
-      
 
       {/* ========== VERSÃO MOBILE ========== */}
       <div className="md:hidden relative z-10 flex flex-col items-center px-6 py-10 w-full max-w-md">

@@ -208,6 +208,9 @@ import OrdensInstalacoesLogistica from "./pages/logistica/OrdensInstalacoesLogis
 import AdministrativoHub from "./pages/administrativo/AdministrativoHub";
 import PedidosAdminMinimalista from "./pages/administrativo/PedidosAdminMinimalista";
 import PedidoViewMinimalista from "./pages/administrativo/PedidoViewMinimalista";
+import FinanceiroHub from "./pages/administrativo/FinanceiroHub";
+import FaturamentoMinimalista from "./pages/administrativo/FaturamentoMinimalista";
+import CustosMinimalista from "./pages/administrativo/CustosMinimalista";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -384,6 +387,9 @@ const App = () => (
                 <Route path="/administrativo" element={<ProtectedRoute><AdministrativoHub /></ProtectedRoute>} />
                 <Route path="/administrativo/pedidos" element={<ProtectedRoute><PedidosAdminMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/pedidos/:id" element={<ProtectedRoute><PedidoViewMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/financeiro" element={<ProtectedRoute><FinanceiroHub /></ProtectedRoute>} />
+                <Route path="/administrativo/financeiro/faturamento" element={<ProtectedRoute><FaturamentoMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/financeiro/custos" element={<ProtectedRoute><CustosMinimalista /></ProtectedRoute>} />
 
                 {/* Hub da Fábrica Legado - usa autenticação própria com CPF */}
                 <Route path="/hub-fabrica" element={<HubFabrica />} />
