@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { addDays } from 'date-fns';
 import { PagamentoData } from '@/components/vendas/PagamentoSection';
+import { MetodoPagamento } from '@/components/vendas/MetodoPagamentoCard';
 
 export interface ProdutoVenda {
   id?: string;
@@ -264,12 +265,13 @@ export function useVendas() {
       // 5. Criar venda com valores calculados
       const { endereco, venda_presencial, cliente_id: _, ...vendaDataLimpo } = vendaData;
       
-      // Definir se pagamento é na instalação (para cartão de crédito)
-      const pagoNaInstalacao = pagamentoData?.metodo_pagamento === 'cartao_credito' && pagamentoData?.pago_na_instalacao;
+      // Extrair o método de pagamento principal (primeiro método válido)
+      const metodoPrincipal = pagamentoData?.metodos?.[0]?.tipo || vendaData.forma_pagamento;
+      const empresaReceptoraPrincipal = pagamentoData?.metodos?.[0]?.empresa_receptora_id || null;
       
       const vendaPayload = {
         ...vendaDataLimpo,
-        cliente_id: clienteId, // Vincula ao cliente
+        cliente_id: clienteId,
         cpf_cliente: vendaData.cpf_cliente || null,
         atendente_id: adminUser.user_id,
         data_venda: vendaData.data_venda || new Date().toISOString(),
@@ -283,10 +285,10 @@ export function useVendas() {
         valor_credito: valorCreditoVenda,
         percentual_credito: percentualCreditoVenda,
         // Campos de pagamento
-        metodo_pagamento: pagamentoData?.metodo_pagamento || vendaData.forma_pagamento,
-        empresa_receptora_id: pagamentoData?.empresa_receptora_id || null,
-        quantidade_parcelas: pagamentoData?.quantidade_parcelas || 1,
-        pago_na_instalacao: pagoNaInstalacao
+        metodo_pagamento: metodoPrincipal,
+        empresa_receptora_id: empresaReceptoraPrincipal,
+        quantidade_parcelas: pagamentoData?.metodos?.[0]?.parcelas_boleto || pagamentoData?.metodos?.[0]?.parcelas_cartao || 1,
+        pago_na_instalacao: false
       };
 
       console.log('📦 Venda payload:', vendaPayload);
@@ -326,123 +328,44 @@ export function useVendas() {
       
       if (produtosError) throw produtosError;
 
-      // 7. GERAR CONTAS A RECEBER baseado no método de pagamento
-      const dataVendaBase = new Date(vendaData.data_venda || new Date().toISOString());
-      
+      // 7. GERAR CONTAS A RECEBER baseado nos métodos de pagamento
       if (pagamentoData) {
-        // === BOLETO ===
-        if (pagamentoData.metodo_pagamento === 'boleto') {
-          const valorParcela = valor_a_receber / pagamentoData.quantidade_parcelas;
-          const parcelas = [];
+        const metodosParaProcessar = pagamentoData.usar_dois_metodos 
+          ? pagamentoData.metodos.filter(m => m.tipo)
+          : [pagamentoData.metodos[0]].filter(m => m.tipo);
+        
+        for (const metodo of metodosParaProcessar) {
+          if (!metodo.tipo || metodo.valor <= 0) continue;
           
-          for (let i = 1; i <= pagamentoData.quantidade_parcelas; i++) {
-            const dataVencimento = addDays(dataVendaBase, pagamentoData.intervalo_boletos * i);
-            parcelas.push({
-              venda_id: venda.id,
-              numero_parcela: i,
-              valor_parcela: valorParcela,
-              data_vencimento: dataVencimento.toISOString().split('T')[0],
-              metodo_pagamento: 'boleto',
-              empresa_receptora_id: pagamentoData.empresa_receptora_id || null,
-              status: 'pendente'
-            });
-          }
+          const dataBase = metodo.data_pagamento || new Date(vendaData.data_venda || new Date().toISOString());
           
-          if (parcelas.length > 0) {
-            const { error: parcelasError } = await supabase
-              .from('contas_receber')
-              .insert(parcelas);
+          await gerarContasReceberPorMetodo(venda.id, metodo, dataBase);
+        }
+        
+        // Upload de comprovantes (para método à vista)
+        for (const metodo of metodosParaProcessar) {
+          if (metodo.tipo === 'a_vista' && metodo.comprovante_file) {
+            const fileName = `${venda.id}/${Date.now()}_${metodo.comprovante_file.name}`;
             
-            if (parcelasError) {
-              console.error('Erro ao criar parcelas boleto:', parcelasError);
-            }
-          }
-        }
-        
-        // === CARTÃO DE CRÉDITO (sem pagamento na instalação) ===
-        if (pagamentoData.metodo_pagamento === 'cartao_credito' && !pagamentoData.pago_na_instalacao) {
-          const valorParcela = valor_a_receber / pagamentoData.quantidade_parcelas;
-          const parcelas = [];
-          
-          for (let i = 1; i <= pagamentoData.quantidade_parcelas; i++) {
-            const dataVencimento = addDays(dataVendaBase, 30 * i);
-            parcelas.push({
-              venda_id: venda.id,
-              numero_parcela: i,
-              valor_parcela: valorParcela,
-              data_vencimento: dataVencimento.toISOString().split('T')[0],
-              metodo_pagamento: 'cartao_credito',
-              empresa_receptora_id: pagamentoData.empresa_receptora_id || null,
-              status: 'pendente'
-            });
-          }
-          
-          if (parcelas.length > 0) {
-            const { error: parcelasError } = await supabase
-              .from('contas_receber')
-              .insert(parcelas);
-            
-            if (parcelasError) {
-              console.error('Erro ao criar parcelas cartão:', parcelasError);
-            }
-          }
-        }
-        
-        // === CARTÃO DE CRÉDITO (com pagamento na instalação) ===
-        // As parcelas serão geradas quando a entrega for concluída
-        // A flag pago_na_instalacao já foi salva na venda
-        
-        // === DINHEIRO COM 2 PARCELAS ===
-        if (pagamentoData.metodo_pagamento === 'dinheiro' && pagamentoData.parcelas_dinheiro === 2) {
-          const saldoRestante = valor_a_receber - (pagamentoData.valor_entrada_dinheiro || 0);
-          
-          // Data de vencimento = data prevista de entrega ou 30 dias após a venda
-          const dataVencimento = vendaData.data_prevista_entrega 
-            ? new Date(vendaData.data_prevista_entrega)
-            : addDays(dataVendaBase, 30);
-          
-          const { error: parcelaDinheiroError } = await supabase
-            .from('contas_receber')
-            .insert({
-              venda_id: venda.id,
-              numero_parcela: 2,
-              valor_parcela: saldoRestante,
-              data_vencimento: dataVencimento.toISOString().split('T')[0],
-              metodo_pagamento: 'dinheiro',
-              status: 'pendente',
-              pago_na_instalacao: pagamentoData.restante_na_instalacao
-            });
-          
-          if (parcelaDinheiroError) {
-            console.error('Erro ao criar parcela dinheiro:', parcelaDinheiroError);
-          }
-        }
-        
-        // === À VISTA ou DINHEIRO 1 PARCELA ===
-        // Não gera contas a receber (pagamento já realizado)
-        
-        // === UPLOAD COMPROVANTE PARA À VISTA ===
-        if (pagamentoData.metodo_pagamento === 'a_vista' && pagamentoData.comprovante_file) {
-          const fileName = `${venda.id}/${Date.now()}_${pagamentoData.comprovante_file.name}`;
-          
-          const { error: uploadError } = await supabase.storage
-            .from('comprovantes-pagamento')
-            .upload(fileName, pagamentoData.comprovante_file);
-          
-          if (!uploadError) {
-            const { data: urlData } = supabase.storage
+            const { error: uploadError } = await supabase.storage
               .from('comprovantes-pagamento')
-              .getPublicUrl(fileName);
+              .upload(fileName, metodo.comprovante_file);
             
-            await supabase
-              .from('vendas')
-              .update({ 
-                comprovante_url: urlData.publicUrl,
-                comprovante_nome: pagamentoData.comprovante_file.name 
-              })
-              .eq('id', venda.id);
-          } else {
-            console.error('Erro ao fazer upload do comprovante:', uploadError);
+            if (!uploadError) {
+              const { data: urlData } = supabase.storage
+                .from('comprovantes-pagamento')
+                .getPublicUrl(fileName);
+              
+              await supabase
+                .from('vendas')
+                .update({ 
+                  comprovante_url: urlData.publicUrl,
+                  comprovante_nome: metodo.comprovante_file.name 
+                })
+                .eq('id', venda.id);
+            } else {
+              console.error('Erro ao fazer upload do comprovante:', uploadError);
+            }
           }
         }
       }
@@ -571,4 +494,89 @@ export function useVendas() {
     isCreating: createVendaMutation.isPending,
     isDeleting: deleteVendaMutation.isPending
   };
+}
+
+// Função auxiliar para gerar contas a receber por método
+async function gerarContasReceberPorMetodo(
+  vendaId: string, 
+  metodo: MetodoPagamento, 
+  dataBase: Date
+) {
+  const parcelas: any[] = [];
+  
+  switch (metodo.tipo) {
+    case 'boleto': {
+      const valorParcela = metodo.valor / metodo.parcelas_boleto;
+      for (let i = 0; i < metodo.parcelas_boleto; i++) {
+        const dataVencimento = addDays(dataBase, metodo.intervalo_boletos * i);
+        parcelas.push({
+          venda_id: vendaId,
+          numero_parcela: i + 1,
+          valor_parcela: valorParcela,
+          data_vencimento: dataVencimento.toISOString().split('T')[0],
+          metodo_pagamento: 'boleto',
+          empresa_receptora_id: metodo.empresa_receptora_id || null,
+          status: 'pendente'
+        });
+      }
+      break;
+    }
+    
+    case 'cartao_credito': {
+      const valorParcela = metodo.valor / metodo.parcelas_cartao;
+      for (let i = 0; i < metodo.parcelas_cartao; i++) {
+        const dataVencimento = addDays(dataBase, 30 * i);
+        parcelas.push({
+          venda_id: vendaId,
+          numero_parcela: i + 1,
+          valor_parcela: valorParcela,
+          data_vencimento: dataVencimento.toISOString().split('T')[0],
+          metodo_pagamento: 'cartao_credito',
+          empresa_receptora_id: metodo.empresa_receptora_id || null,
+          status: 'pendente'
+        });
+      }
+      break;
+    }
+    
+    case 'dinheiro': {
+      // Dinheiro gera 1 conta a receber pendente
+      parcelas.push({
+        venda_id: vendaId,
+        numero_parcela: 1,
+        valor_parcela: metodo.valor,
+        data_vencimento: dataBase.toISOString().split('T')[0],
+        metodo_pagamento: 'dinheiro',
+        empresa_receptora_id: metodo.empresa_receptora_id || null,
+        status: 'pendente'
+      });
+      break;
+    }
+    
+    case 'a_vista': {
+      // À vista gera 1 conta já paga
+      parcelas.push({
+        venda_id: vendaId,
+        numero_parcela: 1,
+        valor_parcela: metodo.valor,
+        data_vencimento: dataBase.toISOString().split('T')[0],
+        data_pagamento: dataBase.toISOString().split('T')[0],
+        valor_pago: metodo.valor,
+        metodo_pagamento: 'a_vista',
+        empresa_receptora_id: metodo.empresa_receptora_id || null,
+        status: 'pago'
+      });
+      break;
+    }
+  }
+  
+  if (parcelas.length > 0) {
+    const { error } = await supabase
+      .from('contas_receber')
+      .insert(parcelas);
+    
+    if (error) {
+      console.error('Erro ao criar contas a receber:', error);
+    }
+  }
 }
