@@ -24,9 +24,11 @@ import {
   Wrench,
   Paintbrush,
   Target,
-  Calculator
+  Calculator,
+  Timer,
+  AlertCircle
 } from "lucide-react";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, differenceInDays, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
@@ -69,6 +71,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'tipo_entrega', label: 'Tipo Entrega', defaultVisible: true },
   { id: 'valor_frete', label: 'Frete', defaultVisible: true },
   { id: 'valor_instalacao', label: 'Instalação', defaultVisible: true },
+  { id: 'tempo_faturamento', label: 'Tempo', defaultVisible: true },
   { id: 'lucro_total', label: 'Lucro', defaultVisible: true },
   { id: 'valor_total', label: 'Valor Total', defaultVisible: true },
   { id: 'status', label: 'Status', defaultVisible: true },
@@ -291,7 +294,30 @@ export default function FaturamentoMinimalista() {
     fretesTotais: filteredVendas.reduce((acc, v) => 
       acc + (v.valor_frete || 0), 0),
     
+    valorPendente: filteredVendas
+      .filter(v => !isFaturada(v))
+      .reduce((acc, v) => acc + (v.valor_venda || 0) + (v.valor_credito || 0), 0),
+    
     lucroBrutoTotal,
+  };
+
+  // Função para calcular tempo de faturamento
+  const calcularTempoFaturamento = (venda: Venda) => {
+    const dataVenda = new Date(venda.data_venda);
+    const agora = new Date();
+    
+    // Se foi faturada, calcular até a data de faturamento (usando a última porta faturada)
+    // Por enquanto, usamos a data atual como referência
+    const dias = differenceInDays(agora, dataVenda);
+    const horas = differenceInHours(agora, dataVenda) % 24;
+    
+    if (dias === 0) {
+      return `${horas}h`;
+    } else if (dias === 1) {
+      return `1 dia`;
+    } else {
+      return `${dias} dias`;
+    }
   };
 
   const handleGeneratePDF = () => {
@@ -381,6 +407,19 @@ export default function FaturamentoMinimalista() {
           <span className="text-white/80">
             {formatCurrency(venda.valor_instalacao || 0)}
           </span>
+        );
+      case 'tempo_faturamento':
+        const tempo = calcularTempoFaturamento(venda);
+        const faturada = isFaturada(venda);
+        return (
+          <div className={cn(
+            "flex items-center gap-1.5 text-sm",
+            faturada ? "text-emerald-400" : "text-amber-400"
+          )}>
+            <Timer className="h-3.5 w-3.5" />
+            <span>{tempo}</span>
+            {!faturada && <span className="animate-pulse">•</span>}
+          </div>
         );
       case 'lucro_total':
         return isFaturada(venda) ? (
@@ -531,7 +570,7 @@ export default function FaturamentoMinimalista() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
               <div className="text-center p-3 rounded-lg bg-white/5">
                 <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
                   <DollarSign className="h-3 w-3 text-blue-400" />
@@ -593,6 +632,15 @@ export default function FaturamentoMinimalista() {
                 </div>
                 <p className="text-green-400 font-bold text-lg">
                   {formatCurrency(indicadores.lucroBrutoTotal)}
+                </p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-white/5 border border-red-500/20">
+                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                  <AlertCircle className="h-3 w-3 text-red-400" />
+                  Pendente
+                </div>
+                <p className="text-red-400 font-bold text-lg">
+                  {formatCurrency(indicadores.valorPendente)}
                 </p>
               </div>
             </div>
