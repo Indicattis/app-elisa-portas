@@ -5,8 +5,10 @@ import { ptBR } from "date-fns/locale";
 import { Plus } from "lucide-react";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { NeoInstalacao } from "@/types/neoInstalacao";
+import { NeoCorrecao } from "@/types/neoCorrecao";
 import { DraggableOrdemCarregamento } from "./DraggableOrdemCarregamento";
 import { DraggableNeoInstalacao } from "./DraggableNeoInstalacao";
+import { DraggableNeoCorrecao } from "./DraggableNeoCorrecao";
 import { AdicionarOrdemCalendarioModal } from "./AdicionarOrdemCalendarioModal";
 import { Button } from "@/components/ui/button";
 
@@ -14,6 +16,7 @@ interface DroppableDaySimpleExpedicaoProps {
   date: Date;
   ordens: OrdemCarregamento[];
   neoInstalacoes?: NeoInstalacao[];
+  neoCorrecoes?: NeoCorrecao[];
   onDayClick: (date: Date) => void;
   onEdit?: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario?: (id: string) => void;
@@ -27,6 +30,7 @@ export const DroppableDaySimpleExpedicao = ({
   date,
   ordens,
   neoInstalacoes = [],
+  neoCorrecoes = [],
   onDayClick,
   onEdit,
   onRemoverDoCalendario,
@@ -57,6 +61,11 @@ export const DroppableDaySimpleExpedicao = ({
   const neoNoDia = neoInstalacoes.filter((neo) => {
     if (!neo.data_instalacao) return false;
     return isSameDay(parseISO(neo.data_instalacao), date);
+  });
+
+  const neoCorrecoesNoDia = neoCorrecoes.filter((neo) => {
+    if (!neo.data_correcao) return false;
+    return isSameDay(parseISO(neo.data_correcao), date);
   });
 
   const handleConfirmModal = async (params: {
@@ -131,6 +140,13 @@ export const DroppableDaySimpleExpedicao = ({
             <DraggableNeoInstalacao
               key={neo.id}
               neoInstalacao={neo}
+              disableDrag={readOnly}
+            />
+          ))}
+          {neoCorrecoesNoDia.map((neo) => (
+            <DraggableNeoCorrecao
+              key={neo.id}
+              neoCorrecao={neo}
               disableDrag={readOnly}
             />
           ))}

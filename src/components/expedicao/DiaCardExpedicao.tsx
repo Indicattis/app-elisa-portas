@@ -6,14 +6,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { NeoInstalacao } from "@/types/neoInstalacao";
+import { NeoCorrecao } from "@/types/neoCorrecao";
 import { OrdemCarregamentoCard } from "./OrdemCarregamentoCard";
 import { NeoInstalacaoCard } from "./NeoInstalacaoCard";
+import { NeoCorrecaoCard } from "./NeoCorrecaoCard";
 import { AdicionarOrdemCalendarioModal } from "./AdicionarOrdemCalendarioModal";
 
 interface DiaCardExpedicaoProps {
   date: Date;
   ordens: OrdemCarregamento[];
   neoInstalacoes?: NeoInstalacao[];
+  neoCorrecoes?: NeoCorrecao[];
   onDayClick: (date: Date) => void;
   onEdit?: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario?: (id: string) => void;
@@ -26,6 +29,7 @@ export const DiaCardExpedicao = ({
   date,
   ordens,
   neoInstalacoes = [],
+  neoCorrecoes = [],
   onDayClick,
   onEdit,
   onRemoverDoCalendario,
@@ -47,6 +51,11 @@ export const DiaCardExpedicao = ({
   const neoNoDia = neoInstalacoes.filter((neo) => {
     if (!neo.data_instalacao) return false;
     return isSameDay(parseISO(neo.data_instalacao), date);
+  });
+
+  const neoCorrecoesNoDia = neoCorrecoes.filter((neo) => {
+    if (!neo.data_correcao) return false;
+    return isSameDay(parseISO(neo.data_correcao), date);
   });
 
   const handleConfirmModal = async (params: {
@@ -110,7 +119,7 @@ export const DiaCardExpedicao = ({
 
         {/* Lista de ordens */}
         <div className="flex-1 space-y-2 overflow-y-auto">
-          {ordensNoDia.length === 0 && neoNoDia.length === 0 ? (
+          {ordensNoDia.length === 0 && neoNoDia.length === 0 && neoCorrecoesNoDia.length === 0 ? (
             <div className="text-center py-4 text-xs text-muted-foreground">
               Nenhuma ordem
             </div>
@@ -127,6 +136,9 @@ export const DiaCardExpedicao = ({
               ))}
               {neoNoDia.map((neo) => (
                 <NeoInstalacaoCard key={neo.id} neoInstalacao={neo} />
+              ))}
+              {neoCorrecoesNoDia.map((neo) => (
+                <NeoCorrecaoCard key={neo.id} neoCorrecao={neo} />
               ))}
             </>
           )}
