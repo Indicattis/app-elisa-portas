@@ -63,7 +63,6 @@ export default function VendaNovaMinimalista() {
   });
 
   const [portas, setPortas] = useState<ProdutoVenda[]>([]);
-  const [dataVenda, setDataVenda] = useState<Date>();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
   const [produtoEditando, setProdutoEditando] = useState<ProdutoVenda | undefined>(undefined);
@@ -398,8 +397,8 @@ export default function VendaNovaMinimalista() {
         vendaData: {
           ...formData,
           forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
-          data_venda: dataVenda ? dataVenda.toISOString() : new Date().toISOString(),
-        }, 
+          data_venda: new Date().toISOString(),
+        },
         portas,
         pagamentoData,
         creditoVenda: { valorCredito, percentualCredito }
@@ -426,7 +425,7 @@ export default function VendaNovaMinimalista() {
         vendaData: {
           ...formData,
           forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
-          data_venda: dataVenda ? dataVenda.toISOString() : new Date().toISOString(),
+          data_venda: new Date().toISOString(),
         },
         portas: produtosComDesconto,
         pagamentoData,
@@ -476,6 +475,7 @@ export default function VendaNovaMinimalista() {
             endereco: formData.endereco,
             bairro: formData.bairro,
             canal_aquisicao_id: formData.canal_aquisicao_id || '',
+            publico_alvo: formData.publico_alvo,
           }}
           onChange={(dados) => setFormData(prev => ({ ...prev, ...dados }))}
           onClienteSelecionado={(cliente) => {
@@ -483,62 +483,6 @@ export default function VendaNovaMinimalista() {
           }}
           disabled={isFromOrcamento}
         />
-
-        {/* Dados da Venda */}
-        <Card className={cardClass}>
-          <CardHeader className="pb-3 pt-4">
-            <CardTitle className="text-base font-semibold text-white">Dados da Venda</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-4">
-            <div className="space-y-1">
-              <Label htmlFor="data_venda" className={labelClass}>Data</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal h-9",
-                      inputClass,
-                      !dataVenda && "text-white/60"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                    {dataVenda ? format(dataVenda, "dd/MM/yyyy", { locale: ptBR }) : <span>Hoje</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dataVenda}
-                    onSelect={setDataVenda}
-                    disabled={(date) => date > new Date()}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="publico_alvo" className={labelClass}>Público *</Label>
-              <Select
-                value={formData.publico_alvo}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, publico_alvo: value }))}
-                required
-              >
-                <SelectTrigger className={inputClass}>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cliente_final">Cliente Final</SelectItem>
-                  <SelectItem value="serralheiro">Serralheiro</SelectItem>
-                  <SelectItem value="empresa">Empresa</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Forma de Pagamento */}
         <PagamentoSection

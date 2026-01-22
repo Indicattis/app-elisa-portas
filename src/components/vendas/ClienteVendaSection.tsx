@@ -25,6 +25,7 @@ interface DadosCliente {
   endereco: string;
   bairro: string;
   canal_aquisicao_id: string;
+  publico_alvo: string;
 }
 
 interface ClienteVendaSectionProps {
@@ -552,25 +553,43 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
               </div>
             </div>
 
-            {/* Canal de Aquisição */}
+            {/* Canal de Aquisição e Público Alvo */}
             <div className="pt-2 border-t">
-              <div className="space-y-1 max-w-xs">
-                <Label htmlFor="canal_aquisicao_id" className="text-xs font-medium">Canal de Aquisição</Label>
-                <Select
-                  value={dados.canal_aquisicao_id}
-                  onValueChange={(value) => onChange({ canal_aquisicao_id: value })}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Como conheceu?" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {canais.map((canal) => (
-                      <SelectItem key={canal.id} value={canal.id}>
-                        {canal.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-md">
+                <div className="space-y-1">
+                  <Label htmlFor="canal_aquisicao_id" className="text-xs font-medium">Canal de Aquisição</Label>
+                  <Select
+                    value={dados.canal_aquisicao_id}
+                    onValueChange={(value) => onChange({ canal_aquisicao_id: value })}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Como conheceu?" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {canais.map((canal) => (
+                        <SelectItem key={canal.id} value={canal.id}>
+                          {canal.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="publico_alvo" className="text-xs font-medium">Público Alvo *</Label>
+                  <Select
+                    value={dados.publico_alvo}
+                    onValueChange={(value) => onChange({ publico_alvo: value })}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cliente_final">Cliente Final</SelectItem>
+                      <SelectItem value="serralheiro">Serralheiro</SelectItem>
+                      <SelectItem value="empresa">Empresa</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </>
