@@ -202,7 +202,10 @@ export default function FaturamentoVendaMinimalista() {
   const vendaFaturada = todosProdutosFaturados && venda?.frete_aprovado === true;
   const totalLucro = produtos?.reduce((acc, p) => acc + ((p.lucro_item || 0) * p.quantidade), 0) || 0;
   const margem = venda && venda.valor_venda > 0 ? (totalLucro / venda.valor_venda) * 100 : 0;
-  const produtosFaturados = produtos?.filter(p => p.lucro_item !== null && p.lucro_item !== undefined).length || 0;
+  // Só conta como faturado se lucro_item > 0 OU se o faturamento já foi finalizado
+  const produtosFaturados = produtos?.filter(p => 
+    p.faturamento === true || (p.lucro_item !== null && p.lucro_item !== undefined && p.lucro_item > 0)
+  ).length || 0;
   const totalProdutos = produtos?.length || 0;
 
   // Descontos e acréscimos
