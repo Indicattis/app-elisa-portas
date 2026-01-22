@@ -8,6 +8,7 @@ interface DraggableNeoInstalacaoProps {
   onClick?: (neoInstalacao: NeoInstalacao) => void;
   onConcluir?: (id: string) => void;
   onRemover?: (id: string) => void;
+  onOpenDetails?: (neoInstalacao: NeoInstalacao) => void;
   disableDrag?: boolean;
 }
 
@@ -16,6 +17,7 @@ export const DraggableNeoInstalacao = ({
   onClick,
   onConcluir,
   onRemover,
+  onOpenDetails,
   disableDrag = false,
 }: DraggableNeoInstalacaoProps) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -40,6 +42,7 @@ export const DraggableNeoInstalacao = ({
         onClick={onClick}
         onConcluir={onConcluir}
         onRemover={onRemover}
+        onOpenDetails={onOpenDetails}
         dragListeners={disableDrag ? undefined : listeners}
       />
     </div>

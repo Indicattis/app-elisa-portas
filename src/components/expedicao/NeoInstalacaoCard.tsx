@@ -13,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MoreVertical, MapPin, Info, Edit, XCircle, CheckCircle } from "lucide-react";
+import { MoreVertical, MapPin, Info, XCircle, CheckCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NeoInstalacao } from "@/types/neoInstalacao";
@@ -23,6 +23,7 @@ interface NeoInstalacaoCardProps {
   onClick?: (neoInstalacao: NeoInstalacao) => void;
   onConcluir?: (id: string) => void;
   onRemover?: (id: string) => void;
+  onOpenDetails?: (neoInstalacao: NeoInstalacao) => void;
   dragListeners?: any;
 }
 
@@ -31,11 +32,12 @@ export const NeoInstalacaoCard = ({
   onClick,
   onConcluir,
   onRemover,
+  onOpenDetails,
   dragListeners,
 }: NeoInstalacaoCardProps) => {
   const corEquipe = neoInstalacao.equipe?.cor || "#6366f1";
 
-  // Estilo igual ao de instalação Elisa (Azul)
+  // Estilo azul para instalações
   const getCardStyles = () => {
     return {
       backgroundColor: 'rgb(59 130 246 / 0.15)',
@@ -58,7 +60,7 @@ export const NeoInstalacaoCard = ({
         <div className="flex items-center gap-2 flex-1 min-w-0 cursor-grab active:cursor-grabbing" {...dragListeners}>
           <Badge 
             variant="outline" 
-            className="text-[9px] px-1 py-0 h-4 shrink-0 bg-purple-500/20 text-purple-300 border-purple-400/50"
+            className="text-[9px] px-1 py-0 h-4 shrink-0 bg-blue-500/20 text-blue-300 border-blue-400/50"
           >
             Avulso
           </Badge>
@@ -112,7 +114,10 @@ export const NeoInstalacaoCard = ({
               <TooltipTrigger asChild>
                 <button 
                   className="p-0.5 hover:bg-accent rounded-md transition-colors"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenDetails?.(neoInstalacao);
+                  }}
                 >
                   <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
                 </button>
@@ -124,7 +129,7 @@ export const NeoInstalacaoCard = ({
                   </div>
 
                   <div className="flex items-center gap-1 text-[10px]">
-                    <span className="font-medium text-purple-400">Instalação Avulsa</span>
+                    <span className="font-medium text-blue-400">Instalação Avulsa</span>
                     <span className="text-muted-foreground">•</span>
                     <span className="text-muted-foreground">
                       {getResponsavelNome()}
@@ -149,6 +154,10 @@ export const NeoInstalacaoCard = ({
                       <p className="text-[9px] text-muted-foreground">{neoInstalacao.descricao}</p>
                     </div>
                   )}
+                  
+                  <p className="text-[9px] text-muted-foreground/70 italic pt-1">
+                    Clique no ícone ℹ️ para ver detalhes completos
+                  </p>
                 </div>
               </TooltipContent>
             </Tooltip>

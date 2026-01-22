@@ -23,6 +23,8 @@ interface DroppableDaySimpleExpedicaoProps {
   onOrdemDropped?: () => void;
   onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
+  onOpenNeoInstalacaoDetails?: (neoInstalacao: NeoInstalacao) => void;
+  onOpenNeoCorrecaoDetails?: (neoCorrecao: NeoCorrecao) => void;
   readOnly?: boolean;
 }
 
@@ -37,6 +39,8 @@ export const DroppableDaySimpleExpedicao = ({
   onOrdemDropped,
   onUpdateOrdem,
   onOrdemClick,
+  onOpenNeoInstalacaoDetails,
+  onOpenNeoCorrecaoDetails,
   readOnly = false,
 }: DroppableDaySimpleExpedicaoProps) => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -140,6 +144,7 @@ export const DroppableDaySimpleExpedicao = ({
             <DraggableNeoInstalacao
               key={neo.id}
               neoInstalacao={neo}
+              onOpenDetails={onOpenNeoInstalacaoDetails}
               disableDrag={readOnly}
             />
           ))}
@@ -147,6 +152,7 @@ export const DroppableDaySimpleExpedicao = ({
             <DraggableNeoCorrecao
               key={neo.id}
               neoCorrecao={neo}
+              onOpenDetails={onOpenNeoCorrecaoDetails}
               disableDrag={readOnly}
             />
           ))}

@@ -23,6 +23,8 @@ interface DiaCardExpedicaoProps {
   onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
   onOrdemAdded?: () => void;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
+  onOpenNeoInstalacaoDetails?: (neoInstalacao: NeoInstalacao) => void;
+  onOpenNeoCorrecaoDetails?: (neoCorrecao: NeoCorrecao) => void;
 }
 
 export const DiaCardExpedicao = ({
@@ -36,6 +38,8 @@ export const DiaCardExpedicao = ({
   onUpdateOrdem,
   onOrdemAdded,
   onOrdemClick,
+  onOpenNeoInstalacaoDetails,
+  onOpenNeoCorrecaoDetails,
 }: DiaCardExpedicaoProps) => {
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -135,10 +139,10 @@ export const DiaCardExpedicao = ({
                 />
               ))}
               {neoNoDia.map((neo) => (
-                <NeoInstalacaoCard key={neo.id} neoInstalacao={neo} />
+                <NeoInstalacaoCard key={neo.id} neoInstalacao={neo} onOpenDetails={onOpenNeoInstalacaoDetails} />
               ))}
               {neoCorrecoesNoDia.map((neo) => (
-                <NeoCorrecaoCard key={neo.id} neoCorrecao={neo} />
+                <NeoCorrecaoCard key={neo.id} neoCorrecao={neo} onOpenDetails={onOpenNeoCorrecaoDetails} />
               ))}
             </>
           )}
