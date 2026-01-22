@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Package, Clock, CheckCircle, Paintbrush, Truck, Wrench, ArchiveRestore, RefreshCw, HardHat } from "lucide-react";
+import { Package, Clock, CheckCircle, Paintbrush, Truck, Wrench, ArchiveRestore, RefreshCw, HardHat, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +21,7 @@ const ETAPA_ICONS: Record<EtapaPedido, any> = {
   aguardando_coleta: Truck,
   aguardando_instalacao: Wrench,
   instalacoes: HardHat,
+  correcoes: AlertTriangle,
   finalizado: ArchiveRestore,
 };
 
