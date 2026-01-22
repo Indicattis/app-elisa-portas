@@ -960,7 +960,7 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: '24px 24px 1fr 70px 24px 50px 50px 95px 80px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}>
+            <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: '24px 24px 28px 1fr 70px 24px 50px 50px 95px 80px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}>
               {/* Col 1: Drag Handle */}
               <div>
                 {dragHandleProps ? (
@@ -969,6 +969,15 @@ export function PedidoCard({
                   </div>
                 ) : (
                   <span />
+                )}
+              </div>
+              
+              {/* Col 2: Índice de prioridade */}
+              <div className="flex items-center justify-center">
+                {posicao && (
+                  <Badge variant="outline" className={cn("h-5 min-w-5 px-1.5 text-[10px] font-bold", getBadgeColor())}>
+                    {posicao}º
+                  </Badge>
                 )}
               </div>
               
@@ -1482,6 +1491,13 @@ export function PedidoCard({
               >
                   <GripVertical className="h-3 w-3 text-muted-foreground" />
                 </div>}
+              
+              {/* Índice de prioridade */}
+              {posicao && (
+                <Badge variant="outline" className={cn("h-4 min-w-4 px-1 text-[9px] font-bold", getBadgeColor())}>
+                  {posicao}º
+                </Badge>
+              )}
               
               {(emBacklog || temHistoricoBacklog) && (
                 <Tooltip>
