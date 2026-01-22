@@ -52,41 +52,43 @@ export function VendaResumo({
   // Total final = produtos + frete + crédito da venda
   const valorTotalFinal = totais.total + valorFrete + valorCredito;
 
+  const cardClass = "bg-primary/5 border-primary/10 backdrop-blur-xl";
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Resumo da Venda</CardTitle>
+    <Card className={cardClass}>
+      <CardHeader className="pb-3 pt-4">
+        <CardTitle className="text-base font-semibold text-white">Resumo da Venda</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-2 pb-4">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Valor Produtos:</span>
-          <span className="font-semibold">R$ {totais.produto.toFixed(2)}</span>
+          <span className="text-white/60 text-sm">Valor Produtos:</span>
+          <span className="font-semibold text-white text-sm">R$ {totais.produto.toFixed(2)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Valor Pintura:</span>
-          <span className="font-semibold">R$ {totais.pintura.toFixed(2)}</span>
+          <span className="text-white/60 text-sm">Valor Pintura:</span>
+          <span className="font-semibold text-white text-sm">R$ {totais.pintura.toFixed(2)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Valor Instalação:</span>
-          <span className="font-semibold">R$ {totais.instalacao.toFixed(2)}</span>
+          <span className="text-white/60 text-sm">Valor Instalação:</span>
+          <span className="font-semibold text-white text-sm">R$ {totais.instalacao.toFixed(2)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Valor Frete:</span>
-          <span className="font-semibold">R$ {valorFrete.toFixed(2)}</span>
+          <span className="text-white/60 text-sm">Valor Frete:</span>
+          <span className="font-semibold text-white text-sm">R$ {valorFrete.toFixed(2)}</span>
         </div>
         {descontoAplicado > 0 && (
-          <div className="flex justify-between text-green-600 dark:text-green-400">
-            <span className="font-medium">Desconto Aplicado:</span>
-            <span className="font-semibold">
+          <div className="flex justify-between text-green-400">
+            <span className="font-medium text-sm">Desconto Aplicado:</span>
+            <span className="font-semibold text-sm">
               -R$ {descontoAplicado.toFixed(2)} ({percentualDescontoCalc.toFixed(2)}%)
             </span>
           </div>
         )}
         {valorCredito > 0 && (
-          <div className="flex justify-between items-center text-blue-600 dark:text-blue-400">
-            <span className="font-medium">Crédito Aplicado:</span>
+          <div className="flex justify-between items-center text-blue-400">
+            <span className="font-medium text-sm">Crédito Aplicado:</span>
             <div className="flex items-center gap-2">
-              <span className="font-semibold">
+              <span className="font-semibold text-sm">
                 +R$ {valorCredito.toFixed(2)} ({percentualCredito.toFixed(2)}%)
               </span>
               {onRemoverCredito && (
@@ -94,7 +96,7 @@ export function VendaResumo({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-5 w-5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  className="h-5 w-5 text-red-400 hover:text-red-300 hover:bg-red-500/10"
                   onClick={onRemoverCredito}
                   title="Remover crédito"
                 >
@@ -104,9 +106,9 @@ export function VendaResumo({
             </div>
           </div>
         )}
-        <div className="h-px bg-border my-2" />
+        <div className="h-px bg-primary/10 my-2" />
         <div className="flex justify-between text-lg">
-          <span className="font-bold">Total:</span>
+          <span className="font-bold text-white">Total:</span>
           <span className="font-bold text-primary">R$ {valorTotalFinal.toFixed(2)}</span>
         </div>
       </CardContent>
