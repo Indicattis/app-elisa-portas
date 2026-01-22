@@ -49,6 +49,11 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
 
   const cidades = dados.estado ? getCidadesPorEstado(dados.estado) : [];
 
+  // Classes minimalistas
+  const cardClass = "bg-primary/5 border-primary/10 backdrop-blur-xl";
+  const labelClass = "text-xs font-medium text-white/80";
+  const inputClass = "h-9 bg-primary/5 border-primary/10 text-white placeholder:text-white/40";
+
   // Quando seleciona um cliente existente, preenche os dados
   const handleSelectCliente = (cliente: Cliente) => {
     setClienteSelecionado(cliente);
@@ -147,10 +152,10 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
   };
 
   return (
-    <Card>
+    <Card className={cardClass}>
       <CardHeader className="pb-3 pt-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold">Cliente</CardTitle>
+          <CardTitle className="text-base font-semibold text-white">Cliente</CardTitle>
           {!disabled && (
             <RadioGroup
               value={modo}
@@ -163,12 +168,12 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
               className="flex gap-4"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="buscar" id="buscar" />
-                <Label htmlFor="buscar" className="text-sm cursor-pointer">Buscar existente</Label>
+                <RadioGroupItem value="buscar" id="buscar" className="border-primary/30 text-primary" />
+                <Label htmlFor="buscar" className="text-sm cursor-pointer text-white/80">Buscar existente</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="cadastrar" id="cadastrar" />
-                <Label htmlFor="cadastrar" className="text-sm cursor-pointer">Cadastrar novo</Label>
+                <RadioGroupItem value="cadastrar" id="cadastrar" className="border-primary/30 text-primary" />
+                <Label htmlFor="cadastrar" className="text-sm cursor-pointer text-white/80">Cadastrar novo</Label>
               </div>
             </RadioGroup>
           )}
@@ -179,15 +184,15 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
         {disabled && (
           <>
             {/* Dados bloqueados do orçamento */}
-            <div className="border rounded-lg p-4 bg-muted/30">
+            <div className="border rounded-lg p-4 border-primary/10 bg-primary/5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Nome do Cliente</Label>
-                  <p className="font-medium">{dados.cliente_nome || '-'}</p>
+                  <Label className="text-xs text-white/60">Nome do Cliente</Label>
+                  <p className="font-medium text-white">{dados.cliente_nome || '-'}</p>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Telefone</Label>
-                  <p className="font-medium">{dados.cliente_telefone || '-'}</p>
+                  <Label className="text-xs text-white/60">Telefone</Label>
+                  <p className="font-medium text-white">{dados.cliente_telefone || '-'}</p>
                 </div>
               </div>
             </div>
@@ -195,48 +200,48 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
             {/* Campos editáveis para complementar dados */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="space-y-1">
-                <Label htmlFor="cpf_cliente_disabled" className="text-xs font-medium">CPF/CNPJ</Label>
+                <Label htmlFor="cpf_cliente_disabled" className={labelClass}>CPF/CNPJ</Label>
                 <Input
                   id="cpf_cliente_disabled"
                   value={dados.cpf_cliente}
                   onChange={(e) => onChange({ cpf_cliente: formatarCpfCnpj(e.target.value) })}
                   placeholder="CPF ou CNPJ"
-                  className="h-9"
+                  className={inputClass}
                   maxLength={18}
                 />
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="cliente_email_disabled" className="text-xs font-medium">E-mail</Label>
+                <Label htmlFor="cliente_email_disabled" className={labelClass}>E-mail</Label>
                 <Input
                   id="cliente_email_disabled"
                   type="email"
                   value={dados.cliente_email}
                   onChange={(e) => onChange({ cliente_email: e.target.value })}
                   placeholder="email@exemplo.com"
-                  className="h-9"
+                  className={inputClass}
                 />
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="cep_disabled" className="text-xs font-medium">CEP</Label>
+                <Label htmlFor="cep_disabled" className={labelClass}>CEP</Label>
                 <Input
                   id="cep_disabled"
                   value={dados.cep}
                   onChange={(e) => onChange({ cep: formatarCep(e.target.value) })}
                   placeholder="00000-000"
-                  className="h-9"
+                  className={inputClass}
                   maxLength={9}
                 />
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="estado_disabled" className="text-xs font-medium">Estado</Label>
+                <Label htmlFor="estado_disabled" className={labelClass}>Estado</Label>
                 <Select
                   value={dados.estado}
                   onValueChange={(value) => onChange({ estado: value, cidade: '' })}
                 >
-                  <SelectTrigger className="h-9">
+                  <SelectTrigger className={inputClass}>
                     <SelectValue placeholder="UF" />
                   </SelectTrigger>
                   <SelectContent>
@@ -252,13 +257,13 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="space-y-1">
-                <Label htmlFor="cidade_disabled" className="text-xs font-medium">Cidade</Label>
+                <Label htmlFor="cidade_disabled" className={labelClass}>Cidade</Label>
                 <Select
                   value={dados.cidade}
                   onValueChange={(value) => onChange({ cidade: value })}
                   disabled={!dados.estado}
                 >
-                  <SelectTrigger className="h-9">
+                  <SelectTrigger className={inputClass}>
                     <SelectValue placeholder="Selecione a cidade" />
                   </SelectTrigger>
                   <SelectContent>
@@ -272,24 +277,24 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="bairro_disabled" className="text-xs font-medium">Bairro</Label>
+                <Label htmlFor="bairro_disabled" className={labelClass}>Bairro</Label>
                 <Input
                   id="bairro_disabled"
                   value={dados.bairro}
                   onChange={(e) => onChange({ bairro: e.target.value })}
                   placeholder="Bairro"
-                  className="h-9"
+                  className={inputClass}
                 />
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="endereco_disabled" className="text-xs font-medium">Endereço</Label>
+                <Label htmlFor="endereco_disabled" className={labelClass}>Endereço</Label>
                 <Input
                   id="endereco_disabled"
                   value={dados.endereco}
                   onChange={(e) => onChange({ endereco: e.target.value })}
                   placeholder="Rua, número"
-                  className="h-9"
+                  className={inputClass}
                 />
               </div>
             </div>
@@ -299,16 +304,16 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
         {/* Modo Buscar */}
         {!disabled && modo === 'buscar' && !clienteSelecionado && (
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Buscar por nome ou CPF/CNPJ</Label>
+            <Label className={labelClass}>Buscar por nome ou CPF/CNPJ</Label>
             <Popover open={searchOpen} onOpenChange={setSearchOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
-                  className="w-full justify-start h-9"
+                  className="w-full justify-start h-9 border-primary/10 bg-primary/5 text-white/60 hover:bg-primary/10 hover:text-white"
                 >
-                  <Search className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Digite para buscar...</span>
+                  <Search className="mr-2 h-4 w-4" />
+                  <span>Digite para buscar...</span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[400px] p-0" align="start">
@@ -351,7 +356,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                 </Command>
               </PopoverContent>
             </Popover>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-white/50">
               Ou selecione "Cadastrar novo" para adicionar um cliente
             </p>
           </div>
@@ -359,14 +364,14 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
 
         {/* Cliente Selecionado */}
         {!disabled && modo === 'buscar' && clienteSelecionado && (
-          <div className="border rounded-lg p-4 bg-muted/30">
+          <div className="border rounded-lg p-4 border-primary/10 bg-primary/5">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-600" />
-                  <span className="font-medium">{clienteSelecionado.nome}</span>
+                  <Check className="h-4 w-4 text-green-400" />
+                  <span className="font-medium text-white">{clienteSelecionado.nome}</span>
                 </div>
-                <div className="text-sm text-muted-foreground space-y-0.5">
+                <div className="text-sm text-white/60 space-y-0.5">
                   {clienteSelecionado.cpf_cnpj && <p>CPF/CNPJ: {clienteSelecionado.cpf_cnpj}</p>}
                   {clienteSelecionado.telefone && <p>Tel: {clienteSelecionado.telefone}</p>}
                   {clienteSelecionado.email && <p>Email: {clienteSelecionado.email}</p>}
@@ -375,7 +380,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                   )}
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleLimparCliente}>
+              <Button variant="ghost" size="sm" onClick={handleLimparCliente} className="text-white/60 hover:text-white hover:bg-primary/10">
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -387,10 +392,10 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
           <>
             {/* Alerta de CPF/CNPJ duplicado - BLOQUEIA CADASTRO */}
             {clienteDuplicado && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="border-red-500/30 bg-red-500/10">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>CPF/CNPJ já cadastrado!</AlertTitle>
-                <AlertDescription>
+                <AlertTitle className="text-red-400">CPF/CNPJ já cadastrado!</AlertTitle>
+                <AlertDescription className="text-red-300/80">
                   <p className="mb-2">
                     Já existe um cliente com este documento: <strong>{clienteDuplicado.nome}</strong>
                     {clienteDuplicado.telefone && ` - Tel: ${clienteDuplicado.telefone}`}
@@ -403,6 +408,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                     variant="secondary"
                     size="sm"
                     onClick={handleUsarClienteExistente}
+                    className="bg-primary/20 text-white hover:bg-primary/30"
                   >
                     <Check className="h-3 w-3 mr-1" />
                     Usar cliente existente
@@ -414,26 +420,26 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
             {/* Dados do Cliente - desabilitados se houver duplicado */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="space-y-1">
-                <Label htmlFor="cliente_nome" className="text-xs font-medium">Nome *</Label>
+                <Label htmlFor="cliente_nome" className={labelClass}>Nome *</Label>
                 <Input
                   id="cliente_nome"
                   value={dados.cliente_nome}
                   onChange={(e) => onChange({ cliente_nome: e.target.value })}
                   placeholder="Nome completo"
-                  className="h-9"
+                  className={inputClass}
                   required
                   disabled={!!clienteDuplicado}
                 />
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="cliente_telefone" className="text-xs font-medium">Telefone *</Label>
+                <Label htmlFor="cliente_telefone" className={labelClass}>Telefone *</Label>
                 <Input
                   id="cliente_telefone"
                   value={dados.cliente_telefone}
                   onChange={(e) => onChange({ cliente_telefone: formatarTelefone(e.target.value) })}
                   placeholder="(00) 00000-0000"
-                  className="h-9"
+                  className={inputClass}
                   maxLength={15}
                   required
                   disabled={!!clienteDuplicado}
@@ -441,26 +447,26 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="cliente_email" className="text-xs font-medium">E-mail</Label>
+                <Label htmlFor="cliente_email" className={labelClass}>E-mail</Label>
                 <Input
                   id="cliente_email"
                   type="email"
                   value={dados.cliente_email}
                   onChange={(e) => onChange({ cliente_email: e.target.value })}
                   placeholder="email@exemplo.com"
-                  className="h-9"
+                  className={inputClass}
                   disabled={!!clienteDuplicado}
                 />
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="cpf_cliente" className="text-xs font-medium">CPF/CNPJ *</Label>
+                <Label htmlFor="cpf_cliente" className={labelClass}>CPF/CNPJ *</Label>
                 <Input
                   id="cpf_cliente"
                   value={dados.cpf_cliente}
                   onChange={(e) => onChange({ cpf_cliente: formatarCpfCnpj(e.target.value) })}
                   placeholder="CPF ou CNPJ"
-                  className={cn("h-9", clienteDuplicado && "border-destructive focus-visible:ring-destructive")}
+                  className={cn(inputClass, clienteDuplicado && "border-red-500/50 focus-visible:ring-red-500/50")}
                   maxLength={18}
                   required
                 />
@@ -468,17 +474,17 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
             </div>
 
             {/* Localização - desabilitados se houver duplicado */}
-            <div className="pt-2 border-t">
-              <Label className="text-xs font-medium text-muted-foreground mb-2 block">Localização (obrigatório para NF-e)</Label>
+            <div className="pt-2 border-t border-primary/10">
+              <Label className="text-xs font-medium text-white/50 mb-2 block">Localização (obrigatório para NF-e)</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <Label htmlFor="estado" className="text-xs font-medium">Estado *</Label>
+                  <Label htmlFor="estado" className={labelClass}>Estado *</Label>
                   <Select
                     value={dados.estado}
                     onValueChange={(value) => onChange({ estado: value, cidade: '' })}
                     disabled={!!clienteDuplicado}
                   >
-                    <SelectTrigger className="h-9">
+                    <SelectTrigger className={inputClass}>
                       <SelectValue placeholder="UF" />
                     </SelectTrigger>
                     <SelectContent>
@@ -492,13 +498,13 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="cidade" className="text-xs font-medium">Cidade *</Label>
+                  <Label htmlFor="cidade" className={labelClass}>Cidade *</Label>
                   <Select
                     value={dados.cidade}
                     onValueChange={(value) => onChange({ cidade: value })}
                     disabled={!dados.estado || !!clienteDuplicado}
                   >
-                    <SelectTrigger className="h-9">
+                    <SelectTrigger className={inputClass}>
                       <SelectValue placeholder="Selecione a cidade" />
                     </SelectTrigger>
                     <SelectContent>
@@ -512,13 +518,13 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="cep" className="text-xs font-medium">CEP *</Label>
+                  <Label htmlFor="cep" className={labelClass}>CEP *</Label>
                   <Input
                     id="cep"
                     value={dados.cep}
                     onChange={(e) => onChange({ cep: formatarCep(e.target.value) })}
                     placeholder="00000-000"
-                    className="h-9"
+                    className={inputClass}
                     maxLength={9}
                     required
                     disabled={!!clienteDuplicado}
@@ -526,26 +532,26 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                 </div>
 
                 <div className="space-y-1 md:col-span-2">
-                  <Label htmlFor="endereco" className="text-xs font-medium">Endereço *</Label>
+                  <Label htmlFor="endereco" className={labelClass}>Endereço *</Label>
                   <Input
                     id="endereco"
                     value={dados.endereco}
                     onChange={(e) => onChange({ endereco: e.target.value })}
                     placeholder="Ex: Rua das Flores, 123"
-                    className="h-9"
+                    className={inputClass}
                     required
                     disabled={!!clienteDuplicado}
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="bairro" className="text-xs font-medium">Bairro *</Label>
+                  <Label htmlFor="bairro" className={labelClass}>Bairro *</Label>
                   <Input
                     id="bairro"
                     value={dados.bairro}
                     onChange={(e) => onChange({ bairro: e.target.value })}
                     placeholder="Nome do bairro"
-                    className="h-9"
+                    className={inputClass}
                     required
                     disabled={!!clienteDuplicado}
                   />
@@ -554,15 +560,15 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
             </div>
 
             {/* Canal de Aquisição e Público Alvo */}
-            <div className="pt-2 border-t">
+            <div className="pt-2 border-t border-primary/10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-md">
                 <div className="space-y-1">
-                  <Label htmlFor="canal_aquisicao_id" className="text-xs font-medium">Canal de Aquisição</Label>
+                  <Label htmlFor="canal_aquisicao_id" className={labelClass}>Canal de Aquisição</Label>
                   <Select
                     value={dados.canal_aquisicao_id}
                     onValueChange={(value) => onChange({ canal_aquisicao_id: value })}
                   >
-                    <SelectTrigger className="h-9">
+                    <SelectTrigger className={inputClass}>
                       <SelectValue placeholder="Como conheceu?" />
                     </SelectTrigger>
                     <SelectContent>
@@ -575,12 +581,12 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="publico_alvo" className="text-xs font-medium">Público Alvo *</Label>
+                  <Label htmlFor="publico_alvo" className={labelClass}>Público Alvo *</Label>
                   <Select
                     value={dados.publico_alvo}
                     onValueChange={(value) => onChange({ publico_alvo: value })}
                   >
-                    <SelectTrigger className="h-9">
+                    <SelectTrigger className={inputClass}>
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
