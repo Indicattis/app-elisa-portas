@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   MapPin, 
   Calendar, 
@@ -31,6 +31,15 @@ export function NeoInstalacaoCardGestao({
 }: NeoInstalacaoCardGestaoProps) {
   const corEquipe = neoInstalacao.equipe?.cor || "#6366f1";
 
+  // Dados do criador
+  const criadorNome = neoInstalacao.criador?.nome || 'Desconhecido';
+  const criadorFoto = neoInstalacao.criador?.foto_perfil_url;
+  const criadorIniciais = criadorNome
+    .split(' ')
+    .map((n: string) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
   if (viewMode === 'list') {
     return (
       <TooltipProvider>
@@ -44,17 +53,19 @@ export function NeoInstalacaoCardGestao({
               {/* Col 1: Espaço do drag handle (vazio para manter alinhamento) */}
               <div />
               
-              {/* Col 2: Avatar/Badge tipo */}
+              {/* Col 2: Avatar do criador */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Avatar className="h-5 w-5 bg-blue-500/20 border border-blue-500/50">
-                    <AvatarFallback className="text-[8px] bg-blue-500/20 text-blue-400">
-                      <Hammer className="h-3 w-3" />
+                  <Avatar className="h-5 w-5">
+                    <AvatarImage src={criadorFoto || undefined} alt={criadorNome} />
+                    <AvatarFallback className="text-[8px] bg-blue-500/20 text-blue-400 border border-blue-500/50">
+                      {criadorIniciais}
                     </AvatarFallback>
                   </Avatar>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p className="text-xs">Instalação Avulsa</p>
+                  <p className="text-xs">Criado por: {criadorNome}</p>
+                  <p className="text-[10px] text-muted-foreground">Instalação Avulsa</p>
                 </TooltipContent>
               </Tooltip>
               

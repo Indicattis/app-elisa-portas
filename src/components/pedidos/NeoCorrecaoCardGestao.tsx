@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Calendar, Clock, AlertTriangle, Check } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -23,6 +23,15 @@ export function NeoCorrecaoCardGestao({
 }: NeoCorrecaoCardGestaoProps) {
   const corEquipe = neoCorrecao.equipe?.cor || "#9333ea";
 
+  // Dados do criador
+  const criadorNome = neoCorrecao.criador?.nome || 'Desconhecido';
+  const criadorFoto = neoCorrecao.criador?.foto_perfil_url;
+  const criadorIniciais = criadorNome
+    .split(' ')
+    .map((n: string) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
   if (viewMode === 'list') {
     return (
       <TooltipProvider>
@@ -36,17 +45,19 @@ export function NeoCorrecaoCardGestao({
               {/* Col 1: Espaço do drag handle (vazio para manter alinhamento) */}
               <div />
               
-              {/* Col 2: Avatar/Badge tipo */}
+              {/* Col 2: Avatar do criador */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Avatar className="h-5 w-5 bg-purple-500/20 border border-purple-500/50">
-                    <AvatarFallback className="text-[8px] bg-purple-500/20 text-purple-400">
-                      <AlertTriangle className="h-3 w-3" />
+                  <Avatar className="h-5 w-5">
+                    <AvatarImage src={criadorFoto || undefined} alt={criadorNome} />
+                    <AvatarFallback className="text-[8px] bg-purple-500/20 text-purple-400 border border-purple-500/50">
+                      {criadorIniciais}
                     </AvatarFallback>
                   </Avatar>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p className="text-xs">Correção Avulsa</p>
+                  <p className="text-xs">Criado por: {criadorNome}</p>
+                  <p className="text-[10px] text-muted-foreground">Correção Avulsa</p>
                 </TooltipContent>
               </Tooltip>
               
