@@ -14,7 +14,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MoreVertical, Check, Trash2, Info, AlertTriangle } from "lucide-react";
+import { MoreVertical, MapPin, Info, XCircle, CheckCircle, AlertTriangle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -23,6 +23,7 @@ interface NeoCorrecaoCardProps {
   onClick?: (neoCorrecao: NeoCorrecao) => void;
   onConcluir?: (id: string) => void;
   onRemover?: (id: string) => void;
+  onOpenDetails?: (neoCorrecao: NeoCorrecao) => void;
   dragListeners?: any;
 }
 
@@ -31,104 +32,140 @@ export const NeoCorrecaoCard = ({
   onClick,
   onConcluir,
   onRemover,
+  onOpenDetails,
   dragListeners,
 }: NeoCorrecaoCardProps) => {
-  const corEquipe = neoCorrecao.equipe?.cor || "#9333ea"; // purple-600 como fallback
+  const corEquipe = neoCorrecao.equipe?.cor || "#9333ea";
+
+  // Estilo roxo para correções (similar ao azul das instalações)
+  const getCardStyles = () => {
+    return {
+      backgroundColor: 'rgb(147 51 234 / 0.15)',
+      borderColor: 'rgb(147 51 234 / 0.5)',
+    };
+  };
+
+  // Nome do responsável (equipe)
+  const getResponsavelNome = () => {
+    return neoCorrecao.equipe_nome || 'Sem equipe';
+  };
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Card
-            className="p-2 cursor-pointer hover:shadow-md transition-shadow border-l-4"
-            style={{
-              borderLeftColor: "#9333ea",
-              backgroundColor: "rgba(147, 51, 234, 0.1)",
-            }}
-            onClick={() => onClick?.(neoCorrecao)}
-            {...dragListeners}
+    <Card 
+      className="relative h-[35px] p-2 border transition-all duration-200 cursor-pointer hover:opacity-80"
+      style={getCardStyles()}
+      onClick={() => onClick?.(neoCorrecao)}
+    >
+      <div className="flex items-center justify-between gap-2 h-[19px]">
+        <div className="flex items-center gap-2 flex-1 min-w-0 cursor-grab active:cursor-grabbing" {...dragListeners}>
+          <Badge 
+            variant="outline" 
+            className="text-[9px] px-1 py-0 h-4 shrink-0 bg-purple-500/20 text-purple-300 border-purple-400/50 flex items-center gap-0.5"
           >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <AlertTriangle className="h-3 w-3 text-purple-600 flex-shrink-0" />
-                  <Badge
-                    variant="outline"
-                    className="text-[10px] px-1.5 py-0 bg-purple-50 text-purple-700 border-purple-200"
-                  >
-                    Correção
-                  </Badge>
-                </div>
-                <p className="text-xs font-medium truncate">
-                  {neoCorrecao.nome_cliente}
-                </p>
-                <div className="flex items-center gap-1 mt-1">
-                  <Badge
-                    variant="secondary"
-                    className="text-[10px] px-1.5 py-0"
-                    style={{
-                      backgroundColor: `${corEquipe}20`,
-                      color: corEquipe,
-                      borderColor: `${corEquipe}40`,
-                    }}
-                  >
-                    {neoCorrecao.equipe_nome || "Sem equipe"}
-                  </Badge>
-                </div>
-              </div>
+            <AlertTriangle className="h-2.5 w-2.5" />
+            Correção
+          </Badge>
+          <h4 className="font-semibold text-xs truncate">{neoCorrecao.nome_cliente}</h4>
+          <Badge 
+            variant="secondary" 
+            className="text-[9px] px-1 py-0 h-4 shrink-0"
+            style={{ 
+              backgroundColor: `${corEquipe}30`,
+              color: corEquipe,
+              borderColor: `${corEquipe}50`
+            }}
+          >
+            {getResponsavelNome()}
+          </Badge>
+        </div>
 
-              {(onConcluir || onRemover) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0">
-                      <MoreVertical className="h-3 w-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {onConcluir && (
-                      <DropdownMenuItem onClick={() => onConcluir(neoCorrecao.id)}>
-                        <Check className="h-4 w-4 mr-2" />
-                        Concluir
-                      </DropdownMenuItem>
-                    )}
-                    {onRemover && (
-                      <DropdownMenuItem
-                        onClick={() => onRemover(neoCorrecao.id)}
-                        className="text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Remover
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-          </Card>
-        </TooltipTrigger>
-        <TooltipContent side="right" className="max-w-xs">
-          <div className="space-y-1 text-xs">
-            <p className="font-medium">{neoCorrecao.nome_cliente}</p>
-            <p className="text-muted-foreground">
-              {neoCorrecao.cidade}/{neoCorrecao.estado}
-            </p>
-            {neoCorrecao.data_correcao && (
-              <p>
-                Data:{" "}
-                {format(parseISO(neoCorrecao.data_correcao), "dd/MM/yyyy", {
-                  locale: ptBR,
-                })}
-                {neoCorrecao.hora && ` às ${neoCorrecao.hora.slice(0, 5)}`}
-              </p>
-            )}
-            {neoCorrecao.descricao && (
-              <p className="text-muted-foreground italic">
-                {neoCorrecao.descricao}
-              </p>
-            )}
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+        <div className="flex items-center gap-1 shrink-0">
+          {(onConcluir || onRemover) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="icon" className="h-5 w-5 p-0">
+                  <MoreVertical className="h-3 w-3 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                {onConcluir && (
+                  <DropdownMenuItem 
+                    onClick={() => onConcluir(neoCorrecao.id)}
+                    className="text-green-600"
+                  >
+                    <CheckCircle className="h-3.5 w-3.5 mr-2" />
+                    Concluir
+                  </DropdownMenuItem>
+                )}
+                {onRemover && (
+                  <DropdownMenuItem 
+                    onClick={() => onRemover(neoCorrecao.id)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <XCircle className="h-3.5 w-3.5 mr-2" />
+                    Remover do calendário
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  className="p-0.5 hover:bg-accent rounded-md transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenDetails?.(neoCorrecao);
+                  }}
+                >
+                  <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-sm">
+                <div className="space-y-2">
+                  <div className="font-semibold text-[11px] border-b border-border pb-1">
+                    {neoCorrecao.nome_cliente}
+                  </div>
+
+                  <div className="flex items-center gap-1 text-[10px]">
+                    <AlertTriangle className="h-3 w-3 text-purple-400" />
+                    <span className="font-medium text-purple-400">Correção Avulsa</span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">
+                      {getResponsavelNome()}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-1 text-[10px]">
+                    <MapPin className="h-3 w-3 flex-shrink-0" />
+                    <span>{neoCorrecao.cidade}/{neoCorrecao.estado}</span>
+                  </div>
+
+                  {neoCorrecao.data_correcao && (
+                    <div className="text-[10px] text-muted-foreground">
+                      Data: {format(parseISO(neoCorrecao.data_correcao), "dd/MM/yyyy", { locale: ptBR })}
+                      {neoCorrecao.hora && ` às ${neoCorrecao.hora.substring(0, 5)}`}
+                    </div>
+                  )}
+
+                  {neoCorrecao.descricao && (
+                    <div className="pt-1 border-t border-border/50">
+                      <p className="text-[9px] font-medium mb-1">Descrição:</p>
+                      <p className="text-[9px] text-muted-foreground">{neoCorrecao.descricao}</p>
+                    </div>
+                  )}
+                  
+                  <p className="text-[9px] text-muted-foreground/70 italic pt-1">
+                    Clique no ícone ℹ️ para ver detalhes completos
+                  </p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </div>
+    </Card>
   );
 };

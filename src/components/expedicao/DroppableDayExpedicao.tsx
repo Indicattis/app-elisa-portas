@@ -23,6 +23,8 @@ interface DroppableDayExpedicaoProps {
   onOrdemDropped?: () => void;
   onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
+  onOpenNeoInstalacaoDetails?: (neoInstalacao: NeoInstalacao) => void;
+  onOpenNeoCorrecaoDetails?: (neoCorrecao: NeoCorrecao) => void;
   readOnly?: boolean;
 }
 
@@ -38,6 +40,8 @@ export const DroppableDayExpedicao = ({
   onOrdemDropped,
   onUpdateOrdem,
   onOrdemClick,
+  onOpenNeoInstalacaoDetails,
+  onOpenNeoCorrecaoDetails,
   readOnly = false,
 }: DroppableDayExpedicaoProps) => {
   const [modalOpen, setModalOpen] = useState(false);

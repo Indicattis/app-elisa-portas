@@ -13,6 +13,8 @@ import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamen
 import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrdemCarregamentoDrawer";
 import { CriarNeoInstalacaoModal } from "@/components/expedicao/CriarNeoInstalacaoModal";
 import { CriarNeoCorrecaoModal } from "@/components/expedicao/CriarNeoCorrecaoModal";
+import { NeoInstalacaoDetails } from "@/components/expedicao/NeoInstalacaoDetails";
+import { NeoCorrecaoDetails } from "@/components/expedicao/NeoCorrecaoDetails";
 import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
 import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
@@ -20,11 +22,12 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addDays, startOfWeek, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
-import { CriarNeoInstalacaoData } from "@/types/neoInstalacao";
-import { CriarNeoCorrecaoData } from "@/types/neoCorrecao";
+import { NeoInstalacao, CriarNeoInstalacaoData } from "@/types/neoInstalacao";
+import { NeoCorrecao, CriarNeoCorrecaoData } from "@/types/neoCorrecao";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+
 export default function ExpedicaoMinimalista() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -39,10 +42,16 @@ export default function ExpedicaoMinimalista() {
   const [editingOrdem, setEditingOrdem] = useState<OrdemCarregamento | null>(null);
   const [neoModalOpen, setNeoModalOpen] = useState(false);
   const [neoCorrecaoModalOpen, setNeoCorrecaoModalOpen] = useState(false);
+  
+  // States for details sidebars
+  const [selectedNeoInstalacao, setSelectedNeoInstalacao] = useState<NeoInstalacao | null>(null);
+  const [neoInstalacaoDetailsOpen, setNeoInstalacaoDetailsOpen] = useState(false);
+  const [selectedNeoCorrecao, setSelectedNeoCorrecao] = useState<NeoCorrecao | null>(null);
+  const [neoCorrecaoDetailsOpen, setNeoCorrecaoDetailsOpen] = useState(false);
 
   const { ordens, isLoading, updateOrdem } = useOrdensCarregamentoCalendario(currentDate, viewType);
-  const { neoInstalacoes, createNeoInstalacao, updateNeoInstalacao, deleteNeoInstalacao } = useNeoInstalacoes(currentDate, viewType);
-  const { neoCorrecoes, createNeoCorrecao, updateNeoCorrecao, deleteNeoCorrecao } = useNeoCorrecoes(currentDate, viewType);
+  const { neoInstalacoes, createNeoInstalacao, updateNeoInstalacao, deleteNeoInstalacao, concluirNeoInstalacao, isConcluindo: isConcluindoInstalacao } = useNeoInstalacoes(currentDate, viewType);
+  const { neoCorrecoes, createNeoCorrecao, updateNeoCorrecao, deleteNeoCorrecao, concluirNeoCorrecao, isConcluindo: isConcluindoCorrecao } = useNeoCorrecoes(currentDate, viewType);
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -104,6 +113,27 @@ export default function ExpedicaoMinimalista() {
 
   const handleMonthChange = (date: Date) => {
     setCurrentDate(date);
+  };
+
+  // Handlers para abrir detalhes
+  const handleOpenNeoInstalacaoDetails = (neoInstalacao: NeoInstalacao) => {
+    setSelectedNeoInstalacao(neoInstalacao);
+    setNeoInstalacaoDetailsOpen(true);
+  };
+
+  const handleOpenNeoCorrecaoDetails = (neoCorrecao: NeoCorrecao) => {
+    setSelectedNeoCorrecao(neoCorrecao);
+    setNeoCorrecaoDetailsOpen(true);
+  };
+
+  const handleConcluirNeoInstalacao = async (id: string) => {
+    await concluirNeoInstalacao(id);
+    setNeoInstalacaoDetailsOpen(false);
+  };
+
+  const handleConcluirNeoCorrecao = async (id: string) => {
+    await concluirNeoCorrecao(id);
+    setNeoCorrecaoDetailsOpen(false);
   };
 
   const [mounted, setMounted] = useState(false);
@@ -215,6 +245,8 @@ export default function ExpedicaoMinimalista() {
                       onRemoverDoCalendario={handleRemoverDoCalendario}
                       onUpdateOrdem={handleUpdateOrdem}
                       onOrdemAdded={handleOrdemCriada}
+                      onOpenNeoInstalacaoDetails={handleOpenNeoInstalacaoDetails}
+                      onOpenNeoCorrecaoDetails={handleOpenNeoCorrecaoDetails}
                     />
                   ) : viewType === 'week' ? (
                     <CalendarioSemanalExpedicaoDesktop
@@ -237,6 +269,8 @@ export default function ExpedicaoMinimalista() {
                       onOrdemCriada={handleOrdemCriada}
                       onOrdemDropped={handleOrdemDropped}
                       onOrdemClick={handleOrdemClick}
+                      onOpenNeoInstalacaoDetails={handleOpenNeoInstalacaoDetails}
+                      onOpenNeoCorrecaoDetails={handleOpenNeoCorrecaoDetails}
                     />
                   ) : (
                     <CalendarioMensalExpedicaoDesktop
@@ -257,6 +291,8 @@ export default function ExpedicaoMinimalista() {
                       onOrdemCriada={handleOrdemCriada}
                       onOrdemDropped={handleOrdemDropped}
                       onOrdemClick={handleOrdemClick}
+                      onOpenNeoInstalacaoDetails={handleOpenNeoInstalacaoDetails}
+                      onOpenNeoCorrecaoDetails={handleOpenNeoCorrecaoDetails}
                     />
                   )}
                 </CardContent>
@@ -306,6 +342,24 @@ export default function ExpedicaoMinimalista() {
         onConfirm={async (dados: CriarNeoCorrecaoData) => {
           await createNeoCorrecao(dados);
         }}
+      />
+
+      {/* Sidebar de Detalhes - Neo Instalação */}
+      <NeoInstalacaoDetails
+        neoInstalacao={selectedNeoInstalacao}
+        open={neoInstalacaoDetailsOpen}
+        onOpenChange={setNeoInstalacaoDetailsOpen}
+        onConcluir={handleConcluirNeoInstalacao}
+        isConcluindo={isConcluindoInstalacao}
+      />
+
+      {/* Sidebar de Detalhes - Neo Correção */}
+      <NeoCorrecaoDetails
+        neoCorrecao={selectedNeoCorrecao}
+        open={neoCorrecaoDetailsOpen}
+        onOpenChange={setNeoCorrecaoDetailsOpen}
+        onConcluir={handleConcluirNeoCorrecao}
+        isConcluindo={isConcluindoCorrecao}
       />
     </div>
   );

@@ -1,4 +1,5 @@
 import { useDraggable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import { NeoCorrecao } from "@/types/neoCorrecao";
 import { NeoCorrecaoCard } from "./NeoCorrecaoCard";
 
@@ -7,6 +8,7 @@ interface DraggableNeoCorrecaoProps {
   onClick?: (neoCorrecao: NeoCorrecao) => void;
   onConcluir?: (id: string) => void;
   onRemover?: (id: string) => void;
+  onOpenDetails?: (neoCorrecao: NeoCorrecao) => void;
   disableDrag?: boolean;
 }
 
@@ -15,6 +17,7 @@ export const DraggableNeoCorrecao = ({
   onClick,
   onConcluir,
   onRemover,
+  onOpenDetails,
   disableDrag = false,
 }: DraggableNeoCorrecaoProps) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -26,20 +29,20 @@ export const DraggableNeoCorrecao = ({
     disabled: disableDrag,
   });
 
-  const style = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        opacity: isDragging ? 0.5 : 1,
-      }
-    : undefined;
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+    cursor: disableDrag ? "pointer" : isDragging ? "grabbing" : "grab",
+  };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
+    <div ref={setNodeRef} style={style} {...attributes} className="animate-scale-in">
       <NeoCorrecaoCard
         neoCorrecao={neoCorrecao}
         onClick={onClick}
         onConcluir={onConcluir}
         onRemover={onRemover}
+        onOpenDetails={onOpenDetails}
         dragListeners={disableDrag ? undefined : listeners}
       />
     </div>
