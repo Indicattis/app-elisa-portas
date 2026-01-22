@@ -9,9 +9,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Upload, X, CreditCard, Banknote, QrCode, Wallet } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Upload, X, CreditCard, Banknote, QrCode, Wallet, CalendarIcon } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 export interface PagamentoData {
   metodo_pagamento: 'boleto' | 'a_vista' | 'cartao_credito' | 'dinheiro' | '';
@@ -21,6 +24,7 @@ export interface PagamentoData {
   pago_na_instalacao: boolean;
   parcelas_dinheiro: 1 | 2;
   valor_entrada_dinheiro: number;
+  data_entrada_dinheiro: Date | undefined;
   restante_na_instalacao: boolean;
   comprovante_file: File | null;
 }
@@ -367,7 +371,7 @@ export function PagamentoSection({
 
             {pagamentoData.parcelas_dinheiro === 2 && (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Valor de Entrada *</Label>
                     <Input
@@ -377,6 +381,35 @@ export function PagamentoSection({
                       onChange={(e) => onChange({ ...pagamentoData, valor_entrada_dinheiro: parseFloat(e.target.value) || 0 })}
                       placeholder="R$ 0,00"
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Data da Entrada</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !pagamentoData.data_entrada_dinheiro && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {pagamentoData.data_entrada_dinheiro 
+                            ? format(pagamentoData.data_entrada_dinheiro, "dd/MM/yyyy", { locale: ptBR }) 
+                            : "Selecione a data"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={pagamentoData.data_entrada_dinheiro}
+                          onSelect={(date) => onChange({ ...pagamentoData, data_entrada_dinheiro: date })}
+                          initialFocus
+                          locale={ptBR}
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="space-y-2">
                     <Label>Saldo Restante</Label>
