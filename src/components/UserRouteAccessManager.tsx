@@ -258,6 +258,7 @@ export function UserRouteAccessManager() {
     const hasChildren = node.children.length > 0;
     const paddingLeft = level * 20;
     const isHomeRoute = node.key === 'home';
+    const isHub = node.key.endsWith('_hub');
 
     if (hasChildren) {
       const folderHasAccess = hasFolderAccess(node);
@@ -266,15 +267,19 @@ export function UserRouteAccessManager() {
         <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-1">
           <div 
             className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer
-                       ${folderHasAccess 
-                         ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 border border-blue-500/30' 
-                         : 'bg-white/5 border border-white/10 hover:border-blue-500/30'}`}
+                       ${isHub
+                         ? folderHasAccess
+                           ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/10 border-2 border-amber-500/40 shadow-lg shadow-amber-500/10'
+                           : 'bg-gradient-to-r from-amber-500/10 to-amber-600/5 border-2 border-amber-500/20'
+                         : folderHasAccess 
+                           ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 border border-blue-500/30' 
+                           : 'bg-white/5 border border-white/10 hover:border-blue-500/30'}`}
             style={{ marginLeft: `${paddingLeft}px` }}
           >
             <CollapsibleTrigger className="p-0 hover:bg-transparent" asChild>
               <button className="p-1 rounded hover:bg-white/10 transition-colors">
                 {isOpen ? (
-                  <ChevronDown className="h-4 w-4 text-blue-400" />
+                  <ChevronDown className={`h-4 w-4 ${isHub ? 'text-amber-400' : 'text-blue-400'}`} />
                 ) : (
                   <ChevronRight className="h-4 w-4 text-white/50" />
                 )}
@@ -285,18 +290,28 @@ export function UserRouteAccessManager() {
               id={`folder-${node.key}`}
               checked={folderHasAccess}
               onCheckedChange={(checked) => handleToggleFolder(node, checked as boolean)}
-              className="border-blue-500/50 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+              className={isHub 
+                ? "border-amber-500/50 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                : "border-blue-500/50 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"}
             />
             
             {isOpen ? (
-              <FolderOpen className="h-4 w-4 text-blue-400" />
+              <FolderOpen className={`h-4 w-4 ${isHub ? 'text-amber-400' : 'text-blue-400'}`} />
             ) : (
               <Folder className="h-4 w-4 text-white/50" />
             )}
             
             <label htmlFor={`folder-${node.key}`} className="flex-1 cursor-pointer">
-              <span className="text-sm font-medium text-white">{node.label}</span>
-              <span className="ml-2 text-xs text-white/40">({node.children.length})</span>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-medium ${isHub ? 'text-amber-200' : 'text-white'}`}>{node.label}</span>
+                {isHub && (
+                  <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    Hub Principal
+                  </span>
+                )}
+                <span className="text-xs text-white/40">({node.children.length} sub-rotas)</span>
+              </div>
+              <div className="text-xs text-white/40 mt-0.5">{node.path}</div>
             </label>
           </div>
           
