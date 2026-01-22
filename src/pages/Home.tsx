@@ -1,10 +1,21 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
-import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings } from "lucide-react";
+import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
+
+// Mapeamento de path para route_key no banco
+const routeKeyMap: Record<string, string> = {
+  '/direcao': 'direcao_hub',
+  '/vendas': 'vendas_hub',
+  '/fabrica': 'fabrica_hub',
+  '/logistica': 'logistica_hub',
+  '/administrativo': 'administrativo_hub'
+};
 
 const menuItems = [
   { label: "Direção", icon: Shield, path: "/direcao", isGold: true },
@@ -16,11 +27,43 @@ const menuItems = [
 
 export default function Home() {
   const navigate = useNavigate();
-  const { userRole, signOut } = useAuth();
+  const { user, userRole, signOut, isAdmin } = useAuth();
   const [mounted, setMounted] = useState(false);
   
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Buscar acessos do usuário às rotas principais
+  const { data: userAccess } = useQuery({
+    queryKey: ['user-home-access', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const routeKeys = Object.values(routeKeyMap);
+      
+      const { data, error } = await supabase
+        .from('user_route_access')
+        .select('route_key')
+        .eq('user_id', user.id)
+        .eq('can_access', true)
+        .in('route_key', routeKeys);
+      
+      if (error) throw error;
+      return data?.map(r => r.route_key) || [];
+    },
+    enabled: !!user?.id && !isAdmin,
+  });
+
+  // Verificar se usuário tem acesso a uma rota
+  const hasAccess = (path: string): boolean => {
+    // Admin tem acesso a tudo
+    if (isAdmin) return true;
+    
+    const routeKey = routeKeyMap[path];
+    if (!routeKey) return true;
+    
+    return userAccess?.includes(routeKey) || false;
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 100);
@@ -55,6 +98,12 @@ export default function Home() {
   const handleLogout = async () => {
     await signOut();
     navigate('/auth');
+  };
+
+  const handleMenuClick = (path: string, canAccess: boolean) => {
+    if (canAccess) {
+      navigate(path);
+    }
   };
 
   return (
@@ -176,11 +225,15 @@ export default function Home() {
         {menuItems.map((item, index) => {
             const Icon = item.icon;
             const delay = 100 + index * 80;
+            const canAccess = hasAccess(item.path);
             
             return (
               <div
                 key={item.label}
-                className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10"
+                className={`p-1.5 rounded-xl backdrop-blur-xl border transition-all
+                           ${canAccess 
+                             ? 'bg-white/5 border-white/10' 
+                             : 'bg-white/[0.02] border-white/5'}`}
                 style={{
                   opacity: mounted ? 1 : 0,
                   transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
@@ -188,17 +241,28 @@ export default function Home() {
                 }}
               >
                 <button
-                  onClick={() => navigate(item.path)}
+                  onClick={() => handleMenuClick(item.path, canAccess)}
+                  disabled={!canAccess}
                   className={`w-full h-12 rounded-lg
                              flex items-center gap-4 px-5
-                             text-white font-medium border
-                             ${item.isGold 
-                               ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 border-amber-300/50 shadow-lg shadow-amber-500/20' 
-                               : 'bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30'
+                             font-medium border transition-all
+                             ${canAccess 
+                               ? item.isGold 
+                                 ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 border-amber-300/50 shadow-lg shadow-amber-500/20 text-white cursor-pointer hover:shadow-xl' 
+                                 : 'bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30 text-white cursor-pointer hover:from-blue-400 hover:to-blue-600'
+                               : 'bg-zinc-800/50 border-zinc-700/30 text-zinc-500 cursor-not-allowed'
                              }`}
                 >
-                  <Icon className="w-5 h-5" strokeWidth={1.5} />
-                  <span className="text-sm font-medium">{item.label}</span>
+                  <div className="relative">
+                    <Icon className={`w-5 h-5 ${!canAccess ? 'opacity-50' : ''}`} strokeWidth={1.5} />
+                    {!canAccess && (
+                      <Lock className="w-3 h-3 absolute -bottom-1 -right-1 text-zinc-400" strokeWidth={2.5} />
+                    )}
+                  </div>
+                  <span className={`text-sm font-medium ${!canAccess ? 'opacity-60' : ''}`}>{item.label}</span>
+                  {!canAccess && (
+                    <Lock className="w-4 h-4 ml-auto text-zinc-500" strokeWidth={2} />
+                  )}
                 </button>
               </div>
             );
