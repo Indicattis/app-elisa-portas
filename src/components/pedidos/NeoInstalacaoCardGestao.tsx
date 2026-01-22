@@ -1,14 +1,16 @@
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   MapPin, 
   Calendar, 
   Clock, 
   CheckCircle, 
   Hammer,
-  Users
+  Users,
+  FileText
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -32,152 +34,189 @@ export function NeoInstalacaoCardGestao({
   if (viewMode === 'list') {
     return (
       <TooltipProvider>
-        <Card className="p-2 hover:bg-primary/5 transition-colors border-primary/10 bg-primary/5">
-          {/* Grid layout similar ao PedidoCard - 14 colunas */}
-          <div className="grid grid-cols-[80px_1fr_120px_80px_100px_80px_100px_1fr_80px] gap-2 items-center text-sm">
-            
-            {/* Col 1: Badge Avulso */}
-            <div className="flex items-center justify-center">
-              <Badge 
-                variant="outline" 
-                className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border-blue-500/30"
-              >
-                <Hammer className="h-3 w-3 mr-1" />
-                Avulso
-              </Badge>
-            </div>
-
-            {/* Col 2: Nome do cliente */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="font-semibold text-sm truncate text-white">
-                  {neoInstalacao.nome_cliente && neoInstalacao.nome_cliente.length > 25 
-                    ? `${neoInstalacao.nome_cliente.substring(0, 25)}...` 
-                    : neoInstalacao.nome_cliente}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{neoInstalacao.nome_cliente}</p>
-              </TooltipContent>
-            </Tooltip>
-
-            {/* Col 3: Cidade/Estado */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <MapPin className="h-3 w-3 flex-shrink-0" />
-                  <span className="text-[10px] truncate">
-                    {neoInstalacao.cidade}/{neoInstalacao.estado}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">{neoInstalacao.cidade}, {neoInstalacao.estado}</p>
-              </TooltipContent>
-            </Tooltip>
-
-            {/* Col 4: Data */}
-            <div className="text-center">
-              {neoInstalacao.data_instalacao ? (
-                <div className="flex flex-col items-center leading-tight">
-                  <span className="text-[9px] font-medium text-blue-400">
-                    Agendado
-                  </span>
-                  <span className="text-xs font-bold text-blue-400">
-                    {format(parseISO(neoInstalacao.data_instalacao), "dd/MM/yy", { locale: ptBR })}
-                  </span>
-                </div>
-              ) : (
-                <span className="text-[10px] font-bold text-destructive">
-                  Não agendado
-                </span>
-              )}
-            </div>
-
-            {/* Col 5: Hora */}
-            <div className="text-center">
-              {neoInstalacao.hora ? (
-                <div className="flex items-center justify-center gap-1 text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  <span className="text-[10px] font-medium">
-                    {neoInstalacao.hora.substring(0, 5)}
-                  </span>
-                </div>
-              ) : (
-                <span className="text-[9px] text-muted-foreground/50">—</span>
-              )}
-            </div>
-
-            {/* Col 6: Tipo - sempre instalação */}
-            <div className="flex items-center justify-center">
-              <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-blue-500/10 text-blue-400 border-blue-500/50">
-                <Hammer className="h-2.5 w-2.5" />
-              </Badge>
-            </div>
-
-            {/* Col 7: Equipe */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1">
-                  <Users className="h-3 w-3 text-muted-foreground" />
-                  <Badge 
-                    variant="secondary" 
-                    className="text-[10px] px-1.5 py-0 h-5"
-                    style={{ 
-                      backgroundColor: `${corEquipe}20`,
-                      color: corEquipe,
-                    }}
-                  >
-                    {neoInstalacao.equipe_nome 
-                      ? (neoInstalacao.equipe_nome.length > 12 
-                          ? `${neoInstalacao.equipe_nome.substring(0, 12)}...` 
-                          : neoInstalacao.equipe_nome)
-                      : "Sem equipe"}
-                  </Badge>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">{neoInstalacao.equipe_nome || "Sem equipe definida"}</p>
-              </TooltipContent>
-            </Tooltip>
-
-            {/* Col 8: Descrição resumida */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="text-[10px] text-muted-foreground truncate">
-                  {neoInstalacao.descricao 
-                    ? (neoInstalacao.descricao.length > 40 
-                        ? `${neoInstalacao.descricao.substring(0, 40)}...` 
-                        : neoInstalacao.descricao)
-                    : "—"}
-                </span>
-              </TooltipTrigger>
-              {neoInstalacao.descricao && (
-                <TooltipContent className="max-w-xs">
-                  <p className="text-xs">{neoInstalacao.descricao}</p>
+        <Card className="hover:shadow-sm transition-all h-10 overflow-hidden">
+          <CardContent className="p-0 h-full">
+            {/* Grid layout IDÊNTICO ao PedidoCard */}
+            <div 
+              className="grid items-center gap-2 h-full px-3 w-full" 
+              style={{ gridTemplateColumns: '24px 24px 1fr 70px 24px 50px 50px 95px 80px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}
+            >
+              {/* Col 1: Espaço do drag handle (vazio para manter alinhamento) */}
+              <div />
+              
+              {/* Col 2: Avatar/Badge tipo */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Avatar className="h-5 w-5 bg-blue-500/20 border border-blue-500/50">
+                    <AvatarFallback className="text-[8px] bg-blue-500/20 text-blue-400">
+                      <Hammer className="h-3 w-3" />
+                    </AvatarFallback>
+                  </Avatar>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Instalação Avulsa</p>
                 </TooltipContent>
-              )}
-            </Tooltip>
+              </Tooltip>
+              
+              {/* Col 3: Nome do cliente */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <h3 className="font-semibold text-sm truncate">
+                    {neoInstalacao.nome_cliente && neoInstalacao.nome_cliente.length > 20 
+                      ? `${neoInstalacao.nome_cliente.substring(0, 20)}...` 
+                      : neoInstalacao.nome_cliente}
+                  </h3>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{neoInstalacao.nome_cliente}</p>
+                </TooltipContent>
+              </Tooltip>
 
-            {/* Col 9: Ação */}
-            <div className="flex items-center justify-end">
-              {onConcluir && (
-                <Button
-                  size="icon"
-                  variant="outline"
-                  className="h-[20px] w-[20px] rounded-[3px] bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/50"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onConcluir(neoInstalacao.id);
-                  }}
-                  disabled={isConcluindo}
-                  title="Concluir instalação"
+              {/* Col 4: Cidade/Estado */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center text-center">
+                    <span className="text-[10px] text-muted-foreground truncate">
+                      {neoInstalacao.cidade && neoInstalacao.estado 
+                        ? `${neoInstalacao.cidade}/${neoInstalacao.estado}`
+                        : neoInstalacao.cidade || neoInstalacao.estado || '—'}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">
+                    {neoInstalacao.cidade}, {neoInstalacao.estado}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Col 5: Terceirização placeholder */}
+              <div />
+
+              {/* Col 6: Metragem Linear placeholder */}
+              <div className="text-center">
+                <span className="text-[9px] text-muted-foreground/50">—</span>
+              </div>
+
+              {/* Col 7: Metragem Quadrada placeholder */}
+              <div className="text-center">
+                <span className="text-[9px] text-muted-foreground/50">—</span>
+              </div>
+
+              {/* Col 8: Data de Agendamento */}
+              <div className="text-center">
+                {neoInstalacao.data_instalacao ? (
+                  <div className="flex flex-col items-center leading-tight">
+                    <span className="text-[9px] font-medium text-blue-400">
+                      Agendado
+                    </span>
+                    <span className="text-xs font-bold text-blue-400">
+                      {format(parseISO(neoInstalacao.data_instalacao), "dd/MM/yy")}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[10px] font-bold text-destructive">
+                    Não agendado
+                  </span>
+                )}
+              </div>
+
+              {/* Col 9: Responsável/Equipe */}
+              <div className="text-center overflow-hidden">
+                {neoInstalacao.equipe_nome ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span 
+                        className="text-[10px] font-medium truncate block cursor-help"
+                        style={{ color: corEquipe }}
+                      >
+                        {neoInstalacao.equipe_nome.length > 10 
+                          ? `${neoInstalacao.equipe_nome.substring(0, 10)}...` 
+                          : neoInstalacao.equipe_nome}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">{neoInstalacao.equipe_nome}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <span className="text-[9px] text-muted-foreground/50">—</span>
+                )}
+              </div>
+
+              {/* Col 10: Portas P/G - Badge Avulso */}
+              <div className="flex items-center gap-0.5 overflow-hidden">
+                <Badge 
+                  variant="outline" 
+                  className="text-[9px] px-1 py-0 h-4 text-blue-400 bg-blue-500/20 border-blue-500/50"
                 >
-                  <CheckCircle className="h-3 w-3" />
-                </Button>
-              )}
+                  AVULSO
+                </Badge>
+              </div>
+
+              {/* Col 11: Tags/Badges (Instalação) */}
+              <div className="flex items-center justify-center gap-1">
+                <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-blue-500/10 text-blue-400 border-blue-500/50">
+                  <Hammer className="h-2.5 w-2.5" />
+                </Badge>
+              </div>
+
+              {/* Col 12: Cores placeholder */}
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] text-muted-foreground/50">—</span>
+              </div>
+
+              {/* Col 13-17: Status das Ordens - placeholders */}
+              <div className="flex items-center justify-center">
+                <span className="text-[9px] text-muted-foreground/50">—</span>
+              </div>
+              <div className="flex items-center justify-center">
+                <span className="text-[9px] text-muted-foreground/50">—</span>
+              </div>
+              <div className="flex items-center justify-center">
+                <span className="text-[9px] text-muted-foreground/50">—</span>
+              </div>
+              <div className="flex items-center justify-center">
+                <span className="text-[9px] text-muted-foreground/50">—</span>
+              </div>
+              <div className="flex items-center justify-center">
+                <span className="text-[9px] text-muted-foreground/50">—</span>
+              </div>
+
+              {/* Col 18: Tempo na Etapa - Hora */}
+              <div className="text-center">
+                {neoInstalacao.hora ? (
+                  <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    <span className="text-[10px] font-medium">
+                      {neoInstalacao.hora.substring(0, 5)}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[9px] text-muted-foreground/50">—</span>
+                )}
+              </div>
+
+              {/* Col 19: Botões de ação */}
+              <div className="flex items-center justify-end gap-0.5">
+                {onConcluir && (
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="flex h-[20px] w-[20px] rounded-[3px] bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onConcluir(neoInstalacao.id);
+                    }}
+                    disabled={isConcluindo}
+                    title="Concluir instalação"
+                  >
+                    <CheckCircle className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
+          </CardContent>
         </Card>
       </TooltipProvider>
     );
