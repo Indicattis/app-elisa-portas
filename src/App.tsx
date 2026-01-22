@@ -196,6 +196,7 @@ import ClientesDirecao from "./pages/direcao/ClientesDirecao";
 
 // Hub de Logística Minimalista
 import LogisticaHub from "./pages/logistica/LogisticaHub";
+import ControleLogistica from "./pages/logistica/ControleLogistica";
 import ExpedicaoMinimalista from "./pages/logistica/ExpedicaoMinimalista";
 import FrotaMinimalista from "./pages/logistica/FrotaMinimalista";
 import InstalacoesHub from "./pages/logistica/InstalacoesHub";
@@ -371,6 +372,7 @@ const App = () => (
 
                 {/* Hub de Logística Minimalista */}
                 <Route path="/logistica" element={<ProtectedRoute><LogisticaHub /></ProtectedRoute>} />
+                <Route path="/logistica/controle" element={<ProtectedRoute><ControleLogistica /></ProtectedRoute>} />
                 <Route path="/logistica/expedicao" element={<ProtectedRoute><ExpedicaoMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/frota" element={<ProtectedRoute><FrotaMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes" element={<ProtectedRoute><InstalacoesHub /></ProtectedRoute>} />

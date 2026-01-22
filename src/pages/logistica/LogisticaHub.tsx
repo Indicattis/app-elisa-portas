@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
-import { Truck, Car, CalendarDays, ArrowLeft } from "lucide-react";
+import { Truck, Car, CalendarDays, ArrowLeft, ClipboardList } from "lucide-react";
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 
 const menuItems = [
+  { label: "Controle", icon: ClipboardList, path: "/logistica/controle" },
   { label: "Calendário", icon: Truck, path: "/logistica/expedicao" },
   { label: "Frota", icon: Car, path: "/logistica/frota" },
   { label: "Instalações", icon: CalendarDays, path: "/logistica/instalacoes" },

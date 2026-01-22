@@ -32,6 +32,7 @@ interface PedidosDraggableListProps {
   onArquivar?: (pedidoId: string) => Promise<void>;
   onDeletar?: (pedidoId: string) => Promise<void>;
   enableDragAndDrop?: boolean; // Habilita drag-and-drop e botões de prioridade (apenas em "Em Produção")
+  showPosicao?: boolean; // Mostra o índice de posição/prioridade (default: true)
 }
 
 interface SortableItemProps {
@@ -109,6 +110,7 @@ export function PedidosDraggableList({
   onArquivar,
   onDeletar,
   enableDragAndDrop = true,
+  showPosicao = true,
 }: PedidosDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   
@@ -176,8 +178,8 @@ export function PedidosDraggableList({
               onRetrocederEtapa={onRetrocederEtapa}
               onArquivar={onArquivar}
               onDeletar={onDeletar}
-              posicao={index + 1}
-              total={pedidos.length}
+              posicao={showPosicao ? index + 1 : undefined}
+              total={showPosicao ? pedidos.length : undefined}
               // Sem dragHandleProps - não há arrastar
               // Sem onMoverPrioridade - não há botões de prioridade
             />
@@ -209,8 +211,8 @@ export function PedidosDraggableList({
               key={pedido.id}
               id={pedido.id}
               pedido={pedido}
-              posicao={index + 1}
-              total={pedidos.length}
+              posicao={showPosicao ? index + 1 : 0}
+              total={showPosicao ? pedidos.length : 0}
               isAberto={isAberto}
               viewMode={viewMode}
               onMoverEtapa={onMoverEtapa}
