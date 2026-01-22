@@ -83,9 +83,12 @@ export function MetodoPagamentoCard({
     { value: 'dinheiro', label: 'Dinheiro', icon: Wallet },
   ];
 
+  const inputClass = "bg-primary/5 border-primary/10 text-white placeholder:text-white/40";
+  const labelClass = "text-xs font-medium text-white/80";
+
   return (
-    <div className="border rounded-lg p-4 space-y-4 bg-card">
-      <h4 className="font-medium text-sm text-muted-foreground">{titulo}</h4>
+    <div className="border rounded-lg p-4 space-y-4 border-primary/10 bg-primary/5">
+      <h4 className="font-medium text-xs text-white/60">{titulo}</h4>
       
       {/* Seleção do tipo de pagamento */}
       <div className="grid grid-cols-4 gap-2">
@@ -95,8 +98,13 @@ export function MetodoPagamentoCard({
             <Button
               key={m.value}
               type="button"
-              variant={metodo.tipo === m.value ? "default" : "outline"}
-              className="flex flex-col h-auto py-3 gap-1"
+              variant="outline"
+              className={cn(
+                "flex flex-col h-auto py-3 gap-1 border-primary/20",
+                metodo.tipo === m.value 
+                  ? "bg-primary/20 border-primary text-primary" 
+                  : "bg-primary/5 text-white/80 hover:bg-primary/10 hover:text-white"
+              )}
               onClick={() => onChange({ ...metodo, tipo: m.value as MetodoPagamento['tipo'] })}
             >
               <Icon className="h-5 w-5" />
@@ -109,11 +117,11 @@ export function MetodoPagamentoCard({
       {metodo.tipo && (
         <div className="space-y-4">
           {/* Linha com Valor, Data e Empresa */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>{valorLabel}</Label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <Label className={labelClass}>{valorLabel}</Label>
               {valorFixo ? (
-                <div className="h-9 px-3 py-2 border rounded-md bg-muted text-sm">
+                <div className={cn("h-9 px-3 py-2 border rounded-md text-sm", inputClass)}>
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metodo.valor)}
                 </div>
               ) : (
@@ -124,19 +132,20 @@ export function MetodoPagamentoCard({
                   value={metodo.valor || ''}
                   onChange={(e) => onChange({ ...metodo, valor: parseFloat(e.target.value) || 0 })}
                   placeholder="R$ 0,00"
+                  className={cn("h-9", inputClass)}
                 />
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label>Data do Pagamento *</Label>
+            <div className="space-y-1">
+              <Label className={labelClass}>Data do Pagamento *</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !metodo.data_pagamento && "text-muted-foreground"
+                      "w-full h-9 justify-start text-left font-normal border-primary/10 bg-primary/5",
+                      !metodo.data_pagamento ? "text-white/40" : "text-white"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -158,13 +167,13 @@ export function MetodoPagamentoCard({
               </Popover>
             </div>
 
-            <div className="space-y-2">
-              <Label>Empresa Receptora *</Label>
+            <div className="space-y-1">
+              <Label className={labelClass}>Empresa Receptora *</Label>
               <Select
                 value={metodo.empresa_receptora_id}
                 onValueChange={(value) => onChange({ ...metodo, empresa_receptora_id: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className={cn("h-9", inputClass)}>
                   <SelectValue placeholder={isLoadingEmpresas ? "Carregando..." : "Selecione"} />
                 </SelectTrigger>
                 <SelectContent>
@@ -180,14 +189,14 @@ export function MetodoPagamentoCard({
 
           {/* Campos específicos por tipo */}
           {metodo.tipo === 'cartao_credito' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Número de Parcelas *</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className={labelClass}>Número de Parcelas *</Label>
                 <Select
                   value={metodo.parcelas_cartao.toString()}
                   onValueChange={(value) => onChange({ ...metodo, parcelas_cartao: parseInt(value) })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={cn("h-9", inputClass)}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -203,14 +212,14 @@ export function MetodoPagamentoCard({
           )}
 
           {metodo.tipo === 'boleto' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Número de Parcelas *</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className={labelClass}>Número de Parcelas *</Label>
                 <Select
                   value={metodo.parcelas_boleto.toString()}
                   onValueChange={(value) => onChange({ ...metodo, parcelas_boleto: parseInt(value) })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={cn("h-9", inputClass)}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -223,13 +232,13 @@ export function MetodoPagamentoCard({
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Intervalo entre Boletos *</Label>
+              <div className="space-y-1">
+                <Label className={labelClass}>Intervalo entre Boletos *</Label>
                 <Select
                   value={metodo.intervalo_boletos.toString()}
                   onValueChange={(value) => onChange({ ...metodo, intervalo_boletos: parseInt(value) })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={cn("h-9", inputClass)}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -246,8 +255,8 @@ export function MetodoPagamentoCard({
           )}
 
           {metodo.tipo === 'a_vista' && (
-            <div className="space-y-2">
-              <Label>Comprovante de Pagamento</Label>
+            <div className="space-y-1">
+              <Label className={labelClass}>Comprovante de Pagamento</Label>
               {!metodo.comprovante_file ? (
                 <div className="flex items-center gap-2">
                   <Input
@@ -261,20 +270,21 @@ export function MetodoPagamentoCard({
                     type="button"
                     variant="outline"
                     onClick={() => document.getElementById(`comprovante-${titulo}`)?.click()}
-                    className="w-full"
+                    className="w-full border-primary/20 bg-primary/5 text-white/80 hover:bg-primary/10 hover:text-white"
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     Anexar Comprovante (PNG, JPG ou PDF)
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 p-2 border rounded-md bg-muted">
-                  <span className="text-sm flex-1 truncate">{metodo.comprovante_file.name}</span>
+                <div className="flex items-center gap-2 p-2 border rounded-md border-primary/10 bg-primary/5">
+                  <span className="text-sm flex-1 truncate text-white/80">{metodo.comprovante_file.name}</span>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={handleRemoveFile}
+                    className="text-white/60 hover:text-white hover:bg-primary/10"
                   >
                     <X className="h-4 w-4" />
                   </Button>
