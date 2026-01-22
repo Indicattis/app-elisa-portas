@@ -214,6 +214,10 @@ import FaturamentoVendasMinimalista from "./pages/administrativo/FaturamentoVend
 import FaturamentoProdutosMinimalista from "./pages/administrativo/FaturamentoProdutosMinimalista";
 import FaturamentoVendaMinimalista from "./pages/administrativo/FaturamentoVendaMinimalista";
 import CustosMinimalista from "./pages/administrativo/CustosMinimalista";
+import CaixaHub from "./pages/administrativo/CaixaHub";
+import GestaoCaixaMinimalista from "./pages/administrativo/GestaoCaixaMinimalista";
+import ContasReceberMinimalista from "./pages/administrativo/ContasReceberMinimalista";
+import ContasPagarMinimalista from "./pages/administrativo/ContasPagarMinimalista";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -396,6 +400,12 @@ const App = () => (
                 <Route path="/administrativo/financeiro/faturamento/produtos" element={<ProtectedRoute><FaturamentoProdutosMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/faturamento/:id" element={<ProtectedRoute><FaturamentoVendaMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/custos" element={<ProtectedRoute><CustosMinimalista /></ProtectedRoute>} />
+                
+                {/* Hub de Caixa Minimalista */}
+                <Route path="/administrativo/financeiro/caixa" element={<ProtectedRoute><CaixaHub /></ProtectedRoute>} />
+                <Route path="/administrativo/financeiro/caixa/gestao" element={<ProtectedRoute><GestaoCaixaMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/financeiro/caixa/contas-a-receber" element={<ProtectedRoute><ContasReceberMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/financeiro/caixa/contas-a-pagar" element={<ProtectedRoute><ContasPagarMinimalista /></ProtectedRoute>} />
 
                 {/* Hub da Fábrica Legado - usa autenticação própria com CPF */}
                 <Route path="/hub-fabrica" element={<HubFabrica />} />
