@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useDroppable } from "@dnd-kit/core";
+import { useDroppable, useDndMonitor } from "@dnd-kit/core";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronDown } from "lucide-react";
@@ -54,6 +54,15 @@ export const VerMaisCardsPopover = ({
   readOnly = false,
 }: VerMaisCardsPopoverProps) => {
   const [open, setOpen] = useState(false);
+
+  // Close modal when drag starts so user can drop on calendar
+  useDndMonitor({
+    onDragStart: () => {
+      if (open) {
+        setOpen(false);
+      }
+    },
+  });
 
   const { setNodeRef, isOver } = useDroppable({
     id: `modal-${format(date, "yyyy-MM-dd")}`,
