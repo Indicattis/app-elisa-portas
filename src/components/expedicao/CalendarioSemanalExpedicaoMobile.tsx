@@ -23,6 +23,8 @@ interface CalendarioSemanalExpedicaoMobileProps {
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
   onOpenNeoInstalacaoDetails?: (neoInstalacao: NeoInstalacao) => void;
   onOpenNeoCorrecaoDetails?: (neoCorrecao: NeoCorrecao) => void;
+  onExcluirNeoInstalacao?: (id: string) => void;
+  onExcluirNeoCorrecao?: (id: string) => void;
 }
 
 export const CalendarioSemanalExpedicaoMobile = ({
@@ -41,6 +43,8 @@ export const CalendarioSemanalExpedicaoMobile = ({
   onOrdemClick,
   onOpenNeoInstalacaoDetails,
   onOpenNeoCorrecaoDetails,
+  onExcluirNeoInstalacao,
+  onExcluirNeoCorrecao,
 }: CalendarioSemanalExpedicaoMobileProps) => {
   const weekStart = startOfWeek(startDate, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -85,6 +89,8 @@ export const CalendarioSemanalExpedicaoMobile = ({
             onOrdemClick={onOrdemClick}
             onOpenNeoInstalacaoDetails={onOpenNeoInstalacaoDetails}
             onOpenNeoCorrecaoDetails={onOpenNeoCorrecaoDetails}
+            onExcluirNeoInstalacao={onExcluirNeoInstalacao}
+            onExcluirNeoCorrecao={onExcluirNeoCorrecao}
           />
         ))}
       </div>

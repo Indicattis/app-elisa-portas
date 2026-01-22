@@ -8,6 +8,7 @@ interface DraggableNeoCorrecaoProps {
   onClick?: (neoCorrecao: NeoCorrecao) => void;
   onConcluir?: (id: string) => void;
   onRemover?: (id: string) => void;
+  onExcluir?: (id: string) => void;
   onOpenDetails?: (neoCorrecao: NeoCorrecao) => void;
   disableDrag?: boolean;
 }
@@ -17,6 +18,7 @@ export const DraggableNeoCorrecao = ({
   onClick,
   onConcluir,
   onRemover,
+  onExcluir,
   onOpenDetails,
   disableDrag = false,
 }: DraggableNeoCorrecaoProps) => {
@@ -42,6 +44,7 @@ export const DraggableNeoCorrecao = ({
         onClick={onClick}
         onConcluir={onConcluir}
         onRemover={onRemover}
+        onExcluir={onExcluir}
         onOpenDetails={onOpenDetails}
         dragListeners={disableDrag ? undefined : listeners}
       />

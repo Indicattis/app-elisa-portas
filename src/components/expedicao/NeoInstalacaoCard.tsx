@@ -13,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MoreVertical, MapPin, Info, XCircle, CheckCircle } from "lucide-react";
+import { MoreVertical, MapPin, Info, XCircle, CheckCircle, Trash2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NeoInstalacao } from "@/types/neoInstalacao";
@@ -23,6 +23,7 @@ interface NeoInstalacaoCardProps {
   onClick?: (neoInstalacao: NeoInstalacao) => void;
   onConcluir?: (id: string) => void;
   onRemover?: (id: string) => void;
+  onExcluir?: (id: string) => void;
   onOpenDetails?: (neoInstalacao: NeoInstalacao) => void;
   dragListeners?: any;
 }
@@ -32,6 +33,7 @@ export const NeoInstalacaoCard = ({
   onClick,
   onConcluir,
   onRemover,
+  onExcluir,
   onOpenDetails,
   dragListeners,
 }: NeoInstalacaoCardProps) => {
@@ -79,7 +81,7 @@ export const NeoInstalacaoCard = ({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {(onConcluir || onRemover) && (
+          {(onConcluir || onRemover || onExcluir) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                 <Button variant="ghost" size="icon" className="h-5 w-5 p-0">
@@ -99,10 +101,19 @@ export const NeoInstalacaoCard = ({
                 {onRemover && (
                   <DropdownMenuItem 
                     onClick={() => onRemover(neoInstalacao.id)}
-                    className="text-destructive focus:text-destructive"
+                    className="text-orange-600 focus:text-orange-600"
                   >
                     <XCircle className="h-3.5 w-3.5 mr-2" />
                     Remover do calendário
+                  </DropdownMenuItem>
+                )}
+                {onExcluir && (
+                  <DropdownMenuItem 
+                    onClick={() => onExcluir(neoInstalacao.id)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-2" />
+                    Excluir
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>

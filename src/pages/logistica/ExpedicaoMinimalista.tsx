@@ -247,6 +247,8 @@ export default function ExpedicaoMinimalista() {
                       onOrdemAdded={handleOrdemCriada}
                       onOpenNeoInstalacaoDetails={handleOpenNeoInstalacaoDetails}
                       onOpenNeoCorrecaoDetails={handleOpenNeoCorrecaoDetails}
+                      onExcluirNeoInstalacao={deleteNeoInstalacao}
+                      onExcluirNeoCorrecao={deleteNeoCorrecao}
                     />
                   ) : viewType === 'week' ? (
                     <CalendarioSemanalExpedicaoDesktop
@@ -271,6 +273,8 @@ export default function ExpedicaoMinimalista() {
                       onOrdemClick={handleOrdemClick}
                       onOpenNeoInstalacaoDetails={handleOpenNeoInstalacaoDetails}
                       onOpenNeoCorrecaoDetails={handleOpenNeoCorrecaoDetails}
+                      onExcluirNeoInstalacao={deleteNeoInstalacao}
+                      onExcluirNeoCorrecao={deleteNeoCorrecao}
                     />
                   ) : (
                     <CalendarioMensalExpedicaoDesktop
@@ -293,6 +297,8 @@ export default function ExpedicaoMinimalista() {
                       onOrdemClick={handleOrdemClick}
                       onOpenNeoInstalacaoDetails={handleOpenNeoInstalacaoDetails}
                       onOpenNeoCorrecaoDetails={handleOpenNeoCorrecaoDetails}
+                      onExcluirNeoInstalacao={deleteNeoInstalacao}
+                      onExcluirNeoCorrecao={deleteNeoCorrecao}
                     />
                   )}
                 </CardContent>

@@ -32,6 +32,8 @@ interface CalendarioSemanalExpedicaoDesktopProps {
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
   onOpenNeoInstalacaoDetails?: (neoInstalacao: NeoInstalacao) => void;
   onOpenNeoCorrecaoDetails?: (neoCorrecao: NeoCorrecao) => void;
+  onExcluirNeoInstalacao?: (id: string) => void;
+  onExcluirNeoCorrecao?: (id: string) => void;
   readOnly?: boolean;
 }
 
@@ -53,6 +55,8 @@ export const CalendarioSemanalExpedicaoDesktop = ({
   onOrdemClick,
   onOpenNeoInstalacaoDetails,
   onOpenNeoCorrecaoDetails,
+  onExcluirNeoInstalacao,
+  onExcluirNeoCorrecao,
   readOnly = false,
 }: CalendarioSemanalExpedicaoDesktopProps) => {
   const [activeOrdem, setActiveOrdem] = useState<OrdemCarregamento | null>(null);
@@ -234,6 +238,8 @@ export const CalendarioSemanalExpedicaoDesktop = ({
             onOrdemClick={onOrdemClick}
             onOpenNeoInstalacaoDetails={onOpenNeoInstalacaoDetails}
             onOpenNeoCorrecaoDetails={onOpenNeoCorrecaoDetails}
+            onExcluirNeoInstalacao={readOnly ? undefined : onExcluirNeoInstalacao}
+            onExcluirNeoCorrecao={readOnly ? undefined : onExcluirNeoCorrecao}
             readOnly={readOnly}
           />
         ))}
