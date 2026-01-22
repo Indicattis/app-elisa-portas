@@ -83,12 +83,12 @@ export function MetodoPagamentoCard({
     { value: 'dinheiro', label: 'Dinheiro', icon: Wallet },
   ];
 
-  const inputClass = "bg-primary/5 border-primary/10 text-white placeholder:text-white/40";
-  const labelClass = "text-xs font-medium text-white/80";
+  const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-white/40";
+  const labelClass = "text-xs font-medium text-white/70";
 
   return (
-    <div className="border rounded-lg p-4 space-y-4 border-primary/10 bg-primary/5">
-      <h4 className="font-medium text-xs text-white/60">{titulo}</h4>
+    <div className="border rounded-lg p-4 space-y-4 border-white/10 bg-white/5">
+      <h4 className="font-medium text-xs text-white/50">{titulo}</h4>
       
       {/* Seleção do tipo de pagamento */}
       <div className="grid grid-cols-4 gap-2">
@@ -100,10 +100,10 @@ export function MetodoPagamentoCard({
               type="button"
               variant="outline"
               className={cn(
-                "flex flex-col h-auto py-3 gap-1 border-primary/20",
+                "flex flex-col h-auto py-3 gap-1 border-white/20",
                 metodo.tipo === m.value 
-                  ? "bg-primary/20 border-primary text-primary" 
-                  : "bg-primary/5 text-white/80 hover:bg-primary/10 hover:text-white"
+                  ? "bg-white/20 border-white/40 text-white" 
+                  : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
               )}
               onClick={() => onChange({ ...metodo, tipo: m.value as MetodoPagamento['tipo'] })}
             >
@@ -144,7 +144,7 @@ export function MetodoPagamentoCard({
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full h-9 justify-start text-left font-normal border-primary/10 bg-primary/5",
+                      "w-full h-9 justify-start text-left font-normal border-white/10 bg-white/5",
                       !metodo.data_pagamento ? "text-white/40" : "text-white"
                     )}
                   >
@@ -270,21 +270,21 @@ export function MetodoPagamentoCard({
                     type="button"
                     variant="outline"
                     onClick={() => document.getElementById(`comprovante-${titulo}`)?.click()}
-                    className="w-full border-primary/20 bg-primary/5 text-white/80 hover:bg-primary/10 hover:text-white"
+                    className="w-full border-white/20 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     Anexar Comprovante (PNG, JPG ou PDF)
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 p-2 border rounded-md border-primary/10 bg-primary/5">
-                  <span className="text-sm flex-1 truncate text-white/80">{metodo.comprovante_file.name}</span>
+                <div className="flex items-center gap-2 p-2 border rounded-md border-white/10 bg-white/5">
+                  <span className="text-sm flex-1 truncate text-white/70">{metodo.comprovante_file.name}</span>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={handleRemoveFile}
-                    className="text-white/60 hover:text-white hover:bg-primary/10"
+                    className="text-white/50 hover:text-white hover:bg-white/10"
                   >
                     <X className="h-4 w-4" />
                   </Button>

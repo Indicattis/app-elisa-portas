@@ -52,7 +52,7 @@ export function VendaResumo({
   // Total final = produtos + frete + crédito da venda
   const valorTotalFinal = totais.total + valorFrete + valorCredito;
 
-  const cardClass = "bg-primary/5 border-primary/10 backdrop-blur-xl";
+  const cardClass = "bg-white/5 border-white/10 backdrop-blur-xl";
 
   return (
     <Card className={cardClass}>
@@ -61,23 +61,23 @@ export function VendaResumo({
       </CardHeader>
       <CardContent className="space-y-2 pb-4">
         <div className="flex justify-between">
-          <span className="text-white/60 text-sm">Valor Produtos:</span>
+          <span className="text-white/50 text-sm">Valor Produtos:</span>
           <span className="font-semibold text-white text-sm">R$ {totais.produto.toFixed(2)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-white/60 text-sm">Valor Pintura:</span>
+          <span className="text-white/50 text-sm">Valor Pintura:</span>
           <span className="font-semibold text-white text-sm">R$ {totais.pintura.toFixed(2)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-white/60 text-sm">Valor Instalação:</span>
+          <span className="text-white/50 text-sm">Valor Instalação:</span>
           <span className="font-semibold text-white text-sm">R$ {totais.instalacao.toFixed(2)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-white/60 text-sm">Valor Frete:</span>
+          <span className="text-white/50 text-sm">Valor Frete:</span>
           <span className="font-semibold text-white text-sm">R$ {valorFrete.toFixed(2)}</span>
         </div>
         {descontoAplicado > 0 && (
-          <div className="flex justify-between text-green-400">
+          <div className="flex justify-between text-red-400">
             <span className="font-medium text-sm">Desconto Aplicado:</span>
             <span className="font-semibold text-sm">
               -R$ {descontoAplicado.toFixed(2)} ({percentualDescontoCalc.toFixed(2)}%)
@@ -85,7 +85,7 @@ export function VendaResumo({
           </div>
         )}
         {valorCredito > 0 && (
-          <div className="flex justify-between items-center text-blue-400">
+          <div className="flex justify-between items-center text-emerald-400">
             <span className="font-medium text-sm">Crédito Aplicado:</span>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-sm">
@@ -106,10 +106,10 @@ export function VendaResumo({
             </div>
           </div>
         )}
-        <div className="h-px bg-primary/10 my-2" />
+        <div className="h-px bg-white/10 my-2" />
         <div className="flex justify-between text-lg">
           <span className="font-bold text-white">Total:</span>
-          <span className="font-bold text-primary">R$ {valorTotalFinal.toFixed(2)}</span>
+          <span className="font-bold text-white">R$ {valorTotalFinal.toFixed(2)}</span>
         </div>
       </CardContent>
     </Card>
