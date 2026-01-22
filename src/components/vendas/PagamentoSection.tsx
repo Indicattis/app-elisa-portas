@@ -8,7 +8,6 @@ import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MetodoPagamentoCard, MetodoPagamento, createEmptyMetodo } from "./MetodoPagamentoCard";
 import { useEffect } from "react";
-import { cn } from "@/lib/utils";
 
 export interface PagamentoData {
   usar_dois_metodos: boolean;
@@ -139,27 +138,27 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
   const valorMetodo2 = paymentData.usar_dois_metodos ? Math.max(0, valorTotal - metodo1.valor) : 0;
   const valoresConferem = !paymentData.usar_dois_metodos || (metodo1.valor + valorMetodo2 === valorTotal);
 
-  const cardClass = "bg-primary/5 border-primary/10 backdrop-blur-xl";
+  const cardClass = "bg-white/5 border-white/10 backdrop-blur-xl";
 
   return (
     <Card className={cardClass}>
       <CardHeader className="pb-3 pt-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold text-white">Forma de Pagamento</CardTitle>
-          <Badge variant="outline" className="bg-primary/10 border-primary/20 text-white">
+          <Badge variant="outline" className="bg-white/10 border-white/20 text-white">
             Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorTotal)}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4 pb-4">
         {/* Toggle para 2 métodos */}
-        <div className="flex items-center space-x-2 p-2.5 border rounded-md border-primary/10 bg-primary/5">
+        <div className="flex items-center space-x-2 p-2.5 border rounded-md border-white/10 bg-white/5">
           <Checkbox
             id="usar-dois-metodos"
             checked={paymentData.usar_dois_metodos}
             onCheckedChange={handleToggleDoisMetodos}
           />
-          <Label htmlFor="usar-dois-metodos" className="cursor-pointer text-xs text-white/80">
+          <Label htmlFor="usar-dois-metodos" className="cursor-pointer text-xs text-white/70">
             Usar 2 formas de pagamento (ex: entrada + restante)
           </Label>
         </div>
@@ -177,13 +176,13 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
 
         {/* Preview parcelas método 1 */}
         {(metodo1.tipo === 'boleto' || metodo1.tipo === 'cartao_credito') && metodo1.data_pagamento && valorMetodo1 > 0 && (
-          <div className="border rounded-lg p-3 border-primary/10 bg-primary/5">
-            <p className="text-xs font-medium mb-2 text-white/80">
+          <div className="border rounded-lg p-3 border-white/10 bg-white/5">
+            <p className="text-xs font-medium mb-2 text-white/70">
               Parcelas {metodo1.tipo === 'boleto' ? 'do Boleto' : 'do Cartão'} (Método 1):
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {calcularPreviewParcelas({ ...metodo1, valor: valorMetodo1 }).map((p) => (
-                <div key={p.numero} className="text-xs p-2 bg-primary/5 rounded border border-primary/10 text-white/70">
+                <div key={p.numero} className="text-xs p-2 bg-white/5 rounded border border-white/10 text-white/60">
                   <span className="font-medium text-white">{p.numero}ª:</span>{' '}
                   {format(p.data, "dd/MM/yy", { locale: ptBR })} -{' '}
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.valor)}
@@ -208,13 +207,13 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
 
             {/* Preview parcelas método 2 */}
             {(metodo2.tipo === 'boleto' || metodo2.tipo === 'cartao_credito') && metodo2.data_pagamento && valorMetodo2 > 0 && (
-              <div className="border rounded-lg p-3 border-primary/10 bg-primary/5">
-                <p className="text-xs font-medium mb-2 text-white/80">
+              <div className="border rounded-lg p-3 border-white/10 bg-white/5">
+                <p className="text-xs font-medium mb-2 text-white/70">
                   Parcelas {metodo2.tipo === 'boleto' ? 'do Boleto' : 'do Cartão'} (Método 2):
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {calcularPreviewParcelas({ ...metodo2, valor: valorMetodo2 }).map((p) => (
-                    <div key={p.numero} className="text-xs p-2 bg-primary/5 rounded border border-primary/10 text-white/70">
+                    <div key={p.numero} className="text-xs p-2 bg-white/5 rounded border border-white/10 text-white/60">
                       <span className="font-medium text-white">{p.numero}ª:</span>{' '}
                       {format(p.data, "dd/MM/yy", { locale: ptBR })} -{' '}
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.valor)}
@@ -228,20 +227,20 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
 
         {/* Resumo do pagamento */}
         {(metodo1.tipo || (paymentData.usar_dois_metodos && metodo2.tipo)) && (
-          <div className="border rounded-lg p-4 space-y-3 border-primary/10 bg-primary/5">
+          <div className="border rounded-lg p-4 space-y-3 border-white/10 bg-white/5">
             <h4 className="font-medium text-sm text-white">Resumo do Pagamento</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-white/60">Total da Venda:</span>
+                <span className="text-white/50">Total da Venda:</span>
                 <span className="font-medium text-white">
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorTotal)}
                 </span>
               </div>
               
-              <div className="border-t border-primary/10 pt-2 space-y-1">
+              <div className="border-t border-white/10 pt-2 space-y-1">
                 {metodo1.tipo && (
                   <div className="flex justify-between">
-                    <span className="text-white/60">
+                    <span className="text-white/50">
                       {paymentData.usar_dois_metodos ? 'Método 1' : 'Pagamento'} ({
                         metodo1.tipo === 'boleto' ? `Boleto ${metodo1.parcelas_boleto}x` :
                         metodo1.tipo === 'cartao_credito' ? `Cartão ${metodo1.parcelas_cartao}x` :
@@ -251,7 +250,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
                     <span className="text-white">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorMetodo1)}
                       {metodo1.data_pagamento && (
-                        <span className="text-white/50 ml-2">
+                        <span className="text-white/40 ml-2">
                           em {format(metodo1.data_pagamento, "dd/MM/yyyy", { locale: ptBR })}
                         </span>
                       )}
@@ -261,7 +260,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
                 
                 {paymentData.usar_dois_metodos && metodo2.tipo && (
                   <div className="flex justify-between">
-                    <span className="text-white/60">
+                    <span className="text-white/50">
                       Método 2 ({
                         metodo2.tipo === 'boleto' ? `Boleto ${metodo2.parcelas_boleto}x` :
                         metodo2.tipo === 'cartao_credito' ? `Cartão ${metodo2.parcelas_cartao}x` :
@@ -271,7 +270,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
                     <span className="text-white">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorMetodo2)}
                       {metodo2.data_pagamento && (
-                        <span className="text-white/50 ml-2">
+                        <span className="text-white/40 ml-2">
                           em {format(metodo2.data_pagamento, "dd/MM/yyyy", { locale: ptBR })}
                         </span>
                       )}
@@ -280,11 +279,11 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
                 )}
               </div>
 
-              <div className="border-t border-primary/10 pt-2">
+              <div className="border-t border-white/10 pt-2">
                 {valoresConferem ? (
-                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30">✓ Valores conferem</Badge>
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">✓ Valores conferem</Badge>
                 ) : (
-                  <Badge className="bg-red-500/20 text-red-400 border-red-500/30">⚠ Valores não conferem com o total</Badge>
+                  <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">⚠ Valores não conferem com o total</Badge>
                 )}
               </div>
             </div>

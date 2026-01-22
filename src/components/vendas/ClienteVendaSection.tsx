@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Search, UserPlus, X, AlertTriangle, Check, User } from 'lucide-react';
-import { useSearchClientes, useCheckClienteDuplicado, useCreateCliente, Cliente, ClienteFormData } from '@/hooks/useClientes';
+import { Search, X, AlertTriangle, Check, User } from 'lucide-react';
+import { useSearchClientes, useCheckClienteDuplicado, Cliente } from '@/hooks/useClientes';
 import { useCanaisAquisicao } from '@/hooks/useCanaisAquisicao';
 import { ESTADOS_BRASIL, getCidadesPorEstado } from '@/utils/estadosCidades';
 import { cn } from '@/lib/utils';
@@ -45,14 +45,13 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
   const { data: clientesBusca = [], isLoading: buscando } = useSearchClientes(searchTerm);
   const { data: clienteDuplicado } = useCheckClienteDuplicado(cpfParaVerificar);
   const { canais } = useCanaisAquisicao();
-  const createCliente = useCreateCliente();
 
   const cidades = dados.estado ? getCidadesPorEstado(dados.estado) : [];
 
   // Classes minimalistas
-  const cardClass = "bg-primary/5 border-primary/10 backdrop-blur-xl";
-  const labelClass = "text-xs font-medium text-white/80";
-  const inputClass = "h-9 bg-primary/5 border-primary/10 text-white placeholder:text-white/40";
+  const cardClass = "bg-white/5 border-white/10 backdrop-blur-xl";
+  const labelClass = "text-xs font-medium text-white/70";
+  const inputClass = "h-9 bg-white/5 border-white/10 text-white placeholder:text-white/40";
 
   // Quando seleciona um cliente existente, preenche os dados
   const handleSelectCliente = (cliente: Cliente) => {
@@ -168,12 +167,12 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
               className="flex gap-4"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="buscar" id="buscar" className="border-primary/30 text-primary" />
-                <Label htmlFor="buscar" className="text-sm cursor-pointer text-white/80">Buscar existente</Label>
+                <RadioGroupItem value="buscar" id="buscar" className="border-white/30 text-white" />
+                <Label htmlFor="buscar" className="text-sm cursor-pointer text-white/70">Buscar existente</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="cadastrar" id="cadastrar" className="border-primary/30 text-primary" />
-                <Label htmlFor="cadastrar" className="text-sm cursor-pointer text-white/80">Cadastrar novo</Label>
+                <RadioGroupItem value="cadastrar" id="cadastrar" className="border-white/30 text-white" />
+                <Label htmlFor="cadastrar" className="text-sm cursor-pointer text-white/70">Cadastrar novo</Label>
               </div>
             </RadioGroup>
           )}
@@ -184,14 +183,14 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
         {disabled && (
           <>
             {/* Dados bloqueados do orçamento */}
-            <div className="border rounded-lg p-4 border-primary/10 bg-primary/5">
+            <div className="border rounded-lg p-4 border-white/10 bg-white/5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <Label className="text-xs text-white/60">Nome do Cliente</Label>
+                  <Label className="text-xs text-white/50">Nome do Cliente</Label>
                   <p className="font-medium text-white">{dados.cliente_nome || '-'}</p>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-white/60">Telefone</Label>
+                  <Label className="text-xs text-white/50">Telefone</Label>
                   <p className="font-medium text-white">{dados.cliente_telefone || '-'}</p>
                 </div>
               </div>
@@ -310,7 +309,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                 <Button
                   variant="outline"
                   role="combobox"
-                  className="w-full justify-start h-9 border-primary/10 bg-primary/5 text-white/60 hover:bg-primary/10 hover:text-white"
+                  className="w-full justify-start h-9 border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
                 >
                   <Search className="mr-2 h-4 w-4" />
                   <span>Digite para buscar...</span>
@@ -356,7 +355,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                 </Command>
               </PopoverContent>
             </Popover>
-            <p className="text-xs text-white/50">
+            <p className="text-xs text-white/40">
               Ou selecione "Cadastrar novo" para adicionar um cliente
             </p>
           </div>
@@ -364,14 +363,14 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
 
         {/* Cliente Selecionado */}
         {!disabled && modo === 'buscar' && clienteSelecionado && (
-          <div className="border rounded-lg p-4 border-primary/10 bg-primary/5">
+          <div className="border rounded-lg p-4 border-white/10 bg-white/5">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-400" />
+                  <Check className="h-4 w-4 text-emerald-400" />
                   <span className="font-medium text-white">{clienteSelecionado.nome}</span>
                 </div>
-                <div className="text-sm text-white/60 space-y-0.5">
+                <div className="text-sm text-white/50 space-y-0.5">
                   {clienteSelecionado.cpf_cnpj && <p>CPF/CNPJ: {clienteSelecionado.cpf_cnpj}</p>}
                   {clienteSelecionado.telefone && <p>Tel: {clienteSelecionado.telefone}</p>}
                   {clienteSelecionado.email && <p>Email: {clienteSelecionado.email}</p>}
@@ -380,7 +379,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                   )}
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleLimparCliente} className="text-white/60 hover:text-white hover:bg-primary/10">
+              <Button variant="ghost" size="sm" onClick={handleLimparCliente} className="text-white/50 hover:text-white hover:bg-white/10">
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -408,7 +407,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                     variant="secondary"
                     size="sm"
                     onClick={handleUsarClienteExistente}
-                    className="bg-primary/20 text-white hover:bg-primary/30"
+                    className="bg-white/20 text-white hover:bg-white/30"
                   >
                     <Check className="h-3 w-3 mr-1" />
                     Usar cliente existente
@@ -474,8 +473,8 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
             </div>
 
             {/* Localização - desabilitados se houver duplicado */}
-            <div className="pt-2 border-t border-primary/10">
-              <Label className="text-xs font-medium text-white/50 mb-2 block">Localização (obrigatório para NF-e)</Label>
+            <div className="pt-2 border-t border-white/10">
+              <Label className="text-xs font-medium text-white/40 mb-2 block">Localização (obrigatório para NF-e)</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="estado" className={labelClass}>Estado *</Label>
@@ -560,7 +559,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
             </div>
 
             {/* Canal de Aquisição e Público Alvo */}
-            <div className="pt-2 border-t border-primary/10">
+            <div className="pt-2 border-t border-white/10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-md">
                 <div className="space-y-1">
                   <Label htmlFor="canal_aquisicao_id" className={labelClass}>Canal de Aquisição</Label>

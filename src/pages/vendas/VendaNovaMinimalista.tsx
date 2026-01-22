@@ -445,9 +445,9 @@ export default function VendaNovaMinimalista() {
   };
 
   // Classes minimalistas para Cards
-  const cardClass = "bg-primary/5 border-primary/10 backdrop-blur-xl";
-  const labelClass = "text-xs font-medium text-white/80";
-  const inputClass = "bg-primary/5 border-primary/10 text-white placeholder:text-white/40";
+  const cardClass = "bg-white/5 border-white/10 backdrop-blur-xl";
+  const labelClass = "text-xs font-medium text-white/70";
+  const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-white/40";
 
   return (
     <MinimalistLayout 
