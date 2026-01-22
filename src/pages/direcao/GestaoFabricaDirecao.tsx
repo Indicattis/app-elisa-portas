@@ -2,13 +2,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus } from "lucide-react";
 import { CriarPedidoTesteModal } from "@/components/pedidos/CriarPedidoTesteModal";
+import { SelecionarResponsavelEtapaModal } from "@/components/pedidos/SelecionarResponsavelEtapaModal";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
 import { useNeoInstalacoesListagem } from "@/hooks/useNeoInstalacoes";
 import { useNeoCorrecoesListagem } from "@/hooks/useNeoCorrecoes";
+import { useEtapaResponsaveis } from "@/hooks/useEtapaResponsaveis";
 import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
 import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMinimalista";
 import { NeoInstalacaoCardGestao } from "@/components/pedidos/NeoInstalacaoCardGestao";
@@ -44,10 +48,18 @@ export default function GestaoFabricaDirecao() {
   const [mostrarProntos, setMostrarProntos] = useState(false);
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [modalPedidoTesteAberto, setModalPedidoTesteAberto] = useState(false);
+  const [modalResponsavelAberto, setModalResponsavelAberto] = useState(false);
+  const [etapaParaAtribuir, setEtapaParaAtribuir] = useState<EtapaPedido | null>(null);
   const ITENS_POR_PAGINA = 25;
   const contadores = usePedidosContadores();
   const { neoInstalacoes, concluirNeoInstalacao, isConcluindo } = useNeoInstalacoesListagem();
   const { neoCorrecoes, concluirNeoCorrecao } = useNeoCorrecoesListagem();
+  const { 
+    getResponsavel, 
+    atribuirResponsavel, 
+    removerResponsavel, 
+    isAtribuindo 
+  } = useEtapaResponsaveis();
   const {
     pedidos,
     isLoading,
@@ -162,7 +174,29 @@ export default function GestaoFabricaDirecao() {
     queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
     queryClient.invalidateQueries({ queryKey: ['neo_instalacoes_listagem'] });
     queryClient.invalidateQueries({ queryKey: ['neo_correcoes_listagem'] });
+    queryClient.invalidateQueries({ queryKey: ['etapa-responsaveis'] });
     toast({ title: "Atualizado", description: "Lista de pedidos atualizada com sucesso" });
+  };
+
+  const handleAbrirModalResponsavel = (etapa: EtapaPedido) => {
+    setEtapaParaAtribuir(etapa);
+    setModalResponsavelAberto(true);
+  };
+
+  const handleAtribuirResponsavel = (userId: string) => {
+    if (etapaParaAtribuir) {
+      atribuirResponsavel({ etapa: etapaParaAtribuir, responsavelId: userId });
+      setModalResponsavelAberto(false);
+      setEtapaParaAtribuir(null);
+    }
+  };
+
+  const handleRemoverResponsavel = () => {
+    if (etapaParaAtribuir) {
+      removerResponsavel(etapaParaAtribuir);
+      setModalResponsavelAberto(false);
+      setEtapaParaAtribuir(null);
+    }
   };
 
   const handleConcluirNeoCorrecao = async (id: string) => {
@@ -262,24 +296,43 @@ export default function GestaoFabricaDirecao() {
 
         {/* Tabs - Desktop */}
         <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-1 bg-primary/5 border border-primary/10">
-          {ORDEM_ETAPAS.map(etapa => {
-            const config = ETAPAS_CONFIG[etapa];
-            const count = contadores[etapa] || 0;
-            const IconComponent = ETAPA_ICONS[etapa];
-            return (
-              <TabsTrigger 
-                key={etapa} 
-                value={etapa} 
-                className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white"
-              >
-                <IconComponent className="h-4 w-4 flex-shrink-0" />
-                <span className="text-xs">{config.label}</span>
-                <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
-                  {count}
-                </span>
-              </TabsTrigger>
-            );
-          })}
+          <TooltipProvider>
+            {ORDEM_ETAPAS.map(etapa => {
+              const config = ETAPAS_CONFIG[etapa];
+              const count = contadores[etapa] || 0;
+              const IconComponent = ETAPA_ICONS[etapa];
+              const responsavel = getResponsavel(etapa);
+              return (
+                <TabsTrigger 
+                  key={etapa} 
+                  value={etapa} 
+                  className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white"
+                >
+                  {responsavel ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Avatar className="h-5 w-5 border border-primary/30">
+                          <AvatarImage src={responsavel.foto_perfil_url || undefined} />
+                          <AvatarFallback className="text-[10px] bg-primary/20">
+                            {responsavel.nome.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">Responsável: {responsavel.nome}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <IconComponent className="h-4 w-4 flex-shrink-0" />
+                  )}
+                  <span className="text-xs">{config.label}</span>
+                  <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
+                    {count}
+                  </span>
+                </TabsTrigger>
+              );
+            })}
+          </TooltipProvider>
         </TabsList>
 
         {ORDEM_ETAPAS.map(etapa => (
@@ -298,6 +351,54 @@ export default function GestaoFabricaDirecao() {
                         🚪 {totalPortasEtapa} {totalPortasEtapa === 1 ? 'porta' : 'portas'}
                       </Badge>
                     )}
+                    
+                    {/* Responsável da Etapa */}
+                    <div className="flex items-center gap-2 ml-4">
+                      {(() => {
+                        const responsavel = getResponsavel(etapa);
+                        return responsavel ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button 
+                                  onClick={() => handleAbrirModalResponsavel(etapa)}
+                                  className="flex items-center gap-2 px-2 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
+                                >
+                                  <Avatar className="h-6 w-6 border border-primary/30">
+                                    <AvatarImage src={responsavel.foto_perfil_url || undefined} />
+                                    <AvatarFallback className="text-[10px] bg-primary/20">
+                                      {responsavel.nome.charAt(0).toUpperCase()}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="text-xs text-white/80">{responsavel.nome.split(' ')[0]}</span>
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-xs">Clique para alterar o responsável</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleAbrirModalResponsavel(etapa)}
+                                  className="h-7 px-2 text-white/50 hover:text-white hover:bg-primary/10"
+                                >
+                                  <UserPlus className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-xs">Atribuir responsável</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        );
+                      })()}
+                    </div>
                   </CardTitle>
                   
                   <PedidosFiltrosMinimalista 
@@ -447,6 +548,19 @@ export default function GestaoFabricaDirecao() {
           setModalPedidoTesteAberto(false);
         }}
       />
+
+      {/* Modal para atribuir responsável */}
+      {etapaParaAtribuir && (
+        <SelecionarResponsavelEtapaModal
+          open={modalResponsavelAberto}
+          onOpenChange={setModalResponsavelAberto}
+          etapa={etapaParaAtribuir}
+          responsavelAtualId={getResponsavel(etapaParaAtribuir)?.user_id}
+          onConfirm={handleAtribuirResponsavel}
+          onRemover={handleRemoverResponsavel}
+          isLoading={isAtribuindo}
+        />
+      )}
     </MinimalistLayout>
   );
 }
