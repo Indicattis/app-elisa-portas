@@ -26,7 +26,10 @@ import {
   Target,
   Calculator,
   Timer,
-  AlertCircle
+  AlertCircle,
+  TrendingDown,
+  Plus,
+  Minus
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, differenceInDays, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -71,6 +74,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'tipo_entrega', label: 'Tipo Entrega', defaultVisible: true },
   { id: 'valor_frete', label: 'Frete', defaultVisible: true },
   { id: 'valor_instalacao', label: 'Instalação', defaultVisible: true },
+  { id: 'desconto_acrescimo', label: 'Desc./Acrés.', defaultVisible: true },
   { id: 'tempo_faturamento', label: 'Tempo', defaultVisible: true },
   { id: 'lucro_total', label: 'Lucro', defaultVisible: true },
   { id: 'valor_total', label: 'Valor Total', defaultVisible: true },
@@ -154,7 +158,8 @@ export default function FaturamentoMinimalista() {
             lucro_item,
             custo_produto,
             custo_pintura,
-            faturamento
+            faturamento,
+            desconto_valor
           )
         `)
         .order("data_venda", { ascending: false });
@@ -408,6 +413,41 @@ export default function FaturamentoMinimalista() {
             {formatCurrency(venda.valor_instalacao || 0)}
           </span>
         );
+      case 'desconto_acrescimo':
+        const totalDesconto = (venda.portas || []).reduce((acc: number, p: any) => 
+          acc + (p.desconto_valor || 0), 0);
+        const acrescimo = venda.valor_credito || 0;
+        
+        if (totalDesconto > 0 && acrescimo > 0) {
+          return (
+            <div className="flex flex-col gap-0.5 text-xs">
+              <div className="flex items-center gap-1 text-red-400">
+                <Minus className="h-3 w-3" />
+                {formatCurrency(totalDesconto)}
+              </div>
+              <div className="flex items-center gap-1 text-emerald-400">
+                <Plus className="h-3 w-3" />
+                {formatCurrency(acrescimo)}
+              </div>
+            </div>
+          );
+        } else if (totalDesconto > 0) {
+          return (
+            <div className="flex items-center gap-1 text-red-400 text-sm">
+              <Minus className="h-3.5 w-3.5" />
+              {formatCurrency(totalDesconto)}
+            </div>
+          );
+        } else if (acrescimo > 0) {
+          return (
+            <div className="flex items-center gap-1 text-emerald-400 text-sm">
+              <Plus className="h-3.5 w-3.5" />
+              {formatCurrency(acrescimo)}
+            </div>
+          );
+        } else {
+          return <span className="text-white/30">-</span>;
+        }
       case 'tempo_faturamento':
         const tempo = calcularTempoFaturamento(venda);
         const faturada = isFaturada(venda);
