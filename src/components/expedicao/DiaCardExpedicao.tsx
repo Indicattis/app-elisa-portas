@@ -25,6 +25,8 @@ interface DiaCardExpedicaoProps {
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
   onOpenNeoInstalacaoDetails?: (neoInstalacao: NeoInstalacao) => void;
   onOpenNeoCorrecaoDetails?: (neoCorrecao: NeoCorrecao) => void;
+  onExcluirNeoInstalacao?: (id: string) => void;
+  onExcluirNeoCorrecao?: (id: string) => void;
 }
 
 export const DiaCardExpedicao = ({
@@ -40,6 +42,8 @@ export const DiaCardExpedicao = ({
   onOrdemClick,
   onOpenNeoInstalacaoDetails,
   onOpenNeoCorrecaoDetails,
+  onExcluirNeoInstalacao,
+  onExcluirNeoCorrecao,
 }: DiaCardExpedicaoProps) => {
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -139,10 +143,10 @@ export const DiaCardExpedicao = ({
                 />
               ))}
               {neoNoDia.map((neo) => (
-                <NeoInstalacaoCard key={neo.id} neoInstalacao={neo} onOpenDetails={onOpenNeoInstalacaoDetails} />
+                <NeoInstalacaoCard key={neo.id} neoInstalacao={neo} onOpenDetails={onOpenNeoInstalacaoDetails} onExcluir={onExcluirNeoInstalacao} />
               ))}
               {neoCorrecoesNoDia.map((neo) => (
-                <NeoCorrecaoCard key={neo.id} neoCorrecao={neo} onOpenDetails={onOpenNeoCorrecaoDetails} />
+                <NeoCorrecaoCard key={neo.id} neoCorrecao={neo} onOpenDetails={onOpenNeoCorrecaoDetails} onExcluir={onExcluirNeoCorrecao} />
               ))}
             </>
           )}

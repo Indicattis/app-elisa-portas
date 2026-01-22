@@ -14,7 +14,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MoreVertical, MapPin, Info, XCircle, CheckCircle, AlertTriangle } from "lucide-react";
+import { MoreVertical, MapPin, Info, XCircle, CheckCircle, AlertTriangle, Trash2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -23,6 +23,7 @@ interface NeoCorrecaoCardProps {
   onClick?: (neoCorrecao: NeoCorrecao) => void;
   onConcluir?: (id: string) => void;
   onRemover?: (id: string) => void;
+  onExcluir?: (id: string) => void;
   onOpenDetails?: (neoCorrecao: NeoCorrecao) => void;
   dragListeners?: any;
 }
@@ -32,6 +33,7 @@ export const NeoCorrecaoCard = ({
   onClick,
   onConcluir,
   onRemover,
+  onExcluir,
   onOpenDetails,
   dragListeners,
 }: NeoCorrecaoCardProps) => {
@@ -80,7 +82,7 @@ export const NeoCorrecaoCard = ({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {(onConcluir || onRemover) && (
+          {(onConcluir || onRemover || onExcluir) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                 <Button variant="ghost" size="icon" className="h-5 w-5 p-0">
@@ -100,10 +102,19 @@ export const NeoCorrecaoCard = ({
                 {onRemover && (
                   <DropdownMenuItem 
                     onClick={() => onRemover(neoCorrecao.id)}
-                    className="text-destructive focus:text-destructive"
+                    className="text-orange-600 focus:text-orange-600"
                   >
                     <XCircle className="h-3.5 w-3.5 mr-2" />
                     Remover do calendário
+                  </DropdownMenuItem>
+                )}
+                {onExcluir && (
+                  <DropdownMenuItem 
+                    onClick={() => onExcluir(neoCorrecao.id)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-2" />
+                    Excluir
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
