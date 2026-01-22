@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck, FileDown, Printer, ClipboardList, MessageSquare } from "lucide-react";
+import { MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck, FileDown, Printer, ClipboardList, MessageSquare, AlertTriangle } from "lucide-react";
 import { FichaVisitaUpload } from "@/components/pedidos/FichaVisitaUpload";
 import { toast as sonnerToast } from "sonner";
 import { baixarPedidoProducaoPDF, imprimirPedidoProducaoPDF, type PedidoProducaoPDFData } from "@/utils/pedidoProducaoPDFGenerator";
@@ -105,7 +105,7 @@ export default function PedidoViewMinimalista() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const { linhas, adicionarLinha, removerLinha, atualizarCheckbox, atualizarLinhasEmLote, atualizarLinha } = usePedidoLinhas(id || "");
+  const { linhas, adicionarLinha, removerLinha, atualizarCheckbox, atualizarLinhasEmLote, atualizarLinhasComPropagacao, atualizarLinha } = usePedidoLinhas(id || "");
   const { moverParaProximaEtapa } = usePedidosEtapas();
   const { salvarObservacao, getObservacoesPorPorta } = usePedidoPortaObservacoes(id || "");
   const { salvarObservacao: salvarObservacaoSocial, getObservacoesPorPorta: getObservacoesSocialPorPorta } = usePedidoPortaSocialObservacoes(id || "");
@@ -230,10 +230,20 @@ export default function PedidoViewMinimalista() {
     setSalvando(true);
     try {
       const updates = Array.from(linhasEditadas.values());
-      await atualizarLinhasEmLote(updates);
-      setLinhasEditadas(new Map());
-      setMostrarModalAvancar(true);
-      fetchPedidoDetails();
+      
+      // Se está em produção, usar propagação para ordens
+      if (pedido?.etapa_atual === 'em_producao') {
+        await atualizarLinhasComPropagacao(updates);
+        setLinhasEditadas(new Map());
+        setModoEdicao(false);
+        fetchPedidoDetails();
+      } else {
+        // Se está aberto, usar atualização normal
+        await atualizarLinhasEmLote(updates);
+        setLinhasEditadas(new Map());
+        setMostrarModalAvancar(true);
+        fetchPedidoDetails();
+      }
     } catch (error) {
       console.error("Erro ao salvar:", error);
     } finally {
@@ -364,6 +374,9 @@ export default function PedidoViewMinimalista() {
   }
 
   const isAberto = pedido.etapa_atual === 'aberto';
+  const isEmProducao = pedido.etapa_atual === 'em_producao';
+  const podeEditarLinhas = isAberto || isEmProducao;
+  const podeEditarObservacoes = isAberto || isEmProducao;
   const temPendentesSalvamento = linhasEditadas.size > 0;
 
   return (
@@ -607,7 +620,7 @@ export default function PedidoViewMinimalista() {
                 <Package className="w-4 h-4" />
                 Itens do Pedido {pedido.linhas.length > 0 && `(${pedido.linhas.length})`}
               </CardTitle>
-              {isAberto && (
+              {podeEditarLinhas && (
                 <div className="flex items-center gap-2">
                   {!modoEdicao ? (
                     <Button variant="outline" size="sm" onClick={() => setModoEdicao(true)} className="bg-white/5 border-white/10 text-white hover:bg-white/10">
@@ -625,11 +638,20 @@ export default function PedidoViewMinimalista() {
                 </div>
               )}
             </div>
+            {/* Aviso de propagação quando em produção */}
+            {isEmProducao && modoEdicao && (
+              <div className="mt-3 p-2 rounded-md bg-orange-500/10 border border-orange-500/20 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0" />
+                <p className="text-xs text-orange-300">
+                  Alterações serão propagadas para as ordens de produção e linhas já concluídas serão desmarcadas.
+                </p>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <PedidoLinhasEditor
               linhas={pedido.linhas}
-              isReadOnly={!isAberto || !modoEdicao}
+              isReadOnly={!podeEditarLinhas || !modoEdicao}
               todasOrdensConcluidas={todasOrdensConcluidas}
               vendaId={pedido.venda_id}
               temPortasEnrolar={portasEnrolar.length > 0}
@@ -670,7 +692,7 @@ export default function PedidoViewMinimalista() {
                     valoresIniciais={getObservacoesPorPorta(porta._originalId, porta._indicePorta)}
                     onSalvar={salvarObservacao}
                     pedidoId={id || ''}
-                    isReadOnly={!isAberto}
+                    isReadOnly={!podeEditarObservacoes}
                   />
                 ))}
               </div>
@@ -697,7 +719,7 @@ export default function PedidoViewMinimalista() {
                     valoresIniciais={getObservacoesSocialPorPorta(porta._originalId, porta._indicePorta)}
                     onSalvar={salvarObservacaoSocial}
                     pedidoId={id || ''}
-                    isReadOnly={!isAberto}
+                    isReadOnly={!podeEditarObservacoes}
                   />
                 ))}
               </div>

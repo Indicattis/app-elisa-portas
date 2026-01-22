@@ -3334,6 +3334,9 @@ export type Database = {
           perfis_produzidos: Json | null
           prioridade: number | null
           produtos: Json | null
+          projeto_alterado: boolean | null
+          projeto_alterado_descricao: string | null
+          projeto_alterado_em: string | null
           responsavel_id: string | null
           status: string
           tempo_acumulado_segundos: number | null
@@ -3359,6 +3362,9 @@ export type Database = {
           perfis_produzidos?: Json | null
           prioridade?: number | null
           produtos?: Json | null
+          projeto_alterado?: boolean | null
+          projeto_alterado_descricao?: string | null
+          projeto_alterado_em?: string | null
           responsavel_id?: string | null
           status?: string
           tempo_acumulado_segundos?: number | null
@@ -3384,6 +3390,9 @@ export type Database = {
           perfis_produzidos?: Json | null
           prioridade?: number | null
           produtos?: Json | null
+          projeto_alterado?: boolean | null
+          projeto_alterado_descricao?: string | null
+          projeto_alterado_em?: string | null
           responsavel_id?: string | null
           status?: string
           tempo_acumulado_segundos?: number | null
@@ -3424,6 +3433,9 @@ export type Database = {
           pedido_id: string
           prioridade: number | null
           produtos: Json | null
+          projeto_alterado: boolean | null
+          projeto_alterado_descricao: string | null
+          projeto_alterado_em: string | null
           responsavel_id: string | null
           status: string
           tempo_conclusao_segundos: number | null
@@ -3446,6 +3458,9 @@ export type Database = {
           pedido_id: string
           prioridade?: number | null
           produtos?: Json | null
+          projeto_alterado?: boolean | null
+          projeto_alterado_descricao?: string | null
+          projeto_alterado_em?: string | null
           responsavel_id?: string | null
           status?: string
           tempo_conclusao_segundos?: number | null
@@ -3468,6 +3483,9 @@ export type Database = {
           pedido_id?: string
           prioridade?: number | null
           produtos?: Json | null
+          projeto_alterado?: boolean | null
+          projeto_alterado_descricao?: string | null
+          projeto_alterado_em?: string | null
           responsavel_id?: string | null
           status?: string
           tempo_conclusao_segundos?: number | null
@@ -3580,6 +3598,9 @@ export type Database = {
           pausada_em: string | null
           pedido_id: string
           prioridade: number | null
+          projeto_alterado: boolean | null
+          projeto_alterado_descricao: string | null
+          projeto_alterado_em: string | null
           responsavel_id: string | null
           status: string
           tempo_acumulado_segundos: number | null
@@ -3602,6 +3623,9 @@ export type Database = {
           pausada_em?: string | null
           pedido_id: string
           prioridade?: number | null
+          projeto_alterado?: boolean | null
+          projeto_alterado_descricao?: string | null
+          projeto_alterado_em?: string | null
           responsavel_id?: string | null
           status?: string
           tempo_acumulado_segundos?: number | null
@@ -3624,6 +3648,9 @@ export type Database = {
           pausada_em?: string | null
           pedido_id?: string
           prioridade?: number | null
+          projeto_alterado?: boolean | null
+          projeto_alterado_descricao?: string | null
+          projeto_alterado_em?: string | null
           responsavel_id?: string | null
           status?: string
           tempo_acumulado_segundos?: number | null
@@ -3680,6 +3707,9 @@ export type Database = {
           pedido_id: string
           prioridade: number | null
           produtos: Json | null
+          projeto_alterado: boolean | null
+          projeto_alterado_descricao: string | null
+          projeto_alterado_em: string | null
           responsavel_id: string | null
           status: string
           tempo_acumulado_segundos: number | null
@@ -3704,6 +3734,9 @@ export type Database = {
           pedido_id: string
           prioridade?: number | null
           produtos?: Json | null
+          projeto_alterado?: boolean | null
+          projeto_alterado_descricao?: string | null
+          projeto_alterado_em?: string | null
           responsavel_id?: string | null
           status?: string
           tempo_acumulado_segundos?: number | null
@@ -3728,6 +3761,9 @@ export type Database = {
           pedido_id?: string
           prioridade?: number | null
           produtos?: Json | null
+          projeto_alterado?: boolean | null
+          projeto_alterado_descricao?: string | null
+          projeto_alterado_em?: string | null
           responsavel_id?: string | null
           status?: string
           tempo_acumulado_segundos?: number | null
@@ -3769,6 +3805,9 @@ export type Database = {
           pedido_id: string
           prioridade: number | null
           produtos: Json | null
+          projeto_alterado: boolean | null
+          projeto_alterado_descricao: string | null
+          projeto_alterado_em: string | null
           qtd_portas_g: number | null
           qtd_portas_p: number | null
           responsavel_id: string | null
@@ -3794,6 +3833,9 @@ export type Database = {
           pedido_id: string
           prioridade?: number | null
           produtos?: Json | null
+          projeto_alterado?: boolean | null
+          projeto_alterado_descricao?: string | null
+          projeto_alterado_em?: string | null
           qtd_portas_g?: number | null
           qtd_portas_p?: number | null
           responsavel_id?: string | null
@@ -3819,6 +3861,9 @@ export type Database = {
           pedido_id?: string
           prioridade?: number | null
           produtos?: Json | null
+          projeto_alterado?: boolean | null
+          projeto_alterado_descricao?: string | null
+          projeto_alterado_em?: string | null
           qtd_portas_g?: number | null
           qtd_portas_p?: number | null
           responsavel_id?: string | null

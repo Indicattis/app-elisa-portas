@@ -7,7 +7,9 @@ import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer, Tags, RotateCcw, AlertTriangle, PauseCircle, Wrench, ChevronDown } from "lucide-react";
+import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer, Tags, RotateCcw, AlertTriangle, PauseCircle, Wrench, ChevronDown, Check } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
 import {
   OPCOES_INTERNA_EXTERNA,
@@ -73,6 +75,9 @@ interface Ordem {
   pausada_em?: string;
   justificativa_pausa?: string;
   tempo_acumulado_segundos?: number;
+  projeto_alterado?: boolean;
+  projeto_alterado_em?: string;
+  projeto_alterado_descricao?: string;
   linhas?: LinhaOrdem[];
   observacoesVisita?: ObservacaoVisita[];
   pedido?: {
@@ -114,6 +119,7 @@ interface OrdemDetalhesSheetProps {
   isPausing?: boolean;
   onMarcarLinhaProblema?: (linhaId: string, ordemId: string, descricao: string) => void;
   isMarkingProblem?: boolean;
+  onMarcarCienteAlteracao?: (ordemId: string, tipoOrdem: string) => Promise<void>;
 }
 
 const TIPO_LABELS: Record<TipoOrdem, string> = {
@@ -151,12 +157,14 @@ export function OrdemDetalhesSheet({
   isPausing = false,
   onMarcarLinhaProblema,
   isMarkingProblem = false,
+  onMarcarCienteAlteracao,
 }: OrdemDetalhesSheetProps) {
   const { user } = useAuth();
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const [retornarModalOpen, setRetornarModalOpen] = useState(false);
   const [avisoFaltaModalOpen, setAvisoFaltaModalOpen] = useState(false);
   const [linhaProblemaModalOpen, setLinhaProblemaModalOpen] = useState(false);
+  const [isMarcandoCiente, setIsMarcandoCiente] = useState(false);
   const [linhaSelecionada, setLinhaSelecionada] = useState<LinhaOrdem | null>(null);
   const { buscarDadosOrdem } = useOrdemPDFData();
   const { calcularEtiquetasLinha } = useEtiquetasProducao();
@@ -547,7 +555,49 @@ export function OrdemDetalhesSheet({
             </>
           )}
 
-          {/* Observações da Visita Técnica - Especificações (Recolhível) */}
+          {/* Alerta de Projeto Alterado */}
+          {ordem.projeto_alterado && (
+            <>
+              <Separator />
+              <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 animate-pulse">
+                <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300 font-medium mb-1">
+                  <AlertTriangle className="h-4 w-4" />
+                  ⚠️ Projeto Alterado
+                </div>
+                <p className="text-sm text-orange-700 dark:text-orange-200">
+                  {ordem.projeto_alterado_descricao || 'O pedido foi alterado após a geração desta ordem.'}
+                </p>
+                {ordem.projeto_alterado_em && (
+                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                    Alterado em: {format(new Date(ordem.projeto_alterado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  </p>
+                )}
+                {podeMarcarLinhas && onMarcarCienteAlteracao && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isMarcandoCiente}
+                    onClick={async () => {
+                      setIsMarcandoCiente(true);
+                      try {
+                        await onMarcarCienteAlteracao(ordem.id, tipoOrdem);
+                        toast.success('Ciência registrada com sucesso');
+                      } catch (error) {
+                        toast.error('Erro ao registrar ciência');
+                      } finally {
+                        setIsMarcandoCiente(false);
+                      }
+                    }}
+                    className="w-full mt-3 border-orange-300 text-orange-700 hover:bg-orange-100 dark:border-orange-700 dark:text-orange-300 dark:hover:bg-orange-900/50"
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                    {isMarcandoCiente ? 'Registrando...' : 'Ciente da Alteração'}
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
+
           {ordem.observacoesVisita && ordem.observacoesVisita.length > 0 && (
             <>
               <Separator />

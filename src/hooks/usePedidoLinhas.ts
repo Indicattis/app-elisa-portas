@@ -248,6 +248,132 @@ export function usePedidoLinhas(pedidoId: string) {
     }
   });
 
+  // Mutation para atualizar linhas com propagação para ordens (usado em Em Produção)
+  const atualizarLinhasComPropagacao = useMutation({
+    mutationFn: async (updates: PedidoLinhaUpdate[]) => {
+      if (updates.length === 0) {
+        throw new Error('Nenhuma atualização para processar.');
+      }
+
+      const alteracoesDescricoes: string[] = [];
+
+      for (const update of updates) {
+        const { id, ...campos } = update;
+        
+        // Buscar linha original para comparar alterações
+        const linhaOriginal = linhas.find(l => l.id === id);
+        
+        // Montar descrição da alteração
+        const mudancas: string[] = [];
+        if (campos.nome_produto && campos.nome_produto !== linhaOriginal?.nome_produto) {
+          mudancas.push(`Produto: ${linhaOriginal?.nome_produto} → ${campos.nome_produto}`);
+        }
+        if (campos.quantidade !== undefined && campos.quantidade !== linhaOriginal?.quantidade) {
+          mudancas.push(`Qtd: ${linhaOriginal?.quantidade} → ${campos.quantidade}`);
+        }
+        if (campos.tamanho !== undefined && campos.tamanho !== linhaOriginal?.tamanho) {
+          mudancas.push(`Tamanho: ${linhaOriginal?.tamanho || '-'} → ${campos.tamanho || '-'}`);
+        }
+        
+        if (mudancas.length > 0) {
+          alteracoesDescricoes.push(`${linhaOriginal?.nome_produto || 'Item'}: ${mudancas.join(', ')}`);
+        }
+
+        // 1. Atualizar pedido_linha
+        const { error: updateError } = await supabase
+          .from('pedido_linhas')
+          .update(campos)
+          .eq('id', id);
+        
+        if (updateError) throw updateError;
+
+        // 2. Buscar linhas_ordens vinculadas
+        const { data: linhasOrdens, error: linhasError } = await supabase
+          .from('linhas_ordens')
+          .select('id, ordem_id, tipo_ordem, item, tamanho, quantidade, concluida')
+          .eq('pedido_linha_id', id);
+        
+        if (linhasError) throw linhasError;
+
+        // 3. Para cada linha da ordem, atualizar e desmarcar como concluída
+        for (const linhaOrdem of linhasOrdens || []) {
+          const updateLinhaOrdem: Record<string, any> = {
+            concluida: false,
+            concluida_em: null,
+            concluida_por: null,
+          };
+          
+          if (campos.nome_produto) updateLinhaOrdem.item = campos.nome_produto;
+          if (campos.tamanho !== undefined) updateLinhaOrdem.tamanho = campos.tamanho;
+          if (campos.quantidade !== undefined) updateLinhaOrdem.quantidade = campos.quantidade;
+          
+          await supabase
+            .from('linhas_ordens')
+            .update(updateLinhaOrdem)
+            .eq('id', linhaOrdem.id);
+          
+          // 4. Marcar a ordem como alterada
+          const tipoOrdem = linhaOrdem.tipo_ordem;
+          const tabelaOrdem = `ordens_${tipoOrdem}` as 'ordens_perfiladeira' | 'ordens_soldagem' | 'ordens_separacao' | 'ordens_qualidade' | 'ordens_pintura';
+          
+          const descricaoAlteracao = alteracoesDescricoes.join('\n') || 'Linha do pedido foi alterada';
+          
+          await supabase
+            .from(tabelaOrdem)
+            .update({
+              projeto_alterado: true,
+              projeto_alterado_em: new Date().toISOString(),
+              projeto_alterado_descricao: descricaoAlteracao,
+            })
+            .eq('id', linhaOrdem.ordem_id);
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pedido-linhas', pedidoId] });
+      queryClient.invalidateQueries({ queryKey: ['ordens'] });
+      toast({
+        title: "Linhas atualizadas com propagação",
+        description: "As alterações foram propagadas para as ordens de produção.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao propagar alterações",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutation para marcar "ciente da alteração" em uma ordem
+  const marcarCienteAlteracao = useMutation({
+    mutationFn: async ({ ordemId, tipoOrdem }: { ordemId: string; tipoOrdem: string }) => {
+      const tabelaOrdem = `ordens_${tipoOrdem}` as 'ordens_perfiladeira' | 'ordens_soldagem' | 'ordens_separacao' | 'ordens_qualidade' | 'ordens_pintura';
+      
+      const { error } = await supabase
+        .from(tabelaOrdem)
+        .update({
+          projeto_alterado: false,
+          projeto_alterado_em: null,
+          projeto_alterado_descricao: null,
+        })
+        .eq('id', ordemId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordens'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao confirmar ciência",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
   return {
     linhas,
     isLoading,
@@ -256,5 +382,7 @@ export function usePedidoLinhas(pedidoId: string) {
     atualizarCheckbox: atualizarCheckbox.mutateAsync,
     atualizarLinha: atualizarLinha.mutateAsync,
     atualizarLinhasEmLote: atualizarLinhasEmLote.mutateAsync,
+    atualizarLinhasComPropagacao: atualizarLinhasComPropagacao.mutateAsync,
+    marcarCienteAlteracao: marcarCienteAlteracao.mutateAsync,
   };
 }

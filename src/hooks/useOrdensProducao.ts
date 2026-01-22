@@ -82,11 +82,11 @@ export const useOrdensProducao = (filters: UseOrdensProducaoFilters = {}) => {
         { data: ordensQualidade },
         { data: ordensCarregamento }
       ] = await Promise.all([
-        supabase.from('ordens_soldagem').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos').in('pedido_id', pedidoIds),
-        supabase.from('ordens_perfiladeira').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos').in('pedido_id', pedidoIds),
-        supabase.from('ordens_separacao').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos').in('pedido_id', pedidoIds),
-        supabase.from('ordens_pintura').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos').in('pedido_id', pedidoIds),
-        supabase.from('ordens_qualidade').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos').in('pedido_id', pedidoIds),
+        supabase.from('ordens_soldagem').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos, projeto_alterado, projeto_alterado_em, projeto_alterado_descricao').in('pedido_id', pedidoIds),
+        supabase.from('ordens_perfiladeira').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos, projeto_alterado, projeto_alterado_em, projeto_alterado_descricao').in('pedido_id', pedidoIds),
+        supabase.from('ordens_separacao').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos, projeto_alterado, projeto_alterado_em, projeto_alterado_descricao').in('pedido_id', pedidoIds),
+        supabase.from('ordens_pintura').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos, projeto_alterado, projeto_alterado_em, projeto_alterado_descricao').in('pedido_id', pedidoIds),
+        supabase.from('ordens_qualidade').select('id, numero_ordem, pedido_id, status, created_at, historico, responsavel_id, tempo_conclusao_segundos, projeto_alterado, projeto_alterado_em, projeto_alterado_descricao').in('pedido_id', pedidoIds),
         supabase.from('ordens_carregamento').select('id, pedido_id, status, created_at, carregamento_concluido, responsavel_carregamento_id').in('pedido_id', pedidoIds)
       ]);
 
