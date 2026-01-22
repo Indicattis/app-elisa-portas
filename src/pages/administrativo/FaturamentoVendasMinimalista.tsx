@@ -514,7 +514,8 @@ export default function FaturamentoMinimalista() {
           { label: "Home", path: "/home" },
           { label: "Administrativo", path: "/administrativo" },
           { label: "Financeiro", path: "/administrativo/financeiro" },
-          { label: "Faturamento" }
+          { label: "Faturamento", path: "/administrativo/financeiro/faturamento" },
+          { label: "Por Venda" }
         ]} 
         mounted={mounted} 
       />
@@ -524,7 +525,7 @@ export default function FaturamentoMinimalista() {
 
       {/* Botão Voltar */}
       <button
-        onClick={() => navigate('/administrativo/financeiro')}
+        onClick={() => navigate('/administrativo/financeiro/faturamento')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
                    hover:bg-white/10 transition-all duration-300"
         style={{
@@ -533,7 +534,7 @@ export default function FaturamentoMinimalista() {
           transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 100ms'
         }}
       >
-        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20">
+        <div className="p-2 rounded-lg bg-gradient-to-br from-green-500 to-green-700 text-white shadow-lg shadow-green-500/20">
           <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
         </div>
       </button>
@@ -542,8 +543,8 @@ export default function FaturamentoMinimalista() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Faturamento</h1>
-            <p className="text-white/60">Controle de vendas e faturamento</p>
+            <h1 className="text-3xl font-bold">Faturamento por Venda</h1>
+            <p className="text-white/60">Controle de faturamento individual por venda</p>
           </div>
           <div className="flex gap-2">
             <ColumnManager
@@ -827,7 +828,7 @@ export default function FaturamentoMinimalista() {
                       <TableRow 
                         key={venda.id} 
                         className="border-white/10 hover:bg-white/5 cursor-pointer"
-                        onClick={() => navigate(`/administrativo/financeiro/faturamento/${venda.id}`)}
+                        onClick={() => navigate(`/administrativo/financeiro/faturamento/${venda.id}?from=vendas`)}
                       >
                         {visibleColumns.map(column => (
                           <TableCell 
