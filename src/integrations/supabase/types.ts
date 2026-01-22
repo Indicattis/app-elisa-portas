@@ -2602,6 +2602,8 @@ export type Database = {
       }
       neo_correcoes: {
         Row: {
+          autorizado_id: string | null
+          autorizado_nome: string | null
           cidade: string
           concluida: boolean
           concluida_em: string | null
@@ -2617,9 +2619,12 @@ export type Database = {
           id: string
           nome_cliente: string
           status: string
+          tipo_responsavel: string | null
           updated_at: string
         }
         Insert: {
+          autorizado_id?: string | null
+          autorizado_nome?: string | null
           cidade: string
           concluida?: boolean
           concluida_em?: string | null
@@ -2635,9 +2640,12 @@ export type Database = {
           id?: string
           nome_cliente: string
           status?: string
+          tipo_responsavel?: string | null
           updated_at?: string
         }
         Update: {
+          autorizado_id?: string | null
+          autorizado_nome?: string | null
           cidade?: string
           concluida?: boolean
           concluida_em?: string | null
@@ -2653,9 +2661,17 @@ export type Database = {
           id?: string
           nome_cliente?: string
           status?: string
+          tipo_responsavel?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "neo_correcoes_autorizado_id_fkey"
+            columns: ["autorizado_id"]
+            isOneToOne: false
+            referencedRelation: "autorizados"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "neo_correcoes_equipe_id_fkey"
             columns: ["equipe_id"]
@@ -2667,6 +2683,8 @@ export type Database = {
       }
       neo_instalacoes: {
         Row: {
+          autorizado_id: string | null
+          autorizado_nome: string | null
           cidade: string
           concluida: boolean
           concluida_em: string | null
@@ -2682,9 +2700,12 @@ export type Database = {
           id: string
           nome_cliente: string
           status: string
+          tipo_responsavel: string | null
           updated_at: string
         }
         Insert: {
+          autorizado_id?: string | null
+          autorizado_nome?: string | null
           cidade: string
           concluida?: boolean
           concluida_em?: string | null
@@ -2700,9 +2721,12 @@ export type Database = {
           id?: string
           nome_cliente: string
           status?: string
+          tipo_responsavel?: string | null
           updated_at?: string
         }
         Update: {
+          autorizado_id?: string | null
+          autorizado_nome?: string | null
           cidade?: string
           concluida?: boolean
           concluida_em?: string | null
@@ -2718,9 +2742,17 @@ export type Database = {
           id?: string
           nome_cliente?: string
           status?: string
+          tipo_responsavel?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "neo_instalacoes_autorizado_id_fkey"
+            columns: ["autorizado_id"]
+            isOneToOne: false
+            referencedRelation: "autorizados"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "neo_instalacoes_equipe_id_fkey"
             columns: ["equipe_id"]

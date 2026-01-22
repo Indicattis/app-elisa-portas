@@ -47,6 +47,7 @@ export const useNeoCorrecoes = (currentDate: Date, periodo: 'week' | 'month' = '
       const correcoesEnriquecidas: NeoCorrecao[] = (correcoes || []).map(correcao => ({
         ...correcao,
         _tipo: 'neo_correcao' as const,
+        tipo_responsavel: (correcao.tipo_responsavel as 'equipe_interna' | 'autorizado' | null) || 'equipe_interna',
         equipe: correcao.equipe_id ? equipesMap.get(correcao.equipe_id) || null : null
       }));
 
@@ -234,6 +235,7 @@ export const useNeoCorrecoesListagem = () => {
       const correcoesEnriquecidas: NeoCorrecao[] = (correcoes || []).map(correcao => ({
         ...correcao,
         _tipo: 'neo_correcao' as const,
+        tipo_responsavel: (correcao.tipo_responsavel as 'equipe_interna' | 'autorizado' | null) || 'equipe_interna',
         equipe: correcao.equipe_id ? equipesMap.get(correcao.equipe_id) || null : null,
         criador: correcao.created_by
           ? usuariosMap.get(correcao.created_by)

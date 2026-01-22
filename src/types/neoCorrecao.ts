@@ -8,6 +8,9 @@ export interface NeoCorrecao {
   descricao: string | null;
   equipe_id: string | null;
   equipe_nome: string | null;
+  tipo_responsavel: 'equipe_interna' | 'autorizado' | null;
+  autorizado_id: string | null;
+  autorizado_nome: string | null;
   status: string;
   concluida: boolean;
   concluida_em: string | null;
@@ -23,6 +26,13 @@ export interface NeoCorrecao {
     nome: string;
     cor: string | null;
   } | null;
+  // Dados do autorizado (join)
+  autorizado?: {
+    id: string;
+    nome: string;
+    cidade: string | null;
+    estado: string | null;
+  } | null;
   // Dados do criador (join)
   criador?: {
     id: string;
@@ -37,7 +47,10 @@ export interface CriarNeoCorrecaoData {
   estado: string;
   data_correcao: string;
   hora: string;
-  equipe_id: string;
-  equipe_nome: string;
+  tipo_responsavel: 'equipe_interna' | 'autorizado';
+  equipe_id?: string | null;
+  equipe_nome?: string | null;
+  autorizado_id?: string | null;
+  autorizado_nome?: string | null;
   descricao?: string;
 }

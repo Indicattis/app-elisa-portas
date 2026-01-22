@@ -15,7 +15,9 @@ import {
   FileText,
   CheckCircle,
   Users,
-  AlertTriangle
+  AlertTriangle,
+  Building2,
+  Pencil
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -25,6 +27,7 @@ interface NeoCorrecaoDetailsProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConcluir?: (id: string) => void;
+  onEditar?: (neoCorrecao: NeoCorrecao) => void;
   isConcluindo?: boolean;
 }
 
@@ -33,11 +36,16 @@ export function NeoCorrecaoDetails({
   open,
   onOpenChange,
   onConcluir,
+  onEditar,
   isConcluindo,
 }: NeoCorrecaoDetailsProps) {
   if (!neoCorrecao) return null;
 
-  const corEquipe = neoCorrecao.equipe?.cor || "#9333ea";
+  const isAutorizado = neoCorrecao.tipo_responsavel === 'autorizado';
+  const corResponsavel = isAutorizado ? '#10B981' : (neoCorrecao.equipe?.cor || "#9333ea");
+  const nomeResponsavel = isAutorizado 
+    ? neoCorrecao.autorizado_nome || "Sem autorizado"
+    : neoCorrecao.equipe_nome || "Sem equipe";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -51,12 +59,12 @@ export function NeoCorrecaoDetails({
             <Badge
               variant="outline"
               style={{
-                backgroundColor: `${corEquipe}20`,
-                color: corEquipe,
-                borderColor: `${corEquipe}50`,
+                backgroundColor: `${corResponsavel}20`,
+                color: corResponsavel,
+                borderColor: `${corResponsavel}50`,
               }}
             >
-              {neoCorrecao.equipe_nome || "Sem equipe"}
+              {nomeResponsavel}
             </Badge>
           </div>
           <SheetTitle className="text-left text-lg">
@@ -105,22 +113,26 @@ export function NeoCorrecaoDetails({
 
           <Separator />
 
-          {/* Equipe */}
+          {/* Responsável */}
           <div className="space-y-2">
             <h4 className="text-sm font-medium flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              Equipe Responsável
+              {isAutorizado ? (
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <Users className="h-4 w-4 text-muted-foreground" />
+              )}
+              {isAutorizado ? "Autorizado Responsável" : "Equipe Responsável"}
             </h4>
             <div className="pl-6">
               <Badge
                 variant="secondary"
                 style={{
-                  backgroundColor: `${corEquipe}20`,
-                  color: corEquipe,
-                  borderColor: `${corEquipe}50`,
+                  backgroundColor: `${corResponsavel}20`,
+                  color: corResponsavel,
+                  borderColor: `${corResponsavel}50`,
                 }}
               >
-                {neoCorrecao.equipe_nome || "Sem equipe atribuída"}
+                {nomeResponsavel}
               </Badge>
             </div>
           </div>
@@ -161,17 +173,32 @@ export function NeoCorrecaoDetails({
             )}
           </div>
 
-          {/* Ação de Concluir */}
-          {onConcluir && !neoCorrecao.concluida && (
-            <Button
-              className="w-full bg-green-600 hover:bg-green-700"
-              onClick={() => onConcluir(neoCorrecao.id)}
-              disabled={isConcluindo}
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              {isConcluindo ? "Concluindo..." : "Concluir Correção"}
-            </Button>
-          )}
+          {/* Ações */}
+          <div className="flex flex-col gap-2">
+            {onEditar && !neoCorrecao.concluida && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  onEditar(neoCorrecao);
+                  onOpenChange(false);
+                }}
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Editar
+              </Button>
+            )}
+            {onConcluir && !neoCorrecao.concluida && (
+              <Button
+                className="w-full bg-green-600 hover:bg-green-700"
+                onClick={() => onConcluir(neoCorrecao.id)}
+                disabled={isConcluindo}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                {isConcluindo ? "Concluindo..." : "Concluir Correção"}
+              </Button>
+            )}
+          </div>
         </div>
       </SheetContent>
     </Sheet>

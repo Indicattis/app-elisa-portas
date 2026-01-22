@@ -13,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MoreVertical, MapPin, Info, XCircle, CheckCircle, Trash2 } from "lucide-react";
+import { MoreVertical, MapPin, Info, XCircle, CheckCircle, Trash2, Pencil } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NeoInstalacao } from "@/types/neoInstalacao";
@@ -24,6 +24,7 @@ interface NeoInstalacaoCardProps {
   onConcluir?: (id: string) => void;
   onRemover?: (id: string) => void;
   onExcluir?: (id: string) => void;
+  onEditar?: (neoInstalacao: NeoInstalacao) => void;
   onOpenDetails?: (neoInstalacao: NeoInstalacao) => void;
   dragListeners?: any;
 }
@@ -34,10 +35,27 @@ export const NeoInstalacaoCard = ({
   onConcluir,
   onRemover,
   onExcluir,
+  onEditar,
   onOpenDetails,
   dragListeners,
 }: NeoInstalacaoCardProps) => {
-  const corEquipe = neoInstalacao.equipe?.cor || "#6366f1";
+  // Cor do responsável
+  const getResponsavelCor = () => {
+    if (neoInstalacao.tipo_responsavel === 'autorizado') {
+      return '#10B981'; // Verde para autorizados
+    }
+    return neoInstalacao.equipe?.cor || '#6366f1';
+  };
+
+  // Nome do responsável (equipe ou autorizado)
+  const getResponsavelNome = () => {
+    if (neoInstalacao.tipo_responsavel === 'autorizado') {
+      return neoInstalacao.autorizado_nome || 'Sem autorizado';
+    }
+    return neoInstalacao.equipe_nome || 'Sem equipe';
+  };
+
+  const corResponsavel = getResponsavelCor();
 
   // Estilo laranja para instalações avulsas
   const getCardStyles = () => {
@@ -45,11 +63,6 @@ export const NeoInstalacaoCard = ({
       backgroundColor: 'rgb(249 115 22 / 0.15)',
       borderColor: 'rgb(249 115 22 / 0.5)',
     };
-  };
-
-  // Nome do responsável (equipe)
-  const getResponsavelNome = () => {
-    return neoInstalacao.equipe_nome || 'Sem equipe';
   };
 
   return (
@@ -71,9 +84,9 @@ export const NeoInstalacaoCard = ({
             variant="secondary" 
             className="text-[9px] px-1 py-0 h-4 shrink-0"
             style={{ 
-              backgroundColor: `${corEquipe}30`,
-              color: corEquipe,
-              borderColor: `${corEquipe}50`
+              backgroundColor: `${corResponsavel}30`,
+              color: corResponsavel,
+              borderColor: `${corResponsavel}50`
             }}
           >
             {getResponsavelNome()}
@@ -81,7 +94,7 @@ export const NeoInstalacaoCard = ({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {(onConcluir || onRemover || onExcluir) && (
+          {(onConcluir || onRemover || onExcluir || onEditar) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                 <Button variant="ghost" size="icon" className="h-5 w-5 p-0">
@@ -89,6 +102,15 @@ export const NeoInstalacaoCard = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                {onEditar && (
+                  <DropdownMenuItem 
+                    onClick={() => onEditar(neoInstalacao)}
+                    className="text-blue-600"
+                  >
+                    <Pencil className="h-3.5 w-3.5 mr-2" />
+                    Editar
+                  </DropdownMenuItem>
+                )}
                 {onConcluir && (
                   <DropdownMenuItem 
                     onClick={() => onConcluir(neoInstalacao.id)}

@@ -11,8 +11,8 @@ import { useNeoCorrecoes } from "@/hooks/useNeoCorrecoes";
 import { OrdensCarregamentoDisponiveis } from "@/components/expedicao/OrdensCarregamentoDisponiveis";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
 import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrdemCarregamentoDrawer";
-import { CriarNeoInstalacaoModal } from "@/components/expedicao/CriarNeoInstalacaoModal";
-import { CriarNeoCorrecaoModal } from "@/components/expedicao/CriarNeoCorrecaoModal";
+import { NeoInstalacaoModal } from "@/components/expedicao/NeoInstalacaoModal";
+import { NeoCorrecaoModal } from "@/components/expedicao/NeoCorrecaoModal";
 import { NeoInstalacaoDetails } from "@/components/expedicao/NeoInstalacaoDetails";
 import { NeoCorrecaoDetails } from "@/components/expedicao/NeoCorrecaoDetails";
 import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
@@ -42,6 +42,10 @@ export default function ExpedicaoMinimalista() {
   const [editingOrdem, setEditingOrdem] = useState<OrdemCarregamento | null>(null);
   const [neoModalOpen, setNeoModalOpen] = useState(false);
   const [neoCorrecaoModalOpen, setNeoCorrecaoModalOpen] = useState(false);
+  
+  // States for editing Neo Instalação/Correção
+  const [editingNeoInstalacao, setEditingNeoInstalacao] = useState<NeoInstalacao | null>(null);
+  const [editingNeoCorrecao, setEditingNeoCorrecao] = useState<NeoCorrecao | null>(null);
   
   // States for details sidebars
   const [selectedNeoInstalacao, setSelectedNeoInstalacao] = useState<NeoInstalacao | null>(null);
@@ -134,6 +138,47 @@ export default function ExpedicaoMinimalista() {
   const handleConcluirNeoCorrecao = async (id: string) => {
     await concluirNeoCorrecao(id);
     setNeoCorrecaoDetailsOpen(false);
+  };
+
+  // Handlers para edição
+  const handleEditarNeoInstalacao = (neo: NeoInstalacao) => {
+    setEditingNeoInstalacao(neo);
+    setNeoModalOpen(true);
+  };
+
+  const handleEditarNeoCorrecao = (neo: NeoCorrecao) => {
+    setEditingNeoCorrecao(neo);
+    setNeoCorrecaoModalOpen(true);
+  };
+
+  const handleSaveNeoInstalacao = async (dados: CriarNeoInstalacaoData) => {
+    if (editingNeoInstalacao) {
+      await updateNeoInstalacao({ id: editingNeoInstalacao.id, data: dados });
+      toast.success("Instalação atualizada com sucesso!");
+    } else {
+      await createNeoInstalacao(dados);
+    }
+    setEditingNeoInstalacao(null);
+  };
+
+  const handleSaveNeoCorrecao = async (dados: CriarNeoCorrecaoData) => {
+    if (editingNeoCorrecao) {
+      await updateNeoCorrecao({ id: editingNeoCorrecao.id, data: dados });
+      toast.success("Correção atualizada com sucesso!");
+    } else {
+      await createNeoCorrecao(dados);
+    }
+    setEditingNeoCorrecao(null);
+  };
+
+  const handleCloseNeoInstalacaoModal = (open: boolean) => {
+    setNeoModalOpen(open);
+    if (!open) setEditingNeoInstalacao(null);
+  };
+
+  const handleCloseNeoCorrecaoModal = (open: boolean) => {
+    setNeoCorrecaoModalOpen(open);
+    if (!open) setEditingNeoCorrecao(null);
   };
 
   const [mounted, setMounted] = useState(false);
@@ -275,6 +320,8 @@ export default function ExpedicaoMinimalista() {
                       onOpenNeoCorrecaoDetails={handleOpenNeoCorrecaoDetails}
                       onExcluirNeoInstalacao={deleteNeoInstalacao}
                       onExcluirNeoCorrecao={deleteNeoCorrecao}
+                      onEditarNeoInstalacao={handleEditarNeoInstalacao}
+                      onEditarNeoCorrecao={handleEditarNeoCorrecao}
                     />
                   ) : (
                     <CalendarioMensalExpedicaoDesktop
@@ -299,6 +346,8 @@ export default function ExpedicaoMinimalista() {
                       onOpenNeoCorrecaoDetails={handleOpenNeoCorrecaoDetails}
                       onExcluirNeoInstalacao={deleteNeoInstalacao}
                       onExcluirNeoCorrecao={deleteNeoCorrecao}
+                      onEditarNeoInstalacao={handleEditarNeoInstalacao}
+                      onEditarNeoCorrecao={handleEditarNeoCorrecao}
                     />
                   )}
                 </CardContent>
@@ -332,22 +381,20 @@ export default function ExpedicaoMinimalista() {
         onSave={handleSaveEdit}
       />
 
-      {/* Modal Neo Instalação */}
-      <CriarNeoInstalacaoModal
+      {/* Modal Neo Instalação (Criar/Editar) */}
+      <NeoInstalacaoModal
         open={neoModalOpen}
-        onOpenChange={setNeoModalOpen}
-        onConfirm={async (dados: CriarNeoInstalacaoData) => {
-          await createNeoInstalacao(dados);
-        }}
+        onOpenChange={handleCloseNeoInstalacaoModal}
+        neoInstalacao={editingNeoInstalacao}
+        onConfirm={handleSaveNeoInstalacao}
       />
 
-      {/* Modal Neo Correção */}
-      <CriarNeoCorrecaoModal
+      {/* Modal Neo Correção (Criar/Editar) */}
+      <NeoCorrecaoModal
         open={neoCorrecaoModalOpen}
-        onOpenChange={setNeoCorrecaoModalOpen}
-        onConfirm={async (dados: CriarNeoCorrecaoData) => {
-          await createNeoCorrecao(dados);
-        }}
+        onOpenChange={handleCloseNeoCorrecaoModal}
+        neoCorrecao={editingNeoCorrecao}
+        onConfirm={handleSaveNeoCorrecao}
       />
 
       {/* Sidebar de Detalhes - Neo Instalação */}
@@ -356,6 +403,7 @@ export default function ExpedicaoMinimalista() {
         open={neoInstalacaoDetailsOpen}
         onOpenChange={setNeoInstalacaoDetailsOpen}
         onConcluir={handleConcluirNeoInstalacao}
+        onEditar={handleEditarNeoInstalacao}
         isConcluindo={isConcluindoInstalacao}
       />
 
@@ -365,6 +413,7 @@ export default function ExpedicaoMinimalista() {
         open={neoCorrecaoDetailsOpen}
         onOpenChange={setNeoCorrecaoDetailsOpen}
         onConcluir={handleConcluirNeoCorrecao}
+        onEditar={handleEditarNeoCorrecao}
         isConcluindo={isConcluindoCorrecao}
       />
     </div>

@@ -52,6 +52,7 @@ export const useNeoInstalacoes = (
       return (data || []).map(item => ({
         ...item,
         _tipo: 'neo_instalacao' as const,
+        tipo_responsavel: (item.tipo_responsavel as 'equipe_interna' | 'autorizado' | null) || 'equipe_interna',
         equipe: item.equipe_id 
           ? equipesMap.get(item.equipe_id) || null 
           : null
@@ -233,6 +234,7 @@ export const useNeoInstalacoesListagem = () => {
       return (data || []).map(item => ({
         ...item,
         _tipo: 'neo_instalacao' as const,
+        tipo_responsavel: (item.tipo_responsavel as 'equipe_interna' | 'autorizado' | null) || 'equipe_interna',
         equipe: item.equipe_id 
           ? equipesMap.get(item.equipe_id) || null 
           : null,

@@ -14,7 +14,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MoreVertical, MapPin, Info, XCircle, CheckCircle, AlertTriangle, Trash2 } from "lucide-react";
+import { MoreVertical, MapPin, Info, XCircle, CheckCircle, AlertTriangle, Trash2, Pencil } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -24,6 +24,7 @@ interface NeoCorrecaoCardProps {
   onConcluir?: (id: string) => void;
   onRemover?: (id: string) => void;
   onExcluir?: (id: string) => void;
+  onEditar?: (neoCorrecao: NeoCorrecao) => void;
   onOpenDetails?: (neoCorrecao: NeoCorrecao) => void;
   dragListeners?: any;
 }
@@ -34,22 +35,34 @@ export const NeoCorrecaoCard = ({
   onConcluir,
   onRemover,
   onExcluir,
+  onEditar,
   onOpenDetails,
   dragListeners,
 }: NeoCorrecaoCardProps) => {
-  const corEquipe = neoCorrecao.equipe?.cor || "#9333ea";
+  // Cor do responsável
+  const getResponsavelCor = () => {
+    if (neoCorrecao.tipo_responsavel === 'autorizado') {
+      return '#10B981'; // Verde para autorizados
+    }
+    return neoCorrecao.equipe?.cor || '#9333ea';
+  };
 
-  // Estilo roxo para correções (similar ao azul das instalações)
+  // Nome do responsável (equipe ou autorizado)
+  const getResponsavelNome = () => {
+    if (neoCorrecao.tipo_responsavel === 'autorizado') {
+      return neoCorrecao.autorizado_nome || 'Sem autorizado';
+    }
+    return neoCorrecao.equipe_nome || 'Sem equipe';
+  };
+
+  const corResponsavel = getResponsavelCor();
+
+  // Estilo roxo para correções
   const getCardStyles = () => {
     return {
       backgroundColor: 'rgb(147 51 234 / 0.15)',
       borderColor: 'rgb(147 51 234 / 0.5)',
     };
-  };
-
-  // Nome do responsável (equipe)
-  const getResponsavelNome = () => {
-    return neoCorrecao.equipe_nome || 'Sem equipe';
   };
 
   return (
@@ -72,9 +85,9 @@ export const NeoCorrecaoCard = ({
             variant="secondary" 
             className="text-[9px] px-1 py-0 h-4 shrink-0"
             style={{ 
-              backgroundColor: `${corEquipe}30`,
-              color: corEquipe,
-              borderColor: `${corEquipe}50`
+              backgroundColor: `${corResponsavel}30`,
+              color: corResponsavel,
+              borderColor: `${corResponsavel}50`
             }}
           >
             {getResponsavelNome()}
@@ -82,7 +95,7 @@ export const NeoCorrecaoCard = ({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {(onConcluir || onRemover || onExcluir) && (
+          {(onConcluir || onRemover || onExcluir || onEditar) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                 <Button variant="ghost" size="icon" className="h-5 w-5 p-0">
@@ -90,6 +103,15 @@ export const NeoCorrecaoCard = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                {onEditar && (
+                  <DropdownMenuItem 
+                    onClick={() => onEditar(neoCorrecao)}
+                    className="text-blue-600"
+                  >
+                    <Pencil className="h-3.5 w-3.5 mr-2" />
+                    Editar
+                  </DropdownMenuItem>
+                )}
                 {onConcluir && (
                   <DropdownMenuItem 
                     onClick={() => onConcluir(neoCorrecao.id)}
