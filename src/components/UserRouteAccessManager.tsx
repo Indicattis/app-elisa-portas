@@ -2,18 +2,18 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Loader2, Search, ChevronRight, ChevronDown, Folder, FolderOpen, Home, Globe } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { 
+  Loader2, Search, ChevronRight, ChevronDown, Folder, FolderOpen, 
+  Home, Globe, Shield, Users, Minus, Plus, User
+} from "lucide-react";
 
 interface AppRoute {
   key: string;
@@ -37,6 +37,21 @@ interface UserRouteAccess {
   can_access: boolean;
 }
 
+// Estilo minimalista consistente
+const sectionWrapperClass = "p-1.5 rounded-xl bg-gradient-to-br from-blue-500/5 to-blue-900/10 backdrop-blur-xl border border-blue-500/20";
+const labelClass = "text-xs font-semibold text-blue-300/80 uppercase tracking-wider";
+const inputClass = "h-10 bg-blue-500/5 border-blue-500/20 text-white placeholder:text-blue-200/30 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30";
+
+// Interfaces disponíveis
+const interfaces = [
+  { value: 'minimalista', label: 'Minimalista', icon: Home },
+  { value: 'dashboard', label: 'Dashboard', icon: Shield },
+  { value: 'instalacoes', label: 'Instalações', icon: Users },
+  { value: 'producao', label: 'Produção', icon: Users },
+  { value: 'paineis', label: 'Painéis', icon: Users },
+  { value: 'admin', label: 'Admin', icon: Shield },
+];
+
 export function UserRouteAccessManager() {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
@@ -46,20 +61,14 @@ export function UserRouteAccessManager() {
 
   // Função para construir árvore de rotas
   const buildRouteTree = (routes: AppRoute[], parentKey: string | null): RouteTreeNode[] => {
-    // Identificar quais parent_keys existem na lista de rotas
     const existingKeys = new Set(routes.map(r => r.key));
     
     return routes
       .filter(route => {
-        // Se parent_key é null, incluir
         if (route.parent_key === parentKey) return true;
-        
-        // Se o parentKey procurado é null e o parent_key da rota não existe na lista, 
-        // tratar como raiz (órfã)
         if (parentKey === null && route.parent_key && !existingKeys.has(route.parent_key)) {
           return true;
         }
-        
         return false;
       })
       .map(route => ({
@@ -75,7 +84,7 @@ export function UserRouteAccessManager() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('admin_users')
-        .select('user_id, nome, role, setor')
+        .select('user_id, nome, role, setor, foto_perfil_url')
         .eq('ativo', true)
         .order('nome');
       
@@ -122,39 +131,33 @@ export function UserRouteAccessManager() {
   const updateAccessMutation = useMutation({
     mutationFn: async ({ userId, routeKey, canAccess }: { userId: string; routeKey: string; canAccess: boolean }) => {
       if (canAccess) {
-        // Adicionar acesso
         const { error } = await supabase
           .from('user_route_access' as any)
           .upsert({ user_id: userId, route_key: routeKey, can_access: true });
-        
         if (error) throw error;
       } else {
-        // Remover acesso
         const { error } = await supabase
           .from('user_route_access' as any)
           .delete()
           .eq('user_id', userId)
           .eq('route_key', routeKey);
-        
         if (error) throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-route-access', selectedUserId] });
-      toast.success('Permissão atualizada com sucesso');
+      toast.success('Permissão atualizada');
     },
-    onError: (error) => {
-      console.error('Erro ao atualizar permissão:', error);
+    onError: () => {
       toast.error('Erro ao atualizar permissão');
     },
   });
 
-  // Mutation para liberar todas as rotas
+  // Mutation para liberar todas as rotas da interface atual
   const grantAllMutation = useMutation({
     mutationFn: async (userId: string) => {
-      if (!routes) return;
-      
-      const accesses = routes.map(route => ({
+      const interfaceRoutes = routes?.filter(r => r.interface === selectedInterface) || [];
+      const accesses = interfaceRoutes.map(route => ({
         user_id: userId,
         route_key: route.key,
         can_access: true,
@@ -168,26 +171,30 @@ export function UserRouteAccessManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-route-access', selectedUserId] });
-      toast.success('Todos os acessos liberados');
+      toast.success('Acessos liberados');
     },
     onError: () => {
       toast.error('Erro ao liberar acessos');
     },
   });
 
-  // Mutation para remover todos os acessos
+  // Mutation para remover todos os acessos da interface atual
   const revokeAllMutation = useMutation({
     mutationFn: async (userId: string) => {
+      const interfaceRoutes = routes?.filter(r => r.interface === selectedInterface) || [];
+      const routeKeys = interfaceRoutes.map(r => r.key);
+      
       const { error } = await supabase
         .from('user_route_access' as any)
         .delete()
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .in('route_key', routeKeys);
       
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-route-access', selectedUserId] });
-      toast.success('Todos os acessos removidos');
+      toast.success('Acessos removidos');
     },
     onError: () => {
       toast.error('Erro ao remover acessos');
@@ -196,8 +203,8 @@ export function UserRouteAccessManager() {
 
   if (!isAdmin) {
     return (
-      <Alert>
-        <AlertDescription>
+      <Alert className="bg-red-500/10 border-red-500/30">
+        <AlertDescription className="text-red-400">
           Apenas administradores podem gerenciar permissões de acesso.
         </AlertDescription>
       </Alert>
@@ -210,27 +217,18 @@ export function UserRouteAccessManager() {
 
   const handleToggle = (routeKey: string, checked: boolean) => {
     if (!selectedUserId) return;
-    
-    updateAccessMutation.mutate({
-      userId: selectedUserId,
-      routeKey,
-      canAccess: checked,
-    });
+    updateAccessMutation.mutate({ userId: selectedUserId, routeKey, canAccess: checked });
   };
 
-  // Função para alternar acesso de uma pasta e todos os filhos
   const handleToggleFolder = (node: RouteTreeNode, checked: boolean) => {
     if (!selectedUserId) return;
-    
     const toggleRecursive = (n: RouteTreeNode) => {
       handleToggle(n.key, checked);
       n.children.forEach(child => toggleRecursive(child));
     };
-    
     toggleRecursive(node);
   };
 
-  // Verificar se uma pasta tem todos os filhos com acesso
   const hasFolderAccess = (node: RouteTreeNode): boolean => {
     const hasOwnAccess = hasAccess(node.key);
     const allChildrenHaveAccess = node.children.length > 0 
@@ -239,28 +237,27 @@ export function UserRouteAccessManager() {
     return hasOwnAccess && allChildrenHaveAccess;
   };
 
-  // Filtrar rotas pela interface
   const filteredRoutesByInterface = routes?.filter(route => route.interface === selectedInterface) || [];
-  
-  // Construir árvore de rotas
   const routeTree = buildRouteTree(filteredRoutesByInterface, null);
-
-  // Filtrar rotas pela busca
-  const filteredRoutes = routes?.filter(route => 
-    route.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    route.path.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    route.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  
+  const filteredRoutes = searchTerm 
+    ? routes?.filter(route => 
+        route.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        route.path.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   const selectedUser = users?.find(u => u.user_id === selectedUserId);
-  const grantedCount = userAccess?.filter(a => a.can_access).length || 0;
-  const totalCount = routes?.length || 0;
+  const grantedCount = userAccess?.filter(a => 
+    filteredRoutesByInterface.some(r => r.key === a.route_key) && a.can_access
+  ).length || 0;
 
   // Componente recursivo para renderizar item da árvore
   const RouteTreeItem = ({ node, level = 0 }: { node: RouteTreeNode; level?: number }) => {
     const [isOpen, setIsOpen] = useState(true);
     const hasChildren = node.children.length > 0;
-    const paddingLeft = level * 16;
+    const paddingLeft = level * 20;
+    const isHomeRoute = node.key === 'home';
 
     if (hasChildren) {
       const folderHasAccess = hasFolderAccess(node);
@@ -268,34 +265,42 @@ export function UserRouteAccessManager() {
       return (
         <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-1">
           <div 
-            className="flex items-center gap-2 p-2 hover:bg-muted/50 rounded group"
-            style={{ paddingLeft: `${paddingLeft}px` }}
+            className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer
+                       ${folderHasAccess 
+                         ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 border border-blue-500/30' 
+                         : 'bg-white/5 border border-white/10 hover:border-blue-500/30'}`}
+            style={{ marginLeft: `${paddingLeft}px` }}
           >
-            <CollapsibleTrigger className="flex items-center gap-1 p-0 hover:bg-transparent">
-              {isOpen ? (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              )}
+            <CollapsibleTrigger className="p-0 hover:bg-transparent" asChild>
+              <button className="p-1 rounded hover:bg-white/10 transition-colors">
+                {isOpen ? (
+                  <ChevronDown className="h-4 w-4 text-blue-400" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-white/50" />
+                )}
+              </button>
             </CollapsibleTrigger>
+            
             <Checkbox
               id={`folder-${node.key}`}
               checked={folderHasAccess}
               onCheckedChange={(checked) => handleToggleFolder(node, checked as boolean)}
+              className="border-blue-500/50 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
             />
+            
             {isOpen ? (
-              <FolderOpen className="h-4 w-4 text-primary" />
+              <FolderOpen className="h-4 w-4 text-blue-400" />
             ) : (
-              <Folder className="h-4 w-4 text-muted-foreground" />
+              <Folder className="h-4 w-4 text-white/50" />
             )}
-            <label
-              htmlFor={`folder-${node.key}`}
-              className="flex-1 text-sm font-medium cursor-pointer"
-            >
-              {node.label}
+            
+            <label htmlFor={`folder-${node.key}`} className="flex-1 cursor-pointer">
+              <span className="text-sm font-medium text-white">{node.label}</span>
+              <span className="ml-2 text-xs text-white/40">({node.children.length})</span>
             </label>
           </div>
-          <CollapsibleContent className="space-y-1">
+          
+          <CollapsibleContent className="space-y-1 mt-1">
             {node.children.map(child => (
               <RouteTreeItem key={child.key} node={child} level={level + 1} />
             ))}
@@ -304,165 +309,246 @@ export function UserRouteAccessManager() {
       );
     }
 
-    // Verificar se é a rota /home (acesso universal)
-    const isHomeRoute = node.key === 'home';
+    const routeHasAccess = hasAccess(node.key);
 
     return (
       <div 
-        className="flex items-center gap-2 p-2 hover:bg-muted/50 rounded"
-        style={{ paddingLeft: `${paddingLeft + 20}px` }}
+        className={`flex items-center gap-3 p-3 rounded-lg transition-all
+                   ${isHomeRoute
+                     ? 'bg-gradient-to-r from-green-500/20 to-emerald-600/10 border border-green-500/30'
+                     : routeHasAccess 
+                       ? 'bg-gradient-to-r from-blue-500/15 to-blue-600/5 border border-blue-500/25' 
+                       : 'bg-white/5 border border-white/10 hover:border-white/20'}`}
+        style={{ marginLeft: `${paddingLeft + 28}px` }}
       >
         {isHomeRoute ? (
-          <Globe className="h-4 w-4 text-green-500" />
+          <Globe className="h-4 w-4 text-green-400" />
         ) : (
           <Checkbox
             id={`route-${node.key}`}
-            checked={hasAccess(node.key)}
+            checked={routeHasAccess}
             onCheckedChange={(checked) => handleToggle(node.key, checked as boolean)}
+            className="border-blue-500/50 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
           />
         )}
-        <label
-          htmlFor={`route-${node.key}`}
-          className="flex-1 text-sm cursor-pointer"
-        >
-          <div className="font-medium flex items-center gap-2">
-            {node.label}
+        
+        <label htmlFor={`route-${node.key}`} className="flex-1 cursor-pointer">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-white">{node.label}</span>
             {isHomeRoute && (
-              <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30 text-[10px] px-1.5 py-0">
+              <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
                 Acesso Universal
-              </Badge>
+              </span>
             )}
           </div>
-          <div className="text-xs text-muted-foreground">{node.path}</div>
-          {node.description && (
-            <div className="text-xs text-muted-foreground">{node.description}</div>
-          )}
+          <div className="text-xs text-white/40 mt-0.5">{node.path}</div>
         </label>
       </div>
     );
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Gerenciar Acessos de Usuários</CardTitle>
-        <CardDescription>
-          Controle quais rotas cada usuário pode acessar no sistema
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-      {/* Tabs de Interface */}
-      <Tabs value={selectedInterface} onValueChange={setSelectedInterface}>
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="minimalista" className="flex items-center gap-1">
-            <Home className="h-3 w-3" />
-            Minimalista
-          </TabsTrigger>
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="instalacoes">Instalações</TabsTrigger>
-          <TabsTrigger value="producao">Produção</TabsTrigger>
-          <TabsTrigger value="paineis">Painéis</TabsTrigger>
-          <TabsTrigger value="admin">Admin</TabsTrigger>
-        </TabsList>
-        </Tabs>
+    <div className="space-y-6">
+      {/* Header com título */}
+      <div className={sectionWrapperClass}>
+        <div className="p-4 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/30">
+            <Shield className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-white">Gerenciar Permissões</h2>
+            <p className="text-sm text-white/50">Controle o acesso às rotas do sistema</p>
+          </div>
+        </div>
+      </div>
 
-        {/* Seleção de usuário */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Selecione o usuário</label>
+      {/* Seleção de Interface */}
+      <div className={sectionWrapperClass}>
+        <div className="px-4 py-3 border-b border-blue-500/10 bg-gradient-to-r from-blue-500/10 to-transparent">
+          <span className={labelClass}>Interface</span>
+        </div>
+        <div className="p-4">
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+            {interfaces.map((iface) => {
+              const Icon = iface.icon;
+              const isSelected = selectedInterface === iface.value;
+              const routeCount = routes?.filter(r => r.interface === iface.value).length || 0;
+              
+              return (
+                <button
+                  key={iface.value}
+                  onClick={() => setSelectedInterface(iface.value)}
+                  className={`p-3 rounded-lg border transition-all flex flex-col items-center gap-1
+                             ${isSelected 
+                               ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-500/40 shadow-lg shadow-blue-500/20' 
+                               : 'bg-white/5 border-white/10 hover:border-blue-500/30'}`}
+                >
+                  <Icon className={`h-4 w-4 ${isSelected ? 'text-blue-400' : 'text-white/50'}`} />
+                  <span className={`text-xs font-medium ${isSelected ? 'text-blue-300' : 'text-white/70'}`}>
+                    {iface.label}
+                  </span>
+                  <span className={`text-[10px] ${isSelected ? 'text-blue-400/70' : 'text-white/40'}`}>
+                    {routeCount} rotas
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Seleção de Usuário */}
+      <div className={sectionWrapperClass}>
+        <div className="px-4 py-3 border-b border-blue-500/10 bg-gradient-to-r from-blue-500/10 to-transparent">
+          <span className={labelClass}>Usuário</span>
+        </div>
+        <div className="p-4">
           <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Escolha um usuário..." />
+            <SelectTrigger className={`${inputClass} w-full`}>
+              <SelectValue placeholder="Selecione um usuário..." />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-zinc-900 border-white/10">
               {users?.map((user) => (
-                <SelectItem key={user.user_id} value={user.user_id}>
-                  {user.nome} - {user.role} ({user.setor})
+                <SelectItem 
+                  key={user.user_id} 
+                  value={user.user_id}
+                  className="text-white hover:bg-white/10 focus:bg-white/10"
+                >
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-blue-400" />
+                    <span>{user.nome}</span>
+                    <span className="text-white/40">• {user.role}</span>
+                    {user.setor && <span className="text-white/30">({user.setor})</span>}
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
+      </div>
 
-        {selectedUserId && (
-          <>
-            {/* Busca e ações em massa */}
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar rotas..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
+      {/* Usuário Selecionado Info */}
+      {selectedUser && (
+        <div className={sectionWrapperClass}>
+          <div className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                {selectedUser.foto_perfil_url ? (
+                  <img src={selectedUser.foto_perfil_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                ) : (
+                  <span className="text-white font-medium text-sm">
+                    {selectedUser.nome.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                  </span>
+                )}
               </div>
-              <Button
-                variant="outline"
-                onClick={() => revokeAllMutation.mutate(selectedUserId)}
-                disabled={revokeAllMutation.isPending}
-              >
-                Remover Todos
-              </Button>
-              <Button
-                onClick={() => grantAllMutation.mutate(selectedUserId)}
-                disabled={grantAllMutation.isPending}
-              >
-                Liberar Todos
-              </Button>
+              <div>
+                <p className="text-white font-medium">{selectedUser.nome}</p>
+                <p className="text-xs text-white/50">{selectedUser.role} • {selectedUser.setor}</p>
+              </div>
             </div>
-
-            {/* Contador */}
-            <div className="text-sm text-muted-foreground">
-              {grantedCount} de {filteredRoutesByInterface.length} rotas liberadas nesta interface
+            
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-2xl font-bold text-blue-400">{grantedCount}</p>
+                <p className="text-xs text-white/50">de {filteredRoutesByInterface.length} rotas</p>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => revokeAllMutation.mutate(selectedUserId)}
+                  disabled={revokeAllMutation.isPending}
+                  className="bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20 hover:text-red-300"
+                >
+                  <Minus className="h-4 w-4 mr-1" />
+                  Remover
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => grantAllMutation.mutate(selectedUserId)}
+                  disabled={grantAllMutation.isPending}
+                  className="bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30 text-white hover:from-blue-600 hover:to-blue-800"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Liberar
+                </Button>
+              </div>
             </div>
+          </div>
+        </div>
+      )}
 
-            {/* Lista de rotas */}
+      {/* Busca e Lista de Rotas */}
+      {selectedUserId && (
+        <div className={sectionWrapperClass}>
+          <div className="px-4 py-3 border-b border-blue-500/10 bg-gradient-to-r from-blue-500/10 to-transparent flex items-center justify-between">
+            <span className={labelClass}>Rotas Disponíveis</span>
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+              <Input
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={`${inputClass} pl-9 h-8 text-sm`}
+              />
+            </div>
+          </div>
+          
+          <div className="p-4">
             {isLoadingAccess ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
               </div>
             ) : searchTerm ? (
               <div className="space-y-2">
                 {filteredRoutes?.map((route) => (
-                  <div key={route.key} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded">
+                  <div 
+                    key={route.key} 
+                    className={`flex items-center gap-3 p-3 rounded-lg transition-all
+                               ${hasAccess(route.key)
+                                 ? 'bg-gradient-to-r from-blue-500/15 to-blue-600/5 border border-blue-500/25'
+                                 : 'bg-white/5 border border-white/10 hover:border-white/20'}`}
+                  >
                     <Checkbox
-                      id={`route-${route.key}`}
+                      id={`search-${route.key}`}
                       checked={hasAccess(route.key)}
                       onCheckedChange={(checked) => handleToggle(route.key, checked as boolean)}
+                      className="border-blue-500/50 data-[state=checked]:bg-blue-500"
                     />
-                    <label
-                      htmlFor={`route-${route.key}`}
-                      className="flex-1 text-sm cursor-pointer"
-                    >
-                      <div className="font-medium">
-                        {route.parent_key && '↳ '}
-                        {route.label}
-                        {route.interface && route.interface !== 'dashboard' && (
-                          <span className="ml-2 text-xs bg-muted px-2 py-0.5 rounded">
-                            {route.interface}
-                          </span>
-                        )}
+                    <label htmlFor={`search-${route.key}`} className="flex-1 cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-white">{route.label}</span>
+                        <span className="px-2 py-0.5 text-[10px] rounded bg-white/10 text-white/50">
+                          {route.interface}
+                        </span>
                       </div>
-                      <div className="text-xs text-muted-foreground">{route.path}</div>
-                      {route.description && (
-                        <div className="text-xs text-muted-foreground">{route.description}</div>
-                      )}
+                      <div className="text-xs text-white/40 mt-0.5">{route.path}</div>
                     </label>
                   </div>
                 ))}
+                {filteredRoutes?.length === 0 && (
+                  <p className="text-center py-8 text-white/40">Nenhuma rota encontrada</p>
+                )}
               </div>
             ) : (
               <ScrollArea className="h-[500px] pr-4">
-                <div className="space-y-1">
-                  {routeTree.map(node => (
-                    <RouteTreeItem key={node.key} node={node} />
-                  ))}
+                <div className="space-y-2">
+                  {routeTree.length > 0 ? (
+                    routeTree.map(node => (
+                      <RouteTreeItem key={node.key} node={node} />
+                    ))
+                  ) : (
+                    <p className="text-center py-8 text-white/40">
+                      Nenhuma rota encontrada para esta interface
+                    </p>
+                  )}
                 </div>
               </ScrollArea>
             )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
