@@ -1069,7 +1069,7 @@ const App = () => (
                 <Route
                   path="/paineis"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute routeKey="paineis">
                       <PaineisLayout>
                         <PaineisHome />
                       </PaineisLayout>
