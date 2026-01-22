@@ -7,9 +7,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 
 const menuItems = [
+  { label: "Direção", icon: Shield, path: "/direcao", isGold: true },
   { label: "Vendas", icon: ShoppingCart, path: "/vendas" },
   { label: "Fábrica", icon: Factory, path: "/fabrica" },
-  { label: "Direção", icon: Shield, path: "/direcao" },
   { label: "Logística", icon: Truck, path: "/logistica" },
   { label: "Administrativo", icon: Building2, path: "/administrativo" }
 ];
@@ -189,11 +189,13 @@ export default function Home() {
               >
                 <button
                   onClick={() => navigate(item.path)}
-                  className="w-full h-12 rounded-lg
-                             bg-gradient-to-r from-blue-500 to-blue-700
+                  className={`w-full h-12 rounded-lg
                              flex items-center gap-4 px-5
-                             text-white font-medium 
-                             border border-blue-400/30"
+                             text-white font-medium border
+                             ${item.isGold 
+                               ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 border-amber-300/50 shadow-lg shadow-amber-500/20' 
+                               : 'bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30'
+                             }`}
                 >
                   <Icon className="w-5 h-5" strokeWidth={1.5} />
                   <span className="text-sm font-medium">{item.label}</span>
