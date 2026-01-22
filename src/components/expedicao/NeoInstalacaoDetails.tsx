@@ -12,10 +12,11 @@ import {
   MapPin, 
   Calendar, 
   Clock, 
-  User, 
   FileText,
   CheckCircle,
-  Users
+  Users,
+  Building2,
+  Pencil
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -25,6 +26,7 @@ interface NeoInstalacaoDetailsProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConcluir?: (id: string) => void;
+  onEditar?: (neoInstalacao: NeoInstalacao) => void;
   isConcluindo?: boolean;
 }
 
@@ -33,11 +35,16 @@ export function NeoInstalacaoDetails({
   open,
   onOpenChange,
   onConcluir,
+  onEditar,
   isConcluindo,
 }: NeoInstalacaoDetailsProps) {
   if (!neoInstalacao) return null;
 
-  const corEquipe = neoInstalacao.equipe?.cor || "#6366f1";
+  const isAutorizado = neoInstalacao.tipo_responsavel === 'autorizado';
+  const corResponsavel = isAutorizado ? '#10B981' : (neoInstalacao.equipe?.cor || "#6366f1");
+  const nomeResponsavel = isAutorizado 
+    ? neoInstalacao.autorizado_nome || "Sem autorizado"
+    : neoInstalacao.equipe_nome || "Sem equipe";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -50,12 +57,12 @@ export function NeoInstalacaoDetails({
             <Badge
               variant="outline"
               style={{
-                backgroundColor: `${corEquipe}20`,
-                color: corEquipe,
-                borderColor: `${corEquipe}50`,
+                backgroundColor: `${corResponsavel}20`,
+                color: corResponsavel,
+                borderColor: `${corResponsavel}50`,
               }}
             >
-              {neoInstalacao.equipe_nome || "Sem equipe"}
+              {nomeResponsavel}
             </Badge>
           </div>
           <SheetTitle className="text-left text-lg">
@@ -104,22 +111,26 @@ export function NeoInstalacaoDetails({
 
           <Separator />
 
-          {/* Equipe */}
+          {/* Responsável */}
           <div className="space-y-2">
             <h4 className="text-sm font-medium flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              Equipe Responsável
+              {isAutorizado ? (
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <Users className="h-4 w-4 text-muted-foreground" />
+              )}
+              {isAutorizado ? "Autorizado Responsável" : "Equipe Responsável"}
             </h4>
             <div className="pl-6">
               <Badge
                 variant="secondary"
                 style={{
-                  backgroundColor: `${corEquipe}20`,
-                  color: corEquipe,
-                  borderColor: `${corEquipe}50`,
+                  backgroundColor: `${corResponsavel}20`,
+                  color: corResponsavel,
+                  borderColor: `${corResponsavel}50`,
                 }}
               >
-                {neoInstalacao.equipe_nome || "Sem equipe atribuída"}
+                {nomeResponsavel}
               </Badge>
             </div>
           </div>
@@ -160,17 +171,32 @@ export function NeoInstalacaoDetails({
             )}
           </div>
 
-          {/* Ação de Concluir */}
-          {onConcluir && !neoInstalacao.concluida && (
-            <Button
-              className="w-full bg-green-600 hover:bg-green-700"
-              onClick={() => onConcluir(neoInstalacao.id)}
-              disabled={isConcluindo}
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              {isConcluindo ? "Concluindo..." : "Concluir Instalação"}
-            </Button>
-          )}
+          {/* Ações */}
+          <div className="flex flex-col gap-2">
+            {onEditar && !neoInstalacao.concluida && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  onEditar(neoInstalacao);
+                  onOpenChange(false);
+                }}
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Editar
+              </Button>
+            )}
+            {onConcluir && !neoInstalacao.concluida && (
+              <Button
+                className="w-full bg-green-600 hover:bg-green-700"
+                onClick={() => onConcluir(neoInstalacao.id)}
+                disabled={isConcluindo}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                {isConcluindo ? "Concluindo..." : "Concluir Instalação"}
+              </Button>
+            )}
+          </div>
         </div>
       </SheetContent>
     </Sheet>
