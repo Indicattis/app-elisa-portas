@@ -483,6 +483,122 @@ export default function VendaNovaMinimalista() {
           }}
           disabled={isFromOrcamento}
         />
+        {/* Produtos */}
+        <Card className={cardClass}>
+          <CardHeader className="pb-3 pt-4">
+            <CardTitle className="text-base font-semibold text-white">Produtos</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 pb-4">
+            <div className="flex gap-2 flex-wrap">
+              <Button 
+                type="button"
+                size="sm"
+                onClick={() => {
+                  setProdutoEditando(undefined);
+                  setIndexEditando(undefined);
+                  setTipoInicial('porta_enrolar');
+                  setPermitirTrocaTipo(false);
+                  setDialogOpen(true);
+                }}
+              >
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                Porta de Enrolar
+              </Button>
+              <Button 
+                type="button"
+                size="sm"
+                variant="outline"
+                className="border-primary/30 text-white hover:bg-primary/10"
+                onClick={() => {
+                  setProdutoEditando(undefined);
+                  setIndexEditando(undefined);
+                  setTipoInicial('porta_social');
+                  setPermitirTrocaTipo(false);
+                  setDialogOpen(true);
+                }}
+              >
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                Porta Social
+              </Button>
+              <Button 
+                type="button"
+                size="sm"
+                variant="outline"
+                className="border-primary/30 text-white hover:bg-primary/10"
+                onClick={() => {
+                  setProdutoEditando(undefined);
+                  setIndexEditando(undefined);
+                  setTipoInicial('pintura_epoxi');
+                  setPermitirTrocaTipo(false);
+                  setDialogOpen(true);
+                }}
+              >
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                Pintura Eletrostática
+              </Button>
+              <Button 
+                type="button"
+                size="sm"
+                variant="outline"
+                className="border-primary/30 text-white hover:bg-primary/10"
+                onClick={() => {
+                  setProdutoEditando(undefined);
+                  setIndexEditando(undefined);
+                  setTipoInicial('manutencao');
+                  setPermitirTrocaTipo(false);
+                  setDialogOpen(true);
+                }}
+              >
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                Serviço
+              </Button>
+              <Button 
+                type="button"
+                size="sm"
+                variant="outline"
+                className="border-primary/30 text-white hover:bg-primary/10"
+                onClick={() => setAcessoriosModalOpen(true)}
+              >
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                Catálogo
+              </Button>
+            </div>
+            
+            <ProdutoVendaForm 
+              open={dialogOpen}
+              onOpenChange={(open) => {
+                setDialogOpen(open);
+                if (!open) {
+                  setProdutoEditando(undefined);
+                  setIndexEditando(undefined);
+                  setTipoInicial(undefined);
+                }
+              }}
+              tipoInicial={tipoInicial}
+              permitirTrocaTipo={permitirTrocaTipo}
+              onAddProduto={(produto) => {
+                handleAddPorta(produto);
+                setDialogOpen(false);
+              }}
+              produtoEditando={produtoEditando}
+              indexEditando={indexEditando}
+            />
+            
+            <SelecionarAcessoriosModal
+              open={acessoriosModalOpen}
+              onOpenChange={setAcessoriosModalOpen}
+              onConfirm={handleAddAcessorios}
+            />
+            
+            <ProdutosVendaTable
+              produtos={portas}
+              onRemoveProduto={handleRemovePorta}
+              onEditProduto={handleEditPorta}
+              onUpdateQuantidade={handleUpdateQuantidade}
+              onRemoverDesconto={handleRemoverDesconto}
+            />
+          </CardContent>
+        </Card>
 
         {/* Forma de Pagamento */}
         <PagamentoSection
@@ -618,123 +734,6 @@ export default function VendaNovaMinimalista() {
                 </Label>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Produtos */}
-        <Card className={cardClass}>
-          <CardHeader className="pb-3 pt-4">
-            <CardTitle className="text-base font-semibold text-white">Produtos</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 pb-4">
-            <div className="flex gap-2 flex-wrap">
-              <Button 
-                type="button"
-                size="sm"
-                onClick={() => {
-                  setProdutoEditando(undefined);
-                  setIndexEditando(undefined);
-                  setTipoInicial('porta_enrolar');
-                  setPermitirTrocaTipo(false);
-                  setDialogOpen(true);
-                }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Porta de Enrolar
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-primary/30 text-white hover:bg-primary/10"
-                onClick={() => {
-                  setProdutoEditando(undefined);
-                  setIndexEditando(undefined);
-                  setTipoInicial('porta_social');
-                  setPermitirTrocaTipo(false);
-                  setDialogOpen(true);
-                }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Porta Social
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-primary/30 text-white hover:bg-primary/10"
-                onClick={() => {
-                  setProdutoEditando(undefined);
-                  setIndexEditando(undefined);
-                  setTipoInicial('pintura_epoxi');
-                  setPermitirTrocaTipo(false);
-                  setDialogOpen(true);
-                }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Pintura Eletrostática
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-primary/30 text-white hover:bg-primary/10"
-                onClick={() => {
-                  setProdutoEditando(undefined);
-                  setIndexEditando(undefined);
-                  setTipoInicial('manutencao');
-                  setPermitirTrocaTipo(false);
-                  setDialogOpen(true);
-                }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Serviço
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-primary/30 text-white hover:bg-primary/10"
-                onClick={() => setAcessoriosModalOpen(true)}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Catálogo
-              </Button>
-            </div>
-            
-            <ProdutoVendaForm 
-              open={dialogOpen}
-              onOpenChange={(open) => {
-                setDialogOpen(open);
-                if (!open) {
-                  setProdutoEditando(undefined);
-                  setIndexEditando(undefined);
-                  setTipoInicial(undefined);
-                }
-              }}
-              tipoInicial={tipoInicial}
-              permitirTrocaTipo={permitirTrocaTipo}
-              onAddProduto={(produto) => {
-                handleAddPorta(produto);
-                setDialogOpen(false);
-              }}
-              produtoEditando={produtoEditando}
-              indexEditando={indexEditando}
-            />
-            
-            <SelecionarAcessoriosModal
-              open={acessoriosModalOpen}
-              onOpenChange={setAcessoriosModalOpen}
-              onConfirm={handleAddAcessorios}
-            />
-            
-            <ProdutosVendaTable
-              produtos={portas}
-              onRemoveProduto={handleRemovePorta}
-              onEditProduto={handleEditPorta}
-              onUpdateQuantidade={handleUpdateQuantidade}
-              onRemoverDesconto={handleRemoverDesconto}
-            />
           </CardContent>
         </Card>
 
