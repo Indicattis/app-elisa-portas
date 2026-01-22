@@ -3,15 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 export function useRouteAccess(routeKey: string) {
-  const { user, isAdmin } = useAuth();
+  const { user, hasBypassPermissions } = useAuth();
 
   return useQuery({
-    queryKey: ['route-access', user?.id, routeKey],
+    queryKey: ['route-access', user?.id, routeKey, hasBypassPermissions],
     queryFn: async () => {
       if (!user?.id) return false;
       
-      // Admin tem acesso a tudo
-      if (isAdmin) {
+      // Apenas usuários com bypass_permissions explícito têm acesso irrestrito
+      if (hasBypassPermissions) {
         return true;
       }
 

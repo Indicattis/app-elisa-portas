@@ -27,7 +27,7 @@ const menuItems = [
 
 export default function Home() {
   const navigate = useNavigate();
-  const { user, userRole, signOut, isAdmin } = useAuth();
+  const { user, userRole, signOut, hasBypassPermissions } = useAuth();
   const [mounted, setMounted] = useState(false);
   
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -35,7 +35,7 @@ export default function Home() {
 
   // Buscar acessos do usuário às rotas principais
   const { data: userAccess } = useQuery({
-    queryKey: ['user-home-access', user?.id],
+    queryKey: ['user-home-access', user?.id, hasBypassPermissions],
     queryFn: async () => {
       if (!user?.id) return [];
       
@@ -51,13 +51,13 @@ export default function Home() {
       if (error) throw error;
       return data?.map(r => r.route_key) || [];
     },
-    enabled: !!user?.id && !isAdmin,
+    enabled: !!user?.id && !hasBypassPermissions,
   });
 
   // Verificar se usuário tem acesso a uma rota
   const hasAccess = (path: string): boolean => {
-    // Admin tem acesso a tudo
-    if (isAdmin) return true;
+    // Apenas bypass_permissions tem acesso irrestrito
+    if (hasBypassPermissions) return true;
     
     const routeKey = routeKeyMap[path];
     if (!routeKey) return true;
