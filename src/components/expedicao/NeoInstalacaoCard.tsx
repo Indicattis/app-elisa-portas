@@ -39,11 +39,11 @@ export const NeoInstalacaoCard = ({
 }: NeoInstalacaoCardProps) => {
   const corEquipe = neoInstalacao.equipe?.cor || "#6366f1";
 
-  // Estilo azul para instalações
+  // Estilo laranja para instalações avulsas
   const getCardStyles = () => {
     return {
-      backgroundColor: 'rgb(59 130 246 / 0.15)',
-      borderColor: 'rgb(59 130 246 / 0.5)',
+      backgroundColor: 'rgb(249 115 22 / 0.15)',
+      borderColor: 'rgb(249 115 22 / 0.5)',
     };
   };
 
@@ -62,7 +62,7 @@ export const NeoInstalacaoCard = ({
         <div className="flex items-center gap-2 flex-1 min-w-0 cursor-grab active:cursor-grabbing" {...dragListeners}>
           <Badge 
             variant="outline" 
-            className="text-[9px] px-1 py-0 h-4 shrink-0 bg-blue-500/20 text-blue-300 border-blue-400/50"
+            className="text-[9px] px-1 py-0 h-4 shrink-0 bg-orange-500/20 text-orange-300 border-orange-400/50"
           >
             Avulso
           </Badge>
@@ -140,7 +140,7 @@ export const NeoInstalacaoCard = ({
                   </div>
 
                   <div className="flex items-center gap-1 text-[10px]">
-                    <span className="font-medium text-blue-400">Instalação Avulsa</span>
+                    <span className="font-medium text-orange-400">Instalação Avulsa</span>
                     <span className="text-muted-foreground">•</span>
                     <span className="text-muted-foreground">
                       {getResponsavelNome()}
