@@ -26,7 +26,7 @@ export default function Auth() {
     if (savedPath && savedPath !== '/auth') {
       return savedPath;
     }
-    return '/dashboard';
+    return '/home';
   };
 
   const from = getRedirectPath();
