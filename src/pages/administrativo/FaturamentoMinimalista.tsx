@@ -827,7 +827,7 @@ export default function FaturamentoMinimalista() {
                       <TableRow 
                         key={venda.id} 
                         className="border-white/10 hover:bg-white/5 cursor-pointer"
-                        onClick={() => navigate(`/dashboard/administrativo/financeiro/faturamento/${venda.id}/edit`)}
+                        onClick={() => navigate(`/administrativo/financeiro/faturamento/${venda.id}`)}
                       >
                         {visibleColumns.map(column => (
                           <TableCell 
