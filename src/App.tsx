@@ -209,7 +209,9 @@ import AdministrativoHub from "./pages/administrativo/AdministrativoHub";
 import PedidosAdminMinimalista from "./pages/administrativo/PedidosAdminMinimalista";
 import PedidoViewMinimalista from "./pages/administrativo/PedidoViewMinimalista";
 import FinanceiroHub from "./pages/administrativo/FinanceiroHub";
-import FaturamentoMinimalista from "./pages/administrativo/FaturamentoMinimalista";
+import FaturamentoHub from "./pages/administrativo/FaturamentoHub";
+import FaturamentoVendasMinimalista from "./pages/administrativo/FaturamentoVendasMinimalista";
+import FaturamentoProdutosMinimalista from "./pages/administrativo/FaturamentoProdutosMinimalista";
 import FaturamentoVendaMinimalista from "./pages/administrativo/FaturamentoVendaMinimalista";
 import CustosMinimalista from "./pages/administrativo/CustosMinimalista";
 
@@ -389,7 +391,9 @@ const App = () => (
                 <Route path="/administrativo/pedidos" element={<ProtectedRoute><PedidosAdminMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/pedidos/:id" element={<ProtectedRoute><PedidoViewMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro" element={<ProtectedRoute><FinanceiroHub /></ProtectedRoute>} />
-                <Route path="/administrativo/financeiro/faturamento" element={<ProtectedRoute><FaturamentoMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/financeiro/faturamento" element={<ProtectedRoute><FaturamentoHub /></ProtectedRoute>} />
+                <Route path="/administrativo/financeiro/faturamento/vendas" element={<ProtectedRoute><FaturamentoVendasMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/financeiro/faturamento/produtos" element={<ProtectedRoute><FaturamentoProdutosMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/faturamento/:id" element={<ProtectedRoute><FaturamentoVendaMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/custos" element={<ProtectedRoute><CustosMinimalista /></ProtectedRoute>} />
 

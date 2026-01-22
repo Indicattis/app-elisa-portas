@@ -225,10 +225,11 @@ export default function FaturamentoVendaMinimalista() {
   };
 
   const breadcrumbItems = [
-    { label: "Home", path: "/painels" },
+    { label: "Home", path: "/home" },
     { label: "Administrativo", path: "/administrativo" },
     { label: "Financeiro", path: "/administrativo/financeiro" },
     { label: "Faturamento", path: "/administrativo/financeiro/faturamento" },
+    { label: "Por Venda", path: "/administrativo/financeiro/faturamento/vendas" },
     { label: venda?.cliente_nome || "Venda" },
   ];
 
@@ -247,7 +248,7 @@ export default function FaturamentoVendaMinimalista() {
           <h2 className="text-2xl font-bold mb-4">Venda não encontrada</h2>
           <Button 
             variant="outline" 
-            onClick={() => navigate('/administrativo/financeiro/faturamento')}
+            onClick={() => navigate('/administrativo/financeiro/faturamento/vendas')}
             className="bg-white/5 border-white/20 text-white hover:bg-white/10"
           >
             Voltar
@@ -269,7 +270,7 @@ export default function FaturamentoVendaMinimalista() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/administrativo/financeiro/faturamento')}
+              onClick={() => navigate('/administrativo/financeiro/faturamento/vendas')}
               className="text-white hover:bg-white/10"
             >
               <ArrowLeft className="h-5 w-5" />
