@@ -9,6 +9,7 @@ interface DraggableNeoInstalacaoProps {
   onConcluir?: (id: string) => void;
   onRemover?: (id: string) => void;
   onExcluir?: (id: string) => void;
+  onEditar?: (neoInstalacao: NeoInstalacao) => void;
   onOpenDetails?: (neoInstalacao: NeoInstalacao) => void;
   disableDrag?: boolean;
 }
@@ -19,6 +20,7 @@ export const DraggableNeoInstalacao = ({
   onConcluir,
   onRemover,
   onExcluir,
+  onEditar,
   onOpenDetails,
   disableDrag = false,
 }: DraggableNeoInstalacaoProps) => {
@@ -45,6 +47,7 @@ export const DraggableNeoInstalacao = ({
         onConcluir={onConcluir}
         onRemover={onRemover}
         onExcluir={onExcluir}
+        onEditar={onEditar}
         onOpenDetails={onOpenDetails}
         dragListeners={disableDrag ? undefined : listeners}
       />
