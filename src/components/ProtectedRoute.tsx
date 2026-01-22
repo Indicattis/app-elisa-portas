@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, routeKey, requireAdmin = false }: ProtectedRouteProps) {
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, isAdmin, hasBypassPermissions } = useAuth();
   const location = useLocation();
   const { data: hasAccess, isLoading: accessLoading } = useRouteAccess(routeKey || '');
 
@@ -32,8 +32,8 @@ export function ProtectedRoute({ children, routeKey, requireAdmin = false }: Pro
     return <Navigate to="/forbidden" replace />;
   }
 
-  // Verificação de acesso à rota (admin sempre tem acesso)
-  if (routeKey && !isAdmin && !hasAccess) {
+  // Verificação de acesso à rota (apenas bypass_permissions ignora verificação)
+  if (routeKey && !hasBypassPermissions && !hasAccess) {
     return <Navigate to="/forbidden" replace />;
   }
 

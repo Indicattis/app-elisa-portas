@@ -77,6 +77,7 @@ export type Database = {
       admin_users: {
         Row: {
           ativo: boolean
+          bypass_permissions: boolean | null
           cpf: string | null
           created_at: string
           data_nascimento: string | null
@@ -96,6 +97,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          bypass_permissions?: boolean | null
           cpf?: string | null
           created_at?: string
           data_nascimento?: string | null
@@ -115,6 +117,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          bypass_permissions?: boolean | null
           cpf?: string | null
           created_at?: string
           data_nascimento?: string | null

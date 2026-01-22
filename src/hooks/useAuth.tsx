@@ -14,6 +14,7 @@ interface AdminUser {
   nome: string;
   foto_perfil_url: string | null;
   user_id: string;
+  bypass_permissions: boolean | null;
 }
 
 interface AuthContextType {
@@ -25,6 +26,7 @@ interface AuthContextType {
   isGerenteComercial: boolean;
   isGerenteFabril: boolean;
   isFabrica: boolean;
+  hasBypassPermissions: boolean;
   signOut: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, metadata?: any) => Promise<void>;
@@ -199,6 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isGerenteComercial = userRole?.role === 'gerente_comercial';
   const isGerenteFabril = userRole?.role === 'gerente_fabril';
   const isFabrica = userRole?.setor === 'fabrica';
+  const hasBypassPermissions = userRole?.bypass_permissions === true;
 
   return (
     <AuthContext.Provider value={{ 
@@ -210,6 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isGerenteComercial,
       isGerenteFabril,
       isFabrica,
+      hasBypassPermissions,
       signOut,
       signIn,
       signUp
