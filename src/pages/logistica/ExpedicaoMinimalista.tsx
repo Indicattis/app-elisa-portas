@@ -224,7 +224,7 @@ export default function ExpedicaoMinimalista() {
                       onToday={handleToday}
                       onUpdateOrdem={handleUpdateOrdem}
                       onUpdateNeoInstalacao={async (params) => {
-                        await updateNeoInstalacao.mutate(params);
+                        await updateNeoInstalacao(params);
                       }}
                       onEdit={handleEdit}
                       onRemoverDoCalendario={handleRemoverDoCalendario}
@@ -240,7 +240,7 @@ export default function ExpedicaoMinimalista() {
                       onMonthChange={handleMonthChange}
                       onUpdateOrdem={handleUpdateOrdem}
                       onUpdateNeoInstalacao={async (params) => {
-                        await updateNeoInstalacao.mutate(params);
+                        await updateNeoInstalacao(params);
                       }}
                       onEdit={handleEdit}
                       onRemoverDoCalendario={handleRemoverDoCalendario}
@@ -285,7 +285,7 @@ export default function ExpedicaoMinimalista() {
         open={neoModalOpen}
         onOpenChange={setNeoModalOpen}
         onConfirm={async (dados: CriarNeoInstalacaoData) => {
-          await createNeoInstalacao.mutate(dados);
+          await createNeoInstalacao(dados);
         }}
       />
 
@@ -294,7 +294,7 @@ export default function ExpedicaoMinimalista() {
         open={neoCorrecaoModalOpen}
         onOpenChange={setNeoCorrecaoModalOpen}
         onConfirm={async (dados: CriarNeoCorrecaoData) => {
-          await createNeoCorrecao.mutate(dados);
+          await createNeoCorrecao(dados);
         }}
       />
     </div>

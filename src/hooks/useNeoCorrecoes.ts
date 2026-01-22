@@ -186,10 +186,14 @@ export const useNeoCorrecoes = (currentDate: Date, periodo: 'week' | 'month' = '
     isLoading,
     error,
     refetch,
-    createNeoCorrecao,
-    updateNeoCorrecao,
-    concluirNeoCorrecao,
-    deleteNeoCorrecao
+    createNeoCorrecao: createNeoCorrecao.mutateAsync,
+    updateNeoCorrecao: updateNeoCorrecao.mutateAsync,
+    concluirNeoCorrecao: concluirNeoCorrecao.mutateAsync,
+    deleteNeoCorrecao: deleteNeoCorrecao.mutateAsync,
+    isCreating: createNeoCorrecao.isPending,
+    isUpdating: updateNeoCorrecao.isPending,
+    isConcluindo: concluirNeoCorrecao.isPending,
+    isDeleting: deleteNeoCorrecao.isPending,
   };
 };
 
