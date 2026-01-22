@@ -645,32 +645,6 @@ export default function VendaNovaMinimalista() {
               />
             </div>
 
-            <div className="space-y-1">
-              <Label htmlFor="valor_entrada" className={labelClass}>Entrada (R$)</Label>
-              <Input
-                id="valor_entrada"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.valor_entrada}
-                onChange={(e) => {
-                  const entrada = parseFloat(e.target.value) || 0;
-                  const valorTotal = portas.reduce((acc, p) => {
-                    const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
-                    const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
-                    return acc + valorBase - desconto;
-                  }, 0) + (formData.valor_frete || 0);
-                  
-                  setFormData(prev => ({ 
-                    ...prev, 
-                    valor_entrada: entrada,
-                    valor_a_receber: valorTotal - entrada
-                  }));
-                }}
-                placeholder="0,00"
-                className={cn("h-9", inputClass)}
-              />
-            </div>
 
             <div className="space-y-2 md:col-span-3">
               <Label className={labelClass}>Tipo de Entrega *</Label>
