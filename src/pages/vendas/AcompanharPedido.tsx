@@ -46,10 +46,10 @@ function PedidoCardSimples({ pedido }: { pedido: PedidoBuscaGeral }) {
     return acc;
   }, 0) || 0;
 
-  // Cores únicas
+  // Cores únicas (usando cor_id com catalogo_cores)
   const cores = [...new Set(
     venda?.produtos_vendas
-      ?.map(p => p.cor)
+      ?.map(p => p.catalogo_cores?.nome)
       .filter(Boolean) || []
   )];
 

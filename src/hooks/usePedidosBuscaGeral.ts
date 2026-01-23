@@ -22,8 +22,11 @@ export interface PedidoBuscaGeral {
     };
     produtos_vendas?: Array<{
       tipo_produto?: string;
-      cor?: string;
       quantidade?: number;
+      cor_id?: string;
+      catalogo_cores?: {
+        nome: string;
+      };
     }>;
   };
 }
@@ -55,8 +58,11 @@ export function usePedidosBuscaGeral(searchTerm: string) {
             ),
             produtos_vendas (
               tipo_produto,
-              cor,
-              quantidade
+              quantidade,
+              cor_id,
+              catalogo_cores:cor_id (
+                nome
+              )
             )
           )
         `)
