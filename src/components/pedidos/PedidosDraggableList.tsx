@@ -9,6 +9,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -77,7 +78,8 @@ function SortableItem({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.3 : 1,
+    zIndex: isDragging ? 0 : 'auto' as const,
   };
 
   return (
@@ -235,9 +237,15 @@ export function PedidosDraggableList({
         {viewMode === 'list' && <PedidosTotalRow pedidos={pedidosParaTotais || pedidos} />}
       </SortableContext>
 
-      <DragOverlay>
+      <DragOverlay
+        modifiers={[restrictToWindowEdges]}
+        dropAnimation={{
+          duration: 200,
+          easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+        }}
+      >
         {activePedido ? (
-          <div className="opacity-80">
+          <div className="opacity-90 shadow-2xl pointer-events-none">
             <PedidoCard
               pedido={activePedido}
               isAberto={isAberto}
