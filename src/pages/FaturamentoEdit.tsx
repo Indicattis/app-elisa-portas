@@ -11,7 +11,6 @@ import { LucroItemModal } from "@/components/vendas/LucroItemModal";
 import { FaturamentoProdutosTable } from "@/components/vendas/FaturamentoProdutosTable";
 import { ConfirmarFaturamentoDialog } from "@/components/vendas/ConfirmarFaturamentoDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { Badge } from "@/components/ui/badge";
 
 interface Venda {
@@ -32,12 +31,7 @@ export default function FaturamentoEdit() {
   const [loading, setLoading] = useState(true);
   const [selectedProduto, setSelectedProduto] = useState<any | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [showPedidoDialog, setShowPedidoDialog] = useState(false);
-  const [showPedidoDuplicadoDialog, setShowPedidoDuplicadoDialog] = useState(false);
   const [showRemoverFaturamentoDialog, setShowRemoverFaturamentoDialog] = useState(false);
-  const [pedidoExistenteId, setPedidoExistenteId] = useState<string | null>(null);
-  const [checkingPedido, setCheckingPedido] = useState(false);
-  const { createPedidoFromVenda, checkExistingPedido } = usePedidoCreation();
   const { removerFaturamento, isRemovendo, verificarFaturamento } = useFaturamento();
 
   const {
@@ -120,6 +114,8 @@ export default function FaturamentoEdit() {
     const produtosIds = produtos.map(p => p.id);
     
     try {
+      setShowConfirmDialog(false);
+      
       await finalizarFaturamento({
         vendaId: venda.id,
         custoTotal,
@@ -127,12 +123,20 @@ export default function FaturamentoEdit() {
         produtosIds,
       });
       
-      setShowConfirmDialog(false);
+      // Recarregar dados da venda para atualizar o estado
+      await fetchVenda();
       
-      // Mostrar dialog perguntando se quer criar pedido
-      setShowPedidoDialog(true);
+      toast({
+        title: "Venda faturada com sucesso!",
+        description: "Os valores de lucro e custo foram calculados e salvos.",
+      });
     } catch (error) {
       console.error('Erro ao finalizar faturamento:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao faturar",
+        description: "Ocorreu um erro ao finalizar o faturamento.",
+      });
     }
   };
 
@@ -140,9 +144,9 @@ export default function FaturamentoEdit() {
     if (!venda || !id) return;
 
     try {
-      // Verificar se existe pedido
-      const pedido = await checkExistingPedido(venda.id);
-      if (pedido) {
+      // Verificar se existe pedido usando verificarFaturamento
+      const { hasPedido } = await verificarFaturamento(venda.id);
+      if (hasPedido) {
         toast({
           variant: "destructive",
           title: "Não é possível remover o faturamento",
@@ -294,7 +298,7 @@ export default function FaturamentoEdit() {
         <Button
           variant="outline"
           size="lg"
-          onClick={() => navigate('/dashboard/faturamento')}
+          onClick={() => navigate(-1)}
         >
           Voltar
         </Button>
@@ -329,84 +333,6 @@ export default function FaturamentoEdit() {
         ).length || 0}
         onConfirmar={executarFaturamento}
       />
-
-      {/* Modal de Criação de Pedido */}
-      <AlertDialog open={showPedidoDialog} onOpenChange={setShowPedidoDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {checkingPedido ? "Verificando..." : "Venda Faturada com Sucesso!"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {checkingPedido 
-                ? "Verificando se já existe um pedido para esta venda..." 
-                : "Deseja criar o pedido de produção para esta venda agora?"
-              }
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          {!checkingPedido && (
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => navigate('/dashboard/faturamento')}>
-                Não, criar depois
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={async () => {
-                if (!venda) return;
-                
-                // Primeiro verificar se já existe
-                setCheckingPedido(true);
-                const pedidoExistente = await checkExistingPedido(venda.id);
-                setCheckingPedido(false);
-                
-                if (pedidoExistente) {
-                  setPedidoExistenteId(pedidoExistente);
-                  setShowPedidoDialog(false);
-                  setShowPedidoDuplicadoDialog(true);
-                  return;
-                }
-                
-                // Se não existe, criar
-                const pedidoId = await createPedidoFromVenda(venda.id);
-                setShowPedidoDialog(false);
-                if (pedidoId) {
-                  toast({
-                    title: "Pedido criado com sucesso!",
-                    description: "O pedido está pronto para ser preenchido.",
-                  });
-                  navigate(`/dashboard/pedido/${pedidoId}/view`);
-                } else {
-                  navigate('/dashboard/faturamento');
-                }
-              }}>
-                Sim, Criar Pedido
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          )}
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Modal de Pedido Duplicado */}
-      <AlertDialog open={showPedidoDuplicadoDialog} onOpenChange={setShowPedidoDuplicadoDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Pedido Existente</AlertDialogTitle>
-            <AlertDialogDescription>
-              Já existe um pedido vinculado a esta venda.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => navigate('/dashboard/faturamento')}>
-              Voltar
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              if (pedidoExistenteId) {
-                navigate(`/dashboard/pedido/${pedidoExistenteId}/view`);
-              }
-            }}>
-              Acessar Pedido
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Modal de Remover Faturamento */}
       <AlertDialog open={showRemoverFaturamentoDialog} onOpenChange={setShowRemoverFaturamentoDialog}>
