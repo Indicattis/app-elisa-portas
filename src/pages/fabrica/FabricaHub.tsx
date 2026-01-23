@@ -9,7 +9,7 @@ import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 
 const menuItems = [
-  { label: 'Pedidos em Produção', icon: Package, path: '/fabrica/pedidos-producao' },
+  { label: 'Gestão de Pedidos', icon: Package, path: '/fabrica/pedidos-producao' },
   { label: 'Controle de Estoque', icon: Boxes, path: '/fabrica/controle-estoque' },
   { label: 'Produção', icon: Factory, path: '/fabrica/producao' },
 ];
@@ -145,45 +145,45 @@ export default function FabricaHub() {
       </div>
 
       {/* ========== VERSÃO DESKTOP ========== */}
-      <div className="hidden md:flex relative z-10 flex-col items-center justify-center">
-        {/* Grid de botões */}
-        <div className="grid grid-cols-2 gap-4 max-w-lg">
+      <div className="hidden md:flex relative z-10 flex-col items-center justify-center px-6 w-full max-w-md">
+        {/* Lista de botões */}
+        <div className="w-full flex flex-col gap-3">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
-            const delay = 200 + index * 100;
+            const delay = 100 + index * 80;
             const canAccess = hasAccess(item.path);
             
             return (
               <div
                 key={item.label}
-                className={`p-2 rounded-2xl backdrop-blur-xl border transition-all duration-300
+                className={`p-1.5 rounded-xl backdrop-blur-xl border transition-all duration-300
                            ${canAccess 
                              ? 'bg-white/5 border-white/10 hover:bg-white/10' 
                              : 'bg-zinc-900/50 border-zinc-800/50'}`}
                 style={{
                   opacity: mounted ? 1 : 0,
-                  transform: mounted ? 'translateY(0)' : 'translateY(30px)',
-                  transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
+                  transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
+                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
                 }}
               >
                 <button
                   onClick={() => handleMenuClick(item.path, canAccess)}
                   disabled={!canAccess}
-                  className={`w-40 h-24 rounded-xl flex flex-col items-center justify-center gap-2 font-medium 
+                  className={`w-full h-14 rounded-lg flex items-center gap-4 px-5 font-medium 
                              border transition-all duration-300 relative
                              ${canAccess 
-                               ? 'bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/50 border-blue-400/30' 
+                               ? 'bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 active:scale-[0.98] text-white shadow-lg shadow-blue-500/20 border-blue-400/30' 
                                : 'bg-zinc-800/50 text-zinc-500 border-zinc-700/30 cursor-not-allowed'}`}
                 >
                   <div className="relative">
-                    <Icon className={`w-7 h-7 ${canAccess ? '' : 'opacity-50'}`} strokeWidth={1.5} />
+                    <Icon className={`w-5 h-5 ${canAccess ? '' : 'opacity-50'}`} strokeWidth={1.5} />
                     {!canAccess && (
-                      <Lock className="w-3.5 h-3.5 absolute -bottom-1 -right-1 text-zinc-400" />
+                      <Lock className="w-3 h-3 absolute -bottom-1 -right-1 text-zinc-400" />
                     )}
                   </div>
-                  <span className="text-sm font-medium text-center px-2">{item.label}</span>
+                  <span className="text-sm font-medium">{item.label}</span>
                   {!canAccess && (
-                    <Lock className="w-4 h-4 absolute top-2 right-2 text-zinc-500" />
+                    <Lock className="w-4 h-4 ml-auto text-zinc-500" />
                   )}
                 </button>
               </div>
