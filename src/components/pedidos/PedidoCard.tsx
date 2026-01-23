@@ -44,6 +44,7 @@ interface PedidoCardProps {
   onDeletar?: (pedidoId: string) => Promise<void>;
   basePath?: string;
   readOnly?: boolean;
+  disableClienteClick?: boolean;
 }
 export function PedidoCard({
   pedido,
@@ -58,7 +59,8 @@ export function PedidoCard({
   viewMode = 'grid',
   onArquivar,
   onDeletar,
-  readOnly = false
+  readOnly = false,
+  disableClienteClick = false
 }: PedidoCardProps) {
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showAcaoEtapa, setShowAcaoEtapa] = useState(false);
@@ -1002,8 +1004,12 @@ export function PedidoCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <h3 
-                    className="font-semibold text-sm truncate cursor-pointer hover:text-primary transition-colors"
+                    className={cn(
+                      "font-semibold text-sm truncate",
+                      !disableClienteClick && "cursor-pointer hover:text-primary transition-colors"
+                    )}
                     onClick={(e) => {
+                      if (disableClienteClick) return;
                       e.stopPropagation();
                       if (isAdministrativo) {
                         navigate(`/administrativo/pedidos/${pedido.id}`);
