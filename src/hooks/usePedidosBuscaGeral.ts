@@ -13,7 +13,7 @@ export interface PedidoBuscaGeral {
     id: string;
     cliente_nome: string;
     cliente_telefone?: string;
-    cpf_cnpj?: string;
+    cpf_cliente?: string;
     valor_venda?: number;
     tipo_entrega?: string;
     atendente?: {
@@ -49,7 +49,7 @@ export function usePedidosBuscaGeral(searchTerm: string) {
             id,
             cliente_nome,
             cliente_telefone,
-            cpf_cnpj,
+            cpf_cliente,
             valor_venda,
             tipo_entrega,
             atendente:atendente_id (
@@ -94,10 +94,10 @@ export function usePedidosBuscaGeral(searchTerm: string) {
         return true;
       }
       
-      // Buscar por CPF/CNPJ (removendo pontuação)
-      const cpfCnpj = pedido.vendas?.cpf_cnpj?.replace(/\D/g, '') || '';
+      // Buscar por CPF (removendo pontuação)
+      const cpfCliente = pedido.vendas?.cpf_cliente?.replace(/\D/g, '') || '';
       const termSemPontuacao = termLower.replace(/\D/g, '');
-      if (cpfCnpj.includes(termSemPontuacao) && termSemPontuacao.length >= 3) {
+      if (cpfCliente.includes(termSemPontuacao) && termSemPontuacao.length >= 3) {
         return true;
       }
       

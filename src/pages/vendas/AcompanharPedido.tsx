@@ -84,10 +84,10 @@ function PedidoCardSimples({ pedido }: { pedido: PedidoBuscaGeral }) {
                 </div>
               )}
               
-              {venda?.cpf_cnpj && (
+              {venda?.cpf_cliente && (
                 <div className="flex items-center gap-1.5">
                   <FileText className="w-4 h-4" />
-                  <span>{venda.cpf_cnpj}</span>
+                  <span>{venda.cpf_cliente}</span>
                 </div>
               )}
             </div>
