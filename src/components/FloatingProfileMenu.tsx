@@ -9,7 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 // Mapeamento de rotas para route_keys
 const routeKeyMap: Record<string, string> = {
   '/paineis': 'paineis',
-  '/dashboard': 'dashboard',
   '/admin': 'admin',
   '/producao': 'producao_hub',
 };
@@ -18,7 +17,6 @@ const routeKeyMap: Record<string, string> = {
 const menuItems = [
   { label: 'Produção', icon: Factory, path: '/producao' },
   { label: 'Painéis', icon: PanelLeft, path: '/paineis' },
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Admin', icon: Settings, path: '/admin' },
 ];
 

@@ -169,17 +169,6 @@ export default function Home() {
 
               <button
                 onClick={() => {
-                  navigate('/dashboard');
-                  setProfileMenuOpen(false);
-                }}
-                className="w-full px-3 py-2 flex items-center gap-3 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                <span className="text-sm">Dashboard</span>
-              </button>
-
-              <button
-                onClick={() => {
                   navigate('/admin');
                   setProfileMenuOpen(false);
                 }}
@@ -187,6 +176,14 @@ export default function Home() {
               >
                 <Settings className="w-4 h-4" />
                 <span className="text-sm">Admin</span>
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="w-full px-3 py-2 flex items-center gap-3 text-red-400/80 hover:text-red-400 hover:bg-white/10 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="text-sm">Sair</span>
               </button>
 
               <button

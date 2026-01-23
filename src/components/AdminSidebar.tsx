@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import logoLight from "@/assets/logo-light.png";
 import logoDark from "@/assets/logo-dark.png";
 import { useState, useEffect, useMemo } from "react";
-import { ChevronRight, Lock, Search, X } from "lucide-react";
+import { ChevronRight, Lock, Search, X, Home } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { icons } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
@@ -325,11 +325,11 @@ export function AdminSidebar() {
       <SidebarFooter className="p-2 space-y-1.5">
         <div className="space-y-1">
           <Link
-            to="/dashboard"
+            to="/home"
             className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-accent hover:bg-accent/80 text-accent-foreground transition-colors text-xs font-medium"
           >
-            <icons.LayoutDashboard className="h-4 w-4" />
-            <span>Dashboard</span>
+            <Home className="h-4 w-4" />
+            <span>Início</span>
           </Link>
         </div>
       </SidebarFooter>
