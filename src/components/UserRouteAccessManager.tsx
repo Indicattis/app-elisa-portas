@@ -12,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { 
   Loader2, Search, ChevronRight, ChevronDown, Folder, FolderOpen, 
-  Home, Globe, Shield, Users, Minus, Plus, User, BarChart3
+  Home, Globe, Shield, Users, Minus, Plus, User
 } from "lucide-react";
 
 interface AppRoute {
@@ -43,15 +43,14 @@ const labelClass = "text-xs font-semibold text-blue-300/80 uppercase tracking-wi
 const inputClass = "h-10 bg-blue-500/5 border-blue-500/20 text-white placeholder:text-blue-200/30 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30";
 
 // Interfaces disponíveis
-  const interfaces = [
-    { value: 'minimalista', label: 'Minimalista', icon: Home },
-    { value: 'dashboard', label: 'Dashboard', icon: Shield },
-    { value: 'marketing', label: 'Marketing', icon: BarChart3 },
-    { value: 'instalacoes', label: 'Instalações', icon: Users },
-    { value: 'producao', label: 'Produção', icon: Users },
-    { value: 'paineis', label: 'Painéis', icon: Users },
-    { value: 'admin', label: 'Admin', icon: Shield },
-  ];
+const interfaces = [
+  { value: 'minimalista', label: 'Minimalista', icon: Home },
+  { value: 'dashboard', label: 'Dashboard', icon: Shield },
+  { value: 'instalacoes', label: 'Instalações', icon: Users },
+  { value: 'producao', label: 'Produção', icon: Users },
+  { value: 'paineis', label: 'Painéis', icon: Users },
+  { value: 'admin', label: 'Admin', icon: Shield },
+];
 
 export function UserRouteAccessManager() {
   const { isAdmin } = useAuth();
