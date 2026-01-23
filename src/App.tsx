@@ -171,6 +171,7 @@ import CatalogoMinimalista from "./pages/vendas/Catalogo";
 import MeusOrcamentos from "./pages/vendas/MeusOrcamentos";
 import AcompanharPedido from "./pages/vendas/AcompanharPedido";
 import MeusParceiros from "./pages/vendas/MeusParceiros";
+import VendaDetalhesMinimalista from "./pages/vendas/VendaDetalhesMinimalista";
 
 // Hub da Fábrica Minimalista
 import FabricaHub from "./pages/fabrica/FabricaHub";
@@ -399,6 +400,7 @@ const App = () => (
                 <Route path="/administrativo" element={<ProtectedRoute routeKey="administrativo_hub"><AdministrativoHub /></ProtectedRoute>} />
                 <Route path="/administrativo/pedidos" element={<ProtectedRoute routeKey="administrativo_hub"><PedidosAdminMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/pedidos/:id" element={<ProtectedRoute routeKey="administrativo_hub"><PedidoViewMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/vendas/:id" element={<ProtectedRoute routeKey="administrativo_hub"><VendaDetalhesMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro" element={<ProtectedRoute routeKey="administrativo_hub"><FinanceiroHub /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/faturamento" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoHub /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/faturamento/vendas" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoVendasMinimalista /></ProtectedRoute>} />
