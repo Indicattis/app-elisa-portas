@@ -1,10 +1,9 @@
-import { ReactNode, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, FileText, Truck, Lock } from 'lucide-react';
+import { Package, FileText, Truck, Lock, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
-import { ArrowLeft } from 'lucide-react';
 
 const menuItems = [
   { label: "Estoque", icon: Package, path: "/administrativo/compras/estoque", ativo: true },
@@ -18,7 +17,7 @@ export default function ComprasHub() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 50);
+    const timer = setTimeout(() => setMounted(true), 100);
     return () => clearTimeout(timer);
   }, []);
 
@@ -27,25 +26,26 @@ export default function ComprasHub() {
       navigate(item.path);
     } else {
       toast({
-        title: "Em breve",
-        description: `A seção "${item.label}" estará disponível em breve.`,
+        title: "Em desenvolvimento",
+        description: `A página ${item.label} estará disponível em breve.`,
       });
     }
   };
 
-  const breadcrumbItems = [
-    { label: 'Home', path: '/home' },
-    { label: 'Administrativo', path: '/administrativo' },
-    { label: 'Compras' }
-  ];
-
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
-      {/* Breadcrumb animado */}
-      <AnimatedBreadcrumb items={breadcrumbItems} mounted={mounted} />
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center overflow-hidden relative">
+      {/* Breadcrumb */}
+      <AnimatedBreadcrumb 
+        items={[
+          { label: "Home", path: "/home" },
+          { label: "Administrativo", path: "/administrativo" },
+          { label: "Compras" }
+        ]} 
+        mounted={mounted} 
+      />
 
-      {/* Menu flutuante de perfil */}
-      <FloatingProfileMenu />
+      {/* Menu de Perfil Flutuante */}
+      <FloatingProfileMenu mounted={mounted} />
 
       {/* Botão Voltar */}
       <button
@@ -63,97 +63,88 @@ export default function ComprasHub() {
         </div>
       </button>
 
-      {/* Conteúdo principal */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-8">
-        {/* Título */}
-        <div 
-          className="text-center mb-12"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'translateY(0)' : 'translateY(20px)',
-            transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 200ms'
-          }}
-        >
-          <h1 className="text-3xl font-bold text-white mb-2">Compras & Suprimentos</h1>
-          <p className="text-white/60">Gestão de estoque, requisições e fornecedores</p>
-        </div>
-
-        {/* Menu Mobile - Lista Vertical */}
-        <div className="md:hidden w-full max-w-sm space-y-4">
+      {/* ========== VERSÃO MOBILE ========== */}
+      <div className="md:hidden relative z-10 flex flex-col items-center px-6 py-10 w-full max-w-md">
+        <div className="w-full flex flex-col gap-3">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
-            const isDisabled = !item.ativo;
+            const delay = 100 + index * 80;
             
             return (
-              <button
+              <div
                 key={item.label}
-                onClick={() => handleClick(item)}
-                disabled={isDisabled}
-                className={`w-full p-1.5 rounded-xl backdrop-blur-xl border transition-all duration-300
-                  ${isDisabled 
-                    ? 'bg-zinc-800/50 border-zinc-700/50 cursor-not-allowed' 
-                    : 'bg-white/5 border-white/10 hover:bg-white/10'
-                  }`}
+                className={`p-1.5 rounded-xl backdrop-blur-xl border transition-all duration-300
+                           ${item.ativo 
+                             ? 'bg-white/5 border-white/10' 
+                             : 'bg-white/[0.02] border-white/5'
+                           }`}
                 style={{
                   opacity: mounted ? 1 : 0,
-                  transform: mounted ? 'translateY(0)' : 'translateY(20px)',
-                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${300 + index * 100}ms`
+                  transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
+                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
                 }}
               >
-                <div className="flex items-center gap-4 p-4 rounded-lg">
-                  <div className={`p-3 rounded-lg shadow-lg
-                    ${isDisabled 
-                      ? 'bg-zinc-700 text-zinc-500' 
-                      : 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-500/20'
-                    }`}
-                  >
-                    {isDisabled ? <Lock className="w-6 h-6" /> : <Icon className="w-6 h-6" />}
-                  </div>
-                  <span className={`text-lg font-medium ${isDisabled ? 'text-zinc-500' : 'text-white'}`}>
-                    {item.label}
-                  </span>
-                </div>
-              </button>
+                <button
+                  onClick={() => handleClick(item)}
+                  className={`w-full h-12 rounded-lg
+                             flex items-center gap-4 px-5
+                             font-medium 
+                             border transition-all duration-300
+                             ${item.ativo 
+                               ? 'bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 active:scale-[0.98] text-white shadow-lg shadow-blue-500/20 border-blue-400/30' 
+                               : 'bg-white/5 text-white/50 border-white/10 cursor-not-allowed'
+                             }`}
+                >
+                  <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
+                  {!item.ativo && <Lock className="w-4 h-4" />}
+                </button>
+              </div>
             );
           })}
         </div>
+      </div>
 
-        {/* Menu Desktop - Grid 3 colunas */}
-        <div className="hidden md:grid grid-cols-3 gap-6 max-w-4xl">
+      {/* ========== VERSÃO DESKTOP ========== */}
+      <div className="hidden md:flex relative z-10 flex-col items-center gap-8">
+        <div className="grid grid-cols-3 gap-4">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
-            const isDisabled = !item.ativo;
+            const delay = 200 + index * 100;
             
             return (
-              <button
+              <div
                 key={item.label}
-                onClick={() => handleClick(item)}
-                disabled={isDisabled}
-                className={`group p-1.5 rounded-xl backdrop-blur-xl border transition-all duration-300
-                  ${isDisabled 
-                    ? 'bg-zinc-800/50 border-zinc-700/50 cursor-not-allowed' 
-                    : 'bg-white/5 border-white/10 hover:bg-white/10 hover:scale-105'
-                  }`}
+                className={`p-2 rounded-2xl backdrop-blur-xl border transition-all duration-300
+                           ${item.ativo 
+                             ? 'bg-white/5 border-white/10 hover:bg-white/10' 
+                             : 'bg-white/[0.02] border-white/5'
+                           }`}
                 style={{
                   opacity: mounted ? 1 : 0,
-                  transform: mounted ? 'translateY(0)' : 'translateY(20px)',
-                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${300 + index * 100}ms`
+                  transform: mounted ? 'translateY(0)' : 'translateY(30px)',
+                  transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
                 }}
               >
-                <div className="flex flex-col items-center gap-4 p-8 rounded-lg">
-                  <div className={`p-4 rounded-xl shadow-lg transition-all duration-300
-                    ${isDisabled 
-                      ? 'bg-zinc-700 text-zinc-500' 
-                      : 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-500/20 group-hover:shadow-blue-500/40'
-                    }`}
-                  >
-                    {isDisabled ? <Lock className="w-8 h-8" /> : <Icon className="w-8 h-8" />}
+                <button
+                  onClick={() => handleClick(item)}
+                  className={`w-36 h-28 rounded-xl
+                             flex flex-col items-center justify-center gap-3
+                             font-medium border transition-all duration-300
+                             ${item.ativo 
+                               ? 'bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 hover:shadow-xl hover:shadow-blue-500/50 text-white shadow-lg shadow-blue-500/30 border-blue-400/30 cursor-pointer' 
+                               : 'bg-white/5 text-white/50 border-white/10 cursor-not-allowed'
+                             }`}
+                >
+                  <div className="relative">
+                    <Icon className="w-7 h-7" strokeWidth={1.5} />
+                    {!item.ativo && (
+                      <Lock className="w-3 h-3 absolute -top-1 -right-1" />
+                    )}
                   </div>
-                  <span className={`text-lg font-medium ${isDisabled ? 'text-zinc-500' : 'text-white'}`}>
-                    {item.label}
-                  </span>
-                </div>
-              </button>
+                  <span className="text-xs font-medium tracking-wide">{item.label}</span>
+                </button>
+              </div>
             );
           })}
         </div>
