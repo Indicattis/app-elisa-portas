@@ -329,7 +329,7 @@ export default function FaturamentoDirecao() {
     
     return {
       faturamentoTotal: filteredVendas.reduce((acc, v) => 
-        acc + (v.valor_venda || 0) + (v.valor_credito || 0), 0),
+        acc + (v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0), 0),
       
       quantidadePortas: filteredVendas.reduce((acc, v) => {
         const portas = v.portas || [];
@@ -362,7 +362,7 @@ export default function FaturamentoDirecao() {
         .filter(v => !isFaturada(v))
         .reduce((acc, v) => acc + (v.valor_venda || 0) + (v.valor_credito || 0), 0),
       
-      lucroBrutoTotal: vendasFaturadas.reduce((acc, v) => {
+      lucroLiquidoTotal: vendasFaturadas.reduce((acc, v) => {
         const portas = v.portas || [];
         const lucroItens = portas.reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
         return acc + lucroItens + (v.valor_instalacao || 0);
@@ -625,10 +625,10 @@ export default function FaturamentoDirecao() {
             <div className="text-center p-3 rounded-lg bg-white/5">
               <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
                 <TrendingUp className="h-3 w-3 text-green-400" />
-                Lucro Bruto
+                Lucro Líquido
               </div>
               <p className="text-green-400 font-bold text-lg">
-                {formatCurrency(indicadores.lucroBrutoTotal)}
+                {formatCurrency(indicadores.lucroLiquidoTotal)}
               </p>
             </div>
             <div className="text-center p-3 rounded-lg bg-white/5 border border-red-500/20">

@@ -284,7 +284,7 @@ export default function FaturamentoMinimalista() {
   // Indicadores do período
   const indicadores = {
     faturamentoTotal: filteredVendas.reduce((acc, v) => 
-      acc + (v.valor_venda || 0) + (v.valor_credito || 0), 0),
+      acc + (v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0), 0),
     
     quantidadePortas: filteredVendas.reduce((acc, v) => {
       const portas = v.portas || [];
@@ -667,7 +667,7 @@ export default function FaturamentoMinimalista() {
           </Card>
           <Card className="bg-white/5 border-white/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">Lucro Bruto</CardTitle>
+              <CardTitle className="text-sm font-medium text-white/80">Lucro Líquido</CardTitle>
               <TrendingUp className="h-4 w-4 text-blue-400" />
             </CardHeader>
             <CardContent>
@@ -758,7 +758,7 @@ export default function FaturamentoMinimalista() {
               <div className="text-center p-3 rounded-lg bg-white/5">
                 <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
                   <TrendingUp className="h-3 w-3 text-green-400" />
-                  Lucro Bruto
+                  Lucro Líquido
                 </div>
                 <p className="text-green-400 font-bold text-lg">
                   {formatCurrency(indicadores.lucroBrutoTotal)}
