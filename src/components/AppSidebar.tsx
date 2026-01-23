@@ -328,7 +328,7 @@ export function AppSidebar() {
   };
   return <Sidebar collapsible="offcanvas" className="border-r border-white/10 bg-black/90 backdrop-blur-xl">
       <div className="flex gap-2 px-2 py-2 border-b border-white/10">
-        <button onClick={() => navigate('/dashboard')} className="flex items-center justify-center px-2 py-1.5 rounded-md bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-colors" title="Home">
+        <button onClick={() => navigate('/home')} className="flex items-center justify-center px-2 py-1.5 rounded-md bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-colors" title="Home">
           <img src={currentLogo} alt="Home" className="h-5 w-5 object-contain" />
         </button>
         <div className="relative flex-1">

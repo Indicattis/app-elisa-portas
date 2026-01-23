@@ -170,10 +170,10 @@ export function PaineisSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Voltar ao Dashboard">
-              <NavLink to="/dashboard">
-                <icons.LayoutDashboard className="h-4 w-4" />
-                <span>Dashboard</span>
+            <SidebarMenuButton asChild tooltip="Voltar ao Início">
+              <NavLink to="/home">
+                <icons.Home className="h-4 w-4" />
+                <span>Início</span>
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>

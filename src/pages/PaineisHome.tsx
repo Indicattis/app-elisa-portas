@@ -56,7 +56,6 @@ const paineis = [
 
 const profileMenuItems = [
   { label: 'Home', icon: Home, path: '/home' },
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
 ];
 
 export default function PaineisHome() {

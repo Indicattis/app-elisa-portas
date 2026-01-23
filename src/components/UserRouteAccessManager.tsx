@@ -44,9 +44,7 @@ const inputClass = "h-10 bg-blue-500/5 border-blue-500/20 text-white placeholder
 
 // Interfaces disponíveis
 const interfaces = [
-  { value: 'minimalista', label: 'Minimalista', icon: Home },
-  { value: 'dashboard', label: 'Dashboard', icon: Shield },
-  { value: 'instalacoes', label: 'Instalações', icon: Users },
+  { value: 'padrao', label: 'Padrão', icon: Home },
   { value: 'producao', label: 'Produção', icon: Users },
   { value: 'paineis', label: 'Painéis', icon: Users },
   { value: 'admin', label: 'Admin', icon: Shield },
@@ -56,7 +54,7 @@ export function UserRouteAccessManager() {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const [selectedInterface, setSelectedInterface] = useState<string>('minimalista');
+  const [selectedInterface, setSelectedInterface] = useState<string>('padrao');
   const [searchTerm, setSearchTerm] = useState("");
 
   // Função para construir árvore de rotas

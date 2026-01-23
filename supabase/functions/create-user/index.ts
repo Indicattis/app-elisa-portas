@@ -168,12 +168,12 @@ serve(async (req) => {
       );
     }
 
-    // Grant default access to /dashboard route
+    // Grant default access to /home route
     const { error: routeAccessError } = await supabaseAdmin
       .from('user_route_access')
       .insert({
         user_id: newUser.user.id,
-        route_key: 'dashboard',
+        route_key: 'home',
         can_access: true,
       });
 
