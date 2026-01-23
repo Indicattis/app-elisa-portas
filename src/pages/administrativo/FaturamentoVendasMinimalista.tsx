@@ -29,8 +29,12 @@ import {
   AlertCircle,
   TrendingDown,
   Plus,
-  Minus
+  Minus,
+  Pencil,
+  MessageSquare
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { format, startOfMonth, endOfMonth, differenceInDays, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
@@ -65,6 +69,7 @@ interface Venda {
   frete_aprovado?: boolean;
   portas?: any[];
   produtos?: any[];
+  justificativa_nao_faturada?: string | null;
 }
 
 const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
@@ -76,6 +81,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'valor_instalacao', label: 'Instalação', defaultVisible: true },
   { id: 'desconto_acrescimo', label: 'Desc./Acrés.', defaultVisible: true },
   { id: 'tempo_faturamento', label: 'Tempo', defaultVisible: true },
+  { id: 'justificativa', label: 'Justificativa', defaultVisible: true },
   { id: 'lucro_total', label: 'Lucro', defaultVisible: true },
   { id: 'valor_total', label: 'Valor Total', defaultVisible: true },
   { id: 'status', label: 'Status', defaultVisible: true },
@@ -102,6 +108,13 @@ export default function FaturamentoMinimalista() {
   const [activeTab, setActiveTab] = useState<'todas' | 'faturadas' | 'nao_faturadas'>('todas');
   const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
   const [atendentes, setAtendentes] = useState<any[]>([]);
+  const [justificativaDialog, setJustificativaDialog] = useState<{ open: boolean; vendaId: string; vendaCliente: string; justificativa: string }>({ 
+    open: false, 
+    vendaId: '', 
+    vendaCliente: '',
+    justificativa: '' 
+  });
+  const [savingJustificativa, setSavingJustificativa] = useState(false);
 
   const {
     columns,
@@ -149,6 +162,7 @@ export default function FaturamentoMinimalista() {
           lucro_total,
           custo_total,
           frete_aprovado,
+          justificativa_nao_faturada,
           produtos_vendas (
             id,
             tipo_produto,
@@ -363,6 +377,49 @@ export default function FaturamentoMinimalista() {
     });
   };
 
+  const handleOpenJustificativaDialog = (venda: Venda, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setJustificativaDialog({
+      open: true,
+      vendaId: venda.id,
+      vendaCliente: venda.cliente_nome || 'Cliente não informado',
+      justificativa: venda.justificativa_nao_faturada || ''
+    });
+  };
+
+  const handleSaveJustificativa = async () => {
+    setSavingJustificativa(true);
+    try {
+      const { error } = await supabase
+        .from('vendas')
+        .update({ justificativa_nao_faturada: justificativaDialog.justificativa.trim() || null })
+        .eq('id', justificativaDialog.vendaId);
+
+      if (error) throw error;
+
+      setVendas(prev => prev.map(v => 
+        v.id === justificativaDialog.vendaId 
+          ? { ...v, justificativa_nao_faturada: justificativaDialog.justificativa.trim() || null }
+          : v
+      ));
+
+      toast({
+        title: "Justificativa salva",
+        description: "A justificativa foi atualizada com sucesso.",
+      });
+      setJustificativaDialog({ open: false, vendaId: '', vendaCliente: '', justificativa: '' });
+    } catch (error) {
+      console.error('Erro ao salvar justificativa:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar a justificativa.",
+      });
+    } finally {
+      setSavingJustificativa(false);
+    }
+  };
+
   const renderCell = (venda: Venda, columnId: string) => {
     switch(columnId) {
       case 'data':
@@ -474,6 +531,38 @@ export default function FaturamentoMinimalista() {
           <span className="text-white font-semibold">
             {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
           </span>
+        );
+      case 'justificativa':
+        if (isFaturada(venda)) {
+          return <span className="text-white/30">-</span>;
+        }
+        return venda.justificativa_nao_faturada ? (
+          <div className="flex items-center gap-1.5 max-w-[180px]">
+            <span 
+              className="text-white/70 text-xs truncate" 
+              title={venda.justificativa_nao_faturada}
+            >
+              {venda.justificativa_nao_faturada}
+            </span>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-5 w-5 shrink-0 hover:bg-white/10"
+              onClick={(e) => handleOpenJustificativaDialog(venda, e)}
+            >
+              <Pencil className="h-3 w-3 text-white/40" />
+            </Button>
+          </div>
+        ) : (
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="h-6 px-2 text-xs text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
+            onClick={(e) => handleOpenJustificativaDialog(venda, e)}
+          >
+            <MessageSquare className="h-3 w-3 mr-1" />
+            Informar
+          </Button>
         );
       case 'status':
         return isFaturada(venda) ? (
@@ -850,6 +939,48 @@ export default function FaturamentoMinimalista() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog de Justificativa */}
+      <Dialog 
+        open={justificativaDialog.open} 
+        onOpenChange={(open) => !savingJustificativa && setJustificativaDialog(prev => ({ ...prev, open }))}
+      >
+        <DialogContent className="bg-zinc-900 border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg">
+              Justificativa de Não Faturamento
+            </DialogTitle>
+            <p className="text-sm text-white/60">
+              Cliente: {justificativaDialog.vendaCliente}
+            </p>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="Informe o motivo da venda ainda não estar faturada..."
+              value={justificativaDialog.justificativa}
+              onChange={(e) => setJustificativaDialog(prev => ({ ...prev, justificativa: e.target.value }))}
+              className="bg-white/5 border-white/20 text-white placeholder:text-white/40 min-h-[120px] resize-none"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setJustificativaDialog({ open: false, vendaId: '', vendaCliente: '', justificativa: '' })}
+              disabled={savingJustificativa}
+              className="text-white/70 hover:text-white hover:bg-white/10"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSaveJustificativa}
+              disabled={savingJustificativa}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {savingJustificativa ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

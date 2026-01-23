@@ -5689,6 +5689,7 @@ export type Database = {
           frete_aprovado: boolean
           id: string
           intervalo_boletos: number | null
+          justificativa_nao_faturada: string | null
           lucro_total: number | null
           metodo_pagamento: string | null
           numero_parcelas: number | null
@@ -5735,6 +5736,7 @@ export type Database = {
           frete_aprovado?: boolean
           id?: string
           intervalo_boletos?: number | null
+          justificativa_nao_faturada?: string | null
           lucro_total?: number | null
           metodo_pagamento?: string | null
           numero_parcelas?: number | null
@@ -5781,6 +5783,7 @@ export type Database = {
           frete_aprovado?: boolean
           id?: string
           intervalo_boletos?: number | null
+          justificativa_nao_faturada?: string | null
           lucro_total?: number | null
           metodo_pagamento?: string | null
           numero_parcelas?: number | null
