@@ -86,7 +86,7 @@ export function PedidoCard({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
-  const isHubFabrica = location.pathname.startsWith('/hub-fabrica');
+  const isProducao = location.pathname.startsWith('/producao');
   const isAdministrativo = location.pathname.startsWith('/administrativo');
   const isDirecao = location.pathname.startsWith('/direcao');
 
@@ -1014,8 +1014,8 @@ export function PedidoCard({
                       e.stopPropagation();
                       if (isAdministrativo) {
                         navigate(`/administrativo/pedidos/${pedido.id}`);
-                      } else if (isHubFabrica) {
-                        navigate(`/hub-fabrica/producao/controle/pedido/${pedido.id}/view`);
+                      } else if (isProducao) {
+                        navigate(`/producao/controle/pedido/${pedido.id}/view`);
                       } else if (isDirecao) {
                         navigate(`/direcao/pedidos/${pedido.id}`);
                       } else {

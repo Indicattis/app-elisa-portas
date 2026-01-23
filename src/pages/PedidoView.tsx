@@ -123,7 +123,7 @@ export default function PedidoView() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const isHubFabrica = location.pathname.startsWith('/hub-fabrica');
+  const isProducao = location.pathname.startsWith('/producao');
 
   // Hooks para edição (apenas se pedido estiver aberto)
   const { linhas, adicionarLinha, removerLinha, atualizarCheckbox, atualizarLinhasEmLote, atualizarLinha } = usePedidoLinhas(id || "");
@@ -674,7 +674,7 @@ export default function PedidoView() {
               if (window.history.length > 2) {
                 navigate(-1);
               } else {
-                navigate(isHubFabrica ? '/hub-fabrica/producao/controle' : '/dashboard/fabrica/pedidos');
+                navigate(isProducao ? '/producao/controle' : '/dashboard/fabrica/pedidos');
               }
             }}
           >

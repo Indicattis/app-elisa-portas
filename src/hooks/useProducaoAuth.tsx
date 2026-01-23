@@ -121,12 +121,12 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
     try {
       await supabase.auth.signOut();
       setUser(null);
-      navigate("/hub-fabrica/login", { replace: true });
+      navigate("/producao/login", { replace: true });
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
       // Mesmo com erro, limpar estado local e redirecionar
       setUser(null);
-      navigate("/hub-fabrica/login", { replace: true });
+      navigate("/producao/login", { replace: true });
     }
   };
 

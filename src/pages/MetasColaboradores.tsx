@@ -51,7 +51,7 @@ export default function MetasColaboradores() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center gap-3 px-4 h-14">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/hub-fabrica")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/direcao/metas")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
@@ -127,7 +127,7 @@ export default function MetasColaboradores() {
             <div
               key={colaborador.user_id}
               className="bg-card border rounded-lg p-4 hover:bg-accent/50 transition-colors cursor-pointer"
-              onClick={() => navigate(`/hub-fabrica/metas/${colaborador.user_id}`)}
+              onClick={() => navigate(`/direcao/metas/${colaborador.user_id}`)}
             >
               {/* Mobile Layout */}
               <div className="md:hidden space-y-3">

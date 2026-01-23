@@ -1,5 +1,5 @@
 import { useNavigate, Navigate } from "react-router-dom";
-import { Factory, Wrench, Package, LogOut, Target } from "lucide-react";
+import { Factory, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -15,25 +15,7 @@ const menuItems = [
     title: "Colaboradores",
     description: "Interface de produção",
     icon: Factory,
-    path: "/hub-fabrica/producao",
-  },
-  {
-    title: "Instalações",
-    description: "Gerenciar instalações",
-    icon: Wrench,
-    path: "/hub-fabrica/instalacoes",
-  },
-  {
-    title: "Gerente",
-    description: "Gestão de pedidos",
-    icon: Package,
-    path: "/hub-fabrica/pedidos",
-  },
-  {
-    title: "Metas",
-    description: "Desempenho dos colaboradores",
-    icon: Target,
-    path: "/hub-fabrica/metas",
+    path: "/producao/home",
   },
 ];
 
@@ -107,10 +89,10 @@ export default function HubFabrica() {
     try {
       await supabase.auth.signOut();
       setUser(null);
-      navigate("/hub-fabrica/login", { replace: true });
+      navigate("/producao/login", { replace: true });
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
-      navigate("/hub-fabrica/login", { replace: true });
+      navigate("/producao/login", { replace: true });
     }
   };
 
@@ -123,7 +105,7 @@ export default function HubFabrica() {
   }
 
   if (!user) {
-    return <Navigate to="/hub-fabrica/login" replace />;
+    return <Navigate to="/producao/login" replace />;
   }
 
   return (
