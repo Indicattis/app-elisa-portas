@@ -113,7 +113,7 @@ export function PortasPorEtapa() {
   const [dataFimCustom, setDataFimCustom] = useState<Date | undefined>();
 
   const handleColaboradorClick = (userId: string) => {
-    navigate(`/hub-fabrica/colaborador/${userId}`);
+    navigate(`/direcao/colaborador/${userId}`);
   };
 
   const { dataInicio, dataFim } = useMemo(() => {

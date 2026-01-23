@@ -42,14 +42,14 @@ export function ProtectedProducaoRoute({ children, routeKey }: ProtectedProducao
     );
   }
 
-  // Não autenticado → login do hub
+  // Não autenticado → login do producao
   if (!user) {
-    return <Navigate to="/hub-fabrica/login" state={{ from: location }} replace />;
+    return <Navigate to="/producao/login" state={{ from: location }} replace />;
   }
 
-  // Sem permissão → forbidden do hub
+  // Sem permissão → forbidden do producao
   if (routeKey && !hasAccess) {
-    return <Navigate to="/hub-fabrica/forbidden" replace />;
+    return <Navigate to="/producao/forbidden" replace />;
   }
 
   return <>{children}</>;

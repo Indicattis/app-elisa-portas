@@ -9,14 +9,14 @@ export function ProducaoHeader() {
   const navigate = useNavigate();
   
   // Verifica se está na home de produção
-  const isProducaoHome = location.pathname === '/hub-fabrica/producao' || location.pathname === '/hub-fabrica/producao/';
+  const isProducaoHome = location.pathname === '/producao' || location.pathname === '/producao/' || location.pathname === '/producao/home';
   
   // Define o destino do botão voltar baseado na rota atual
   const handleVoltar = () => {
     if (isProducaoHome) {
-      navigate('/hub-fabrica');
+      navigate('/producao');
     } else {
-      navigate('/hub-fabrica/producao');
+      navigate('/producao/home');
     }
   };
 

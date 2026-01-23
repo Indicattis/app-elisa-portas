@@ -100,7 +100,7 @@ export default function InstalacoesCronograma() {
         <header className="sticky top-0 z-10 bg-background border-b shadow-sm">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/hub-fabrica/instalacoes")}>
+              <Button variant="ghost" size="icon" onClick={() => navigate("/logistica/instalacoes")}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
@@ -123,7 +123,7 @@ export default function InstalacoesCronograma() {
       <header className="sticky top-0 z-10 bg-background border-b shadow-sm">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/hub-fabrica/instalacoes")}>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/logistica/instalacoes")}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>

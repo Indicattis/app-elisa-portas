@@ -102,7 +102,7 @@ export default function ProducaoHome() {
             Acompanhe as ordens de produção e acesse os diferentes painéis
           </p>
         </div>
-        <Button variant="outline" onClick={() => navigate('/hub-fabrica/producao/meu-historico')} className="shrink-0">
+        <Button variant="outline" onClick={() => navigate('/producao/meu-historico')} className="shrink-0">
           <History className="h-4 w-4 mr-2" />
           Meu Histórico
         </Button>
