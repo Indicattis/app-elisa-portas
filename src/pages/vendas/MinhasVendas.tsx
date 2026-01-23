@@ -1,55 +1,115 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Eye, TrendingUp, ShoppingCart, DollarSign, FileCheck } from 'lucide-react';
+import { Plus, ShoppingCart, DollarSign, FileCheck, Search, CalendarIcon, Truck, Hammer, ArrowUpDown, ArrowUp, ArrowDown, Settings2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { ColumnManager } from '@/components/ColumnManager';
+import { useColumnConfig, ColumnConfig } from '@/hooks/useColumnConfig';
 import { cn } from '@/lib/utils';
+
+interface ProdutoVenda {
+  id: string;
+  tipo_produto: string;
+  desconto_valor: number | null;
+}
 
 interface Venda {
   id: string;
   cliente_nome: string | null;
+  cliente_telefone: string | null;
+  cidade: string | null;
+  estado: string | null;
   valor_venda: number | null;
   valor_frete: number | null;
   valor_credito: number | null;
+  valor_instalacao: number | null;
   data_venda: string;
+  data_prevista_entrega: string | null;
+  tipo_entrega: string | null;
   comprovante_url: string | null;
+  produtos_vendas: ProdutoVenda[];
   pedidos_producao: { status: string } | null;
 }
+
+const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
+  { id: 'data', label: 'Data', defaultVisible: true },
+  { id: 'cliente', label: 'Cliente', defaultVisible: true },
+  { id: 'cidade', label: 'Cidade', defaultVisible: true },
+  { id: 'previsao', label: 'Prev. Entrega', defaultVisible: true },
+  { id: 'expedicao', label: 'Expedição', defaultVisible: true },
+  { id: 'desconto', label: 'Desconto', defaultVisible: false },
+  { id: 'acrescimo', label: 'Acréscimo', defaultVisible: false },
+  { id: 'instalacao', label: 'Instalação', defaultVisible: false },
+  { id: 'frete', label: 'Frete', defaultVisible: false },
+  { id: 'valor', label: 'Valor', defaultVisible: true },
+  { id: 'status', label: 'Status', defaultVisible: true },
+];
+
+type SortField = 'data' | 'cliente' | 'cidade' | 'valor' | 'previsao';
+type SortDirection = 'asc' | 'desc';
 
 export default function MinhasVendas() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [mesAtual] = useState(new Date());
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dataInicio, setDataInicio] = useState<Date | undefined>(startOfMonth(new Date()));
+  const [dataFim, setDataFim] = useState<Date | undefined>(endOfMonth(new Date()));
+  const [sortField, setSortField] = useState<SortField>('data');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  const inicioMes = startOfMonth(mesAtual);
-  const fimMes = endOfMonth(mesAtual);
+  const {
+    columns,
+    visibleColumns,
+    visibleIds,
+    toggleColumn,
+    setColumnOrder,
+    resetColumns
+  } = useColumnConfig('minhas_vendas_columns', COLUNAS_DISPONIVEIS);
 
   const { data: vendas, isLoading } = useQuery({
-    queryKey: ['minhas-vendas', user?.id, format(mesAtual, 'yyyy-MM')],
+    queryKey: ['minhas-vendas', user?.id, dataInicio?.toISOString(), dataFim?.toISOString()],
     queryFn: async () => {
       if (!user?.id) return [];
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('vendas')
         .select(`
           id,
           cliente_nome,
+          cliente_telefone,
+          cidade,
+          estado,
           valor_venda,
           valor_frete,
           valor_credito,
+          valor_instalacao,
           data_venda,
+          data_prevista_entrega,
+          tipo_entrega,
           comprovante_url,
+          produtos_vendas(id, tipo_produto, desconto_valor),
           pedidos_producao!left(status)
         `)
-        .eq('atendente_id', user.id)
-        .gte('data_venda', inicioMes.toISOString())
-        .lte('data_venda', fimMes.toISOString())
-        .order('data_venda', { ascending: false });
+        .eq('atendente_id', user.id);
+
+      if (dataInicio) {
+        query = query.gte('data_venda', dataInicio.toISOString());
+      }
+      if (dataFim) {
+        query = query.lte('data_venda', dataFim.toISOString());
+      }
+      
+      const { data, error } = await query.order('data_venda', { ascending: false });
       
       if (error) throw error;
       return (data || []) as unknown as Venda[];
@@ -57,12 +117,54 @@ export default function MinhasVendas() {
     enabled: !!user?.id
   });
 
-  const totalVendas = vendas?.length || 0;
-  const valorTotal = vendas?.reduce((acc, v) => {
+  // Filtrar e ordenar vendas
+  const vendasFiltradas = useMemo(() => {
+    if (!vendas) return [];
+
+    let filtered = vendas.filter(venda => {
+      if (!searchTerm) return true;
+      const termo = searchTerm.toLowerCase();
+      return (
+        venda.cliente_nome?.toLowerCase().includes(termo) ||
+        venda.cliente_telefone?.toLowerCase().includes(termo) ||
+        venda.cidade?.toLowerCase().includes(termo)
+      );
+    });
+
+    // Ordenar
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case 'data':
+          comparison = new Date(a.data_venda).getTime() - new Date(b.data_venda).getTime();
+          break;
+        case 'cliente':
+          comparison = (a.cliente_nome || '').localeCompare(b.cliente_nome || '');
+          break;
+        case 'cidade':
+          comparison = (a.cidade || '').localeCompare(b.cidade || '');
+          break;
+        case 'valor':
+          comparison = (a.valor_venda || 0) - (b.valor_venda || 0);
+          break;
+        case 'previsao':
+          const dateA = a.data_prevista_entrega ? new Date(a.data_prevista_entrega).getTime() : 0;
+          const dateB = b.data_prevista_entrega ? new Date(b.data_prevista_entrega).getTime() : 0;
+          comparison = dateA - dateB;
+          break;
+      }
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    return filtered;
+  }, [vendas, searchTerm, sortField, sortDirection]);
+
+  const totalVendas = vendasFiltradas.length;
+  const valorTotal = vendasFiltradas.reduce((acc, v) => {
     const valorLiquido = (v.valor_venda || 0) - (v.valor_frete || 0) + (v.valor_credito || 0);
     return acc + valorLiquido;
-  }, 0) || 0;
-  const vendasFaturadas = vendas?.filter(v => v.comprovante_url).length || 0;
+  }, 0);
+  const vendasFaturadas = vendasFiltradas.filter(v => v.comprovante_url).length;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -91,7 +193,70 @@ export default function MinhasVendas() {
     }
   };
 
-  // Estilos sofisticados com azul
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-50" />;
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="w-3 h-3 ml-1" /> 
+      : <ArrowDown className="w-3 h-3 ml-1" />;
+  };
+
+  const renderCell = (venda: Venda, columnId: string) => {
+    switch (columnId) {
+      case 'data':
+        return format(new Date(venda.data_venda), 'dd/MM/yy');
+      case 'cliente':
+        return (
+          <div className="max-w-[180px]">
+            <p className="truncate font-medium">{venda.cliente_nome || 'N/I'}</p>
+            {venda.cliente_telefone && (
+              <p className="text-xs text-muted-foreground truncate">{venda.cliente_telefone}</p>
+            )}
+          </div>
+        );
+      case 'cidade':
+        return venda.cidade && venda.estado 
+          ? `${venda.cidade}/${venda.estado}` 
+          : venda.cidade || '-';
+      case 'previsao':
+        return venda.data_prevista_entrega 
+          ? format(new Date(venda.data_prevista_entrega), 'dd/MM/yy') 
+          : '-';
+      case 'expedicao':
+        return venda.tipo_entrega === 'instalacao' 
+          ? <span title="Instalação"><Hammer className="h-4 w-4 text-orange-400" /></span>
+          : <span title="Entrega"><Truck className="h-4 w-4 text-blue-400" /></span>;
+      case 'desconto':
+        const totalDesconto = venda.produtos_vendas?.reduce((acc, p) => acc + (p.desconto_valor || 0), 0) || 0;
+        return totalDesconto > 0 ? formatCurrency(totalDesconto) : '-';
+      case 'acrescimo':
+        return (venda.valor_credito || 0) > 0 ? formatCurrency(venda.valor_credito!) : '-';
+      case 'instalacao':
+        return (venda.valor_instalacao || 0) > 0 ? formatCurrency(venda.valor_instalacao!) : '-';
+      case 'frete':
+        return (venda.valor_frete || 0) > 0 ? formatCurrency(venda.valor_frete!) : '-';
+      case 'valor':
+        return <span className="font-semibold">{formatCurrency(venda.valor_venda || 0)}</span>;
+      case 'status':
+        const status = venda.pedidos_producao?.status || null;
+        return (
+          <span className={cn("text-xs px-2 py-1 rounded-full border font-medium", getStatusColor(status))}>
+            {getStatusLabel(status)}
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
   const cardClass = "p-1.5 rounded-xl bg-gradient-to-br from-blue-500/5 to-blue-900/10 backdrop-blur-xl border border-blue-500/20";
   const statCardInner = "p-4 flex items-center gap-4";
 
@@ -157,63 +322,109 @@ export default function MinhasVendas() {
         </div>
       </div>
 
-      {/* Lista de vendas */}
-      <div className="space-y-3">
+      {/* Filtros */}
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="relative flex-1 min-w-[200px] max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-300/50" />
+          <Input
+            placeholder="Buscar cliente, telefone, cidade..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 bg-blue-500/5 border-blue-500/20 text-white placeholder:text-blue-300/40 focus:border-blue-400/50"
+          />
+        </div>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="h-10 px-4 rounded-lg border border-blue-500/20 bg-blue-500/5 text-blue-200 hover:bg-blue-500/10 hover:border-blue-400/30 transition-all flex items-center gap-2">
+              <CalendarIcon className="w-4 h-4" />
+              <span className="text-sm">
+                {dataInicio && dataFim 
+                  ? `${format(dataInicio, 'dd/MM')} - ${format(dataFim, 'dd/MM')}`
+                  : 'Período'
+                }
+              </span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 bg-slate-900 border-blue-500/20" align="end">
+            <Calendar
+              mode="range"
+              selected={{ from: dataInicio, to: dataFim }}
+              onSelect={(range) => {
+                setDataInicio(range?.from);
+                setDataFim(range?.to);
+              }}
+              locale={ptBR}
+              className="bg-slate-900"
+            />
+          </PopoverContent>
+        </Popover>
+
+        <ColumnManager
+          columns={columns}
+          visibleIds={visibleIds}
+          onToggle={toggleColumn}
+          onReorder={setColumnOrder}
+          onReset={resetColumns}
+        />
+      </div>
+
+      {/* Tabela */}
+      <div className={cn(cardClass, "overflow-hidden")}>
         {isLoading ? (
-          Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 bg-blue-500/5 border border-blue-500/10" />
-          ))
-        ) : vendas && vendas.length > 0 ? (
-          vendas.map((venda) => {
-            const status = venda.pedidos_producao?.status || null;
-            
-            return (
-              <div
-                key={venda.id}
-                onClick={() => navigate(`/dashboard/vendas/${venda.id}`)}
-                className="p-1.5 rounded-xl bg-gradient-to-br from-blue-500/5 to-blue-900/10 backdrop-blur-xl border border-blue-500/20
-                           hover:from-blue-500/10 hover:to-blue-800/15 hover:border-blue-400/30 hover:shadow-lg hover:shadow-blue-500/10
-                           transition-all duration-200 cursor-pointer group"
-              >
-                <div className="p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${getStatusColor(status)}`}>
-                          {getStatusLabel(status)}
-                        </span>
-                        {venda.comprovante_url && (
-                          <span className="text-xs px-2.5 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 font-medium">
-                            Pago
-                          </span>
+          <div className="p-4 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 bg-blue-500/5" />
+            ))}
+          </div>
+        ) : vendasFiltradas.length > 0 ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-blue-500/10 hover:bg-transparent">
+                  {visibleColumns.map((col) => {
+                    const isSortable = ['data', 'cliente', 'cidade', 'valor', 'previsao'].includes(col.id);
+                    return (
+                      <TableHead 
+                        key={col.id}
+                        className={cn(
+                          "text-blue-300/70 font-semibold text-xs uppercase tracking-wider",
+                          isSortable && "cursor-pointer hover:text-blue-200 select-none"
                         )}
-                      </div>
-                      <h3 className="text-blue-100 font-medium group-hover:text-white transition-colors">
-                        {venda.cliente_nome || 'Cliente não informado'}
-                      </h3>
-                      <p className="text-sm text-blue-300/60">
-                        {format(new Date(venda.data_venda), "dd 'de' MMMM", { locale: ptBR })}
-                      </p>
-                    </div>
-                    <div className="text-right flex flex-col items-end">
-                      <p className="text-lg font-bold text-white">
-                        {formatCurrency(venda.valor_venda || 0)}
-                      </p>
-                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 mt-2 group-hover:bg-blue-500/20 transition-colors">
-                        <Eye className="w-4 h-4 text-blue-400" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })
+                        onClick={() => isSortable && handleSort(col.id as SortField)}
+                      >
+                        <div className="flex items-center">
+                          {col.label}
+                          {isSortable && getSortIcon(col.id as SortField)}
+                        </div>
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {vendasFiltradas.map((venda) => (
+                  <TableRow 
+                    key={venda.id}
+                    className="border-blue-500/10 hover:bg-blue-500/10 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/dashboard/vendas/${venda.id}`)}
+                  >
+                    {visibleColumns.map((col) => (
+                      <TableCell key={col.id} className="text-blue-100/90">
+                        {renderCell(venda, col.id)}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         ) : (
-          <div className={cn(cardClass, "text-center py-12")}>
+          <div className="text-center py-12">
             <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 mx-auto mb-4">
               <ShoppingCart className="w-8 h-8 text-blue-400/50" />
             </div>
-            <p className="text-blue-200/60 mb-4">Nenhuma venda encontrada neste mês</p>
+            <p className="text-blue-200/60 mb-4">Nenhuma venda encontrada</p>
             <button 
               onClick={() => navigate('/vendas/minhas-vendas/nova')}
               className="h-10 px-5 rounded-lg font-medium border border-blue-500/30 bg-blue-500/10 text-blue-300
