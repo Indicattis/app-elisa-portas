@@ -9,7 +9,7 @@ import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 const menuItems = [
   { label: "Financeiro", icon: DollarSign, path: "/administrativo/financeiro", ativo: true },
   { label: "RH/DP", icon: Users, path: "/administrativo/rh-dp", ativo: false },
-  { label: "Compras & Suprimentos", icon: ShoppingCart, path: "/administrativo/compras", ativo: false },
+  { label: "Compras & Suprimentos", icon: ShoppingCart, path: "/administrativo/compras", ativo: true },
   { label: "Fiscal & Contábil", icon: FileText, path: "/administrativo/controladoria", ativo: false },
   { label: "Pedidos", icon: Package, path: "/administrativo/pedidos", ativo: true },
   { label: "Documentos", icon: FolderOpen, path: "/administrativo/documentos", ativo: true },
