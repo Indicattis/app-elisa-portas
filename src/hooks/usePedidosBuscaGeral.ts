@@ -57,8 +57,11 @@ export interface PedidoBuscaGeral {
 }
 
 export function usePedidosBuscaGeral(searchTerm: string) {
+  // Normalizar termo para case-insensitive
+  const normalizedSearch = searchTerm.toLowerCase().trim();
+  
   const { data: pedidos, isLoading, error } = useQuery({
-    queryKey: ['pedidos-busca-geral', searchTerm],
+    queryKey: ['pedidos-busca-geral', normalizedSearch],
     queryFn: async () => {
       // Buscar todos os pedidos não arquivados com dados da venda
       const { data, error } = await supabase
@@ -180,15 +183,15 @@ export function usePedidosBuscaGeral(searchTerm: string) {
 
       return pedidosComOrdens as unknown as PedidoBuscaGeral[];
     },
-    enabled: searchTerm.length >= 2,
+    enabled: normalizedSearch.length >= 2,
     staleTime: 30000, // 30 segundos
   });
 
   // Filtrar resultados no cliente para busca flexível
   const pedidosFiltrados = useMemo(() => {
-    if (!pedidos || !searchTerm || searchTerm.length < 2) return [];
+    if (!pedidos || !normalizedSearch || normalizedSearch.length < 2) return [];
     
-    const termLower = searchTerm.toLowerCase().trim();
+    const termLower = normalizedSearch;
     
     return pedidos.filter(pedido => {
       // Buscar por número do pedido
@@ -217,7 +220,7 @@ export function usePedidosBuscaGeral(searchTerm: string) {
       
       return false;
     });
-  }, [pedidos, searchTerm]);
+  }, [pedidos, normalizedSearch]);
 
   return {
     pedidos: pedidosFiltrados,
