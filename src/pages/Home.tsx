@@ -156,7 +156,7 @@ export default function Home() {
             <div className="py-1">
               <button
                 onClick={() => {
-                  navigate('/painels');
+                  navigate('/paineis');
                   setProfileMenuOpen(false);
                 }}
                 className="w-full px-3 py-2 flex items-center gap-3 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
