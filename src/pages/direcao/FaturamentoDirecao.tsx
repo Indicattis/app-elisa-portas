@@ -317,7 +317,7 @@ export default function FaturamentoDirecao() {
     
     return {
       faturamento: filteredVendas.reduce((acc, v) => 
-        acc + ((v.valor_venda || 0) + (v.valor_credito || 0)), 0),
+        acc + ((v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0)), 0),
       faturadas: faturadas.length,
       naoFaturadas: naoFaturadas.length,
     };
