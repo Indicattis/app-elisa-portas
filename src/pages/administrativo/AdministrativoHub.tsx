@@ -12,7 +12,7 @@ const menuItems = [
   { label: "Compras & Suprimentos", icon: ShoppingCart, path: "/administrativo/compras", ativo: false },
   { label: "Fiscal & Contábil", icon: FileText, path: "/administrativo/controladoria", ativo: false },
   { label: "Pedidos", icon: Package, path: "/administrativo/pedidos", ativo: true },
-  { label: "Documentos", icon: FolderOpen, path: "/dashboard/administrativo/documentos", ativo: true },
+  { label: "Documentos", icon: FolderOpen, path: "/administrativo/documentos", ativo: true },
 ];
 
 export default function AdministrativoHub() {
