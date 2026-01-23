@@ -198,6 +198,13 @@ import ClientesDirecao from "./pages/direcao/ClientesDirecao";
 import LogisticaHub from "./pages/logistica/LogisticaHub";
 import ControleLogistica from "./pages/logistica/ControleLogistica";
 import ExpedicaoMinimalista from "./pages/logistica/ExpedicaoMinimalista";
+
+// Hub de Compras Minimalista
+import ComprasHub from "./pages/administrativo/ComprasHub";
+import EstoqueMinimalista from "./pages/administrativo/EstoqueMinimalista";
+import EstoqueEditMinimalista from "./pages/administrativo/EstoqueEditMinimalista";
+import RequisicoesMinimalista from "./pages/administrativo/RequisicoesMinimalista";
+import FornecedoresMinimalista from "./pages/administrativo/FornecedoresMinimalista";
 import FrotaMinimalista from "./pages/logistica/FrotaMinimalista";
 import InstalacoesHub from "./pages/logistica/InstalacoesHub";
 import EquipesMinimalista from "./pages/logistica/EquipesMinimalista";
@@ -408,6 +415,13 @@ const App = () => (
                 <Route path="/administrativo/financeiro/caixa/contas-a-receber" element={<ProtectedRoute routeKey="administrativo_hub"><ContasReceberMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/caixa/contas-a-pagar" element={<ProtectedRoute routeKey="administrativo_hub"><ContasPagarMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/documentos" element={<ProtectedRoute routeKey="administrativo_hub"><DocumentosMinimalista /></ProtectedRoute>} />
+
+                {/* Hub de Compras Minimalista */}
+                <Route path="/administrativo/compras" element={<ProtectedRoute routeKey="administrativo_hub"><ComprasHub /></ProtectedRoute>} />
+                <Route path="/administrativo/compras/estoque" element={<ProtectedRoute routeKey="administrativo_hub"><EstoqueMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/compras/estoque/editar-item/:id" element={<ProtectedRoute routeKey="administrativo_hub"><EstoqueEditMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/compras/requisicoes" element={<ProtectedRoute routeKey="administrativo_hub"><RequisicoesMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/compras/fornecedores" element={<ProtectedRoute routeKey="administrativo_hub"><FornecedoresMinimalista /></ProtectedRoute>} />
 
                 {/* Hub da Fábrica Legado - usa autenticação própria com CPF */}
                 <Route path="/hub-fabrica" element={<HubFabrica />} />
