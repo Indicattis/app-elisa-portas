@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { User, MapPin, Calendar, DollarSign, FileText, History, Edit } from "lucide-react";
+import { User, MapPin, Calendar, DollarSign, FileText, History, Edit, Package } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 
@@ -41,12 +41,31 @@ interface HistoricoItem {
   atendente_nome: string;
 }
 
+interface ProdutoVendaWithRelations {
+  id: string;
+  tipo_produto: string;
+  largura: number | null;
+  altura: number | null;
+  quantidade: number | null;
+  valor_total: number;
+  valor_produto: number;
+  valor_pintura: number;
+  valor_instalacao: number;
+  descricao: string | null;
+  acessorio_id: string | null;
+  adicional_id: string | null;
+  catalogo_cores: { nome: string; codigo_hex: string } | null;
+  acessorios: { nome: string } | null;
+  adicionais: { nome: string } | null;
+}
+
 export default function VendaDetalhesMinimalista() {
   const { id } = useParams<{ id: string }>();
   const [venda, setVenda] = useState<Tables<"vendas"> | null>(null);
   const [lead, setLead] = useState<Lead | null>(null);
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
   const [historico, setHistorico] = useState<HistoricoItem[]>([]);
+  const [produtos, setProdutos] = useState<ProdutoVendaWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
 
   const { isAdmin } = useAuth();
@@ -73,6 +92,21 @@ export default function VendaDetalhesMinimalista() {
 
       if (vendaError) throw vendaError;
       setVenda(vendaData);
+
+      // Buscar produtos da venda com relacionamentos
+      const { data: produtosData, error: produtosError } = await supabase
+        .from("produtos_vendas")
+        .select(`
+          *,
+          catalogo_cores(nome, codigo_hex),
+          acessorios(nome),
+          adicionais(nome)
+        `)
+        .eq("venda_id", id)
+        .order("created_at", { ascending: true });
+
+      if (produtosError) throw produtosError;
+      setProdutos((produtosData as ProdutoVendaWithRelations[]) || []);
     } catch (error) {
       console.error("Erro ao buscar detalhes da venda:", error);
       toast({
@@ -110,6 +144,17 @@ export default function VendaDetalhesMinimalista() {
         {statusInfo.label}
       </Badge>
     );
+  };
+
+  const getTipoProdutoLabel = (tipo: string) => {
+    const tipos: Record<string, string> = {
+      'porta_enrolar': 'Porta de Enrolar',
+      'porta_automacao': 'Automação',
+      'manutencao': 'Manutenção',
+      'acessorio': 'Acessório',
+      'outro': 'Outro'
+    };
+    return tipos[tipo] || tipo;
   };
 
   const cardClass = "bg-primary/5 border-primary/10 backdrop-blur-xl";
@@ -307,7 +352,95 @@ export default function VendaDetalhesMinimalista() {
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-white">Orçamento</span>
                         {getStatusBadge(orcamento.status)}
+        </div>
+
+        {/* Produtos da Venda */}
+        {produtos.length > 0 && (
+          <Card className={cardClass}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Package className="w-4 h-4" />
+                Produtos da Venda ({produtos.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {produtos.map((produto, index) => (
+                  <div key={produto.id} className="border border-primary/10 rounded-lg p-4 bg-primary/5">
+                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="text-white border-primary/30">
+                          #{index + 1}
+                        </Badge>
+                        <span className="font-medium text-white">
+                          {getTipoProdutoLabel(produto.tipo_produto)}
+                        </span>
+                        {produto.catalogo_cores && (
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-4 h-4 rounded-full border border-white/20" 
+                              style={{ backgroundColor: produto.catalogo_cores.codigo_hex }}
+                            />
+                            <span className="text-sm text-white/70">{produto.catalogo_cores.nome}</span>
+                          </div>
+                        )}
                       </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-green-400">
+                          {formatCurrency(produto.valor_total)}
+                        </p>
+                        <p className="text-xs text-white/60">
+                          {produto.quantidade || 1}x {formatCurrency(produto.valor_produto)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {(produto.largura || produto.altura) && (
+                      <div className="flex gap-4 text-sm mb-3">
+                        {produto.largura && (
+                          <div>
+                            <span className="text-white/60">Largura:</span>{" "}
+                            <span className="text-white font-medium">{produto.largura}mm</span>
+                          </div>
+                        )}
+                        {produto.altura && (
+                          <div>
+                            <span className="text-white/60">Altura:</span>{" "}
+                            <span className="text-white font-medium">{produto.altura}mm</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Acessório */}
+                    {produto.acessorios && (
+                      <div className="mb-2">
+                        <Badge variant="secondary" className="text-xs bg-primary/20 text-white/80">
+                          Acessório: {produto.acessorios.nome}
+                        </Badge>
+                      </div>
+                    )}
+
+                    {/* Adicional */}
+                    {produto.adicionais && (
+                      <div className="mb-2">
+                        <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-300">
+                          Adicional: {produto.adicionais.nome}
+                        </Badge>
+                      </div>
+                    )}
+
+                    {produto.descricao && (
+                      <p className="text-sm text-white/60 bg-primary/10 p-2 rounded mt-2">
+                        {produto.descricao}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
                       <div className="text-right">
                         <p className="text-lg font-bold text-green-400">
                           {formatCurrency(orcamento.valor_total)}
