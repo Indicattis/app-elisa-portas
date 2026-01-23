@@ -13,6 +13,14 @@ export const CalendarioLegendas = () => {
         <div className="w-4 h-4 rounded border" style={{ backgroundColor: 'rgb(34 197 94 / 0.15)', borderColor: 'rgb(34 197 94 / 0.5)' }} />
         <span>Entrega</span>
       </div>
+      <div className="flex items-center gap-2">
+        <div className="w-4 h-4 rounded border" style={{ backgroundColor: 'rgb(249 115 22 / 0.15)', borderColor: 'rgb(249 115 22 / 0.5)' }} />
+        <span>Neo Instalação</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="w-4 h-4 rounded border" style={{ backgroundColor: 'rgb(147 51 234 / 0.15)', borderColor: 'rgb(147 51 234 / 0.5)' }} />
+        <span>Neo Correção</span>
+      </div>
     </div>
   );
 };
