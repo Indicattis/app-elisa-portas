@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Package, RefreshCw, Search, Factory } from "lucide-react";
+import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,7 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const ITEMS_PER_PAGE = 25;
 
 export default function PedidosAdminMinimalista() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
@@ -25,8 +24,77 @@ export default function PedidosAdminMinimalista() {
   const [currentPageProducao, setCurrentPageProducao] = useState(1);
   const [activeTab, setActiveTab] = useState<string>("aberto");
   
-  const { pedidos: pedidosAberto, isLoading: isLoadingAberto } = usePedidosEtapas("aberto");
+  const { 
+    pedidos: pedidosAberto, 
+    isLoading: isLoadingAberto,
+    moverParaProximaEtapa,
+    retrocederEtapa,
+    deletarPedido
+  } = usePedidosEtapas("aberto");
   const { pedidos: pedidosProducao, isLoading: isLoadingProducao } = usePedidosEtapas("em_producao");
+
+  // Handler para avançar etapa
+  const handleMoverEtapa = async (
+    pedidoId: string, 
+    skipCheckboxValidation?: boolean,
+    onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void
+  ) => {
+    try {
+      await moverParaProximaEtapa.mutateAsync({ 
+        pedidoId, 
+        skipCheckboxValidation,
+        onProgress 
+      });
+      toast({
+        title: "Sucesso",
+        description: "Pedido avançado com sucesso",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao avançar pedido",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handler para retroceder etapa
+  const handleRetrocederEtapa = async (
+    pedidoId: string, 
+    etapaDestino: EtapaPedido, 
+    motivo: string
+  ) => {
+    try {
+      await retrocederEtapa.mutateAsync({ pedidoId, etapaDestino, motivo });
+      toast({
+        title: "Sucesso", 
+        description: "Pedido retrocedido com sucesso",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao retroceder pedido",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handler para excluir pedido
+  const handleDeletarPedido = async (pedidoId: string) => {
+    try {
+      await deletarPedido.mutateAsync(pedidoId);
+      toast({
+        title: "Sucesso",
+        description: "Pedido excluído com sucesso",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao excluir pedido",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Filtrar pedidos em aberto
   const pedidosAbertoFiltrados = useMemo(() => {
@@ -105,10 +173,6 @@ export default function PedidosAdminMinimalista() {
       title: "Atualizado",
       description: "Dados atualizados com sucesso",
     });
-  };
-
-  const handlePedidoClick = (pedidoId: string) => {
-    navigate(`/administrativo/pedidos/${pedidoId}`);
   };
 
   // Gerar páginas para paginação
@@ -247,17 +311,15 @@ export default function PedidosAdminMinimalista() {
               ) : (
                 <div className="space-y-2">
                   {pedidosAbertoPaginados.map((pedido) => (
-                    <div
+                    <PedidoCard
                       key={pedido.id}
-                      onClick={() => handlePedidoClick(pedido.id)}
-                      className="cursor-pointer hover:opacity-80 transition-opacity"
-                    >
-                      <PedidoCard
-                        pedido={pedido}
-                        isAberto={true}
-                        viewMode="list"
-                      />
-                    </div>
+                      pedido={pedido}
+                      isAberto={true}
+                      viewMode="list"
+                      onMoverEtapa={handleMoverEtapa}
+                      onRetrocederEtapa={handleRetrocederEtapa}
+                      onDeletar={handleDeletarPedido}
+                    />
                   ))}
                 </div>
               )}
@@ -331,17 +393,14 @@ export default function PedidosAdminMinimalista() {
               ) : (
                 <div className="space-y-2">
                   {pedidosProducaoPaginados.map((pedido) => (
-                    <div
+                    <PedidoCard
                       key={pedido.id}
-                      onClick={() => handlePedidoClick(pedido.id)}
-                      className="cursor-pointer hover:opacity-80 transition-opacity"
-                    >
-                      <PedidoCard
-                        pedido={pedido}
-                        isAberto={false}
-                        viewMode="list"
-                      />
-                    </div>
+                      pedido={pedido}
+                      isAberto={false}
+                      viewMode="list"
+                      onMoverEtapa={handleMoverEtapa}
+                      onRetrocederEtapa={handleRetrocederEtapa}
+                    />
                   ))}
                 </div>
               )}
