@@ -9,6 +9,7 @@ export interface PedidoBuscaGeral {
   created_at: string;
   prioridade_etapa: number;
   data_carregamento?: string;
+  arquivado?: boolean;
   vendas?: {
     id: string;
     cliente_nome: string;
@@ -16,19 +17,33 @@ export interface PedidoBuscaGeral {
     cpf_cliente?: string;
     valor_venda?: number;
     tipo_entrega?: string;
+    cidade?: string;
+    estado?: string;
     atendente?: {
       nome: string;
       foto_perfil_url?: string;
     };
     produtos_vendas?: Array<{
+      id?: string;
       tipo_produto?: string;
       quantidade?: number;
-      cor_id?: string;
-      catalogo_cores?: {
+      valor_pintura?: number;
+      largura?: number;
+      altura?: number;
+      tamanho?: string;
+      cor?: {
         nome: string;
+        codigo_hex?: string;
       };
     }>;
   };
+  pedidos_etapas?: Array<{
+    id: string;
+    etapa: string;
+    data_entrada: string;
+    data_saida?: string;
+    checkboxes?: any;
+  }>;
 }
 
 export function usePedidosBuscaGeral(searchTerm: string) {
@@ -39,12 +54,7 @@ export function usePedidosBuscaGeral(searchTerm: string) {
       const { data, error } = await supabase
         .from("pedidos_producao")
         .select(`
-          id,
-          numero_pedido,
-          etapa_atual,
-          created_at,
-          prioridade_etapa,
-          data_carregamento,
+          *,
           vendas:venda_id (
             id,
             cliente_nome,
@@ -52,19 +62,27 @@ export function usePedidosBuscaGeral(searchTerm: string) {
             cpf_cliente,
             valor_venda,
             tipo_entrega,
+            cidade,
+            estado,
             atendente:atendente_id (
               nome,
               foto_perfil_url
             ),
             produtos_vendas (
+              id,
               tipo_produto,
               quantidade,
-              cor_id,
-              catalogo_cores:cor_id (
-                nome
+              valor_pintura,
+              largura,
+              altura,
+              tamanho,
+              cor:catalogo_cores (
+                nome,
+                codigo_hex
               )
             )
-          )
+          ),
+          pedidos_etapas (*)
         `)
         .eq("arquivado", false)
         .order("created_at", { ascending: false });
@@ -95,9 +113,9 @@ export function usePedidosBuscaGeral(searchTerm: string) {
       }
       
       // Buscar por CPF (removendo pontuação)
-      const cpfCliente = pedido.vendas?.cpf_cliente?.replace(/\D/g, '') || '';
       const termSemPontuacao = termLower.replace(/\D/g, '');
-      if (cpfCliente.includes(termSemPontuacao) && termSemPontuacao.length >= 3) {
+      const cpfCliente = pedido.vendas?.cpf_cliente?.replace(/\D/g, '') || '';
+      if (termSemPontuacao.length >= 3 && cpfCliente.includes(termSemPontuacao)) {
         return true;
       }
       

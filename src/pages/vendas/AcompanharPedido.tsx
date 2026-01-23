@@ -1,14 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
-import { Search, Loader2, Package, Phone, User, Calendar, MapPin, Truck, Hammer, FileText } from "lucide-react";
+import { Search, Loader2, Package } from "lucide-react";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { usePedidosBuscaGeral, PedidoBuscaGeral } from "@/hooks/usePedidosBuscaGeral";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { formatCurrency } from "@/lib/utils";
-import { EtapaPedido } from "@/types/pedidoEtapa";
+import { usePedidosBuscaGeral } from "@/hooks/usePedidosBuscaGeral";
+import { PedidoCard } from "@/components/pedidos/PedidoCard";
 import {
   Pagination,
   PaginationContent,
@@ -20,131 +16,6 @@ import {
 } from "@/components/ui/pagination";
 
 const ITEMS_PER_PAGE = 15;
-
-const ETAPA_BADGES: Record<string, { label: string; color: string }> = {
-  aberto: { label: "Aberto", color: "bg-gray-500/20 text-gray-400 border-gray-500/30" },
-  em_producao: { label: "Em Produção", color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-  inspecao_qualidade: { label: "Qualidade", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" },
-  aguardando_pintura: { label: "Pintura", color: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
-  aguardando_coleta: { label: "Aguardando Coleta", color: "bg-orange-500/20 text-orange-400 border-orange-500/30" },
-  aguardando_instalacao: { label: "Aguardando Instalação", color: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30" },
-  instalacoes: { label: "Em Instalação", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
-  correcoes: { label: "Correções", color: "bg-red-500/20 text-red-400 border-red-500/30" },
-  finalizado: { label: "Finalizado", color: "bg-green-500/20 text-green-400 border-green-500/30" },
-};
-
-function PedidoCardSimples({ pedido }: { pedido: PedidoBuscaGeral }) {
-  // Usar created_at como data de referência
-  const etapaBadge = ETAPA_BADGES[pedido.etapa_atual] || ETAPA_BADGES.aberto;
-  const venda = pedido.vendas;
-  
-  // Contar portas
-  const totalPortas = venda?.produtos_vendas?.reduce((acc, prod) => {
-    if (prod.tipo_produto?.includes('porta_enrolar')) {
-      return acc + (prod.quantidade || 1);
-    }
-    return acc;
-  }, 0) || 0;
-
-  // Cores únicas (usando cor_id com catalogo_cores)
-  const cores = [...new Set(
-    venda?.produtos_vendas
-      ?.map(p => p.catalogo_cores?.nome)
-      .filter(Boolean) || []
-  )];
-
-  return (
-    <Card className="bg-white/5 border-white/10 hover:bg-white/10 transition-colors">
-      <CardContent className="p-4">
-        <div className="flex flex-col md:flex-row md:items-center gap-4">
-          {/* Info principal */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="text-lg font-semibold text-white">
-                #{pedido.numero_pedido}
-              </span>
-              <Badge 
-                variant="outline" 
-                className={`${etapaBadge.color} border`}
-              >
-                {etapaBadge.label}
-              </Badge>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-white/60">
-              <div className="flex items-center gap-1.5">
-                <User className="w-4 h-4" />
-                <span className="truncate">{venda?.cliente_nome || 'Cliente não informado'}</span>
-              </div>
-              
-              {venda?.cliente_telefone && (
-                <div className="flex items-center gap-1.5">
-                  <Phone className="w-4 h-4" />
-                  <span>{venda.cliente_telefone}</span>
-                </div>
-              )}
-              
-              {venda?.cpf_cliente && (
-                <div className="flex items-center gap-1.5">
-                  <FileText className="w-4 h-4" />
-                  <span>{venda.cpf_cliente}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Info secundária */}
-          <div className="flex flex-wrap items-center gap-3 text-sm">
-            {totalPortas > 0 && (
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-500/10 text-blue-400">
-                <Package className="w-4 h-4" />
-                <span>{totalPortas} porta{totalPortas > 1 ? 's' : ''}</span>
-              </div>
-            )}
-            
-            {cores.length > 0 && (
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-purple-500/10 text-purple-400">
-                <span className="text-xs">Cor: {cores.join(', ')}</span>
-              </div>
-            )}
-            
-            {venda?.tipo_entrega && (
-              <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${
-                venda.tipo_entrega === 'instalacao' 
-                  ? 'bg-emerald-500/10 text-emerald-400' 
-                  : 'bg-orange-500/10 text-orange-400'
-              }`}>
-                {venda.tipo_entrega === 'instalacao' ? (
-                  <Hammer className="w-4 h-4" />
-                ) : (
-                  <Truck className="w-4 h-4" />
-                )}
-                <span className="text-xs capitalize">{venda.tipo_entrega}</span>
-              </div>
-            )}
-
-            {venda?.valor_venda && (
-              <div className="text-white font-medium">
-                {formatCurrency(venda.valor_venda)}
-              </div>
-            )}
-          </div>
-
-          {/* Data */}
-          <div className="flex items-center gap-1.5 text-xs text-white/40">
-            <Calendar className="w-3.5 h-3.5" />
-            <span>
-              {pedido.created_at 
-                ? format(new Date(pedido.created_at), "dd/MM/yyyy", { locale: ptBR })
-                : 'Sem data'
-              }
-            </span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 export default function AcompanharPedido() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -241,7 +112,12 @@ export default function AcompanharPedido() {
             {!isLoading && pedidosPaginados.length > 0 && (
               <div className="space-y-3">
                 {pedidosPaginados.map((pedido) => (
-                  <PedidoCardSimples key={pedido.id} pedido={pedido} />
+                  <PedidoCard
+                    key={pedido.id}
+                    pedido={pedido as any}
+                    viewMode="list"
+                    isAberto={false}
+                  />
                 ))}
               </div>
             )}
