@@ -185,14 +185,6 @@ export default function Home() {
                 <LogOut className="w-4 h-4" />
                 <span className="text-sm">Sair</span>
               </button>
-
-              <button
-                onClick={handleLogout}
-                className="w-full px-3 py-2 flex items-center gap-3 text-red-400/80 hover:text-red-400 hover:bg-white/10 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="text-sm">Sair</span>
-              </button>
             </div>
           </div>
         </div>
