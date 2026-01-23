@@ -281,7 +281,7 @@ export default function FaturamentoMinimalista() {
     return acc + lucroItens + (v.valor_instalacao || 0);
   }, 0);
 
-  // Indicadores do período
+  // Indicadores do período (mesmo formato da Direção)
   const indicadores = {
     faturamentoTotal: filteredVendas.reduce((acc, v) => 
       acc + (v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0), 0),
@@ -293,6 +293,25 @@ export default function FaturamentoMinimalista() {
       ).reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
     }, 0),
     
+    // Valores brutos (vendas)
+    valorBrutoPortas: filteredVendas.reduce((acc, v) => {
+      const portas = v.portas || [];
+      return acc + portas
+        .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
+        .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+    }, 0),
+    
+    valorBrutoPintura: filteredVendas.reduce((acc, v) => {
+      const portas = v.portas || [];
+      return acc + portas
+        .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
+        .reduce((sum: number, p: any) => sum + (p.valor_pintura || 0), 0);
+    }, 0),
+    
+    valorBrutoInstalacoes: filteredVendas.reduce((acc, v) => 
+      acc + (v.valor_instalacao || 0), 0),
+    
+    // Lucros
     lucroPortas: vendasParaLucros.reduce((acc, v) => {
       const portas = v.portas || [];
       return acc + portas
@@ -313,9 +332,11 @@ export default function FaturamentoMinimalista() {
     fretesTotais: filteredVendas.reduce((acc, v) => 
       acc + (v.valor_frete || 0), 0),
     
-    valorPendente: filteredVendas
-      .filter(v => !isFaturada(v))
-      .reduce((acc, v) => acc + (v.valor_venda || 0) + (v.valor_credito || 0), 0),
+    lucroLiquidoTotal: vendasParaLucros.reduce((acc, v) => {
+      const portas = v.portas || [];
+      const lucroItens = portas.reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+      return acc + lucroItens + (v.valor_instalacao || 0);
+    }, 0),
     
     lucroBrutoTotal,
   };
@@ -700,54 +721,45 @@ export default function FaturamentoMinimalista() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-              <div className="text-center p-3 rounded-lg bg-white/5">
-                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="text-center p-4 rounded-lg bg-white/5">
+                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
                   <DollarSign className="h-3 w-3 text-blue-400" />
-                  Faturamento
+                  Portas
                 </div>
                 <p className="text-blue-400 font-bold text-lg">
-                  {formatCurrency(indicadores.faturamentoTotal)}
+                  {formatCurrency(indicadores.valorBrutoPortas)}
+                </p>
+                <p className="text-emerald-400 text-sm mt-1">
+                  Lucro: {formatCurrency(indicadores.lucroPortas)}
                 </p>
               </div>
-              <div className="text-center p-3 rounded-lg bg-white/5">
-                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
-                  <Target className="h-3 w-3 text-purple-400" />
-                  Qtd Portas
-                </div>
-                <p className="text-purple-400 font-bold text-lg">
-                  {indicadores.quantidadePortas}
-                </p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-white/5">
-                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
-                  <TrendingUp className="h-3 w-3 text-emerald-400" />
-                  Lucro Portas
-                </div>
-                <p className="text-emerald-400 font-bold text-lg">
-                  {formatCurrency(indicadores.lucroPortas)}
-                </p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-white/5">
-                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+              <div className="text-center p-4 rounded-lg bg-white/5">
+                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
                   <Paintbrush className="h-3 w-3 text-orange-400" />
-                  Lucro Pintura
+                  Pintura
                 </div>
                 <p className="text-orange-400 font-bold text-lg">
-                  {formatCurrency(indicadores.lucroPintura)}
+                  {formatCurrency(indicadores.valorBrutoPintura)}
+                </p>
+                <p className="text-emerald-400 text-sm mt-1">
+                  Lucro: {formatCurrency(indicadores.lucroPintura)}
                 </p>
               </div>
-              <div className="text-center p-3 rounded-lg bg-white/5">
-                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+              <div className="text-center p-4 rounded-lg bg-white/5">
+                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
                   <Wrench className="h-3 w-3 text-cyan-400" />
                   Instalações
                 </div>
                 <p className="text-cyan-400 font-bold text-lg">
-                  {formatCurrency(indicadores.lucroInstalacoes)}
+                  {formatCurrency(indicadores.valorBrutoInstalacoes)}
+                </p>
+                <p className="text-emerald-400 text-sm mt-1">
+                  Lucro: {formatCurrency(indicadores.lucroInstalacoes)}
                 </p>
               </div>
-              <div className="text-center p-3 rounded-lg bg-white/5">
-                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+              <div className="text-center p-4 rounded-lg bg-white/5">
+                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
                   <Truck className="h-3 w-3 text-amber-400" />
                   Fretes
                 </div>
@@ -755,22 +767,22 @@ export default function FaturamentoMinimalista() {
                   {formatCurrency(indicadores.fretesTotais)}
                 </p>
               </div>
-              <div className="text-center p-3 rounded-lg bg-white/5">
-                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+              <div className="text-center p-4 rounded-lg bg-white/5">
+                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
                   <TrendingUp className="h-3 w-3 text-green-400" />
                   Lucro Líquido
                 </div>
                 <p className="text-green-400 font-bold text-lg">
-                  {formatCurrency(indicadores.lucroBrutoTotal)}
+                  {formatCurrency(indicadores.lucroLiquidoTotal)}
                 </p>
               </div>
-              <div className="text-center p-3 rounded-lg bg-white/5 border border-red-500/20">
-                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
-                  <AlertCircle className="h-3 w-3 text-red-400" />
-                  Pendente
+              <div className="text-center p-4 rounded-lg bg-white/5">
+                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
+                  <Target className="h-3 w-3 text-purple-400" />
+                  Qtd Portas
                 </div>
-                <p className="text-red-400 font-bold text-lg">
-                  {formatCurrency(indicadores.valorPendente)}
+                <p className="text-purple-400 font-bold text-lg">
+                  {indicadores.quantidadePortas}
                 </p>
               </div>
             </div>
