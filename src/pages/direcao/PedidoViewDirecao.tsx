@@ -1,0 +1,412 @@
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { MapPin, User, Package, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCw, Hammer, Paintbrush, Truck, FileDown, Printer, ExternalLink } from "lucide-react";
+import { baixarPedidoProducaoPDF, imprimirPedidoProducaoPDF, type PedidoProducaoPDFData } from "@/utils/pedidoProducaoPDFGenerator";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { PedidoHistoricoMovimentacoes } from "@/components/pedidos/PedidoHistoricoMovimentacoes";
+import { MinimalistLayout } from "@/components/MinimalistLayout";
+
+interface Ordem {
+  id: string;
+  tipo: string;
+  numero_ordem: string;
+  status: string;
+  capturado_por_nome?: string | null;
+}
+
+interface PedidoLinha {
+  id: string;
+  nome_produto: string;
+  descricao_produto?: string | null;
+  quantidade: number;
+  tamanho?: string | null;
+}
+
+interface Pedido {
+  id: string;
+  numero_pedido: string;
+  etapa_atual: string;
+  created_at: string;
+  venda_id?: string;
+  ficha_visita_url?: string | null;
+  cliente_nome?: string;
+  cidade?: string;
+  estado?: string;
+  valor_venda?: number;
+  forma_pagamento?: string;
+  tipo_entrega?: string;
+  data_prevista_entrega?: string;
+  linhas: PedidoLinha[];
+  ordens: Ordem[];
+}
+
+export default function PedidoViewDirecao() {
+  const { id } = useParams<{ id: string }>();
+  const [pedido, setPedido] = useState<Pedido | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetchPedidoDetails = async () => {
+    if (!id) return;
+    setLoading(true);
+    try {
+      // Buscar pedido
+      const { data: pedidoData, error: pedidoError } = await supabase
+        .from('pedidos_producao')
+        .select(`
+          id, numero_pedido, etapa_atual, created_at, venda_id,
+          ficha_visita_url,
+          vendas!inner(cliente_nome, cidade, estado, valor_venda, forma_pagamento, tipo_entrega, data_prevista_entrega)
+        `)
+        .eq('id', id)
+        .single();
+      
+      if (pedidoError) throw pedidoError;
+
+      // Buscar linhas - usando any para evitar problemas de tipo
+      const { data: linhasData } = await supabase
+        .from('linhas_pedido' as any)
+        .select('id, nome_produto, descricao_produto, quantidade, tamanho')
+        .eq('pedido_id', id)
+        .order('ordem', { ascending: true });
+
+      // Buscar ordens de forma simples
+      const ordensResult: Ordem[] = [];
+      const ordemTables = ['ordens_soldagem', 'ordens_perfiladeira', 'ordens_separacao', 'ordens_qualidade', 'ordens_pintura', 'ordens_carregamento'];
+      const tiposOrdem = ['Soldagem', 'Perfiladeira', 'Separação', 'Qualidade', 'Pintura', 'Carregamento'];
+
+      for (let i = 0; i < ordemTables.length; i++) {
+        const table = ordemTables[i];
+        const tipo = tiposOrdem[i];
+        
+        const { data: ordemData } = await supabase
+          .from(table as any)
+          .select('id, numero_ordem, status')
+          .eq('pedido_id', id)
+          .maybeSingle();
+        
+        if (ordemData) {
+          ordensResult.push({
+            id: (ordemData as any).id,
+            tipo,
+            numero_ordem: (ordemData as any).numero_ordem || '',
+            status: (ordemData as any).status || 'pendente',
+          });
+        }
+      }
+
+      const venda = (pedidoData as any).vendas;
+      
+      setPedido({
+        id: pedidoData.id,
+        numero_pedido: pedidoData.numero_pedido,
+        etapa_atual: pedidoData.etapa_atual,
+        created_at: pedidoData.created_at,
+        venda_id: pedidoData.venda_id || undefined,
+        ficha_visita_url: pedidoData.ficha_visita_url,
+        cliente_nome: venda?.cliente_nome,
+        cidade: venda?.cidade,
+        estado: venda?.estado,
+        valor_venda: venda?.valor_venda,
+        forma_pagamento: venda?.forma_pagamento,
+        tipo_entrega: venda?.tipo_entrega,
+        data_prevista_entrega: venda?.data_prevista_entrega,
+        linhas: ((linhasData as any) || []) as PedidoLinha[],
+        ordens: ordensResult,
+      });
+    } catch (error) {
+      console.error('Erro ao buscar pedido:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível carregar os detalhes do pedido',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPedidoDetails();
+  }, [id]);
+
+  const getEtapaLabel = (etapa: string) => {
+    const labels: Record<string, string> = {
+      aberto: 'Aberto',
+      em_producao: 'Em Produção',
+      inspecao_qualidade: 'Inspeção de Qualidade',
+      aguardando_pintura: 'Aguardando Pintura',
+      aguardando_coleta: 'Aguardando Coleta',
+      aguardando_instalacao: 'Expedição Instalação',
+      instalacoes: 'Instalações',
+      correcoes: 'Correções',
+      finalizado: 'Finalizado',
+    };
+    return labels[etapa] || etapa;
+  };
+
+  const getEtapaBadgeColor = (etapa: string) => {
+    const colors: Record<string, string> = {
+      aberto: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      em_producao: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+      inspecao_qualidade: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+      aguardando_pintura: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
+      aguardando_coleta: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+      aguardando_instalacao: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
+      instalacoes: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+      correcoes: 'bg-red-500/20 text-red-400 border-red-500/30',
+      finalizado: 'bg-green-500/20 text-green-400 border-green-500/30',
+    };
+    return colors[etapa] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+  };
+
+  const getOrdemStatusIcon = (status: string) => {
+    switch (status) {
+      case 'finalizada':
+        return <CheckCircle2 className="w-4 h-4 text-green-400" />;
+      case 'em_andamento':
+        return <Clock className="w-4 h-4 text-yellow-400" />;
+      case 'pendente':
+        return <AlertCircle className="w-4 h-4 text-blue-400" />;
+      default:
+        return <XCircle className="w-4 h-4 text-gray-400" />;
+    }
+  };
+
+  const getOrdemIcon = (tipo: string) => {
+    switch (tipo.toLowerCase()) {
+      case 'soldagem':
+        return <Hammer className="w-4 h-4" />;
+      case 'pintura':
+        return <Paintbrush className="w-4 h-4" />;
+      case 'carregamento':
+        return <Truck className="w-4 h-4" />;
+      default:
+        return <Package className="w-4 h-4" />;
+    }
+  };
+
+  const prepararDadosPDF = (): PedidoProducaoPDFData | null => {
+    if (!pedido) return null;
+    return {
+      pedido: {
+        id: pedido.id,
+        numero_pedido: pedido.numero_pedido,
+        etapa_atual: pedido.etapa_atual,
+        created_at: pedido.created_at,
+      },
+      cliente: pedido.cliente_nome ? {
+        nome: pedido.cliente_nome,
+        cidade: pedido.cidade,
+        estado: pedido.estado,
+        valor_venda: pedido.valor_venda,
+        forma_pagamento: pedido.forma_pagamento,
+        tipo_entrega: pedido.tipo_entrega,
+        data_prevista_entrega: pedido.data_prevista_entrega,
+      } : undefined,
+      produtos: [],
+      linhas: pedido.linhas.map((l) => ({ 
+        nome_produto: l.nome_produto, 
+        descricao_produto: l.descricao_produto || undefined, 
+        quantidade: l.quantidade, 
+        tamanho: l.tamanho || undefined 
+      })),
+      observacoes: [],
+      ordens: pedido.ordens.map((o) => ({ tipo: o.tipo, numero_ordem: o.numero_ordem, status: o.status })),
+    };
+  };
+
+  if (loading) {
+    return (
+      <MinimalistLayout title="Carregando..." backPath="/direcao/gestao-fabrica">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </MinimalistLayout>
+    );
+  }
+
+  if (!pedido) {
+    return (
+      <MinimalistLayout title="Pedido não encontrado" backPath="/direcao/gestao-fabrica">
+        <div className="text-center py-8">
+          <p className="text-white/60">Pedido não encontrado</p>
+        </div>
+      </MinimalistLayout>
+    );
+  }
+
+  return (
+    <MinimalistLayout 
+      title={`Pedido #${pedido.numero_pedido}`}
+      subtitle={`Cadastrado em ${format(new Date(pedido.created_at), "dd/MM/yyyy", { locale: ptBR })}`}
+      backPath="/direcao/gestao-fabrica"
+      headerActions={
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => fetchPedidoDetails()} className="text-white/70 hover:text-white hover:bg-white/10">
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+          <Badge variant="outline" className={`${getEtapaBadgeColor(pedido.etapa_atual)} text-xs px-2 py-0.5`}>
+            {getEtapaLabel(pedido.etapa_atual)}
+          </Badge>
+        </div>
+      }
+    >
+      <div className="space-y-4">
+        {/* Grid: Informações do Cliente e Ações Rápidas */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <Card className="lg:col-span-2 bg-primary/5 border-primary/10 backdrop-blur-xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2 text-white">
+                <User className="w-4 h-4" />
+                Informações do Cliente
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-white/50">Cliente</p>
+                  <p className="font-medium text-white">{pedido.cliente_nome || 'Não informado'}</p>
+                </div>
+                {pedido.cidade && pedido.estado && (
+                  <div>
+                    <p className="text-xs text-white/50">Localização</p>
+                    <div className="flex items-center gap-1 text-white/80">
+                      <MapPin className="w-3 h-3" />
+                      <span className="text-xs">{pedido.cidade}, {pedido.estado}</span>
+                    </div>
+                  </div>
+                )}
+                {pedido.valor_venda && (
+                  <div>
+                    <p className="text-xs text-white/50">Valor da Venda</p>
+                    <p className="font-medium text-white">R$ {Number(pedido.valor_venda).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  </div>
+                )}
+                {pedido.forma_pagamento && (
+                  <div>
+                    <p className="text-xs text-white/50">Forma de Pagamento</p>
+                    <p className="font-medium capitalize text-white">{pedido.forma_pagamento}</p>
+                  </div>
+                )}
+                {pedido.tipo_entrega && (
+                  <div>
+                    <p className="text-xs text-white/50">Tipo de Entrega</p>
+                    <p className="font-medium capitalize text-white">{pedido.tipo_entrega}</p>
+                  </div>
+                )}
+                {pedido.data_prevista_entrega && (
+                  <div>
+                    <p className="text-xs text-white/50">Data Prevista</p>
+                    <p className="font-medium text-white">{format(new Date(pedido.data_prevista_entrega), "dd/MM/yyyy")}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm text-white">Ações Rápidas</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {pedido.venda_id && (
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start text-sm h-9 bg-white/5 border-white/10 text-white hover:bg-white/10" 
+                  onClick={() => window.open(`/direcao/vendas/${pedido.venda_id}`, '_blank')}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Ver Venda
+                </Button>
+              )}
+              <Button 
+                variant="outline" 
+                className="w-full justify-start text-sm h-9 bg-white/5 border-white/10 text-white hover:bg-white/10" 
+                onClick={() => { const pdfData = prepararDadosPDF(); if (pdfData) baixarPedidoProducaoPDF(pdfData); }}
+              >
+                <FileDown className="w-4 h-4 mr-2" />
+                Baixar PDF
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start text-sm h-9 bg-white/5 border-white/10 text-white hover:bg-white/10" 
+                onClick={() => { const pdfData = prepararDadosPDF(); if (pdfData) imprimirPedidoProducaoPDF(pdfData); }}
+              >
+                <Printer className="w-4 h-4 mr-2" />
+                Imprimir PDF
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Itens do Pedido */}
+        {pedido.linhas.length > 0 && (
+          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2 text-white">
+                <Package className="w-4 h-4" />
+                Itens do Pedido ({pedido.linhas.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {pedido.linhas.map((linha) => (
+                  <div key={linha.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-sm">
+                    <div className="flex-1">
+                      <p className="font-medium text-white">{linha.nome_produto}</p>
+                      {linha.descricao_produto && (
+                        <p className="text-xs text-white/60">{linha.descricao_produto}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 text-white/60 text-xs">
+                      {linha.tamanho && <span>{linha.tamanho}</span>}
+                      <span>Qtd: {linha.quantidade}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Ordens de Produção */}
+        {pedido.ordens.length > 0 && (
+          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2 text-white">
+                <Hammer className="w-4 h-4" />
+                Ordens de Produção
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {pedido.ordens.map((ordem) => (
+                  <div key={ordem.id} className="p-3 rounded-lg bg-white/5">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {getOrdemIcon(ordem.tipo)}
+                        <span className="font-medium text-white text-sm">{ordem.tipo}</span>
+                      </div>
+                      {getOrdemStatusIcon(ordem.status)}
+                    </div>
+                    <p className="text-xs text-white/60">#{ordem.numero_ordem}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Histórico de Movimentações */}
+        <PedidoHistoricoMovimentacoes pedidoId={pedido.id} />
+      </div>
+    </MinimalistLayout>
+  );
+}

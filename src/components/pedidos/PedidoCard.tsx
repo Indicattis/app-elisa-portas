@@ -88,6 +88,7 @@ export function PedidoCard({
   const location = useLocation();
   const isHubFabrica = location.pathname.startsWith('/hub-fabrica');
   const isAdministrativo = location.pathname.startsWith('/administrativo');
+  const isDirecao = location.pathname.startsWith('/direcao');
 
   // Mutation para remover responsável
   const removerResponsavelMutation = useMutation({
@@ -1015,6 +1016,8 @@ export function PedidoCard({
                         navigate(`/administrativo/pedidos/${pedido.id}`);
                       } else if (isHubFabrica) {
                         navigate(`/hub-fabrica/producao/controle/pedido/${pedido.id}/view`);
+                      } else if (isDirecao) {
+                        navigate(`/direcao/pedidos/${pedido.id}`);
                       } else {
                         navigate(`/dashboard/pedido/${pedido.id}/view`);
                       }
