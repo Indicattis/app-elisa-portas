@@ -112,6 +112,28 @@ export default function ExpedicaoMinimalista() {
     toast.success("Ordem removida do calendário");
   };
 
+  const handleRemoverNeoInstalacaoDoCalendario = async (id: string) => {
+    await updateNeoInstalacao({
+      id,
+      data: {
+        data_instalacao: null,
+        hora: null,
+      }
+    });
+    toast.success("Instalação removida do calendário");
+  };
+
+  const handleRemoverNeoCorrecaoDoCalendario = async (id: string) => {
+    await updateNeoCorrecao({
+      id,
+      data: {
+        data_correcao: null,
+        hora: null,
+      }
+    });
+    toast.success("Correção removida do calendário");
+  };
+
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['ordens-carregamento-calendario'] });
   };
@@ -328,6 +350,8 @@ export default function ExpedicaoMinimalista() {
                       }}
                       onEdit={handleEdit}
                       onRemoverDoCalendario={handleRemoverDoCalendario}
+                      onRemoverNeoInstalacaoDoCalendario={handleRemoverNeoInstalacaoDoCalendario}
+                      onRemoverNeoCorrecaoDoCalendario={handleRemoverNeoCorrecaoDoCalendario}
                       onOrdemCriada={handleOrdemCriada}
                       onOrdemDropped={handleOrdemDropped}
                       onOrdemClick={handleOrdemClick}
@@ -354,6 +378,8 @@ export default function ExpedicaoMinimalista() {
                       }}
                       onEdit={handleEdit}
                       onRemoverDoCalendario={handleRemoverDoCalendario}
+                      onRemoverNeoInstalacaoDoCalendario={handleRemoverNeoInstalacaoDoCalendario}
+                      onRemoverNeoCorrecaoDoCalendario={handleRemoverNeoCorrecaoDoCalendario}
                       onOrdemCriada={handleOrdemCriada}
                       onOrdemDropped={handleOrdemDropped}
                       onOrdemClick={handleOrdemClick}

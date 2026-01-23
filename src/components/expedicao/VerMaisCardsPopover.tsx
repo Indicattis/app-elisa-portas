@@ -26,6 +26,8 @@ interface VerMaisCardsPopoverProps {
   totalHidden: number;
   onEdit?: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario?: (id: string) => void;
+  onRemoverNeoInstalacaoDoCalendario?: (id: string) => void;
+  onRemoverNeoCorrecaoDoCalendario?: (id: string) => void;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
   onOpenNeoInstalacaoDetails?: (neoInstalacao: NeoInstalacao) => void;
   onOpenNeoCorrecaoDetails?: (neoCorrecao: NeoCorrecao) => void;
@@ -44,6 +46,8 @@ export const VerMaisCardsPopover = ({
   totalHidden,
   onEdit,
   onRemoverDoCalendario,
+  onRemoverNeoInstalacaoDoCalendario,
+  onRemoverNeoCorrecaoDoCalendario,
   onOrdemClick,
   onOpenNeoInstalacaoDetails,
   onOpenNeoCorrecaoDetails,
@@ -124,6 +128,7 @@ export const VerMaisCardsPopover = ({
                   onOpenDetails={onOpenNeoInstalacaoDetails}
                   onExcluir={onExcluirNeoInstalacao}
                   onEditar={onEditarNeoInstalacao}
+                  onRemover={readOnly ? undefined : onRemoverNeoInstalacaoDoCalendario}
                   disableDrag={readOnly}
                 />
               ))}
@@ -134,6 +139,7 @@ export const VerMaisCardsPopover = ({
                   onOpenDetails={onOpenNeoCorrecaoDetails}
                   onExcluir={onExcluirNeoCorrecao}
                   onEditar={onEditarNeoCorrecao}
+                  onRemover={readOnly ? undefined : onRemoverNeoCorrecaoDoCalendario}
                   disableDrag={readOnly}
                 />
               ))}

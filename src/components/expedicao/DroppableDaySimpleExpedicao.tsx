@@ -23,6 +23,8 @@ interface DroppableDaySimpleExpedicaoProps {
   onDayClick: (date: Date) => void;
   onEdit?: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario?: (id: string) => void;
+  onRemoverNeoInstalacaoDoCalendario?: (id: string) => void;
+  onRemoverNeoCorrecaoDoCalendario?: (id: string) => void;
   onOrdemDropped?: () => void;
   onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
@@ -43,6 +45,8 @@ export const DroppableDaySimpleExpedicao = ({
   onDayClick,
   onEdit,
   onRemoverDoCalendario,
+  onRemoverNeoInstalacaoDoCalendario,
+  onRemoverNeoCorrecaoDoCalendario,
   onOrdemDropped,
   onUpdateOrdem,
   onOrdemClick,
@@ -177,6 +181,7 @@ export const DroppableDaySimpleExpedicao = ({
               onOpenDetails={onOpenNeoInstalacaoDetails}
               onExcluir={onExcluirNeoInstalacao}
               onEditar={onEditarNeoInstalacao}
+              onRemover={readOnly ? undefined : onRemoverNeoInstalacaoDoCalendario}
               disableDrag={readOnly}
             />
           ))}
@@ -187,6 +192,7 @@ export const DroppableDaySimpleExpedicao = ({
               onOpenDetails={onOpenNeoCorrecaoDetails}
               onExcluir={onExcluirNeoCorrecao}
               onEditar={onEditarNeoCorrecao}
+              onRemover={readOnly ? undefined : onRemoverNeoCorrecaoDoCalendario}
               disableDrag={readOnly}
             />
           ))}
@@ -200,6 +206,8 @@ export const DroppableDaySimpleExpedicao = ({
             totalHidden={totalHidden}
             onEdit={onEdit}
             onRemoverDoCalendario={onRemoverDoCalendario}
+            onRemoverNeoInstalacaoDoCalendario={readOnly ? undefined : onRemoverNeoInstalacaoDoCalendario}
+            onRemoverNeoCorrecaoDoCalendario={readOnly ? undefined : onRemoverNeoCorrecaoDoCalendario}
             onOrdemClick={onOrdemClick}
             onOpenNeoInstalacaoDetails={onOpenNeoInstalacaoDetails}
             onOpenNeoCorrecaoDetails={onOpenNeoCorrecaoDetails}
