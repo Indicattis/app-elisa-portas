@@ -14,6 +14,8 @@ interface Venda {
   id: string;
   cliente_nome: string | null;
   valor_venda: number | null;
+  valor_frete: number | null;
+  valor_credito: number | null;
   data_venda: string;
   comprovante_url: string | null;
   pedidos_producao: { status: string } | null;
@@ -38,6 +40,8 @@ export default function MinhasVendas() {
           id,
           cliente_nome,
           valor_venda,
+          valor_frete,
+          valor_credito,
           data_venda,
           comprovante_url,
           pedidos_producao!left(status)
@@ -54,7 +58,10 @@ export default function MinhasVendas() {
   });
 
   const totalVendas = vendas?.length || 0;
-  const valorTotal = vendas?.reduce((acc, v) => acc + (v.valor_venda || 0), 0) || 0;
+  const valorTotal = vendas?.reduce((acc, v) => {
+    const valorLiquido = (v.valor_venda || 0) - (v.valor_frete || 0) + (v.valor_credito || 0);
+    return acc + valorLiquido;
+  }, 0) || 0;
   const vendasFaturadas = vendas?.filter(v => v.comprovante_url).length || 0;
 
   const formatCurrency = (value: number) => {
