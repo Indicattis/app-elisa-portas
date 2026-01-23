@@ -45,8 +45,8 @@ export interface CriarNeoInstalacaoData {
   nome_cliente: string;
   cidade: string;
   estado: string;
-  data_instalacao: string;
-  hora: string;
+  data_instalacao?: string | null;
+  hora?: string | null;
   tipo_responsavel: 'equipe_interna' | 'autorizado';
   equipe_id?: string | null;
   equipe_nome?: string | null;

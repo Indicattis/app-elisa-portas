@@ -310,3 +310,94 @@ export const useNeoCorrecoesListagem = () => {
     concluirNeoCorrecao
   };
 };
+
+// Hook para buscar Neo Correções SEM DATA (pendentes de agendamento)
+export const useNeoCorrecoesSemData = () => {
+  const queryClient = useQueryClient();
+
+  const { data: neoCorrecoesSemData = [], isLoading } = useQuery({
+    queryKey: ["neo_correcoes_sem_data"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("neo_correcoes")
+        .select("*")
+        .is("data_correcao", null)
+        .eq("concluida", false)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Buscar cores das equipes
+      const { data: equipes } = await supabase
+        .from("equipes_instalacao")
+        .select("id, nome, cor")
+        .eq("ativa", true);
+
+      const equipesMap = new Map(equipes?.map(e => [e.id, e]) || []);
+      
+      return (data || []).map(item => ({
+        ...item,
+        _tipo: 'neo_correcao' as const,
+        tipo_responsavel: (item.tipo_responsavel as 'equipe_interna' | 'autorizado' | null) || 'equipe_interna',
+        equipe: item.equipe_id 
+          ? equipesMap.get(item.equipe_id) || null 
+          : null
+      })) as NeoCorrecao[];
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<NeoCorrecao> }) => {
+      const { data: updated, error } = await supabase
+        .from("neo_correcoes")
+        .update({
+          ...data,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return updated;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_sem_data"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_calendario"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_listagem"] });
+    },
+    onError: (error) => {
+      console.error("Erro ao atualizar neo correção:", error);
+      toast.error("Erro ao atualizar neo correção");
+    },
+  });
+
+  // Subscription em tempo real
+  useEffect(() => {
+    const channel = supabase
+      .channel('neo-correcoes-sem-data-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'neo_correcoes'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["neo_correcoes_sem_data"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  return {
+    neoCorrecoesSemData,
+    isLoading,
+    updateNeoCorrecao: updateMutation.mutateAsync,
+    isUpdating: updateMutation.isPending,
+  };
+};

@@ -142,14 +142,6 @@ export function NeoCorrecaoModal({
       toast.error("Selecione o estado");
       return;
     }
-    if (!dataCorrecao) {
-      toast.error("Informe a data da correção");
-      return;
-    }
-    if (!hora) {
-      toast.error("Informe o horário");
-      return;
-    }
 
     if (tipoResponsavel === 'equipe_interna' && !equipeId) {
       toast.error("Selecione uma equipe");
@@ -170,8 +162,8 @@ export function NeoCorrecaoModal({
         nome_cliente: nomeCliente.trim(),
         cidade: cidade.trim(),
         estado,
-        data_correcao: dataCorrecao,
-        hora,
+        data_correcao: dataCorrecao || null,
+        hora: hora || null,
         tipo_responsavel: tipoResponsavel,
         equipe_id: tipoResponsavel === 'equipe_interna' ? equipeId : null,
         equipe_nome: tipoResponsavel === 'equipe_interna' ? selectedEquipe?.nome : null,
@@ -239,7 +231,7 @@ export function NeoCorrecaoModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="dataCorrecao">Data *</Label>
+              <Label htmlFor="dataCorrecao">Data <span className="text-muted-foreground text-xs">(opcional)</span></Label>
               <Input
                 id="dataCorrecao"
                 type="date"
@@ -248,7 +240,7 @@ export function NeoCorrecaoModal({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="hora">Horário *</Label>
+              <Label htmlFor="hora">Horário <span className="text-muted-foreground text-xs">(opcional)</span></Label>
               <Input
                 id="hora"
                 type="time"
