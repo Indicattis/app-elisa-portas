@@ -16,7 +16,7 @@ interface ProducaoAuthContextType {
   signOut: () => Promise<void>;
 }
 
-const ProducaoAuthContext = createContext<ProducaoAuthContextType | undefined>(undefined);
+export const ProducaoAuthContext = createContext<ProducaoAuthContextType | undefined>(undefined);
 
 export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<ProducaoUser | null>(null);
