@@ -25,6 +25,8 @@ interface CalendarioMensalExpedicaoDesktopProps {
   onUpdateNeoCorrecao?: (params: { id: string; data: Partial<NeoCorrecao> }) => Promise<void>;
   onEdit?: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario?: (id: string) => void;
+  onRemoverNeoInstalacaoDoCalendario?: (id: string) => void;
+  onRemoverNeoCorrecaoDoCalendario?: (id: string) => void;
   onOrdemCriada?: () => void;
   onOrdemDropped?: () => void;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
@@ -48,6 +50,8 @@ export const CalendarioMensalExpedicaoDesktop = ({
   onUpdateNeoCorrecao,
   onEdit,
   onRemoverDoCalendario,
+  onRemoverNeoInstalacaoDoCalendario,
+  onRemoverNeoCorrecaoDoCalendario,
   onOrdemCriada,
   onOrdemDropped,
   onOrdemClick,
@@ -252,6 +256,8 @@ export const CalendarioMensalExpedicaoDesktop = ({
               onDayClick={handleDayClick}
               onEdit={readOnly ? undefined : onEdit}
               onRemoverDoCalendario={readOnly ? undefined : onRemoverDoCalendario}
+              onRemoverNeoInstalacaoDoCalendario={readOnly ? undefined : onRemoverNeoInstalacaoDoCalendario}
+              onRemoverNeoCorrecaoDoCalendario={readOnly ? undefined : onRemoverNeoCorrecaoDoCalendario}
               onOrdemDropped={readOnly ? undefined : onOrdemDropped}
               onUpdateOrdem={readOnly ? undefined : onUpdateOrdem}
               onOrdemClick={onOrdemClick}

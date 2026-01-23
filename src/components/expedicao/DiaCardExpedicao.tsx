@@ -23,6 +23,8 @@ interface DiaCardExpedicaoProps {
   onDayClick: (date: Date) => void;
   onEdit?: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario?: (id: string) => void;
+  onRemoverNeoInstalacaoDoCalendario?: (id: string) => void;
+  onRemoverNeoCorrecaoDoCalendario?: (id: string) => void;
   onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
   onOrdemAdded?: () => void;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
@@ -40,6 +42,8 @@ export const DiaCardExpedicao = ({
   onDayClick,
   onEdit,
   onRemoverDoCalendario,
+  onRemoverNeoInstalacaoDoCalendario,
+  onRemoverNeoCorrecaoDoCalendario,
   onUpdateOrdem,
   onOrdemAdded,
   onOrdemClick,
@@ -167,10 +171,10 @@ export const DiaCardExpedicao = ({
                 />
               ))}
               {visibleNeo.map((neo) => (
-                <NeoInstalacaoCard key={neo.id} neoInstalacao={neo} onOpenDetails={onOpenNeoInstalacaoDetails} onExcluir={onExcluirNeoInstalacao} />
+                <NeoInstalacaoCard key={neo.id} neoInstalacao={neo} onOpenDetails={onOpenNeoInstalacaoDetails} onExcluir={onExcluirNeoInstalacao} onRemover={onRemoverNeoInstalacaoDoCalendario} />
               ))}
               {visibleNeoCorrecoes.map((neo) => (
-                <NeoCorrecaoCard key={neo.id} neoCorrecao={neo} onOpenDetails={onOpenNeoCorrecaoDetails} onExcluir={onExcluirNeoCorrecao} />
+                <NeoCorrecaoCard key={neo.id} neoCorrecao={neo} onOpenDetails={onOpenNeoCorrecaoDetails} onExcluir={onExcluirNeoCorrecao} onRemover={onRemoverNeoCorrecaoDoCalendario} />
               ))}
 
               {/* Ver mais button */}
@@ -187,6 +191,8 @@ export const DiaCardExpedicao = ({
                 onOpenNeoCorrecaoDetails={onOpenNeoCorrecaoDetails}
                 onExcluirNeoInstalacao={onExcluirNeoInstalacao}
                 onExcluirNeoCorrecao={onExcluirNeoCorrecao}
+                onRemoverNeoInstalacaoDoCalendario={onRemoverNeoInstalacaoDoCalendario}
+                onRemoverNeoCorrecaoDoCalendario={onRemoverNeoCorrecaoDoCalendario}
               />
             </>
           )}

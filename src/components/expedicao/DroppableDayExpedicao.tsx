@@ -23,6 +23,8 @@ interface DroppableDayExpedicaoProps {
   onDayClick: (date: Date) => void;
   onEdit?: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario?: (id: string) => void;
+  onRemoverNeoInstalacaoDoCalendario?: (id: string) => void;
+  onRemoverNeoCorrecaoDoCalendario?: (id: string) => void;
   onOrdemDropped?: () => void;
   onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
@@ -44,6 +46,8 @@ export const DroppableDayExpedicao = ({
   onDayClick,
   onEdit,
   onRemoverDoCalendario,
+  onRemoverNeoInstalacaoDoCalendario,
+  onRemoverNeoCorrecaoDoCalendario,
   onOrdemDropped,
   onUpdateOrdem,
   onOrdemClick,
@@ -186,6 +190,7 @@ export const DroppableDayExpedicao = ({
               onOpenDetails={onOpenNeoInstalacaoDetails}
               onExcluir={onExcluirNeoInstalacao}
               onEditar={onEditarNeoInstalacao}
+              onRemover={readOnly ? undefined : onRemoverNeoInstalacaoDoCalendario}
               disableDrag={readOnly}
             />
           ))}
@@ -196,6 +201,7 @@ export const DroppableDayExpedicao = ({
               onOpenDetails={onOpenNeoCorrecaoDetails}
               onExcluir={onExcluirNeoCorrecao}
               onEditar={onEditarNeoCorrecao}
+              onRemover={readOnly ? undefined : onRemoverNeoCorrecaoDoCalendario}
               disableDrag={readOnly}
             />
           ))}
@@ -209,6 +215,8 @@ export const DroppableDayExpedicao = ({
             totalHidden={totalHidden}
             onEdit={onEdit}
             onRemoverDoCalendario={onRemoverDoCalendario}
+            onRemoverNeoInstalacaoDoCalendario={readOnly ? undefined : onRemoverNeoInstalacaoDoCalendario}
+            onRemoverNeoCorrecaoDoCalendario={readOnly ? undefined : onRemoverNeoCorrecaoDoCalendario}
             onOrdemClick={onOrdemClick}
             onOpenNeoInstalacaoDetails={onOpenNeoInstalacaoDetails}
             onOpenNeoCorrecaoDetails={onOpenNeoCorrecaoDetails}
