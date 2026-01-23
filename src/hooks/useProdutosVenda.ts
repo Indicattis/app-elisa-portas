@@ -162,20 +162,29 @@ export const useProdutosVenda = (vendaId?: string) => {
       vendaId, 
       custoTotal, 
       lucroTotal,
-      produtosIds
+      produtosIds,
+      lucroInstalacao = 0,
+      custoInstalacao = 0,
     }: { 
       vendaId: string; 
       custoTotal: number; 
       lucroTotal: number;
       produtosIds: string[];
+      lucroInstalacao?: number;
+      custoInstalacao?: number;
     }) => {
-      // Atualizar venda
+      // Atualizar venda com lucro total (produtos + instalação)
+      const lucroTotalFinal = lucroTotal + lucroInstalacao;
+      
       const { error: vendaError } = await supabase
         .from('vendas')
         .update({ 
-          custo_total: custoTotal,
-          lucro_total: lucroTotal,
-          frete_aprovado: true
+          custo_total: custoTotal + custoInstalacao,
+          lucro_total: lucroTotalFinal,
+          frete_aprovado: true,
+          lucro_instalacao: lucroInstalacao > 0 ? lucroInstalacao : null,
+          custo_instalacao: custoInstalacao > 0 ? custoInstalacao : null,
+          instalacao_faturada: lucroInstalacao > 0,
         })
         .eq('id', vendaId);
 

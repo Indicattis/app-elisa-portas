@@ -5680,6 +5680,7 @@ export type Database = {
           comprovante_url: string | null
           cpf_cliente: string | null
           created_at: string
+          custo_instalacao: number | null
           custo_total: number | null
           data_prevista_entrega: string | null
           data_venda: string
@@ -5688,8 +5689,10 @@ export type Database = {
           forma_pagamento: string | null
           frete_aprovado: boolean
           id: string
+          instalacao_faturada: boolean | null
           intervalo_boletos: number | null
           justificativa_nao_faturada: string | null
+          lucro_instalacao: number | null
           lucro_total: number | null
           metodo_pagamento: string | null
           numero_parcelas: number | null
@@ -5727,6 +5730,7 @@ export type Database = {
           comprovante_url?: string | null
           cpf_cliente?: string | null
           created_at?: string
+          custo_instalacao?: number | null
           custo_total?: number | null
           data_prevista_entrega?: string | null
           data_venda?: string
@@ -5735,8 +5739,10 @@ export type Database = {
           forma_pagamento?: string | null
           frete_aprovado?: boolean
           id?: string
+          instalacao_faturada?: boolean | null
           intervalo_boletos?: number | null
           justificativa_nao_faturada?: string | null
+          lucro_instalacao?: number | null
           lucro_total?: number | null
           metodo_pagamento?: string | null
           numero_parcelas?: number | null
@@ -5774,6 +5780,7 @@ export type Database = {
           comprovante_url?: string | null
           cpf_cliente?: string | null
           created_at?: string
+          custo_instalacao?: number | null
           custo_total?: number | null
           data_prevista_entrega?: string | null
           data_venda?: string
@@ -5782,8 +5789,10 @@ export type Database = {
           forma_pagamento?: string | null
           frete_aprovado?: boolean
           id?: string
+          instalacao_faturada?: boolean | null
           intervalo_boletos?: number | null
           justificativa_nao_faturada?: string | null
+          lucro_instalacao?: number | null
           lucro_total?: number | null
           metodo_pagamento?: string | null
           numero_parcelas?: number | null

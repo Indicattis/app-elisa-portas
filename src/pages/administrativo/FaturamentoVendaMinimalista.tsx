@@ -19,7 +19,8 @@ import {
   Receipt,
   Minus,
   Plus,
-  Calculator
+  Calculator,
+  Wrench
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
@@ -42,6 +43,9 @@ interface Venda {
   frete_aprovado: boolean;
   comprovante_url?: string;
   comprovante_nome?: string;
+  lucro_instalacao?: number;
+  custo_instalacao?: number;
+  instalacao_faturada?: boolean;
 }
 
 const formatCurrency = (value: number) => {
@@ -88,12 +92,36 @@ export default function FaturamentoVendaMinimalista() {
     }
   }, [id]);
 
+  // Auto-faturar produtos pintura_epoxi com 30% de lucro
+  useEffect(() => {
+    if (!produtos || produtos.length === 0 || isUpdatingLucro) return;
+    
+    const produtosPinturaParaAutoFaturar = produtos.filter(p => 
+      p.tipo_produto === 'pintura_epoxi' && 
+      (p.lucro_item === null || p.lucro_item === undefined) &&
+      !p.faturamento
+    );
+    
+    if (produtosPinturaParaAutoFaturar.length === 0) return;
+    
+    // Auto-preencher lucro de 30% para cada produto de pintura
+    produtosPinturaParaAutoFaturar.forEach(async (produto) => {
+      const lucro30percent = produto.valor_total * 0.30;
+      const custoCalculado = produto.valor_total - lucro30percent;
+      await updateLucroItem({ 
+        produtoId: produto.id, 
+        lucroItem: lucro30percent,
+        custoProducao: custoCalculado 
+      });
+    });
+  }, [produtos]);
+
   const fetchVenda = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from("vendas")
-        .select("id, cliente_nome, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome")
+        .select("id, cliente_nome, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada")
         .eq("id", id)
         .single();
 
@@ -147,6 +175,11 @@ export default function FaturamentoVendaMinimalista() {
       acc + ((p.lucro_item || 0) * p.quantidade), 0
     );
     
+    // Calcular lucro da instalação (30% se houver valor)
+    const valorInstalacao = venda.valor_instalacao || 0;
+    const lucroInstalacao = valorInstalacao > 0 ? valorInstalacao * 0.30 : 0;
+    const custoInstalacao = valorInstalacao - lucroInstalacao;
+    
     const produtosIds = produtos.map(p => p.id);
     
     try {
@@ -155,6 +188,8 @@ export default function FaturamentoVendaMinimalista() {
         custoTotal,
         lucroTotal,
         produtosIds,
+        lucroInstalacao,
+        custoInstalacao,
       });
       
       setShowConfirmDialog(false);
@@ -200,13 +235,25 @@ export default function FaturamentoVendaMinimalista() {
   // Cálculos
   const todosProdutosFaturados = produtos?.every(p => p.faturamento === true) || false;
   const vendaFaturada = todosProdutosFaturados && venda?.frete_aprovado === true;
-  const totalLucro = produtos?.reduce((acc, p) => acc + ((p.lucro_item || 0) * p.quantidade), 0) || 0;
+  const lucroProdutos = produtos?.reduce((acc, p) => acc + ((p.lucro_item || 0) * p.quantidade), 0) || 0;
+  
+  // Lucro da instalação: se já faturada usa o valor salvo, senão calcula 30%
+  const valorInstalacao = venda?.valor_instalacao || 0;
+  const lucroInstalacaoCalculado = valorInstalacao > 0 ? valorInstalacao * 0.30 : 0;
+  const lucroInstalacao = venda?.instalacao_faturada 
+    ? (venda.lucro_instalacao || 0) 
+    : lucroInstalacaoCalculado;
+  
+  const totalLucro = lucroProdutos + lucroInstalacao;
   const margem = venda && venda.valor_venda > 0 ? (totalLucro / venda.valor_venda) * 100 : 0;
   // Só conta como faturado se lucro_item > 0 OU se o faturamento já foi finalizado
   const produtosFaturados = produtos?.filter(p => 
     p.faturamento === true || (p.lucro_item !== null && p.lucro_item !== undefined && p.lucro_item > 0)
   ).length || 0;
-  const totalProdutos = produtos?.length || 0;
+  // Contabilizar instalação se houver
+  const temInstalacao = valorInstalacao > 0;
+  const totalProdutos = (produtos?.length || 0) + (temInstalacao ? 1 : 0);
+  const totalFaturados = produtosFaturados + (temInstalacao && (venda?.instalacao_faturada || lucroInstalacaoCalculado > 0) ? 1 : 0);
 
   // Descontos e acréscimos
   const totalDescontos = produtos?.reduce((acc, p) => acc + (p.desconto_valor || 0), 0) || 0;
@@ -346,9 +393,9 @@ export default function FaturamentoVendaMinimalista() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">
-                {produtosFaturados}/{totalProdutos}
+                {totalFaturados}/{totalProdutos}
               </div>
-              <p className="text-xs text-white/50">Produtos faturados</p>
+              <p className="text-xs text-white/50">Itens faturados</p>
             </CardContent>
           </Card>
         </div>
@@ -506,6 +553,45 @@ export default function FaturamentoVendaMinimalista() {
                       </TableRow>
                     );
                   })}
+
+                  {/* Linha da Instalação (se houver) */}
+                  {valorInstalacao > 0 && (
+                    <TableRow className="bg-cyan-500/5 border-white/10">
+                      <TableCell className="text-sm text-cyan-400">
+                        <div className="flex items-center gap-2">
+                          <Wrench className="h-3 w-3" />
+                          Instalação
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium text-white">
+                        Serviço de Instalação
+                      </TableCell>
+                      <TableCell className="text-white/60">-</TableCell>
+                      <TableCell className="text-right text-white/60">-</TableCell>
+                      <TableCell className="text-right text-white/80">
+                        {formatCurrency(valorInstalacao)}
+                      </TableCell>
+                      <TableCell className="text-center text-white/80">1</TableCell>
+                      <TableCell className="text-right font-medium text-white">
+                        {formatCurrency(valorInstalacao)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {venda.instalacao_faturada ? (
+                          <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Faturado
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                            {formatCurrency(lucroInstalacaoCalculado)} (30%)
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400/50 mx-auto" />
+                      </TableCell>
+                    </TableRow>
+                  )}
 
                   {/* Linha do Frete */}
                   <TableRow className="bg-white/5 border-white/10">
