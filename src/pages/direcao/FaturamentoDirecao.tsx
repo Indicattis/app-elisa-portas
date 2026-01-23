@@ -55,12 +55,11 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'cidade', label: 'Cidade', defaultVisible: true },
   { id: 'previsao', label: 'Previsão Entrega', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
-  { id: 'desconto', label: 'Desconto', defaultVisible: true },
-  { id: 'acrescimo', label: 'Acréscimo', defaultVisible: true },
+  { id: 'desconto_acrescimo', label: 'Desc./Acrés.', defaultVisible: true },
   { id: 'instalacao', label: 'Instalação', defaultVisible: true },
   { id: 'frete', label: 'Frete', defaultVisible: true },
-  { id: 'custo_porta', label: 'Custo Porta', defaultVisible: true },
-  { id: 'custo_pintura', label: 'Custo Pintura', defaultVisible: true },
+  { id: 'valor_porta', label: 'Vl. Portas', defaultVisible: true },
+  { id: 'valor_pintura', label: 'Vl. Pintura', defaultVisible: true },
   { id: 'valor', label: 'Valor', defaultVisible: true },
   { id: 'lucro', label: 'Lucro', defaultVisible: true },
   { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
@@ -248,19 +247,22 @@ export default function FaturamentoDirecao() {
             return venda.data_prevista_entrega ? new Date(venda.data_prevista_entrega).getTime() : 0;
           case 'expedicao':
             return venda.tipo_entrega || '';
-          case 'desconto':
-            const desconto = (venda.portas || []).reduce((sum: number, p: any) => sum + (p.desconto_valor || 0), 0);
-            return desconto;
-          case 'acrescimo':
-            return venda.valor_credito || 0;
+          case 'desconto_acrescimo':
+            const desc = (venda.portas || []).reduce((sum: number, p: any) => sum + (p.desconto_valor || 0), 0);
+            const acre = venda.valor_credito || 0;
+            return acre - desc;
           case 'instalacao':
             return venda.valor_instalacao || 0;
           case 'frete':
             return venda.valor_frete || 0;
-          case 'custo_porta':
-            return (venda.portas || []).reduce((sum: number, p: any) => sum + (p.custo_produto || 0), 0);
-          case 'custo_pintura':
-            return (venda.portas || []).reduce((sum: number, p: any) => sum + (p.custo_pintura || 0), 0);
+          case 'valor_porta':
+            return (venda.portas || [])
+              .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
+              .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+          case 'valor_pintura':
+            return (venda.portas || [])
+              .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
+              .reduce((sum: number, p: any) => sum + (p.valor_pintura || 0), 0);
           case 'valor':
             return (venda.valor_venda || 0) + (venda.valor_credito || 0);
           case 'tempo_sem_faturar':
@@ -327,6 +329,24 @@ export default function FaturamentoDirecao() {
   const indicadores = useMemo(() => {
     const vendasFaturadas = filteredVendas.filter(isFaturada);
     
+    // Valores brutos (vendas)
+    const valorBrutoPortas = filteredVendas.reduce((acc, v) => {
+      const portas = v.portas || [];
+      return acc + portas
+        .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
+        .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+    }, 0);
+    
+    const valorBrutoPintura = filteredVendas.reduce((acc, v) => {
+      const portas = v.portas || [];
+      return acc + portas
+        .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
+        .reduce((sum: number, p: any) => sum + (p.valor_pintura || 0), 0);
+    }, 0);
+    
+    const valorBrutoInstalacoes = filteredVendas.reduce((acc, v) => 
+      acc + (v.valor_instalacao || 0), 0);
+    
     return {
       faturamentoTotal: filteredVendas.reduce((acc, v) => 
         acc + (v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0), 0),
@@ -338,6 +358,7 @@ export default function FaturamentoDirecao() {
         ).reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
       }, 0),
       
+      valorBrutoPortas,
       lucroPortas: vendasFaturadas.reduce((acc, v) => {
         const portas = v.portas || [];
         return acc + portas
@@ -345,6 +366,7 @@ export default function FaturamentoDirecao() {
           .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
       }, 0),
       
+      valorBrutoPintura,
       lucroPintura: vendasFaturadas.reduce((acc, v) => {
         const portas = v.portas || [];
         return acc + portas
@@ -352,15 +374,12 @@ export default function FaturamentoDirecao() {
           .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
       }, 0),
       
+      valorBrutoInstalacoes,
       lucroInstalacoes: vendasFaturadas.reduce((acc, v) => 
         acc + (v.valor_instalacao || 0), 0),
       
       fretesTotais: filteredVendas.reduce((acc, v) => 
         acc + (v.valor_frete || 0), 0),
-      
-      valorPendente: filteredVendas
-        .filter(v => !isFaturada(v))
-        .reduce((acc, v) => acc + (v.valor_venda || 0) + (v.valor_credito || 0), 0),
       
       lucroLiquidoTotal: vendasFaturadas.reduce((acc, v) => {
         const portas = v.portas || [];
@@ -388,7 +407,7 @@ export default function FaturamentoDirecao() {
   };
 
   const getColumnResponsiveClass = (columnId: string) => {
-    const hiddenOnMobile = ['cidade', 'previsao', 'expedicao', 'desconto', 'acrescimo', 'instalacao', 'frete', 'custo_porta', 'custo_pintura', 'tempo_sem_faturar', 'justificativa', 'lucro'];
+    const hiddenOnMobile = ['cidade', 'previsao', 'expedicao', 'desconto_acrescimo', 'instalacao', 'frete', 'valor_porta', 'valor_pintura', 'tempo_sem_faturar', 'justificativa', 'lucro'];
     if (hiddenOnMobile.includes(columnId)) {
       return 'hidden md:table-cell';
     }
@@ -396,7 +415,7 @@ export default function FaturamentoDirecao() {
   };
 
   const getColumnAlignment = (columnId: string) => {
-    const rightAligned = ['valor', 'frete', 'instalacao', 'desconto', 'acrescimo', 'custo_porta', 'custo_pintura', 'lucro'];
+    const rightAligned = ['valor', 'frete', 'instalacao', 'desconto_acrescimo', 'valor_porta', 'valor_pintura', 'lucro'];
     const centerAligned = ['faturada', 'expedicao', 'tempo_sem_faturar'];
     if (rightAligned.includes(columnId)) return 'text-right';
     if (centerAligned.includes(columnId)) return 'text-center';
@@ -432,15 +451,16 @@ export default function FaturamentoDirecao() {
           return <Truck className="h-4 w-4 text-blue-400 mx-auto" />;
         }
         return <span className="text-white/30">-</span>;
-      case 'desconto':
-        const desconto = (venda.portas || []).reduce((sum: number, p: any) => sum + (p.desconto_valor || 0), 0);
-        return desconto > 0 
-          ? <span className="text-red-400">-{formatCurrency(desconto)}</span>
-          : <span className="text-white/30">-</span>;
-      case 'acrescimo':
-        return venda.valor_credito && venda.valor_credito > 0
-          ? <span className="text-green-400">+{formatCurrency(venda.valor_credito)}</span>
-          : <span className="text-white/30">-</span>;
+      case 'desconto_acrescimo':
+        const descontoTotal = (venda.portas || []).reduce((sum: number, p: any) => sum + (p.desconto_valor || 0), 0);
+        const acrescimoTotal = venda.valor_credito || 0;
+        const saldo = acrescimoTotal - descontoTotal;
+        if (saldo > 0) {
+          return <span className="text-green-400">+{formatCurrency(saldo)}</span>;
+        } else if (saldo < 0) {
+          return <span className="text-red-400">{formatCurrency(saldo)}</span>;
+        }
+        return <span className="text-white/30">-</span>;
       case 'instalacao':
         return venda.valor_instalacao && venda.valor_instalacao > 0
           ? <span className="text-white/80">{formatCurrency(venda.valor_instalacao)}</span>
@@ -449,15 +469,19 @@ export default function FaturamentoDirecao() {
         return venda.valor_frete && venda.valor_frete > 0
           ? <span className="text-white/80">{formatCurrency(venda.valor_frete)}</span>
           : <span className="text-white/30">-</span>;
-      case 'custo_porta':
-        const custoPorta = (venda.portas || []).reduce((sum: number, p: any) => sum + (p.custo_produto || 0), 0);
-        return custoPorta > 0
-          ? <span className="text-white/80">{formatCurrency(custoPorta)}</span>
+      case 'valor_porta':
+        const valorPortas = (venda.portas || [])
+          .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
+          .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+        return valorPortas > 0
+          ? <span className="text-white/80">{formatCurrency(valorPortas)}</span>
           : <span className="text-white/30">-</span>;
-      case 'custo_pintura':
-        const custoPintura = (venda.portas || []).reduce((sum: number, p: any) => sum + (p.custo_pintura || 0), 0);
-        return custoPintura > 0
-          ? <span className="text-white/80">{formatCurrency(custoPintura)}</span>
+      case 'valor_pintura':
+        const valorPintura = (venda.portas || [])
+          .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
+          .reduce((sum: number, p: any) => sum + (p.valor_pintura || 0), 0);
+        return valorPintura > 0
+          ? <span className="text-white/80">{formatCurrency(valorPintura)}</span>
           : <span className="text-white/30">-</span>;
       case 'valor':
         return <span className="text-white font-medium">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</span>;
@@ -567,54 +591,45 @@ export default function FaturamentoDirecao() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="text-center p-4 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
                 <DollarSign className="h-3 w-3 text-blue-400" />
-                Faturamento
+                Portas
               </div>
               <p className="text-blue-400 font-bold text-lg">
-                {formatCurrency(indicadores.faturamentoTotal)}
+                {formatCurrency(indicadores.valorBrutoPortas)}
+              </p>
+              <p className="text-emerald-400 text-sm mt-1">
+                Lucro: {formatCurrency(indicadores.lucroPortas)}
               </p>
             </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
-                <Target className="h-3 w-3 text-purple-400" />
-                Qtd Portas
-              </div>
-              <p className="text-purple-400 font-bold text-lg">
-                {indicadores.quantidadePortas}
-              </p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
-                <TrendingUp className="h-3 w-3 text-emerald-400" />
-                Lucro Portas
-              </div>
-              <p className="text-emerald-400 font-bold text-lg">
-                {formatCurrency(indicadores.lucroPortas)}
-              </p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+            <div className="text-center p-4 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
                 <Paintbrush className="h-3 w-3 text-orange-400" />
-                Lucro Pintura
+                Pintura
               </div>
               <p className="text-orange-400 font-bold text-lg">
-                {formatCurrency(indicadores.lucroPintura)}
+                {formatCurrency(indicadores.valorBrutoPintura)}
+              </p>
+              <p className="text-emerald-400 text-sm mt-1">
+                Lucro: {formatCurrency(indicadores.lucroPintura)}
               </p>
             </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+            <div className="text-center p-4 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
                 <Wrench className="h-3 w-3 text-cyan-400" />
                 Instalações
               </div>
               <p className="text-cyan-400 font-bold text-lg">
-                {formatCurrency(indicadores.lucroInstalacoes)}
+                {formatCurrency(indicadores.valorBrutoInstalacoes)}
+              </p>
+              <p className="text-emerald-400 text-sm mt-1">
+                Lucro: {formatCurrency(indicadores.lucroInstalacoes)}
               </p>
             </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+            <div className="text-center p-4 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
                 <Truck className="h-3 w-3 text-amber-400" />
                 Fretes
               </div>
@@ -622,8 +637,8 @@ export default function FaturamentoDirecao() {
                 {formatCurrency(indicadores.fretesTotais)}
               </p>
             </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+            <div className="text-center p-4 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
                 <TrendingUp className="h-3 w-3 text-green-400" />
                 Lucro Líquido
               </div>
@@ -631,13 +646,13 @@ export default function FaturamentoDirecao() {
                 {formatCurrency(indicadores.lucroLiquidoTotal)}
               </p>
             </div>
-            <div className="text-center p-3 rounded-lg bg-white/5 border border-red-500/20">
-              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
-                <AlertCircle className="h-3 w-3 text-red-400" />
-                Pendente
+            <div className="text-center p-4 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
+                <Target className="h-3 w-3 text-purple-400" />
+                Qtd Portas
               </div>
-              <p className="text-red-400 font-bold text-lg">
-                {formatCurrency(indicadores.valorPendente)}
+              <p className="text-purple-400 font-bold text-lg">
+                {indicadores.quantidadePortas}
               </p>
             </div>
           </div>
