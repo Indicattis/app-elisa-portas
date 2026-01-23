@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
+import { SpaceParticles } from "@/components/SpaceParticles";
 
 // Mapeamento de path para route_key no banco
 const routeKeyMap: Record<string, string> = {
@@ -31,6 +32,7 @@ export default function Home() {
   const navigate = useNavigate();
   const { user, userRole, signOut, hasBypassPermissions } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const [showParticles, setShowParticles] = useState(false);
   
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -68,8 +70,12 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 100);
-    return () => clearTimeout(timer);
+    const mountTimer = setTimeout(() => setMounted(true), 100);
+    const particlesTimer = setTimeout(() => setShowParticles(true), 5000);
+    return () => {
+      clearTimeout(mountTimer);
+      clearTimeout(particlesTimer);
+    };
   }, []);
 
   // Fechar menu ao clicar fora
@@ -110,6 +116,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
+      {/* Animação de partículas - aparece após 5s com fade-in */}
+      <div 
+        className="fixed inset-0 z-0 transition-opacity duration-[2000ms] ease-out"
+        style={{ opacity: showParticles ? 1 : 0 }}
+      >
+        <SpaceParticles slowMode />
+      </div>
       {/* Breadcrumb animado */}
       <AnimatedBreadcrumb 
         items={[{ label: "Home" }]} 
