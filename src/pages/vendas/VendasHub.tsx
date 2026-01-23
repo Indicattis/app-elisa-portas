@@ -6,7 +6,8 @@ import {
   BookOpen, 
   FileText, 
   Handshake,
-  ArrowLeft
+  ArrowLeft,
+  Search
 } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -18,6 +19,7 @@ const menuItems = [
   { label: 'Catálogo', icon: BookOpen, path: '/vendas/catalogo' },
   { label: 'Meus Orçamentos', icon: FileText, path: '/vendas/meus-orcamentos' },
   { label: 'Meus Parceiros', icon: Handshake, path: '/vendas/meus-parceiros' },
+  { label: 'Acompanhar Pedido', icon: Search, path: '/vendas/acompanhar-pedido' },
 ];
 
 export default function VendasHub() {
