@@ -456,7 +456,7 @@ export default function PedidoViewMinimalista() {
             </CardHeader>
             <CardContent className="space-y-2">
               {pedido.venda_id && (
-                <Button variant="outline" className="w-full justify-start text-sm h-9 bg-white/5 border-white/10 text-white hover:bg-white/10" onClick={() => navigate(`/dashboard/vendas/${pedido.venda_id}/view`)}>
+                <Button variant="outline" className="w-full justify-start text-sm h-9 bg-white/5 border-white/10 text-white hover:bg-white/10" onClick={() => navigate(`/administrativo/vendas/${pedido.venda_id}`)}>
                   <FileText className="w-4 h-4 mr-2" />
                   Ver Venda
                 </Button>
