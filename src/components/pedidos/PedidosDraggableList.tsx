@@ -33,6 +33,7 @@ interface PedidosDraggableListProps {
   onDeletar?: (pedidoId: string) => Promise<void>;
   enableDragAndDrop?: boolean; // Habilita drag-and-drop e botões de prioridade (apenas em "Em Produção")
   showPosicao?: boolean; // Mostra o índice de posição/prioridade (default: true)
+  disableClienteClick?: boolean; // Desabilita clique no nome do cliente
 }
 
 interface SortableItemProps {
@@ -47,6 +48,7 @@ interface SortableItemProps {
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
   onArquivar?: (pedidoId: string) => Promise<void>;
   onDeletar?: (pedidoId: string) => Promise<void>;
+  disableClienteClick?: boolean;
 }
 
 function SortableItem({
@@ -61,6 +63,7 @@ function SortableItem({
   onMoverPrioridade,
   onArquivar,
   onDeletar,
+  disableClienteClick,
 }: SortableItemProps) {
   const {
     attributes,
@@ -92,6 +95,7 @@ function SortableItem({
         dragHandleProps={{ ...attributes, ...listeners }}
         posicao={posicao}
         total={total}
+        disableClienteClick={disableClienteClick}
       />
     </div>
   );
@@ -111,6 +115,7 @@ export function PedidosDraggableList({
   onDeletar,
   enableDragAndDrop = true,
   showPosicao = true,
+  disableClienteClick = false,
 }: PedidosDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   
@@ -180,6 +185,7 @@ export function PedidosDraggableList({
               onDeletar={onDeletar}
               posicao={showPosicao ? index + 1 : undefined}
               total={showPosicao ? pedidos.length : undefined}
+              disableClienteClick={disableClienteClick}
               // Sem dragHandleProps - não há arrastar
               // Sem onMoverPrioridade - não há botões de prioridade
             />
@@ -220,6 +226,7 @@ export function PedidosDraggableList({
               onMoverPrioridade={onMoverPrioridade}
               onArquivar={onArquivar}
               onDeletar={onDeletar}
+              disableClienteClick={disableClienteClick}
             />
           ))}
         </div>
