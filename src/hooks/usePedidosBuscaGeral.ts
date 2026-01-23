@@ -5,6 +5,8 @@ import { useMemo } from "react";
 export interface PedidoBuscaGeral {
   id: string;
   numero_pedido: string;
+  numero_mes?: number;
+  mes_vigencia?: string;
   etapa_atual: string;
   created_at: string;
   prioridade_etapa: number;
@@ -19,6 +21,7 @@ export interface PedidoBuscaGeral {
     tipo_entrega?: string;
     cidade?: string;
     estado?: string;
+    created_at?: string;
     atendente?: {
       nome: string;
       foto_perfil_url?: string;
@@ -31,6 +34,7 @@ export interface PedidoBuscaGeral {
       largura?: number;
       altura?: number;
       tamanho?: string;
+      tipo_fabricacao?: string;
       cor?: {
         nome: string;
         codigo_hex?: string;
@@ -44,6 +48,12 @@ export interface PedidoBuscaGeral {
     data_saida?: string;
     checkboxes?: any;
   }>;
+  backlog?: Array<{
+    motivo_backlog?: string;
+    data_backlog?: string;
+  }>;
+  tem_historico_backlog?: boolean;
+  ordens?: any;
 }
 
 export function usePedidosBuscaGeral(searchTerm: string) {
@@ -64,7 +74,8 @@ export function usePedidosBuscaGeral(searchTerm: string) {
             tipo_entrega,
             cidade,
             estado,
-            atendente:atendente_id (
+            created_at,
+            atendente:admin_users!fk_vendas_atendente (
               nome,
               foto_perfil_url
             ),
@@ -76,6 +87,7 @@ export function usePedidosBuscaGeral(searchTerm: string) {
               largura,
               altura,
               tamanho,
+              tipo_fabricacao,
               cor:catalogo_cores (
                 nome,
                 codigo_hex
