@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, PanelLeft, Settings, Lock } from 'lucide-react';
+import { LogOut, LayoutDashboard, PanelLeft, Settings, Lock, Factory } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
@@ -11,10 +11,12 @@ const routeKeyMap: Record<string, string> = {
   '/paineis': 'paineis',
   '/dashboard': 'dashboard',
   '/admin': 'admin',
+  '/producao': 'producao_hub',
 };
 
 // Definir itens do menu
 const menuItems = [
+  { label: 'Produção', icon: Factory, path: '/producao' },
   { label: 'Painéis', icon: PanelLeft, path: '/paineis' },
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Admin', icon: Settings, path: '/admin' },
