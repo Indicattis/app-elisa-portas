@@ -218,6 +218,7 @@ import CaixaHub from "./pages/administrativo/CaixaHub";
 import GestaoCaixaMinimalista from "./pages/administrativo/GestaoCaixaMinimalista";
 import ContasReceberMinimalista from "./pages/administrativo/ContasReceberMinimalista";
 import ContasPagarMinimalista from "./pages/administrativo/ContasPagarMinimalista";
+import DocumentosMinimalista from "./pages/administrativo/DocumentosMinimalista";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -406,6 +407,7 @@ const App = () => (
                 <Route path="/administrativo/financeiro/caixa/gestao" element={<ProtectedRoute routeKey="administrativo_hub"><GestaoCaixaMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/caixa/contas-a-receber" element={<ProtectedRoute routeKey="administrativo_hub"><ContasReceberMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/caixa/contas-a-pagar" element={<ProtectedRoute routeKey="administrativo_hub"><ContasPagarMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/documentos" element={<ProtectedRoute routeKey="administrativo_hub"><DocumentosMinimalista /></ProtectedRoute>} />
 
                 {/* Hub da Fábrica Legado - usa autenticação própria com CPF */}
                 <Route path="/hub-fabrica" element={<HubFabrica />} />
