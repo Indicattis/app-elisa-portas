@@ -6,8 +6,8 @@ import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useOrdensCarregamentoCalendario } from "@/hooks/useOrdensCarregamentoCalendario";
-import { useNeoInstalacoes } from "@/hooks/useNeoInstalacoes";
-import { useNeoCorrecoes } from "@/hooks/useNeoCorrecoes";
+import { useNeoInstalacoes, useNeoInstalacoesSemData } from "@/hooks/useNeoInstalacoes";
+import { useNeoCorrecoes, useNeoCorrecoesSemData } from "@/hooks/useNeoCorrecoes";
 import { OrdensCarregamentoDisponiveis } from "@/components/expedicao/OrdensCarregamentoDisponiveis";
 import { OrdensCarregamentoDisponiveisMobile } from "@/components/expedicao/OrdensCarregamentoDisponiveisMobile";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
@@ -16,6 +16,7 @@ import { NeoInstalacaoModal } from "@/components/expedicao/NeoInstalacaoModal";
 import { NeoCorrecaoModal } from "@/components/expedicao/NeoCorrecaoModal";
 import { NeoInstalacaoDetails } from "@/components/expedicao/NeoInstalacaoDetails";
 import { NeoCorrecaoDetails } from "@/components/expedicao/NeoCorrecaoDetails";
+import { NeoServicosDisponiveis } from "@/components/expedicao/NeoServicosDisponiveis";
 import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
 import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
@@ -57,6 +58,10 @@ export default function ExpedicaoMinimalista() {
   const { ordens, isLoading, updateOrdem } = useOrdensCarregamentoCalendario(currentDate, viewType);
   const { neoInstalacoes, createNeoInstalacao, updateNeoInstalacao, deleteNeoInstalacao, concluirNeoInstalacao, isConcluindo: isConcluindoInstalacao } = useNeoInstalacoes(currentDate, viewType);
   const { neoCorrecoes, createNeoCorrecao, updateNeoCorrecao, deleteNeoCorrecao, concluirNeoCorrecao, isConcluindo: isConcluindoCorrecao } = useNeoCorrecoes(currentDate, viewType);
+  
+  // Hooks para serviços sem data (pendentes de agendamento)
+  const { neoInstalacoesSemData, updateNeoInstalacao: updateNeoInstalacaoSemData, isLoading: isLoadingInstalacoesSemData } = useNeoInstalacoesSemData();
+  const { neoCorrecoesSemData, updateNeoCorrecao: updateNeoCorrecaoSemData, isLoading: isLoadingCorrecoesSemData } = useNeoCorrecoesSemData();
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -180,6 +185,15 @@ export default function ExpedicaoMinimalista() {
   const handleCloseNeoCorrecaoModal = (open: boolean) => {
     setNeoCorrecaoModalOpen(open);
     if (!open) setEditingNeoCorrecao(null);
+  };
+
+  // Handlers para agendar serviços sem data
+  const handleAgendarInstalacao = async (id: string, data: string, hora: string) => {
+    await updateNeoInstalacaoSemData({ id, data: { data_instalacao: data, hora } });
+  };
+
+  const handleAgendarCorrecao = async (id: string, data: string, hora: string) => {
+    await updateNeoCorrecaoSemData({ id, data: { data_correcao: data, hora } });
   };
 
   const [mounted, setMounted] = useState(false);
@@ -364,6 +378,18 @@ export default function ExpedicaoMinimalista() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Serviços Avulsos Pendentes de Agendamento */}
+              {!isMobile && (
+                <NeoServicosDisponiveis
+                  neoInstalacoes={neoInstalacoesSemData}
+                  neoCorrecoes={neoCorrecoesSemData}
+                  onAgendarInstalacao={handleAgendarInstalacao}
+                  onAgendarCorrecao={handleAgendarCorrecao}
+                  isLoadingInstalacoes={isLoadingInstalacoesSemData}
+                  isLoadingCorrecoes={isLoadingCorrecoesSemData}
+                />
+              )}
             </div>
           )}
         </main>

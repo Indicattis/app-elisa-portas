@@ -142,14 +142,6 @@ export function NeoInstalacaoModal({
       toast.error("Selecione o estado");
       return;
     }
-    if (!dataInstalacao) {
-      toast.error("Informe a data da instalação");
-      return;
-    }
-    if (!hora) {
-      toast.error("Informe o horário");
-      return;
-    }
 
     if (tipoResponsavel === 'equipe_interna' && !equipeId) {
       toast.error("Selecione uma equipe");
@@ -170,8 +162,8 @@ export function NeoInstalacaoModal({
         nome_cliente: nomeCliente.trim(),
         cidade: cidade.trim(),
         estado,
-        data_instalacao: dataInstalacao,
-        hora,
+        data_instalacao: dataInstalacao || null,
+        hora: hora || null,
         tipo_responsavel: tipoResponsavel,
         equipe_id: tipoResponsavel === 'equipe_interna' ? equipeId : null,
         equipe_nome: tipoResponsavel === 'equipe_interna' ? selectedEquipe?.nome : null,
@@ -239,7 +231,7 @@ export function NeoInstalacaoModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="dataInstalacao">Data *</Label>
+              <Label htmlFor="dataInstalacao">Data <span className="text-muted-foreground text-xs">(opcional)</span></Label>
               <Input
                 id="dataInstalacao"
                 type="date"
@@ -248,7 +240,7 @@ export function NeoInstalacaoModal({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="hora">Horário *</Label>
+              <Label htmlFor="hora">Horário <span className="text-muted-foreground text-xs">(opcional)</span></Label>
               <Input
                 id="hora"
                 type="time"

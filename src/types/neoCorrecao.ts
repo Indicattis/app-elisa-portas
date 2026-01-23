@@ -45,8 +45,8 @@ export interface CriarNeoCorrecaoData {
   nome_cliente: string;
   cidade: string;
   estado: string;
-  data_correcao: string;
-  hora: string;
+  data_correcao?: string | null;
+  hora?: string | null;
   tipo_responsavel: 'equipe_interna' | 'autorizado';
   equipe_id?: string | null;
   equipe_nome?: string | null;
