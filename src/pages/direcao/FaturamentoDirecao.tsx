@@ -40,6 +40,8 @@ interface Venda {
   valor_credito?: number;
   valor_frete: number;
   valor_instalacao?: number;
+  lucro_instalacao?: number;
+  instalacao_faturada?: boolean;
   data_prevista_entrega?: string | null;
   tipo_entrega?: string | null;
   frete_aprovado?: boolean;
@@ -142,6 +144,8 @@ export default function FaturamentoDirecao() {
           valor_credito,
           valor_frete,
           valor_instalacao,
+          lucro_instalacao,
+          instalacao_faturada,
           data_prevista_entrega,
           tipo_entrega,
           frete_aprovado,
@@ -310,7 +314,9 @@ export default function FaturamentoDirecao() {
 
   const calcularLucroVenda = (venda: Venda) => {
     const portas = venda.portas || [];
-    return portas.reduce((acc: number, p: any) => acc + (p.lucro_item || 0), 0);
+    const lucroProdutos = portas.reduce((acc: number, p: any) => acc + (p.lucro_item || 0), 0);
+    const lucroInstalacao = venda.lucro_instalacao || 0;
+    return lucroProdutos + lucroInstalacao;
   };
 
   const stats = useMemo(() => {
@@ -375,16 +381,19 @@ export default function FaturamentoDirecao() {
       }, 0),
       
       valorBrutoInstalacoes,
+      // Lucro de instalações: usa lucro_instalacao quando faturada, senão 0
       lucroInstalacoes: vendasFaturadas.reduce((acc, v) => 
-        acc + (v.valor_instalacao || 0), 0),
+        acc + (v.lucro_instalacao || 0), 0),
       
       fretesTotais: filteredVendas.reduce((acc, v) => 
         acc + (v.valor_frete || 0), 0),
       
+      // Lucro total inclui lucro dos produtos + lucro das instalações faturadas
       lucroLiquidoTotal: vendasFaturadas.reduce((acc, v) => {
         const portas = v.portas || [];
         const lucroItens = portas.reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
-        return acc + lucroItens + (v.valor_instalacao || 0);
+        const lucroInstalacao = v.lucro_instalacao || 0;
+        return acc + lucroItens + lucroInstalacao;
       }, 0),
     };
   }, [filteredVendas]);
