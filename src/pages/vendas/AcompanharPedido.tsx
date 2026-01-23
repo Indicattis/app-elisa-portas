@@ -68,7 +68,7 @@ export default function AcompanharPedido() {
         { label: "Acompanhar Pedido" }
       ]}
     >
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Input de busca grande */}
         <div className="mb-8">
           <div className="relative">
