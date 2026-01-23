@@ -317,7 +317,12 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
               <div>
                 <p className="text-sm text-muted-foreground">Criado em</p>
                 <p className="font-medium">
-                  {format(new Date(venda.created_at), "dd/MM/yyyy 'às' HH:mm")}
+                  {venda.created_at 
+                    ? format(new Date(venda.created_at), "dd/MM/yyyy 'às' HH:mm")
+                    : pedido.created_at 
+                      ? format(new Date(pedido.created_at), "dd/MM/yyyy 'às' HH:mm")
+                      : "Data não disponível"
+                  }
                 </p>
               </div>
             </div>
