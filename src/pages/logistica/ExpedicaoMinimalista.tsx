@@ -9,6 +9,7 @@ import { useOrdensCarregamentoCalendario } from "@/hooks/useOrdensCarregamentoCa
 import { useNeoInstalacoes } from "@/hooks/useNeoInstalacoes";
 import { useNeoCorrecoes } from "@/hooks/useNeoCorrecoes";
 import { OrdensCarregamentoDisponiveis } from "@/components/expedicao/OrdensCarregamentoDisponiveis";
+import { OrdensCarregamentoDisponiveisMobile } from "@/components/expedicao/OrdensCarregamentoDisponiveisMobile";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
 import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrdemCarregamentoDrawer";
 import { NeoInstalacaoModal } from "@/components/expedicao/NeoInstalacaoModal";
@@ -354,13 +355,15 @@ export default function ExpedicaoMinimalista() {
               </Card>
 
               {/* Ordens Disponíveis */}
-              {!isMobile && (
-                <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-                  <CardContent className="p-4">
+              <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+                <CardContent className="p-4">
+                  {isMobile ? (
+                    <OrdensCarregamentoDisponiveisMobile onRefresh={handleRefresh} />
+                  ) : (
                     <OrdensCarregamentoDisponiveis onRefresh={handleRefresh} />
-                  </CardContent>
-                </Card>
-              )}
+                  )}
+                </CardContent>
+              </Card>
             </div>
           )}
         </main>
