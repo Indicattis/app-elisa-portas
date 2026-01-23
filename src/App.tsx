@@ -340,7 +340,7 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/home" element={<Home />} />
+                <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/forbidden" element={<Forbidden />} />
 
