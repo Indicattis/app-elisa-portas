@@ -8,7 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, CalendarIcon, CheckCircle2, Clock, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer } from "lucide-react";
+import { Search, DollarSign, CalendarIcon, CheckCircle2, Clock, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, TrendingUp, Target, Paintbrush, Wrench, AlertCircle, Calculator } from "lucide-react";
+import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -61,6 +62,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'custo_porta', label: 'Custo Porta', defaultVisible: true },
   { id: 'custo_pintura', label: 'Custo Pintura', defaultVisible: true },
   { id: 'valor', label: 'Valor', defaultVisible: true },
+  { id: 'lucro', label: 'Lucro', defaultVisible: true },
   { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
   { id: 'justificativa', label: 'Justificativa', defaultVisible: true },
   { id: 'faturada', label: 'Faturada', defaultVisible: true },
@@ -150,11 +152,13 @@ export default function FaturamentoDirecao() {
             tipo_produto,
             descricao,
             valor_produto,
+            valor_pintura,
             quantidade,
             faturamento,
             desconto_valor,
             custo_produto,
-            custo_pintura
+            custo_pintura,
+            lucro_item
           )
         `)
         .order("data_venda", { ascending: false });
@@ -262,6 +266,8 @@ export default function FaturamentoDirecao() {
           case 'tempo_sem_faturar':
             if (isFaturada(venda)) return -1;
             return differenceInDays(new Date(), new Date(venda.data_venda));
+          case 'lucro':
+            return calcularLucroVenda(venda);
           case 'justificativa':
             return venda.justificativa_nao_faturada || '';
           case 'faturada':
@@ -300,6 +306,11 @@ export default function FaturamentoDirecao() {
     });
   }, []);
 
+  const calcularLucroVenda = (venda: Venda) => {
+    const portas = venda.portas || [];
+    return portas.reduce((acc: number, p: any) => acc + (p.lucro_item || 0), 0);
+  };
+
   const stats = useMemo(() => {
     const faturadas = filteredVendas.filter(isFaturada);
     const naoFaturadas = filteredVendas.filter(v => !isFaturada(v));
@@ -309,6 +320,53 @@ export default function FaturamentoDirecao() {
         acc + ((v.valor_venda || 0) + (v.valor_credito || 0)), 0),
       faturadas: faturadas.length,
       naoFaturadas: naoFaturadas.length,
+    };
+  }, [filteredVendas]);
+
+  // Indicadores do período (mesmo do FaturamentoVendasMinimalista)
+  const indicadores = useMemo(() => {
+    const vendasFaturadas = filteredVendas.filter(isFaturada);
+    
+    return {
+      faturamentoTotal: filteredVendas.reduce((acc, v) => 
+        acc + (v.valor_venda || 0) + (v.valor_credito || 0), 0),
+      
+      quantidadePortas: filteredVendas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        return acc + portas.filter((p: any) => 
+          ['porta', 'porta_enrolar'].includes(p.tipo_produto)
+        ).reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
+      }, 0),
+      
+      lucroPortas: vendasFaturadas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        return acc + portas
+          .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
+          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+      }, 0),
+      
+      lucroPintura: vendasFaturadas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        return acc + portas
+          .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
+          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+      }, 0),
+      
+      lucroInstalacoes: vendasFaturadas.reduce((acc, v) => 
+        acc + (v.valor_instalacao || 0), 0),
+      
+      fretesTotais: filteredVendas.reduce((acc, v) => 
+        acc + (v.valor_frete || 0), 0),
+      
+      valorPendente: filteredVendas
+        .filter(v => !isFaturada(v))
+        .reduce((acc, v) => acc + (v.valor_venda || 0) + (v.valor_credito || 0), 0),
+      
+      lucroBrutoTotal: vendasFaturadas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        const lucroItens = portas.reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+        return acc + lucroItens + (v.valor_instalacao || 0);
+      }, 0),
     };
   }, [filteredVendas]);
 
@@ -330,7 +388,7 @@ export default function FaturamentoDirecao() {
   };
 
   const getColumnResponsiveClass = (columnId: string) => {
-    const hiddenOnMobile = ['cidade', 'previsao', 'expedicao', 'desconto', 'acrescimo', 'instalacao', 'frete', 'custo_porta', 'custo_pintura', 'tempo_sem_faturar', 'justificativa'];
+    const hiddenOnMobile = ['cidade', 'previsao', 'expedicao', 'desconto', 'acrescimo', 'instalacao', 'frete', 'custo_porta', 'custo_pintura', 'tempo_sem_faturar', 'justificativa', 'lucro'];
     if (hiddenOnMobile.includes(columnId)) {
       return 'hidden md:table-cell';
     }
@@ -338,7 +396,7 @@ export default function FaturamentoDirecao() {
   };
 
   const getColumnAlignment = (columnId: string) => {
-    const rightAligned = ['valor', 'frete', 'instalacao', 'desconto', 'acrescimo', 'custo_porta', 'custo_pintura'];
+    const rightAligned = ['valor', 'frete', 'instalacao', 'desconto', 'acrescimo', 'custo_porta', 'custo_pintura', 'lucro'];
     const centerAligned = ['faturada', 'expedicao', 'tempo_sem_faturar'];
     if (rightAligned.includes(columnId)) return 'text-right';
     if (centerAligned.includes(columnId)) return 'text-center';
@@ -403,6 +461,11 @@ export default function FaturamentoDirecao() {
           : <span className="text-white/30">-</span>;
       case 'valor':
         return <span className="text-white font-medium">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</span>;
+      case 'lucro':
+        const lucroVenda = calcularLucroVenda(venda);
+        return isFaturada(venda) 
+          ? <span className="text-emerald-400 font-medium">{formatCurrency(lucroVenda)}</span>
+          : <span className="text-white/30">-</span>;
       case 'tempo_sem_faturar':
         if (isFaturada(venda)) {
           return <span className="text-green-400/60 text-xs">Faturada</span>;
@@ -494,6 +557,92 @@ export default function FaturamentoDirecao() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Indicadores do Período */}
+      <Card className="bg-primary/5 border-primary/10 mb-6">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base text-white/80 flex items-center gap-2">
+            <Calculator className="h-4 w-4 text-blue-400" />
+            Indicadores do Período
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+            <div className="text-center p-3 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                <DollarSign className="h-3 w-3 text-blue-400" />
+                Faturamento
+              </div>
+              <p className="text-blue-400 font-bold text-lg">
+                {formatCurrency(indicadores.faturamentoTotal)}
+              </p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                <Target className="h-3 w-3 text-purple-400" />
+                Qtd Portas
+              </div>
+              <p className="text-purple-400 font-bold text-lg">
+                {indicadores.quantidadePortas}
+              </p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                <TrendingUp className="h-3 w-3 text-emerald-400" />
+                Lucro Portas
+              </div>
+              <p className="text-emerald-400 font-bold text-lg">
+                {formatCurrency(indicadores.lucroPortas)}
+              </p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                <Paintbrush className="h-3 w-3 text-orange-400" />
+                Lucro Pintura
+              </div>
+              <p className="text-orange-400 font-bold text-lg">
+                {formatCurrency(indicadores.lucroPintura)}
+              </p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                <Wrench className="h-3 w-3 text-cyan-400" />
+                Instalações
+              </div>
+              <p className="text-cyan-400 font-bold text-lg">
+                {formatCurrency(indicadores.lucroInstalacoes)}
+              </p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                <Truck className="h-3 w-3 text-amber-400" />
+                Fretes
+              </div>
+              <p className="text-amber-400 font-bold text-lg">
+                {formatCurrency(indicadores.fretesTotais)}
+              </p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                <TrendingUp className="h-3 w-3 text-green-400" />
+                Lucro Bruto
+              </div>
+              <p className="text-green-400 font-bold text-lg">
+                {formatCurrency(indicadores.lucroBrutoTotal)}
+              </p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-white/5 border border-red-500/20">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-1">
+                <AlertCircle className="h-3 w-3 text-red-400" />
+                Pendente
+              </div>
+              <p className="text-red-400 font-bold text-lg">
+                {formatCurrency(indicadores.valorPendente)}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="mb-6">
