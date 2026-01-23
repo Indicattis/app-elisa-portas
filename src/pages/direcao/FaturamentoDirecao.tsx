@@ -43,6 +43,7 @@ interface Venda {
   tipo_entrega?: string | null;
   frete_aprovado?: boolean;
   portas?: any[];
+  justificativa_nao_faturada?: string | null;
 }
 
 // Definição das colunas disponíveis
@@ -61,6 +62,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'custo_pintura', label: 'Custo Pintura', defaultVisible: true },
   { id: 'valor', label: 'Valor', defaultVisible: true },
   { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
+  { id: 'justificativa', label: 'Justificativa', defaultVisible: true },
   { id: 'faturada', label: 'Faturada', defaultVisible: true },
 ];
 
@@ -142,6 +144,7 @@ export default function FaturamentoDirecao() {
           data_prevista_entrega,
           tipo_entrega,
           frete_aprovado,
+          justificativa_nao_faturada,
           produtos_vendas (
             id,
             tipo_produto,
@@ -259,6 +262,8 @@ export default function FaturamentoDirecao() {
           case 'tempo_sem_faturar':
             if (isFaturada(venda)) return -1;
             return differenceInDays(new Date(), new Date(venda.data_venda));
+          case 'justificativa':
+            return venda.justificativa_nao_faturada || '';
           case 'faturada':
             return isFaturada(venda) ? 1 : 0;
           default:
@@ -325,7 +330,7 @@ export default function FaturamentoDirecao() {
   };
 
   const getColumnResponsiveClass = (columnId: string) => {
-    const hiddenOnMobile = ['cidade', 'previsao', 'expedicao', 'desconto', 'acrescimo', 'instalacao', 'frete', 'custo_porta', 'custo_pintura', 'tempo_sem_faturar'];
+    const hiddenOnMobile = ['cidade', 'previsao', 'expedicao', 'desconto', 'acrescimo', 'instalacao', 'frete', 'custo_porta', 'custo_pintura', 'tempo_sem_faturar', 'justificativa'];
     if (hiddenOnMobile.includes(columnId)) {
       return 'hidden md:table-cell';
     }
@@ -407,6 +412,20 @@ export default function FaturamentoDirecao() {
         if (dias >= 30) colorClass = 'text-red-400';
         else if (dias >= 14) colorClass = 'text-amber-400';
         return <span className={`${colorClass} text-xs`}>{formatarTempoSemFaturar(dias)}</span>;
+      case 'justificativa':
+        if (isFaturada(venda)) {
+          return <span className="text-white/30">-</span>;
+        }
+        return venda.justificativa_nao_faturada 
+          ? (
+            <span 
+              className="text-white/70 text-xs truncate max-w-[180px] block" 
+              title={venda.justificativa_nao_faturada}
+            >
+              {venda.justificativa_nao_faturada}
+            </span>
+          )
+          : <span className="text-amber-400/60 text-xs italic">Sem justificativa</span>;
       case 'faturada':
         return isFaturada(venda) 
           ? <Check className="h-4 w-4 text-green-400 mx-auto" />
