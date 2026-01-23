@@ -59,6 +59,12 @@ import CanaisAquisicao from "./pages/CanaisAquisicao";
 import CronogramaPostagens from "./pages/CronogramaPostagens";
 import Postagens from "./pages/Postagens";
 
+// Hub de Marketing Minimalista
+import MarketingHub from "./pages/marketing/MarketingHub";
+import PerformanceMinimalista from "./pages/marketing/PerformanceMinimalista";
+import CanaisAquisicaoMinimalista from "./pages/marketing/CanaisAquisicaoMinimalista";
+import InvestimentosMinimalista from "./pages/marketing/InvestimentosMinimalista";
+
 import FabricaHome from "./pages/FabricaHome";
 import InstalacoesHome from "./pages/InstalacoesHome";
 import AdministrativoHome from "./pages/AdministrativoHome";
@@ -363,6 +369,12 @@ const App = () => (
                 <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/forbidden" element={<Forbidden />} />
+
+                {/* Hub de Marketing Minimalista */}
+                <Route path="/marketing" element={<ProtectedRoute routeKey="marketing_hub"><MarketingHub /></ProtectedRoute>} />
+                <Route path="/marketing/performance" element={<ProtectedRoute routeKey="marketing_hub"><PerformanceMinimalista /></ProtectedRoute>} />
+                <Route path="/marketing/canais-aquisicao" element={<ProtectedRoute routeKey="marketing_hub"><CanaisAquisicaoMinimalista /></ProtectedRoute>} />
+                <Route path="/marketing/investimentos" element={<ProtectedRoute routeKey="marketing_hub"><InvestimentosMinimalista /></ProtectedRoute>} />
 
                 {/* Hub de Vendas Minimalista */}
                 <Route path="/vendas" element={<ProtectedRoute routeKey="vendas_hub"><VendasHub /></ProtectedRoute>} />
