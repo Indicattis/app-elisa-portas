@@ -692,16 +692,15 @@ export default function FaturamentoVendaMinimalista() {
                     return;
                   }
                   
+                  setCheckingPedido(true);
                   const pedidoId = await createPedidoFromVenda(venda.id);
+                  setCheckingPedido(false);
                   setShowPedidoDialog(false);
                   if (pedidoId) {
                     toast({
                       title: "Pedido criado com sucesso!",
                       description: "O pedido está pronto para ser preenchido.",
                     });
-                    navigate(`/administrativo/pedidos/${pedidoId}`);
-                  } else {
-                    navigate('/administrativo/financeiro/faturamento');
                   }
                 }}
                 className="bg-emerald-600 hover:bg-emerald-700"
