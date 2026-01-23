@@ -117,9 +117,9 @@ export default function ProducaoMinimalista() {
     );
   }
 
-  // Filtrar rotas - remover hub_fabrica_pedidos, metas, e controle_producao
+  // Filtrar rotas - remover hub_fabrica_pedidos, metas, e producao_controle
   const filteredRoutes = routes.filter(
-    route => !['hub_fabrica_pedidos', 'metas', 'controle_producao'].includes(route.key)
+    route => !['hub_fabrica_pedidos', 'metas', 'producao_controle'].includes(route.key)
   );
 
   return (
