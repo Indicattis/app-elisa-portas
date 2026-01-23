@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Search, Loader2, Package, Phone, User, Calendar, MapPin, Truck, Hammer, FileText } from "lucide-react";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Input } from "@/components/ui/input";
@@ -152,16 +152,7 @@ export default function AcompanharPedido() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Debounce da busca
-  useState(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-      setCurrentPage(1);
-    }, 500);
-    return () => clearTimeout(timer);
-  });
-
-  // Atualizar debounced search quando searchTerm mudar
-  useMemo(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchTerm);
       setCurrentPage(1);
