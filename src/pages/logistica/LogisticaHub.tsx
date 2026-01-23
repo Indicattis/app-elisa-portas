@@ -4,6 +4,7 @@ import { Truck, Car, CalendarDays, ArrowLeft, ClipboardList } from "lucide-react
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
+import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
   { label: "Controle", icon: ClipboardList, path: "/logistica/controle" },
@@ -23,6 +24,9 @@ export default function LogisticaHub() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
+      {/* Animação de partículas com fade-in */}
+      <DelayedParticles />
+      
       {/* Breadcrumb */}
       <AnimatedBreadcrumb 
         items={[

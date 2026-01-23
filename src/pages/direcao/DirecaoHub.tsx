@@ -4,6 +4,7 @@ import { ShoppingCart, DollarSign, Factory, Truck, Target, ArrowLeft } from 'luc
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
+import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
   { label: 'Vendas', icon: ShoppingCart, path: '/direcao/vendas' },
@@ -24,6 +25,9 @@ export default function DirecaoHub() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
+      {/* Animação de partículas com fade-in */}
+      <DelayedParticles />
+      
       {/* Breadcrumb */}
       <AnimatedBreadcrumb 
         items={[

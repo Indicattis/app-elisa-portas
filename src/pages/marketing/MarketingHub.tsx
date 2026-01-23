@@ -4,6 +4,7 @@ import { TrendingUp, Database, DollarSign, Lock, ArrowLeft } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
+import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
   { label: "Performance", icon: TrendingUp, path: "/marketing/performance", ativo: true },
@@ -34,6 +35,9 @@ export default function MarketingHub() {
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative">
+      {/* Animação de partículas com fade-in */}
+      <DelayedParticles />
+      
       {/* Breadcrumb animado */}
       <AnimatedBreadcrumb 
         items={[

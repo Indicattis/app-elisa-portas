@@ -89,8 +89,7 @@ export function SpaceParticles({ slowMode = false }: SpaceParticlesProps) {
     };
 
     const animate = () => {
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       const speedMultiplier = slowModeRef.current ? 0.15 : 1;
 
@@ -115,15 +114,13 @@ export function SpaceParticles({ slowMode = false }: SpaceParticlesProps) {
     initParticles();
     
     // Initial clear
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     animate();
 
     window.addEventListener('resize', () => {
       resizeCanvas();
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     });
 
     return () => {
@@ -141,7 +138,7 @@ export function SpaceParticles({ slowMode = false }: SpaceParticlesProps) {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 z-0"
-      style={{ background: '#000000' }}
+      style={{ background: 'transparent' }}
     />
   );
 }
