@@ -228,6 +228,13 @@ import ContasReceberMinimalista from "./pages/administrativo/ContasReceberMinima
 import ContasPagarMinimalista from "./pages/administrativo/ContasPagarMinimalista";
 import DocumentosMinimalista from "./pages/administrativo/DocumentosMinimalista";
 
+// Hub Fiscal Minimalista
+import FiscalHub from "./pages/administrativo/FiscalHub";
+import NotasFiscaisMinimalista from "./pages/administrativo/NotasFiscaisMinimalista";
+import EmitirNfeMinimalista from "./pages/administrativo/EmitirNfeMinimalista";
+import EmitirNfseMinimalista from "./pages/administrativo/EmitirNfseMinimalista";
+import ConfiguracoesFiscaisMinimalista from "./pages/administrativo/ConfiguracoesFiscaisMinimalista";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -425,7 +432,13 @@ const App = () => (
                 <Route path="/administrativo/compras/requisicoes" element={<ProtectedRoute routeKey="administrativo_hub"><RequisicoesMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/compras/fornecedores" element={<ProtectedRoute routeKey="administrativo_hub"><FornecedoresMinimalista /></ProtectedRoute>} />
 
-                {/* Hub da Fábrica Legado - usa autenticação própria com CPF */}
+                {/* Hub Fiscal Minimalista */}
+                <Route path="/administrativo/fiscal" element={<ProtectedRoute routeKey="administrativo_hub"><FiscalHub /></ProtectedRoute>} />
+                <Route path="/administrativo/fiscal/notas-fiscais" element={<ProtectedRoute routeKey="administrativo_hub"><NotasFiscaisMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/fiscal/notas-fiscais/emitir-nfe" element={<ProtectedRoute routeKey="administrativo_hub"><EmitirNfeMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/fiscal/notas-fiscais/emitir-nfse" element={<ProtectedRoute routeKey="administrativo_hub"><EmitirNfseMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/fiscal/configuracoes" element={<ProtectedRoute routeKey="administrativo_hub"><ConfiguracoesFiscaisMinimalista /></ProtectedRoute>} />
+
                 <Route path="/hub-fabrica" element={<HubFabrica />} />
                 <Route path="/hub-fabrica/login" element={<ProducaoLogin />} />
                 <Route path="/hub-fabrica/forbidden" element={<ForbiddenProducao />} />

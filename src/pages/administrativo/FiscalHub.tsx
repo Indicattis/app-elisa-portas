@@ -1,21 +1,16 @@
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { DollarSign, Users, ShoppingCart, FileText, Package, Lock, ArrowLeft, FolderOpen } from "lucide-react";
-
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FileText, Settings, Lock, ArrowLeft } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 
 const menuItems = [
-  { label: "Financeiro", icon: DollarSign, path: "/administrativo/financeiro", ativo: true },
-  { label: "RH/DP", icon: Users, path: "/administrativo/rh-dp", ativo: false },
-  { label: "Compras & Suprimentos", icon: ShoppingCart, path: "/administrativo/compras", ativo: true },
-  { label: "Fiscal & Contábil", icon: FileText, path: "/administrativo/fiscal", ativo: true },
-  { label: "Pedidos", icon: Package, path: "/administrativo/pedidos", ativo: true },
-  { label: "Documentos", icon: FolderOpen, path: "/administrativo/documentos", ativo: true },
+  { label: "Gestão de Notas", icon: FileText, path: "/administrativo/fiscal/notas-fiscais", ativo: true },
+  { label: "Configurações", icon: Settings, path: "/administrativo/fiscal/configuracoes", ativo: true },
 ];
 
-export default function AdministrativoHub() {
+export default function FiscalHub() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
@@ -42,7 +37,8 @@ export default function AdministrativoHub() {
       <AnimatedBreadcrumb 
         items={[
           { label: "Home", path: "/home" },
-          { label: "Administrativo" }
+          { label: "Administrativo", path: "/administrativo" },
+          { label: "Fiscal" }
         ]} 
         mounted={mounted} 
       />
@@ -52,7 +48,7 @@ export default function AdministrativoHub() {
 
       {/* Botão Voltar */}
       <button
-        onClick={() => navigate('/home')}
+        onClick={() => navigate('/administrativo')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
                    hover:bg-white/10 transition-all duration-300"
         style={{
@@ -65,8 +61,6 @@ export default function AdministrativoHub() {
           <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
         </div>
       </button>
-
-      
 
       {/* ========== VERSÃO MOBILE ========== */}
       <div className="md:hidden relative z-10 flex flex-col items-center px-6 py-10 w-full max-w-md">
@@ -112,7 +106,7 @@ export default function AdministrativoHub() {
 
       {/* ========== VERSÃO DESKTOP ========== */}
       <div className="hidden md:flex relative z-10 flex-col items-center gap-8">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const delay = 200 + index * 100;
