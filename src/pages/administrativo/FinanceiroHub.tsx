@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Receipt, Coins, Wallet, Lock, ArrowLeft } from "lucide-react";
+import { Receipt, Coins, Wallet, HandCoins, Lock, ArrowLeft } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -10,6 +10,7 @@ const menuItems = [
   { label: "Faturamento", icon: Receipt, path: "/administrativo/financeiro/faturamento", ativo: true },
   { label: "Custos", icon: Coins, path: "/administrativo/financeiro/custos", ativo: true },
   { label: "Caixa", icon: Wallet, path: "/administrativo/financeiro/caixa", ativo: true },
+  { label: "Cobranças", icon: HandCoins, path: "/administrativo/financeiro/cobrancas", ativo: true },
 ];
 
 export default function FinanceiroHub() {
@@ -108,7 +109,7 @@ export default function FinanceiroHub() {
 
       {/* ========== VERSÃO DESKTOP ========== */}
       <div className="hidden md:flex relative z-10 flex-col items-center gap-8">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const delay = 200 + index * 100;
