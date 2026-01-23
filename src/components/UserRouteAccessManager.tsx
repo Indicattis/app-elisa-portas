@@ -12,8 +12,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { 
   Loader2, Search, ChevronRight, ChevronDown, Folder, FolderOpen, 
-  Home, Globe, Shield, Users, Minus, Plus, User
+  Home, Globe, Shield, Users, Minus, Plus, User, Settings, PanelLeft, Factory
 } from "lucide-react";
+
+// Rotas do Menu Flutuante - aparecem em todas as interfaces
+const FLOATING_MENU_ROUTES = ['admin', 'paineis', 'producao_hub'];
+const floatingMenuConfig: Record<string, { label: string; icon: any; color: string }> = {
+  'admin': { label: 'Admin', icon: Settings, color: 'blue' },
+  'paineis': { label: 'Painéis', icon: PanelLeft, color: 'purple' },
+  'producao_hub': { label: 'Produção', icon: Factory, color: 'emerald' },
+};
 
 interface AppRoute {
   key: string;
@@ -487,6 +495,77 @@ export function UserRouteAccessManager() {
                   Liberar
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Menu Flutuante - Permissões Rápidas */}
+      {selectedUser && (
+        <div className={sectionWrapperClass}>
+          <div className="px-4 py-3 border-b border-amber-500/20 bg-gradient-to-r from-amber-500/15 to-transparent">
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-amber-400" />
+              <span className="text-xs font-semibold text-amber-300/80 uppercase tracking-wider">
+                Menu Flutuante
+              </span>
+              <span className="text-xs text-amber-400/50 ml-2">• Botões de acesso rápido em todas as telas</span>
+            </div>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-3 gap-3">
+              {FLOATING_MENU_ROUTES.map((routeKey) => {
+                const config = floatingMenuConfig[routeKey];
+                const route = routes?.find(r => r.key === routeKey);
+                const routeHasAccess = hasAccess(routeKey);
+                const Icon = config.icon;
+                
+                const colorClasses = {
+                  blue: {
+                    active: 'from-blue-500/20 to-blue-600/10 border-blue-500/40',
+                    inactive: 'from-blue-500/5 to-blue-600/5 border-blue-500/20',
+                    icon: 'text-blue-400',
+                    checkbox: 'border-blue-500/50 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500',
+                  },
+                  purple: {
+                    active: 'from-purple-500/20 to-purple-600/10 border-purple-500/40',
+                    inactive: 'from-purple-500/5 to-purple-600/5 border-purple-500/20',
+                    icon: 'text-purple-400',
+                    checkbox: 'border-purple-500/50 data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500',
+                  },
+                  emerald: {
+                    active: 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/40',
+                    inactive: 'from-emerald-500/5 to-emerald-600/5 border-emerald-500/20',
+                    icon: 'text-emerald-400',
+                    checkbox: 'border-emerald-500/50 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500',
+                  },
+                };
+                
+                const colors = colorClasses[config.color as keyof typeof colorClasses];
+                
+                return (
+                  <div
+                    key={routeKey}
+                    className={`flex items-center gap-3 p-4 rounded-xl transition-all border-2
+                               bg-gradient-to-r ${routeHasAccess ? colors.active : colors.inactive}
+                               ${routeHasAccess ? 'shadow-lg' : ''}`}
+                  >
+                    <Checkbox
+                      id={`floating-${routeKey}`}
+                      checked={routeHasAccess}
+                      onCheckedChange={(checked) => handleToggle(routeKey, checked as boolean)}
+                      className={colors.checkbox}
+                    />
+                    <Icon className={`h-5 w-5 ${colors.icon}`} />
+                    <label htmlFor={`floating-${routeKey}`} className="flex-1 cursor-pointer">
+                      <span className="text-sm font-medium text-white">{config.label}</span>
+                      {route && (
+                        <p className="text-xs text-white/40 mt-0.5">{route.path}</p>
+                      )}
+                    </label>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
