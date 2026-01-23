@@ -117,6 +117,7 @@ export default function AcompanharPedido() {
                     pedido={pedido as any}
                     viewMode="list"
                     isAberto={false}
+                    readOnly={true}
                   />
                 ))}
               </div>

@@ -100,7 +100,85 @@ export function usePedidosBuscaGeral(searchTerm: string) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as unknown as PedidoBuscaGeral[];
+      
+      // Buscar ordens de produção para cada pedido
+      const pedidosComOrdens = await Promise.all(
+        (data || []).map(async (pedido: any) => {
+          // Buscar status das ordens de produção
+          const [soldagem, perfiladeira, separacao, qualidade, pintura] = await Promise.all([
+            supabase
+              .from('ordens_soldagem')
+              .select('id, status, responsavel_id')
+              .eq('pedido_id', pedido.id)
+              .maybeSingle(),
+            supabase
+              .from('ordens_perfiladeira')
+              .select('id, status, responsavel_id')
+              .eq('pedido_id', pedido.id)
+              .maybeSingle(),
+            supabase
+              .from('ordens_separacao')
+              .select('id, status, responsavel_id')
+              .eq('pedido_id', pedido.id)
+              .maybeSingle(),
+            supabase
+              .from('ordens_qualidade')
+              .select('id, status, responsavel_id')
+              .eq('pedido_id', pedido.id)
+              .maybeSingle(),
+            supabase
+              .from('ordens_pintura')
+              .select('id, status, responsavel_id')
+              .eq('pedido_id', pedido.id)
+              .maybeSingle(),
+          ]);
+
+          // Função auxiliar para buscar foto do responsável
+          const fetchResponsavelFoto = async (responsavelId: string | null): Promise<string | null> => {
+            if (!responsavelId) return null;
+            const { data } = await supabase
+              .from('admin_users')
+              .select('foto_perfil_url')
+              .eq('user_id', responsavelId)
+              .maybeSingle();
+            return data?.foto_perfil_url || null;
+          };
+
+          const buildOrdemStatus = async (result: any) => {
+            const responsavelId = result.data?.responsavel_id || null;
+            const foto = await fetchResponsavelFoto(responsavelId);
+            
+            return {
+              existe: !!result.data,
+              ordem_id: result.data?.id || null,
+              status: result.data?.status || null,
+              capturada: !!responsavelId,
+              capturada_por_foto: foto,
+            };
+          };
+
+          const [ordemSoldagem, ordemPerfiladeira, ordemSeparacao, ordemQualidade, ordemPintura] = await Promise.all([
+            buildOrdemStatus(soldagem),
+            buildOrdemStatus(perfiladeira),
+            buildOrdemStatus(separacao),
+            buildOrdemStatus(qualidade),
+            buildOrdemStatus(pintura),
+          ]);
+
+          return {
+            ...pedido,
+            ordens: {
+              soldagem: ordemSoldagem,
+              perfiladeira: ordemPerfiladeira,
+              separacao: ordemSeparacao,
+              qualidade: ordemQualidade,
+              pintura: ordemPintura,
+            }
+          };
+        })
+      );
+
+      return pedidosComOrdens as unknown as PedidoBuscaGeral[];
     },
     enabled: searchTerm.length >= 2,
     staleTime: 30000, // 30 segundos
