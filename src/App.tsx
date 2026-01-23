@@ -372,9 +372,9 @@ const App = () => (
 
                 {/* Hub de Marketing Minimalista */}
                 <Route path="/marketing" element={<ProtectedRoute routeKey="marketing_hub"><MarketingHub /></ProtectedRoute>} />
-                <Route path="/marketing/performance" element={<ProtectedRoute routeKey="marketing_hub"><PerformanceMinimalista /></ProtectedRoute>} />
-                <Route path="/marketing/canais-aquisicao" element={<ProtectedRoute routeKey="marketing_hub"><CanaisAquisicaoMinimalista /></ProtectedRoute>} />
-                <Route path="/marketing/investimentos" element={<ProtectedRoute routeKey="marketing_hub"><InvestimentosMinimalista /></ProtectedRoute>} />
+            <Route path="/marketing/performance" element={<ProtectedRoute routeKey="marketing_performance"><PerformanceMinimalista /></ProtectedRoute>} />
+            <Route path="/marketing/canais-aquisicao" element={<ProtectedRoute routeKey="marketing_canais_aquisicao"><CanaisAquisicaoMinimalista /></ProtectedRoute>} />
+            <Route path="/marketing/investimentos" element={<ProtectedRoute routeKey="marketing_investimentos"><InvestimentosMinimalista /></ProtectedRoute>} />
 
                 {/* Hub de Vendas Minimalista */}
                 <Route path="/vendas" element={<ProtectedRoute routeKey="vendas_hub"><VendasHub /></ProtectedRoute>} />
