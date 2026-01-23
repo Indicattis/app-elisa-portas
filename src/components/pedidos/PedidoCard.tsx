@@ -43,6 +43,7 @@ interface PedidoCardProps {
   onArquivar?: (pedidoId: string) => Promise<void>;
   onDeletar?: (pedidoId: string) => Promise<void>;
   basePath?: string;
+  readOnly?: boolean;
 }
 export function PedidoCard({
   pedido,
@@ -56,7 +57,8 @@ export function PedidoCard({
   total,
   viewMode = 'grid',
   onArquivar,
-  onDeletar
+  onDeletar,
+  readOnly = false
 }: PedidoCardProps) {
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showAcaoEtapa, setShowAcaoEtapa] = useState(false);
@@ -1301,6 +1303,7 @@ export function PedidoCard({
               </div>
               
               {/* Col 14: Botões de ação */}
+              {!readOnly && (
               <TooltipProvider>
                 <div className="flex items-center justify-end gap-0.5">
                   {(() => {
@@ -1417,6 +1420,7 @@ export function PedidoCard({
                   })()}
                 </div>
               </TooltipProvider>
+              )}
             </div>
           </CardContent>
         </Card>
