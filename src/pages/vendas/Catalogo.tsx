@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, BookOpen, Star, Package } from 'lucide-react';
 import { useVendasCatalogo } from '@/hooks/useVendasCatalogo';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
@@ -7,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 
 export default function Catalogo() {
+  const navigate = useNavigate();
   const [busca, setBusca] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>('');
 
@@ -87,8 +89,9 @@ export default function Catalogo() {
           produtos.map((produto) => (
             <div
               key={produto.id}
+              onClick={() => navigate(`/vendas/catalogo/editar/${produto.id}`)}
               className="bg-primary/5 border border-primary/10 rounded-xl overflow-hidden backdrop-blur-xl
-                         hover:bg-primary/10 hover:border-blue-500/30 transition-all group"
+                         hover:bg-primary/10 hover:border-blue-500/30 transition-all group cursor-pointer"
             >
               {/* Imagem */}
               <div className="aspect-square bg-white/5 relative overflow-hidden">
