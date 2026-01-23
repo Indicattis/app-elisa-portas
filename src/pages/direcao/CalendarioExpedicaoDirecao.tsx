@@ -28,7 +28,7 @@ export default function CalendarioExpedicaoDirecao() {
   const queryClient = useQueryClient();
   
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewType, setViewType] = useState<'week' | 'month'>('week');
+  const [viewType, setViewType] = useState<'week' | 'month'>('month');
   const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editDrawerOpen, setEditDrawerOpen] = useState(false);
