@@ -12,6 +12,7 @@ import {
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
+import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
   { label: 'Minhas Vendas', icon: ShoppingCart, path: '/vendas/minhas-vendas' },
@@ -33,6 +34,9 @@ export default function VendasHub() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
+      {/* Animação de partículas com fade-in */}
+      <DelayedParticles />
+      
       {/* Breadcrumb */}
       <AnimatedBreadcrumb 
         items={[

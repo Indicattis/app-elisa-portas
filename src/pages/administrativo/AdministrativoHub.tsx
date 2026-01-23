@@ -5,6 +5,7 @@ import { DollarSign, Users, ShoppingCart, FileText, Package, Lock, ArrowLeft, Fo
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
+import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
   { label: "Financeiro", icon: DollarSign, path: "/administrativo/financeiro", ativo: true },
@@ -38,6 +39,9 @@ export default function AdministrativoHub() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center overflow-hidden relative">
+      {/* Animação de partículas com fade-in */}
+      <DelayedParticles />
+      
       {/* Breadcrumb */}
       <AnimatedBreadcrumb 
         items={[

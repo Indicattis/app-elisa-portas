@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
+import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
   { label: 'Gestão de Pedidos', icon: Package, path: '/fabrica/pedidos-producao' },
@@ -67,6 +68,9 @@ export default function FabricaHub() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
+      {/* Animação de partículas com fade-in */}
+      <DelayedParticles />
+      
       {/* Breadcrumb */}
       <AnimatedBreadcrumb 
         items={[
