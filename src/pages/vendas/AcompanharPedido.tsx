@@ -88,112 +88,98 @@ export default function AcompanharPedido() {
             )}
           </div>
           <p className="text-center text-white/40 text-sm mt-2">
-            Digite pelo menos 2 caracteres para buscar
+            Filtre os pedidos usando a busca acima
           </p>
         </div>
 
         {/* Resultados */}
-        {debouncedSearch.length >= 2 && (
-          <div className="space-y-4">
-            {/* Contador de resultados */}
-            <div className="flex items-center justify-between">
-              <h3 className="text-white/60 text-sm">
-                {isLoading ? (
-                  'Buscando...'
-                ) : totalEncontrados === 0 ? (
-                  'Nenhum pedido encontrado'
-                ) : (
-                  `${totalEncontrados} pedido${totalEncontrados > 1 ? 's' : ''} encontrado${totalEncontrados > 1 ? 's' : ''}`
-                )}
-              </h3>
-            </div>
-
-            {/* Lista de pedidos */}
-            {!isLoading && pedidosPaginados.length > 0 && (
-              <div className="space-y-3">
-                {pedidosPaginados.map((pedido) => (
-                  <PedidoCard
-                    key={pedido.id}
-                    pedido={pedido as any}
-                    viewMode="list"
-                    isAberto={false}
-                    readOnly={true}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Mensagem de nenhum resultado */}
-            {!isLoading && totalEncontrados === 0 && debouncedSearch.length >= 2 && (
-              <Card className="bg-white/5 border-white/10">
-                <CardContent className="p-8 text-center">
-                  <Package className="w-12 h-12 mx-auto mb-4 text-white/20" />
-                  <p className="text-white/60">
-                    Nenhum pedido encontrado para "{debouncedSearch}"
-                  </p>
-                  <p className="text-white/40 text-sm mt-2">
-                    Tente buscar por número do pedido, CPF/CNPJ ou nome do cliente
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Paginação */}
-            {totalPages > 1 && (
-              <div className="flex justify-center mt-6">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                      />
-                    </PaginationItem>
-                    
-                    {getPageNumbers().map((page, idx) => (
-                      <PaginationItem key={idx}>
-                        {page === 'ellipsis' ? (
-                          <PaginationEllipsis />
-                        ) : (
-                          <PaginationLink
-                            onClick={() => setCurrentPage(page)}
-                            isActive={currentPage === page}
-                            className="cursor-pointer"
-                          >
-                            {page}
-                          </PaginationLink>
-                        )}
-                      </PaginationItem>
-                    ))}
-                    
-                    <PaginationItem>
-                      <PaginationNext 
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            )}
+        <div className="space-y-4">
+          {/* Contador de resultados */}
+          <div className="flex items-center justify-between">
+            <h3 className="text-white/60 text-sm">
+              {isLoading ? (
+                'Carregando pedidos...'
+              ) : totalEncontrados === 0 ? (
+                'Nenhum pedido encontrado'
+              ) : (
+                `${totalEncontrados} pedido${totalEncontrados > 1 ? 's' : ''} encontrado${totalEncontrados > 1 ? 's' : ''}`
+              )}
+            </h3>
           </div>
-        )}
 
-        {/* Estado inicial */}
-        {debouncedSearch.length < 2 && (
-          <Card className="bg-white/5 border-white/10">
-            <CardContent className="p-12 text-center">
-              <Search className="w-16 h-16 mx-auto mb-4 text-white/20" />
-              <h3 className="text-lg font-medium text-white mb-2">
-                Busque um pedido
-              </h3>
-              <p className="text-white/60 max-w-md mx-auto">
-                Use a barra de busca acima para localizar pedidos em qualquer etapa do processo.
-                Você pode buscar pelo número do pedido, CPF/CNPJ ou nome do cliente.
-              </p>
-            </CardContent>
-          </Card>
-        )}
+          {/* Lista de pedidos */}
+          {!isLoading && pedidosPaginados.length > 0 && (
+            <div className="space-y-3">
+              {pedidosPaginados.map((pedido) => (
+                <PedidoCard
+                  key={pedido.id}
+                  pedido={pedido as any}
+                  viewMode="list"
+                  isAberto={false}
+                  readOnly={true}
+                  showEtapaBadge={true}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Mensagem de nenhum resultado */}
+          {!isLoading && totalEncontrados === 0 && (
+            <Card className="bg-white/5 border-white/10">
+              <CardContent className="p-8 text-center">
+                <Package className="w-12 h-12 mx-auto mb-4 text-white/20" />
+                <p className="text-white/60">
+                  {debouncedSearch.length >= 2 
+                    ? `Nenhum pedido encontrado para "${debouncedSearch}"`
+                    : 'Nenhum pedido encontrado'
+                  }
+                </p>
+                <p className="text-white/40 text-sm mt-2">
+                  Tente buscar por número do pedido, CPF/CNPJ ou nome do cliente
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Paginação */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-6">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                  
+                  {getPageNumbers().map((page, idx) => (
+                    <PaginationItem key={idx}>
+                      {page === 'ellipsis' ? (
+                        <PaginationEllipsis />
+                      ) : (
+                        <PaginationLink
+                          onClick={() => setCurrentPage(page)}
+                          isActive={currentPage === page}
+                          className="cursor-pointer"
+                        >
+                          {page}
+                        </PaginationLink>
+                      )}
+                    </PaginationItem>
+                  ))}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </div>
       </div>
     </MinimalistLayout>
   );
