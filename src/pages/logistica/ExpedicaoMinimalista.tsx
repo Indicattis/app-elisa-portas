@@ -1,9 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, CalendarDays, ArrowLeft, LogOut, Plus } from "lucide-react";
+import { Calendar, CalendarDays, ArrowLeft, LogOut, Plus, Hammer, Wrench } from "lucide-react";
 
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import { useOrdensCarregamentoCalendario } from "@/hooks/useOrdensCarregamentoCalendario";
 import { useNeoInstalacoes, useNeoInstalacoesSemData } from "@/hooks/useNeoInstalacoes";
@@ -256,25 +262,35 @@ export default function ExpedicaoMinimalista() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setNeoModalOpen(true)}
-                className="text-white/80 hover:text-white hover:bg-primary/10 text-xs"
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Neo Instalação
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setNeoCorrecaoModalOpen(true)}
-                className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 text-xs"
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Neo Correção
-              </Button>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-white/80 hover:text-white hover:bg-primary/10 text-xs"
+                  >
+                    <Plus className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Novo Neo</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem 
+                    onClick={() => setNeoModalOpen(true)}
+                    className="text-orange-600 focus:text-orange-600"
+                  >
+                    <Hammer className="h-4 w-4 mr-2" />
+                    Neo Instalação
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setNeoCorrecaoModalOpen(true)}
+                    className="text-purple-600 focus:text-purple-600"
+                  >
+                    <Wrench className="h-4 w-4 mr-2" />
+                    Neo Correção
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button
                 variant="ghost"
                 size="sm"
