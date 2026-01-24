@@ -17,6 +17,7 @@ import { NeoCorrecaoModal } from "@/components/expedicao/NeoCorrecaoModal";
 import { NeoInstalacaoDetails } from "@/components/expedicao/NeoInstalacaoDetails";
 import { NeoCorrecaoDetails } from "@/components/expedicao/NeoCorrecaoDetails";
 import { NeoServicosDisponiveis } from "@/components/expedicao/NeoServicosDisponiveis";
+import { NeoServicosDisponiveisMobile } from "@/components/expedicao/NeoServicosDisponiveisMobile";
 import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
 import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
@@ -406,14 +407,29 @@ export default function ExpedicaoMinimalista() {
               </Card>
 
               {/* Serviços Avulsos Pendentes de Agendamento */}
-              <NeoServicosDisponiveis
-                neoInstalacoes={neoInstalacoesSemData}
-                neoCorrecoes={neoCorrecoesSemData}
-                onAgendarInstalacao={handleAgendarInstalacao}
-                onAgendarCorrecao={handleAgendarCorrecao}
-                isLoadingInstalacoes={isLoadingInstalacoesSemData}
-                isLoadingCorrecoes={isLoadingCorrecoesSemData}
-              />
+              <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+                <CardContent className="p-4">
+                  {isMobile ? (
+                    <NeoServicosDisponiveisMobile
+                      neoInstalacoes={neoInstalacoesSemData}
+                      neoCorrecoes={neoCorrecoesSemData}
+                      onAgendarInstalacao={handleAgendarInstalacao}
+                      onAgendarCorrecao={handleAgendarCorrecao}
+                      isLoadingInstalacoes={isLoadingInstalacoesSemData}
+                      isLoadingCorrecoes={isLoadingCorrecoesSemData}
+                    />
+                  ) : (
+                    <NeoServicosDisponiveis
+                      neoInstalacoes={neoInstalacoesSemData}
+                      neoCorrecoes={neoCorrecoesSemData}
+                      onAgendarInstalacao={handleAgendarInstalacao}
+                      onAgendarCorrecao={handleAgendarCorrecao}
+                      isLoadingInstalacoes={isLoadingInstalacoesSemData}
+                      isLoadingCorrecoes={isLoadingCorrecoesSemData}
+                    />
+                  )}
+                </CardContent>
+              </Card>
             </div>
           )}
         </main>
