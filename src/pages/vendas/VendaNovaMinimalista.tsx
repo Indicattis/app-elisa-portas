@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -179,6 +179,24 @@ export default function VendaNovaMinimalista() {
     }, 0);
     return valorProdutos + credito + (formData.valor_frete || 0);
   };
+
+  // Memoized values to prevent re-renders that cause focus loss
+  const valorTotalMemo = useMemo(() => {
+    return portas.reduce((acc, p) => {
+      const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+      const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
+      const credito = (p.valor_credito || 0) * (p.quantidade || 1);
+      return acc + valorBase - desconto + credito;
+    }, 0) + (formData.valor_frete || 0);
+  }, [portas, formData.valor_frete]);
+
+  const validacaoDescontoMemo = useMemo(() => {
+    return validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial);
+  }, [portas, formData.forma_pagamento, formData.venda_presencial]);
+
+  const tipoAutorizacaoNecessariaMemo = useMemo(() => {
+    return getTipoAutorizacaoNecessaria(validacaoDescontoMemo);
+  }, [validacaoDescontoMemo]);
 
   const handleAddPorta = (produto: ProdutoVenda) => {
     setPortas(prev => {
@@ -752,12 +770,7 @@ export default function VendaNovaMinimalista() {
         <PagamentoSection
           paymentData={pagamentoData}
           onChange={setPagamentoData}
-          valorTotal={portas.reduce((acc, p) => {
-            const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
-            const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
-            const credito = (p.valor_credito || 0) * (p.quantidade || 1);
-            return acc + valorBase - desconto + credito;
-          }, 0) + (formData.valor_frete || 0)}
+          valorTotal={valorTotalMemo}
         />
 
         {/* Dados Adicionais */}
@@ -881,74 +894,61 @@ export default function VendaNovaMinimalista() {
             />
             
             {/* Indicador de Autorização Necessária */}
-            {(() => {
-              const validacao = validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial);
-              const tipoAutorizacao = getTipoAutorizacaoNecessaria(validacao);
-              
-              if (validacao.dentroDoLimite) {
-                return (
-                  <div className={cn(sectionWrapperClass, "border-green-500/30")}>
-                    <div className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-500/20">
-                          <CheckCircle2 className="w-5 h-5 text-green-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-green-300">Venda Dentro do Limite</p>
-                          <p className="text-xs text-green-400/70">
-                            Desconto: {validacao.percentualDesconto.toFixed(1)}% (limite: {validacao.limitePermitido.toFixed(0)}%)
-                          </p>
-                        </div>
-                      </div>
+            {validacaoDescontoMemo.dentroDoLimite && (
+              <div className={cn(sectionWrapperClass, "border-green-500/30")}>
+                <div className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-500/20">
+                      <CheckCircle2 className="w-5 h-5 text-green-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-green-300">Venda Dentro do Limite</p>
+                      <p className="text-xs text-green-400/70">
+                        Desconto: {validacaoDescontoMemo.percentualDesconto.toFixed(1)}% (limite: {validacaoDescontoMemo.limitePermitido.toFixed(0)}%)
+                      </p>
                     </div>
                   </div>
-                );
-              }
-              
-              if (tipoAutorizacao === 'responsavel_setor') {
-                return (
-                  <div className={cn(sectionWrapperClass, "border-amber-500/30")}>
-                    <div className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20">
-                          <ShieldCheck className="w-5 h-5 text-amber-400" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-amber-300">Autorização do Líder Necessária</p>
-                          <p className="text-xs text-amber-400/70">
-                            Desconto: {validacao.percentualDesconto.toFixed(1)}% (excede {validacao.excedente.toFixed(1)}%, limite: {validacao.limitePermitido.toFixed(0)}%)
-                          </p>
-                        </div>
-                        <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs">Responsável</Badge>
-                      </div>
+                </div>
+              </div>
+            )}
+            
+            {tipoAutorizacaoNecessariaMemo === 'responsavel_setor' && (
+              <div className={cn(sectionWrapperClass, "border-amber-500/30")}>
+                <div className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20">
+                      <ShieldCheck className="w-5 h-5 text-amber-400" />
                     </div>
-                  </div>
-                );
-              }
-              
-              if (tipoAutorizacao === 'master') {
-                return (
-                  <div className={cn(sectionWrapperClass, "border-orange-500/30")}>
-                    <div className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-orange-500/20">
-                          <ShieldCheck className="w-5 h-5 text-orange-400" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-orange-300">Autorização Master Necessária</p>
-                          <p className="text-xs text-orange-400/70">
-                            Desconto: {validacao.percentualDesconto.toFixed(1)}% (excede {validacao.excedente.toFixed(1)}%, limite: {validacao.limitePermitido.toFixed(0)}%)
-                          </p>
-                        </div>
-                        <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/30 text-xs">Master</Badge>
-                      </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-amber-300">Autorização do Líder Necessária</p>
+                      <p className="text-xs text-amber-400/70">
+                        Desconto: {validacaoDescontoMemo.percentualDesconto.toFixed(1)}% (excede {validacaoDescontoMemo.excedente.toFixed(1)}%, limite: {validacaoDescontoMemo.limitePermitido.toFixed(0)}%)
+                      </p>
                     </div>
+                    <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs">Responsável</Badge>
                   </div>
-                );
-              }
+                </div>
+              </div>
+            )}
               
-              return null;
-            })()}
+            {tipoAutorizacaoNecessariaMemo === 'master' && (
+              <div className={cn(sectionWrapperClass, "border-orange-500/30")}>
+                <div className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-orange-500/20">
+                      <ShieldCheck className="w-5 h-5 text-orange-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-orange-300">Autorização Master Necessária</p>
+                      <p className="text-xs text-orange-400/70">
+                        Desconto: {validacaoDescontoMemo.percentualDesconto.toFixed(1)}% (excede {validacaoDescontoMemo.excedente.toFixed(1)}%, limite: {validacaoDescontoMemo.limitePermitido.toFixed(0)}%)
+                      </p>
+                    </div>
+                    <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/30 text-xs">Master</Badge>
+                  </div>
+                </div>
+              </div>
+            )}
             
             {formData.valor_entrada > 0 && (
               <div className={sectionWrapperClass}>
