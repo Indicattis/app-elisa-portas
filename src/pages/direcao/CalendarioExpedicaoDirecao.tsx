@@ -6,13 +6,16 @@ import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useOrdensCarregamentoCalendario } from "@/hooks/useOrdensCarregamentoCalendario";
-import { useNeoInstalacoes } from "@/hooks/useNeoInstalacoes";
+import { useNeoInstalacoes, useNeoInstalacoesSemData } from "@/hooks/useNeoInstalacoes";
+import { useNeoCorrecoes, useNeoCorrecoesSemData } from "@/hooks/useNeoCorrecoes";
 import { OrdensCarregamentoDisponiveis } from "@/components/expedicao/OrdensCarregamentoDisponiveis";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
 import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrdemCarregamentoDrawer";
 import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
 import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
+import { NeoServicosDisponiveis } from "@/components/expedicao/NeoServicosDisponiveis";
+import { NeoServicosDisponiveisMobile } from "@/components/expedicao/NeoServicosDisponiveisMobile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addDays, startOfWeek, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -36,6 +39,11 @@ export default function CalendarioExpedicaoDirecao() {
 
   const { ordens, isLoading, updateOrdem } = useOrdensCarregamentoCalendario(currentDate, viewType);
   const { neoInstalacoes } = useNeoInstalacoes(currentDate, viewType);
+  const { neoCorrecoes } = useNeoCorrecoes(currentDate, viewType);
+  
+  // Neo serviços sem data (pendentes de agendamento)
+  const { neoInstalacoesSemData, updateNeoInstalacao, isLoading: isLoadingNeoInstalacoes } = useNeoInstalacoesSemData();
+  const { neoCorrecoesSemData, updateNeoCorrecao, isLoading: isLoadingNeoCorrecoes } = useNeoCorrecoesSemData();
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -93,6 +101,17 @@ export default function CalendarioExpedicaoDirecao() {
   const handleOrdemClick = (ordem: OrdemCarregamento) => {
     setSelectedOrdem(ordem);
     setDetailsOpen(true);
+  };
+
+  // Handlers para agendar Neo serviços
+  const handleAgendarInstalacao = async (id: string, data: string, hora: string) => {
+    await updateNeoInstalacao({ id, data: { data_instalacao: data } });
+    queryClient.invalidateQueries({ queryKey: ['neo_instalacoes_calendario'] });
+  };
+
+  const handleAgendarCorrecao = async (id: string, data: string, hora: string) => {
+    await updateNeoCorrecao({ id, data: { data_correcao: data } });
+    queryClient.invalidateQueries({ queryKey: ['neo_correcoes_calendario'] });
   };
 
   const handleMonthChange = (date: Date) => {
@@ -182,6 +201,7 @@ export default function CalendarioExpedicaoDirecao() {
                       startDate={weekStart}
                       ordens={ordens || []}
                       neoInstalacoes={neoInstalacoes || []}
+                      neoCorrecoes={neoCorrecoes || []}
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
@@ -196,6 +216,7 @@ export default function CalendarioExpedicaoDirecao() {
                       startDate={weekStart}
                       ordens={ordens || []}
                       neoInstalacoes={neoInstalacoes || []}
+                      neoCorrecoes={neoCorrecoes || []}
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
@@ -211,6 +232,7 @@ export default function CalendarioExpedicaoDirecao() {
                       currentMonth={currentDate}
                       ordens={ordens || []}
                       neoInstalacoes={neoInstalacoes || []}
+                      neoCorrecoes={neoCorrecoes || []}
                       onMonthChange={handleMonthChange}
                       onUpdateOrdem={handleUpdateOrdem}
                       onEdit={handleEdit}
@@ -228,6 +250,35 @@ export default function CalendarioExpedicaoDirecao() {
                 <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
                   <CardContent className="p-4">
                     <OrdensCarregamentoDisponiveis onRefresh={handleRefresh} />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Neo Serviços Pendentes de Agendamento */}
+              {isMobile ? (
+                <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+                  <CardContent className="p-4">
+                    <NeoServicosDisponiveisMobile
+                      neoInstalacoes={neoInstalacoesSemData || []}
+                      neoCorrecoes={neoCorrecoesSemData || []}
+                      onAgendarInstalacao={handleAgendarInstalacao}
+                      onAgendarCorrecao={handleAgendarCorrecao}
+                      isLoadingInstalacoes={isLoadingNeoInstalacoes}
+                      isLoadingCorrecoes={isLoadingNeoCorrecoes}
+                    />
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+                  <CardContent className="p-4">
+                    <NeoServicosDisponiveis
+                      neoInstalacoes={neoInstalacoesSemData || []}
+                      neoCorrecoes={neoCorrecoesSemData || []}
+                      onAgendarInstalacao={handleAgendarInstalacao}
+                      onAgendarCorrecao={handleAgendarCorrecao}
+                      isLoadingInstalacoes={isLoadingNeoInstalacoes}
+                      isLoadingCorrecoes={isLoadingNeoCorrecoes}
+                    />
                   </CardContent>
                 </Card>
               )}
