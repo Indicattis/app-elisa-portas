@@ -406,16 +406,14 @@ export default function ExpedicaoMinimalista() {
               </Card>
 
               {/* Serviços Avulsos Pendentes de Agendamento */}
-              {!isMobile && (
-                <NeoServicosDisponiveis
-                  neoInstalacoes={neoInstalacoesSemData}
-                  neoCorrecoes={neoCorrecoesSemData}
-                  onAgendarInstalacao={handleAgendarInstalacao}
-                  onAgendarCorrecao={handleAgendarCorrecao}
-                  isLoadingInstalacoes={isLoadingInstalacoesSemData}
-                  isLoadingCorrecoes={isLoadingCorrecoesSemData}
-                />
-              )}
+              <NeoServicosDisponiveis
+                neoInstalacoes={neoInstalacoesSemData}
+                neoCorrecoes={neoCorrecoesSemData}
+                onAgendarInstalacao={handleAgendarInstalacao}
+                onAgendarCorrecao={handleAgendarCorrecao}
+                isLoadingInstalacoes={isLoadingInstalacoesSemData}
+                isLoadingCorrecoes={isLoadingCorrecoesSemData}
+              />
             </div>
           )}
         </main>
