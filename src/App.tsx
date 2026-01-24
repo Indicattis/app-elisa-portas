@@ -196,7 +196,8 @@ import GestaoFabricaDirecao from "./pages/direcao/GestaoFabricaDirecao";
 import GestaoInstalacaoDirecao from "./pages/direcao/GestaoInstalacaoDirecao";
 import OrdensInstalacoesDirecao from "./pages/direcao/OrdensInstalacoesDirecao";
 import CalendarioExpedicaoDirecao from "./pages/direcao/CalendarioExpedicaoDirecao";
-import MetasDirecao from "./pages/direcao/MetasDirecao";
+import MetasHubDirecao from "./pages/direcao/MetasHubDirecao";
+import MetasFabricaDirecao from "./pages/direcao/MetasFabricaDirecao";
 import VendaEditarDirecao from "./pages/direcao/VendaEditarDirecao";
 import ClientesDirecao from "./pages/direcao/ClientesDirecao";
 import PedidoViewDirecao from "./pages/direcao/PedidoViewDirecao";
@@ -383,7 +384,8 @@ const App = () => (
                 <Route path="/direcao/gestao-instalacao" element={<ProtectedRoute routeKey="direcao_hub"><GestaoInstalacaoDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/gestao-instalacao/ordens-instalacoes" element={<ProtectedRoute routeKey="direcao_hub"><OrdensInstalacoesDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/calendario-expedicao" element={<ProtectedRoute routeKey="direcao_hub"><CalendarioExpedicaoDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/metas" element={<ProtectedRoute routeKey="direcao_hub"><MetasDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/metas" element={<ProtectedRoute routeKey="direcao_hub"><MetasHubDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/metas/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><MetasFabricaDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/pedidos/:id" element={<ProtectedRoute routeKey="direcao_hub"><PedidoViewDirecao /></ProtectedRoute>} />
 
                 {/* Hub de Logística Minimalista */}
