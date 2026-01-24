@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import {
   DndContext,
   DragEndEvent,
@@ -237,25 +238,28 @@ export function PedidosDraggableList({
         {viewMode === 'list' && <PedidosTotalRow pedidos={pedidosParaTotais || pedidos} />}
       </SortableContext>
 
-      <DragOverlay
-        modifiers={[restrictToWindowEdges]}
-        dropAnimation={{
-          duration: 200,
-          easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
-        }}
-      >
-        {activePedido ? (
-          <div className="opacity-90 shadow-2xl pointer-events-none">
-            <PedidoCard
-              pedido={activePedido}
-              isAberto={isAberto}
-              onMoverEtapa={onMoverEtapa}
-              isDragging
-              viewMode={viewMode}
-            />
-          </div>
-        ) : null}
-      </DragOverlay>
+      {createPortal(
+        <DragOverlay
+          modifiers={[restrictToWindowEdges]}
+          dropAnimation={{
+            duration: 200,
+            easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+          }}
+        >
+          {activePedido ? (
+            <div className="opacity-90 shadow-2xl pointer-events-none">
+              <PedidoCard
+                pedido={activePedido}
+                isAberto={isAberto}
+                onMoverEtapa={onMoverEtapa}
+                isDragging
+                viewMode={viewMode}
+              />
+            </div>
+          ) : null}
+        </DragOverlay>,
+        document.body
+      )}
     </DndContext>
   );
 }
