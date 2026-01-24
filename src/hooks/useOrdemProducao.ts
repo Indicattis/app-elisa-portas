@@ -183,12 +183,14 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       }
       
       // Mapear linhas para suas ordens
-      return ordensData.map((ordem: any) => {
+      const ordensProcessadas = ordensData.map((ordem: any) => {
         // Processar pedido e vendas
         let pedidoProcessado = null;
+        let prioridadeEtapa = 0;
         if (ordem.pedido) {
           const vendasArray = Array.isArray(ordem.pedido.vendas) ? ordem.pedido.vendas : [ordem.pedido.vendas];
           const primeiraVenda = vendasArray.length > 0 ? vendasArray[0] : null;
+          prioridadeEtapa = ordem.pedido.prioridade_etapa || 0;
           
           pedidoProcessado = {
             id: ordem.pedido.id,
@@ -196,6 +198,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
             cliente_nome: ordem.pedido.cliente_nome,
             venda_id: ordem.pedido.venda_id,
             observacoes: ordem.pedido.observacoes,
+            prioridade_etapa: prioridadeEtapa,
             vendas: primeiraVenda,
             produtos: primeiraVenda?.produtos || [],
           };
@@ -207,8 +210,20 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
           pedido: pedidoProcessado,
           admin_users: ordem.responsavel_id ? responsaveisMap[ordem.responsavel_id] || null : null,
           observacoesVisita: ordem.pedido?.id ? observacoesMap[ordem.pedido.id] || [] : [],
+          _prioridadeEtapa: prioridadeEtapa, // Campo auxiliar para ordenação
         };
-      }) as Ordem[];
+      });
+
+      // Ordenar pela prioridade_etapa do PEDIDO (maior = mais prioritário)
+      ordensProcessadas.sort((a: any, b: any) => {
+        const aPrio = a._prioridadeEtapa || 0;
+        const bPrio = b._prioridadeEtapa || 0;
+        if (bPrio !== aPrio) return bPrio - aPrio;
+        // Desempate por created_at (mais antiga primeiro)
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      });
+
+      return ordensProcessadas as Ordem[];
     },
   });
 
