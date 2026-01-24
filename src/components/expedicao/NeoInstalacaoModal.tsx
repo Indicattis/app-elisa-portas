@@ -218,7 +218,7 @@ export function NeoInstalacaoModal({
                 <SelectTrigger>
                   <SelectValue placeholder="UF" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent modal={false}>
                   {ESTADOS_BRASIL.map((uf) => (
                     <SelectItem key={uf} value={uf}>
                       {uf}
@@ -283,7 +283,7 @@ export function NeoInstalacaoModal({
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a equipe" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent modal={false}>
                   {equipes.map((equipe) => (
                     <SelectItem key={equipe.id} value={equipe.id}>
                       <div className="flex items-center gap-2">
@@ -305,7 +305,7 @@ export function NeoInstalacaoModal({
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o autorizado" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent modal={false}>
                   {autorizados.map((autorizado) => (
                     <SelectItem key={autorizado.id} value={autorizado.id}>
                       <div className="flex items-center gap-2">
