@@ -478,7 +478,7 @@ export default function GestaoFabricaDirecao() {
                       onMoverPrioridade={handleMoverPrioridade}
                       onArquivar={handleArquivar}
                       onDeletar={handleDeletarPedido}
-                      enableDragAndDrop={etapa === 'em_producao'}
+                      enableDragAndDrop={true}
                     />
                     
                     {totalPaginas > 1 && (
