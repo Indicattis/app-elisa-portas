@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -225,6 +225,9 @@ export function AdicionarOrdemCalendarioModal({
           <DialogTitle>
             Adicionar ao Calendário - {format(dataSelecionada, "dd 'de' MMMM", { locale: ptBR })}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Selecione uma ordem e configure o agendamento
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 space-y-4 overflow-hidden flex flex-col">
@@ -417,7 +420,7 @@ export function AdicionarOrdemCalendarioModal({
                           : "Selecione..."
                       } />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent modal={false}>
                       {isEntrega && responsavelTipo === 'elisa' ? (
                         veiculos.filter(v => v.ativo).map((veiculo) => (
                           <SelectItem key={veiculo.id} value={veiculo.id}>

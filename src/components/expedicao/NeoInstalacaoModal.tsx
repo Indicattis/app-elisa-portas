@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -189,6 +190,9 @@ export function NeoInstalacaoModal({
           <DialogTitle>
             {isEditing ? "Editar Instalação Avulsa" : "Nova Instalação Avulsa"}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Preencha os dados da instalação avulsa
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">

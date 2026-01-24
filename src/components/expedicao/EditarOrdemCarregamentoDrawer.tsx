@@ -292,7 +292,7 @@ export const EditarOrdemCarregamentoDrawer = ({
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent modal={false}>
                 <SelectItem value="sem-responsavel">
                   Sem responsável
                 </SelectItem>
@@ -340,7 +340,7 @@ export const EditarOrdemCarregamentoDrawer = ({
                       )}
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent modal={false}>
                     {isEntrega && responsavelTipo === 'elisa' ? (
                       veiculos.filter(v => v.ativo).map((veiculo) => (
                         <SelectItem key={veiculo.id} value={veiculo.id}>
