@@ -2071,6 +2071,42 @@ export type Database = {
         }
         Relationships: []
       }
+      frete_cidades: {
+        Row: {
+          ativo: boolean | null
+          cidade: string
+          created_at: string | null
+          created_by: string | null
+          estado: string
+          id: string
+          observacoes: string | null
+          updated_at: string | null
+          valor_frete: number
+        }
+        Insert: {
+          ativo?: boolean | null
+          cidade: string
+          created_at?: string | null
+          created_by?: string | null
+          estado: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string | null
+          valor_frete?: number
+        }
+        Update: {
+          ativo?: boolean | null
+          cidade?: string
+          created_at?: string | null
+          created_by?: string | null
+          estado?: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string | null
+          valor_frete?: number
+        }
+        Relationships: []
+      }
       instalacoes: {
         Row: {
           carregamento_concluido: boolean | null
