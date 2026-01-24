@@ -183,13 +183,17 @@ export function usePedidosBuscaGeral(searchTerm: string) {
 
       return pedidosComOrdens as unknown as PedidoBuscaGeral[];
     },
-    enabled: normalizedSearch.length >= 2,
     staleTime: 30000, // 30 segundos
   });
 
   // Filtrar resultados no cliente para busca flexível
   const pedidosFiltrados = useMemo(() => {
-    if (!pedidos || !normalizedSearch || normalizedSearch.length < 2) return [];
+    if (!pedidos) return [];
+    
+    // Se não há termo de busca, retorna todos
+    if (!normalizedSearch || normalizedSearch.length < 2) {
+      return pedidos;
+    }
     
     const termLower = normalizedSearch;
     

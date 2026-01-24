@@ -45,6 +45,7 @@ interface PedidoCardProps {
   basePath?: string;
   readOnly?: boolean;
   disableClienteClick?: boolean;
+  showEtapaBadge?: boolean;
 }
 export function PedidoCard({
   pedido,
@@ -60,7 +61,8 @@ export function PedidoCard({
   onArquivar,
   onDeletar,
   readOnly = false,
-  disableClienteClick = false
+  disableClienteClick = false,
+  showEtapaBadge = false
 }: PedidoCardProps) {
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showAcaoEtapa, setShowAcaoEtapa] = useState(false);
@@ -965,7 +967,7 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: '24px 24px 28px 1fr 70px 24px 50px 50px 95px 80px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}>
+            <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: showEtapaBadge ? '24px 65px 24px 28px 1fr 70px 24px 50px 50px 95px 80px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' : '24px 24px 28px 1fr 70px 24px 50px 50px 95px 80px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}>
               {/* Col 1: Drag Handle */}
               <div>
                 {dragHandleProps ? (
@@ -976,6 +978,34 @@ export function PedidoCard({
                   <span />
                 )}
               </div>
+              
+              {/* Col 1.5: Badge de Etapa (apenas se showEtapaBadge=true) */}
+              {showEtapaBadge && (
+                <div className="flex items-center justify-center">
+                  <Badge 
+                    variant="outline" 
+                    className={cn(
+                      "text-[8px] px-1.5 py-0.5 truncate max-w-[60px]",
+                      config?.color
+                    )}
+                  >
+                    {(() => {
+                      const labelMap: Record<string, string> = {
+                        'aberto': 'Aberto',
+                        'em_producao': 'Produção',
+                        'inspecao_qualidade': 'Qualidade',
+                        'aguardando_pintura': 'Pintura',
+                        'aguardando_coleta': 'Exp. Coleta',
+                        'aguardando_instalacao': 'Exp. Instal.',
+                        'instalacoes': 'Instalação',
+                        'correcoes': 'Correções',
+                        'finalizado': 'Finalizado'
+                      };
+                      return labelMap[etapaAtual] || config?.label || etapaAtual;
+                    })()}
+                  </Badge>
+                </div>
+              )}
               
               {/* Col 2: Índice de prioridade */}
               <div className="flex items-center justify-center">
