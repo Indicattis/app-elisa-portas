@@ -363,27 +363,154 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
 
         {/* Cliente Selecionado */}
         {!disabled && modo === 'buscar' && clienteSelecionado && (
-          <div className="border rounded-lg p-4 border-white/10 bg-white/5">
-            <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-emerald-400" />
-                  <span className="font-medium text-white">{clienteSelecionado.nome}</span>
+          <>
+            <div className="border rounded-lg p-4 border-white/10 bg-white/5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-emerald-400" />
+                    <span className="font-medium text-white">{clienteSelecionado.nome}</span>
+                  </div>
+                  <div className="text-sm text-white/50 space-y-0.5">
+                    {clienteSelecionado.cpf_cnpj && <p>CPF/CNPJ: {clienteSelecionado.cpf_cnpj}</p>}
+                    {clienteSelecionado.telefone && <p>Tel: {clienteSelecionado.telefone}</p>}
+                    {clienteSelecionado.email && <p>Email: {clienteSelecionado.email}</p>}
+                  </div>
                 </div>
-                <div className="text-sm text-white/50 space-y-0.5">
-                  {clienteSelecionado.cpf_cnpj && <p>CPF/CNPJ: {clienteSelecionado.cpf_cnpj}</p>}
-                  {clienteSelecionado.telefone && <p>Tel: {clienteSelecionado.telefone}</p>}
-                  {clienteSelecionado.email && <p>Email: {clienteSelecionado.email}</p>}
-                  {clienteSelecionado.cidade && (
-                    <p>Local: {clienteSelecionado.endereco && `${clienteSelecionado.endereco}, `}{clienteSelecionado.bairro && `${clienteSelecionado.bairro} - `}{clienteSelecionado.cidade}/{clienteSelecionado.estado}</p>
-                  )}
+                <Button variant="ghost" size="sm" onClick={handleLimparCliente} className="text-white/50 hover:text-white hover:bg-white/10">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Editable location fields for selected client */}
+            <div className="pt-2 border-t border-white/10">
+              <Label className={cn(
+                "text-xs font-medium mb-2 block",
+                (!dados.estado || !dados.cidade || !dados.cep || !dados.bairro || !dados.endereco) 
+                  ? "text-amber-400/80" 
+                  : "text-white/40"
+              )}>
+                {(!dados.estado || !dados.cidade || !dados.cep || !dados.bairro || !dados.endereco) 
+                  ? "⚠️ Complete os dados de localização obrigatórios" 
+                  : "Localização (editar se necessário)"}
+              </Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="estado_buscar" className={labelClass}>Estado *</Label>
+                  <Select
+                    value={dados.estado}
+                    onValueChange={(value) => onChange({ estado: value, cidade: '' })}
+                  >
+                    <SelectTrigger className={cn(inputClass, !dados.estado && "border-amber-500/50")}>
+                      <SelectValue placeholder="UF" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ESTADOS_BRASIL.map(estado => (
+                        <SelectItem key={estado.sigla} value={estado.sigla}>
+                          {estado.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="cidade_buscar" className={labelClass}>Cidade *</Label>
+                  <Select
+                    value={dados.cidade}
+                    onValueChange={(value) => onChange({ cidade: value })}
+                    disabled={!dados.estado}
+                  >
+                    <SelectTrigger className={cn(inputClass, !dados.cidade && "border-amber-500/50")}>
+                      <SelectValue placeholder="Selecione a cidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cidades.map(cidade => (
+                        <SelectItem key={cidade} value={cidade}>
+                          {cidade}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="cep_buscar" className={labelClass}>CEP *</Label>
+                  <Input
+                    id="cep_buscar"
+                    value={dados.cep}
+                    onChange={(e) => onChange({ cep: formatarCep(e.target.value) })}
+                    placeholder="00000-000"
+                    className={cn(inputClass, !dados.cep && "border-amber-500/50")}
+                    maxLength={9}
+                  />
+                </div>
+
+                <div className="space-y-1 md:col-span-2">
+                  <Label htmlFor="endereco_buscar" className={labelClass}>Endereço *</Label>
+                  <Input
+                    id="endereco_buscar"
+                    value={dados.endereco}
+                    onChange={(e) => onChange({ endereco: e.target.value })}
+                    placeholder="Ex: Rua das Flores, 123"
+                    className={cn(inputClass, !dados.endereco && "border-amber-500/50")}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="bairro_buscar" className={labelClass}>Bairro *</Label>
+                  <Input
+                    id="bairro_buscar"
+                    value={dados.bairro}
+                    onChange={(e) => onChange({ bairro: e.target.value })}
+                    placeholder="Nome do bairro"
+                    className={cn(inputClass, !dados.bairro && "border-amber-500/50")}
+                  />
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleLimparCliente} className="text-white/50 hover:text-white hover:bg-white/10">
-                <X className="h-4 w-4" />
-              </Button>
             </div>
-          </div>
+
+            {/* Canal de Aquisição e Público Alvo for search mode */}
+            <div className="pt-2 border-t border-white/10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-md">
+                <div className="space-y-1">
+                  <Label htmlFor="canal_aquisicao_id_buscar" className={labelClass}>Canal de Aquisição</Label>
+                  <Select
+                    value={dados.canal_aquisicao_id}
+                    onValueChange={(value) => onChange({ canal_aquisicao_id: value })}
+                  >
+                    <SelectTrigger className={inputClass}>
+                      <SelectValue placeholder="Como conheceu?" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {canais.map((canal) => (
+                        <SelectItem key={canal.id} value={canal.id}>
+                          {canal.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="publico_alvo_buscar" className={labelClass}>Público Alvo *</Label>
+                  <Select
+                    value={dados.publico_alvo}
+                    onValueChange={(value) => onChange({ publico_alvo: value })}
+                  >
+                    <SelectTrigger className={inputClass}>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cliente_final">Cliente Final</SelectItem>
+                      <SelectItem value="serralheiro">Serralheiro</SelectItem>
+                      <SelectItem value="empresa">Empresa</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Modo Cadastrar */}
