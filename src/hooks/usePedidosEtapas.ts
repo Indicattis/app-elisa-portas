@@ -1003,7 +1003,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     },
   });
 
-  // Reorganizar múltiplos pedidos (drag-and-drop)
+  // Reorganizar múltiplos pedidos (drag-and-drop) com Optimistic Update
   const reorganizarPedidos = useMutation({
     mutationFn: async (atualizacoes: { id: string; prioridade: number }[]) => {
       const updates = atualizacoes.map(({ id, prioridade }) =>
@@ -1018,16 +1018,51 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       
       if (errors.length > 0) throw errors[0].error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
-      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
-      queryClient.invalidateQueries({ queryKey: ['ordens-pintura'] });
-      toast({
-        title: "Pedidos reorganizados",
-        description: "As prioridades foram atualizadas com sucesso"
+    // Optimistic Update - atualiza UI imediatamente antes da resposta do servidor
+    onMutate: async (atualizacoes) => {
+      // Cancelar queries em andamento para evitar sobrescrever nosso update otimista
+      await queryClient.cancelQueries({ queryKey: ['pedidos-etapas', etapa] });
+      
+      // Salvar estado anterior para rollback em caso de erro
+      const previousPedidos = queryClient.getQueryData(['pedidos-etapas', etapa]);
+      
+      // Atualizar cache imediatamente com a nova ordem
+      queryClient.setQueryData(['pedidos-etapas', etapa], (old: any[]) => {
+        if (!old) return old;
+        
+        // Criar mapa de novas prioridades
+        const prioridadeMap = new Map(
+          atualizacoes.map(a => [a.id, a.prioridade])
+        );
+        
+        // Atualizar prioridades
+        const updated = old.map(pedido => ({
+          ...pedido,
+          prioridade_etapa: prioridadeMap.get(pedido.id) ?? pedido.prioridade_etapa
+        }));
+        
+        // Ordenar por prioridade (decrescente)
+        return updated.sort((a, b) => 
+          (b.prioridade_etapa || 0) - (a.prioridade_etapa || 0)
+        );
       });
+      
+      return { previousPedidos };
     },
-    onError: (error) => {
+    onSuccess: () => {
+      // Sincronizar queries relacionadas em background
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+        queryClient.invalidateQueries({ queryKey: ['ordens-pintura'] });
+      }, 1000);
+    },
+    // Rollback em caso de erro
+    onError: (error, _variables, context) => {
+      // Reverter para estado anterior
+      if (context?.previousPedidos) {
+        queryClient.setQueryData(['pedidos-etapas', etapa], context.previousPedidos);
+      }
+      
       console.error('Erro ao reorganizar pedidos:', error);
       toast({
         title: "Erro",
@@ -1035,6 +1070,13 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         variant: "destructive"
       });
     },
+    // Sincronização final em background
+    onSettled: () => {
+      // Refetch silencioso após 3 segundos para garantir sincronização
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      }, 3000);
+    }
   });
 
   // Retroceder pedido para qualquer etapa (backlog)
