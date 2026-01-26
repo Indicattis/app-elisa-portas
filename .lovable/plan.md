@@ -1,93 +1,168 @@
 
+## Plano: Corrigir Pedido 0157 e Melhorar Robustez do Auto-Avanco
 
-## Plano: Corrigir Linhas de Ordens Vazias para Pedido 0092
+### Parte 1: Correcao Manual do Pedido 0157
 
-### Problema Identificado
+O pedido 0157 (`8c4cd1a9-671b-4b49-be27-458397f9330b`) deve ser avancado manualmente para `inspecao_qualidade` e ter uma ordem de qualidade criada.
 
-O pedido **0092** (`60840c18-9164-493c-94db-a2970c4e6985`) possui 3 ordens de producao (soldagem, perfiladeira, separacao) que foram criadas **sem linhas** para executar.
+**Acoes:**
 
-**Causa Raiz:**
-A funcao `criar_ordens_producao_automaticas` verifica se ja existe uma linha em `linhas_ordens` com o mesmo `pedido_linha_id`:
-
-```sql
-AND NOT EXISTS (SELECT 1 FROM linhas_ordens lo WHERE lo.pedido_linha_id = pl.id)
-```
-
-Como ja existiam linhas de **pintura** vinculadas aos mesmos `pedido_linha_id`, a funcao ignorou a criacao de linhas para soldagem/perfiladeira/separacao.
-
-**Evidencia:**
-- Linhas de solda (Eixo, Soleira, Guia): `linhas_ordens_count = 1` (da pintura)
-- Linhas de perfiladeira (Meia cana): `linhas_ordens_count = 1` (da pintura)
-- Linhas de separacao (Motor, Central, etc.): maioria com `linhas_ordens_count = 0`
-
----
-
-### Parte 1: Corrigir a Funcao SQL
-
-Atualizar a funcao `criar_ordens_producao_automaticas` para verificar `(pedido_linha_id, tipo_ordem)` em vez de apenas `pedido_linha_id`:
-
-```text
--- ANTES (bug):
-AND NOT EXISTS (SELECT 1 FROM linhas_ordens lo WHERE lo.pedido_linha_id = pl.id)
-
--- DEPOIS (corrigido):
-AND NOT EXISTS (SELECT 1 FROM linhas_ordens lo WHERE lo.pedido_linha_id = pl.id AND lo.tipo_ordem = 'soldagem')
-```
-
-Mesma correcao para `perfiladeira` e `separacao`.
-
----
-
-### Parte 2: Criar Linhas para o Pedido Afetado
-
-Inserir manualmente as linhas nas ordens vazias:
-
-| Ordem | ID | Linhas a Criar |
-|-------|-----|----------------|
-| Soldagem | 2ceea7e4-e9d8-4c50-9206-aa7a96b46e58 | 6 itens (Eixo, Soleira, Guia) |
-| Perfiladeira | bf95cffc-7f0a-4c2e-a2a8-3b3c41383531 | 2 itens (Meia cana lisa) |
-| Separacao | a79b1427-826a-4f41-9821-438a1e97de55 | 15+ itens (Motor, Central, Orelhas, etc.) |
-
----
-
-### Resumo Tecnico da Migracao
+1. Fechar a etapa atual `em_producao` no `pedidos_etapas`
+2. Criar nova etapa `inspecao_qualidade` no `pedidos_etapas`
+3. Atualizar `etapa_atual` do pedido para `inspecao_qualidade`
+4. Chamar a funcao `criar_ordem_qualidade` para criar a ordem de qualidade
 
 ```sql
--- 1. Corrigir a funcao para verificar (pedido_linha_id, tipo_ordem)
-CREATE OR REPLACE FUNCTION public.criar_ordens_producao_automaticas(...)
--- Alterar todas as clausulas NOT EXISTS para incluir tipo_ordem
+-- 1. Fechar etapa em_producao
+UPDATE pedidos_etapas
+SET data_saida = NOW()
+WHERE pedido_id = '8c4cd1a9-671b-4b49-be27-458397f9330b'
+  AND etapa = 'em_producao'
+  AND data_saida IS NULL;
 
--- 2. Inserir linhas para soldagem
-INSERT INTO linhas_ordens (ordem_id, pedido_id, tipo_ordem, item, ...)
-SELECT '2ceea7e4-...', pl.pedido_id, 'soldagem', ...
-FROM pedido_linhas pl
-WHERE pl.pedido_id = '60840c18-...' AND pl.categoria_linha = 'solda'
-  AND NOT EXISTS (SELECT 1 FROM linhas_ordens lo 
-                  WHERE lo.pedido_linha_id = pl.id AND lo.tipo_ordem = 'soldagem');
+-- 2. Criar etapa inspecao_qualidade
+INSERT INTO pedidos_etapas (pedido_id, etapa, data_entrada)
+VALUES ('8c4cd1a9-671b-4b49-be27-458397f9330b', 'inspecao_qualidade', NOW());
 
--- 3. Inserir linhas para perfiladeira
-INSERT INTO linhas_ordens (ordem_id, pedido_id, tipo_ordem, item, ...)
-SELECT 'bf95cffc-...', pl.pedido_id, 'perfiladeira', ...
-FROM pedido_linhas pl
-WHERE pl.pedido_id = '60840c18-...' AND pl.categoria_linha = 'perfiladeira'
-  AND NOT EXISTS (SELECT 1 FROM linhas_ordens lo 
-                  WHERE lo.pedido_linha_id = pl.id AND lo.tipo_ordem = 'perfiladeira');
+-- 3. Atualizar pedido
+UPDATE pedidos_producao
+SET etapa_atual = 'inspecao_qualidade',
+    updated_at = NOW()
+WHERE id = '8c4cd1a9-671b-4b49-be27-458397f9330b';
 
--- 4. Inserir linhas para separacao
-INSERT INTO linhas_ordens (ordem_id, pedido_id, tipo_ordem, item, ...)
-SELECT 'a79b1427-...', pl.pedido_id, 'separacao', ...
-FROM pedido_linhas pl
-WHERE pl.pedido_id = '60840c18-...' AND pl.categoria_linha = 'separacao'
-  AND NOT EXISTS (SELECT 1 FROM linhas_ordens lo 
-                  WHERE lo.pedido_linha_id = pl.id AND lo.tipo_ordem = 'separacao');
+-- 4. Criar ordem de qualidade
+SELECT criar_ordem_qualidade('8c4cd1a9-671b-4b49-be27-458397f9330b');
+
+-- 5. Registrar movimentacao
+INSERT INTO pedidos_movimentacoes (pedido_id, etapa_origem, etapa_destino, observacoes)
+VALUES (
+  '8c4cd1a9-671b-4b49-be27-458397f9330b',
+  'em_producao',
+  'inspecao_qualidade',
+  'Avanco manual via migracao - correcao de auto-avanco que nao funcionou'
+);
 ```
+
+---
+
+### Parte 2: Melhorar Robustez do Auto-Avanco
+
+O problema identificado e uma possivel falha silenciosa no fluxo de auto-avanco. Melhorias propostas:
+
+**2.1. Adicionar Logs Detalhados**
+
+No `usePedidoAutoAvanco.ts`, adicionar logs mais detalhados antes e depois de cada verificacao:
+
+```typescript
+// Antes de verificarOrdensProducaoConcluidas
+console.log(`[Auto-Avanco] Pedido ${pedidoId}: Verificando ordens de producao...`);
+
+// Antes de moverParaProximaEtapa
+console.log(`[Auto-Avanco] Pedido ${pedidoId}: Iniciando moverParaProximaEtapa...`);
+
+// Apos sucesso
+console.log(`[Auto-Avanco] Pedido ${pedidoId}: Avanco concluido com sucesso`);
+```
+
+**2.2. Garantir Execucao do Callback**
+
+No `useOrdemProducao.ts`, garantir que o callback `onOrdemConcluida` seja executado de forma assincrona robusta:
+
+```typescript
+// Em concluirOrdem.onSuccess
+onSuccess: async (pedidoId) => {
+  // ... invalidate queries ...
+
+  // Tentar avanco automatico com try-catch
+  if (onOrdemConcluida) {
+    try {
+      console.log('[concluirOrdem] Chamando onOrdemConcluida para pedido:', pedidoId);
+      await onOrdemConcluida(pedidoId, tipoOrdem);
+      console.log('[concluirOrdem] onOrdemConcluida executado com sucesso');
+    } catch (error) {
+      console.error('[concluirOrdem] Erro ao executar onOrdemConcluida:', error);
+    }
+  }
+}
+```
+
+**2.3. Adicionar Fallback via Trigger no Banco**
+
+Criar um trigger no banco de dados que verifica apos cada conclusao de ordem se o pedido pode avancar automaticamente. Isso serve como fallback caso o frontend falhe:
+
+```sql
+CREATE OR REPLACE FUNCTION public.verificar_avanco_automatico_producao()
+RETURNS trigger AS $$
+DECLARE
+  v_pedido_id UUID;
+  v_etapa_atual TEXT;
+  v_linhas_pendentes INTEGER;
+  v_ordens_nao_concluidas INTEGER;
+BEGIN
+  -- Buscar pedido_id da ordem
+  v_pedido_id := NEW.pedido_id;
+  
+  -- Verificar etapa atual do pedido
+  SELECT etapa_atual INTO v_etapa_atual
+  FROM pedidos_producao
+  WHERE id = v_pedido_id;
+  
+  -- Se nao esta em em_producao, nada a fazer
+  IF v_etapa_atual != 'em_producao' THEN
+    RETURN NEW;
+  END IF;
+  
+  -- Verificar se existem linhas pendentes
+  SELECT COUNT(*) INTO v_linhas_pendentes
+  FROM linhas_ordens
+  WHERE pedido_id = v_pedido_id
+    AND tipo_ordem IN ('soldagem', 'perfiladeira', 'separacao')
+    AND concluida = false;
+  
+  -- Se tem linhas pendentes, nao avancar
+  IF v_linhas_pendentes > 0 THEN
+    RETURN NEW;
+  END IF;
+  
+  -- Verificar ordens ativas nao concluidas
+  SELECT COUNT(*) INTO v_ordens_nao_concluidas
+  FROM (
+    SELECT 1 FROM ordens_soldagem WHERE pedido_id = v_pedido_id AND historico = false AND status != 'concluido'
+    UNION ALL
+    SELECT 1 FROM ordens_perfiladeira WHERE pedido_id = v_pedido_id AND historico = false AND status != 'concluido'
+    UNION ALL
+    SELECT 1 FROM ordens_separacao WHERE pedido_id = v_pedido_id AND historico = false AND status != 'concluido'
+  ) ordens;
+  
+  IF v_ordens_nao_concluidas > 0 THEN
+    RETURN NEW;
+  END IF;
+  
+  -- Todas condicoes atendidas: agendar avanco
+  -- (Registrar em tabela de fila para processamento posterior pelo frontend)
+  INSERT INTO pedidos_avanco_pendente (pedido_id, etapa_origem, created_at)
+  VALUES (v_pedido_id, v_etapa_atual, NOW())
+  ON CONFLICT (pedido_id) DO NOTHING;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+---
+
+### Resumo das Mudancas
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| Nova migracao SQL | Corrigir pedido 0157 manualmente |
+| `src/hooks/useOrdemProducao.ts` | Adicionar try-catch e logs ao chamar onOrdemConcluida |
+| `src/hooks/usePedidoAutoAvanco.ts` | Adicionar logs detalhados em cada etapa |
 
 ---
 
 ### Resultado Esperado
 
-1. A funcao `criar_ordens_producao_automaticas` permitira que um mesmo item do pedido tenha linhas em multiplos setores (ex: solda + pintura)
-2. O pedido 0092 tera todas as linhas criadas nas 3 ordens de producao
-3. Os operadores poderao marcar os itens como concluidos em cada setor
-4. O fluxo de producao nao sera bloqueado por ordens vazias
-
+1. Pedido 0157 estara em `inspecao_qualidade` com ordem de qualidade criada
+2. Logs mais detalhados facilitarao debug de futuros problemas
+3. Sistema mais resiliente a falhas de callback
