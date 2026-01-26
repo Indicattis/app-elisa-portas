@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Package, Boxes, CheckSquare, Search, Filter } from 'lucide-react';
+import { Package, Boxes, CheckSquare, Search, Filter, AlertTriangle } from 'lucide-react';
 
 import { supabase } from '@/integrations/supabase/client';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
@@ -17,7 +17,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useSessionFilters } from '@/hooks/useSessionFilters';
 
-type LogType = 'todos' | 'pedidos' | 'estoque' | 'tarefas';
+type LogType = 'todos' | 'pedidos' | 'estoque' | 'tarefas' | 'erros';
 type PeriodType = '7' | '30' | '90' | '365';
 
 interface UnifiedLog {
@@ -26,6 +26,7 @@ interface UnifiedLog {
   description: string;
   created_at: string;
   user_name: string | null;
+  isError?: boolean;
 }
 
 export default function AdminLogs() {
@@ -43,7 +44,7 @@ export default function AdminLogs() {
       const allLogs: UnifiedLog[] = [];
 
       // Fetch pedidos_movimentacoes
-      if (logType === 'todos' || logType === 'pedidos') {
+      if (logType === 'todos' || logType === 'pedidos' || logType === 'erros') {
         const { data: pedidosLogs } = await supabase
           .from('pedidos_movimentacoes')
           .select(`
@@ -76,6 +77,15 @@ export default function AdminLogs() {
 
           for (const log of pedidosLogs) {
             const pedido = log.pedidos_producao as { numero_pedido: string } | null;
+            const isError = log.teor === 'erro' || 
+                           (log.descricao?.toLowerCase().includes('erro') ?? false) ||
+                           (log.descricao?.toLowerCase().includes('falha') ?? false) ||
+                           (log.descricao?.toLowerCase().includes('não funcionou') ?? false) ||
+                           (log.descricao?.toLowerCase().includes('não avançou') ?? false);
+            
+            // Se estamos filtrando por erros, pular logs que não são erros
+            if (logType === 'erros' && !isError) continue;
+            
             const desc = log.descricao || log.teor || `${formatEtapa(log.etapa_origem)} → ${formatEtapa(log.etapa_destino)}`;
             allLogs.push({
               id: `pedido-${log.id}`,
@@ -83,13 +93,14 @@ export default function AdminLogs() {
               description: `Pedido ${pedido?.numero_pedido || 'N/A'}: ${desc}`,
               created_at: log.created_at,
               user_name: log.user_id ? (userMap.get(log.user_id) ?? null) : null,
+              isError,
             });
           }
         }
       }
 
       // Fetch estoque_movimentacoes
-      if (logType === 'todos' || logType === 'estoque') {
+      if (logType === 'todos' || logType === 'estoque' || logType === 'erros') {
         const { data: estoqueLogs } = await supabase
           .from('estoque_movimentacoes')
           .select(`
@@ -122,12 +133,18 @@ export default function AdminLogs() {
 
           for (const log of estoqueLogs) {
             const produto = log.estoque as { nome_produto: string } | null;
+            const isError = (log.observacoes?.toLowerCase().includes('erro') ?? false) ||
+                           (log.observacoes?.toLowerCase().includes('falha') ?? false);
+            
+            if (logType === 'erros' && !isError) continue;
+            
             allLogs.push({
               id: `estoque-${log.id}`,
               type: 'estoque',
               description: `${formatTipoMovimentacao(log.tipo_movimentacao)} de ${Math.abs(log.quantidade)} un. - ${produto?.nome_produto || 'Produto'}${log.observacoes ? ` (${log.observacoes})` : ''}`,
               created_at: log.created_at,
               user_name: log.created_by ? (userMap.get(log.created_by) ?? null) : null,
+              isError,
             });
           }
         }
@@ -168,6 +185,7 @@ export default function AdminLogs() {
               description: `Tarefa concluída: ${template?.descricao || 'Tarefa'}`,
               created_at: log.data_conclusao || log.created_at,
               user_name: log.concluida_por ? (userMap.get(log.concluida_por) ?? null) : null,
+              isError: false,
             });
           }
         }
@@ -189,8 +207,11 @@ export default function AdminLogs() {
     },
   });
 
-  const getLogIcon = (type: UnifiedLog['type']) => {
-    switch (type) {
+  const getLogIcon = (log: UnifiedLog) => {
+    if (log.isError) {
+      return <AlertTriangle className="w-4 h-4" />;
+    }
+    switch (log.type) {
       case 'pedido':
         return <Package className="w-4 h-4" />;
       case 'estoque':
@@ -200,8 +221,11 @@ export default function AdminLogs() {
     }
   };
 
-  const getLogColor = (type: UnifiedLog['type']) => {
-    switch (type) {
+  const getLogColor = (log: UnifiedLog) => {
+    if (log.isError) {
+      return 'bg-red-500/20 text-red-400 border-red-500/30';
+    }
+    switch (log.type) {
       case 'pedido':
         return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
       case 'estoque':
@@ -211,8 +235,11 @@ export default function AdminLogs() {
     }
   };
 
-  const getLogLabel = (type: UnifiedLog['type']) => {
-    switch (type) {
+  const getLogLabel = (log: UnifiedLog) => {
+    if (log.isError) {
+      return 'ERRO';
+    }
+    switch (log.type) {
       case 'pedido':
         return 'Pedido';
       case 'estoque':
@@ -221,6 +248,8 @@ export default function AdminLogs() {
         return 'Tarefa';
     }
   };
+
+  const errorCount = logs?.filter(l => l.isError).length || 0;
 
   return (
     <MinimalistLayout
@@ -252,6 +281,9 @@ export default function AdminLogs() {
                 <SelectItem value="pedidos">Pedidos</SelectItem>
                 <SelectItem value="estoque">Estoque</SelectItem>
                 <SelectItem value="tarefas">Tarefas</SelectItem>
+                <SelectItem value="erros" className="text-red-400">
+                  🚨 Erros
+                </SelectItem>
               </SelectContent>
             </Select>
 
@@ -268,11 +300,23 @@ export default function AdminLogs() {
             </Select>
           </div>
 
-          {logs && (
-            <p className="text-sm text-white/50 mt-3">
-              Mostrando {logs.length} {logs.length === 1 ? 'log' : 'logs'}
-            </p>
-          )}
+          <div className="flex items-center gap-4 mt-3">
+            {logs && (
+              <p className="text-sm text-white/50">
+                Mostrando {logs.length} {logs.length === 1 ? 'log' : 'logs'}
+              </p>
+            )}
+            {errorCount > 0 && logType !== 'erros' && (
+              <Badge 
+                variant="outline" 
+                className="bg-red-500/20 text-red-400 border-red-500/30 cursor-pointer hover:bg-red-500/30"
+                onClick={() => setLogType('erros')}
+              >
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                {errorCount} {errorCount === 1 ? 'erro' : 'erros'}
+              </Badge>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -286,25 +330,29 @@ export default function AdminLogs() {
           logs.map((log) => (
             <Card 
               key={log.id} 
-              className="bg-white/5 border-white/10 hover:bg-white/10 transition-colors"
+              className={`border transition-colors ${
+                log.isError 
+                  ? 'bg-red-500/10 border-red-500/30 hover:bg-red-500/20' 
+                  : 'bg-white/5 border-white/10 hover:bg-white/10'
+              }`}
             >
               <CardContent className="p-3">
                 <div className="flex items-start gap-3">
-                  <div className={`p-2 rounded-lg ${getLogColor(log.type)}`}>
-                    {getLogIcon(log.type)}
+                  <div className={`p-2 rounded-lg ${getLogColor(log)}`}>
+                    {getLogIcon(log)}
                   </div>
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="outline" className={`text-xs ${getLogColor(log.type)}`}>
-                        {getLogLabel(log.type)}
+                      <Badge variant="outline" className={`text-xs ${getLogColor(log)}`}>
+                        {getLogLabel(log)}
                       </Badge>
                       <span className="text-xs text-white/40">
                         {format(new Date(log.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                       </span>
                     </div>
                     
-                    <p className="text-sm text-white/90 break-words">
+                    <p className={`text-sm break-words ${log.isError ? 'text-red-300' : 'text-white/90'}`}>
                       {log.description}
                     </p>
                     
@@ -320,7 +368,10 @@ export default function AdminLogs() {
           ))
         ) : (
           <div className="text-center py-12 text-white/50">
-            Nenhum log encontrado para os filtros selecionados.
+            {logType === 'erros' 
+              ? '✅ Nenhum erro encontrado no período selecionado!'
+              : 'Nenhum log encontrado para os filtros selecionados.'
+            }
           </div>
         )}
       </div>
