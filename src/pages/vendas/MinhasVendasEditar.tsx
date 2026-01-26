@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCanEditVenda } from "@/hooks/useCanEditVenda";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Calendar, User, MapPin, CreditCard, Truck, MessageSquare, Store, Percent, Save } from "lucide-react";
+import { Plus, Calendar, User, MapPin, CreditCard, Truck, MessageSquare, Store, Percent, Save, Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import type { Tables } from "@/integrations/supabase/types";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { ProdutoVendaForm } from "@/components/vendas/ProdutoVendaForm";
@@ -33,6 +34,8 @@ export default function MinhasVendasEditar() {
   const [creditoModalOpen, setCreditoModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const [observacoes, setObservacoes] = useState("");
+  const [isSavingObservacoes, setIsSavingObservacoes] = useState(false);
   const { produtos, isLoading: isLoadingProdutos, addProduto, deleteProduto, updateProduto } = useProdutosVenda(id);
   const { canais } = useCanaisAquisicao();
 
@@ -77,6 +80,7 @@ export default function MinhasVendasEditar() {
       if (vendaError) throw vendaError;
       
       setVenda(vendaData);
+      setObservacoes(vendaData.observacoes_venda || "");
     } catch (error) {
       console.error("Erro ao buscar venda:", error);
       toast({
@@ -269,6 +273,34 @@ export default function MinhasVendasEditar() {
       });
     } catch (error) {
       console.error('Erro ao remover desconto:', error);
+    }
+  };
+
+  const handleSalvarObservacoes = async () => {
+    if (!id) return;
+    
+    setIsSavingObservacoes(true);
+    try {
+      await supabase
+        .from('vendas')
+        .update({ observacoes_venda: observacoes })
+        .eq('id', id);
+      
+      setVenda(prev => prev ? { ...prev, observacoes_venda: observacoes } : null);
+      
+      toast({
+        title: "Observações salvas",
+        description: "As observações foram atualizadas com sucesso"
+      });
+    } catch (error) {
+      console.error('Erro ao salvar observações:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível salvar as observações"
+      });
+    } finally {
+      setIsSavingObservacoes(false);
     }
   };
 
@@ -470,16 +502,36 @@ export default function MinhasVendasEditar() {
               </div>
             </div>
 
-            {/* Observações */}
-            {venda.observacoes_venda && (
-              <div className="mt-6 pt-4 border-t border-blue-500/20">
-                <div className="flex items-center gap-2 text-sm font-medium text-blue-300/70 mb-2">
+            {/* Observações - Editável */}
+            <div className="mt-6 pt-4 border-t border-blue-500/20">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-blue-300/70">
                   <MessageSquare className="h-4 w-4" />
                   Observações
                 </div>
-                <p className="text-sm bg-blue-500/10 p-3 rounded-md text-blue-100/80 border border-blue-500/20">{venda.observacoes_venda}</p>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleSalvarObservacoes}
+                  disabled={isSavingObservacoes || observacoes === (venda.observacoes_venda || "")}
+                  className="text-blue-300 hover:text-blue-100 hover:bg-blue-500/20"
+                >
+                  {isSavingObservacoes ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-1" />
+                  )}
+                  Salvar
+                </Button>
               </div>
-            )}
+              <Textarea
+                value={observacoes}
+                onChange={(e) => setObservacoes(e.target.value)}
+                placeholder="Informações adicionais sobre a venda..."
+                rows={3}
+                className="bg-blue-500/10 border-blue-500/20 text-blue-100/90 placeholder:text-blue-300/40 focus:border-blue-400/50 focus:ring-blue-400/20"
+              />
+            </div>
           </CardContent>
         </Card>
 
