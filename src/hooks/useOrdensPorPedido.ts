@@ -1,7 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { EtapaPedido } from "@/types/pedidoEtapa";
 
 export type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
+
+export interface ResponsavelInfo {
+  nome: string;
+  foto_url: string | null;
+  iniciais: string;
+}
 
 export interface OrdemStatus {
   existe: boolean;
@@ -9,6 +16,18 @@ export interface OrdemStatus {
   numero_ordem: string | null;
   status: string | null;
   tipo: TipoOrdem;
+  responsavel: ResponsavelInfo | null;
+}
+
+export interface CorInfo {
+  nome: string;
+  codigo_hex: string;
+}
+
+export interface VendedorInfo {
+  nome: string;
+  foto_url: string | null;
+  iniciais: string;
 }
 
 export interface PedidoComOrdens {
@@ -17,6 +36,14 @@ export interface PedidoComOrdens {
   cliente_nome: string;
   etapa_atual: string;
   prioridade_etapa: number | null;
+  localizacao: string | null;
+  tipo_entrega: 'instalacao' | 'entrega' | null;
+  cores: CorInfo[];
+  portas_p: number;
+  portas_g: number;
+  metragem_linear: number;
+  metragem_quadrada: number;
+  vendedor: VendedorInfo | null;
   ordens: {
     soldagem: OrdemStatus;
     perfiladeira: OrdemStatus;
@@ -26,21 +53,17 @@ export interface PedidoComOrdens {
   };
 }
 
-type EtapaPedido = 'aberto' | 'em_producao' | 'inspecao_qualidade' | 'pintura' | 'aguardando_coleta' | 'concluido';
-
-const TABELA_ORDENS: Record<TipoOrdem, string> = {
-  soldagem: 'ordens_soldagem',
-  perfiladeira: 'ordens_perfiladeira',
-  separacao: 'ordens_separacao',
-  qualidade: 'ordens_qualidade',
-  pintura: 'ordens_pintura',
-};
+function getIniciais(nome: string): string {
+  const partes = nome.trim().split(/\s+/);
+  if (partes.length === 1) return partes[0].substring(0, 2).toUpperCase();
+  return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+}
 
 export function useOrdensPorPedido(etapa: EtapaPedido) {
   return useQuery({
     queryKey: ['ordens-por-pedido', etapa],
     queryFn: async (): Promise<PedidoComOrdens[]> => {
-      // Buscar pedidos da etapa
+      // Buscar pedidos da etapa com dados expandidos
       const { data: pedidos, error: pedidosError } = await supabase
         .from('pedidos_producao')
         .select(`
@@ -49,7 +72,12 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
           etapa_atual,
           prioridade_etapa,
           venda:venda_id (
-            cliente:cliente_id (nome)
+            id,
+            cidade,
+            estado,
+            tipo_entrega,
+            cliente:cliente_id (nome),
+            atendente:atendente_id (nome, foto_perfil_url)
           )
         `)
         .eq('etapa_atual', etapa)
@@ -64,34 +92,102 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
       if (!pedidos || pedidos.length === 0) return [];
 
       const pedidoIds = pedidos.map(p => p.id);
+      const vendaIds = pedidos
+        .map(p => (p.venda as any)?.id)
+        .filter(Boolean);
 
-      // Buscar ordens de todas as tabelas em paralelo
-      const [soldagem, perfiladeira, separacao, qualidade, pintura] = await Promise.all([
+      // Buscar ordens com responsáveis, produtos e linhas em paralelo
+      const [
+        soldagemRes,
+        perfiladeiraRes,
+        separacaoRes,
+        qualidadeRes,
+        pinturaRes,
+        produtosRes,
+        linhasRes,
+      ] = await Promise.all([
         supabase
           .from('ordens_soldagem')
-          .select('id, pedido_id, numero_ordem, status')
+          .select('id, pedido_id, numero_ordem, status, responsavel_id')
           .in('pedido_id', pedidoIds),
         supabase
           .from('ordens_perfiladeira')
-          .select('id, pedido_id, numero_ordem, status')
+          .select('id, pedido_id, numero_ordem, status, responsavel_id, metragem_linear')
           .in('pedido_id', pedidoIds),
         supabase
           .from('ordens_separacao')
-          .select('id, pedido_id, numero_ordem, status')
+          .select('id, pedido_id, numero_ordem, status, responsavel_id')
           .in('pedido_id', pedidoIds),
         supabase
           .from('ordens_qualidade')
-          .select('id, pedido_id, numero_ordem, status')
+          .select('id, pedido_id, numero_ordem, status, responsavel_id')
           .in('pedido_id', pedidoIds),
         supabase
           .from('ordens_pintura')
-          .select('id, pedido_id, numero_ordem, status')
+          .select('id, pedido_id, numero_ordem, status, responsavel_id, metragem_quadrada')
           .in('pedido_id', pedidoIds),
+        vendaIds.length > 0
+          ? supabase
+              .from('produtos_vendas')
+              .select(`
+                id,
+                venda_id,
+                tipo_produto,
+                largura,
+                altura,
+                quantidade,
+                cor:cor_id (nome, codigo_hex)
+              `)
+              .in('venda_id', vendaIds)
+          : Promise.resolve({ data: [] }),
+        supabase
+          .from('linhas_ordens')
+          .select('id, pedido_id, tipo_ordem, tamanho, quantidade')
+          .in('pedido_id', pedidoIds)
+          .eq('tipo_ordem', 'perfiladeira'),
       ]);
 
-      // Criar mapa de ordens por pedido_id
+      // Coletar todos os responsavel_ids únicos
+      const allResponsavelIds = new Set<string>();
+      [soldagemRes.data, perfiladeiraRes.data, separacaoRes.data, qualidadeRes.data, pinturaRes.data]
+        .forEach(ordens => {
+          ordens?.forEach((o: any) => {
+            if (o.responsavel_id) allResponsavelIds.add(o.responsavel_id);
+          });
+        });
+
+      // Buscar dados dos responsáveis
+      let responsaveisMap: Record<string, ResponsavelInfo> = {};
+      if (allResponsavelIds.size > 0) {
+        const { data: responsaveis } = await supabase
+          .from('admin_users')
+          .select('user_id, nome, foto_perfil_url')
+          .in('user_id', Array.from(allResponsavelIds));
+
+        responsaveis?.forEach(r => {
+          responsaveisMap[r.user_id] = {
+            nome: r.nome,
+            foto_url: r.foto_perfil_url,
+            iniciais: getIniciais(r.nome),
+          };
+        });
+      }
+
+      // Criar mapas para acesso rápido
+      const produtosPorVenda: Record<string, any[]> = {};
+      produtosRes.data?.forEach((p: any) => {
+        if (!produtosPorVenda[p.venda_id]) produtosPorVenda[p.venda_id] = [];
+        produtosPorVenda[p.venda_id].push(p);
+      });
+
+      const linhasPorPedido: Record<string, any[]> = {};
+      linhasRes.data?.forEach((l: any) => {
+        if (!linhasPorPedido[l.pedido_id]) linhasPorPedido[l.pedido_id] = [];
+        linhasPorPedido[l.pedido_id].push(l);
+      });
+
+      // Mapas de ordens por pedido
       const ordensMap: Record<string, Record<TipoOrdem, any>> = {};
-      
       const processOrdens = (data: any[] | null, tipo: TipoOrdem) => {
         if (!data) return;
         data.forEach(ordem => {
@@ -102,33 +198,117 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
         });
       };
 
-      processOrdens(soldagem.data, 'soldagem');
-      processOrdens(perfiladeira.data, 'perfiladeira');
-      processOrdens(separacao.data, 'separacao');
-      processOrdens(qualidade.data, 'qualidade');
-      processOrdens(pintura.data, 'pintura');
+      processOrdens(soldagemRes.data, 'soldagem');
+      processOrdens(perfiladeiraRes.data, 'perfiladeira');
+      processOrdens(separacaoRes.data, 'separacao');
+      processOrdens(qualidadeRes.data, 'qualidade');
+      processOrdens(pinturaRes.data, 'pintura');
 
       // Consolidar pedidos com ordens
       const resultado: PedidoComOrdens[] = pedidos.map(pedido => {
+        const venda = pedido.venda as any;
+        const vendaId = venda?.id;
+        const produtos = vendaId ? (produtosPorVenda[vendaId] || []) : [];
+        const linhas = linhasPorPedido[pedido.id] || [];
         const ordensDosPedido = ordensMap[pedido.id] || {};
-        
+
+        // Calcular cores únicas
+        const coresMap = new Map<string, CorInfo>();
+        produtos.forEach((p: any) => {
+          if (p.cor?.nome && p.cor?.codigo_hex) {
+            coresMap.set(p.cor.nome, {
+              nome: p.cor.nome,
+              codigo_hex: p.cor.codigo_hex,
+            });
+          }
+        });
+
+        // Calcular portas P/G (área > 25m² = G)
+        let portas_p = 0;
+        let portas_g = 0;
+        produtos
+          .filter((p: any) => p.tipo_produto === 'porta_enrolar')
+          .forEach((p: any) => {
+            const area = ((p.largura || 0) / 1000) * ((p.altura || 0) / 1000); // mm para m
+            const qtd = p.quantidade || 1;
+            if (area > 25) portas_g += qtd;
+            else portas_p += qtd;
+          });
+
+        // Calcular metragem linear (das linhas de perfiladeira)
+        let metragem_linear = 0;
+        // Primeiro verificar se a ordem de perfiladeira tem metragem
+        const ordemPerfiladeira = ordensDosPedido['perfiladeira'];
+        if (ordemPerfiladeira?.metragem_linear) {
+          metragem_linear = ordemPerfiladeira.metragem_linear;
+        } else {
+          // Calcular das linhas
+          linhas.forEach((l: any) => {
+            const metros = parseFloat(String(l.tamanho || '0').replace(',', '.')) || 0;
+            metragem_linear += metros * (l.quantidade || 1);
+          });
+        }
+
+        // Calcular metragem quadrada (para pintura)
+        let metragem_quadrada = 0;
+        const ordemPintura = ordensDosPedido['pintura'];
+        if (ordemPintura?.metragem_quadrada) {
+          metragem_quadrada = ordemPintura.metragem_quadrada;
+        } else {
+          produtos
+            .filter((p: any) => p.tipo_produto === 'porta_enrolar')
+            .forEach((p: any) => {
+              const area = ((p.largura || 0) / 1000) * ((p.altura || 0) / 1000);
+              metragem_quadrada += area * (p.quantidade || 1);
+            });
+        }
+
+        // Vendedor
+        const atendente = venda?.atendente;
+        const vendedor: VendedorInfo | null = atendente ? {
+          nome: atendente.nome,
+          foto_url: atendente.foto_perfil_url,
+          iniciais: getIniciais(atendente.nome),
+        } : null;
+
+        // Localização
+        const cidade = venda?.cidade || '';
+        const estado = venda?.estado || '';
+        const localizacao = cidade && estado ? `${cidade}/${estado}` : (cidade || estado || null);
+
+        // Tipo entrega
+        const tipoEntregaRaw = venda?.tipo_entrega;
+        const tipo_entrega: 'instalacao' | 'entrega' | null = 
+          tipoEntregaRaw === 'instalacao' ? 'instalacao' :
+          tipoEntregaRaw === 'entrega' || tipoEntregaRaw === 'coleta' ? 'entrega' : null;
+
         const criarOrdemStatus = (tipo: TipoOrdem): OrdemStatus => {
           const ordem = ordensDosPedido[tipo];
+          const responsavelId = ordem?.responsavel_id;
           return {
             existe: !!ordem,
             id: ordem?.id || null,
             numero_ordem: ordem?.numero_ordem || null,
             status: ordem?.status || null,
             tipo,
+            responsavel: responsavelId ? responsaveisMap[responsavelId] || null : null,
           };
         };
 
         return {
           id: pedido.id,
           numero_pedido: pedido.numero_pedido,
-          cliente_nome: (pedido.venda as any)?.cliente?.nome || 'Cliente não encontrado',
+          cliente_nome: (venda?.cliente as any)?.nome || 'Cliente não encontrado',
           etapa_atual: pedido.etapa_atual,
           prioridade_etapa: pedido.prioridade_etapa,
+          localizacao,
+          tipo_entrega,
+          cores: Array.from(coresMap.values()),
+          portas_p,
+          portas_g,
+          metragem_linear,
+          metragem_quadrada,
+          vendedor,
           ordens: {
             soldagem: criarOrdemStatus('soldagem'),
             perfiladeira: criarOrdemStatus('perfiladeira'),
@@ -141,6 +321,6 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
 
       return resultado;
     },
-    staleTime: 30 * 1000, // 30 segundos
+    staleTime: 30 * 1000,
   });
 }

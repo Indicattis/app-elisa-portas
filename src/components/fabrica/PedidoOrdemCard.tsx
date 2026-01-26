@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Truck, Wrench, Ruler, PaintBucket } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import type { PedidoComOrdens, OrdemStatus, TipoOrdem } from "@/hooks/useOrdensPorPedido";
 
@@ -57,43 +58,123 @@ export function PedidoOrdemCard({ pedido, onOrdemClick }: PedidoOrdemCardProps) 
   const ordensExistentes = ordens.filter(o => o.existe);
   const ordensConcluidas = ordensExistentes.filter(o => o.status === 'concluido');
 
+  const corPrincipal = pedido.cores[0];
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+      <div className="rounded-lg bg-zinc-900/50 border border-zinc-800/50 overflow-hidden">
         <CollapsibleTrigger asChild>
           <button
-            className="w-full rounded-lg bg-zinc-900/50 border border-zinc-800/50 p-4 
+            className="w-full h-[30px] px-2 flex items-center gap-2 
                        hover:bg-zinc-800/50 transition-all duration-200 text-left"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {isOpen ? (
-                  <ChevronDown className="w-5 h-5 text-zinc-400" />
-                ) : (
-                  <ChevronRight className="w-5 h-5 text-zinc-400" />
-                )}
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-white">
-                      Pedido #{pedido.numero_pedido}
-                    </span>
-                    {ordensExistentes.length > 0 && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-700/50 text-zinc-400">
-                        {ordensConcluidas.length}/{ordensExistentes.length} ordens
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-sm text-zinc-400">
-                    {pedido.cliente_nome}
-                  </span>
-                </div>
+            {/* Chevron */}
+            {isOpen ? (
+              <ChevronDown className="w-3 h-3 text-zinc-500 flex-shrink-0" />
+            ) : (
+              <ChevronRight className="w-3 h-3 text-zinc-500 flex-shrink-0" />
+            )}
+
+            {/* Número pedido */}
+            <span className="text-xs font-medium text-white flex-shrink-0">
+              #{pedido.numero_pedido}
+            </span>
+
+            {/* Separador */}
+            <div className="w-px h-4 bg-zinc-700/50 flex-shrink-0" />
+
+            {/* Cor */}
+            {corPrincipal && (
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <div 
+                  className="w-2.5 h-2.5 rounded-sm border border-zinc-600/50" 
+                  style={{ backgroundColor: corPrincipal.codigo_hex }} 
+                />
+                <span className="text-[10px] text-zinc-400 max-w-[60px] truncate">
+                  {corPrincipal.nome}
+                </span>
               </div>
-            </div>
+            )}
+
+            {/* Localização */}
+            {pedido.localizacao && (
+              <span className="text-[10px] text-zinc-500 flex-shrink-0 max-w-[80px] truncate">
+                {pedido.localizacao}
+              </span>
+            )}
+
+            {/* Portas P/G */}
+            {(pedido.portas_p > 0 || pedido.portas_g > 0) && (
+              <div className="flex gap-1 flex-shrink-0">
+                {pedido.portas_p > 0 && (
+                  <span className="text-[10px] px-1 py-0.5 rounded bg-blue-500/20 text-blue-400">
+                    P:{pedido.portas_p}
+                  </span>
+                )}
+                {pedido.portas_g > 0 && (
+                  <span className="text-[10px] px-1 py-0.5 rounded bg-orange-500/20 text-orange-400">
+                    G:{pedido.portas_g}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Metragem linear */}
+            {pedido.metragem_linear > 0 && (
+              <div className="flex items-center gap-0.5 flex-shrink-0">
+                <Ruler className="w-2.5 h-2.5 text-zinc-500" />
+                <span className="text-[10px] text-zinc-400">
+                  {pedido.metragem_linear.toFixed(1)}m
+                </span>
+              </div>
+            )}
+
+            {/* Metragem quadrada */}
+            {pedido.metragem_quadrada > 0 && (
+              <div className="flex items-center gap-0.5 flex-shrink-0">
+                <PaintBucket className="w-2.5 h-2.5 text-zinc-500" />
+                <span className="text-[10px] text-zinc-400">
+                  {pedido.metragem_quadrada.toFixed(1)}m²
+                </span>
+              </div>
+            )}
+
+            {/* Spacer */}
+            <div className="flex-1 min-w-0" />
+
+            {/* Contador ordens */}
+            {ordensExistentes.length > 0 && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-700/50 text-zinc-400 flex-shrink-0">
+                {ordensConcluidas.length}/{ordensExistentes.length}
+              </span>
+            )}
+
+            {/* Ícone entrega/instalação */}
+            {pedido.tipo_entrega === 'instalacao' ? (
+              <Wrench className="w-3 h-3 text-cyan-400 flex-shrink-0" />
+            ) : pedido.tipo_entrega === 'entrega' ? (
+              <Truck className="w-3 h-3 text-indigo-400 flex-shrink-0" />
+            ) : null}
+
+            {/* Avatar vendedor */}
+            {pedido.vendedor && (
+              <Avatar className="h-5 w-5 border border-zinc-700 flex-shrink-0">
+                <AvatarImage src={pedido.vendedor.foto_url || undefined} />
+                <AvatarFallback className="text-[8px] bg-zinc-800 text-zinc-400">
+                  {pedido.vendedor.iniciais}
+                </AvatarFallback>
+              </Avatar>
+            )}
           </button>
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className="p-4 pt-2">
+          <div className="p-3 pt-2 border-t border-zinc-800/50">
+            {/* Cliente nome */}
+            <p className="text-xs text-zinc-400 mb-2 truncate">
+              {pedido.cliente_nome}
+            </p>
+            
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {ordens.map((ordem) => (
                 <button
@@ -102,15 +183,26 @@ export function PedidoOrdemCard({ pedido, onOrdemClick }: PedidoOrdemCardProps) 
                   disabled={!ordem.existe}
                   className={cn(
                     "px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",
-                    "flex flex-col items-start gap-0.5",
+                    "flex items-center justify-between gap-2",
                     ordem.existe ? "cursor-pointer" : "cursor-not-allowed opacity-60",
                     getStatusStyle(ordem.status)
                   )}
                 >
-                  <span className="font-medium">{ORDEM_LABELS[ordem.tipo]}</span>
-                  <span className="text-xs opacity-80">
-                    {ordem.existe ? getStatusLabel(ordem.status) : 'Sem ordem'}
-                  </span>
+                  <div className="flex flex-col items-start gap-0.5 min-w-0">
+                    <span className="font-medium text-xs">{ORDEM_LABELS[ordem.tipo]}</span>
+                    <span className="text-[10px] opacity-80">
+                      {ordem.existe ? getStatusLabel(ordem.status) : 'Sem ordem'}
+                    </span>
+                  </div>
+                  
+                  {ordem.responsavel && (
+                    <Avatar className="h-5 w-5 border border-current/30 flex-shrink-0">
+                      <AvatarImage src={ordem.responsavel.foto_url || undefined} />
+                      <AvatarFallback className="text-[8px] bg-current/20">
+                        {ordem.responsavel.iniciais}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                 </button>
               ))}
             </div>
