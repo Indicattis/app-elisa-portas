@@ -1,168 +1,108 @@
 
-## Plano: Corrigir Pedido 0157 e Melhorar Robustez do Auto-Avanco
+## Plano: Adicionar Botao "Logs" em /admin e Criar Pagina /admin/logs
 
-### Parte 1: Correcao Manual do Pedido 0157
+### Visao Geral
 
-O pedido 0157 (`8c4cd1a9-671b-4b49-be27-458397f9330b`) deve ser avancado manualmente para `inspecao_qualidade` e ter uma ordem de qualidade criada.
+Adicionar um botao "Logs" no hub de administracao (/admin) que encaminha para uma nova pagina /admin/logs. Esta pagina exibira logs consolidados do sistema a partir de varias tabelas existentes:
 
-**Acoes:**
+- `pedidos_movimentacoes` - Movimentacoes de pedidos de producao
+- `estoque_movimentacoes` - Movimentacoes de estoque
+- `tarefas_historico` - Historico de tarefas concluidas
 
-1. Fechar a etapa atual `em_producao` no `pedidos_etapas`
-2. Criar nova etapa `inspecao_qualidade` no `pedidos_etapas`
-3. Atualizar `etapa_atual` do pedido para `inspecao_qualidade`
-4. Chamar a funcao `criar_ordem_qualidade` para criar a ordem de qualidade
+### Arquivos a Modificar/Criar
 
-```sql
--- 1. Fechar etapa em_producao
-UPDATE pedidos_etapas
-SET data_saida = NOW()
-WHERE pedido_id = '8c4cd1a9-671b-4b49-be27-458397f9330b'
-  AND etapa = 'em_producao'
-  AND data_saida IS NULL;
+| Arquivo | Acao |
+|---------|------|
+| `src/pages/admin/AdminHub.tsx` | Adicionar item "Logs" no menuItems |
+| `src/pages/admin/AdminLogs.tsx` | Criar nova pagina de logs |
+| `src/App.tsx` | Adicionar rota /admin/logs |
 
--- 2. Criar etapa inspecao_qualidade
-INSERT INTO pedidos_etapas (pedido_id, etapa, data_entrada)
-VALUES ('8c4cd1a9-671b-4b49-be27-458397f9330b', 'inspecao_qualidade', NOW());
+### Parte 1: Adicionar Botao no Hub
 
--- 3. Atualizar pedido
-UPDATE pedidos_producao
-SET etapa_atual = 'inspecao_qualidade',
-    updated_at = NOW()
-WHERE id = '8c4cd1a9-671b-4b49-be27-458397f9330b';
-
--- 4. Criar ordem de qualidade
-SELECT criar_ordem_qualidade('8c4cd1a9-671b-4b49-be27-458397f9330b');
-
--- 5. Registrar movimentacao
-INSERT INTO pedidos_movimentacoes (pedido_id, etapa_origem, etapa_destino, observacoes)
-VALUES (
-  '8c4cd1a9-671b-4b49-be27-458397f9330b',
-  'em_producao',
-  'inspecao_qualidade',
-  'Avanco manual via migracao - correcao de auto-avanco que nao funcionou'
-);
-```
-
----
-
-### Parte 2: Melhorar Robustez do Auto-Avanco
-
-O problema identificado e uma possivel falha silenciosa no fluxo de auto-avanco. Melhorias propostas:
-
-**2.1. Adicionar Logs Detalhados**
-
-No `usePedidoAutoAvanco.ts`, adicionar logs mais detalhados antes e depois de cada verificacao:
+Modificar o array `menuItems` em `AdminHub.tsx`:
 
 ```typescript
-// Antes de verificarOrdensProducaoConcluidas
-console.log(`[Auto-Avanco] Pedido ${pedidoId}: Verificando ordens de producao...`);
+import { Shield, Briefcase, Building2, Users, LogOut, LayoutDashboard, Tv, ArrowLeft, FileText } from "lucide-react";
 
-// Antes de moverParaProximaEtapa
-console.log(`[Auto-Avanco] Pedido ${pedidoId}: Iniciando moverParaProximaEtapa...`);
-
-// Apos sucesso
-console.log(`[Auto-Avanco] Pedido ${pedidoId}: Avanco concluido com sucesso`);
+const menuItems = [
+  { label: "Permissões", icon: Shield, path: "/admin/permissions" },
+  { label: "Cargos", icon: Briefcase, path: "/admin/roles" },
+  { label: "Empresas", icon: Building2, path: "/admin/companies" },
+  { label: "Usuários", icon: Users, path: "/admin/users" },
+  { label: "Logs", icon: FileText, path: "/admin/logs" },  // NOVO
+];
 ```
 
-**2.2. Garantir Execucao do Callback**
+### Parte 2: Criar Pagina AdminLogs
 
-No `useOrdemProducao.ts`, garantir que o callback `onOrdemConcluida` seja executado de forma assincrona robusta:
+Nova pagina seguindo o padrao MinimalistLayout:
+
+```text
+/src/pages/admin/AdminLogs.tsx
+
+Funcionalidades:
+- Filtro por tipo de log (Pedidos, Estoque, Tarefas)
+- Filtro por data (ultimos 7 dias, 30 dias, etc.)
+- Busca por texto
+- Lista com scroll infinito ou paginacao
+- Exibicao formatada de cada tipo de log
+```
+
+Estrutura visual:
+- Header com titulo "Logs do Sistema" e breadcrumb
+- Filtros em card com glassmorphism
+- Lista de logs com icones diferenciados por tipo
+- Cada log mostra: data/hora, tipo, descricao, usuario responsavel
+
+### Parte 3: Adicionar Rota
+
+Em `App.tsx`, adicionar apos a rota /admin/users:
 
 ```typescript
-// Em concluirOrdem.onSuccess
-onSuccess: async (pedidoId) => {
-  // ... invalidate queries ...
-
-  // Tentar avanco automatico com try-catch
-  if (onOrdemConcluida) {
-    try {
-      console.log('[concluirOrdem] Chamando onOrdemConcluida para pedido:', pedidoId);
-      await onOrdemConcluida(pedidoId, tipoOrdem);
-      console.log('[concluirOrdem] onOrdemConcluida executado com sucesso');
-    } catch (error) {
-      console.error('[concluirOrdem] Erro ao executar onOrdemConcluida:', error);
-    }
+<Route
+  path="/admin/logs"
+  element={
+    <ProtectedRoute routeKey="admin_logs">
+      <AdminLogs />
+    </ProtectedRoute>
   }
-}
+/>
 ```
 
-**2.3. Adicionar Fallback via Trigger no Banco**
+### Parte 4: Adicionar Rota no Banco (Permissoes)
 
-Criar um trigger no banco de dados que verifica apos cada conclusao de ordem se o pedido pode avancar automaticamente. Isso serve como fallback caso o frontend falhe:
+Criar entrada na tabela `app_routes` para controle de acesso:
 
 ```sql
-CREATE OR REPLACE FUNCTION public.verificar_avanco_automatico_producao()
-RETURNS trigger AS $$
-DECLARE
-  v_pedido_id UUID;
-  v_etapa_atual TEXT;
-  v_linhas_pendentes INTEGER;
-  v_ordens_nao_concluidas INTEGER;
-BEGIN
-  -- Buscar pedido_id da ordem
-  v_pedido_id := NEW.pedido_id;
-  
-  -- Verificar etapa atual do pedido
-  SELECT etapa_atual INTO v_etapa_atual
-  FROM pedidos_producao
-  WHERE id = v_pedido_id;
-  
-  -- Se nao esta em em_producao, nada a fazer
-  IF v_etapa_atual != 'em_producao' THEN
-    RETURN NEW;
-  END IF;
-  
-  -- Verificar se existem linhas pendentes
-  SELECT COUNT(*) INTO v_linhas_pendentes
-  FROM linhas_ordens
-  WHERE pedido_id = v_pedido_id
-    AND tipo_ordem IN ('soldagem', 'perfiladeira', 'separacao')
-    AND concluida = false;
-  
-  -- Se tem linhas pendentes, nao avancar
-  IF v_linhas_pendentes > 0 THEN
-    RETURN NEW;
-  END IF;
-  
-  -- Verificar ordens ativas nao concluidas
-  SELECT COUNT(*) INTO v_ordens_nao_concluidas
-  FROM (
-    SELECT 1 FROM ordens_soldagem WHERE pedido_id = v_pedido_id AND historico = false AND status != 'concluido'
-    UNION ALL
-    SELECT 1 FROM ordens_perfiladeira WHERE pedido_id = v_pedido_id AND historico = false AND status != 'concluido'
-    UNION ALL
-    SELECT 1 FROM ordens_separacao WHERE pedido_id = v_pedido_id AND historico = false AND status != 'concluido'
-  ) ordens;
-  
-  IF v_ordens_nao_concluidas > 0 THEN
-    RETURN NEW;
-  END IF;
-  
-  -- Todas condicoes atendidas: agendar avanco
-  -- (Registrar em tabela de fila para processamento posterior pelo frontend)
-  INSERT INTO pedidos_avanco_pendente (pedido_id, etapa_origem, created_at)
-  VALUES (v_pedido_id, v_etapa_atual, NOW())
-  ON CONFLICT (pedido_id) DO NOTHING;
-  
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+INSERT INTO app_routes (key, label, path, interface, parent_key, ordem)
+VALUES ('admin_logs', 'Logs do Sistema', '/admin/logs', 'admin', 'admin', 50);
 ```
 
----
+### Design da Pagina de Logs
 
-### Resumo das Mudancas
-
-| Arquivo | Alteracao |
-|---------|-----------|
-| Nova migracao SQL | Corrigir pedido 0157 manualmente |
-| `src/hooks/useOrdemProducao.ts` | Adicionar try-catch e logs ao chamar onOrdemConcluida |
-| `src/hooks/usePedidoAutoAvanco.ts` | Adicionar logs detalhados em cada etapa |
-
----
+```text
++----------------------------------------------------------+
+|  <- Voltar     Logs do Sistema                           |
+|                Historico de acoes do sistema             |
++----------------------------------------------------------+
+|  [Buscar...]  [Tipo: Todos v]  [Periodo: 7 dias v]       |
+|                                                          |
+|  Mostrando 156 logs                                      |
++----------------------------------------------------------+
+|  [icone] Pedido 0092 - Avancou para inspecao_qualidade   |
+|  26/01/2026 15:10  por  Maria Silva                      |
++----------------------------------------------------------+
+|  [icone] Estoque - Saida de 10 unidades de Fechadura     |
+|  26/01/2026 14:30  por  Joao Santos                      |
++----------------------------------------------------------+
+|  ...                                                     |
++----------------------------------------------------------+
+```
 
 ### Resultado Esperado
 
-1. Pedido 0157 estara em `inspecao_qualidade` com ordem de qualidade criada
-2. Logs mais detalhados facilitarao debug de futuros problemas
-3. Sistema mais resiliente a falhas de callback
+1. Botao "Logs" aparece no grid do /admin (posicao 5)
+2. Clique navega para /admin/logs
+3. Pagina exibe logs consolidados de varias fontes
+4. Filtros permitem buscar logs especificos
+5. Controle de acesso via permissoes (routeKey: admin_logs)
