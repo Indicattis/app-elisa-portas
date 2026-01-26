@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Table,
   TableBody,
@@ -113,16 +115,34 @@ export default function AcordosAutorizados() {
     }
   };
 
-  // Resumo de portas
-  const getResumoPortas = (acordo: AcordoAutorizado) => {
+  // Cores das portas por tamanho
+  const PORTA_COLORS: Record<string, string> = {
+    P: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40',
+    G: 'bg-purple-500/20 text-purple-400 border-purple-500/40',
+    GG: 'bg-orange-500/20 text-orange-400 border-orange-500/40',
+  };
+
+  // Resumo de portas como badges
+  const getResumoPortasBadges = (acordo: AcordoAutorizado) => {
     const resumo = acordo.portas.reduce((acc, p) => {
       acc[p.tamanho] = (acc[p.tamanho] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    return Object.entries(resumo)
-      .map(([tam, qtd]) => `${qtd}${tam}`)
-      .join(', ');
+    return Object.entries(resumo).map(([tam, qtd]) => (
+      <Badge 
+        key={tam} 
+        variant="outline" 
+        className={`text-[10px] px-1.5 py-0 ${PORTA_COLORS[tam] || 'bg-white/10 text-white/70 border-white/20'}`}
+      >
+        {qtd}{tam}
+      </Badge>
+    ));
+  };
+
+  // Iniciais do nome
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   return (
@@ -219,6 +239,7 @@ export default function AcordosAutorizados() {
                         <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
                         <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
                         <TableHead className="text-xs text-white/70 text-center">Data</TableHead>
+                        <TableHead className="text-xs text-white/70 text-center">Criado por</TableHead>
                         <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -240,7 +261,9 @@ export default function AcordosAutorizados() {
                             {acordo.autorizado_nome}
                           </TableCell>
                           <TableCell className="text-center">
-                            <span className="text-white/80">{getResumoPortas(acordo)}</span>
+                            <div className="flex items-center justify-center gap-1">
+                              {getResumoPortasBadges(acordo)}
+                            </div>
                           </TableCell>
                           <TableCell className="text-right font-medium text-green-400">
                             {formatCurrency(acordo.valor_acordado)}
@@ -255,6 +278,29 @@ export default function AcordosAutorizados() {
                           </TableCell>
                           <TableCell className="text-center text-white/60">
                             {format(new Date(acordo.data_acordo), 'dd/MM/yy', { locale: ptBR })}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {acordo.criador ? (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex justify-center">
+                                      <Avatar className="h-6 w-6">
+                                        <AvatarImage src={acordo.criador.foto_perfil_url} />
+                                        <AvatarFallback className="text-[10px] bg-primary/20 text-primary">
+                                          {getInitials(acordo.criador.nome)}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{acordo.criador.nome}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : (
+                              <span className="text-white/40">-</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
