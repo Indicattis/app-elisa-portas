@@ -636,6 +636,11 @@ const App = () => (
 
                 {/* Hub de Painéis */}
                 <Route path="/paineis" element={<ProtectedRoute routeKey="paineis"><PaineisHome /></ProtectedRoute>} />
+                <Route path="/paineis/tv-dashboard" element={<ProtectedRoute routeKey="tv_dashboard"><TvDashboard /></ProtectedRoute>} />
+                <Route path="/paineis/mapa" element={<ProtectedRoute routeKey="mapa_autorizados"><MapaAutorizados /></ProtectedRoute>} />
+                <Route path="/paineis/diario-bordo" element={<ProtectedRoute routeKey="diario_bordo"><DiarioBordo /></ProtectedRoute>} />
+                <Route path="/paineis/calendario" element={<ProtectedRoute routeKey="calendario"><Calendario /></ProtectedRoute>} />
+                <Route path="/paineis/contador-vendas" element={<ProtectedRoute routeKey="contador_vendas"><ContadorVendas /></ProtectedRoute>} />
                 
                 {/* Redirect TV Dashboard */}
                 <Route path="/tv-dashboard" element={<Navigate to="/paineis/tv-dashboard" replace />} />
