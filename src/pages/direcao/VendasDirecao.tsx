@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVendas } from '@/hooks/useVendas';
 import { useAuth } from '@/hooks/useAuth';
+import { useSessionFilters } from '@/hooks/useSessionFilters';
 import { useColumnConfig, ColumnConfig } from '@/hooks/useColumnConfig';
 import { ProductIconsSummary } from '@/components/vendas/ProductIconsSummary';
 import { ColumnManager } from '@/components/ColumnManager';
@@ -72,15 +73,31 @@ export default function VendasDirecao() {
   const { isAdmin, user } = useAuth();
   const { vendas, isLoading } = useVendas();
   const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState('');
-  
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: startOfMonth(new Date()),
-    to: endOfMonth(new Date())
+  // Filtros persistentes na sessão
+  const [searchTerm, setSearchTerm] = useSessionFilters<string>({
+    key: 'direcao_vendas_search',
+    defaultValue: ''
   });
-  const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
+  
+  const [dateRange, setDateRange] = useSessionFilters<DateRange | undefined>({
+    key: 'direcao_vendas_daterange',
+    defaultValue: {
+      from: startOfMonth(new Date()),
+      to: endOfMonth(new Date())
+    }
+  });
+  
+  const [selectedAtendente, setSelectedAtendente] = useSessionFilters<string>({
+    key: 'direcao_vendas_atendente',
+    defaultValue: 'todos'
+  });
+  
+  const [selectedMonth, setSelectedMonth] = useSessionFilters<number | null>({
+    key: 'direcao_vendas_month',
+    defaultValue: null
+  });
+
   const [atendentes, setAtendentes] = useState<any[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [sortConfig, setSortConfig] = useState<{
     column: string | null;
     direction: 'asc' | 'desc' | null;
