@@ -218,7 +218,8 @@ import RequisicoesMinimalista from "./pages/administrativo/RequisicoesMinimalist
 import FornecedoresMinimalista from "./pages/administrativo/FornecedoresMinimalista";
 import FrotaMinimalista from "./pages/logistica/FrotaMinimalista";
 import FreteMinimalista from "./pages/logistica/FreteMinimalista";
-import AutorizadosPrecos from "./pages/logistica/AutorizadosPrecos";
+import AcordosAutorizados from "./pages/logistica/AcordosAutorizados";
+import AutorizadosPrecosDirecao from "./pages/direcao/AutorizadosPrecosDirecao";
 import InstalacoesHub from "./pages/logistica/InstalacoesHub";
 import EquipesMinimalista from "./pages/logistica/EquipesMinimalista";
 import CronogramaMinimalista from "./pages/logistica/CronogramaMinimalista";
@@ -389,6 +390,7 @@ const App = () => (
                 <Route path="/direcao/metas" element={<ProtectedRoute routeKey="direcao_hub"><MetasHubDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/metas/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><MetasFabricaDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/pedidos/:id" element={<ProtectedRoute routeKey="direcao_hub"><PedidoViewDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/autorizados" element={<ProtectedRoute routeKey="direcao_hub"><AutorizadosPrecosDirecao /></ProtectedRoute>} />
 
                 {/* Hub de Logística Minimalista */}
                 <Route path="/logistica" element={<ProtectedRoute routeKey="logistica_hub"><LogisticaHub /></ProtectedRoute>} />
@@ -396,7 +398,7 @@ const App = () => (
                 <Route path="/logistica/expedicao" element={<ProtectedRoute routeKey="logistica_hub"><ExpedicaoMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/frota" element={<ProtectedRoute routeKey="logistica_hub"><FrotaMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/frete" element={<ProtectedRoute routeKey="logistica_hub"><FreteMinimalista /></ProtectedRoute>} />
-                <Route path="/logistica/autorizados" element={<ProtectedRoute routeKey="logistica_hub"><AutorizadosPrecos /></ProtectedRoute>} />
+                <Route path="/logistica/autorizados" element={<ProtectedRoute routeKey="logistica_hub"><AcordosAutorizados /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes" element={<ProtectedRoute routeKey="logistica_hub"><InstalacoesHub /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/ordens-instalacoes" element={<ProtectedRoute routeKey="logistica_hub"><OrdensInstalacoesLogistica /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/equipes" element={<ProtectedRoute routeKey="logistica_hub"><EquipesMinimalista /></ProtectedRoute>} />

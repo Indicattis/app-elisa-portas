@@ -44,6 +44,91 @@ export type Database = {
         }
         Relationships: []
       }
+      acordo_portas: {
+        Row: {
+          acordo_id: string
+          id: string
+          tamanho: string
+          valor_unitario: number
+        }
+        Insert: {
+          acordo_id: string
+          id?: string
+          tamanho: string
+          valor_unitario?: number
+        }
+        Update: {
+          acordo_id?: string
+          id?: string
+          tamanho?: string
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acordo_portas_acordo_id_fkey"
+            columns: ["acordo_id"]
+            isOneToOne: false
+            referencedRelation: "acordos_instalacao_autorizados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acordos_instalacao_autorizados: {
+        Row: {
+          autorizado_id: string
+          cliente_cidade: string
+          cliente_estado: string
+          cliente_nome: string
+          created_at: string
+          created_by: string | null
+          data_acordo: string
+          id: string
+          observacoes: string | null
+          quantidade_portas: number
+          status: string
+          updated_at: string
+          valor_acordado: number
+        }
+        Insert: {
+          autorizado_id: string
+          cliente_cidade: string
+          cliente_estado: string
+          cliente_nome: string
+          created_at?: string
+          created_by?: string | null
+          data_acordo?: string
+          id?: string
+          observacoes?: string | null
+          quantidade_portas?: number
+          status?: string
+          updated_at?: string
+          valor_acordado?: number
+        }
+        Update: {
+          autorizado_id?: string
+          cliente_cidade?: string
+          cliente_estado?: string
+          cliente_nome?: string
+          created_at?: string
+          created_by?: string | null
+          data_acordo?: string
+          id?: string
+          observacoes?: string | null
+          quantidade_portas?: number
+          status?: string
+          updated_at?: string
+          valor_acordado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acordos_instalacao_autorizados_autorizado_id_fkey"
+            columns: ["autorizado_id"]
+            isOneToOne: false
+            referencedRelation: "autorizados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       adicionais: {
         Row: {
           ativo: boolean

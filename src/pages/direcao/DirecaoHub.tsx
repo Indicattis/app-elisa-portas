@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, DollarSign, Factory, Truck, Target, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, DollarSign, Factory, Truck, Target, ArrowLeft, Users } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
@@ -12,6 +12,7 @@ const menuItems = [
   { label: 'Gestão de Fábrica', icon: Factory, path: '/direcao/gestao-fabrica' },
   { label: 'Gestão de Instalações', icon: Truck, path: '/direcao/gestao-instalacao' },
   { label: 'Metas', icon: Target, path: '/direcao/metas' },
+  { label: 'Autorizados', icon: Users, path: '/direcao/autorizados' },
 ];
 
 export default function DirecaoHub() {
