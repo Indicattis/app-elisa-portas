@@ -263,6 +263,44 @@ export type Database = {
         }
         Relationships: []
       }
+      autorizado_precos_portas: {
+        Row: {
+          autorizado_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          tamanho: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          autorizado_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          tamanho: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          autorizado_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          tamanho?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autorizado_precos_portas_autorizado_id_fkey"
+            columns: ["autorizado_id"]
+            isOneToOne: false
+            referencedRelation: "autorizados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       autorizados: {
         Row: {
           ativo: boolean
