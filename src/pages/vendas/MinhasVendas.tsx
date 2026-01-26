@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, ShoppingCart, DollarSign, FileCheck, Search, CalendarIcon, Truck, Hammer, ArrowUpDown, ArrowUp, ArrowDown, Settings2 } from 'lucide-react';
+import { Plus, ShoppingCart, DollarSign, FileCheck, Search, CalendarIcon, Truck, Hammer, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
@@ -15,6 +15,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { ColumnManager } from '@/components/ColumnManager';
 import { useColumnConfig, ColumnConfig } from '@/hooks/useColumnConfig';
 import { cn } from '@/lib/utils';
+import { VendaBloqueadaDialog } from "@/components/vendas/VendaBloqueadaDialog";
+import { BlockReason } from "@/hooks/useCanEditVenda";
 
 interface ProdutoVenda {
   id: string;
@@ -37,7 +39,9 @@ interface Venda {
   tipo_entrega: string | null;
   comprovante_url: string | null;
   produtos_vendas: ProdutoVenda[];
-  pedidos_producao: { status: string } | null;
+  pedidos_producao: { id: string; status: string } | null;
+  atendente_id: string | null;
+  frete_aprovado: boolean | null;
 }
 
 const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
@@ -59,13 +63,18 @@ type SortDirection = 'asc' | 'desc';
 
 export default function MinhasVendas() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [mesAtual] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState('');
   const [dataInicio, setDataInicio] = useState<Date | undefined>(startOfMonth(new Date()));
   const [dataFim, setDataFim] = useState<Date | undefined>(endOfMonth(new Date()));
   const [sortField, setSortField] = useState<SortField>('data');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  
+  // Estados para o dialog de bloqueio
+  const [bloqueioDialogOpen, setBloqueioDialogOpen] = useState(false);
+  const [blockReason, setBlockReason] = useState<BlockReason>(null);
+  const [selectedPedidoId, setSelectedPedidoId] = useState<string | null>(null);
 
   const {
     columns,
@@ -97,8 +106,10 @@ export default function MinhasVendas() {
           data_prevista_entrega,
           tipo_entrega,
           comprovante_url,
-          produtos_vendas(id, tipo_produto, desconto_valor),
-          pedidos_producao!left(status)
+          atendente_id,
+          frete_aprovado,
+          produtos_vendas(id, tipo_produto, desconto_valor, faturamento),
+          pedidos_producao!left(id, status)
         `)
         .eq('atendente_id', user.id);
 
@@ -190,6 +201,47 @@ export default function MinhasVendas() {
       case 'cancelado': return 'Cancelado';
       case 'pendente': return 'Pendente';
       default: return status || 'Aguardando';
+    }
+  };
+
+  // Função de verificação antes de editar
+  const handleEditVenda = async (venda: Venda) => {
+    try {
+      // Verificar se é o proprietário
+      const isOwner = venda.atendente_id === user?.id;
+      if (!isOwner && !isAdmin) {
+        setBlockReason('nao_proprietario');
+        setBloqueioDialogOpen(true);
+        return;
+      }
+
+      // Verificar faturamento - todos os produtos faturados E frete aprovado
+      const produtos = venda.produtos_vendas || [];
+      const todosFaturados = produtos.length > 0 && 
+        produtos.every((p: any) => p.faturamento === true);
+      const freteAprovado = venda.frete_aprovado === true;
+      const isFaturada = todosFaturados && freteAprovado;
+
+      // Verificar pedido vinculado
+      const hasPedido = !!venda.pedidos_producao?.id;
+      setSelectedPedidoId(venda.pedidos_producao?.id || null);
+
+      // Determinar bloqueio
+      if (isFaturada && hasPedido) {
+        setBlockReason('ambos');
+        setBloqueioDialogOpen(true);
+      } else if (isFaturada) {
+        setBlockReason('faturada');
+        setBloqueioDialogOpen(true);
+      } else if (hasPedido) {
+        setBlockReason('com_pedido');
+        setBloqueioDialogOpen(true);
+      } else {
+        // Pode editar - navegar para página de edição
+        navigate(`/vendas/minhas-vendas/editar/${venda.id}`);
+      }
+    } catch (error) {
+      console.error('Erro ao verificar permissões:', error);
     }
   };
 
@@ -407,7 +459,7 @@ export default function MinhasVendas() {
                   <TableRow 
                     key={venda.id}
                     className="border-blue-500/10 hover:bg-blue-500/10 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/dashboard/vendas/${venda.id}`)}
+                    onClick={() => handleEditVenda(venda)}
                   >
                     {visibleColumns.map((col) => (
                       <TableCell key={col.id} className="text-blue-100/90">
@@ -437,6 +489,14 @@ export default function MinhasVendas() {
           </div>
         )}
       </div>
+
+      {/* Dialog de bloqueio */}
+      <VendaBloqueadaDialog
+        open={bloqueioDialogOpen}
+        onOpenChange={setBloqueioDialogOpen}
+        blockReason={blockReason}
+        pedidoId={selectedPedidoId}
+      />
     </MinimalistLayout>
   );
 }
