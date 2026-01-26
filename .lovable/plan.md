@@ -1,117 +1,228 @@
 
-## Plano: Remover Paginação e Corrigir Ordens Faltantes
+
+## Plano: Nova Pagina de Precos por Autorizado
 
 ### Visao Geral
 
-O usuario identificou dois problemas na pagina `/direcao/gestao-fabrica`:
+Criar uma nova pagina `/logistica/autorizados` acessivel via o hub de Logistica que permitira gerenciar valores de instalacao de portas de enrolar por tamanho para cada parceiro autorizado.
 
-1. **Ordens faltantes**: Os 3 ultimos pedidos na etapa "Em Producao" (0087, 0092, 0093) nao possuem ordens de producao, apesar de terem linhas de producao cadastradas
-2. **Paginacao**: Solicita remocao da paginacao para exibir todos os pedidos de uma vez
+### Tamanhos de Portas
 
----
-
-### Parte 1: Remover Paginacao
-
-A paginacao sera removida da pagina GestaoFabricaDirecao. Todos os pedidos da etapa serao exibidos sem limite.
-
-#### Alteracoes no Arquivo
-
-**Arquivo:** `src/pages/direcao/GestaoFabricaDirecao.tsx`
-
-| Linha | Alteracao |
-|-------|-----------|
-| 49 | Remover estado `paginaAtual` |
-| 53 | Remover constante `ITENS_POR_PAGINA` |
-| 164-166 | Remover `useEffect` que reseta paginacao |
-| 168-171 | Remover calculo de paginacao (`totalPaginas`, `indiceInicio`, etc.) |
-| 348 | Remover texto de paginacao no header |
-| 470 | Alterar de `pedidosPaginados` para `pedidosFiltrados` |
-| 484-536 | Remover bloco completo da UI de paginacao |
+| Tamanho | Descricao | Area |
+|---------|-----------|------|
+| P | Pequena | menor que 25m2 |
+| G | Grande | entre 25m2 e 50m2 |
+| GG | Extra Grande | maior que 50m2 |
 
 ---
 
-### Parte 2: Criar Ordens para Pedidos Antigos
+### Parte 1: Banco de Dados
 
-Os pedidos que entraram na etapa "em_producao" antes da implementacao do sistema de criacao automatica nao possuem ordens. Uma migration SQL criara as ordens faltantes.
+Criar uma nova tabela `autorizado_precos_portas` para armazenar os valores por autorizado e tamanho.
 
-#### Pedidos Afetados
+#### Nova Tabela: autorizado_precos_portas
 
-| Pedido | Cliente | Linhas Solda | Linhas Perfiladeira | Linhas Separacao |
-|--------|---------|--------------|---------------------|------------------|
-| 0087 | Finamore Comercio... | 3 | 1 | 10 |
-| 0092 | Valderi Lopes | 6 | 2 | 19 |
-| 0093 | TREINAMENTO E ASSESSORIA... | 3 | 2 | 10 |
-
-#### SQL para Criar Ordens
+| Coluna | Tipo | Descricao |
+|--------|------|-----------|
+| id | uuid | Chave primaria |
+| autorizado_id | uuid | FK para autorizados |
+| tamanho | text | P, G ou GG |
+| valor | numeric | Valor em R$ |
+| created_at | timestamp | Data de criacao |
+| updated_at | timestamp | Data de atualizacao |
+| created_by | uuid | Usuario que criou |
 
 ```sql
--- Inserir ordens de soldagem para pedidos que tem linhas de solda mas nao tem ordens
-INSERT INTO ordens_soldagem (pedido_id, numero_ordem, status)
-SELECT DISTINCT 
-  pl.pedido_id,
-  'SOL-' || SUBSTRING(pl.pedido_id::text, 1, 8),
-  'pendente'
-FROM pedido_linhas pl
-WHERE pl.categoria_linha = 'solda'
-  AND pl.pedido_id IN (
-    '0d4acc35-162e-44cf-b2f5-19fa3fc66755',
-    '60840c18-9164-493c-94db-a2970c4e6985',
-    '1b05ea5b-844b-418d-a5fa-7c4936d97f8b'
-  )
-  AND NOT EXISTS (
-    SELECT 1 FROM ordens_soldagem os WHERE os.pedido_id = pl.pedido_id
-  );
+CREATE TABLE autorizado_precos_portas (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  autorizado_id uuid REFERENCES autorizados(id) ON DELETE CASCADE NOT NULL,
+  tamanho text NOT NULL CHECK (tamanho IN ('P', 'G', 'GG')),
+  valor numeric(10,2) NOT NULL DEFAULT 0,
+  created_at timestamptz DEFAULT now() NOT NULL,
+  updated_at timestamptz DEFAULT now() NOT NULL,
+  created_by uuid REFERENCES auth.users(id),
+  UNIQUE(autorizado_id, tamanho)
+);
 
--- Inserir ordens de perfiladeira
-INSERT INTO ordens_perfiladeira (pedido_id, numero_ordem, status)
-SELECT DISTINCT 
-  pl.pedido_id,
-  'PERF-' || SUBSTRING(pl.pedido_id::text, 1, 8),
-  'pendente'
-FROM pedido_linhas pl
-WHERE pl.categoria_linha = 'perfiladeira'
-  AND pl.pedido_id IN (
-    '0d4acc35-162e-44cf-b2f5-19fa3fc66755',
-    '60840c18-9164-493c-94db-a2970c4e6985',
-    '1b05ea5b-844b-418d-a5fa-7c4936d97f8b'
-  )
-  AND NOT EXISTS (
-    SELECT 1 FROM ordens_perfiladeira op WHERE op.pedido_id = pl.pedido_id
-  );
+ALTER TABLE autorizado_precos_portas ENABLE ROW LEVEL SECURITY;
 
--- Inserir ordens de separacao
-INSERT INTO ordens_separacao (pedido_id, numero_ordem, status)
-SELECT DISTINCT 
-  pl.pedido_id,
-  'SEP-' || SUBSTRING(pl.pedido_id::text, 1, 8),
-  'pendente'
-FROM pedido_linhas pl
-WHERE pl.categoria_linha = 'separacao'
-  AND pl.pedido_id IN (
-    '0d4acc35-162e-44cf-b2f5-19fa3fc66755',
-    '60840c18-9164-493c-94db-a2970c4e6985',
-    '1b05ea5b-844b-418d-a5fa-7c4936d97f8b'
-  )
-  AND NOT EXISTS (
-    SELECT 1 FROM ordens_separacao ose WHERE ose.pedido_id = pl.pedido_id
-  );
+CREATE POLICY "Usuarios autenticados podem ver precos"
+  ON autorizado_precos_portas FOR SELECT
+  TO authenticated USING (true);
+
+CREATE POLICY "Usuarios autenticados podem inserir precos"
+  ON autorizado_precos_portas FOR INSERT
+  TO authenticated WITH CHECK (true);
+
+CREATE POLICY "Usuarios autenticados podem atualizar precos"
+  ON autorizado_precos_portas FOR UPDATE
+  TO authenticated USING (true);
+
+CREATE POLICY "Usuarios autenticados podem deletar precos"
+  ON autorizado_precos_portas FOR DELETE
+  TO authenticated USING (true);
 ```
 
 ---
 
-### Arquivos a Modificar
+### Parte 2: Adicionar Botao no Hub de Logistica
 
-| Arquivo | Alteracao |
-|---------|-----------|
-| `src/pages/direcao/GestaoFabricaDirecao.tsx` | Remover toda logica e UI de paginacao |
-| Nova migration SQL | Criar ordens faltantes para os 3 pedidos |
+Modificar `src/pages/logistica/LogisticaHub.tsx` para incluir novo item de menu.
+
+#### Alteracao no menuItems (linha 9-15)
+
+```typescript
+const menuItems = [
+  { label: "Controle", icon: ClipboardList, path: "/logistica/controle" },
+  { label: "Calendario", icon: Truck, path: "/logistica/expedicao" },
+  { label: "Frota", icon: Car, path: "/logistica/frota" },
+  { label: "Instalacoes", icon: CalendarDays, path: "/logistica/instalacoes" },
+  { label: "Frete", icon: Package, path: "/logistica/frete" },
+  { label: "Autorizados", icon: Users, path: "/logistica/autorizados" }, // NOVO
+];
+```
+
+Importar icone `Users` do lucide-react.
+
+---
+
+### Parte 3: Criar Nova Pagina
+
+Criar arquivo `src/pages/logistica/AutorizadosPrecos.tsx` seguindo o padrao de `FreteMinimalista.tsx`.
+
+#### Funcionalidades da Pagina
+
+1. **Header** com botao voltar e titulo "Precos por Autorizado"
+2. **Filtros** de busca por nome e estado
+3. **Tabela** listando autorizados ativos com:
+   - Nome do autorizado
+   - Cidade/Estado
+   - Valores P, G, GG (editaveis inline ou via modal)
+4. **Modal de Edicao** para definir os 3 valores
+
+#### Estrutura do Componente
+
+```text
+AutorizadosPrecos.tsx
+├── Header (breadcrumb, titulo, botao voltar)
+├── Filtros (busca, estado)
+├── Tabela de Autorizados
+│   ├── Nome
+│   ├── Cidade/Estado
+│   ├── Valor P (clicavel)
+│   ├── Valor G (clicavel)
+│   └── Valor GG (clicavel)
+└── Dialog de Edicao de Precos
+    ├── Nome do Autorizado (readonly)
+    ├── Input Valor P (< 25m2)
+    ├── Input Valor G (25-50m2)
+    └── Input Valor GG (> 50m2)
+```
+
+---
+
+### Parte 4: Criar Hook de Dados
+
+Criar arquivo `src/hooks/useAutorizadosPrecos.ts` para gerenciar os dados.
+
+#### Interface
+
+```typescript
+interface AutorizadoPreco {
+  id: string;
+  autorizado_id: string;
+  tamanho: 'P' | 'G' | 'GG';
+  valor: number;
+}
+
+interface AutorizadoComPrecos {
+  id: string;
+  nome: string;
+  cidade: string;
+  estado: string;
+  precos: {
+    P: number;
+    G: number;
+    GG: number;
+  };
+}
+```
+
+#### Funcoes
+
+- `useAutorizadosComPrecos()` - Lista autorizados ativos com seus precos
+- `upsertPrecos(autorizado_id, precos)` - Inserir/atualizar precos dos 3 tamanhos
+
+---
+
+### Parte 5: Criar Dialog de Edicao
+
+Criar arquivo `src/components/autorizados/AutorizadoPrecosDialog.tsx`.
+
+#### Layout do Dialog
+
+```text
+┌─────────────────────────────────────────┐
+│  Definir Precos - [Nome Autorizado]     │
+├─────────────────────────────────────────┤
+│                                         │
+│  Tamanho P (< 25m2)                     │
+│  ┌─────────────────────────────────┐    │
+│  │ R$ 0,00                         │    │
+│  └─────────────────────────────────┘    │
+│                                         │
+│  Tamanho G (25m2 - 50m2)                │
+│  ┌─────────────────────────────────┐    │
+│  │ R$ 0,00                         │    │
+│  └─────────────────────────────────┘    │
+│                                         │
+│  Tamanho GG (> 50m2)                    │
+│  ┌─────────────────────────────────┐    │
+│  │ R$ 0,00                         │    │
+│  └─────────────────────────────────┘    │
+│                                         │
+│              [Cancelar] [Salvar]        │
+└─────────────────────────────────────────┘
+```
+
+---
+
+### Parte 6: Registrar Rota no App.tsx
+
+Adicionar nova rota no arquivo `src/App.tsx`.
+
+```typescript
+// Importar componente
+import AutorizadosPrecos from "@/pages/logistica/AutorizadosPrecos";
+
+// Adicionar rota (linha ~398)
+<Route path="/logistica/autorizados" element={
+  <ProtectedRoute routeKey="logistica_hub">
+    <AutorizadosPrecos />
+  </ProtectedRoute>
+} />
+```
+
+---
+
+### Arquivos a Criar/Modificar
+
+| Arquivo | Acao |
+|---------|------|
+| Nova migration SQL | Criar tabela `autorizado_precos_portas` |
+| `src/pages/logistica/LogisticaHub.tsx` | Adicionar botao "Autorizados" |
+| `src/pages/logistica/AutorizadosPrecos.tsx` | Criar nova pagina |
+| `src/hooks/useAutorizadosPrecos.ts` | Criar hook de dados |
+| `src/components/autorizados/AutorizadoPrecosDialog.tsx` | Criar dialog de edicao |
+| `src/App.tsx` | Registrar nova rota |
 
 ---
 
 ### Resultado Esperado
 
-Apos a implementacao:
+1. No hub `/logistica` aparecera um novo botao "Autorizados"
+2. Ao clicar, o usuario vai para `/logistica/autorizados`
+3. Lista todos os autorizados ativos com seus valores de portas
+4. Ao clicar em um autorizado, abre modal para definir valores P, G e GG
+5. Os valores sao salvos no banco e exibidos na tabela
 
-1. Todos os pedidos de cada etapa serao exibidos sem paginacao
-2. Os 3 pedidos antigos (0087, 0092, 0093) terao suas ordens de producao criadas
-3. A interface permitira arrastar e reordenar todos os pedidos sem limitacao de pagina
