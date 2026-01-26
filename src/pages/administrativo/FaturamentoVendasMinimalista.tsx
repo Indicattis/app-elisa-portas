@@ -45,6 +45,7 @@ import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
 import { ColumnManager } from "@/components/ColumnManager";
 import { useColumnConfig, ColumnConfig } from "@/hooks/useColumnConfig";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
+import { VendasNaoFaturadasHistorico } from "@/components/faturamento/VendasNaoFaturadasHistorico";
 
 interface Venda {
   id: string;
@@ -950,6 +951,18 @@ export default function FaturamentoMinimalista() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Vendas Não Faturadas - Histórico 3 meses */}
+        <VendasNaoFaturadasHistorico 
+          onOpenJustificativa={(vendaId, clienteNome, justificativa) => {
+            setJustificativaDialog({
+              open: true,
+              vendaId,
+              vendaCliente: clienteNome,
+              justificativa
+            });
+          }}
+        />
       </div>
 
       {/* Dialog de Justificativa */}
