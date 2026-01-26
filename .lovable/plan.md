@@ -1,142 +1,272 @@
 
-## Plano: Adicionar Tipo de Entrega "Manutenção" e Remover Botão "Serviço"
+## Plano: Unificar Etapas Expedicao Instalacoes e Instalacoes
 
-### Visão Geral
+### Visao Geral do Problema Atual
 
-Modificar a página `/vendas/minhas-vendas/nova` (`VendaNovaMinimalista.tsx`) para:
-1. Adicionar "MANUTENÇÃO" como terceiro tipo de entrega no RadioGroup
-2. Remover o botão "Serviço" da seção de adição de produtos
+O sistema possui **duas etapas separadas** para pedidos com tipo_entrega = instalacao:
+1. **aguardando_instalacao** (label: "Expedicao Instalacao") - Onde o carregamento e enviado
+2. **instalacoes** (label: "Instalacoes") - Onde a instalacao e executada
 
-Esta mudança consolida a manutenção como um tipo de entrega/serviço em vez de um produto individual.
+E **duas tabelas** gerenciando dados similares:
+- **ordens_carregamento**: Armazena informacoes de carregamento (data_carregamento, responsavel, etc)
+- **instalacoes**: Armazena informacoes de instalacao (data_instalacao, equipe, etc)
+
+### Objetivo da Unificacao
+
+Consolidar em **uma unica etapa "Instalacoes"** onde:
+1. Ordens de carregamento com `tipo_entrega = 'instalacao'` sao tratadas como **ordens de instalacao**
+2. Continuam aparecendo em `/producao/carregamento` para coleta
+3. So podem ser capturadas/concluidas se tiverem `data_carregamento` marcada em `/logistica/expedicao`
+4. Ao concluir o carregamento, o pedido vai direto para `finalizado`
 
 ---
 
-### Arquivo a Modificar
+### Parte 1: Alteracoes no Banco de Dados
 
-| Arquivo | Ação |
-|---------|------|
-| `src/pages/vendas/VendaNovaMinimalista.tsx` | Modificar |
+#### 1.1 Remover Etapa aguardando_instalacao
+
+Criar migracao para atualizar pedidos existentes:
+
+```sql
+-- Migrar pedidos em aguardando_instalacao para instalacoes (etapa unificada)
+-- Nota: Estes pedidos continuarao usando ordens_carregamento para o fluxo de carregamento
+
+-- Atualizar pedidos que estao em aguardando_instalacao para usar a etapa 'instalacoes'
+-- mas manter o fluxo de carregamento atraves de ordens_carregamento
+-- (Esta migracao pode ser opcional se decidirmos manter compatibilidade retroativa)
+```
+
+#### 1.2 Atualizar Funcao RPC concluir_carregamento_e_avancar_pedido
+
+A funcao ja aceita `aguardando_instalacao`, precisamos:
+- Manter suporte para `instalacoes` como etapa valida
+- Garantir que avance para `finalizado`
 
 ---
 
-### Parte 1: Adicionar Ícone de Manutenção
+### Parte 2: Alteracoes nos Tipos TypeScript
 
-Atualizar os imports do Lucide para incluir um ícone apropriado para manutenção:
+#### 2.1 Modificar src/types/pedidoEtapa.ts
 
-**Linha 16 - Adicionar ícone `Settings`:**
+**Remover** `aguardando_instalacao` do tipo `EtapaPedido`:
 
 ```typescript
-import { Plus, CalendarIcon, Percent, CheckCircle2, ShieldCheck, Lock, Package, CreditCard, FileText, Truck, Wrench, Settings } from 'lucide-react';
+export type EtapaPedido = 
+  | 'aberto'
+  | 'em_producao'
+  | 'inspecao_qualidade'
+  | 'aguardando_pintura'
+  | 'aguardando_coleta'
+  // | 'aguardando_instalacao' -- REMOVIDO
+  | 'instalacoes'  // Agora e a etapa unica para instalacoes
+  | 'correcoes'
+  | 'finalizado';
+```
+
+**Atualizar** ETAPAS_CONFIG - mesclar configuracoes:
+
+```typescript
+instalacoes: {
+  label: 'Instalacoes',  // Nome unificado
+  color: 'bg-teal-500',
+  icon: 'HardHat',
+  checkboxes: [
+    // Checkboxes do antigo aguardando_instalacao
+    { id: 'equipe_escalada', label: 'Equipe escalada', required: false },
+    { id: 'cliente_contatado', label: 'Cliente contatado', required: false }
+  ]
+},
+```
+
+**Atualizar** ORDEM_ETAPAS removendo `aguardando_instalacao`
+
+---
+
+### Parte 3: Alteracoes no Fluxograma
+
+#### 3.1 Modificar src/utils/pedidoFluxograma.ts
+
+**Remover** entrada aguardando_instalacao do FLUXOGRAMA_ETAPAS
+
+**Atualizar** funcao determinarFluxograma:
+
+```typescript
+// Antes:
+if (tipoEntrega === 'instalacao') {
+  baseFlow.push(FLUXOGRAMA_ETAPAS.aguardando_instalacao);
+  baseFlow.push(FLUXOGRAMA_ETAPAS.instalacoes);
+}
+
+// Depois:
+if (tipoEntrega === 'instalacao') {
+  baseFlow.push(FLUXOGRAMA_ETAPAS.instalacoes); // Apenas uma etapa
+}
 ```
 
 ---
 
-### Parte 2: Alterar Grid do RadioGroup
+### Parte 4: Alteracoes no Hook usePedidosEtapas.ts
 
-Alterar o layout do RadioGroup de 2 colunas para 3 colunas:
+#### 4.1 Atualizar Contador de Etapas (usePedidosContadores)
 
-**Linha 811:**
+Remover contagem de `aguardando_instalacao` do objeto counts
+
+#### 4.2 Atualizar Logica de Avanco de Etapa
+
+Quando pedido chega em `instalacoes`:
+- Criar ordem de carregamento (como ja faz para aguardando_coleta)
+- Atualizar status da instalacao existente para 'pronta_fabrica'
 
 ```typescript
-className="grid grid-cols-3 gap-3"
+// Ao avancar para 'instalacoes' (antes era aguardando_instalacao)
+if (etapaDestino === 'instalacoes') {
+  // Verificar/criar ordem de carregamento
+  const { data: ordemExistente } = await supabase
+    .from('ordens_carregamento')
+    .select('id')
+    .eq('pedido_id', pedidoId)
+    .maybeSingle();
+
+  if (!ordemExistente) {
+    // Criar ordem de carregamento para instalacao
+    await supabase.from('ordens_carregamento').insert({
+      pedido_id: pedidoId,
+      venda_id: pedidoData.venda_id,
+      nome_cliente: venda.cliente_nome,
+      hora: '08:00',
+      status: 'pronta_fabrica',
+      tipo_carregamento: 'elisa',
+      created_by: user.id,
+      data_carregamento: null // Sera agendada em /logistica/expedicao
+    });
+  }
+
+  // Atualizar instalacao existente
+  await supabase
+    .from('instalacoes')
+    .update({ status: 'pronta_fabrica' })
+    .eq('pedido_id', pedidoId);
+}
 ```
 
 ---
 
-### Parte 3: Adicionar Opção "Manutenção"
+### Parte 5: Atualizar Funcao RPC do Banco
 
-Adicionar a terceira opção de tipo de entrega após "Entrega" (após linha 853):
+#### 5.1 Modificar concluir_carregamento_e_avancar_pedido
 
-```typescript
-<label
-  htmlFor="tipo-manutencao"
-  className={cn(
-    "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200",
-    "border-2",
-    formData.tipo_entrega === "manutencao"
-      ? "bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/50 shadow-lg shadow-blue-500/20"
-      : "bg-blue-500/5 border-blue-500/20 hover:border-blue-400/40 hover:bg-blue-500/10"
-  )}
->
-  <RadioGroupItem value="manutencao" id="tipo-manutencao" className="sr-only" />
-  <Settings className={cn(
-    "w-5 h-5",
-    formData.tipo_entrega === "manutencao" ? "text-blue-400" : "text-blue-300/50"
-  )} />
-  <span className={cn(
-    "text-sm font-medium",
-    formData.tipo_entrega === "manutencao" ? "text-blue-100" : "text-blue-200/70"
-  )}>Manutenção</span>
-</label>
+```sql
+-- Aceitar 'instalacoes' como etapa valida (alem de aguardando_coleta)
+IF v_etapa_atual NOT IN ('aguardando_coleta', 'instalacoes') THEN
+  RAISE EXCEPTION 'Pedido deve estar em "Expedicao Coleta" ou "Instalacoes" para concluir carregamento. Etapa atual: %', v_etapa_atual;
+END IF;
 ```
 
 ---
 
-### Parte 4: Remover Botão "Serviço"
+### Parte 6: Atualizar Componentes de UI
 
-Remover o ProductButton de "Serviço" (linhas 717-726):
+#### 6.1 CarregamentoKanban.tsx e CarregamentoMinimalista.tsx
 
-**Antes:**
+**Nenhuma alteracao necessaria** - ja filtram por `venda.tipo_entrega` e exibem ambos tipos
+
+#### 6.2 Atualizar Legenda do Calendario (CalendarioLegendas.tsx)
+
 ```typescript
-<ProductButton 
-  label="Pintura Eletrostática"
-  onClick={() => {...}}
-/>
-<ProductButton 
-  label="Serviço"
-  onClick={() => {...}}
-/>
-<ProductButton 
-  label="Catálogo"
-  onClick={() => setAcessoriosModalOpen(true)}
-/>
+// Atualizar texto
+<span>Instalacao Elisa</span>  // antes era "Instalação Elisa"
+// Ja esta correto, manter como esta
 ```
 
-**Depois:**
-```typescript
-<ProductButton 
-  label="Pintura Eletrostática"
-  onClick={() => {...}}
-/>
-<ProductButton 
-  label="Catálogo"
-  onClick={() => setAcessoriosModalOpen(true)}
-/>
+#### 6.3 Validacao em CarregamentoKanban
+
+A funcao `podeIniciarColeta` ja valida:
+- `data_carregamento` deve estar preenchida
+- `responsavel_carregamento_nome` deve estar preenchido
+
+Isso atende o requisito de que so pode ser coletada se tiver data marcada em `/logistica/expedicao`
+
+---
+
+### Parte 7: Migrar Dados Existentes
+
+#### 7.1 Script de Migracao para Pedidos em aguardando_instalacao
+
+```sql
+-- Atualizar pedidos que estao na etapa antiga
+UPDATE pedidos_producao 
+SET etapa_atual = 'instalacoes'
+WHERE etapa_atual = 'aguardando_instalacao';
+
+-- Atualizar registros na tabela pedidos_etapas
+UPDATE pedidos_etapas
+SET etapa = 'instalacoes'
+WHERE etapa = 'aguardando_instalacao';
+
+-- Garantir que ordens de carregamento existentes para instalacoes tenham status correto
+UPDATE ordens_carregamento oc
+SET status = CASE 
+  WHEN data_carregamento IS NOT NULL THEN 'agendada'
+  ELSE 'pronta_fabrica'
+END
+FROM vendas v
+WHERE oc.venda_id = v.id 
+AND v.tipo_entrega = 'instalacao'
+AND oc.carregamento_concluido = false;
 ```
 
 ---
 
-### Resumo Visual das Mudanças
+### Resumo dos Arquivos a Modificar
 
-**Tipos de Entrega (Antes):**
+| Arquivo | Tipo | Descricao |
+|---------|------|-----------|
+| `src/types/pedidoEtapa.ts` | Modificar | Remover aguardando_instalacao, mesclar checkboxes |
+| `src/utils/pedidoFluxograma.ts` | Modificar | Remover aguardando_instalacao do fluxo |
+| `src/hooks/usePedidosEtapas.ts` | Modificar | Atualizar logica de avanco para instalacoes |
+| `src/hooks/usePedidosContadores.ts` | Modificar | Remover contador de aguardando_instalacao |
+| Migracao SQL | Criar | Migrar dados e atualizar funcao RPC |
+
+---
+
+### Fluxo Unificado Resultante
+
 ```text
-┌─────────────┬─────────────┐
-│ Instalação  │   Entrega   │
-└─────────────┴─────────────┘
-```
+Pedido com tipo_entrega = 'instalacao':
 
-**Tipos de Entrega (Depois):**
-```text
-┌─────────────┬─────────────┬─────────────┐
-│ Instalação  │   Entrega   │ Manutenção  │
-└─────────────┴─────────────┴─────────────┘
-```
+[Aberto] -> [Em Producao] -> [Inspecao Qualidade] -> [Aguardando Pintura*] -> [Instalacoes] -> [Finalizado]
 
-**Botões de Produto (Antes):**
-```text
-[Porta de Enrolar] [Porta Social] [Pintura Eletrostática] [Serviço] [Catálogo]
-```
+                                                                                    |
+                                                                                    v
+                                                                        Cria ordem_carregamento
+                                                                                    |
+                                                                                    v
+                                                         Aparece em /logistica/expedicao (sem data)
+                                                                                    |
+                                                                                    v
+                                                              Gestor agenda data_carregamento
+                                                                                    |
+                                                                                    v
+                                                          Aparece em /producao/carregamento
+                                                              (botao "Iniciar Coleta" habilitado)
+                                                                                    |
+                                                                                    v
+                                                              Operador conclui carregamento
+                                                                                    |
+                                                                                    v
+                                                                            [Finalizado]
 
-**Botões de Produto (Depois):**
-```text
-[Porta de Enrolar] [Porta Social] [Pintura Eletrostática] [Catálogo]
+* Aguardando Pintura so aparece se pedido tem pintura
 ```
 
 ---
 
 ### Resultado Esperado
 
-1. O usuário pode selecionar "Manutenção" como tipo de entrega
-2. O botão "Serviço" não aparece mais na seção de produtos
-3. O layout permanece consistente com o tema azul minimalista
-4. O valor `manutencao` é salvo no campo `tipo_entrega` da venda
+1. Etapa `aguardando_instalacao` e removida do sistema
+2. Pedidos de instalacao vao de `inspecao_qualidade` (ou `aguardando_pintura`) direto para `instalacoes`
+3. Na etapa `instalacoes`, uma ordem de carregamento e criada automaticamente
+4. A ordem aparece em `/logistica/expedicao` para agendamento de data
+5. Apos agendar data, aparece em `/producao/carregamento` para coleta
+6. Ao concluir carregamento, pedido avanca para `finalizado`
+7. Dados existentes sao migrados sem perda
