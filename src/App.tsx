@@ -634,6 +634,9 @@ const App = () => (
                   }
                 />
 
+                {/* Hub de Painéis */}
+                <Route path="/paineis" element={<ProtectedRoute routeKey="paineis"><PaineisHome /></ProtectedRoute>} />
+                
                 {/* Redirect TV Dashboard */}
                 <Route path="/tv-dashboard" element={<Navigate to="/paineis/tv-dashboard" replace />} />
 
