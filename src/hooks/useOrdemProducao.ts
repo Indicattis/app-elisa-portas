@@ -535,7 +535,13 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
 
       // Tentar avanço automático do pedido
       if (onOrdemConcluida) {
-        onOrdemConcluida(pedidoId, tipoOrdem);
+        try {
+          console.log('[concluirOrdem] Chamando onOrdemConcluida para pedido:', pedidoId, 'tipo:', tipoOrdem);
+          await onOrdemConcluida(pedidoId, tipoOrdem);
+          console.log('[concluirOrdem] onOrdemConcluida executado com sucesso para pedido:', pedidoId);
+        } catch (error) {
+          console.error('[concluirOrdem] Erro ao executar onOrdemConcluida:', error);
+        }
       }
     },
     onError: (error) => {
