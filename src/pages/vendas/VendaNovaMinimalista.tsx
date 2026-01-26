@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
-import { Plus, CalendarIcon, Percent, CheckCircle2, ShieldCheck, Lock, Package, CreditCard, FileText, Truck, Wrench } from 'lucide-react';
+import { Plus, CalendarIcon, Percent, CheckCircle2, ShieldCheck, Lock, Package, CreditCard, FileText, Truck, Wrench, Settings } from 'lucide-react';
 import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { ProdutosVendaTable } from '@/components/vendas/ProdutosVendaTable';
 import { VendaResumo } from '@/components/vendas/VendaResumo';
@@ -715,16 +715,6 @@ export default function VendaNovaMinimalista() {
                 }}
               />
               <ProductButton 
-                label="Serviço"
-                onClick={() => {
-                  setProdutoEditando(undefined);
-                  setIndexEditando(undefined);
-                  setTipoInicial('manutencao');
-                  setPermitirTrocaTipo(false);
-                  setDialogOpen(true);
-                }}
-              />
-              <ProductButton 
                 label="Catálogo"
                 onClick={() => setAcessoriosModalOpen(true)}
               />
@@ -808,7 +798,7 @@ export default function VendaNovaMinimalista() {
               <RadioGroup
                 value={formData.tipo_entrega}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_entrega: value }))}
-                className="grid grid-cols-2 gap-3"
+                className="grid grid-cols-3 gap-3"
                 required
               >
                 <label
@@ -850,6 +840,26 @@ export default function VendaNovaMinimalista() {
                     "text-sm font-medium",
                     formData.tipo_entrega === "entrega" ? "text-blue-100" : "text-blue-200/70"
                   )}>Entrega</span>
+                </label>
+                <label
+                  htmlFor="tipo-manutencao"
+                  className={cn(
+                    "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200",
+                    "border-2",
+                    formData.tipo_entrega === "manutencao"
+                      ? "bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/50 shadow-lg shadow-blue-500/20"
+                      : "bg-blue-500/5 border-blue-500/20 hover:border-blue-400/40 hover:bg-blue-500/10"
+                  )}
+                >
+                  <RadioGroupItem value="manutencao" id="tipo-manutencao" className="sr-only" />
+                  <Settings className={cn(
+                    "w-5 h-5",
+                    formData.tipo_entrega === "manutencao" ? "text-blue-400" : "text-blue-300/50"
+                  )} />
+                  <span className={cn(
+                    "text-sm font-medium",
+                    formData.tipo_entrega === "manutencao" ? "text-blue-100" : "text-blue-200/70"
+                  )}>Manutenção</span>
                 </label>
               </RadioGroup>
             </div>
