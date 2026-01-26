@@ -59,8 +59,8 @@ export function RetrocederEtapaModal({
         // Excluir aguardando pintura se não tem pintura
         if (etapa === 'aguardando_pintura' && !temPintura) return false;
         
-        // Excluir expedição instalação se não tem instalação
-        if (etapa === 'aguardando_instalacao' && !temInstalacao) return false;
+        // Excluir instalações se não tem instalação
+        if (etapa === 'instalacoes' && !temInstalacao) return false;
         
         // Excluir expedição coleta/entrega se não tem entrega
         if (etapa === 'aguardando_coleta' && !temEntrega) return false;

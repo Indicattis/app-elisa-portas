@@ -45,7 +45,6 @@ export function usePedidosContadores() {
         inspecao_qualidade: 0,
         aguardando_pintura: 0,
         aguardando_coleta: 0,
-        aguardando_instalacao: 0,
         instalacoes: 0,
         correcoes: 0,
         finalizado: 0,
@@ -436,8 +435,8 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         }
       }
 
-      // Se está em aguardando_coleta ou aguardando_instalacao, validar ordem de carregamento
-      if (etapaAtualNome === 'aguardando_coleta' || etapaAtualNome === 'aguardando_instalacao') {
+      // Se está em aguardando_coleta ou instalacoes, validar ordem de carregamento
+      if (etapaAtualNome === 'aguardando_coleta' || etapaAtualNome === 'instalacoes') {
         // Verificar se existe ordem de carregamento e se está concluída
         const { data: ordemCarregamento, error: ordemError } = await supabase
           .from('ordens_carregamento')
@@ -570,7 +569,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             if (venda?.tipo_entrega === 'entrega') {
               etapaDestino = 'aguardando_coleta';
             } else {
-              etapaDestino = 'aguardando_instalacao';
+              etapaDestino = 'instalacoes';
             }
           }
         }
@@ -599,11 +598,11 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             etapaDestino = 'aguardando_coleta';
             console.log('[moverParaProximaEtapa] ✓ Pedido é ENTREGA → indo para aguardando_coleta');
           } else if (venda?.tipo_entrega === 'instalacao') {
-            etapaDestino = 'aguardando_instalacao';
-            console.log('[moverParaProximaEtapa] ✓ Pedido é INSTALAÇÃO → indo para aguardando_instalacao');
+            etapaDestino = 'instalacoes';
+            console.log('[moverParaProximaEtapa] ✓ Pedido é INSTALAÇÃO → indo para instalacoes');
           } else {
-            console.warn('[moverParaProximaEtapa] ⚠️ tipo_entrega desconhecido:', venda?.tipo_entrega, '→ usando aguardando_instalacao por padrão');
-            etapaDestino = 'aguardando_instalacao';
+            console.warn('[moverParaProximaEtapa] ⚠️ tipo_entrega desconhecido:', venda?.tipo_entrega, '→ usando instalacoes por padrão');
+            etapaDestino = 'instalacoes';
           }
         }
       }
@@ -666,7 +665,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           etapaDestino === 'em_producao' ? 'em_producao' :
           etapaDestino === 'inspecao_qualidade' ? 'em_producao' :
           etapaDestino === 'aguardando_pintura' ? 'em_producao' :
-          etapaDestino === 'aguardando_instalacao' ? 'pronta_fabrica' :
+          etapaDestino === 'instalacoes' ? 'pronta_fabrica' :
           etapaDestino === 'finalizado' ? 'finalizada' :
           'pendente_producao';
         
@@ -685,8 +684,8 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
         // Tabela entregas foi removida - sincronização não é mais necessária
 
-        // Criar ordem de carregamento se avançar para aguardando_coleta ou aguardando_instalacao
-        if (etapaDestino === 'aguardando_coleta' || etapaDestino === 'aguardando_instalacao') {
+        // Criar ordem de carregamento se avançar para aguardando_coleta ou instalacoes
+        if (etapaDestino === 'aguardando_coleta' || etapaDestino === 'instalacoes') {
           if (onProgress) onProgress('criar_ordem_carregamento', 'in_progress');
           await executarComDelay(async () => {
             console.log('[moverParaProximaEtapa] Verificando necessidade de criar ordem de carregamento');
@@ -886,8 +885,8 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         if (onProgress) onProgress('preparar_coleta', 'completed');
       }
 
-      // Se avançou para aguardando_instalacao, garantir que a instalação existe
-      if (etapaDestino === 'aguardando_instalacao') {
+      // Se avançou para instalacoes, garantir que a instalação existe
+      if (etapaDestino === 'instalacoes') {
         if (onProgress) onProgress('preparar_instalacao', 'in_progress');
         await executarComDelay(async () => {
           console.log('[moverParaProximaEtapa] Preparando instalação para pedido:', pedidoId);

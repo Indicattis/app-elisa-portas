@@ -228,7 +228,7 @@ export function PedidoCard({
         };
         
       case 'aguardando_coleta':
-      case 'aguardando_instalacao':
+      case 'instalacoes':
         return {
           podeAvancar: carregamentoConcluido,
           mensagem: carregamentoConcluido 
@@ -316,7 +316,7 @@ export function PedidoCard({
   } = useQuery({
     queryKey: ['pedido-carregamento', pedido.id],
     queryFn: async () => {
-      if (pedido.etapa_atual !== 'aguardando_coleta' && pedido.etapa_atual !== 'aguardando_instalacao') {
+      if (pedido.etapa_atual !== 'aguardando_coleta' && pedido.etapa_atual !== 'instalacoes') {
         return {
           concluido: false,
           temData: true,
@@ -344,7 +344,7 @@ export function PedidoCard({
         tipoCarregamento: ordemCarregamento?.tipo_carregamento || null
       };
     },
-    enabled: pedido.etapa_atual === 'aguardando_coleta' || pedido.etapa_atual === 'aguardando_instalacao'
+    enabled: pedido.etapa_atual === 'aguardando_coleta' || pedido.etapa_atual === 'instalacoes'
   });
   const carregamentoConcluido = carregamentoCompleto?.concluido || false;
   const temDataCarregamento = carregamentoCompleto?.temData || false;
@@ -751,7 +751,7 @@ export function PedidoCard({
         status: 'pending'
       });
     }
-    if (proximaEtapa === 'aguardando_coleta' || proximaEtapa === 'aguardando_instalacao') {
+    if (proximaEtapa === 'aguardando_coleta' || proximaEtapa === 'instalacoes') {
       lista.unshift({
         id: 'criar_ordem_carregamento',
         label: 'Criando ordem de carregamento',
@@ -847,8 +847,8 @@ export function PedidoCard({
       });
     }
 
-    // Se está na etapa aguardando_instalacao, verificar carregamento e finalizar
-    if (etapaAtual === 'aguardando_instalacao') {
+    // Se está na etapa instalacoes, verificar carregamento e finalizar
+    if (etapaAtual === 'instalacoes') {
       lista.push({
         id: 'verificar_carregamento',
         label: 'Verificando ordem de carregamento',
@@ -884,8 +884,8 @@ export function PedidoCard({
   const handleConfirmarAvanco = async () => {
     setShowConfirmarAvanco(false);
 
-    // Se está na etapa aberto, aguardando_pintura, aguardando_coleta ou aguardando_instalacao, usa o sistema de processos
-    if (etapaAtual === 'aberto' || etapaAtual === 'aguardando_pintura' || etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
+    // Se está na etapa aberto, aguardando_pintura, aguardando_coleta ou instalacoes, usa o sistema de processos
+    if (etapaAtual === 'aberto' || etapaAtual === 'aguardando_pintura' || etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes') {
       const listaProcessos = await determinarProcessos(pedido.id);
       setProcessos(listaProcessos);
       setShowProgresso(true);
@@ -1146,7 +1146,7 @@ export function PedidoCard({
               {/* Col 6: Data de Carregamento */}
               <div className="text-center">
                 {(() => {
-                  const isExpedicao = etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao';
+                  const isExpedicao = etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes';
                   
                   if (isExpedicao) {
                     if (!dataCarregamento) {
@@ -1429,7 +1429,7 @@ export function PedidoCard({
                           </Button>
                         </ButtonWithTooltip>
                       );
-                    } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
+                    } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes') {
                       const validacao = getValidacaoAvancoEtapa(etapaAtual);
                       avancarButtons.push(
                         <ButtonWithTooltip key="avançar-expedicao" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
@@ -1736,7 +1736,7 @@ export function PedidoCard({
                     </Button>
                   </ButtonWithTooltip>
                 );
-              } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') {
+              } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes') {
                 const validacao = getValidacaoAvancoEtapa(etapaAtual);
                 actionButtons.push(
                   <ButtonWithTooltip key="avançar-expedicao" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
@@ -1807,7 +1807,7 @@ export function PedidoCard({
                     {actionButtons.length > 0 && <div className="grid grid-cols-4 gap-1.5 w-full">
                         {actionButtons}
                       </div>}
-                    {!temDataCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'aguardando_instalacao') && <span className="text-xs text-warning text-center block">
+                    {!temDataCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes') && <span className="text-xs text-warning text-center block">
                         Defina data de carregamento
                       </span>}
                   </div>;

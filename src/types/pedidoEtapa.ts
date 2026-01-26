@@ -4,7 +4,6 @@ export type EtapaPedido =
   | 'inspecao_qualidade'
   | 'aguardando_pintura'
   | 'aguardando_coleta'
-  | 'aguardando_instalacao'
   | 'instalacoes'
   | 'correcoes'
   | 'finalizado';
@@ -83,20 +82,14 @@ export const ETAPAS_CONFIG: Record<EtapaPedido, {
       { id: 'nota_fiscal_emitida', label: 'Nota fiscal emitida', required: true }
     ]
   },
-  aguardando_instalacao: {
-    label: 'Expedição Instalação',
-    color: 'bg-cyan-500',
-    icon: 'Wrench',
-    checkboxes: [
-      { id: 'equipe_escalada', label: 'Equipe escalada', required: true },
-      { id: 'cliente_contatado', label: 'Cliente contatado', required: true }
-    ]
-  },
   instalacoes: {
     label: 'Instalações',
     color: 'bg-teal-500',
     icon: 'HardHat',
-    checkboxes: []
+    checkboxes: [
+      { id: 'equipe_escalada', label: 'Equipe escalada', required: false },
+      { id: 'cliente_contatado', label: 'Cliente contatado', required: false }
+    ]
   },
   correcoes: {
     label: 'Correções',
@@ -118,7 +111,6 @@ export const ORDEM_ETAPAS: EtapaPedido[] = [
   'inspecao_qualidade',
   'aguardando_pintura',
   'aguardando_coleta',
-  'aguardando_instalacao',
   'instalacoes',
   'correcoes',
   'finalizado'
