@@ -26,14 +26,12 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 // Etapas específicas para logística
 const ETAPAS_LOGISTICA: EtapaPedido[] = [
   'aguardando_coleta',
-  'aguardando_instalacao',
   'instalacoes',
   'correcoes'
 ];
 
 const ETAPA_ICONS = {
   aguardando_coleta: Package,
-  aguardando_instalacao: Wrench,
   instalacoes: HardHat,
   correcoes: AlertTriangle,
 };

@@ -32,11 +32,6 @@ export const FLUXOGRAMA_ETAPAS: Record<EtapaPedido, FluxogramaEtapa> = {
     label: 'Expedição Coleta',
     color: 'bg-yellow-500'
   },
-  aguardando_instalacao: {
-    id: 'aguardando_instalacao',
-    label: 'Expedição Instalação',
-    color: 'bg-cyan-500'
-  },
   instalacoes: {
     id: 'instalacoes',
     label: 'Instalações',
@@ -83,10 +78,10 @@ export function determinarFluxograma(pedido: any): FluxogramaEtapa[] {
   const apenasManutencao = produtos.length > 0 && 
     produtos.every((p: any) => p.tipo_produto === 'manutencao');
   
-  // Se for apenas manutenção, fluxo direto para expedição instalação
+  // Se for apenas manutenção, fluxo direto para instalações
   if (apenasManutencao) {
     return [
-      FLUXOGRAMA_ETAPAS.aguardando_instalacao,
+      FLUXOGRAMA_ETAPAS.instalacoes,
       FLUXOGRAMA_ETAPAS.finalizado
     ];
   }
@@ -109,7 +104,6 @@ export function determinarFluxograma(pedido: any): FluxogramaEtapa[] {
   if (tipoEntrega === 'entrega') {
     baseFlow.push(FLUXOGRAMA_ETAPAS.aguardando_coleta);
   } else if (tipoEntrega === 'instalacao') {
-    baseFlow.push(FLUXOGRAMA_ETAPAS.aguardando_instalacao);
     baseFlow.push(FLUXOGRAMA_ETAPAS.instalacoes);
   }
   

@@ -6379,7 +6379,7 @@ export type Database = {
       }
       concluir_carregamento_e_avancar_pedido: {
         Args: { p_ordem_carregamento_id: string }
-        Returns: Json
+        Returns: undefined
       }
       concluir_instalacao_e_avancar_pedido: {
         Args: { p_instalacao_id: string }

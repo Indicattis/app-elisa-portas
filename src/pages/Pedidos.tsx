@@ -24,7 +24,6 @@ const ETAPA_ICONS: Record<EtapaPedido, React.ComponentType<{ className?: string 
   inspecao_qualidade: ClipboardCheck,
   aguardando_pintura: Paintbrush,
   aguardando_coleta: Package,
-  aguardando_instalacao: Wrench,
   instalacoes: HardHat,
   correcoes: AlertTriangle,
   finalizado: CheckCircle2
