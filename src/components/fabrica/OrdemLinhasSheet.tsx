@@ -1,6 +1,7 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Package } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useLinhasOrdem, LinhaOrdem } from "@/hooks/useLinhasOrdem";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,17 +84,32 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
         <SheetHeader>
           <SheetTitle className="text-white flex items-center gap-2">
             <Package className="w-5 h-5 text-blue-400" />
-            {ordem ? `${TIPO_LABELS[ordem.tipo]} #${ordem.numero_ordem}` : 'Ordem'}
+            <span className="flex-1">
+              {ordem ? `${TIPO_LABELS[ordem.tipo]} #${ordem.numero_ordem}` : 'Ordem'}
+            </span>
+            {ordem?.responsavel && (
+              <Avatar className="h-6 w-6 border border-blue-500/30">
+                <AvatarImage src={ordem.responsavel.foto_url || undefined} />
+                <AvatarFallback className="text-[10px] bg-blue-500/20 text-blue-300">
+                  {ordem.responsavel.iniciais}
+                </AvatarFallback>
+              </Avatar>
+            )}
           </SheetTitle>
           <SheetDescription className="text-zinc-400">
-            {totalLinhas > 0 && (
-              <span className="flex items-center gap-2">
-                Progresso: {linhasConcluidas}/{totalLinhas} linhas concluídas
-                <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-700/50">
-                  {Math.round((linhasConcluidas / totalLinhas) * 100)}%
+            <div className="flex flex-col gap-1">
+              {ordem?.responsavel && (
+                <span className="text-xs">Responsável: {ordem.responsavel.nome}</span>
+              )}
+              {totalLinhas > 0 && (
+                <span className="flex items-center gap-2">
+                  Progresso: {linhasConcluidas}/{totalLinhas} linhas concluídas
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-700/50">
+                    {Math.round((linhasConcluidas / totalLinhas) * 100)}%
+                  </span>
                 </span>
-              </span>
-            )}
+              )}
+            </div>
           </SheetDescription>
         </SheetHeader>
 
