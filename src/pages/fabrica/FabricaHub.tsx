@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Package, Boxes, Factory, ArrowLeft, Lock } from "lucide-react";
+import { Package, Boxes, Factory, ArrowLeft, Lock, ClipboardList } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,12 +11,14 @@ import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
   { label: 'Gestão de Pedidos', icon: Package, path: '/fabrica/pedidos-producao' },
+  { label: 'Ordens por Pedido', icon: ClipboardList, path: '/fabrica/ordens-pedidos' },
   { label: 'Controle de Estoque', icon: Boxes, path: '/fabrica/controle-estoque' },
   { label: 'Produção', icon: Factory, path: '/fabrica/producao' },
 ];
 
 const routeKeyMap: Record<string, string> = {
   '/fabrica/pedidos-producao': 'fabrica_pedidos',
+  '/fabrica/ordens-pedidos': 'fabrica_ordens_pedidos',
   '/fabrica/controle-estoque': 'fabrica_estoque',
   '/fabrica/producao': 'fabrica_producao',
 };
