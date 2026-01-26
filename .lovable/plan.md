@@ -1,271 +1,300 @@
 
-## Plano: Melhorar Design da Pagina /fabrica/ordens-pedidos
+## Plano: Criar Pagina de Edicao de Vendas Minimalista em /vendas/minhas-vendas
 
 ### Visao Geral
 
-Aprimorar a pagina de Ordens por Pedido com:
-1. Cards de pedido compactos (30px de altura) com informacoes adicionais
-2. Dados de cor, localizacao, portas P/G, metragem linear e quadrada
-3. Icone de instalacao/entrega e foto do vendedor
-4. Foto do responsavel nas ordens expandidas
-5. Abas replicadas de /direcao/gestao-fabrica (todas as etapas)
+Replicar o sistema de edicao de vendas existente (`VendaEditarMinimalista.tsx`) para uma nova rota `/vendas/minhas-vendas/editar/:id`, mantendo o estilo minimalista azul da area de vendas. A pagina deve verificar se a venda esta faturada ou com pedido antes de permitir edicao, exibindo um dialog de bloqueio quando necessario.
 
 ---
 
-### Arquivos a Modificar
+### Arquivos a Modificar/Criar
 
 | Arquivo | Acao |
 |---------|------|
-| `src/hooks/useOrdensPorPedido.ts` | Expandir busca para incluir produtos, vendedor, responsaveis |
-| `src/components/fabrica/PedidoOrdemCard.tsx` | Redesign com altura compacta e badges informativos |
-| `src/pages/fabrica/OrdensPorPedido.tsx` | Atualizar tabs para todas as etapas |
-| `src/components/fabrica/OrdemLinhasSheet.tsx` | Adicionar foto do responsavel |
+| `src/pages/vendas/MinhasVendasEditar.tsx` | Criar nova pagina de edicao |
+| `src/pages/vendas/MinhasVendas.tsx` | Adicionar verificacao de faturamento e navegacao para edicao |
+| `src/App.tsx` | Adicionar rota `/vendas/minhas-vendas/editar/:id` |
 
 ---
 
-### Parte 1: Atualizar Hook useOrdensPorPedido
+### Parte 1: Modificar MinhasVendas.tsx - Adicionar Logica de Edicao
 
-Expandir a interface `PedidoComOrdens` para incluir todos os dados necessarios:
+Atualmente, ao clicar em uma venda na tabela, o sistema navega para `/dashboard/vendas/${venda.id}`. Vamos adicionar:
+
+1. **Estado para o dialog de bloqueio**
+2. **Funcao de verificacao antes de editar**
+3. **Uso do VendaBloqueadaDialog**
+
+**Mudancas:**
 
 ```typescript
-interface PedidoComOrdens {
-  id: string;
-  numero_pedido: string;
-  cliente_nome: string;
-  etapa_atual: string;
-  prioridade_etapa: number | null;
+// Novos imports
+import { VendaBloqueadaDialog } from "@/components/vendas/VendaBloqueadaDialog";
+import { BlockReason } from "@/hooks/useCanEditVenda";
+
+// Novos estados
+const [bloqueioDialogOpen, setBloqueioDialogOpen] = useState(false);
+const [blockReason, setBlockReason] = useState<BlockReason>(null);
+const [selectedVendaId, setSelectedVendaId] = useState<string | null>(null);
+
+// Funcao de verificacao
+const handleEditVenda = async (venda: Venda) => {
+  try {
+    // Verificar se e o proprietario
+    const isOwner = venda.atendente_id === user?.id;
+    if (!isOwner && !isAdmin) {
+      setBlockReason('nao_proprietario');
+      setBloqueioDialogOpen(true);
+      return;
+    }
+
+    // Buscar dados de faturamento
+    const { data: vendaData, error } = await supabase
+      .from('vendas')
+      .select('*, produtos_vendas(faturamento), frete_aprovado')
+      .eq('id', venda.id)
+      .single();
+
+    if (error) throw error;
+
+    const produtos = vendaData.produtos_vendas || [];
+    const todosFaturados = produtos.length > 0 && 
+      produtos.every((p: any) => p.faturamento === true);
+    const freteAprovado = vendaData.frete_aprovado === true;
+    const isFaturada = todosFaturados && freteAprovado;
+
+    // Verificar pedido vinculado
+    const { data: pedido } = await supabase
+      .from('pedidos_producao')
+      .select('id')
+      .eq('venda_id', venda.id)
+      .maybeSingle();
+
+    const hasPedido = !!pedido;
+
+    // Determinar bloqueio
+    if (isFaturada && hasPedido) {
+      setBlockReason('ambos');
+      setBloqueioDialogOpen(true);
+    } else if (isFaturada) {
+      setBlockReason('faturada');
+      setBloqueioDialogOpen(true);
+    } else if (hasPedido) {
+      setBlockReason('com_pedido');
+      setBloqueioDialogOpen(true);
+    } else {
+      // Pode editar - navegar para pagina de edicao
+      navigate(`/vendas/minhas-vendas/editar/${venda.id}`);
+    }
+  } catch (error) {
+    console.error('Erro ao verificar permissoes:', error);
+  }
+};
+```
+
+**Atualizar o onClick da TableRow:**
+
+```typescript
+<TableRow 
+  key={venda.id}
+  className="border-blue-500/10 hover:bg-blue-500/10 cursor-pointer transition-colors"
+  onClick={() => handleEditVenda(venda)}
+>
+```
+
+**Adicionar o dialog ao final do componente:**
+
+```typescript
+<VendaBloqueadaDialog
+  open={bloqueioDialogOpen}
+  onOpenChange={setBloqueioDialogOpen}
+  blockReason={blockReason}
+/>
+```
+
+---
+
+### Parte 2: Criar Pagina MinhasVendasEditar.tsx
+
+Criar uma nova pagina baseada em `VendaEditarMinimalista.tsx` com o estilo azul minimalista consistente com a area de vendas.
+
+**Principais diferencas do original:**
+
+1. **Tema azul** - Usar `bg-gradient-to-br from-blue-500/5 to-blue-900/10` em vez de `bg-primary/5`
+2. **Back path** - Apontar para `/vendas/minhas-vendas`
+3. **Breadcrumb** - Home > Vendas > Minhas Vendas > Editar
+
+**Estrutura do arquivo:**
+
+```typescript
+// src/pages/vendas/MinhasVendasEditar.tsx
+
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useCanEditVenda, BlockReason } from "@/hooks/useCanEditVenda";
+import { useToast } from "@/hooks/use-toast";
+import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { VendaBloqueadaDialog } from "@/components/vendas/VendaBloqueadaDialog";
+// ... demais imports
+
+export default function MinhasVendasEditar() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
-  // NOVOS CAMPOS
-  localizacao: string | null;           // cidade/estado
-  tipo_entrega: 'instalacao' | 'entrega' | null;
-  cores: { nome: string; codigo_hex: string }[];
-  portas_p: number;                     // quantidade portas pequenas
-  portas_g: number;                     // quantidade portas grandes
-  metragem_linear: number;              // total meia canas em metros
-  metragem_quadrada: number;            // total m2 para pintura
-  vendedor: {
-    nome: string;
-    foto_url: string | null;
-    iniciais: string;
-  } | null;
+  // Verificacao de permissoes com o hook
+  const { 
+    canEdit, 
+    loading: loadingPermission, 
+    isFaturada, 
+    hasPedido, 
+    pedidoId,
+    blockReason 
+  } = useCanEditVenda({ vendaId: id });
   
-  ordens: {
-    soldagem: OrdemStatusExtended;
-    perfiladeira: OrdemStatusExtended;
-    separacao: OrdemStatusExtended;
-    qualidade: OrdemStatusExtended;
-    pintura: OrdemStatusExtended;
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  
+  // Se nao pode editar, mostrar dialog
+  useEffect(() => {
+    if (!loadingPermission && !canEdit && blockReason) {
+      setShowBlockedDialog(true);
+    }
+  }, [loadingPermission, canEdit, blockReason]);
+  
+  const handleBlockedDialogClose = (open: boolean) => {
+    setShowBlockedDialog(open);
+    if (!open) {
+      navigate('/vendas/minhas-vendas');
+    }
   };
-}
-
-interface OrdemStatusExtended extends OrdemStatus {
-  responsavel: {
-    nome: string;
-    foto_url: string | null;
-    iniciais: string;
-  } | null;
+  
+  // ... resto da logica igual ao VendaEditarMinimalista
+  
+  const cardClass = "bg-gradient-to-br from-blue-500/5 to-blue-900/10 border-blue-500/20 backdrop-blur-xl";
+  
+  return (
+    <MinimalistLayout 
+      title="Editar Venda" 
+      subtitle="Gerencie os produtos desta venda"
+      backPath="/vendas/minhas-vendas"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Vendas", path: "/vendas" },
+        { label: "Minhas Vendas", path: "/vendas/minhas-vendas" },
+        { label: "Editar" }
+      ]}
+    >
+      {/* Dialog de bloqueio */}
+      <VendaBloqueadaDialog
+        open={showBlockedDialog}
+        onOpenChange={handleBlockedDialogClose}
+        blockReason={blockReason}
+        pedidoId={pedidoId}
+      />
+      
+      {/* Conteudo da pagina - igual ao VendaEditarMinimalista */}
+      {/* ... */}
+    </MinimalistLayout>
+  );
 }
 ```
 
-**Consultas adicionais necessarias:**
+**Estilos azuis consistentes:**
 
-1. Buscar `vendas.atendente_id` com join em `admin_users` para foto do vendedor
-2. Buscar `produtos_vendas` via `venda_id` para calcular P/G e m2
-3. Buscar `linhas_ordens` tipo `perfiladeira` para metragem linear
-4. Buscar `cidade/estado` de vendas ou clientes
-5. Buscar `responsavel_id` de cada ordem com join em `admin_users`
+- Cards: `bg-gradient-to-br from-blue-500/5 to-blue-900/10 border-blue-500/20 backdrop-blur-xl`
+- Textos label: `text-blue-300/70`
+- Textos valor: `text-white`
+- Bordas: `border-blue-500/20`
+- Hover: `hover:bg-blue-500/10`
+- Botao primario: `bg-gradient-to-r from-blue-500 to-blue-700`
+- Botao secundario: `border-blue-500/30 text-blue-300 hover:bg-blue-500/10`
 
 ---
 
-### Parte 2: Redesign do PedidoOrdemCard
+### Parte 3: Adicionar Rota no App.tsx
 
-Layout compacto com altura fixa de 30px quando fechado:
+Adicionar a nova rota no grupo de rotas de vendas:
+
+```typescript
+// Importar o novo componente
+import MinhasVendasEditar from '@/pages/vendas/MinhasVendasEditar';
+
+// Adicionar rota apos /vendas/minhas-vendas/nova
+<Route 
+  path="/vendas/minhas-vendas/editar/:id" 
+  element={
+    <ProtectedRoute routeKey="vendas_hub">
+      <MinhasVendasEditar />
+    </ProtectedRoute>
+  } 
+/>
+```
+
+---
+
+### Fluxo de Edicao Completo
 
 ```text
-+------------------------------------------------------------------+
-| [>] #0134 | [cor] Preto | Caxias/RS | P:2 G:1 | 45.2m | 37.6m2 | [truck] [avatar] |
-+------------------------------------------------------------------+
-```
-
-**Elementos visuais:**
-
-- **Chevron**: Indicador de expansao (4px)
-- **Numero do pedido**: Texto branco, fonte medium
-- **Cor**: Badge com quadrado colorido + nome da cor
-- **Localizacao**: Cidade/UF em texto zinc
-- **P/G**: Badges "P:2" e "G:1" para portas pequenas/grandes
-- **Metragem linear**: "45.2m" com icone de regua
-- **Metragem quadrada**: "37.6m2" com icone de pintura
-- **Tipo entrega**: Icone Truck (entrega) ou Wrench (instalacao)
-- **Avatar vendedor**: Foto circular 20x20 com fallback de iniciais
-
-**Implementacao de estilos:**
-
-```typescript
-// Card fechado - altura compacta
-<button className="w-full h-[30px] px-2 flex items-center gap-2 
-                   bg-zinc-900/50 border border-zinc-800/50 
-                   hover:bg-zinc-800/50 transition-all">
-  
-  {/* Chevron */}
-  <ChevronRight className="w-3 h-3 text-zinc-500 flex-shrink-0" />
-  
-  {/* Numero pedido */}
-  <span className="text-xs font-medium text-white">#{numero}</span>
-  
-  {/* Separador */}
-  <div className="w-px h-4 bg-zinc-700/50" />
-  
-  {/* Cor */}
-  <div className="flex items-center gap-1">
-    <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: hex }} />
-    <span className="text-[10px] text-zinc-400">{corNome}</span>
-  </div>
-  
-  {/* Localizacao */}
-  <span className="text-[10px] text-zinc-500">{cidade}/{uf}</span>
-  
-  {/* Portas P/G */}
-  <div className="flex gap-1">
-    <span className="text-[10px] px-1 py-0.5 rounded bg-blue-500/20 text-blue-400">P:{p}</span>
-    <span className="text-[10px] px-1 py-0.5 rounded bg-orange-500/20 text-orange-400">G:{g}</span>
-  </div>
-  
-  {/* Metragens */}
-  <span className="text-[10px] text-zinc-400">{linear.toFixed(1)}m</span>
-  <span className="text-[10px] text-zinc-400">{quadrada.toFixed(1)}m2</span>
-  
-  {/* Icone entrega/instalacao */}
-  {tipoEntrega === 'instalacao' ? (
-    <Wrench className="w-3 h-3 text-cyan-400" />
-  ) : (
-    <Truck className="w-3 h-3 text-indigo-400" />
-  )}
-  
-  {/* Avatar vendedor */}
-  <Avatar className="h-5 w-5 border border-zinc-700">
-    <AvatarImage src={vendedorFoto} />
-    <AvatarFallback className="text-[8px] bg-zinc-800">{iniciais}</AvatarFallback>
-  </Avatar>
-</button>
+Usuario clica em venda na tabela
+         |
+         v
+Verificar proprietario/admin
+         |
+    +----+----+
+    |         |
+  Nao        Sim
+    |         |
+    v         v
+Dialog    Verificar faturamento
+"Sem       e pedido
+Permissao"    |
+         +----+----+----+
+         |    |    |    |
+       Faturada  Pedido  Ambos  Nenhum
+         |    |    |         |
+         v    v    v         v
+       Dialog de bloqueio   Navegar
+       correspondente       para /editar/:id
 ```
 
 ---
 
-### Parte 3: Expandir Ordens com Avatar do Responsavel
+### Funcionalidades da Pagina de Edicao
 
-Quando expandido, cada badge de ordem mostra a foto do responsavel atual:
+A pagina de edicao mantera todas as funcionalidades do `VendaEditarMinimalista.tsx`:
 
-```text
-+----------------------------------------------------------------+
-| [Soldagem] Em andamento  [avatar Elton]                        |
-| [Perfiladeira] Concluido [avatar Maria]                        |
-| [Separacao] Pendente     [avatar -]                            |
-+----------------------------------------------------------------+
-```
+1. **Visualizacao de dados da venda** (somente leitura)
+   - Cliente (nome, telefone, email, CPF)
+   - Data da venda
+   - Publico alvo e tipo de venda
+   - Forma de pagamento
+   - Tipo de entrega e frete
+   - Endereco
+   - Canal de aquisicao
+   - Observacoes
 
-**Implementacao:**
+2. **Gerenciamento de produtos**
+   - Adicionar Porta de Enrolar
+   - Adicionar Porta Social
+   - Adicionar Pintura Eletrostatica
+   - Adicionar Acessorios
+   - Adicionar Adicionais
+   - Adicionar Servico (Manutencao)
+   - Adicionar do Catalogo
 
-```typescript
-<button className="px-3 py-2 rounded-lg border flex items-center justify-between">
-  <div className="flex flex-col items-start gap-0.5">
-    <span className="font-medium">{ORDEM_LABELS[tipo]}</span>
-    <span className="text-xs opacity-80">{statusLabel}</span>
-  </div>
-  
-  {ordem.responsavel && (
-    <Avatar className="h-6 w-6 border border-primary/30">
-      <AvatarImage src={ordem.responsavel.foto_url} />
-      <AvatarFallback className="text-[10px] bg-primary/20">
-        {ordem.responsavel.iniciais}
-      </AvatarFallback>
-    </Avatar>
-  )}
-</button>
-```
+3. **Gerenciamento de descontos e creditos**
+   - Modal de aplicacao de desconto
+   - Modal de aplicacao de credito
+   - Remocao de descontos
 
----
-
-### Parte 4: Atualizar Abas para Todas as Etapas
-
-Replicar as abas de /direcao/gestao-fabrica usando `ORDEM_ETAPAS`:
-
-```typescript
-import { ORDEM_ETAPAS, ETAPAS_CONFIG, EtapaPedido } from "@/types/pedidoEtapa";
-
-// Substituir o array ETAPAS atual por:
-const ETAPAS_VISIVEIS = ORDEM_ETAPAS.filter(e => e !== 'finalizado');
-
-// No componente:
-<TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
-  {ETAPAS_VISIVEIS.map((etapa) => {
-    const config = ETAPAS_CONFIG[etapa];
-    return (
-      <TabsTrigger key={etapa} value={etapa}>
-        {config.label}
-      </TabsTrigger>
-    );
-  })}
-</TabsList>
-```
-
-**Etapas a exibir:**
-- Pedidos em Aberto
-- Em Producao
-- Inspecao de Qualidade
-- Aguardando Pintura
-- Expedicao Coleta
-- Expedicao Instalacao
-- Instalacoes
-- Correcoes
-
----
-
-### Parte 5: Logica de Calculo das Metragens
-
-**Portas P/G (baseado na area):**
-
-```typescript
-const calcularPortas = (produtos: any[]) => {
-  const portas = produtos.filter(p => p.tipo_produto === 'porta_enrolar');
-  let p = 0, g = 0;
-  
-  portas.forEach(porta => {
-    const area = (porta.largura || 0) * (porta.altura || 0);
-    const qtd = porta.quantidade || 1;
-    if (area > 25) g += qtd;
-    else p += qtd;
-  });
-  
-  return { p, g };
-};
-```
-
-**Metragem Linear (meia canas da perfiladeira):**
-
-```typescript
-const calcularMetragemLinear = (linhas: any[]) => {
-  return linhas
-    .filter(l => l.tipo_ordem === 'perfiladeira')
-    .reduce((total, l) => {
-      const metros = parseFloat((l.tamanho || '0').replace(',', '.')) || 0;
-      return total + (metros * (l.quantidade || 1));
-    }, 0);
-};
-```
-
-**Metragem Quadrada (para pintura):**
-
-```typescript
-const calcularMetragemQuadrada = (produtos: any[]) => {
-  return produtos
-    .filter(p => p.tipo_produto === 'porta_enrolar')
-    .reduce((total, p) => {
-      const area = (p.largura || 0) * (p.altura || 0);
-      return total + (area * (p.quantidade || 1));
-    }, 0);
-};
-```
+4. **Tabela de produtos**
+   - Visualizacao dos produtos adicionados
+   - Remocao de produtos
+   - Remocao de descontos individuais
 
 ---
 
@@ -273,38 +302,17 @@ const calcularMetragemQuadrada = (produtos: any[]) => {
 
 | Arquivo | Tipo | Descricao |
 |---------|------|-----------|
-| `useOrdensPorPedido.ts` | Modificar | Expandir query para produtos, vendedor, responsaveis, metragens |
-| `PedidoOrdemCard.tsx` | Modificar | Redesign compacto 30px com badges e avatares |
-| `OrdensPorPedido.tsx` | Modificar | Usar ORDEM_ETAPAS para todas as abas |
-| `OrdemLinhasSheet.tsx` | Modificar | Exibir avatar do responsavel no header |
-
----
-
-### Fluxo de Dados Atualizado
-
-```text
-pedidos_producao
-  |-- venda_id --> vendas
-  |                  |-- atendente_id --> admin_users (vendedor)
-  |                  |-- cidade, estado, tipo_entrega
-  |                  |-- produtos_vendas (cores, portas P/G, m2)
-  |
-  |-- id --> linhas_ordens (metragem linear perfiladeira)
-  |
-  |-- id --> ordens_* (5 tabelas)
-               |-- responsavel_id --> admin_users (responsavel)
-```
+| `MinhasVendas.tsx` | Modificar | Adicionar verificacao de faturamento e dialog de bloqueio |
+| `MinhasVendasEditar.tsx` | Criar | Nova pagina de edicao com estilo azul |
+| `App.tsx` | Modificar | Adicionar rota `/vendas/minhas-vendas/editar/:id` |
 
 ---
 
 ### Resultado Esperado
 
-1. Cards de pedido com altura compacta (30px) exibindo todas as informacoes
-2. Badge colorido mostrando a cor principal do pedido
-3. Localizacao (cidade/UF) visivel
-4. Contadores P/G para portas pequenas e grandes
-5. Metragem linear (meia canas) e quadrada (pintura) calculadas
-6. Icone diferenciando instalacao vs entrega
-7. Avatar do vendedor no card
-8. Avatar do responsavel em cada ordem expandida
-9. Todas as etapas de producao nas abas (igual /direcao/gestao-fabrica)
+1. Ao clicar em uma venda na tabela, o sistema verifica se pode editar
+2. Se estiver faturada, com pedido, ou nao for proprietario: mostra dialog explicativo
+3. Se puder editar: navega para `/vendas/minhas-vendas/editar/:id`
+4. Pagina de edicao exibe dados da venda e permite gerenciar produtos
+5. Estilo visual consistente com a area de vendas (tema azul minimalista)
+6. Ao salvar, retorna para `/vendas/minhas-vendas`
