@@ -118,26 +118,16 @@ export default function VendasDirecao() {
 
   useEffect(() => {
     const fetchAtendentes = async () => {
-      // Buscar apenas usuários com role "atendente" via join com user_roles
+      // Buscar usuários com role "atendente" diretamente da tabela admin_users
       const { data } = await supabase
-        .from('user_roles')
-        .select(`
-          user_id,
-          admin_users!inner(id, nome, foto_perfil_url)
-        `)
-        .eq('role', 'atendente');
+        .from('admin_users')
+        .select('id, user_id, nome, foto_perfil_url')
+        .eq('role', 'atendente')
+        .eq('ativo', true)
+        .order('nome');
       
       if (data) {
-        // Mapear para formato mais simples
-        const mapped = data.map((d: any) => ({
-          user_id: d.user_id,
-          id: d.admin_users.id,
-          nome: d.admin_users.nome,
-          foto_perfil_url: d.admin_users.foto_perfil_url
-        }));
-        // Ordenar por nome
-        mapped.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-        setAtendentes(mapped);
+        setAtendentes(data);
       }
     };
     fetchAtendentes();
