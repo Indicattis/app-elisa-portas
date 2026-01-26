@@ -34,9 +34,9 @@ export function FichaVisitaUpload({
       return;
     }
 
-    // Validar tamanho (max 20MB)
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error('Arquivo muito grande. Máximo permitido: 20MB.');
+    // Validar tamanho (max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo permitido: 50MB.');
       return;
     }
 
@@ -146,7 +146,7 @@ export function FichaVisitaUpload({
         )}
       </Button>
       <p className="text-xs text-muted-foreground text-center">
-        Formatos aceitos: PDF, PNG, JPG, WEBP (máx. 20MB)
+        Formatos aceitos: PDF, PNG, JPG, WEBP (máx. 50MB)
       </p>
     </div>
   );
