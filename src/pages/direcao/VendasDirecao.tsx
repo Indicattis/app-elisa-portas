@@ -118,11 +118,27 @@ export default function VendasDirecao() {
 
   useEffect(() => {
     const fetchAtendentes = async () => {
+      // Buscar apenas usuários com role "atendente" via join com user_roles
       const { data } = await supabase
-        .from('admin_users')
-        .select('id, nome, user_id')
-        .order('nome');
-      if (data) setAtendentes(data);
+        .from('user_roles')
+        .select(`
+          user_id,
+          admin_users!inner(id, nome, foto_perfil_url)
+        `)
+        .eq('role', 'atendente');
+      
+      if (data) {
+        // Mapear para formato mais simples
+        const mapped = data.map((d: any) => ({
+          user_id: d.user_id,
+          id: d.admin_users.id,
+          nome: d.admin_users.nome,
+          foto_perfil_url: d.admin_users.foto_perfil_url
+        }));
+        // Ordenar por nome
+        mapped.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+        setAtendentes(mapped);
+      }
     };
     fetchAtendentes();
   }, []);
@@ -318,26 +334,38 @@ export default function VendasDirecao() {
       return venda.produtos.some((p: any) => p.faturamento === true);
     };
 
+    // Classes responsivas para texto - menor no mobile
+    const textClass = "text-[10px] md:text-sm";
+    const textMutedClass = "text-[10px] md:text-sm text-white/60";
+
     switch (columnId) {
       case 'data':
         return (
-          <span className="text-white/80">
-            {format(new Date(venda.data_venda), 'dd/MM/yy', { locale: ptBR })}
+          <span className={`${textClass} text-white/80`}>
+            {format(new Date(venda.data_venda), 'dd/MM', { locale: ptBR })}
           </span>
         );
       case 'cliente':
-        return <span className="text-white font-medium">{venda.cliente_nome}</span>;
+        return (
+          <span className={`${textClass} text-white font-medium truncate block max-w-[70px] md:max-w-none`}>
+            {venda.cliente_nome}
+          </span>
+        );
       case 'telefone':
-        return <span className="text-white/60">{venda.cliente_telefone || '-'}</span>;
+        return <span className={textMutedClass}>{venda.cliente_telefone || '-'}</span>;
       case 'cidade':
-        return <span className="text-white/60">{venda.cidade}/{venda.estado}</span>;
+        return (
+          <span className={`${textMutedClass} truncate block max-w-[60px] md:max-w-none`}>
+            {venda.cidade}/{venda.estado}
+          </span>
+        );
       case 'estado':
-        return <span className="text-white/60">{venda.estado}</span>;
+        return <span className={textMutedClass}>{venda.estado}</span>;
       case 'vendedor':
         return (
-          <Avatar className="h-7 w-7">
+          <Avatar className="h-6 w-6 md:h-7 md:w-7">
             <AvatarImage src={venda.atendente?.foto_perfil_url} />
-            <AvatarFallback className="text-[10px] bg-blue-500/20 text-blue-400">
+            <AvatarFallback className="text-[8px] md:text-[10px] bg-blue-500/20 text-blue-400">
               {venda.atendente?.nome?.substring(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -345,42 +373,42 @@ export default function VendasDirecao() {
       case 'expedicao':
         const tipoEntrega = venda.tipo_entrega;
         if (tipoEntrega === 'instalacao') {
-          return <Hammer className="h-4 w-4 text-orange-400 mx-auto" />;
+          return <Hammer className="h-3.5 w-3.5 md:h-4 md:w-4 text-orange-400 mx-auto" />;
         } else if (tipoEntrega === 'entrega') {
-          return <Truck className="h-4 w-4 text-blue-400 mx-auto" />;
+          return <Truck className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-400 mx-auto" />;
         }
-        return <span className="text-white/30">-</span>;
+        return <span className="text-white/30 text-[10px]">-</span>;
       case 'previsao':
         return (
-          <span className="text-white/60">
+          <span className={textMutedClass}>
             {venda.data_prevista_entrega 
-              ? format(new Date(venda.data_prevista_entrega), 'dd/MM/yy', { locale: ptBR })
+              ? format(new Date(venda.data_prevista_entrega), 'dd/MM', { locale: ptBR })
               : '-'
             }
           </span>
         );
       case 'frete':
         return (
-          <span className="text-white/60">
+          <span className={textMutedClass}>
             {venda.valor_frete ? formatCurrency(venda.valor_frete) : '-'}
           </span>
         );
       case 'instalacao':
         return (
-          <span className="text-white/60">
+          <span className={textMutedClass}>
             {venda.valor_instalacao ? formatCurrency(venda.valor_instalacao) : '-'}
           </span>
         );
       case 'desconto':
         const desconto = calcularDescontoTotal();
         return (
-          <span className={desconto > 0 ? "text-red-400" : "text-white/60"}>
+          <span className={`text-[10px] md:text-sm ${desconto > 0 ? "text-red-400" : "text-white/60"}`}>
             {desconto > 0 ? `-${formatCurrency(desconto)}` : '-'}
           </span>
         );
       case 'acrescimo':
         return (
-          <span className={venda.valor_credito > 0 ? "text-green-400" : "text-white/60"}>
+          <span className={`text-[10px] md:text-sm ${venda.valor_credito > 0 ? "text-green-400" : "text-white/60"}`}>
             {venda.valor_credito > 0 ? `+${formatCurrency(venda.valor_credito)}` : '-'}
           </span>
         );
@@ -389,19 +417,19 @@ export default function VendasDirecao() {
         return (
           <div className="flex justify-center">
             {faturada ? (
-              <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
-                <Check className="w-3 h-3 text-green-400" />
+              <div className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-green-500/20 flex items-center justify-center">
+                <Check className="w-2.5 h-2.5 md:w-3 md:h-3 text-green-400" />
               </div>
             ) : (
-              <div className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center">
-                <X className="w-3 h-3 text-white/30" />
+              <div className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-white/5 flex items-center justify-center">
+                <X className="w-2.5 h-2.5 md:w-3 md:h-3 text-white/30" />
               </div>
             )}
           </div>
         );
       case 'tempo_sem_faturar':
         if (isFaturada()) {
-          return <span className="text-white/30">-</span>;
+          return <span className="text-white/30 text-[10px] md:text-sm">-</span>;
         }
         const diasSemFaturar = differenceInDays(new Date(), new Date(venda.data_venda));
         const tempoFormatado = formatarTempoSemFaturar(diasSemFaturar);
@@ -411,10 +439,10 @@ export default function VendasDirecao() {
           : diasSemFaturar >= 14 
             ? 'text-amber-400' 
             : 'text-white/60';
-        return <span className={corTempo}>{tempoFormatado}</span>;
+        return <span className={`text-[10px] md:text-sm ${corTempo}`}>{tempoFormatado}</span>;
       case 'valor':
         return (
-          <span className="text-white font-medium">
+          <span className={`${textClass} text-white font-medium`}>
             {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
           </span>
         );
@@ -564,6 +592,55 @@ export default function VendasDirecao() {
         </div>
       </div>
 
+      {/* Seção de Filtro de Vendedores Destacada */}
+      <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-blue-600/20 to-blue-800/10 border border-blue-500/30">
+        <div className="flex items-center gap-2 mb-3">
+          <Users className="h-4 w-4 text-blue-400" />
+          <span className="text-sm font-medium text-blue-300">Filtrar por Vendedor</span>
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-blue-500/30 scrollbar-track-transparent">
+          {/* Botão "Todos" */}
+          <button
+            onClick={() => setSelectedAtendente("todos")}
+            className={`
+              flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg transition-all
+              ${selectedAtendente === "todos"
+                ? "bg-blue-500 text-white shadow-lg shadow-blue-500/25"
+                : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+              }
+            `}
+          >
+            <Users className="h-4 w-4" />
+            <span className="text-xs font-medium">Todos</span>
+          </button>
+          
+          {/* Cards de atendentes */}
+          {atendentes.map(atendente => (
+            <button
+              key={atendente.user_id}
+              onClick={() => setSelectedAtendente(atendente.user_id)}
+              className={`
+                flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg transition-all
+                ${selectedAtendente === atendente.user_id
+                  ? "bg-blue-500 text-white ring-2 ring-blue-400 shadow-lg shadow-blue-500/25"
+                  : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                }
+              `}
+            >
+              <Avatar className="h-6 w-6">
+                <AvatarImage src={atendente.foto_perfil_url} />
+                <AvatarFallback className="text-[10px] bg-blue-500/20 text-blue-400">
+                  {atendente.nome?.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-xs font-medium whitespace-nowrap">
+                {atendente.nome?.split(' ')[0]}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Filtros */}
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="relative flex-1 min-w-[200px]">
@@ -607,20 +684,6 @@ export default function VendasDirecao() {
           </PopoverContent>
         </Popover>
 
-        <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
-          <SelectTrigger className="w-[180px] bg-white/5 border-white/10 text-white/70 hover:bg-white/10">
-            <SelectValue placeholder="Vendedor" />
-          </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-white/10">
-            <SelectItem value="todos" className="text-white">Todos</SelectItem>
-            {atendentes.map(atendente => (
-              <SelectItem key={atendente.user_id} value={atendente.user_id} className="text-white">
-                {atendente.nome}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
         {/* Botão de configuração de colunas */}
         <ColumnManager
           columns={columns}
@@ -640,17 +703,17 @@ export default function VendasDirecao() {
                 {visibleColumns.map(column => (
                   <TableHead 
                     key={column.id}
-                    className={`text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
+                    className={`text-[10px] md:text-xs text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none py-2 px-2 md:px-4 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
                     onClick={() => handleSort(column.id)}
                   >
-                    <div className={`flex items-center gap-1 ${column.id === 'valor' || column.id === 'frete' || column.id === 'instalacao' || column.id === 'desconto' || column.id === 'acrescimo' ? 'justify-end' : column.id === 'faturada' ? 'justify-center' : ''}`}>
-                      {column.label}
+                    <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'frete' || column.id === 'instalacao' || column.id === 'desconto' || column.id === 'acrescimo' ? 'justify-end' : column.id === 'faturada' ? 'justify-center' : ''}`}>
+                      <span className="truncate">{column.label}</span>
                       {sortConfig.column === column.id ? (
                         sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="h-3 w-3 text-blue-400" />
-                          : <ArrowDown className="h-3 w-3 text-blue-400" />
+                          ? <ArrowUp className="h-2.5 w-2.5 md:h-3 md:w-3 text-blue-400 flex-shrink-0" />
+                          : <ArrowDown className="h-2.5 w-2.5 md:h-3 md:w-3 text-blue-400 flex-shrink-0" />
                       ) : (
-                        <ArrowUpDown className="h-3 w-3 opacity-30" />
+                        <ArrowUpDown className="h-2.5 w-2.5 md:h-3 md:w-3 opacity-30 flex-shrink-0" />
                       )}
                     </div>
                   </TableHead>
@@ -674,7 +737,7 @@ export default function VendasDirecao() {
                     {visibleColumns.map(column => (
                       <TableCell 
                         key={column.id}
-                        className={`${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
+                        className={`py-2 px-2 md:px-4 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
                       >
                         {renderCell(venda, column.id)}
                       </TableCell>
