@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, Briefcase, Building2, Users, LogOut, LayoutDashboard, Tv, ArrowLeft } from "lucide-react";
+import { Shield, Briefcase, Building2, Users, LogOut, LayoutDashboard, Tv, ArrowLeft, FileText } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,6 +11,7 @@ const menuItems = [
   { label: "Cargos", icon: Briefcase, path: "/admin/roles" },
   { label: "Empresas", icon: Building2, path: "/admin/companies" },
   { label: "Usuários", icon: Users, path: "/admin/users" },
+  { label: "Logs", icon: FileText, path: "/admin/logs" },
 ];
 
 export default function AdminHub() {

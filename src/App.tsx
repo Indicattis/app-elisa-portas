@@ -147,6 +147,7 @@ import AdminRolesMinimalista from "./pages/admin/AdminRolesMinimalista";
 import AdminCompaniesMinimalista from "./pages/admin/AdminCompaniesMinimalista";
 import AdminCompanyEditMinimalista from "./pages/admin/AdminCompanyEditMinimalista";
 import AdminUsersMinimalista from "./pages/admin/AdminUsersMinimalista";
+import AdminLogs from "./pages/admin/AdminLogs";
 import ParceiroHome from "./pages/ParceiroHome";
 import ComprasHome from "./pages/ComprasHome";
 import MetasColaboradores from "./pages/MetasColaboradores";
@@ -628,6 +629,14 @@ const App = () => (
                   element={
                     <ProtectedRoute routeKey="users">
                       <AdminUsersMinimalista />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/logs"
+                  element={
+                    <ProtectedRoute routeKey="admin_logs">
+                      <AdminLogs />
                     </ProtectedRoute>
                   }
                 />
