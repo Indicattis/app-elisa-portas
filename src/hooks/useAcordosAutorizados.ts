@@ -23,6 +23,10 @@ export interface AcordoAutorizado {
   observacoes?: string;
   created_at: string;
   portas: PortaAcordo[];
+  criador?: {
+    nome: string;
+    foto_perfil_url?: string;
+  };
 }
 
 export interface NovoAcordo {
@@ -74,6 +78,26 @@ export function useAcordosAutorizados() {
         portasData = portas || [];
       }
 
+      // Buscar dados dos criadores (admin_users via user_id)
+      const creatorIds = [...new Set(acordosData?.filter(a => a.created_by).map(a => a.created_by) || [])];
+      let criadoresMap: Record<string, { nome: string; foto_perfil_url?: string }> = {};
+      
+      if (creatorIds.length > 0) {
+        const { data: criadoresData } = await supabase
+          .from('admin_users')
+          .select('user_id, nome, foto_perfil_url')
+          .in('user_id', creatorIds);
+        
+        if (criadoresData) {
+          criadoresData.forEach(c => {
+            criadoresMap[c.user_id] = {
+              nome: c.nome,
+              foto_perfil_url: c.foto_perfil_url || undefined
+            };
+          });
+        }
+      }
+
       // Mapear acordos com suas portas
       const acordosMapeados: AcordoAutorizado[] = (acordosData || []).map(acordo => ({
         id: acordo.id,
@@ -94,7 +118,8 @@ export function useAcordosAutorizados() {
             id: p.id,
             tamanho: p.tamanho as 'P' | 'G' | 'GG',
             valor_unitario: Number(p.valor_unitario)
-          }))
+          })),
+        criador: acordo.created_by ? criadoresMap[acordo.created_by] : undefined
       }));
 
       setAcordos(acordosMapeados);
