@@ -546,37 +546,37 @@ export default function VendasDirecao() {
       />
 
       {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
-          <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-700/10 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] sm:text-xs text-white/60">Vendas</p>
-              <p className="text-xl sm:text-2xl font-bold text-white">{stats.totalVendas}</p>
+      <div className="flex flex-col gap-2 md:grid md:grid-cols-3 md:gap-3 mb-6">
+        <div className="h-[50px] md:h-auto p-1 md:p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+          <div className="h-full px-3 py-1 md:p-3 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-700/10 flex items-center justify-between">
+            <div className="flex items-center gap-3 md:block">
+              <p className="text-xs text-white/60">Vendas</p>
+              <p className="text-lg md:text-2xl font-bold text-white">{stats.totalVendas}</p>
             </div>
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
-            </div>
-          </div>
-        </div>
-        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
-          <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-700/10 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] sm:text-xs text-white/60">Valor</p>
-              <p className="text-base sm:text-xl font-bold text-white">{formatCurrency(stats.totalValor)}</p>
-            </div>
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <ShoppingCart className="h-4 w-4 md:h-5 md:w-5 text-blue-400" />
             </div>
           </div>
         </div>
-        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
-          <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-700/10 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] sm:text-xs text-white/60">Portas</p>
-              <p className="text-xl sm:text-2xl font-bold text-white">{stats.totalPortasEnrolar}</p>
+        <div className="h-[50px] md:h-auto p-1 md:p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+          <div className="h-full px-3 py-1 md:p-3 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-700/10 flex items-center justify-between">
+            <div className="flex items-center gap-3 md:block">
+              <p className="text-xs text-white/60">Valor</p>
+              <p className="text-sm md:text-xl font-bold text-white">{formatCurrency(stats.totalValor)}</p>
             </div>
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-              <Package className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-blue-400" />
+            </div>
+          </div>
+        </div>
+        <div className="h-[50px] md:h-auto p-1 md:p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+          <div className="h-full px-3 py-1 md:p-3 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-700/10 flex items-center justify-between">
+            <div className="flex items-center gap-3 md:block">
+              <p className="text-xs text-white/60">Portas</p>
+              <p className="text-lg md:text-2xl font-bold text-white">{stats.totalPortasEnrolar}</p>
+            </div>
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <Package className="h-4 w-4 md:h-5 md:w-5 text-blue-400" />
             </div>
           </div>
         </div>
