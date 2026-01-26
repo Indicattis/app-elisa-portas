@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useFretesCidades, FreteCidade } from "@/hooks/useFretesCidades";
 import {
   Dialog,
@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getCidadesPorEstado } from "@/utils/estadosCidades";
 
 const ESTADOS_BR = [
   { sigla: "AC", nome: "Acre" },
@@ -136,7 +137,7 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
               <Label htmlFor="estado">Estado *</Label>
               <Select
                 value={formData.estado}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, estado: value }))}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, estado: value, cidade: "" }))}
               >
                 <SelectTrigger id="estado">
                   <SelectValue placeholder="Selecione" />
@@ -153,12 +154,22 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
 
             <div className="space-y-2">
               <Label htmlFor="cidade">Cidade *</Label>
-              <Input
-                id="cidade"
+              <Select
                 value={formData.cidade}
-                onChange={(e) => setFormData(prev => ({ ...prev, cidade: e.target.value }))}
-                placeholder="Nome da cidade"
-              />
+                onValueChange={(value) => setFormData(prev => ({ ...prev, cidade: value }))}
+                disabled={!formData.estado}
+              >
+                <SelectTrigger id="cidade">
+                  <SelectValue placeholder={formData.estado ? "Selecione a cidade" : "Selecione o estado primeiro"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {getCidadesPorEstado(formData.estado).map(cidade => (
+                    <SelectItem key={cidade} value={cidade}>
+                      {cidade}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
