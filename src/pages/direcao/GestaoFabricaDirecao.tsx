@@ -22,7 +22,7 @@ import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
 import { useState, useMemo, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
+
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 
 const ETAPA_ICONS = {
@@ -46,11 +46,11 @@ export default function GestaoFabricaDirecao() {
   const [tipoEntrega, setTipoEntrega] = useState('todos');
   const [corPintura, setCorPintura] = useState('todas');
   const [mostrarProntos, setMostrarProntos] = useState(false);
-  const [paginaAtual, setPaginaAtual] = useState(1);
+  
   const [modalPedidoTesteAberto, setModalPedidoTesteAberto] = useState(false);
   const [modalResponsavelAberto, setModalResponsavelAberto] = useState(false);
   const [etapaParaAtribuir, setEtapaParaAtribuir] = useState<EtapaPedido | null>(null);
-  const ITENS_POR_PAGINA = 25;
+  
   const contadores = usePedidosContadores();
   const { neoInstalacoes, concluirNeoInstalacao, isConcluindo } = useNeoInstalacoesListagem();
   const { neoCorrecoes, concluirNeoCorrecao } = useNeoCorrecoesListagem();
@@ -161,14 +161,6 @@ export default function GestaoFabricaDirecao() {
     }, 0);
   }, [pedidosFiltrados]);
 
-  useEffect(() => {
-    setPaginaAtual(1);
-  }, [searchTerm, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
-
-  const totalPaginas = Math.ceil(pedidosFiltrados.length / ITENS_POR_PAGINA);
-  const indiceInicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
-  const indiceFim = indiceInicio + ITENS_POR_PAGINA;
-  const pedidosPaginados = pedidosFiltrados.slice(indiceInicio, indiceFim);
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
@@ -345,7 +337,6 @@ export default function GestaoFabricaDirecao() {
                     <span>{ETAPAS_CONFIG[etapa].label}</span>
                     <span className="text-sm font-normal text-white/60">
                       {pedidosFiltrados.length} {pedidosFiltrados.length === 1 ? 'pedido' : 'pedidos'}
-                      {totalPaginas > 1 && ` (Página ${paginaAtual} de ${totalPaginas})`}
                     </span>
                     {totalPortasEtapa > 0 && (
                       <Badge variant="secondary" className="text-xs ml-2 bg-primary/10 text-white">
@@ -467,7 +458,7 @@ export default function GestaoFabricaDirecao() {
                     )}
                     
                     <PedidosDraggableList 
-                      pedidos={pedidosPaginados}
+                      pedidos={pedidosFiltrados}
                       pedidosParaTotais={pedidosFiltrados}
                       etapa={etapa} 
                       isAberto={etapa === 'aberto'} 
@@ -481,59 +472,6 @@ export default function GestaoFabricaDirecao() {
                       enableDragAndDrop={true}
                     />
                     
-                    {totalPaginas > 1 && (
-                      <div className="mt-6 flex justify-center">
-                        <Pagination>
-                          <PaginationContent>
-                            <PaginationItem>
-                              <PaginationPrevious 
-                                onClick={() => setPaginaAtual(prev => Math.max(1, prev - 1))}
-                                className={`${paginaAtual === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'} text-white`}
-                              />
-                            </PaginationItem>
-                            
-                            {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((pagina) => {
-                              const mostrarPagina = 
-                                pagina === 1 || 
-                                pagina === totalPaginas || 
-                                (pagina >= paginaAtual - 1 && pagina <= paginaAtual + 1);
-                              
-                              const mostrarEllipsisAntes = pagina === paginaAtual - 2 && paginaAtual > 3;
-                              const mostrarEllipsisDepois = pagina === paginaAtual + 2 && paginaAtual < totalPaginas - 2;
-                              
-                              if (mostrarEllipsisAntes || mostrarEllipsisDepois) {
-                                return (
-                                  <PaginationItem key={pagina}>
-                                    <PaginationEllipsis className="text-white" />
-                                  </PaginationItem>
-                                );
-                              }
-                              
-                              if (!mostrarPagina) return null;
-                              
-                              return (
-                                <PaginationItem key={pagina}>
-                                  <PaginationLink
-                                    onClick={() => setPaginaAtual(pagina)}
-                                    isActive={paginaAtual === pagina}
-                                    className="cursor-pointer text-white"
-                                  >
-                                    {pagina}
-                                  </PaginationLink>
-                                </PaginationItem>
-                              );
-                            })}
-                            
-                            <PaginationItem>
-                              <PaginationNext 
-                                onClick={() => setPaginaAtual(prev => Math.min(totalPaginas, prev + 1))}
-                                className={`${paginaAtual === totalPaginas ? 'pointer-events-none opacity-50' : 'cursor-pointer'} text-white`}
-                              />
-                            </PaginationItem>
-                          </PaginationContent>
-                        </Pagination>
-                      </div>
-                    )}
                   </>
                 )}
               </CardContent>
