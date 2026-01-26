@@ -1,243 +1,56 @@
 
-## Plano: Mover Precos para Direcao e Criar Acordos em Logistica
 
-### Visao Geral
+## Plano: Corrigir Cor do Produto Pintura Epoxi
 
-O usuario solicitou duas alteracoes principais:
+### Situacao Atual
 
-1. **Mover** a funcionalidade de precos de autorizados de `/logistica/autorizados` para `/direcao/autorizados`
-2. **Criar** nova funcionalidade em `/logistica/autorizados` para cadastrar acordos de instalacao com autorizados
+Na venda `589b2296-6585-463d-9edc-5870a837ea84`, o produto de pintura eletrostatica esta cadastrado com a cor errada:
 
----
-
-### Parte 1: Mover Precos para Direcao
-
-#### 1.1 Criar novo arquivo em Direcao
-
-Criar `src/pages/direcao/AutorizadosPrecosDirecao.tsx` copiando o conteudo de `AutorizadosPrecos.tsx` com ajustes:
-
-- Alterar breadcrumb de "Logistica" para "Direcao"
-- Alterar botao voltar para `/direcao`
-- Ajustar titulo se necessario
-
-#### 1.2 Atualizar Hub de Direcao
-
-Modificar `src/pages/direcao/DirecaoHub.tsx`:
-
-```typescript
-import { Users } from 'lucide-react';
-
-const menuItems = [
-  { label: 'Vendas', icon: ShoppingCart, path: '/direcao/vendas' },
-  { label: 'Faturamento', icon: DollarSign, path: '/direcao/faturamento' },
-  { label: 'Gestao de Fabrica', icon: Factory, path: '/direcao/gestao-fabrica' },
-  { label: 'Gestao de Instalacoes', icon: Truck, path: '/direcao/gestao-instalacao' },
-  { label: 'Metas', icon: Target, path: '/direcao/metas' },
-  { label: 'Autorizados', icon: Users, path: '/direcao/autorizados' }, // NOVO
-];
-```
-
-#### 1.3 Atualizar App.tsx
-
-- Adicionar nova rota `/direcao/autorizados`
-- Remover rota antiga `/logistica/autorizados` (sera substituida pela nova funcionalidade)
+| Campo | Valor Atual | Valor Correto |
+|-------|-------------|---------------|
+| Cor | Vermelho | Preto Fosco |
+| Cor ID | `826e51d7-0b2b-4a60-9495-3aa1c9bfcb97` | `7d856cba-536d-440b-9114-3076cb9a8e76` |
+| Codigo Hex | `#b80000` | `#14181e` |
+| Descricao | Pintura Vermelho | Pintura Preto Fosco |
 
 ---
 
-### Parte 2: Criar Sistema de Acordos em Logistica
+### Correcao Necessaria
 
-#### 2.1 Nova Tabela: acordos_instalacao_autorizados
-
-Criar migration para nova tabela que armazenara os acordos:
-
-| Coluna | Tipo | Descricao |
-|--------|------|-----------|
-| id | uuid | PK |
-| autorizado_id | uuid | FK para autorizados |
-| cliente_nome | text | Nome do cliente |
-| cliente_cidade | text | Cidade do cliente |
-| cliente_estado | text | Estado do cliente |
-| quantidade_portas | integer | Total de portas |
-| valor_acordado | numeric | Valor acordado com autorizado |
-| status | text | pendente, em_andamento, concluido |
-| data_acordo | date | Data do acordo |
-| observacoes | text | Observacoes opcionais |
-| created_at | timestamptz | Data criacao |
-| created_by | uuid | Usuario que criou |
-
-#### 2.2 Nova Tabela: acordo_portas
-
-Tabela para armazenar detalhes de cada porta do acordo:
-
-| Coluna | Tipo | Descricao |
-|--------|------|-----------|
-| id | uuid | PK |
-| acordo_id | uuid | FK para acordos_instalacao_autorizados |
-| tamanho | text | P, G ou GG |
-| valor_unitario | numeric | Valor por porta (baseado no preco cadastrado) |
-
-#### 2.3 Nova Pagina: AcordosAutorizados.tsx
-
-Criar `src/pages/logistica/AcordosAutorizados.tsx` com:
-
-**Funcionalidades:**
-- Listagem de acordos existentes
-- Filtro por status, autorizado, periodo
-- Botao para criar novo acordo
-
-**Tabela exibira:**
-- Cliente (nome, cidade-estado)
-- Autorizado
-- Qtd Portas (resumo: 2P, 1G, 1GG)
-- Valor Acordado
-- Status
-- Data
-
-#### 2.4 Dialog de Cadastro de Acordo
-
-Criar `src/components/autorizados/NovoAcordoDialog.tsx`:
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  Novo Acordo de Instalacao                                  │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  CLIENTE                                                    │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ Nome do Cliente                                     │    │
-│  └─────────────────────────────────────────────────────┘    │
-│  ┌───────────────────┐  ┌─────────────────────────────┐    │
-│  │ Cidade            │  │ Estado [UF v]               │    │
-│  └───────────────────┘  └─────────────────────────────┘    │
-│                                                             │
-│  AUTORIZADO                                                 │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ Selecione o autorizado... [v]                       │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                             │
-│  PORTAS                                                     │
-│  ┌──────────────┬────────────────────────┬────────────┐    │
-│  │ Porta 1      │ Tamanho: [P v]         │ [Remover]  │    │
-│  ├──────────────┼────────────────────────┼────────────┤    │
-│  │ Porta 2      │ Tamanho: [G v]         │ [Remover]  │    │
-│  └──────────────┴────────────────────────┴────────────┘    │
-│  [+ Adicionar Porta]                                        │
-│                                                             │
-│  VALOR ACORDADO                                             │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ R$ 0,00                                             │    │
-│  └─────────────────────────────────────────────────────┘    │
-│  Valor sugerido: R$ X (baseado nos precos cadastrados)      │
-│                                                             │
-│                         [Cancelar] [Salvar Acordo]          │
-└─────────────────────────────────────────────────────────────┘
-```
-
-#### 2.5 Hook para Acordos
-
-Criar `src/hooks/useAcordosAutorizados.ts`:
-
-```typescript
-interface AcordoAutorizado {
-  id: string;
-  autorizado_id: string;
-  autorizado_nome: string;
-  cliente_nome: string;
-  cliente_cidade: string;
-  cliente_estado: string;
-  quantidade_portas: number;
-  valor_acordado: number;
-  status: 'pendente' | 'em_andamento' | 'concluido';
-  data_acordo: string;
-  portas: { tamanho: 'P' | 'G' | 'GG'; valor_unitario: number }[];
-}
-
-// Funcoes:
-// - fetchAcordos() - listar acordos com filtros
-// - createAcordo() - criar novo acordo com portas
-// - updateAcordo() - atualizar acordo existente
-// - deleteAcordo() - remover acordo
-```
-
----
-
-### Arquivos a Criar/Modificar
-
-| Arquivo | Acao |
-|---------|------|
-| Nova migration SQL | Criar tabelas `acordos_instalacao_autorizados` e `acordo_portas` |
-| `src/pages/direcao/DirecaoHub.tsx` | Adicionar botao "Autorizados" |
-| `src/pages/direcao/AutorizadosPrecosDirecao.tsx` | Criar (copiar de logistica com ajustes) |
-| `src/pages/logistica/AcordosAutorizados.tsx` | Criar nova pagina de acordos |
-| `src/pages/logistica/AutorizadosPrecos.tsx` | Remover (sera substituido) |
-| `src/components/autorizados/NovoAcordoDialog.tsx` | Criar dialog de cadastro |
-| `src/hooks/useAcordosAutorizados.ts` | Criar hook para gerenciar acordos |
-| `src/pages/logistica/LogisticaHub.tsx` | Alterar label de "Autorizados" para "Acordos com Autorizados" ou manter |
-| `src/App.tsx` | Atualizar rotas: adicionar `/direcao/autorizados`, alterar `/logistica/autorizados` |
-
----
-
-### SQL para Novas Tabelas
+Executar uma migration SQL para atualizar o registro do produto:
 
 ```sql
--- Tabela de acordos
-CREATE TABLE acordos_instalacao_autorizados (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  autorizado_id uuid REFERENCES autorizados(id) ON DELETE CASCADE NOT NULL,
-  cliente_nome text NOT NULL,
-  cliente_cidade text NOT NULL,
-  cliente_estado text NOT NULL,
-  quantidade_portas integer NOT NULL DEFAULT 1,
-  valor_acordado numeric(10,2) NOT NULL DEFAULT 0,
-  status text NOT NULL DEFAULT 'pendente' CHECK (status IN ('pendente', 'em_andamento', 'concluido')),
-  data_acordo date NOT NULL DEFAULT CURRENT_DATE,
-  observacoes text,
-  created_at timestamptz DEFAULT now() NOT NULL,
-  updated_at timestamptz DEFAULT now() NOT NULL,
-  created_by uuid REFERENCES auth.users(id)
-);
-
--- Tabela de portas do acordo
-CREATE TABLE acordo_portas (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  acordo_id uuid REFERENCES acordos_instalacao_autorizados(id) ON DELETE CASCADE NOT NULL,
-  tamanho text NOT NULL CHECK (tamanho IN ('P', 'G', 'GG')),
-  valor_unitario numeric(10,2) NOT NULL DEFAULT 0
-);
-
--- RLS
-ALTER TABLE acordos_instalacao_autorizados ENABLE ROW LEVEL SECURITY;
-ALTER TABLE acordo_portas ENABLE ROW LEVEL SECURITY;
-
--- Policies para usuarios autenticados
-CREATE POLICY "Usuarios autenticados podem ver acordos"
-  ON acordos_instalacao_autorizados FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Usuarios autenticados podem inserir acordos"
-  ON acordos_instalacao_autorizados FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Usuarios autenticados podem atualizar acordos"
-  ON acordos_instalacao_autorizados FOR UPDATE TO authenticated USING (true);
-CREATE POLICY "Usuarios autenticados podem deletar acordos"
-  ON acordos_instalacao_autorizados FOR DELETE TO authenticated USING (true);
-
-CREATE POLICY "Usuarios autenticados podem ver portas"
-  ON acordo_portas FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Usuarios autenticados podem inserir portas"
-  ON acordo_portas FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Usuarios autenticados podem atualizar portas"
-  ON acordo_portas FOR UPDATE TO authenticated USING (true);
-CREATE POLICY "Usuarios autenticados podem deletar portas"
-  ON acordo_portas FOR DELETE TO authenticated USING (true);
+UPDATE produtos_vendas
+SET 
+  cor_id = '7d856cba-536d-440b-9114-3076cb9a8e76',
+  descricao = 'Pintura Preto Fosco'
+WHERE id = 'a26f7649-08fb-49e4-a154-0294759f1984'
+  AND venda_id = '589b2296-6585-463d-9edc-5870a837ea84'
+  AND tipo_produto = 'pintura_epoxi';
 ```
+
+---
+
+### Dados Envolvidos
+
+**Produto a ser atualizado:**
+- ID: `a26f7649-08fb-49e4-a154-0294759f1984`
+- Tipo: `pintura_epoxi`
+- Tamanho: 2.52 x 2.6m
+- Valor: R$ 800,00
+
+**Nova cor:**
+- Nome: Preto Fosco
+- ID: `7d856cba-536d-440b-9114-3076cb9a8e76`
+- Codigo Hex: #14181e
 
 ---
 
 ### Resultado Esperado
 
-1. **Em `/direcao`**: Novo botao "Autorizados" leva para `/direcao/autorizados` com gestao de precos P, G, GG
-2. **Em `/logistica/autorizados`**: Nova interface para cadastrar acordos de instalacao:
-   - Selecionar cliente (nome, cidade, estado)
-   - Selecionar autorizado instalador
-   - Adicionar portas com tamanhos (P, G, GG)
-   - Definir valor acordado
-   - Acompanhar status dos acordos
+Apos a correcao, ao visualizar a venda em `/direcao/vendas/589b2296-6585-463d-9edc-5870a837ea84`:
+
+1. O produto de pintura exibira a cor **Preto Fosco** em vez de Vermelho
+2. O badge de cor mostrara a cor preta (#14181e)
+3. A descricao do produto sera "Pintura Preto Fosco"
 
