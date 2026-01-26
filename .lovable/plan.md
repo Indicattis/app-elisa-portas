@@ -1,186 +1,117 @@
 
-## Plano: Atualizar Rotas Faltantes no app_routes
+## Plano: Remover Paginação e Corrigir Ordens Faltantes
 
-### Visão Geral
+### Visao Geral
 
-A tabela `app_routes` no banco de dados não contém todas as rotas existentes no `App.tsx`. Isso significa que essas rotas não podem ser gerenciadas no painel de permissões (`/admin/permissions`).
+O usuario identificou dois problemas na pagina `/direcao/gestao-fabrica`:
 
-### Rotas a Adicionar
-
-Serão adicionadas **18 rotas** distribuídas nas seguintes interfaces:
-
----
-
-### Interface: Padrão
-
-#### Logística
-| key | label | path | parent_key |
-|-----|-------|------|------------|
-| `logistica_frete` | Frete | `/logistica/frete` | `logistica_hub` |
-
-#### Vendas
-| key | label | path | parent_key |
-|-----|-------|------|------------|
-| `vendas_catalogo_minimalista` | Catálogo | `/vendas/catalogo` | `vendas_hub` |
-| `vendas_acompanhar_pedido` | Acompanhar Pedido | `/vendas/acompanhar-pedido` | `vendas_hub` |
-
-#### Direção
-| key | label | path | parent_key |
-|-----|-------|------|------------|
-| `direcao_metas_fabrica` | Metas Fábrica | `/direcao/metas/fabrica` | `direcao_metas` |
-| `direcao_ordens_instalacoes` | Ordens de Instalações | `/direcao/gestao-instalacao/ordens-instalacoes` | `direcao_gestao_instalacao` |
-
-#### Administrativo - Documentos
-| key | label | path | parent_key |
-|-----|-------|------|------------|
-| `admin_documentos` | Documentos | `/administrativo/documentos` | `administrativo_hub` |
-
-#### Administrativo - Cobranças
-| key | label | path | parent_key |
-|-----|-------|------|------------|
-| `admin_cobrancas` | Cobranças | `/administrativo/financeiro/cobrancas` | `admin_financeiro` |
-
-#### Administrativo - RH/DP (Sub-hub)
-| key | label | path | parent_key |
-|-----|-------|------|------------|
-| `admin_rh_dp_hub` | RH/DP | `/administrativo/rh-dp` | `administrativo_hub` |
-| `admin_rh_dp_colaboradores` | Colaboradores | `/administrativo/rh-dp/colaboradores` | `admin_rh_dp_hub` |
-
-#### Administrativo - Compras (Sub-hub)
-| key | label | path | parent_key |
-|-----|-------|------|------------|
-| `admin_compras_hub` | Compras & Suprimentos | `/administrativo/compras` | `administrativo_hub` |
-| `admin_compras_estoque` | Estoque | `/administrativo/compras/estoque` | `admin_compras_hub` |
-| `admin_compras_requisicoes` | Requisições | `/administrativo/compras/requisicoes` | `admin_compras_hub` |
-| `admin_compras_fornecedores` | Fornecedores | `/administrativo/compras/fornecedores` | `admin_compras_hub` |
-
-#### Administrativo - Fiscal (Sub-hub)
-| key | label | path | parent_key |
-|-----|-------|------|------------|
-| `admin_fiscal_hub` | Fiscal & Contábil | `/administrativo/fiscal` | `administrativo_hub` |
-| `admin_fiscal_notas` | Notas Fiscais | `/administrativo/fiscal/notas-fiscais` | `admin_fiscal_hub` |
-| `admin_fiscal_emitir_nfe` | Emitir NF-e | `/administrativo/fiscal/notas-fiscais/emitir-nfe` | `admin_fiscal_notas` |
-| `admin_fiscal_emitir_nfse` | Emitir NFS-e | `/administrativo/fiscal/notas-fiscais/emitir-nfse` | `admin_fiscal_notas` |
-| `admin_fiscal_configuracoes` | Configurações Fiscais | `/administrativo/fiscal/configuracoes` | `admin_fiscal_hub` |
+1. **Ordens faltantes**: Os 3 ultimos pedidos na etapa "Em Producao" (0087, 0092, 0093) nao possuem ordens de producao, apesar de terem linhas de producao cadastradas
+2. **Paginacao**: Solicita remocao da paginacao para exibir todos os pedidos de uma vez
 
 ---
 
-### Implementação
+### Parte 1: Remover Paginacao
 
-#### 1. Migration SQL
+A paginacao sera removida da pagina GestaoFabricaDirecao. Todos os pedidos da etapa serao exibidos sem limite.
 
-Criar uma migration que insere todas as rotas faltantes:
+#### Alteracoes no Arquivo
+
+**Arquivo:** `src/pages/direcao/GestaoFabricaDirecao.tsx`
+
+| Linha | Alteracao |
+|-------|-----------|
+| 49 | Remover estado `paginaAtual` |
+| 53 | Remover constante `ITENS_POR_PAGINA` |
+| 164-166 | Remover `useEffect` que reseta paginacao |
+| 168-171 | Remover calculo de paginacao (`totalPaginas`, `indiceInicio`, etc.) |
+| 348 | Remover texto de paginacao no header |
+| 470 | Alterar de `pedidosPaginados` para `pedidosFiltrados` |
+| 484-536 | Remover bloco completo da UI de paginacao |
+
+---
+
+### Parte 2: Criar Ordens para Pedidos Antigos
+
+Os pedidos que entraram na etapa "em_producao" antes da implementacao do sistema de criacao automatica nao possuem ordens. Uma migration SQL criara as ordens faltantes.
+
+#### Pedidos Afetados
+
+| Pedido | Cliente | Linhas Solda | Linhas Perfiladeira | Linhas Separacao |
+|--------|---------|--------------|---------------------|------------------|
+| 0087 | Finamore Comercio... | 3 | 1 | 10 |
+| 0092 | Valderi Lopes | 6 | 2 | 19 |
+| 0093 | TREINAMENTO E ASSESSORIA... | 3 | 2 | 10 |
+
+#### SQL para Criar Ordens
 
 ```sql
-INSERT INTO app_routes (key, path, label, description, interface, parent_key, sort_order, active) VALUES
--- Logística
-('logistica_frete', '/logistica/frete', 'Frete', 'Gerenciamento de valores de frete por cidade', 'padrao', 'logistica_hub', 5, true),
+-- Inserir ordens de soldagem para pedidos que tem linhas de solda mas nao tem ordens
+INSERT INTO ordens_soldagem (pedido_id, numero_ordem, status)
+SELECT DISTINCT 
+  pl.pedido_id,
+  'SOL-' || SUBSTRING(pl.pedido_id::text, 1, 8),
+  'pendente'
+FROM pedido_linhas pl
+WHERE pl.categoria_linha = 'solda'
+  AND pl.pedido_id IN (
+    '0d4acc35-162e-44cf-b2f5-19fa3fc66755',
+    '60840c18-9164-493c-94db-a2970c4e6985',
+    '1b05ea5b-844b-418d-a5fa-7c4936d97f8b'
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM ordens_soldagem os WHERE os.pedido_id = pl.pedido_id
+  );
 
--- Vendas
-('vendas_catalogo_minimalista', '/vendas/catalogo', 'Catálogo', 'Catálogo de produtos', 'padrao', 'vendas_hub', 5, true),
-('vendas_acompanhar_pedido', '/vendas/acompanhar-pedido', 'Acompanhar Pedido', 'Acompanhamento de pedidos do cliente', 'padrao', 'vendas_hub', 6, true),
+-- Inserir ordens de perfiladeira
+INSERT INTO ordens_perfiladeira (pedido_id, numero_ordem, status)
+SELECT DISTINCT 
+  pl.pedido_id,
+  'PERF-' || SUBSTRING(pl.pedido_id::text, 1, 8),
+  'pendente'
+FROM pedido_linhas pl
+WHERE pl.categoria_linha = 'perfiladeira'
+  AND pl.pedido_id IN (
+    '0d4acc35-162e-44cf-b2f5-19fa3fc66755',
+    '60840c18-9164-493c-94db-a2970c4e6985',
+    '1b05ea5b-844b-418d-a5fa-7c4936d97f8b'
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM ordens_perfiladeira op WHERE op.pedido_id = pl.pedido_id
+  );
 
--- Direção
-('direcao_metas_fabrica', '/direcao/metas/fabrica', 'Metas Fábrica', 'Metas de produção da fábrica', 'padrao', 'direcao_metas', 1, true),
-('direcao_ordens_instalacoes', '/direcao/gestao-instalacao/ordens-instalacoes', 'Ordens de Instalações', 'Gerenciamento de ordens de instalação', 'padrao', 'direcao_gestao_instalacao', 1, true),
-
--- Administrativo - Documentos
-('admin_documentos', '/administrativo/documentos', 'Documentos', 'Gestão de documentos', 'padrao', 'administrativo_hub', 6, true),
-
--- Administrativo - Cobranças
-('admin_cobrancas', '/administrativo/financeiro/cobrancas', 'Cobranças', 'Gestão de cobranças', 'padrao', 'admin_financeiro', 4, true),
-
--- Administrativo - RH/DP
-('admin_rh_dp_hub', '/administrativo/rh-dp', 'RH/DP', 'Hub de Recursos Humanos e Departamento Pessoal', 'padrao', 'administrativo_hub', 2, true),
-('admin_rh_dp_colaboradores', '/administrativo/rh-dp/colaboradores', 'Colaboradores', 'Gestão de colaboradores', 'padrao', 'admin_rh_dp_hub', 1, true),
-
--- Administrativo - Compras
-('admin_compras_hub', '/administrativo/compras', 'Compras & Suprimentos', 'Hub de Compras e Suprimentos', 'padrao', 'administrativo_hub', 3, true),
-('admin_compras_estoque', '/administrativo/compras/estoque', 'Estoque', 'Controle de estoque', 'padrao', 'admin_compras_hub', 1, true),
-('admin_compras_requisicoes', '/administrativo/compras/requisicoes', 'Requisições', 'Requisições de compra', 'padrao', 'admin_compras_hub', 2, true),
-('admin_compras_fornecedores', '/administrativo/compras/fornecedores', 'Fornecedores', 'Cadastro de fornecedores', 'padrao', 'admin_compras_hub', 3, true),
-
--- Administrativo - Fiscal
-('admin_fiscal_hub', '/administrativo/fiscal', 'Fiscal & Contábil', 'Hub de Fiscal e Contábil', 'padrao', 'administrativo_hub', 4, true),
-('admin_fiscal_notas', '/administrativo/fiscal/notas-fiscais', 'Notas Fiscais', 'Gestão de notas fiscais', 'padrao', 'admin_fiscal_hub', 1, true),
-('admin_fiscal_emitir_nfe', '/administrativo/fiscal/notas-fiscais/emitir-nfe', 'Emitir NF-e', 'Emissão de NF-e', 'padrao', 'admin_fiscal_notas', 1, true),
-('admin_fiscal_emitir_nfse', '/administrativo/fiscal/notas-fiscais/emitir-nfse', 'Emitir NFS-e', 'Emissão de NFS-e', 'padrao', 'admin_fiscal_notas', 2, true),
-('admin_fiscal_configuracoes', '/administrativo/fiscal/configuracoes', 'Configurações Fiscais', 'Configurações do módulo fiscal', 'padrao', 'admin_fiscal_hub', 2, true)
-
-ON CONFLICT (key) DO UPDATE SET
-  path = EXCLUDED.path,
-  label = EXCLUDED.label,
-  description = EXCLUDED.description,
-  interface = EXCLUDED.interface,
-  parent_key = EXCLUDED.parent_key,
-  active = EXCLUDED.active;
-```
-
----
-
-### Estrutura Hierárquica Final
-
-Após a migration, a árvore de rotas no painel de permissões ficará organizada assim:
-
-```text
-Padrão
-├── Home (acesso universal)
-├── Vendas
-│   ├── Minhas Vendas
-│   ├── Meus Clientes
-│   ├── Meus Orçamentos
-│   ├── Meus Parceiros
-│   ├── Catálogo          ← NOVA
-│   └── Acompanhar Pedido ← NOVA
-├── Fábrica
-│   └── (rotas existentes)
-├── Direção
-│   ├── Vendas
-│   ├── Faturamento
-│   ├── Gestão Fábrica
-│   ├── Gestão Instalação
-│   │   └── Ordens de Instalações ← NOVA
-│   └── Metas
-│       └── Metas Fábrica         ← NOVA
-├── Logística
-│   ├── (rotas existentes)
-│   └── Frete ← NOVA
-├── Administrativo
-│   ├── Pedidos
-│   ├── Financeiro
-│   │   ├── Faturamento
-│   │   ├── Custos
-│   │   ├── Cobranças ← NOVA
-│   │   └── Caixa
-│   ├── RH/DP ← NOVO
-│   │   └── Colaboradores
-│   ├── Compras & Suprimentos ← NOVO
-│   │   ├── Estoque
-│   │   ├── Requisições
-│   │   └── Fornecedores
-│   ├── Fiscal & Contábil ← NOVO
-│   │   ├── Notas Fiscais
-│   │   │   ├── Emitir NF-e
-│   │   │   └── Emitir NFS-e
-│   │   └── Configurações Fiscais
-│   └── Documentos ← NOVA
-└── Marketing
-    └── (rotas existentes)
+-- Inserir ordens de separacao
+INSERT INTO ordens_separacao (pedido_id, numero_ordem, status)
+SELECT DISTINCT 
+  pl.pedido_id,
+  'SEP-' || SUBSTRING(pl.pedido_id::text, 1, 8),
+  'pendente'
+FROM pedido_linhas pl
+WHERE pl.categoria_linha = 'separacao'
+  AND pl.pedido_id IN (
+    '0d4acc35-162e-44cf-b2f5-19fa3fc66755',
+    '60840c18-9164-493c-94db-a2970c4e6985',
+    '1b05ea5b-844b-418d-a5fa-7c4936d97f8b'
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM ordens_separacao ose WHERE ose.pedido_id = pl.pedido_id
+  );
 ```
 
 ---
 
 ### Arquivos a Modificar
 
-| Arquivo | Alteração |
+| Arquivo | Alteracao |
 |---------|-----------|
-| `supabase/migrations/XXXXXX_add_missing_routes.sql` | Criar migration com INSERT das 18 rotas |
+| `src/pages/direcao/GestaoFabricaDirecao.tsx` | Remover toda logica e UI de paginacao |
+| Nova migration SQL | Criar ordens faltantes para os 3 pedidos |
 
 ---
 
 ### Resultado Esperado
 
-Após executar a migration:
-- Todas as 18 rotas aparecerão no painel `/admin/permissions`
-- A hierarquia será exibida corretamente com as pastas aninhadas
-- Os administradores poderão gerenciar permissões granulares para cada nova rota
+Apos a implementacao:
+
+1. Todos os pedidos de cada etapa serao exibidos sem paginacao
+2. Os 3 pedidos antigos (0087, 0092, 0093) terao suas ordens de producao criadas
+3. A interface permitira arrastar e reordenar todos os pedidos sem limitacao de pagina
