@@ -159,7 +159,9 @@ export function usePedidoAutoAvanco() {
 
   const tentarAvancoAutomatico = useCallback(async (pedidoId: string, tipoOrdemConcluida: TipoOrdem) => {
     try {
-      console.log(`[Auto-Avanço] Iniciando verificação para pedido ${pedidoId} após conclusão de ${tipoOrdemConcluida}`);
+      console.log(`[Auto-Avanço] ========================================`);
+      console.log(`[Auto-Avanço] Iniciando verificação para pedido ${pedidoId}`);
+      console.log(`[Auto-Avanço] Tipo de ordem concluída: ${tipoOrdemConcluida}`);
 
       // Buscar etapa atual do pedido
       const etapaAtual = await buscarEtapaAtual(pedidoId);
@@ -176,20 +178,29 @@ export function usePedidoAutoAvanco() {
       if (etapaAtual === 'em_producao') {
         // Verificar se todas as ordens de produção (solda, perfiladeira, separação) estão concluídas
         if (['soldagem', 'perfiladeira', 'separacao'].includes(tipoOrdemConcluida)) {
+          console.log(`[Auto-Avanço] Verificando se todas as ordens de produção estão concluídas...`);
           deveAvancar = await verificarOrdensProducaoConcluidas(pedidoId);
-          console.log(`[Auto-Avanço] Ordens de produção concluídas: ${deveAvancar}`);
+          console.log(`[Auto-Avanço] Resultado da verificação: deveAvancar = ${deveAvancar}`);
+        } else {
+          console.log(`[Auto-Avanço] Tipo ${tipoOrdemConcluida} não é ordem de produção, ignorando`);
         }
       } else if (etapaAtual === 'inspecao_qualidade') {
         // Verificar se ordem de qualidade está concluída
         if (tipoOrdemConcluida === 'qualidade') {
+          console.log(`[Auto-Avanço] Verificando se ordem de qualidade está concluída...`);
           deveAvancar = await verificarOrdemQualidadeConcluida(pedidoId);
-          console.log(`[Auto-Avanço] Ordem de qualidade concluída: ${deveAvancar}`);
+          console.log(`[Auto-Avanço] Resultado da verificação: deveAvancar = ${deveAvancar}`);
+        } else {
+          console.log(`[Auto-Avanço] Tipo ${tipoOrdemConcluida} não é qualidade, ignorando`);
         }
       } else if (etapaAtual === 'aguardando_pintura') {
         // Verificar se ordem de pintura está concluída
         if (tipoOrdemConcluida === 'pintura') {
+          console.log(`[Auto-Avanço] Verificando se ordem de pintura está concluída...`);
           deveAvancar = await verificarOrdemPinturaConcluida(pedidoId);
-          console.log(`[Auto-Avanço] Ordem de pintura concluída: ${deveAvancar}`);
+          console.log(`[Auto-Avanço] Resultado da verificação: deveAvancar = ${deveAvancar}`);
+        } else {
+          console.log(`[Auto-Avanço] Tipo ${tipoOrdemConcluida} não é pintura, ignorando`);
         }
       } else {
         console.log(`[Auto-Avanço] Etapa ${etapaAtual} não é tratada para tipo ${tipoOrdemConcluida}`);
@@ -197,8 +208,10 @@ export function usePedidoAutoAvanco() {
 
       console.log(`[Auto-Avanço] deveAvancar: ${deveAvancar}`);
 
+      console.log(`[Auto-Avanço] Decisão final: deveAvancar = ${deveAvancar}`);
+      
       if (deveAvancar) {
-        console.log('[Auto-Avanço] Iniciando avanço automático...');
+        console.log('[Auto-Avanço] ✅ Iniciando avanço automático...');
         
         // Inicializar processos
         const processosIniciais: Processo[] = [
