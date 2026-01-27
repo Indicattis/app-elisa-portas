@@ -6381,6 +6381,10 @@ export type Database = {
         Args: { p_ordem_carregamento_id: string }
         Returns: undefined
       }
+      concluir_carregamento_instalacao: {
+        Args: { p_instalacao_id: string }
+        Returns: undefined
+      }
       concluir_instalacao_e_avancar_pedido: {
         Args: { p_instalacao_id: string }
         Returns: Json

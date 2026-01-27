@@ -1,22 +1,23 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, Clock, RefreshCw, Truck, PackageCheck, Calendar, MapPin, Phone } from "lucide-react";
+import { Package, Clock, RefreshCw, Truck, PackageCheck, Calendar, MapPin, Phone, Wrench } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { OrdemCarregamento } from "@/types/ordemCarregamento";
+import { OrdemCarregamentoUnificada } from "@/hooks/useOrdensCarregamentoUnificadas";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
 
 interface OrdemCardProps {
-  ordem: OrdemCarregamento;
-  onIniciarColeta: (ordem: OrdemCarregamento) => void;
+  ordem: OrdemCarregamentoUnificada;
+  onIniciarColeta: (ordem: OrdemCarregamentoUnificada) => void;
   podeIniciar: boolean;
 }
 
 function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
-  const Icon = ordem.tipo_carregamento === 'elisa' ? Truck : PackageCheck;
+  const isInstalacao = ordem.fonte === 'instalacoes';
+  const Icon = isInstalacao ? Wrench : ordem.tipo_carregamento === 'elisa' ? Truck : PackageCheck;
 
   return (
     <Card 
@@ -53,6 +54,11 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
             )}
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 mt-1 sm:mt-0">
+            {isInstalacao && (
+              <Badge variant="outline" className="flex items-center gap-1 text-[10px] sm:text-xs h-4 sm:h-5 px-1.5 sm:px-2 bg-orange-500/10 text-orange-600 border-orange-300">
+                {ordem.tipo_entrega === 'manutencao' ? 'Manutenção' : 'Instalação'}
+              </Badge>
+            )}
             <Badge 
               variant={ordem.tipo_carregamento === 'elisa' ? 'default' : 'outline'} 
               className="flex items-center gap-1 text-[10px] sm:text-xs h-4 sm:h-5 px-1.5 sm:px-2"
@@ -191,9 +197,9 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
 }
 
 interface CarregamentoKanbanProps {
-  ordens: OrdemCarregamento[];
+  ordens: OrdemCarregamentoUnificada[];
   isLoading: boolean;
-  onIniciarColeta: (ordem: OrdemCarregamento) => void;
+  onIniciarColeta: (ordem: OrdemCarregamentoUnificada) => void;
   onRefresh?: () => void;
 }
 
@@ -203,7 +209,7 @@ export function CarregamentoKanban({
   onIniciarColeta,
   onRefresh,
 }: CarregamentoKanbanProps) {
-  const podeIniciarColeta = (ordem: OrdemCarregamento) => {
+  const podeIniciarColeta = (ordem: OrdemCarregamentoUnificada) => {
     // Só pode iniciar se tiver data de carregamento agendada E responsável definido
     return !ordem.carregamento_concluido && 
            !!ordem.data_carregamento && 

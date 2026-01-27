@@ -2,23 +2,23 @@ import { useState, useEffect, useRef } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PackageCheck, Loader2, Truck, Tags } from "lucide-react";
+import { PackageCheck, Loader2, Truck, Tags, Wrench } from "lucide-react";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQueryClient } from "@tanstack/react-query";
-import { OrdemCarregamento } from "@/types/ordemCarregamento";
+import { OrdemCarregamentoUnificada } from "@/hooks/useOrdensCarregamentoUnificadas";
 import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
 import { gerarPDFEtiquetasProducaoMultiplas, gerarPDFEtiquetaProducao } from "@/utils/etiquetasPDFGenerator";
 import { CarregamentoLoadingModal } from "./CarregamentoLoadingModal";
 import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
 
 interface CarregamentoDownbarProps {
-  ordem: OrdemCarregamento | null;
+  ordem: OrdemCarregamentoUnificada | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConcluir: (params: { id: string; observacoes?: string }) => Promise<any>;
+  onConcluir: (params: { observacoes?: string }) => Promise<any>;
   onSuccess: () => void;
 }
 
@@ -196,9 +196,8 @@ export function CarregamentoDownbar({
     setLoadingSuccess(false);
 
     try {
-      console.log('[Carregamento] Concluindo ordem de carregamento...');
+      console.log('[Carregamento] Concluindo ordem de carregamento, fonte:', ordem.fonte);
       await onConcluir({
-        id: ordem.id,
         observacoes: "Carregamento concluído via interface de produção"
       });
 
@@ -208,7 +207,6 @@ export function CarregamentoDownbar({
       // Aguardar um momento para mostrar o feedback de sucesso
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      toast.success("Carregamento concluído com sucesso!");
       setShowLoadingModal(false);
       onSuccess();
       onOpenChange(false);
@@ -222,7 +220,8 @@ export function CarregamentoDownbar({
 
   if (!ordem) return null;
 
-  const Icon = ordem.tipo_carregamento === 'elisa' ? Truck : PackageCheck;
+  const isInstalacao = ordem.fonte === 'instalacoes';
+  const Icon = isInstalacao ? Wrench : ordem.tipo_carregamento === 'elisa' ? Truck : PackageCheck;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -231,7 +230,9 @@ export function CarregamentoDownbar({
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Icon className="h-5 w-5" />
-            Confirmar Carregamento - {ordem.tipo_carregamento === 'elisa' ? 'Elisa' : 'Autorizado'}
+            Confirmar Carregamento - {isInstalacao 
+              ? (ordem.tipo_entrega === 'manutencao' ? 'Manutenção' : 'Instalação')
+              : (ordem.tipo_carregamento === 'elisa' ? 'Elisa' : 'Autorizado')}
           </SheetTitle>
           <div className="flex justify-center pt-2">
             <CoresPortasEnrolar produtos={ordem.venda?.produtos} />
