@@ -1,135 +1,219 @@
 
-## Plano: Corrigir Migracao de Dados - Etapa aguardando_instalacao para instalacoes
+## Plano: Unificar Ordens - Instalação com Funcionalidade de Carregamento Integrada
 
-### Problema Identificado
+### Problema Atual
 
-A migracao anterior atualizou apenas a funcao RPC, mas **nao atualizou as constraints** das tabelas. Resultado:
+Atualmente, para pedidos de instalação/manutenção, o sistema cria **duas ordens**:
+1. `ordens_carregamento` - Para o processo de carregamento
+2. `instalacoes` - Para o processo de instalação
 
-- **5 pedidos** ainda estao em `aguardando_instalacao`
-- **5 registros** em `pedidos_etapas` com etapa `aguardando_instalacao`
-- **Constraints** ainda nao incluem `instalacoes` e `correcoes`
-
-| Pedido | Cliente |
-|--------|---------|
-| 0138 | RICARDO STAUDT |
-| 0116 | LLINAN INDUSTRIA DE MATERIAL PLASTICO LTDA |
-| 0101 | Condominio Industrial Greentec |
-| 0099 | FERNANDO FIGUEIRO LTDA |
-| 0091 | BM CAR Recuperadora e Auto Peças Ltda |
+Isso é redundante porque a tabela `instalacoes` **já possui** todos os campos de carregamento:
+- `data_carregamento`, `hora_carregamento`
+- `tipo_carregamento` (elisa, autorizados, terceiro)
+- `responsavel_carregamento_id`, `responsavel_carregamento_nome`
+- `carregamento_concluido`, `carregamento_concluido_em`, `carregamento_concluido_por`
 
 ---
 
-### Solucao: Nova Migracao SQL
+### Solução Proposta
 
-Criar uma migracao completa que:
+| Tipo de Entrega | Tabela Utilizada | Aparece em |
+|-----------------|------------------|------------|
+| `entrega` | `ordens_carregamento` | `/producao/carregamento`, `/logistica/expedicao` |
+| `instalacao` | `instalacoes` | `/producao/carregamento`, `/logistica/expedicao`, `/logistica/instalacoes` |
+| `manutencao` | `instalacoes` | `/producao/carregamento`, `/logistica/expedicao`, `/logistica/instalacoes` |
 
-#### Passo 1: Atualizar Constraint em pedidos_producao
+---
 
-```sql
--- Remover constraint antiga
-ALTER TABLE pedidos_producao 
-DROP CONSTRAINT IF EXISTS pedidos_producao_etapa_atual_check;
+### Parte 1: Modificar `/producao/carregamento` para Exibir Ambas as Fontes
 
--- Adicionar nova constraint com todas as etapas validas
-ALTER TABLE pedidos_producao 
-ADD CONSTRAINT pedidos_producao_etapa_atual_check 
-CHECK (etapa_atual IN (
-  'aberto',
-  'em_producao',
-  'inspecao_qualidade', 
-  'aguardando_pintura',
-  'aguardando_coleta',
-  'instalacoes',
-  'correcoes',
-  'finalizado'
-));
+#### 1.1 Criar Hook Unificado: `useOrdensCarregamentoUnificadas.ts`
+
+Este hook busca dados de ambas as tabelas e retorna uma lista unificada:
+
+```typescript
+export interface OrdemCarregamentoUnificada {
+  id: string;
+  fonte: 'ordens_carregamento' | 'instalacoes';
+  pedido_id: string | null;
+  venda_id: string | null;
+  nome_cliente: string;
+  data_carregamento: string | null;
+  hora_carregamento: string | null;
+  tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro' | null;
+  responsavel_carregamento_id: string | null;
+  responsavel_carregamento_nome: string | null;
+  carregamento_concluido: boolean;
+  status: string;
+  tipo_entrega: 'entrega' | 'instalacao' | 'manutencao';
+  // ... outros campos comuns
+}
 ```
 
-#### Passo 2: Atualizar Constraint em pedidos_etapas
+**Lógica:**
+```typescript
+// Buscar ordens de carregamento (apenas entregas)
+const ordensEntrega = await supabase
+  .from('ordens_carregamento')
+  .select('*, venda:vendas(...)')
+  .eq('carregamento_concluido', false);
 
-```sql
--- Remover constraint antiga
-ALTER TABLE pedidos_etapas 
-DROP CONSTRAINT IF EXISTS pedidos_etapas_etapa_check;
+// Buscar instalações (instalação/manutenção)
+const ordensInstalacao = await supabase
+  .from('instalacoes')
+  .select('*, venda:vendas(...), pedido:pedidos_producao(...)')
+  .eq('carregamento_concluido', false)
+  .in('pedido.etapa_atual', ['instalacoes']);
 
--- Adicionar nova constraint
-ALTER TABLE pedidos_etapas 
-ADD CONSTRAINT pedidos_etapas_etapa_check 
-CHECK (etapa IN (
-  'aberto',
-  'em_producao', 
-  'inspecao_qualidade',
-  'aguardando_pintura',
-  'aguardando_coleta',
-  'instalacoes',
-  'correcoes',
-  'finalizado'
-));
+// Combinar e normalizar para interface unificada
+return [...ordensEntrega, ...ordensInstalacao].map(normalizar);
 ```
 
-#### Passo 3: Migrar Dados dos Pedidos
+#### 1.2 Atualizar `CarregamentoMinimalista.tsx` e `CarregamentoKanban.tsx`
 
-```sql
--- Atualizar pedidos em aguardando_instalacao para instalacoes
-UPDATE pedidos_producao 
-SET etapa_atual = 'instalacoes',
-    updated_at = now()
-WHERE etapa_atual = 'aguardando_instalacao';
+- Usar o novo hook unificado
+- Adaptar a lógica de conclusão para chamar a função correta baseada na `fonte`
 
--- Atualizar registros em pedidos_etapas
-UPDATE pedidos_etapas
-SET etapa = 'instalacoes',
-    updated_at = now()
-WHERE etapa = 'aguardando_instalacao';
+---
+
+### Parte 2: Modificar `/logistica/expedicao` para Gerenciar Ambas as Fontes
+
+O calendário de expedição já usa `useOrdensCarregamentoInstalacao.ts`. Este hook precisará:
+
+1. **Para instalações**: Atualizar campos na tabela `instalacoes`
+2. **Para entregas**: Continuar atualizando `ordens_carregamento`
+
+---
+
+### Parte 3: Remover Criação Duplicada de `ordens_carregamento`
+
+#### 3.1 Modificar `usePedidosEtapas.ts`
+
+**Antes (ao avançar para `instalacoes`):**
+```typescript
+// Cria ordem em ordens_carregamento (REMOVER)
+await supabase.from('ordens_carregamento').insert({...});
 ```
 
-#### Passo 4: Garantir Ordens de Carregamento Corretas
+**Depois:**
+```typescript
+// Apenas atualiza status da instalação existente
+// A instalação já foi criada ao avançar para em_producao
+await supabase
+  .from('instalacoes')
+  .update({ 
+    status: 'pronta_fabrica',
+    // Campos de carregamento serão preenchidos em /logistica/expedicao
+  })
+  .eq('pedido_id', pedidoId);
+```
+
+#### 3.2 Modificar `usePedidoCreation.ts`
+
+**Para manutenção:** Criar apenas `instalacoes`, não criar `ordens_carregamento`
+
+---
+
+### Parte 4: Atualizar Função RPC para Conclusão de Carregamento
+
+#### 4.1 Nova Função: `concluir_carregamento_instalacao`
 
 ```sql
--- Atualizar status das ordens de carregamento para instalacoes
-UPDATE ordens_carregamento oc
-SET status = CASE 
-  WHEN oc.data_carregamento IS NOT NULL THEN 'agendada'
-  ELSE 'pronta_fabrica'
-END,
-updated_at = now()
-FROM vendas v
-WHERE oc.venda_id = v.id 
-AND v.tipo_entrega = 'instalacao'
+CREATE OR REPLACE FUNCTION concluir_carregamento_instalacao(p_instalacao_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Apenas marcar carregamento como concluído
+  -- NÃO avançar pedido para finalizado
+  -- O pedido permanece em 'instalacoes' até finalização manual
+  
+  UPDATE instalacoes
+  SET carregamento_concluido = true,
+      carregamento_concluido_em = now(),
+      carregamento_concluido_por = auth.uid(),
+      updated_at = now()
+  WHERE id = p_instalacao_id;
+END;
+$$;
+```
+
+#### 4.2 Modificar RPC Existente
+
+A função `concluir_carregamento_e_avancar_pedido` continua sendo usada apenas para `ordens_carregamento` (entregas).
+
+---
+
+### Parte 5: Limpar Dados Duplicados (Migração)
+
+Remover `ordens_carregamento` redundantes para pedidos de instalação onde já existe registro em `instalacoes`:
+
+```sql
+-- Identificar ordens duplicadas
+DELETE FROM ordens_carregamento oc
+WHERE EXISTS (
+  SELECT 1 FROM instalacoes i 
+  WHERE i.pedido_id = oc.pedido_id
+)
 AND oc.carregamento_concluido = false;
 ```
 
 ---
 
-### Resultado Esperado
+### Arquivos a Modificar
 
-Apos a migracao:
-
-1. Todos os 5 pedidos estarao na etapa `instalacoes`
-2. Todos os registros em `pedidos_etapas` serao atualizados
-3. As ordens de carregamento continuarao funcionando normalmente
-4. Os pedidos aparecerao corretamente em `/producao/carregamento` e `/logistica/expedicao`
+| Arquivo | Ação | Descrição |
+|---------|------|-----------|
+| `src/hooks/useOrdensCarregamentoUnificadas.ts` | **Criar** | Hook que busca de ambas tabelas |
+| `src/hooks/usePedidosEtapas.ts` | Modificar | Remover criação de `ordens_carregamento` para instalações |
+| `src/hooks/usePedidoCreation.ts` | Modificar | Remover criação de `ordens_carregamento` para manutenção |
+| `src/pages/fabrica/producao/CarregamentoMinimalista.tsx` | Modificar | Usar hook unificado |
+| `src/components/carregamento/CarregamentoKanban.tsx` | Modificar | Adaptar para tipo unificado |
+| `src/components/carregamento/CarregamentoDownbar.tsx` | Modificar | Lógica de conclusão por fonte |
+| Nova migração SQL | Criar | Função RPC + limpeza de dados |
 
 ---
 
-### Verificacao Pos-Migracao
+### Fluxo Visual Resultante
 
-Queries para confirmar sucesso:
-
-```sql
--- Nao deve retornar resultados
-SELECT * FROM pedidos_producao WHERE etapa_atual = 'aguardando_instalacao';
-
--- Nao deve retornar resultados  
-SELECT * FROM pedidos_etapas WHERE etapa = 'aguardando_instalacao';
-
--- Deve retornar os 5 pedidos migrados
-SELECT id, numero_pedido, etapa_atual FROM pedidos_producao 
-WHERE id IN (
-  'fd1d0188-0e9c-419e-945a-1c9a9e723aee',
-  'ab8225d5-492c-43a5-9ba6-9a5b500b2b27',
-  '901cd408-f032-4aaf-819d-361f8cab2fba',
-  'e99f0197-5e99-45a9-b5f8-da752e369d38',
-  'e03742bb-7807-4291-b531-dd27fafd04bf'
-);
+```text
+VENDA FATURADA (tipo_entrega = instalacao/manutencao)
+       |
+       v
+PEDIDO CRIADO → Cria apenas em 'instalacoes'
+       |
+       v
+[... etapas de produção ...]
+       |
+       v
+ETAPA: INSTALACOES
+       |
+       v
+Status instalacao: 'pronta_fabrica'
+       |
+       v
+/logistica/expedicao → Agenda data_carregamento na tabela 'instalacoes'
+       |
+       v
+/producao/carregamento → Exibe instalações com data_carregamento
+       |
+       v
+Concluir Carregamento → Marca carregamento_concluido = true
+                      → Pedido PERMANECE em 'instalacoes'
+       |
+       v
+/logistica/instalacoes → Concluir Instalação OU Mover para Correções
+       |
+       v
+FINALIZADO
 ```
+
+---
+
+### Benefícios da Unificação
+
+1. **Menos redundância**: Uma única fonte de verdade para instalações
+2. **Dados centralizados**: Informações de carregamento e instalação na mesma tabela
+3. **Código mais simples**: Menos joins e sincronizações entre tabelas
+4. **Histórico completo**: Todo o ciclo de vida da instalação em um registro
