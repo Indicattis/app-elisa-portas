@@ -1,0 +1,317 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useEffect } from "react";
+
+export interface ProdutoUnificado {
+  tipo_produto?: string | null;
+  tamanho?: string | null;
+  largura?: number | null;
+  altura?: number | null;
+  quantidade?: number | null;
+  cor?: {
+    nome: string;
+    codigo_hex: string;
+  } | null;
+}
+
+export interface OrdemCarregamentoUnificada {
+  id: string;
+  fonte: 'ordens_carregamento' | 'instalacoes';
+  pedido_id: string | null;
+  venda_id: string | null;
+  nome_cliente: string;
+  data_carregamento: string | null;
+  hora_carregamento: string | null;
+  hora?: string | null;
+  tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro' | null;
+  responsavel_carregamento_id: string | null;
+  responsavel_carregamento_nome: string | null;
+  carregamento_concluido: boolean;
+  status: string | null;
+  tipo_entrega: 'entrega' | 'instalacao' | 'manutencao' | null;
+  observacoes?: string | null;
+  created_at?: string | null;
+  pedido?: {
+    id: string;
+    numero_pedido: string;
+    etapa_atual?: string;
+  } | null;
+  venda?: {
+    id: string;
+    cliente_nome: string;
+    cliente_telefone?: string | null;
+    cliente_email?: string | null;
+    cidade?: string | null;
+    estado?: string | null;
+    bairro?: string | null;
+    cep?: string | null;
+    tipo_entrega?: 'entrega' | 'instalacao' | 'manutencao' | null;
+    produtos?: ProdutoUnificado[];
+  } | null;
+}
+
+export const useOrdensCarregamentoUnificadas = () => {
+  const queryClient = useQueryClient();
+
+  const { data: ordens = [], isLoading } = useQuery({
+    queryKey: ["ordens_carregamento_unificadas"],
+    queryFn: async () => {
+      // ===== 1. Buscar ordens de carregamento (APENAS ENTREGAS) =====
+      const { data: ordensCarregamento, error: ocError } = await supabase
+        .from("ordens_carregamento")
+        .select(`
+          *,
+          venda:vendas(
+            id,
+            cliente_nome,
+            cliente_telefone,
+            cliente_email,
+            cidade,
+            estado,
+            bairro,
+            cep,
+            tipo_entrega,
+            produtos:produtos_vendas(
+              tipo_produto,
+              tamanho,
+              largura,
+              altura,
+              quantidade,
+              cor:catalogo_cores(
+                nome,
+                codigo_hex
+              )
+            )
+          ),
+          pedido:pedidos_producao!ordens_carregamento_pedido_id_fkey(
+            id,
+            numero_pedido,
+            etapa_atual
+          )
+        `)
+        .eq("carregamento_concluido", false)
+        .order("created_at", { ascending: false });
+
+      if (ocError) {
+        console.error("[useOrdensCarregamentoUnificadas] Erro ao buscar ordens_carregamento:", ocError);
+        throw ocError;
+      }
+
+      // Filtrar apenas entregas (instalações vêm da tabela instalacoes)
+      const ordensEntrega = (ordensCarregamento || []).filter(
+        (ordem) => ordem.venda?.tipo_entrega === 'entrega'
+      );
+
+      // ===== 2. Buscar instalações com carregamento pendente =====
+      const { data: instalacoes, error: instError } = await supabase
+        .from("instalacoes")
+        .select(`
+          *,
+          venda:vendas(
+            id,
+            cliente_nome,
+            cliente_telefone,
+            cliente_email,
+            cidade,
+            estado,
+            bairro,
+            cep,
+            tipo_entrega,
+            produtos:produtos_vendas(
+              tipo_produto,
+              tamanho,
+              largura,
+              altura,
+              quantidade,
+              cor:catalogo_cores(
+                nome,
+                codigo_hex
+              )
+            )
+          ),
+          pedido:pedidos_producao!instalacoes_pedido_id_fkey(
+            id,
+            numero_pedido,
+            etapa_atual
+          )
+        `)
+        .eq("carregamento_concluido", false)
+        .eq("instalacao_concluida", false)
+        .order("created_at", { ascending: false });
+
+      if (instError) {
+        console.error("[useOrdensCarregamentoUnificadas] Erro ao buscar instalacoes:", instError);
+        throw instError;
+      }
+
+      // Filtrar instalações que estão prontas para carregamento (etapa = instalacoes e status = pronta_fabrica)
+      const instalacoesParaCarregar = (instalacoes || []).filter(
+        (inst) => inst.pedido?.etapa_atual === 'instalacoes' || inst.status === 'pronta_fabrica'
+      );
+
+      // ===== 3. Normalizar e combinar =====
+      const ordensNormalizadas: OrdemCarregamentoUnificada[] = [
+        // Ordens de carregamento (entregas)
+        ...ordensEntrega.map((ordem): OrdemCarregamentoUnificada => ({
+          id: ordem.id,
+          fonte: 'ordens_carregamento',
+          pedido_id: ordem.pedido_id,
+          venda_id: ordem.venda_id,
+          nome_cliente: ordem.nome_cliente,
+          data_carregamento: ordem.data_carregamento,
+          hora_carregamento: ordem.hora_carregamento || ordem.hora,
+          hora: ordem.hora,
+          tipo_carregamento: ordem.tipo_carregamento as 'elisa' | 'autorizados' | 'terceiro' | null,
+          responsavel_carregamento_id: ordem.responsavel_carregamento_id,
+          responsavel_carregamento_nome: ordem.responsavel_carregamento_nome,
+          carregamento_concluido: ordem.carregamento_concluido || false,
+          status: ordem.status,
+          tipo_entrega: 'entrega',
+          observacoes: ordem.observacoes,
+          created_at: ordem.created_at,
+          pedido: ordem.pedido,
+          venda: ordem.venda ? {
+            ...ordem.venda,
+            tipo_entrega: ordem.venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null,
+          } : null,
+        })),
+        // Instalações (instalação/manutenção)
+        ...instalacoesParaCarregar.map((inst): OrdemCarregamentoUnificada => ({
+          id: inst.id,
+          fonte: 'instalacoes',
+          pedido_id: inst.pedido_id,
+          venda_id: inst.venda_id,
+          nome_cliente: inst.nome_cliente,
+          data_carregamento: inst.data_carregamento,
+          hora_carregamento: inst.hora_carregamento || inst.hora,
+          hora: inst.hora,
+          tipo_carregamento: inst.tipo_carregamento as 'elisa' | 'autorizados' | 'terceiro' | null,
+          responsavel_carregamento_id: inst.responsavel_carregamento_id,
+          responsavel_carregamento_nome: inst.responsavel_carregamento_nome,
+          carregamento_concluido: inst.carregamento_concluido || false,
+          status: inst.status,
+          tipo_entrega: inst.venda?.tipo_entrega === 'manutencao' ? 'manutencao' : 'instalacao',
+          observacoes: inst.observacoes,
+          created_at: inst.created_at,
+          pedido: inst.pedido,
+          venda: inst.venda ? {
+            ...inst.venda,
+            tipo_entrega: inst.venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null,
+          } : null,
+        })),
+      ];
+
+      // Ordenar por data de carregamento (null por último), depois por created_at
+      ordensNormalizadas.sort((a, b) => {
+        if (a.data_carregamento && b.data_carregamento) {
+          return new Date(a.data_carregamento).getTime() - new Date(b.data_carregamento).getTime();
+        }
+        if (a.data_carregamento) return -1;
+        if (b.data_carregamento) return 1;
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      });
+
+      return ordensNormalizadas;
+    },
+  });
+
+  // Mutation para concluir carregamento (diferenciada por fonte)
+  const concluirCarregamentoMutation = useMutation({
+    mutationFn: async ({ ordem, observacoes }: { ordem: OrdemCarregamentoUnificada; observacoes?: string }) => {
+      console.log('[concluirCarregamentoUnificado] Concluindo:', ordem.id, 'Fonte:', ordem.fonte);
+      
+      if (ordem.fonte === 'ordens_carregamento') {
+        // Concluir via ordens_carregamento (entregas)
+        if (observacoes) {
+          await supabase
+            .from("ordens_carregamento")
+            .update({ observacoes })
+            .eq("id", ordem.id);
+        }
+
+        const { error } = await supabase.rpc('concluir_carregamento_e_avancar_pedido', {
+          p_ordem_carregamento_id: ordem.id
+        });
+
+        if (error) throw error;
+      } else {
+        // Concluir via instalacoes
+        if (observacoes) {
+          await supabase
+            .from("instalacoes")
+            .update({ observacoes })
+            .eq("id", ordem.id);
+        }
+
+        const { error } = await supabase.rpc('concluir_carregamento_instalacao', {
+          p_instalacao_id: ordem.id
+        });
+
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_unificadas"] });
+      queryClient.invalidateQueries({ queryKey: ["ordens_carregamento"] });
+      queryClient.invalidateQueries({ queryKey: ["instalacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-producao"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-etapas"] });
+      
+      if (variables.ordem.fonte === 'ordens_carregamento') {
+        toast.success("Carregamento concluído! Pedido finalizado.");
+      } else {
+        toast.success("Carregamento concluído! Aguardando finalização da instalação.");
+      }
+    },
+    onError: (error) => {
+      console.error("[concluirCarregamentoUnificado] Erro:", error);
+      toast.error("Erro ao concluir carregamento");
+    },
+  });
+
+  // Subscription em tempo real para ambas as tabelas
+  useEffect(() => {
+    const channelOC = supabase
+      .channel('ordens-carregamento-unificadas-oc')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ordens_carregamento'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_unificadas"] });
+        }
+      )
+      .subscribe();
+
+    const channelInst = supabase
+      .channel('ordens-carregamento-unificadas-inst')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'instalacoes'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_unificadas"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channelOC);
+      supabase.removeChannel(channelInst);
+    };
+  }, [queryClient]);
+
+  return {
+    ordens,
+    isLoading,
+    concluirCarregamento: concluirCarregamentoMutation.mutateAsync,
+    isConcluindo: concluirCarregamentoMutation.isPending,
+  };
+};

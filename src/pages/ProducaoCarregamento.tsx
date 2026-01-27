@@ -1,29 +1,31 @@
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PackageCheck, Truck } from "lucide-react";
-import { useOrdensCarregamento } from "@/hooks/useOrdensCarregamento";
+import { useOrdensCarregamentoUnificadas, OrdemCarregamentoUnificada } from "@/hooks/useOrdensCarregamentoUnificadas";
 import { CarregamentoDownbar } from "@/components/carregamento/CarregamentoDownbar";
-import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { CarregamentoKanban } from "@/components/carregamento/CarregamentoKanban";
 import { useQueryClient } from "@tanstack/react-query";
 
 type FiltroTipo = "todos" | "entrega" | "instalacao";
 
 export default function ProducaoCarregamento() {
-  const { ordens, isLoading, concluirCarregamento } = useOrdensCarregamento();
+  const { ordens, isLoading, concluirCarregamento } = useOrdensCarregamentoUnificadas();
   const queryClient = useQueryClient();
 
   const [filtroTipo, setFiltroTipo] = useState<FiltroTipo>("todos");
-  const [itemSelecionado, setItemSelecionado] = useState<OrdemCarregamento | null>(null);
+  const [itemSelecionado, setItemSelecionado] = useState<OrdemCarregamentoUnificada | null>(null);
   const [downbarOpen, setDownbarOpen] = useState(false);
 
-  // Filtrar todas as ordens não concluídas
-  const ordensDisponiveis = ordens.filter(ordem => !ordem.carregamento_concluido);
+  // Ordens já vêm filtradas do hook
+  const ordensDisponiveis = ordens;
 
   // Aplicar filtro por tipo de serviço (entrega ou instalação)
   const ordensFiltradas = ordensDisponiveis.filter(ordem => {
     if (filtroTipo === "todos") return true;
-    return ordem.venda?.tipo_entrega === filtroTipo;
+    if (filtroTipo === "instalacao") {
+      return ordem.tipo_entrega === 'instalacao' || ordem.tipo_entrega === 'manutencao';
+    }
+    return ordem.tipo_entrega === filtroTipo;
   });
 
   // Ordenar por data de carregamento
@@ -33,13 +35,13 @@ export default function ProducaoCarregamento() {
     return dateA - dateB;
   });
 
-  const handleIniciarColeta = (ordem: OrdemCarregamento) => {
+  const handleIniciarColeta = (ordem: OrdemCarregamentoUnificada) => {
     setItemSelecionado(ordem);
     setDownbarOpen(true);
   };
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["ordens_carregamento"] });
+    queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_unificadas"] });
   };
 
   return (
@@ -48,15 +50,15 @@ export default function ProducaoCarregamento() {
       <Tabs value={filtroTipo} onValueChange={(v) => setFiltroTipo(v as FiltroTipo)} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="todos">
-            Todos ({ordensOrdenadas.length})
+            Todos ({ordensDisponiveis.length})
           </TabsTrigger>
           <TabsTrigger value="entrega">
             <Truck className="h-4 w-4 mr-2" />
-            Entrega ({ordensOrdenadas.filter(o => o.venda?.tipo_entrega === 'entrega').length})
+            Entrega ({ordensDisponiveis.filter(o => o.tipo_entrega === 'entrega').length})
           </TabsTrigger>
           <TabsTrigger value="instalacao">
             <PackageCheck className="h-4 w-4 mr-2" />
-            Instalação ({ordensOrdenadas.filter(o => o.venda?.tipo_entrega === 'instalacao').length})
+            Instalação ({ordensDisponiveis.filter(o => o.tipo_entrega === 'instalacao' || o.tipo_entrega === 'manutencao').length})
           </TabsTrigger>
         </TabsList>
       </Tabs>
@@ -75,7 +77,9 @@ export default function ProducaoCarregamento() {
           ordem={itemSelecionado}
           open={downbarOpen}
           onOpenChange={setDownbarOpen}
-          onConcluir={concluirCarregamento}
+          onConcluir={async ({ observacoes }) => {
+            await concluirCarregamento({ ordem: itemSelecionado, observacoes });
+          }}
           onSuccess={() => {
             setDownbarOpen(false);
             setItemSelecionado(null);
