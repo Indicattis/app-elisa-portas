@@ -1,18 +1,41 @@
 
 
-## Plano: Corrigir Exibição de Instalações para Agendamento na Expedição
+## Plano: Corrigir Modal de Agendamento e Erro na Tabela de Expedição
 
 ### Problema Identificado
 
-A instalação #0099 (FERNANDO FIGUEIRO LTDA) não aparece na página `/logistica/expedicao` porque:
+Existem **dois problemas** na página `/logistica/expedicao`:
 
-1. **Dados corretos no banco**: A instalação existe com `carregamento_concluido: false` e pedido em `etapa_atual: instalacoes`
-2. **Componente desatualizado**: O `OrdensCarregamentoDisponiveis` busca apenas da tabela `ordens_carregamento`
-3. **Hook correto existe**: O `useOrdensCarregamentoUnificadas` já foi criado para buscar de ambas as tabelas, mas não está sendo usado
+1. **Modal "+" não mostra instalações**: O `AdicionarOrdemCalendarioModal` usa o hook `useOrdensSemDataCarregamento` que busca **apenas** da tabela `ordens_carregamento`, ignorando instalações
+
+2. **Erro ao agendar da tabela**: O `OrdensCarregamentoDisponiveis` passa uma ordem do tipo `OrdemCarregamentoUnificada` mas o modal espera o tipo antigo `OrdemCarregamento`. Quando tenta agendar, ocorre um erro de incompatibilidade de tipos
+
+### Análise Técnica
+
+| Componente | Problema |
+|------------|----------|
+| `AdicionarOrdemCalendarioModal` | Usa `useOrdensSemDataCarregamento` (apenas `ordens_carregamento`) |
+| `OrdensCarregamentoDisponiveis` | Passa `ordemPreSelecionada` como tipo `OrdemCarregamentoUnificada` mas com cast `as any` |
+| `handleConfirmAgendar` | Funciona corretamente, identifica `fonte` para escolher tabela |
+
+**Linha 31 do modal:**
+```typescript
+ordemPreSelecionada?: OrdemCarregamento | null; // Tipo antigo
+```
+
+**Linha 396-397 do OrdensCarregamentoDisponiveis:**
+```typescript
+ordemPreSelecionada={ordemSelecionada as any} // Cast forçado causa problemas
+```
+
+---
 
 ### Solução
 
-Atualizar o componente `OrdensCarregamentoDisponiveis` (e sua versão mobile) para usar o hook unificado `useOrdensCarregamentoUnificadas` que já busca corretamente de ambas as fontes.
+Atualizar o `AdicionarOrdemCalendarioModal` para:
+1. Aceitar o tipo `OrdemCarregamentoUnificada` 
+2. Usar o hook `useOrdensCarregamentoUnificadas` para buscar de ambas as fontes
+3. Determinar a tabela correta na função `onConfirm` baseado na propriedade `fonte`
 
 ---
 
@@ -20,119 +43,181 @@ Atualizar o componente `OrdensCarregamentoDisponiveis` (e sua versão mobile) pa
 
 | Arquivo | Ação | Descrição |
 |---------|------|-----------|
-| `src/components/expedicao/OrdensCarregamentoDisponiveis.tsx` | Modificar | Usar hook unificado e adaptar tipos |
-| `src/components/expedicao/OrdensCarregamentoDisponiveisMobile.tsx` | Modificar | Usar hook unificado e adaptar tipos |
-| `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx` | Verificar | Adaptar para aceitar tipo unificado se necessário |
+| `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx` | Modificar | Aceitar tipo unificado e usar hook unificado |
+| `src/components/expedicao/OrdensCarregamentoDisponiveis.tsx` | Modificar | Remover cast `as any` |
 
 ---
 
-### Parte 1: Modificar OrdensCarregamentoDisponiveis.tsx
+### Parte 1: Modificar AdicionarOrdemCalendarioModal
 
-**Antes (busca apenas ordens_carregamento):**
+**1.1 Atualizar Props**
+
 ```typescript
-const fetchOrdensDisponiveis = async () => {
-  const { data, error } = await supabase
-    .from("ordens_carregamento")
-    .select(`...`)
-    .is("data_carregamento", null)
-    ...
+// Antes
+import { OrdemCarregamento } from "@/types/ordemCarregamento";
+import { useOrdensSemDataCarregamento } from "@/hooks/useOrdensSemDataCarregamento";
+
+interface AdicionarOrdemCalendarioModalProps {
+  ordemPreSelecionada?: OrdemCarregamento | null;
+  onConfirm: (params: {
+    ordemId: string;
+    // ...
+  }) => Promise<void>;
+}
+
+// Depois
+import { OrdemCarregamentoUnificada } from "@/types/ordemCarregamentoUnificada";
+import { useOrdensCarregamentoUnificadas } from "@/hooks/useOrdensCarregamentoUnificadas";
+
+interface AdicionarOrdemCalendarioModalProps {
+  ordemPreSelecionada?: OrdemCarregamentoUnificada | null;
+  onConfirm: (params: {
+    ordemId: string;
+    fonte: 'ordens_carregamento' | 'instalacoes'; // NOVO: informar a fonte
+    // ...
+  }) => Promise<void>;
 }
 ```
 
-**Depois (usar hook unificado):**
-```typescript
-import { useOrdensCarregamentoUnificadas, OrdemCarregamentoUnificada } from "@/hooks/useOrdensCarregamentoUnificadas";
+**1.2 Usar Hook Unificado**
 
-export const OrdensCarregamentoDisponiveis = ({ onRefresh }) => {
-  const { ordens, isLoading } = useOrdensCarregamentoUnificadas();
-  
-  // Filtrar apenas ordens SEM data de carregamento (disponíveis para agendamento)
-  const ordensDisponiveis = ordens.filter(o => !o.data_carregamento);
-  
-  // ... resto do componente usando ordensDisponiveis
-}
+```typescript
+// Antes
+const { ordens, isLoading: loadingOrdens, refetch } = useOrdensSemDataCarregamento();
+
+// Depois
+const { ordens: todasOrdens, isLoading: loadingOrdens } = useOrdensCarregamentoUnificadas();
+
+// Filtrar apenas ordens SEM data de carregamento
+const ordens = todasOrdens.filter(o => !o.data_carregamento);
+
+// refetch não é necessário pois o hook unificado já tem real-time
+```
+
+**1.3 Atualizar Tipo do Estado**
+
+```typescript
+// Antes
+const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemCarregamento | null>(null);
+
+// Depois
+const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemCarregamentoUnificada | null>(null);
+```
+
+**1.4 Passar a Fonte no Confirm**
+
+```typescript
+// No handleConfirm
+await onConfirm({
+  ordemId: ordemSelecionada.id,
+  fonte: ordemSelecionada.fonte, // NOVO
+  data_carregamento: format(dataSelecionada, "yyyy-MM-dd"),
+  hora,
+  tipo_carregamento: responsavelTipo,
+  responsavel_carregamento_id: finalResponsavelId,
+  responsavel_carregamento_nome: responsavelNome
+});
+```
+
+**1.5 Verificar tipo_entrega**
+
+```typescript
+// Antes
+const isEntrega = ordemSelecionada?.venda?.tipo_entrega === 'entrega';
+
+// Depois (usando campo unificado)
+const isEntrega = ordemSelecionada?.tipo_entrega === 'entrega';
 ```
 
 ---
 
-### Parte 2: Adaptar Lógica de Agendamento
+### Parte 2: Atualizar OrdensCarregamentoDisponiveis
 
-O modal de agendamento (`AdicionarOrdemCalendarioModal`) precisa saber a `fonte` da ordem para atualizar a tabela correta:
+**2.1 Atualizar handleConfirmAgendar**
 
 ```typescript
-const handleConfirmAgendar = async (params) => {
-  const tabela = ordemSelecionada.fonte === 'instalacoes' 
-    ? "instalacoes" 
-    : "ordens_carregamento";
-  
-  const { error } = await supabase
-    .from(tabela)
-    .update({
-      data_carregamento: params.data_carregamento,
-      hora_carregamento: params.hora,
-      tipo_carregamento: params.tipo_carregamento,
-      responsavel_carregamento_id: params.responsavel_carregamento_id,
-      responsavel_carregamento_nome: params.responsavel_carregamento_nome,
-      status: 'agendada',
-      updated_at: new Date().toISOString()
-    })
-    .eq("id", params.ordemId);
-  ...
-}
+// Atualizar interface de params para incluir fonte
+const handleConfirmAgendar = async (params: {
+  ordemId: string;
+  fonte: 'ordens_carregamento' | 'instalacoes'; // NOVO
+  data_carregamento: string;
+  hora: string;
+  tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro';
+  responsavel_carregamento_id: string | null;
+  responsavel_carregamento_nome: string;
+}) => {
+  // Usar fonte do params em vez de ordemSelecionada
+  const tabela = params.fonte === 'instalacoes' ? 'instalacoes' : 'ordens_carregamento';
+  // ...
+};
+```
+
+**2.2 Remover Cast**
+
+```typescript
+// Antes
+<AdicionarOrdemCalendarioModal
+  ordemPreSelecionada={ordemSelecionada as any}
+/>
+
+// Depois
+<AdicionarOrdemCalendarioModal
+  ordemPreSelecionada={ordemSelecionada}
+/>
 ```
 
 ---
 
-### Parte 3: Adaptar Versão Mobile
+### Parte 3: Adicionar Badge de Tipo no Modal
 
-O componente `OrdensCarregamentoDisponiveisMobile` também precisa da mesma atualização para usar o hook unificado.
-
----
-
-### Parte 4: Adicionar Indicador Visual de Tipo
-
-Para diferenciar entregas de instalações na tabela, adicionar badge visual:
+Para diferenciar entregas de instalações na lista do modal:
 
 ```typescript
-<td className="p-2">
-  <Badge 
-    variant={ordem.tipo_entrega === 'entrega' ? 'default' : 'secondary'} 
-    className={cn(
-      "text-xs",
-      ordem.tipo_entrega === 'instalacao' && "bg-orange-500/20 text-orange-400 border-orange-500/30",
-      ordem.tipo_entrega === 'manutencao' && "bg-purple-500/20 text-purple-400 border-purple-500/30"
-    )}
-  >
-    {ordem.tipo_entrega === 'entrega' ? 'Entrega' : 
-     ordem.tipo_entrega === 'manutencao' ? 'Manutenção' : 'Instalação'}
-  </Badge>
-</td>
+// Na lista de ordens dentro do modal
+<Badge
+  variant={ordem.tipo_entrega === 'entrega' ? 'default' : 'secondary'}
+  className={cn(
+    "text-xs shrink-0",
+    ordem.tipo_entrega === 'instalacao' && "bg-orange-500/20 text-orange-600",
+    ordem.tipo_entrega === 'manutencao' && "bg-purple-500/20 text-purple-600"
+  )}
+>
+  {ordem.tipo_entrega === 'entrega' ? 'Entrega' : 
+   ordem.tipo_entrega === 'manutencao' ? 'Manutenção' : 'Instalação'}
+</Badge>
 ```
 
 ---
 
 ### Resultado Esperado
 
-Após a correção:
+Após as correções:
 
-1. A instalação #0099 (FERNANDO FIGUEIRO LTDA) aparecerá na lista "Ordens Disponíveis para Agendamento"
-2. O badge indicará que é uma "Instalação" (cor laranja)
-3. Ao agendar, a data será salva na tabela `instalacoes` (não em `ordens_carregamento`)
-4. O calendário de expedição exibirá a instalação agendada
+1. **Modal "+"** exibirá tanto entregas quanto instalações pendentes de agendamento
+2. **Tabela "Ordens Disponíveis"** funcionará corretamente ao clicar em "Agendar"
+3. **Instalação #0099** aparecerá em ambos os locais com badge laranja "Instalação"
+4. **Agendamento** salvará na tabela correta (`instalacoes` ou `ordens_carregamento`)
 
 ---
 
-### Fluxo Visual Corrigido
+### Fluxo Corrigido
 
 ```text
-INSTALAÇÃO #0099
-├── pedido.etapa_atual = 'instalacoes'
-├── carregamento_concluido = false
-├── data_carregamento = null
-│
-└── APARECE EM:
-    ├── /logistica/expedicao → "Ordens Disponíveis para Agendamento" ← SERÁ CORRIGIDO
-    │
-    └── Ao agendar → Atualiza tabela 'instalacoes' diretamente
+Usuário clica em "+"
+       │
+       ▼
+Modal abre com useOrdensCarregamentoUnificadas()
+       │
+       ▼
+Lista mostra:
+├── Entregas (ordens_carregamento) - Badge azul
+├── Instalações (instalacoes) - Badge laranja
+└── Manutenções (instalacoes) - Badge roxo
+       │
+       ▼
+Seleciona ordem → onConfirm({ fonte: 'instalacoes' | 'ordens_carregamento' })
+       │
+       ▼
+Salva na tabela correta
 ```
 
