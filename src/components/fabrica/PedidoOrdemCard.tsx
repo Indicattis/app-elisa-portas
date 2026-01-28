@@ -80,6 +80,11 @@ export function PedidoOrdemCard({ pedido, onOrdemClick }: PedidoOrdemCardProps) 
               #{pedido.numero_pedido}
             </span>
 
+            {/* Nome do cliente */}
+            <span className="text-[10px] text-zinc-300 truncate max-w-[150px] min-w-0">
+              {pedido.cliente_nome}
+            </span>
+
             {/* Separador */}
             <div className="w-px h-4 bg-zinc-700/50 flex-shrink-0" />
 
