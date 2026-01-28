@@ -31,7 +31,8 @@ export const useOrdensCarregamentoCalendario = (
   const { data: ordens = [], isLoading } = useQuery({
     queryKey: ["ordens_carregamento_calendario", inicio, fim],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // 1. Buscar de ordens_carregamento
+      const { data: ordensCarregamento, error: errorOrdens } = await supabase
         .from("ordens_carregamento")
         .select(`
           *,
@@ -73,14 +74,105 @@ export const useOrdensCarregamentoCalendario = (
         .lte("data_carregamento", fim)
         .order("data_carregamento", { ascending: true });
 
-      if (error) throw error;
+      if (errorOrdens) throw errorOrdens;
+
+      // 2. Buscar instalações com data_carregamento agendada
+      const { data: instalacoes, error: errorInstalacoes } = await supabase
+        .from("instalacoes")
+        .select(`
+          id,
+          nome_cliente,
+          data_carregamento,
+          hora_carregamento,
+          tipo_carregamento,
+          responsavel_carregamento_id,
+          responsavel_carregamento_nome,
+          status,
+          carregamento_concluido,
+          observacoes,
+          created_at,
+          updated_at,
+          pedido:pedidos_producao(
+            id,
+            numero_pedido,
+            etapa_atual
+          ),
+          venda:vendas(
+            id,
+            cliente_nome,
+            cliente_telefone,
+            cliente_email,
+            estado,
+            cidade,
+            cep,
+            bairro,
+            data_prevista_entrega,
+            tipo_entrega,
+            produtos:produtos_vendas(
+              tipo_produto,
+              tamanho,
+              largura,
+              altura,
+              quantidade,
+              cor:catalogo_cores(
+                nome,
+                codigo_hex
+              )
+            )
+          )
+        `)
+        .not("data_carregamento", "is", null)
+        .gte("data_carregamento", inicio)
+        .lte("data_carregamento", fim)
+        .eq("carregamento_concluido", false);
+
+      if (errorInstalacoes) throw errorInstalacoes;
+
+      // 3. Normalizar instalações para o formato OrdemCarregamento
+      const instalacoesNormalizadas = (instalacoes || []).map((inst: any) => ({
+        id: inst.id,
+        pedido_id: inst.pedido?.id || null,
+        venda_id: inst.venda?.id || null,
+        nome_cliente: inst.nome_cliente,
+        tipo_carregamento: inst.tipo_carregamento,
+        data_carregamento: inst.data_carregamento,
+        hora: inst.hora_carregamento,
+        hora_carregamento: inst.hora_carregamento,
+        responsavel_carregamento_id: inst.responsavel_carregamento_id,
+        responsavel_carregamento_nome: inst.responsavel_carregamento_nome,
+        status: inst.status,
+        carregamento_concluido: inst.carregamento_concluido,
+        carregamento_concluido_em: null,
+        carregamento_concluido_por: null,
+        latitude: null,
+        longitude: null,
+        geocode_precision: null,
+        last_geocoded_at: null,
+        observacoes: inst.observacoes,
+        created_at: inst.created_at,
+        updated_at: inst.updated_at,
+        created_by: null,
+        fonte: 'instalacoes' as const,
+        pedido: inst.pedido ? {
+          id: inst.pedido.id,
+          numero_pedido: inst.pedido.numero_pedido,
+          etapa_atual: inst.pedido.etapa_atual,
+          instalacao: null
+        } : undefined,
+        venda: inst.venda
+      }));
+
+      // 4. Marcar ordens_carregamento com fonte
+      const ordensComFonte = (ordensCarregamento || []).map((ordem: any) => ({
+        ...ordem,
+        fonte: 'ordens_carregamento' as const
+      }));
+
+      // 5. Filtrar ordens com status concluído e combinar
+      const filteredOrdens = ordensComFonte.filter((ordem: any) => ordem.status !== 'concluida');
+      const filteredInstalacoes = instalacoesNormalizadas.filter((inst: any) => inst.status !== 'concluida');
       
-      // Filtrar ordens com status concluído
-      const filteredData = (data || []).filter((ordem: any) => {
-        return ordem.status !== 'concluida';
-      });
-      
-      return filteredData as OrdemCarregamento[];
+      return [...filteredOrdens, ...filteredInstalacoes] as OrdemCarregamento[];
     },
   });
 
