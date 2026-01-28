@@ -196,6 +196,7 @@ export const useOrdensCarregamentoCalendario = (
             tipo_carregamento: data.tipo_carregamento,
             responsavel_carregamento_id: data.responsavel_carregamento_id,
             responsavel_carregamento_nome: data.responsavel_carregamento_nome,
+            status: 'agendada',
             updated_at: new Date().toISOString()
           })
           .eq("id", id);
