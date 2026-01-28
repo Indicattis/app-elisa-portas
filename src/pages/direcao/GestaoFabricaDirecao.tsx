@@ -470,43 +470,36 @@ export default function GestaoFabricaDirecao() {
                           <span className="text-xs text-white/40 ml-auto">últimos 30 dias</span>
                         </h3>
                         <div className="space-y-1">
-                          {[...neoInstalacoesFinalizadas, ...neoCorrecoesFinalizadas]
+                          {/* Instalações finalizadas */}
+                          {neoInstalacoesFinalizadas
                             .sort((a, b) => {
                               const dateA = a.concluida_em ? new Date(a.concluida_em).getTime() : 0;
                               const dateB = b.concluida_em ? new Date(b.concluida_em).getTime() : 0;
                               return dateB - dateA;
                             })
-                            .map((neo) => {
-                              const isInstalacao = neo._tipo === 'neo_instalacao';
-                              const concluidaEm = neo.concluida_em ? new Date(neo.concluida_em) : null;
-                              const formatTime = (date: Date) => {
-                                const now = new Date();
-                                const diffMs = now.getTime() - date.getTime();
-                                const diffMins = Math.floor(diffMs / 60000);
-                                const diffHours = Math.floor(diffMs / 3600000);
-                                const diffDays = Math.floor(diffMs / 86400000);
-                                if (diffMins < 60) return `há ${diffMins}min`;
-                                if (diffHours < 24) return `há ${diffHours}h`;
-                                return `há ${diffDays}d`;
-                              };
-                              return (
-                                <div
-                                  key={neo.id}
-                                  className="flex items-center gap-3 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20 h-[35px]"
-                                >
-                                  <div className={`w-2 h-2 rounded-full ${isInstalacao ? 'bg-orange-500' : 'bg-purple-500'}`} />
-                                  <span className="text-sm font-medium text-white/90 truncate flex-1">{neo.nome_cliente}</span>
-                                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${isInstalacao ? 'bg-orange-500/20 text-orange-400' : 'bg-purple-500/20 text-purple-400'}`}>
-                                    {isInstalacao ? 'Instalação' : 'Correção'}
-                                  </span>
-                                  <span className="text-xs text-white/50">{neo.cidade}/{neo.estado}</span>
-                                  {concluidaEm && (
-                                    <span className="text-xs text-emerald-400">{formatTime(concluidaEm)}</span>
-                                  )}
-                                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                                </div>
-                              );
-                            })}
+                            .map((neo) => (
+                              <NeoInstalacaoCardGestao
+                                key={neo.id}
+                                neoInstalacao={neo}
+                                viewMode="list"
+                                showConcluido={true}
+                              />
+                            ))}
+                          {/* Correções finalizadas */}
+                          {neoCorrecoesFinalizadas
+                            .sort((a, b) => {
+                              const dateA = a.concluida_em ? new Date(a.concluida_em).getTime() : 0;
+                              const dateB = b.concluida_em ? new Date(b.concluida_em).getTime() : 0;
+                              return dateB - dateA;
+                            })
+                            .map((neo) => (
+                              <NeoCorrecaoCardGestao
+                                key={neo.id}
+                                neoCorrecao={neo}
+                                viewMode="list"
+                                showConcluido={true}
+                              />
+                            ))}
                         </div>
                         {pedidosFiltrados.length > 0 && (
                           <h3 className="text-sm font-medium text-white/70 mt-4 mb-2">Pedidos ({pedidosFiltrados.length})</h3>
