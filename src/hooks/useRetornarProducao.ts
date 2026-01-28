@@ -11,11 +11,17 @@ interface OrdemProducao {
   tipo: 'soldagem' | 'perfiladeira' | 'separacao';
 }
 
+export interface OrdemConfig {
+  tipo: 'soldagem' | 'perfiladeira' | 'separacao';
+  acao: 'manter' | 'pausar' | 'reativar';
+  justificativa?: string;
+}
+
 interface RetornarProducaoParams {
   pedidoId: string;
   ordemQualidadeId: string;
   motivo: string;
-  ordensReativar: string[]; // tipos: 'soldagem', 'perfiladeira', 'separacao'
+  ordensConfig: OrdemConfig[];
 }
 
 export function useRetornarProducao(pedidoId: string | undefined) {
@@ -70,14 +76,21 @@ export function useRetornarProducao(pedidoId: string | undefined) {
 
   // Mutation para executar o retorno
   const retornarParaProducao = useMutation({
-    mutationFn: async ({ pedidoId, ordemQualidadeId, motivo, ordensReativar }: RetornarProducaoParams) => {
+    mutationFn: async ({ pedidoId, ordemQualidadeId, motivo, ordensConfig }: RetornarProducaoParams) => {
       if (!user?.id) throw new Error('Usuário não autenticado');
+
+      // Converter para JSON compatível com Supabase
+      const ordensConfigJson = ordensConfig.map(c => ({
+        tipo: c.tipo,
+        acao: c.acao,
+        justificativa: c.justificativa || null,
+      }));
 
       const { error } = await supabase.rpc('retornar_pedido_para_producao', {
         p_pedido_id: pedidoId,
         p_ordem_qualidade_id: ordemQualidadeId,
         p_motivo: motivo,
-        p_ordens_reativar: ordensReativar,
+        p_ordens_config: ordensConfigJson,
         p_user_id: user.id,
       });
 
