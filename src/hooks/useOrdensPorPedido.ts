@@ -10,6 +10,13 @@ export interface ResponsavelInfo {
   iniciais: string;
 }
 
+export interface LinhaProblemaInfo {
+  id: string;
+  item: string;
+  quantidade: number;
+  tamanho: string | null;
+}
+
 export interface OrdemStatus {
   existe: boolean;
   id: string | null;
@@ -20,6 +27,7 @@ export interface OrdemStatus {
   pausada: boolean;
   justificativa_pausa: string | null;
   pausada_em: string | null;
+  linha_problema: LinhaProblemaInfo | null;
   linhas_concluidas: number;
   total_linhas: number;
 }
@@ -113,15 +121,27 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
       ] = await Promise.all([
         supabase
           .from('ordens_soldagem')
-          .select('id, pedido_id, numero_ordem, status, responsavel_id, pausada, justificativa_pausa, pausada_em')
+          .select(`
+            id, pedido_id, numero_ordem, status, responsavel_id, pausada, justificativa_pausa, pausada_em,
+            linha_problema_id,
+            linha_problema:linha_problema_id (id, item, quantidade, tamanho)
+          `)
           .in('pedido_id', pedidoIds),
         supabase
           .from('ordens_perfiladeira')
-          .select('id, pedido_id, numero_ordem, status, responsavel_id, metragem_linear, pausada, justificativa_pausa, pausada_em')
+          .select(`
+            id, pedido_id, numero_ordem, status, responsavel_id, metragem_linear, pausada, justificativa_pausa, pausada_em,
+            linha_problema_id,
+            linha_problema:linha_problema_id (id, item, quantidade, tamanho)
+          `)
           .in('pedido_id', pedidoIds),
         supabase
           .from('ordens_separacao')
-          .select('id, pedido_id, numero_ordem, status, responsavel_id, pausada, justificativa_pausa, pausada_em')
+          .select(`
+            id, pedido_id, numero_ordem, status, responsavel_id, pausada, justificativa_pausa, pausada_em,
+            linha_problema_id,
+            linha_problema:linha_problema_id (id, item, quantidade, tamanho)
+          `)
           .in('pedido_id', pedidoIds),
         supabase
           .from('ordens_qualidade')
@@ -310,6 +330,7 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
           const ordem = ordensDosPedido[tipo];
           const responsavelId = ordem?.responsavel_id;
           const linhasCount = linhasCountMap[pedido.id]?.[tipo] || { concluidas: 0, total: 0 };
+          const linhaProblema = ordem?.linha_problema;
           return {
             existe: !!ordem,
             id: ordem?.id || null,
@@ -320,6 +341,12 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
             pausada: ordem?.pausada || false,
             justificativa_pausa: ordem?.justificativa_pausa || null,
             pausada_em: ordem?.pausada_em || null,
+            linha_problema: linhaProblema ? {
+              id: linhaProblema.id,
+              item: linhaProblema.item,
+              quantidade: linhaProblema.quantidade,
+              tamanho: linhaProblema.tamanho,
+            } : null,
             linhas_concluidas: linhasCount.concluidas,
             total_linhas: linhasCount.total,
           };

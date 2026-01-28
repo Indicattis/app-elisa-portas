@@ -62,8 +62,8 @@ export default function ProducaoPerfiladeira() {
     setSheetOpen(false);
   };
 
-  const handlePausarOrdem = async (ordemId: string, justificativa: string) => {
-    await pausarOrdem.mutateAsync({ ordemId, justificativa });
+  const handlePausarOrdem = async (ordemId: string, justificativa: string, linhaProblemaId?: string) => {
+    await pausarOrdem.mutateAsync({ ordemId, justificativa, linhaProblemaId });
     setSheetOpen(false);
   };
 
