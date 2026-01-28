@@ -311,6 +311,93 @@ export const useNeoCorrecoesListagem = () => {
   };
 };
 
+// Hook para buscar Neo Correções FINALIZADAS
+export const useNeoCorrecoesFinalizadas = () => {
+  const queryClient = useQueryClient();
+
+  const { data: neoCorrecoesFinalizadas = [], isLoading } = useQuery({
+    queryKey: ["neo_correcoes_finalizadas"],
+    queryFn: async () => {
+      // Buscar neo correções finalizadas (últimos 30 dias)
+      const dataLimite = new Date();
+      dataLimite.setDate(dataLimite.getDate() - 30);
+
+      const { data, error } = await supabase
+        .from("neo_correcoes")
+        .select("*")
+        .eq("concluida", true)
+        .gte("concluida_em", dataLimite.toISOString())
+        .order("concluida_em", { ascending: false });
+
+      if (error) throw error;
+
+      // Buscar dados das equipes
+      const { data: equipes } = await supabase
+        .from("equipes_instalacao")
+        .select("id, nome, cor")
+        .eq("ativa", true);
+
+      const equipesMap = new Map(equipes?.map(e => [e.id, e]) || []);
+
+      // Buscar dados dos usuários que concluíram
+      const concluidoPorIds = [...new Set((data || []).map(item => item.concluida_por).filter(Boolean))];
+      const { data: usuarios } = concluidoPorIds.length > 0
+        ? await supabase
+            .from("admin_users")
+            .select("user_id, nome, foto_perfil_url")
+            .in("user_id", concluidoPorIds)
+        : { data: [] };
+
+      const usuariosMap = new Map((usuarios || []).map(u => [u.user_id, u]));
+
+      return (data || []).map(item => ({
+        ...item,
+        _tipo: 'neo_correcao' as const,
+        tipo_responsavel: (item.tipo_responsavel as 'equipe_interna' | 'autorizado' | null) || 'equipe_interna',
+        equipe: item.equipe_id
+          ? equipesMap.get(item.equipe_id) || null
+          : null,
+        concluidor: item.concluida_por
+          ? usuariosMap.get(item.concluida_por)
+            ? {
+                id: usuariosMap.get(item.concluida_por)!.user_id,
+                nome: usuariosMap.get(item.concluida_por)!.nome,
+                foto_perfil_url: usuariosMap.get(item.concluida_por)!.foto_perfil_url
+              }
+            : null
+          : null
+      })) as (NeoCorrecao & { concluidor?: { id: string; nome: string; foto_perfil_url: string | null } | null })[];
+    },
+  });
+
+  // Subscription em tempo real
+  useEffect(() => {
+    const channel = supabase
+      .channel('neo-correcoes-finalizadas-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'neo_correcoes'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["neo_correcoes_finalizadas"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  return {
+    neoCorrecoesFinalizadas,
+    isLoading,
+  };
+};
+
 // Hook para buscar Neo Correções SEM DATA (pendentes de agendamento)
 export const useNeoCorrecoesSemData = () => {
   const queryClient = useQueryClient();
