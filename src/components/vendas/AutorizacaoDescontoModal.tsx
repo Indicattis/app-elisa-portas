@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAllUsers } from '@/hooks/useAllUsers';
 import { useLiderVendas } from '@/hooks/useLiderVendas';
@@ -36,25 +36,32 @@ export function AutorizacaoDescontoModal({
   const { data: liderVendas, isLoading: loadingLider } = useLiderVendas();
   const { configuracoes, isLoading: loadingConfig, limites, refetch: refetchConfiguracoes } = useConfiguracoesVendas();
   
-  // Filtrar usuários baseado no tipo de autorização
-  const usuariosFiltrados = useMemo(() => {
+  // Obter o autorizador configurado (não permite seleção manual)
+  const autorizadorConfigurado = useMemo(() => {
     if (tipoAutorizacao === 'responsavel_setor') {
-      // Se há líder de vendas configurado, mostrar apenas ele
       if (liderVendas) {
-        return [{
+        return {
           id: liderVendas.user_id,
-          user_id: liderVendas.user_id,
           nome: liderVendas.nome,
-          email: liderVendas.email,
-          role: liderVendas.role,
-          foto_perfil_url: liderVendas.foto_perfil_url,
-          ativo: true
-        }];
+          role: liderVendas.role
+        };
       }
-      return [];
+      return null;
     }
-    return usuarios;
-  }, [usuarios, tipoAutorizacao, liderVendas]);
+    
+    // Para master, buscar o responsável configurado
+    if (configuracoes?.responsavel_senha_master_id) {
+      const responsavel = usuarios.find(u => u.user_id === configuracoes.responsavel_senha_master_id);
+      if (responsavel) {
+        return {
+          id: responsavel.user_id,
+          nome: responsavel.nome,
+          role: responsavel.role
+        };
+      }
+    }
+    return null;
+  }, [usuarios, tipoAutorizacao, liderVendas, configuracoes]);
 
   useEffect(() => {
     if (open) {
@@ -63,16 +70,14 @@ export function AutorizacaoDescontoModal({
       setSenha('');
       setErro('');
       
-      // Auto-selecionar o líder de vendas se disponível
-      if (tipoAutorizacao === 'responsavel_setor' && liderVendas) {
-        setAutorizadorId(liderVendas.user_id);
-      } else if (tipoAutorizacao === 'master' && configuracoes?.responsavel_senha_master_id) {
-        setAutorizadorId(configuracoes.responsavel_senha_master_id);
+      // Auto-definir o autorizador configurado
+      if (autorizadorConfigurado) {
+        setAutorizadorId(autorizadorConfigurado.id);
       } else {
         setAutorizadorId('');
       }
     }
-  }, [open, tipoAutorizacao, liderVendas, configuracoes, refetchConfiguracoes]);
+  }, [open, autorizadorConfigurado, refetchConfiguracoes]);
 
   const handleAutorizar = async () => {
     if (!senha.trim()) {
@@ -179,36 +184,26 @@ export function AutorizacaoDescontoModal({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="autorizador">Quem está autorizando? *</Label>
-            <Select
-              value={autorizadorId}
-              onValueChange={(value) => {
-                setAutorizadorId(value);
-                setErro('');
-              }}
-              disabled={loading || loadingUsuarios || loadingLider || usuariosFiltrados.length === 0}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={
-                  loadingLider || loadingUsuarios 
-                    ? "Carregando..." 
-                    : usuariosFiltrados.length === 0
-                    ? "Nenhum usuário disponível"
-                    : "Selecione o autorizador"
-                } />
-              </SelectTrigger>
-              <SelectContent>
-                {usuariosFiltrados.map((usuario) => (
-                  <SelectItem key={usuario.user_id} value={usuario.user_id}>
-                    {usuario.nome} - {usuario.role}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {tipoAutorizacao === 'responsavel_setor' && liderVendas && (
-              <p className="text-xs text-muted-foreground">
-                Líder de vendas configurado: {liderVendas.nome}
-              </p>
+            <Label>Quem está autorizando?</Label>
+            {loadingLider || loadingUsuarios ? (
+              <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm text-muted-foreground">Carregando...</span>
+              </div>
+            ) : autorizadorConfigurado ? (
+              <div className="p-3 bg-muted rounded-md">
+                <p className="font-medium">{autorizadorConfigurado.nome}</p>
+                <p className="text-xs text-muted-foreground">{autorizadorConfigurado.role}</p>
+              </div>
+            ) : (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {tipoAutorizacao === 'master' 
+                    ? 'Nenhum responsável configurado para senha master. Configure em Regras de Vendas.'
+                    : 'Nenhum líder de vendas configurado. Configure em Setores e Líderes.'}
+                </AlertDescription>
+              </Alert>
             )}
           </div>
 
