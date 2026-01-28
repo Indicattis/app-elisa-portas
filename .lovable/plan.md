@@ -1,173 +1,158 @@
 
-## Plano: Gerenciar Ordem de Pintura ao Retroceder para "Aguardando Pintura"
+
+## Plano: Downbar para Instalacoes e Remover Campo Hora
 
 ### Objetivo
-Permitir que o usuario escolha o que acontece com a ordem de pintura ao retroceder um pedido para "Aguardando Pintura", similar ao gerenciamento de ordens de producao quando retorna para "Em Producao".
+1. Fazer o icone de informacao (Info) abrir uma downbar (Sheet inferior) ao inves da sidebar lateral direita
+2. Remover a informacao de hora na criacao, edicao e exibicao das instalacoes avulsas
 
 ---
 
-### Mudanca 1: Buscar Ordem de Pintura no Hook
+### Mudanca 1: Converter NeoInstalacaoDetails para Downbar
 
-**Arquivo:** `src/hooks/useRetrocederPedido.ts`
+**Arquivo:** `src/components/expedicao/NeoInstalacaoDetails.tsx`
 
-Adicionar busca da ordem de pintura e expandir interface:
+Alterar o componente Sheet para usar `side="bottom"` e ajustar o layout para funcionar como downbar:
 
-```typescript
-interface OrdemProducao {
-  id: string;
-  numero_ordem: string;
-  status: string;
-  tipo: 'soldagem' | 'perfiladeira' | 'separacao' | 'pintura';  // Adicionar pintura
-  pausada?: boolean;
-}
-
-// Na queryFn, adicionar busca de ordem de pintura:
-const { data: pintura } = await supabase
-  .from('ordens_pintura')
-  .select('id, numero_ordem, status, em_backlog')
-  .eq('pedido_id', pedidoId)
-  .maybeSingle();
-
-if (pintura) {
-  ordens.push({
-    id: pintura.id,
-    numero_ordem: pintura.numero_ordem || '',
-    status: pintura.status || 'pendente',
-    tipo: 'pintura',
-    pausada: false,  // ordens_pintura nao tem campo pausada
-  });
-}
-```
-
----
-
-### Mudanca 2: Expandir Interface OrdemConfig
-
-**Arquivo:** `src/hooks/useRetrocederPedido.ts`
-
-```typescript
-export interface OrdemConfig {
-  tipo: 'soldagem' | 'perfiladeira' | 'separacao' | 'pintura';  // Adicionar pintura
-  acao: 'manter' | 'pausar' | 'reativar' | 'resetar';  // Adicionar resetar
-  justificativa?: string;
-}
-```
-
----
-
-### Mudanca 3: Atualizar Modal para Mostrar Config de Pintura
-
-**Arquivo:** `src/components/pedidos/RetrocederPedidoUnificadoModal.tsx`
-
-Adicionar UI para gerenciar ordem de pintura quando destino e `aguardando_pintura`:
-
-```typescript
-const LABEL_TIPO_ORDEM: Record<string, string> = {
-  soldagem: 'Soldagem',
-  perfiladeira: 'Perfiladeira',
-  separacao: 'Separacao',
-  pintura: 'Pintura',  // Adicionar
-};
-
-// Filtrar ordem de pintura
-const ordemPintura = ordensProducao.find(o => o.tipo === 'pintura');
-
-// Na construcao de ordensConfigArray:
-const ordensConfigArray: OrdemConfig[] = 
-  etapaDestino === 'em_producao'
-    ? ordensProducao.filter(o => o.tipo !== 'pintura').map(...)
-    : etapaDestino === 'aguardando_pintura' && ordemPintura
-    ? [{ tipo: 'pintura', acao: ordensConfig['pintura'] || 'resetar' }]
-    : [];
-```
-
-UI para aguardando_pintura:
 ```tsx
-{etapaDestino === 'aguardando_pintura' && ordemPintura && (
-  <div className="space-y-3">
-    <Label className="text-sm font-medium">Gerenciar Ordem de Pintura:</Label>
-    <div className="border rounded-lg p-3 bg-muted/30">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium">
-          Pintura - {ordemPintura.numero_ordem || 'S/N'}
-        </span>
-        <Badge variant="outline" className="text-xs">
-          {STATUS_LABELS[ordemPintura.status] || ordemPintura.status}
-        </Badge>
-      </div>
-      
-      <RadioGroup
-        value={ordensConfig['pintura'] || 'resetar'}
-        onValueChange={(value) => handleOrdemConfigChange('pintura', value)}
-        className="flex flex-col gap-1"
-      >
-        <div className="flex items-center gap-2">
-          <RadioGroupItem value="resetar" id="pintura-resetar" />
-          <Label htmlFor="pintura-resetar" className="text-xs cursor-pointer">
-            Resetar ordem (status pendente, linhas desmarcadas)
-          </Label>
-        </div>
-        <div className="flex items-center gap-2">
-          <RadioGroupItem value="manter" id="pintura-manter" />
-          <Label htmlFor="pintura-manter" className="text-xs cursor-pointer">
-            Manter status atual
-          </Label>
-        </div>
-      </RadioGroup>
-    </div>
+// ANTES
+<Sheet open={open} onOpenChange={onOpenChange}>
+  <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+
+// DEPOIS
+<Sheet open={open} onOpenChange={onOpenChange}>
+  <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl max-w-[700px] mx-auto overflow-y-auto">
+```
+
+Tambem remover a exibicao da hora na secao "Data e Hora":
+
+```tsx
+// REMOVER este bloco:
+{neoInstalacao.hora && (
+  <p className="text-sm text-muted-foreground flex items-center gap-1">
+    <Clock className="h-3 w-3" />
+    {neoInstalacao.hora.substring(0, 5)}
+  </p>
+)}
+```
+
+Remover import do Clock se nao for mais usado.
+
+---
+
+### Mudanca 2: Remover Campo Hora do Modal de Criacao/Edicao
+
+**Arquivo:** `src/components/expedicao/NeoInstalacaoModal.tsx`
+
+Remover todo o bloco de input de horario:
+
+```tsx
+// REMOVER (linhas 246-255):
+<div className="space-y-2">
+  <Label htmlFor="hora">Horário <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+  <Input
+    id="hora"
+    type="time"
+    value={hora}
+    onChange={(e) => setHora(e.target.value)}
+  />
+</div>
+```
+
+Ajustar o grid para coluna unica para data:
+
+```tsx
+// ANTES
+<div className="grid grid-cols-2 gap-4">
+  <div className="space-y-2">
+    <Label htmlFor="dataInstalacao">Data...</Label>
+    ...
+  </div>
+  <div className="space-y-2">
+    <Label htmlFor="hora">Horário...</Label>
+    ...
+  </div>
+</div>
+
+// DEPOIS
+<div className="space-y-2">
+  <Label htmlFor="dataInstalacao">Data <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+  <Input
+    id="dataInstalacao"
+    type="date"
+    value={dataInstalacao}
+    onChange={(e) => setDataInstalacao(e.target.value)}
+  />
+</div>
+```
+
+Remover estado `hora` e seu reset:
+
+```tsx
+// REMOVER:
+const [hora, setHora] = useState("");
+
+// E nos useEffects, remover:
+setHora(neoInstalacao.hora?.substring(0, 5) || "");
+setHora("");
+```
+
+Sempre passar `hora: null` nos dados:
+
+```tsx
+const dados: CriarNeoInstalacaoData = {
+  // ...
+  hora: null,  // Sempre null
+  // ...
+};
+```
+
+---
+
+### Mudanca 3: Remover Hora do Tooltip do Card
+
+**Arquivo:** `src/components/expedicao/NeoInstalacaoCard.tsx`
+
+Remover a exibicao da hora no tooltip:
+
+```tsx
+// ANTES (linhas 171-176):
+{neoInstalacao.data_instalacao && (
+  <div className="text-[10px] text-muted-foreground">
+    Data: {format(parseISO(neoInstalacao.data_instalacao), "dd/MM/yyyy", { locale: ptBR })}
+    {neoInstalacao.hora && ` às ${neoInstalacao.hora.substring(0, 5)}`}
+  </div>
+)}
+
+// DEPOIS:
+{neoInstalacao.data_instalacao && (
+  <div className="text-[10px] text-muted-foreground">
+    Data: {format(parseISO(neoInstalacao.data_instalacao), "dd/MM/yyyy", { locale: ptBR })}
   </div>
 )}
 ```
 
 ---
 
-### Mudanca 4: Atualizar RPC para Aceitar Config de Pintura
+### Mudanca 4: Atualizar Handlers de Agendamento
 
-**Arquivo:** Nova migration SQL
+**Arquivo:** `src/pages/logistica/ExpedicaoMinimalista.tsx`
 
-Modificar a funcao `retroceder_pedido_unificado` para processar config de pintura:
+Simplificar o handler de agendamento para nao usar hora:
 
-```sql
--- CASO 3: AGUARDANDO_PINTURA - agora com config
-ELSIF p_etapa_destino = 'aguardando_pintura' THEN
-  -- Excluir ordens posteriores
-  DELETE FROM ordens_carregamento WHERE pedido_id = p_pedido_id;
-  DELETE FROM instalacoes WHERE pedido_id = p_pedido_id;
-  
-  -- Processar config de pintura se fornecida
-  v_config := (SELECT jsonb_array_elements(p_ordens_config) 
-               WHERE jsonb_array_elements->>'tipo' = 'pintura' LIMIT 1);
-  v_acao := COALESCE(v_config->>'acao', 'resetar');
-  
-  IF v_acao = 'resetar' OR v_acao IS NULL THEN
-    -- Comportamento padrao: resetar ordem
-    IF NOT EXISTS (SELECT 1 FROM ordens_pintura WHERE pedido_id = p_pedido_id) THEN
-      PERFORM criar_ordem_pintura(p_pedido_id);
-    ELSE
-      UPDATE ordens_pintura SET 
-        status = 'pendente', 
-        historico = false, 
-        em_backlog = true,
-        data_conclusao = NULL
-      WHERE pedido_id = p_pedido_id;
-      
-      UPDATE linhas_ordens SET concluida = false 
-      WHERE pedido_id = p_pedido_id AND tipo_ordem = 'pintura';
-    END IF;
-  ELSIF v_acao = 'manter' THEN
-    -- Manter status atual da ordem
-    UPDATE ordens_pintura SET em_backlog = true
-    WHERE pedido_id = p_pedido_id;
-  END IF;
-  
-  -- Atualizar pedido com backlog
-  UPDATE pedidos_producao SET
-    etapa_atual = 'aguardando_pintura',
-    em_backlog = TRUE,
-    updated_at = now()
-  WHERE id = p_pedido_id;
-END IF;
+```tsx
+// ANTES (linhas 220-221):
+const handleAgendarInstalacao = async (id: string, data: string, hora: string) => {
+  await updateNeoInstalacaoSemData({ id, data: { data_instalacao: data, hora } });
+};
+
+// DEPOIS:
+const handleAgendarInstalacao = async (id: string, data: string) => {
+  await updateNeoInstalacaoSemData({ id, data: { data_instalacao: data, hora: null } });
+};
 ```
+
+Atualizar tambem os componentes NeoServicosDisponiveis e NeoServicosDisponiveisMobile se necessario.
 
 ---
 
@@ -175,80 +160,59 @@ END IF;
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `src/hooks/useRetrocederPedido.ts` | Buscar ordem de pintura, expandir tipos |
-| `src/components/pedidos/RetrocederPedidoUnificadoModal.tsx` | UI para gerenciar ordem de pintura |
-| `supabase/migrations/xxx.sql` | Atualizar RPC para processar config de pintura |
+| `src/components/expedicao/NeoInstalacaoDetails.tsx` | Mudar para `side="bottom"`, remover exibicao de hora |
+| `src/components/expedicao/NeoInstalacaoModal.tsx` | Remover campo de horario do form |
+| `src/components/expedicao/NeoInstalacaoCard.tsx` | Remover hora do tooltip |
+| `src/pages/logistica/ExpedicaoMinimalista.tsx` | Simplificar handler de agendamento |
+| `src/components/expedicao/NeoServicosDisponiveis.tsx` | Ajustar callback de agendamento |
+| `src/components/expedicao/NeoServicosDisponiveisMobile.tsx` | Ajustar callback de agendamento |
 
 ---
 
-### Fluxo Visual
+### Resultado Visual
 
+**Downbar (antes era sidebar lateral):**
 ```text
 +------------------------------------------+
-|   Retornar Pedido - Modal                |
+|                                          |
+|          [Conteudo da Pagina]            |
+|                                          |
 +------------------------------------------+
-| Pedido #001-01/26                        |
-|                                          |
-| Etapa Atual: [Instalacoes]               |
-|                                          |
-| Retornar para: [Aguardando Pintura v]    |
-|                                          |
-| Justificativa: *                         |
-| +--------------------------------------+ |
-| | Problemas na pintura identificados   | |
-| +--------------------------------------+ |
-|                                          |
-| Gerenciar Ordem de Pintura:              |
-| +--------------------------------------+ |
-| | Pintura - OPT-2026-0001  [Concluido] | |
-| |                                      | |
-| | (o) Resetar ordem                    | |
-| |     Status pendente, linhas reset   | |
-| | ( ) Manter status atual              | |
-| +--------------------------------------+ |
-|                                          |
-| +--------------------------------------+ |
-| | i O que acontecera:                  | |
-| | - Ordem de instalacao sera excluida  | |
-| | - Ordem de pintura sera [resetada]   | |
-| | - Pedido ficara em BACKLOG           | |
-| +--------------------------------------+ |
-|                                          |
-| [Cancelar]  [Confirmar Retorno]          |
+|  +------------------------------------+  |
+|  |  ____    Downbar Instalacao        |  |
+|  | (__)                               |  |
+|  |                                    |  |
+|  |  Cliente: Joao Silva               |  |
+|  |  Local: Sao Paulo/SP               |  |
+|  |  Data: 15/02/2026                  |  |
+|  |                                    |  |
+|  |  [Editar]  [Concluir Instalacao]   |  |
+|  +------------------------------------+  |
 +------------------------------------------+
 ```
 
----
-
-### Secao Tecnica
-
-**Tipos Atualizados:**
-```typescript
-// useRetrocederPedido.ts
-export interface OrdemConfig {
-  tipo: 'soldagem' | 'perfiladeira' | 'separacao' | 'pintura';
-  acao: 'manter' | 'pausar' | 'reativar' | 'resetar';
-  justificativa?: string;
-}
+**Modal de Criacao (sem hora):**
+```text
++----------------------------------+
+|   Nova Instalacao Avulsa         |
++----------------------------------+
+| Cliente *                        |
+| [______________________]         |
+|                                  |
+| Cidade *         Estado *        |
+| [__________]     [UF v]          |
+|                                  |
+| Data (opcional)                  |
+| [__/__/____]                     |
+|                                  |
+| Tipo de Responsavel *            |
+| (o) Equipe Interna               |
+| ( ) Autorizado                   |
+|                                  |
+| Equipe *                         |
+| [Selecione a equipe v]           |
+|                                  |
+| [Cancelar]        [Criar]        |
++----------------------------------+
 ```
 
-**Logica de Construcao do Array:**
-```typescript
-const ordensConfigArray: OrdemConfig[] = (() => {
-  if (etapaDestino === 'em_producao') {
-    return ordensProducao
-      .filter(o => o.tipo !== 'pintura')
-      .map(ordem => ({
-        tipo: ordem.tipo,
-        acao: ordensConfig[ordem.tipo] || 'manter',
-      }));
-  }
-  if (etapaDestino === 'aguardando_pintura' && ordemPintura) {
-    return [{
-      tipo: 'pintura' as const,
-      acao: (ordensConfig['pintura'] || 'resetar') as OrdemConfig['acao'],
-    }];
-  }
-  return [];
-})();
-```
