@@ -1,119 +1,70 @@
 
 
-## Plano: Corrigir Calendário para Exibir Instalações Agendadas
+## Plano: Corrigir Status da Instalação ao Agendar no Calendário
 
 ### Problema Identificado
 
-Quando uma **instalação** é agendada via modal, o update vai corretamente para a tabela `instalacoes`. Porém, o calendário em `/logistica/expedicao` usa o hook `useOrdensCarregamentoCalendario` que **só busca dados da tabela `ordens_carregamento`**, nunca exibindo instalações agendadas.
+Ao agendar uma instalação via calendário em `/logistica/expedicao`, o `status` permanece como `pendente_producao` mesmo quando o pedido já está pronto na produção (etapa = `instalacoes`).
+
+**Causa raiz:** A mutation de update em `useOrdensCarregamentoCalendario.ts` (linhas 190-200) não inclui o campo `status` quando atualiza instalações.
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│ FLUXO ATUAL (COM PROBLEMA)                                  │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│ Modal: Agendar instalação para 28/01                        │
-│        │                                                    │
-│        ▼                                                    │
-│ UPDATE instalacoes SET data_carregamento = '2026-01-28'     │
-│        │                                                    │
-│        ✓ Sucesso!                                           │
-│                                                             │
-│ Calendário: useOrdensCarregamentoCalendario                 │
-│        │                                                    │
-│        ▼                                                    │
-│ SELECT * FROM ordens_carregamento WHERE data BETWEEN ...    │
-│        │                                                    │
-│        ⚠️ Instalações nunca são buscadas!                   │
-│        │                                                    │
-│        ▼                                                    │
-│ Calendário vazio (instalações não aparecem)                 │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+Dados atuais no banco:
+- instalacao.id: 42383ee9-ae43-4ec7-9d69-4c6e06d15841
+- nome_cliente: FERNANDO FIGUEIRO LTDA
+- status: pendente_producao  ← Deveria ser 'agendada' ou 'pronta_fabrica'
+- data_carregamento: 2026-01-28
+- pedido.etapa_atual: instalacoes  ← Produção já concluída!
 ```
-
----
-
-### Solucao
-
-Atualizar o hook `useOrdensCarregamentoCalendario` para tambem buscar instalacoes com `data_carregamento` definido no periodo selecionado.
 
 ---
 
 ### Arquivo a Modificar
 
-| Arquivo | Acao | Descricao |
+| Arquivo | Ação | Descrição |
 |---------|------|-----------|
-| `src/hooks/useOrdensCarregamentoCalendario.ts` | Modificar | Buscar tambem da tabela `instalacoes` e combinar resultados |
+| `src/hooks/useOrdensCarregamentoCalendario.ts` | Modificar | Adicionar `status: 'agendada'` no update de instalações |
 
 ---
 
-### Mudancas no Hook
+### Mudança Proposta
 
-O hook atualmente faz:
+**Antes (linhas 190-200):**
 ```typescript
-const { data: ordens = [] } = useQuery({
-  queryFn: async () => {
-    const { data } = await supabase
-      .from("ordens_carregamento")  // ← Só busca daqui!
-      .select(...)
-      .gte("data_carregamento", inicio)
-      .lte("data_carregamento", fim);
-    return data;
-  },
-});
+if (fonte === 'instalacoes') {
+  const { error } = await supabase
+    .from("instalacoes")
+    .update({
+      data_carregamento: data.data_carregamento,
+      hora_carregamento: data.hora,
+      tipo_carregamento: data.tipo_carregamento,
+      responsavel_carregamento_id: data.responsavel_carregamento_id,
+      responsavel_carregamento_nome: data.responsavel_carregamento_nome,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", id);
+
+  if (error) throw error;
+}
 ```
 
-**Novo fluxo:**
-
+**Depois:**
 ```typescript
-const { data: ordens = [] } = useQuery({
-  queryFn: async () => {
-    // 1. Buscar de ordens_carregamento
-    const { data: ordensCarregamento } = await supabase
-      .from("ordens_carregamento")
-      .select(...)
-      .gte("data_carregamento", inicio)
-      .lte("data_carregamento", fim);
+if (fonte === 'instalacoes') {
+  const { error } = await supabase
+    .from("instalacoes")
+    .update({
+      data_carregamento: data.data_carregamento,
+      hora_carregamento: data.hora,
+      tipo_carregamento: data.tipo_carregamento,
+      responsavel_carregamento_id: data.responsavel_carregamento_id,
+      responsavel_carregamento_nome: data.responsavel_carregamento_nome,
+      status: 'agendada',  // NOVO: Atualizar status para 'agendada'
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", id);
 
-    // 2. Buscar de instalacoes COM data_carregamento definida
-    const { data: instalacoes } = await supabase
-      .from("instalacoes")
-      .select(...)
-      .gte("data_carregamento", inicio)
-      .lte("data_carregamento", fim)
-      .eq("carregamento_concluido", false);
-
-    // 3. Normalizar instalacoes para o formato OrdemCarregamento
-    const instalacoesNormalizadas = instalacoes.map(inst => ({
-      id: inst.id,
-      nome_cliente: inst.nome_cliente,
-      data_carregamento: inst.data_carregamento,
-      hora: inst.hora_carregamento,
-      tipo_carregamento: inst.tipo_carregamento,
-      responsavel_carregamento_id: inst.responsavel_carregamento_id,
-      responsavel_carregamento_nome: inst.responsavel_carregamento_nome,
-      status: inst.status,
-      // ... outros campos
-      fonte: 'instalacoes',  // ← Importante!
-    }));
-
-    // 4. Combinar e retornar
-    return [...ordensCarregamento, ...instalacoesNormalizadas];
-  },
-});
-```
-
----
-
-### Atualizacao do Tipo OrdemCarregamento
-
-Adicionar campo `fonte` opcional ao tipo:
-
-```typescript
-// src/types/ordemCarregamento.ts
-export interface OrdemCarregamento {
-  // ... campos existentes
-  fonte?: 'ordens_carregamento' | 'instalacoes';  // NOVO
+  if (error) throw error;
 }
 ```
 
@@ -122,38 +73,43 @@ export interface OrdemCarregamento {
 ### Fluxo Corrigido
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│ FLUXO CORRIGIDO                                             │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│ Modal: Agendar instalação para 28/01                        │
-│        │                                                    │
-│        ▼                                                    │
-│ UPDATE instalacoes SET data_carregamento = '2026-01-28'     │
-│        │                                                    │
-│        ✓ Sucesso!                                           │
-│                                                             │
-│ Calendário: useOrdensCarregamentoCalendario                 │
-│        │                                                    │
-│        ▼                                                    │
-│ SELECT * FROM ordens_carregamento WHERE data BETWEEN ...    │
-│ SELECT * FROM instalacoes WHERE data BETWEEN ...            │
-│        │                                                    │
-│        ▼                                                    │
-│ Combinar resultados + normalizar                            │
-│        │                                                    │
-│        ▼                                                    │
-│ Calendário mostra entregas E instalações!                   │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ ANTES (COM PROBLEMA)                                         │
+├──────────────────────────────────────────────────────────────┤
+│ Agendar instalação → UPDATE sem status                       │
+│ status permanece: 'pendente_producao'                        │
+│ Em /producao/carregamento → mostra como pendente             │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ DEPOIS (CORRIGIDO)                                           │
+├──────────────────────────────────────────────────────────────┤
+│ Agendar instalação → UPDATE com status: 'agendada'           │
+│ status atualiza: 'agendada'                                  │
+│ Em /producao/carregamento → mostra corretamente como agendada│
+└──────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+### Consideração Adicional
+
+A instalação recém-agendada (FERNANDO FIGUEIRO LTDA) que está com status incorreto precisará de uma correção manual via SQL para corrigir o dado existente:
+
+```sql
+UPDATE instalacoes 
+SET status = 'agendada' 
+WHERE data_carregamento IS NOT NULL 
+  AND status = 'pendente_producao';
+```
+
+Isso pode ser feito após a implementação do fix no código.
 
 ---
 
 ### Resultado Esperado
 
-1. **Entregas** (tabela `ordens_carregamento`) continuam aparecendo no calendario
-2. **Instalacoes agendadas** (tabela `instalacoes` com `data_carregamento` definida) agora tambem aparecem
-3. Ambas as fontes sao exibidas corretamente com seus respectivos estilos (badges de "Entrega" vs "Instalacao")
-4. O drag-and-drop continua funcionando com a `fonte` sendo passada corretamente para updates
+1. Novos agendamentos de instalação atualizam o `status` para `'agendada'`
+2. Em `/producao/carregamento`, instalações agendadas exibem corretamente "Agendada" no badge
+3. Dados existentes podem ser corrigidos via SQL
 
