@@ -3,12 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Search, Calendar, Package, MapPin, Truck, Wrench } from "lucide-react";
+import { Search, Calendar, Package, MapPin, Truck, Wrench, User } from "lucide-react";
 import { toast } from "sonner";
 import { AdicionarOrdemCalendarioModal } from "./AdicionarOrdemCalendarioModal";
+import { OrdemCarregamentoDetails } from "./OrdemCarregamentoDetails";
 import { cn } from "@/lib/utils";
 import { useOrdensCarregamentoUnificadas, OrdemCarregamentoUnificada } from "@/hooks/useOrdensCarregamentoUnificadas";
+import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -67,6 +70,46 @@ const getPortasInfo = (ordem: OrdemCarregamentoUnificada) => {
   return lista;
 };
 
+// Converter OrdemCarregamentoUnificada para OrdemCarregamento (para o details)
+const toOrdemCarregamento = (ordem: OrdemCarregamentoUnificada): OrdemCarregamento => ({
+  id: ordem.id,
+  pedido_id: ordem.pedido_id,
+  venda_id: ordem.venda_id,
+  nome_cliente: ordem.nome_cliente,
+  tipo_carregamento: ordem.tipo_carregamento,
+  data_carregamento: ordem.data_carregamento,
+  hora: ordem.hora || null,
+  hora_carregamento: ordem.hora_carregamento,
+  responsavel_carregamento_id: ordem.responsavel_carregamento_id,
+  responsavel_carregamento_nome: ordem.responsavel_carregamento_nome,
+  status: ordem.status,
+  carregamento_concluido: ordem.carregamento_concluido,
+  carregamento_concluido_em: null,
+  carregamento_concluido_por: null,
+  latitude: null,
+  longitude: null,
+  geocode_precision: null,
+  last_geocoded_at: null,
+  observacoes: ordem.observacoes || null,
+  created_at: ordem.created_at || null,
+  updated_at: null,
+  created_by: null,
+  fonte: ordem.fonte,
+  pedido: ordem.pedido,
+  venda: ordem.venda ? {
+    id: ordem.venda.id,
+    cliente_nome: ordem.venda.cliente_nome,
+    cliente_telefone: ordem.venda.cliente_telefone,
+    cliente_email: ordem.venda.cliente_email,
+    cidade: ordem.venda.cidade,
+    estado: ordem.venda.estado,
+    cep: ordem.venda.cep,
+    bairro: ordem.venda.bairro,
+    tipo_entrega: ordem.venda.tipo_entrega === 'manutencao' ? 'instalacao' : ordem.venda.tipo_entrega,
+    produtos: ordem.venda.produtos,
+  } : null,
+});
+
 export const OrdensCarregamentoDisponiveis = ({
   onRefresh
 }: OrdensCarregamentoDisponiveisProps) => {
@@ -75,13 +118,23 @@ export const OrdensCarregamentoDisponiveis = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemCarregamentoUnificada | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  
+  // States para downbar de detalhes
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
 
   // Filtrar apenas ordens SEM data de carregamento (disponíveis para agendamento)
   const ordensDisponiveis = ordens.filter(o => !o.data_carregamento);
 
-  const handleAgendar = (ordem: OrdemCarregamentoUnificada) => {
+  const handleAgendar = (e: React.MouseEvent, ordem: OrdemCarregamentoUnificada) => {
+    e.stopPropagation();
     setOrdemSelecionada(ordem);
     setModalOpen(true);
+  };
+
+  const handleRowClick = (ordem: OrdemCarregamentoUnificada) => {
+    setSelectedOrdem(toOrdemCarregamento(ordem));
+    setDetailsOpen(true);
   };
 
   const handleConfirmAgendar = async (params: {
@@ -137,7 +190,8 @@ export const OrdensCarregamentoDisponiveis = ({
       ordem.nome_cliente.toLowerCase().includes(termo) ||
       ordem.pedido?.numero_pedido?.toLowerCase().includes(termo) ||
       ordem.venda?.cidade?.toLowerCase().includes(termo) ||
-      ordem.venda?.estado?.toLowerCase().includes(termo)
+      ordem.venda?.estado?.toLowerCase().includes(termo) ||
+      ordem.vendedor?.nome?.toLowerCase().includes(termo)
     );
   });
 
@@ -190,6 +244,11 @@ export const OrdensCarregamentoDisponiveis = ({
     );
   };
 
+  // Obter iniciais do nome
+  const getInitials = (nome: string) => {
+    return nome.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+  };
+
   return (
     <>
       <Card>
@@ -206,7 +265,7 @@ export const OrdensCarregamentoDisponiveis = ({
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por cliente, pedido ou localização..."
+              placeholder="Buscar por cliente, pedido, localização ou vendedor..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="pl-9 h-9"
@@ -225,19 +284,20 @@ export const OrdensCarregamentoDisponiveis = ({
                     <th className="text-left font-medium p-2 min-w-[120px]">Localização</th>
                     <th className="text-left font-medium p-2 min-w-[120px]">Cores</th>
                     <th className="text-left font-medium p-2 min-w-[100px]">Serviço</th>
+                    <th className="text-left font-medium p-2 min-w-[110px]">Vendedor</th>
                     <th className="text-right font-medium p-2 min-w-[90px]">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                      <td colSpan={8} className="p-8 text-center text-muted-foreground">
                         Carregando ordens...
                       </td>
                     </tr>
                   ) : ordensFiltradas.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                      <td colSpan={8} className="p-8 text-center text-muted-foreground">
                         Nenhuma ordem disponível
                       </td>
                     </tr>
@@ -250,7 +310,11 @@ export const OrdensCarregamentoDisponiveis = ({
                       const portasInfo = getPortasInfo(ordem);
                       
                       return (
-                        <tr key={ordem.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                        <tr 
+                          key={ordem.id} 
+                          className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                          onClick={() => handleRowClick(ordem)}
+                        >
                           <td className="p-2 h-[35px]">
                             <div className="font-medium truncate">{ordem.nome_cliente}</div>
                           </td>
@@ -372,12 +436,38 @@ export const OrdensCarregamentoDisponiveis = ({
                           <td className="p-2">
                             {getTipoServicoBadge(ordem)}
                           </td>
+                          <td className="p-2">
+                            {ordem.vendedor ? (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-1.5">
+                                      <Avatar className="h-5 w-5">
+                                        <AvatarImage src={ordem.vendedor.foto_perfil_url || undefined} />
+                                        <AvatarFallback className="text-[8px]">
+                                          {getInitials(ordem.vendedor.nome)}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <span className="text-xs truncate max-w-[80px]">
+                                        {ordem.vendedor.nome.split(' ')[0]}
+                                      </span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p className="text-xs">{ordem.vendedor.nome}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : (
+                              <span className="text-muted-foreground text-[10px]">—</span>
+                            )}
+                          </td>
                           <td className="p-2 text-right">
                             <Button
                               size="sm"
                               variant="ghost"
                               className="h-7 px-2 text-xs"
-                              onClick={() => handleAgendar(ordem)}
+                              onClick={(e) => handleAgendar(e, ordem)}
                             >
                               <Calendar className="h-3 w-3 mr-1.5" />
                               Agendar
@@ -400,6 +490,12 @@ export const OrdensCarregamentoDisponiveis = ({
         dataSelecionada={new Date()}
         onConfirm={handleConfirmAgendar}
         ordemPreSelecionada={ordemSelecionada}
+      />
+
+      <OrdemCarregamentoDetails
+        ordem={selectedOrdem}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
       />
     </>
   );

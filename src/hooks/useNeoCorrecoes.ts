@@ -421,6 +421,17 @@ export const useNeoCorrecoesSemData = () => {
         .eq("ativa", true);
 
       const equipesMap = new Map(equipes?.map(e => [e.id, e]) || []);
+
+      // Buscar dados dos criadores
+      const createdByIds = [...new Set((data || []).map(item => item.created_by).filter(Boolean))];
+      const { data: usuarios } = createdByIds.length > 0 
+        ? await supabase
+            .from("admin_users")
+            .select("user_id, nome, foto_perfil_url")
+            .in("user_id", createdByIds)
+        : { data: [] };
+
+      const usuariosMap = new Map((usuarios || []).map(u => [u.user_id, u]));
       
       return (data || []).map(item => ({
         ...item,
@@ -428,6 +439,15 @@ export const useNeoCorrecoesSemData = () => {
         tipo_responsavel: (item.tipo_responsavel as 'equipe_interna' | 'autorizado' | null) || 'equipe_interna',
         equipe: item.equipe_id 
           ? equipesMap.get(item.equipe_id) || null 
+          : null,
+        criador: item.created_by
+          ? usuariosMap.get(item.created_by)
+            ? {
+                id: usuariosMap.get(item.created_by)!.user_id,
+                nome: usuariosMap.get(item.created_by)!.nome,
+                foto_perfil_url: usuariosMap.get(item.created_by)!.foto_perfil_url
+              }
+            : null
           : null
       })) as NeoCorrecao[];
     },
