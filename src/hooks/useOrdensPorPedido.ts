@@ -24,6 +24,7 @@ export interface OrdemStatus {
   status: string | null;
   tipo: TipoOrdem;
   responsavel: ResponsavelInfo | null;
+  responsavel_id: string | null;
   pausada: boolean;
   justificativa_pausa: string | null;
   pausada_em: string | null;
@@ -338,6 +339,7 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
             status: ordem?.status || null,
             tipo,
             responsavel: responsavelId ? responsaveisMap[responsavelId] || null : null,
+            responsavel_id: responsavelId || null,
             pausada: ordem?.pausada || false,
             justificativa_pausa: ordem?.justificativa_pausa || null,
             pausada_em: ordem?.pausada_em || null,

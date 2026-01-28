@@ -1,14 +1,16 @@
+import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { Loader2, Package, RefreshCw, Pause } from "lucide-react";
+import { Loader2, Package, RefreshCw, Pause, UserMinus } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useLinhasOrdem, LinhaOrdem } from "@/hooks/useLinhasOrdem";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { RemoverResponsavelModal } from "@/components/pedidos/RemoverResponsavelModal";
 import type { OrdemStatus, TipoOrdem } from "@/hooks/useOrdensPorPedido";
 
 interface OrdemLinhasSheetProps {
@@ -25,9 +27,18 @@ const TIPO_LABELS: Record<TipoOrdem, string> = {
   pintura: 'Pintura',
 };
 
+const TABLE_MAP: Record<TipoOrdem, string> = {
+  soldagem: 'ordens_soldagem',
+  perfiladeira: 'ordens_perfiladeira',
+  separacao: 'ordens_separacao',
+  qualidade: 'ordens_qualidade',
+  pintura: 'ordens_pintura',
+};
+
 export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheetProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showRemoverModal, setShowRemoverModal] = useState(false);
   
   const { data: linhas = [], isLoading } = useLinhasOrdem(
     ordem?.id || null, 
@@ -109,180 +120,251 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
     },
   });
 
+  const removerResponsavel = useMutation({
+    mutationFn: async () => {
+      if (!ordem?.id || !ordem?.tipo) throw new Error('Ordem inválida');
+      
+      const tableName = TABLE_MAP[ordem.tipo];
+      
+      const { error } = await supabase
+        .from(tableName as any)
+        .update({
+          responsavel_id: null,
+          capturada_em: null,
+        })
+        .eq('id', ordem.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
+      setShowRemoverModal(false);
+      toast({
+        title: "Responsável removido",
+        description: "A ordem está disponível para captura novamente.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover o responsável.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const linhasConcluidas = linhas.filter(l => l.concluida).length;
   const totalLinhas = linhas.length;
   const isOrdemConcluida = ordem?.status === 'concluido';
+  
+  // Pode remover responsável se: tem responsável E (está pausada OU status é pendente)
+  const podeRemoverResponsavel = ordem?.responsavel && 
+    (ordem?.pausada || ordem?.status === 'pendente');
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="bg-zinc-900 border-zinc-800 text-white w-full sm:max-w-lg">
-        <SheetHeader>
-          <SheetTitle className="text-white flex items-center gap-2 pr-8">
-            <Package className="w-5 h-5 text-blue-400" />
-            <span className="flex-1">
-              {ordem ? `${TIPO_LABELS[ordem.tipo]} #${ordem.numero_ordem}` : 'Ordem'}
-            </span>
-            
-            {ordem?.responsavel && (
-              <Avatar className="h-6 w-6 border border-blue-500/30">
-                <AvatarImage src={ordem.responsavel.foto_url || undefined} />
-                <AvatarFallback className="text-[10px] bg-blue-500/20 text-blue-300">
-                  {ordem.responsavel.iniciais}
-                </AvatarFallback>
-              </Avatar>
-            )}
-          </SheetTitle>
-          <SheetDescription className="text-zinc-400">
-            <div className="flex flex-col gap-1">
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent className="bg-zinc-900 border-zinc-800 text-white w-full sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle className="text-white flex items-center gap-2 pr-8">
+              <Package className="w-5 h-5 text-blue-400" />
+              <span className="flex-1">
+                {ordem ? `${TIPO_LABELS[ordem.tipo]} #${ordem.numero_ordem}` : 'Ordem'}
+              </span>
+              
               {ordem?.responsavel && (
-                <span className="text-xs">Responsável: {ordem.responsavel.nome}</span>
+                <Avatar className="h-6 w-6 border border-blue-500/30">
+                  <AvatarImage src={ordem.responsavel.foto_url || undefined} />
+                  <AvatarFallback className="text-[10px] bg-blue-500/20 text-blue-300">
+                    {ordem.responsavel.iniciais}
+                  </AvatarFallback>
+                </Avatar>
               )}
-              {totalLinhas > 0 && (
-                <span className="flex items-center gap-2">
-                  Progresso: {linhasConcluidas}/{totalLinhas} linhas concluídas
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-700/50">
-                    {Math.round((linhasConcluidas / totalLinhas) * 100)}%
+            </SheetTitle>
+            <SheetDescription className="text-zinc-400">
+              <div className="flex flex-col gap-1">
+                {ordem?.responsavel && (
+                  <span className="text-xs">Responsável: {ordem.responsavel.nome}</span>
+                )}
+                {totalLinhas > 0 && (
+                  <span className="flex items-center gap-2">
+                    Progresso: {linhasConcluidas}/{totalLinhas} linhas concluídas
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-700/50">
+                      {Math.round((linhasConcluidas / totalLinhas) * 100)}%
+                    </span>
                   </span>
-                </span>
+                )}
+              </div>
+            </SheetDescription>
+          </SheetHeader>
+
+          {/* Alerta de ordem pausada */}
+          {ordem?.pausada && (
+            <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Pause className="w-4 h-4 text-red-400" />
+                <span className="text-sm font-medium text-red-300">Ordem Pausada</span>
+              </div>
+              
+              {ordem.linha_problema && (
+                <div className="mb-2 p-2 rounded bg-red-500/20">
+                  <p className="text-xs text-red-200 font-medium">Linha com problema:</p>
+                  <p className="text-sm text-white">
+                    {ordem.linha_problema.item} - Qtd: {ordem.linha_problema.quantidade}
+                    {ordem.linha_problema.tamanho && ` - Tam: ${ordem.linha_problema.tamanho}`}
+                  </p>
+                </div>
+              )}
+              
+              {ordem.justificativa_pausa && (
+                <div className="p-2 rounded bg-zinc-800/50">
+                  <p className="text-xs text-zinc-400 font-medium">Motivo:</p>
+                  <p className="text-sm text-zinc-300">{ordem.justificativa_pausa}</p>
+                </div>
               )}
             </div>
-          </SheetDescription>
-        </SheetHeader>
+          )}
 
-        {/* Alerta de ordem pausada */}
-        {ordem?.pausada && (
-          <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-            <div className="flex items-center gap-2 mb-2">
-              <Pause className="w-4 h-4 text-red-400" />
-              <span className="text-sm font-medium text-red-300">Ordem Pausada</span>
-            </div>
-            
-            {ordem.linha_problema && (
-              <div className="mb-2 p-2 rounded bg-red-500/20">
-                <p className="text-xs text-red-200 font-medium">Linha com problema:</p>
-                <p className="text-sm text-white">
-                  {ordem.linha_problema.item} - Qtd: {ordem.linha_problema.quantidade}
-                  {ordem.linha_problema.tamanho && ` - Tam: ${ordem.linha_problema.tamanho}`}
-                </p>
+          {/* Ações da ordem - abaixo do header para evitar conflito com botão fechar */}
+          <div className="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-zinc-700/50">
+            <TooltipProvider>
+              {/* Botão Remover Responsável */}
+              {podeRemoverResponsavel && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowRemoverModal(true)}
+                      className="h-8 gap-2 border-orange-500/50 bg-orange-500/10 hover:bg-orange-500/20 text-orange-300"
+                    >
+                      <UserMinus className="h-4 w-4" />
+                      <span className="text-xs">Remover Responsável</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Remover responsável e liberar ordem para captura
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
+              {/* Botão Regenerar Linhas */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => regenerarLinhas.mutate()}
+                    disabled={regenerarLinhas.isPending || isOrdemConcluida}
+                    className={cn(
+                      "h-8 gap-2 border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700/50",
+                      isOrdemConcluida && "opacity-50"
+                    )}
+                  >
+                    {regenerarLinhas.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 text-amber-400" />
+                    )}
+                    <span className="text-xs text-zinc-300">Regenerar linhas</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isOrdemConcluida 
+                    ? 'Ordem concluída - não é possível regenerar' 
+                    : 'Regenerar linhas da ordem'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
+          <div className="mt-6 max-h-[calc(100vh-200px)] overflow-y-auto">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
               </div>
-            )}
-            
-            {ordem.justificativa_pausa && (
-              <div className="p-2 rounded bg-zinc-800/50">
-                <p className="text-xs text-zinc-400 font-medium">Motivo:</p>
-                <p className="text-sm text-zinc-300">{ordem.justificativa_pausa}</p>
+            ) : linhas.length === 0 ? (
+              <div className="text-center py-8 text-zinc-500">
+                Nenhuma linha encontrada para esta ordem.
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {/* Header */}
+                <div 
+                  className="grid gap-2 px-2 py-1.5 text-[10px] text-zinc-500 uppercase tracking-wide border-b border-zinc-700/50"
+                  style={{ gridTemplateColumns: '24px 1fr 45px 55px 85px' }}
+                >
+                  <span></span>
+                  <span>Item</span>
+                  <span className="text-center">Qtd</span>
+                  <span className="text-center">Tam</span>
+                  <span className="text-center">Dims</span>
+                </div>
+
+                {/* Rows */}
+                {linhas.map((linha) => (
+                  <div
+                    key={linha.id}
+                    className={cn(
+                      "grid gap-2 px-2 py-2 rounded-md transition-all duration-200 border",
+                      linha.concluida
+                        ? "bg-green-500/10 border-green-500/30"
+                        : "bg-zinc-800/30 border-zinc-700/30 hover:bg-zinc-800/50"
+                    )}
+                    style={{ gridTemplateColumns: '24px 1fr 45px 55px 85px', alignItems: 'center' }}
+                  >
+                    <div className="flex items-center justify-center h-full">
+                      <Checkbox
+                        checked={linha.concluida}
+                        onCheckedChange={(checked) => {
+                          marcarLinha.mutate({ linhaId: linha.id, concluida: checked as boolean });
+                        }}
+                        className="border-zinc-600 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center h-full">
+                      <span className={cn(
+                        "text-sm truncate",
+                        linha.concluida ? "text-green-300 line-through" : "text-white"
+                      )}>
+                        {linha.estoque?.nome_produto || linha.item}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center justify-center h-full">
+                      <span className="text-xs text-zinc-400">{linha.quantidade}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-center h-full">
+                      <span className="text-xs text-zinc-400">{linha.tamanho || '-'}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-center h-full">
+                      <span className="text-xs text-zinc-400">
+                        {linha.largura && linha.altura 
+                          ? `${linha.largura}x${linha.altura}` 
+                          : '-'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
-        )}
+        </SheetContent>
+      </Sheet>
 
-        {/* Ações da ordem - abaixo do header para evitar conflito com botão fechar */}
-        <div className="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-zinc-700/50">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => regenerarLinhas.mutate()}
-                  disabled={regenerarLinhas.isPending || isOrdemConcluida}
-                  className={cn(
-                    "h-8 gap-2 border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700/50",
-                    isOrdemConcluida && "opacity-50"
-                  )}
-                >
-                  {regenerarLinhas.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-4 w-4 text-amber-400" />
-                  )}
-                  <span className="text-xs text-zinc-300">Regenerar linhas</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {isOrdemConcluida 
-                  ? 'Ordem concluída - não é possível regenerar' 
-                  : 'Regenerar linhas da ordem'}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-
-        <div className="mt-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-            </div>
-          ) : linhas.length === 0 ? (
-            <div className="text-center py-8 text-zinc-500">
-              Nenhuma linha encontrada para esta ordem.
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {/* Header */}
-              <div 
-                className="grid gap-2 px-2 py-1.5 text-[10px] text-zinc-500 uppercase tracking-wide border-b border-zinc-700/50"
-                style={{ gridTemplateColumns: '24px 1fr 45px 55px 85px' }}
-              >
-                <span></span>
-                <span>Item</span>
-                <span className="text-center">Qtd</span>
-                <span className="text-center">Tam</span>
-                <span className="text-center">Dims</span>
-              </div>
-
-              {/* Rows */}
-              {linhas.map((linha) => (
-                <div
-                  key={linha.id}
-                  className={cn(
-                    "grid gap-2 px-2 py-2 rounded-md transition-all duration-200 border",
-                    linha.concluida
-                      ? "bg-green-500/10 border-green-500/30"
-                      : "bg-zinc-800/30 border-zinc-700/30 hover:bg-zinc-800/50"
-                  )}
-                  style={{ gridTemplateColumns: '24px 1fr 45px 55px 85px', alignItems: 'center' }}
-                >
-                  <div className="flex items-center justify-center h-full">
-                    <Checkbox
-                      checked={linha.concluida}
-                      onCheckedChange={(checked) => {
-                        marcarLinha.mutate({ linhaId: linha.id, concluida: checked as boolean });
-                      }}
-                      className="border-zinc-600 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                    />
-                  </div>
-                  
-                  <div className="flex items-center h-full">
-                    <span className={cn(
-                      "text-sm truncate",
-                      linha.concluida ? "text-green-300 line-through" : "text-white"
-                    )}>
-                      {linha.estoque?.nome_produto || linha.item}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center justify-center h-full">
-                    <span className="text-xs text-zinc-400">{linha.quantidade}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-center h-full">
-                    <span className="text-xs text-zinc-400">{linha.tamanho || '-'}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-center h-full">
-                    <span className="text-xs text-zinc-400">
-                      {linha.largura && linha.altura 
-                        ? `${linha.largura}x${linha.altura}` 
-                        : '-'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </SheetContent>
-    </Sheet>
+      {/* Modal de confirmação para remover responsável */}
+      <RemoverResponsavelModal
+        open={showRemoverModal}
+        onOpenChange={setShowRemoverModal}
+        onConfirm={() => removerResponsavel.mutate()}
+        responsavelNome={ordem?.responsavel?.nome || null}
+        responsavelFoto={ordem?.responsavel?.foto_url || null}
+        nomeSetor={ordem?.tipo ? TIPO_LABELS[ordem.tipo] : 'Ordem'}
+        isLoading={removerResponsavel.isPending}
+      />
+    </>
   );
 }
