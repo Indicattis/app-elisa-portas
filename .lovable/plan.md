@@ -1,71 +1,136 @@
 
-
-## Plano: Corrigir Status da Instalação ao Agendar no Calendário
+## Plano: Corrigir Exibicao de Linhas do Pedido e Ordens em PedidoViewDirecao
 
 ### Problema Identificado
 
-Ao agendar uma instalação via calendário em `/logistica/expedicao`, o `status` permanece como `pendente_producao` mesmo quando o pedido já está pronto na produção (etapa = `instalacoes`).
+Na pagina `/direcao/pedidos/:id`, as linhas do pedido e as linhas das ordens de producao nao aparecem devido a dois problemas:
 
-**Causa raiz:** A mutation de update em `useOrdensCarregamentoCalendario.ts` (linhas 190-200) não inclui o campo `status` quando atualiza instalações.
-
-```text
-Dados atuais no banco:
-- instalacao.id: 42383ee9-ae43-4ec7-9d69-4c6e06d15841
-- nome_cliente: FERNANDO FIGUEIRO LTDA
-- status: pendente_producao  ← Deveria ser 'agendada' ou 'pronta_fabrica'
-- data_carregamento: 2026-01-28
-- pedido.etapa_atual: instalacoes  ← Produção já concluída!
+**Problema 1 - Linhas do Pedido:**
+```typescript
+// Linha 73-74 de PedidoViewDirecao.tsx
+const { data: linhasData } = await supabase
+  .from('linhas_pedido' as any)  // TABELA NAO EXISTE!
 ```
 
+A pagina busca da tabela `linhas_pedido` que nao existe. A tabela correta e `pedido_linhas`.
+
+**Problema 2 - Linhas das Ordens:**
+A pagina busca as ordens de producao (Soldagem, Perfiladeira, Separacao, etc.) mas nao busca as linhas/materiais vinculados a cada ordem (tabela `linhas_ordens`).
+
+### Evidencia do Banco de Dados
+
+- Tabela `pedido_linhas` existe com 12+ linhas para este pedido
+- Tabela `linhas_ordens` existe com 15 linhas vinculadas as ordens
+- Tabela `linhas_pedido` NAO EXISTE
+
 ---
 
-### Arquivo a Modificar
+### Arquivos a Modificar
 
-| Arquivo | Ação | Descrição |
+| Arquivo | Acao | Descricao |
 |---------|------|-----------|
-| `src/hooks/useOrdensCarregamentoCalendario.ts` | Modificar | Adicionar `status: 'agendada'` no update de instalações |
+| `src/pages/direcao/PedidoViewDirecao.tsx` | Modificar | Corrigir nome da tabela e adicionar busca de linhas das ordens |
 
 ---
 
-### Mudança Proposta
+### Mudanca 1: Corrigir Nome da Tabela de Linhas do Pedido
 
-**Antes (linhas 190-200):**
+**Antes (linha 74):**
 ```typescript
-if (fonte === 'instalacoes') {
-  const { error } = await supabase
-    .from("instalacoes")
-    .update({
-      data_carregamento: data.data_carregamento,
-      hora_carregamento: data.hora,
-      tipo_carregamento: data.tipo_carregamento,
-      responsavel_carregamento_id: data.responsavel_carregamento_id,
-      responsavel_carregamento_nome: data.responsavel_carregamento_nome,
-      updated_at: new Date().toISOString()
-    })
-    .eq("id", id);
-
-  if (error) throw error;
-}
+const { data: linhasData } = await supabase
+  .from('linhas_pedido' as any)
+  .select('id, nome_produto, descricao_produto, quantidade, tamanho')
+  .eq('pedido_id', id)
+  .order('ordem', { ascending: true });
 ```
 
 **Depois:**
 ```typescript
-if (fonte === 'instalacoes') {
-  const { error } = await supabase
-    .from("instalacoes")
-    .update({
-      data_carregamento: data.data_carregamento,
-      hora_carregamento: data.hora,
-      tipo_carregamento: data.tipo_carregamento,
-      responsavel_carregamento_id: data.responsavel_carregamento_id,
-      responsavel_carregamento_nome: data.responsavel_carregamento_nome,
-      status: 'agendada',  // NOVO: Atualizar status para 'agendada'
-      updated_at: new Date().toISOString()
-    })
-    .eq("id", id);
+const { data: linhasData } = await supabase
+  .from('pedido_linhas')
+  .select('id, nome_produto, descricao_produto, quantidade, tamanho')
+  .eq('pedido_id', id)
+  .order('ordem', { ascending: true });
+```
 
-  if (error) throw error;
+---
+
+### Mudanca 2: Adicionar Busca de Linhas das Ordens
+
+Apos buscar as ordens (linhas 84-102), buscar tambem as linhas de cada ordem:
+
+**Adicionar apos linha 102:**
+```typescript
+// Buscar linhas de cada ordem
+for (const ordem of ordensResult) {
+  const { data: linhasOrdem } = await supabase
+    .from('linhas_ordens')
+    .select('id, item, quantidade, tamanho, concluida')
+    .eq('ordem_id', ordem.id)
+    .eq('tipo_ordem', ordem.tipo.toLowerCase())
+    .order('created_at', { ascending: true });
+  
+  (ordem as any).linhas = linhasOrdem || [];
 }
+```
+
+---
+
+### Mudanca 3: Atualizar Interface para Incluir Linhas
+
+**Atualizar interface Ordem (linha 15-21):**
+```typescript
+interface Ordem {
+  id: string;
+  tipo: string;
+  numero_ordem: string;
+  status: string;
+  capturado_por_nome?: string | null;
+  linhas?: Array<{
+    id: string;
+    item: string;
+    quantidade: number;
+    tamanho?: string | null;
+    concluida: boolean;
+  }>;
+}
+```
+
+---
+
+### Mudanca 4: Exibir Linhas das Ordens na UI
+
+**Atualizar o card de ordens (linhas 389-404) para mostrar as linhas:**
+```tsx
+{pedido.ordens.map((ordem) => (
+  <div key={ordem.id} className="p-3 rounded-lg bg-white/5">
+    <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center gap-2">
+        {getOrdemIcon(ordem.tipo)}
+        <span className="font-medium text-white text-sm">{ordem.tipo}</span>
+      </div>
+      {getOrdemStatusIcon(ordem.status)}
+    </div>
+    <p className="text-xs text-white/60">#{ordem.numero_ordem}</p>
+    
+    {/* Linhas da ordem */}
+    {(ordem as any).linhas?.length > 0 && (
+      <div className="mt-2 pt-2 border-t border-white/10 space-y-1">
+        {(ordem as any).linhas.map((linha: any) => (
+          <div key={linha.id} className="flex items-center justify-between text-xs">
+            <span className="text-white/70 truncate flex-1">{linha.item}</span>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="text-white/50">{linha.quantidade}x</span>
+              {linha.concluida && (
+                <CheckCircle2 className="w-3 h-3 text-green-400" />
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+))}
 ```
 
 ---
@@ -73,43 +138,37 @@ if (fonte === 'instalacoes') {
 ### Fluxo Corrigido
 
 ```text
-┌──────────────────────────────────────────────────────────────┐
-│ ANTES (COM PROBLEMA)                                         │
-├──────────────────────────────────────────────────────────────┤
-│ Agendar instalação → UPDATE sem status                       │
-│ status permanece: 'pendente_producao'                        │
-│ Em /producao/carregamento → mostra como pendente             │
-└──────────────────────────────────────────────────────────────┘
+ANTES (COM PROBLEMA):
+1. Buscar pedido -> OK
+2. Buscar linhas de 'linhas_pedido' -> TABELA NAO EXISTE -> 0 linhas
+3. Buscar ordens -> OK (3 ordens encontradas)
+4. NAO busca linhas das ordens -> ordens sem materiais
 
-┌──────────────────────────────────────────────────────────────┐
-│ DEPOIS (CORRIGIDO)                                           │
-├──────────────────────────────────────────────────────────────┤
-│ Agendar instalação → UPDATE com status: 'agendada'           │
-│ status atualiza: 'agendada'                                  │
-│ Em /producao/carregamento → mostra corretamente como agendada│
-└──────────────────────────────────────────────────────────────┘
+DEPOIS (CORRIGIDO):
+1. Buscar pedido -> OK
+2. Buscar linhas de 'pedido_linhas' -> 12+ linhas encontradas
+3. Buscar ordens -> OK (3 ordens encontradas)
+4. Para cada ordem, buscar linhas de 'linhas_ordens' -> 15 linhas vinculadas
 ```
 
 ---
 
-### Consideração Adicional
+### Secao Tecnica
 
-A instalação recém-agendada (FERNANDO FIGUEIRO LTDA) que está com status incorreto precisará de uma correção manual via SQL para corrigir o dado existente:
+**Tabelas envolvidas:**
+- `pedido_linhas`: Armazena linhas do pedido (produtos, quantidades, tamanhos)
+- `linhas_ordens`: Armazena linhas de cada ordem de producao (materiais necessarios)
 
-```sql
-UPDATE instalacoes 
-SET status = 'agendada' 
-WHERE data_carregamento IS NOT NULL 
-  AND status = 'pendente_producao';
-```
-
-Isso pode ser feito após a implementação do fix no código.
+**Relacionamentos:**
+- `pedido_linhas.pedido_id` -> `pedidos_producao.id`
+- `linhas_ordens.ordem_id` -> `ordens_*.id` (tabelas de ordens especificas)
+- `linhas_ordens.tipo_ordem` -> Identifica a qual tabela de ordem pertence
+- `linhas_ordens.pedido_linha_id` -> `pedido_linhas.id` (relacionamento opcional)
 
 ---
 
 ### Resultado Esperado
 
-1. Novos agendamentos de instalação atualizam o `status` para `'agendada'`
-2. Em `/producao/carregamento`, instalações agendadas exibem corretamente "Agendada" no badge
-3. Dados existentes podem ser corrigidos via SQL
-
+1. Secao "Itens do Pedido" exibira as 12+ linhas cadastradas
+2. Cada card de ordem de producao exibira seus materiais/linhas
+3. Usuario podera ver status de conclusao de cada linha (check verde)
