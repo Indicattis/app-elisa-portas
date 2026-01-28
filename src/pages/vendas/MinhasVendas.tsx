@@ -172,7 +172,8 @@ export default function MinhasVendas() {
 
   const totalVendas = vendasFiltradas.length;
   const valorTotal = vendasFiltradas.reduce((acc, v) => {
-    const valorLiquido = (v.valor_venda || 0) - (v.valor_frete || 0) + (v.valor_credito || 0);
+    const totalDesconto = v.produtos_vendas?.reduce((sum, p) => sum + (p.desconto_valor || 0), 0) || 0;
+    const valorLiquido = (v.valor_venda || 0) - (v.valor_frete || 0) + (v.valor_credito || 0) - totalDesconto;
     return acc + valorLiquido;
   }, 0);
   const vendasFaturadas = vendasFiltradas.filter(v => v.comprovante_url).length;
@@ -296,7 +297,9 @@ export default function MinhasVendas() {
       case 'frete':
         return (venda.valor_frete || 0) > 0 ? formatCurrency(venda.valor_frete!) : '-';
       case 'valor':
-        return <span className="font-semibold">{formatCurrency(venda.valor_venda || 0)}</span>;
+        const descontoTotalValor = venda.produtos_vendas?.reduce((acc, p) => acc + (p.desconto_valor || 0), 0) || 0;
+        const valorAjustado = (venda.valor_venda || 0) - descontoTotalValor + (venda.valor_credito || 0);
+        return <span className="font-semibold">{formatCurrency(valorAjustado)}</span>;
       case 'status':
         const status = venda.pedidos_producao?.status || null;
         return (
