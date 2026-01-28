@@ -1,14 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { ArrowLeft, CheckCircle2, Phone, MapPin, Calendar, User, Ruler, Package, RefreshCw, Search, Filter, Hammer, AlertTriangle } from "lucide-react";
+import { ArrowLeft, RefreshCw, Search, Filter, MapPin, Truck, Package, Hammer, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,8 +22,9 @@ import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { useOrdensInstalacao, OrdemInstalacao } from "@/hooks/useOrdensInstalacao";
 import { useNeoInstalacoesListagem } from "@/hooks/useNeoInstalacoes";
 import { useNeoCorrecoesListagem } from "@/hooks/useNeoCorrecoes";
-import { NeoInstalacaoCardGestao } from "@/components/pedidos/NeoInstalacaoCardGestao";
-import { NeoCorrecaoCardGestao } from "@/components/pedidos/NeoCorrecaoCardGestao";
+import { OrdemInstalacaoRow } from "@/components/instalacoes/OrdemInstalacaoRow";
+import { NeoInstalacaoRow } from "@/components/instalacoes/NeoInstalacaoRow";
+import { NeoCorrecaoRow } from "@/components/instalacoes/NeoCorrecaoRow";
 import { NeoInstalacao } from "@/types/neoInstalacao";
 import { NeoCorrecao } from "@/types/neoCorrecao";
 import { cn } from "@/lib/utils";
@@ -92,17 +90,14 @@ export default function OrdensInstalacoesLogistica() {
   // Filtrar ordens
   const ordensFiltradas = useMemo(() => {
     return ordens.filter(ordem => {
-      // Filtro de busca
       const nomeCliente = ordem.venda?.cliente_nome || ordem.nome_cliente || "";
       const numeroPedido = ordem.pedido?.numero_pedido || "";
       const matchSearch = searchTerm === "" || 
         nomeCliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
         numeroPedido.toLowerCase().includes(searchTerm.toLowerCase());
 
-      // Filtro de equipe
       const matchEquipe = filterEquipe === "todas" || ordem.equipe?.nome === filterEquipe;
 
-      // Filtro de estado
       const estado = ordem.venda?.estado || ordem.estado;
       const matchEstado = filterEstado === "todos" || estado === filterEstado;
 
@@ -110,33 +105,13 @@ export default function OrdensInstalacoesLogistica() {
     });
   }, [ordens, searchTerm, filterEquipe, filterEstado]);
 
-  // Formatar medidas do produto
-  const formatMedidas = (ordem: OrdemInstalacao): string => {
-    const produtos = ordem.venda?.produtos || [];
-    const portasEnrolar = produtos.filter(p => p.tipo_produto === 'porta_enrolar');
-
-    if (portasEnrolar.length === 0) return "—";
-
-    if (portasEnrolar.length === 1) {
-      const p = portasEnrolar[0];
-      if (p.largura && p.altura) {
-        return `${p.largura}x${p.altura}m`;
-      }
-      return p.tamanho || "—";
-    }
-
-    return `(${portasEnrolar.reduce((acc, p) => acc + p.quantidade, 0)}) portas`;
-  };
-
-  // Verificar se está atrasado
-  const isAtrasado = (ordem: OrdemInstalacao): boolean => {
-    if (!ordem.data_instalacao) return false;
-    const dataInstalacao = new Date(ordem.data_instalacao);
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    dataInstalacao.setHours(0, 0, 0, 0);
-    return dataInstalacao < hoje;
-  };
+  // Separar ordens por status de carregamento
+  const { ordensNaoCarregadas, ordensCarregadas } = useMemo(() => {
+    return {
+      ordensNaoCarregadas: ordensFiltradas.filter(o => !o.carregamento_concluido),
+      ordensCarregadas: ordensFiltradas.filter(o => o.carregamento_concluido)
+    };
+  }, [ordensFiltradas]);
 
   const handleConcluir = async () => {
     if (!confirmDialog.ordem) return;
@@ -176,8 +151,6 @@ export default function OrdensInstalacoesLogistica() {
 
   return (
     <MinimalistLayout title="Ordens de Instalação">
-      
-      
       <div className="min-h-screen p-4 md:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
@@ -201,9 +174,9 @@ export default function OrdensInstalacoesLogistica() {
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Ordens de Instalação</h1>
                 <p className="text-muted-foreground text-sm">
-                  {ordensFiltradas.length} instalações de pedidos
-                  {neoInstalacoes.length > 0 && `, ${neoInstalacoes.length} avulsas`}
-                  {neoCorrecoes.length > 0 && `, ${neoCorrecoes.length} correções`}
+                  {ordensNaoCarregadas.length} aguardando • {ordensCarregadas.length} prontas
+                  {neoInstalacoes.length > 0 && ` • ${neoInstalacoes.length} avulsas`}
+                  {neoCorrecoes.length > 0 && ` • ${neoCorrecoes.length} correções`}
                 </p>
               </div>
 
@@ -261,225 +234,151 @@ export default function OrdensInstalacoesLogistica() {
             </Select>
           </div>
 
-          {/* Lista de Ordens */}
+          {/* SEÇÃO 1: Aguardando Carregamento */}
           <div className={cn(
             "space-y-3 transition-all duration-500 delay-200",
             mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           )}>
+            <div className="flex items-center gap-2">
+              <Truck className="h-5 w-5 text-amber-500" />
+              <h2 className="text-lg font-semibold">Aguardando Carregamento</h2>
+              <Badge variant="secondary" className="bg-amber-500/20 text-amber-600">
+                {ordensNaoCarregadas.length}
+              </Badge>
+            </div>
+
             {isLoading ? (
-              <div className="text-center py-12 text-muted-foreground">
+              <div className="text-center py-8 text-muted-foreground text-sm">
                 Carregando ordens...
               </div>
-            ) : ordensFiltradas.length === 0 ? (
+            ) : ordensNaoCarregadas.length === 0 ? (
               <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-                <CardContent className="py-12 text-center text-muted-foreground">
-                  {searchTerm || filterEquipe !== "todas" || filterEstado !== "todos"
-                    ? "Nenhuma ordem encontrada com os filtros aplicados."
-                    : "Nenhuma ordem de instalação pendente."
-                  }
+                <CardContent className="py-8 text-center text-muted-foreground text-sm">
+                  Nenhuma instalação aguardando carregamento.
                 </CardContent>
               </Card>
             ) : (
-              ordensFiltradas.map((ordem, index) => {
-                const atrasado = isAtrasado(ordem);
-                const clienteNome = ordem.venda?.cliente_nome || ordem.nome_cliente;
-                const telefone = ordem.venda?.cliente_telefone;
-                const cidade = ordem.venda?.cidade || ordem.cidade;
-                const estado = ordem.venda?.estado || ordem.estado;
-
-                return (
-                  <Card 
+              <div className="space-y-1">
+                {ordensNaoCarregadas.map((ordem) => (
+                  <OrdemInstalacaoRow
                     key={ordem.id}
-                    className={cn(
-                      "bg-card/50 backdrop-blur-sm border-border/50 transition-all duration-300",
-                      atrasado && "border-red-500/50 bg-red-500/5"
-                    )}
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <CardContent className="p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4">
-                        {/* Informações principais */}
-                        <div className="space-y-3">
-                          {/* Linha 1: Pedido + Cliente + Status */}
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="outline" className="font-mono">
-                              #{ordem.pedido?.numero_pedido || "—"}
-                            </Badge>
-                            <span className="font-semibold text-foreground">{clienteNome}</span>
-                            {atrasado && (
-                              <Badge variant="destructive" className="text-xs">
-                                Atrasado
-                              </Badge>
-                            )}
-                          </div>
-
-                          {/* Linha 2: Detalhes */}
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                            {/* Medidas */}
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex items-center gap-1.5">
-                                  <Ruler className="h-4 w-4" />
-                                  <span>{formatMedidas(ordem)}</span>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>Medidas da porta</TooltipContent>
-                            </Tooltip>
-
-                            {/* Equipe */}
-                            {ordem.equipe && (
-                              <div className="flex items-center gap-1.5">
-                                <div 
-                                  className="w-3 h-3 rounded-full" 
-                                  style={{ backgroundColor: ordem.equipe.cor || '#888' }}
-                                />
-                                <span>{ordem.equipe.nome}</span>
-                              </div>
-                            )}
-
-                            {/* Tipo */}
-                            {ordem.tipo_instalacao && (
-                              <Badge 
-                                variant="secondary"
-                                className={cn(
-                                  "text-xs",
-                                  ordem.tipo_instalacao === 'elisa' && "bg-blue-500/20 text-blue-600",
-                                  ordem.tipo_instalacao === 'autorizados' && "bg-amber-500/20 text-amber-600"
-                                )}
-                              >
-                                {ordem.tipo_instalacao === 'elisa' ? 'Elisa' : 'Autorizado'}
-                              </Badge>
-                            )}
-
-                            {/* Localização */}
-                            {(cidade || estado) && (
-                              <div className="flex items-center gap-1.5">
-                                <MapPin className="h-4 w-4" />
-                                <span>
-                                  {cidade}{cidade && estado && ", "}{estado}
-                                </span>
-                              </div>
-                            )}
-
-                            {/* Telefone */}
-                            {telefone && (
-                              <a 
-                                href={`tel:${telefone}`}
-                                className="flex items-center gap-1.5 hover:text-foreground transition-colors"
-                              >
-                                <Phone className="h-4 w-4" />
-                                <span>{telefone}</span>
-                              </a>
-                            )}
-                          </div>
-
-                          {/* Linha 3: Data */}
-                          <div className="flex items-center gap-4 text-sm">
-                            <div className={cn(
-                              "flex items-center gap-1.5",
-                              atrasado ? "text-red-600" : "text-green-600"
-                            )}>
-                              <Calendar className="h-4 w-4" />
-                              <span className="font-medium">
-                                {ordem.data_instalacao 
-                                  ? format(new Date(ordem.data_instalacao), "dd/MM/yyyy", { locale: ptBR })
-                                  : "Não agendado"
-                                }
-                              </span>
-                              {ordem.hora && (
-                                <span className="text-muted-foreground">às {ordem.hora}</span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Observações */}
-                          {ordem.observacoes && (
-                            <p className="text-xs text-muted-foreground italic">
-                              {ordem.observacoes}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Botão de Concluir */}
-                        <div className="flex items-center">
-                          <Button
-                            onClick={() => setConfirmDialog({ open: true, ordem })}
-                            disabled={isConcluindo}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            <CheckCircle2 className="h-4 w-4 mr-2" />
-                            Concluir
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })
+                    ordem={ordem}
+                    onConcluir={(o) => setConfirmDialog({ open: true, ordem: o })}
+                    isConcluindo={isConcluindo}
+                    showCarregador={false}
+                  />
+                ))}
+              </div>
             )}
           </div>
 
-          {/* Seção: Neo Instalações (Avulsas) */}
-          {neoInstalacoes.length > 0 && (
-            <div className={cn(
-              "space-y-4 mt-8 transition-all duration-500 delay-300",
-              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            )}>
-              <div className="flex items-center gap-2">
-                <Hammer className="h-5 w-5 text-blue-500" />
-                <h2 className="text-lg font-semibold">Instalações Avulsas</h2>
-                <Badge variant="secondary" className="bg-blue-500/20 text-blue-500">
-                  {neoInstalacoes.length}
-                </Badge>
+          {/* SEÇÃO 2: Prontas para Instalação */}
+          <div className={cn(
+            "space-y-3 transition-all duration-500 delay-300",
+            mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          )}>
+            <div className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-green-500" />
+              <h2 className="text-lg font-semibold">Prontas para Instalação</h2>
+              <Badge variant="secondary" className="bg-green-500/20 text-green-600">
+                {ordensCarregadas.length}
+              </Badge>
+            </div>
+
+            {ordensCarregadas.length === 0 ? (
+              <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                <CardContent className="py-8 text-center text-muted-foreground text-sm">
+                  Nenhuma instalação pronta (carregada).
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-1">
+                {ordensCarregadas.map((ordem) => (
+                  <OrdemInstalacaoRow
+                    key={ordem.id}
+                    ordem={ordem}
+                    onConcluir={(o) => setConfirmDialog({ open: true, ordem: o })}
+                    isConcluindo={isConcluindo}
+                    showCarregador={true}
+                  />
+                ))}
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            )}
+          </div>
+
+          {/* SEÇÃO 3: Instalações Avulsas (Neo) */}
+          <div className={cn(
+            "space-y-3 transition-all duration-500 delay-400",
+            mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          )}>
+            <div className="flex items-center gap-2">
+              <Hammer className="h-5 w-5 text-orange-500" />
+              <h2 className="text-lg font-semibold">Instalações Avulsas</h2>
+              <Badge variant="secondary" className="bg-orange-500/20 text-orange-600">
+                {neoInstalacoes.length}
+              </Badge>
+            </div>
+
+            {isLoadingNeoInstalacoes ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                Carregando instalações avulsas...
+              </div>
+            ) : neoInstalacoes.length === 0 ? (
+              <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                <CardContent className="py-8 text-center text-muted-foreground text-sm">
+                  Nenhuma instalação avulsa pendente.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-1">
                 {neoInstalacoes.map((neo) => (
-                  <NeoInstalacaoCardGestao
+                  <NeoInstalacaoRow
                     key={neo.id}
                     neoInstalacao={neo}
-                    viewMode="grid"
-                    onConcluir={() => setConfirmNeoInstalacaoDialog({ 
-                      open: true, 
-                      neoInstalacao: neo 
-                    })}
+                    onConcluir={(n) => setConfirmNeoInstalacaoDialog({ open: true, neoInstalacao: n })}
                     isConcluindo={isConcluindoNeoInstalacao}
                   />
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Seção: Neo Correções (Avulsas) */}
-          {neoCorrecoes.length > 0 && (
-            <div className={cn(
-              "space-y-4 mt-8 transition-all duration-500 delay-400",
-              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            )}>
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-purple-500" />
-                <h2 className="text-lg font-semibold">Correções Avulsas</h2>
-                <Badge variant="secondary" className="bg-purple-500/20 text-purple-500">
-                  {neoCorrecoes.length}
-                </Badge>
+          {/* SEÇÃO 4: Correções Avulsas (Neo) */}
+          <div className={cn(
+            "space-y-3 transition-all duration-500 delay-500",
+            mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          )}>
+            <div className="flex items-center gap-2">
+              <Wrench className="h-5 w-5 text-purple-500" />
+              <h2 className="text-lg font-semibold">Correções Avulsas</h2>
+              <Badge variant="secondary" className="bg-purple-500/20 text-purple-600">
+                {neoCorrecoes.length}
+              </Badge>
+            </div>
+
+            {isLoadingNeoCorrecoes ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                Carregando correções avulsas...
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            ) : neoCorrecoes.length === 0 ? (
+              <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                <CardContent className="py-8 text-center text-muted-foreground text-sm">
+                  Nenhuma correção avulsa pendente.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-1">
                 {neoCorrecoes.map((neo) => (
-                  <NeoCorrecaoCardGestao
+                  <NeoCorrecaoRow
                     key={neo.id}
                     neoCorrecao={neo}
-                    viewMode="grid"
-                    onConcluir={() => setConfirmNeoCorrecaoDialog({ 
-                      open: true, 
-                      neoCorrecao: neo 
-                    })}
+                    onConcluir={(n) => setConfirmNeoCorrecaoDialog({ open: true, neoCorrecao: n })}
                     isConcluindo={isConcluindoNeoCorrecao}
                   />
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
