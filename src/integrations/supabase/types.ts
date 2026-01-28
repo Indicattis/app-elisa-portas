@@ -6685,6 +6685,10 @@ export type Database = {
           pontuacoes_inseridas: number
         }[]
       }
+      regenerar_linhas_ordem: {
+        Args: { p_ordem_id: string; p_tipo_ordem: string }
+        Returns: Json
+      }
       resetar_pedido_para_aberto: {
         Args: { p_pedido_id: string }
         Returns: undefined
