@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, CalendarDays, ArrowLeft, LogOut } from "lucide-react";
+import { Calendar, CalendarDays, ArrowLeft, LogOut, RefreshCw } from "lucide-react";
 
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
@@ -94,8 +94,20 @@ export default function CalendarioExpedicaoDirecao() {
     toast.success("Ordem removida do calendário");
   };
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['ordens-carregamento-calendario'] });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['ordens-carregamento-calendario'] }),
+      queryClient.invalidateQueries({ queryKey: ['ordens-carregamento-disponiveis'] }),
+      queryClient.invalidateQueries({ queryKey: ['neo_instalacoes_calendario'] }),
+      queryClient.invalidateQueries({ queryKey: ['neo_correcoes_calendario'] }),
+      queryClient.invalidateQueries({ queryKey: ['neo_instalacoes_sem_data'] }),
+      queryClient.invalidateQueries({ queryKey: ['neo_correcoes_sem_data'] }),
+    ]);
+    toast.success("Calendário atualizado");
+    setIsRefreshing(false);
   };
 
   const handleOrdemClick = (ordem: OrdemCarregamento) => {
@@ -164,6 +176,15 @@ export default function CalendarioExpedicaoDirecao() {
                 className="text-white/80 hover:text-white hover:bg-primary/10"
               >
                 {viewType === 'week' ? <CalendarDays className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="text-white/80 hover:text-white hover:bg-primary/10"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               </Button>
               <Button
                 variant="ghost"
