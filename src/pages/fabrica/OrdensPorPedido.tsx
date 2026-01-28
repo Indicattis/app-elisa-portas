@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Loader2, ClipboardList, Search } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Loader2, ClipboardList, Search, ListTodo, AlertTriangle, Pause } from "lucide-react";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,42 @@ export default function OrdensPorPedido() {
     );
   });
 
+  // Calcular métricas das ordens
+  const metricas = useMemo(() => {
+    let ordensPendentes = 0;
+    let ordensSemLinhas = 0;
+    let ordensPausadas = 0;
+
+    pedidos.forEach(pedido => {
+      const ordens = [
+        pedido.ordens.soldagem,
+        pedido.ordens.perfiladeira,
+        pedido.ordens.separacao,
+        pedido.ordens.qualidade,
+        pedido.ordens.pintura,
+      ];
+
+      ordens.forEach(ordem => {
+        if (ordem.existe) {
+          // Ordens para concluir (não concluídas)
+          if (ordem.status !== 'concluido') {
+            ordensPendentes++;
+          }
+          // Ordens sem linhas
+          if (ordem.total_linhas === 0) {
+            ordensSemLinhas++;
+          }
+          // Ordens pausadas
+          if (ordem.pausada) {
+            ordensPausadas++;
+          }
+        }
+      });
+    });
+
+    return { ordensPendentes, ordensSemLinhas, ordensPausadas };
+  }, [pedidos]);
+
   const handleOrdemClick = (ordem: OrdemStatus) => {
     setOrdemSelecionada(ordem);
     setSheetOpen(true);
@@ -45,6 +81,35 @@ export default function OrdensPorPedido() {
       ]}
     >
       <div className="space-y-4">
+        {/* Indicadores de resumo */}
+        {!isLoading && pedidos.length > 0 && (
+          <div className="grid grid-cols-3 gap-2">
+            <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+              <div className="flex items-center gap-2">
+                <ListTodo className="w-4 h-4 text-yellow-400" />
+                <span className="text-xs text-yellow-300">A concluir</span>
+              </div>
+              <p className="text-xl font-bold text-yellow-400 mt-1">{metricas.ordensPendentes}</p>
+            </div>
+            
+            <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-orange-400" />
+                <span className="text-xs text-orange-300">Sem linhas</span>
+              </div>
+              <p className="text-xl font-bold text-orange-400 mt-1">{metricas.ordensSemLinhas}</p>
+            </div>
+            
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+              <div className="flex items-center gap-2">
+                <Pause className="w-4 h-4 text-red-400" />
+                <span className="text-xs text-red-300">Pausadas</span>
+              </div>
+              <p className="text-xl font-bold text-red-400 mt-1">{metricas.ordensPausadas}</p>
+            </div>
+          </div>
+        )}
+
         {/* Barra de busca */}
         <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
           <div className="relative">
