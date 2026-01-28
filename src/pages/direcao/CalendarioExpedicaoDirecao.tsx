@@ -116,12 +116,12 @@ export default function CalendarioExpedicaoDirecao() {
   };
 
   // Handlers para agendar Neo serviços
-  const handleAgendarInstalacao = async (id: string, data: string, hora: string) => {
+  const handleAgendarInstalacao = async (id: string, data: string) => {
     await updateNeoInstalacao({ id, data: { data_instalacao: data } });
     queryClient.invalidateQueries({ queryKey: ['neo_instalacoes_calendario'] });
   };
 
-  const handleAgendarCorrecao = async (id: string, data: string, hora: string) => {
+  const handleAgendarCorrecao = async (id: string, data: string) => {
     await updateNeoCorrecao({ id, data: { data_correcao: data } });
     queryClient.invalidateQueries({ queryKey: ['neo_correcoes_calendario'] });
   };

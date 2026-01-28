@@ -11,7 +11,6 @@ import { Separator } from "@/components/ui/separator";
 import { 
   MapPin, 
   Calendar, 
-  Clock, 
   FileText,
   CheckCircle,
   Users,
@@ -48,7 +47,7 @@ export function NeoInstalacaoDetails({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+      <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl max-w-[700px] mx-auto overflow-y-auto">
         <SheetHeader className="pb-4">
           <div className="flex items-center gap-2">
             <Badge className="bg-blue-500/20 text-blue-400 border-blue-400/50">
@@ -84,13 +83,13 @@ export function NeoInstalacaoDetails({
 
           <Separator />
 
-          {/* Data e Hora */}
+          {/* Data */}
           <div className="space-y-2">
             <h4 className="text-sm font-medium flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               Data da Instalação
             </h4>
-            <div className="pl-6 space-y-1">
+            <div className="pl-6">
               {neoInstalacao.data_instalacao ? (
                 <p className="text-sm text-muted-foreground">
                   {format(parseISO(neoInstalacao.data_instalacao), "EEEE, dd 'de' MMMM 'de' yyyy", {
@@ -99,12 +98,6 @@ export function NeoInstalacaoDetails({
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground italic">Não agendada</p>
-              )}
-              {neoInstalacao.hora && (
-                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {neoInstalacao.hora.substring(0, 5)}
-                </p>
               )}
             </div>
           </div>

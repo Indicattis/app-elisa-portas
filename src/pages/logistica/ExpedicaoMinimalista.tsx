@@ -217,12 +217,12 @@ export default function ExpedicaoMinimalista() {
   };
 
   // Handlers para agendar serviços sem data
-  const handleAgendarInstalacao = async (id: string, data: string, hora: string) => {
-    await updateNeoInstalacaoSemData({ id, data: { data_instalacao: data, hora } });
+  const handleAgendarInstalacao = async (id: string, data: string) => {
+    await updateNeoInstalacaoSemData({ id, data: { data_instalacao: data, hora: null } });
   };
 
-  const handleAgendarCorrecao = async (id: string, data: string, hora: string) => {
-    await updateNeoCorrecaoSemData({ id, data: { data_correcao: data, hora } });
+  const handleAgendarCorrecao = async (id: string, data: string) => {
+    await updateNeoCorrecaoSemData({ id, data: { data_correcao: data, hora: null } });
   };
 
   const [mounted, setMounted] = useState(false);

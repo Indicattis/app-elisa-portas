@@ -171,7 +171,6 @@ export const NeoInstalacaoCard = ({
                   {neoInstalacao.data_instalacao && (
                     <div className="text-[10px] text-muted-foreground">
                       Data: {format(parseISO(neoInstalacao.data_instalacao), "dd/MM/yyyy", { locale: ptBR })}
-                      {neoInstalacao.hora && ` às ${neoInstalacao.hora.substring(0, 5)}`}
                     </div>
                   )}
 

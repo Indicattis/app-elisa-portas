@@ -62,7 +62,6 @@ export function NeoInstalacaoModal({
   const [cidade, setCidade] = useState("");
   const [estado, setEstado] = useState("");
   const [dataInstalacao, setDataInstalacao] = useState("");
-  const [hora, setHora] = useState("");
   const [tipoResponsavel, setTipoResponsavel] = useState<'equipe_interna' | 'autorizado'>('equipe_interna');
   const [equipeId, setEquipeId] = useState("");
   const [autorizadoId, setAutorizadoId] = useState("");
@@ -87,7 +86,6 @@ export function NeoInstalacaoModal({
       setCidade(neoInstalacao.cidade || "");
       setEstado(neoInstalacao.estado || "");
       setDataInstalacao(neoInstalacao.data_instalacao || "");
-      setHora(neoInstalacao.hora?.substring(0, 5) || "");
       setTipoResponsavel(neoInstalacao.tipo_responsavel || 'equipe_interna');
       setEquipeId(neoInstalacao.equipe_id || "");
       setAutorizadoId(neoInstalacao.autorizado_id || "");
@@ -98,7 +96,6 @@ export function NeoInstalacaoModal({
       setCidade("");
       setEstado("");
       setDataInstalacao("");
-      setHora("");
       setTipoResponsavel('equipe_interna');
       setEquipeId("");
       setAutorizadoId("");
@@ -164,7 +161,7 @@ export function NeoInstalacaoModal({
         cidade: cidade.trim(),
         estado,
         data_instalacao: dataInstalacao || null,
-        hora: hora || null,
+        hora: null,
         tipo_responsavel: tipoResponsavel,
         equipe_id: tipoResponsavel === 'equipe_interna' ? equipeId : null,
         equipe_nome: tipoResponsavel === 'equipe_interna' ? selectedEquipe?.nome : null,
@@ -233,25 +230,14 @@ export function NeoInstalacaoModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="dataInstalacao">Data <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-              <Input
-                id="dataInstalacao"
-                type="date"
-                value={dataInstalacao}
-                onChange={(e) => setDataInstalacao(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="hora">Horário <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-              <Input
-                id="hora"
-                type="time"
-                value={hora}
-                onChange={(e) => setHora(e.target.value)}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="dataInstalacao">Data <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+            <Input
+              id="dataInstalacao"
+              type="date"
+              value={dataInstalacao}
+              onChange={(e) => setDataInstalacao(e.target.value)}
+            />
           </div>
 
           <div className="space-y-3">
