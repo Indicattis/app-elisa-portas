@@ -1,37 +1,48 @@
 
 
-## Plano: Corrigir Função concluir_carregamento_instalacao
+## Plano: Corrigir Valor de Teor na Função concluir_carregamento_instalacao
 
 ### Problema Identificado
 
-A função `concluir_carregamento_instalacao` (linha 30-31) insere em `pedidos_movimentacoes` sem fornecer a coluna obrigatória `etapa_destino`:
+A função `concluir_carregamento_instalacao` usa o valor `'carregamento'` para a coluna `teor`, mas este valor não é permitido pelo check constraint.
 
+**Constraint atual:**
 ```sql
--- Código atual (incorreto - linha 30-31):
-INSERT INTO pedidos_movimentacoes (pedido_id, user_id, teor, descricao)
-VALUES (v_pedido_id, auth.uid(), 'carregamento', 'Carregamento da instalação concluído');
+CHECK ((teor = ANY (ARRAY['avanco'::text, 'backlog'::text, 'reorganizacao'::text, 'criacao'::text])))
 ```
 
-A coluna `etapa_destino` é `NOT NULL`, causando o erro.
+**Valores permitidos:**
+| Valor | Descrição |
+|-------|-----------|
+| avanco | Avanço de etapa |
+| backlog | Retrocesso de etapa |
+| reorganizacao | Reorganização/reordenamento |
+| criacao | Criação do pedido |
 
-### Lógica de Negócio Confirmada
+### Solução
 
-- O carregamento da instalação **NÃO** muda a etapa do pedido
-- O pedido **permanece** em "instalacoes" após o carregamento
-- A instalação só é finalizada quando o usuário **explicitamente** conclui a ordem
-- Portanto: `etapa_origem = 'instalacoes'` e `etapa_destino = 'instalacoes'` (mesma etapa)
+Temos duas opções:
+
+**Opção 1 (Recomendada):** Remover a inserção de movimentação, já que o carregamento não muda a etapa do pedido
+
+**Opção 2:** Adicionar `'carregamento'` aos valores permitidos no constraint
+
+Recomendo a **Opção 1** porque:
+- O carregamento não é uma movimentação de etapa (origem = destino)
+- O registro de carregamento já existe na tabela `instalacoes` (`carregamento_concluido`, `carregamento_concluido_em`)
+- Manter o constraint simples evita confusão sobre o que é uma "movimentação"
 
 ---
 
-### Arquivo a Criar
+### Arquivo a Modificar
 
 | Tipo | Descrição |
 |------|-----------|
-| Migration SQL | Corrigir função para incluir etapa_origem e etapa_destino |
+| Migration SQL | Remover INSERT em pedidos_movimentacoes da função |
 
 ---
 
-### SQL para Corrigir
+### SQL para Corrigir (Opção 1)
 
 ```sql
 CREATE OR REPLACE FUNCTION public.concluir_carregamento_instalacao(p_instalacao_id uuid)
@@ -40,85 +51,80 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-DECLARE
-  v_pedido_id uuid;
-  v_etapa_atual text;
 BEGIN
-  -- Buscar pedido_id e etapa atual da instalação
-  SELECT i.pedido_id, pp.etapa_atual 
-  INTO v_pedido_id, v_etapa_atual
-  FROM instalacoes i
-  LEFT JOIN pedidos_producao pp ON pp.id = i.pedido_id
-  WHERE i.id = p_instalacao_id;
-
   -- Marcar carregamento como concluído na tabela instalacoes
   -- O pedido permanece em 'instalacoes' para finalização manual
+  -- NÃO registra movimentação pois não há mudança de etapa
   UPDATE instalacoes
   SET carregamento_concluido = true,
       carregamento_concluido_em = now(),
       carregamento_concluido_por = auth.uid(),
       updated_at = now()
   WHERE id = p_instalacao_id;
-  
-  -- Registrar movimentação COM etapa_destino (obrigatório)
-  -- O pedido permanece na mesma etapa (não avança)
-  IF v_pedido_id IS NOT NULL THEN
-    INSERT INTO pedidos_movimentacoes (
-      pedido_id, 
-      user_id, 
-      etapa_origem, 
-      etapa_destino,
-      teor, 
-      descricao
-    )
-    VALUES (
-      v_pedido_id, 
-      auth.uid(), 
-      COALESCE(v_etapa_atual, 'instalacoes'),
-      COALESCE(v_etapa_atual, 'instalacoes'),  -- Permanece na mesma etapa
-      'carregamento', 
-      'Carregamento da instalação concluído'
-    );
-  END IF;
 END;
 $$;
 ```
 
 ---
 
-### Mudanças Chave
+### Alternativa: SQL para Corrigir (Opção 2 - Expandir Constraint)
 
-| Aspecto | Antes | Depois |
-|---------|-------|--------|
-| Busca etapa_atual | Não | Sim (via JOIN com pedidos_producao) |
-| etapa_origem | Não fornecido | COALESCE(v_etapa_atual, 'instalacoes') |
-| etapa_destino | Não fornecido (ERRO!) | COALESCE(v_etapa_atual, 'instalacoes') |
-| Avanço de etapa | Não | Não (permanece igual) |
+Se preferir manter o registro de movimentação:
+
+```sql
+-- Primeiro, remover o constraint antigo
+ALTER TABLE pedidos_movimentacoes 
+DROP CONSTRAINT pedidos_movimentacoes_teor_check;
+
+-- Adicionar novo constraint com 'carregamento' incluído
+ALTER TABLE pedidos_movimentacoes 
+ADD CONSTRAINT pedidos_movimentacoes_teor_check 
+CHECK (teor = ANY (ARRAY['avanco', 'backlog', 'reorganizacao', 'criacao', 'carregamento']));
+```
 
 ---
 
-### Fluxo de Negócio Preservado
+### Mudança Chave
 
-```
+```text
+OPÇÃO 1 (Simplificar):
 ┌─────────────────────────────────────────────────────────────┐
-│ CARREGAMENTO DE INSTALAÇÃO                                  │
+│ FUNÇÃO concluir_carregamento_instalacao                     │
 ├─────────────────────────────────────────────────────────────┤
-│ 1. Usuário conclui carregamento em /producao/carregamento   │
-│ 2. Função marca carregamento_concluido = true               │
-│ 3. Registra movimentação: instalacoes → instalacoes         │
-│    (apenas registro, não avança etapa)                      │
-│ 4. Instalação para de aparecer no carregamento              │
-│ 5. Instalação continua visível em /logistica/instalacoes    │
-│ 6. Usuário conclui manualmente → avança para Finalizado     │
+│ ANTES:                                                      │
+│   1. UPDATE instalacoes SET carregamento_concluido = true   │
+│   2. INSERT INTO pedidos_movimentacoes (teor='carregamento')│
+│      ↑ ERRO: valor não permitido                            │
+│                                                             │
+│ DEPOIS:                                                     │
+│   1. UPDATE instalacoes SET carregamento_concluido = true   │
+│      ↑ Apenas isso - registro já existe na tabela           │
+└─────────────────────────────────────────────────────────────┘
+
+OPÇÃO 2 (Expandir):
+┌─────────────────────────────────────────────────────────────┐
+│ CONSTRAINT pedidos_movimentacoes_teor_check                 │
+├─────────────────────────────────────────────────────────────┤
+│ ANTES: ['avanco', 'backlog', 'reorganizacao', 'criacao']    │
+│ DEPOIS: + 'carregamento'                                    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
+### Seção Técnica
+
+**Por que Opção 1 é recomendada:**
+1. A tabela `instalacoes` já registra quando o carregamento foi concluído (`carregamento_concluido_em`, `carregamento_concluido_por`)
+2. `pedidos_movimentacoes` é para registrar **mudanças de etapa**, não atividades internas
+3. Menos dados redundantes = menos chances de inconsistência
+4. Os logs em `/admin/logs` podem buscar de `instalacoes` para eventos de carregamento
+
+---
+
 ### Resultado Esperado
 
-1. Erro de constraint NOT NULL será resolvido
-2. Movimentação de carregamento será registrada corretamente
-3. Pedido permanecerá em "instalacoes" aguardando conclusão manual
-4. Instalação desaparecerá de `/producao/carregamento` após conclusão
+1. Conclusão de carregamento funcionará sem erro
+2. Registro de quem/quando concluiu fica em `instalacoes`
+3. Logs podem ser ajustados para incluir eventos de carregamento da tabela `instalacoes`
 
