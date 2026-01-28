@@ -99,10 +99,10 @@ export function useConfiguracoesVendas() {
   // Limites calculados
   const limites = {
     avista: configuracoes?.limite_desconto_avista ?? 3,
-    presencial: configuracoes?.limite_desconto_presencial ?? 3,
+    presencial: configuracoes?.limite_desconto_presencial ?? 5,
     adicionalResponsavel: configuracoes?.limite_adicional_responsavel ?? 5,
-    totalSemSenha: (configuracoes?.limite_desconto_avista ?? 3) + (configuracoes?.limite_desconto_presencial ?? 3),
-    totalComResponsavel: (configuracoes?.limite_desconto_avista ?? 3) + (configuracoes?.limite_desconto_presencial ?? 3) + (configuracoes?.limite_adicional_responsavel ?? 5),
+    totalSemSenha: (configuracoes?.limite_desconto_avista ?? 3) + (configuracoes?.limite_desconto_presencial ?? 5),
+    totalComResponsavel: (configuracoes?.limite_desconto_avista ?? 3) + (configuracoes?.limite_desconto_presencial ?? 5) + (configuracoes?.limite_adicional_responsavel ?? 5),
   };
 
   return {

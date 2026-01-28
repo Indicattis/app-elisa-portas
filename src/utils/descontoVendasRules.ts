@@ -35,12 +35,12 @@ export function calcularLimitesDesconto(
 ): DescontoLimits {
   // Usar valores do banco ou padrões
   const limiteAvista = config?.avista ?? 3;
-  const limitePresencialConfig = config?.presencial ?? 3;
+  const limitePresencialConfig = config?.presencial ?? 5;
   const limiteAdicionalResponsavel = config?.adicionalResponsavel ?? 5;
   
   // 3% para pagamento que não seja cartão de crédito (à vista, boleto, dinheiro)
   const limiteBase = formaPagamento !== 'cartao_credito' ? limiteAvista : 0;
-  // 3% adicional para venda presencial
+  // 5% adicional para venda presencial
   const limitePresencial = vendaPresencial ? limitePresencialConfig : 0;
   const limiteTotal = limiteBase + limitePresencial;
   // Máximo com senha do responsável = 11% (6% base + 5% adicional)
