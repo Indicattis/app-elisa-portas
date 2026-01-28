@@ -1,146 +1,254 @@
 
 
-## Plano: Igualar NeoInstalacaoDetails ao PedidoDetalhesSheet
+## Plano: Integracao Vite + Capacitor + Bitrise
 
 ### Objetivo
-Atualizar o componente `NeoInstalacaoDetails` para ter a mesma aparencia visual do `PedidoDetalhesSheet` usado em `/logistica/instalacoes/ordens-instalacoes`.
+Configurar o projeto para build nativo mobile (iOS/Android) com CI/CD automatizado via Bitrise.
 
 ---
 
-### Diferencas Identificadas
+### Etapa 1: Configurar Capacitor no Projeto
 
-| Aspecto | NeoInstalacaoDetails (Atual) | PedidoDetalhesSheet (Referencia) |
-|---------|------------------------------|----------------------------------|
-| Altura | `h-[70vh]` | `h-[85vh]` |
-| Background | Default | `bg-zinc-900` |
-| Border | Default | `border-t border-white/10` |
-| Padding | Default | `p-0` com areas internas |
-| Header | Simples | Gradiente `from-blue-600/20 to-purple-600/20` com backdrop-blur |
-| Secoes | `Separator` simples | Cards com `bg-white/5 rounded-xl border border-white/10` |
-| Texto | `text-muted-foreground` | `text-white`, `text-white/60`, etc. |
-| Layout | `overflow-y-auto` | `overflow-hidden flex flex-col` com scroll interno |
+**Arquivos a criar:**
 
----
+1. **`capacitor.config.ts`** - Configuracao principal do Capacitor
+```typescript
+import type { CapacitorConfig } from '@capacitor/cli';
 
-### Mudanca: Atualizar NeoInstalacaoDetails
+const config: CapacitorConfig = {
+  appId: 'app.lovable.9eb1bc327d674330b27a36a057f315d7',
+  appName: 'app-elisa-portas',
+  webDir: 'dist',
+  server: {
+    // Para desenvolvimento com hot-reload
+    url: 'https://9eb1bc32-7d67-4330-b27a-36a057f315d7.lovableproject.com?forceHideBadge=true',
+    cleartext: true
+  }
+};
 
-**Arquivo:** `src/components/expedicao/NeoInstalacaoDetails.tsx`
+export default config;
+```
 
-Reestilizar completamente para seguir o padrao do PedidoDetalhesSheet:
-
-```tsx
-<Sheet open={open} onOpenChange={onOpenChange}>
-  <SheetContent 
-    side="bottom" 
-    className="h-[85vh] max-w-[700px] mx-auto rounded-t-2xl overflow-hidden flex flex-col p-0 bg-zinc-900 border-t border-white/10"
-  >
-    {/* Header com gradiente */}
-    <div className="sticky top-0 z-10 bg-gradient-to-r from-orange-600/20 to-amber-600/20 backdrop-blur-xl border-b border-white/10 px-6 py-4">
-      <SheetHeader>
-        <div className="flex items-center gap-2">
-          <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
-            Instalacao Avulsa
-          </Badge>
-          <Badge style={{ backgroundColor: `${corResponsavel}20`, color: corResponsavel }}>
-            {nomeResponsavel}
-          </Badge>
-        </div>
-        <SheetTitle className="text-white text-lg">
-          {neoInstalacao.nome_cliente}
-        </SheetTitle>
-      </SheetHeader>
-    </div>
-
-    {/* Conteudo scrollavel */}
-    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-      {/* Localizacao e Data em card */}
-      <div className="bg-white/5 rounded-xl border border-white/10 p-4 space-y-4">
-        <div className="flex items-center gap-2">
-          <MapPin className="h-4 w-4 text-blue-400" />
-          <span className="text-sm text-white">{cidade}/{estado}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-purple-400" />
-          <span className="text-sm text-white">{data formatada}</span>
-        </div>
-      </div>
-
-      {/* Responsavel em card */}
-      <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-        <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-2">
-          {isAutorizado ? "Autorizado Responsavel" : "Equipe Responsavel"}
-        </h3>
-        <Badge style={...}>{nomeResponsavel}</Badge>
-      </div>
-
-      {/* Descricao se existir */}
-      {descricao && (
-        <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-          <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-2">
-            Observacoes
-          </h3>
-          <p className="text-sm text-white/80">{descricao}</p>
-        </div>
-      )}
-
-      {/* Metadados */}
-      <div className="text-xs text-white/40 space-y-1">
-        <p>Criado em: {data}</p>
-        <p>Atualizado em: {data}</p>
-      </div>
-    </div>
-
-    {/* Footer com acoes - fixo no fundo */}
-    <div className="sticky bottom-0 bg-zinc-900 border-t border-white/10 px-6 py-4 space-y-2">
-      <Button variant="outline" className="w-full bg-white/5 border-white/20 text-white">
-        Editar
-      </Button>
-      <Button className="w-full bg-green-600 hover:bg-green-700">
-        Concluir Instalacao
-      </Button>
-    </div>
-  </SheetContent>
-</Sheet>
+**Dependencias a adicionar no `package.json`:**
+```json
+{
+  "@capacitor/core": "^6.0.0",
+  "@capacitor/cli": "^6.0.0",
+  "@capacitor/ios": "^6.0.0",
+  "@capacitor/android": "^6.0.0"
+}
 ```
 
 ---
 
-### Arquivos a Modificar
+### Etapa 2: Criar Configuracao Bitrise
 
-| Arquivo | Alteracao |
-|---------|-----------|
-| `src/components/expedicao/NeoInstalacaoDetails.tsx` | Reestilizar para tema escuro com gradiente e cards |
+**Arquivo:** `bitrise.yml`
+
+```yaml
+format_version: "11"
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+
+project_type: other
+
+workflows:
+  # Workflow para Android
+  android:
+    steps:
+      - activate-ssh-key@4: {}
+      - git-clone@8: {}
+      - nvm@1:
+          inputs:
+            - node_version: "20"
+      - npm@1:
+          title: Install dependencies
+          inputs:
+            - command: install
+      - npm@1:
+          title: Build Vite app
+          inputs:
+            - command: run build
+      - script@1:
+          title: Capacitor Sync Android
+          inputs:
+            - content: |
+                #!/bin/bash
+                set -ex
+                npx cap sync android
+      - android-build@1:
+          inputs:
+            - project_location: android
+            - module: app
+            - variant: Release
+      - deploy-to-bitrise-io@2: {}
+
+  # Workflow para iOS
+  ios:
+    steps:
+      - activate-ssh-key@4: {}
+      - git-clone@8: {}
+      - nvm@1:
+          inputs:
+            - node_version: "20"
+      - npm@1:
+          title: Install dependencies
+          inputs:
+            - command: install
+      - npm@1:
+          title: Build Vite app
+          inputs:
+            - command: run build
+      - script@1:
+          title: Capacitor Sync iOS
+          inputs:
+            - content: |
+                #!/bin/bash
+                set -ex
+                npx cap sync ios
+      - cocoapods-install@2:
+          inputs:
+            - source_root_path: ios/App
+      - xcode-archive@5:
+          inputs:
+            - project_path: ios/App/App.xcworkspace
+            - scheme: App
+            - distribution_method: app-store
+      - deploy-to-bitrise-io@2: {}
+
+  # Workflow completo (Android + iOS)
+  deploy_all:
+    before_run:
+      - android
+      - ios
+
+trigger_map:
+  - push_branch: main
+    workflow: deploy_all
+  - pull_request_source_branch: "*"
+    workflow: android
+
+app:
+  envs:
+    - PROJECT_LOCATION: android
+    - MODULE: app
+    - VARIANT: Release
+```
 
 ---
 
-### Resultado Visual
+### Etapa 3: Scripts NPM para Capacitor
+
+**Adicionar ao `package.json`:**
+```json
+{
+  "scripts": {
+    "cap:sync": "cap sync",
+    "cap:android": "cap open android",
+    "cap:ios": "cap open ios",
+    "build:mobile": "npm run build && cap sync"
+  }
+}
+```
+
+---
+
+### Etapa 4: Configurar .gitignore
+
+**Adicionar ao `.gitignore`:**
+```
+# Capacitor
+/android/
+/ios/
+*.keystore
+*.jks
+```
+
+> **Nota:** As pastas `android/` e `ios/` sao geradas pelo Capacitor e geralmente nao sao commitadas, pois o Bitrise as regenera durante o build.
+
+---
+
+### Etapa 5: Documentacao (README)
+
+**Criar:** `docs/MOBILE_BUILD.md`
+
+Documento explicando:
+- Como configurar Bitrise
+- Variaveis de ambiente necessarias
+- Como fazer deploy manual
+- Troubleshooting comum
+
+---
+
+### Fluxo de CI/CD
 
 ```text
-+------------------------------------------+
-|  ____  Instalacao Avulsa  [Equipe X]     |  <- Header com gradiente orange
-| (__)   Joao Silva                        |
-+------------------------------------------+
-|                                          |
-|  +------------------------------------+  |
-|  | 📍 Sao Paulo/SP                    |  |  <- Card bg-white/5
-|  | 📅 Quarta, 15 de Fevereiro 2026    |  |
-|  +------------------------------------+  |
-|                                          |
-|  +------------------------------------+  |
-|  | EQUIPE RESPONSAVEL                 |  |
-|  | [Badge: Instaladores SP]           |  |
-|  +------------------------------------+  |
-|                                          |
-|  +------------------------------------+  |
-|  | OBSERVACOES                        |  |
-|  | Cliente solicita instalacao...     |  |
-|  +------------------------------------+  |
-|                                          |
-|  Criado em: 10/01/2026 as 14:30         |  <- Metadados
-|                                          |
-+------------------------------------------+
-|  [     Editar     ]                      |  <- Footer fixo
-|  [Concluir Instalacao]                   |
-+------------------------------------------+
++------------------+     +------------------+     +------------------+
+|   Push para      | --> |     Bitrise      | --> |   App Stores     |
+|   GitHub/main    |     |   Workflow       |     |   (iOS/Android)  |
++------------------+     +------------------+     +------------------+
+                              |
+                              v
+                    +------------------+
+                    | 1. git clone     |
+                    | 2. npm install   |
+                    | 3. npm run build |
+                    | 4. cap sync      |
+                    | 5. Build nativo  |
+                    | 6. Deploy        |
+                    +------------------+
 ```
+
+---
+
+### Passos Pos-Implementacao (Manual)
+
+Apos criar os arquivos, voce precisara:
+
+1. **Exportar para GitHub** (se ainda nao fez)
+2. **No Bitrise:**
+   - Criar conta em bitrise.io
+   - Conectar repositorio GitHub
+   - Adicionar variaveis de ambiente:
+     - `ANDROID_KEYSTORE_PASSWORD`
+     - `ANDROID_KEY_ALIAS`
+     - `ANDROID_KEY_PASSWORD`
+     - Certificados iOS (provisioning profiles)
+3. **Localmente (opcional para teste):**
+   ```bash
+   git pull
+   npm install
+   npx cap add android
+   npx cap add ios
+   npm run build
+   npx cap sync
+   ```
+
+---
+
+### Arquivos a Criar/Modificar
+
+| Arquivo | Acao |
+|---------|------|
+| `capacitor.config.ts` | Criar - configuracao Capacitor |
+| `bitrise.yml` | Criar - workflows CI/CD |
+| `package.json` | Modificar - adicionar deps e scripts |
+| `.gitignore` | Modificar - ignorar pastas nativas |
+| `docs/MOBILE_BUILD.md` | Criar - documentacao |
+
+---
+
+### Secao Tecnica
+
+**Dependencias Capacitor:**
+```bash
+npm install @capacitor/core @capacitor/cli @capacitor/ios @capacitor/android
+npx cap init app-elisa-portas app.lovable.9eb1bc327d674330b27a36a057f315d7 --web-dir dist
+```
+
+**Variaveis de Ambiente Bitrise (Secrets):**
+- `BITRISEIO_ANDROID_KEYSTORE_URL` - URL do keystore
+- `BITRISEIO_ANDROID_KEYSTORE_PASSWORD`
+- `BITRISEIO_ANDROID_KEYSTORE_ALIAS`
+- `BITRISEIO_ANDROID_KEYSTORE_PRIVATE_KEY_PASSWORD`
+- Para iOS: certificados e provisioning profiles via Code Signing
 
