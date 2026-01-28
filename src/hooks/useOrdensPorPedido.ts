@@ -17,6 +17,9 @@ export interface OrdemStatus {
   status: string | null;
   tipo: TipoOrdem;
   responsavel: ResponsavelInfo | null;
+  pausada: boolean;
+  justificativa_pausa: string | null;
+  pausada_em: string | null;
 }
 
 export interface CorInfo {
@@ -108,15 +111,15 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
       ] = await Promise.all([
         supabase
           .from('ordens_soldagem')
-          .select('id, pedido_id, numero_ordem, status, responsavel_id')
+          .select('id, pedido_id, numero_ordem, status, responsavel_id, pausada, justificativa_pausa, pausada_em')
           .in('pedido_id', pedidoIds),
         supabase
           .from('ordens_perfiladeira')
-          .select('id, pedido_id, numero_ordem, status, responsavel_id, metragem_linear')
+          .select('id, pedido_id, numero_ordem, status, responsavel_id, metragem_linear, pausada, justificativa_pausa, pausada_em')
           .in('pedido_id', pedidoIds),
         supabase
           .from('ordens_separacao')
-          .select('id, pedido_id, numero_ordem, status, responsavel_id')
+          .select('id, pedido_id, numero_ordem, status, responsavel_id, pausada, justificativa_pausa, pausada_em')
           .in('pedido_id', pedidoIds),
         supabase
           .from('ordens_qualidade')
@@ -292,6 +295,9 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
             status: ordem?.status || null,
             tipo,
             responsavel: responsavelId ? responsaveisMap[responsavelId] || null : null,
+            pausada: ordem?.pausada || false,
+            justificativa_pausa: ordem?.justificativa_pausa || null,
+            pausada_em: ordem?.pausada_em || null,
           };
         };
 
