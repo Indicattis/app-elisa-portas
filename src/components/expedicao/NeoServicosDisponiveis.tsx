@@ -19,7 +19,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Search, Calendar, Wrench, Hammer, MapPin, Users, Clock, Loader2 } from "lucide-react";
+import { Search, Calendar, Wrench, Hammer, MapPin, Users, Loader2 } from "lucide-react";
 import { NeoInstalacao } from "@/types/neoInstalacao";
 import { NeoCorrecao } from "@/types/neoCorrecao";
 import { toast } from "sonner";
@@ -27,8 +27,8 @@ import { toast } from "sonner";
 interface NeoServicosDisponiveisProps {
   neoInstalacoes: NeoInstalacao[];
   neoCorrecoes: NeoCorrecao[];
-  onAgendarInstalacao: (id: string, data: string, hora: string) => Promise<void>;
-  onAgendarCorrecao: (id: string, data: string, hora: string) => Promise<void>;
+  onAgendarInstalacao: (id: string, data: string) => Promise<void>;
+  onAgendarCorrecao: (id: string, data: string) => Promise<void>;
   isLoadingInstalacoes?: boolean;
   isLoadingCorrecoes?: boolean;
 }
@@ -58,7 +58,6 @@ export function NeoServicosDisponiveis({
   const [agendandoId, setAgendandoId] = useState<string | null>(null);
   const [agendandoTipo, setAgendandoTipo] = useState<'instalacao' | 'correcao' | null>(null);
   const [dataAgendamento, setDataAgendamento] = useState("");
-  const [horaAgendamento, setHoraAgendamento] = useState("");
   const [isAgendando, setIsAgendando] = useState(false);
 
   // Combinar todos os serviços em uma lista
@@ -103,7 +102,6 @@ export function NeoServicosDisponiveis({
     setAgendandoId(id);
     setAgendandoTipo(tipo);
     setDataAgendamento("");
-    setHoraAgendamento("");
   };
 
   const handleConfirmarAgendamento = async () => {
@@ -111,18 +109,14 @@ export function NeoServicosDisponiveis({
       toast.error("Informe a data");
       return;
     }
-    if (!horaAgendamento) {
-      toast.error("Informe o horário");
-      return;
-    }
     if (!agendandoId || !agendandoTipo) return;
 
     setIsAgendando(true);
     try {
       if (agendandoTipo === 'instalacao') {
-        await onAgendarInstalacao(agendandoId, dataAgendamento, horaAgendamento);
+        await onAgendarInstalacao(agendandoId, dataAgendamento);
       } else {
-        await onAgendarCorrecao(agendandoId, dataAgendamento, horaAgendamento);
+        await onAgendarCorrecao(agendandoId, dataAgendamento);
       }
       toast.success("Serviço agendado com sucesso!");
       setAgendandoId(null);
@@ -260,7 +254,7 @@ export function NeoServicosDisponiveis({
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-primary" />
+              <Calendar className="h-5 w-5 text-primary" />
               Agendar {agendandoTipo === 'instalacao' ? 'Instalação' : 'Correção'}
             </DialogTitle>
           </DialogHeader>
@@ -272,15 +266,6 @@ export function NeoServicosDisponiveis({
                 type="date"
                 value={dataAgendamento}
                 onChange={(e) => setDataAgendamento(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="horaAgendamento">Horário *</Label>
-              <Input
-                id="horaAgendamento"
-                type="time"
-                value={horaAgendamento}
-                onChange={(e) => setHoraAgendamento(e.target.value)}
               />
             </div>
           </div>
