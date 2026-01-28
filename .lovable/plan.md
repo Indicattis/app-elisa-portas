@@ -1,59 +1,85 @@
 
-## Plano: Alinhar Cálculo de Valor em Minhas Vendas com Direção
+## Plano: Corrigir Erro de NOT NULL na Coluna `hora` da Tabela `instalacoes`
 
 ### Problema Identificado
 
-As fórmulas de cálculo do "Valor" estão diferentes entre as duas páginas:
+O erro `null value in column "hora" of relation "instalacoes" violates not-null constraint` ocorre porque:
 
-| Página | Fórmula Atual |
-|--------|---------------|
-| `/direcao/vendas` | `valor_venda + valor_credito` |
-| `/vendas/minhas-vendas` | `valor_venda - descontos + valor_credito` |
+1. O modal `AdicionarOrdemCalendarioModal` define `horaFinal = null` para instalações (linha 210)
+2. O componente `OrdensCarregamentoDisponiveis.tsx` passa `hora: params.hora` (linha 104) diretamente para o update
+3. A tabela `instalacoes` tem a coluna `hora` com constraint `NOT NULL` e default `'08:00'`
 
-### Correção Necessária
+O default `'08:00'` só funciona em **INSERT** quando o valor não é especificado. Em **UPDATE** com valor explícito `null`, o constraint NOT NULL falha.
 
-Alinhar a coluna "Valor" em `/vendas/minhas-vendas` com a fórmula de `/direcao/vendas`.
+### Análise da Estrutura
 
-**Arquivo:** `src/pages/vendas/MinhasVendas.tsx`
+| Tabela | Coluna | Nullable | Default |
+|--------|--------|----------|---------|
+| `instalacoes` | `hora` | **NÃO** | `'08:00'` |
+| `instalacoes` | `hora_carregamento` | SIM | null |
+| `neo_instalacoes` | `hora` | SIM | null |
+| `neo_correcoes` | `hora` | SIM | null |
 
-#### 1. Atualizar a coluna "Valor" (linhas 299-302)
+### Solução Proposta
+
+Corrigir os pontos onde `hora: null` é passado para updates na tabela `instalacoes`, usando `'08:00'` como valor padrão quando a hora não é especificada.
+
+### Arquivos a Modificar
+
+| Arquivo | Linha | Alteração |
+|---------|-------|-----------|
+| `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx` | 210 | Usar `'08:00'` em vez de `null` para instalações |
+| `src/components/expedicao/OrdensCarregamentoDisponiveis.tsx` | 104 | Usar valor padrão quando hora é null para instalações |
+| `src/components/expedicao/OrdensCarregamentoDisponiveisMobile.tsx` | (verificar) | Mesmo padrão se aplicável |
+
+### Detalhes Técnicos
+
+#### 1. AdicionarOrdemCalendarioModal.tsx (linha 210)
 
 ```typescript
 // ANTES
-case 'valor':
-  const descontoTotalValor = venda.produtos_vendas?.reduce((acc, p) => acc + (p.desconto_valor || 0), 0) || 0;
-  const valorAjustado = (venda.valor_venda || 0) - descontoTotalValor + (venda.valor_credito || 0);
-  return <span className="font-semibold">{formatCurrency(valorAjustado)}</span>;
+const horaFinal = isEntrega ? hora : null;
 
-// DEPOIS (igual a VendasDirecao)
-case 'valor':
-  return <span className="font-semibold">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</span>;
+// DEPOIS - Usar "08:00" como default para instalações
+const horaFinal = isEntrega ? hora : "08:00";
 ```
 
-#### 2. Atualizar o card "Valor Total" (linhas 174-178)
+#### 2. OrdensCarregamentoDisponiveis.tsx (linhas 99-111)
 
 ```typescript
 // ANTES
-const valorTotal = vendasFiltradas.reduce((acc, v) => {
-  const totalDesconto = v.produtos_vendas?.reduce((sum, p) => sum + (p.desconto_valor || 0), 0) || 0;
-  const valorLiquido = (v.valor_venda || 0) - (v.valor_frete || 0) + (v.valor_credito || 0) - totalDesconto;
-  return acc + valorLiquido;
-}, 0);
+const { error } = await supabase
+  .from(tabela)
+  .update({
+    data_carregamento: params.data_carregamento,
+    hora_carregamento: params.hora,
+    hora: params.hora,  // <-- Problema: passa null para instalações
+    // ...
+  })
+  .eq("id", params.ordemId);
 
-// DEPOIS (consistente com a coluna)
-const valorTotal = vendasFiltradas.reduce((acc, v) => {
-  return acc + (v.valor_venda || 0) + (v.valor_credito || 0);
-}, 0);
+// DEPOIS - Para instalações, usar valor padrão se hora for null
+const isInstalacao = params.fonte === 'instalacoes';
+const horaValue = isInstalacao ? (params.hora || "08:00") : params.hora;
+
+const { error } = await supabase
+  .from(tabela)
+  .update({
+    data_carregamento: params.data_carregamento,
+    hora_carregamento: params.hora,
+    hora: horaValue,  // <-- Usa default para instalações
+    // ...
+  })
+  .eq("id", params.ordemId);
 ```
 
-### Resumo das Alterações
+#### 3. Verificar OrdensCarregamentoDisponiveisMobile.tsx
 
-| Local | Antes | Depois |
-|-------|-------|--------|
-| Coluna "Valor" | `valor_venda - descontos + credito` | `valor_venda + credito` |
-| Card "Valor Total" | `valor_venda - frete + credito - descontos` | `valor_venda + credito` |
+Aplicar a mesma correção se houver lógica similar de agendamento.
 
 ### Resultado Esperado
 
-- Valores na coluna "Valor" em `/vendas/minhas-vendas` serão idênticos aos de `/direcao/vendas`
-- Card de resumo "Valor Total" será consistente com os valores das linhas
+- Instalações podem ser agendadas sem erros
+- Campo de hora permanece oculto para instalações/manutenções no modal
+- Valor padrão `'08:00'` é usado automaticamente para satisfazer o constraint NOT NULL
+- Consistência com a política "date-only" para instalações (hora não é relevante para o usuário, mas necessária para o banco)
