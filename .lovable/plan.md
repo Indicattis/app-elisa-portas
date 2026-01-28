@@ -1,218 +1,145 @@
 
+## Plano: Corrigir Exibição de Dados em Instalações Avulsas
 
-## Plano: Downbar para Ordens de Carregamento/Instalacoes
+### Problema Identificado
 
-### Objetivo
-Atualizar o componente `OrdemCarregamentoDetails` para:
-1. Usar downbar (bottom sheet) igual ao `PedidoDetalhesSheet`
-2. Exibir endereco completo do cliente (cidade, estado, bairro, CEP)
-3. Destacar produtos `porta_enrolar` com seus tamanhos
-4. Mostrar cores das portas de forma visual
+A ordem "Ederson Stringhini" é uma **instalação avulsa** (tabela `instalacoes`) que:
+- **Não tem** `venda_id` nem `pedido_id` vinculados
+- **Tem dados próprios** na tabela `instalacoes`:
+  - `cidade`: Bento Gonçalves
+  - `estado`: RS
+  - `endereco`: R. Alfredo Zanoni N 152, Condomínio Mirante do Vale
+  - `telefone_cliente`: (54) 8115 - 8344
+  - `cor_id`: Cinza Escuro (#2b2b2b)
 
----
-
-### Dados Disponiveis na Venda
-
-A tabela `vendas` possui os seguintes campos de endereco:
-- `cidade`
-- `estado`
-- `bairro`
-- `cep`
-
-Nao existem campos de rua/numero/complemento na tabela. Usaremos os campos disponiveis.
+O hook `useOrdensCarregamentoCalendario` **não busca** esses campos próprios da instalação, e o componente `OrdemCarregamentoDetails` só verifica dados da venda vinculada.
 
 ---
 
-### Mudanca: Redesenhar OrdemCarregamentoDetails
+### Correção 1: Hook - Buscar Campos Próprios
+
+**Arquivo:** `src/hooks/useOrdensCarregamentoCalendario.ts`
+
+Adicionar campos na query de instalações:
+
+```typescript
+// Linha 82-122: Adicionar campos próprios
+.select(`
+  id,
+  nome_cliente,
+  data_carregamento,
+  hora_carregamento,
+  tipo_carregamento,
+  responsavel_carregamento_id,
+  responsavel_carregamento_nome,
+  status,
+  carregamento_concluido,
+  observacoes,
+  created_at,
+  updated_at,
+  cidade,           // ADICIONAR
+  estado,           // ADICIONAR
+  cep,              // ADICIONAR
+  endereco,         // ADICIONAR
+  telefone_cliente, // ADICIONAR
+  cor:catalogo_cores(  // ADICIONAR
+    nome,
+    codigo_hex
+  ),
+  pedido:pedidos_producao(...),
+  venda:vendas(...)
+`)
+```
+
+---
+
+### Correção 2: Hook - Normalizar com Fallback
+
+**Arquivo:** `src/hooks/useOrdensCarregamentoCalendario.ts`
+
+Atualizar a normalização para criar uma "venda virtual" com dados próprios:
+
+```typescript
+// Linha 131-163: Normalização com fallback
+const instalacoesNormalizadas = (instalacoes || []).map((inst: any) => {
+  // Se tem venda vinculada, usar dados da venda
+  // Senão, criar objeto com dados próprios da instalação
+  const vendaOuDadosProprios = inst.venda || (inst.cidade || inst.endereco ? {
+    id: null,
+    cliente_nome: inst.nome_cliente,
+    cliente_telefone: inst.telefone_cliente,
+    cliente_email: null,
+    cidade: inst.cidade,
+    estado: inst.estado,
+    cep: inst.cep,
+    bairro: inst.endereco, // endereco contém endereço completo
+    data_prevista_entrega: null,
+    tipo_entrega: 'instalacao',
+    produtos: inst.cor ? [{
+      tipo_produto: 'porta_enrolar',
+      tamanho: null,
+      largura: null,
+      altura: null,
+      quantidade: 1,
+      cor: inst.cor
+    }] : []
+  } : null);
+
+  return {
+    ...resto,
+    venda: vendaOuDadosProprios
+  };
+});
+```
+
+---
+
+### Correção 3: Downbar - Usar Dados com Fallback
 
 **Arquivo:** `src/components/expedicao/OrdemCarregamentoDetails.tsx`
 
-**Alteracoes:**
-
-1. **Converter para downbar** - Mudar `side="right"` para `side="bottom"` com estilo glassmorphism escuro
-
-2. **Header com gradiente** - Usar gradiente azul/roxo como no PedidoDetalhesSheet
-
-3. **Secao de Endereco Completo** - Card dedicado com todos os campos disponiveis:
-   - Cidade/Estado
-   - Bairro
-   - CEP
-
-4. **Secao de Produtos porta_enrolar** - Filtrar e destacar apenas portas de enrolar:
-   - Tamanho (largura x altura)
-   - Badge com dimensoes
-   - Cor visual (swatch + nome)
-
-5. **Layout em cards** - Usar `bg-white/5 rounded-xl border border-white/10`
-
----
-
-### Estrutura Proposta
-
-```tsx
-<Sheet open={open} onOpenChange={onOpenChange}>
-  <SheetContent 
-    side="bottom" 
-    className="h-[85vh] max-w-[700px] mx-auto rounded-t-2xl overflow-hidden flex flex-col p-0 bg-zinc-900 border-t border-white/10"
-  >
-    {/* Header com gradiente azul */}
-    <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-xl border-b border-white/10 px-6 py-4">
-      <div className="flex items-center gap-2">
-        <Badge>Entrega/Instalacao</Badge>
-        <Badge>{status}</Badge>
-      </div>
-      <SheetTitle className="text-white">{nome_cliente}</SheetTitle>
-    </div>
-
-    {/* Conteudo scrollavel */}
-    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-      
-      {/* Card: Endereco Completo */}
-      <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-        <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-3">
-          Endereco de Entrega
-        </h3>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-blue-400" />
-            <span className="text-white">{cidade} - {estado}</span>
-          </div>
-          {bairro && (
-            <p className="text-sm text-white/70 pl-6">{bairro}</p>
-          )}
-          {cep && (
-            <p className="text-sm text-white/50 pl-6">CEP: {cep}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Card: Portas de Enrolar */}
-      <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-        <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-3">
-          Portas de Enrolar
-        </h3>
-        <div className="space-y-2">
-          {produtos.filter(p => p.tipo_produto === 'porta_enrolar').map((produto, idx) => (
-            <div key={idx} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
-              {/* Swatch de cor */}
-              {produto.cor && (
-                <div 
-                  className="h-8 w-8 rounded-lg border-2 border-white/20"
-                  style={{ backgroundColor: produto.cor.codigo_hex }}
-                />
-              )}
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-white">
-                    {produto.largura}m x {produto.altura}m
-                  </Badge>
-                  {produto.quantidade > 1 && (
-                    <span className="text-xs text-white/50">x{produto.quantidade}</span>
-                  )}
-                </div>
-                {produto.cor && (
-                  <p className="text-xs text-white/60 mt-1">{produto.cor.nome}</p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Card: Informacoes de Carregamento */}
-      <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-        <h3>Carregamento</h3>
-        {/* Data, Hora, Responsavel */}
-      </div>
-
-      {/* Card: Informacoes do Pedido */}
-      <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-        <h3>Pedido</h3>
-        {/* Numero, Etapa */}
-      </div>
-    </div>
-  </SheetContent>
-</Sheet>
-```
-
----
-
-### Secao Tecnica
-
-**Atualizacao do Hook**
-
-O hook `useOrdensCarregamentoCalendario.ts` ja busca os dados necessarios:
-- `venda.cidade`, `venda.estado`, `venda.cep`, `venda.bairro`
-- `venda.produtos` com `tipo_produto`, `largura`, `altura`, `tamanho`, `cor`
-
-Nenhuma alteracao no hook e necessaria.
-
-**Filtragem de Produtos**
-
-Para exibir apenas portas de enrolar:
-```typescript
-const portasEnrolar = ordem.venda?.produtos?.filter(
-  p => p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'porta'
-) || [];
-```
-
-**Formatacao de Tamanho**
-
-```typescript
-const formatTamanho = (produto) => {
-  if (produto.tamanho) return produto.tamanho;
-  if (produto.largura && produto.altura) {
-    return `${produto.largura}m x ${produto.altura}m`;
-  }
-  return null;
-};
-```
+O componente já está preparado para mostrar os dados - a correção no hook será suficiente.
 
 ---
 
 ### Arquivos a Modificar
 
-| Arquivo | Alteracao |
+| Arquivo | Alteração |
 |---------|-----------|
-| `src/components/expedicao/OrdemCarregamentoDetails.tsx` | Reestilizar para downbar com tema escuro, endereco completo e produtos filtrados |
+| `src/hooks/useOrdensCarregamentoCalendario.ts` | Buscar campos próprios da instalação e criar fallback para venda |
 
 ---
 
-### Resultado Visual
+### Resultado Esperado
+
+Após a correção, a downbar de "Ederson Stringhini" exibirá:
 
 ```text
 +------------------------------------------+
-|  [Entrega]  [Agendada]                   |  <- Header azul/roxo
-|  GUSTAVO OLIVEIRA DE LIMA                |
+|  [Instalação]  [Pendente Produção]       |
+|  EDERSON STRINGHINI                      |
+|  📞 (54) 8115 - 8344                     |
 +------------------------------------------+
 |                                          |
 |  +------------------------------------+  |
-|  | ENDERECO DE ENTREGA                |  |
-|  | 📍 Guaiba - RS                     |  |
-|  |    PEDRAS BRANCAS                  |  |
-|  |    CEP: 92722-140                  |  |
+|  | ENDEREÇO DE ENTREGA                |  |
+|  | 📍 Bento Gonçalves - RS            |  |
+|  |    R. Alfredo Zanoni N 152,        |  |
+|  |    Condomínio Mirante do Vale      |  |
 |  +------------------------------------+  |
 |                                          |
 |  +------------------------------------+  |
-|  | PORTAS DE ENROLAR                  |  |
+|  | PORTAS DE ENROLAR (1)              |  |
 |  | +--------------------------------+ |  |
-|  | | [████] [6m x 4.8m]            | |  |  <- Swatch de cor
-|  | |        Branco Neve             | |  |
+|  | | [████] Cinza Escuro            | |  |
 |  | +--------------------------------+ |  |
 |  +------------------------------------+  |
 |                                          |
 |  +------------------------------------+  |
 |  | CARREGAMENTO                       |  |
-|  | Data: 27/01/2026                   |  |
-|  | Responsavel: HYUNDAI/HR HDB        |  |
-|  +------------------------------------+  |
-|                                          |
-|  +------------------------------------+  |
-|  | PEDIDO                             |  |
-|  | Numero: #0117                      |  |
-|  | Etapa: Finalizado                  |  |
+|  | Data: 06/01/2026                   |  |
+|  | Responsável: Elisa                 |  |
 |  +------------------------------------+  |
 |                                          |
 +------------------------------------------+
 ```
-
