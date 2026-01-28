@@ -1,226 +1,243 @@
 
+## Plano: Redesign da Listagem de Ordens de Instalacao
 
-## Plano: Exibir "Carregada" para Instalacoes com Carregamento Concluido
+### Objetivo
 
-### Problema Identificado
-
-Na pagina `/direcao/gestao-fabrica`, pedidos na etapa "Instalacoes" cuja ordem de instalacao foi carregada nao exibem corretamente o status. A coluna de agendamento deve mostrar **"Carregada"** quando o carregamento esta concluido.
-
-**Causa raiz:**
-1. O codigo atual busca dados de carregamento apenas de `ordens_carregamento`
-2. Para pedidos do tipo instalacao, os dados de carregamento ficam na tabela `instalacoes`
-3. A logica de exibicao nao verifica o estado `carregamentoConcluido` para mudar o label
-
-**Dados do banco confirmam:**
-- Pedido 0099: `inst_carregamento_concluido: true`, `inst_data_carregamento: 2026-01-28` (em `instalacoes`)
-- Maioria dos pedidos de instalacao nao tem registro em `ordens_carregamento`
+Redesenhar a pagina `/logistica/instalacoes/ordens-instalacoes` com:
+1. Separacao em duas listagens: **Carregadas** vs **Nao Carregadas**
+2. Novo design compacto com linhas de **35px**
+3. Foto de perfil de quem carregou
+4. Badges **P, G, GG** para tamanho das portas
+5. Valor da venda
+6. Listagem dedicada para **Neo Instalacoes** e **Neo Correcoes** com mesmo design
 
 ---
 
-### Solucao
-
-Modificar o `PedidoCard.tsx` em dois pontos:
-
-1. **Corrigir a query de carregamento** para buscar tambem da tabela `instalacoes` quando o pedido esta na etapa `instalacoes`
-
-2. **Atualizar a logica de exibicao** para mostrar "Carregada" quando `carregamentoConcluido === true`
-
----
-
-### Arquivo a Modificar
-
-| Arquivo | Linhas | Descricao |
-|---------|--------|-----------|
-| src/components/pedidos/PedidoCard.tsx | 313-348 | Atualizar query para buscar de `instalacoes` |
-| src/components/pedidos/PedidoCard.tsx | 1147-1196 | Adicionar condicao para exibir "Carregada" |
-
----
-
-### Mudanca 1: Query de Carregamento (linhas 313-348)
+### Estrutura da Nova Pagina
 
 ```text
-ANTES:
 ┌─────────────────────────────────────────────────────────────┐
-│ Para etapa 'instalacoes':                                   │
-│   - Busca apenas de ordens_carregamento                     │
-│   - Muitos pedidos nao tem registro la                      │
-│   - Retorna concluido: false mesmo quando esta concluido    │
-└─────────────────────────────────────────────────────────────┘
-
-DEPOIS:
-┌─────────────────────────────────────────────────────────────┐
-│ Para etapa 'instalacoes':                                   │
-│   - Busca de instalacoes (fonte unica de verdade)           │
-│   - Retorna carregamento_concluido corretamente             │
-│   - Retorna data_carregamento da instalacao                 │
+│ Header + Filtros (existentes)                               │
+├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│ Para etapa 'aguardando_coleta':                            │
-│   - Continua buscando de ordens_carregamento                │
+│ ┌─ SECAO 1: NAO CARREGADAS ─────────────────────────────┐  │
+│ │ [Titulo] Aguardando Carregamento (X)                   │  │
+│ │ ┌──────────────────────────────────────────────────┐  │  │
+│ │ │ Linha 35px: Avatar│Cliente│Cidade│P/G│Valor│Acao│  │  │
+│ │ │ Linha 35px: ...                                   │  │
+│ │ └──────────────────────────────────────────────────┘  │  │
+│ └────────────────────────────────────────────────────────┘  │
+│                                                             │
+│ ┌─ SECAO 2: CARREGADAS ────────────────────────────────┐   │
+│ │ [Titulo] Prontas para Instalacao (X)                  │   │
+│ │ ┌──────────────────────────────────────────────────┐  │  │
+│ │ │ Linha 35px: FotoCarregou│Cliente│Data│P/G│Valor │  │  │
+│ │ └──────────────────────────────────────────────────┘  │  │
+│ └────────────────────────────────────────────────────────┘  │
+│                                                             │
+│ ┌─ SECAO 3: NEO INSTALACOES ──────────────────────────┐    │
+│ │ [Titulo] Instalacoes Avulsas (X)                     │    │
+│ │ ┌──────────────────────────────────────────────────┐  │  │
+│ │ │ Linha 35px: Avatar│Cliente│Cidade│Data│Equipe   │  │  │
+│ │ └──────────────────────────────────────────────────┘  │  │
+│ └────────────────────────────────────────────────────────┘  │
+│                                                             │
+│ ┌─ SECAO 4: NEO CORRECOES ────────────────────────────┐    │
+│ │ [Titulo] Correcoes Avulsas (X)                       │    │
+│ │ ┌──────────────────────────────────────────────────┐  │  │
+│ │ │ Linha 35px: Avatar│Cliente│Cidade│Data│Equipe   │  │  │
+│ │ └──────────────────────────────────────────────────┘  │  │
+│ └────────────────────────────────────────────────────────┘  │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### Mudanca 2: Logica de Exibicao (linhas 1147-1196)
+### Design da Linha (35px)
+
+Cada linha tera altura fixa de 35px com as informacoes em formato tabular horizontal:
 
 ```text
-ANTES:
-┌─────────────────────────────────────────────────────────────┐
-│ Se tem data e nao esta atrasado → "Agendado" (verde)        │
-│ Se esta atrasado → "Atrasado" (vermelho)                    │
-│ Se nao tem data → "Nao agendado" (vermelho)                 │
-└─────────────────────────────────────────────────────────────┘
-
-DEPOIS:
-┌─────────────────────────────────────────────────────────────┐
-│ Se carregamento concluido → "Carregada" (azul/cinza)       │
-│ Se tem data e nao esta atrasado → "Agendado" (verde)        │
-│ Se esta atrasado → "Atrasado" (vermelho)                    │
-│ Se nao tem data → "Nao agendado" (vermelho)                 │
-└─────────────────────────────────────────────────────────────┘
+| Avatar | #Pedido | Cliente        | Cidade/UF | P/G/GG | Valor    | Status  | Acao |
+| 24px   | 60px    | flex-1         | 80px      | 80px   | 80px     | 70px    | 50px |
 ```
+
+**Colunas para Ordens de Instalacao:**
+1. Avatar de quem carregou (ou placeholder se nao carregada)
+2. Numero do pedido
+3. Nome do cliente (truncado)
+4. Cidade/Estado
+5. Badges P, G, GG (cores: P=Cyan, G=Purple, GG=Orange)
+6. Valor da venda formatado
+7. Status (Carregada/Aguardando + data)
+8. Botao Concluir
+
+**Colunas para Neo Instalacoes/Correcoes:**
+1. Avatar do criador
+2. AVULSO badge
+3. Nome do cliente
+4. Cidade/Estado
+5. Data agendada
+6. Equipe responsavel
+7. Botao Concluir
 
 ---
 
-### Codigo para Mudanca 1 (Query)
+### Regras de Tamanho P/G/GG
+
+Baseado na area da porta (largura x altura em metros):
+- **P (Pequena)**: area <= 25m² - Badge Cyan
+- **G (Grande)**: area > 25m² e <= 50m² - Badge Purple  
+- **GG (Extra Grande)**: area > 50m² - Badge Orange
+
+---
+
+### Arquivos a Modificar
+
+| Arquivo | Acao | Descricao |
+|---------|------|-----------|
+| src/pages/logistica/OrdensInstalacoesLogistica.tsx | Modificar | Reestruturar layout com 4 secoes |
+| src/hooks/useOrdensInstalacao.ts | Modificar | Adicionar dados de carregamento e valor |
+| src/components/instalacoes/OrdemInstalacaoRow.tsx | Criar | Componente de linha 35px para ordens |
+| src/components/instalacoes/NeoInstalacaoRow.tsx | Criar | Componente de linha 35px para Neo Instalacoes |
+| src/components/instalacoes/NeoCorrecaoRow.tsx | Criar | Componente de linha 35px para Neo Correcoes |
+
+---
+
+### Mudanca 1: Hook useOrdensInstalacao.ts
+
+Adicionar campos ao select:
+- `carregamento_concluido`
+- `carregamento_concluido_por`
+- `data_carregamento`
+- `valor_venda` (da tabela vendas)
+
+Buscar foto de perfil de quem carregou via `admin_users`:
 
 ```typescript
-// Verificar se a ordem de carregamento está concluída e buscar data
-const { data: carregamentoCompleto } = useQuery({
-  queryKey: ['pedido-carregamento', pedido.id],
-  queryFn: async () => {
-    if (pedido.etapa_atual !== 'aguardando_coleta' && pedido.etapa_atual !== 'instalacoes') {
-      return {
-        concluido: false,
-        temData: true,
-        dataCarregamento: null
-      };
-    }
+// Apos buscar ordens, buscar fotos dos usuarios que carregaram
+const carregadoPorIds = [...new Set(
+  ordensFiltered
+    .filter(o => o.carregamento_concluido_por)
+    .map(o => o.carregamento_concluido_por)
+)];
 
-    // Para instalações, buscar da tabela instalacoes
-    if (pedido.etapa_atual === 'instalacoes') {
-      const { data: instalacao } = await supabase
-        .from('instalacoes')
-        .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento')
-        .eq('pedido_id', pedido.id)
-        .maybeSingle();
-
-      const temData = !!instalacao?.data_carregamento;
-      const concluido = instalacao?.carregamento_concluido || false;
-
-      return {
-        concluido,
-        temData,
-        dataCarregamento: instalacao?.data_carregamento || null,
-        responsavelNome: instalacao?.responsavel_carregamento_nome || null,
-        tipoCarregamento: instalacao?.tipo_carregamento || null
-      };
-    }
-
-    // Para entregas, buscar de ordens_carregamento
-    const { data: ordemCarregamento } = await supabase
-      .from('ordens_carregamento')
-      .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento')
-      .eq('pedido_id', pedido.id)
-      .maybeSingle();
-
-    const temData = !!ordemCarregamento?.data_carregamento;
-    const concluido = ordemCarregamento?.carregamento_concluido || false;
-
-    return {
-      concluido,
-      temData,
-      dataCarregamento: ordemCarregamento?.data_carregamento || null,
-      responsavelNome: ordemCarregamento?.responsavel_carregamento_nome || null,
-      tipoCarregamento: ordemCarregamento?.tipo_carregamento || null
-    };
-  },
-  enabled: pedido.etapa_atual === 'aguardando_coleta' || pedido.etapa_atual === 'instalacoes'
-});
+const { data: usuarios } = await supabase
+  .from('admin_users')
+  .select('user_id, nome, foto_perfil_url')
+  .in('user_id', carregadoPorIds);
 ```
 
 ---
 
-### Codigo para Mudanca 2 (Exibicao)
+### Mudanca 2: Componente OrdemInstalacaoRow.tsx
 
 ```typescript
-{/* Col 6: Data de Carregamento */}
-<div className="text-center">
-  {(() => {
-    const isExpedicao = etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes';
-    
-    if (isExpedicao) {
-      // NOVA CONDICAO: Se carregamento concluído, mostrar "Carregada"
-      if (carregamentoConcluido) {
-        return (
-          <div className="flex flex-col items-center leading-tight">
-            <span className="text-[9px] font-medium text-zinc-400">
-              Carregada
-            </span>
-            {dataCarregamento && (
-              <span className="text-xs font-bold text-zinc-500">
-                {format(new Date(dataCarregamento), "dd/MM/yy")}
-              </span>
-            )}
-          </div>
-        );
-      }
-      
-      if (!dataCarregamento) {
-        return (
-          <span className="text-[10px] font-bold text-destructive">
-            Não agendado
-          </span>
-        );
-      }
-      
-      // Verificar se está atrasado
-      const dataCarreg = new Date(dataCarregamento);
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
-      dataCarreg.setHours(0, 0, 0, 0);
-      const atrasado = dataCarreg < hoje;
-      
-      return (
-        <div className="flex flex-col items-center leading-tight">
-          <span className={cn(
-            "text-[9px] font-medium",
-            atrasado ? "text-red-600" : "text-green-600"
-          )}>
-            {atrasado ? "Atrasado" : "Agendado"}
-          </span>
-          <span className={cn(
-            "text-xs font-bold",
-            atrasado ? "text-red-600" : "text-green-600"
-          )}>
-            {format(new Date(dataCarregamento), "dd/MM/yy")}
-          </span>
-        </div>
-      );
-    }
-    
-    // Para outras etapas...
-    if (dataCarregamento) {
-      return (
-        <span title="Data de carregamento" className="text-[10px] font-medium text-muted-foreground">
-          {format(new Date(dataCarregamento), "dd/MM/yy")}
-        </span>
-      );
-    }
-    
-    return <span className="text-[9px] text-muted-foreground/50">—</span>;
-  })()}
-</div>
+interface OrdemInstalacaoRowProps {
+  ordem: OrdemInstalacao;
+  onConcluir: (id: string) => void;
+  isConcluindo: boolean;
+}
+
+// Calcular badges de tamanho
+const calcularBadgesPorta = (produtos: Produto[]) => {
+  const contagem = { P: 0, G: 0, GG: 0 };
+  produtos.filter(p => p.tipo_produto === 'porta_enrolar').forEach(p => {
+    const area = (p.largura || 0) * (p.altura || 0);
+    if (area > 50) contagem.GG++;
+    else if (area > 25) contagem.G++;
+    else contagem.P++;
+  });
+  return contagem;
+};
+
+// Render: linha h-[35px] com grid layout
 ```
+
+Cores dos badges:
+- P: `bg-cyan-500/20 text-cyan-600 border-cyan-500/50`
+- G: `bg-purple-500/20 text-purple-600 border-purple-500/50`
+- GG: `bg-orange-500/20 text-orange-600 border-orange-500/50`
 
 ---
 
-### Resultado Esperado
+### Mudanca 3: Pagina OrdensInstalacoesLogistica.tsx
 
-| Estado | Exibicao Anterior | Exibicao Nova |
-|--------|-------------------|---------------|
-| Sem data | Nao agendado (vermelho) | Nao agendado (vermelho) |
-| Com data, nao concluido | Agendado + data (verde) | Agendado + data (verde) |
-| Com data, atrasado | Atrasado + data (vermelho) | Atrasado + data (vermelho) |
-| **Carregamento concluido** | Agendado + data (verde) | **Carregada + data (cinza)** |
+Separar ordens em duas listas:
+
+```typescript
+const { ordensNaoCarregadas, ordensCarregadas } = useMemo(() => {
+  return {
+    ordensNaoCarregadas: ordensFiltradas.filter(o => !o.carregamento_concluido),
+    ordensCarregadas: ordensFiltradas.filter(o => o.carregamento_concluido)
+  };
+}, [ordensFiltradas]);
+```
+
+Renderizar 4 secoes:
+1. Aguardando Carregamento (ordensNaoCarregadas)
+2. Prontas para Instalacao (ordensCarregadas)
+3. Instalacoes Avulsas (neoInstalacoes)
+4. Correcoes Avulsas (neoCorrecoes)
+
+---
+
+### Mudanca 4: Componentes NeoInstalacaoRow e NeoCorrecaoRow
+
+Design identico ao OrdemInstalacaoRow mas com campos especificos:
+- Avatar do criador
+- Badge "AVULSO" (azul para instalacao, roxo para correcao)
+- Cidade/Estado
+- Data de agendamento
+- Equipe responsavel
+- Botao concluir
+
+---
+
+### Resumo Visual
+
+**Antes:**
+- Cards grandes ocupando muito espaco
+- Sem separacao por status de carregamento
+- Neo Instalacoes/Correcoes em grid de cards
+
+**Depois:**
+- Linhas compactas de 35px
+- Secao separada para carregadas vs nao carregadas
+- Foto de quem carregou visivel
+- Badges P/G/GG coloridos
+- Valor da venda visivel
+- Neo Instalacoes/Correcoes no mesmo formato de linhas
+
+---
+
+### Detalhes Tecnicos
+
+1. **Grid template para linha:**
+```css
+grid-template-columns: 28px 60px 1fr 80px 90px 70px 90px 50px
+```
+
+2. **Cores dos badges de tamanho:**
+- P (<=25m²): Cyan `#06b6d4`
+- G (25-50m²): Purple `#8b5cf6`
+- GG (>50m²): Orange `#f97316`
+
+3. **Formato do valor:**
+```typescript
+const formatarValor = (valor: number) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(valor);
+};
+// Ex: R$ 27.000
+```
+
+4. **Avatar de quem carregou:**
+- Se `carregamento_concluido`: mostra foto do usuario
+- Se nao carregado: mostra icone de truck outline em cinza
 
