@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Package, RefreshCw, Search, Factory } from "lucide-react";
+import { Package, RefreshCw, Search, Factory, CheckCircle, Paintbrush, Truck, HardHat, AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,85 @@ import { PedidoCard } from "@/components/pedidos/PedidoCard";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const ITEMS_PER_PAGE = 25;
+
+interface EtapaConfig {
+  id: EtapaPedido;
+  label: string;
+  shortLabel: string;
+  icon: React.ElementType;
+  color: string;
+  bgColor: string;
+}
+
+const ETAPAS_CONFIG: EtapaConfig[] = [
+  { 
+    id: 'aberto', 
+    label: 'Pedidos em Aberto', 
+    shortLabel: 'Aberto',
+    icon: Package, 
+    color: 'text-blue-400', 
+    bgColor: 'bg-blue-500/20' 
+  },
+  { 
+    id: 'em_producao', 
+    label: 'Em Produção', 
+    shortLabel: 'Produção',
+    icon: Factory, 
+    color: 'text-orange-400', 
+    bgColor: 'bg-orange-500/20' 
+  },
+  { 
+    id: 'inspecao_qualidade', 
+    label: 'Inspeção de Qualidade', 
+    shortLabel: 'Qualidade',
+    icon: CheckCircle, 
+    color: 'text-purple-400', 
+    bgColor: 'bg-purple-500/20' 
+  },
+  { 
+    id: 'aguardando_pintura', 
+    label: 'Aguardando Pintura', 
+    shortLabel: 'Pintura',
+    icon: Paintbrush, 
+    color: 'text-pink-400', 
+    bgColor: 'bg-pink-500/20' 
+  },
+  { 
+    id: 'aguardando_coleta', 
+    label: 'Expedição Coleta', 
+    shortLabel: 'Coleta',
+    icon: Truck, 
+    color: 'text-yellow-400', 
+    bgColor: 'bg-yellow-500/20' 
+  },
+  { 
+    id: 'instalacoes', 
+    label: 'Instalações', 
+    shortLabel: 'Instalações',
+    icon: HardHat, 
+    color: 'text-teal-400', 
+    bgColor: 'bg-teal-500/20' 
+  },
+  { 
+    id: 'correcoes', 
+    label: 'Correções', 
+    shortLabel: 'Correções',
+    icon: AlertTriangle, 
+    color: 'text-red-400', 
+    bgColor: 'bg-red-500/20' 
+  },
+  { 
+    id: 'finalizado', 
+    label: 'Finalizados', 
+    shortLabel: 'Finalizado',
+    icon: CheckCircle2, 
+    color: 'text-green-400', 
+    bgColor: 'bg-green-500/20' 
+  },
+];
 
 export default function PedidosAdminMinimalista() {
   const queryClient = useQueryClient();
@@ -20,10 +97,10 @@ export default function PedidosAdminMinimalista() {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [tipoEntrega, setTipoEntrega] = useState<string>("todos");
-  const [currentPageAberto, setCurrentPageAberto] = useState(1);
-  const [currentPageProducao, setCurrentPageProducao] = useState(1);
   const [activeTab, setActiveTab] = useState<string>("aberto");
+  const [currentPages, setCurrentPages] = useState<Record<string, number>>({});
   
+  // Hooks para cada etapa
   const { 
     pedidos: pedidosAberto, 
     isLoading: isLoadingAberto,
@@ -32,6 +109,35 @@ export default function PedidosAdminMinimalista() {
     deletarPedido
   } = usePedidosEtapas("aberto");
   const { pedidos: pedidosProducao, isLoading: isLoadingProducao } = usePedidosEtapas("em_producao");
+  const { pedidos: pedidosQualidade, isLoading: isLoadingQualidade } = usePedidosEtapas("inspecao_qualidade");
+  const { pedidos: pedidosPintura, isLoading: isLoadingPintura } = usePedidosEtapas("aguardando_pintura");
+  const { pedidos: pedidosColeta, isLoading: isLoadingColeta } = usePedidosEtapas("aguardando_coleta");
+  const { pedidos: pedidosInstalacoes, isLoading: isLoadingInstalacoes } = usePedidosEtapas("instalacoes");
+  const { pedidos: pedidosCorrecoes, isLoading: isLoadingCorrecoes } = usePedidosEtapas("correcoes");
+  const { pedidos: pedidosFinalizados, isLoading: isLoadingFinalizados } = usePedidosEtapas("finalizado");
+
+  // Mapeamento de pedidos e loading por etapa
+  const pedidosPorEtapa: Record<string, any[]> = {
+    aberto: pedidosAberto,
+    em_producao: pedidosProducao,
+    inspecao_qualidade: pedidosQualidade,
+    aguardando_pintura: pedidosPintura,
+    aguardando_coleta: pedidosColeta,
+    instalacoes: pedidosInstalacoes,
+    correcoes: pedidosCorrecoes,
+    finalizado: pedidosFinalizados,
+  };
+
+  const loadingPorEtapa: Record<string, boolean> = {
+    aberto: isLoadingAberto,
+    em_producao: isLoadingProducao,
+    inspecao_qualidade: isLoadingQualidade,
+    aguardando_pintura: isLoadingPintura,
+    aguardando_coleta: isLoadingColeta,
+    instalacoes: isLoadingInstalacoes,
+    correcoes: isLoadingCorrecoes,
+    finalizado: isLoadingFinalizados,
+  };
 
   // Handler para avançar etapa
   const handleMoverEtapa = async (
@@ -96,9 +202,9 @@ export default function PedidosAdminMinimalista() {
     }
   };
 
-  // Filtrar pedidos em aberto
-  const pedidosAbertoFiltrados = useMemo(() => {
-    let filtrados = pedidosAberto;
+  // Filtrar pedidos por etapa
+  const filtrarPedidos = (pedidos: any[]) => {
+    let filtrados = pedidos;
 
     if (searchTerm.trim()) {
       const termo = searchTerm.toLowerCase();
@@ -114,30 +220,10 @@ export default function PedidosAdminMinimalista() {
     }
 
     return filtrados;
-  }, [pedidosAberto, searchTerm, tipoEntrega]);
+  };
 
-  // Filtrar pedidos em produção
-  const pedidosProducaoFiltrados = useMemo(() => {
-    let filtrados = pedidosProducao;
-
-    if (searchTerm.trim()) {
-      const termo = searchTerm.toLowerCase();
-      filtrados = filtrados.filter(
-        (p) =>
-          p.numero_pedido?.toLowerCase().includes(termo) ||
-          p.vendas?.cliente_nome?.toLowerCase().includes(termo)
-      );
-    }
-
-    if (tipoEntrega !== "todos") {
-      filtrados = filtrados.filter((p) => p.vendas?.tipo_entrega === tipoEntrega);
-    }
-
-    return filtrados;
-  }, [pedidosProducao, searchTerm, tipoEntrega]);
-
-  // Calcular total de portas para cada etapa
-  const calcularTotalPortas = (pedidos: typeof pedidosAberto) => {
+  // Calcular total de portas
+  const calcularTotalPortas = (pedidos: any[]) => {
     return pedidos.reduce((total, pedido) => {
       const produtos = (pedido.vendas as any)?.produtos_vendas as any[] | undefined;
       if (!produtos) return total;
@@ -150,30 +236,14 @@ export default function PedidosAdminMinimalista() {
     }, 0);
   };
 
-  const totalPortasAberto = useMemo(() => calcularTotalPortas(pedidosAbertoFiltrados), [pedidosAbertoFiltrados]);
-  const totalPortasProducao = useMemo(() => calcularTotalPortas(pedidosProducaoFiltrados), [pedidosProducaoFiltrados]);
-
-  // Paginação para aberto
-  const totalPagesAberto = Math.ceil(pedidosAbertoFiltrados.length / ITEMS_PER_PAGE);
-  const pedidosAbertoPaginados = pedidosAbertoFiltrados.slice(
-    (currentPageAberto - 1) * ITEMS_PER_PAGE,
-    currentPageAberto * ITEMS_PER_PAGE
-  );
-
-  // Paginação para produção
-  const totalPagesProducao = Math.ceil(pedidosProducaoFiltrados.length / ITEMS_PER_PAGE);
-  const pedidosProducaoPaginados = pedidosProducaoFiltrados.slice(
-    (currentPageProducao - 1) * ITEMS_PER_PAGE,
-    currentPageProducao * ITEMS_PER_PAGE
-  );
-
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["pedidos-etapas"] });
-    toast({
-      title: "Atualizado",
-      description: "Dados atualizados com sucesso",
-    });
-  };
+  // Pedidos filtrados por etapa
+  const pedidosFiltradosPorEtapa = useMemo(() => {
+    const resultado: Record<string, any[]> = {};
+    for (const etapa of ETAPAS_CONFIG) {
+      resultado[etapa.id] = filtrarPedidos(pedidosPorEtapa[etapa.id] || []);
+    }
+    return resultado;
+  }, [pedidosPorEtapa, searchTerm, tipoEntrega]);
 
   // Gerar páginas para paginação
   const getPageNumbers = (currentPage: number, totalPages: number) => {
@@ -207,12 +277,127 @@ export default function PedidosAdminMinimalista() {
     return pages;
   };
 
-  const totalPedidos = pedidosAbertoFiltrados.length + pedidosProducaoFiltrados.length;
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["pedidos-etapas"] });
+    toast({
+      title: "Atualizado",
+      description: "Dados atualizados com sucesso",
+    });
+  };
+
+  // Contar total de pedidos ativos (excluindo finalizados)
+  const totalPedidosAtivos = ETAPAS_CONFIG
+    .filter(e => e.id !== 'finalizado')
+    .reduce((sum, etapa) => sum + (pedidosFiltradosPorEtapa[etapa.id]?.length || 0), 0);
+
+  // Renderizar conteúdo de uma etapa
+  const renderEtapaContent = (etapaConfig: EtapaConfig) => {
+    const pedidosFiltrados = pedidosFiltradosPorEtapa[etapaConfig.id] || [];
+    const isLoading = loadingPorEtapa[etapaConfig.id];
+    const currentPage = currentPages[etapaConfig.id] || 1;
+    const totalPages = Math.ceil(pedidosFiltrados.length / ITEMS_PER_PAGE);
+    const pedidosPaginados = pedidosFiltrados.slice(
+      (currentPage - 1) * ITEMS_PER_PAGE,
+      currentPage * ITEMS_PER_PAGE
+    );
+    const totalPortas = calcularTotalPortas(pedidosFiltrados);
+    const Icon = etapaConfig.icon;
+
+    return (
+      <Card className="bg-primary/5 border-primary/10">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-white flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Icon className={`w-5 h-5 ${etapaConfig.color}`} />
+              <span>{etapaConfig.label}</span>
+              <span className="text-sm font-normal text-white/60">
+                ({pedidosFiltrados.length} pedidos • {totalPortas} portas)
+              </span>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${etapaConfig.color.replace('text-', 'border-')}`} />
+            </div>
+          ) : pedidosPaginados.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-white/60">
+              <Icon className="w-12 h-12 mb-4 opacity-50" />
+              <p>Nenhum pedido encontrado nesta etapa</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {pedidosPaginados.map((pedido) => (
+                <PedidoCard
+                  key={pedido.id}
+                  pedido={pedido}
+                  isAberto={etapaConfig.id === 'aberto'}
+                  viewMode="list"
+                  onMoverEtapa={handleMoverEtapa}
+                  onRetrocederEtapa={handleRetrocederEtapa}
+                  onDeletar={etapaConfig.id === 'aberto' ? handleDeletarPedido : undefined}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Paginação */}
+          {totalPages > 1 && (
+            <div className="mt-4">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setCurrentPages(prev => ({
+                        ...prev,
+                        [etapaConfig.id]: Math.max(1, currentPage - 1)
+                      }))}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  
+                  {getPageNumbers(currentPage, totalPages).map((page, index) => (
+                    <PaginationItem key={index}>
+                      {page === 'ellipsis' ? (
+                        <PaginationEllipsis />
+                      ) : (
+                        <PaginationLink
+                          onClick={() => setCurrentPages(prev => ({
+                            ...prev,
+                            [etapaConfig.id]: page as number
+                          }))}
+                          isActive={currentPage === page}
+                          className="cursor-pointer"
+                        >
+                          {page}
+                        </PaginationLink>
+                      )}
+                    </PaginationItem>
+                  ))}
+                  
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setCurrentPages(prev => ({
+                        ...prev,
+                        [etapaConfig.id]: Math.min(totalPages, currentPage + 1)
+                      }))}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <MinimalistLayout 
       title="Pedidos" 
-      subtitle={`${totalPedidos} pedidos ativos`}
+      subtitle={`${totalPedidosAtivos} pedidos ativos`}
       backPath="/administrativo"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
@@ -240,8 +425,7 @@ export default function PedidosAdminMinimalista() {
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
-              setCurrentPageAberto(1);
-              setCurrentPageProducao(1);
+              setCurrentPages({});
             }}
             className="pl-10 bg-primary/5 border-primary/10 text-white placeholder:text-white/40"
           />
@@ -250,8 +434,7 @@ export default function PedidosAdminMinimalista() {
           value={tipoEntrega} 
           onValueChange={(value) => {
             setTipoEntrega(value);
-            setCurrentPageAberto(1);
-            setCurrentPageProducao(1);
+            setCurrentPages({});
           }}
         >
           <SelectTrigger className="w-[160px] bg-primary/5 border-primary/10 text-white">
@@ -265,187 +448,35 @@ export default function PedidosAdminMinimalista() {
         </Select>
       </div>
 
-      {/* Tabs para alternar entre Aberto e Em Produção */}
+      {/* Tabs para alternar entre etapas */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-4 bg-primary/5 border border-primary/10">
-          <TabsTrigger 
-            value="aberto" 
-            className="data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-400"
-          >
-            <Package className="w-4 h-4 mr-2" />
-            Aberto ({pedidosAbertoFiltrados.length})
-          </TabsTrigger>
-          <TabsTrigger 
-            value="producao"
-            className="data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400"
-          >
-            <Factory className="w-4 h-4 mr-2" />
-            Em Produção ({pedidosProducaoFiltrados.length})
-          </TabsTrigger>
-        </TabsList>
+        <ScrollArea className="w-full whitespace-nowrap">
+          <TabsList className="inline-flex w-max mb-4 bg-primary/5 border border-primary/10 p-1">
+            {ETAPAS_CONFIG.map((etapa) => {
+              const Icon = etapa.icon;
+              const count = pedidosFiltradosPorEtapa[etapa.id]?.length || 0;
+              return (
+                <TabsTrigger 
+                  key={etapa.id}
+                  value={etapa.id} 
+                  className={`data-[state=active]:${etapa.bgColor} data-[state=active]:${etapa.color} px-3`}
+                >
+                  <Icon className="w-4 h-4 mr-1.5" />
+                  <span className="hidden sm:inline">{etapa.shortLabel}</span>
+                  <span className="ml-1.5 text-xs opacity-70">({count})</span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
 
-        {/* Tab: Pedidos em Aberto */}
-        <TabsContent value="aberto">
-          <Card className="bg-primary/5 border-primary/10">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-white flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-blue-400" />
-                  <span>Pedidos em Aberto</span>
-                  <span className="text-sm font-normal text-white/60">
-                    ({pedidosAbertoFiltrados.length} pedidos • {totalPortasAberto} portas)
-                  </span>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoadingAberto ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400" />
-                </div>
-              ) : pedidosAbertoPaginados.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-white/60">
-                  <Package className="w-12 h-12 mb-4 opacity-50" />
-                  <p>Nenhum pedido em aberto encontrado</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {pedidosAbertoPaginados.map((pedido) => (
-                    <PedidoCard
-                      key={pedido.id}
-                      pedido={pedido}
-                      isAberto={true}
-                      viewMode="list"
-                      onMoverEtapa={handleMoverEtapa}
-                      onRetrocederEtapa={handleRetrocederEtapa}
-                      onDeletar={handleDeletarPedido}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Paginação */}
-              {totalPagesAberto > 1 && (
-                <div className="mt-4">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => setCurrentPageAberto((p) => Math.max(1, p - 1))}
-                          className={currentPageAberto === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                      
-                      {getPageNumbers(currentPageAberto, totalPagesAberto).map((page, index) => (
-                        <PaginationItem key={index}>
-                          {page === 'ellipsis' ? (
-                            <PaginationEllipsis />
-                          ) : (
-                            <PaginationLink
-                              onClick={() => setCurrentPageAberto(page)}
-                              isActive={currentPageAberto === page}
-                              className="cursor-pointer"
-                            >
-                              {page}
-                            </PaginationLink>
-                          )}
-                        </PaginationItem>
-                      ))}
-                      
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => setCurrentPageAberto((p) => Math.min(totalPagesAberto, p + 1))}
-                          className={currentPageAberto === totalPagesAberto ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Tab: Pedidos em Produção */}
-        <TabsContent value="producao">
-          <Card className="bg-primary/5 border-primary/10">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-white flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Factory className="w-5 h-5 text-orange-400" />
-                  <span>Pedidos em Produção</span>
-                  <span className="text-sm font-normal text-white/60">
-                    ({pedidosProducaoFiltrados.length} pedidos • {totalPortasProducao} portas)
-                  </span>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoadingProducao ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400" />
-                </div>
-              ) : pedidosProducaoPaginados.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-white/60">
-                  <Factory className="w-12 h-12 mb-4 opacity-50" />
-                  <p>Nenhum pedido em produção encontrado</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {pedidosProducaoPaginados.map((pedido) => (
-                    <PedidoCard
-                      key={pedido.id}
-                      pedido={pedido}
-                      isAberto={false}
-                      viewMode="list"
-                      onMoverEtapa={handleMoverEtapa}
-                      onRetrocederEtapa={handleRetrocederEtapa}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Paginação */}
-              {totalPagesProducao > 1 && (
-                <div className="mt-4">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => setCurrentPageProducao((p) => Math.max(1, p - 1))}
-                          className={currentPageProducao === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                      
-                      {getPageNumbers(currentPageProducao, totalPagesProducao).map((page, index) => (
-                        <PaginationItem key={index}>
-                          {page === 'ellipsis' ? (
-                            <PaginationEllipsis />
-                          ) : (
-                            <PaginationLink
-                              onClick={() => setCurrentPageProducao(page)}
-                              isActive={currentPageProducao === page}
-                              className="cursor-pointer"
-                            >
-                              {page}
-                            </PaginationLink>
-                          )}
-                        </PaginationItem>
-                      ))}
-                      
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => setCurrentPageProducao((p) => Math.min(totalPagesProducao, p + 1))}
-                          className={currentPageProducao === totalPagesProducao ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {/* Conteúdo de cada tab */}
+        {ETAPAS_CONFIG.map((etapa) => (
+          <TabsContent key={etapa.id} value={etapa.id}>
+            {renderEtapaContent(etapa)}
+          </TabsContent>
+        ))}
       </Tabs>
     </MinimalistLayout>
   );
