@@ -1,262 +1,172 @@
 
-## Plano: Selecionar Linha do Problema ao Pausar Ordem
+## Plano: Gerenciar Ordem de Pintura ao Retroceder para "Aguardando Pintura"
 
 ### Objetivo
-Permitir que ao pausar uma ordem, o usuario selecione qual linha tem problema OU digite um motivo customizado ("outros"). Exibir essas informacoes na sidebar lateral direita em /fabrica/ordens-pedidos.
+Permitir que o usuario escolha o que acontece com a ordem de pintura ao retroceder um pedido para "Aguardando Pintura", similar ao gerenciamento de ordens de producao quando retorna para "Em Producao".
 
 ---
 
-### Mudanca 1: Adicionar Coluna no Banco de Dados
+### Mudanca 1: Buscar Ordem de Pintura no Hook
 
-**Tipo:** Migration SQL
+**Arquivo:** `src/hooks/useRetrocederPedido.ts`
 
-Adicionar `linha_problema_id` nas tabelas de ordens para referenciar a linha com problema:
+Adicionar busca da ordem de pintura e expandir interface:
+
+```typescript
+interface OrdemProducao {
+  id: string;
+  numero_ordem: string;
+  status: string;
+  tipo: 'soldagem' | 'perfiladeira' | 'separacao' | 'pintura';  // Adicionar pintura
+  pausada?: boolean;
+}
+
+// Na queryFn, adicionar busca de ordem de pintura:
+const { data: pintura } = await supabase
+  .from('ordens_pintura')
+  .select('id, numero_ordem, status, em_backlog')
+  .eq('pedido_id', pedidoId)
+  .maybeSingle();
+
+if (pintura) {
+  ordens.push({
+    id: pintura.id,
+    numero_ordem: pintura.numero_ordem || '',
+    status: pintura.status || 'pendente',
+    tipo: 'pintura',
+    pausada: false,  // ordens_pintura nao tem campo pausada
+  });
+}
+```
+
+---
+
+### Mudanca 2: Expandir Interface OrdemConfig
+
+**Arquivo:** `src/hooks/useRetrocederPedido.ts`
+
+```typescript
+export interface OrdemConfig {
+  tipo: 'soldagem' | 'perfiladeira' | 'separacao' | 'pintura';  // Adicionar pintura
+  acao: 'manter' | 'pausar' | 'reativar' | 'resetar';  // Adicionar resetar
+  justificativa?: string;
+}
+```
+
+---
+
+### Mudanca 3: Atualizar Modal para Mostrar Config de Pintura
+
+**Arquivo:** `src/components/pedidos/RetrocederPedidoUnificadoModal.tsx`
+
+Adicionar UI para gerenciar ordem de pintura quando destino e `aguardando_pintura`:
+
+```typescript
+const LABEL_TIPO_ORDEM: Record<string, string> = {
+  soldagem: 'Soldagem',
+  perfiladeira: 'Perfiladeira',
+  separacao: 'Separacao',
+  pintura: 'Pintura',  // Adicionar
+};
+
+// Filtrar ordem de pintura
+const ordemPintura = ordensProducao.find(o => o.tipo === 'pintura');
+
+// Na construcao de ordensConfigArray:
+const ordensConfigArray: OrdemConfig[] = 
+  etapaDestino === 'em_producao'
+    ? ordensProducao.filter(o => o.tipo !== 'pintura').map(...)
+    : etapaDestino === 'aguardando_pintura' && ordemPintura
+    ? [{ tipo: 'pintura', acao: ordensConfig['pintura'] || 'resetar' }]
+    : [];
+```
+
+UI para aguardando_pintura:
+```tsx
+{etapaDestino === 'aguardando_pintura' && ordemPintura && (
+  <div className="space-y-3">
+    <Label className="text-sm font-medium">Gerenciar Ordem de Pintura:</Label>
+    <div className="border rounded-lg p-3 bg-muted/30">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-medium">
+          Pintura - {ordemPintura.numero_ordem || 'S/N'}
+        </span>
+        <Badge variant="outline" className="text-xs">
+          {STATUS_LABELS[ordemPintura.status] || ordemPintura.status}
+        </Badge>
+      </div>
+      
+      <RadioGroup
+        value={ordensConfig['pintura'] || 'resetar'}
+        onValueChange={(value) => handleOrdemConfigChange('pintura', value)}
+        className="flex flex-col gap-1"
+      >
+        <div className="flex items-center gap-2">
+          <RadioGroupItem value="resetar" id="pintura-resetar" />
+          <Label htmlFor="pintura-resetar" className="text-xs cursor-pointer">
+            Resetar ordem (status pendente, linhas desmarcadas)
+          </Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <RadioGroupItem value="manter" id="pintura-manter" />
+          <Label htmlFor="pintura-manter" className="text-xs cursor-pointer">
+            Manter status atual
+          </Label>
+        </div>
+      </RadioGroup>
+    </div>
+  </div>
+)}
+```
+
+---
+
+### Mudanca 4: Atualizar RPC para Aceitar Config de Pintura
+
+**Arquivo:** Nova migration SQL
+
+Modificar a funcao `retroceder_pedido_unificado` para processar config de pintura:
 
 ```sql
-ALTER TABLE ordens_soldagem 
-ADD COLUMN linha_problema_id UUID REFERENCES linhas_ordens(id) ON DELETE SET NULL;
-
-ALTER TABLE ordens_perfiladeira 
-ADD COLUMN linha_problema_id UUID REFERENCES linhas_ordens(id) ON DELETE SET NULL;
-
-ALTER TABLE ordens_separacao 
-ADD COLUMN linha_problema_id UUID REFERENCES linhas_ordens(id) ON DELETE SET NULL;
-```
-
----
-
-### Mudanca 2: Atualizar AvisoFaltaModal
-
-**Arquivo:** `src/components/production/AvisoFaltaModal.tsx`
-
-Adicionar props para linhas e retornar tambem a linha selecionada:
-
-```typescript
-interface LinhaSimples {
-  id: string;
-  item: string;
-  quantidade: number;
-  tamanho: string | null;
-}
-
-interface AvisoFaltaModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  numeroOrdem: string;
-  linhas?: LinhaSimples[];  // NOVO
-  onConfirm: (justificativa: string, linhaProblemaId?: string) => Promise<void>;  // ATUALIZADO
-  isPausing?: boolean;
-}
-```
-
-UI atualizada:
-- Adicionar Select com opcoes das linhas + "Outros"
-- Se linha selecionada: pre-preencher justificativa com nome do item
-- Se "Outros": mostrar textarea para digitacao livre
-- Retornar linhaProblemaId quando aplicavel
-
-```tsx
-const [tipoProblema, setTipoProblema] = useState<'linha' | 'outros'>('outros');
-const [linhaSelecionada, setLinhaSelecionada] = useState<string | null>(null);
-
-// UI
-<Select value={tipoProblema} onValueChange={...}>
-  <SelectItem value="outros">Outros (digitar motivo)</SelectItem>
-  {linhas.map(linha => (
-    <SelectItem key={linha.id} value={linha.id}>
-      {linha.item} - Qtd: {linha.quantidade}
-    </SelectItem>
-  ))}
-</Select>
-
-{tipoProblema === 'outros' ? (
-  <Textarea ... />
-) : (
-  <div className="bg-amber-50 p-3 rounded">
-    Item selecionado: {linhaInfo.item}
-  </div>
-)}
-```
-
----
-
-### Mudanca 3: Atualizar Hook useOrdemProducao
-
-**Arquivo:** `src/hooks/useOrdemProducao.ts`
-
-Modificar a mutation `pausarOrdem` para aceitar `linhaProblemaId`:
-
-```typescript
-const pausarOrdem = useMutation({
-  mutationFn: async ({ 
-    ordemId, 
-    justificativa,
-    linhaProblemaId  // NOVO
-  }: { 
-    ordemId: string; 
-    justificativa: string;
-    linhaProblemaId?: string;
-  }) => {
-    // ...
-    const { error } = await supabase
-      .from(tabelaOrdem)
-      .update({
-        pausada: true,
-        pausada_em: new Date().toISOString(),
-        justificativa_pausa: justificativa,
-        linha_problema_id: linhaProblemaId || null,  // NOVO
-        tempo_acumulado_segundos: tempoTotal,
-        responsavel_id: null,
-      })
-      .eq('id', ordemId);
-    // ...
-  },
-});
-```
-
----
-
-### Mudanca 4: Atualizar OrdemDetalhesSheet
-
-**Arquivo:** `src/components/production/OrdemDetalhesSheet.tsx`
-
-Passar linhas para o AvisoFaltaModal e atualizar callback:
-
-```typescript
-// Atualizar interface de prop
-onPausarOrdem?: (ordemId: string, justificativa: string, linhaProblemaId?: string) => Promise<void>;
-
-// No AvisoFaltaModal
-<AvisoFaltaModal
-  open={avisoFaltaModalOpen}
-  onOpenChange={setAvisoFaltaModalOpen}
-  numeroOrdem={ordem.numero_ordem}
-  linhas={linhas}  // NOVO - passar linhas da ordem
-  onConfirm={async (justificativa, linhaProblemaId) => {
-    await onPausarOrdem(ordem.id, justificativa, linhaProblemaId);
-    onOpenChange(false);
-  }}
-  isPausing={isPausing}
-/>
-```
-
----
-
-### Mudanca 5: Atualizar Paginas de Producao
-
-**Arquivos:** 
-- `src/pages/ProducaoPerfiladeira.tsx`
-- `src/pages/fabrica/producao/SoldaMinimalista.tsx`
-- etc.
-
-Atualizar `handlePausarOrdem` para aceitar o novo parametro:
-
-```typescript
-const handlePausarOrdem = async (ordemId: string, justificativa: string, linhaProblemaId?: string) => {
-  await pausarOrdem.mutateAsync({ ordemId, justificativa, linhaProblemaId });
-  setSheetOpen(false);
-};
-```
-
----
-
-### Mudanca 6: Atualizar Interface OrdemStatus
-
-**Arquivo:** `src/hooks/useOrdensPorPedido.ts`
-
-Adicionar informacao da linha problema:
-
-```typescript
-export interface LinhaProblemaInfo {
-  id: string;
-  item: string;
-  quantidade: number;
-  tamanho: string | null;
-}
-
-export interface OrdemStatus {
-  // ... campos existentes
-  pausada: boolean;
-  justificativa_pausa: string | null;
-  pausada_em: string | null;
-  linha_problema: LinhaProblemaInfo | null;  // NOVO
-}
-```
-
----
-
-### Mudanca 7: Atualizar Queries do Hook
-
-**Arquivo:** `src/hooks/useOrdensPorPedido.ts`
-
-Buscar `linha_problema_id` e dados da linha:
-
-```typescript
-// Nas queries de ordens
-supabase
-  .from('ordens_soldagem')
-  .select(`
-    id, pedido_id, numero_ordem, status, responsavel_id, 
-    pausada, justificativa_pausa, pausada_em,
-    linha_problema_id,
-    linha_problema:linha_problema_id (id, item, quantidade, tamanho)
-  `)
-  .in('pedido_id', pedidoIds),
-```
-
-No `criarOrdemStatus`:
-
-```typescript
-const criarOrdemStatus = (tipo: TipoOrdem): OrdemStatus => {
-  const ordem = ordensDosPedido[tipo];
-  const linhaProblema = ordem?.linha_problema;
-  return {
-    // ... campos existentes
-    linha_problema: linhaProblema ? {
-      id: linhaProblema.id,
-      item: linhaProblema.item,
-      quantidade: linhaProblema.quantidade,
-      tamanho: linhaProblema.tamanho,
-    } : null,
-  };
-};
-```
-
----
-
-### Mudanca 8: Exibir na Sidebar OrdemLinhasSheet
-
-**Arquivo:** `src/components/fabrica/OrdemLinhasSheet.tsx`
-
-Adicionar secao de aviso quando ordem pausada:
-
-```tsx
-{/* Alerta de ordem pausada */}
-{ordem?.pausada && (
-  <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-    <div className="flex items-center gap-2 mb-2">
-      <Pause className="w-4 h-4 text-red-400" />
-      <span className="text-sm font-medium text-red-300">Ordem Pausada</span>
-    </div>
-    
-    {ordem.linha_problema && (
-      <div className="mb-2 p-2 rounded bg-red-500/20">
-        <p className="text-xs text-red-200 font-medium">Linha com problema:</p>
-        <p className="text-sm text-white">
-          {ordem.linha_problema.item} - Qtd: {ordem.linha_problema.quantidade}
-          {ordem.linha_problema.tamanho && ` - Tam: ${ordem.linha_problema.tamanho}`}
-        </p>
-      </div>
-    )}
-    
-    {ordem.justificativa_pausa && (
-      <div className="p-2 rounded bg-zinc-800/50">
-        <p className="text-xs text-zinc-400 font-medium">Motivo:</p>
-        <p className="text-sm text-zinc-300">{ordem.justificativa_pausa}</p>
-      </div>
-    )}
-  </div>
-)}
+-- CASO 3: AGUARDANDO_PINTURA - agora com config
+ELSIF p_etapa_destino = 'aguardando_pintura' THEN
+  -- Excluir ordens posteriores
+  DELETE FROM ordens_carregamento WHERE pedido_id = p_pedido_id;
+  DELETE FROM instalacoes WHERE pedido_id = p_pedido_id;
+  
+  -- Processar config de pintura se fornecida
+  v_config := (SELECT jsonb_array_elements(p_ordens_config) 
+               WHERE jsonb_array_elements->>'tipo' = 'pintura' LIMIT 1);
+  v_acao := COALESCE(v_config->>'acao', 'resetar');
+  
+  IF v_acao = 'resetar' OR v_acao IS NULL THEN
+    -- Comportamento padrao: resetar ordem
+    IF NOT EXISTS (SELECT 1 FROM ordens_pintura WHERE pedido_id = p_pedido_id) THEN
+      PERFORM criar_ordem_pintura(p_pedido_id);
+    ELSE
+      UPDATE ordens_pintura SET 
+        status = 'pendente', 
+        historico = false, 
+        em_backlog = true,
+        data_conclusao = NULL
+      WHERE pedido_id = p_pedido_id;
+      
+      UPDATE linhas_ordens SET concluida = false 
+      WHERE pedido_id = p_pedido_id AND tipo_ordem = 'pintura';
+    END IF;
+  ELSIF v_acao = 'manter' THEN
+    -- Manter status atual da ordem
+    UPDATE ordens_pintura SET em_backlog = true
+    WHERE pedido_id = p_pedido_id;
+  END IF;
+  
+  -- Atualizar pedido com backlog
+  UPDATE pedidos_producao SET
+    etapa_atual = 'aguardando_pintura',
+    em_backlog = TRUE,
+    updated_at = now()
+  WHERE id = p_pedido_id;
+END IF;
 ```
 
 ---
@@ -265,52 +175,80 @@ Adicionar secao de aviso quando ordem pausada:
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `supabase/migrations/xxx.sql` | Adicionar coluna `linha_problema_id` |
-| `src/components/production/AvisoFaltaModal.tsx` | Select de linhas + opcao "Outros" |
-| `src/hooks/useOrdemProducao.ts` | Aceitar `linhaProblemaId` na mutation |
-| `src/components/production/OrdemDetalhesSheet.tsx` | Passar linhas ao modal |
-| `src/pages/ProducaoPerfiladeira.tsx` | Atualizar handler |
-| `src/pages/fabrica/producao/SoldaMinimalista.tsx` | Atualizar handler |
-| `src/hooks/useOrdensPorPedido.ts` | Buscar e mapear linha_problema |
-| `src/components/fabrica/OrdemLinhasSheet.tsx` | Exibir alerta com linha/motivo |
+| `src/hooks/useRetrocederPedido.ts` | Buscar ordem de pintura, expandir tipos |
+| `src/components/pedidos/RetrocederPedidoUnificadoModal.tsx` | UI para gerenciar ordem de pintura |
+| `supabase/migrations/xxx.sql` | Atualizar RPC para processar config de pintura |
 
 ---
 
 ### Fluxo Visual
 
 ```text
-+----------------------------------+
-|   Aviso de Falta - Modal         |
-+----------------------------------+
-| Selecione o problema:            |
-| [v Linha: Perfil L 40mm      ]   |
-|                                  |
-|  ou                              |
-|                                  |
-| [v Outros (digitar motivo)   ]   |
-| +------------------------------+ |
-| | Falta de material...         | |
-| +------------------------------+ |
-|                                  |
-| [Cancelar]  [Pausar Ordem]       |
-+----------------------------------+
++------------------------------------------+
+|   Retornar Pedido - Modal                |
++------------------------------------------+
+| Pedido #001-01/26                        |
+|                                          |
+| Etapa Atual: [Instalacoes]               |
+|                                          |
+| Retornar para: [Aguardando Pintura v]    |
+|                                          |
+| Justificativa: *                         |
+| +--------------------------------------+ |
+| | Problemas na pintura identificados   | |
+| +--------------------------------------+ |
+|                                          |
+| Gerenciar Ordem de Pintura:              |
+| +--------------------------------------+ |
+| | Pintura - OPT-2026-0001  [Concluido] | |
+| |                                      | |
+| | (o) Resetar ordem                    | |
+| |     Status pendente, linhas reset   | |
+| | ( ) Manter status atual              | |
+| +--------------------------------------+ |
+|                                          |
+| +--------------------------------------+ |
+| | i O que acontecera:                  | |
+| | - Ordem de instalacao sera excluida  | |
+| | - Ordem de pintura sera [resetada]   | |
+| | - Pedido ficara em BACKLOG           | |
+| +--------------------------------------+ |
+|                                          |
+| [Cancelar]  [Confirmar Retorno]          |
++------------------------------------------+
+```
 
-+----------------------------------+
-|   OrdemLinhasSheet (Sidebar)     |
-+----------------------------------+
-| Soldagem #OSL-2026-0008          |
-|                                  |
-| +------------------------------+ |
-| | ⏸️ Ordem Pausada              | |
-| | Linha com problema:           | |
-| | Perfil L 40mm - Qtd: 5        | |
-| |                               | |
-| | Motivo:                       | |
-| | Aguardando reposicao...       | |
-| +------------------------------+ |
-|                                  |
-| [ ] Item 1                       |
-| [x] Item 2                       |
-| [ ] Item 3                       |
-+----------------------------------+
+---
+
+### Secao Tecnica
+
+**Tipos Atualizados:**
+```typescript
+// useRetrocederPedido.ts
+export interface OrdemConfig {
+  tipo: 'soldagem' | 'perfiladeira' | 'separacao' | 'pintura';
+  acao: 'manter' | 'pausar' | 'reativar' | 'resetar';
+  justificativa?: string;
+}
+```
+
+**Logica de Construcao do Array:**
+```typescript
+const ordensConfigArray: OrdemConfig[] = (() => {
+  if (etapaDestino === 'em_producao') {
+    return ordensProducao
+      .filter(o => o.tipo !== 'pintura')
+      .map(ordem => ({
+        tipo: ordem.tipo,
+        acao: ordensConfig[ordem.tipo] || 'manter',
+      }));
+  }
+  if (etapaDestino === 'aguardando_pintura' && ordemPintura) {
+    return [{
+      tipo: 'pintura' as const,
+      acao: (ordensConfig['pintura'] || 'resetar') as OrdemConfig['acao'],
+    }];
+  }
+  return [];
+})();
 ```
