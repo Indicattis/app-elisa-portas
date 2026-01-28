@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, RefreshCw, Search, Filter, MapPin, Truck, Package, Hammer, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,12 +27,14 @@ import { OrdemInstalacaoRow } from "@/components/instalacoes/OrdemInstalacaoRow"
 import { NeoInstalacaoRow } from "@/components/instalacoes/NeoInstalacaoRow";
 import { NeoCorrecaoRow } from "@/components/instalacoes/NeoCorrecaoRow";
 import { PedidoDetalhesSheet } from "@/components/pedidos/PedidoDetalhesSheet";
+import { RetrocederPedidoUnificadoModal } from "@/components/pedidos/RetrocederPedidoUnificadoModal";
 import { NeoInstalacao } from "@/types/neoInstalacao";
 import { NeoCorrecao } from "@/types/neoCorrecao";
 import { cn } from "@/lib/utils";
 
 export default function OrdensInstalacoesLogistica() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterEquipe, setFilterEquipe] = useState<string>("todas");
@@ -52,6 +55,12 @@ export default function OrdensInstalacoesLogistica() {
   // Estado para a downbar de detalhes do pedido
   const [selectedPedido, setSelectedPedido] = useState<any | null>(null);
   const [showDetalhes, setShowDetalhes] = useState(false);
+
+  // Estado para o modal de retroceder
+  const [retrocederDialog, setRetrocederDialog] = useState<{
+    open: boolean;
+    ordem: OrdemInstalacao | null;
+  }>({ open: false, ordem: null });
 
   const { ordens, isLoading, concluirOrdem, isConcluindo } = useOrdensInstalacao();
   
@@ -162,6 +171,11 @@ export default function OrdensInstalacoesLogistica() {
       setSelectedPedido(pedidoForSheet);
       setShowDetalhes(true);
     }
+  };
+
+  // Handler para retroceder pedido
+  const handleRetroceder = (ordem: OrdemInstalacao) => {
+    setRetrocederDialog({ open: true, ordem });
   };
 
   const breadcrumbItems = [
@@ -285,6 +299,7 @@ export default function OrdensInstalacoesLogistica() {
                     key={ordem.id}
                     ordem={ordem}
                     onConcluir={(o) => setConfirmDialog({ open: true, ordem: o })}
+                    onRetroceder={handleRetroceder}
                     isConcluindo={isConcluindo}
                     showCarregador={false}
                     onClick={handleOpenDetalhes}
@@ -320,6 +335,7 @@ export default function OrdensInstalacoesLogistica() {
                     key={ordem.id}
                     ordem={ordem}
                     onConcluir={(o) => setConfirmDialog({ open: true, ordem: o })}
+                    onRetroceder={handleRetroceder}
                     isConcluindo={isConcluindo}
                     showCarregador={true}
                     onClick={handleOpenDetalhes}
@@ -494,6 +510,23 @@ export default function OrdensInstalacoesLogistica() {
           pedido={selectedPedido} 
           open={showDetalhes} 
           onOpenChange={setShowDetalhes} 
+        />
+      )}
+
+      {/* Modal de Retroceder Pedido */}
+      {retrocederDialog.ordem?.pedido && (
+        <RetrocederPedidoUnificadoModal
+          open={retrocederDialog.open}
+          onOpenChange={(open) => setRetrocederDialog({ open, ordem: open ? retrocederDialog.ordem : null })}
+          pedido={{
+            id: retrocederDialog.ordem.pedido.id,
+            numero_pedido: retrocederDialog.ordem.pedido.numero_pedido,
+            etapa_atual: retrocederDialog.ordem.pedido.etapa_atual as any,
+            vendas: retrocederDialog.ordem.venda
+          }}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['ordens-instalacao'] });
+          }}
         />
       )}
     </MinimalistLayout>

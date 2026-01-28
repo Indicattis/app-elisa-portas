@@ -12,7 +12,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
 import { AcaoEtapaModal } from "./AcaoEtapaModal";
-import { RetrocederEtapaModal } from "./RetrocederEtapaModal";
+import { RetrocederPedidoUnificadoModal } from "./RetrocederPedidoUnificadoModal";
 import { AvancarQualidadeModal } from "./AvancarQualidadeModal";
 import { ConfirmarAvancoModal } from "./ConfirmarAvancoModal";
 import { ProcessoAvancoModal, Processo } from "./ProcessoAvancoModal";
@@ -1504,7 +1504,7 @@ export function PedidoCard({
 
         <AcaoEtapaModal pedido={pedido} open={showAcaoEtapa} onOpenChange={setShowAcaoEtapa} onAvancar={onMoverEtapa || (() => {})} />
 
-        <RetrocederEtapaModal pedido={pedido} open={showRetrocederEtapa} onOpenChange={setShowRetrocederEtapa} onConfirmar={onRetrocederEtapa || (() => {})} />
+        <RetrocederPedidoUnificadoModal pedido={pedido} open={showRetrocederEtapa} onOpenChange={setShowRetrocederEtapa} />
 
         <VisualizarBacklogModal pedido={pedido} open={showVisualizarBacklog} onOpenChange={setShowVisualizarBacklog} />
 
@@ -1856,7 +1856,7 @@ export function PedidoCard({
 
       <AcaoEtapaModal pedido={pedido} open={showAcaoEtapa} onOpenChange={setShowAcaoEtapa} onAvancar={onMoverEtapa || (() => {})} />
 
-      <RetrocederEtapaModal pedido={pedido} open={showRetrocederEtapa} onOpenChange={setShowRetrocederEtapa} onConfirmar={onRetrocederEtapa || (() => {})} />
+      <RetrocederPedidoUnificadoModal pedido={pedido} open={showRetrocederEtapa} onOpenChange={setShowRetrocederEtapa} />
 
       <VisualizarBacklogModal pedido={pedido} open={showVisualizarBacklog} onOpenChange={setShowVisualizarBacklog} />
 
