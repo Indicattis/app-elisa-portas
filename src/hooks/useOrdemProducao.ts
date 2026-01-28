@@ -501,6 +501,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       }
 
       // Atualizar ordem como concluída E enviar para histórico
+      // IMPORTANTE: Resetar campos de pausa para garantir que auto-avanço funcione
       const { error } = await supabase
         .from(tabelaOrdem)
         .update({ 
@@ -508,6 +509,10 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
           data_conclusao: new Date().toISOString(),
           tempo_conclusao_segundos,
           historico: true, // Enviar diretamente para histórico
+          pausada: false,
+          pausada_em: null,
+          justificativa_pausa: null,
+          linha_problema_id: null,
         })
         .eq('id', ordemId);
         
