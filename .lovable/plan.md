@@ -1,190 +1,154 @@
 
-# Plano: Melhorias nas Listagens de Expedição
+
+# Plano: Tooltip com Detalhes de Desconto em /direcao/vendas
 
 ## Visao Geral
 
-Implementar tres melhorias na pagina `/logistica/expedicao`:
+Adicionar um tooltip informativo na coluna "Desconto" da tabela de vendas que exibe:
+- Percentual de desconto aplicado
+- Tipo de autorizacao (Responsavel do Setor ou Master)
+- Nome de quem autorizou o desconto
 
-1. **Adicionar coluna de vendedor/criador** nas listagens
-2. **Abrir downbar ao clicar** nos elementos das tabelas
-3. **Substituir input de hora por mini calendario** no modal de agendamento
+## Analise Atual
+
+### Estrutura de Dados
+
+A tabela `vendas_autorizacoes_desconto` contem:
+
+| Campo | Descricao |
+|-------|-----------|
+| `venda_id` | ID da venda vinculada |
+| `autorizado_por` | UUID do usuario autorizador |
+| `solicitado_por` | UUID do solicitante |
+| `percentual_desconto` | % de desconto autorizado |
+| `tipo_autorizacao` | `responsavel_setor` ou `master` |
+| `senha_usada` | Qual senha foi usada |
+
+### Query Atual
+
+A query do `useVendas` nao inclui os dados de autorizacao:
+
+```typescript
+.select(`
+  *,
+  produtos:produtos_vendas(...),
+  atendente:admin_users!atendente_id(...),
+  notas_fiscais(...)
+`)
+```
 
 ---
 
-## 1. Adicionar Coluna do Vendedor/Criador
+## Solucao
 
-### Fonte de Dados
+### 1. Atualizar Query no `useVendas.ts`
 
-| Tipo de Item | Fonte do Responsavel |
-|--------------|---------------------|
-| Ordens de Carregamento | `vendas.atendente_id` -> join com `admin_users` |
-| Instalacoes (da tabela instalacoes) | `vendas.atendente_id` -> join com `admin_users` |
-| Neo Instalacoes | `neo_instalacoes.created_by` -> join com `admin_users` |
-| Neo Correcoes | `neo_correcoes.created_by` -> join com `admin_users` |
-
-### Alteracoes Necessarias
-
-#### 1.1. Atualizar `useOrdensCarregamentoUnificadas.ts`
-
-Modificar a query para incluir o atendente (vendedor) da venda:
+Adicionar join com `vendas_autorizacoes_desconto` e buscar nome do autorizador:
 
 ```typescript
-// Na query de vendas, adicionar:
-venda:vendas(
-  id,
-  ...campos_existentes,
-  atendente:admin_users!vendas_atendente_id_fkey(
-    user_id,
-    nome,
-    foto_perfil_url
+.select(`
+  *,
+  produtos:produtos_vendas(
+    *,
+    cor:catalogo_cores(nome, codigo_hex)
+  ),
+  atendente:admin_users!atendente_id(nome, foto_perfil_url),
+  notas_fiscais(id, status, tipo),
+  autorizacao_desconto:vendas_autorizacoes_desconto(
+    id,
+    percentual_desconto,
+    tipo_autorizacao,
+    autorizado_por,
+    autorizador:admin_users!vendas_autorizacoes_desconto_autorizado_por_fkey(
+      nome,
+      foto_perfil_url
+    )
   )
-)
+`)
 ```
 
-Adicionar o tipo `VendedorInfo` na interface `OrdemCarregamentoUnificada`:
+### 2. Atualizar Componente `VendasDirecao.tsx`
+
+#### 2.1. Importar componentes de Tooltip
 
 ```typescript
-vendedor?: {
-  id: string;
-  nome: string;
-  foto_perfil_url: string | null;
-} | null;
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
 ```
 
-#### 1.2. Atualizar `OrdensCarregamentoDisponiveis.tsx`
+#### 2.2. Modificar a celula de desconto no `renderCell`
 
-- Adicionar nova coluna "Vendedor" na tabela
-- Exibir avatar pequeno + nome truncado do vendedor
-- Largura da coluna: ~120px
-
-#### 1.3. Atualizar `OrdensCarregamentoDisponiveisMobile.tsx`
-
-- Adicionar avatar do vendedor no card mobile
-
-#### 1.4. Atualizar `NeoServicosDisponiveis.tsx`
-
-- Adicionar coluna "Criador" na tabela
-- Buscar dados do criador via `created_by` (ja existe na query de `useNeoInstalacoesSemData` para listagem)
-- Exibir avatar + nome do criador
-
----
-
-## 2. Abrir Downbar ao Clicar no Elemento
-
-### Componentes Afetados
-
-| Componente | Downbar Existente |
-|------------|-------------------|
-| `OrdensCarregamentoDisponiveis.tsx` | `OrdemCarregamentoDetails` |
-| `NeoServicosDisponiveis.tsx` | `NeoInstalacaoDetails` / `NeoCorrecaoDetails` |
-
-### Alteracoes
-
-#### 2.1. `OrdensCarregamentoDisponiveis.tsx`
-
-- Adicionar state para `selectedOrdem` e `detailsOpen`
-- Transformar a row da tabela em clicavel (exceto o botao "Agendar")
-- Ao clicar na row, abrir `OrdemCarregamentoDetails`
-- Importar e renderizar o componente `OrdemCarregamentoDetails`
+Transformar o case `'desconto'` para incluir um Tooltip quando houver desconto:
 
 ```typescript
-// Novos states
-const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamentoUnificada | null>(null);
-const [detailsOpen, setDetailsOpen] = useState(false);
-
-// Handler
-const handleOrdemClick = (ordem: OrdemCarregamentoUnificada) => {
-  setSelectedOrdem(ordem);
-  setDetailsOpen(true);
-};
-```
-
-#### 2.2. `NeoServicosDisponiveis.tsx`
-
-- Adicionar states para Neo Instalacao e Neo Correcao details
-- Ao clicar na row, identificar o tipo e abrir o downbar correspondente
-- Importar e renderizar `NeoInstalacaoDetails` e `NeoCorrecaoDetails`
-
----
-
-## 3. Modal de Agendamento com Mini Calendario
-
-### Arquivos Afetados
-
-- `AdicionarOrdemCalendarioModal.tsx` (ordens de carregamento)
-- `NeoServicosDisponiveis.tsx` (neo services - modal interno)
-
-### Alteracoes em `AdicionarOrdemCalendarioModal.tsx`
-
-#### 3.1. Remover Input de Hora
-
-O input de hora ja e ocultado para instalacoes (linha 368-378). Para entregas, a hora tambem deve ser removida conforme solicitado.
-
-#### 3.2. Adicionar State para Data Selecionada
-
-```typescript
-const [dataSelecionada, setDataSelecionada] = useState<Date | undefined>(undefined);
-```
-
-#### 3.3. Substituir a data fixa por mini calendario
-
-Usar o componente `Calendar` do shadcn:
-
-```typescript
-import { Calendar } from "@/components/ui/calendar";
-
-// Remover input de hora completamente
-// Adicionar calendario inline:
-<div className="space-y-2">
-  <Label>Data do Carregamento *</Label>
-  <div className="border rounded-lg p-2">
-    <Calendar
-      mode="single"
-      selected={dataSelecionada}
-      onSelect={setDataSelecionada}
-      locale={ptBR}
-      className="pointer-events-auto"
-      disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
-    />
-  </div>
-</div>
-```
-
-#### 3.4. Atualizar handleConfirm
-
-Usar a data selecionada do calendario ao inves de `dataSelecionada` (prop):
-
-```typescript
-const handleConfirm = async () => {
-  if (!dataSelecionada) {
-    toast.error("Selecione uma data");
-    return;
+case 'desconto':
+  const desconto = calcularDescontoTotal();
+  const autorizacao = venda.autorizacao_desconto?.[0];
+  
+  if (desconto <= 0) {
+    return <span className="text-[10px] md:text-sm text-white/60">-</span>;
   }
-  // ... resto da logica
-  await onConfirm({
-    // ...
-    data_carregamento: format(dataSelecionada, "yyyy-MM-dd"),
-    hora: "08:00", // Hora fixa padrao
-    // ...
-  });
-};
+  
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="text-[10px] md:text-sm text-red-400 cursor-help underline decoration-dotted">
+          -{formatCurrency(desconto)}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="bg-zinc-900 border-zinc-700 p-3 max-w-xs">
+        <div className="space-y-2">
+          <div className="text-sm font-medium text-white">
+            Detalhes do Desconto
+          </div>
+          <div className="text-xs space-y-1">
+            <p className="text-white/70">
+              <span className="text-white/50">Valor:</span> {formatCurrency(desconto)}
+            </p>
+            {autorizacao && (
+              <>
+                <p className="text-white/70">
+                  <span className="text-white/50">Percentual:</span>{' '}
+                  {autorizacao.percentual_desconto.toFixed(2)}%
+                </p>
+                <p className="text-white/70">
+                  <span className="text-white/50">Tipo:</span>{' '}
+                  {autorizacao.tipo_autorizacao === 'master' 
+                    ? 'Senha Master' 
+                    : 'Responsavel do Setor'}
+                </p>
+                <p className="text-white/70">
+                  <span className="text-white/50">Autorizado por:</span>{' '}
+                  {autorizacao.autorizador?.nome || 'Nao informado'}
+                </p>
+              </>
+            )}
+            {!autorizacao && (
+              <p className="text-white/50 italic">
+                Sem autorizacao registrada
+              </p>
+            )}
+          </div>
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
 ```
 
-### Alteracoes em `NeoServicosDisponiveis.tsx`
+#### 2.3. Envolver a tabela com TooltipProvider
 
-O modal interno ja usa apenas data (sem hora). Substituir o input `type="date"` por um mini calendario:
+Garantir que a tabela esteja dentro de um `TooltipProvider`:
 
 ```typescript
-<div className="space-y-2">
-  <Label>Data *</Label>
-  <Calendar
-    mode="single"
-    selected={dataAgendamento ? new Date(dataAgendamento) : undefined}
-    onSelect={(date) => setDataAgendamento(date ? format(date, 'yyyy-MM-dd') : '')}
-    locale={ptBR}
-    className="pointer-events-auto rounded-md border"
-  />
-</div>
+<TooltipProvider delayDuration={200}>
+  <Table>
+    {/* ... conteudo da tabela */}
+  </Table>
+</TooltipProvider>
 ```
 
 ---
@@ -193,26 +157,34 @@ O modal interno ja usa apenas data (sem hora). Substituir o input `type="date"` 
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `src/hooks/useOrdensCarregamentoUnificadas.ts` | Adicionar join com `admin_users` para vendedor |
-| `src/types/ordemCarregamentoUnificada.ts` | Adicionar tipo `vendedor` na interface (se existir) |
-| `src/components/expedicao/OrdensCarregamentoDisponiveis.tsx` | Adicionar coluna vendedor + clique para downbar |
-| `src/components/expedicao/OrdensCarregamentoDisponiveisMobile.tsx` | Adicionar avatar vendedor |
-| `src/components/expedicao/NeoServicosDisponiveis.tsx` | Adicionar coluna criador + clique para downbar + calendario no modal |
-| `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx` | Remover hora + adicionar mini calendario |
+| `src/hooks/useVendas.ts` | Adicionar join com `vendas_autorizacoes_desconto` e `admin_users` |
+| `src/pages/direcao/VendasDirecao.tsx` | Importar Tooltip e modificar celula de desconto |
 
 ---
 
-## Detalhes Tecnicos
+## Resultado Visual
 
-### Busca de Criador para Neo Services
+Ao passar o mouse sobre o valor de desconto na tabela:
 
-Os hooks `useNeoInstalacoesSemData` e `useNeoCorrecoesSemData` precisam ser atualizados para buscar os dados do criador (`created_by` -> `admin_users`), similar ao que ja existe em `useNeoInstalacoesListagem`.
+```
++----------------------------------+
+|    Detalhes do Desconto          |
+|----------------------------------|
+| Valor: -R$ 500,00                |
+| Percentual: 14.50%               |
+| Tipo: Senha Master               |
+| Autorizado por: Luan Pescador    |
++----------------------------------+
+```
 
-### Hora Padrao
+Para vendas sem autorizacao registrada (descontos dentro do limite automatico):
 
-Conforme regra de negocio existente (`business-rules/installations-date-only-policy`), a hora "08:00" e usada como valor padrao quando o campo de hora e oculto.
-
-### Compatibilidade de Tipos
-
-O componente `OrdemCarregamentoDetails` espera um tipo `OrdemCarregamento`. Sera necessario adaptar ou criar um tipo compativel para `OrdemCarregamentoUnificada`.
+```
++----------------------------------+
+|    Detalhes do Desconto          |
+|----------------------------------|
+| Valor: -R$ 100,00                |
+| Sem autorizacao registrada       |
++----------------------------------+
+```
 
