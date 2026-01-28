@@ -1,60 +1,112 @@
 
 
-## Plano: Corrigir Ordem OSE-2026-0026 Marcada Como Historico
+## Plano: Corrigir Bug de Avanço Automático para Ordens Pausadas Concluídas
 
-### Diagnostico
+### Diagnóstico
 
-A ordem **#OSE-2026-0026** esta pausada e com status `pendente`, mas nao aparece na pagina `/producao/separacao` porque foi marcada incorretamente como **historico**.
+O pedido **#0081** não avançou automaticamente após a conclusão da ordem de separação porque:
 
-| Campo | Valor |
-|-------|-------|
-| `status` | pendente |
-| `pausada` | true |
-| `justificativa_pausa` | Falta de motor 800AC |
-| **`historico`** | **true** (PROBLEMA!) |
+1. **Estado atual da ordem OSE-2026-0026:**
+   - `status: concluido`
+   - `pausada: true` (PROBLEMA!)
+   - `historico: true`
 
-### Logica de Filtro Atual
+2. **Lógica de verificação no auto-avanço:**
+   ```typescript
+   // usePedidoAutoAvanco.ts linha 50-51
+   if (ordens.some(o => o.pausada === true)) {
+     return false; // Bloqueia avanço
+   }
+   ```
 
-O hook `useOrdemProducao.ts` busca apenas ordens com `historico = false`:
+3. **Causa raiz:** Ao concluir uma ordem no `useOrdemProducao.ts`, o código não reseta o campo `pausada`:
+   ```typescript
+   // Linha 504-512
+   .update({ 
+     status: 'concluido',
+     data_conclusao: new Date().toISOString(),
+     historico: true,
+     // FALTA: pausada: false
+   })
+   ```
+
+### Solução
+
+#### 1. Corrigir a mutação `concluirOrdem` no hook
+
+**Arquivo:** `src/hooks/useOrdemProducao.ts`
+
+Adicionar reset dos campos de pausa ao concluir a ordem:
 
 ```typescript
-// Linha 117
-.eq('historico', false)
+// Atualizar ordem como concluída E enviar para histórico
+const { error } = await supabase
+  .from(tabelaOrdem)
+  .update({ 
+    status: 'concluido',
+    data_conclusao: new Date().toISOString(),
+    tempo_conclusao_segundos,
+    historico: true,
+    // ADICIONAR:
+    pausada: false,
+    pausada_em: null,
+    justificativa_pausa: null,
+    linha_problema_id: null,
+  })
+  .eq('id', ordemId);
 ```
 
-Depois filtra as ordens por status `pendente`:
+#### 2. Corrigir dados existentes no banco
 
-```typescript
-// Linha 558-559
-const ordensAFazer = ordens
-  .filter(o => o.status === 'pendente')
-```
-
-Como a ordem esta com `historico = true`, ela e excluida antes mesmo de chegar ao filtro de status.
-
-### Correcao Necessaria
-
-Executar uma migracao SQL para corrigir o campo `historico` desta ordem especifica:
+Executar SQL para resetar `pausada` em todas as ordens concluídas que ainda estão marcadas como pausadas:
 
 ```sql
+-- Corrigir ordens de separação
 UPDATE public.ordens_separacao 
-SET historico = false
-WHERE numero_ordem = 'OSE-2026-0026';
+SET pausada = false, pausada_em = NULL, justificativa_pausa = NULL, linha_problema_id = NULL
+WHERE status = 'concluido' AND pausada = true;
+
+-- Corrigir ordens de soldagem (preventivo)
+UPDATE public.ordens_soldagem 
+SET pausada = false, pausada_em = NULL, justificativa_pausa = NULL, linha_problema_id = NULL
+WHERE status = 'concluido' AND pausada = true;
+
+-- Corrigir ordens de perfiladeira (preventivo)
+UPDATE public.ordens_perfiladeira 
+SET pausada = false, pausada_em = NULL, justificativa_pausa = NULL, linha_problema_id = NULL
+WHERE status = 'concluido' AND pausada = true;
 ```
 
-### Prevencao de Recorrencia
+#### 3. Avançar o pedido manualmente
 
-Idealmente, ao pausar uma ordem, o sistema deveria garantir que `historico` nunca seja marcado como `true`. No entanto, isso nao e o comportamento atual - a ordem provavelmente foi marcada como historico manualmente ou por outra acao.
+Após as correções, executar o avanço do pedido #0081 de `em_producao` para `inspecao_qualidade`:
 
-Sugestao para implementacao futura: Adicionar uma validacao no banco (trigger) que impeca ordens pausadas de serem marcadas como historico.
+```sql
+UPDATE public.pedidos_producao 
+SET etapa_atual = 'inspecao_qualidade'
+WHERE id = '1ed5836f-9448-4828-88b7-7f2aa8c74a71';
+```
 
 ### Arquivos a Modificar
 
-| Tipo | Descricao |
-|------|-----------|
-| SQL Migration | Corrigir `historico = false` para OSE-2026-0026 |
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/hooks/useOrdemProducao.ts` | Adicionar reset de pausada na mutação concluirOrdem |
+| SQL Migration | Corrigir dados existentes e avançar pedido |
 
-### Resultado Esperado
+### Fluxo Corrigido
 
-Apos a correcao, a ordem **#OSE-2026-0026** aparecera na pagina `/producao/separacao` com o badge **PAUSADA** visivel, permitindo que operadores a recapturem.
+```text
+Antes (bug):
+  Ordem pausada → Concluir → status=concluido, pausada=true → Auto-avanço bloqueado
+
+Depois (fix):
+  Ordem pausada → Concluir → status=concluido, pausada=false → Auto-avanço funciona
+```
+
+### Impacto
+
+- Todas as futuras ordens pausadas que forem concluídas terão o flag `pausada` resetado
+- Pedidos avançarão automaticamente após conclusão de todas as ordens
+- Dados históricos inconsistentes serão corrigidos
 
