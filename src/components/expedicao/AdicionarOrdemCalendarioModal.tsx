@@ -160,7 +160,8 @@ export function AdicionarOrdemCalendarioModal({
       return;
     }
 
-    if (!hora) {
+    // Hora obrigatória apenas para entregas
+    if (isEntrega && !hora) {
       toast.error("Informe o horário");
       return;
     }
@@ -205,11 +206,14 @@ export function AdicionarOrdemCalendarioModal({
         responsavelNome = responsavel?.nome || '';
       }
 
+      // Para instalações/manutenções, hora é null (date-only policy)
+      const horaFinal = isEntrega ? hora : null;
+
       await onConfirm({
         ordemId: ordemSelecionada.id,
         fonte: ordemSelecionada.fonte,
         data_carregamento: format(dataSelecionada, "yyyy-MM-dd"),
-        hora,
+        hora: horaFinal as string,
         tipo_carregamento: responsavelTipo,
         responsavel_carregamento_id: finalResponsavelId,
         responsavel_carregamento_nome: responsavelNome
@@ -360,17 +364,19 @@ export function AdicionarOrdemCalendarioModal({
                 Configurar {isEntrega ? 'Entrega' : 'Instalação'}
               </div>
 
-              {/* Horário */}
-              <div className="space-y-2">
-                <Label htmlFor="hora">Horário *</Label>
-                <Input
-                  id="hora"
-                  type="time"
-                  value={hora}
-                  onChange={(e) => setHora(e.target.value)}
-                  className="w-32"
-                />
-              </div>
+              {/* Horário - apenas para entregas */}
+              {isEntrega && (
+                <div className="space-y-2">
+                  <Label htmlFor="hora">Horário *</Label>
+                  <Input
+                    id="hora"
+                    type="time"
+                    value={hora}
+                    onChange={(e) => setHora(e.target.value)}
+                    className="w-32"
+                  />
+                </div>
+              )}
 
               {/* Tipo de Responsável */}
               <div className="space-y-3">

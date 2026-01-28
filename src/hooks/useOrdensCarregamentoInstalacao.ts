@@ -133,18 +133,15 @@ export const useOrdensCarregamentoInstalacao = (
 
   const updateOrdemMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<OrdemCarregamentoInstalacao> }) => {
-      const { data: updated, error } = await supabase
+      const { error } = await supabase
         .from("ordens_carregamento")
         .update({
           ...data,
           updated_at: new Date().toISOString()
         })
-        .eq("id", id)
-        .select()
-        .single();
+        .eq("id", id);
 
       if (error) throw error;
-      return updated;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_instalacao"] });
