@@ -1,85 +1,124 @@
 
-## Plano: Corrigir Erro de NOT NULL na Coluna `hora` da Tabela `instalacoes`
 
-### Problema Identificado
+## Plano: Adicionar Botão e Página de Regras de Vendas
 
-O erro `null value in column "hora" of relation "instalacoes" violates not-null constraint` ocorre porque:
+### Objetivo
+Criar um botão na página `/direcao/vendas` que encaminha para uma nova página `/direcao/vendas/regras-vendas`, onde serão exibidas todas as regras do sistema de vendas de forma organizada e visual.
 
-1. O modal `AdicionarOrdemCalendarioModal` define `horaFinal = null` para instalações (linha 210)
-2. O componente `OrdensCarregamentoDisponiveis.tsx` passa `hora: params.hora` (linha 104) diretamente para o update
-3. A tabela `instalacoes` tem a coluna `hora` com constraint `NOT NULL` e default `'08:00'`
+---
 
-O default `'08:00'` só funciona em **INSERT** quando o valor não é especificado. Em **UPDATE** com valor explícito `null`, o constraint NOT NULL falha.
+### Alterações Necessárias
 
-### Análise da Estrutura
+#### 1. Adicionar Botão na Página VendasDirecao
 
-| Tabela | Coluna | Nullable | Default |
-|--------|--------|----------|---------|
-| `instalacoes` | `hora` | **NÃO** | `'08:00'` |
-| `instalacoes` | `hora_carregamento` | SIM | null |
-| `neo_instalacoes` | `hora` | SIM | null |
-| `neo_correcoes` | `hora` | SIM | null |
+**Arquivo:** `src/pages/direcao/VendasDirecao.tsx`
 
-### Solução Proposta
-
-Corrigir os pontos onde `hora: null` é passado para updates na tabela `instalacoes`, usando `'08:00'` como valor padrão quando a hora não é especificada.
-
-### Arquivos a Modificar
-
-| Arquivo | Linha | Alteração |
-|---------|-------|-----------|
-| `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx` | 210 | Usar `'08:00'` em vez de `null` para instalações |
-| `src/components/expedicao/OrdensCarregamentoDisponiveis.tsx` | 104 | Usar valor padrão quando hora é null para instalações |
-| `src/components/expedicao/OrdensCarregamentoDisponiveisMobile.tsx` | (verificar) | Mesmo padrão se aplicável |
-
-### Detalhes Técnicos
-
-#### 1. AdicionarOrdemCalendarioModal.tsx (linha 210)
+Adicionar um novo botão na área `headerActions` com ícone de livro/manual (BookOpen) que navega para a página de regras.
 
 ```typescript
-// ANTES
-const horaFinal = isEntrega ? hora : null;
-
-// DEPOIS - Usar "08:00" como default para instalações
-const horaFinal = isEntrega ? hora : "08:00";
+// Novo botão ao lado do botão de clientes e exportação
+<Button 
+  variant="outline" 
+  size="sm" 
+  className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+  onClick={() => navigate('/direcao/vendas/regras-vendas')}
+>
+  <BookOpen className="h-4 w-4" />
+</Button>
 ```
 
-#### 2. OrdensCarregamentoDisponiveis.tsx (linhas 99-111)
+#### 2. Criar Nova Página de Regras
+
+**Arquivo:** `src/pages/direcao/RegrasVendasDirecao.tsx`
+
+Página informativa usando o layout `MinimalistLayout` com seções em acordeão (Accordion) para organizar as regras:
+
+**Conteúdo da Página:**
+
+| Seção | Descrição |
+|-------|-----------|
+| **Descontos** | Limites cumulativos: 5% à vista, +3% presencial, +5% com senha = 13% máximo |
+| **Acréscimos (Crédito)** | Regra de exclusividade com desconto, propósito do acréscimo |
+| **Formas de Pagamento** | Detalhes de Boleto, À Vista, Cartão, Dinheiro |
+| **Campos Obrigatórios** | Lista de campos necessários para finalizar a venda |
+
+**Estrutura Visual:**
+- Cards com gradiente azul para cada seção principal
+- Badges coloridos para destacar percentuais e limites
+- Ícones representativos por seção
+- Texto claro e direto
+
+#### 3. Adicionar Rota no App.tsx
+
+**Arquivo:** `src/App.tsx`
 
 ```typescript
-// ANTES
-const { error } = await supabase
-  .from(tabela)
-  .update({
-    data_carregamento: params.data_carregamento,
-    hora_carregamento: params.hora,
-    hora: params.hora,  // <-- Problema: passa null para instalações
-    // ...
-  })
-  .eq("id", params.ordemId);
+import RegrasVendasDirecao from "./pages/direcao/RegrasVendasDirecao";
 
-// DEPOIS - Para instalações, usar valor padrão se hora for null
-const isInstalacao = params.fonte === 'instalacoes';
-const horaValue = isInstalacao ? (params.hora || "08:00") : params.hora;
-
-const { error } = await supabase
-  .from(tabela)
-  .update({
-    data_carregamento: params.data_carregamento,
-    hora_carregamento: params.hora,
-    hora: horaValue,  // <-- Usa default para instalações
-    // ...
-  })
-  .eq("id", params.ordemId);
+// Na seção de rotas da Direção
+<Route 
+  path="/direcao/vendas/regras-vendas" 
+  element={<ProtectedRoute routeKey="direcao_hub"><RegrasVendasDirecao /></ProtectedRoute>} 
+/>
 ```
 
-#### 3. Verificar OrdensCarregamentoDisponiveisMobile.tsx
+---
 
-Aplicar a mesma correção se houver lógica similar de agendamento.
+### Detalhes do Conteúdo da Página
 
-### Resultado Esperado
+#### Seção 1: Regras de Desconto
 
-- Instalações podem ser agendadas sem erros
-- Campo de hora permanece oculto para instalações/manutenções no modal
-- Valor padrão `'08:00'` é usado automaticamente para satisfazer o constraint NOT NULL
-- Consistência com a política "date-only" para instalações (hora não é relevante para o usuário, mas necessária para o banco)
+| Condição | Desconto Permitido |
+|----------|-------------------|
+| Pagamento à vista (não cartão) | +5% |
+| Venda presencial | +3% |
+| Limite sem autorização | 8% |
+| Com senha do responsável | +5% adicional |
+| **Limite absoluto** | **13%** |
+
+**Observação:** Descontos acima de 13% são bloqueados pelo sistema.
+
+#### Seção 2: Regras de Acréscimo (Crédito)
+
+- Acréscimo adiciona valor ao total da venda
+- **Não pode** ser aplicado se houver qualquer desconto
+- Usado para adicionar margem extra ou serviços adicionais
+
+#### Seção 3: Formas de Pagamento
+
+| Método | Detalhes |
+|--------|----------|
+| **Boleto** | Parcelas com intervalo customizável (7, 15, 21, 28, 30, 45, 60 dias) |
+| **À Vista** | Requer upload de comprovante |
+| **Cartão de Crédito** | 1 a 12 parcelas |
+| **Dinheiro** | Sem parâmetros adicionais |
+
+#### Seção 4: Campos Obrigatórios
+
+**Dados do Cliente:**
+- Nome do cliente
+- Telefone
+
+**Localização (todos obrigatórios):**
+- Estado
+- Cidade
+- CEP
+- Bairro (mínimo 2 caracteres)
+- Endereço (mínimo 2 caracteres)
+
+**Produtos:**
+- Mínimo 1 produto na venda
+
+**Documentos:**
+- CPF (11 dígitos) ou CNPJ (14 dígitos) - opcional mas validado
+
+---
+
+### Resumo de Arquivos
+
+| Arquivo | Ação |
+|---------|------|
+| `src/pages/direcao/VendasDirecao.tsx` | Adicionar botão de navegação |
+| `src/pages/direcao/RegrasVendasDirecao.tsx` | **Criar** nova página |
+| `src/App.tsx` | Adicionar nova rota |
+
