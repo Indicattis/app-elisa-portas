@@ -324,7 +324,27 @@ export function PedidoCard({
         };
       }
 
-      // Buscar a ordem de carregamento associada ao pedido
+      // Para instalações, buscar da tabela instalacoes (fonte única de verdade)
+      if (pedido.etapa_atual === 'instalacoes') {
+        const { data: instalacao } = await supabase
+          .from('instalacoes')
+          .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento')
+          .eq('pedido_id', pedido.id)
+          .maybeSingle();
+
+        const temData = !!instalacao?.data_carregamento;
+        const concluido = instalacao?.carregamento_concluido || false;
+
+        return {
+          concluido,
+          temData,
+          dataCarregamento: instalacao?.data_carregamento || null,
+          responsavelNome: instalacao?.responsavel_carregamento_nome || null,
+          tipoCarregamento: instalacao?.tipo_carregamento || null
+        };
+      }
+
+      // Para entregas (aguardando_coleta), buscar de ordens_carregamento
       const {
         data: ordemCarregamento
       } = await supabase
@@ -1149,6 +1169,22 @@ export function PedidoCard({
                   const isExpedicao = etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes';
                   
                   if (isExpedicao) {
+                    // Se carregamento concluído, mostrar "Carregada"
+                    if (carregamentoConcluido) {
+                      return (
+                        <div className="flex flex-col items-center leading-tight">
+                          <span className="text-[9px] font-medium text-zinc-400">
+                            Carregada
+                          </span>
+                          {dataCarregamento && (
+                            <span className="text-xs font-bold text-zinc-500">
+                              {format(new Date(dataCarregamento), "dd/MM/yy")}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    }
+                    
                     if (!dataCarregamento) {
                       return (
                         <span className="text-[10px] font-bold text-destructive">
@@ -1162,7 +1198,7 @@ export function PedidoCard({
                     const hoje = new Date();
                     hoje.setHours(0, 0, 0, 0);
                     dataCarreg.setHours(0, 0, 0, 0);
-                    const atrasado = dataCarreg < hoje && !carregamentoConcluido;
+                    const atrasado = dataCarreg < hoje;
                     
                     return (
                       <div className="flex flex-col items-center leading-tight">
