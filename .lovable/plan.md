@@ -1,174 +1,132 @@
 
-## Plano: Corrigir Exibicao de Linhas do Pedido e Ordens em PedidoViewDirecao
+## Plano: Corrigir Linhas Faltantes nas Ordens de Producao (Pedido 0093)
 
 ### Problema Identificado
 
-Na pagina `/direcao/pedidos/:id`, as linhas do pedido e as linhas das ordens de producao nao aparecem devido a dois problemas:
+O pedido `0093` (ID: `1b05ea5b-844b-418d-a5fa-7c4936d97f8b`) foi retrocedido em 22/01 e depois avancado novamente para producao. Porem, as linhas de producao (`linhas_ordens`) nao foram regeneradas corretamente para as ordens de soldagem, perfiladeira e separacao.
 
-**Problema 1 - Linhas do Pedido:**
-```typescript
-// Linha 73-74 de PedidoViewDirecao.tsx
-const { data: linhasData } = await supabase
-  .from('linhas_pedido' as any)  // TABELA NAO EXISTE!
-```
+**Dados do banco de dados confirmam:**
+- Pedido tem 15 linhas em `pedido_linhas` (3 solda, 2 perfiladeira, 10 separacao)
+- Ordens existem: SOL-1b05ea5b, PERF-1b05ea5b, SEP-1b05ea5b
+- **0 linhas** em `linhas_ordens` para essas ordens
+- Apenas 6 linhas de **pintura** existem (de uma etapa posterior)
 
-A pagina busca da tabela `linhas_pedido` que nao existe. A tabela correta e `pedido_linhas`.
-
-**Problema 2 - Linhas das Ordens:**
-A pagina busca as ordens de producao (Soldagem, Perfiladeira, Separacao, etc.) mas nao busca as linhas/materiais vinculados a cada ordem (tabela `linhas_ordens`).
-
-### Evidencia do Banco de Dados
-
-- Tabela `pedido_linhas` existe com 12+ linhas para este pedido
-- Tabela `linhas_ordens` existe com 15 linhas vinculadas as ordens
-- Tabela `linhas_pedido` NAO EXISTE
+**Causa raiz:** O bug foi corrigido em 26/01 (migration `20260126163055`), mas o pedido foi avancado em 22/01, antes da correcao. As linhas nao foram regeneradas.
 
 ---
 
-### Arquivos a Modificar
+### Solucao
 
-| Arquivo | Acao | Descricao |
-|---------|------|-----------|
-| `src/pages/direcao/PedidoViewDirecao.tsx` | Modificar | Corrigir nome da tabela e adicionar busca de linhas das ordens |
+Executar uma migration para inserir as linhas faltantes nas ordens de producao existentes para este pedido especifico, seguindo o mesmo padrao usado na migration anterior.
 
 ---
 
-### Mudanca 1: Corrigir Nome da Tabela de Linhas do Pedido
+### Acoes
 
-**Antes (linha 74):**
-```typescript
-const { data: linhasData } = await supabase
-  .from('linhas_pedido' as any)
-  .select('id, nome_produto, descricao_produto, quantidade, tamanho')
-  .eq('pedido_id', id)
-  .order('ordem', { ascending: true });
-```
-
-**Depois:**
-```typescript
-const { data: linhasData } = await supabase
-  .from('pedido_linhas')
-  .select('id, nome_produto, descricao_produto, quantidade, tamanho')
-  .eq('pedido_id', id)
-  .order('ordem', { ascending: true });
-```
+| Acao | Descricao |
+|------|-----------|
+| Criar migration SQL | Inserir linhas faltantes para soldagem, perfiladeira e separacao |
 
 ---
 
-### Mudanca 2: Adicionar Busca de Linhas das Ordens
+### SQL para Corrigir os Dados
 
-Apos buscar as ordens (linhas 84-102), buscar tambem as linhas de cada ordem:
+```sql
+-- Inserir linhas para SOLDAGEM (ordem c575538b-12e9-4d07-8d80-800db3919f75)
+INSERT INTO linhas_ordens (
+  ordem_id, pedido_id, tipo_ordem, item, quantidade, tamanho, 
+  concluida, produto_venda_id, largura, altura, pedido_linha_id, estoque_id
+)
+SELECT 
+  'c575538b-12e9-4d07-8d80-800db3919f75'::uuid,
+  pl.pedido_id, 
+  'soldagem', 
+  COALESCE(pl.nome_produto, pl.descricao_produto, 'Item'),
+  COALESCE(pl.quantidade, 1), 
+  pl.tamanho, 
+  false, 
+  pl.produto_venda_id, 
+  pl.largura, 
+  pl.altura, 
+  pl.id, 
+  pl.estoque_id
+FROM pedido_linhas pl
+WHERE pl.pedido_id = '1b05ea5b-844b-418d-a5fa-7c4936d97f8b'::uuid 
+  AND pl.categoria_linha = 'solda'
+  AND NOT EXISTS (
+    SELECT 1 FROM linhas_ordens lo 
+    WHERE lo.pedido_linha_id = pl.id AND lo.tipo_ordem = 'soldagem'
+  );
 
-**Adicionar apos linha 102:**
-```typescript
-// Buscar linhas de cada ordem
-for (const ordem of ordensResult) {
-  const { data: linhasOrdem } = await supabase
-    .from('linhas_ordens')
-    .select('id, item, quantidade, tamanho, concluida')
-    .eq('ordem_id', ordem.id)
-    .eq('tipo_ordem', ordem.tipo.toLowerCase())
-    .order('created_at', { ascending: true });
-  
-  (ordem as any).linhas = linhasOrdem || [];
-}
-```
+-- Inserir linhas para PERFILADEIRA (ordem d11a1ee0-9fff-4229-947f-e634e2c1533f)
+INSERT INTO linhas_ordens (
+  ordem_id, pedido_id, tipo_ordem, item, quantidade, tamanho, 
+  concluida, produto_venda_id, largura, altura, pedido_linha_id, estoque_id
+)
+SELECT 
+  'd11a1ee0-9fff-4229-947f-e634e2c1533f'::uuid,
+  pl.pedido_id, 
+  'perfiladeira', 
+  COALESCE(pl.nome_produto, pl.descricao_produto, 'Item'),
+  COALESCE(pl.quantidade, 1), 
+  pl.tamanho, 
+  false, 
+  pl.produto_venda_id, 
+  pl.largura, 
+  pl.altura, 
+  pl.id, 
+  pl.estoque_id
+FROM pedido_linhas pl
+WHERE pl.pedido_id = '1b05ea5b-844b-418d-a5fa-7c4936d97f8b'::uuid 
+  AND pl.categoria_linha = 'perfiladeira'
+  AND NOT EXISTS (
+    SELECT 1 FROM linhas_ordens lo 
+    WHERE lo.pedido_linha_id = pl.id AND lo.tipo_ordem = 'perfiladeira'
+  );
 
----
-
-### Mudanca 3: Atualizar Interface para Incluir Linhas
-
-**Atualizar interface Ordem (linha 15-21):**
-```typescript
-interface Ordem {
-  id: string;
-  tipo: string;
-  numero_ordem: string;
-  status: string;
-  capturado_por_nome?: string | null;
-  linhas?: Array<{
-    id: string;
-    item: string;
-    quantidade: number;
-    tamanho?: string | null;
-    concluida: boolean;
-  }>;
-}
-```
-
----
-
-### Mudanca 4: Exibir Linhas das Ordens na UI
-
-**Atualizar o card de ordens (linhas 389-404) para mostrar as linhas:**
-```tsx
-{pedido.ordens.map((ordem) => (
-  <div key={ordem.id} className="p-3 rounded-lg bg-white/5">
-    <div className="flex items-center justify-between mb-2">
-      <div className="flex items-center gap-2">
-        {getOrdemIcon(ordem.tipo)}
-        <span className="font-medium text-white text-sm">{ordem.tipo}</span>
-      </div>
-      {getOrdemStatusIcon(ordem.status)}
-    </div>
-    <p className="text-xs text-white/60">#{ordem.numero_ordem}</p>
-    
-    {/* Linhas da ordem */}
-    {(ordem as any).linhas?.length > 0 && (
-      <div className="mt-2 pt-2 border-t border-white/10 space-y-1">
-        {(ordem as any).linhas.map((linha: any) => (
-          <div key={linha.id} className="flex items-center justify-between text-xs">
-            <span className="text-white/70 truncate flex-1">{linha.item}</span>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-white/50">{linha.quantidade}x</span>
-              {linha.concluida && (
-                <CheckCircle2 className="w-3 h-3 text-green-400" />
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-))}
+-- Inserir linhas para SEPARACAO (ordem 5309297d-a58c-4ffa-aa46-3fd64efb47bd)
+INSERT INTO linhas_ordens (
+  ordem_id, pedido_id, tipo_ordem, item, quantidade, tamanho, 
+  concluida, produto_venda_id, largura, altura, pedido_linha_id, estoque_id
+)
+SELECT 
+  '5309297d-a58c-4ffa-aa46-3fd64efb47bd'::uuid,
+  pl.pedido_id, 
+  'separacao', 
+  COALESCE(pl.nome_produto, pl.descricao_produto, 'Item'),
+  COALESCE(pl.quantidade, 1), 
+  pl.tamanho, 
+  false, 
+  pl.produto_venda_id, 
+  pl.largura, 
+  pl.altura, 
+  pl.id, 
+  pl.estoque_id
+FROM pedido_linhas pl
+WHERE pl.pedido_id = '1b05ea5b-844b-418d-a5fa-7c4936d97f8b'::uuid 
+  AND pl.categoria_linha = 'separacao'
+  AND NOT EXISTS (
+    SELECT 1 FROM linhas_ordens lo 
+    WHERE lo.pedido_linha_id = pl.id AND lo.tipo_ordem = 'separacao'
+  );
 ```
 
 ---
 
-### Fluxo Corrigido
+### Mapeamento de IDs
 
-```text
-ANTES (COM PROBLEMA):
-1. Buscar pedido -> OK
-2. Buscar linhas de 'linhas_pedido' -> TABELA NAO EXISTE -> 0 linhas
-3. Buscar ordens -> OK (3 ordens encontradas)
-4. NAO busca linhas das ordens -> ordens sem materiais
-
-DEPOIS (CORRIGIDO):
-1. Buscar pedido -> OK
-2. Buscar linhas de 'pedido_linhas' -> 12+ linhas encontradas
-3. Buscar ordens -> OK (3 ordens encontradas)
-4. Para cada ordem, buscar linhas de 'linhas_ordens' -> 15 linhas vinculadas
-```
-
----
-
-### Secao Tecnica
-
-**Tabelas envolvidas:**
-- `pedido_linhas`: Armazena linhas do pedido (produtos, quantidades, tamanhos)
-- `linhas_ordens`: Armazena linhas de cada ordem de producao (materiais necessarios)
-
-**Relacionamentos:**
-- `pedido_linhas.pedido_id` -> `pedidos_producao.id`
-- `linhas_ordens.ordem_id` -> `ordens_*.id` (tabelas de ordens especificas)
-- `linhas_ordens.tipo_ordem` -> Identifica a qual tabela de ordem pertence
-- `linhas_ordens.pedido_linha_id` -> `pedido_linhas.id` (relacionamento opcional)
+| Ordem | ID | Tipo |
+|-------|-----|------|
+| SOL-1b05ea5b | c575538b-12e9-4d07-8d80-800db3919f75 | soldagem |
+| PERF-1b05ea5b | d11a1ee0-9fff-4229-947f-e634e2c1533f | perfiladeira |
+| SEP-1b05ea5b | 5309297d-a58c-4ffa-aa46-3fd64efb47bd | separacao |
 
 ---
 
 ### Resultado Esperado
 
-1. Secao "Itens do Pedido" exibira as 12+ linhas cadastradas
-2. Cada card de ordem de producao exibira seus materiais/linhas
-3. Usuario podera ver status de conclusao de cada linha (check verde)
+Apos a migration:
+- Ordem SOL-1b05ea5b tera 3 linhas (Eixo, Soleira, Guia M)
+- Ordem PERF-1b05ea5b tera 2 linhas (Meia cana lisa x2)
+- Ordem SEP-1b05ea5b tera 10 linhas (Motor, Central, Cuica, etc.)
+- Operadores em `/producao/solda` poderao ver e concluir as linhas normalmente
