@@ -22,6 +22,18 @@ export interface OrdemInstalacao {
   observacoes: string | null;
   created_at: string;
   
+  // Campos de carregamento
+  carregamento_concluido: boolean;
+  carregamento_concluido_por: string | null;
+  data_carregamento: string | null;
+  
+  // Dados do usuário que carregou
+  carregador?: {
+    user_id: string;
+    nome: string;
+    foto_perfil_url: string | null;
+  } | null;
+  
   // Dados relacionados
   pedido?: {
     id: string;
@@ -36,6 +48,7 @@ export interface OrdemInstalacao {
     cidade: string | null;
     estado: string | null;
     bairro: string | null;
+    valor_venda: number | null;
     produtos?: Array<{
       tipo_produto: string;
       largura: number | null;
@@ -75,6 +88,7 @@ export const useOrdensInstalacao = () => {
             cidade,
             estado,
             bairro,
+            valor_venda,
             produtos:produtos_vendas(
               tipo_produto,
               largura,
@@ -105,10 +119,31 @@ export const useOrdensInstalacao = () => {
 
       const equipesMap = new Map(equipes?.map(e => [e.id, e]) || []);
 
+      // Buscar fotos dos usuários que carregaram
+      const carregadoPorIds = [...new Set(
+        ordensFiltered
+          .filter((o: any) => o.carregamento_concluido_por)
+          .map((o: any) => o.carregamento_concluido_por)
+      )] as string[];
+
+      let usuariosMap = new Map<string, { user_id: string; nome: string; foto_perfil_url: string | null }>();
+      
+      if (carregadoPorIds.length > 0) {
+        const { data: usuarios } = await supabase
+          .from('admin_users')
+          .select('user_id, nome, foto_perfil_url')
+          .in('user_id', carregadoPorIds);
+        
+        usuariosMap = new Map(usuarios?.map(u => [u.user_id, u]) || []);
+      }
+
       return ordensFiltered.map((ordem: any) => ({
         ...ordem,
         equipe: ordem.responsavel_instalacao_id 
           ? equipesMap.get(ordem.responsavel_instalacao_id) || null 
+          : null,
+        carregador: ordem.carregamento_concluido_por 
+          ? usuariosMap.get(ordem.carregamento_concluido_por) || null 
           : null,
       })) as OrdemInstalacao[];
     },
