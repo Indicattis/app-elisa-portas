@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { 
   MapPin, 
   Calendar, 
@@ -47,76 +46,18 @@ export function NeoInstalacaoDetails({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl max-w-[700px] mx-auto overflow-y-auto">
-        <SheetHeader className="pb-4">
-          <div className="flex items-center gap-2">
-            <Badge className="bg-blue-500/20 text-blue-400 border-blue-400/50">
-              Instalação Avulsa
-            </Badge>
-            <Badge
-              variant="outline"
-              style={{
-                backgroundColor: `${corResponsavel}20`,
-                color: corResponsavel,
-                borderColor: `${corResponsavel}50`,
-              }}
-            >
-              {nomeResponsavel}
-            </Badge>
-          </div>
-          <SheetTitle className="text-left text-lg">
-            {neoInstalacao.nome_cliente}
-          </SheetTitle>
-        </SheetHeader>
-
-        <div className="space-y-6">
-          {/* Localização */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              Localização
-            </h4>
-            <p className="text-sm text-muted-foreground pl-6">
-              {neoInstalacao.cidade}/{neoInstalacao.estado}
-            </p>
-          </div>
-
-          <Separator />
-
-          {/* Data */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              Data da Instalação
-            </h4>
-            <div className="pl-6">
-              {neoInstalacao.data_instalacao ? (
-                <p className="text-sm text-muted-foreground">
-                  {format(parseISO(neoInstalacao.data_instalacao), "EEEE, dd 'de' MMMM 'de' yyyy", {
-                    locale: ptBR,
-                  })}
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground italic">Não agendada</p>
-              )}
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Responsável */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium flex items-center gap-2">
-              {isAutorizado ? (
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <Users className="h-4 w-4 text-muted-foreground" />
-              )}
-              {isAutorizado ? "Autorizado Responsável" : "Equipe Responsável"}
-            </h4>
-            <div className="pl-6">
+      <SheetContent 
+        side="bottom" 
+        className="h-[85vh] max-w-[700px] mx-auto rounded-t-2xl overflow-hidden flex flex-col p-0 bg-zinc-900 border-t border-white/10"
+      >
+        {/* Header com gradiente */}
+        <div className="sticky top-0 z-10 bg-gradient-to-r from-orange-600/20 to-amber-600/20 backdrop-blur-xl border-b border-white/10 px-6 py-4">
+          <SheetHeader className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                Instalação Avulsa
+              </Badge>
               <Badge
-                variant="secondary"
                 style={{
                   backgroundColor: `${corResponsavel}20`,
                   color: corResponsavel,
@@ -126,28 +67,77 @@ export function NeoInstalacaoDetails({
                 {nomeResponsavel}
               </Badge>
             </div>
+            <SheetTitle className="text-white text-lg text-left">
+              {neoInstalacao.nome_cliente}
+            </SheetTitle>
+          </SheetHeader>
+        </div>
+
+        {/* Conteúdo scrollável */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          {/* Localização e Data em card */}
+          <div className="bg-white/5 rounded-xl border border-white/10 p-4 space-y-4">
+            <div className="flex items-center gap-3">
+              <MapPin className="h-4 w-4 text-blue-400" />
+              <span className="text-sm text-white">
+                {neoInstalacao.cidade}/{neoInstalacao.estado}
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Calendar className="h-4 w-4 text-purple-400" />
+              {neoInstalacao.data_instalacao ? (
+                <span className="text-sm text-white">
+                  {format(parseISO(neoInstalacao.data_instalacao), "EEEE, dd 'de' MMMM 'de' yyyy", {
+                    locale: ptBR,
+                  })}
+                </span>
+              ) : (
+                <span className="text-sm text-white/50 italic">Não agendada</span>
+              )}
+            </div>
           </div>
 
-          {/* Descrição */}
+          {/* Responsável em card */}
+          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              {isAutorizado ? (
+                <Building2 className="h-4 w-4 text-emerald-400" />
+              ) : (
+                <Users className="h-4 w-4 text-indigo-400" />
+              )}
+              <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">
+                {isAutorizado ? "Autorizado Responsável" : "Equipe Responsável"}
+              </h3>
+            </div>
+            <Badge
+              variant="secondary"
+              style={{
+                backgroundColor: `${corResponsavel}20`,
+                color: corResponsavel,
+                borderColor: `${corResponsavel}50`,
+              }}
+            >
+              {nomeResponsavel}
+            </Badge>
+          </div>
+
+          {/* Descrição se existir */}
           {neoInstalacao.descricao && (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  Descrição / Observações
-                </h4>
-                <p className="text-sm text-muted-foreground pl-6 whitespace-pre-wrap">
-                  {neoInstalacao.descricao}
-                </p>
+            <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="h-4 w-4 text-amber-400" />
+                <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">
+                  Observações
+                </h3>
               </div>
-            </>
+              <p className="text-sm text-white/80 whitespace-pre-wrap">
+                {neoInstalacao.descricao}
+              </p>
+            </div>
           )}
 
-          <Separator />
-
           {/* Metadados */}
-          <div className="space-y-2 text-xs text-muted-foreground">
+          <div className="text-xs text-white/40 space-y-1 pt-2">
             <p>
               Criado em:{" "}
               {format(parseISO(neoInstalacao.created_at), "dd/MM/yyyy 'às' HH:mm", {
@@ -163,13 +153,15 @@ export function NeoInstalacaoDetails({
               </p>
             )}
           </div>
+        </div>
 
-          {/* Ações */}
-          <div className="flex flex-col gap-2">
-            {onEditar && !neoInstalacao.concluida && (
+        {/* Footer com ações - fixo no fundo */}
+        {!neoInstalacao.concluida && (onEditar || onConcluir) && (
+          <div className="sticky bottom-0 bg-zinc-900 border-t border-white/10 px-6 py-4 space-y-2">
+            {onEditar && (
               <Button
                 variant="outline"
-                className="w-full"
+                className="w-full bg-white/5 border-white/20 text-white hover:bg-white/10"
                 onClick={() => {
                   onEditar(neoInstalacao);
                   onOpenChange(false);
@@ -179,9 +171,9 @@ export function NeoInstalacaoDetails({
                 Editar
               </Button>
             )}
-            {onConcluir && !neoInstalacao.concluida && (
+            {onConcluir && (
               <Button
-                className="w-full bg-green-600 hover:bg-green-700"
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
                 onClick={() => onConcluir(neoInstalacao.id)}
                 disabled={isConcluindo}
               >
@@ -190,7 +182,7 @@ export function NeoInstalacaoDetails({
               </Button>
             )}
           </div>
-        </div>
+        )}
       </SheetContent>
     </Sheet>
   );
