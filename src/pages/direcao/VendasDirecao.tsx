@@ -14,7 +14,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users } from 'lucide-react';
+import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users, BookOpen } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -498,6 +498,15 @@ export default function VendasDirecao() {
 
   const headerActions = (
     <div className="flex items-center gap-2">
+      <Button 
+        variant="outline" 
+        size="sm" 
+        className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+        onClick={() => navigate('/direcao/vendas/regras-vendas')}
+        title="Regras de Vendas"
+      >
+        <BookOpen className="h-4 w-4" />
+      </Button>
       <Button 
         variant="outline" 
         size="sm" 
