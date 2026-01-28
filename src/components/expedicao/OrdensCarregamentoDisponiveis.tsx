@@ -99,6 +99,10 @@ export const OrdensCarregamentoDisponiveis = ({
     // Para instalações, usar valor padrão "08:00" se hora for null (constraint NOT NULL)
     const horaValue = params.fonte === 'instalacoes' ? (params.hora || "08:00") : params.hora;
 
+    // Status para instalações: 'pronta_fabrica' (check constraint não aceita 'agendada')
+    // Status para ordens_carregamento: 'agendada'
+    const statusValue = params.fonte === 'instalacoes' ? 'pronta_fabrica' : 'agendada';
+
     const { error } = await supabase
       .from(tabela)
       .update({
@@ -108,7 +112,7 @@ export const OrdensCarregamentoDisponiveis = ({
         tipo_carregamento: params.tipo_carregamento,
         responsavel_carregamento_id: params.responsavel_carregamento_id,
         responsavel_carregamento_nome: params.responsavel_carregamento_nome,
-        status: 'agendada',
+        status: statusValue,
         updated_at: new Date().toISOString()
       })
       .eq("id", params.ordemId);
