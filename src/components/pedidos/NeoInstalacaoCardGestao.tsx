@@ -21,6 +21,7 @@ interface NeoInstalacaoCardGestaoProps {
   viewMode?: 'grid' | 'list';
   onConcluir?: (id: string) => void;
   isConcluindo?: boolean;
+  showConcluido?: boolean;
 }
 
 export function NeoInstalacaoCardGestao({
@@ -28,6 +29,7 @@ export function NeoInstalacaoCardGestao({
   viewMode = 'grid',
   onConcluir,
   isConcluindo,
+  showConcluido = false,
 }: NeoInstalacaoCardGestaoProps) {
   const corEquipe = neoInstalacao.equipe?.cor || "#6366f1";
 
@@ -208,9 +210,28 @@ export function NeoInstalacaoCardGestao({
                 )}
               </div>
 
-              {/* Col 19: Botões de ação */}
-              <div className="flex items-center justify-end gap-0.5">
-                {onConcluir && (
+              {/* Col 19: Botões de ação ou status concluído */}
+              <div className="flex items-center justify-end gap-1">
+                {showConcluido ? (
+                  <>
+                    {neoInstalacao.concluida_em && (
+                      <span className="text-[10px] text-emerald-400">
+                        {(() => {
+                          const date = new Date(neoInstalacao.concluida_em);
+                          const now = new Date();
+                          const diffMs = now.getTime() - date.getTime();
+                          const diffMins = Math.floor(diffMs / 60000);
+                          const diffHours = Math.floor(diffMs / 3600000);
+                          const diffDays = Math.floor(diffMs / 86400000);
+                          if (diffMins < 60) return `há ${diffMins}min`;
+                          if (diffHours < 24) return `há ${diffHours}h`;
+                          return `há ${diffDays}d`;
+                        })()}
+                      </span>
+                    )}
+                    <CheckCircle className="h-4 w-4 text-emerald-500" />
+                  </>
+                ) : onConcluir && (
                   <Button
                     size="icon"
                     variant="outline"
