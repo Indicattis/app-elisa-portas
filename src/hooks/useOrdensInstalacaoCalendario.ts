@@ -125,15 +125,12 @@ export const useOrdensInstalacaoCalendario = (
         updateData.hora_carregamento = data.hora;
       }
 
-      const { data: updated, error } = await supabase
+      const { error } = await supabase
         .from("instalacoes")
         .update(updateData)
-        .eq("id", id)
-        .select()
-        .single();
+        .eq("id", id);
 
       if (error) throw error;
-      return updated;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["instalacoes_calendario"] });
