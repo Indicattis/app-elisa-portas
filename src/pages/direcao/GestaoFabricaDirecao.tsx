@@ -10,8 +10,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
-import { useNeoInstalacoesListagem } from "@/hooks/useNeoInstalacoes";
-import { useNeoCorrecoesListagem } from "@/hooks/useNeoCorrecoes";
+import { useNeoInstalacoesListagem, useNeoInstalacoesFinalizadas } from "@/hooks/useNeoInstalacoes";
+import { useNeoCorrecoesListagem, useNeoCorrecoesFinalizadas } from "@/hooks/useNeoCorrecoes";
 import { useEtapaResponsaveis } from "@/hooks/useEtapaResponsaveis";
 import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
 import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMinimalista";
@@ -54,6 +54,8 @@ export default function GestaoFabricaDirecao() {
   const contadores = usePedidosContadores();
   const { neoInstalacoes, concluirNeoInstalacao, isConcluindo } = useNeoInstalacoesListagem();
   const { neoCorrecoes, concluirNeoCorrecao } = useNeoCorrecoesListagem();
+  const { neoInstalacoesFinalizadas } = useNeoInstalacoesFinalizadas();
+  const { neoCorrecoesFinalizadas } = useNeoCorrecoesFinalizadas();
   const { 
     getResponsavel, 
     atribuirResponsavel, 
@@ -167,6 +169,8 @@ export default function GestaoFabricaDirecao() {
     queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
     queryClient.invalidateQueries({ queryKey: ['neo_instalacoes_listagem'] });
     queryClient.invalidateQueries({ queryKey: ['neo_correcoes_listagem'] });
+    queryClient.invalidateQueries({ queryKey: ['neo_instalacoes_finalizadas'] });
+    queryClient.invalidateQueries({ queryKey: ['neo_correcoes_finalizadas'] });
     queryClient.invalidateQueries({ queryKey: ['etapa-responsaveis'] });
     toast({ title: "Atualizado", description: "Lista de pedidos atualizada com sucesso" });
   };
@@ -456,8 +460,61 @@ export default function GestaoFabricaDirecao() {
                         )}
                       </div>
                     )}
+
+                    {/* Neo Finalizados - apenas na etapa finalizado */}
+                    {etapaAtiva === 'finalizado' && (neoInstalacoesFinalizadas.length > 0 || neoCorrecoesFinalizadas.length > 0) && (
+                      <div className="mb-4 space-y-2">
+                        <h3 className="text-sm font-medium text-white/70 mb-2 flex items-center gap-2">
+                          <span>Serviços Avulsos Finalizados</span>
+                          <span className="text-emerald-400">({neoInstalacoesFinalizadas.length + neoCorrecoesFinalizadas.length})</span>
+                          <span className="text-xs text-white/40 ml-auto">últimos 30 dias</span>
+                        </h3>
+                        <div className="space-y-1">
+                          {[...neoInstalacoesFinalizadas, ...neoCorrecoesFinalizadas]
+                            .sort((a, b) => {
+                              const dateA = a.concluida_em ? new Date(a.concluida_em).getTime() : 0;
+                              const dateB = b.concluida_em ? new Date(b.concluida_em).getTime() : 0;
+                              return dateB - dateA;
+                            })
+                            .map((neo) => {
+                              const isInstalacao = neo._tipo === 'neo_instalacao';
+                              const concluidaEm = neo.concluida_em ? new Date(neo.concluida_em) : null;
+                              const formatTime = (date: Date) => {
+                                const now = new Date();
+                                const diffMs = now.getTime() - date.getTime();
+                                const diffMins = Math.floor(diffMs / 60000);
+                                const diffHours = Math.floor(diffMs / 3600000);
+                                const diffDays = Math.floor(diffMs / 86400000);
+                                if (diffMins < 60) return `há ${diffMins}min`;
+                                if (diffHours < 24) return `há ${diffHours}h`;
+                                return `há ${diffDays}d`;
+                              };
+                              return (
+                                <div
+                                  key={neo.id}
+                                  className="flex items-center gap-3 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20 h-[35px]"
+                                >
+                                  <div className={`w-2 h-2 rounded-full ${isInstalacao ? 'bg-orange-500' : 'bg-purple-500'}`} />
+                                  <span className="text-sm font-medium text-white/90 truncate flex-1">{neo.nome_cliente}</span>
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${isInstalacao ? 'bg-orange-500/20 text-orange-400' : 'bg-purple-500/20 text-purple-400'}`}>
+                                    {isInstalacao ? 'Instalação' : 'Correção'}
+                                  </span>
+                                  <span className="text-xs text-white/50">{neo.cidade}/{neo.estado}</span>
+                                  {concluidaEm && (
+                                    <span className="text-xs text-emerald-400">{formatTime(concluidaEm)}</span>
+                                  )}
+                                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                </div>
+                              );
+                            })}
+                        </div>
+                        {pedidosFiltrados.length > 0 && (
+                          <h3 className="text-sm font-medium text-white/70 mt-4 mb-2">Pedidos ({pedidosFiltrados.length})</h3>
+                        )}
+                      </div>
+                    )}
                     
-                    <PedidosDraggableList 
+                    <PedidosDraggableList
                       pedidos={pedidosFiltrados}
                       pedidosParaTotais={pedidosFiltrados}
                       etapa={etapa} 
