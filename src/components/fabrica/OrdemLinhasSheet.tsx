@@ -35,6 +35,9 @@ const TABLE_MAP: Record<TipoOrdem, string> = {
   pintura: 'ordens_pintura',
 };
 
+// Tipos que suportam regeneração de linhas
+const TIPOS_COM_REGENERACAO: TipoOrdem[] = ['soldagem', 'perfiladeira', 'separacao'];
+
 export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheetProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -263,33 +266,35 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
                 </Tooltip>
               )}
 
-              {/* Botão Regenerar Linhas */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => regenerarLinhas.mutate()}
-                    disabled={regenerarLinhas.isPending || isOrdemConcluida}
-                    className={cn(
-                      "h-8 gap-2 border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700/50",
-                      isOrdemConcluida && "opacity-50"
-                    )}
-                  >
-                    {regenerarLinhas.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="h-4 w-4 text-amber-400" />
-                    )}
-                    <span className="text-xs text-zinc-300">Regenerar linhas</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isOrdemConcluida 
-                    ? 'Ordem concluída - não é possível regenerar' 
-                    : 'Regenerar linhas da ordem'}
-                </TooltipContent>
-              </Tooltip>
+              {/* Botão Regenerar Linhas - apenas para tipos suportados */}
+              {ordem?.tipo && TIPOS_COM_REGENERACAO.includes(ordem.tipo) && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => regenerarLinhas.mutate()}
+                      disabled={regenerarLinhas.isPending || isOrdemConcluida}
+                      className={cn(
+                        "h-8 gap-2 border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700/50",
+                        isOrdemConcluida && "opacity-50"
+                      )}
+                    >
+                      {regenerarLinhas.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4 text-amber-400" />
+                      )}
+                      <span className="text-xs text-zinc-300">Regenerar linhas</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {isOrdemConcluida 
+                      ? 'Ordem concluída - não é possível regenerar' 
+                      : 'Regenerar linhas da ordem'}
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </TooltipProvider>
           </div>
 
