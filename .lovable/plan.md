@@ -1,41 +1,158 @@
 
 
-## Plano: Corrigir Modal de Agendamento e Erro na Tabela de Expedição
+## Plano: Sistema de Retorno para Produção com Exclusão de Ordens e Status Configurável
 
-### Problema Identificado
+### Contexto do Problema
 
-Existem **dois problemas** na página `/logistica/expedicao`:
+O pedido `537c9681-7b96-4477-9897-81a4bf3d38e4` foi retornado para produção, mas:
+1. **Ordem de qualidade** (`OQU-2026-0007`) ainda existe - deveria ser excluída
+2. **Ordem de pintura** (`PINT-00058`) ainda existe - deveria ser excluída
+3. Linhas associadas a ambas as ordens também permaneceram
 
-1. **Modal "+" não mostra instalações**: O `AdicionarOrdemCalendarioModal` usa o hook `useOrdensSemDataCarregamento` que busca **apenas** da tabela `ordens_carregamento`, ignorando instalações
+Além disso, o usuário deseja um modal melhorado onde possa definir o status de cada ordem de produção (pausada com justificativa, ou pendente).
 
-2. **Erro ao agendar da tabela**: O `OrdensCarregamentoDisponiveis` passa uma ordem do tipo `OrdemCarregamentoUnificada` mas o modal espera o tipo antigo `OrdemCarregamento`. Quando tenta agendar, ocorre um erro de incompatibilidade de tipos
+---
 
-### Análise Técnica
+### Parte 1: Corrigir Dados do Pedido Atual
 
-| Componente | Problema |
-|------------|----------|
-| `AdicionarOrdemCalendarioModal` | Usa `useOrdensSemDataCarregamento` (apenas `ordens_carregamento`) |
-| `OrdensCarregamentoDisponiveis` | Passa `ordemPreSelecionada` como tipo `OrdemCarregamentoUnificada` mas com cast `as any` |
-| `handleConfirmAgendar` | Funciona corretamente, identifica `fonte` para escolher tabela |
+**Ação Imediata:** Executar SQL para limpar os dados órfãos do pedido específico:
 
-**Linha 31 do modal:**
-```typescript
-ordemPreSelecionada?: OrdemCarregamento | null; // Tipo antigo
-```
+```sql
+-- Excluir linhas de qualidade e pintura
+DELETE FROM linhas_ordens 
+WHERE pedido_id = '537c9681-7b96-4477-9897-81a4bf3d38e4' 
+  AND tipo_ordem IN ('qualidade', 'pintura');
 
-**Linha 396-397 do OrdensCarregamentoDisponiveis:**
-```typescript
-ordemPreSelecionada={ordemSelecionada as any} // Cast forçado causa problemas
+-- Excluir ordem de qualidade
+DELETE FROM ordens_qualidade 
+WHERE pedido_id = '537c9681-7b96-4477-9897-81a4bf3d38e4';
+
+-- Excluir ordem de pintura  
+DELETE FROM ordens_pintura 
+WHERE pedido_id = '537c9681-7b96-4477-9897-81a4bf3d38e4';
 ```
 
 ---
 
-### Solução
+### Parte 2: Atualizar Função SQL de Retorno
 
-Atualizar o `AdicionarOrdemCalendarioModal` para:
-1. Aceitar o tipo `OrdemCarregamentoUnificada` 
-2. Usar o hook `useOrdensCarregamentoUnificadas` para buscar de ambas as fontes
-3. Determinar a tabela correta na função `onConfirm` baseado na propriedade `fonte`
+**Arquivo:** `supabase/migrations/[nova_migracao].sql`
+
+**Mudanças na função `retornar_pedido_para_producao`:**
+
+1. Adicionar parâmetro para status das ordens (array de objetos JSONB)
+2. Excluir ordem de pintura e suas linhas
+3. Excluir ordem de qualidade e suas linhas
+4. Aplicar status configurado para cada ordem (pendente ou pausada com justificativa)
+
+**Nova assinatura:**
+```sql
+CREATE OR REPLACE FUNCTION retornar_pedido_para_producao(
+  p_pedido_id UUID,
+  p_ordem_qualidade_id UUID,
+  p_motivo TEXT,
+  p_ordens_config JSONB,  -- [{tipo: 'soldagem', acao: 'pausar', justificativa: '...'}, ...]
+  p_user_id UUID
+)
+```
+
+**Estrutura do `p_ordens_config`:**
+```json
+[
+  {"tipo": "soldagem", "acao": "pausar", "justificativa": "Refazer solda do eixo"},
+  {"tipo": "perfiladeira", "acao": "reativar"},
+  {"tipo": "separacao", "acao": "manter"}  
+]
+```
+
+Onde `acao` pode ser:
+- `pausar`: Define status = 'pausada', pausada = true, justificativa_pausa = texto
+- `reativar`: Define status = 'pendente', limpa responsável e pausa
+- `manter`: Não altera a ordem (mantém status atual)
+
+---
+
+### Parte 3: Redesenhar Modal de Retorno
+
+**Arquivo:** `src/components/production/RetornarProducaoModal.tsx`
+
+**Novo layout do modal:**
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ ⚠️ Retornar Pedido para Produção                            │
+├─────────────────────────────────────────────────────────────┤
+│ Pedido: #0097/25                                            │
+│ Cliente: FERNANDO FIGUEIRO LTDA                             │
+├─────────────────────────────────────────────────────────────┤
+│ ⚠️ Esta ação irá:                                           │
+│ • Excluir ordem de qualidade e pintura (serão recriadas)    │
+│ • Retornar pedido para etapa "Em Produção"                  │
+│ • Marcar como BACKLOG                                       │
+├─────────────────────────────────────────────────────────────┤
+│ 📋 Justificativa Geral: *                                   │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Problemas na soldagem...                                │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ Defina o que fazer com cada ordem:                          │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ 🔧 Soldagem (OS-2025-0013) - Status: Concluído          │ │
+│ │ ┌──────────────────────────────────────────────────┐    │ │
+│ │ │ ○ Manter status atual                            │    │ │
+│ │ │ ● Pausar ordem (definir justificativa)           │    │ │
+│ │ │ ○ Reativar ordem (pendente, a fazer)             │    │ │
+│ │ └──────────────────────────────────────────────────┘    │ │
+│ │ Justificativa da pausa:                                 │ │
+│ │ ┌─────────────────────────────────────────────────┐     │ │
+│ │ │ Refazer solda do eixo principal...              │     │ │
+│ │ └─────────────────────────────────────────────────┘     │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ 🏭 Perfiladeira (OP-2025-0015) - Status: Concluído      │ │
+│ │ ┌──────────────────────────────────────────────────┐    │ │
+│ │ │ ● Manter status atual                            │    │ │
+│ │ │ ○ Pausar ordem                                   │    │ │
+│ │ │ ○ Reativar ordem                                 │    │ │
+│ │ └──────────────────────────────────────────────────┘    │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ 📦 Separação (OE-2025-0014) - Status: Concluído         │ │
+│ │ ┌──────────────────────────────────────────────────┐    │ │
+│ │ │ ● Manter status atual                            │    │ │
+│ │ │ ○ Pausar ordem                                   │    │ │
+│ │ │ ○ Reativar ordem                                 │    │ │
+│ │ └──────────────────────────────────────────────────┘    │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│                          [Cancelar]  [Confirmar Retorno]    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Parte 4: Atualizar Hook
+
+**Arquivo:** `src/hooks/useRetornarProducao.ts`
+
+**Mudanças:**
+1. Atualizar interface para incluir configuração por ordem
+2. Enviar JSONB para a função RPC
+
+```typescript
+interface OrdemConfig {
+  tipo: 'soldagem' | 'perfiladeira' | 'separacao';
+  acao: 'manter' | 'pausar' | 'reativar';
+  justificativa?: string;
+}
+
+interface RetornarProducaoParams {
+  pedidoId: string;
+  ordemQualidadeId: string;
+  motivo: string;
+  ordensConfig: OrdemConfig[];
+}
+```
 
 ---
 
@@ -43,181 +160,142 @@ Atualizar o `AdicionarOrdemCalendarioModal` para:
 
 | Arquivo | Ação | Descrição |
 |---------|------|-----------|
-| `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx` | Modificar | Aceitar tipo unificado e usar hook unificado |
-| `src/components/expedicao/OrdensCarregamentoDisponiveis.tsx` | Modificar | Remover cast `as any` |
+| Nova migração SQL | Criar | SQL para limpar dados do pedido específico |
+| Nova migração SQL | Criar | Atualizar função `retornar_pedido_para_producao` |
+| `src/hooks/useRetornarProducao.ts` | Modificar | Atualizar interface e chamada RPC |
+| `src/components/production/RetornarProducaoModal.tsx` | Modificar | Novo layout com RadioGroup por ordem |
 
 ---
 
-### Parte 1: Modificar AdicionarOrdemCalendarioModal
+### Detalhes Técnicos
 
-**1.1 Atualizar Props**
+**Nova função SQL:**
 
-```typescript
-// Antes
-import { OrdemCarregamento } from "@/types/ordemCarregamento";
-import { useOrdensSemDataCarregamento } from "@/hooks/useOrdensSemDataCarregamento";
+```sql
+CREATE OR REPLACE FUNCTION retornar_pedido_para_producao(
+  p_pedido_id UUID,
+  p_ordem_qualidade_id UUID,
+  p_motivo TEXT,
+  p_ordens_config JSONB,
+  p_user_id UUID
+) RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_config JSONB;
+  v_tipo TEXT;
+  v_acao TEXT;
+  v_justificativa TEXT;
+BEGIN
+  -- Validações
+  IF p_motivo IS NULL OR p_motivo = '' THEN
+    RAISE EXCEPTION 'Motivo é obrigatório';
+  END IF;
 
-interface AdicionarOrdemCalendarioModalProps {
-  ordemPreSelecionada?: OrdemCarregamento | null;
-  onConfirm: (params: {
-    ordemId: string;
-    // ...
-  }) => Promise<void>;
-}
+  -- 1. EXCLUIR ORDEM DE QUALIDADE E SUAS LINHAS
+  DELETE FROM linhas_ordens 
+  WHERE pedido_id = p_pedido_id AND tipo_ordem = 'qualidade';
+  
+  DELETE FROM ordens_qualidade WHERE pedido_id = p_pedido_id;
 
-// Depois
-import { OrdemCarregamentoUnificada } from "@/types/ordemCarregamentoUnificada";
-import { useOrdensCarregamentoUnificadas } from "@/hooks/useOrdensCarregamentoUnificadas";
+  -- 2. EXCLUIR ORDEM DE PINTURA E SUAS LINHAS
+  DELETE FROM linhas_ordens 
+  WHERE pedido_id = p_pedido_id AND tipo_ordem = 'pintura';
+  
+  DELETE FROM ordens_pintura WHERE pedido_id = p_pedido_id;
 
-interface AdicionarOrdemCalendarioModalProps {
-  ordemPreSelecionada?: OrdemCarregamentoUnificada | null;
-  onConfirm: (params: {
-    ordemId: string;
-    fonte: 'ordens_carregamento' | 'instalacoes'; // NOVO: informar a fonte
-    // ...
-  }) => Promise<void>;
-}
-```
+  -- 3. PROCESSAR CADA ORDEM DE PRODUÇÃO
+  FOR v_config IN SELECT * FROM jsonb_array_elements(p_ordens_config)
+  LOOP
+    v_tipo := v_config->>'tipo';
+    v_acao := v_config->>'acao';
+    v_justificativa := v_config->>'justificativa';
 
-**1.2 Usar Hook Unificado**
+    -- Processar conforme a ação
+    IF v_acao = 'pausar' THEN
+      -- Pausar ordem com justificativa
+      IF v_tipo = 'soldagem' THEN
+        UPDATE ordens_soldagem 
+        SET status = 'pausada',
+            pausada = true,
+            pausada_em = now(),
+            justificativa_pausa = v_justificativa,
+            updated_at = now()
+        WHERE pedido_id = p_pedido_id;
+      ELSIF v_tipo = 'perfiladeira' THEN
+        UPDATE ordens_perfiladeira 
+        SET status = 'pausada',
+            pausada = true,
+            pausada_em = now(),
+            justificativa_pausa = v_justificativa,
+            updated_at = now()
+        WHERE pedido_id = p_pedido_id;
+      ELSIF v_tipo = 'separacao' THEN
+        UPDATE ordens_separacao 
+        SET status = 'pausada',
+            pausada = true,
+            pausada_em = now(),
+            justificativa_pausa = v_justificativa,
+            updated_at = now()
+        WHERE pedido_id = p_pedido_id;
+      END IF;
 
-```typescript
-// Antes
-const { ordens, isLoading: loadingOrdens, refetch } = useOrdensSemDataCarregamento();
+    ELSIF v_acao = 'reativar' THEN
+      -- Reativar ordem como pendente
+      IF v_tipo = 'soldagem' THEN
+        UPDATE ordens_soldagem 
+        SET status = 'pendente',
+            historico = false,
+            em_backlog = true,
+            pausada = false,
+            pausada_em = NULL,
+            justificativa_pausa = NULL,
+            responsavel_id = NULL,
+            data_conclusao = NULL,
+            updated_at = now()
+        WHERE pedido_id = p_pedido_id;
+        
+        UPDATE linhas_ordens 
+        SET concluida = false, concluida_em = NULL, concluida_por = NULL
+        WHERE pedido_id = p_pedido_id AND tipo_ordem = 'soldagem';
+        
+      -- Similar para perfiladeira e separacao...
+      END IF;
+    END IF;
+    -- 'manter' não faz nada
+  END LOOP;
 
-// Depois
-const { ordens: todasOrdens, isLoading: loadingOrdens } = useOrdensCarregamentoUnificadas();
+  -- 4. ATUALIZAR ETAPAS
+  UPDATE pedidos_etapas 
+  SET data_saida = now()
+  WHERE pedido_id = p_pedido_id 
+    AND data_saida IS NULL;
 
-// Filtrar apenas ordens SEM data de carregamento
-const ordens = todasOrdens.filter(o => !o.data_carregamento);
+  INSERT INTO pedidos_etapas (pedido_id, etapa, data_entrada, checkboxes)
+  VALUES (p_pedido_id, 'em_producao', now(), '[]'::jsonb);
 
-// refetch não é necessário pois o hook unificado já tem real-time
-```
-
-**1.3 Atualizar Tipo do Estado**
-
-```typescript
-// Antes
-const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemCarregamento | null>(null);
-
-// Depois
-const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemCarregamentoUnificada | null>(null);
-```
-
-**1.4 Passar a Fonte no Confirm**
-
-```typescript
-// No handleConfirm
-await onConfirm({
-  ordemId: ordemSelecionada.id,
-  fonte: ordemSelecionada.fonte, // NOVO
-  data_carregamento: format(dataSelecionada, "yyyy-MM-dd"),
-  hora,
-  tipo_carregamento: responsavelTipo,
-  responsavel_carregamento_id: finalResponsavelId,
-  responsavel_carregamento_nome: responsavelNome
-});
-```
-
-**1.5 Verificar tipo_entrega**
-
-```typescript
-// Antes
-const isEntrega = ordemSelecionada?.venda?.tipo_entrega === 'entrega';
-
-// Depois (usando campo unificado)
-const isEntrega = ordemSelecionada?.tipo_entrega === 'entrega';
-```
-
----
-
-### Parte 2: Atualizar OrdensCarregamentoDisponiveis
-
-**2.1 Atualizar handleConfirmAgendar**
-
-```typescript
-// Atualizar interface de params para incluir fonte
-const handleConfirmAgendar = async (params: {
-  ordemId: string;
-  fonte: 'ordens_carregamento' | 'instalacoes'; // NOVO
-  data_carregamento: string;
-  hora: string;
-  tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro';
-  responsavel_carregamento_id: string | null;
-  responsavel_carregamento_nome: string;
-}) => {
-  // Usar fonte do params em vez de ordemSelecionada
-  const tabela = params.fonte === 'instalacoes' ? 'instalacoes' : 'ordens_carregamento';
-  // ...
-};
-```
-
-**2.2 Remover Cast**
-
-```typescript
-// Antes
-<AdicionarOrdemCalendarioModal
-  ordemPreSelecionada={ordemSelecionada as any}
-/>
-
-// Depois
-<AdicionarOrdemCalendarioModal
-  ordemPreSelecionada={ordemSelecionada}
-/>
-```
-
----
-
-### Parte 3: Adicionar Badge de Tipo no Modal
-
-Para diferenciar entregas de instalações na lista do modal:
-
-```typescript
-// Na lista de ordens dentro do modal
-<Badge
-  variant={ordem.tipo_entrega === 'entrega' ? 'default' : 'secondary'}
-  className={cn(
-    "text-xs shrink-0",
-    ordem.tipo_entrega === 'instalacao' && "bg-orange-500/20 text-orange-600",
-    ordem.tipo_entrega === 'manutencao' && "bg-purple-500/20 text-purple-600"
-  )}
->
-  {ordem.tipo_entrega === 'entrega' ? 'Entrega' : 
-   ordem.tipo_entrega === 'manutencao' ? 'Manutenção' : 'Instalação'}
-</Badge>
+  -- 5. ATUALIZAR PEDIDO
+  UPDATE pedidos_producao 
+  SET etapa_atual = 'em_producao',
+      em_backlog = true,
+      observacoes = COALESCE(observacoes, '') || 
+        E'\n\n[RETORNO QUALIDADE ' || to_char(now(), 'DD/MM/YYYY HH24:MI') || ']: ' || p_motivo,
+      updated_at = now()
+  WHERE id = p_pedido_id;
+END;
+$$;
 ```
 
 ---
 
 ### Resultado Esperado
 
-Após as correções:
-
-1. **Modal "+"** exibirá tanto entregas quanto instalações pendentes de agendamento
-2. **Tabela "Ordens Disponíveis"** funcionará corretamente ao clicar em "Agendar"
-3. **Instalação #0099** aparecerá em ambos os locais com badge laranja "Instalação"
-4. **Agendamento** salvará na tabela correta (`instalacoes` ou `ordens_carregamento`)
-
----
-
-### Fluxo Corrigido
-
-```text
-Usuário clica em "+"
-       │
-       ▼
-Modal abre com useOrdensCarregamentoUnificadas()
-       │
-       ▼
-Lista mostra:
-├── Entregas (ordens_carregamento) - Badge azul
-├── Instalações (instalacoes) - Badge laranja
-└── Manutenções (instalacoes) - Badge roxo
-       │
-       ▼
-Seleciona ordem → onConfirm({ fonte: 'instalacoes' | 'ordens_carregamento' })
-       │
-       ▼
-Salva na tabela correta
-```
+1. **Pedido atual corrigido**: Ordens de qualidade e pintura serão excluídas
+2. **Futuras operações de retorno**:
+   - Sempre excluem ordens de qualidade e pintura (serão recriadas ao avançar)
+   - Usuário define ação para cada ordem de produção (manter/pausar/reativar)
+   - Ordens pausadas recebem justificativa específica
+   - Ordens reativadas voltam para o backlog com linhas desmarcadas
 
