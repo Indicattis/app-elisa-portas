@@ -13,6 +13,7 @@ interface OrdemInstalacaoRowProps {
   onConcluir: (ordem: OrdemInstalacao) => void;
   isConcluindo: boolean;
   showCarregador?: boolean;
+  onClick?: (ordem: OrdemInstalacao) => void;
 }
 
 // Calcular badges de tamanho baseado na área
@@ -55,7 +56,8 @@ export function OrdemInstalacaoRow({
   ordem, 
   onConcluir, 
   isConcluindo,
-  showCarregador = false 
+  showCarregador = false,
+  onClick 
 }: OrdemInstalacaoRowProps) {
   const clienteNome = ordem.venda?.cliente_nome || ordem.nome_cliente;
   const cidade = ordem.venda?.cidade || ordem.cidade;
@@ -79,8 +81,10 @@ export function OrdemInstalacaoRow({
     <div 
       className={cn(
         "h-[35px] grid items-center gap-2 px-3 rounded-md border bg-card/50 text-sm transition-colors hover:bg-muted/50",
-        atrasado && "border-red-500/50 bg-red-500/5"
+        atrasado && "border-red-500/50 bg-red-500/5",
+        onClick && "cursor-pointer"
       )}
+      onClick={() => onClick?.(ordem)}
       style={{ 
         gridTemplateColumns: "28px 70px 1fr 100px 80px 80px 50px" 
       }}
