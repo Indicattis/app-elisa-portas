@@ -20,6 +20,8 @@ export interface OrdemStatus {
   pausada: boolean;
   justificativa_pausa: string | null;
   pausada_em: string | null;
+  linhas_concluidas: number;
+  total_linhas: number;
 }
 
 export interface CorInfo {
@@ -145,9 +147,8 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
           : Promise.resolve({ data: [] }),
         supabase
           .from('linhas_ordens')
-          .select('id, pedido_id, tipo_ordem, tamanho, quantidade')
-          .in('pedido_id', pedidoIds)
-          .eq('tipo_ordem', 'perfiladeira'),
+          .select('id, pedido_id, tipo_ordem, tamanho, quantidade, concluida')
+          .in('pedido_id', pedidoIds),
       ]);
 
       // Coletar todos os responsavel_ids únicos
@@ -183,10 +184,30 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
         produtosPorVenda[p.venda_id].push(p);
       });
 
+      // Mapa de linhas por pedido e tipo de ordem
+      const linhasCountMap: Record<string, Record<TipoOrdem, { concluidas: number; total: number }>> = {};
+      linhasRes.data?.forEach((l: any) => {
+        const pedidoId = l.pedido_id;
+        const tipoOrdem = l.tipo_ordem as TipoOrdem;
+        if (!linhasCountMap[pedidoId]) {
+          linhasCountMap[pedidoId] = {} as Record<TipoOrdem, { concluidas: number; total: number }>;
+        }
+        if (!linhasCountMap[pedidoId][tipoOrdem]) {
+          linhasCountMap[pedidoId][tipoOrdem] = { concluidas: 0, total: 0 };
+        }
+        linhasCountMap[pedidoId][tipoOrdem].total += 1;
+        if (l.concluida) {
+          linhasCountMap[pedidoId][tipoOrdem].concluidas += 1;
+        }
+      });
+
+      // Mapa separado para cálculo de metragem linear (perfiladeira)
       const linhasPorPedido: Record<string, any[]> = {};
       linhasRes.data?.forEach((l: any) => {
-        if (!linhasPorPedido[l.pedido_id]) linhasPorPedido[l.pedido_id] = [];
-        linhasPorPedido[l.pedido_id].push(l);
+        if (l.tipo_ordem === 'perfiladeira') {
+          if (!linhasPorPedido[l.pedido_id]) linhasPorPedido[l.pedido_id] = [];
+          linhasPorPedido[l.pedido_id].push(l);
+        }
       });
 
       // Mapas de ordens por pedido
@@ -288,6 +309,7 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
         const criarOrdemStatus = (tipo: TipoOrdem): OrdemStatus => {
           const ordem = ordensDosPedido[tipo];
           const responsavelId = ordem?.responsavel_id;
+          const linhasCount = linhasCountMap[pedido.id]?.[tipo] || { concluidas: 0, total: 0 };
           return {
             existe: !!ordem,
             id: ordem?.id || null,
@@ -298,6 +320,8 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
             pausada: ordem?.pausada || false,
             justificativa_pausa: ordem?.justificativa_pausa || null,
             pausada_em: ordem?.pausada_em || null,
+            linhas_concluidas: linhasCount.concluidas,
+            total_linhas: linhasCount.total,
           };
         };
 
