@@ -1,254 +1,218 @@
 
 
-## Plano: Integracao Vite + Capacitor + Bitrise
+## Plano: Downbar para Ordens de Carregamento/Instalacoes
 
 ### Objetivo
-Configurar o projeto para build nativo mobile (iOS/Android) com CI/CD automatizado via Bitrise.
+Atualizar o componente `OrdemCarregamentoDetails` para:
+1. Usar downbar (bottom sheet) igual ao `PedidoDetalhesSheet`
+2. Exibir endereco completo do cliente (cidade, estado, bairro, CEP)
+3. Destacar produtos `porta_enrolar` com seus tamanhos
+4. Mostrar cores das portas de forma visual
 
 ---
 
-### Etapa 1: Configurar Capacitor no Projeto
+### Dados Disponiveis na Venda
 
-**Arquivos a criar:**
+A tabela `vendas` possui os seguintes campos de endereco:
+- `cidade`
+- `estado`
+- `bairro`
+- `cep`
 
-1. **`capacitor.config.ts`** - Configuracao principal do Capacitor
-```typescript
-import type { CapacitorConfig } from '@capacitor/cli';
+Nao existem campos de rua/numero/complemento na tabela. Usaremos os campos disponiveis.
 
-const config: CapacitorConfig = {
-  appId: 'app.lovable.9eb1bc327d674330b27a36a057f315d7',
-  appName: 'app-elisa-portas',
-  webDir: 'dist',
-  server: {
-    // Para desenvolvimento com hot-reload
-    url: 'https://9eb1bc32-7d67-4330-b27a-36a057f315d7.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  }
-};
+---
 
-export default config;
+### Mudanca: Redesenhar OrdemCarregamentoDetails
+
+**Arquivo:** `src/components/expedicao/OrdemCarregamentoDetails.tsx`
+
+**Alteracoes:**
+
+1. **Converter para downbar** - Mudar `side="right"` para `side="bottom"` com estilo glassmorphism escuro
+
+2. **Header com gradiente** - Usar gradiente azul/roxo como no PedidoDetalhesSheet
+
+3. **Secao de Endereco Completo** - Card dedicado com todos os campos disponiveis:
+   - Cidade/Estado
+   - Bairro
+   - CEP
+
+4. **Secao de Produtos porta_enrolar** - Filtrar e destacar apenas portas de enrolar:
+   - Tamanho (largura x altura)
+   - Badge com dimensoes
+   - Cor visual (swatch + nome)
+
+5. **Layout em cards** - Usar `bg-white/5 rounded-xl border border-white/10`
+
+---
+
+### Estrutura Proposta
+
+```tsx
+<Sheet open={open} onOpenChange={onOpenChange}>
+  <SheetContent 
+    side="bottom" 
+    className="h-[85vh] max-w-[700px] mx-auto rounded-t-2xl overflow-hidden flex flex-col p-0 bg-zinc-900 border-t border-white/10"
+  >
+    {/* Header com gradiente azul */}
+    <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-xl border-b border-white/10 px-6 py-4">
+      <div className="flex items-center gap-2">
+        <Badge>Entrega/Instalacao</Badge>
+        <Badge>{status}</Badge>
+      </div>
+      <SheetTitle className="text-white">{nome_cliente}</SheetTitle>
+    </div>
+
+    {/* Conteudo scrollavel */}
+    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+      
+      {/* Card: Endereco Completo */}
+      <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+        <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-3">
+          Endereco de Entrega
+        </h3>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-blue-400" />
+            <span className="text-white">{cidade} - {estado}</span>
+          </div>
+          {bairro && (
+            <p className="text-sm text-white/70 pl-6">{bairro}</p>
+          )}
+          {cep && (
+            <p className="text-sm text-white/50 pl-6">CEP: {cep}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Card: Portas de Enrolar */}
+      <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+        <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-3">
+          Portas de Enrolar
+        </h3>
+        <div className="space-y-2">
+          {produtos.filter(p => p.tipo_produto === 'porta_enrolar').map((produto, idx) => (
+            <div key={idx} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
+              {/* Swatch de cor */}
+              {produto.cor && (
+                <div 
+                  className="h-8 w-8 rounded-lg border-2 border-white/20"
+                  style={{ backgroundColor: produto.cor.codigo_hex }}
+                />
+              )}
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-white">
+                    {produto.largura}m x {produto.altura}m
+                  </Badge>
+                  {produto.quantidade > 1 && (
+                    <span className="text-xs text-white/50">x{produto.quantidade}</span>
+                  )}
+                </div>
+                {produto.cor && (
+                  <p className="text-xs text-white/60 mt-1">{produto.cor.nome}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Card: Informacoes de Carregamento */}
+      <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+        <h3>Carregamento</h3>
+        {/* Data, Hora, Responsavel */}
+      </div>
+
+      {/* Card: Informacoes do Pedido */}
+      <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+        <h3>Pedido</h3>
+        {/* Numero, Etapa */}
+      </div>
+    </div>
+  </SheetContent>
+</Sheet>
 ```
-
-**Dependencias a adicionar no `package.json`:**
-```json
-{
-  "@capacitor/core": "^6.0.0",
-  "@capacitor/cli": "^6.0.0",
-  "@capacitor/ios": "^6.0.0",
-  "@capacitor/android": "^6.0.0"
-}
-```
-
----
-
-### Etapa 2: Criar Configuracao Bitrise
-
-**Arquivo:** `bitrise.yml`
-
-```yaml
-format_version: "11"
-default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
-
-project_type: other
-
-workflows:
-  # Workflow para Android
-  android:
-    steps:
-      - activate-ssh-key@4: {}
-      - git-clone@8: {}
-      - nvm@1:
-          inputs:
-            - node_version: "20"
-      - npm@1:
-          title: Install dependencies
-          inputs:
-            - command: install
-      - npm@1:
-          title: Build Vite app
-          inputs:
-            - command: run build
-      - script@1:
-          title: Capacitor Sync Android
-          inputs:
-            - content: |
-                #!/bin/bash
-                set -ex
-                npx cap sync android
-      - android-build@1:
-          inputs:
-            - project_location: android
-            - module: app
-            - variant: Release
-      - deploy-to-bitrise-io@2: {}
-
-  # Workflow para iOS
-  ios:
-    steps:
-      - activate-ssh-key@4: {}
-      - git-clone@8: {}
-      - nvm@1:
-          inputs:
-            - node_version: "20"
-      - npm@1:
-          title: Install dependencies
-          inputs:
-            - command: install
-      - npm@1:
-          title: Build Vite app
-          inputs:
-            - command: run build
-      - script@1:
-          title: Capacitor Sync iOS
-          inputs:
-            - content: |
-                #!/bin/bash
-                set -ex
-                npx cap sync ios
-      - cocoapods-install@2:
-          inputs:
-            - source_root_path: ios/App
-      - xcode-archive@5:
-          inputs:
-            - project_path: ios/App/App.xcworkspace
-            - scheme: App
-            - distribution_method: app-store
-      - deploy-to-bitrise-io@2: {}
-
-  # Workflow completo (Android + iOS)
-  deploy_all:
-    before_run:
-      - android
-      - ios
-
-trigger_map:
-  - push_branch: main
-    workflow: deploy_all
-  - pull_request_source_branch: "*"
-    workflow: android
-
-app:
-  envs:
-    - PROJECT_LOCATION: android
-    - MODULE: app
-    - VARIANT: Release
-```
-
----
-
-### Etapa 3: Scripts NPM para Capacitor
-
-**Adicionar ao `package.json`:**
-```json
-{
-  "scripts": {
-    "cap:sync": "cap sync",
-    "cap:android": "cap open android",
-    "cap:ios": "cap open ios",
-    "build:mobile": "npm run build && cap sync"
-  }
-}
-```
-
----
-
-### Etapa 4: Configurar .gitignore
-
-**Adicionar ao `.gitignore`:**
-```
-# Capacitor
-/android/
-/ios/
-*.keystore
-*.jks
-```
-
-> **Nota:** As pastas `android/` e `ios/` sao geradas pelo Capacitor e geralmente nao sao commitadas, pois o Bitrise as regenera durante o build.
-
----
-
-### Etapa 5: Documentacao (README)
-
-**Criar:** `docs/MOBILE_BUILD.md`
-
-Documento explicando:
-- Como configurar Bitrise
-- Variaveis de ambiente necessarias
-- Como fazer deploy manual
-- Troubleshooting comum
-
----
-
-### Fluxo de CI/CD
-
-```text
-+------------------+     +------------------+     +------------------+
-|   Push para      | --> |     Bitrise      | --> |   App Stores     |
-|   GitHub/main    |     |   Workflow       |     |   (iOS/Android)  |
-+------------------+     +------------------+     +------------------+
-                              |
-                              v
-                    +------------------+
-                    | 1. git clone     |
-                    | 2. npm install   |
-                    | 3. npm run build |
-                    | 4. cap sync      |
-                    | 5. Build nativo  |
-                    | 6. Deploy        |
-                    +------------------+
-```
-
----
-
-### Passos Pos-Implementacao (Manual)
-
-Apos criar os arquivos, voce precisara:
-
-1. **Exportar para GitHub** (se ainda nao fez)
-2. **No Bitrise:**
-   - Criar conta em bitrise.io
-   - Conectar repositorio GitHub
-   - Adicionar variaveis de ambiente:
-     - `ANDROID_KEYSTORE_PASSWORD`
-     - `ANDROID_KEY_ALIAS`
-     - `ANDROID_KEY_PASSWORD`
-     - Certificados iOS (provisioning profiles)
-3. **Localmente (opcional para teste):**
-   ```bash
-   git pull
-   npm install
-   npx cap add android
-   npx cap add ios
-   npm run build
-   npx cap sync
-   ```
-
----
-
-### Arquivos a Criar/Modificar
-
-| Arquivo | Acao |
-|---------|------|
-| `capacitor.config.ts` | Criar - configuracao Capacitor |
-| `bitrise.yml` | Criar - workflows CI/CD |
-| `package.json` | Modificar - adicionar deps e scripts |
-| `.gitignore` | Modificar - ignorar pastas nativas |
-| `docs/MOBILE_BUILD.md` | Criar - documentacao |
 
 ---
 
 ### Secao Tecnica
 
-**Dependencias Capacitor:**
-```bash
-npm install @capacitor/core @capacitor/cli @capacitor/ios @capacitor/android
-npx cap init app-elisa-portas app.lovable.9eb1bc327d674330b27a36a057f315d7 --web-dir dist
+**Atualizacao do Hook**
+
+O hook `useOrdensCarregamentoCalendario.ts` ja busca os dados necessarios:
+- `venda.cidade`, `venda.estado`, `venda.cep`, `venda.bairro`
+- `venda.produtos` com `tipo_produto`, `largura`, `altura`, `tamanho`, `cor`
+
+Nenhuma alteracao no hook e necessaria.
+
+**Filtragem de Produtos**
+
+Para exibir apenas portas de enrolar:
+```typescript
+const portasEnrolar = ordem.venda?.produtos?.filter(
+  p => p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'porta'
+) || [];
 ```
 
-**Variaveis de Ambiente Bitrise (Secrets):**
-- `BITRISEIO_ANDROID_KEYSTORE_URL` - URL do keystore
-- `BITRISEIO_ANDROID_KEYSTORE_PASSWORD`
-- `BITRISEIO_ANDROID_KEYSTORE_ALIAS`
-- `BITRISEIO_ANDROID_KEYSTORE_PRIVATE_KEY_PASSWORD`
-- Para iOS: certificados e provisioning profiles via Code Signing
+**Formatacao de Tamanho**
+
+```typescript
+const formatTamanho = (produto) => {
+  if (produto.tamanho) return produto.tamanho;
+  if (produto.largura && produto.altura) {
+    return `${produto.largura}m x ${produto.altura}m`;
+  }
+  return null;
+};
+```
+
+---
+
+### Arquivos a Modificar
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/components/expedicao/OrdemCarregamentoDetails.tsx` | Reestilizar para downbar com tema escuro, endereco completo e produtos filtrados |
+
+---
+
+### Resultado Visual
+
+```text
++------------------------------------------+
+|  [Entrega]  [Agendada]                   |  <- Header azul/roxo
+|  GUSTAVO OLIVEIRA DE LIMA                |
++------------------------------------------+
+|                                          |
+|  +------------------------------------+  |
+|  | ENDERECO DE ENTREGA                |  |
+|  | 📍 Guaiba - RS                     |  |
+|  |    PEDRAS BRANCAS                  |  |
+|  |    CEP: 92722-140                  |  |
+|  +------------------------------------+  |
+|                                          |
+|  +------------------------------------+  |
+|  | PORTAS DE ENROLAR                  |  |
+|  | +--------------------------------+ |  |
+|  | | [████] [6m x 4.8m]            | |  |  <- Swatch de cor
+|  | |        Branco Neve             | |  |
+|  | +--------------------------------+ |  |
+|  +------------------------------------+  |
+|                                          |
+|  +------------------------------------+  |
+|  | CARREGAMENTO                       |  |
+|  | Data: 27/01/2026                   |  |
+|  | Responsavel: HYUNDAI/HR HDB        |  |
+|  +------------------------------------+  |
+|                                          |
+|  +------------------------------------+  |
+|  | PEDIDO                             |  |
+|  | Numero: #0117                      |  |
+|  | Etapa: Finalizado                  |  |
+|  +------------------------------------+  |
+|                                          |
++------------------------------------------+
+```
 
