@@ -1,91 +1,93 @@
 
-# Plano: Corrigir Valores de Desconto Presencial
+# Plano: Corrigir Filtro de Ordens Concluídas no Calendário de Expedição
 
 ## Problema Identificado
 
-Os valores de desconto presencial estão incorretos em vários lugares:
+Pedidos de entrega que tiveram sua ordem de carregamento concluída não estão desaparecendo do calendário em `/logistica/expedicao`.
 
-| Parâmetro | Valor Atual | Valor Correto |
-|-----------|-------------|---------------|
-| Desconto presencial | 3% | **5%** |
-| Limite sem autorização | 6% (3+3) | **8%** (3+5) |
-| Limite máximo com responsável | 11% (6+5) | **13%** (8+5) |
+**Causa raiz**: O hook `useOrdensCarregamentoCalendario.ts` não filtra corretamente as ordens concluídas. A query busca todas as ordens no período e depois filtra apenas por `status !== 'concluida'`, mas algumas ordens concluídas têm status diferente (ex: `'carregada'`).
 
-O erro está nos valores padrão/fallback definidos no código e possivelmente no registro do banco.
+## Evidência do Problema
+
+Ordem encontrada no banco que aparece indevidamente no calendário:
+
+| Campo | Valor |
+|-------|-------|
+| nome_cliente | GUSTAVO OLIVEIRA DE LIMA |
+| carregamento_concluido | **true** |
+| status | carregada |
+| etapa_atual | finalizado |
+| data_carregamento | 2026-01-27 |
+
+O filtro atual `status !== 'concluida'` não remove esta ordem porque o status é `'carregada'`, não `'concluida'`.
 
 ---
 
-## Alterações Necessárias
+## Solução
 
-### 1. Atualizar dados no banco de dados
+Adicionar filtro direto na query do Supabase para excluir ordens com `carregamento_concluido = true`.
 
-Executar UPDATE no registro existente para corrigir o valor de `limite_desconto_presencial`:
+**Arquivo**: `src/hooks/useOrdensCarregamentoCalendario.ts`
+
+### Alteração na Query
+
+Adicionar `.eq("carregamento_concluido", false)` na query de `ordens_carregamento` (por volta da linha 74):
+
+```typescript
+// Antes
+.gte("data_carregamento", inicio)
+.lte("data_carregamento", fim)
+.order("data_carregamento", { ascending: true });
+
+// Depois
+.gte("data_carregamento", inicio)
+.lte("data_carregamento", fim)
+.eq("carregamento_concluido", false) // Excluir ordens já concluídas
+.order("data_carregamento", { ascending: true });
+```
+
+### Remover Filtro JavaScript Redundante
+
+Como o filtro agora é feito na query, podemos simplificar o código removendo o filtro JavaScript desnecessário (linha 206):
+
+```typescript
+// Antes
+const filteredOrdens = ordensComFonte.filter((ordem: any) => ordem.status !== 'concluida');
+const filteredInstalacoes = instalacoesNormalizadas.filter((inst: any) => inst.status !== 'concluida');
+
+return [...filteredOrdens, ...filteredInstalacoes] as OrdemCarregamento[];
+
+// Depois
+return [...ordensComFonte, ...instalacoesNormalizadas] as OrdemCarregamento[];
+```
+
+---
+
+## Correção de Dados Existentes
+
+Corrigir ordens que têm `carregamento_concluido = true` mas `status` diferente de `'concluida'`:
 
 ```sql
-UPDATE configuracoes_vendas
-SET limite_desconto_presencial = 5
-WHERE limite_desconto_presencial = 3;
-```
-
-### 2. Atualizar valores padrão no código
-
-**Arquivo: `src/hooks/useConfiguracoesVendas.ts`**
-
-Alterar os fallbacks de 3 para 5:
-
-```typescript
-// Antes
-presencial: configuracoes?.limite_desconto_presencial ?? 3,
-totalSemSenha: (...) + (configuracoes?.limite_desconto_presencial ?? 3),
-totalComResponsavel: (...) + (configuracoes?.limite_desconto_presencial ?? 3) + ...
-
-// Depois
-presencial: configuracoes?.limite_desconto_presencial ?? 5,
-totalSemSenha: (...) + (configuracoes?.limite_desconto_presencial ?? 5),
-totalComResponsavel: (...) + (configuracoes?.limite_desconto_presencial ?? 5) + ...
-```
-
-**Arquivo: `src/utils/descontoVendasRules.ts`**
-
-Alterar o fallback na função `calcularLimitesDesconto`:
-
-```typescript
-// Antes
-const limitePresencialConfig = config?.presencial ?? 3;
-
-// Depois
-const limitePresencialConfig = config?.presencial ?? 5;
-```
-
-Também atualizar o comentário:
-
-```typescript
-// Antes
-// 3% adicional para venda presencial
-
-// Depois  
-// 5% adicional para venda presencial
+UPDATE ordens_carregamento 
+SET status = 'concluida'
+WHERE carregamento_concluido = true 
+  AND status != 'concluida';
 ```
 
 ---
 
-## Resumo de Arquivos
+## Resumo das Alterações
 
 | Arquivo | Ação |
 |---------|------|
-| Banco de dados | UPDATE `limite_desconto_presencial = 5` |
-| `src/hooks/useConfiguracoesVendas.ts` | Alterar fallback de 3 para 5 |
-| `src/utils/descontoVendasRules.ts` | Alterar fallback de 3 para 5 |
+| `src/hooks/useOrdensCarregamentoCalendario.ts` | Adicionar filtro `.eq("carregamento_concluido", false)` na query |
+| Banco de dados | Corrigir status inconsistente de ordens já concluídas |
 
 ---
 
-## Resultado Final
+## Resultado Esperado
 
-| Parâmetro | Valor |
-|-----------|-------|
-| Pagamento à vista (não cartão) | +3% |
-| Venda presencial | +5% |
-| **Limite sem autorização** | **8%** |
-| Com senha do responsável | +5% |
-| **Limite máximo com responsável** | **13%** |
-| Com senha master | Sem limite |
+Após a implementação:
+1. Ordens de carregamento com `carregamento_concluido = true` não aparecerão mais no calendário
+2. Pedidos tipo "entrega" avançam automaticamente para "Finalizado" quando o carregamento é concluído (já funciona via RPC)
+3. O calendário mostra apenas ordens pendentes de carregamento
