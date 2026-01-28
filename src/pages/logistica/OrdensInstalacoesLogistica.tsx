@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, RefreshCw, Search, Filter, MapPin, Truck, Package, Hammer, Wrench } from "lucide-react";
+import { ArrowLeft, RefreshCw, Search, Filter, MapPin, Truck, Package, Hammer, Wrench, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,11 +21,12 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 
 import { useOrdensInstalacao, OrdemInstalacao } from "@/hooks/useOrdensInstalacao";
-import { useNeoInstalacoesListagem } from "@/hooks/useNeoInstalacoes";
-import { useNeoCorrecoesListagem } from "@/hooks/useNeoCorrecoes";
+import { useNeoInstalacoesListagem, useNeoInstalacoesFinalizadas } from "@/hooks/useNeoInstalacoes";
+import { useNeoCorrecoesListagem, useNeoCorrecoesFinalizadas } from "@/hooks/useNeoCorrecoes";
 import { OrdemInstalacaoRow } from "@/components/instalacoes/OrdemInstalacaoRow";
 import { NeoInstalacaoRow } from "@/components/instalacoes/NeoInstalacaoRow";
 import { NeoCorrecaoRow } from "@/components/instalacoes/NeoCorrecaoRow";
+import { NeoFinalizadoRow } from "@/components/instalacoes/NeoFinalizadoRow";
 import { PedidoDetalhesSheet } from "@/components/pedidos/PedidoDetalhesSheet";
 import { RetrocederPedidoUnificadoModal } from "@/components/pedidos/RetrocederPedidoUnificadoModal";
 import { NeoInstalacao } from "@/types/neoInstalacao";
@@ -78,6 +79,29 @@ export default function OrdensInstalacoesLogistica() {
   } = useNeoCorrecoesListagem();
   
   const isConcluindoNeoCorrecao = concluirNeoCorrecao.isPending;
+
+  // Hooks para finalizados
+  const { 
+    neoInstalacoesFinalizadas, 
+    isLoading: isLoadingFinalizadasInstalacoes 
+  } = useNeoInstalacoesFinalizadas();
+
+  const { 
+    neoCorrecoesFinalizadas, 
+    isLoading: isLoadingFinalizadasCorrecoes 
+  } = useNeoCorrecoesFinalizadas();
+
+  // Combinar finalizados ordenados por data de conclusão
+  const finalizados = useMemo(() => {
+    const todos = [...neoInstalacoesFinalizadas, ...neoCorrecoesFinalizadas];
+    return todos.sort((a, b) => {
+      const dateA = a.concluida_em ? new Date(a.concluida_em).getTime() : 0;
+      const dateB = b.concluida_em ? new Date(b.concluida_em).getTime() : 0;
+      return dateB - dateA; // Mais recentes primeiro
+    });
+  }, [neoInstalacoesFinalizadas, neoCorrecoesFinalizadas]);
+
+  const isLoadingFinalizados = isLoadingFinalizadasInstalacoes || isLoadingFinalizadasCorrecoes;
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
@@ -413,6 +437,44 @@ export default function OrdensInstalacoesLogistica() {
                     neoCorrecao={neo}
                     onConcluir={(n) => setConfirmNeoCorrecaoDialog({ open: true, neoCorrecao: n })}
                     isConcluindo={isConcluindoNeoCorrecao}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* SEÇÃO 5: Finalizados (Neo) */}
+          <div className={cn(
+            "space-y-3 transition-all duration-500 delay-[600ms]",
+            mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          )}>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              <h2 className="text-lg font-semibold">Finalizados</h2>
+              <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-600">
+                {finalizados.length}
+              </Badge>
+              <span className="text-xs text-muted-foreground ml-auto">
+                últimos 30 dias
+              </span>
+            </div>
+
+            {isLoadingFinalizados ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                Carregando finalizados...
+              </div>
+            ) : finalizados.length === 0 ? (
+              <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                <CardContent className="py-8 text-center text-muted-foreground text-sm">
+                  Nenhum serviço avulso finalizado recentemente.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-1">
+                {finalizados.map((item) => (
+                  <NeoFinalizadoRow
+                    key={item.id}
+                    item={item}
                   />
                 ))}
               </div>
