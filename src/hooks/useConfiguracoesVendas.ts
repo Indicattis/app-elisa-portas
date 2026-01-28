@@ -1,0 +1,118 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+export interface ConfiguracoesVendas {
+  id: string;
+  senha_responsavel: string;
+  senha_master: string;
+  responsavel_senha_responsavel_id: string | null;
+  responsavel_senha_master_id: string | null;
+  limite_desconto_avista: number;
+  limite_desconto_presencial: number;
+  limite_adicional_responsavel: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConfiguracoesVendasUpdate {
+  senha_responsavel?: string;
+  senha_master?: string;
+  responsavel_senha_responsavel_id?: string | null;
+  responsavel_senha_master_id?: string | null;
+  limite_desconto_avista?: number;
+  limite_desconto_presencial?: number;
+  limite_adicional_responsavel?: number;
+}
+
+export function useConfiguracoesVendas() {
+  const queryClient = useQueryClient();
+
+  const { data: configuracoes, isLoading, error } = useQuery({
+    queryKey: ["configuracoes-vendas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("configuracoes_vendas")
+        .select("*")
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Erro ao buscar configurações de vendas:", error);
+        throw error;
+      }
+
+      return data as ConfiguracoesVendas | null;
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (updates: ConfiguracoesVendasUpdate) => {
+      // Validar que as senhas são diferentes
+      const senhaResponsavel = updates.senha_responsavel ?? configuracoes?.senha_responsavel;
+      const senhaMaster = updates.senha_master ?? configuracoes?.senha_master;
+      
+      if (senhaResponsavel && senhaMaster && senhaResponsavel === senhaMaster) {
+        throw new Error("As senhas do responsável e master devem ser diferentes");
+      }
+
+      if (!configuracoes?.id) {
+        throw new Error("Configurações não encontradas");
+      }
+
+      const { data, error } = await supabase
+        .from("configuracoes_vendas")
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", configuracoes.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Erro ao atualizar configurações:", error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["configuracoes-vendas"] });
+      toast.success("Configurações atualizadas com sucesso!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao atualizar configurações");
+    },
+  });
+
+  // Função para verificar senha do responsável
+  const verificarSenhaResponsavel = (senha: string): boolean => {
+    return configuracoes?.senha_responsavel === senha;
+  };
+
+  // Função para verificar senha master
+  const verificarSenhaMaster = (senha: string): boolean => {
+    return configuracoes?.senha_master === senha;
+  };
+
+  // Limites calculados
+  const limites = {
+    avista: configuracoes?.limite_desconto_avista ?? 3,
+    presencial: configuracoes?.limite_desconto_presencial ?? 3,
+    adicionalResponsavel: configuracoes?.limite_adicional_responsavel ?? 5,
+    totalSemSenha: (configuracoes?.limite_desconto_avista ?? 3) + (configuracoes?.limite_desconto_presencial ?? 3),
+    totalComResponsavel: (configuracoes?.limite_desconto_avista ?? 3) + (configuracoes?.limite_desconto_presencial ?? 3) + (configuracoes?.limite_adicional_responsavel ?? 5),
+  };
+
+  return {
+    configuracoes,
+    isLoading,
+    error,
+    limites,
+    updateConfiguracoes: updateMutation.mutate,
+    isUpdating: updateMutation.isPending,
+    verificarSenhaResponsavel,
+    verificarSenhaMaster,
+  };
+}

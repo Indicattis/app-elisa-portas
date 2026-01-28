@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
+import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
 import { Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 
 interface VerificacaoLiderModalProps {
@@ -24,6 +25,8 @@ export function VerificacaoLiderModal({
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
   const [liderNome, setLiderNome] = useState('');
+  
+  const { configuracoes, isLoading: loadingConfig } = useConfiguracoesVendas();
 
   useEffect(() => {
     if (open) {
@@ -77,6 +80,11 @@ export function VerificacaoLiderModal({
       return;
     }
 
+    if (loadingConfig || !configuracoes) {
+      setErro('Carregando configurações...');
+      return;
+    }
+
     setLoading(true);
     setErro('');
 
@@ -118,10 +126,8 @@ export function VerificacaoLiderModal({
         return;
       }
 
-      // Verificar senha usando senha fixa
-      const SENHA_LIDER = "Lider@2025";
-      
-      if (senha === SENHA_LIDER) {
+      // Verificar senha usando a configuração do banco
+      if (senha === configuracoes.senha_responsavel) {
         onSenhaCorreta();
         onOpenChange(false);
       } else {

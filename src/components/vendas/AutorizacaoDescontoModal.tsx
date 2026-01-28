@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAllUsers } from '@/hooks/useAllUsers';
 import { useLiderVendas } from '@/hooks/useLiderVendas';
-import { Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
+import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
+import { Loader2, AlertCircle, ShieldCheck, Infinity } from 'lucide-react';
 
 interface AutorizacaoDescontoModalProps {
   open: boolean;
@@ -17,8 +18,6 @@ interface AutorizacaoDescontoModalProps {
   tipoAutorizacao: 'responsavel_setor' | 'master';
   limitePermitido: number;
 }
-
-const SENHA_LIDER = "Lider@2025";
 
 export function AutorizacaoDescontoModal({
   open,
@@ -35,6 +34,7 @@ export function AutorizacaoDescontoModal({
   
   const { data: usuarios = [], isLoading: loadingUsuarios } = useAllUsers();
   const { data: liderVendas, isLoading: loadingLider } = useLiderVendas();
+  const { configuracoes, isLoading: loadingConfig, limites } = useConfiguracoesVendas();
   
   // Filtrar usuários baseado no tipo de autorização
   const usuariosFiltrados = useMemo(() => {
@@ -64,15 +64,17 @@ export function AutorizacaoDescontoModal({
       // Auto-selecionar o líder de vendas se disponível
       if (tipoAutorizacao === 'responsavel_setor' && liderVendas) {
         setAutorizadorId(liderVendas.user_id);
+      } else if (tipoAutorizacao === 'master' && configuracoes?.responsavel_senha_master_id) {
+        setAutorizadorId(configuracoes.responsavel_senha_master_id);
       } else {
         setAutorizadorId('');
       }
     }
-  }, [open, tipoAutorizacao, liderVendas]);
+  }, [open, tipoAutorizacao, liderVendas, configuracoes]);
 
   const handleAutorizar = async () => {
     if (!senha.trim()) {
-      setErro(tipoAutorizacao === 'master' ? 'Digite a senha mestre' : 'Digite a senha do responsável');
+      setErro(tipoAutorizacao === 'master' ? 'Digite a senha master' : 'Digite a senha do responsável');
       return;
     }
 
@@ -81,19 +83,33 @@ export function AutorizacaoDescontoModal({
       return;
     }
 
+    if (loadingConfig || !configuracoes) {
+      setErro('Carregando configurações...');
+      return;
+    }
+
     setLoading(true);
     setErro('');
 
     try {
-      // Validar senha do líder
-      if (senha !== SENHA_LIDER) {
+      // Validar senha baseado no tipo de autorização
+      let senhaValida = false;
+      
+      if (tipoAutorizacao === 'master') {
+        // Verificar senha master
+        senhaValida = senha === configuracoes.senha_master;
+      } else {
+        // Verificar senha do responsável
+        senhaValida = senha === configuracoes.senha_responsavel;
+      }
+
+      if (!senhaValida) {
         setErro('Senha incorreta');
         return;
       }
 
-      // Senha correta, validar usuário
+      // Validar usuário para senha do responsável
       if (tipoAutorizacao === 'responsavel_setor') {
-        // Verificar se o usuário é o líder de vendas configurado
         if (!liderVendas) {
           setErro('Nenhum líder de vendas configurado no sistema');
           return;
@@ -136,8 +152,8 @@ export function AutorizacaoDescontoModal({
             o limite permitido de <span className="font-bold text-foreground">{limitePermitido.toFixed(0)}%</span> em{' '}
             <span className="font-bold text-foreground">{(percentualDesconto - limitePermitido).toFixed(1)}%</span>.
             {tipoAutorizacao === 'master' 
-              ? ' É necessária autorização com senha master (excedeu mais de 5%).'
-              : ' É necessária autorização do responsável do setor (excedeu até 5%).'}
+              ? ` É necessária a senha master (desconto acima de ${limites.totalComResponsavel}%).`
+              : ` É necessária a senha do responsável (até ${limites.totalComResponsavel}%).`}
           </DialogDescription>
         </DialogHeader>
 
@@ -147,6 +163,15 @@ export function AutorizacaoDescontoModal({
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 Nenhum líder de vendas configurado. Configure um líder em Configurações → Setores e Líderes.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {tipoAutorizacao === 'master' && (
+            <Alert className="bg-red-500/10 border-red-500/30">
+              <Infinity className="h-4 w-4 text-red-400" />
+              <AlertDescription className="text-red-300">
+                A senha master desbloqueia qualquer percentual de desconto.
               </AlertDescription>
             </Alert>
           )}

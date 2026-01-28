@@ -26,7 +26,8 @@ import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
 import { CreditoVendaModal } from '@/components/vendas/CreditoVendaModal';
 import { AutorizacaoDescontoModal } from '@/components/vendas/AutorizacaoDescontoModal';
 import { PinturaRapidaModal } from '@/components/vendas/PinturaRapidaModal';
-import { validarDesconto, getTipoAutorizacaoNecessaria } from '@/utils/descontoVendasRules';
+import { validarDesconto, getTipoAutorizacaoNecessaria, ConfigLimites } from '@/utils/descontoVendasRules';
+import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
 import { useAuth } from '@/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from '@/components/vendas/PagamentoSection';
@@ -40,6 +41,7 @@ export default function VendaNovaMinimalista() {
   const { toast } = useToast();
   const { createVenda, isCreating } = useVendas();
   const { user } = useAuth();
+  const { limites: configLimites } = useConfiguracoesVendas();
   
   const [formData, setFormData] = useState<VendaFormData>({
     cliente_nome: '',
@@ -190,9 +192,15 @@ export default function VendaNovaMinimalista() {
     }, 0) + (formData.valor_frete || 0);
   }, [portas, formData.valor_frete]);
 
+  const configLimitesObj: ConfigLimites = useMemo(() => ({
+    avista: configLimites.avista,
+    presencial: configLimites.presencial,
+    adicionalResponsavel: configLimites.adicionalResponsavel
+  }), [configLimites]);
+
   const validacaoDescontoMemo = useMemo(() => {
-    return validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial);
-  }, [portas, formData.forma_pagamento, formData.venda_presencial]);
+    return validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial, configLimitesObj);
+  }, [portas, formData.forma_pagamento, formData.venda_presencial, configLimitesObj]);
 
   const tipoAutorizacaoNecessariaMemo = useMemo(() => {
     return getTipoAutorizacaoNecessaria(validacaoDescontoMemo);
@@ -398,7 +406,8 @@ export default function VendaNovaMinimalista() {
     const validacao = validarDesconto(
       portas,
       formData.forma_pagamento,
-      formData.venda_presencial
+      formData.venda_presencial,
+      configLimitesObj
     );
 
     const tipoAutorizacao = getTipoAutorizacaoNecessaria(validacao);
@@ -436,7 +445,8 @@ export default function VendaNovaMinimalista() {
       const validacao = validarDesconto(
         produtosComDesconto,
         formData.forma_pagamento,
-        formData.venda_presencial
+        formData.venda_presencial,
+        configLimitesObj
       );
 
       await createVenda({ 

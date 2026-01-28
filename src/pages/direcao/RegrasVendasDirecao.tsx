@@ -1,6 +1,12 @@
+import { useState, useEffect } from 'react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Accordion, 
   AccordionContent, 
@@ -21,10 +27,61 @@ import {
   User,
   MapPin,
   Package,
-  Lock
+  Lock,
+  Key,
+  Eye,
+  EyeOff,
+  Save,
+  Loader2,
+  Shield,
+  Infinity
 } from 'lucide-react';
+import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
+import { useAllUsers } from '@/hooks/useAllUsers';
 
 export default function RegrasVendasDirecao() {
+  const { configuracoes, isLoading, limites, updateConfiguracoes, isUpdating } = useConfiguracoesVendas();
+  const { data: usuarios = [] } = useAllUsers();
+  
+  const [senhaResponsavel, setSenhaResponsavel] = useState('');
+  const [senhaMaster, setSenhaMaster] = useState('');
+  const [responsavelSenhaResponsavel, setResponsavelSenhaResponsavel] = useState('');
+  const [responsavelSenhaMaster, setResponsavelSenhaMaster] = useState('');
+  const [showSenhaResponsavel, setShowSenhaResponsavel] = useState(false);
+  const [showSenhaMaster, setShowSenhaMaster] = useState(false);
+  const [senhasIguais, setSenhasIguais] = useState(false);
+
+  useEffect(() => {
+    if (configuracoes) {
+      setSenhaResponsavel(configuracoes.senha_responsavel || '');
+      setSenhaMaster(configuracoes.senha_master || '');
+      setResponsavelSenhaResponsavel(configuracoes.responsavel_senha_responsavel_id || '');
+      setResponsavelSenhaMaster(configuracoes.responsavel_senha_master_id || '');
+    }
+  }, [configuracoes]);
+
+  useEffect(() => {
+    setSenhasIguais(senhaResponsavel === senhaMaster && senhaResponsavel.length > 0);
+  }, [senhaResponsavel, senhaMaster]);
+
+  const handleSalvarSenhas = () => {
+    if (senhasIguais) return;
+    
+    updateConfiguracoes({
+      senha_responsavel: senhaResponsavel,
+      senha_master: senhaMaster,
+      responsavel_senha_responsavel_id: responsavelSenhaResponsavel || null,
+      responsavel_senha_master_id: responsavelSenhaMaster || null,
+    });
+  };
+
+  const hasChanges = configuracoes && (
+    senhaResponsavel !== configuracoes.senha_responsavel ||
+    senhaMaster !== configuracoes.senha_master ||
+    responsavelSenhaResponsavel !== (configuracoes.responsavel_senha_responsavel_id || '') ||
+    responsavelSenhaMaster !== (configuracoes.responsavel_senha_master_id || '')
+  );
+
   return (
     <MinimalistLayout
       title="Regras de Vendas"
@@ -38,6 +95,165 @@ export default function RegrasVendasDirecao() {
       ]}
     >
       <div className="space-y-6">
+        {/* Seção de Gerenciamento de Senhas */}
+        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-900/20 border-amber-500/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Key className="h-5 w-5 text-amber-400" />
+              Gerenciamento de Senhas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-amber-400" />
+              </div>
+            ) : (
+              <>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {/* Senha do Responsável */}
+                  <div className="p-4 rounded-lg bg-white/5 border border-white/10 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-blue-400" />
+                      <h4 className="text-sm font-medium text-white">Senha do Responsável</h4>
+                      <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-[10px]">
+                        +{limites.adicionalResponsavel}%
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-white/50">
+                      Libera até {limites.totalComResponsavel}% de desconto
+                    </p>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-xs text-white/70">Senha</Label>
+                      <div className="relative">
+                        <Input
+                          type={showSenhaResponsavel ? 'text' : 'password'}
+                          value={senhaResponsavel}
+                          onChange={(e) => setSenhaResponsavel(e.target.value)}
+                          className="pr-10 bg-white/5 border-white/20 text-white"
+                          placeholder="Digite a senha"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowSenhaResponsavel(!showSenhaResponsavel)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
+                        >
+                          {showSenhaResponsavel ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-xs text-white/70">Responsável (opcional)</Label>
+                      <Select
+                        value={responsavelSenhaResponsavel}
+                        onValueChange={setResponsavelSenhaResponsavel}
+                      >
+                        <SelectTrigger className="bg-white/5 border-white/20 text-white">
+                          <SelectValue placeholder="Selecionar responsável" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Nenhum</SelectItem>
+                          {usuarios.map((user) => (
+                            <SelectItem key={user.user_id} value={user.user_id}>
+                              {user.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Senha Master */}
+                  <div className="p-4 rounded-lg bg-white/5 border border-white/10 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-red-400" />
+                      <h4 className="text-sm font-medium text-white">Senha Master</h4>
+                      <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-[10px] flex items-center gap-1">
+                        <Infinity className="h-3 w-3" />
+                        Sem limite
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-white/50">
+                      Desbloqueia qualquer percentual de desconto
+                    </p>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-xs text-white/70">Senha</Label>
+                      <div className="relative">
+                        <Input
+                          type={showSenhaMaster ? 'text' : 'password'}
+                          value={senhaMaster}
+                          onChange={(e) => setSenhaMaster(e.target.value)}
+                          className="pr-10 bg-white/5 border-white/20 text-white"
+                          placeholder="Digite a senha master"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowSenhaMaster(!showSenhaMaster)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
+                        >
+                          {showSenhaMaster ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-xs text-white/70">Responsável (opcional)</Label>
+                      <Select
+                        value={responsavelSenhaMaster}
+                        onValueChange={setResponsavelSenhaMaster}
+                      >
+                        <SelectTrigger className="bg-white/5 border-white/20 text-white">
+                          <SelectValue placeholder="Selecionar responsável" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Nenhum</SelectItem>
+                          {usuarios.map((user) => (
+                            <SelectItem key={user.user_id} value={user.user_id}>
+                              {user.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {senhasIguais && (
+                  <Alert variant="destructive" className="bg-red-500/10 border-red-500/30">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-red-300">
+                      As senhas do responsável e master devem ser diferentes!
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleSalvarSenhas}
+                    disabled={isUpdating || senhasIguais || !hasChanges}
+                    className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30"
+                  >
+                    {isUpdating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Salvar Alterações
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Seção de Descontos */}
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-900/20 border-blue-500/20">
           <CardHeader className="pb-2">
@@ -53,7 +269,7 @@ export default function RegrasVendasDirecao() {
                   <Banknote className="h-4 w-4 text-green-400" />
                   <span className="text-white/80 text-sm">Pagamento à vista (não cartão)</span>
                 </div>
-                <Badge className="bg-green-500/20 text-green-400 border-green-500/30">+5%</Badge>
+                <Badge className="bg-green-500/20 text-green-400 border-green-500/30">+{limites.avista}%</Badge>
               </div>
               
               <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
@@ -61,7 +277,7 @@ export default function RegrasVendasDirecao() {
                   <User className="h-4 w-4 text-blue-400" />
                   <span className="text-white/80 text-sm">Venda presencial</span>
                 </div>
-                <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">+3%</Badge>
+                <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">+{limites.presencial}%</Badge>
               </div>
               
               <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
@@ -69,30 +285,41 @@ export default function RegrasVendasDirecao() {
                   <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                   <span className="text-white/80 text-sm">Limite sem autorização</span>
                 </div>
-                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">8%</Badge>
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">{limites.totalSemSenha}%</Badge>
               </div>
               
               <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
                 <div className="flex items-center gap-3">
-                  <Lock className="h-4 w-4 text-amber-400" />
+                  <Shield className="h-4 w-4 text-amber-400" />
                   <span className="text-white/80 text-sm">Com senha do responsável</span>
                 </div>
-                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">+5%</Badge>
+                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">+{limites.adicionalResponsavel}%</Badge>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                <div className="flex items-center gap-3">
+                  <Lock className="h-4 w-4 text-amber-400" />
+                  <span className="text-white font-medium text-sm">Limite máximo com responsável</span>
+                </div>
+                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">{limites.totalComResponsavel}%</Badge>
               </div>
               
               <div className="flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/30">
                 <div className="flex items-center gap-3">
-                  <AlertCircle className="h-4 w-4 text-red-400" />
-                  <span className="text-white font-medium text-sm">Limite absoluto do sistema</span>
+                  <Key className="h-4 w-4 text-red-400" />
+                  <span className="text-white font-medium text-sm">Com senha master</span>
                 </div>
-                <Badge className="bg-red-500/20 text-red-400 border-red-500/30">13%</Badge>
+                <Badge className="bg-red-500/20 text-red-400 border-red-500/30 flex items-center gap-1">
+                  <Infinity className="h-3 w-3" />
+                  Sem limite
+                </Badge>
               </div>
             </div>
             
             <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
               <p className="text-amber-300 text-xs flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                <span>Descontos acima de 13% são automaticamente bloqueados pelo sistema, mesmo com autorização.</span>
+                <span>Descontos acima de {limites.totalComResponsavel}% requerem senha master. Apenas a senha master desbloqueia qualquer percentual.</span>
               </p>
             </div>
           </CardContent>
@@ -176,7 +403,7 @@ export default function RegrasVendasDirecao() {
                       <AlertCircle className="h-4 w-4 text-amber-400" />
                       <span>Requer upload de comprovante de pagamento</span>
                     </p>
-                    <p className="text-sm">Habilita desconto de até 5% por pagamento à vista.</p>
+                    <p className="text-sm">Habilita desconto de até {limites.avista}% por pagamento à vista.</p>
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -209,7 +436,7 @@ export default function RegrasVendasDirecao() {
                 <AccordionContent className="text-white/70 pb-4">
                   <div className="pl-6">
                     <p className="text-sm">Sem parâmetros adicionais necessários.</p>
-                    <p className="text-sm">Habilita desconto de até 5% por pagamento à vista.</p>
+                    <p className="text-sm">Habilita desconto de até {limites.avista}% por pagamento à vista.</p>
                   </div>
                 </AccordionContent>
               </AccordionItem>
