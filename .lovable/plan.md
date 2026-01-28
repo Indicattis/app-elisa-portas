@@ -1,108 +1,106 @@
 
-
-## Plano: Adicionar Seção "Finalizados" para Neo Instalações e Neo Correções
+## Plano: Padronizar Design dos Neo na Aba Finalizados
 
 ### Problema Identificado
 
-Quando uma Neo Instalação ou Neo Correção é concluída, ela desaparece da listagem sem aparecer em nenhum lugar. Isso ocorre porque:
+Atualmente, os serviços avulsos (Neo Instalações e Neo Correções) na aba "Finalizados" usam um design simples inline diferente do design completo usado nas abas "Instalações" e "Correções".
 
-1. O hook `useNeoInstalacoesListagem` filtra apenas registros com `concluida = false`
-2. A página não possui uma seção para exibir os serviços avulsos finalizados
+**Design atual (Finalizados):**
+- Layout simples com `flex` e poucos elementos
+- Altura de 35px
+- Apenas: bolinha colorida, nome, badge tipo, cidade/estado, tempo relativo, ícone check
 
-**Evidência no banco de dados:**
-- Neo instalação "Espaço de Veiculos" foi concluída em 28/01/2026 às 19:06 mas não aparece em nenhuma seção
+**Design das outras abas:**
+- Grid layout com 19 colunas (idêntico ao PedidoCard)
+- Altura de 40px (h-10)
+- Avatar do criador, nome completo, cidade/estado, data agendada, equipe responsável, badges, botões de ação
 
 ### Solução Proposta
 
-Adicionar uma nova seção "Finalizados" na página `/logistica/instalacoes/ordens-instalacoes` que exibe as Neo Instalações e Neo Correções concluídas recentemente.
-
----
+Reutilizar os componentes `NeoInstalacaoCardGestao` e `NeoCorrecaoCardGestao` na aba "Finalizados", adaptando-os para:
+1. Remover o botão "Concluir" (já estão concluídos)
+2. Adicionar indicador visual de "Concluído" (ícone verde)
+3. Mostrar tempo desde a conclusão
 
 ### Alterações Necessárias
 
-#### 1. Criar hook para buscar Neo Instalações e Correções finalizadas
+#### 1. Modificar NeoInstalacaoCardGestao e NeoCorrecaoCardGestao
 
-**Arquivo:** `src/hooks/useNeoInstalacoes.ts`
+**Arquivos:** 
+- `src/components/pedidos/NeoInstalacaoCardGestao.tsx`
+- `src/components/pedidos/NeoCorrecaoCardGestao.tsx`
 
-Adicionar nova função `useNeoInstalacoesFinalizadas`:
+Adicionar prop opcional `showConcluido` que:
+- Quando true, remove o botão de concluir
+- Mostra um badge/ícone indicando status "Concluído"
+- Exibe o tempo desde a conclusão (se `concluida_em` existir)
 
 ```typescript
-export const useNeoInstalacoesFinalizadas = () => {
-  const { data = [], isLoading } = useQuery({
-    queryKey: ["neo_instalacoes_finalizadas"],
-    queryFn: async () => {
-      // Buscar neo instalações finalizadas (últimos 30 dias)
-      const dataLimite = new Date();
-      dataLimite.setDate(dataLimite.getDate() - 30);
-      
-      const { data, error } = await supabase
-        .from("neo_instalacoes")
-        .select("*")
-        .eq("concluida", true)
-        .gte("concluida_em", dataLimite.toISOString())
-        .order("concluida_em", { ascending: false });
-      // ...
-    },
-  });
-  return { neoInstalacoesFinalizadas: data, isLoading };
-};
+interface NeoInstalacaoCardGestaoProps {
+  neoInstalacao: NeoInstalacao;
+  viewMode?: 'grid' | 'list';
+  onConcluir?: (id: string) => void;
+  isConcluindo?: boolean;
+  showConcluido?: boolean; // Nova prop
+}
 ```
 
-#### 2. Criar hook similar para Neo Correções
+**Mudanças no layout list (Col 19):**
 
-**Arquivo:** `src/hooks/useNeoCorrecoes.ts`
+Quando `showConcluido=true`:
+- Esconder botão de ação
+- Mostrar ícone CheckCircle2 verde + tempo relativo
 
-Adicionar `useNeoCorrecoesFinalizadas` com a mesma lógica.
+#### 2. Atualizar GestaoFabricaDirecao.tsx
 
-#### 3. Atualizar a página de Ordens de Instalação
+**Arquivo:** `src/pages/direcao/GestaoFabricaDirecao.tsx`
 
-**Arquivo:** `src/pages/logistica/OrdensInstalacoesLogistica.tsx`
-
-**Mudanças:**
-
-| Item | Descrição |
-|------|-----------|
-| Importar novos hooks | `useNeoInstalacoesFinalizadas`, `useNeoCorrecoesFinalizadas` |
-| Nova seção visual | Adicionar "Finalizados" após as correções avulsas |
-| Ícone | `CheckCircle2` em verde |
-| Contador | Mostrar total de finalizados recentes |
-
-**Estrutura da nova seção:**
+Substituir o bloco inline atual na aba "Finalizados" pelo uso dos componentes:
 
 ```tsx
-{/* SEÇÃO 5: Finalizados (Neo) */}
-<div className="space-y-3">
-  <div className="flex items-center gap-2">
-    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-    <h2 className="text-lg font-semibold">Finalizados</h2>
-    <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-600">
-      {neoInstalacoesFinalizadas.length + neoCorrecoesFinalizadas.length}
-    </Badge>
+{etapaAtiva === 'finalizado' && (neoInstalacoesFinalizadas.length > 0 || neoCorrecoesFinalizadas.length > 0) && (
+  <div className="mb-4 space-y-2">
+    <h3>Serviços Avulsos Finalizados ({total})</h3>
+    <div className="space-y-1">
+      {/* Instalações finalizadas */}
+      {neoInstalacoesFinalizadas.map((neo) => (
+        <NeoInstalacaoCardGestao
+          key={neo.id}
+          neoInstalacao={neo}
+          viewMode="list"
+          showConcluido={true}
+        />
+      ))}
+      {/* Correções finalizadas */}
+      {neoCorrecoesFinalizadas.map((neo) => (
+        <NeoCorrecaoCardGestao
+          key={neo.id}
+          neoCorrecao={neo}
+          viewMode="list"
+          showConcluido={true}
+        />
+      ))}
+    </div>
   </div>
-  
-  {/* Lista combinada de finalizados */}
-  <div className="space-y-1">
-    {[...neoInstalacoesFinalizadas, ...neoCorrecoesFinalizadas]
-      .sort((a, b) => b.concluida_em - a.concluida_em)
-      .map(item => (
-        // Renderizar com badge indicando tipo (Instalação/Correção)
-      ))
-    }
-  </div>
-</div>
+)}
 ```
 
-#### 4. Criar componentes de linha para itens finalizados
+---
 
-**Arquivos novos:**
-- `src/components/instalacoes/NeoInstalacaoFinalizadaRow.tsx`
-- `src/components/instalacoes/NeoCorrecaoFinalizadaRow.tsx`
+### Detalhes Visuais
 
-Componentes simplificados mostrando:
-- Nome do cliente
-- Data de conclusão (formato relativo: "há 2 horas")
-- Badge indicando tipo (Instalação Avulsa / Correção Avulsa)
-- Quem concluiu (foto do usuário)
+| Elemento | Instalações | Correções |
+|----------|-------------|-----------|
+| Cor do avatar | Azul | Roxo |
+| Badge AVULSO | Azul | Roxo |
+| Ícone tipo | Hammer (martelo) | AlertTriangle |
+| Status concluído | CheckCircle2 verde | CheckCircle2 verde |
+
+#### Indicador de Conclusão (Col 19)
+
+Quando `showConcluido=true`, mostrar:
+- Ícone CheckCircle2 em verde (h-4 w-4)
+- Tempo relativo pequeno (ex: "há 2h")
 
 ---
 
@@ -110,19 +108,15 @@ Componentes simplificados mostrando:
 
 | Arquivo | Ação |
 |---------|------|
-| `src/hooks/useNeoInstalacoes.ts` | Adicionar `useNeoInstalacoesFinalizadas` |
-| `src/hooks/useNeoCorrecoes.ts` | Adicionar `useNeoCorrecoesFinalizadas` |
-| `src/pages/logistica/OrdensInstalacoesLogistica.tsx` | Adicionar seção "Finalizados" |
-| `src/components/instalacoes/NeoInstalacaoFinalizadaRow.tsx` | **Criar** componente |
-| `src/components/instalacoes/NeoCorrecaoFinalizadaRow.tsx` | **Criar** componente |
+| `src/components/pedidos/NeoInstalacaoCardGestao.tsx` | Adicionar prop `showConcluido` e lógica |
+| `src/components/pedidos/NeoCorrecaoCardGestao.tsx` | Adicionar prop `showConcluido` e lógica |
+| `src/pages/direcao/GestaoFabricaDirecao.tsx` | Usar componentes ao invés de renderização inline |
 
 ---
 
 ### Resultado Esperado
 
-- Neo Instalações e Neo Correções concluídas aparecem na seção "Finalizados"
-- Listagem mostra os últimos 30 dias de serviços concluídos
-- Visual consistente com as demais seções da página
-- Data de conclusão formatada de forma legível
-- Usuário pode ver quem concluiu cada serviço
-
+- Neo Instalações e Neo Correções finalizadas terão o mesmo design das abas Instalações e Correções
+- Layout em grid de 19 colunas alinhado com PedidoCard
+- Indicador visual claro de status "Concluído"
+- Tempo desde conclusão visível
