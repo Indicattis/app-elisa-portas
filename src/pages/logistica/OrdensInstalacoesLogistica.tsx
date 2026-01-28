@@ -25,6 +25,7 @@ import { useNeoCorrecoesListagem } from "@/hooks/useNeoCorrecoes";
 import { OrdemInstalacaoRow } from "@/components/instalacoes/OrdemInstalacaoRow";
 import { NeoInstalacaoRow } from "@/components/instalacoes/NeoInstalacaoRow";
 import { NeoCorrecaoRow } from "@/components/instalacoes/NeoCorrecaoRow";
+import { PedidoDetalhesSheet } from "@/components/pedidos/PedidoDetalhesSheet";
 import { NeoInstalacao } from "@/types/neoInstalacao";
 import { NeoCorrecao } from "@/types/neoCorrecao";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,10 @@ export default function OrdensInstalacoesLogistica() {
     open: boolean; 
     neoCorrecao: NeoCorrecao | null 
   }>({ open: false, neoCorrecao: null });
+  
+  // Estado para a downbar de detalhes do pedido
+  const [selectedPedido, setSelectedPedido] = useState<any | null>(null);
+  const [showDetalhes, setShowDetalhes] = useState(false);
 
   const { ordens, isLoading, concluirOrdem, isConcluindo } = useOrdensInstalacao();
   
@@ -140,6 +145,22 @@ export default function OrdensInstalacoesLogistica() {
       setConfirmNeoCorrecaoDialog({ open: false, neoCorrecao: null });
     } catch (error) {
       console.error("Erro ao concluir neo correção:", error);
+    }
+  };
+
+  // Handler para abrir detalhes do pedido
+  const handleOpenDetalhes = (ordem: OrdemInstalacao) => {
+    if (ordem.pedido) {
+      const pedidoForSheet = {
+        id: ordem.pedido.id,
+        numero_pedido: ordem.pedido.numero_pedido,
+        numero_mes: (ordem.pedido as any).numero_mes,
+        mes_vigencia: (ordem.pedido as any).mes_vigencia,
+        etapa_atual: ordem.pedido.etapa_atual,
+        vendas: ordem.venda
+      };
+      setSelectedPedido(pedidoForSheet);
+      setShowDetalhes(true);
     }
   };
 
@@ -266,6 +287,7 @@ export default function OrdensInstalacoesLogistica() {
                     onConcluir={(o) => setConfirmDialog({ open: true, ordem: o })}
                     isConcluindo={isConcluindo}
                     showCarregador={false}
+                    onClick={handleOpenDetalhes}
                   />
                 ))}
               </div>
@@ -300,6 +322,7 @@ export default function OrdensInstalacoesLogistica() {
                     onConcluir={(o) => setConfirmDialog({ open: true, ordem: o })}
                     isConcluindo={isConcluindo}
                     showCarregador={true}
+                    onClick={handleOpenDetalhes}
                   />
                 ))}
               </div>
@@ -464,6 +487,15 @@ export default function OrdensInstalacoesLogistica() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Downbar de Detalhes do Pedido */}
+      {selectedPedido && (
+        <PedidoDetalhesSheet 
+          pedido={selectedPedido} 
+          open={showDetalhes} 
+          onOpenChange={setShowDetalhes} 
+        />
+      )}
     </MinimalistLayout>
   );
 }

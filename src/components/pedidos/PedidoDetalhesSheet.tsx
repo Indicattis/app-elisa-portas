@@ -8,8 +8,9 @@ import { format } from "date-fns";
 import { 
   Package, Phone, MapPin, Calendar, DollarSign, ListChecks, 
   ShoppingCart, CheckCircle2, Clock, AlertCircle, XCircle,
-  FolderOpen, ChevronDown, User, Wrench, Factory
+  FolderOpen, ChevronDown, User, Wrench, Factory, History
 } from "lucide-react";
+import { PedidoHistoricoMovimentacoes } from "./PedidoHistoricoMovimentacoes";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -41,6 +42,7 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
   const [loadingOrdens, setLoadingOrdens] = useState(false);
   const [linhasOpen, setLinhasOpen] = useState(false);
   const [itensOpen, setItensOpen] = useState(false);
+  const [historicoOpen, setHistoricoOpen] = useState(false);
   
   useEffect(() => {
     if (open && pedido?.id) {
@@ -411,6 +413,27 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
               <p className="text-sm text-white/50">Nenhuma ordem vinculada</p>
             )}
           </div>
+
+          {/* Histórico de Movimentações */}
+          <Collapsible open={historicoOpen} onOpenChange={setHistoricoOpen}>
+            <CollapsibleTrigger asChild>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
+                <div className="flex items-center gap-2">
+                  <History className="h-4 w-4 text-amber-400" />
+                  <span className="font-medium text-white text-sm">Histórico de Movimentações</span>
+                </div>
+                <ChevronDown className={cn(
+                  "h-4 w-4 text-white/60 transition-transform duration-200",
+                  historicoOpen && "rotate-180"
+                )} />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 pl-2">
+              <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+                <PedidoHistoricoMovimentacoes pedidoId={pedido.id} />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* Data de Criação */}
           <div className="flex items-center gap-2 text-white/40 text-xs">
