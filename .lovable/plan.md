@@ -1,206 +1,120 @@
 
-## Plano: Corrigir Erro PGRST116 ao Agendar Instalações
 
-### Causa Raiz Identificada
+## Plano: Corrigir Calendário para Exibir Instalações Agendadas
 
-O erro "JSON object requested, multiple (or no) rows returned" (PGRST116) ocorre porque:
+### Problema Identificado
 
-1. O modal de agendamento agora suporta **duas fontes**: `ordens_carregamento` e `instalacoes`
-2. O hook `useOrdensCarregamentoCalendario` sempre atualiza na tabela `ordens_carregamento`
-3. Quando tentamos agendar uma **instalação**, o ID não existe em `ordens_carregamento`, retornando 0 linhas
+Quando uma **instalação** é agendada via modal, o update vai corretamente para a tabela `instalacoes`. Porém, o calendário em `/logistica/expedicao` usa o hook `useOrdensCarregamentoCalendario` que **só busca dados da tabela `ordens_carregamento`**, nunca exibindo instalações agendadas.
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│ FLUXO ATUAL (COM ERRO)                                      │
+│ FLUXO ATUAL (COM PROBLEMA)                                  │
 ├─────────────────────────────────────────────────────────────┤
-│ Modal seleciona ordem de INSTALAÇÃO                         │
+│                                                             │
+│ Modal: Agendar instalação para 28/01                        │
 │        │                                                    │
 │        ▼                                                    │
-│ onConfirm({ fonte: 'instalacoes', ... })                    │
+│ UPDATE instalacoes SET data_carregamento = '2026-01-28'     │
+│        │                                                    │
+│        ✓ Sucesso!                                           │
+│                                                             │
+│ Calendário: useOrdensCarregamentoCalendario                 │
 │        │                                                    │
 │        ▼                                                    │
-│ handleConfirmModal ignora 'fonte' → onUpdateOrdem           │
+│ SELECT * FROM ordens_carregamento WHERE data BETWEEN ...    │
+│        │                                                    │
+│        ⚠️ Instalações nunca são buscadas!                   │
 │        │                                                    │
 │        ▼                                                    │
-│ useOrdensCarregamentoCalendario.updateOrdem                 │
-│        │                                                    │
-│        ▼                                                    │
-│ UPDATE ordens_carregamento WHERE id = [instalacao_id]       │
-│        │                                                    │
-│        ▼                                                    │
-│ ❌ 0 linhas → PGRST116                                      │
+│ Calendário vazio (instalações não aparecem)                 │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### Solução
+### Solucao
 
-Atualizar o hook `useOrdensCarregamentoCalendario` para receber a `fonte` e roteamento dinâmico.
+Atualizar o hook `useOrdensCarregamentoCalendario` para tambem buscar instalacoes com `data_carregamento` definido no periodo selecionado.
 
 ---
 
-### Arquivos a Modificar
+### Arquivo a Modificar
 
-| Arquivo | Ação | Descrição |
+| Arquivo | Acao | Descricao |
 |---------|------|-----------|
-| `src/hooks/useOrdensCarregamentoCalendario.ts` | Modificar | Adicionar suporte a fonte dinâmica na mutation |
-| `src/components/expedicao/DroppableDayExpedicao.tsx` | Modificar | Passar fonte no onUpdateOrdem |
-| `src/components/expedicao/DroppableDaySimpleExpedicao.tsx` | Modificar | Passar fonte no onUpdateOrdem |
+| `src/hooks/useOrdensCarregamentoCalendario.ts` | Modificar | Buscar tambem da tabela `instalacoes` e combinar resultados |
 
 ---
 
-### Parte 1: Atualizar Hook useOrdensCarregamentoCalendario
+### Mudancas no Hook
 
-**Mudanças:**
+O hook atualmente faz:
+```typescript
+const { data: ordens = [] } = useQuery({
+  queryFn: async () => {
+    const { data } = await supabase
+      .from("ordens_carregamento")  // ← Só busca daqui!
+      .select(...)
+      .gte("data_carregamento", inicio)
+      .lte("data_carregamento", fim);
+    return data;
+  },
+});
+```
 
-1. Atualizar a interface do mutation para aceitar `fonte`
-2. Rotear o update para a tabela correta
-3. Remover `.single()` para evitar erro quando não há retorno
+**Novo fluxo:**
 
 ```typescript
-// Antes (linha 87-100)
-const updateOrdemMutation = useMutation({
-  mutationFn: async ({ id, data }: { id: string; data: Partial<OrdemCarregamento> }) => {
-    const { data: updated, error } = await supabase
+const { data: ordens = [] } = useQuery({
+  queryFn: async () => {
+    // 1. Buscar de ordens_carregamento
+    const { data: ordensCarregamento } = await supabase
       .from("ordens_carregamento")
-      .update({...})
-      .eq("id", id)
-      .select()
-      .single();  // ❌ Causa erro se 0 linhas
+      .select(...)
+      .gte("data_carregamento", inicio)
+      .lte("data_carregamento", fim);
 
-    if (error) throw error;
-    return updated;
-  },
-});
+    // 2. Buscar de instalacoes COM data_carregamento definida
+    const { data: instalacoes } = await supabase
+      .from("instalacoes")
+      .select(...)
+      .gte("data_carregamento", inicio)
+      .lte("data_carregamento", fim)
+      .eq("carregamento_concluido", false);
 
-// Depois
-const updateOrdemMutation = useMutation({
-  mutationFn: async ({ 
-    id, 
-    data,
-    fonte = 'ordens_carregamento' 
-  }: { 
-    id: string; 
-    data: Partial<OrdemCarregamento>;
-    fonte?: 'ordens_carregamento' | 'instalacoes';
-  }) => {
-    const tabela = fonte === 'instalacoes' ? 'instalacoes' : 'ordens_carregamento';
-    
-    const { error } = await supabase
-      .from(tabela)
-      .update({
-        data_carregamento: data.data_carregamento,
-        hora: data.hora,
-        hora_carregamento: data.hora,
-        tipo_carregamento: data.tipo_carregamento,
-        responsavel_carregamento_id: data.responsavel_carregamento_id,
-        responsavel_carregamento_nome: data.responsavel_carregamento_nome,
-        status: data.status || 'agendada',
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", id);
+    // 3. Normalizar instalacoes para o formato OrdemCarregamento
+    const instalacoesNormalizadas = instalacoes.map(inst => ({
+      id: inst.id,
+      nome_cliente: inst.nome_cliente,
+      data_carregamento: inst.data_carregamento,
+      hora: inst.hora_carregamento,
+      tipo_carregamento: inst.tipo_carregamento,
+      responsavel_carregamento_id: inst.responsavel_carregamento_id,
+      responsavel_carregamento_nome: inst.responsavel_carregamento_nome,
+      status: inst.status,
+      // ... outros campos
+      fonte: 'instalacoes',  // ← Importante!
+    }));
 
-    if (error) throw error;
+    // 4. Combinar e retornar
+    return [...ordensCarregamento, ...instalacoesNormalizadas];
   },
 });
 ```
 
 ---
 
-### Parte 2: Atualizar DroppableDayExpedicao
+### Atualizacao do Tipo OrdemCarregamento
 
-**Mudanças no handleConfirmModal (linhas 110-133):**
-
-Atualmente o modal retorna `fonte` mas o `handleConfirmModal` não usa esse valor. Precisamos:
-
-1. Atualizar a interface do `onConfirm` do modal para incluir `fonte`
-2. Passar `fonte` para `onUpdateOrdem`
+Adicionar campo `fonte` opcional ao tipo:
 
 ```typescript
-// Antes (linha 110-117)
-const handleConfirmModal = async (params: {
-  ordemId: string;
-  data_carregamento: string;
-  hora: string;
-  tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro';
-  responsavel_carregamento_id: string | null;
-  responsavel_carregamento_nome: string;
-}) => {
-
-// Depois - adicionar fonte
-const handleConfirmModal = async (params: {
-  ordemId: string;
-  fonte: 'ordens_carregamento' | 'instalacoes';  // NOVO
-  data_carregamento: string;
-  hora: string;
-  tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro';
-  responsavel_carregamento_id: string | null;
-  responsavel_carregamento_nome: string;
-}) => {
-```
-
-E passar `fonte` para `onUpdateOrdem`:
-
-```typescript
-// Antes
-await onUpdateOrdem({
-  id: params.ordemId,
-  data: { ... }
-});
-
-// Depois
-await onUpdateOrdem({
-  id: params.ordemId,
-  data: { ... },
-  fonte: params.fonte  // NOVO
-});
-```
-
----
-
-### Parte 3: Atualizar Props de onUpdateOrdem
-
-Todos os componentes que usam `onUpdateOrdem` precisam atualizar a interface:
-
-```typescript
-// Antes
-onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
-
-// Depois
-onUpdateOrdem?: (params: { 
-  id: string; 
-  data: Partial<OrdemCarregamento>;
-  fonte?: 'ordens_carregamento' | 'instalacoes';
-}) => Promise<void>;
-```
-
-Arquivos que precisam dessa mudança de interface:
-- `DroppableDayExpedicao.tsx`
-- `DroppableDaySimpleExpedicao.tsx`
-- `DiaCardExpedicao.tsx`
-- `CalendarioSemanalExpedicaoDesktop.tsx`
-- `CalendarioSemanalExpedicaoMobile.tsx`
-- `CalendarioMensalExpedicaoDesktop.tsx`
-
----
-
-### Parte 4: Atualizar Página ExpedicaoMinimalista
-
-```typescript
-// Antes (linha 86-88)
-const handleUpdateOrdem = async (params: { id: string; data: Partial<OrdemCarregamento> }) => {
-  await updateOrdem(params);
-};
-
-// Depois
-const handleUpdateOrdem = async (params: { 
-  id: string; 
-  data: Partial<OrdemCarregamento>;
-  fonte?: 'ordens_carregamento' | 'instalacoes';
-}) => {
-  await updateOrdem(params);
-};
+// src/types/ordemCarregamento.ts
+export interface OrdemCarregamento {
+  // ... campos existentes
+  fonte?: 'ordens_carregamento' | 'instalacoes';  // NOVO
+}
 ```
 
 ---
@@ -211,23 +125,26 @@ const handleUpdateOrdem = async (params: {
 ┌─────────────────────────────────────────────────────────────┐
 │ FLUXO CORRIGIDO                                             │
 ├─────────────────────────────────────────────────────────────┤
-│ Modal seleciona ordem de INSTALAÇÃO                         │
+│                                                             │
+│ Modal: Agendar instalação para 28/01                        │
 │        │                                                    │
 │        ▼                                                    │
-│ onConfirm({ fonte: 'instalacoes', ... })                    │
+│ UPDATE instalacoes SET data_carregamento = '2026-01-28'     │
+│        │                                                    │
+│        ✓ Sucesso!                                           │
+│                                                             │
+│ Calendário: useOrdensCarregamentoCalendario                 │
 │        │                                                    │
 │        ▼                                                    │
-│ handleConfirmModal recebe fonte → onUpdateOrdem({ fonte })  │
+│ SELECT * FROM ordens_carregamento WHERE data BETWEEN ...    │
+│ SELECT * FROM instalacoes WHERE data BETWEEN ...            │
 │        │                                                    │
 │        ▼                                                    │
-│ updateOrdem verifica fonte                                  │
+│ Combinar resultados + normalizar                            │
 │        │                                                    │
 │        ▼                                                    │
-│ fonte === 'instalacoes' ? UPDATE instalacoes                │
-│                        : UPDATE ordens_carregamento         │
-│        │                                                    │
-│        ▼                                                    │
-│ ✅ Sucesso                                                  │
+│ Calendário mostra entregas E instalações!                   │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -235,7 +152,8 @@ const handleUpdateOrdem = async (params: {
 
 ### Resultado Esperado
 
-1. Agendamento de **entregas** continua funcionando (tabela `ordens_carregamento`)
-2. Agendamento de **instalações** passa a funcionar (tabela `instalacoes`)
-3. Erro PGRST116 é eliminado
-4. Drag-and-drop no calendário também funcionará corretamente com ambos os tipos
+1. **Entregas** (tabela `ordens_carregamento`) continuam aparecendo no calendario
+2. **Instalacoes agendadas** (tabela `instalacoes` com `data_carregamento` definida) agora tambem aparecem
+3. Ambas as fontes sao exibidas corretamente com seus respectivos estilos (badges de "Entrega" vs "Instalacao")
+4. O drag-and-drop continua funcionando com a `fonte` sendo passada corretamente para updates
+
