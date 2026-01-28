@@ -147,15 +147,15 @@ export default function RegrasVendasDirecao() {
                     <div className="space-y-2">
                       <Label className="text-xs text-white/70">Responsável (opcional)</Label>
                       <Select
-                        value={responsavelSenhaResponsavel}
-                        onValueChange={setResponsavelSenhaResponsavel}
+                        value={responsavelSenhaResponsavel || '__none__'}
+                        onValueChange={(value) => setResponsavelSenhaResponsavel(value === '__none__' ? '' : value)}
                       >
                         <SelectTrigger className="bg-white/5 border-white/20 text-white">
                           <SelectValue placeholder="Selecionar responsável" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Nenhum</SelectItem>
-                          {usuarios.map((user) => (
+                          <SelectItem value="__none__">Nenhum</SelectItem>
+                          {usuarios.filter(user => user.user_id).map((user) => (
                             <SelectItem key={user.user_id} value={user.user_id}>
                               {user.nome}
                             </SelectItem>
@@ -202,15 +202,15 @@ export default function RegrasVendasDirecao() {
                     <div className="space-y-2">
                       <Label className="text-xs text-white/70">Responsável (opcional)</Label>
                       <Select
-                        value={responsavelSenhaMaster}
-                        onValueChange={setResponsavelSenhaMaster}
+                        value={responsavelSenhaMaster || '__none__'}
+                        onValueChange={(value) => setResponsavelSenhaMaster(value === '__none__' ? '' : value)}
                       >
                         <SelectTrigger className="bg-white/5 border-white/20 text-white">
                           <SelectValue placeholder="Selecionar responsável" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Nenhum</SelectItem>
-                          {usuarios.map((user) => (
+                          <SelectItem value="__none__">Nenhum</SelectItem>
+                          {usuarios.filter(user => user.user_id).map((user) => (
                             <SelectItem key={user.user_id} value={user.user_id}>
                               {user.nome}
                             </SelectItem>
