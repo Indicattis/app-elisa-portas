@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Package, MapPin, Calendar } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { OrdemCarregamento } from "@/types/ordemCarregamento";
+import { Search, Package, MapPin, Calendar, Truck, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { AdicionarOrdemCalendarioModal } from "./AdicionarOrdemCalendarioModal";
 import { cn } from "@/lib/utils";
+import { useOrdensCarregamentoUnificadas, OrdemCarregamentoUnificada } from "@/hooks/useOrdensCarregamentoUnificadas";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface OrdensCarregamentoDisponiveisMobileProps {
   onRefresh?: () => void;
@@ -28,7 +29,7 @@ const parseTamanhoString = (tamanhoStr: string | null) => {
 };
 
 // Calcular lista de portas P/G
-const getPortasInfo = (ordem: OrdemCarregamento) => {
+const getPortasInfo = (ordem: OrdemCarregamentoUnificada) => {
   const produtos = ordem.venda?.produtos || [];
   const portasEnrolar = produtos.filter(p => p.tipo_produto === 'porta_enrolar');
   const lista: { tamanho: 'P' | 'G'; largura: number; altura: number; area: number }[] = [];
@@ -56,66 +57,16 @@ const getPortasInfo = (ordem: OrdemCarregamento) => {
 };
 
 export const OrdensCarregamentoDisponiveisMobile = ({ onRefresh }: OrdensCarregamentoDisponiveisMobileProps) => {
-  const [ordens, setOrdens] = useState<OrdemCarregamento[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { ordens, isLoading: loading } = useOrdensCarregamentoUnificadas();
   const [searchTerm, setSearchTerm] = useState("");
-  const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemCarregamento | null>(null);
+  const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemCarregamentoUnificada | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  useEffect(() => {
-    fetchOrdensDisponiveis();
-  }, []);
+  // Filtrar apenas ordens SEM data de carregamento (disponíveis para agendamento)
+  const ordensDisponiveis = ordens.filter(o => !o.data_carregamento);
 
-  const fetchOrdensDisponiveis = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("ordens_carregamento")
-        .select(`
-          *,
-          venda:vendas(
-            id,
-            cliente_nome,
-            cliente_telefone,
-            cliente_email,
-            estado,
-            cidade,
-            cep,
-            bairro,
-            data_prevista_entrega,
-            tipo_entrega,
-            produtos:produtos_vendas(
-              tipo_produto,
-              tamanho,
-              largura,
-              altura,
-              quantidade,
-              cor:catalogo_cores(
-                nome,
-                codigo_hex
-              )
-            )
-          ),
-          pedido:pedidos_producao!ordens_carregamento_pedido_id_fkey(
-            id,
-            numero_pedido,
-            etapa_atual
-          )
-        `)
-        .is("data_carregamento", null)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setOrdens((data || []) as OrdemCarregamento[]);
-    } catch (error) {
-      console.error("Erro ao buscar ordens:", error);
-      toast.error("Erro ao carregar ordens disponíveis");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAgendar = (ordem: OrdemCarregamento) => {
+  const handleAgendar = (ordem: OrdemCarregamentoUnificada) => {
     setOrdemSelecionada(ordem);
     setModalOpen(true);
   };
@@ -128,10 +79,16 @@ export const OrdensCarregamentoDisponiveisMobile = ({ onRefresh }: OrdensCarrega
     responsavel_carregamento_id: string | null;
     responsavel_carregamento_nome: string;
   }) => {
+    if (!ordemSelecionada) return;
+
+    // Determinar a tabela correta com base na fonte
+    const tabela = ordemSelecionada.fonte === 'instalacoes' ? 'instalacoes' : 'ordens_carregamento';
+
     const { error } = await supabase
-      .from("ordens_carregamento")
+      .from(tabela)
       .update({
         data_carregamento: params.data_carregamento,
+        hora_carregamento: params.hora,
         hora: params.hora,
         tipo_carregamento: params.tipo_carregamento,
         responsavel_carregamento_id: params.responsavel_carregamento_id,
@@ -144,25 +101,29 @@ export const OrdensCarregamentoDisponiveisMobile = ({ onRefresh }: OrdensCarrega
     if (error) throw error;
 
     toast.success("Carregamento agendado com sucesso!");
-    fetchOrdensDisponiveis();
+    
+    // Invalidar queries para atualizar dados
+    queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_unificadas"] });
+    queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_calendario"] });
+    
     onRefresh?.();
     setModalOpen(false);
     setOrdemSelecionada(null);
   };
 
   // Filtrar ordens por termo de busca
-  const ordensFiltradas = ordens.filter((ordem) => {
+  const ordensFiltradas = ordensDisponiveis.filter((ordem) => {
     const termo = searchTerm.toLowerCase();
     return (
       ordem.nome_cliente.toLowerCase().includes(termo) ||
-      ordem.pedido?.numero_pedido.toLowerCase().includes(termo) ||
+      ordem.pedido?.numero_pedido?.toLowerCase().includes(termo) ||
       ordem.venda?.cidade?.toLowerCase().includes(termo) ||
       ordem.venda?.estado?.toLowerCase().includes(termo)
     );
   });
 
   // Extrair cores únicas de uma ordem
-  const getCoresUnicas = (ordem: OrdemCarregamento) => {
+  const getCoresUnicas = (ordem: OrdemCarregamentoUnificada) => {
     if (!ordem.venda?.produtos) return [];
     
     const coresMap = new Map<string, { nome: string; codigo_hex: string }>();
@@ -174,6 +135,43 @@ export const OrdensCarregamentoDisponiveisMobile = ({ onRefresh }: OrdensCarrega
     });
     
     return Array.from(coresMap.values());
+  };
+
+  // Obter badge de tipo de serviço
+  const getTipoServicoBadge = (ordem: OrdemCarregamentoUnificada) => {
+    const tipo = ordem.tipo_entrega;
+    
+    if (tipo === 'entrega') {
+      return (
+        <Badge variant="default" className="text-[10px] h-5">
+          <Truck className="h-3 w-3 mr-1" />
+          Entrega
+        </Badge>
+      );
+    }
+    
+    if (tipo === 'manutencao') {
+      return (
+        <Badge 
+          variant="secondary" 
+          className="text-[10px] h-5 bg-purple-500/20 text-purple-600 border-purple-500/30"
+        >
+          <Wrench className="h-3 w-3 mr-1" />
+          Manutenção
+        </Badge>
+      );
+    }
+    
+    // instalacao
+    return (
+      <Badge 
+        variant="secondary" 
+        className="text-[10px] h-5 bg-orange-500/20 text-orange-600 border-orange-500/30"
+      >
+        <Wrench className="h-3 w-3 mr-1" />
+        Instalação
+      </Badge>
+    );
   };
 
   return (
@@ -275,12 +273,7 @@ export const OrdensCarregamentoDisponiveisMobile = ({ onRefresh }: OrdensCarrega
                         )}
                         
                         {/* Tipo de Serviço */}
-                        <Badge 
-                          variant={ordem.venda?.tipo_entrega === 'entrega' ? 'default' : 'secondary'}
-                          className="text-[10px] h-5"
-                        >
-                          {ordem.venda?.tipo_entrega === 'entrega' ? 'Entrega' : 'Instalação'}
-                        </Badge>
+                        {getTipoServicoBadge(ordem)}
                       </div>
                     </div>
 
@@ -320,7 +313,7 @@ export const OrdensCarregamentoDisponiveisMobile = ({ onRefresh }: OrdensCarrega
         onOpenChange={setModalOpen}
         dataSelecionada={new Date()}
         onConfirm={handleConfirmAgendar}
-        ordemPreSelecionada={ordemSelecionada}
+        ordemPreSelecionada={ordemSelecionada as any}
       />
     </>
   );
