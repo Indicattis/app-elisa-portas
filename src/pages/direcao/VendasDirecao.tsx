@@ -14,7 +14,13 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users, BookOpen } from 'lucide-react';
+import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users, BookOpen, Info } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -408,10 +414,56 @@ export default function VendasDirecao() {
         );
       case 'desconto':
         const desconto = calcularDescontoTotal();
+        const autorizacao = venda.autorizacao_desconto?.[0];
+        
+        if (desconto <= 0) {
+          return <span className="text-[10px] md:text-sm text-white/60">-</span>;
+        }
+        
         return (
-          <span className={`text-[10px] md:text-sm ${desconto > 0 ? "text-red-400" : "text-white/60"}`}>
-            {desconto > 0 ? `-${formatCurrency(desconto)}` : '-'}
-          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-[10px] md:text-sm text-red-400 cursor-help underline decoration-dotted underline-offset-2">
+                -{formatCurrency(desconto)}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="bg-zinc-900 border-zinc-700 p-3 max-w-xs">
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-white flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-red-400" />
+                  Detalhes do Desconto
+                </div>
+                <div className="text-xs space-y-1">
+                  <p className="text-white/70">
+                    <span className="text-white/50">Valor:</span> {formatCurrency(desconto)}
+                  </p>
+                  {autorizacao && (
+                    <>
+                      <p className="text-white/70">
+                        <span className="text-white/50">Percentual:</span>{' '}
+                        {autorizacao.percentual_desconto?.toFixed(2)}%
+                      </p>
+                      <p className="text-white/70">
+                        <span className="text-white/50">Tipo:</span>{' '}
+                        {autorizacao.tipo_autorizacao === 'master' 
+                          ? 'Senha Master' 
+                          : 'Responsável do Setor'}
+                      </p>
+                      <p className="text-white/70">
+                        <span className="text-white/50">Autorizado por:</span>{' '}
+                        {autorizacao.autorizador?.nome || 'Não informado'}
+                      </p>
+                    </>
+                  )}
+                  {!autorizacao && (
+                    <p className="text-white/50 italic">
+                      Desconto dentro do limite automático
+                    </p>
+                  )}
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
         );
       case 'acrescimo':
         return (
@@ -713,56 +765,58 @@ export default function VendasDirecao() {
       {/* Tabela */}
       <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
         <div className="rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-white/10 hover:bg-transparent">
-                {visibleColumns.map(column => (
-                  <TableHead 
-                    key={column.id}
-                    className={`text-[10px] md:text-xs text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none py-2 px-3 md:px-5 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
-                    onClick={() => handleSort(column.id)}
-                  >
-                    <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'frete' || column.id === 'instalacao' || column.id === 'desconto' || column.id === 'acrescimo' ? 'justify-end' : column.id === 'faturada' ? 'justify-center' : ''}`}>
-                      <span className="truncate">{column.label}</span>
-                      {sortConfig.column === column.id ? (
-                        sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="h-2.5 w-2.5 md:h-3 md:w-3 text-blue-400 flex-shrink-0" />
-                          : <ArrowDown className="h-2.5 w-2.5 md:h-3 md:w-3 text-blue-400 flex-shrink-0" />
-                      ) : (
-                        <ArrowUpDown className="h-2.5 w-2.5 md:h-3 md:w-3 opacity-30 flex-shrink-0" />
-                      )}
-                    </div>
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedVendas.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-white/40">
-                    Nenhuma venda encontrada
-                  </TableCell>
+          <TooltipProvider delayDuration={200}>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/10 hover:bg-transparent">
+                  {visibleColumns.map(column => (
+                    <TableHead 
+                      key={column.id}
+                      className={`text-[10px] md:text-xs text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none py-2 px-3 md:px-5 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
+                      onClick={() => handleSort(column.id)}
+                    >
+                      <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'frete' || column.id === 'instalacao' || column.id === 'desconto' || column.id === 'acrescimo' ? 'justify-end' : column.id === 'faturada' ? 'justify-center' : ''}`}>
+                        <span className="truncate">{column.label}</span>
+                        {sortConfig.column === column.id ? (
+                          sortConfig.direction === 'asc' 
+                            ? <ArrowUp className="h-2.5 w-2.5 md:h-3 md:w-3 text-blue-400 flex-shrink-0" />
+                            : <ArrowDown className="h-2.5 w-2.5 md:h-3 md:w-3 text-blue-400 flex-shrink-0" />
+                        ) : (
+                          <ArrowUpDown className="h-2.5 w-2.5 md:h-3 md:w-3 opacity-30 flex-shrink-0" />
+                        )}
+                      </div>
+                    </TableHead>
+                  ))}
                 </TableRow>
-              ) : (
-                sortedVendas.map((venda) => (
-                  <TableRow 
-                    key={venda.id} 
-                    className="border-white/5 hover:bg-white/5 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/direcao/vendas/${venda.id}`)}
-                  >
-                    {visibleColumns.map(column => (
-                      <TableCell 
-                        key={column.id}
-                        className={`py-2.5 px-3 md:px-5 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
-                      >
-                        {renderCell(venda, column.id)}
-                      </TableCell>
-                    ))}
+              </TableHeader>
+              <TableBody>
+                {sortedVendas.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-white/40">
+                      Nenhuma venda encontrada
+                    </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  sortedVendas.map((venda) => (
+                    <TableRow 
+                      key={venda.id} 
+                      className="border-white/5 hover:bg-white/5 cursor-pointer transition-colors"
+                      onClick={() => navigate(`/direcao/vendas/${venda.id}`)}
+                    >
+                      {visibleColumns.map(column => (
+                        <TableCell 
+                          key={column.id}
+                          className={`py-2.5 px-3 md:px-5 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
+                        >
+                          {renderCell(venda, column.id)}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TooltipProvider>
         </div>
       </div>
     </MinimalistLayout>
