@@ -12,12 +12,21 @@ import { ptBR } from "date-fns/locale";
 import { PedidoHistoricoMovimentacoes } from "@/components/pedidos/PedidoHistoricoMovimentacoes";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 
+interface OrdemLinha {
+  id: string;
+  item: string;
+  quantidade: number;
+  tamanho?: string | null;
+  concluida: boolean;
+}
+
 interface Ordem {
   id: string;
   tipo: string;
   numero_ordem: string;
   status: string;
   capturado_por_nome?: string | null;
+  linhas?: OrdemLinha[];
 }
 
 interface PedidoLinha {
@@ -69,9 +78,9 @@ export default function PedidoViewDirecao() {
       
       if (pedidoError) throw pedidoError;
 
-      // Buscar linhas - usando any para evitar problemas de tipo
+      // Buscar linhas do pedido
       const { data: linhasData } = await supabase
-        .from('linhas_pedido' as any)
+        .from('pedido_linhas')
         .select('id, nome_produto, descricao_produto, quantidade, tamanho')
         .eq('pedido_id', id)
         .order('ordem', { ascending: true });
@@ -97,8 +106,21 @@ export default function PedidoViewDirecao() {
             tipo,
             numero_ordem: (ordemData as any).numero_ordem || '',
             status: (ordemData as any).status || 'pendente',
+            linhas: [],
           });
         }
+      }
+
+      // Buscar linhas de cada ordem
+      for (const ordem of ordensResult) {
+        const { data: linhasOrdem } = await supabase
+          .from('linhas_ordens')
+          .select('id, item, quantidade, tamanho, concluida')
+          .eq('ordem_id', ordem.id)
+          .eq('tipo_ordem', ordem.tipo.toLowerCase())
+          .order('created_at', { ascending: true });
+        
+        ordem.linhas = (linhasOrdem as OrdemLinha[]) || [];
       }
 
       const venda = (pedidoData as any).vendas;
@@ -397,6 +419,23 @@ export default function PedidoViewDirecao() {
                       {getOrdemStatusIcon(ordem.status)}
                     </div>
                     <p className="text-xs text-white/60">#{ordem.numero_ordem}</p>
+                    
+                    {/* Linhas da ordem */}
+                    {ordem.linhas && ordem.linhas.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-white/10 space-y-1">
+                        {ordem.linhas.map((linha) => (
+                          <div key={linha.id} className="flex items-center justify-between text-xs">
+                            <span className="text-white/70 truncate flex-1">{linha.item}</span>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <span className="text-white/50">{linha.quantidade}x</span>
+                              {linha.concluida && (
+                                <CheckCircle2 className="w-3 h-3 text-green-400" />
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
