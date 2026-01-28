@@ -8,7 +8,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, CalendarIcon, CheckCircle2, Clock, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, TrendingUp, Target, Paintbrush, Wrench, AlertCircle, Calculator } from "lucide-react";
+import { Search, DollarSign, CalendarIcon, CheckCircle2, Clock, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, TrendingUp, Target, Paintbrush, Wrench, AlertCircle, Calculator, Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth, differenceInDays } from "date-fns";
@@ -26,6 +32,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+interface AutorizacaoDesconto {
+  id: string;
+  percentual_desconto: number;
+  tipo_autorizacao: string;
+  autorizado_por: string;
+  autorizador?: {
+    nome: string;
+    foto_perfil_url?: string | null;
+  } | null;
+}
 
 interface Venda {
   id: string;
@@ -47,6 +64,7 @@ interface Venda {
   frete_aprovado?: boolean;
   portas?: any[];
   justificativa_nao_faturada?: string | null;
+  autorizacao_desconto?: AutorizacaoDesconto[];
 }
 
 // Definição das colunas disponíveis
@@ -162,6 +180,16 @@ export default function FaturamentoDirecao() {
             custo_produto,
             custo_pintura,
             lucro_item
+          ),
+          autorizacao_desconto:vendas_autorizacoes_desconto(
+            id,
+            percentual_desconto,
+            tipo_autorizacao,
+            autorizado_por,
+            autorizador:admin_users!vendas_autorizacoes_desconto_autorizado_por_fkey(
+              nome,
+              foto_perfil_url
+            )
           )
         `)
         .order("data_venda", { ascending: false });
@@ -201,6 +229,7 @@ export default function FaturamentoDirecao() {
           atendente_nome: atendenteData?.nome || "Não encontrado",
           atendente_foto: atendenteData?.foto || null,
           portas: venda.produtos_vendas || [],
+          autorizacao_desconto: venda.autorizacao_desconto || [],
         };
       });
 
@@ -464,12 +493,68 @@ export default function FaturamentoDirecao() {
         const descontoTotal = (venda.portas || []).reduce((sum: number, p: any) => sum + (p.desconto_valor || 0), 0);
         const acrescimoTotal = venda.valor_credito || 0;
         const saldo = acrescimoTotal - descontoTotal;
-        if (saldo > 0) {
-          return <span className="text-green-400">+{formatCurrency(saldo)}</span>;
-        } else if (saldo < 0) {
-          return <span className="text-red-400">{formatCurrency(saldo)}</span>;
+        const autorizacao = venda.autorizacao_desconto?.[0];
+        
+        if (saldo === 0) {
+          return <span className="text-white/30">-</span>;
         }
-        return <span className="text-white/30">-</span>;
+        
+        // Se tem desconto (saldo negativo), mostrar tooltip
+        if (descontoTotal > 0) {
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className={`cursor-help underline decoration-dotted underline-offset-2 ${saldo > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {saldo > 0 ? `+${formatCurrency(saldo)}` : formatCurrency(saldo)}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="bg-zinc-900 border-zinc-700 p-3 max-w-xs">
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-white flex items-center gap-1.5">
+                    <Info className="w-3.5 h-3.5 text-red-400" />
+                    Detalhes do Desconto
+                  </div>
+                  <div className="text-xs space-y-1">
+                    <p className="text-white/70">
+                      <span className="text-white/50">Desconto:</span> -{formatCurrency(descontoTotal)}
+                    </p>
+                    {acrescimoTotal > 0 && (
+                      <p className="text-white/70">
+                        <span className="text-white/50">Acréscimo:</span> +{formatCurrency(acrescimoTotal)}
+                      </p>
+                    )}
+                    {autorizacao && (
+                      <>
+                        <p className="text-white/70">
+                          <span className="text-white/50">Percentual:</span>{' '}
+                          {autorizacao.percentual_desconto?.toFixed(2)}%
+                        </p>
+                        <p className="text-white/70">
+                          <span className="text-white/50">Tipo:</span>{' '}
+                          {autorizacao.tipo_autorizacao === 'master' 
+                            ? 'Senha Master' 
+                            : 'Responsável do Setor'}
+                        </p>
+                        <p className="text-white/70">
+                          <span className="text-white/50">Autorizado por:</span>{' '}
+                          {autorizacao.autorizador?.nome || 'Não informado'}
+                        </p>
+                      </>
+                    )}
+                    {!autorizacao && (
+                      <p className="text-white/50 italic">
+                        Desconto dentro do limite automático
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          );
+        }
+        
+        // Só tem acréscimo
+        return <span className="text-green-400">+{formatCurrency(saldo)}</span>;
       case 'instalacao':
         return venda.valor_instalacao && venda.valor_instalacao > 0
           ? <span className="text-white/80">{formatCurrency(venda.valor_instalacao)}</span>
@@ -751,50 +836,52 @@ export default function FaturamentoDirecao() {
 
       {/* Tabela */}
       <div className="bg-primary/5 border border-primary/10 rounded-xl overflow-hidden backdrop-blur-xl">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-primary/10 hover:bg-transparent">
-              {visibleColumns.map((column) => (
-                <TableHead 
-                  key={column.id}
-                  className={`text-white/60 cursor-pointer hover:text-white/80 transition-colors ${getColumnResponsiveClass(column.id)} ${getColumnAlignment(column.id)}`}
-                  onClick={() => handleSort(column.id)}
-                >
-                  <div className={`flex items-center ${getColumnAlignment(column.id) === 'text-right' ? 'justify-end' : getColumnAlignment(column.id) === 'text-center' ? 'justify-center' : ''}`}>
-                    {column.label}
-                    {getSortIcon(column.id)}
-                  </div>
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedVendas.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-white/40">
-                  Nenhuma venda encontrada
-                </TableCell>
+        <TooltipProvider delayDuration={200}>
+          <Table>
+            <TableHeader>
+              <TableRow className="border-primary/10 hover:bg-transparent">
+                {visibleColumns.map((column) => (
+                  <TableHead 
+                    key={column.id}
+                    className={`text-white/60 cursor-pointer hover:text-white/80 transition-colors ${getColumnResponsiveClass(column.id)} ${getColumnAlignment(column.id)}`}
+                    onClick={() => handleSort(column.id)}
+                  >
+                    <div className={`flex items-center ${getColumnAlignment(column.id) === 'text-right' ? 'justify-end' : getColumnAlignment(column.id) === 'text-center' ? 'justify-center' : ''}`}>
+                      {column.label}
+                      {getSortIcon(column.id)}
+                    </div>
+                  </TableHead>
+                ))}
               </TableRow>
-            ) : (
-              sortedVendas.map((venda) => (
-                <TableRow 
-                  key={venda.id} 
-                  className="border-primary/10 hover:bg-primary/5 cursor-pointer"
-                  onClick={() => navigate(`/dashboard/vendas/${venda.id}`)}
-                >
-                  {visibleColumns.map((column) => (
-                    <TableCell 
-                      key={column.id}
-                      className={`${getColumnResponsiveClass(column.id)} ${getColumnAlignment(column.id)}`}
-                    >
-                      {renderCell(venda, column.id)}
-                    </TableCell>
-                  ))}
+            </TableHeader>
+            <TableBody>
+              {sortedVendas.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-white/40">
+                    Nenhuma venda encontrada
+                  </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                sortedVendas.map((venda) => (
+                  <TableRow 
+                    key={venda.id} 
+                    className="border-primary/10 hover:bg-primary/5 cursor-pointer"
+                    onClick={() => navigate(`/dashboard/vendas/${venda.id}`)}
+                  >
+                    {visibleColumns.map((column) => (
+                      <TableCell 
+                        key={column.id}
+                        className={`${getColumnResponsiveClass(column.id)} ${getColumnAlignment(column.id)}`}
+                      >
+                        {renderCell(venda, column.id)}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TooltipProvider>
       </div>
     </MinimalistLayout>
   );
