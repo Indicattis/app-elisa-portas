@@ -1,77 +1,110 @@
 
+## Plano: Corrigir Erros de Agendamento de Instalações e Remover Campo de Hora
 
-## Plano: Corrigir Cálculo do Valor Total com Desconto e Acréscimo
+### Problemas Identificados
 
-### Problema Identificado
+#### 1. Erro PGRST116
+O erro `PGRST116: "JSON object requested, multiple (or no) rows returned"` ocorre quando a query Supabase usa `.single()` e retorna 0 linhas. Isso está acontecendo em vários hooks de update.
 
-Na página `/vendas/minhas-vendas`, a coluna **Valor** exibe apenas o `valor_venda` bruto, sem considerar:
-- **Descontos** aplicados nos produtos
-- **Acréscimos** (valor_credito) da venda
+**Hooks afetados:**
 
-### Comportamento Atual vs Esperado
+| Arquivo | Linha | Problema |
+|---------|-------|----------|
+| `useOrdensInstalacaoCalendario.ts` | 128-133 | `.select().single()` no update |
+| `useOrdensCarregamentoInstalacao.ts` | 136-144 | `.select().single()` no update |
+| `useOrdensSemDataCarregamento.ts` | 68-76 | `.select().single()` no update |
 
-| Situação | Atual | Esperado |
-|----------|-------|----------|
-| Venda R$ 1.000 com desconto R$ 100 | R$ 1.000 | R$ 900 |
-| Venda R$ 1.000 com acréscimo R$ 50 | R$ 1.000 | R$ 1.050 |
-| Venda R$ 1.000 com desconto R$ 100 e acréscimo R$ 50 | R$ 1.000 | R$ 950 |
+#### 2. Campo de Hora Desnecessário
+O modal `AdicionarOrdemCalendarioModal` ainda solicita o horário para instalações, mas conforme a regra de negócio definida, instalações seguem uma política de **apenas data** (date-only policy).
 
-### Fórmula do Valor Ajustado
+### Solução Proposta
 
-```text
-Valor Ajustado = valor_venda - totalDesconto + valorCredito
-```
+#### 1. Remover `.single()` das Mutations de Update
 
-Onde:
-- `totalDesconto` = soma de `produtos_vendas.desconto_valor`
-- `valorCredito` = `valor_credito` (acréscimo)
-
-### Alterações Necessárias
-
-**Arquivo:** `src/pages/vendas/MinhasVendas.tsx`
-
-#### 1. Atualizar a coluna "Valor" (linha ~298-299)
+Substituir `.select().single()` por apenas `.select()` ou remover completamente a seleção quando o retorno não é necessário.
 
 ```typescript
-// Antes
-case 'valor':
-  return <span className="font-semibold">{formatCurrency(venda.valor_venda || 0)}</span>;
+// ANTES (causa erro se 0 rows)
+const { data: updated, error } = await supabase
+  .from("instalacoes")
+  .update(updateData)
+  .eq("id", id)
+  .select()
+  .single();
 
-// Depois
-case 'valor':
-  const descontoTotal = venda.produtos_vendas?.reduce((acc, p) => acc + (p.desconto_valor || 0), 0) || 0;
-  const valorAjustado = (venda.valor_venda || 0) - descontoTotal + (venda.valor_credito || 0);
-  return <span className="font-semibold">{formatCurrency(valorAjustado)}</span>;
+// DEPOIS (não falha se 0 rows)
+const { error } = await supabase
+  .from("instalacoes")
+  .update(updateData)
+  .eq("id", id);
 ```
 
-#### 2. Atualizar o card "Valor Total" (linha ~174-177)
+#### 2. Ocultar Campo de Hora para Instalações/Manutenções
 
-O cálculo do card de estatísticas também precisa incluir o desconto:
+No `AdicionarOrdemCalendarioModal`, ocultar o campo de horário quando o tipo de entrega for `instalacao` ou `manutencao`, e definir um valor padrão (null ou "08:00") automaticamente.
 
 ```typescript
-// Antes
-const valorTotal = vendasFiltradas.reduce((acc, v) => {
-  const valorLiquido = (v.valor_venda || 0) - (v.valor_frete || 0) + (v.valor_credito || 0);
-  return acc + valorLiquido;
-}, 0);
+// Verificar se é entrega (precisa de hora) ou instalação (não precisa)
+const isEntrega = ordemSelecionada?.tipo_entrega === 'entrega';
 
-// Depois
-const valorTotal = vendasFiltradas.reduce((acc, v) => {
-  const totalDesconto = v.produtos_vendas?.reduce((sum, p) => sum + (p.desconto_valor || 0), 0) || 0;
-  const valorLiquido = (v.valor_venda || 0) - (v.valor_frete || 0) + (v.valor_credito || 0) - totalDesconto;
-  return acc + valorLiquido;
-}, 0);
+// Só mostrar campo de hora para entregas
+{isEntrega && (
+  <div className="space-y-2">
+    <Label htmlFor="hora">Horário *</Label>
+    <Input type="time" ... />
+  </div>
+)}
 ```
 
 ### Arquivos a Modificar
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/pages/vendas/MinhasVendas.tsx` | Atualizar cálculo na coluna "Valor" e no card "Valor Total" |
+| `src/hooks/useOrdensInstalacaoCalendario.ts` | Remover `.single()` do `updateInstalacaoMutation` |
+| `src/hooks/useOrdensCarregamentoInstalacao.ts` | Remover `.single()` do `updateOrdemMutation` |
+| `src/hooks/useOrdensSemDataCarregamento.ts` | Remover `.single()` do `updateOrdemMutation` |
+| `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx` | Ocultar campo de hora para instalações |
+
+### Detalhes Técnicos
+
+#### Padrão Seguro para Updates
+
+```typescript
+// Pattern recomendado - sem .single()
+const updateMutation = useMutation({
+  mutationFn: async ({ id, data }) => {
+    const { error } = await supabase
+      .from("tabela")
+      .update({
+        ...data,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", id);
+
+    if (error) throw error;
+  },
+  // ...
+});
+```
+
+#### Lógica de Hora para Modal
+
+```typescript
+// Hora obrigatória apenas para entregas
+const handleConfirm = async () => {
+  // Para instalações, usar null ou valor padrão
+  const horaFinal = isEntrega ? hora : null;
+  
+  await onConfirm({
+    ...params,
+    hora: horaFinal,
+  });
+};
+```
 
 ### Resultado Esperado
 
-- Coluna **Valor** exibirá o valor ajustado (com desconto subtraído e acréscimo adicionado)
-- Card **Valor Total** incluirá os descontos no cálculo geral
-- Consistência entre o valor individual de cada venda e o total exibido
-
+- Agendamento de instalações via listagem funcionará sem erros
+- Campo de hora não será mais exibido para instalações/manutenções
+- Updates que não encontram registros não causarão erros fatais
+- Consistência com a política de "apenas data" para instalações
