@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Truck, Wrench, Ruler, PaintBucket } from "lucide-react";
+import { ChevronDown, ChevronRight, Truck, Wrench, Ruler, PaintBucket, Pause } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { PedidoComOrdens, OrdemStatus, TipoOrdem } from "@/hooks/useOrdensPorPedido";
 
@@ -18,7 +19,10 @@ const ORDEM_LABELS: Record<TipoOrdem, string> = {
   pintura: 'Pintura',
 };
 
-const getStatusStyle = (status: string | null) => {
+const getStatusStyle = (status: string | null, pausada: boolean = false) => {
+  if (pausada) {
+    return 'bg-red-500/20 text-red-300 border-red-500/30 hover:bg-red-500/30';
+  }
   switch (status) {
     case 'pendente':
       return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30 hover:bg-yellow-500/30';
@@ -190,24 +194,42 @@ export function PedidoOrdemCard({ pedido, onOrdemClick }: PedidoOrdemCardProps) 
                     "px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",
                     "flex items-center justify-between gap-2",
                     ordem.existe ? "cursor-pointer" : "cursor-not-allowed opacity-60",
-                    getStatusStyle(ordem.status)
+                    getStatusStyle(ordem.status, ordem.pausada)
                   )}
                 >
                   <div className="flex flex-col items-start gap-0.5 min-w-0">
                     <span className="font-medium text-xs">{ORDEM_LABELS[ordem.tipo]}</span>
                     <span className="text-[10px] opacity-80">
-                      {ordem.existe ? getStatusLabel(ordem.status) : 'Sem ordem'}
+                      {ordem.pausada ? 'Pausada' : (ordem.existe ? getStatusLabel(ordem.status) : 'Sem ordem')}
                     </span>
                   </div>
                   
-                  {ordem.responsavel && (
-                    <Avatar className="h-5 w-5 border border-current/30 flex-shrink-0">
-                      <AvatarImage src={ordem.responsavel.foto_url || undefined} />
-                      <AvatarFallback className="text-[8px] bg-current/20">
-                        {ordem.responsavel.iniciais}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {ordem.pausada && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="p-1 rounded-full bg-red-500/30">
+                              <Pause className="w-3 h-3 text-red-400 fill-red-400" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[200px]">
+                            <p className="text-xs font-medium">Motivo da pausa:</p>
+                            <p className="text-xs text-zinc-400">{ordem.justificativa_pausa || 'Não informado'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    
+                    {ordem.responsavel && (
+                      <Avatar className="h-5 w-5 border border-current/30">
+                        <AvatarImage src={ordem.responsavel.foto_url || undefined} />
+                        <AvatarFallback className="text-[8px] bg-current/20">
+                          {ordem.responsavel.iniciais}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>
