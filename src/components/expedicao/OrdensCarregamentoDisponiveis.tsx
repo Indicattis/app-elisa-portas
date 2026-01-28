@@ -95,13 +95,16 @@ export const OrdensCarregamentoDisponiveis = ({
   }) => {
     // Usar fonte do params para determinar a tabela correta
     const tabela = params.fonte === 'instalacoes' ? 'instalacoes' : 'ordens_carregamento';
+    
+    // Para instalações, usar valor padrão "08:00" se hora for null (constraint NOT NULL)
+    const horaValue = params.fonte === 'instalacoes' ? (params.hora || "08:00") : params.hora;
 
     const { error } = await supabase
       .from(tabela)
       .update({
         data_carregamento: params.data_carregamento,
         hora_carregamento: params.hora,
-        hora: params.hora,
+        hora: horaValue,
         tipo_carregamento: params.tipo_carregamento,
         responsavel_carregamento_id: params.responsavel_carregamento_id,
         responsavel_carregamento_nome: params.responsavel_carregamento_nome,

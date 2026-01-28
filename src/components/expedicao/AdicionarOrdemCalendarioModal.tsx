@@ -206,8 +206,8 @@ export function AdicionarOrdemCalendarioModal({
         responsavelNome = responsavel?.nome || '';
       }
 
-      // Para instalações/manutenções, hora é null (date-only policy)
-      const horaFinal = isEntrega ? hora : null;
+      // Para instalações/manutenções, usar "08:00" como default (tabela instalacoes tem NOT NULL constraint)
+      const horaFinal = isEntrega ? hora : "08:00";
 
       await onConfirm({
         ordemId: ordemSelecionada.id,
