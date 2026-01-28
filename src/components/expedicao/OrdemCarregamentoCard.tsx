@@ -122,86 +122,24 @@ export const OrdemCarregamentoCard = ({
             </DropdownMenu>
           )}
           
-          {ordem.venda && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button 
-                    className="p-0.5 hover:bg-accent rounded-md transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-sm">
-                  <div className="space-y-2">
-                    <div className="font-semibold text-[11px] border-b border-border pb-1">
-                      {ordem.venda?.cliente_nome || ordem.nome_cliente}
-                    </div>
-
-                    <div className="flex items-center gap-1 text-[10px]">
-                      <Package className="h-3 w-3 flex-shrink-0" />
-                      <span className="font-medium">
-                        {ordem.venda?.tipo_entrega === 'entrega' ? 'Entrega' : 'Instalação'}
-                      </span>
-                      <span className="text-muted-foreground">•</span>
-                      <span className="text-muted-foreground">
-                        {getResponsavelNome()}
-                      </span>
-                    </div>
-                    
-                    {ordem.venda.cidade && (
-                      <div className="flex items-center gap-1 text-[10px]">
-                        <MapPin className="h-3 w-3 flex-shrink-0" />
-                        <span>{ordem.venda.cidade}/{ordem.venda.estado}</span>
-                      </div>
-                    )}
-
-                    {ordem.venda.data_prevista_entrega && (
-                      <div className="text-[10px] text-muted-foreground">
-                        Entrega prevista: {new Date(ordem.venda.data_prevista_entrega).toLocaleDateString('pt-BR')}
-                      </div>
-                    )}
-
-                    {ordem.venda.produtos && ordem.venda.produtos.length > 0 && (
-                      <div className="pt-1 border-t border-border/50">
-                        <p className="text-[9px] font-medium mb-1.5">Produtos:</p>
-                        <div className="space-y-1">
-                          {ordem.venda.produtos.map((produto, idx) => (
-                            <div key={idx} className="flex items-start gap-1.5 text-[9px]">
-                              {produto.cor && (
-                                <div 
-                                  className="h-2.5 w-2.5 rounded-full border border-border/30 shrink-0 mt-0.5" 
-                                  style={{ backgroundColor: produto.cor.codigo_hex }}
-                                />
-                              )}
-                              <div className="flex-1 min-w-0">
-                                {produto.tipo_produto && (
-                                  <span className="font-medium">{produto.tipo_produto}</span>
-                                )}
-                                {(produto.tamanho || (produto.largura && produto.altura)) && (
-                                  <span className="text-muted-foreground">
-                                    {' • '}
-                                    {produto.tamanho || `${produto.largura}x${produto.altura}`}
-                                  </span>
-                                )}
-                                {produto.cor && (
-                                  <span className="text-muted-foreground">
-                                    {' • '}
-                                    {produto.cor.nome}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  className="p-0.5 hover:bg-accent rounded-md transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClick?.(ordem);
+                  }}
+                >
+                  <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                Ver detalhes
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
     </Card>
