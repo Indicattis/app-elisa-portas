@@ -49,6 +49,11 @@ export interface OrdemCarregamentoUnificada {
     tipo_entrega?: 'entrega' | 'instalacao' | 'manutencao' | null;
     produtos?: ProdutoUnificado[];
   } | null;
+  vendedor?: {
+    id: string;
+    nome: string;
+    foto_perfil_url: string | null;
+  } | null;
 }
 
 export const useOrdensCarregamentoUnificadas = () => {
@@ -72,6 +77,7 @@ export const useOrdensCarregamentoUnificadas = () => {
             bairro,
             cep,
             tipo_entrega,
+            atendente_id,
             produtos:produtos_vendas(
               tipo_produto,
               tamanho,
@@ -103,6 +109,17 @@ export const useOrdensCarregamentoUnificadas = () => {
         (ordem) => ordem.venda?.tipo_entrega === 'entrega'
       );
 
+      // Buscar dados dos vendedores (atendentes)
+      const atendenteIds = [...new Set(ordensEntrega.map(o => o.venda?.atendente_id).filter(Boolean))] as string[];
+      const { data: vendedores } = atendenteIds.length > 0
+        ? await supabase
+            .from("admin_users")
+            .select("user_id, nome, foto_perfil_url")
+            .in("user_id", atendenteIds)
+        : { data: [] };
+      
+      const vendedoresMap = new Map((vendedores || []).map(v => [v.user_id, v]));
+
       // ===== 2. Buscar instalações com carregamento pendente =====
       const { data: instalacoes, error: instError } = await supabase
         .from("instalacoes")
@@ -118,6 +135,7 @@ export const useOrdensCarregamentoUnificadas = () => {
             bairro,
             cep,
             tipo_entrega,
+            atendente_id,
             produtos:produtos_vendas(
               tipo_produto,
               tamanho,
@@ -150,56 +168,83 @@ export const useOrdensCarregamentoUnificadas = () => {
         (inst) => inst.pedido?.etapa_atual === 'instalacoes' || inst.status === 'pronta_fabrica'
       );
 
+      // Buscar dados dos vendedores para instalações também
+      const instAtendenteIds = [...new Set(instalacoesParaCarregar.map(i => i.venda?.atendente_id).filter(Boolean))] as string[];
+      const { data: instVendedores } = instAtendenteIds.length > 0
+        ? await supabase
+            .from("admin_users")
+            .select("user_id, nome, foto_perfil_url")
+            .in("user_id", instAtendenteIds.filter(id => !vendedoresMap.has(id)))
+        : { data: [] };
+      
+      (instVendedores || []).forEach(v => vendedoresMap.set(v.user_id, v));
+
       // ===== 3. Normalizar e combinar =====
       const ordensNormalizadas: OrdemCarregamentoUnificada[] = [
         // Ordens de carregamento (entregas)
-        ...ordensEntrega.map((ordem): OrdemCarregamentoUnificada => ({
-          id: ordem.id,
-          fonte: 'ordens_carregamento',
-          pedido_id: ordem.pedido_id,
-          venda_id: ordem.venda_id,
-          nome_cliente: ordem.nome_cliente,
-          data_carregamento: ordem.data_carregamento,
-          hora_carregamento: ordem.hora_carregamento || ordem.hora,
-          hora: ordem.hora,
-          tipo_carregamento: ordem.tipo_carregamento as 'elisa' | 'autorizados' | 'terceiro' | null,
-          responsavel_carregamento_id: ordem.responsavel_carregamento_id,
-          responsavel_carregamento_nome: ordem.responsavel_carregamento_nome,
-          carregamento_concluido: ordem.carregamento_concluido || false,
-          status: ordem.status,
-          tipo_entrega: 'entrega',
-          observacoes: ordem.observacoes,
-          created_at: ordem.created_at,
-          pedido: ordem.pedido,
-          venda: ordem.venda ? {
-            ...ordem.venda,
-            tipo_entrega: ordem.venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null,
-          } : null,
-        })),
+        ...ordensEntrega.map((ordem): OrdemCarregamentoUnificada => {
+          const vendedorData = ordem.venda?.atendente_id ? vendedoresMap.get(ordem.venda.atendente_id) : null;
+          return {
+            id: ordem.id,
+            fonte: 'ordens_carregamento',
+            pedido_id: ordem.pedido_id,
+            venda_id: ordem.venda_id,
+            nome_cliente: ordem.nome_cliente,
+            data_carregamento: ordem.data_carregamento,
+            hora_carregamento: ordem.hora_carregamento || ordem.hora,
+            hora: ordem.hora,
+            tipo_carregamento: ordem.tipo_carregamento as 'elisa' | 'autorizados' | 'terceiro' | null,
+            responsavel_carregamento_id: ordem.responsavel_carregamento_id,
+            responsavel_carregamento_nome: ordem.responsavel_carregamento_nome,
+            carregamento_concluido: ordem.carregamento_concluido || false,
+            status: ordem.status,
+            tipo_entrega: 'entrega',
+            observacoes: ordem.observacoes,
+            created_at: ordem.created_at,
+            pedido: ordem.pedido,
+            venda: ordem.venda ? {
+              ...ordem.venda,
+              tipo_entrega: ordem.venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null,
+            } : null,
+            vendedor: vendedorData ? {
+              id: vendedorData.user_id,
+              nome: vendedorData.nome,
+              foto_perfil_url: vendedorData.foto_perfil_url,
+            } : null,
+          };
+        }),
         // Instalações (instalação/manutenção)
-        ...instalacoesParaCarregar.map((inst): OrdemCarregamentoUnificada => ({
-          id: inst.id,
-          fonte: 'instalacoes',
-          pedido_id: inst.pedido_id,
-          venda_id: inst.venda_id,
-          nome_cliente: inst.nome_cliente,
-          data_carregamento: inst.data_carregamento,
-          hora_carregamento: inst.hora_carregamento || inst.hora,
-          hora: inst.hora,
-          tipo_carregamento: inst.tipo_carregamento as 'elisa' | 'autorizados' | 'terceiro' | null,
-          responsavel_carregamento_id: inst.responsavel_carregamento_id,
-          responsavel_carregamento_nome: inst.responsavel_carregamento_nome,
-          carregamento_concluido: inst.carregamento_concluido || false,
-          status: inst.status,
-          tipo_entrega: inst.venda?.tipo_entrega === 'manutencao' ? 'manutencao' : 'instalacao',
-          observacoes: inst.observacoes,
-          created_at: inst.created_at,
-          pedido: inst.pedido,
-          venda: inst.venda ? {
-            ...inst.venda,
-            tipo_entrega: inst.venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null,
-          } : null,
-        })),
+        ...instalacoesParaCarregar.map((inst): OrdemCarregamentoUnificada => {
+          const vendedorData = inst.venda?.atendente_id ? vendedoresMap.get(inst.venda.atendente_id) : null;
+          return {
+            id: inst.id,
+            fonte: 'instalacoes',
+            pedido_id: inst.pedido_id,
+            venda_id: inst.venda_id,
+            nome_cliente: inst.nome_cliente,
+            data_carregamento: inst.data_carregamento,
+            hora_carregamento: inst.hora_carregamento || inst.hora,
+            hora: inst.hora,
+            tipo_carregamento: inst.tipo_carregamento as 'elisa' | 'autorizados' | 'terceiro' | null,
+            responsavel_carregamento_id: inst.responsavel_carregamento_id,
+            responsavel_carregamento_nome: inst.responsavel_carregamento_nome,
+            carregamento_concluido: inst.carregamento_concluido || false,
+            status: inst.status,
+            tipo_entrega: inst.venda?.tipo_entrega === 'manutencao' ? 'manutencao' : 'instalacao',
+            observacoes: inst.observacoes,
+            created_at: inst.created_at,
+            pedido: inst.pedido,
+            venda: inst.venda ? {
+              ...inst.venda,
+              tipo_entrega: inst.venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null,
+            } : null,
+            vendedor: vendedorData ? {
+              id: vendedorData.user_id,
+              nome: vendedorData.nome,
+              foto_perfil_url: vendedorData.foto_perfil_url,
+            } : null,
+          };
+        }),
       ];
 
       // Ordenar por data de carregamento (null por último), depois por created_at

@@ -2,11 +2,14 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Package, MapPin, Calendar, Truck, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { AdicionarOrdemCalendarioModal } from "./AdicionarOrdemCalendarioModal";
+import { OrdemCarregamentoDetails } from "./OrdemCarregamentoDetails";
 import { cn } from "@/lib/utils";
 import { useOrdensCarregamentoUnificadas, OrdemCarregamentoUnificada } from "@/hooks/useOrdensCarregamentoUnificadas";
+import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -56,6 +59,51 @@ const getPortasInfo = (ordem: OrdemCarregamentoUnificada) => {
   return lista;
 };
 
+// Converter OrdemCarregamentoUnificada para OrdemCarregamento (para o details)
+const toOrdemCarregamento = (ordem: OrdemCarregamentoUnificada): OrdemCarregamento => ({
+  id: ordem.id,
+  pedido_id: ordem.pedido_id,
+  venda_id: ordem.venda_id,
+  nome_cliente: ordem.nome_cliente,
+  tipo_carregamento: ordem.tipo_carregamento,
+  data_carregamento: ordem.data_carregamento,
+  hora: ordem.hora || null,
+  hora_carregamento: ordem.hora_carregamento,
+  responsavel_carregamento_id: ordem.responsavel_carregamento_id,
+  responsavel_carregamento_nome: ordem.responsavel_carregamento_nome,
+  status: ordem.status,
+  carregamento_concluido: ordem.carregamento_concluido,
+  carregamento_concluido_em: null,
+  carregamento_concluido_por: null,
+  latitude: null,
+  longitude: null,
+  geocode_precision: null,
+  last_geocoded_at: null,
+  observacoes: ordem.observacoes || null,
+  created_at: ordem.created_at || null,
+  updated_at: null,
+  created_by: null,
+  fonte: ordem.fonte,
+  pedido: ordem.pedido,
+  venda: ordem.venda ? {
+    id: ordem.venda.id,
+    cliente_nome: ordem.venda.cliente_nome,
+    cliente_telefone: ordem.venda.cliente_telefone,
+    cliente_email: ordem.venda.cliente_email,
+    cidade: ordem.venda.cidade,
+    estado: ordem.venda.estado,
+    cep: ordem.venda.cep,
+    bairro: ordem.venda.bairro,
+    tipo_entrega: ordem.venda.tipo_entrega === 'manutencao' ? 'instalacao' : ordem.venda.tipo_entrega,
+    produtos: ordem.venda.produtos,
+  } : null,
+});
+
+// Obter iniciais do nome
+const getInitials = (nome: string) => {
+  return nome.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+};
+
 export const OrdensCarregamentoDisponiveisMobile = ({ onRefresh }: OrdensCarregamentoDisponiveisMobileProps) => {
   const queryClient = useQueryClient();
   const { ordens, isLoading: loading } = useOrdensCarregamentoUnificadas();
@@ -63,12 +111,22 @@ export const OrdensCarregamentoDisponiveisMobile = ({ onRefresh }: OrdensCarrega
   const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemCarregamentoUnificada | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
+  // States para downbar de detalhes
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedOrdem, setSelectedOrdem] = useState<OrdemCarregamento | null>(null);
+
   // Filtrar apenas ordens SEM data de carregamento (disponíveis para agendamento)
   const ordensDisponiveis = ordens.filter(o => !o.data_carregamento);
 
-  const handleAgendar = (ordem: OrdemCarregamentoUnificada) => {
+  const handleAgendar = (e: React.MouseEvent, ordem: OrdemCarregamentoUnificada) => {
+    e.stopPropagation();
     setOrdemSelecionada(ordem);
     setModalOpen(true);
+  };
+
+  const handleCardClick = (ordem: OrdemCarregamentoUnificada) => {
+    setSelectedOrdem(toOrdemCarregamento(ordem));
+    setDetailsOpen(true);
   };
 
   const handleConfirmAgendar = async (params: {
@@ -125,7 +183,8 @@ export const OrdensCarregamentoDisponiveisMobile = ({ onRefresh }: OrdensCarrega
       ordem.nome_cliente.toLowerCase().includes(termo) ||
       ordem.pedido?.numero_pedido?.toLowerCase().includes(termo) ||
       ordem.venda?.cidade?.toLowerCase().includes(termo) ||
-      ordem.venda?.estado?.toLowerCase().includes(termo)
+      ordem.venda?.estado?.toLowerCase().includes(termo) ||
+      ordem.vendedor?.nome?.toLowerCase().includes(termo)
     );
   });
 
@@ -189,7 +248,7 @@ export const OrdensCarregamentoDisponiveisMobile = ({ onRefresh }: OrdensCarrega
             <div>
               <CardTitle className="text-sm font-medium">Ordens Disponíveis</CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Toque para agendar
+                Toque para detalhes, agende pelo botão
               </p>
             </div>
             <Badge variant="secondary" className="text-xs">
@@ -228,7 +287,7 @@ export const OrdensCarregamentoDisponiveisMobile = ({ onRefresh }: OrdensCarrega
                   <Card 
                     key={ordem.id} 
                     className="p-3 cursor-pointer hover:bg-muted/50 active:bg-muted/70 transition-colors border-border/50"
-                    onClick={() => handleAgendar(ordem)}
+                    onClick={() => handleCardClick(ordem)}
                   >
                     <div className="flex items-start justify-between gap-2">
                       {/* Info Principal */}
@@ -247,6 +306,20 @@ export const OrdensCarregamentoDisponiveisMobile = ({ onRefresh }: OrdensCarrega
                             <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                             <span className="text-xs text-muted-foreground truncate">
                               {ordem.venda.cidade}/{ordem.venda.estado}
+                            </span>
+                          </div>
+                        )}
+                        {/* Vendedor */}
+                        {ordem.vendedor && (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <Avatar className="h-4 w-4">
+                              <AvatarImage src={ordem.vendedor.foto_perfil_url || undefined} />
+                              <AvatarFallback className="text-[6px]">
+                                {getInitials(ordem.vendedor.nome)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-[10px] text-muted-foreground truncate">
+                              {ordem.vendedor.nome.split(' ')[0]}
                             </span>
                           </div>
                         )}
@@ -302,8 +375,11 @@ export const OrdensCarregamentoDisponiveisMobile = ({ onRefresh }: OrdensCarrega
                       </div>
                     )}
 
-                    {/* Indicador de ação */}
-                    <div className="flex items-center justify-end mt-2 text-primary">
+                    {/* Botão de Agendar */}
+                    <div 
+                      className="flex items-center justify-end mt-2 text-primary"
+                      onClick={(e) => handleAgendar(e, ordem)}
+                    >
                       <Calendar className="h-3 w-3 mr-1" />
                       <span className="text-[10px] font-medium">Agendar</span>
                     </div>
@@ -321,6 +397,12 @@ export const OrdensCarregamentoDisponiveisMobile = ({ onRefresh }: OrdensCarrega
         dataSelecionada={new Date()}
         onConfirm={handleConfirmAgendar}
         ordemPreSelecionada={ordemSelecionada as any}
+      />
+
+      <OrdemCarregamentoDetails
+        ordem={selectedOrdem}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
       />
     </>
   );

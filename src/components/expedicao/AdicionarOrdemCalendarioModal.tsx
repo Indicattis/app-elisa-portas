@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Calendar } from "@/components/ui/calendar";
 import { OrdemCarregamentoUnificada } from "@/types/ordemCarregamentoUnificada";
 import { useOrdensCarregamentoUnificadas } from "@/hooks/useOrdensCarregamentoUnificadas";
 import { useVeiculos } from "@/hooks/useVeiculos";
@@ -50,7 +51,7 @@ export function AdicionarOrdemCalendarioModal({
 }: AdicionarOrdemCalendarioModalProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemCarregamentoUnificada | null>(null);
-  const [hora, setHora] = useState("08:00");
+  const [dataSelecionadaCalendario, setDataSelecionadaCalendario] = useState<Date | undefined>(undefined);
   const [responsavelTipo, setResponsavelTipo] = useState<"elisa" | "autorizados" | "terceiro">("elisa");
   const [responsavelId, setResponsavelId] = useState("");
   const [responsavelNomeTerceiro, setResponsavelNomeTerceiro] = useState("");
@@ -80,12 +81,12 @@ export function AdicionarOrdemCalendarioModal({
       }
       
       setSearchTerm("");
-      setHora("08:00");
+      setDataSelecionadaCalendario(dataSelecionada);
       setResponsavelTipo("elisa");
       setResponsavelId("");
       setResponsavelNomeTerceiro("");
     }
-  }, [open, ordemPreSelecionada]);
+  }, [open, ordemPreSelecionada, dataSelecionada]);
 
   const loadResponsaveis = async () => {
     setLoadingResponsaveis(true);
@@ -160,9 +161,8 @@ export function AdicionarOrdemCalendarioModal({
       return;
     }
 
-    // Hora obrigatória apenas para entregas
-    if (isEntrega && !hora) {
-      toast.error("Informe o horário");
+    if (!dataSelecionadaCalendario) {
+      toast.error("Selecione uma data");
       return;
     }
 
@@ -206,14 +206,14 @@ export function AdicionarOrdemCalendarioModal({
         responsavelNome = responsavel?.nome || '';
       }
 
-      // Para instalações/manutenções, usar "08:00" como default (tabela instalacoes tem NOT NULL constraint)
-      const horaFinal = isEntrega ? hora : "08:00";
+      // Hora padrão "08:00" para todos (removido campo de hora)
+      const horaFinal = "08:00";
 
       await onConfirm({
         ordemId: ordemSelecionada.id,
         fonte: ordemSelecionada.fonte,
-        data_carregamento: format(dataSelecionada, "yyyy-MM-dd"),
-        hora: horaFinal as string,
+        data_carregamento: format(dataSelecionadaCalendario, "yyyy-MM-dd"),
+        hora: horaFinal,
         tipo_carregamento: responsavelTipo,
         responsavel_carregamento_id: finalResponsavelId,
         responsavel_carregamento_nome: responsavelNome
@@ -230,10 +230,10 @@ export function AdicionarOrdemCalendarioModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[650px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
-            Adicionar ao Calendário - {format(dataSelecionada, "dd 'de' MMMM", { locale: ptBR })}
+            Adicionar ao Calendário
           </DialogTitle>
           <DialogDescription className="sr-only">
             Selecione uma ordem e configure o agendamento
@@ -364,19 +364,25 @@ export function AdicionarOrdemCalendarioModal({
                 Configurar {isEntrega ? 'Entrega' : 'Instalação'}
               </div>
 
-              {/* Horário - apenas para entregas */}
-              {isEntrega && (
-                <div className="space-y-2">
-                  <Label htmlFor="hora">Horário *</Label>
-                  <Input
-                    id="hora"
-                    type="time"
-                    value={hora}
-                    onChange={(e) => setHora(e.target.value)}
-                    className="w-32"
+              {/* Calendário para selecionar data */}
+              <div className="space-y-2">
+                <Label>Data do Carregamento *</Label>
+                <div className="border rounded-lg flex justify-center">
+                  <Calendar
+                    mode="single"
+                    selected={dataSelecionadaCalendario}
+                    onSelect={setDataSelecionadaCalendario}
+                    locale={ptBR}
+                    disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                    className={cn("p-3 pointer-events-auto")}
                   />
                 </div>
-              )}
+                {dataSelecionadaCalendario && (
+                  <p className="text-sm text-muted-foreground text-center">
+                    {format(dataSelecionadaCalendario, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                  </p>
+                )}
+              </div>
 
               {/* Tipo de Responsável */}
               <div className="space-y-3">
