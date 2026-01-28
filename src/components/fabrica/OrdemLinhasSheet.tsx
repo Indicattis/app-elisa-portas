@@ -36,7 +36,7 @@ const TABLE_MAP: Record<TipoOrdem, string> = {
 };
 
 // Tipos que suportam regeneração de linhas
-const TIPOS_COM_REGENERACAO: TipoOrdem[] = ['soldagem', 'perfiladeira', 'separacao'];
+const TIPOS_COM_REGENERACAO: TipoOrdem[] = ['soldagem', 'perfiladeira', 'separacao', 'qualidade', 'pintura'];
 
 export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheetProps) {
   const { toast } = useToast();
