@@ -111,6 +111,7 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
 
   const linhasConcluidas = linhas.filter(l => l.concluida).length;
   const totalLinhas = linhas.length;
+  const isOrdemConcluida = ordem?.status === 'concluido';
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -129,8 +130,8 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
                     size="icon"
                     variant="ghost"
                     onClick={() => regenerarLinhas.mutate()}
-                    disabled={regenerarLinhas.isPending}
-                    className="h-7 w-7"
+                    disabled={regenerarLinhas.isPending || isOrdemConcluida}
+                    className={cn("h-7 w-7", isOrdemConcluida && "opacity-50")}
                   >
                     {regenerarLinhas.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -139,7 +140,11 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
                     )}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Regenerar linhas da ordem</TooltipContent>
+                <TooltipContent>
+                  {isOrdemConcluida 
+                    ? 'Ordem concluída - não é possível regenerar' 
+                    : 'Regenerar linhas da ordem'}
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
             
