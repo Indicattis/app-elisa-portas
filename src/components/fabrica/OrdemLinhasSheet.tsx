@@ -2,7 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { Loader2, Package, RefreshCw } from "lucide-react";
+import { Loader2, Package, RefreshCw, Pause } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useLinhasOrdem, LinhaOrdem } from "@/hooks/useLinhasOrdem";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -148,6 +148,33 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
             </div>
           </SheetDescription>
         </SheetHeader>
+
+        {/* Alerta de ordem pausada */}
+        {ordem?.pausada && (
+          <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+            <div className="flex items-center gap-2 mb-2">
+              <Pause className="w-4 h-4 text-red-400" />
+              <span className="text-sm font-medium text-red-300">Ordem Pausada</span>
+            </div>
+            
+            {ordem.linha_problema && (
+              <div className="mb-2 p-2 rounded bg-red-500/20">
+                <p className="text-xs text-red-200 font-medium">Linha com problema:</p>
+                <p className="text-sm text-white">
+                  {ordem.linha_problema.item} - Qtd: {ordem.linha_problema.quantidade}
+                  {ordem.linha_problema.tamanho && ` - Tam: ${ordem.linha_problema.tamanho}`}
+                </p>
+              </div>
+            )}
+            
+            {ordem.justificativa_pausa && (
+              <div className="p-2 rounded bg-zinc-800/50">
+                <p className="text-xs text-zinc-400 font-medium">Motivo:</p>
+                <p className="text-sm text-zinc-300">{ordem.justificativa_pausa}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Ações da ordem - abaixo do header para evitar conflito com botão fechar */}
         <div className="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-zinc-700/50">

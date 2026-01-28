@@ -115,7 +115,7 @@ interface OrdemDetalhesSheetProps {
   isIniciando?: boolean;
   isFinalizando?: boolean;
   onRetornarProducao?: () => void;
-  onPausarOrdem?: (ordemId: string, justificativa: string) => Promise<void>;
+  onPausarOrdem?: (ordemId: string, justificativa: string, linhaProblemaId?: string) => Promise<void>;
   isPausing?: boolean;
   onMarcarLinhaProblema?: (linhaId: string, ordemId: string, descricao: string) => void;
   isMarkingProblem?: boolean;
@@ -1017,8 +1017,14 @@ export function OrdemDetalhesSheet({
           open={avisoFaltaModalOpen}
           onOpenChange={setAvisoFaltaModalOpen}
           numeroOrdem={ordem.numero_ordem}
-          onConfirm={async (justificativa) => {
-            await onPausarOrdem(ordem.id, justificativa);
+          linhas={linhas.map(l => ({
+            id: l.id,
+            item: l.item,
+            quantidade: l.quantidade,
+            tamanho: l.tamanho || null,
+          }))}
+          onConfirm={async (justificativa, linhaProblemaId) => {
+            await onPausarOrdem(ordem.id, justificativa, linhaProblemaId);
             onOpenChange(false);
           }}
           isPausing={isPausing}

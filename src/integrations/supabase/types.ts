@@ -3487,6 +3487,7 @@ export type Database = {
           historico: boolean
           id: string
           justificativa_pausa: string | null
+          linha_problema_id: string | null
           metragem_linear: number | null
           numero_ordem: string
           observacoes: string | null
@@ -3515,6 +3516,7 @@ export type Database = {
           historico?: boolean
           id?: string
           justificativa_pausa?: string | null
+          linha_problema_id?: string | null
           metragem_linear?: number | null
           numero_ordem: string
           observacoes?: string | null
@@ -3543,6 +3545,7 @@ export type Database = {
           historico?: boolean
           id?: string
           justificativa_pausa?: string | null
+          linha_problema_id?: string | null
           metragem_linear?: number | null
           numero_ordem?: string
           observacoes?: string | null
@@ -3562,6 +3565,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ordens_perfiladeira_linha_problema_id_fkey"
+            columns: ["linha_problema_id"]
+            isOneToOne: false
+            referencedRelation: "linhas_ordens"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ordens_perfiladeira_pedido_id_fkey"
             columns: ["pedido_id"]
@@ -3861,6 +3871,7 @@ export type Database = {
           historico: boolean
           id: string
           justificativa_pausa: string | null
+          linha_problema_id: string | null
           materiais_separados: Json | null
           numero_ordem: string
           observacoes: string | null
@@ -3888,6 +3899,7 @@ export type Database = {
           historico?: boolean
           id?: string
           justificativa_pausa?: string | null
+          linha_problema_id?: string | null
           materiais_separados?: Json | null
           numero_ordem: string
           observacoes?: string | null
@@ -3915,6 +3927,7 @@ export type Database = {
           historico?: boolean
           id?: string
           justificativa_pausa?: string | null
+          linha_problema_id?: string | null
           materiais_separados?: Json | null
           numero_ordem?: string
           observacoes?: string | null
@@ -3933,6 +3946,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ordens_separacao_linha_problema_id_fkey"
+            columns: ["linha_problema_id"]
+            isOneToOne: false
+            referencedRelation: "linhas_ordens"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ordens_separacao_pedido_id_fkey"
             columns: ["pedido_id"]
@@ -3960,6 +3980,7 @@ export type Database = {
           historico: boolean
           id: string
           justificativa_pausa: string | null
+          linha_problema_id: string | null
           numero_ordem: string
           observacoes: string | null
           pausada: boolean | null
@@ -3988,6 +4009,7 @@ export type Database = {
           historico?: boolean
           id?: string
           justificativa_pausa?: string | null
+          linha_problema_id?: string | null
           numero_ordem: string
           observacoes?: string | null
           pausada?: boolean | null
@@ -4016,6 +4038,7 @@ export type Database = {
           historico?: boolean
           id?: string
           justificativa_pausa?: string | null
+          linha_problema_id?: string | null
           numero_ordem?: string
           observacoes?: string | null
           pausada?: boolean | null
@@ -4035,6 +4058,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ordens_soldagem_linha_problema_id_fkey"
+            columns: ["linha_problema_id"]
+            isOneToOne: false
+            referencedRelation: "linhas_ordens"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ordens_soldagem_pedido_id_fkey"
             columns: ["pedido_id"]

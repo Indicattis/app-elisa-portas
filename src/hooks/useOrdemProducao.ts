@@ -606,7 +606,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
 
   // Pausar ordem (Aviso de Falta) - para separação e perfiladeira
   const pausarOrdem = useMutation({
-    mutationFn: async ({ ordemId, justificativa }: { ordemId: string; justificativa: string }) => {
+    mutationFn: async ({ ordemId, justificativa, linhaProblemaId }: { ordemId: string; justificativa: string; linhaProblemaId?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
@@ -639,6 +639,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
           pausada: true,
           pausada_em: new Date().toISOString(),
           justificativa_pausa: justificativa,
+          linha_problema_id: linhaProblemaId || null,
           tempo_acumulado_segundos: tempoTotal,
           responsavel_id: null, // Liberar a ordem para outro operador
         })
