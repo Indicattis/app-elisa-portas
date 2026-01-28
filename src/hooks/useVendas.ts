@@ -88,7 +88,17 @@ export function useVendas() {
             cor:catalogo_cores(nome, codigo_hex)
           ),
           atendente:admin_users!atendente_id(nome, foto_perfil_url),
-          notas_fiscais(id, status, tipo)
+          notas_fiscais(id, status, tipo),
+          autorizacao_desconto:vendas_autorizacoes_desconto(
+            id,
+            percentual_desconto,
+            tipo_autorizacao,
+            autorizado_por,
+            autorizador:admin_users!vendas_autorizacoes_desconto_autorizado_por_fkey(
+              nome,
+              foto_perfil_url
+            )
+          )
         `)
         .order('data_venda', { ascending: false });
       
