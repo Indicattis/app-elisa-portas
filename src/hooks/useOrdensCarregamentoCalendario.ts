@@ -92,6 +92,15 @@ export const useOrdensCarregamentoCalendario = (
           observacoes,
           created_at,
           updated_at,
+          cidade,
+          estado,
+          cep,
+          endereco,
+          telefone_cliente,
+          cor:catalogo_cores(
+            nome,
+            codigo_hex
+          ),
           pedido:pedidos_producao(
             id,
             numero_pedido,
@@ -129,38 +138,63 @@ export const useOrdensCarregamentoCalendario = (
       if (errorInstalacoes) throw errorInstalacoes;
 
       // 3. Normalizar instalações para o formato OrdemCarregamento
-      const instalacoesNormalizadas = (instalacoes || []).map((inst: any) => ({
-        id: inst.id,
-        pedido_id: inst.pedido?.id || null,
-        venda_id: inst.venda?.id || null,
-        nome_cliente: inst.nome_cliente,
-        tipo_carregamento: inst.tipo_carregamento,
-        data_carregamento: inst.data_carregamento,
-        hora: inst.hora_carregamento,
-        hora_carregamento: inst.hora_carregamento,
-        responsavel_carregamento_id: inst.responsavel_carregamento_id,
-        responsavel_carregamento_nome: inst.responsavel_carregamento_nome,
-        status: inst.status,
-        carregamento_concluido: inst.carregamento_concluido,
-        carregamento_concluido_em: null,
-        carregamento_concluido_por: null,
-        latitude: null,
-        longitude: null,
-        geocode_precision: null,
-        last_geocoded_at: null,
-        observacoes: inst.observacoes,
-        created_at: inst.created_at,
-        updated_at: inst.updated_at,
-        created_by: null,
-        fonte: 'instalacoes' as const,
-        pedido: inst.pedido ? {
-          id: inst.pedido.id,
-          numero_pedido: inst.pedido.numero_pedido,
-          etapa_atual: inst.pedido.etapa_atual,
-          instalacao: null
-        } : undefined,
-        venda: inst.venda
-      }));
+      const instalacoesNormalizadas = (instalacoes || []).map((inst: any) => {
+        // Se tem venda vinculada, usar dados da venda
+        // Senão, criar objeto com dados próprios da instalação (instalações avulsas)
+        const vendaOuDadosProprios = inst.venda || (inst.cidade || inst.endereco || inst.telefone_cliente ? {
+          id: null,
+          cliente_nome: inst.nome_cliente,
+          cliente_telefone: inst.telefone_cliente,
+          cliente_email: null,
+          cidade: inst.cidade,
+          estado: inst.estado,
+          cep: inst.cep,
+          bairro: inst.endereco, // endereco contém endereço completo
+          data_prevista_entrega: null,
+          tipo_entrega: 'instalacao' as const,
+          produtos: inst.cor ? [{
+            tipo_produto: 'porta_enrolar',
+            tamanho: null,
+            largura: null,
+            altura: null,
+            quantidade: 1,
+            cor: inst.cor
+          }] : []
+        } : null);
+
+        return {
+          id: inst.id,
+          pedido_id: inst.pedido?.id || null,
+          venda_id: inst.venda?.id || null,
+          nome_cliente: inst.nome_cliente,
+          tipo_carregamento: inst.tipo_carregamento,
+          data_carregamento: inst.data_carregamento,
+          hora: inst.hora_carregamento,
+          hora_carregamento: inst.hora_carregamento,
+          responsavel_carregamento_id: inst.responsavel_carregamento_id,
+          responsavel_carregamento_nome: inst.responsavel_carregamento_nome,
+          status: inst.status,
+          carregamento_concluido: inst.carregamento_concluido,
+          carregamento_concluido_em: null,
+          carregamento_concluido_por: null,
+          latitude: null,
+          longitude: null,
+          geocode_precision: null,
+          last_geocoded_at: null,
+          observacoes: inst.observacoes,
+          created_at: inst.created_at,
+          updated_at: inst.updated_at,
+          created_by: null,
+          fonte: 'instalacoes' as const,
+          pedido: inst.pedido ? {
+            id: inst.pedido.id,
+            numero_pedido: inst.pedido.numero_pedido,
+            etapa_atual: inst.pedido.etapa_atual,
+            instalacao: null
+          } : undefined,
+          venda: vendaOuDadosProprios
+        };
+      });
 
       // 4. Marcar ordens_carregamento com fonte
       const ordensComFonte = (ordensCarregamento || []).map((ordem: any) => ({
