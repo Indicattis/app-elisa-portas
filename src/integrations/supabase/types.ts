@@ -6719,6 +6719,16 @@ export type Database = {
         }
         Returns: Json
       }
+      retroceder_pedido_unificado: {
+        Args: {
+          p_etapa_destino: string
+          p_motivo: string
+          p_ordens_config?: Json
+          p_pedido_id: string
+          p_user_id?: string
+        }
+        Returns: Json
+      }
       verificar_ordem_pintura_concluida: {
         Args: { p_pedido_id: string }
         Returns: boolean

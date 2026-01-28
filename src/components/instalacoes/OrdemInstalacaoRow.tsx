@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CheckCircle2, Truck, MapPin } from "lucide-react";
+import { CheckCircle2, Truck, MapPin, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 interface OrdemInstalacaoRowProps {
   ordem: OrdemInstalacao;
   onConcluir: (ordem: OrdemInstalacao) => void;
+  onRetroceder?: (ordem: OrdemInstalacao) => void;
   isConcluindo: boolean;
   showCarregador?: boolean;
   onClick?: (ordem: OrdemInstalacao) => void;
@@ -55,6 +56,7 @@ const formatarValor = (valor: number | null | undefined): string => {
 export function OrdemInstalacaoRow({ 
   ordem, 
   onConcluir, 
+  onRetroceder,
   isConcluindo,
   showCarregador = false,
   onClick 
@@ -180,14 +182,29 @@ export function OrdemInstalacaoRow({
         </span>
       </div>
       
-      {/* Botão Concluir */}
-      <div className="flex items-center justify-end">
+      {/* Botões de Ação */}
+      <div className="flex items-center justify-end gap-1">
+        {onRetroceder && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={(e) => { e.stopPropagation(); onRetroceder(ordem); }}
+                className="h-6 w-6 text-red-600 hover:text-red-700 hover:bg-red-500/10"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Retroceder pedido</TooltipContent>
+          </Tooltip>
+        )}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               size="icon"
               variant="ghost"
-              onClick={() => onConcluir(ordem)}
+              onClick={(e) => { e.stopPropagation(); onConcluir(ordem); }}
               disabled={isConcluindo}
               className="h-6 w-6 text-green-600 hover:text-green-700 hover:bg-green-500/10"
             >
