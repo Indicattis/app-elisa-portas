@@ -1,112 +1,78 @@
 
 
-## Plano: Corrigir Bug de Avanço Automático para Ordens Pausadas Concluídas
+## Plano: Corrigir Botão "Regenerar Linhas" para Ordens de Qualidade e Pintura
 
 ### Diagnóstico
 
-O pedido **#0081** não avançou automaticamente após a conclusão da ordem de separação porque:
+O erro **"Tipo de ordem inválido"** ocorre porque:
 
-1. **Estado atual da ordem OSE-2026-0026:**
-   - `status: concluido`
-   - `pausada: true` (PROBLEMA!)
-   - `historico: true`
+1. **O botão "Regenerar linhas" aparece para TODOS os tipos de ordem**
+2. **A função SQL `regenerar_linhas_ordem` só suporta 3 tipos:**
+   - `soldagem`
+   - `perfiladeira`
+   - `separacao`
 
-2. **Lógica de verificação no auto-avanço:**
-   ```typescript
-   // usePedidoAutoAvanco.ts linha 50-51
-   if (ordens.some(o => o.pausada === true)) {
-     return false; // Bloqueia avanço
-   }
-   ```
+3. **Ordens de `qualidade` e `pintura` não são suportadas** porque:
+   - Não possuem linhas baseadas em `pedido_linhas` com `categoria_linha`
+   - São etapas de verificação/processamento, não de produção de itens
 
-3. **Causa raiz:** Ao concluir uma ordem no `useOrdemProducao.ts`, o código não reseta o campo `pausada`:
-   ```typescript
-   // Linha 504-512
-   .update({ 
-     status: 'concluido',
-     data_conclusao: new Date().toISOString(),
-     historico: true,
-     // FALTA: pausada: false
-   })
-   ```
+### Código Atual da Função SQL
+
+```sql
+CASE p_tipo_ordem
+  WHEN 'soldagem' THEN ...
+  WHEN 'perfiladeira' THEN ...
+  WHEN 'separacao' THEN ...
+  ELSE
+    RETURN jsonb_build_object('success', false, 'error', 'Tipo de ordem inválido');
+END CASE;
+```
 
 ### Solução
 
-#### 1. Corrigir a mutação `concluirOrdem` no hook
+Ocultar o botão "Regenerar linhas" para ordens que não são de produção (`qualidade` e `pintura`).
 
-**Arquivo:** `src/hooks/useOrdemProducao.ts`
-
-Adicionar reset dos campos de pausa ao concluir a ordem:
+**Arquivo:** `src/components/fabrica/OrdemLinhasSheet.tsx`
 
 ```typescript
-// Atualizar ordem como concluída E enviar para histórico
-const { error } = await supabase
-  .from(tabelaOrdem)
-  .update({ 
-    status: 'concluido',
-    data_conclusao: new Date().toISOString(),
-    tempo_conclusao_segundos,
-    historico: true,
-    // ADICIONAR:
-    pausada: false,
-    pausada_em: null,
-    justificativa_pausa: null,
-    linha_problema_id: null,
-  })
-  .eq('id', ordemId);
+// Definir tipos que suportam regeneração
+const TIPOS_COM_REGENERACAO: TipoOrdem[] = ['soldagem', 'perfiladeira', 'separacao'];
+
+// Na renderização do botão:
+{TIPOS_COM_REGENERACAO.includes(ordem?.tipo || '') && (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => regenerarLinhas.mutate()}
+        disabled={regenerarLinhas.isPending || isOrdemConcluida}
+        ...
+      >
+        ...
+      </Button>
+    </TooltipTrigger>
+  </Tooltip>
+)}
 ```
 
-#### 2. Corrigir dados existentes no banco
+### Por que NÃO expandir a função SQL?
 
-Executar SQL para resetar `pausada` em todas as ordens concluídas que ainda estão marcadas como pausadas:
+Ordens de qualidade e pintura têm estrutura diferente:
+- **Qualidade:** É uma verificação geral do pedido, não tem linhas próprias
+- **Pintura:** Pode ter linhas, mas baseadas em metragem, não em `categoria_linha`
 
-```sql
--- Corrigir ordens de separação
-UPDATE public.ordens_separacao 
-SET pausada = false, pausada_em = NULL, justificativa_pausa = NULL, linha_problema_id = NULL
-WHERE status = 'concluido' AND pausada = true;
-
--- Corrigir ordens de soldagem (preventivo)
-UPDATE public.ordens_soldagem 
-SET pausada = false, pausada_em = NULL, justificativa_pausa = NULL, linha_problema_id = NULL
-WHERE status = 'concluido' AND pausada = true;
-
--- Corrigir ordens de perfiladeira (preventivo)
-UPDATE public.ordens_perfiladeira 
-SET pausada = false, pausada_em = NULL, justificativa_pausa = NULL, linha_problema_id = NULL
-WHERE status = 'concluido' AND pausada = true;
-```
-
-#### 3. Avançar o pedido manualmente
-
-Após as correções, executar o avanço do pedido #0081 de `em_producao` para `inspecao_qualidade`:
-
-```sql
-UPDATE public.pedidos_producao 
-SET etapa_atual = 'inspecao_qualidade'
-WHERE id = '1ed5836f-9448-4828-88b7-7f2aa8c74a71';
-```
+Adicionar suporte seria mais complexo e não traria benefício real - essas ordens não precisam de regeneração de linhas.
 
 ### Arquivos a Modificar
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/hooks/useOrdemProducao.ts` | Adicionar reset de pausada na mutação concluirOrdem |
-| SQL Migration | Corrigir dados existentes e avançar pedido |
+| `src/components/fabrica/OrdemLinhasSheet.tsx` | Condicionar exibição do botão "Regenerar linhas" |
 
-### Fluxo Corrigido
+### Resultado Esperado
 
-```text
-Antes (bug):
-  Ordem pausada → Concluir → status=concluido, pausada=true → Auto-avanço bloqueado
-
-Depois (fix):
-  Ordem pausada → Concluir → status=concluido, pausada=false → Auto-avanço funciona
-```
-
-### Impacto
-
-- Todas as futuras ordens pausadas que forem concluídas terão o flag `pausada` resetado
-- Pedidos avançarão automaticamente após conclusão de todas as ordens
-- Dados históricos inconsistentes serão corrigidos
+- Botão "Regenerar linhas" só aparece para ordens de **Soldagem**, **Perfiladeira** e **Separação**
+- Ordens de **Qualidade** e **Pintura** não exibem o botão
+- Nenhum erro "Tipo de ordem inválido" ao abrir sheets de qualidade/pintura
 
