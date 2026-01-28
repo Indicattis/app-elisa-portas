@@ -354,7 +354,7 @@ export default function VendasDirecao() {
         );
       case 'cliente':
         return (
-          <span className={`${textClass} text-white font-medium truncate block max-w-[70px] md:max-w-none`}>
+          <span className={`${textClass} text-white font-medium truncate block max-w-[100px] md:max-w-none`}>
             {venda.cliente_nome}
           </span>
         );
@@ -362,7 +362,7 @@ export default function VendasDirecao() {
         return <span className={textMutedClass}>{venda.cliente_telefone || '-'}</span>;
       case 'cidade':
         return (
-          <span className={`${textMutedClass} truncate block max-w-[60px] md:max-w-none`}>
+          <span className={`${textMutedClass} truncate block max-w-[80px] md:max-w-none`}>
             {venda.cidade}/{venda.estado}
           </span>
         );
@@ -659,7 +659,7 @@ export default function VendasDirecao() {
 
       {/* Filtros */}
       <div className="flex flex-wrap gap-3 mb-6">
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-[280px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/40" />
           <Input
             placeholder="Buscar cliente, telefone, cidade..."
@@ -719,7 +719,7 @@ export default function VendasDirecao() {
                 {visibleColumns.map(column => (
                   <TableHead 
                     key={column.id}
-                    className={`text-[10px] md:text-xs text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none py-2 px-2 md:px-4 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
+                    className={`text-[10px] md:text-xs text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none py-2 px-3 md:px-5 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
                     onClick={() => handleSort(column.id)}
                   >
                     <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'frete' || column.id === 'instalacao' || column.id === 'desconto' || column.id === 'acrescimo' ? 'justify-end' : column.id === 'faturada' ? 'justify-center' : ''}`}>
@@ -753,7 +753,7 @@ export default function VendasDirecao() {
                     {visibleColumns.map(column => (
                       <TableCell 
                         key={column.id}
-                        className={`py-2 px-2 md:px-4 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
+                        className={`py-2.5 px-3 md:px-5 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
                       >
                         {renderCell(venda, column.id)}
                       </TableCell>
