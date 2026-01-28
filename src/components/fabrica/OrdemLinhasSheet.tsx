@@ -117,36 +117,11 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="bg-zinc-900 border-zinc-800 text-white w-full sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle className="text-white flex items-center gap-2">
+          <SheetTitle className="text-white flex items-center gap-2 pr-8">
             <Package className="w-5 h-5 text-blue-400" />
             <span className="flex-1">
               {ordem ? `${TIPO_LABELS[ordem.tipo]} #${ordem.numero_ordem}` : 'Ordem'}
             </span>
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => regenerarLinhas.mutate()}
-                    disabled={regenerarLinhas.isPending || isOrdemConcluida}
-                    className={cn("h-7 w-7", isOrdemConcluida && "opacity-50")}
-                  >
-                    {regenerarLinhas.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="h-4 w-4 text-amber-400" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isOrdemConcluida 
-                    ? 'Ordem concluída - não é possível regenerar' 
-                    : 'Regenerar linhas da ordem'}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
             
             {ordem?.responsavel && (
               <Avatar className="h-6 w-6 border border-blue-500/30">
@@ -173,6 +148,38 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
             </div>
           </SheetDescription>
         </SheetHeader>
+
+        {/* Ações da ordem - abaixo do header para evitar conflito com botão fechar */}
+        <div className="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-zinc-700/50">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => regenerarLinhas.mutate()}
+                  disabled={regenerarLinhas.isPending || isOrdemConcluida}
+                  className={cn(
+                    "h-8 gap-2 border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700/50",
+                    isOrdemConcluida && "opacity-50"
+                  )}
+                >
+                  {regenerarLinhas.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 text-amber-400" />
+                  )}
+                  <span className="text-xs text-zinc-300">Regenerar linhas</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isOrdemConcluida 
+                  ? 'Ordem concluída - não é possível regenerar' 
+                  : 'Regenerar linhas da ordem'}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
 
         <div className="mt-6 max-h-[calc(100vh-200px)] overflow-y-auto">
           {isLoading ? (
