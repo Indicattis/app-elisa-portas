@@ -197,41 +197,47 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
                 <div
                   key={linha.id}
                   className={cn(
-                    "grid gap-2 px-2 py-2 rounded-md items-center transition-all duration-200 border",
+                    "grid gap-2 px-2 py-2 rounded-md transition-all duration-200 border",
                     linha.concluida
                       ? "bg-green-500/10 border-green-500/30"
                       : "bg-zinc-800/30 border-zinc-700/30 hover:bg-zinc-800/50"
                   )}
-                  style={{ gridTemplateColumns: '24px 1fr 45px 55px 85px' }}
+                  style={{ gridTemplateColumns: '24px 1fr 45px 55px 85px', alignItems: 'center' }}
                 >
-                  <Checkbox
-                    checked={linha.concluida}
-                    onCheckedChange={(checked) => {
-                      marcarLinha.mutate({ linhaId: linha.id, concluida: checked as boolean });
-                    }}
-                    className="border-zinc-600 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                  />
+                  <div className="flex items-center justify-center h-full">
+                    <Checkbox
+                      checked={linha.concluida}
+                      onCheckedChange={(checked) => {
+                        marcarLinha.mutate({ linhaId: linha.id, concluida: checked as boolean });
+                      }}
+                      className="border-zinc-600 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                    />
+                  </div>
                   
-                  <span className={cn(
-                    "text-sm truncate",
-                    linha.concluida ? "text-green-300 line-through" : "text-white"
-                  )}>
-                    {linha.estoque?.nome_produto || linha.item}
-                  </span>
+                  <div className="flex items-center h-full">
+                    <span className={cn(
+                      "text-sm truncate",
+                      linha.concluida ? "text-green-300 line-through" : "text-white"
+                    )}>
+                      {linha.estoque?.nome_produto || linha.item}
+                    </span>
+                  </div>
                   
-                  <span className="text-xs text-zinc-400 text-center">
-                    {linha.quantidade}
-                  </span>
+                  <div className="flex items-center justify-center h-full">
+                    <span className="text-xs text-zinc-400">{linha.quantidade}</span>
+                  </div>
                   
-                  <span className="text-xs text-zinc-400 text-center">
-                    {linha.tamanho || '-'}
-                  </span>
+                  <div className="flex items-center justify-center h-full">
+                    <span className="text-xs text-zinc-400">{linha.tamanho || '-'}</span>
+                  </div>
                   
-                  <span className="text-xs text-zinc-400 text-center">
-                    {linha.largura && linha.altura 
-                      ? `${linha.largura}x${linha.altura}` 
-                      : '-'}
-                  </span>
+                  <div className="flex items-center justify-center h-full">
+                    <span className="text-xs text-zinc-400">
+                      {linha.largura && linha.altura 
+                        ? `${linha.largura}x${linha.altura}` 
+                        : '-'}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
