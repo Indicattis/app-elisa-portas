@@ -8,13 +8,13 @@ interface OrdemProducao {
   id: string;
   numero_ordem: string;
   status: string;
-  tipo: 'soldagem' | 'perfiladeira' | 'separacao';
+  tipo: 'soldagem' | 'perfiladeira' | 'separacao' | 'pintura';
   pausada?: boolean;
 }
 
 export interface OrdemConfig {
-  tipo: 'soldagem' | 'perfiladeira' | 'separacao';
-  acao: 'manter' | 'pausar' | 'reativar';
+  tipo: 'soldagem' | 'perfiladeira' | 'separacao' | 'pintura';
+  acao: 'manter' | 'pausar' | 'reativar' | 'resetar';
   justificativa?: string;
 }
 
@@ -86,6 +86,23 @@ export function useRetrocederPedido(pedidoId: string | null) {
           status: separacao.status || 'pendente',
           tipo: 'separacao',
           pausada: separacao.pausada || false,
+        });
+      }
+
+      // Buscar ordem de pintura
+      const { data: pintura } = await supabase
+        .from('ordens_pintura')
+        .select('id, numero_ordem, status, em_backlog')
+        .eq('pedido_id', pedidoId)
+        .maybeSingle();
+
+      if (pintura) {
+        ordens.push({
+          id: pintura.id,
+          numero_ordem: pintura.numero_ordem || '',
+          status: pintura.status || 'pendente',
+          tipo: 'pintura',
+          pausada: false,
         });
       }
 

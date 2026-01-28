@@ -37,6 +37,7 @@ const LABEL_TIPO_ORDEM: Record<string, string> = {
   soldagem: 'Soldagem',
   perfiladeira: 'Perfiladeira',
   separacao: 'Separação',
+  pintura: 'Pintura',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -44,6 +45,7 @@ const STATUS_LABELS: Record<string, string> = {
   em_andamento: 'Em Andamento',
   concluido: 'Concluído',
   pausada: 'Pausada',
+  pronta: 'Pronta',
 };
 
 export function RetrocederPedidoUnificadoModal({
@@ -54,7 +56,7 @@ export function RetrocederPedidoUnificadoModal({
 }: RetrocederPedidoUnificadoModalProps) {
   const [etapaDestino, setEtapaDestino] = useState<EtapaPedido>('aberto');
   const [motivo, setMotivo] = useState('');
-  const [ordensConfig, setOrdensConfig] = useState<Record<string, 'manter' | 'pausar' | 'reativar'>>({});
+  const [ordensConfig, setOrdensConfig] = useState<Record<string, 'manter' | 'pausar' | 'reativar' | 'resetar'>>({});
 
   const { ordensProducao, isLoadingOrdens, retrocederPedido, isRetrocedendo } = useRetrocederPedido(
     open ? pedido.id : null
@@ -84,12 +86,16 @@ export function RetrocederPedidoUnificadoModal({
       });
   }, [etapaAtual, temPintura]);
 
+  // Filtrar ordem de pintura
+  const ordemPintura = ordensProducao.find(o => o.tipo === 'pintura');
+  const ordensProducaoSemPintura = ordensProducao.filter(o => o.tipo !== 'pintura');
+
   // Inicializar ordensConfig quando ordensProducao mudar
   useEffect(() => {
     if (ordensProducao.length > 0) {
-      const initial: Record<string, 'manter' | 'pausar' | 'reativar'> = {};
+      const initial: Record<string, 'manter' | 'pausar' | 'reativar' | 'resetar'> = {};
       ordensProducao.forEach(ordem => {
-        initial[ordem.tipo] = 'manter';
+        initial[ordem.tipo] = ordem.tipo === 'pintura' ? 'resetar' : 'manter';
       });
       setOrdensConfig(initial);
     }
@@ -107,13 +113,22 @@ export function RetrocederPedidoUnificadoModal({
   const handleConfirmar = async () => {
     if (!motivo.trim()) return;
 
-    // Construir array de configurações de ordens
-    const ordensConfigArray: OrdemConfig[] = etapaDestino === 'em_producao'
-      ? ordensProducao.map(ordem => ({
+    // Construir array de configurações de ordens conforme etapa destino
+    const ordensConfigArray: OrdemConfig[] = (() => {
+      if (etapaDestino === 'em_producao') {
+        return ordensProducaoSemPintura.map(ordem => ({
           tipo: ordem.tipo,
           acao: ordensConfig[ordem.tipo] || 'manter',
-        }))
-      : [];
+        }));
+      }
+      if (etapaDestino === 'aguardando_pintura' && ordemPintura) {
+        return [{
+          tipo: 'pintura' as const,
+          acao: (ordensConfig['pintura'] || 'resetar') as OrdemConfig['acao'],
+        }];
+      }
+      return [];
+    })();
 
     try {
       await retrocederPedido.mutateAsync({
@@ -130,7 +145,7 @@ export function RetrocederPedidoUnificadoModal({
     }
   };
 
-  const handleOrdemConfigChange = (tipo: string, acao: 'manter' | 'pausar' | 'reativar') => {
+  const handleOrdemConfigChange = (tipo: string, acao: 'manter' | 'pausar' | 'reativar' | 'resetar') => {
     setOrdensConfig(prev => ({ ...prev, [tipo]: acao }));
   };
 
@@ -247,7 +262,7 @@ export function RetrocederPedidoUnificadoModal({
               </div>
 
               {/* Gerenciamento de Ordens de Produção (apenas para em_producao) */}
-              {etapaDestino === 'em_producao' && ordensProducao.length > 0 && (
+              {etapaDestino === 'em_producao' && ordensProducaoSemPintura.length > 0 && (
                 <div className="space-y-3">
                   <Label className="text-sm font-medium">Gerenciar Ordens de Produção:</Label>
                   
@@ -258,7 +273,7 @@ export function RetrocederPedidoUnificadoModal({
                     </div>
                   ) : (
                     <div className="space-y-4 border rounded-lg p-3 bg-muted/30">
-                      {ordensProducao.map((ordem) => (
+                      {ordensProducaoSemPintura.map((ordem) => (
                         <div key={ordem.id} className="space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium">
@@ -297,6 +312,52 @@ export function RetrocederPedidoUnificadoModal({
                           </RadioGroup>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Gerenciamento de Ordem de Pintura (apenas para aguardando_pintura) */}
+              {etapaDestino === 'aguardando_pintura' && ordemPintura && (
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Gerenciar Ordem de Pintura:</Label>
+                  
+                  {isLoadingOrdens ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Carregando ordens...
+                    </div>
+                  ) : (
+                    <div className="border rounded-lg p-3 bg-muted/30">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-medium">
+                          {LABEL_TIPO_ORDEM[ordemPintura.tipo]} - {ordemPintura.numero_ordem || 'S/N'}
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {STATUS_LABELS[ordemPintura.status] || ordemPintura.status}
+                        </Badge>
+                      </div>
+                      
+                      <RadioGroup
+                        value={ordensConfig['pintura'] || 'resetar'}
+                        onValueChange={(value) => 
+                          handleOrdemConfigChange('pintura', value as 'manter' | 'resetar')
+                        }
+                        className="flex flex-col gap-1"
+                      >
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="resetar" id="pintura-resetar" />
+                          <Label htmlFor="pintura-resetar" className="text-xs cursor-pointer">
+                            Resetar ordem (status pendente, linhas desmarcadas)
+                          </Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="manter" id="pintura-manter" />
+                          <Label htmlFor="pintura-manter" className="text-xs cursor-pointer">
+                            Manter status atual
+                          </Label>
+                        </div>
+                      </RadioGroup>
                     </div>
                   )}
                 </div>
