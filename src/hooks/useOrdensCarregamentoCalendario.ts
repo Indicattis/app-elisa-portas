@@ -72,6 +72,7 @@ export const useOrdensCarregamentoCalendario = (
         `)
         .gte("data_carregamento", inicio)
         .lte("data_carregamento", fim)
+        .eq("carregamento_concluido", false)
         .order("data_carregamento", { ascending: true });
 
       if (errorOrdens) throw errorOrdens;
@@ -202,11 +203,8 @@ export const useOrdensCarregamentoCalendario = (
         fonte: 'ordens_carregamento' as const
       }));
 
-      // 5. Filtrar ordens com status concluído e combinar
-      const filteredOrdens = ordensComFonte.filter((ordem: any) => ordem.status !== 'concluida');
-      const filteredInstalacoes = instalacoesNormalizadas.filter((inst: any) => inst.status !== 'concluida');
-      
-      return [...filteredOrdens, ...filteredInstalacoes] as OrdemCarregamento[];
+      // 5. Combinar ordens e instalações (filtros já aplicados nas queries)
+      return [...ordensComFonte, ...instalacoesNormalizadas] as OrdemCarregamento[];
     },
   });
 
