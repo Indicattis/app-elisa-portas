@@ -34,7 +34,7 @@ export function AutorizacaoDescontoModal({
   
   const { data: usuarios = [], isLoading: loadingUsuarios } = useAllUsers();
   const { data: liderVendas, isLoading: loadingLider } = useLiderVendas();
-  const { configuracoes, isLoading: loadingConfig, limites } = useConfiguracoesVendas();
+  const { configuracoes, isLoading: loadingConfig, limites, refetch: refetchConfiguracoes } = useConfiguracoesVendas();
   
   // Filtrar usuários baseado no tipo de autorização
   const usuariosFiltrados = useMemo(() => {
@@ -58,6 +58,8 @@ export function AutorizacaoDescontoModal({
 
   useEffect(() => {
     if (open) {
+      // Forçar recarregamento das configurações quando modal abre
+      refetchConfiguracoes();
       setSenha('');
       setErro('');
       
@@ -70,7 +72,7 @@ export function AutorizacaoDescontoModal({
         setAutorizadorId('');
       }
     }
-  }, [open, tipoAutorizacao, liderVendas, configuracoes]);
+  }, [open, tipoAutorizacao, liderVendas, configuracoes, refetchConfiguracoes]);
 
   const handleAutorizar = async () => {
     if (!senha.trim()) {

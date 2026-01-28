@@ -28,8 +28,10 @@ export interface ConfiguracoesVendasUpdate {
 export function useConfiguracoesVendas() {
   const queryClient = useQueryClient();
 
-  const { data: configuracoes, isLoading, error } = useQuery({
+  const { data: configuracoes, isLoading, error, refetch } = useQuery({
     queryKey: ["configuracoes-vendas"],
+    staleTime: 0,
+    refetchOnMount: 'always',
     queryFn: async () => {
       const { data, error } = await supabase
         .from("configuracoes_vendas")
@@ -120,5 +122,6 @@ export function useConfiguracoesVendas() {
     isUpdating: updateMutation.isPending,
     verificarSenhaResponsavel,
     verificarSenhaMaster,
+    refetch,
   };
 }
