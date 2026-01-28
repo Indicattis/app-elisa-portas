@@ -222,12 +222,26 @@ export function PedidoOrdemCard({ pedido, onOrdemClick }: PedidoOrdemCardProps) 
                     )}
                     
                     {ordem.responsavel && (
-                      <Avatar className="h-5 w-5 border border-current/30">
-                        <AvatarImage src={ordem.responsavel.foto_url || undefined} />
-                        <AvatarFallback className="text-[8px] bg-current/20">
-                          {ordem.responsavel.iniciais}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="flex items-center gap-1">
+                        <Avatar className="h-5 w-5 border border-current/30">
+                          <AvatarImage src={ordem.responsavel.foto_url || undefined} />
+                          <AvatarFallback className="text-[8px] bg-current/20">
+                            {ordem.responsavel.iniciais}
+                          </AvatarFallback>
+                        </Avatar>
+                        {ordem.total_linhas > 0 && (
+                          <span className="text-[10px] font-medium opacity-90">
+                            {ordem.linhas_concluidas}/{ordem.total_linhas}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Mostrar contador mesmo sem responsável */}
+                    {!ordem.responsavel && ordem.total_linhas > 0 && (
+                      <span className="text-[10px] font-medium opacity-90">
+                        {ordem.linhas_concluidas}/{ordem.total_linhas}
+                      </span>
                     )}
                   </div>
                 </button>
