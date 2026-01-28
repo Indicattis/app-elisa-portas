@@ -27,8 +27,9 @@ import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
 import { CreditoVendaModal } from '@/components/vendas/CreditoVendaModal';
 import { AutorizacaoDescontoModal } from '@/components/vendas/AutorizacaoDescontoModal';
 import { PinturaRapidaModal } from '@/components/vendas/PinturaRapidaModal';
-import { validarDesconto, getTipoAutorizacaoNecessaria } from '@/utils/descontoVendasRules';
+import { validarDesconto, getTipoAutorizacaoNecessaria, ConfigLimites } from '@/utils/descontoVendasRules';
 import { validarCredito } from '@/utils/creditoVendasRules';
+import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
 import { useAuth } from '@/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from '@/components/vendas/PagamentoSection';
@@ -41,6 +42,13 @@ export default function VendasNova() {
   const { toast } = useToast();
   const { createVenda, isCreating } = useVendas();
   const { user } = useAuth();
+  const { limites: configLimites } = useConfiguracoesVendas();
+  
+  const configLimitesObj: ConfigLimites = {
+    avista: configLimites.avista,
+    presencial: configLimites.presencial,
+    adicionalResponsavel: configLimites.adicionalResponsavel
+  };
   
   const [formData, setFormData] = useState<VendaFormData>({
     cliente_nome: '',
@@ -400,7 +408,8 @@ export default function VendasNova() {
     const validacao = validarDesconto(
       portas,
       formData.forma_pagamento,
-      formData.venda_presencial
+      formData.venda_presencial,
+      configLimitesObj
     );
 
     // Verificar se precisa autorização
@@ -439,7 +448,8 @@ export default function VendasNova() {
       const validacao = validarDesconto(
         produtosComDesconto,
         formData.forma_pagamento,
-        formData.venda_presencial
+        formData.venda_presencial,
+        configLimitesObj
       );
 
       await createVenda({ 

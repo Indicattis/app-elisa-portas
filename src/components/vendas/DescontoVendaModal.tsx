@@ -9,7 +9,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { ProdutoVenda } from '@/hooks/useVendas';
 import { calcularLimitesDesconto, calcularTotalVenda } from '@/utils/descontoVendasRules';
-import { Percent, DollarSign, AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
+import { Percent, DollarSign, AlertCircle, CheckCircle2, AlertTriangle, Key, Infinity } from 'lucide-react';
 
 interface DescontoVendaModalProps {
   open: boolean;
@@ -31,6 +32,8 @@ export function DescontoVendaModal({
   const [produtosSelecionados, setProdutosSelecionados] = useState<boolean[]>([]);
   const [tipoDesconto, setTipoDesconto] = useState<'percentual' | 'valor'>('percentual');
   const [valorDesconto, setValorDesconto] = useState('');
+  
+  const { limites: configLimites } = useConfiguracoesVendas();
 
   useEffect(() => {
     if (open) {
@@ -41,7 +44,11 @@ export function DescontoVendaModal({
     }
   }, [open, produtos]);
 
-  const limites = calcularLimitesDesconto(formaPagamento, vendaPresencial);
+  const limites = calcularLimitesDesconto(formaPagamento, vendaPresencial, {
+    avista: configLimites.avista,
+    presencial: configLimites.presencial,
+    adicionalResponsavel: configLimites.adicionalResponsavel
+  });
   const totalVenda = calcularTotalVenda(produtos);
 
   // Calcular desconto já aplicado
@@ -83,7 +90,7 @@ export function DescontoVendaModal({
   const excedente = novoPercentualDesconto - limites.limiteTotal;
   const dentroDoLimite = excedente <= 0;
   const requerSenhaResponsavel = excedente > 0 && novoPercentualDesconto <= limites.limiteMaximo;
-  const excedeLimiteMaximo = novoPercentualDesconto > limites.limiteMaximo;
+  const requerSenhaMaster = novoPercentualDesconto > limites.limiteMaximo;
 
   const handleAplicar = () => {
     if (produtosSelecionados.every(sel => !sel)) {
@@ -163,23 +170,22 @@ export function DescontoVendaModal({
               <p className="text-sm text-muted-foreground">Desconto Atual</p>
               <p className="text-2xl font-bold">{percentualDescontoAtual.toFixed(1)}%</p>
               <p className="text-xs text-muted-foreground">
-                Limite: {limites.limiteTotal}% | Com senha: até {limites.limiteMaximo}%
+                Limite: {limites.limiteTotal}% | Com senha: até {limites.limiteMaximo}% | Com master: sem limite
               </p>
             </div>
           </div>
 
-          {/* Condições da Venda */}
           <div className="flex gap-2 flex-wrap">
             {formaPagamento !== 'cartao_credito' && (
               <Badge variant="outline" className="bg-green-500/10 text-green-700 border-green-500/20">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
-                Não Cartão (+5%)
+                Não Cartão (+{configLimites.avista}%)
               </Badge>
             )}
             {vendaPresencial && (
               <Badge variant="outline" className="bg-blue-500/10 text-blue-700 border-blue-500/20">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
-                Presencial (+3%)
+                Presencial (+{configLimites.presencial}%)
               </Badge>
             )}
           </div>
@@ -278,8 +284,13 @@ export function DescontoVendaModal({
                   <div className="flex items-center gap-2">
                     <p className="text-lg font-bold">{novoPercentualDesconto.toFixed(1)}%</p>
                     {dentroDoLimite && <Badge className="bg-green-500">Dentro do limite</Badge>}
-                    {requerSenhaResponsavel && <Badge className="bg-amber-500">Requer senha (+5% max)</Badge>}
-                    {excedeLimiteMaximo && <Badge className="bg-red-500">Excede limite máximo</Badge>}
+                    {requerSenhaResponsavel && <Badge className="bg-amber-500">Requer senha responsável</Badge>}
+                    {requerSenhaMaster && (
+                      <Badge className="bg-red-500 flex items-center gap-1">
+                        <Key className="h-3 w-3" />
+                        Requer senha master
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </div>
@@ -296,11 +307,12 @@ export function DescontoVendaModal({
             </Alert>
           )}
 
-          {excedeLimiteMaximo && (
+          {requerSenhaMaster && (
             <Alert className="bg-red-500/10 border-red-500/20">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-900">
-                Este desconto excede o limite máximo de {limites.limiteMaximo}% e não pode ser aplicado.
+              <Key className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-900 flex items-center gap-1">
+                <Infinity className="h-4 w-4 inline" />
+                Este desconto excede o limite de {limites.limiteMaximo}%. Será necessária a senha master para aprovar.
               </AlertDescription>
             </Alert>
           )}
@@ -314,8 +326,7 @@ export function DescontoVendaModal({
               onClick={handleAplicar}
               disabled={
                 !produtosSelecionados.some(sel => sel) ||
-                valorDescontoNumerico <= 0 ||
-                excedeLimiteMaximo
+                valorDescontoNumerico <= 0
               }
             >
               Aplicar Desconto

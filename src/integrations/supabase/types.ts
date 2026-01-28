@@ -843,6 +843,60 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracoes_vendas: {
+        Row: {
+          created_at: string
+          id: string
+          limite_adicional_responsavel: number
+          limite_desconto_avista: number
+          limite_desconto_presencial: number
+          responsavel_senha_master_id: string | null
+          responsavel_senha_responsavel_id: string | null
+          senha_master: string
+          senha_responsavel: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          limite_adicional_responsavel?: number
+          limite_desconto_avista?: number
+          limite_desconto_presencial?: number
+          responsavel_senha_master_id?: string | null
+          responsavel_senha_responsavel_id?: string | null
+          senha_master?: string
+          senha_responsavel?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          limite_adicional_responsavel?: number
+          limite_desconto_avista?: number
+          limite_desconto_presencial?: number
+          responsavel_senha_master_id?: string | null
+          responsavel_senha_responsavel_id?: string | null
+          senha_master?: string
+          senha_responsavel?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "configuracoes_vendas_responsavel_senha_master_id_fkey"
+            columns: ["responsavel_senha_master_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "configuracoes_vendas_responsavel_senha_responsavel_id_fkey"
+            columns: ["responsavel_senha_responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       contador_vendas_dias: {
         Row: {
           atendente_id: string

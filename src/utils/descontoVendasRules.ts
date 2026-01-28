@@ -12,26 +12,39 @@ export interface DescontoCalculation {
   descontoAplicado: number;
   percentualDesconto: number;
   limitePermitido: number;
+  limiteMaximoResponsavel?: number; // Limite com senha do responsável
   excedente: number; // Quanto % excede o limite
   dentroDoLimite: boolean;
   requerSenha: boolean;
-  excedeLimiteMaximo: boolean;
+  excedeLimiteMaximo: boolean; // Excede o limite do responsável, requer master
 }
 
 /**
  * Calcula os limites de desconto baseado nas condições da venda
  */
+export interface ConfigLimites {
+  avista?: number;
+  presencial?: number;
+  adicionalResponsavel?: number;
+}
+
 export function calcularLimitesDesconto(
   formaPagamento: string,
-  vendaPresencial: boolean
+  vendaPresencial: boolean,
+  config?: ConfigLimites
 ): DescontoLimits {
-  // 5% para pagamento que não seja cartão de crédito (à vista, boleto, dinheiro)
-  const limiteBase = formaPagamento !== 'cartao_credito' ? 5 : 0;
+  // Usar valores do banco ou padrões
+  const limiteAvista = config?.avista ?? 3;
+  const limitePresencialConfig = config?.presencial ?? 3;
+  const limiteAdicionalResponsavel = config?.adicionalResponsavel ?? 5;
+  
+  // 3% para pagamento que não seja cartão de crédito (à vista, boleto, dinheiro)
+  const limiteBase = formaPagamento !== 'cartao_credito' ? limiteAvista : 0;
   // 3% adicional para venda presencial
-  const limitePresencial = vendaPresencial ? 3 : 0;
+  const limitePresencial = vendaPresencial ? limitePresencialConfig : 0;
   const limiteTotal = limiteBase + limitePresencial;
-  // Máximo de 5% adicional com senha = 13% total
-  const limiteMaximo = 13;
+  // Máximo com senha do responsável = 11% (6% base + 5% adicional)
+  const limiteMaximo = limiteTotal + limiteAdicionalResponsavel;
 
   return {
     limiteBase,
@@ -91,16 +104,18 @@ export function calcularPercentualDesconto(
 export function validarDesconto(
   produtos: ProdutoVenda[],
   formaPagamento: string,
-  vendaPresencial: boolean
+  vendaPresencial: boolean,
+  config?: ConfigLimites
 ): DescontoCalculation {
   const totalVenda = calcularTotalVenda(produtos);
   const descontoAplicado = calcularDescontoTotal(produtos);
   const percentualDesconto = calcularPercentualDesconto(descontoAplicado, totalVenda);
-  const limites = calcularLimitesDesconto(formaPagamento, vendaPresencial);
+  const limites = calcularLimitesDesconto(formaPagamento, vendaPresencial, config);
   
   const excedente = percentualDesconto - limites.limiteTotal;
   const dentroDoLimite = excedente <= 0;
   const requerSenha = excedente > 0 && percentualDesconto <= limites.limiteMaximo;
+  // Com senha master, não há limite máximo - essa lógica é tratada nos modais
   const excedeLimiteMaximo = percentualDesconto > limites.limiteMaximo;
 
   return {
@@ -108,6 +123,7 @@ export function validarDesconto(
     descontoAplicado,
     percentualDesconto,
     limitePermitido: limites.limiteTotal,
+    limiteMaximoResponsavel: limites.limiteMaximo,
     excedente: Math.max(0, excedente),
     dentroDoLimite,
     requerSenha,
