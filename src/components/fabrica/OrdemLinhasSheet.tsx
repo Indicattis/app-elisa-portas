@@ -90,20 +90,34 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
 
   const regenerarLinhas = useMutation({
     mutationFn: async () => {
-      if (!ordem?.id || !ordem?.tipo) throw new Error('Ordem inválida');
+      console.log('[regenerarLinhas] Iniciando...', { ordemId: ordem?.id, tipo: ordem?.tipo });
       
+      if (!ordem?.id || !ordem?.tipo) {
+        console.error('[regenerarLinhas] Ordem inválida', { ordem });
+        throw new Error('Ordem inválida');
+      }
+      
+      console.log('[regenerarLinhas] Chamando RPC regenerar_linhas_ordem');
       const { data, error } = await supabase.rpc('regenerar_linhas_ordem', {
         p_ordem_id: ordem.id,
         p_tipo_ordem: ordem.tipo,
       });
       
-      if (error) throw error;
+      console.log('[regenerarLinhas] Resposta:', { data, error });
+      
+      if (error) {
+        console.error('[regenerarLinhas] Erro da RPC:', error);
+        throw error;
+      }
       if (data && !(data as { success: boolean }).success) {
-        throw new Error((data as { error?: string }).error || 'Erro desconhecido');
+        const errorMsg = (data as { error?: string }).error || 'Erro desconhecido';
+        console.error('[regenerarLinhas] RPC retornou erro:', errorMsg);
+        throw new Error(errorMsg);
       }
       return data as { success: boolean; linhas_criadas: number };
     },
     onSuccess: (data) => {
+      console.log('[regenerarLinhas] Sucesso:', data);
       queryClient.invalidateQueries({ queryKey: ['linhas-ordem', ordem?.id, ordem?.tipo] });
       queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
       toast({
@@ -111,10 +125,11 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
         description: `${data.linhas_criadas} linhas foram recriadas.`,
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('[regenerarLinhas] onError:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível regenerar as linhas.",
+        description: error instanceof Error ? error.message : "Não foi possível regenerar as linhas.",
         variant: "destructive",
       });
     },
