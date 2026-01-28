@@ -1,78 +1,194 @@
 
+## Plano: Implementar Regeneração de Linhas para Qualidade e Pintura
 
-## Plano: Corrigir Botão "Regenerar Linhas" para Ordens de Qualidade e Pintura
+### Contexto
 
-### Diagnóstico
+O usuário definiu critérios específicos para regeneração de linhas:
 
-O erro **"Tipo de ordem inválido"** ocorre porque:
+| Tipo de Ordem | Critério de Linhas |
+|---------------|-------------------|
+| **Qualidade** | Todas as linhas do pedido **EXCETO** linhas de separação |
+| **Pintura** | Linhas que **requerem pintura** (estoque.requer_pintura = true) |
 
-1. **O botão "Regenerar linhas" aparece para TODOS os tipos de ordem**
-2. **A função SQL `regenerar_linhas_ordem` só suporta 3 tipos:**
-   - `soldagem`
-   - `perfiladeira`
-   - `separacao`
+### Análise Técnica
 
-3. **Ordens de `qualidade` e `pintura` não são suportadas** porque:
-   - Não possuem linhas baseadas em `pedido_linhas` com `categoria_linha`
-   - São etapas de verificação/processamento, não de produção de itens
-
-### Código Atual da Função SQL
+#### Estrutura Atual da Função SQL `regenerar_linhas_ordem`
 
 ```sql
 CASE p_tipo_ordem
   WHEN 'soldagem' THEN ...
   WHEN 'perfiladeira' THEN ...
   WHEN 'separacao' THEN ...
-  ELSE
-    RETURN jsonb_build_object('success', false, 'error', 'Tipo de ordem inválido');
+  ELSE RETURN 'Tipo de ordem inválido'
 END CASE;
 ```
 
-### Solução
+A função atual filtra por `categoria_linha` ou `setor_responsavel_producao`, o que funciona para ordens de produção, mas não atende aos novos critérios.
 
-Ocultar o botão "Regenerar linhas" para ordens que não são de produção (`qualidade` e `pintura`).
+#### Critérios de Seleção das Linhas
 
-**Arquivo:** `src/components/fabrica/OrdemLinhasSheet.tsx`
-
-```typescript
-// Definir tipos que suportam regeneração
-const TIPOS_COM_REGENERACAO: TipoOrdem[] = ['soldagem', 'perfiladeira', 'separacao'];
-
-// Na renderização do botão:
-{TIPOS_COM_REGENERACAO.includes(ordem?.tipo || '') && (
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => regenerarLinhas.mutate()}
-        disabled={regenerarLinhas.isPending || isOrdemConcluida}
-        ...
-      >
-        ...
-      </Button>
-    </TooltipTrigger>
-  </Tooltip>
-)}
+**Para Qualidade:**
+```sql
+-- Todas as linhas EXCETO separação
+WHERE pl.pedido_id = v_pedido_id
+  AND pl.categoria_linha != 'separacao'
 ```
 
-### Por que NÃO expandir a função SQL?
+**Para Pintura:**
+```sql
+-- Linhas que requerem pintura (via estoque)
+WHERE pl.pedido_id = v_pedido_id
+  AND e.requer_pintura = true
+```
 
-Ordens de qualidade e pintura têm estrutura diferente:
-- **Qualidade:** É uma verificação geral do pedido, não tem linhas próprias
-- **Pintura:** Pode ter linhas, mas baseadas em metragem, não em `categoria_linha`
+Nota: A função `criar_ordem_pintura` já usa este critério, então manteremos consistência.
 
-Adicionar suporte seria mais complexo e não traria benefício real - essas ordens não precisam de regeneração de linhas.
+### Alterações Necessárias
+
+#### 1. Atualizar Função SQL `regenerar_linhas_ordem`
+
+Adicionar suporte para `qualidade` e `pintura` no CASE statement:
+
+```sql
+CREATE OR REPLACE FUNCTION public.regenerar_linhas_ordem(
+  p_ordem_id UUID,
+  p_tipo_ordem TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_pedido_id UUID;
+  v_status TEXT;
+  v_linha RECORD;
+  v_count INTEGER := 0;
+BEGIN
+  -- Buscar pedido_id e status da ordem
+  CASE p_tipo_ordem
+    WHEN 'soldagem' THEN
+      SELECT pedido_id, status INTO v_pedido_id, v_status 
+      FROM ordens_soldagem WHERE id = p_ordem_id;
+    WHEN 'perfiladeira' THEN
+      SELECT pedido_id, status INTO v_pedido_id, v_status 
+      FROM ordens_perfiladeira WHERE id = p_ordem_id;
+    WHEN 'separacao' THEN
+      SELECT pedido_id, status INTO v_pedido_id, v_status 
+      FROM ordens_separacao WHERE id = p_ordem_id;
+    WHEN 'qualidade' THEN
+      SELECT pedido_id, status INTO v_pedido_id, v_status 
+      FROM ordens_qualidade WHERE id = p_ordem_id;
+    WHEN 'pintura' THEN
+      SELECT pedido_id, status INTO v_pedido_id, v_status 
+      FROM ordens_pintura WHERE id = p_ordem_id;
+    ELSE
+      RETURN jsonb_build_object('success', false, 'error', 'Tipo de ordem inválido');
+  END CASE;
+
+  IF v_pedido_id IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Ordem não encontrada');
+  END IF;
+
+  IF v_status = 'concluido' THEN
+    RETURN jsonb_build_object(
+      'success', false, 
+      'error', 'Não é possível regenerar linhas de uma ordem concluída'
+    );
+  END IF;
+
+  -- Excluir linhas atuais
+  DELETE FROM linhas_ordens 
+  WHERE ordem_id = p_ordem_id AND tipo_ordem = p_tipo_ordem;
+
+  -- SOLDAGEM, PERFILADEIRA, SEPARACAO: lógica existente (categoria_linha/setor)
+  IF p_tipo_ordem IN ('soldagem', 'perfiladeira', 'separacao') THEN
+    FOR v_linha IN
+      SELECT ... -- lógica atual mantida
+      WHERE pl.pedido_id = v_pedido_id
+        AND COALESCE(e.setor_responsavel_producao::text, ...) = p_tipo_ordem
+    LOOP
+      -- INSERT linhas_ordens
+    END LOOP;
+
+  -- QUALIDADE: todas exceto separação
+  ELSIF p_tipo_ordem = 'qualidade' THEN
+    FOR v_linha IN
+      SELECT 
+        pl.id as pedido_linha_id,
+        pl.quantidade,
+        pl.estoque_id,
+        COALESCE(e.nome_produto, pl.nome_produto) as nome_produto_final,
+        pv.tamanho,
+        pv.largura,
+        pv.altura,
+        pv.tipo_pintura,
+        cc.nome as cor_nome,
+        pl.produto_venda_id
+      FROM pedido_linhas pl
+      LEFT JOIN estoque e ON pl.estoque_id = e.id
+      LEFT JOIN produtos_vendas pv ON pl.produto_venda_id = pv.id
+      LEFT JOIN catalogo_cores cc ON pv.cor_id = cc.id
+      WHERE pl.pedido_id = v_pedido_id
+        AND pl.categoria_linha != 'separacao'  -- EXCETO separação
+    LOOP
+      INSERT INTO linhas_ordens (...) VALUES (...);
+      v_count := v_count + 1;
+    END LOOP;
+
+  -- PINTURA: linhas que requerem pintura
+  ELSIF p_tipo_ordem = 'pintura' THEN
+    FOR v_linha IN
+      SELECT 
+        pl.id as pedido_linha_id,
+        pl.quantidade,
+        pl.estoque_id,
+        e.nome_produto as nome_produto_final,
+        pv.tamanho,
+        pv.largura,
+        pv.altura,
+        pv.tipo_pintura,
+        cc.nome as cor_nome,
+        pl.produto_venda_id
+      FROM pedido_linhas pl
+      JOIN estoque e ON pl.estoque_id = e.id  -- INNER JOIN: precisa ter estoque
+      LEFT JOIN produtos_vendas pv ON pl.produto_venda_id = pv.id
+      LEFT JOIN catalogo_cores cc ON pv.cor_id = cc.id
+      WHERE pl.pedido_id = v_pedido_id
+        AND e.requer_pintura = true  -- Apenas itens que requerem pintura
+    LOOP
+      INSERT INTO linhas_ordens (...) VALUES (...);
+      v_count := v_count + 1;
+    END LOOP;
+  END IF;
+
+  RETURN jsonb_build_object('success', true, 'linhas_criadas', v_count);
+END;
+$$;
+```
+
+#### 2. Atualizar Frontend para Exibir Botão
+
+Modificar a constante `TIPOS_COM_REGENERACAO` para incluir todos os tipos:
+
+```typescript
+// Antes
+const TIPOS_COM_REGENERACAO: TipoOrdem[] = ['soldagem', 'perfiladeira', 'separacao'];
+
+// Depois
+const TIPOS_COM_REGENERACAO: TipoOrdem[] = ['soldagem', 'perfiladeira', 'separacao', 'qualidade', 'pintura'];
+```
 
 ### Arquivos a Modificar
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/components/fabrica/OrdemLinhasSheet.tsx` | Condicionar exibição do botão "Regenerar linhas" |
+| **Nova migração SQL** | Atualizar função `regenerar_linhas_ordem` com suporte a `qualidade` e `pintura` |
+| `src/components/fabrica/OrdemLinhasSheet.tsx` | Adicionar `qualidade` e `pintura` à lista `TIPOS_COM_REGENERACAO` |
 
 ### Resultado Esperado
 
-- Botão "Regenerar linhas" só aparece para ordens de **Soldagem**, **Perfiladeira** e **Separação**
-- Ordens de **Qualidade** e **Pintura** não exibem o botão
-- Nenhum erro "Tipo de ordem inválido" ao abrir sheets de qualidade/pintura
-
+- Botão "Regenerar linhas" visível para **todos os tipos** de ordem
+- **Qualidade**: Regenera com todas as linhas do pedido exceto as de separação
+- **Pintura**: Regenera apenas com linhas que possuem `estoque.requer_pintura = true`
+- Comportamento existente para soldagem/perfiladeira/separação permanece inalterado
