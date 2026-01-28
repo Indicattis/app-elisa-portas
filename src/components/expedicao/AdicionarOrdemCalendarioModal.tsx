@@ -7,14 +7,15 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { OrdemCarregamento } from "@/types/ordemCarregamento";
-import { useOrdensSemDataCarregamento } from "@/hooks/useOrdensSemDataCarregamento";
+import { OrdemCarregamentoUnificada } from "@/types/ordemCarregamentoUnificada";
+import { useOrdensCarregamentoUnificadas } from "@/hooks/useOrdensCarregamentoUnificadas";
 import { useVeiculos } from "@/hooks/useVeiculos";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Search, Package, MapPin, Check, Ruler } from "lucide-react";
+import { Loader2, Search, Package, MapPin, Check, Ruler, Truck, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 interface AdicionarOrdemCalendarioModalProps {
   open: boolean;
@@ -22,13 +23,14 @@ interface AdicionarOrdemCalendarioModalProps {
   dataSelecionada: Date;
   onConfirm: (params: {
     ordemId: string;
+    fonte: 'ordens_carregamento' | 'instalacoes';
     data_carregamento: string;
     hora: string;
     tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro';
     responsavel_carregamento_id: string | null;
     responsavel_carregamento_nome: string;
   }) => Promise<void>;
-  ordemPreSelecionada?: OrdemCarregamento | null;
+  ordemPreSelecionada?: OrdemCarregamentoUnificada | null;
 }
 
 interface Responsavel {
@@ -47,7 +49,7 @@ export function AdicionarOrdemCalendarioModal({
   ordemPreSelecionada
 }: AdicionarOrdemCalendarioModalProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemCarregamento | null>(null);
+  const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemCarregamentoUnificada | null>(null);
   const [hora, setHora] = useState("08:00");
   const [responsavelTipo, setResponsavelTipo] = useState<"elisa" | "autorizados" | "terceiro">("elisa");
   const [responsavelId, setResponsavelId] = useState("");
@@ -57,14 +59,17 @@ export function AdicionarOrdemCalendarioModal({
   const [loadingResponsaveis, setLoadingResponsaveis] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const { ordens, isLoading: loadingOrdens, refetch } = useOrdensSemDataCarregamento();
+  // Usar hook unificado que busca de ambas as fontes (ordens_carregamento e instalacoes)
+  const { ordens: todasOrdens, isLoading: loadingOrdens } = useOrdensCarregamentoUnificadas();
   const { veiculos, isLoading: loadingVeiculos } = useVeiculos();
+  
+  // Filtrar apenas ordens SEM data de carregamento (disponíveis para agendamento)
+  const ordens = todasOrdens.filter(o => !o.data_carregamento);
 
-  const isEntrega = ordemSelecionada?.venda?.tipo_entrega === 'entrega';
+  const isEntrega = ordemSelecionada?.tipo_entrega === 'entrega';
 
   useEffect(() => {
     if (open) {
-      refetch();
       loadResponsaveis();
       
       // Se tem ordem pré-selecionada, usa ela
@@ -113,7 +118,7 @@ export function AdicionarOrdemCalendarioModal({
   };
 
   // Formatar tamanhos das portas de enrolar
-  const formatarTamanhosPortas = (ordem: OrdemCarregamento): string | null => {
+  const formatarTamanhosPortas = (ordem: OrdemCarregamentoUnificada): string | null => {
     const produtos = ordem.venda?.produtos;
     if (!produtos || produtos.length === 0) return null;
 
@@ -142,7 +147,7 @@ export function AdicionarOrdemCalendarioModal({
     );
   });
 
-  const handleSelectOrdem = (ordem: OrdemCarregamento) => {
+  const handleSelectOrdem = (ordem: OrdemCarregamentoUnificada) => {
     setOrdemSelecionada(ordem);
     setResponsavelTipo("elisa");
     setResponsavelId("");
@@ -202,6 +207,7 @@ export function AdicionarOrdemCalendarioModal({
 
       await onConfirm({
         ordemId: ordemSelecionada.id,
+        fonte: ordemSelecionada.fonte,
         data_carregamento: format(dataSelecionada, "yyyy-MM-dd"),
         hora,
         tipo_carregamento: responsavelTipo,
@@ -290,10 +296,17 @@ export function AdicionarOrdemCalendarioModal({
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge
-                              variant={ordem.venda?.tipo_entrega === 'entrega' ? 'default' : 'secondary'}
-                              className="text-xs shrink-0"
+                              variant={ordem.tipo_entrega === 'entrega' ? 'default' : 'secondary'}
+                              className={cn(
+                                "text-xs shrink-0",
+                                ordem.tipo_entrega === 'instalacao' && "bg-orange-500/20 text-orange-600 border-orange-500/30",
+                                ordem.tipo_entrega === 'manutencao' && "bg-purple-500/20 text-purple-600 border-purple-500/30"
+                              )}
                             >
-                              {ordem.venda?.tipo_entrega === 'entrega' ? 'Entrega' : 'Instalação'}
+                              {ordem.tipo_entrega === 'entrega' && <Truck className="h-3 w-3 mr-1" />}
+                              {ordem.tipo_entrega !== 'entrega' && <Wrench className="h-3 w-3 mr-1" />}
+                              {ordem.tipo_entrega === 'entrega' ? 'Entrega' : 
+                               ordem.tipo_entrega === 'manutencao' ? 'Manutenção' : 'Instalação'}
                             </Badge>
                             {ordemSelecionada?.id === ordem.id && (
                               <Check className="h-4 w-4 text-primary shrink-0" />

@@ -86,16 +86,15 @@ export const OrdensCarregamentoDisponiveis = ({
 
   const handleConfirmAgendar = async (params: {
     ordemId: string;
+    fonte: 'ordens_carregamento' | 'instalacoes';
     data_carregamento: string;
     hora: string;
     tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro';
     responsavel_carregamento_id: string | null;
     responsavel_carregamento_nome: string;
   }) => {
-    if (!ordemSelecionada) return;
-
-    // Determinar a tabela correta com base na fonte
-    const tabela = ordemSelecionada.fonte === 'instalacoes' ? 'instalacoes' : 'ordens_carregamento';
+    // Usar fonte do params para determinar a tabela correta
+    const tabela = params.fonte === 'instalacoes' ? 'instalacoes' : 'ordens_carregamento';
 
     const { error } = await supabase
       .from(tabela)
@@ -393,7 +392,7 @@ export const OrdensCarregamentoDisponiveis = ({
         onOpenChange={setModalOpen}
         dataSelecionada={new Date()}
         onConfirm={handleConfirmAgendar}
-        ordemPreSelecionada={ordemSelecionada as any}
+        ordemPreSelecionada={ordemSelecionada}
       />
     </>
   );
