@@ -26,7 +26,7 @@ interface DroppableDayExpedicaoProps {
   onRemoverNeoInstalacaoDoCalendario?: (id: string) => void;
   onRemoverNeoCorrecaoDoCalendario?: (id: string) => void;
   onOrdemDropped?: () => void;
-  onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
+  onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento>; fonte?: 'ordens_carregamento' | 'instalacoes' }) => Promise<void>;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
   onOpenNeoInstalacaoDetails?: (neoInstalacao: NeoInstalacao) => void;
   onOpenNeoCorrecaoDetails?: (neoCorrecao: NeoCorrecao) => void;
@@ -109,6 +109,7 @@ export const DroppableDayExpedicao = ({
 
   const handleConfirmModal = async (params: {
     ordemId: string;
+    fonte?: 'ordens_carregamento' | 'instalacoes';
     data_carregamento: string;
     hora: string;
     tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro';
@@ -126,7 +127,8 @@ export const DroppableDayExpedicao = ({
         responsavel_carregamento_id: params.responsavel_carregamento_id,
         responsavel_carregamento_nome: params.responsavel_carregamento_nome,
         status: 'agendada'
-      }
+      },
+      fonte: params.fonte || 'ordens_carregamento'
     });
 
     onOrdemDropped?.();

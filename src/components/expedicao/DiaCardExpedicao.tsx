@@ -25,7 +25,7 @@ interface DiaCardExpedicaoProps {
   onRemoverDoCalendario?: (id: string) => void;
   onRemoverNeoInstalacaoDoCalendario?: (id: string) => void;
   onRemoverNeoCorrecaoDoCalendario?: (id: string) => void;
-  onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
+  onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento>; fonte?: 'ordens_carregamento' | 'instalacoes' }) => Promise<void>;
   onOrdemAdded?: () => void;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
   onOpenNeoInstalacaoDetails?: (neoInstalacao: NeoInstalacao) => void;
@@ -94,6 +94,7 @@ export const DiaCardExpedicao = ({
 
   const handleConfirmModal = async (params: {
     ordemId: string;
+    fonte?: 'ordens_carregamento' | 'instalacoes';
     data_carregamento: string;
     hora: string;
     tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro';
@@ -111,7 +112,8 @@ export const DiaCardExpedicao = ({
         responsavel_carregamento_id: params.responsavel_carregamento_id,
         responsavel_carregamento_nome: params.responsavel_carregamento_nome,
         status: 'agendada'
-      }
+      },
+      fonte: params.fonte || 'ordens_carregamento'
     });
 
     onOrdemAdded?.();
