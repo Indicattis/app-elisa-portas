@@ -309,12 +309,12 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
   
   const tableEndY = tableY;
   
-  // Rodapé com origem da ordem
-  if (tag.origemOrdem) {
+  // Rodapé com cor da porta
+  if (tag.corNome) {
     doc.setFontSize(40);
-    doc.setFont('helvetica', 'italic');
-    doc.setTextColor(120, 120, 120);
-    doc.text(`Impresso em: ${tag.origemOrdem}`, pageWidth / 2, tableEndY + 25, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(80, 80, 80);
+    doc.text(`Cor: ${tag.corNome}`, pageWidth / 2, tableEndY + 25, { align: 'center' });
   }
 }
 
