@@ -67,15 +67,21 @@ export function useConfiguracoesVendas() {
           updated_at: new Date().toISOString(),
         })
         .eq("id", configuracoes.id)
-        .select()
-        .single();
+        .select();
 
       if (error) {
         console.error("Erro ao atualizar configurações:", error);
+        if (error.code === '42501') {
+          throw new Error("Você não tem permissão para atualizar as configurações. Apenas administradores podem fazer isso.");
+        }
         throw error;
       }
 
-      return data;
+      if (!data || data.length === 0) {
+        throw new Error("Você não tem permissão para atualizar as configurações. Apenas administradores podem fazer isso.");
+      }
+
+      return data[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["configuracoes-vendas"] });
