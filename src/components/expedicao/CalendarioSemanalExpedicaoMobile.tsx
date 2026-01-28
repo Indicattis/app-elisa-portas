@@ -19,7 +19,7 @@ interface CalendarioSemanalExpedicaoMobileProps {
   onDayClick: (date: Date) => void;
   onEdit?: (ordem: OrdemCarregamento) => void;
   onRemoverDoCalendario?: (id: string) => void;
-  onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento> }) => Promise<void>;
+  onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento>; fonte?: 'ordens_carregamento' | 'instalacoes' }) => Promise<void>;
   onOrdemAdded?: () => void;
   onOrdemClick?: (ordem: OrdemCarregamento) => void;
   onOpenNeoInstalacaoDetails?: (neoInstalacao: NeoInstalacao) => void;

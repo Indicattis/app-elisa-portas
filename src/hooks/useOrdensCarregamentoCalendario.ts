@@ -85,23 +85,46 @@ export const useOrdensCarregamentoCalendario = (
   });
 
   const updateOrdemMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<OrdemCarregamento> }) => {
-      const { data: updated, error } = await supabase
-        .from("ordens_carregamento")
-        .update({
-          ...data,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", id)
-        .select()
-        .single();
+    mutationFn: async ({ 
+      id, 
+      data,
+      fonte = 'ordens_carregamento' 
+    }: { 
+      id: string; 
+      data: Partial<OrdemCarregamento>;
+      fonte?: 'ordens_carregamento' | 'instalacoes';
+    }) => {
+      // Rotear para a tabela correta baseado na fonte
+      if (fonte === 'instalacoes') {
+        const { error } = await supabase
+          .from("instalacoes")
+          .update({
+            data_carregamento: data.data_carregamento,
+            hora_carregamento: data.hora,
+            tipo_carregamento: data.tipo_carregamento,
+            responsavel_carregamento_id: data.responsavel_carregamento_id,
+            responsavel_carregamento_nome: data.responsavel_carregamento_nome,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", id);
 
-      if (error) throw error;
-      return updated;
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("ordens_carregamento")
+          .update({
+            ...data,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", id);
+
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_calendario"] });
       queryClient.invalidateQueries({ queryKey: ["ordens_carregamento"] });
+      queryClient.invalidateQueries({ queryKey: ["instalacoes"] });
     },
     onError: (error) => {
       console.error("Erro ao atualizar ordem:", error);

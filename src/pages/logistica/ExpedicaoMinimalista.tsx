@@ -83,7 +83,7 @@ export default function ExpedicaoMinimalista() {
     }
   };
 
-  const handleUpdateOrdem = async (params: { id: string; data: Partial<OrdemCarregamento> }) => {
+  const handleUpdateOrdem = async (params: { id: string; data: Partial<OrdemCarregamento>; fonte?: 'ordens_carregamento' | 'instalacoes' }) => {
     await updateOrdem(params);
   };
 
