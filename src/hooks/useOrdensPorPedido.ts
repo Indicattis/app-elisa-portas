@@ -90,6 +90,7 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
             cidade,
             estado,
             tipo_entrega,
+            cliente_nome,
             cliente:cliente_id (nome),
             atendente:atendente_id (nome, foto_perfil_url)
           )
@@ -357,7 +358,7 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
         return {
           id: pedido.id,
           numero_pedido: pedido.numero_pedido,
-          cliente_nome: (venda?.cliente as any)?.nome || 'Cliente não encontrado',
+          cliente_nome: (venda?.cliente as any)?.nome || venda?.cliente_nome || 'Cliente não encontrado',
           etapa_atual: pedido.etapa_atual,
           prioridade_etapa: pedido.prioridade_etapa,
           localizacao,
