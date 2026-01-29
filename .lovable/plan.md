@@ -1,200 +1,156 @@
 
-# Plano: Adicionar Descontos e Acréscimos em /direcao/vendas/:id
+# Plano: Corrigir Criacao Condicional de Ordens de Qualidade
 
 ## Problema Identificado
 
-A página `VendaDetalhesDirecao.tsx` não exibe as informações de:
-1. **Descontos aplicados** - dados vindos de `vendas_autorizacoes_desconto`
-2. **Acréscimos/Crédito** - campo `valor_credito` da tabela `vendas`
+A ordem de qualidade **OQU-2026-0082** foi criada para o pedido **#0152** (Daiane Raquel Rosa Camargo), mas este pedido possui **apenas itens de separacao**:
 
-A query atual apenas busca:
-```typescript
-.select(`
-  *,
-  produtos:produtos_vendas(...)
-`)
-```
+| Item | Categoria | Quantidade |
+|------|-----------|------------|
+| Controle Avulso | separacao | 2 |
+
+A funcao SQL `criar_ordem_qualidade` cria a ordem de qualidade **antes** de verificar se existem itens elegiveis (solda/perfiladeira), resultando em ordens vazias que nao deveriam existir.
 
 ---
 
-## Solução
+## Analise da Logica Atual
 
-### 1. Atualizar a Query para Buscar os Dados
+```sql
+-- Funcao ATUAL: criar_ordem_qualidade
+1. Verifica se ja existe ordem de qualidade
+2. Gera numero da ordem
+3. CRIA a ordem de qualidade (INSERT)  <-- Problema: cria sem verificar itens
+4. Depois, adiciona linhas apenas de solda/perfiladeira
+```
 
-Modificar `fetchVendaDetails()` para incluir:
-- Campo `valor_credito` (já vem com `*`, mas precisa verificar)
-- Relação `autorizacao_desconto:vendas_autorizacoes_desconto` com dados do autorizador
-- Campo `desconto_valor` de cada produto
+O resultado: ordens de qualidade vazias quando o pedido tem apenas itens de separacao.
 
-```typescript
-const { data: vendaData, error: vendaError } = await supabase
-  .from("vendas")
-  .select(`
-    *,
-    produtos:produtos_vendas(
-      id,
-      tipo_produto,
-      largura,
-      altura,
+---
+
+## Solucao
+
+### 1. Corrigir Funcao SQL `criar_ordem_qualidade`
+
+Adicionar verificacao **antes** de criar a ordem para garantir que existem itens elegiveis:
+
+```sql
+CREATE OR REPLACE FUNCTION public.criar_ordem_qualidade(p_pedido_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+AS $function$
+DECLARE
+  v_ordem_id uuid;
+  v_numero_ordem text;
+  v_linha record;
+  v_linhas_elegiveis INTEGER;
+BEGIN
+  -- Verificar se ja existe ordem de qualidade para este pedido
+  SELECT id INTO v_ordem_id 
+  FROM ordens_qualidade 
+  WHERE pedido_id = p_pedido_id AND historico = false;
+  
+  IF v_ordem_id IS NOT NULL THEN
+    RAISE LOG '[criar_ordem_qualidade] Ordem de qualidade ja existe para pedido: %', p_pedido_id;
+    RETURN;
+  END IF;
+  
+  -- NOVA VERIFICACAO: Contar itens elegiveis (solda/perfiladeira)
+  SELECT COUNT(*) INTO v_linhas_elegiveis
+  FROM pedido_linhas 
+  WHERE pedido_id = p_pedido_id 
+    AND categoria_linha IN ('solda', 'perfiladeira');
+  
+  -- Se nao ha itens elegiveis, nao criar a ordem
+  IF v_linhas_elegiveis = 0 THEN
+    RAISE LOG '[criar_ordem_qualidade] Nenhum item elegivel (solda/perfiladeira) para pedido: %. Ordem NAO sera criada.', p_pedido_id;
+    RETURN;
+  END IF;
+  
+  -- Gerar numero da ordem
+  SELECT gerar_numero_ordem('qualidade') INTO v_numero_ordem;
+  
+  -- Criar ordem de qualidade
+  INSERT INTO ordens_qualidade (pedido_id, numero_ordem, status)
+  VALUES (p_pedido_id, v_numero_ordem, 'pendente')
+  RETURNING id INTO v_ordem_id;
+  
+  RAISE LOG '[criar_ordem_qualidade] Ordem de qualidade criada: % com numero: %', v_ordem_id, v_numero_ordem;
+  
+  -- Criar linhas APENAS para itens de SOLDA e PERFILADEIRA
+  FOR v_linha IN 
+    SELECT * FROM pedido_linhas 
+    WHERE pedido_id = p_pedido_id 
+      AND categoria_linha IN ('solda', 'perfiladeira')
+    ORDER BY ordem
+  LOOP
+    INSERT INTO linhas_ordens (
+      pedido_id,
+      ordem_id,
+      tipo_ordem,
+      item,
       quantidade,
-      valor_produto,
-      valor_total,
-      desconto_percentual,
-      desconto_valor,
-      catalogo_cores(nome, codigo_hex)
-    ),
-    autorizacao_desconto:vendas_autorizacoes_desconto(
-      id,
-      percentual_desconto,
-      tipo_autorizacao,
-      autorizador:admin_users!vendas_autorizacoes_desconto_autorizado_por_fkey(
-        nome,
-        foto_perfil_url
-      )
-    )
-  `)
-  .eq("id", id)
-  .single();
+      tamanho,
+      concluida,
+      estoque_id
+    ) VALUES (
+      p_pedido_id,
+      v_ordem_id,
+      'qualidade',
+      COALESCE(v_linha.nome_produto, v_linha.descricao_produto, 'Item'),
+      COALESCE(v_linha.quantidade, 1),
+      COALESCE(v_linha.tamanho, v_linha.largura::text || ' x ' || v_linha.altura::text),
+      false,
+      v_linha.estoque_id
+    );
+  END LOOP;
+  
+END;
+$function$;
 ```
 
-### 2. Adicionar Interfaces para Tipagem
+### 2. Limpar Ordem Invalida Existente
 
-```typescript
-interface AutorizacaoDesconto {
-  id: string;
-  percentual_desconto: number;
-  tipo_autorizacao: string;
-  autorizador: {
-    nome: string;
-    foto_perfil_url: string | null;
-  } | null;
-}
+Deletar a ordem de qualidade vazia que foi criada incorretamente:
+
+```sql
+-- Deletar linhas associadas (se houver)
+DELETE FROM linhas_ordens 
+WHERE ordem_id = '3f105cb6-b976-464b-b638-80fafb3c70db' 
+  AND tipo_ordem = 'qualidade';
+
+-- Deletar a ordem de qualidade vazia
+DELETE FROM ordens_qualidade 
+WHERE id = '3f105cb6-b976-464b-b638-80fafb3c70db';
 ```
 
-### 3. Adicionar Seção Visual de Descontos e Acréscimos
+### 3. Ajustar Fluxo de Avanco (Opcional)
 
-Entre os cards financeiros e a lista de produtos, adicionar uma nova seção similar à página de faturamento:
-
-```text
-+------------------------------------------------------------------+
-| DESCONTOS E ACRÉSCIMOS                                           |
-| +-------------------------+ +---------------------------+        |
-| | ↓ DESCONTOS             | | ↑ ACRÉSCIMOS             |        |
-| | -R$ XXX,XX              | | +R$ XXX,XX               |        |
-| | XX% - Senha Master      | | Crédito do cliente       |        |
-| | Autorizado: João        | |                          |        |
-| +-------------------------+ +---------------------------+        |
-+------------------------------------------------------------------+
-```
-
-### 4. Atualizar o Valor Total Exibido
-
-O card "Valor Total" deve considerar o crédito:
-```typescript
-// Antes
-{formatCurrency(venda.valor_venda)}
-
-// Depois
-{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
-```
+O frontend em `usePedidosEtapas.ts` pode pular a etapa de inspecao de qualidade quando nao ha itens elegiveis. Porem, isso ja esta coberto pela funcao SQL que simplesmente retorna sem criar a ordem.
 
 ---
 
-## Cálculos Necessários
+## Resumo das Alteracoes
 
-```typescript
-// Total de descontos (soma dos descontos de cada produto)
-const totalDescontos = venda.produtos?.reduce(
-  (acc, p) => acc + (p.desconto_valor || 0), 
-  0
-) || 0;
-
-// Total de acréscimos
-const totalAcrescimos = venda.valor_credito || 0;
-
-// Autorização (primeira do array)
-const autorizacao = venda.autorizacao_desconto?.[0];
-```
+| Arquivo/Recurso | Acao |
+|-----------------|------|
+| Funcao SQL `criar_ordem_qualidade` | Adicionar verificacao de itens elegiveis antes de criar ordem |
+| Ordem `OQU-2026-0082` | Deletar ordem vazia do banco de dados |
 
 ---
 
-## Componente da Seção
+## Impacto
 
-A seção será renderizada apenas quando houver descontos ou acréscimos:
-
-```typescript
-{(totalDescontos > 0 || totalAcrescimos > 0) && (
-  <div className={cardClass}>
-    <h3 className="text-white font-medium mb-4">Descontos e Acréscimos</h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* Card de Descontos */}
-      <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-        <div className="flex items-center gap-2 mb-2">
-          <ArrowDown className="w-4 h-4 text-red-400" />
-          <span className="text-sm font-medium text-red-400">Descontos</span>
-        </div>
-        <p className="text-2xl font-bold text-red-400">
-          -{formatCurrency(totalDescontos)}
-        </p>
-        {autorizacao && (
-          <div className="mt-3 pt-3 border-t border-red-500/20 space-y-1">
-            <p className="text-xs text-white/50">
-              Percentual: {autorizacao.percentual_desconto.toFixed(2)}%
-            </p>
-            <p className="text-xs text-white/50">
-              Tipo: {autorizacao.tipo_autorizacao === 'master' 
-                ? 'Senha Master' : 'Responsável do Setor'}
-            </p>
-            <p className="text-xs text-white/50">
-              Autorizado por: {autorizacao.autorizador?.nome || 'Não informado'}
-            </p>
-          </div>
-        )}
-      </div>
-      
-      {/* Card de Acréscimos */}
-      <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-        <div className="flex items-center gap-2 mb-2">
-          <ArrowUp className="w-4 h-4 text-emerald-400" />
-          <span className="text-sm font-medium text-emerald-400">Acréscimos</span>
-        </div>
-        <p className="text-2xl font-bold text-emerald-400">
-          +{formatCurrency(totalAcrescimos)}
-        </p>
-        {totalAcrescimos > 0 && (
-          <p className="mt-2 text-xs text-white/50">Crédito do cliente</p>
-        )}
-      </div>
-    </div>
-  </div>
-)}
-```
+- **Pedidos so com separacao**: Nao terao ordem de qualidade criada
+- **Pedidos com solda/perfiladeira**: Continuarao tendo ordem de qualidade normalmente
+- **Pedidos mistos**: Ordem de qualidade tera apenas itens de solda/perfiladeira
 
 ---
 
-## Resumo de Alterações
+## Consideracao sobre o Fluxo do Pedido #0152
 
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/pages/direcao/VendaDetalhesDirecao.tsx` | Atualizar query, adicionar interfaces, adicionar seção visual |
+Apos deletar a ordem de qualidade, o pedido pode precisar de ajuste manual na etapa. Se ele esta em `inspecao_qualidade` sem ordem de qualidade valida, pode ser necessario:
 
----
+1. Avancar manualmente para a proxima etapa (`aguardando_pintura` ou `aguardando_coleta`)
+2. Ou ajustar o status via SQL
 
-## Imports Necessários
-
-```typescript
-import { ArrowDown, ArrowUp } from "lucide-react";
-```
-
----
-
-## Resultado Visual
-
-Ao acessar `/direcao/vendas/:id`:
-
-1. Os 4 cards financeiros superiores (Valor Total agora com crédito somado)
-2. **Nova seção**: "Descontos e Acréscimos" com dois cards lado a lado
-   - Descontos em vermelho com detalhes da autorização
-   - Acréscimos em verde mostrando o crédito
-3. Lista de produtos
-4. Informações do cliente e da venda
+Vou verificar a etapa atual do pedido se necessario durante a implementacao.
