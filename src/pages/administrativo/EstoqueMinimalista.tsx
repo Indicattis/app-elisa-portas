@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, ArrowUpDown, Tags, FileDown, Printer } from "lucide-react";
+import { Plus, Tags, FileDown, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -12,21 +12,18 @@ import { useEstoque, ProdutoEstoque } from "@/hooks/useEstoque";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useSubcategorias } from "@/hooks/useSubcategorias";
 import { useFornecedores } from "@/hooks/useFornecedores";
-import { MovimentacaoModal } from "@/components/estoque/MovimentacaoModal";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { toast } from "sonner";
 import { baixarEstoquePDF, imprimirEstoquePDF } from "@/utils/estoquePDFGenerator";
 
 export default function EstoqueMinimalista() {
   const navigate = useNavigate();
-  const { produtos, loading, adicionarProduto, movimentarEstoque } = useEstoque();
+  const { produtos, loading, adicionarProduto } = useEstoque();
   const { categorias } = useCategorias();
   const { subcategorias } = useSubcategorias();
   const { fornecedores } = useFornecedores();
   
   const [novoModal, setNovoModal] = useState(false);
-  const [movimentacaoModal, setMovimentacaoModal] = useState(false);
-  const [produtoSelecionado, setProdutoSelecionado] = useState<ProdutoEstoque | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     nome_produto: "",
@@ -100,28 +97,6 @@ export default function EstoqueMinimalista() {
     } catch (error) {
       toast.error("Erro ao adicionar produto");
     }
-  };
-
-  const handleMovimentar = async (tipo: 'entrada' | 'saida', quantidade: number, observacoes?: string) => {
-    if (!produtoSelecionado) return;
-    
-    try {
-      await movimentarEstoque({
-        produtoId: produtoSelecionado.id,
-        tipo,
-        quantidade,
-        observacoes,
-      });
-      setMovimentacaoModal(false);
-      toast.success("Movimentação registrada com sucesso");
-    } catch (error) {
-      toast.error("Erro ao registrar movimentação");
-    }
-  };
-
-  const handleOpenMovimentacao = (produto: ProdutoEstoque) => {
-    setProdutoSelecionado(produto);
-    setMovimentacaoModal(true);
   };
 
   const handleDoubleClick = (produtoId: string) => {
@@ -441,15 +416,12 @@ export default function EstoqueMinimalista() {
                   <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>
                   <TableHead className="text-xs font-medium text-white/60">Setor</TableHead>
                   <TableHead className="text-center text-xs font-medium text-white/60">Pintura</TableHead>
-                  <TableHead className="text-right text-xs font-medium text-white/60">Estoque</TableHead>
-                  <TableHead className="text-right text-xs font-medium text-white/60">Custo</TableHead>
-                  <TableHead className="text-right text-xs font-medium text-white/60">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow className="border-white/10">
-                    <TableCell colSpan={8} className="text-center py-8 text-sm text-white/40">
+                    <TableCell colSpan={5} className="text-center py-8 text-sm text-white/40">
                       Carregando...
                     </TableCell>
                   </TableRow>
@@ -460,7 +432,7 @@ export default function EstoqueMinimalista() {
                     p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
                   ).length === 0 ? (
                   <TableRow className="border-white/10">
-                    <TableCell colSpan={8} className="text-center py-8 text-sm text-white/40">
+                    <TableCell colSpan={5} className="text-center py-8 text-sm text-white/40">
                       Nenhum produto encontrado
                     </TableCell>
                   </TableRow>
@@ -527,48 +499,6 @@ export default function EstoqueMinimalista() {
                           <span className="text-xs text-white/40">Não</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right px-3 py-2">
-                        <div>
-                          <div className={`font-medium text-sm ${
-                            produto.quantidade_ideal && produto.quantidade < produto.quantidade_ideal
-                              ? 'text-red-400'
-                              : 'text-white'
-                          }`}>
-                            {produto.quantidade} {produto.unidade}
-                          </div>
-                          {produto.quantidade_ideal && (
-                            <div className="text-xs text-white/40">
-                              Ideal: {produto.quantidade_ideal}
-                            </div>
-                          )}
-                          {produto.quantidade_ideal && produto.quantidade < produto.quantidade_ideal && (
-                            <Badge className="text-xs mt-1 bg-red-500/20 text-red-400 border-red-500/30">
-                              Estoque Baixo
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right px-3 py-2">
-                        <span className="text-sm font-mono text-white">
-                          {new Intl.NumberFormat('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL',
-                          }).format(produto.custo_unitario)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right px-3 py-2">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenMovimentacao(produto);
-                          }}
-                        >
-                          <ArrowUpDown className="h-3.5 w-3.5" />
-                        </Button>
-                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -577,15 +507,6 @@ export default function EstoqueMinimalista() {
           </div>
         </div>
       </div>
-
-      {produtoSelecionado && (
-        <MovimentacaoModal
-          open={movimentacaoModal}
-          onOpenChange={setMovimentacaoModal}
-          produto={produtoSelecionado}
-          onMovimentar={handleMovimentar}
-        />
-      )}
     </MinimalistLayout>
   );
 }

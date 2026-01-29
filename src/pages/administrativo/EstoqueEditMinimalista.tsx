@@ -43,15 +43,7 @@ export default function EstoqueEditMinimalista() {
   const [formData, setFormData] = useState<{
     nome_produto: string;
     descricao_produto: string;
-    quantidade: number;
-    quantidade_ideal: number;
-    unidade: string;
-    categoria: string;
-    custo_unitario: number;
-    subcategoria_id: string;
-    peso_porta: number;
     setor_responsavel_producao: string;
-    fornecedor_id: string;
     requer_pintura: boolean;
     modulo_calculo: string;
     valor_calculo: number;
@@ -60,15 +52,7 @@ export default function EstoqueEditMinimalista() {
   }>({
     nome_produto: "",
     descricao_produto: "",
-    quantidade: 0,
-    quantidade_ideal: 0,
-    unidade: "UN",
-    categoria: "geral",
-    custo_unitario: 0,
-    subcategoria_id: "",
-    peso_porta: 0,
     setor_responsavel_producao: "",
-    fornecedor_id: "",
     requer_pintura: false,
     modulo_calculo: "",
     valor_calculo: 0,
@@ -102,20 +86,10 @@ export default function EstoqueEditMinimalista() {
 
   useEffect(() => {
     if (produto) {
-      const categoriaNormalizada = produto.categoria?.replace(/ /g, '_') || "geral";
-      
       const newFormData = {
         nome_produto: produto.nome_produto || "",
         descricao_produto: produto.descricao_produto || "",
-        quantidade: Number(produto.quantidade) || 0,
-        quantidade_ideal: Number(produto.quantidade_ideal) || 0,
-        unidade: produto.unidade || "UN",
-        categoria: categoriaNormalizada,
-        custo_unitario: Number(produto.custo_unitario) || 0,
-        subcategoria_id: produto.subcategoria_id || "",
-        peso_porta: Number(produto.peso_porta) || 0,
         setor_responsavel_producao: produto.setor_responsavel_producao || "",
-        fornecedor_id: produto.fornecedor_id || "",
         requer_pintura: produto.requer_pintura === true,
         modulo_calculo: produto.modulo_calculo || "",
         valor_calculo: Number(produto.valor_calculo) || 0,
@@ -132,21 +106,11 @@ export default function EstoqueEditMinimalista() {
     e.preventDefault();
     
     try {
-      const categoriaBanco = formData.categoria.replace(/_/g, ' ');
-      
       const dadosParaSalvar = {
         id: id!,
         nome_produto: formData.nome_produto,
         descricao_produto: formData.descricao_produto || undefined,
-        quantidade: formData.quantidade,
-        quantidade_ideal: formData.quantidade_ideal,
-        unidade: formData.unidade,
-        categoria: categoriaBanco,
-        custo_unitario: formData.custo_unitario,
-        subcategoria_id: formData.subcategoria_id || null,
-        peso_porta: formData.peso_porta || null,
         setor_responsavel_producao: (formData.setor_responsavel_producao || null) as 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null,
-        fornecedor_id: formData.fornecedor_id || null,
         requer_pintura: formData.requer_pintura,
         modulo_calculo: (formData.modulo_calculo || null) as 'acrescimo' | 'desconto' | null,
         valor_calculo: formData.valor_calculo || null,
@@ -173,10 +137,6 @@ export default function EstoqueEditMinimalista() {
 
   const { data: movimentacoes = [], isLoading: loadingMovimentacoes } = 
     buscarMovimentacoes(id || undefined);
-
-  const subcategoriasFiltradas = subcategorias.filter(
-    (sub) => sub.categoria_id === formData.categoria
-  );
 
   const handleExcluir = async () => {
     if (!id) return;
@@ -235,131 +195,6 @@ export default function EstoqueEditMinimalista() {
                   value={formData.nome_produto}
                   onChange={(e) => setFormData({ ...formData, nome_produto: e.target.value })}
                   required
-                  className="bg-white/5 border-white/10 text-white"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="categoria" className="text-white/80">Categoria</Label>
-                <Select
-                  value={formData.categoria}
-                  onValueChange={(value) => setFormData({ ...formData, categoria: value, subcategoria_id: "" })}
-                >
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                    <SelectValue placeholder="Selecione uma categoria" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-white/10">
-                    <SelectItem value="geral">Geral</SelectItem>
-                    <SelectItem value="componente">Componente</SelectItem>
-                    <SelectItem value="materia_prima">Matéria Prima</SelectItem>
-                    <SelectItem value="ferramentas">Ferramentas</SelectItem>
-                    <SelectItem value="consumivel">Consumível</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="subcategoria_id" className="text-white/80">Subcategoria</Label>
-                <Select
-                  value={formData.subcategoria_id || undefined}
-                  onValueChange={(value) => setFormData({ ...formData, subcategoria_id: value })}
-                >
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                    <SelectValue placeholder="Selecione uma subcategoria" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-white/10">
-                    {subcategoriasFiltradas.map((sub) => (
-                      <SelectItem key={sub.id} value={sub.id}>
-                        {sub.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fornecedor_id" className="text-white/80">Fornecedor</Label>
-                <Select
-                  value={formData.fornecedor_id || undefined}
-                  onValueChange={(value) => setFormData({ ...formData, fornecedor_id: value })}
-                >
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                    <SelectValue placeholder="Selecione um fornecedor" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-white/10">
-                    {fornecedores.map((forn) => (
-                      <SelectItem key={forn.id} value={forn.id}>
-                        {forn.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="quantidade" className="text-white/80">Quantidade Atual *</Label>
-                <Input
-                  id="quantidade"
-                  type="number"
-                  value={formData.quantidade}
-                  onChange={(e) => setFormData({ ...formData, quantidade: parseInt(e.target.value) || 0 })}
-                  required
-                  className="bg-white/5 border-white/10 text-white"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="quantidade_ideal" className="text-white/80">Quantidade Ideal *</Label>
-                <Input
-                  id="quantidade_ideal"
-                  type="number"
-                  value={formData.quantidade_ideal}
-                  onChange={(e) => setFormData({ ...formData, quantidade_ideal: parseInt(e.target.value) || 0 })}
-                  required
-                  className="bg-white/5 border-white/10 text-white"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="unidade" className="text-white/80">Unidade</Label>
-                <Select
-                  value={formData.unidade}
-                  onValueChange={(value) => setFormData({ ...formData, unidade: value })}
-                >
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-white/10">
-                    <SelectItem value="UN">Unidade (UN)</SelectItem>
-                    <SelectItem value="KG">Quilograma (KG)</SelectItem>
-                    <SelectItem value="L">Litro (L)</SelectItem>
-                    <SelectItem value="M">Metro (M)</SelectItem>
-                    <SelectItem value="M2">Metro Quadrado (M²)</SelectItem>
-                    <SelectItem value="CX">Caixa (CX)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="custo_unitario" className="text-white/80">Custo Unitário (R$)</Label>
-                <Input
-                  id="custo_unitario"
-                  type="number"
-                  step="0.01"
-                  value={formData.custo_unitario}
-                  onChange={(e) => setFormData({ ...formData, custo_unitario: parseFloat(e.target.value) || 0 })}
-                  className="bg-white/5 border-white/10 text-white"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="peso_porta" className="text-white/80">Peso por Porta (kg)</Label>
-                <Input
-                  id="peso_porta"
-                  type="number"
-                  step="0.01"
-                  value={formData.peso_porta}
-                  onChange={(e) => setFormData({ ...formData, peso_porta: parseFloat(e.target.value) || 0 })}
                   className="bg-white/5 border-white/10 text-white"
                 />
               </div>
