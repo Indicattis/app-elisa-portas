@@ -122,7 +122,7 @@ export default function MetasFabricaDirecao() {
           <div
             key={colaborador.user_id}
             className="bg-primary/5 border border-primary/10 rounded-lg p-4 hover:bg-primary/10 transition-colors cursor-pointer"
-            onClick={() => navigate(`/direcao/metas/${colaborador.user_id}`)}
+            onClick={() => navigate(`/direcao/metas/fabrica/${colaborador.user_id}`)}
           >
             {/* Mobile Layout */}
             <div className="md:hidden space-y-3">
