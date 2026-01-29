@@ -1,156 +1,69 @@
 
-# Plano: Input Condicional de Meta + Caixa Flutuante de Progresso
+
+# Plano: Pausar Cronômetro Fora do Horário de Expediente
 
 ## Objetivo
 
-1. **Formulário de Meta Condicional**: Alterar o input de valor da meta para mostrar campos específicos por tipo (ex: metragem linear para perfiladeira, m² para pintura)
-2. **Caixa Flutuante de Progresso**: Exibir notificação flutuante nas páginas de produção quando uma ordem é concluída, mostrando o avanço da meta do colaborador
+Criar um sistema que **calcula apenas o tempo trabalhado dentro do expediente** (7h às 17h, horário de Brasília), ignorando o tempo noturno e finais de semana automaticamente.
 
 ---
 
-## Parte 1: Input Condicional no MetaDialog
+## Problema Atual
 
-### Alterações em `src/components/metas/MetaDialog.tsx`
-
-Modificar o campo de "Valor da Meta" para renderizar inputs diferentes baseado no tipo selecionado:
-
-| Tipo | Input | Placeholder | Sufixo |
-|------|-------|-------------|--------|
-| **Solda** | Número inteiro | "Ex: 50" | portas |
-| **Perfiladeira** | Decimal | "Ex: 150,5" | metros |
-| **Separação** | Número inteiro | "Ex: 200" | itens |
-| **Qualidade** | Número inteiro | "Ex: 30" | pedidos |
-| **Pintura** | Decimal | "Ex: 85,5" | m² |
-| **Carregamento** | Número inteiro | "Ex: 25" | pedidos |
-
-### Código do Input Condicional
-
-```tsx
-const getInputConfig = (tipo: string) => {
-  switch (tipo) {
-    case "solda":
-      return { placeholder: "Ex: 50", sufixo: "portas", step: "1" };
-    case "perfiladeira":
-      return { placeholder: "Ex: 150,5", sufixo: "metros", step: "0.1" };
-    case "separacao":
-      return { placeholder: "Ex: 200", sufixo: "itens", step: "1" };
-    case "qualidade":
-      return { placeholder: "Ex: 30", sufixo: "pedidos", step: "1" };
-    case "pintura":
-      return { placeholder: "Ex: 85,5", sufixo: "m²", step: "0.1" };
-    case "carregamento":
-      return { placeholder: "Ex: 25", sufixo: "pedidos", step: "1" };
-    default:
-      return { placeholder: "Ex: 100", sufixo: "", step: "1" };
-  }
-};
-
-// No JSX:
-<div className="space-y-2">
-  <Label>Valor da Meta *</Label>
-  <div className="flex items-center gap-2">
-    <Input
-      type="number"
-      step={inputConfig.step}
-      placeholder={inputConfig.placeholder}
-      value={valorMeta}
-      onChange={(e) => setValorMeta(e.target.value)}
-      className="flex-1"
-    />
-    <span className="text-sm text-muted-foreground whitespace-nowrap">
-      {inputConfig.sufixo}
-    </span>
-  </div>
-  <p className="text-xs text-muted-foreground">
-    {getUnidadeDescricao(tipoMeta)}
-  </p>
-</div>
-```
+Atualmente, o cronômetro conta o tempo de forma contínua desde `capturada_em` até o momento atual. Se um colaborador captura uma ordem às 16h e só retoma às 8h do dia seguinte, o cronômetro mostra 16 horas de trabalho, quando na verdade foram apenas 1h (16h-17h do dia anterior).
 
 ---
 
-## Parte 2: Caixa Flutuante de Progresso de Meta
+## Solução Proposta
 
-### Novo Componente: `src/components/metas/MetaProgressoFlutuante.tsx`
+Criar uma função utilitária que calcula apenas as horas dentro do expediente entre duas datas, descartando:
+- Tempo entre 17h e 7h (noite)
+- Finais de semana (opcional, configurável)
 
-Componente flutuante que aparece no canto inferior da tela quando uma ordem é concluída, mostrando o progresso da meta ativa do colaborador.
+Essa função será usada em:
+1. `useCronometroOrdem.ts` - Para exibição em tempo real
+2. `useOrdemProducao.ts` - Para cálculo do `tempo_conclusao_segundos` ao concluir
+3. `useOrdemProducao.ts` - Para cálculo do `tempo_acumulado_segundos` ao pausar
+
+---
+
+## Detalhes Técnicos
+
+### Nova Função: `calcularTempoExpediente`
+
+| Parâmetro | Tipo | Descrição |
+|-----------|------|-----------|
+| `inicio` | `Date` | Data/hora de início (capturada_em) |
+| `fim` | `Date` | Data/hora de fim (agora ou data_conclusao) |
+| `horaInicio` | `number` | Hora início expediente (default: 7) |
+| `horaFim` | `number` | Hora fim expediente (default: 17) |
+| `incluirFimDeSemana` | `boolean` | Se deve contar sábado/domingo (default: false) |
+
+**Retorno:** Número de segundos trabalhados dentro do expediente
+
+### Lógica do Algoritmo
 
 ```text
-┌─────────────────────────────────────────────┐
-│  🎯 Meta de Solda                           │
-│  ████████████░░░░░░░░░░░░░░░░  35/100       │
-│  ────────────────────────────────           │
-│  35% concluído                              │
-│  R$ 150,00 • Termina em 28/02               │
-└─────────────────────────────────────────────┘
+1. Converter ambas as datas para timezone de Brasília (America/Sao_Paulo)
+2. Para cada dia entre início e fim:
+   a. Se for fim de semana e !incluirFimDeSemana → pular
+   b. Calcular hora de início efetiva: max(horaInicio, hora real de início)
+   c. Calcular hora de fim efetiva: min(horaFim, hora real de fim)
+   d. Se início efetivo < fim efetivo → somar diferença
+3. Retornar total de segundos
 ```
 
-### Funcionalidades do Componente
+### Exemplo Visual
 
-1. **Aparecer automaticamente** quando uma ordem é concluída
-2. **Buscar a meta ativa** do colaborador para o tipo da ordem concluída
-3. **Calcular progresso atual** buscando desempenho no período da meta
-4. **Auto-fechar** após 5 segundos (ou ao clicar)
-5. **Animação de entrada/saída** suave
+```text
+Ordem capturada: 16:30 (segunda)
+Ordem concluída: 09:15 (terça)
 
-### Hook: `src/hooks/useMetaProgresso.ts`
-
-Hook para buscar meta ativa e calcular progresso quando ordem é concluída:
-
-```tsx
-export function useMetaProgresso() {
-  const [metaInfo, setMetaInfo] = useState<MetaProgressoInfo | null>(null);
-  const [visible, setVisible] = useState(false);
-
-  const mostrarProgresso = async (userId: string, tipoOrdem: TipoOrdem) => {
-    // 1. Buscar meta ativa do tipo
-    const meta = await buscarMetaAtiva(userId, tipoOrdem);
-    if (!meta) return;
-
-    // 2. Calcular progresso atual
-    const progresso = await calcularProgresso(userId, tipoOrdem, meta);
-
-    // 3. Mostrar componente
-    setMetaInfo({ meta, progressoAtual: progresso });
-    setVisible(true);
-
-    // 4. Auto-fechar após 5s
-    setTimeout(() => setVisible(false), 5000);
-  };
-
-  return { metaInfo, visible, mostrarProgresso, fechar: () => setVisible(false) };
-}
-```
-
-### Integração nas Páginas de Produção
-
-Adicionar o componente flutuante em todas as páginas de produção (Solda, Perfiladeira, Separação, Qualidade, Pintura, Carregamento):
-
-```tsx
-// Em cada página de produção (ex: SoldaMinimalista.tsx)
-import { MetaProgressoFlutuante } from "@/components/metas/MetaProgressoFlutuante";
-import { useMetaProgresso } from "@/hooks/useMetaProgresso";
-
-// No componente:
-const { metaInfo, visible, mostrarProgresso, fechar } = useMetaProgresso();
-
-// Ao concluir ordem:
-const handleConcluirOrdem = async (ordemId: string) => {
-  await concluirOrdem.mutateAsync(ordemId);
-  setSheetOpen(false);
-  
-  // Mostrar progresso da meta
-  if (user?.id) {
-    mostrarProgresso(user.id, 'soldagem');
-  }
-};
-
-// No JSX:
-<MetaProgressoFlutuante
-  metaInfo={metaInfo}
-  visible={visible}
-  onClose={fechar}
-/>
+Tempo bruto: 16h 45min
+Tempo expediente:
+  - Segunda: 16:30 → 17:00 = 30min
+  - Terça: 07:00 → 09:15 = 2h 15min
+  Total: 2h 45min ✓
 ```
 
 ---
@@ -159,104 +72,221 @@ const handleConcluirOrdem = async (ordemId: string) => {
 
 | Arquivo | Tipo | Descrição |
 |---------|------|-----------|
-| `src/components/metas/MetaDialog.tsx` | Editar | Input condicional por tipo de meta |
-| `src/components/metas/MetaProgressoFlutuante.tsx` | **Criar** | Componente flutuante de progresso |
-| `src/hooks/useMetaProgresso.ts` | **Criar** | Hook para buscar meta e calcular progresso |
-| `src/pages/fabrica/producao/SoldaMinimalista.tsx` | Editar | Integrar caixa flutuante |
-| `src/pages/fabrica/producao/PerfiladeiraMinimalista.tsx` | Editar | Integrar caixa flutuante |
-| `src/pages/fabrica/producao/SeparacaoMinimalista.tsx` | Editar | Integrar caixa flutuante |
-| `src/pages/fabrica/producao/QualidadeMinimalista.tsx` | Editar | Integrar caixa flutuante |
-| `src/pages/fabrica/producao/PinturaMinimalista.tsx` | Editar | Integrar caixa flutuante |
-| `src/pages/fabrica/producao/CarregamentoMinimalista.tsx` | Editar | Integrar caixa flutuante |
-| `src/pages/ProducaoSolda.tsx` | Editar | Integrar caixa flutuante (versão desktop) |
-| `src/pages/ProducaoPerfiladeira.tsx` | Editar | Integrar caixa flutuante (versão desktop) |
-| `src/pages/ProducaoSeparacao.tsx` | Editar | Integrar caixa flutuante (versão desktop) |
-| `src/pages/ProducaoQualidade.tsx` | Editar | Integrar caixa flutuante (versão desktop) |
-| `src/pages/ProducaoPintura.tsx` | Editar | Integrar caixa flutuante (versão desktop) |
+| `src/utils/calcularTempoExpediente.ts` | **Criar** | Função utilitária para calcular tempo de expediente |
+| `src/hooks/useCronometroOrdem.ts` | Editar | Usar nova função no cálculo em tempo real |
+| `src/hooks/useOrdemProducao.ts` | Editar | Usar nova função em pausarOrdem e concluirOrdem |
+| `src/hooks/useCronometroEtapa.ts` | Editar | Usar nova função (opcional, para etapas de pedido) |
 
 ---
 
-## Design do Componente Flutuante
+## Código: calcularTempoExpediente.ts
 
-### Estrutura Visual
+```typescript
+import { toZonedTime } from 'date-fns-tz';
+
+const TIMEZONE = 'America/Sao_Paulo';
+
+interface ConfigExpediente {
+  horaInicio?: number;  // Default: 7
+  horaFim?: number;     // Default: 17
+  incluirSabado?: boolean;
+  incluirDomingo?: boolean;
+}
+
+/**
+ * Calcula o tempo decorrido apenas durante o horário de expediente
+ * @param inicio Data/hora de início
+ * @param fim Data/hora de fim (default: agora)
+ * @param config Configurações do expediente
+ * @returns Segundos trabalhados dentro do expediente
+ */
+export function calcularTempoExpediente(
+  inicio: Date,
+  fim: Date = new Date(),
+  config: ConfigExpediente = {}
+): number {
+  const {
+    horaInicio = 7,
+    horaFim = 17,
+    incluirSabado = false,
+    incluirDomingo = false,
+  } = config;
+
+  // Converter para timezone de Brasília
+  const inicioBrasil = toZonedTime(inicio, TIMEZONE);
+  const fimBrasil = toZonedTime(fim, TIMEZONE);
+
+  let segundosTotais = 0;
+
+  // Clonar data inicial para iteração
+  let diaAtual = new Date(inicioBrasil);
+  diaAtual.setHours(0, 0, 0, 0);
+
+  const diaFinal = new Date(fimBrasil);
+  diaFinal.setHours(23, 59, 59, 999);
+
+  while (diaAtual <= diaFinal) {
+    const diaSemana = diaAtual.getDay();
+    
+    // Verificar se é dia útil
+    const ehDomingo = diaSemana === 0;
+    const ehSabado = diaSemana === 6;
+    
+    if ((ehDomingo && !incluirDomingo) || (ehSabado && !incluirSabado)) {
+      diaAtual.setDate(diaAtual.getDate() + 1);
+      continue;
+    }
+
+    // Definir início e fim do expediente para este dia
+    const inicioExpediente = new Date(diaAtual);
+    inicioExpediente.setHours(horaInicio, 0, 0, 0);
+    
+    const fimExpediente = new Date(diaAtual);
+    fimExpediente.setHours(horaFim, 0, 0, 0);
+
+    // Calcular intervalo efetivo de trabalho neste dia
+    const inicioEfetivo = new Date(Math.max(
+      inicioExpediente.getTime(),
+      inicioBrasil.getTime()
+    ));
+    
+    const fimEfetivo = new Date(Math.min(
+      fimExpediente.getTime(),
+      fimBrasil.getTime()
+    ));
+
+    // Se há trabalho válido neste dia
+    if (inicioEfetivo < fimEfetivo) {
+      const segundosDia = Math.floor(
+        (fimEfetivo.getTime() - inicioEfetivo.getTime()) / 1000
+      );
+      segundosTotais += segundosDia;
+    }
+
+    diaAtual.setDate(diaAtual.getDate() + 1);
+  }
+
+  return segundosTotais;
+}
+
+/**
+ * Verifica se está dentro do horário de expediente
+ */
+export function estaNoExpediente(
+  data: Date = new Date(),
+  config: ConfigExpediente = {}
+): boolean {
+  const { horaInicio = 7, horaFim = 17, incluirSabado = false, incluirDomingo = false } = config;
+  
+  const dataBrasil = toZonedTime(data, TIMEZONE);
+  const hora = dataBrasil.getHours();
+  const diaSemana = dataBrasil.getDay();
+  
+  const ehDomingo = diaSemana === 0;
+  const ehSabado = diaSemana === 6;
+  
+  if ((ehDomingo && !incluirDomingo) || (ehSabado && !incluirSabado)) {
+    return false;
+  }
+  
+  return hora >= horaInicio && hora < horaFim;
+}
+```
+
+---
+
+## Alterações em useCronometroOrdem.ts
+
+```typescript
+import { calcularTempoExpediente, estaNoExpediente } from '@/utils/calcularTempoExpediente';
+
+// Na função calcularTempo:
+const calcularTempo = () => {
+  const agora = new Date();
+  const inicio = new Date(capturadaEm as string);
+
+  // Calcular tempo apenas dentro do expediente
+  const segundosSessao = calcularTempoExpediente(inicio, agora);
+  const segundosTotal = (tempoAcumulado || 0) + segundosSessao;
+  
+  const formatado = formatCronometroExtended(segundosTotal);
+  setTempoDecorrido(formatado);
+  
+  // Animar apenas se estiver no expediente
+  setDeveAnimar(estaNoExpediente());
+};
+```
+
+---
+
+## Alterações em useOrdemProducao.ts
+
+### Em `pausarOrdem`:
+```typescript
+// Calcular tempo trabalhado nesta sessão (apenas expediente)
+let tempoSessao = 0;
+if (ordem.capturada_em) {
+  tempoSessao = calcularTempoExpediente(
+    new Date(ordem.capturada_em),
+    new Date()
+  );
+}
+
+const tempoTotal = (ordem.tempo_acumulado_segundos || 0) + tempoSessao;
+```
+
+### Em `concluirOrdem`:
+```typescript
+// Calcular tempo de conclusão (apenas expediente)
+let tempo_conclusao_segundos = null;
+if (ordem.capturada_em) {
+  const tempoSessao = calcularTempoExpediente(
+    new Date(ordem.capturada_em),
+    new Date()
+  );
+  tempo_conclusao_segundos = (ordem.tempo_acumulado_segundos || 0) + tempoSessao;
+}
+```
+
+---
+
+## Indicador Visual de "Fora do Expediente"
+
+Opcionalmente, podemos adicionar um indicador visual quando o cronômetro está pausado por estar fora do expediente:
 
 ```text
-┌──────────────────────────────────────────────────────┐
-│ [X]                                                  │
-│  🔥 Meta de Solda                                   │
-│                                                      │
-│  ████████████████████░░░░░░░░░░  67/100 portas      │
-│                                                      │
-│  67% concluído                                       │
-│                                                      │
-│  💰 R$ 150,00    📅 01/02 - 28/02                   │
-└──────────────────────────────────────────────────────┘
+┌────────────────────────────┐
+│  ⏸️ 02:45:30               │
+│  Fora do expediente        │
+│  Retoma às 07:00           │
+└────────────────────────────┘
 ```
 
-### Posicionamento
-
-- **Posição**: Canto inferior direito (`fixed bottom-4 right-4`)
-- **Z-index**: Alto para ficar acima de outros elementos (`z-50`)
-- **Largura**: Máxima de 320px (`max-w-xs`)
-- **Animação**: Slide-in da direita + fade
-
-### Cores por Tipo de Meta
-
-| Tipo | Cor de Destaque |
-|------|-----------------|
-| Solda | Laranja (orange-500) |
-| Perfiladeira | Azul (blue-500) |
-| Separação | Roxo (purple-500) |
-| Qualidade | Verde (green-500) |
-| Pintura | Rosa (pink-500) |
-| Carregamento | Âmbar (amber-500) |
+Isso será implementado no componente que renderiza o cronômetro, usando a função `estaNoExpediente()`.
 
 ---
 
-## Lógica de Cálculo de Progresso
+## Resumo das Alterações
 
-### Mapeamento de Tipo de Ordem para Meta
-
-| Tipo Ordem | Tipo Meta | Métrica |
-|------------|-----------|---------|
-| `soldagem` | `solda` | Soma de `qtd_portas_p + qtd_portas_g` das ordens concluídas |
-| `perfiladeira` | `perfiladeira` | Soma de `metragem_linear` das ordens concluídas |
-| `separacao` | `separacao` | Soma de `quantidade_itens` das ordens concluídas |
-| `qualidade` | `qualidade` | Contagem de pedidos inspecionados |
-| `pintura` | `pintura` | Soma de `metragem_quadrada` das ordens concluídas |
-| `carregamento` | `carregamento` | Contagem de pedidos carregados |
-
-### Query de Progresso (exemplo para Solda)
-
-```sql
-SELECT COALESCE(SUM(qtd_portas_p + qtd_portas_g), 0) as total
-FROM ordens_soldagem
-WHERE responsavel_id = :userId
-  AND status = 'concluido'
-  AND data_conclusao >= :dataInicioMeta
-  AND data_conclusao <= :dataTerminoMeta;
-```
+| Arquivo | Tipo | Descrição |
+|---------|------|-----------|
+| `src/utils/calcularTempoExpediente.ts` | Criar | Função de cálculo de tempo em expediente |
+| `src/hooks/useCronometroOrdem.ts` | Editar | Usar cálculo de expediente na exibição |
+| `src/hooks/useOrdemProducao.ts` | Editar | Usar cálculo em pausar e concluir |
 
 ---
 
-## Resumo
+## Dependências
 
-| Item | Tipo | Descrição |
-|------|------|-----------|
-| Input condicional | UX | Placeholders e sufixos específicos por tipo |
-| Caixa flutuante | Novo componente | Mostra progresso ao concluir ordem |
-| Hook de progresso | Novo hook | Busca meta ativa e calcula progresso |
-| Integração | 12 páginas | Todas páginas de produção (minimalistas + desktop) |
+O projeto já possui `date-fns-tz` instalado (versão 3.2.0), portanto não há necessidade de instalar novas dependências.
 
 ---
 
 ## Resultado Esperado
 
-1. Ao criar meta, o input mostra placeholder e unidade específica do tipo
-2. Ao concluir uma ordem na produção, aparece uma caixa flutuante com:
-   - Tipo da meta e ícone colorido
-   - Barra de progresso atualizada
-   - Valor atual / valor da meta
-   - Recompensa em R$
-   - Período de vigência
-3. A caixa fecha automaticamente após 5 segundos ou ao clicar no X
+1. Cronômetro conta apenas tempo dentro do horário de expediente (7h-17h)
+2. Fora do expediente, cronômetro para de animar e mostra tempo acumulado
+3. Ao concluir/pausar, tempo registrado reflete apenas horas úteis trabalhadas
+4. Finais de semana não são contabilizados por padrão
+5. Indicador visual opcional quando fora do expediente
+
