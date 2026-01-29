@@ -5,6 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { PedidoComOrdens, OrdemStatus, TipoOrdem } from "@/hooks/useOrdensPorPedido";
+import { OrdemCronometro } from "./OrdemCronometro";
 
 interface PedidoOrdemCardProps {
   pedido: PedidoComOrdens;
@@ -222,6 +223,9 @@ export function PedidoOrdemCard({ pedido, onOrdemClick }: PedidoOrdemCardProps) 
                   </div>
                   
                   <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {/* Cronômetro da ordem */}
+                    <OrdemCronometro ordem={ordem} />
+                    
                     {ordem.pausada && (
                       <TooltipProvider>
                         <Tooltip>
