@@ -1,105 +1,75 @@
 
+# Plano: Simplificar Tela de Estoque no Administrativo/Compras
 
-# Plano: Corrigir Exibição de Itens da Venda na Downbar
+## Objetivo
 
-## Problema Identificado
-
-Os itens da venda estão sempre mostrando "0" e "Nenhum item na venda" porque há uma **incompatibilidade no nome da propriedade** entre a fonte de dados e o componente que a consome.
-
-### Fluxo Atual
-
-```text
-useOrdensInstalacao.ts
-│
-├─ Query Supabase:
-│   produtos:produtos_vendas(...)
-│   ↓
-│   Resultado: venda.produtos = [{...}, {...}]
-│
-handleOpenDetalhes()
-│
-├─ Passa: ordem.venda (com .produtos)
-│   ↓
-│   pedidoForSheet.vendas = ordem.venda
-│
-PedidoDetalhesSheet.tsx
-│
-└─ Procura: venda.produtos_vendas (UNDEFINED!)
-   ↓
-   const produtos = venda.produtos_vendas || [];  // = []
-   ↓
-   Mostra "0 itens" e "Nenhum item na venda"
-```
-
-### Causa Raiz
-
-| Arquivo | Propriedade Usada | Valor |
-|---------|-------------------|-------|
-| `useOrdensInstalacao.ts` | `venda.produtos` | Array com itens |
-| `PedidoDetalhesSheet.tsx` | `venda.produtos_vendas` | **undefined** |
+Remover colunas e campos das rotas de estoque no módulo Administrativo/Compras, focando apenas nos dados relevantes para o setor de Compras.
 
 ---
 
-## Solução
+## Alterações
 
-Modificar o `handleOpenDetalhes` em `OrdensInstalacoesLogistica.tsx` para **renomear a propriedade** `produtos` para `produtos_vendas` ao construir o objeto `pedidoForSheet.vendas`.
+### 1. Arquivo: `src/pages/administrativo/EstoqueMinimalista.tsx`
 
-### Arquivo a Modificar
+Remover da tabela as colunas:
 
-`src/pages/logistica/OrdensInstalacoesLogistica.tsx`
+| Coluna a Remover | Linha da TableHead | Linha da TableCell |
+|------------------|--------------------|--------------------|
+| **Estoque** | 444 | 530-549 |
+| **Custo** | 445 | 551-557 |
+| **Ações** | 446 | 559-571 |
 
-### Código Atual (linhas 185-197)
+**Ajustes necessários:**
+- Remover as 3 `TableHead` (linhas 444-446)
+- Remover as 3 `TableCell` correspondentes (linhas 530-571)
+- Ajustar o `colSpan` de 8 para 5 nas mensagens de "Carregando" e "Nenhum produto encontrado" (linhas 452 e 463)
+- Remover o estado e modal de movimentação (já que as ações são removidas):
+  - `movimentacaoModal` state (linha 28)
+  - `handleMovimentar` function (linhas 105-120)
+  - `handleOpenMovimentacao` function (linhas 122-125)
+  - Import do `MovimentacaoModal` (linha 15)
+  - Componente `MovimentacaoModal` no final (linhas 581-588)
 
-```typescript
-const handleOpenDetalhes = (ordem: OrdemInstalacao) => {
-  if (ordem.pedido) {
-    const pedidoForSheet = {
-      id: ordem.pedido.id,
-      numero_pedido: ordem.pedido.numero_pedido,
-      numero_mes: (ordem.pedido as any).numero_mes,
-      mes_vigencia: (ordem.pedido as any).mes_vigencia,
-      etapa_atual: ordem.pedido.etapa_atual,
-      vendas: ordem.venda  // <-- Problema: venda.produtos
-    };
-    setSelectedPedido(pedidoForSheet);
-    setShowDetalhes(true);
-  }
-};
-```
+---
 
-### Código Corrigido
+### 2. Arquivo: `src/pages/administrativo/EstoqueEditMinimalista.tsx`
 
-```typescript
-const handleOpenDetalhes = (ordem: OrdemInstalacao) => {
-  if (ordem.pedido) {
-    // Mapear produtos para produtos_vendas (formato esperado pelo PedidoDetalhesSheet)
-    const vendaComProdutosVendas = ordem.venda ? {
-      ...ordem.venda,
-      produtos_vendas: ordem.venda.produtos // Renomear para o formato esperado
-    } : null;
+Remover os seguintes campos do formulário:
 
-    const pedidoForSheet = {
-      id: ordem.pedido.id,
-      numero_pedido: ordem.pedido.numero_pedido,
-      numero_mes: (ordem.pedido as any).numero_mes,
-      mes_vigencia: (ordem.pedido as any).mes_vigencia,
-      etapa_atual: ordem.pedido.etapa_atual,
-      vendas: vendaComProdutosVendas
-    };
-    setSelectedPedido(pedidoForSheet);
-    setShowDetalhes(true);
-  }
-};
-```
+| Campo a Remover | Localização Aproximada |
+|-----------------|------------------------|
+| **Categoria** | linhas 242-259 |
+| **Subcategoria** | linhas 261-278 |
+| **Fornecedor** | linhas 280-297 |
+| **Quantidade Atual** | linhas 299-309 |
+| **Quantidade Ideal** | linhas 311-321 |
+| **Unidade** | linhas 323-341 |
+| **Custo Unitário** | linhas 343-353 |
+| **Peso por Porta** | linhas 355-365 |
+
+**Ajustes necessários:**
+- Remover os campos do `formData` state inicial
+- Remover do `handleSubmit` os dados que não serão mais enviados
+- Manter os campos de produção (Setor de Produção, Requer Pintura, Cálculo Automático)
 
 ---
 
 ## Resultado Esperado
 
-| Antes | Depois |
-|-------|--------|
-| Badge mostra "0" | Badge mostra quantidade correta de itens |
-| Expandir mostra "Nenhum item na venda" | Expandir mostra lista de produtos |
+### Tabela de Estoque (`/administrativo/compras/estoque`)
+
+| SKU | Produto | Categoria | Setor | Pintura |
+|-----|---------|-----------|-------|---------|
+
+### Formulário de Edição (`/administrativo/compras/estoque/editar-item/:id`)
+
+Campos mantidos:
+- Nome do Produto
+- Descrição
+- Setor de Produção
+- Requer Pintura
+- Configurações de Cálculo Automático
+- Regras de Etiqueta
 
 ---
 
@@ -107,13 +77,5 @@ const handleOpenDetalhes = (ordem: OrdemInstalacao) => {
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/pages/logistica/OrdensInstalacoesLogistica.tsx` | Mapear `venda.produtos` → `produtos_vendas` |
-
----
-
-## Por que Esta Abordagem?
-
-1. **Mínima alteração**: Apenas 1 arquivo modificado
-2. **Sem efeitos colaterais**: Não altera a interface do componente `PedidoDetalhesSheet`
-3. **Consistência**: O `PedidoDetalhesSheet` é usado em múltiplos lugares que já passam `produtos_vendas`
-
+| `src/pages/administrativo/EstoqueMinimalista.tsx` | Remover colunas Estoque, Custo e Ações |
+| `src/pages/administrativo/EstoqueEditMinimalista.tsx` | Remover 8 campos do formulário |
