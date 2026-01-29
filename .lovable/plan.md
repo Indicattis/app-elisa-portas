@@ -1,62 +1,119 @@
 
 
-# Plano: Padronizar Cálculo de Valor SEM Frete
+# Plano: Corrigir Exibição de Itens da Venda na Downbar
 
-## Objetivo
+## Problema Identificado
 
-Alterar o cálculo do valor das vendas em `/vendas/minhas-vendas` para excluir o frete, seguindo o mesmo padrão da página `/direcao/vendas`.
+Os itens da venda estão sempre mostrando "0" e "Nenhum item na venda" porque há uma **incompatibilidade no nome da propriedade** entre a fonte de dados e o componente que a consome.
+
+### Fluxo Atual
+
+```text
+useOrdensInstalacao.ts
+│
+├─ Query Supabase:
+│   produtos:produtos_vendas(...)
+│   ↓
+│   Resultado: venda.produtos = [{...}, {...}]
+│
+handleOpenDetalhes()
+│
+├─ Passa: ordem.venda (com .produtos)
+│   ↓
+│   pedidoForSheet.vendas = ordem.venda
+│
+PedidoDetalhesSheet.tsx
+│
+└─ Procura: venda.produtos_vendas (UNDEFINED!)
+   ↓
+   const produtos = venda.produtos_vendas || [];  // = []
+   ↓
+   Mostra "0 itens" e "Nenhum item na venda"
+```
+
+### Causa Raiz
+
+| Arquivo | Propriedade Usada | Valor |
+|---------|-------------------|-------|
+| `useOrdensInstalacao.ts` | `venda.produtos` | Array com itens |
+| `PedidoDetalhesSheet.tsx` | `venda.produtos_vendas` | **undefined** |
 
 ---
 
-## Alterações Necessárias
+## Solução
 
-### Arquivo: `src/pages/vendas/MinhasVendas.tsx`
+Modificar o `handleOpenDetalhes` em `OrdensInstalacoesLogistica.tsx` para **renomear a propriedade** `produtos` para `produtos_vendas` ao construir o objeto `pedidoForSheet.vendas`.
 
-#### 1. Cálculo do Valor Total (linhas 179-181)
+### Arquivo a Modificar
 
-**Atual:**
+`src/pages/logistica/OrdensInstalacoesLogistica.tsx`
+
+### Código Atual (linhas 185-197)
+
 ```typescript
-const valorTotal = vendasFiltradas.reduce((acc, v) => {
-  return acc + (v.valor_venda || 0) + (v.valor_credito || 0);
-}, 0);
+const handleOpenDetalhes = (ordem: OrdemInstalacao) => {
+  if (ordem.pedido) {
+    const pedidoForSheet = {
+      id: ordem.pedido.id,
+      numero_pedido: ordem.pedido.numero_pedido,
+      numero_mes: (ordem.pedido as any).numero_mes,
+      mes_vigencia: (ordem.pedido as any).mes_vigencia,
+      etapa_atual: ordem.pedido.etapa_atual,
+      vendas: ordem.venda  // <-- Problema: venda.produtos
+    };
+    setSelectedPedido(pedidoForSheet);
+    setShowDetalhes(true);
+  }
+};
 ```
 
-**Novo:**
+### Código Corrigido
+
 ```typescript
-const valorTotal = vendasFiltradas.reduce((acc, v) => {
-  return acc + (v.valor_venda || 0) - (v.valor_frete || 0) + (v.valor_credito || 0);
-}, 0);
+const handleOpenDetalhes = (ordem: OrdemInstalacao) => {
+  if (ordem.pedido) {
+    // Mapear produtos para produtos_vendas (formato esperado pelo PedidoDetalhesSheet)
+    const vendaComProdutosVendas = ordem.venda ? {
+      ...ordem.venda,
+      produtos_vendas: ordem.venda.produtos // Renomear para o formato esperado
+    } : null;
+
+    const pedidoForSheet = {
+      id: ordem.pedido.id,
+      numero_pedido: ordem.pedido.numero_pedido,
+      numero_mes: (ordem.pedido as any).numero_mes,
+      mes_vigencia: (ordem.pedido as any).mes_vigencia,
+      etapa_atual: ordem.pedido.etapa_atual,
+      vendas: vendaComProdutosVendas
+    };
+    setSelectedPedido(pedidoForSheet);
+    setShowDetalhes(true);
+  }
+};
 ```
-
-#### 2. Exibição na Célula da Tabela (linha 305)
-
-**Atual:**
-```typescript
-case 'valor':
-  return <span className="font-semibold">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</span>;
-```
-
-**Novo:**
-```typescript
-case 'valor':
-  const valorSemFrete = (venda.valor_venda || 0) - (venda.valor_frete || 0) + (venda.valor_credito || 0);
-  return <span className="font-semibold">{formatCurrency(valorSemFrete)}</span>;
-```
-
----
-
-## Fórmula Padronizada
-
-| Página | Fórmula |
-|--------|---------|
-| `/direcao/vendas` | `valor_venda - valor_frete + valor_credito` |
-| `/vendas/minhas-vendas` | `valor_venda - valor_frete + valor_credito` ✓ |
 
 ---
 
 ## Resultado Esperado
 
-1. O card "Valor Total" exibirá a soma sem incluir fretes
-2. Cada linha da tabela mostrará o valor sem frete
-3. Os valores do vendedor Magno serão iguais em ambas as páginas
+| Antes | Depois |
+|-------|--------|
+| Badge mostra "0" | Badge mostra quantidade correta de itens |
+| Expandir mostra "Nenhum item na venda" | Expandir mostra lista de produtos |
+
+---
+
+## Arquivos Afetados
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/pages/logistica/OrdensInstalacoesLogistica.tsx` | Mapear `venda.produtos` → `produtos_vendas` |
+
+---
+
+## Por que Esta Abordagem?
+
+1. **Mínima alteração**: Apenas 1 arquivo modificado
+2. **Sem efeitos colaterais**: Não altera a interface do componente `PedidoDetalhesSheet`
+3. **Consistência**: O `PedidoDetalhesSheet` é usado em múltiplos lugares que já passam `produtos_vendas`
 
