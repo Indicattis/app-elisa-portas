@@ -1,83 +1,79 @@
 
-# Plano: Adicionar Colunas de Métricas de Desempenho às Ordens de Produção
+# Plano: Corrigir Rota e Navegação de Metas Individuais
 
-## Objetivo
+## Problema Identificado
 
-Adicionar colunas para armazenar métricas de desempenho em cada tipo de ordem de produção, permitindo análise e relatórios de produtividade.
+Ao clicar em um colaborador na página `/direcao/metas/fabrica`, o sistema navega para `/direcao/metas/{userId}`, mas essa rota **não está registrada** no App.tsx, resultando no erro "Page not found".
 
----
+## Causa Raiz
 
-## Colunas a Adicionar
-
-| Tabela | Nova Coluna | Tipo | Descrição |
-|--------|-------------|------|-----------|
-| `ordens_separacao` | `quantidade_itens` | `INTEGER` | Quantidade de linhas/itens na ordem |
-| `ordens_qualidade` | `quantidade_pedidos` | `INTEGER DEFAULT 1` | Sempre 1 (referência ao pedido) |
-| `ordens_carregamento` | `quantidade_pedidos` | `INTEGER DEFAULT 1` | Sempre 1 (referência ao pedido) |
-| `instalacoes` | `metragem_quadrada` | `DECIMAL(10,2)` | Total m² das portas (largura × altura) |
-| `ordens_soldagem` | `metragem_quadrada` | `DECIMAL(10,2)` | Total m² das portas (largura × altura) |
+A página `MetasColaboradorIndividual` já existe e está importada no App.tsx (linha 154), mas nunca foi adicionada como rota no roteador.
 
 ---
 
-## Migração SQL
+## Alterações Necessárias
 
-```sql
--- Adicionar coluna quantidade_itens em ordens_separacao
-ALTER TABLE ordens_separacao 
-ADD COLUMN IF NOT EXISTS quantidade_itens INTEGER;
+### 1. Adicionar Rota no App.tsx
 
--- Adicionar coluna quantidade_pedidos em ordens_qualidade (sempre 1)
-ALTER TABLE ordens_qualidade 
-ADD COLUMN IF NOT EXISTS quantidade_pedidos INTEGER DEFAULT 1;
+Registrar a rota `/direcao/metas/fabrica/:userId` para exibir métricas individuais do colaborador.
 
--- Adicionar coluna quantidade_pedidos em ordens_carregamento (sempre 1)
-ALTER TABLE ordens_carregamento 
-ADD COLUMN IF NOT EXISTS quantidade_pedidos INTEGER DEFAULT 1;
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/App.tsx` | Adicionar rota `/direcao/metas/fabrica/:userId` apontando para `MetasColaboradorIndividual` |
 
--- Adicionar coluna metragem_quadrada em instalacoes
-ALTER TABLE instalacoes 
-ADD COLUMN IF NOT EXISTS metragem_quadrada DECIMAL(10,2);
+```tsx
+// Após linha 400:
+<Route path="/direcao/metas/fabrica/:userId" element={<ProtectedRoute routeKey="direcao_hub"><MetasColaboradorIndividual /></ProtectedRoute>} />
+```
 
--- Adicionar coluna metragem_quadrada em ordens_soldagem
-ALTER TABLE ordens_soldagem 
-ADD COLUMN IF NOT EXISTS metragem_quadrada DECIMAL(10,2);
+### 2. Atualizar Navegação em MetasFabricaDirecao
 
--- Adicionar comentários para documentação
-COMMENT ON COLUMN ordens_separacao.quantidade_itens IS 'Quantidade de itens/linhas na ordem de separação';
-COMMENT ON COLUMN ordens_qualidade.quantidade_pedidos IS 'Quantidade de pedidos (sempre 1)';
-COMMENT ON COLUMN ordens_carregamento.quantidade_pedidos IS 'Quantidade de pedidos (sempre 1)';
-COMMENT ON COLUMN instalacoes.metragem_quadrada IS 'Total de m² (largura x altura) das portas do pedido';
-COMMENT ON COLUMN ordens_soldagem.metragem_quadrada IS 'Total de m² (largura x altura) das portas do pedido';
+Alterar o destino da navegação ao clicar em um colaborador.
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/pages/direcao/MetasFabricaDirecao.tsx` | Mudar navegação de `/direcao/metas/${userId}` para `/direcao/metas/fabrica/${userId}` |
+
+```tsx
+// Linha 125:
+onClick={() => navigate(`/direcao/metas/fabrica/${colaborador.user_id}`)}
+```
+
+### 3. Atualizar Retorno em MetasColaboradorIndividual
+
+Ajustar os botões "Voltar" para retornar à página correta.
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/pages/MetasColaboradorIndividual.tsx` | Mudar navegação de `/direcao/metas` para `/direcao/metas/fabrica` |
+
+Linhas afetadas: 114 e 130
+
+---
+
+## Resumo das Alterações
+
+| Arquivo | Tipo | Descrição |
+|---------|------|-----------|
+| `src/App.tsx` | Adicionar | Nova rota `/direcao/metas/fabrica/:userId` |
+| `src/pages/direcao/MetasFabricaDirecao.tsx` | Editar | Atualizar path de navegação (linha 125) |
+| `src/pages/MetasColaboradorIndividual.tsx` | Editar | Atualizar path de retorno (linhas 114 e 130) |
+
+---
+
+## Fluxo Após Correção
+
+```text
+/direcao/metas (Hub) 
+    → /direcao/metas/fabrica (Lista colaboradores)
+        → /direcao/metas/fabrica/:userId (Métricas individuais)
+            ← Voltar → /direcao/metas/fabrica
 ```
 
 ---
 
-## Estrutura Final por Tipo de Ordem
+## Impacto
 
-| Ordem | Métrica de Desempenho | Status Após Migração |
-|-------|----------------------|---------------------|
-| **Soldagem** | `qtd_portas_p`, `qtd_portas_g`, **`metragem_quadrada`** | Completo |
-| **Perfiladeira** | `metragem_linear` | Já existente |
-| **Separação** | **`quantidade_itens`** | Completo |
-| **Qualidade** | **`quantidade_pedidos`** | Completo |
-| **Pintura** | `metragem_quadrada` | Já existente |
-| **Carregamento** | **`quantidade_pedidos`** | Completo |
-| **Instalação** | **`metragem_quadrada`** | Completo |
-
----
-
-## Próximos Passos (Opcional)
-
-Após a migração, pode ser útil:
-1. Popular as métricas para ordens existentes via script UPDATE
-2. Criar triggers para calcular automaticamente ao criar novas ordens
-
----
-
-## Resumo
-
-| Ação | Detalhes |
-|------|----------|
-| Migração SQL | Adicionar 5 colunas de métricas em 5 tabelas diferentes |
-| Impacto | Nenhum - apenas adiciona novas colunas opcionais |
-| Breaking Changes | Nenhum |
+- Correção imediata do erro 404
+- Navegação consistente entre as páginas de metas
+- Sem breaking changes em outras partes do sistema
