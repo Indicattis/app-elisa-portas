@@ -1,292 +1,213 @@
 
 
-# Plano: Pausar Cronômetro Fora do Horário de Expediente
+# Plano: Exibir Tempo Corrido das Ordens em /fabrica/ordens-pedidos
 
 ## Objetivo
 
-Criar um sistema que **calcula apenas o tempo trabalhado dentro do expediente** (7h às 17h, horário de Brasília), ignorando o tempo noturno e finais de semana automaticamente.
+Adicionar a exibição do tempo decorrido total de cada ordem na página de Ordens por Pedido, reutilizando a lógica existente do cronômetro que considera apenas horário de expediente.
 
 ---
 
-## Problema Atual
+## Alterações Necessárias
 
-Atualmente, o cronômetro conta o tempo de forma contínua desde `capturada_em` até o momento atual. Se um colaborador captura uma ordem às 16h e só retoma às 8h do dia seguinte, o cronômetro mostra 16 horas de trabalho, quando na verdade foram apenas 1h (16h-17h do dia anterior).
+### 1. Atualizar Hook `useOrdensPorPedido.ts`
 
----
+Adicionar os campos necessários para o cronômetro nas queries de cada tipo de ordem:
 
-## Solução Proposta
+| Campo | Descrição |
+|-------|-----------|
+| `capturada_em` | Data/hora de captura da ordem |
+| `tempo_acumulado_segundos` | Tempo já acumulado (pausas anteriores) |
+| `tempo_conclusao_segundos` | Tempo final (se concluída) |
 
-Criar uma função utilitária que calcula apenas as horas dentro do expediente entre duas datas, descartando:
-- Tempo entre 17h e 7h (noite)
-- Finais de semana (opcional, configurável)
+**Atualizar o tipo `OrdemStatus`:**
+```typescript
+export interface OrdemStatus {
+  // ... campos existentes ...
+  capturada_em: string | null;
+  tempo_acumulado_segundos: number | null;
+  tempo_conclusao_segundos: number | null;
+}
+```
 
-Essa função será usada em:
-1. `useCronometroOrdem.ts` - Para exibição em tempo real
-2. `useOrdemProducao.ts` - Para cálculo do `tempo_conclusao_segundos` ao concluir
-3. `useOrdemProducao.ts` - Para cálculo do `tempo_acumulado_segundos` ao pausar
+### 2. Criar Componente `OrdemCronometro.tsx`
+
+Componente compacto que usa o hook `useCronometroOrdem` para exibir o tempo decorrido com animação quando ativo:
+
+```text
+┌─────────────┐
+│ ⏱️ 02:45:30 │  <- Animado quando em expediente
+└─────────────┘
+```
+
+### 3. Atualizar Componente `PedidoOrdemCard.tsx`
+
+Adicionar o cronômetro em cada badge de ordem no painel expandido, mostrando o tempo ao lado do contador de linhas.
 
 ---
 
 ## Detalhes Técnicos
 
-### Nova Função: `calcularTempoExpediente`
+### Campos a Adicionar nas Queries (useOrdensPorPedido.ts)
 
-| Parâmetro | Tipo | Descrição |
-|-----------|------|-----------|
-| `inicio` | `Date` | Data/hora de início (capturada_em) |
-| `fim` | `Date` | Data/hora de fim (agora ou data_conclusao) |
-| `horaInicio` | `number` | Hora início expediente (default: 7) |
-| `horaFim` | `number` | Hora fim expediente (default: 17) |
-| `incluirFimDeSemana` | `boolean` | Se deve contar sábado/domingo (default: false) |
+**Para cada tabela de ordem:**
+```typescript
+// Soldagem
+.select(`
+  id, pedido_id, numero_ordem, status, responsavel_id, pausada, justificativa_pausa, pausada_em,
+  capturada_em, tempo_acumulado_segundos, tempo_conclusao_segundos,  // NOVOS
+  linha_problema_id,
+  linha_problema:linha_problema_id (id, item, quantidade, tamanho)
+`)
 
-**Retorno:** Número de segundos trabalhados dentro do expediente
-
-### Lógica do Algoritmo
-
-```text
-1. Converter ambas as datas para timezone de Brasília (America/Sao_Paulo)
-2. Para cada dia entre início e fim:
-   a. Se for fim de semana e !incluirFimDeSemana → pular
-   b. Calcular hora de início efetiva: max(horaInicio, hora real de início)
-   c. Calcular hora de fim efetiva: min(horaFim, hora real de fim)
-   d. Se início efetivo < fim efetivo → somar diferença
-3. Retornar total de segundos
+// Perfiladeira, Separação, Qualidade, Pintura - mesma adição
 ```
 
-### Exemplo Visual
+### Atualização do Tipo OrdemStatus
 
-```text
-Ordem capturada: 16:30 (segunda)
-Ordem concluída: 09:15 (terça)
+```typescript
+export interface OrdemStatus {
+  existe: boolean;
+  id: string | null;
+  numero_ordem: string | null;
+  status: string | null;
+  tipo: TipoOrdem;
+  responsavel: ResponsavelInfo | null;
+  responsavel_id: string | null;
+  pausada: boolean;
+  justificativa_pausa: string | null;
+  pausada_em: string | null;
+  linha_problema: LinhaProblemaInfo | null;
+  linhas_concluidas: number;
+  total_linhas: number;
+  // Novos campos para cronômetro
+  capturada_em: string | null;
+  tempo_acumulado_segundos: number | null;
+  tempo_conclusao_segundos: number | null;
+}
+```
 
-Tempo bruto: 16h 45min
-Tempo expediente:
-  - Segunda: 16:30 → 17:00 = 30min
-  - Terça: 07:00 → 09:15 = 2h 15min
-  Total: 2h 45min ✓
+### Componente OrdemCronometro
+
+```typescript
+// src/components/fabrica/OrdemCronometro.tsx
+import { Timer } from "lucide-react";
+import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
+import { cn } from "@/lib/utils";
+
+interface OrdemCronometroProps {
+  ordem: {
+    capturada_em: string | null;
+    tempo_acumulado_segundos: number | null;
+    tempo_conclusao_segundos: number | null;
+    pausada: boolean;
+    responsavel_id: string | null;
+    status: string | null;
+    linhas_concluidas: number;
+    total_linhas: number;
+  };
+}
+
+export function OrdemCronometro({ ordem }: OrdemCronometroProps) {
+  const todasConcluidas = ordem.total_linhas > 0 
+    ? ordem.linhas_concluidas >= ordem.total_linhas 
+    : ordem.status === 'concluido';
+
+  const { tempoDecorrido, deveAnimar } = useCronometroOrdem({
+    capturada_em: ordem.capturada_em,
+    tempo_acumulado_segundos: ordem.tempo_acumulado_segundos,
+    tempo_conclusao_segundos: ordem.tempo_conclusao_segundos,
+    pausada: ordem.pausada,
+    responsavel_id: ordem.responsavel_id,
+    todas_linhas_concluidas: todasConcluidas,
+  });
+
+  // Não mostrar se não tem tempo
+  if (tempoDecorrido === '--:--:--') return null;
+
+  return (
+    <div className={cn(
+      "flex items-center gap-1 text-[10px]",
+      deveAnimar && "animate-pulse"
+    )}>
+      <Timer className="w-3 h-3" />
+      <span className="font-mono">{tempoDecorrido}</span>
+    </div>
+  );
+}
+```
+
+### Integração no PedidoOrdemCard
+
+Adicionar o cronômetro no botão de cada ordem:
+
+```tsx
+{/* Dentro do botão de ordem expandido */}
+<div className="flex items-center gap-1.5 flex-shrink-0">
+  {/* Cronômetro - NOVO */}
+  {ordem.existe && (
+    <OrdemCronometro ordem={ordem} />
+  )}
+  
+  {/* Pausa (existente) */}
+  {ordem.pausada && (...)}
+  
+  {/* Avatar e contador (existente) */}
+  {ordem.responsavel && (...)}
+</div>
 ```
 
 ---
 
-## Arquivos a Criar/Modificar
+## Arquivos a Modificar
 
 | Arquivo | Tipo | Descrição |
 |---------|------|-----------|
-| `src/utils/calcularTempoExpediente.ts` | **Criar** | Função utilitária para calcular tempo de expediente |
-| `src/hooks/useCronometroOrdem.ts` | Editar | Usar nova função no cálculo em tempo real |
-| `src/hooks/useOrdemProducao.ts` | Editar | Usar nova função em pausarOrdem e concluirOrdem |
-| `src/hooks/useCronometroEtapa.ts` | Editar | Usar nova função (opcional, para etapas de pedido) |
+| `src/hooks/useOrdensPorPedido.ts` | Editar | Adicionar campos do cronômetro nas queries e tipo |
+| `src/components/fabrica/OrdemCronometro.tsx` | **Criar** | Componente de exibição do cronômetro |
+| `src/components/fabrica/PedidoOrdemCard.tsx` | Editar | Integrar componente de cronômetro |
 
 ---
 
-## Código: calcularTempoExpediente.ts
-
-```typescript
-import { toZonedTime } from 'date-fns-tz';
-
-const TIMEZONE = 'America/Sao_Paulo';
-
-interface ConfigExpediente {
-  horaInicio?: number;  // Default: 7
-  horaFim?: number;     // Default: 17
-  incluirSabado?: boolean;
-  incluirDomingo?: boolean;
-}
-
-/**
- * Calcula o tempo decorrido apenas durante o horário de expediente
- * @param inicio Data/hora de início
- * @param fim Data/hora de fim (default: agora)
- * @param config Configurações do expediente
- * @returns Segundos trabalhados dentro do expediente
- */
-export function calcularTempoExpediente(
-  inicio: Date,
-  fim: Date = new Date(),
-  config: ConfigExpediente = {}
-): number {
-  const {
-    horaInicio = 7,
-    horaFim = 17,
-    incluirSabado = false,
-    incluirDomingo = false,
-  } = config;
-
-  // Converter para timezone de Brasília
-  const inicioBrasil = toZonedTime(inicio, TIMEZONE);
-  const fimBrasil = toZonedTime(fim, TIMEZONE);
-
-  let segundosTotais = 0;
-
-  // Clonar data inicial para iteração
-  let diaAtual = new Date(inicioBrasil);
-  diaAtual.setHours(0, 0, 0, 0);
-
-  const diaFinal = new Date(fimBrasil);
-  diaFinal.setHours(23, 59, 59, 999);
-
-  while (diaAtual <= diaFinal) {
-    const diaSemana = diaAtual.getDay();
-    
-    // Verificar se é dia útil
-    const ehDomingo = diaSemana === 0;
-    const ehSabado = diaSemana === 6;
-    
-    if ((ehDomingo && !incluirDomingo) || (ehSabado && !incluirSabado)) {
-      diaAtual.setDate(diaAtual.getDate() + 1);
-      continue;
-    }
-
-    // Definir início e fim do expediente para este dia
-    const inicioExpediente = new Date(diaAtual);
-    inicioExpediente.setHours(horaInicio, 0, 0, 0);
-    
-    const fimExpediente = new Date(diaAtual);
-    fimExpediente.setHours(horaFim, 0, 0, 0);
-
-    // Calcular intervalo efetivo de trabalho neste dia
-    const inicioEfetivo = new Date(Math.max(
-      inicioExpediente.getTime(),
-      inicioBrasil.getTime()
-    ));
-    
-    const fimEfetivo = new Date(Math.min(
-      fimExpediente.getTime(),
-      fimBrasil.getTime()
-    ));
-
-    // Se há trabalho válido neste dia
-    if (inicioEfetivo < fimEfetivo) {
-      const segundosDia = Math.floor(
-        (fimEfetivo.getTime() - inicioEfetivo.getTime()) / 1000
-      );
-      segundosTotais += segundosDia;
-    }
-
-    diaAtual.setDate(diaAtual.getDate() + 1);
-  }
-
-  return segundosTotais;
-}
-
-/**
- * Verifica se está dentro do horário de expediente
- */
-export function estaNoExpediente(
-  data: Date = new Date(),
-  config: ConfigExpediente = {}
-): boolean {
-  const { horaInicio = 7, horaFim = 17, incluirSabado = false, incluirDomingo = false } = config;
-  
-  const dataBrasil = toZonedTime(data, TIMEZONE);
-  const hora = dataBrasil.getHours();
-  const diaSemana = dataBrasil.getDay();
-  
-  const ehDomingo = diaSemana === 0;
-  const ehSabado = diaSemana === 6;
-  
-  if ((ehDomingo && !incluirDomingo) || (ehSabado && !incluirSabado)) {
-    return false;
-  }
-  
-  return hora >= horaInicio && hora < horaFim;
-}
-```
-
----
-
-## Alterações em useCronometroOrdem.ts
-
-```typescript
-import { calcularTempoExpediente, estaNoExpediente } from '@/utils/calcularTempoExpediente';
-
-// Na função calcularTempo:
-const calcularTempo = () => {
-  const agora = new Date();
-  const inicio = new Date(capturadaEm as string);
-
-  // Calcular tempo apenas dentro do expediente
-  const segundosSessao = calcularTempoExpediente(inicio, agora);
-  const segundosTotal = (tempoAcumulado || 0) + segundosSessao;
-  
-  const formatado = formatCronometroExtended(segundosTotal);
-  setTempoDecorrido(formatado);
-  
-  // Animar apenas se estiver no expediente
-  setDeveAnimar(estaNoExpediente());
-};
-```
-
----
-
-## Alterações em useOrdemProducao.ts
-
-### Em `pausarOrdem`:
-```typescript
-// Calcular tempo trabalhado nesta sessão (apenas expediente)
-let tempoSessao = 0;
-if (ordem.capturada_em) {
-  tempoSessao = calcularTempoExpediente(
-    new Date(ordem.capturada_em),
-    new Date()
-  );
-}
-
-const tempoTotal = (ordem.tempo_acumulado_segundos || 0) + tempoSessao;
-```
-
-### Em `concluirOrdem`:
-```typescript
-// Calcular tempo de conclusão (apenas expediente)
-let tempo_conclusao_segundos = null;
-if (ordem.capturada_em) {
-  const tempoSessao = calcularTempoExpediente(
-    new Date(ordem.capturada_em),
-    new Date()
-  );
-  tempo_conclusao_segundos = (ordem.tempo_acumulado_segundos || 0) + tempoSessao;
-}
-```
-
----
-
-## Indicador Visual de "Fora do Expediente"
-
-Opcionalmente, podemos adicionar um indicador visual quando o cronômetro está pausado por estar fora do expediente:
+## Layout Visual (Painel Expandido)
 
 ```text
-┌────────────────────────────┐
-│  ⏸️ 02:45:30               │
-│  Fora do expediente        │
-│  Retoma às 07:00           │
-└────────────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│ [v] #1234  Cliente ABC  RAL 9010  Campo Grande/MS  ...        │
+├───────────────────────────────────────────────────────────────┤
+│ Cliente ABC Materiais LTDA                                     │
+│ ┌─────────────────────┐ ┌─────────────────────┐               │
+│ │ Soldagem            │ │ Perfiladeira        │               │
+│ │ Em andamento        │ │ Pendente            │               │
+│ │ ⏱️ 02:15:30  👤 3/5 │ │               0/8   │               │
+│ └─────────────────────┘ └─────────────────────┘               │
+│ ┌─────────────────────┐ ┌─────────────────────┐               │
+│ │ Separação           │ │ Qualidade           │               │
+│ │ Pausada  ⏸️         │ │ Sem ordem           │               │
+│ │ ⏱️ 01:30:00         │ │                     │               │
+│ └─────────────────────┘ └─────────────────────┘               │
+└───────────────────────────────────────────────────────────────┘
 ```
 
-Isso será implementado no componente que renderiza o cronômetro, usando a função `estaNoExpediente()`.
-
 ---
 
-## Resumo das Alterações
+## Comportamento do Cronômetro
 
-| Arquivo | Tipo | Descrição |
-|---------|------|-----------|
-| `src/utils/calcularTempoExpediente.ts` | Criar | Função de cálculo de tempo em expediente |
-| `src/hooks/useCronometroOrdem.ts` | Editar | Usar cálculo de expediente na exibição |
-| `src/hooks/useOrdemProducao.ts` | Editar | Usar cálculo em pausar e concluir |
-
----
-
-## Dependências
-
-O projeto já possui `date-fns-tz` instalado (versão 3.2.0), portanto não há necessidade de instalar novas dependências.
+| Estado | Exibição |
+|--------|----------|
+| **Sem captura** | Não exibe cronômetro |
+| **Em andamento (expediente)** | `⏱️ 02:15:30` com animação pulse |
+| **Em andamento (fora expediente)** | `⏱️ 02:15:30` sem animação (congelado) |
+| **Pausada** | `⏱️ 01:30:00` tempo acumulado, sem animação |
+| **Concluída** | `⏱️ 03:45:00` tempo final, sem animação |
 
 ---
 
 ## Resultado Esperado
 
-1. Cronômetro conta apenas tempo dentro do horário de expediente (7h-17h)
-2. Fora do expediente, cronômetro para de animar e mostra tempo acumulado
-3. Ao concluir/pausar, tempo registrado reflete apenas horas úteis trabalhadas
-4. Finais de semana não são contabilizados por padrão
-5. Indicador visual opcional quando fora do expediente
+1. Cada ordem exibe o tempo decorrido no painel expandido
+2. O cronômetro considera apenas horário de expediente (7h-17h)
+3. Ordens pausadas mostram o tempo congelado
+4. Ordens concluídas mostram o tempo total final
+5. Animação visual (pulse) quando o cronômetro está ativo
 
