@@ -711,7 +711,7 @@ export default function MinhasVendasEditar() {
                   className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
                 >
                   <Percent className="w-3.5 h-3.5 mr-1.5" />
-                  Adicionar Desconto
+                  {temDesconto ? 'Editar Desconto' : 'Adicionar Desconto'}
                 </Button>
               )}
               {produtosFormatados.length > 0 && !temDesconto && (
