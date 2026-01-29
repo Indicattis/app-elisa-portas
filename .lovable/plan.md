@@ -1,135 +1,157 @@
 
 
-# Plano: Seletor Dinâmico de Estado/Cidade nos Modais Neo
+# Plano: Exibir Datas de Pagamento nas Listagens de Faturamento
 
-## Problema Identificado
+## Objetivo
 
-Nos modais de criação/edição de **Neo Instalação** e **Neo Correção** em `/logistica/expedicao`:
-
-- O campo **Cidade** é um Input de texto livre
-- O campo **Estado** vem depois da cidade no layout
-- Não há integração com a lista de cidades por estado já existente no sistema
-
-```text
-ATUAL (incorreto):
-┌─────────────────────────┬─────────────────────┐
-│ Cidade *                │ Estado *            │
-│ [ Digite a cidade ]     │ [ UF ▼ ]            │
-└─────────────────────────┴─────────────────────┘
-```
-
-## Solução
-
-Inverter a ordem dos campos e usar o utilitário `estadosCidades.ts` para popular dinamicamente as cidades com base no estado selecionado:
-
-```text
-PROPOSTA (correto):
-┌─────────────────────────┬─────────────────────┐
-│ Estado *                │ Cidade *            │
-│ [ PR - Paraná ▼ ]       │ [ Curitiba ▼ ]      │
-└─────────────────────────┴─────────────────────┘
-```
+Adicionar duas colunas para exibir as datas dos dois métodos de pagamento cadastrados na venda, além de aumentar a largura da listagem para melhorar a visualização de todas as colunas.
 
 ---
 
-## Alterações Técnicas
+## Contexto Técnico
 
-### 1. Arquivo: `src/components/expedicao/NeoInstalacaoModal.tsx`
+O sistema permite até 2 métodos de pagamento por venda. Os dados de pagamento são armazenados na tabela `contas_receber`, com múltiplas parcelas por método. Para identificar as datas dos pagamentos:
 
-#### Importar utilitário de cidades
-```tsx
-import { ESTADOS_BRASIL, getCidadesPorEstado } from "@/utils/estadosCidades";
-```
-
-#### Remover constante local ESTADOS_BRASIL
-As linhas 47-51 devem ser removidas (lista duplicada).
-
-#### Atualizar handler de mudança de estado
-Quando o estado muda, limpar a cidade selecionada:
-```tsx
-const handleEstadoChange = (novoEstado: string) => {
-  setEstado(novoEstado);
-  setCidade(""); // Limpar cidade ao mudar estado
-};
-```
-
-#### Alterar layout e campos (linhas 206-231)
-```tsx
-<div className="grid grid-cols-2 gap-4">
-  <div className="space-y-2">
-    <Label htmlFor="estado">Estado *</Label>
-    <Select value={estado} onValueChange={handleEstadoChange}>
-      <SelectTrigger>
-        <SelectValue placeholder="Selecione o estado" />
-      </SelectTrigger>
-      <SelectContent modal={false}>
-        {ESTADOS_BRASIL.map((e) => (
-          <SelectItem key={e.sigla} value={e.sigla}>
-            {e.sigla} - {e.nome}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  </div>
-  <div className="space-y-2">
-    <Label htmlFor="cidade">Cidade *</Label>
-    <Select 
-      value={cidade} 
-      onValueChange={setCidade}
-      disabled={!estado}
-    >
-      <SelectTrigger>
-        <SelectValue placeholder={estado ? "Selecione a cidade" : "Selecione o estado primeiro"} />
-      </SelectTrigger>
-      <SelectContent modal={false}>
-        {getCidadesPorEstado(estado).map((c) => (
-          <SelectItem key={c} value={c}>
-            {c}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  </div>
-</div>
-```
+- Cada parcela tem `metodo_pagamento` e `data_vencimento`
+- Precisamos buscar a **primeira data de vencimento** de cada método de pagamento distinto por venda
+- Se houver 2 métodos diferentes, exibimos as duas datas separadamente
 
 ---
 
-### 2. Arquivo: `src/components/expedicao/NeoCorrecaoModal.tsx`
+## Alterações
+
+### 1. Página `/direcao/faturamento` (FaturamentoDirecao.tsx)
+
+**Query de Dados:**
+- Adicionar busca de contas_receber para cada venda
+- Extrair datas de pagamento por método
+
+**Novas Colunas:**
+```
+| Data Pgto 1 | Data Pgto 2 |
+| 29/01/26    | 15/02/26    |
+```
+
+**COLUNAS_DISPONIVEIS:**
+```tsx
+{ id: 'data_pgto_1', label: 'Data Pgto 1', defaultVisible: true },
+{ id: 'data_pgto_2', label: 'Data Pgto 2', defaultVisible: true },
+```
+
+**Interface Venda - adicionar:**
+```tsx
+data_pagamento_1?: string | null;
+data_pagamento_2?: string | null;
+metodo_pagamento_1?: string | null;
+metodo_pagamento_2?: string | null;
+```
+
+**renderCell - adicionar cases:**
+```tsx
+case 'data_pgto_1':
+  return venda.data_pagamento_1 
+    ? <span className="text-white/80">{format(new Date(venda.data_pagamento_1), 'dd/MM/yy')}</span>
+    : <span className="text-white/30">-</span>;
+case 'data_pgto_2':
+  return venda.data_pagamento_2 
+    ? <span className="text-white/80">{format(new Date(venda.data_pagamento_2), 'dd/MM/yy')}</span>
+    : <span className="text-white/30">-</span>;
+```
+
+**Largura da Tabela:**
+- Aumentar container para `max-w-[1600px]` ou usar `w-full` com overflow
+
+---
+
+### 2. Página `/administrativo/financeiro/faturamento/vendas` (FaturamentoVendasMinimalista.tsx)
 
 Aplicar as **mesmas alterações**:
 
-#### Importar utilitário
+**Query fetchVendas:**
+- Adicionar busca de contas_receber ou fazer query separada
+
+**COLUNAS_DISPONIVEIS:**
 ```tsx
-import { ESTADOS_BRASIL, getCidadesPorEstado } from "@/utils/estadosCidades";
+{ id: 'data_pgto_1', label: 'Data Pgto 1', defaultVisible: true },
+{ id: 'data_pgto_2', label: 'Data Pgto 2', defaultVisible: true },
 ```
 
-#### Remover constante local ESTADOS_BRASIL (linhas 47-51)
+**Interface e renderCell:**
+- Mesma lógica de FaturamentoDirecao
 
-#### Adicionar handler de mudança de estado
-```tsx
-const handleEstadoChange = (novoEstado: string) => {
-  setEstado(novoEstado);
-  setCidade("");
-};
-```
-
-#### Alterar layout (linhas 209-234)
-Mesmo padrão do NeoInstalacaoModal:
-- Estado primeiro (Select com nome completo)
-- Cidade segundo (Select dinâmico, desabilitado sem estado)
+**Largura:**
+- Ajustar container para acomodar novas colunas
 
 ---
 
-## Comportamento
+## Estratégia de Busca de Dados
 
-| Ação | Resultado |
-|------|-----------|
-| Usuário abre o modal | Campos Estado e Cidade vazios, Cidade desabilitado |
-| Seleciona Estado = "PR" | Campo Cidade habilita, mostra 399 cidades do PR |
-| Muda para Estado = "SC" | Cidade é limpa e recarrega com cidades de SC |
-| Seleciona Cidade = "Curitiba" | Valor selecionado normalmente |
-| Ao editar um Neo existente | Estado e Cidade são preenchidos corretamente |
+Para obter as datas de pagamento de cada venda, faremos uma query agregada:
+
+```sql
+SELECT 
+  venda_id,
+  metodo_pagamento,
+  MIN(data_vencimento) as primeira_data
+FROM contas_receber 
+WHERE venda_id = ANY($1)
+GROUP BY venda_id, metodo_pagamento
+ORDER BY venda_id, MIN(data_vencimento)
+```
+
+Depois processamos no frontend:
+```tsx
+// Agrupar por venda_id
+const pagamentosPorVenda = new Map<string, { data1?: string, data2?: string, metodo1?: string, metodo2?: string }>();
+
+contasData.forEach(conta => {
+  const existing = pagamentosPorVenda.get(conta.venda_id) || {};
+  if (!existing.data1) {
+    existing.data1 = conta.primeira_data;
+    existing.metodo1 = conta.metodo_pagamento;
+  } else if (!existing.data2 && conta.metodo_pagamento !== existing.metodo1) {
+    existing.data2 = conta.primeira_data;
+    existing.metodo2 = conta.metodo_pagamento;
+  }
+  pagamentosPorVenda.set(conta.venda_id, existing);
+});
+```
+
+---
+
+## Exibição das Colunas
+
+```text
+| ... | Data Pgto 1 | Data Pgto 2 | Valor | Lucro | Status |
+|-----|-------------|-------------|-------|-------|--------|
+| ... | 29/01/26    | 15/02/26    | R$ 5k | R$ 1k | Fatur. |
+| ... | 01/02/26    | -           | R$ 3k | R$ 800| Pend.  |
+```
+
+- **Data Pgto 1**: Primeira data de vencimento do primeiro método
+- **Data Pgto 2**: Primeira data de vencimento do segundo método (se houver)
+- Se a venda tiver apenas 1 método, "Data Pgto 2" exibe "-"
+
+---
+
+## Ajuste de Largura das Listagens
+
+### FaturamentoDirecao.tsx
+
+```tsx
+// Alterar o container da tabela
+<div className="bg-primary/5 border border-primary/10 rounded-xl overflow-x-auto backdrop-blur-xl">
+```
+
+### FaturamentoVendasMinimalista.tsx
+
+```tsx
+// Aumentar largura do container principal
+<div className="container mx-auto p-6 pt-20 space-y-6 max-w-[1600px]">
+
+// Adicionar overflow-x-auto na tabela
+<div className="rounded-md border border-white/10 overflow-x-auto">
+```
 
 ---
 
@@ -137,15 +159,14 @@ Mesmo padrão do NeoInstalacaoModal:
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/components/expedicao/NeoInstalacaoModal.tsx` | Importar utilitário, inverter ordem Estado/Cidade, substituir Input por Select dinâmico |
-| `src/components/expedicao/NeoCorrecaoModal.tsx` | Mesmas alterações do NeoInstalacaoModal |
+| `src/pages/direcao/FaturamentoDirecao.tsx` | Buscar contas_receber, adicionar colunas data_pgto_1/2, ajustar largura |
+| `src/pages/administrativo/FaturamentoVendasMinimalista.tsx` | Mesmas alterações |
 
 ---
 
 ## Impacto
 
-- **UX**: Consistência com outros formulários do sistema (FreteDialog, VendaNovaMinimalista)
-- **Dados**: Padronização dos nomes de cidades (sem erros de digitação)
-- **Manutenção**: Reutiliza o mesmo utilitário já existente
-- **Compatibilidade**: Edição de Neos existentes continua funcionando
+- **Visibilidade**: Gestores visualizam rapidamente quando os pagamentos vencem
+- **Decisões**: Facilita acompanhamento de fluxo de caixa
+- **UX**: Tabela com scroll horizontal se necessário, mas todas as informações visíveis
 
