@@ -31,6 +31,10 @@ export interface OrdemStatus {
   linha_problema: LinhaProblemaInfo | null;
   linhas_concluidas: number;
   total_linhas: number;
+  // Campos para cronômetro
+  capturada_em: string | null;
+  tempo_acumulado_segundos: number | null;
+  tempo_conclusao_segundos: number | null;
 }
 
 export interface CorInfo {
@@ -125,6 +129,7 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
           .from('ordens_soldagem')
           .select(`
             id, pedido_id, numero_ordem, status, responsavel_id, pausada, justificativa_pausa, pausada_em,
+            capturada_em, tempo_acumulado_segundos, tempo_conclusao_segundos,
             linha_problema_id,
             linha_problema:linha_problema_id (id, item, quantidade, tamanho)
           `)
@@ -133,6 +138,7 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
           .from('ordens_perfiladeira')
           .select(`
             id, pedido_id, numero_ordem, status, responsavel_id, metragem_linear, pausada, justificativa_pausa, pausada_em,
+            capturada_em, tempo_acumulado_segundos, tempo_conclusao_segundos,
             linha_problema_id,
             linha_problema:linha_problema_id (id, item, quantidade, tamanho)
           `)
@@ -141,17 +147,18 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
           .from('ordens_separacao')
           .select(`
             id, pedido_id, numero_ordem, status, responsavel_id, pausada, justificativa_pausa, pausada_em,
+            capturada_em, tempo_acumulado_segundos, tempo_conclusao_segundos,
             linha_problema_id,
             linha_problema:linha_problema_id (id, item, quantidade, tamanho)
           `)
           .in('pedido_id', pedidoIds),
         supabase
           .from('ordens_qualidade')
-          .select('id, pedido_id, numero_ordem, status, responsavel_id')
+          .select('id, pedido_id, numero_ordem, status, responsavel_id, capturada_em, tempo_acumulado_segundos, tempo_conclusao_segundos')
           .in('pedido_id', pedidoIds),
         supabase
           .from('ordens_pintura')
-          .select('id, pedido_id, numero_ordem, status, responsavel_id, metragem_quadrada')
+          .select('id, pedido_id, numero_ordem, status, responsavel_id, metragem_quadrada, capturada_em, tempo_acumulado_segundos, tempo_conclusao_segundos')
           .in('pedido_id', pedidoIds),
         vendaIds.length > 0
           ? supabase
@@ -352,6 +359,10 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
             } : null,
             linhas_concluidas: linhasCount.concluidas,
             total_linhas: linhasCount.total,
+            // Campos para cronômetro
+            capturada_em: ordem?.capturada_em || null,
+            tempo_acumulado_segundos: ordem?.tempo_acumulado_segundos || null,
+            tempo_conclusao_segundos: ordem?.tempo_conclusao_segundos || null,
           };
         };
 

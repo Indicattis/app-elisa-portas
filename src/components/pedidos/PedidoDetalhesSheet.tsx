@@ -243,6 +243,9 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
       linha_problema: ordem.linha_problema,
       linhas_concluidas: 0,
       total_linhas: 0,
+      capturada_em: null,
+      tempo_acumulado_segundos: null,
+      tempo_conclusao_segundos: null,
     };
     setOrdemSelecionada(ordemStatus);
     setShowOrdemLinhas(true);
