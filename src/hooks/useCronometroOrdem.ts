@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatCronometroExtended } from '@/utils/timeFormat';
+import { calcularTempoExpediente, estaNoExpediente } from '@/utils/calcularTempoExpediente';
 
 interface UseCronometroOrdemParams {
   capturada_em?: string | null;
@@ -66,20 +67,16 @@ export function useCronometroOrdem(params: UseCronometroOrdemParams | string | n
     const calcularTempo = () => {
       const agora = new Date();
       const inicio = new Date(capturadaEm as string);
-      const diff = agora.getTime() - inicio.getTime();
 
-      if (diff < 0) {
-        setTempoDecorrido(formatCronometroExtended(tempoAcumulado || 0));
-        setDeveAnimar(true);
-        return;
-      }
-
-      // Tempo atual = tempo acumulado + tempo da sessão atual
-      const segundosSessao = Math.floor(diff / 1000);
+      // Calcular tempo apenas dentro do expediente (7h-17h, seg-sex)
+      const segundosSessao = calcularTempoExpediente(inicio, agora);
       const segundosTotal = (tempoAcumulado || 0) + segundosSessao;
+      
       const formatado = formatCronometroExtended(segundosTotal);
       setTempoDecorrido(formatado);
-      setDeveAnimar(true);
+      
+      // Animar apenas se estiver dentro do horário de expediente
+      setDeveAnimar(estaNoExpediente());
     };
 
     // Calcular imediatamente
