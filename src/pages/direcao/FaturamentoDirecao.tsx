@@ -65,6 +65,8 @@ interface Venda {
   portas?: any[];
   justificativa_nao_faturada?: string | null;
   autorizacao_desconto?: AutorizacaoDesconto[];
+  data_pagamento_1?: string | null;
+  data_pagamento_2?: string | null;
 }
 
 // Definição das colunas disponíveis
@@ -76,6 +78,8 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'previsao', label: 'Previsão Entrega', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
   { id: 'desconto_acrescimo', label: 'Desc./Acrés.', defaultVisible: true },
+  { id: 'data_pgto_1', label: 'Data Pgto 1', defaultVisible: true },
+  { id: 'data_pgto_2', label: 'Data Pgto 2', defaultVisible: true },
   { id: 'instalacao', label: 'Instalação', defaultVisible: true },
   { id: 'frete', label: 'Frete', defaultVisible: true },
   { id: 'valor_porta', label: 'Vl. Portas', defaultVisible: true },
@@ -222,14 +226,40 @@ export default function FaturamentoDirecao() {
         });
       }
 
+      // Buscar datas de pagamento das contas_receber
+      const vendaIds = vendasData.map((v: any) => v.id);
+      const { data: contasData } = await supabase
+        .from('contas_receber')
+        .select('venda_id, metodo_pagamento, data_vencimento')
+        .in('venda_id', vendaIds)
+        .order('data_vencimento', { ascending: true });
+
+      // Processar datas de pagamento por venda
+      const pagamentosPorVenda = new Map<string, { data1?: string; data2?: string }>();
+      if (contasData) {
+        contasData.forEach((conta: any) => {
+          const existing = pagamentosPorVenda.get(conta.venda_id) || {};
+          if (!existing.data1) {
+            existing.data1 = conta.data_vencimento;
+            (existing as any).metodo1 = conta.metodo_pagamento;
+          } else if (!existing.data2 && conta.metodo_pagamento !== (existing as any).metodo1) {
+            existing.data2 = conta.data_vencimento;
+          }
+          pagamentosPorVenda.set(conta.venda_id, existing);
+        });
+      }
+
       const vendasCompletas = vendasData.map((venda: any) => {
         const atendenteData = venda.atendente_id ? atendenteMap.get(venda.atendente_id) : null;
+        const pagamentos = pagamentosPorVenda.get(venda.id);
         return {
           ...venda,
           atendente_nome: atendenteData?.nome || "Não encontrado",
           atendente_foto: atendenteData?.foto || null,
           portas: venda.produtos_vendas || [],
           autorizacao_desconto: venda.autorizacao_desconto || [],
+          data_pagamento_1: pagamentos?.data1 || null,
+          data_pagamento_2: pagamentos?.data2 || null,
         };
       });
 
@@ -555,6 +585,14 @@ export default function FaturamentoDirecao() {
         
         // Só tem acréscimo
         return <span className="text-green-400">+{formatCurrency(saldo)}</span>;
+      case 'data_pgto_1':
+        return venda.data_pagamento_1 
+          ? <span className="text-white/80">{format(new Date(venda.data_pagamento_1), 'dd/MM/yy')}</span>
+          : <span className="text-white/30">-</span>;
+      case 'data_pgto_2':
+        return venda.data_pagamento_2 
+          ? <span className="text-white/80">{format(new Date(venda.data_pagamento_2), 'dd/MM/yy')}</span>
+          : <span className="text-white/30">-</span>;
       case 'instalacao':
         return venda.valor_instalacao && venda.valor_instalacao > 0
           ? <span className="text-white/80">{formatCurrency(venda.valor_instalacao)}</span>
@@ -835,7 +873,7 @@ export default function FaturamentoDirecao() {
       </div>
 
       {/* Tabela */}
-      <div className="bg-primary/5 border border-primary/10 rounded-xl overflow-hidden backdrop-blur-xl">
+      <div className="bg-primary/5 border border-primary/10 rounded-xl overflow-x-auto backdrop-blur-xl">
         <TooltipProvider delayDuration={200}>
           <Table>
             <TableHeader>
