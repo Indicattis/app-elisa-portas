@@ -1,123 +1,136 @@
 
-# Plano: Pagamento na Entrega para Ordens de Instalação
+# Plano: Unidade de Medida no Catálogo e Quantidade Decimal nas Vendas
 
 ## Resumo
 
-Adicionar um checkbox na seção de pagamentos da venda para sinalizar que o pagamento será feito na entrega/instalação. Quando uma ordem de instalação for criada, ela armazenará o valor a ser pago e o método de pagamento.
+Adicionar campo de seleção de unidade de medida no cadastro/edição de itens do catálogo de vendas. Quando um item for vendido em "Metro", permitir que a quantidade seja inserida com 2 casas decimais nas vendas.
 
 ---
 
 ## Arquitetura da Solução
 
-A tabela `vendas` já possui a coluna `pagamento_na_entrega` (boolean), mas a tabela `instalacoes` precisa de novas colunas para armazenar os detalhes do pagamento.
+A tabela `vendas_catalogo` já possui a coluna `unidade` (atualmente com valor "UN"). Vamos:
+1. Adicionar UI para selecionar a unidade nos formulários de catálogo
+2. Propagar a unidade para os produtos da venda
+3. Ajustar o input de quantidade para aceitar decimais quando unidade for "metro"
 
 ---
 
-## 1. Migração do Banco de Dados
+## 1. Formulários do Catálogo
 
-**Adicionar colunas na tabela `instalacoes`:**
+### Arquivo: `src/pages/vendas/CatalogoNovoMinimalista.tsx`
 
-```sql
-ALTER TABLE instalacoes 
-ADD COLUMN valor_pagamento_entrega NUMERIC DEFAULT 0,
-ADD COLUMN metodo_pagamento_entrega TEXT;
+**Adicionar campo de seleção de unidade:**
+
+| Campo | Valores |
+|-------|---------|
+| Unidade | Unitário, Metro, Kg, Litro |
+
+**Localização:** Na seção de "Preço", adicionar um Select para unidade com valor padrão "Unitário".
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│ Preço de Venda *          │ Custo                       │
+│ [___________]             │ [___________]               │
+├───────────────────────────┴─────────────────────────────┤
+│ Unidade de Venda *                                      │
+│ [ Unitário           ▼ ]                                │
+│ Ex: Metro para itens vendidos por comprimento           │
+└─────────────────────────────────────────────────────────┘
 ```
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| `valor_pagamento_entrega` | NUMERIC | Valor a ser cobrado na entrega |
-| `metodo_pagamento_entrega` | TEXT | Método de pagamento (boleto, cartao_credito, a_vista, dinheiro) |
+### Arquivo: `src/pages/vendas/CatalogoEditMinimalista.tsx`
+
+**Mesma alteração:** Adicionar campo de unidade que carrega o valor existente do banco.
 
 ---
 
-## 2. Interface: PagamentoSection.tsx
+## 2. Migração do Banco de Dados
 
-**Adicionar novo campo ao `PagamentoData`:**
+**Atualizar registros existentes para unidade legível:**
+
+```sql
+UPDATE vendas_catalogo 
+SET unidade = 'Unitário' 
+WHERE unidade = 'UN' OR unidade IS NULL;
+```
+
+---
+
+## 3. Interface ProdutoVenda
+
+### Arquivo: `src/hooks/useVendas.ts`
+
+**Adicionar campo unidade à interface:**
 
 ```typescript
-export interface PagamentoData {
-  usar_dois_metodos: boolean;
-  metodos: [MetodoPagamento, MetodoPagamento];
-  pagamento_na_entrega: boolean;  // NOVO
+export interface ProdutoVenda {
+  // ... campos existentes
+  unidade?: string;  // NOVO: unidade de medida do produto
 }
 ```
 
-**Adicionar checkbox no componente:**
-
-Abaixo do toggle "Usar 2 formas de pagamento", adicionar um checkbox sofisticado:
-
-```text
-┌─────────────────────────────────────────────────────┐
-│ ☑ Pagamento será feito na entrega/instalação        │
-│   O valor total será cobrado no momento da entrega  │
-└─────────────────────────────────────────────────────┘
-```
-
-**Comportamento:**
-- Quando marcado, os campos de método de pagamento ficam opcionais
-- A seção de pagamento fica simplificada (apenas escolha do método previsto)
-- O resumo mostra "A pagar na entrega: R$ X.XXX,XX"
-
 ---
 
-## 3. Página de Nova Venda: VendaNovaMinimalista.tsx
+## 4. Modal de Seleção de Produtos
 
-**Atualizar inicialização do `pagamentoData`:**
+### Arquivo: `src/components/vendas/SelecionarAcessoriosModal.tsx`
 
-```typescript
-const [pagamentoData, setPagamentoData] = useState<PagamentoData>(createEmptyPagamentoData());
-// createEmptyPagamentoData() já retornará pagamento_na_entrega: false
-```
+**Buscar e propagar a unidade:**
 
-**Passar dados para `createVenda`:**
-
-O `pagamentoData.pagamento_na_entrega` já estará no objeto passado.
-
----
-
-## 4. Hook useVendas.ts: Salvar na Venda
-
-**Na função `createVenda`:**
+1. Atualizar a query para incluir `unidade` do catálogo
+2. Passar `unidade` no objeto `ProdutoVenda` criado
 
 ```typescript
-// Ao inserir a venda
-const { data: venda } = await supabase
-  .from('vendas')
-  .insert({
-    ...vendaData,
-    pagamento_na_entrega: pagamentoData.pagamento_na_entrega,
-    metodo_pagamento: pagamentoData.metodos[0]?.tipo || '',
-    // ... outros campos
-  })
-```
+// Na query
+return data.map(item => ({
+  id: item.id,
+  nome: item.nome_produto,
+  preco: Number(item.preco_venda),
+  unidade: item.unidade, // NOVO
+  // ...
+}));
 
----
-
-## 5. Hooks de Criação de Instalação
-
-**Arquivos afetados:**
-- `src/hooks/usePedidoCreation.ts` (para manutenções)
-- `src/hooks/usePedidosEtapas.ts` (para instalações normais)
-- `src/components/instalacoes/CalendarioMensalDesktop.tsx` (criação manual)
-
-**Lógica:**
-
-Ao criar uma instalação, buscar dados da venda e verificar se `pagamento_na_entrega = true`:
-
-```typescript
-// Ao inserir instalação
-const { data: venda } = await supabase
-  .from('vendas')
-  .select('pagamento_na_entrega, valor_venda, metodo_pagamento')
-  .eq('id', vendaId)
-  .single();
-
-await supabase.from('instalacoes').insert({
+// No handleConfirmar
+const produtos: ProdutoVenda[] = itensSelecionadosArray.map(item => ({
   // ... campos existentes
-  valor_pagamento_entrega: venda.pagamento_na_entrega ? venda.valor_venda : 0,
-  metodo_pagamento_entrega: venda.pagamento_na_entrega ? venda.metodo_pagamento : null,
-});
+  unidade: item.unidade, // NOVO
+}));
 ```
+
+---
+
+## 5. Tabela de Produtos da Venda
+
+### Arquivo: `src/components/vendas/ProdutosVendaTable.tsx`
+
+**Permitir quantidade decimal quando unidade for "Metro":**
+
+```typescript
+// Verificar se permite decimais
+const permiteDecimal = produto.unidade?.toLowerCase() === 'metro';
+
+<Input
+  type="number"
+  min={permiteDecimal ? "0.01" : "1"}
+  step={permiteDecimal ? "0.01" : "1"}
+  value={produto.quantidade}
+  onChange={(e) => {
+    const novaQtd = parseFloat(e.target.value);
+    if (novaQtd >= 0.01) {
+      onUpdateQuantidade(index, novaQtd);
+    }
+  }}
+  className="w-20"
+/>
+```
+
+**Exibir unidade na coluna Qtd:**
+
+| Qtd |
+|-----|
+| 2.50 m |
+| 1 un |
 
 ---
 
@@ -125,27 +138,50 @@ await supabase.from('instalacoes').insert({
 
 | Arquivo | Alteração |
 |---------|-----------|
-| **Banco de Dados** | Adicionar `valor_pagamento_entrega` e `metodo_pagamento_entrega` em `instalacoes` |
-| `src/components/vendas/PagamentoSection.tsx` | Adicionar checkbox "Pagamento na entrega" e atualizar interface |
-| `src/hooks/useVendas.ts` | Passar `pagamento_na_entrega` ao criar venda |
-| `src/hooks/usePedidoCreation.ts` | Copiar dados de pagamento ao criar instalação |
-| `src/hooks/usePedidosEtapas.ts` | Copiar dados de pagamento ao criar instalação |
-| `src/components/instalacoes/CalendarioMensalDesktop.tsx` | Copiar dados de pagamento ao criar instalação manual |
+| **Banco de Dados** | Atualizar registros existentes para `unidade = 'Unitário'` |
+| `src/pages/vendas/CatalogoNovoMinimalista.tsx` | Adicionar Select de unidade com padrão "Unitário" |
+| `src/pages/vendas/CatalogoEditMinimalista.tsx` | Adicionar Select de unidade (carrega valor existente) |
+| `src/hooks/useVendas.ts` | Adicionar `unidade?: string` à interface ProdutoVenda |
+| `src/components/vendas/SelecionarAcessoriosModal.tsx` | Buscar e propagar unidade do catálogo |
+| `src/components/vendas/ProdutosVendaTable.tsx` | Permitir decimais quando unidade for "Metro" |
+
+---
+
+## Opções de Unidade
+
+| Valor | Descrição |
+|-------|-----------|
+| Unitário | Item vendido por unidade (padrão) |
+| Metro | Item vendido por metro linear |
+| Kg | Item vendido por peso |
+| Litro | Item vendido por volume |
 
 ---
 
 ## Fluxo do Usuário
 
 ```text
-1. Vendedor abre /vendas/minhas-vendas/nova
-2. Preenche dados do cliente e produtos
-3. Na seção "Forma de Pagamento":
-   - Marca "Pagamento será feito na entrega"
-   - Seleciona o método previsto (boleto, cartão, dinheiro, etc.)
-4. Finaliza a venda
-5. Sistema salva a venda com pagamento_na_entrega = true
-6. Quando o pedido avança para instalação:
-   - O sistema cria a ordem de instalação
-   - Copia o valor total e método para a ordem
-7. Instalador visualiza na ordem: "A receber: R$ X.XXX,XX via [Método]"
+1. Admin cadastra produto no catálogo (/vendas/catalogo/new)
+   - Seleciona "Metro" como unidade de venda
+   
+2. Vendedor cria nova venda (/vendas/minhas-vendas/nova)
+   - Abre modal de catálogo
+   - Seleciona o produto vendido em metros
+   
+3. Na tabela de produtos:
+   - Campo quantidade permite decimais (ex: 2.50)
+   - Exibe "2.50 m" na coluna de quantidade
+   
+4. Sistema calcula: 2.50 × R$ 45.00 = R$ 112.50
 ```
+
+---
+
+## Comportamento do Campo Quantidade
+
+| Unidade | min | step | Exemplo |
+|---------|-----|------|---------|
+| Unitário | 1 | 1 | 1, 2, 3... |
+| Metro | 0.01 | 0.01 | 0.50, 1.25, 2.80... |
+| Kg | 0.01 | 0.01 | 0.500, 1.250... |
+| Litro | 0.01 | 0.01 | 0.5, 1.0... |
