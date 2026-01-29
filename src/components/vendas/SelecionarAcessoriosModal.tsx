@@ -102,7 +102,7 @@ export function SelecionarAcessoriosModal({
       desconto_valor: 0,
       desconto_percentual: 0,
       tipo_desconto: 'valor' as 'valor' | 'percentual',
-      estoque_id: item.id
+      vendas_catalogo_id: item.id
     }));
 
     onConfirm(produtos);

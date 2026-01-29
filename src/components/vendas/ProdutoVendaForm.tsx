@@ -267,12 +267,12 @@ export function ProdutoVendaForm({
       }
     }
     
-    if (formData.tipo_produto === 'acessorio' && !formData.acessorio_id && !formData.estoque_id) {
+    if (formData.tipo_produto === 'acessorio' && !formData.acessorio_id && !formData.vendas_catalogo_id) {
       toast.error('Selecione um acessório');
       return;
     }
     
-    if (formData.tipo_produto === 'adicional' && !formData.adicional_id && !formData.estoque_id) {
+    if (formData.tipo_produto === 'adicional' && !formData.adicional_id && !formData.vendas_catalogo_id) {
       toast.error('Selecione um adicional');
       return;
     }
@@ -596,7 +596,7 @@ export function ProdutoVendaForm({
             <div className="space-y-2">
               <Label htmlFor="acessorio">Acessório *</Label>
               <Select
-                value={formData.estoque_id}
+                value={formData.vendas_catalogo_id}
                 onValueChange={handleAcessorioChange}
                 required
               >
@@ -618,7 +618,7 @@ export function ProdutoVendaForm({
             <div className="space-y-2">
               <Label htmlFor="adicional">Adicional *</Label>
               <Select
-                value={formData.estoque_id}
+                value={formData.vendas_catalogo_id}
                 onValueChange={handleAdicionalChange}
                 required
               >
