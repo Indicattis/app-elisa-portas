@@ -628,11 +628,25 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
 
   // Pausar ordem (Aviso de Falta) - para separação e perfiladeira
   const pausarOrdem = useMutation({
-    mutationFn: async ({ ordemId, justificativa, linhaProblemaId }: { ordemId: string; justificativa: string; linhaProblemaId?: string }) => {
+    mutationFn: async ({ ordemId, justificativa, linhasProblemaIds }: { ordemId: string; justificativa: string; linhasProblemaIds?: string[] }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
       const tabelaOrdem = TABELA_MAP[tipoOrdem] as 'ordens_separacao' | 'ordens_perfiladeira' | 'ordens_soldagem';
+
+      // Se houver linhas selecionadas, marcar todas como com_problema
+      if (linhasProblemaIds && linhasProblemaIds.length > 0) {
+        const { error: linhasError } = await supabase
+          .from('linhas_ordens')
+          .update({
+            com_problema: true,
+            problema_reportado_em: new Date().toISOString(),
+            problema_reportado_por: user.id,
+          })
+          .in('id', linhasProblemaIds);
+
+        if (linhasError) throw linhasError;
+      }
 
       // Buscar ordem para calcular tempo trabalhado até agora
       const { data: ordem, error: ordemError } = await supabase
@@ -655,13 +669,14 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       const tempoTotal = (ordem.tempo_acumulado_segundos || 0) + tempoSessao;
 
       // Atualizar ordem como pausada
+      // Armazenar a primeira linha como linha_problema_id para compatibilidade
       const { error } = await supabase
         .from(tabelaOrdem)
         .update({
           pausada: true,
           pausada_em: new Date().toISOString(),
           justificativa_pausa: justificativa,
-          linha_problema_id: linhaProblemaId || null,
+          linha_problema_id: linhasProblemaIds?.[0] || null,
           tempo_acumulado_segundos: tempoTotal,
           responsavel_id: null, // Liberar a ordem para outro operador
         })

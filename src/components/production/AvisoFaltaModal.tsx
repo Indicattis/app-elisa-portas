@@ -10,14 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AlertTriangle, PauseCircle } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface LinhaSimples {
   id: string;
@@ -31,7 +26,7 @@ interface AvisoFaltaModalProps {
   onOpenChange: (open: boolean) => void;
   numeroOrdem: string;
   linhas?: LinhaSimples[];
-  onConfirm: (justificativa: string, linhaProblemaId?: string) => Promise<void>;
+  onConfirm: (justificativa: string, linhasProblemaIds?: string[]) => Promise<void>;
   isPausing?: boolean;
 }
 
@@ -44,35 +39,68 @@ export function AvisoFaltaModal({
   isPausing = false,
 }: AvisoFaltaModalProps) {
   const [justificativa, setJustificativa] = useState("");
-  const [tipoProblema, setTipoProblema] = useState<string>("outros");
+  const [linhasSelecionadas, setLinhasSelecionadas] = useState<string[]>([]);
+  const [modoOutros, setModoOutros] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const linhaSelecionada = useMemo(() => {
-    if (tipoProblema === "outros") return null;
-    return linhas.find(l => l.id === tipoProblema) || null;
-  }, [tipoProblema, linhas]);
+  const linhasInfo = useMemo(() => {
+    return linhas.filter(l => linhasSelecionadas.includes(l.id));
+  }, [linhasSelecionadas, linhas]);
+
+  const handleToggleLinha = (linhaId: string) => {
+    setLinhasSelecionadas(prev => 
+      prev.includes(linhaId)
+        ? prev.filter(id => id !== linhaId)
+        : [...prev, linhaId]
+    );
+    // Se selecionar uma linha, desmarcar "Outros"
+    if (!linhasSelecionadas.includes(linhaId)) {
+      setModoOutros(false);
+    }
+  };
+
+  const handleToggleOutros = () => {
+    setModoOutros(prev => !prev);
+    // Se marcar "Outros", limpar linhas selecionadas
+    if (!modoOutros) {
+      setLinhasSelecionadas([]);
+    }
+  };
 
   const handleSubmit = async () => {
-    if (tipoProblema === "outros" && justificativa.trim().length < 10) {
+    if (modoOutros && justificativa.trim().length < 10) {
       setError("A justificativa deve ter pelo menos 10 caracteres");
+      return;
+    }
+
+    if (!modoOutros && linhasSelecionadas.length === 0) {
+      setError("Selecione ao menos uma linha com problema ou marque 'Outros'");
       return;
     }
 
     setError(null);
     
-    const linhaProblemaId = tipoProblema !== "outros" ? tipoProblema : undefined;
-    const justificativaFinal = tipoProblema === "outros" 
-      ? justificativa 
-      : `Falta: ${linhaSelecionada?.item}${justificativa.trim() ? ` - ${justificativa}` : ''}`;
+    let justificativaFinal: string;
     
-    await onConfirm(justificativaFinal, linhaProblemaId);
+    if (modoOutros) {
+      justificativaFinal = justificativa;
+    } else {
+      const linhasTexto = linhasInfo.map(l => l.item).join(', ');
+      justificativaFinal = `Falta: ${linhasTexto}${justificativa.trim() ? ` - ${justificativa}` : ''}`;
+    }
+    
+    await onConfirm(
+      justificativaFinal, 
+      modoOutros ? undefined : linhasSelecionadas
+    );
     resetForm();
     onOpenChange(false);
   };
 
   const resetForm = () => {
     setJustificativa("");
-    setTipoProblema("outros");
+    setLinhasSelecionadas([]);
+    setModoOutros(false);
     setError(null);
   };
 
@@ -83,9 +111,9 @@ export function AvisoFaltaModal({
     onOpenChange(newOpen);
   };
 
-  const isFormValid = tipoProblema === "outros" 
+  const isFormValid = modoOutros 
     ? justificativa.trim().length >= 10 
-    : true;
+    : linhasSelecionadas.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -97,74 +125,112 @@ export function AvisoFaltaModal({
           </DialogTitle>
           <DialogDescription>
             Você está pausando a ordem <span className="font-semibold">{numeroOrdem}</span>.
-            Selecione a linha com problema ou informe o motivo.
+            Selecione as linhas com problema ou informe o motivo.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Seleção de tipo de problema */}
+          {/* Lista de linhas com checkboxes */}
           <div className="space-y-2">
-            <Label htmlFor="tipo-problema">Tipo do problema *</Label>
-            <Select value={tipoProblema} onValueChange={setTipoProblema}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o problema" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="outros">Outros (digitar motivo)</SelectItem>
+            <Label>Linhas com problema</Label>
+            <ScrollArea className="h-[200px] rounded-md border p-3">
+              <div className="space-y-2">
                 {linhas.map((linha) => (
-                  <SelectItem key={linha.id} value={linha.id}>
-                    {linha.item} - Qtd: {linha.quantidade}
-                    {linha.tamanho && ` - ${linha.tamanho}`}
-                  </SelectItem>
+                  <div
+                    key={linha.id}
+                    className={`flex items-center space-x-3 p-2 rounded-md transition-colors cursor-pointer ${
+                      linhasSelecionadas.includes(linha.id)
+                        ? 'bg-destructive/10 border border-destructive/30'
+                        : 'hover:bg-muted/50'
+                    }`}
+                    onClick={() => handleToggleLinha(linha.id)}
+                  >
+                    <Checkbox
+                      id={linha.id}
+                      checked={linhasSelecionadas.includes(linha.id)}
+                      onCheckedChange={() => handleToggleLinha(linha.id)}
+                      disabled={modoOutros}
+                    />
+                    <label
+                      htmlFor={linha.id}
+                      className={`flex-1 text-sm cursor-pointer ${
+                        modoOutros ? 'opacity-50' : ''
+                      }`}
+                    >
+                      <span className="font-medium">{linha.item}</span>
+                      <span className="text-muted-foreground ml-2">
+                        Qtd: {linha.quantidade}
+                        {linha.tamanho && ` - ${linha.tamanho}`}
+                      </span>
+                    </label>
+                  </div>
                 ))}
-              </SelectContent>
-            </Select>
+                
+                {/* Opção "Outros" */}
+                <div
+                  className={`flex items-center space-x-3 p-2 rounded-md transition-colors cursor-pointer border-t pt-3 mt-2 ${
+                    modoOutros
+                      ? 'bg-amber-500/10 border border-amber-500/30'
+                      : 'hover:bg-muted/50'
+                  }`}
+                  onClick={handleToggleOutros}
+                >
+                  <Checkbox
+                    id="outros"
+                    checked={modoOutros}
+                    onCheckedChange={handleToggleOutros}
+                  />
+                  <label
+                    htmlFor="outros"
+                    className="flex-1 text-sm cursor-pointer font-medium"
+                  >
+                    Outros (digitar motivo)
+                  </label>
+                </div>
+              </div>
+            </ScrollArea>
           </div>
 
+          {/* Resumo das linhas selecionadas */}
+          {linhasSelecionadas.length > 0 && (
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+              <p className="text-sm font-medium text-destructive mb-1">
+                {linhasSelecionadas.length} linha(s) selecionada(s):
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {linhasInfo.map(l => l.item).join(', ')}
+              </p>
+            </div>
+          )}
+
           {/* Campo de justificativa */}
-          {tipoProblema === "outros" ? (
-            <div className="space-y-2">
-              <Label htmlFor="justificativa">Justificativa *</Label>
-              <Textarea
-                id="justificativa"
-                placeholder="Ex: Falta de perfil L 40mm, aguardando reposição do fornecedor..."
-                value={justificativa}
-                onChange={(e) => {
-                  setJustificativa(e.target.value);
-                  if (error) setError(null);
-                }}
-                rows={4}
-                className="resize-none"
-              />
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="justificativa">
+              {modoOutros ? 'Justificativa *' : 'Detalhes adicionais (opcional)'}
+            </Label>
+            <Textarea
+              id="justificativa"
+              placeholder={modoOutros 
+                ? "Ex: Falta de perfil L 40mm, aguardando reposição do fornecedor..."
+                : "Ex: Aguardando chegada do fornecedor..."
+              }
+              value={justificativa}
+              onChange={(e) => {
+                setJustificativa(e.target.value);
+                if (error) setError(null);
+              }}
+              rows={modoOutros ? 4 : 2}
+              className="resize-none"
+            />
+            {modoOutros && (
               <p className="text-xs text-muted-foreground">
                 Mínimo de 10 caracteres ({justificativa.length}/10)
               </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-                <p className="text-sm text-amber-700 dark:text-amber-300">
-                  <strong>Linha selecionada:</strong>
-                </p>
-                <p className="text-sm text-amber-800 dark:text-amber-200 mt-1">
-                  {linhaSelecionada?.item} - Qtd: {linhaSelecionada?.quantidade}
-                  {linhaSelecionada?.tamanho && ` - Tam: ${linhaSelecionada.tamanho}`}
-                </p>
-              </div>
-              
-              <Label htmlFor="justificativa-extra">Detalhes adicionais (opcional)</Label>
-              <Textarea
-                id="justificativa-extra"
-                placeholder="Ex: Aguardando chegada do fornecedor..."
-                value={justificativa}
-                onChange={(e) => setJustificativa(e.target.value)}
-                rows={2}
-                className="resize-none"
-              />
-            </div>
+            )}
+          </div>
+
+          {error && (
+            <p className="text-sm text-destructive">{error}</p>
           )}
 
           <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">

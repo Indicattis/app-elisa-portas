@@ -224,7 +224,25 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
                 <span className="text-sm font-medium text-red-300">Ordem Pausada</span>
               </div>
               
-              {ordem.linha_problema && (
+              {/* Mostrar todas as linhas com problema */}
+              {linhas.filter(l => l.com_problema).length > 0 && (
+                <div className="mb-2 p-2 rounded bg-red-500/20">
+                  <p className="text-xs text-red-200 font-medium mb-1">
+                    {linhas.filter(l => l.com_problema).length} linha(s) com problema:
+                  </p>
+                  <div className="space-y-1">
+                    {linhas.filter(l => l.com_problema).map(linha => (
+                      <p key={linha.id} className="text-sm text-white">
+                        • {linha.estoque?.nome_produto || linha.item} - Qtd: {linha.quantidade}
+                        {linha.tamanho && ` - Tam: ${linha.tamanho}`}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Fallback para ordem.linha_problema se não houver linhas com com_problema marcado */}
+              {linhas.filter(l => l.com_problema).length === 0 && ordem.linha_problema && (
                 <div className="mb-2 p-2 rounded bg-red-500/20">
                   <p className="text-xs text-red-200 font-medium">Linha com problema:</p>
                   <p className="text-sm text-white">

@@ -71,8 +71,8 @@ export default function ProducaoSeparacao() {
     }
   };
 
-  const handlePausarOrdem = async (ordemId: string, justificativa: string) => {
-    await pausarOrdem.mutateAsync({ ordemId, justificativa });
+  const handlePausarOrdem = async (ordemId: string, justificativa: string, linhasProblemaIds?: string[]) => {
+    await pausarOrdem.mutateAsync({ ordemId, justificativa, linhasProblemaIds });
     setSheetOpen(false);
   };
 

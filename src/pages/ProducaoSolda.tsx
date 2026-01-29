@@ -96,8 +96,8 @@ export default function ProducaoSolda() {
         onMarcarLinha={handleMarcarLinha}
         onConcluirOrdem={handleConcluirOrdem}
         onCapturarOrdem={handleCapturarOrdem}
-        onPausarOrdem={async (ordemId, justificativa) => {
-          await pausarOrdem.mutateAsync({ ordemId, justificativa });
+        onPausarOrdem={async (ordemId, justificativa, linhasProblemaIds) => {
+          await pausarOrdem.mutateAsync({ ordemId, justificativa, linhasProblemaIds });
           setSheetOpen(false);
         }}
         isPausing={pausarOrdem.isPending}
