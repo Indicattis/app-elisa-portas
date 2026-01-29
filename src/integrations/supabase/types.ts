@@ -2308,6 +2308,7 @@ export type Database = {
           last_geocoded_at: string | null
           latitude: number | null
           longitude: number | null
+          metragem_quadrada: number | null
           nome_cliente: string
           observacoes: string | null
           pedido_id: string | null
@@ -2347,6 +2348,7 @@ export type Database = {
           last_geocoded_at?: string | null
           latitude?: number | null
           longitude?: number | null
+          metragem_quadrada?: number | null
           nome_cliente: string
           observacoes?: string | null
           pedido_id?: string | null
@@ -2386,6 +2388,7 @@ export type Database = {
           last_geocoded_at?: string | null
           latitude?: number | null
           longitude?: number | null
+          metragem_quadrada?: number | null
           nome_cliente?: string
           observacoes?: string | null
           pedido_id?: string | null
@@ -3431,6 +3434,7 @@ export type Database = {
           nome_cliente: string
           observacoes: string | null
           pedido_id: string | null
+          quantidade_pedidos: number | null
           responsavel_carregamento_id: string | null
           responsavel_carregamento_nome: string | null
           status: string | null
@@ -3457,6 +3461,7 @@ export type Database = {
           nome_cliente: string
           observacoes?: string | null
           pedido_id?: string | null
+          quantidade_pedidos?: number | null
           responsavel_carregamento_id?: string | null
           responsavel_carregamento_nome?: string | null
           status?: string | null
@@ -3483,6 +3488,7 @@ export type Database = {
           nome_cliente?: string
           observacoes?: string | null
           pedido_id?: string | null
+          quantidade_pedidos?: number | null
           responsavel_carregamento_id?: string | null
           responsavel_carregamento_nome?: string | null
           status?: string | null
@@ -3827,6 +3833,7 @@ export type Database = {
           projeto_alterado: boolean | null
           projeto_alterado_descricao: string | null
           projeto_alterado_em: string | null
+          quantidade_pedidos: number | null
           responsavel_id: string | null
           status: string
           tempo_acumulado_segundos: number | null
@@ -3852,6 +3859,7 @@ export type Database = {
           projeto_alterado?: boolean | null
           projeto_alterado_descricao?: string | null
           projeto_alterado_em?: string | null
+          quantidade_pedidos?: number | null
           responsavel_id?: string | null
           status?: string
           tempo_acumulado_segundos?: number | null
@@ -3877,6 +3885,7 @@ export type Database = {
           projeto_alterado?: boolean | null
           projeto_alterado_descricao?: string | null
           projeto_alterado_em?: string | null
+          quantidade_pedidos?: number | null
           responsavel_id?: string | null
           status?: string
           tempo_acumulado_segundos?: number | null
@@ -3937,6 +3946,7 @@ export type Database = {
           projeto_alterado: boolean | null
           projeto_alterado_descricao: string | null
           projeto_alterado_em: string | null
+          quantidade_itens: number | null
           responsavel_id: string | null
           status: string
           tempo_acumulado_segundos: number | null
@@ -3965,6 +3975,7 @@ export type Database = {
           projeto_alterado?: boolean | null
           projeto_alterado_descricao?: string | null
           projeto_alterado_em?: string | null
+          quantidade_itens?: number | null
           responsavel_id?: string | null
           status?: string
           tempo_acumulado_segundos?: number | null
@@ -3993,6 +4004,7 @@ export type Database = {
           projeto_alterado?: boolean | null
           projeto_alterado_descricao?: string | null
           projeto_alterado_em?: string | null
+          quantidade_itens?: number | null
           responsavel_id?: string | null
           status?: string
           tempo_acumulado_segundos?: number | null
@@ -4035,6 +4047,7 @@ export type Database = {
           id: string
           justificativa_pausa: string | null
           linha_problema_id: string | null
+          metragem_quadrada: number | null
           numero_ordem: string
           observacoes: string | null
           pausada: boolean | null
@@ -4064,6 +4077,7 @@ export type Database = {
           id?: string
           justificativa_pausa?: string | null
           linha_problema_id?: string | null
+          metragem_quadrada?: number | null
           numero_ordem: string
           observacoes?: string | null
           pausada?: boolean | null
@@ -4093,6 +4107,7 @@ export type Database = {
           id?: string
           justificativa_pausa?: string | null
           linha_problema_id?: string | null
+          metragem_quadrada?: number | null
           numero_ordem?: string
           observacoes?: string | null
           pausada?: boolean | null
