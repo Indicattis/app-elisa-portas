@@ -1,156 +1,157 @@
 
 
-# Plano: Exibir Datas de Pagamento nas Listagens de Faturamento
+# Plano: Corrigir Visualização e Edição de Acréscimo/Desconto
 
-## Objetivo
+## Problema Identificado
 
-Adicionar duas colunas para exibir as datas dos dois métodos de pagamento cadastrados na venda, além de aumentar a largura da listagem para melhorar a visualização de todas as colunas.
+Na página `/vendas/minhas-vendas/editar/:id`:
 
----
-
-## Contexto Técnico
-
-O sistema permite até 2 métodos de pagamento por venda. Os dados de pagamento são armazenados na tabela `contas_receber`, com múltiplas parcelas por método. Para identificar as datas dos pagamentos:
-
-- Cada parcela tem `metodo_pagamento` e `data_vencimento`
-- Precisamos buscar a **primeira data de vencimento** de cada método de pagamento distinto por venda
-- Se houver 2 métodos diferentes, exibimos as duas datas separadamente
+1. **Acréscimo não é exibido**: Não há nenhuma seção mostrando o valor do crédito (R$ 6.300) que a venda possui
+2. **Botão de Crédito não aparece**: A condição para exibir o botão não contempla o caso de edição de um crédito existente
+3. **Botão de Desconto não aparece**: A lógica atual oculta o botão quando há crédito, mas não oferece opção de remover o crédito para então aplicar desconto
+4. **Componente VendaResumo não é usado**: O resumo visual com totais e crédito não está na página de edição
 
 ---
 
-## Alterações
+## Análise da Venda em Questão
 
-### 1. Página `/direcao/faturamento` (FaturamentoDirecao.tsx)
-
-**Query de Dados:**
-- Adicionar busca de contas_receber para cada venda
-- Extrair datas de pagamento por método
-
-**Novas Colunas:**
 ```
-| Data Pgto 1 | Data Pgto 2 |
-| 29/01/26    | 15/02/26    |
+ID: 20fbc47e-71a8-43f0-ba19-b549e9b4c24a
+Cliente: Ducatti Engenharia Ltda
+Valor Venda: R$ 22.300
+Valor Crédito: R$ 6.300 (81.82%)
+Desconto nos Produtos: R$ 0 (nenhum)
 ```
-
-**COLUNAS_DISPONIVEIS:**
-```tsx
-{ id: 'data_pgto_1', label: 'Data Pgto 1', defaultVisible: true },
-{ id: 'data_pgto_2', label: 'Data Pgto 2', defaultVisible: true },
-```
-
-**Interface Venda - adicionar:**
-```tsx
-data_pagamento_1?: string | null;
-data_pagamento_2?: string | null;
-metodo_pagamento_1?: string | null;
-metodo_pagamento_2?: string | null;
-```
-
-**renderCell - adicionar cases:**
-```tsx
-case 'data_pgto_1':
-  return venda.data_pagamento_1 
-    ? <span className="text-white/80">{format(new Date(venda.data_pagamento_1), 'dd/MM/yy')}</span>
-    : <span className="text-white/30">-</span>;
-case 'data_pgto_2':
-  return venda.data_pagamento_2 
-    ? <span className="text-white/80">{format(new Date(venda.data_pagamento_2), 'dd/MM/yy')}</span>
-    : <span className="text-white/30">-</span>;
-```
-
-**Largura da Tabela:**
-- Aumentar container para `max-w-[1600px]` ou usar `w-full` com overflow
 
 ---
 
-### 2. Página `/administrativo/financeiro/faturamento/vendas` (FaturamentoVendasMinimalista.tsx)
+## Lógica Atual (Problemática)
 
-Aplicar as **mesmas alterações**:
-
-**Query fetchVendas:**
-- Adicionar busca de contas_receber ou fazer query separada
-
-**COLUNAS_DISPONIVEIS:**
 ```tsx
-{ id: 'data_pgto_1', label: 'Data Pgto 1', defaultVisible: true },
-{ id: 'data_pgto_2', label: 'Data Pgto 2', defaultVisible: true },
+// Botão de Desconto - só aparece se NÃO há crédito
+{produtosFormatados.length > 0 && valorCreditoAtual === 0 && (
+  <Button>Adicionar/Editar Desconto</Button>
+)}
+
+// Botão de Crédito - só aparece se NÃO há desconto
+{produtosFormatados.length > 0 && !temDesconto && (
+  <Button>Adicionar/Editar Crédito</Button>
+)}
 ```
 
-**Interface e renderCell:**
-- Mesma lógica de FaturamentoDirecao
-
-**Largura:**
-- Ajustar container para acomodar novas colunas
+O problema: quando há crédito (`valorCreditoAtual > 0`), o botão de crédito deveria aparecer para permitir **editar** o crédito existente, mas a lógica não considera isso de forma visível.
 
 ---
 
-## Estratégia de Busca de Dados
+## Solução Proposta
 
-Para obter as datas de pagamento de cada venda, faremos uma query agregada:
+### 1. Adicionar Componente VendaResumo
 
-```sql
-SELECT 
-  venda_id,
-  metodo_pagamento,
-  MIN(data_vencimento) as primeira_data
-FROM contas_receber 
-WHERE venda_id = ANY($1)
-GROUP BY venda_id, metodo_pagamento
-ORDER BY venda_id, MIN(data_vencimento)
+Incluir o `VendaResumo` na página de edição para exibir:
+- Valor dos produtos
+- Valor do frete
+- Desconto aplicado (se houver)
+- **Crédito aplicado** (se houver) - com botão para remover
+- Total da venda
+
+### 2. Ajustar Lógica dos Botões
+
+Modificar as condições para:
+- **Botão Desconto**: Mostrar se não há crédito (manter)
+- **Botão Crédito**: Mostrar se não há desconto OU se já tem crédito (permitir edição)
+
+```tsx
+// Botão de Desconto - só se NÃO há crédito
+{produtosFormatados.length > 0 && valorCreditoAtual === 0 && (
+  <Button onClick={() => setDescontoModalOpen(true)}>
+    {temDesconto ? 'Editar Desconto' : 'Adicionar Desconto'}
+  </Button>
+)}
+
+// Botão de Crédito - se não há desconto OU já tem crédito
+{produtosFormatados.length > 0 && (!temDesconto || valorCreditoAtual > 0) && (
+  <Button onClick={() => setCreditoModalOpen(true)}>
+    {valorCreditoAtual > 0 ? 'Editar Crédito' : 'Adicionar Crédito'}
+  </Button>
+)}
 ```
 
-Depois processamos no frontend:
-```tsx
-// Agrupar por venda_id
-const pagamentosPorVenda = new Map<string, { data1?: string, data2?: string, metodo1?: string, metodo2?: string }>();
+### 3. Adicionar Handler para Remover Crédito
 
-contasData.forEach(conta => {
-  const existing = pagamentosPorVenda.get(conta.venda_id) || {};
-  if (!existing.data1) {
-    existing.data1 = conta.primeira_data;
-    existing.metodo1 = conta.metodo_pagamento;
-  } else if (!existing.data2 && conta.metodo_pagamento !== existing.metodo1) {
-    existing.data2 = conta.primeira_data;
-    existing.metodo2 = conta.metodo_pagamento;
+Criar função para remover o crédito diretamente do resumo:
+
+```tsx
+const handleRemoverCredito = async () => {
+  if (!id) return;
+  
+  try {
+    await supabase
+      .from('vendas')
+      .update({ valor_credito: 0, percentual_credito: 0 })
+      .eq('id', id);
+    
+    setVenda(prev => prev ? { ...prev, valor_credito: 0, percentual_credito: 0 } : null);
+    
+    toast({
+      title: "Crédito removido",
+      description: "O crédito foi removido da venda"
+    });
+  } catch (error) {
+    toast({
+      variant: "destructive",
+      title: "Erro",
+      description: "Não foi possível remover o crédito"
+    });
   }
-  pagamentosPorVenda.set(conta.venda_id, existing);
-});
+};
 ```
 
 ---
 
-## Exibição das Colunas
+## Alterações no Arquivo
+
+### `src/pages/vendas/MinhasVendasEditar.tsx`
+
+| Linha | Alteração |
+|-------|-----------|
+| Imports | Adicionar import do `VendaResumo` |
+| ~255 | Adicionar função `handleRemoverCredito` |
+| ~700 | Renderizar o `VendaResumo` antes dos botões |
+| ~704-728 | Ajustar lógica de exibição dos botões |
+
+---
+
+## Resultado Visual Esperado
 
 ```text
-| ... | Data Pgto 1 | Data Pgto 2 | Valor | Lucro | Status |
-|-----|-------------|-------------|-------|-------|--------|
-| ... | 29/01/26    | 15/02/26    | R$ 5k | R$ 1k | Fatur. |
-| ... | 01/02/26    | -           | R$ 3k | R$ 800| Pend.  |
-```
+ANTES:
+┌─────────────────────────────────────┐
+│ Produtos da Venda                   │
+│ ┌───────────────────────────────┐   │
+│ │ Tabela de Produtos           │   │
+│ └───────────────────────────────┘   │
+│                                     │
+│                    [Salvar]         │  <- Nenhum botão de crédito/desconto!
+└─────────────────────────────────────┘
 
-- **Data Pgto 1**: Primeira data de vencimento do primeiro método
-- **Data Pgto 2**: Primeira data de vencimento do segundo método (se houver)
-- Se a venda tiver apenas 1 método, "Data Pgto 2" exibe "-"
-
----
-
-## Ajuste de Largura das Listagens
-
-### FaturamentoDirecao.tsx
-
-```tsx
-// Alterar o container da tabela
-<div className="bg-primary/5 border border-primary/10 rounded-xl overflow-x-auto backdrop-blur-xl">
-```
-
-### FaturamentoVendasMinimalista.tsx
-
-```tsx
-// Aumentar largura do container principal
-<div className="container mx-auto p-6 pt-20 space-y-6 max-w-[1600px]">
-
-// Adicionar overflow-x-auto na tabela
-<div className="rounded-md border border-white/10 overflow-x-auto">
+DEPOIS:
+┌─────────────────────────────────────┐
+│ Produtos da Venda                   │
+│ ┌───────────────────────────────┐   │
+│ │ Tabela de Produtos           │   │
+│ └───────────────────────────────┘   │
+│                                     │
+│ ┌─────────────────────────────────┐ │
+│ │ Resumo da Venda               │ │
+│ │ Valor Produtos: R$ 16.000,00  │ │
+│ │ Valor Frete: R$ 450,00        │ │
+│ │ Crédito: +R$ 6.300 (81.82%) [X]│ │
+│ │ ─────────────────────────────  │ │
+│ │ Total: R$ 22.750,00           │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ [Editar Crédito]          [Salvar] │
+└─────────────────────────────────────┘
 ```
 
 ---
@@ -159,14 +160,14 @@ contasData.forEach(conta => {
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/pages/direcao/FaturamentoDirecao.tsx` | Buscar contas_receber, adicionar colunas data_pgto_1/2, ajustar largura |
-| `src/pages/administrativo/FaturamentoVendasMinimalista.tsx` | Mesmas alterações |
+| `src/pages/vendas/MinhasVendasEditar.tsx` | Importar VendaResumo, adicionar handler remover crédito, renderizar resumo, ajustar lógica botões |
 
 ---
 
 ## Impacto
 
-- **Visibilidade**: Gestores visualizam rapidamente quando os pagamentos vencem
-- **Decisões**: Facilita acompanhamento de fluxo de caixa
-- **UX**: Tabela com scroll horizontal se necessário, mas todas as informações visíveis
+- **Visibilidade**: Usuário vê claramente o acréscimo/crédito aplicado
+- **Edição**: Botão "Editar Crédito" aparece quando há crédito existente
+- **Remoção**: Botão X no resumo permite remover o crédito
+- **Consistência**: Mesma experiência visual da página de nova venda
 
