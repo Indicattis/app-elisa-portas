@@ -1,212 +1,136 @@
 
-# Plano: Melhorar Inputs de Frete e Previsão de Entrega
+# Plano: Adicionar Botão "Editar Desconto" na Página de Edição de Venda
 
 ## Problema Identificado
 
-Em `/vendas/minhas-vendas/nova`, os campos de "Frete" e "Previsão de Entrega" estão com implementação básica:
+Na página `/vendas/minhas-vendas/editar/:id`, a lógica atual dos botões de desconto e crédito é:
 
-```tsx
-// Frete: Input numérico simples
-<Input type="number" value={formData.valor_frete} ... />
+| Condição | Botão Exibido |
+|----------|---------------|
+| `temDesconto = false` e `valorCredito = 0` | "Adicionar Desconto" ✅ + "Adicionar Crédito" ✅ |
+| `temDesconto = false` e `valorCredito > 0` | ❌ Nenhum botão de desconto + "Editar Crédito" ✅ |
+| `temDesconto = true` e `valorCredito = 0` | ❌ Nenhum botão de desconto + ❌ Nenhum botão de crédito |
+| `temDesconto = true` e `valorCredito > 0` | ❌ Nenhum botão de desconto + ❌ Nenhum botão de crédito |
 
-// Previsão Entrega: Input date nativo (inconsistente com o resto do sistema)
-<Input type="date" value={formData.data_prevista_entrega} ... />
-```
+**Problema**: Quando a venda já tem desconto aplicado (`temDesconto = true`), não há forma de editar ou ajustar o desconto existente.
 
 ---
 
-## Solução Proposta
+## Solução
 
-### 1. Campo de Frete Sofisticado
+Adicionar lógica para exibir **"Editar Desconto"** quando já existe desconto aplicado, permitindo ao usuário ajustar os descontos existentes respeitando as mesmas regras.
 
-Criar um componente com:
-- **Sugestão automática** baseada na cidade/estado selecionados (usando `frete_cidades`)
-- **Ícone de caminhão** para indicar visualmente o campo
-- **Badge de sugestão** quando houver frete cadastrado para a localização
-- **Botão "Usar sugestão"** para aplicar o valor automaticamente
-- **Fallback** para digitação manual quando não houver sugestão
+### Nova Lógica dos Botões
 
-```text
-┌──────────────────────────────────────────────────────┐
-│ FRETE (R$)                                           │
-│ ┌──────────────────────────────────────────────────┐ │
-│ │ 🚚  350,00                              [Editar] │ │
-│ └──────────────────────────────────────────────────┘ │
-│  💡 Sugerido: R$ 350,00 (Curitiba/PR)  [Usar]       │
-└──────────────────────────────────────────────────────┘
-```
-
-### 2. Campo de Previsão de Entrega com Calendar Popover
-
-Substituir o input date nativo por um Popover + Calendar estilizado, consistente com o resto do sistema:
-
-```text
-┌──────────────────────────────────────────────────────┐
-│ PREVISÃO ENTREGA *                                   │
-│ ┌──────────────────────────────────────────────────┐ │
-│ │ 📅  15/02/2026                          [▼]      │ │
-│ └──────────────────────────────────────────────────┘ │
-│                                                      │
-│ ┌─ Calendário (Popover) ───────────────────────────┐ │
-│ │        Janeiro 2026                              │ │
-│ │  D   S   T   Q   Q   S   S                       │ │
-│ │              1   2   3   4                       │ │
-│ │  5   6   7   8   9  10  11                       │ │
-│ │ ...                                              │ │
-│ └──────────────────────────────────────────────────┘ │
-└──────────────────────────────────────────────────────┘
-```
+| Condição | Botão Exibido |
+|----------|---------------|
+| `temDesconto = false` e `valorCredito = 0` | "Adicionar Desconto" + "Adicionar Crédito" |
+| `temDesconto = false` e `valorCredito > 0` | "Adicionar Desconto" (desabilitado c/ tooltip) + "Editar Crédito" |
+| **`temDesconto = true`** e `valorCredito = 0` | **"Editar Desconto"** + (crédito bloqueado) |
+| `temDesconto = true` e `valorCredito > 0` | (conflito - não deveria ocorrer) |
 
 ---
 
 ## Alterações Técnicas
 
-### Arquivo: `src/pages/vendas/VendaNovaMinimalista.tsx`
+### Arquivo: `src/pages/vendas/MinhasVendasEditar.tsx`
 
-#### Importações Adicionais
+#### Linhas 703-716 (Botão de Desconto)
+
+**Código Atual:**
 ```tsx
-import { useFretesCidades } from '@/hooks/useFretesCidades';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+{produtosFormatados.length > 0 && valorCreditoAtual === 0 && (
+  <Button 
+    type="button"
+    size="sm"
+    variant="outline"
+    onClick={() => setDescontoModalOpen(true)}
+    disabled={isSaving}
+    className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
+  >
+    <Percent className="w-3.5 h-3.5 mr-1.5" />
+    Adicionar Desconto
+  </Button>
+)}
 ```
 
-#### Novo Estado e Hook
+**Código Novo:**
 ```tsx
-const { fretes } = useFretesCidades();
-const [dataEntrega, setDataEntrega] = useState<Date | undefined>();
+{produtosFormatados.length > 0 && valorCreditoAtual === 0 && (
+  <Button 
+    type="button"
+    size="sm"
+    variant="outline"
+    onClick={() => setDescontoModalOpen(true)}
+    disabled={isSaving}
+    className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
+  >
+    <Percent className="w-3.5 h-3.5 mr-1.5" />
+    {temDesconto ? 'Editar Desconto' : 'Adicionar Desconto'}
+  </Button>
+)}
 ```
 
-#### Lógica de Sugestão de Frete
-```tsx
-const freteSugerido = useMemo(() => {
-  if (!formData.estado || !formData.cidade || !fretes) return null;
-  return fretes.find(
-    f => f.ativo && 
-         f.estado === formData.estado && 
-         f.cidade === formData.cidade
-  );
-}, [formData.estado, formData.cidade, fretes]);
-```
-
-#### Novo Campo de Frete (substituir linhas 779-791)
-```tsx
-<div className="space-y-2">
-  <Label htmlFor="valor_frete" className={labelClass}>Frete (R$)</Label>
-  <div className="relative">
-    <Truck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400/60" />
-    <Input
-      id="valor_frete"
-      type="number"
-      step="0.01"
-      min="0"
-      value={formData.valor_frete}
-      onChange={(e) => setFormData(prev => ({ 
-        ...prev, 
-        valor_frete: parseFloat(e.target.value) || 0 
-      }))}
-      placeholder="0,00"
-      className={cn(inputClass, "pl-10")}
-    />
-  </div>
-  {freteSugerido && formData.valor_frete !== freteSugerido.valor_frete && (
-    <div className="flex items-center gap-2 text-xs">
-      <Badge variant="outline" className="bg-blue-500/10 border-blue-500/30 text-blue-300">
-        💡 Sugerido: R$ {freteSugerido.valor_frete.toFixed(2)}
-      </Badge>
-      <Button 
-        type="button"
-        variant="ghost" 
-        size="sm"
-        className="h-6 text-xs text-blue-400 hover:text-blue-300"
-        onClick={() => setFormData(prev => ({ 
-          ...prev, 
-          valor_frete: freteSugerido.valor_frete 
-        }))}
-      >
-        Usar
-      </Button>
-    </div>
-  )}
-</div>
-```
-
-#### Novo Campo de Previsão de Entrega (substituir linhas 793-804)
-```tsx
-<div className="space-y-2">
-  <Label className={labelClass}>Previsão Entrega *</Label>
-  <Popover>
-    <PopoverTrigger asChild>
-      <Button
-        type="button"
-        variant="outline"
-        className={cn(
-          "w-full justify-start text-left font-normal",
-          inputClass,
-          !dataEntrega && "text-blue-200/30"
-        )}
-      >
-        <CalendarIcon className="mr-2 h-4 w-4 text-blue-400/60" />
-        {dataEntrega ? (
-          format(dataEntrega, "dd/MM/yyyy", { locale: ptBR })
-        ) : (
-          <span>Selecione uma data</span>
-        )}
-      </Button>
-    </PopoverTrigger>
-    <PopoverContent className="w-auto p-0 bg-zinc-900 border-blue-500/20" align="start">
-      <Calendar
-        mode="single"
-        selected={dataEntrega}
-        onSelect={(date) => {
-          setDataEntrega(date);
-          setFormData(prev => ({
-            ...prev,
-            data_prevista_entrega: date ? format(date, 'yyyy-MM-dd') : ''
-          }));
-        }}
-        disabled={(date) => date < new Date()}
-        initialFocus
-        className="pointer-events-auto"
-      />
-    </PopoverContent>
-  </Popover>
-</div>
-```
+Esta alteração simples:
+1. Mantém a mesma condição de exibição (`valorCreditoAtual === 0`)
+2. Altera o texto do botão dinamicamente baseado em `temDesconto`
+3. Reutiliza o mesmo `DescontoVendaModal` que já existe e respeita todas as regras de desconto
 
 ---
 
-## Comportamentos Implementados
+## Comportamento do DescontoVendaModal
 
-| Feature | Descrição |
-|---------|-----------|
-| **Sugestão de Frete** | Ao selecionar cidade/estado, busca na tabela `frete_cidades` e exibe sugestão |
-| **Aplicar Sugestão** | Botão "Usar" preenche o campo automaticamente |
-| **Frete Manual** | Usuário pode digitar qualquer valor mesmo com sugestão |
-| **Calendar Popover** | Substitui input date nativo por componente estilizado |
-| **Datas Futuras** | Calendar bloqueia datas passadas (disabled prop) |
-| **Ícones Visuais** | Truck para frete, CalendarIcon para data |
-| **Tema Consistente** | Mantém o tema azul sofisticado da página |
+O modal já está preparado para lidar com descontos existentes:
+
+- **Linha 55-67**: Calcula `descontoAtual` somando todos os descontos já aplicados
+- **Linha 69**: Calcula `percentualDescontoAtual` para exibição
+- **Linha 170-172**: Exibe o desconto atual no card "Desconto Atual"
+- **Linha 104-136**: Ao aplicar, **soma** o novo desconto ao existente
+
+Isso significa que o modal permite adicionar **mais desconto** sobre o existente, respeitando os limites configurados.
 
 ---
 
-## Resultado Visual Esperado
+## Fluxo Visual
 
 ```text
-ANTES (simples):
-┌─────────────────────┐  ┌─────────────────────┐
-│ Frete (R$)          │  │ Previsão Entrega    │
-│ [ 0,00          ]   │  │ [ ____-__-__ ]      │  <- Input date nativo
-└─────────────────────┘  └─────────────────────┘
+ANTES:
+┌─────────────────────────────────────────────────────────────┐
+│ [+ Porta Enrolar] [+ Porta Social] [+ Catálogo] ...         │
+│                                                             │
+│ Produtos Adicionados                                        │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Porta de Enrolar 3x4m  R$ 2.500,00  (-5%) R$ 2.375,00   │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│                                            [Salvar]         │  <- Sem botão de desconto!
+└─────────────────────────────────────────────────────────────┘
 
-DEPOIS (sofisticado):
-┌───────────────────────────────────┐  ┌───────────────────────────────────┐
-│ FRETE (R$)                        │  │ PREVISÃO ENTREGA *                │
-│ ┌───────────────────────────────┐ │  │ ┌───────────────────────────────┐ │
-│ │ 🚚  350,00                    │ │  │ │ 📅  15/02/2026              ▼│ │
-│ └───────────────────────────────┘ │  │ └───────────────────────────────┘ │
-│ 💡 Sugerido: R$ 350 (Curitiba) ↗  │  │                                   │
-└───────────────────────────────────┘  └───────────────────────────────────┘
+DEPOIS:
+┌─────────────────────────────────────────────────────────────┐
+│ [+ Porta Enrolar] [+ Porta Social] [+ Catálogo] ...         │
+│                                                             │
+│ Produtos Adicionados                                        │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Porta de Enrolar 3x4m  R$ 2.500,00  (-5%) R$ 2.375,00   │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│                        [% Editar Desconto]   [Salvar]       │  <- Botão visível!
+└─────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Regras de Desconto Respeitadas
+
+O `DescontoVendaModal` já implementa todas as regras de negócio:
+
+1. **Limite base**: 3% para pagamentos que não são cartão de crédito
+2. **Limite presencial**: +5% adicional para venda presencial
+3. **Senha do responsável**: Necessária para exceder o limite base (até +5%)
+4. **Senha master**: Necessária para descontos acima do limite máximo
+
+Essas regras são calculadas em `src/utils/descontoVendasRules.ts` e validadas pelo modal.
 
 ---
 
@@ -214,13 +138,13 @@ DEPOIS (sofisticado):
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/pages/vendas/VendaNovaMinimalista.tsx` | Adicionar hook useFretesCidades, criar lógica de sugestão, substituir inputs por versões sofisticadas |
+| `src/pages/vendas/MinhasVendasEditar.tsx` | Alterar texto do botão de desconto para exibir "Editar Desconto" quando `temDesconto = true` |
 
 ---
 
 ## Impacto
 
-- **UX**: Inputs visualmente mais atrativos e consistentes com o resto do sistema
-- **Produtividade**: Sugestão automática de frete economiza tempo do vendedor
-- **Consistência**: Mesmo padrão de Calendar usado em outras páginas
-- **Dados**: Aproveita a tabela `frete_cidades` já existente
+- **UX**: Usuário consegue ajustar descontos de vendas existentes
+- **Consistência**: Mesmo comportamento do botão "Editar Crédito"
+- **Regras**: Todas as validações de desconto continuam sendo aplicadas
+- **Baixo risco**: Alteração mínima de código (apenas texto do botão)
