@@ -69,111 +69,128 @@ export function PedidoOrdemCard({ pedido, onOrdemClick }: PedidoOrdemCardProps) 
       <div className="rounded-lg bg-zinc-900/50 border border-zinc-800/50 overflow-hidden">
         <CollapsibleTrigger asChild>
           <button
-            className="w-full h-[30px] px-2 flex items-center gap-2 
+            className="w-full h-[30px] px-2 grid items-center gap-2 
                        hover:bg-zinc-800/50 transition-all duration-200 text-left"
+            style={{
+              gridTemplateColumns: '16px 55px 1fr 80px 70px 65px 90px 40px 24px 24px'
+            }}
           >
-            {/* Chevron */}
-            {isOpen ? (
-              <ChevronDown className="w-3 h-3 text-zinc-500 flex-shrink-0" />
-            ) : (
-              <ChevronRight className="w-3 h-3 text-zinc-500 flex-shrink-0" />
-            )}
+            {/* Col 1: Chevron */}
+            <div className="flex items-center justify-center">
+              {isOpen ? (
+                <ChevronDown className="w-3 h-3 text-zinc-500" />
+              ) : (
+                <ChevronRight className="w-3 h-3 text-zinc-500" />
+              )}
+            </div>
 
-            {/* Número pedido */}
-            <span className="text-xs font-medium text-white flex-shrink-0">
+            {/* Col 2: Número pedido */}
+            <span className="text-xs font-medium text-white truncate">
               #{pedido.numero_pedido}
             </span>
 
-            {/* Nome do cliente */}
-            <span className="text-[10px] text-zinc-300 truncate max-w-[150px] min-w-0">
+            {/* Col 3: Nome do cliente */}
+            <span className="text-[10px] text-zinc-300 truncate">
               {pedido.cliente_nome}
             </span>
 
-            {/* Separador */}
-            <div className="w-px h-4 bg-zinc-700/50 flex-shrink-0" />
-
-            {/* Cor */}
-            {corPrincipal && (
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <div 
-                  className="w-2.5 h-2.5 rounded-sm border border-zinc-600/50" 
-                  style={{ backgroundColor: corPrincipal.codigo_hex }} 
-                />
-                <span className="text-[10px] text-zinc-400 max-w-[60px] truncate">
-                  {corPrincipal.nome}
-                </span>
-              </div>
-            )}
-
-            {/* Localização */}
-            {pedido.localizacao && (
-              <span className="text-[10px] text-zinc-500 flex-shrink-0 max-w-[80px] truncate">
-                {pedido.localizacao}
-              </span>
-            )}
-
-            {/* Portas P/G */}
-            {(pedido.portas_p > 0 || pedido.portas_g > 0) && (
-              <div className="flex gap-1 flex-shrink-0">
-                {pedido.portas_p > 0 && (
-                  <span className="text-[10px] px-1 py-0.5 rounded bg-blue-500/20 text-blue-400">
-                    P:{pedido.portas_p}
+            {/* Col 4: Cor */}
+            <div className="flex items-center gap-1 truncate">
+              {corPrincipal ? (
+                <>
+                  <div 
+                    className="w-2.5 h-2.5 rounded-sm border border-zinc-600/50 flex-shrink-0" 
+                    style={{ backgroundColor: corPrincipal.codigo_hex }} 
+                  />
+                  <span className="text-[10px] text-zinc-400 truncate">
+                    {corPrincipal.nome}
                   </span>
-                )}
-                {pedido.portas_g > 0 && (
-                  <span className="text-[10px] px-1 py-0.5 rounded bg-orange-500/20 text-orange-400">
-                    G:{pedido.portas_g}
+                </>
+              ) : (
+                <span className="text-[10px] text-zinc-600">—</span>
+              )}
+            </div>
+
+            {/* Col 5: Localização */}
+            <span className="text-[10px] text-zinc-500 truncate">
+              {pedido.localizacao || '—'}
+            </span>
+
+            {/* Col 6: Portas P/G */}
+            <div className="flex gap-1">
+              {pedido.portas_p > 0 && (
+                <span className="text-[10px] px-1 py-0.5 rounded bg-blue-500/20 text-blue-400">
+                  P:{pedido.portas_p}
+                </span>
+              )}
+              {pedido.portas_g > 0 && (
+                <span className="text-[10px] px-1 py-0.5 rounded bg-orange-500/20 text-orange-400">
+                  G:{pedido.portas_g}
+                </span>
+              )}
+              {pedido.portas_p === 0 && pedido.portas_g === 0 && (
+                <span className="text-[10px] text-zinc-600">—</span>
+              )}
+            </div>
+
+            {/* Col 7: Metragem (linear + quadrada) */}
+            <div className="flex items-center gap-2">
+              {pedido.metragem_linear > 0 && (
+                <div className="flex items-center gap-0.5">
+                  <Ruler className="w-2.5 h-2.5 text-zinc-500" />
+                  <span className="text-[10px] text-zinc-400">
+                    {pedido.metragem_linear.toFixed(1)}m
                   </span>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+              {pedido.metragem_quadrada > 0 && (
+                <div className="flex items-center gap-0.5">
+                  <PaintBucket className="w-2.5 h-2.5 text-zinc-500" />
+                  <span className="text-[10px] text-zinc-400">
+                    {pedido.metragem_quadrada.toFixed(1)}m²
+                  </span>
+                </div>
+              )}
+              {pedido.metragem_linear === 0 && pedido.metragem_quadrada === 0 && (
+                <span className="text-[10px] text-zinc-600">—</span>
+              )}
+            </div>
 
-            {/* Metragem linear */}
-            {pedido.metragem_linear > 0 && (
-              <div className="flex items-center gap-0.5 flex-shrink-0">
-                <Ruler className="w-2.5 h-2.5 text-zinc-500" />
-                <span className="text-[10px] text-zinc-400">
-                  {pedido.metragem_linear.toFixed(1)}m
+            {/* Col 8: Contador ordens */}
+            <div className="flex justify-center">
+              {ordensExistentes.length > 0 ? (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-700/50 text-zinc-400">
+                  {ordensConcluidas.length}/{ordensExistentes.length}
                 </span>
-              </div>
-            )}
+              ) : (
+                <span className="text-[10px] text-zinc-600">—</span>
+              )}
+            </div>
 
-            {/* Metragem quadrada */}
-            {pedido.metragem_quadrada > 0 && (
-              <div className="flex items-center gap-0.5 flex-shrink-0">
-                <PaintBucket className="w-2.5 h-2.5 text-zinc-500" />
-                <span className="text-[10px] text-zinc-400">
-                  {pedido.metragem_quadrada.toFixed(1)}m²
-                </span>
-              </div>
-            )}
+            {/* Col 9: Ícone entrega/instalação */}
+            <div className="flex items-center justify-center">
+              {pedido.tipo_entrega === 'instalacao' ? (
+                <Wrench className="w-3 h-3 text-cyan-400" />
+              ) : pedido.tipo_entrega === 'entrega' ? (
+                <Truck className="w-3 h-3 text-indigo-400" />
+              ) : (
+                <span className="text-[10px] text-zinc-600">—</span>
+              )}
+            </div>
 
-            {/* Spacer */}
-            <div className="flex-1 min-w-0" />
-
-            {/* Contador ordens */}
-            {ordensExistentes.length > 0 && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-700/50 text-zinc-400 flex-shrink-0">
-                {ordensConcluidas.length}/{ordensExistentes.length}
-              </span>
-            )}
-
-            {/* Ícone entrega/instalação */}
-            {pedido.tipo_entrega === 'instalacao' ? (
-              <Wrench className="w-3 h-3 text-cyan-400 flex-shrink-0" />
-            ) : pedido.tipo_entrega === 'entrega' ? (
-              <Truck className="w-3 h-3 text-indigo-400 flex-shrink-0" />
-            ) : null}
-
-            {/* Avatar vendedor */}
-            {pedido.vendedor && (
-              <Avatar className="h-5 w-5 border border-zinc-700 flex-shrink-0">
-                <AvatarImage src={pedido.vendedor.foto_url || undefined} />
-                <AvatarFallback className="text-[8px] bg-zinc-800 text-zinc-400">
-                  {pedido.vendedor.iniciais}
-                </AvatarFallback>
-              </Avatar>
-            )}
+            {/* Col 10: Avatar vendedor */}
+            <div className="flex items-center justify-center">
+              {pedido.vendedor ? (
+                <Avatar className="h-5 w-5 border border-zinc-700">
+                  <AvatarImage src={pedido.vendedor.foto_url || undefined} />
+                  <AvatarFallback className="text-[8px] bg-zinc-800 text-zinc-400">
+                    {pedido.vendedor.iniciais}
+                  </AvatarFallback>
+                </Avatar>
+              ) : (
+                <span className="text-[10px] text-zinc-600">—</span>
+              )}
+            </div>
           </button>
         </CollapsibleTrigger>
 
