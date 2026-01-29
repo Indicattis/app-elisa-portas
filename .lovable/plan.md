@@ -1,81 +1,52 @@
 
-# Plano: Adicionar Botão "Novo Produto" e Remover Campos de Estoque
+# Plano: Remover Filtro de Quantidade no Modal de Seleção
 
 ## Problema
-As alterações solicitadas anteriormente não foram aplicadas aos arquivos.
+Produtos cadastrados no catálogo não aparecem no modal de seleção em `/vendas/minhas-vendas/nova` porque a query filtra por `quantidade > 0`.
 
 ---
 
-## Alterações Necessárias
+## Alteração
 
-### 1. `src/pages/vendas/Catalogo.tsx`
+### Arquivo: `src/components/vendas/SelecionarAcessoriosModal.tsx`
 
-**Adicionar:**
-- Import de `Plus` do lucide-react
-- Import de `Button` do componente UI
-- Botão "Novo Produto" no header
-
-**Mudança específica:**
+**Remover linha 45:**
 ```typescript
-// Linha 3 - adicionar Plus ao import
-import { Search, BookOpen, Star, Package, Plus } from 'lucide-react';
+// REMOVER ESTA LINHA:
+.gt('quantidade', 0)
+```
 
-// Linha 12 (novo import)
-import { Button } from '@/components/ui/button';
+**Query atual (linhas 41-47):**
+```typescript
+const { data, error } = await supabase
+  .from('vendas_catalogo')
+  .select('*')
+  .eq('ativo', true)
+  .gt('quantidade', 0)  // ← REMOVER
+  .order('destaque', { ascending: false })
+  .order('nome_produto');
+```
 
-// No MinimalistLayout, adicionar prop headerRight com o botão
+**Query corrigida:**
+```typescript
+const { data, error } = await supabase
+  .from('vendas_catalogo')
+  .select('*')
+  .eq('ativo', true)
+  .order('destaque', { ascending: false })
+  .order('nome_produto');
 ```
 
 ---
 
-### 2. `src/pages/vendas/CatalogoEditMinimalista.tsx`
+## Resultado Esperado
 
-**Remover do formData (linhas 47-63):**
-- `quantidade: 0`
-- `unidade: "un"`
-- `estoque_minimo: 0`
-- `peso: undefined`
-
-**Remover do loadProduto setFormData (linhas 83-99):**
-- `quantidade: data.quantidade`
-- `unidade: data.unidade || "un"`
-- `estoque_minimo: data.estoque_minimo || 0`
-- `peso: data.peso || undefined`
-
-**Remover seção de Estoque (linhas 321-386):**
-- Campo Quantidade
-- Campo Unidade
-- Campo Estoque Mín.
-- Campo Peso
-
-**Manter apenas:** Preço de Venda e Custo
+Todos os produtos ativos do catálogo aparecerão no modal de seleção, independentemente da quantidade em estoque.
 
 ---
 
-### 3. Criar `src/pages/vendas/CatalogoNovoMinimalista.tsx`
-
-Página de cadastro sem os campos de estoque.
-
----
-
-### 4. `src/App.tsx`
-
-Adicionar rota `/vendas/catalogo/new` → `CatalogoNovoMinimalista`
-
----
-
-### 5. `src/hooks/useVendasCatalogo.ts`
-
-Tornar `quantidade` opcional na interface e definir valor padrão 0 no insert.
-
----
-
-## Arquivos Afetados
+## Arquivo Afetado
 
 | Arquivo | Ação |
 |---------|------|
-| `src/pages/vendas/Catalogo.tsx` | Adicionar botão |
-| `src/pages/vendas/CatalogoEditMinimalista.tsx` | Remover 4 campos |
-| `src/pages/vendas/CatalogoNovoMinimalista.tsx` | **Criar** |
-| `src/hooks/useVendasCatalogo.ts` | Atualizar interface |
-| `src/App.tsx` | Adicionar rota |
+| `src/components/vendas/SelecionarAcessoriosModal.tsx` | Remover filtro `.gt('quantidade', 0)` |
