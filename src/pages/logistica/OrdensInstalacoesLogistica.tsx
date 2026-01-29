@@ -184,13 +184,19 @@ export default function OrdensInstalacoesLogistica() {
   // Handler para abrir detalhes do pedido
   const handleOpenDetalhes = (ordem: OrdemInstalacao) => {
     if (ordem.pedido) {
+      // Mapear produtos para produtos_vendas (formato esperado pelo PedidoDetalhesSheet)
+      const vendaComProdutosVendas = ordem.venda ? {
+        ...ordem.venda,
+        produtos_vendas: ordem.venda.produtos
+      } : null;
+
       const pedidoForSheet = {
         id: ordem.pedido.id,
         numero_pedido: ordem.pedido.numero_pedido,
         numero_mes: (ordem.pedido as any).numero_mes,
         mes_vigencia: (ordem.pedido as any).mes_vigencia,
         etapa_atual: ordem.pedido.etapa_atual,
-        vendas: ordem.venda
+        vendas: vendaComProdutosVendas
       };
       setSelectedPedido(pedidoForSheet);
       setShowDetalhes(true);
