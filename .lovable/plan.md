@@ -1,81 +1,129 @@
 
-# Plano: Simplificar Tela de Estoque no Administrativo/Compras
+# Plano: Adicionar Cadastro de Catálogo e Remover Campos de Estoque
 
 ## Objetivo
 
-Remover colunas e campos das rotas de estoque no módulo Administrativo/Compras, focando apenas nos dados relevantes para o setor de Compras.
+1. Adicionar botão em `/vendas/catalogo` para cadastrar novo item
+2. Remover campos de quantidade, unidade, estoque mínimo e peso das páginas de cadastro e edição
 
 ---
 
 ## Alterações
 
-### 1. Arquivo: `src/pages/administrativo/EstoqueMinimalista.tsx`
+### 1. Arquivo: `src/pages/vendas/Catalogo.tsx`
 
-Remover da tabela as colunas:
+Adicionar botão "Novo Produto" no header que navega para `/vendas/catalogo/new`
 
-| Coluna a Remover | Linha da TableHead | Linha da TableCell |
-|------------------|--------------------|--------------------|
-| **Estoque** | 444 | 530-549 |
-| **Custo** | 445 | 551-557 |
-| **Ações** | 446 | 559-571 |
-
-**Ajustes necessários:**
-- Remover as 3 `TableHead` (linhas 444-446)
-- Remover as 3 `TableCell` correspondentes (linhas 530-571)
-- Ajustar o `colSpan` de 8 para 5 nas mensagens de "Carregando" e "Nenhum produto encontrado" (linhas 452 e 463)
-- Remover o estado e modal de movimentação (já que as ações são removidas):
-  - `movimentacaoModal` state (linha 28)
-  - `handleMovimentar` function (linhas 105-120)
-  - `handleOpenMovimentacao` function (linhas 122-125)
-  - Import do `MovimentacaoModal` (linha 15)
-  - Componente `MovimentacaoModal` no final (linhas 581-588)
+**Mudanças:**
+- Importar `Plus` do lucide-react
+- Importar `Button` do componente UI
+- Adicionar botão após o título/subtitle
 
 ---
 
-### 2. Arquivo: `src/pages/administrativo/EstoqueEditMinimalista.tsx`
+### 2. Novo Arquivo: `src/pages/vendas/CatalogoNovoMinimalista.tsx`
 
-Remover os seguintes campos do formulário:
+Criar página de cadastro baseada na página de edição, removendo:
+- Campo de Quantidade
+- Campo de Unidade
+- Campo de Estoque Mínimo
+- Campo de Peso
 
-| Campo a Remover | Localização Aproximada |
-|-----------------|------------------------|
-| **Categoria** | linhas 242-259 |
-| **Subcategoria** | linhas 261-278 |
-| **Fornecedor** | linhas 280-297 |
-| **Quantidade Atual** | linhas 299-309 |
-| **Quantidade Ideal** | linhas 311-321 |
-| **Unidade** | linhas 323-341 |
-| **Custo Unitário** | linhas 343-353 |
-| **Peso por Porta** | linhas 355-365 |
+**Campos mantidos:**
+- Foto do Produto
+- Nome do Produto
+- SKU
+- Descrição
+- Categoria
+- Subcategoria
+- Preço de Venda
+- Custo
+- Tipo de Fabricação
+- Produto em destaque
 
-**Ajustes necessários:**
-- Remover os campos do `formData` state inicial
-- Remover do `handleSubmit` os dados que não serão mais enviados
-- Manter os campos de produção (Setor de Produção, Requer Pintura, Cálculo Automático)
+---
+
+### 3. Arquivo: `src/pages/vendas/CatalogoEditMinimalista.tsx`
+
+Remover os campos:
+
+| Campo | Linhas a Remover |
+|-------|------------------|
+| Quantidade | 324-331 |
+| Unidade | 333-341 |
+| Estoque Mín. | 342-350 |
+| Peso | 376-385 |
+
+Também remover do `formData` state inicial e do `setFormData` no `loadProduto`.
+
+---
+
+### 4. Arquivo: `src/hooks/useVendasCatalogo.ts`
+
+Atualizar `ProdutoCatalogoInput` para tornar `quantidade` opcional:
+
+```typescript
+export interface ProdutoCatalogoInput {
+  nome_produto: string;
+  // ...
+  quantidade?: number; // Tornar opcional
+  // ...
+}
+```
+
+No `adicionarProduto`, definir valor padrão:
+```typescript
+quantidade: produto.quantidade ?? 0,
+```
+
+---
+
+### 5. Arquivo: `src/App.tsx`
+
+Adicionar nova rota:
+
+```typescript
+import CatalogoNovoMinimalista from "./pages/vendas/CatalogoNovoMinimalista";
+
+// Na lista de rotas:
+<Route path="/vendas/catalogo/new" element={<ProtectedRoute routeKey="vendas_hub"><CatalogoNovoMinimalista /></ProtectedRoute>} />
+```
 
 ---
 
 ## Resultado Esperado
 
-### Tabela de Estoque (`/administrativo/compras/estoque`)
+### Listagem (`/vendas/catalogo`)
+- Botão "Novo Produto" visível no topo
+- Ao clicar, navega para `/vendas/catalogo/new`
 
-| SKU | Produto | Categoria | Setor | Pintura |
-|-----|---------|-----------|-------|---------|
-
-### Formulário de Edição (`/administrativo/compras/estoque/editar-item/:id`)
-
-Campos mantidos:
-- Nome do Produto
-- Descrição
-- Setor de Produção
-- Requer Pintura
-- Configurações de Cálculo Automático
-- Regras de Etiqueta
+### Formulário de Cadastro/Edição
+Campos disponíveis:
+| Campo | Cadastro | Edição |
+|-------|----------|--------|
+| Foto | ✓ | ✓ |
+| Nome | ✓ | ✓ |
+| SKU | ✓ | ✓ |
+| Descrição | ✓ | ✓ |
+| Categoria | ✓ | ✓ |
+| Subcategoria | ✓ | ✓ |
+| Preço de Venda | ✓ | ✓ |
+| Custo | ✓ | ✓ |
+| Tipo de Fabricação | ✓ | ✓ |
+| Destaque | ✓ | ✓ |
+| ~~Quantidade~~ | ✗ | ✗ |
+| ~~Unidade~~ | ✗ | ✗ |
+| ~~Estoque Mín.~~ | ✗ | ✗ |
+| ~~Peso~~ | ✗ | ✗ |
 
 ---
 
 ## Arquivos Afetados
 
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/pages/administrativo/EstoqueMinimalista.tsx` | Remover colunas Estoque, Custo e Ações |
-| `src/pages/administrativo/EstoqueEditMinimalista.tsx` | Remover 8 campos do formulário |
+| Arquivo | Ação |
+|---------|------|
+| `src/pages/vendas/Catalogo.tsx` | Adicionar botão |
+| `src/pages/vendas/CatalogoNovoMinimalista.tsx` | **Criar** |
+| `src/pages/vendas/CatalogoEditMinimalista.tsx` | Remover campos |
+| `src/hooks/useVendasCatalogo.ts` | Tornar quantidade opcional |
+| `src/App.tsx` | Adicionar rota |
