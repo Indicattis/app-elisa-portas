@@ -298,7 +298,8 @@ export function useVendas() {
         metodo_pagamento: metodoPrincipal,
         empresa_receptora_id: empresaReceptoraPrincipal,
         quantidade_parcelas: pagamentoData?.metodos?.[0]?.parcelas_boleto || pagamentoData?.metodos?.[0]?.parcelas_cartao || 1,
-        pago_na_instalacao: false
+        pago_na_instalacao: false,
+        pagamento_na_entrega: pagamentoData?.pagamento_na_entrega || false
       };
 
       console.log('📦 Venda payload:', vendaPayload);

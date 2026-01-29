@@ -23,7 +23,7 @@ export const usePedidoCreation = () => {
       // Buscar dados da venda
       const { data: venda, error: vendaError } = await supabase
         .from('vendas')
-        .select('*')
+        .select('*, pagamento_na_entrega, valor_venda, metodo_pagamento')
         .eq('id', vendaId)
         .single();
 
@@ -104,7 +104,7 @@ export const usePedidoCreation = () => {
 
       // Se for apenas manutenção, criar registros de instalação e ordem de carregamento
       if (apenasManutencao) {
-        // Criar instalação
+        // Criar instalação com dados de pagamento na entrega
         const { error: instalacaoError } = await supabase
           .from('instalacoes')
           .insert({
@@ -114,7 +114,9 @@ export const usePedidoCreation = () => {
             hora: '08:00',
             status: 'pronta_fabrica',
             tipo_instalacao: 'elisa',
-            created_by: user.id
+            created_by: user.id,
+            valor_pagamento_entrega: venda.pagamento_na_entrega ? venda.valor_venda : 0,
+            metodo_pagamento_entrega: venda.pagamento_na_entrega ? venda.metodo_pagamento : null
           });
 
         if (instalacaoError) {
