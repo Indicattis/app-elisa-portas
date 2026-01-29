@@ -1,79 +1,190 @@
 
-# Plano: Corrigir Rota e Navegação de Metas Individuais
+# Plano: Ajustar Formulário de Metas com Data de Vigência
 
-## Problema Identificado
+## Objetivo
 
-Ao clicar em um colaborador na página `/direcao/metas/fabrica`, o sistema navega para `/direcao/metas/{userId}`, mas essa rota **não está registrada** no App.tsx, resultando no erro "Page not found".
-
-## Causa Raiz
-
-A página `MetasColaboradorIndividual` já existe e está importada no App.tsx (linha 154), mas nunca foi adicionada como rota no roteador.
+Melhorar o formulário de criação/edição de metas para permitir definir data de início e término (período de vigência), garantindo que o progresso só seja contabilizado dentro desse período.
 
 ---
 
 ## Alterações Necessárias
 
-### 1. Adicionar Rota no App.tsx
+### 1. Atualizar MetaDialog - Adicionar Data de Início
 
-Registrar a rota `/direcao/metas/fabrica/:userId` para exibir métricas individuais do colaborador.
-
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/App.tsx` | Adicionar rota `/direcao/metas/fabrica/:userId` apontando para `MetasColaboradorIndividual` |
-
-```tsx
-// Após linha 400:
-<Route path="/direcao/metas/fabrica/:userId" element={<ProtectedRoute routeKey="direcao_hub"><MetasColaboradorIndividual /></ProtectedRoute>} />
-```
-
-### 2. Atualizar Navegação em MetasFabricaDirecao
-
-Alterar o destino da navegação ao clicar em um colaborador.
+O formulário atual define `data_inicio` como a data atual automaticamente. Precisamos permitir que o usuário escolha a data de início.
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/pages/direcao/MetasFabricaDirecao.tsx` | Mudar navegação de `/direcao/metas/${userId}` para `/direcao/metas/fabrica/${userId}` |
+| `src/components/metas/MetaDialog.tsx` | Adicionar campo de data de início, melhorar labels e unidades |
 
-```tsx
-// Linha 125:
-onClick={() => navigate(`/direcao/metas/fabrica/${colaborador.user_id}`)}
-```
+**Mudanças no formulário:**
+- Adicionar estado `dataInicio` (novo campo)
+- Adicionar input de data para início da vigência
+- Melhorar texto descritivo das unidades por tipo de meta
+- Validar que data de término seja posterior à data de início
 
-### 3. Atualizar Retorno em MetasColaboradorIndividual
+### 2. Atualizar Cálculo de Progresso
 
-Ajustar os botões "Voltar" para retornar à página correta.
+O progresso atualmente considera o mês inteiro. Precisamos ajustar para considerar apenas o período de vigência da meta.
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/pages/MetasColaboradorIndividual.tsx` | Mudar navegação de `/direcao/metas` para `/direcao/metas/fabrica` |
+| `src/pages/MetasColaboradorIndividual.tsx` | Buscar desempenho por período de cada meta individual |
 
-Linhas afetadas: 114 e 130
+**Alternativas de implementação:**
+
+**Opção A (Simples):** Manter busca mensal e filtrar no frontend
+- Menos chamadas ao banco
+- Funciona bem para metas do mês atual
+
+**Opção B (Precisa):** Criar hook que busca desempenho por meta
+- Mais preciso para metas que cruzam meses
+- Requer mais chamadas RPC
+
+Recomendo **Opção A** inicialmente por simplicidade.
 
 ---
 
-## Resumo das Alterações
+## Detalhes Técnicos
+
+### Unidades por Tipo de Meta (já corretas, apenas documentando)
+
+| Tipo | Unidade | Descrição do Input |
+|------|---------|-------------------|
+| **Solda** | Portas | Número de portas de enrolar produzidas |
+| **Perfiladeira** | Metros | Metragem linear (m) |
+| **Separação** | Itens | Número de linhas/itens separados |
+| **Qualidade** | Pedidos | Número de pedidos inspecionados |
+| **Pintura** | m² | Metros quadrados pintados |
+| **Carregamento** | Pedidos | Número de pedidos carregados |
+
+### Campos do Formulário (Após Alteração)
+
+```text
+┌─────────────────────────────────────────────┐
+│ Nova Meta / Editar Meta                     │
+├─────────────────────────────────────────────┤
+│ Tipo de Meta                                │
+│ [ Solda ▼ ]                                 │
+│                                             │
+│ Valor da Meta *                             │
+│ [ 100           ]                           │
+│ "Quantidade de portas"                      │
+│                                             │
+│ Período de Vigência                         │
+│ De:  [ 01/02/2026 ]  Até: [ 28/02/2026 ]   │
+│                                             │
+│ Recompensa (R$)                             │
+│ [ 150,00        ]                           │
+│                                             │
+│              [ Cancelar ] [ Criar Meta ]    │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+## Código: MetaDialog.tsx Atualizado
+
+**Novos estados:**
+```tsx
+const [dataInicio, setDataInicio] = useState("");
+```
+
+**useEffect atualizado:**
+```tsx
+useEffect(() => {
+  if (metaParaEditar) {
+    setTipoMeta(metaParaEditar.tipo_meta);
+    setValorMeta(metaParaEditar.valor_meta.toString());
+    setDataInicio(metaParaEditar.data_inicio);  // Nova linha
+    setDataTermino(metaParaEditar.data_termino);
+    setRecompensaValor(metaParaEditar.recompensa_valor.toString());
+  } else {
+    setTipoMeta("solda");
+    setValorMeta("");
+    setDataInicio(new Date().toISOString().split("T")[0]);  // Padrão: hoje
+    setDataTermino("");
+    setRecompensaValor("");
+  }
+}, [metaParaEditar, open]);
+```
+
+**Labels de unidades melhoradas:**
+```tsx
+const getUnidadeDescricao = (tipo: string) => {
+  switch(tipo) {
+    case "solda": return "Quantidade de portas";
+    case "perfiladeira": return "Metros lineares (m)";
+    case "separacao": return "Quantidade de itens/linhas";
+    case "qualidade": return "Quantidade de pedidos";
+    case "pintura": return "Metros quadrados (m²)";
+    case "carregamento": return "Quantidade de pedidos";
+    default: return "Quantidade";
+  }
+};
+```
+
+**Novo campo de data de início:**
+```tsx
+<div className="grid grid-cols-2 gap-3">
+  <div className="space-y-2">
+    <Label>Data de Início *</Label>
+    <Input
+      type="date"
+      value={dataInicio}
+      onChange={(e) => setDataInicio(e.target.value)}
+    />
+  </div>
+  <div className="space-y-2">
+    <Label>Data de Término *</Label>
+    <Input
+      type="date"
+      value={dataTermino}
+      onChange={(e) => setDataTermino(e.target.value)}
+      min={dataInicio}
+    />
+  </div>
+</div>
+```
+
+---
+
+## Código: MetaCard.tsx - Exibir Período
+
+Atualizar para mostrar o período de vigência completo:
+
+```tsx
+<div className="flex items-center gap-1 text-muted-foreground">
+  <Calendar className="h-3 w-3" />
+  <span>
+    {format(new Date(meta.data_inicio), "dd/MM")} - {format(new Date(meta.data_termino), "dd/MM")}
+  </span>
+</div>
+```
+
+---
+
+## Arquivos a Modificar
 
 | Arquivo | Tipo | Descrição |
 |---------|------|-----------|
-| `src/App.tsx` | Adicionar | Nova rota `/direcao/metas/fabrica/:userId` |
-| `src/pages/direcao/MetasFabricaDirecao.tsx` | Editar | Atualizar path de navegação (linha 125) |
-| `src/pages/MetasColaboradorIndividual.tsx` | Editar | Atualizar path de retorno (linhas 114 e 130) |
+| `src/components/metas/MetaDialog.tsx` | Editar | Adicionar campo data_inicio, melhorar UX |
+| `src/components/metas/MetaCard.tsx` | Editar | Exibir período de vigência |
 
 ---
 
-## Fluxo Após Correção
+## Validações
 
-```text
-/direcao/metas (Hub) 
-    → /direcao/metas/fabrica (Lista colaboradores)
-        → /direcao/metas/fabrica/:userId (Métricas individuais)
-            ← Voltar → /direcao/metas/fabrica
-```
+1. Data de término deve ser >= data de início
+2. Campo de recompensa aceita valores decimais (já funciona)
+3. Valor da meta é obrigatório
 
 ---
 
-## Impacto
+## Resultado Esperado
 
-- Correção imediata do erro 404
-- Navegação consistente entre as páginas de metas
-- Sem breaking changes em outras partes do sistema
+- Metas com período de vigência definido (início e término)
+- Unidades claras para cada tipo de meta
+- Recompensa em valor R$ (já implementado)
+- Cards exibindo o período de vigência
+- Progresso calculado apenas dentro do período da meta
