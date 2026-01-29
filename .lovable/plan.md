@@ -1,190 +1,262 @@
 
-# Plano: Ajustar Formulário de Metas com Data de Vigência
+# Plano: Input Condicional de Meta + Caixa Flutuante de Progresso
 
 ## Objetivo
 
-Melhorar o formulário de criação/edição de metas para permitir definir data de início e término (período de vigência), garantindo que o progresso só seja contabilizado dentro desse período.
+1. **Formulário de Meta Condicional**: Alterar o input de valor da meta para mostrar campos específicos por tipo (ex: metragem linear para perfiladeira, m² para pintura)
+2. **Caixa Flutuante de Progresso**: Exibir notificação flutuante nas páginas de produção quando uma ordem é concluída, mostrando o avanço da meta do colaborador
 
 ---
 
-## Alterações Necessárias
+## Parte 1: Input Condicional no MetaDialog
 
-### 1. Atualizar MetaDialog - Adicionar Data de Início
+### Alterações em `src/components/metas/MetaDialog.tsx`
 
-O formulário atual define `data_inicio` como a data atual automaticamente. Precisamos permitir que o usuário escolha a data de início.
+Modificar o campo de "Valor da Meta" para renderizar inputs diferentes baseado no tipo selecionado:
 
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/components/metas/MetaDialog.tsx` | Adicionar campo de data de início, melhorar labels e unidades |
+| Tipo | Input | Placeholder | Sufixo |
+|------|-------|-------------|--------|
+| **Solda** | Número inteiro | "Ex: 50" | portas |
+| **Perfiladeira** | Decimal | "Ex: 150,5" | metros |
+| **Separação** | Número inteiro | "Ex: 200" | itens |
+| **Qualidade** | Número inteiro | "Ex: 30" | pedidos |
+| **Pintura** | Decimal | "Ex: 85,5" | m² |
+| **Carregamento** | Número inteiro | "Ex: 25" | pedidos |
 
-**Mudanças no formulário:**
-- Adicionar estado `dataInicio` (novo campo)
-- Adicionar input de data para início da vigência
-- Melhorar texto descritivo das unidades por tipo de meta
-- Validar que data de término seja posterior à data de início
+### Código do Input Condicional
 
-### 2. Atualizar Cálculo de Progresso
+```tsx
+const getInputConfig = (tipo: string) => {
+  switch (tipo) {
+    case "solda":
+      return { placeholder: "Ex: 50", sufixo: "portas", step: "1" };
+    case "perfiladeira":
+      return { placeholder: "Ex: 150,5", sufixo: "metros", step: "0.1" };
+    case "separacao":
+      return { placeholder: "Ex: 200", sufixo: "itens", step: "1" };
+    case "qualidade":
+      return { placeholder: "Ex: 30", sufixo: "pedidos", step: "1" };
+    case "pintura":
+      return { placeholder: "Ex: 85,5", sufixo: "m²", step: "0.1" };
+    case "carregamento":
+      return { placeholder: "Ex: 25", sufixo: "pedidos", step: "1" };
+    default:
+      return { placeholder: "Ex: 100", sufixo: "", step: "1" };
+  }
+};
 
-O progresso atualmente considera o mês inteiro. Precisamos ajustar para considerar apenas o período de vigência da meta.
-
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/pages/MetasColaboradorIndividual.tsx` | Buscar desempenho por período de cada meta individual |
-
-**Alternativas de implementação:**
-
-**Opção A (Simples):** Manter busca mensal e filtrar no frontend
-- Menos chamadas ao banco
-- Funciona bem para metas do mês atual
-
-**Opção B (Precisa):** Criar hook que busca desempenho por meta
-- Mais preciso para metas que cruzam meses
-- Requer mais chamadas RPC
-
-Recomendo **Opção A** inicialmente por simplicidade.
+// No JSX:
+<div className="space-y-2">
+  <Label>Valor da Meta *</Label>
+  <div className="flex items-center gap-2">
+    <Input
+      type="number"
+      step={inputConfig.step}
+      placeholder={inputConfig.placeholder}
+      value={valorMeta}
+      onChange={(e) => setValorMeta(e.target.value)}
+      className="flex-1"
+    />
+    <span className="text-sm text-muted-foreground whitespace-nowrap">
+      {inputConfig.sufixo}
+    </span>
+  </div>
+  <p className="text-xs text-muted-foreground">
+    {getUnidadeDescricao(tipoMeta)}
+  </p>
+</div>
+```
 
 ---
 
-## Detalhes Técnicos
+## Parte 2: Caixa Flutuante de Progresso de Meta
 
-### Unidades por Tipo de Meta (já corretas, apenas documentando)
+### Novo Componente: `src/components/metas/MetaProgressoFlutuante.tsx`
 
-| Tipo | Unidade | Descrição do Input |
-|------|---------|-------------------|
-| **Solda** | Portas | Número de portas de enrolar produzidas |
-| **Perfiladeira** | Metros | Metragem linear (m) |
-| **Separação** | Itens | Número de linhas/itens separados |
-| **Qualidade** | Pedidos | Número de pedidos inspecionados |
-| **Pintura** | m² | Metros quadrados pintados |
-| **Carregamento** | Pedidos | Número de pedidos carregados |
-
-### Campos do Formulário (Após Alteração)
+Componente flutuante que aparece no canto inferior da tela quando uma ordem é concluída, mostrando o progresso da meta ativa do colaborador.
 
 ```text
 ┌─────────────────────────────────────────────┐
-│ Nova Meta / Editar Meta                     │
-├─────────────────────────────────────────────┤
-│ Tipo de Meta                                │
-│ [ Solda ▼ ]                                 │
-│                                             │
-│ Valor da Meta *                             │
-│ [ 100           ]                           │
-│ "Quantidade de portas"                      │
-│                                             │
-│ Período de Vigência                         │
-│ De:  [ 01/02/2026 ]  Até: [ 28/02/2026 ]   │
-│                                             │
-│ Recompensa (R$)                             │
-│ [ 150,00        ]                           │
-│                                             │
-│              [ Cancelar ] [ Criar Meta ]    │
+│  🎯 Meta de Solda                           │
+│  ████████████░░░░░░░░░░░░░░░░  35/100       │
+│  ────────────────────────────────           │
+│  35% concluído                              │
+│  R$ 150,00 • Termina em 28/02               │
 └─────────────────────────────────────────────┘
 ```
 
----
+### Funcionalidades do Componente
 
-## Código: MetaDialog.tsx Atualizado
+1. **Aparecer automaticamente** quando uma ordem é concluída
+2. **Buscar a meta ativa** do colaborador para o tipo da ordem concluída
+3. **Calcular progresso atual** buscando desempenho no período da meta
+4. **Auto-fechar** após 5 segundos (ou ao clicar)
+5. **Animação de entrada/saída** suave
 
-**Novos estados:**
+### Hook: `src/hooks/useMetaProgresso.ts`
+
+Hook para buscar meta ativa e calcular progresso quando ordem é concluída:
+
 ```tsx
-const [dataInicio, setDataInicio] = useState("");
+export function useMetaProgresso() {
+  const [metaInfo, setMetaInfo] = useState<MetaProgressoInfo | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  const mostrarProgresso = async (userId: string, tipoOrdem: TipoOrdem) => {
+    // 1. Buscar meta ativa do tipo
+    const meta = await buscarMetaAtiva(userId, tipoOrdem);
+    if (!meta) return;
+
+    // 2. Calcular progresso atual
+    const progresso = await calcularProgresso(userId, tipoOrdem, meta);
+
+    // 3. Mostrar componente
+    setMetaInfo({ meta, progressoAtual: progresso });
+    setVisible(true);
+
+    // 4. Auto-fechar após 5s
+    setTimeout(() => setVisible(false), 5000);
+  };
+
+  return { metaInfo, visible, mostrarProgresso, fechar: () => setVisible(false) };
+}
 ```
 
-**useEffect atualizado:**
-```tsx
-useEffect(() => {
-  if (metaParaEditar) {
-    setTipoMeta(metaParaEditar.tipo_meta);
-    setValorMeta(metaParaEditar.valor_meta.toString());
-    setDataInicio(metaParaEditar.data_inicio);  // Nova linha
-    setDataTermino(metaParaEditar.data_termino);
-    setRecompensaValor(metaParaEditar.recompensa_valor.toString());
-  } else {
-    setTipoMeta("solda");
-    setValorMeta("");
-    setDataInicio(new Date().toISOString().split("T")[0]);  // Padrão: hoje
-    setDataTermino("");
-    setRecompensaValor("");
-  }
-}, [metaParaEditar, open]);
-```
+### Integração nas Páginas de Produção
 
-**Labels de unidades melhoradas:**
+Adicionar o componente flutuante em todas as páginas de produção (Solda, Perfiladeira, Separação, Qualidade, Pintura, Carregamento):
+
 ```tsx
-const getUnidadeDescricao = (tipo: string) => {
-  switch(tipo) {
-    case "solda": return "Quantidade de portas";
-    case "perfiladeira": return "Metros lineares (m)";
-    case "separacao": return "Quantidade de itens/linhas";
-    case "qualidade": return "Quantidade de pedidos";
-    case "pintura": return "Metros quadrados (m²)";
-    case "carregamento": return "Quantidade de pedidos";
-    default: return "Quantidade";
+// Em cada página de produção (ex: SoldaMinimalista.tsx)
+import { MetaProgressoFlutuante } from "@/components/metas/MetaProgressoFlutuante";
+import { useMetaProgresso } from "@/hooks/useMetaProgresso";
+
+// No componente:
+const { metaInfo, visible, mostrarProgresso, fechar } = useMetaProgresso();
+
+// Ao concluir ordem:
+const handleConcluirOrdem = async (ordemId: string) => {
+  await concluirOrdem.mutateAsync(ordemId);
+  setSheetOpen(false);
+  
+  // Mostrar progresso da meta
+  if (user?.id) {
+    mostrarProgresso(user.id, 'soldagem');
   }
 };
-```
 
-**Novo campo de data de início:**
-```tsx
-<div className="grid grid-cols-2 gap-3">
-  <div className="space-y-2">
-    <Label>Data de Início *</Label>
-    <Input
-      type="date"
-      value={dataInicio}
-      onChange={(e) => setDataInicio(e.target.value)}
-    />
-  </div>
-  <div className="space-y-2">
-    <Label>Data de Término *</Label>
-    <Input
-      type="date"
-      value={dataTermino}
-      onChange={(e) => setDataTermino(e.target.value)}
-      min={dataInicio}
-    />
-  </div>
-</div>
+// No JSX:
+<MetaProgressoFlutuante
+  metaInfo={metaInfo}
+  visible={visible}
+  onClose={fechar}
+/>
 ```
 
 ---
 
-## Código: MetaCard.tsx - Exibir Período
-
-Atualizar para mostrar o período de vigência completo:
-
-```tsx
-<div className="flex items-center gap-1 text-muted-foreground">
-  <Calendar className="h-3 w-3" />
-  <span>
-    {format(new Date(meta.data_inicio), "dd/MM")} - {format(new Date(meta.data_termino), "dd/MM")}
-  </span>
-</div>
-```
-
----
-
-## Arquivos a Modificar
+## Arquivos a Criar/Modificar
 
 | Arquivo | Tipo | Descrição |
 |---------|------|-----------|
-| `src/components/metas/MetaDialog.tsx` | Editar | Adicionar campo data_inicio, melhorar UX |
-| `src/components/metas/MetaCard.tsx` | Editar | Exibir período de vigência |
+| `src/components/metas/MetaDialog.tsx` | Editar | Input condicional por tipo de meta |
+| `src/components/metas/MetaProgressoFlutuante.tsx` | **Criar** | Componente flutuante de progresso |
+| `src/hooks/useMetaProgresso.ts` | **Criar** | Hook para buscar meta e calcular progresso |
+| `src/pages/fabrica/producao/SoldaMinimalista.tsx` | Editar | Integrar caixa flutuante |
+| `src/pages/fabrica/producao/PerfiladeiraMinimalista.tsx` | Editar | Integrar caixa flutuante |
+| `src/pages/fabrica/producao/SeparacaoMinimalista.tsx` | Editar | Integrar caixa flutuante |
+| `src/pages/fabrica/producao/QualidadeMinimalista.tsx` | Editar | Integrar caixa flutuante |
+| `src/pages/fabrica/producao/PinturaMinimalista.tsx` | Editar | Integrar caixa flutuante |
+| `src/pages/fabrica/producao/CarregamentoMinimalista.tsx` | Editar | Integrar caixa flutuante |
+| `src/pages/ProducaoSolda.tsx` | Editar | Integrar caixa flutuante (versão desktop) |
+| `src/pages/ProducaoPerfiladeira.tsx` | Editar | Integrar caixa flutuante (versão desktop) |
+| `src/pages/ProducaoSeparacao.tsx` | Editar | Integrar caixa flutuante (versão desktop) |
+| `src/pages/ProducaoQualidade.tsx` | Editar | Integrar caixa flutuante (versão desktop) |
+| `src/pages/ProducaoPintura.tsx` | Editar | Integrar caixa flutuante (versão desktop) |
 
 ---
 
-## Validações
+## Design do Componente Flutuante
 
-1. Data de término deve ser >= data de início
-2. Campo de recompensa aceita valores decimais (já funciona)
-3. Valor da meta é obrigatório
+### Estrutura Visual
+
+```text
+┌──────────────────────────────────────────────────────┐
+│ [X]                                                  │
+│  🔥 Meta de Solda                                   │
+│                                                      │
+│  ████████████████████░░░░░░░░░░  67/100 portas      │
+│                                                      │
+│  67% concluído                                       │
+│                                                      │
+│  💰 R$ 150,00    📅 01/02 - 28/02                   │
+└──────────────────────────────────────────────────────┘
+```
+
+### Posicionamento
+
+- **Posição**: Canto inferior direito (`fixed bottom-4 right-4`)
+- **Z-index**: Alto para ficar acima de outros elementos (`z-50`)
+- **Largura**: Máxima de 320px (`max-w-xs`)
+- **Animação**: Slide-in da direita + fade
+
+### Cores por Tipo de Meta
+
+| Tipo | Cor de Destaque |
+|------|-----------------|
+| Solda | Laranja (orange-500) |
+| Perfiladeira | Azul (blue-500) |
+| Separação | Roxo (purple-500) |
+| Qualidade | Verde (green-500) |
+| Pintura | Rosa (pink-500) |
+| Carregamento | Âmbar (amber-500) |
+
+---
+
+## Lógica de Cálculo de Progresso
+
+### Mapeamento de Tipo de Ordem para Meta
+
+| Tipo Ordem | Tipo Meta | Métrica |
+|------------|-----------|---------|
+| `soldagem` | `solda` | Soma de `qtd_portas_p + qtd_portas_g` das ordens concluídas |
+| `perfiladeira` | `perfiladeira` | Soma de `metragem_linear` das ordens concluídas |
+| `separacao` | `separacao` | Soma de `quantidade_itens` das ordens concluídas |
+| `qualidade` | `qualidade` | Contagem de pedidos inspecionados |
+| `pintura` | `pintura` | Soma de `metragem_quadrada` das ordens concluídas |
+| `carregamento` | `carregamento` | Contagem de pedidos carregados |
+
+### Query de Progresso (exemplo para Solda)
+
+```sql
+SELECT COALESCE(SUM(qtd_portas_p + qtd_portas_g), 0) as total
+FROM ordens_soldagem
+WHERE responsavel_id = :userId
+  AND status = 'concluido'
+  AND data_conclusao >= :dataInicioMeta
+  AND data_conclusao <= :dataTerminoMeta;
+```
+
+---
+
+## Resumo
+
+| Item | Tipo | Descrição |
+|------|------|-----------|
+| Input condicional | UX | Placeholders e sufixos específicos por tipo |
+| Caixa flutuante | Novo componente | Mostra progresso ao concluir ordem |
+| Hook de progresso | Novo hook | Busca meta ativa e calcula progresso |
+| Integração | 12 páginas | Todas páginas de produção (minimalistas + desktop) |
 
 ---
 
 ## Resultado Esperado
 
-- Metas com período de vigência definido (início e término)
-- Unidades claras para cada tipo de meta
-- Recompensa em valor R$ (já implementado)
-- Cards exibindo o período de vigência
-- Progresso calculado apenas dentro do período da meta
+1. Ao criar meta, o input mostra placeholder e unidade específica do tipo
+2. Ao concluir uma ordem na produção, aparece uma caixa flutuante com:
+   - Tipo da meta e ícone colorido
+   - Barra de progresso atualizada
+   - Valor atual / valor da meta
+   - Recompensa em R$
+   - Período de vigência
+3. A caixa fecha automaticamente após 5 segundos ou ao clicar no X
