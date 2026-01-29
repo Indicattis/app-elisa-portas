@@ -42,7 +42,6 @@ export function SelecionarAcessoriosModal({
         .from('vendas_catalogo')
         .select('*')
         .eq('ativo', true)
-        .gt('quantidade', 0)
         .order('destaque', { ascending: false })
         .order('nome_produto');
       
