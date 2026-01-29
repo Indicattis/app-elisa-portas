@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, Package } from 'lucide-react';
 import type { ProdutoVenda } from '@/hooks/useVendas';
 
 interface SelecionarAcessoriosModalProps {
@@ -24,6 +24,7 @@ interface ItemSelecionavel {
   tipo: 'acessorio' | 'adicional';
   descricao?: string;
   categoria: string;
+  imagem_url?: string;
 }
 
 export function SelecionarAcessoriosModal({
@@ -52,7 +53,8 @@ export function SelecionarAcessoriosModal({
         preco: Number(item.preco_venda),
         tipo: (item.categoria === 'acessório' ? 'acessorio' : 'adicional') as 'acessorio' | 'adicional',
         descricao: item.descricao_produto,
-        categoria: item.categoria
+        categoria: item.categoria,
+        imagem_url: item.imagem_url
       }));
     },
     enabled: open
@@ -169,6 +171,7 @@ export function SelecionarAcessoriosModal({
               <TableHeader>
                 <TableRow className="h-8">
                   <TableHead className="w-10"></TableHead>
+                  <TableHead className="w-14">Img</TableHead>
                   <TableHead>Produto</TableHead>
                   <TableHead className="w-24">Categoria</TableHead>
                   <TableHead className="text-right w-24">Preço</TableHead>
@@ -178,7 +181,7 @@ export function SelecionarAcessoriosModal({
                 {produtosFiltrados.map((item) => (
                   <TableRow 
                     key={item.id} 
-                    className="h-[30px] cursor-pointer hover:bg-accent/50 transition-colors"
+                    className="h-[52px] cursor-pointer hover:bg-accent/50 transition-colors"
                     onClick={() => toggleItem(item.id)}
                   >
                     <TableCell className="py-1 px-3">
@@ -187,6 +190,19 @@ export function SelecionarAcessoriosModal({
                         onCheckedChange={() => toggleItem(item.id)}
                         onClick={(e) => e.stopPropagation()}
                       />
+                    </TableCell>
+                    <TableCell className="py-1">
+                      {item.imagem_url ? (
+                        <img 
+                          src={item.imagem_url} 
+                          alt={item.nome}
+                          className="w-10 h-10 object-cover rounded-md border border-border"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
+                          <Package className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="py-1 font-medium text-sm">
                       {item.nome}
