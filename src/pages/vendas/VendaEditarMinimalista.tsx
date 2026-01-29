@@ -139,7 +139,8 @@ export default function VendaEditarMinimalista() {
     desconto_percentual: p.desconto_percentual,
     desconto_valor: p.desconto_valor,
     quantidade: p.quantidade,
-    descricao: p.descricao || ''
+    descricao: p.descricao || '',
+    unidade: (p as any).unidade || 'Unitário'
   }));
 
   const calcularValorTotalProdutos = () => {
@@ -253,6 +254,20 @@ export default function VendaEditarMinimalista() {
       });
     } catch (error) {
       console.error('Erro ao remover desconto:', error);
+    }
+  };
+
+  const handleUpdateQuantidade = async (index: number, quantidade: number) => {
+    const produto = produtos?.[index];
+    if (!produto?.id) return;
+    
+    try {
+      await updateProduto({
+        produtoId: produto.id,
+        updates: { quantidade }
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar quantidade:', error);
     }
   };
 
@@ -467,21 +482,7 @@ export default function VendaEditarMinimalista() {
                 <Plus className="w-3.5 h-3.5 mr-1.5" />
                 Pintura Eletrostática
               </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-primary/30 text-white hover:bg-primary/10"
-                onClick={() => {
-                  setTipoInicial('manutencao');
-                  setPermitirTrocaTipo(false);
-                  setShowProdutoForm(true);
-                }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Serviço
-              </Button>
-              <Button 
+              <Button
                 type="button"
                 size="sm"
                 variant="outline"
@@ -552,6 +553,7 @@ export default function VendaEditarMinimalista() {
                     }
                   }}
                   onRemoverDesconto={handleRemoverDesconto}
+                  onUpdateQuantidade={handleUpdateQuantidade}
                 />
               )}
             </div>
