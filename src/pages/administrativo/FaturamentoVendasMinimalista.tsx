@@ -72,6 +72,8 @@ interface Venda {
   portas?: any[];
   produtos?: any[];
   justificativa_nao_faturada?: string | null;
+  data_pagamento_1?: string | null;
+  data_pagamento_2?: string | null;
 }
 
 import { getFormaPagamentoLabel } from '@/utils/formatters';
@@ -82,6 +84,8 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'atendente', label: 'Atendente', defaultVisible: true },
   { id: 'tipo_entrega', label: 'Tipo Entrega', defaultVisible: true },
   { id: 'pagamento', label: 'Pagamento', defaultVisible: true },
+  { id: 'data_pgto_1', label: 'Data Pgto 1', defaultVisible: true },
+  { id: 'data_pgto_2', label: 'Data Pgto 2', defaultVisible: true },
   { id: 'valor_frete', label: 'Frete', defaultVisible: true },
   { id: 'valor_instalacao', label: 'Instalação', defaultVisible: true },
   { id: 'desconto_acrescimo', label: 'Desc./Acrés.', defaultVisible: true },
@@ -211,9 +215,33 @@ export default function FaturamentoMinimalista() {
         });
       }
 
+      // Buscar datas de pagamento das contas_receber
+      const vendaIds = vendasData.map((v: any) => v.id);
+      const { data: contasData } = await supabase
+        .from('contas_receber')
+        .select('venda_id, metodo_pagamento, data_vencimento')
+        .in('venda_id', vendaIds)
+        .order('data_vencimento', { ascending: true });
+
+      // Processar datas de pagamento por venda
+      const pagamentosPorVenda = new Map<string, { data1?: string; data2?: string }>();
+      if (contasData) {
+        contasData.forEach((conta: any) => {
+          const existing = pagamentosPorVenda.get(conta.venda_id) || {};
+          if (!existing.data1) {
+            existing.data1 = conta.data_vencimento;
+            (existing as any).metodo1 = conta.metodo_pagamento;
+          } else if (!existing.data2 && conta.metodo_pagamento !== (existing as any).metodo1) {
+            existing.data2 = conta.data_vencimento;
+          }
+          pagamentosPorVenda.set(conta.venda_id, existing);
+        });
+      }
+
       const vendasCompletas = vendasData.map((venda: any) => {
         const atendenteData = venda.atendente_id ? atendenteMap.get(venda.atendente_id) : null;
         const portas = venda.produtos_vendas || [];
+        const pagamentos = pagamentosPorVenda.get(venda.id);
         
         const valor_produto = portas.reduce((acc: number, p: any) => 
           acc + (p.valor_produto || 0) * (p.quantidade || 1), 0);
@@ -235,6 +263,8 @@ export default function FaturamentoMinimalista() {
           valor_pintura,
           custo_produto,
           custo_pintura,
+          data_pagamento_1: pagamentos?.data1 || null,
+          data_pagamento_2: pagamentos?.data2 || null,
         };
       });
 
@@ -491,6 +521,14 @@ export default function FaturamentoMinimalista() {
             {getFormaPagamentoLabel(venda.metodo_pagamento)}
           </span>
         );
+      case 'data_pgto_1':
+        return venda.data_pagamento_1 
+          ? <span className="text-white/80">{format(new Date(venda.data_pagamento_1), 'dd/MM/yy')}</span>
+          : <span className="text-white/30">-</span>;
+      case 'data_pgto_2':
+        return venda.data_pagamento_2 
+          ? <span className="text-white/80">{format(new Date(venda.data_pagamento_2), 'dd/MM/yy')}</span>
+          : <span className="text-white/30">-</span>;
       case 'valor_frete':
         return (
           <span className="text-white/80">
@@ -661,7 +699,7 @@ export default function FaturamentoMinimalista() {
         </div>
       </button>
 
-      <div className="container mx-auto p-6 pt-20 space-y-6">
+      <div className="container mx-auto p-6 pt-20 space-y-6 max-w-[1600px]">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -911,7 +949,7 @@ export default function FaturamentoMinimalista() {
             </div>
 
             {/* Table */}
-            <div className="rounded-md border border-white/10 overflow-hidden">
+            <div className="rounded-md border border-white/10 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/10 hover:bg-white/5">
