@@ -4,6 +4,8 @@ import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
 import { ProducaoKanban } from "@/components/production/ProducaoKanban";
 import { OrdemDetalhesSheet } from "@/components/production/OrdemDetalhesSheet";
 import { ProcessoAvancoAutomaticoModal } from "@/components/pedidos/ProcessoAvancoAutomaticoModal";
+import { MetaProgressoFlutuante } from "@/components/metas/MetaProgressoFlutuante";
+import { useMetaProgresso } from "@/hooks/useMetaProgresso";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
@@ -31,6 +33,7 @@ export default function QualidadeMinimalista() {
   const { user } = useAuth();
 
   const { tentarAvancoAutomatico, processos, modalOpen } = usePedidoAutoAvanco();
+  const { metaInfo, visible, mostrarProgresso, fechar } = useMetaProgresso();
 
   const {
     ordens,
@@ -56,9 +59,14 @@ export default function QualidadeMinimalista() {
     await capturarOrdem.mutateAsync(ordemId);
   };
 
-  const handleConcluirOrdem = (ordemId: string) => {
-    concluirOrdem.mutate(ordemId);
+  const handleConcluirOrdem = async (ordemId: string) => {
+    await concluirOrdem.mutateAsync(ordemId);
     setSheetOpen(false);
+    
+    // Mostrar progresso da meta
+    if (user?.id) {
+      mostrarProgresso(user.id, 'qualidade');
+    }
   };
 
   const handleRefresh = () => {
@@ -94,6 +102,12 @@ export default function QualidadeMinimalista() {
       <ProcessoAvancoAutomaticoModal
         open={modalOpen}
         processos={processos}
+      />
+
+      <MetaProgressoFlutuante
+        metaInfo={metaInfo}
+        visible={visible}
+        onClose={fechar}
       />
     </MinimalistLayout>
   );

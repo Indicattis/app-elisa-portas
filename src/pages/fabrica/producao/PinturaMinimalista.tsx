@@ -9,18 +9,23 @@ import { OrdemDetalhesSheet } from "@/components/production/OrdemDetalhesSheet";
 import { ProcessoAvancoAutomaticoModal } from "@/components/pedidos/ProcessoAvancoAutomaticoModal";
 import { PinturaIniciosList } from "@/components/production/PinturaIniciosList";
 import { NovoInicioPinturaModal } from "@/components/production/NovoInicioPinturaModal";
+import { MetaProgressoFlutuante } from "@/components/metas/MetaProgressoFlutuante";
+import { useMetaProgresso } from "@/hooks/useMetaProgresso";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function PinturaMinimalista() {
   const [selectedOrdemId, setSelectedOrdemId] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [novoInicioOpen, setNovoInicioOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { tentarAvancoAutomatico, processos, modalOpen } = usePedidoAutoAvanco();
   const { inicios, isLoading: isLoadingInicios, criarInicio, toggleRecarga } = usePinturaInicios();
+  const { metaInfo, visible, mostrarProgresso, fechar } = useMetaProgresso();
 
   const {
     ordens,
@@ -36,6 +41,17 @@ export default function PinturaMinimalista() {
   const handleOrdemClick = (ordem: any) => {
     setSelectedOrdemId(ordem.id);
     setDetailsOpen(true);
+  };
+
+  const handleFinalizarPintura = async () => {
+    if (!selectedOrdem) return;
+    await finalizarPintura.mutateAsync(selectedOrdem.id);
+    setDetailsOpen(false);
+    
+    // Mostrar progresso da meta
+    if (user?.id) {
+      mostrarProgresso(user.id, 'pintura');
+    }
   };
 
   const handleRefresh = () => {
@@ -110,7 +126,7 @@ export default function PinturaMinimalista() {
         onCapturarOrdem={(ordemId) => capturarOrdem.mutate(ordemId)}
         isUpdating={marcarLinhaConcluida.isPending}
         isCapturing={capturarOrdem.isPending}
-        onFinalizarPintura={() => finalizarPintura.mutate(selectedOrdem?.id || '')}
+        onFinalizarPintura={handleFinalizarPintura}
         isFinalizando={finalizarPintura.isPending}
       />
 
@@ -124,6 +140,12 @@ export default function PinturaMinimalista() {
         onOpenChange={setNovoInicioOpen}
         onConfirm={criarInicio.mutate}
         isLoading={criarInicio.isPending}
+      />
+
+      <MetaProgressoFlutuante
+        metaInfo={metaInfo}
+        visible={visible}
+        onClose={fechar}
       />
     </MinimalistLayout>
   );
