@@ -160,7 +160,8 @@ export default function MinhasVendasEditar() {
     desconto_percentual: p.desconto_percentual,
     desconto_valor: p.desconto_valor,
     quantidade: p.quantidade,
-    descricao: p.descricao || ''
+    descricao: p.descricao || '',
+    unidade: (p as any).unidade || 'Unitário'
   }));
 
   const calcularValorTotalProdutos = () => {
@@ -304,6 +305,40 @@ export default function MinhasVendasEditar() {
       setIsSaving(false);
     }
   };
+
+  const handleUpdateQuantidade = async (index: number, quantidade: number) => {
+    const produto = produtos?.[index];
+    if (!produto?.id) return;
+    
+    try {
+      await updateProduto({
+        produtoId: produto.id,
+        updates: { quantidade }
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar quantidade:', error);
+    }
+  };
+
+  const ProductButton = ({ 
+    label, 
+    onClick 
+  }: { 
+    label: string; 
+    onClick: () => void;
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex items-center gap-2 h-10 px-4 rounded-lg
+                 bg-gradient-to-r from-blue-500/10 to-blue-600/5 border border-blue-500/25 text-blue-200
+                 hover:from-blue-500/20 hover:to-blue-600/10 hover:text-white hover:border-blue-400/40 
+                 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
+    >
+      <Plus className="w-4 h-4 text-blue-400 group-hover:text-blue-300" />
+      <span className="text-sm font-medium">{label}</span>
+    </button>
+  );
 
   const handleSalvarObservacoes = async () => {
     if (!id) return;
@@ -570,99 +605,34 @@ export default function MinhasVendasEditar() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex gap-2 flex-wrap">
-              <Button 
-                type="button"
-                size="sm"
-                className="bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800"
+              <ProductButton 
+                label="Porta de Enrolar"
                 onClick={() => {
                   setTipoInicial('porta_enrolar');
                   setPermitirTrocaTipo(false);
                   setShowProdutoForm(true);
                 }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Porta de Enrolar
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
+              />
+              <ProductButton 
+                label="Porta Social"
                 onClick={() => {
                   setTipoInicial('porta_social');
                   setPermitirTrocaTipo(false);
                   setShowProdutoForm(true);
                 }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Porta Social
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
+              />
+              <ProductButton 
+                label="Pintura Eletrostática"
                 onClick={() => {
                   setTipoInicial('pintura_epoxi');
                   setPermitirTrocaTipo(false);
                   setShowProdutoForm(true);
                 }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Pintura Eletrostática
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
-                onClick={() => {
-                  setTipoInicial('acessorio');
-                  setPermitirTrocaTipo(false);
-                  setShowProdutoForm(true);
-                }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Acessórios
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
-                onClick={() => {
-                  setTipoInicial('adicional');
-                  setPermitirTrocaTipo(false);
-                  setShowProdutoForm(true);
-                }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Adicionais
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
-                onClick={() => {
-                  setTipoInicial('manutencao');
-                  setPermitirTrocaTipo(false);
-                  setShowProdutoForm(true);
-                }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Serviço
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
+              />
+              <ProductButton 
+                label="Catálogo"
                 onClick={() => setAcessoriosModalOpen(true)}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Catálogo
-              </Button>
+              />
             </div>
 
             <ProdutoVendaForm 
@@ -724,6 +694,7 @@ export default function MinhasVendasEditar() {
                     }
                   }}
                   onRemoverDesconto={handleRemoverDesconto}
+                  onUpdateQuantidade={handleUpdateQuantidade}
                 />
               )}
             </div>
