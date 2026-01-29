@@ -49,14 +49,10 @@ export default function CatalogoEditMinimalista() {
     descricao_produto: "",
     categoria: "",
     subcategoria_id: undefined,
-    quantidade: 0,
-    unidade: "un",
     preco_venda: 0,
     custo_produto: undefined,
     imagem_url: undefined,
-    peso: undefined,
     destaque: false,
-    estoque_minimo: 0,
     tags: [],
     sku: "",
     tipo_fabricacao: "interno",
@@ -85,14 +81,10 @@ export default function CatalogoEditMinimalista() {
           descricao_produto: data.descricao_produto || "",
           categoria: data.categoria,
           subcategoria_id: data.subcategoria_id || undefined,
-          quantidade: data.quantidade,
-          unidade: data.unidade || "un",
           preco_venda: data.preco_venda,
           custo_produto: data.custo_produto || undefined,
           imagem_url: data.imagem_url || undefined,
-          peso: data.peso || undefined,
           destaque: data.destaque,
-          estoque_minimo: data.estoque_minimo || 0,
           tags: data.tags || [],
           sku: data.sku || "",
           tipo_fabricacao: (data.tipo_fabricacao as 'interno' | 'terceirizado') || "interno",
@@ -318,38 +310,8 @@ export default function CatalogoEditMinimalista() {
           </div>
         </div>
 
-        {/* Estoque e Preço */}
+        {/* Preço */}
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm text-white/70 mb-1 block">Quantidade *</label>
-              <Input
-                type="number"
-                value={formData.quantidade}
-                onChange={(e) => setFormData((prev) => ({ ...prev, quantidade: Number(e.target.value) }))}
-                className="bg-white/5 border-white/10 text-white"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-white/70 mb-1 block">Unidade</label>
-              <Input
-                value={formData.unidade || ""}
-                onChange={(e) => setFormData((prev) => ({ ...prev, unidade: e.target.value }))}
-                placeholder="un"
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-white/70 mb-1 block">Estoque Mín.</label>
-              <Input
-                type="number"
-                value={formData.estoque_minimo || 0}
-                onChange={(e) => setFormData((prev) => ({ ...prev, estoque_minimo: Number(e.target.value) }))}
-                className="bg-white/5 border-white/10 text-white"
-              />
-            </div>
-          </div>
-          
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm text-white/70 mb-1 block">Preço de Venda *</label>
@@ -371,17 +333,6 @@ export default function CatalogoEditMinimalista() {
                 className="bg-white/5 border-white/10 text-white"
               />
             </div>
-          </div>
-          
-          <div>
-            <label className="text-sm text-white/70 mb-1 block">Peso (kg)</label>
-            <Input
-              type="number"
-              step="0.01"
-              value={formData.peso || ""}
-              onChange={(e) => setFormData((prev) => ({ ...prev, peso: e.target.value ? Number(e.target.value) : undefined }))}
-              className="bg-white/5 border-white/10 text-white"
-            />
           </div>
         </div>
 
