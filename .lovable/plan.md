@@ -1,130 +1,83 @@
 
-# Plano: Corrigir Erro de Coluna Inexistente ao Retroceder Pedido
+# Plano: Adicionar Colunas de Métricas de Desempenho às Ordens de Produção
 
-## Problema Identificado
+## Objetivo
 
-Ao tentar retroceder um pedido para a etapa "Em Produção", o sistema retorna o erro:
-
-```
-column v.valor_pintura does not exist
-```
-
-## Causa Raiz
-
-A função SQL `retroceder_pedido_unificado` contém uma referência incorreta. Na linha 37, ela tenta acessar `v.valor_pintura` na tabela `vendas`:
-
-```sql
-SELECT EXISTS(
-  SELECT 1 FROM vendas v
-  JOIN pedidos_producao p ON p.venda_id = v.id
-  WHERE p.id = p_pedido_id
-  AND (v.valor_pintura > 0 OR EXISTS(...))  -- ❌ v.valor_pintura NÃO EXISTE
-) INTO v_tem_pintura;
-```
-
-**Contexto**: A coluna `valor_pintura` foi removida da tabela `vendas` na migração `20251007164422` porque os valores de pintura agora estão na tabela `produtos_vendas` (itens individuais da venda).
+Adicionar colunas para armazenar métricas de desempenho em cada tipo de ordem de produção, permitindo análise e relatórios de produtividade.
 
 ---
 
-## Estrutura Atual das Tabelas
+## Colunas a Adicionar
 
-| Tabela | Coluna valor_pintura |
-|--------|---------------------|
-| vendas | **NÃO EXISTE** (removida) |
-| produtos_vendas | **SIM** (existe) |
-
----
-
-## Solução
-
-Atualizar a função `retroceder_pedido_unificado` para verificar a existência de pintura consultando a tabela `produtos_vendas` ao invés de `vendas`.
-
-### Código Atual (Incorreto)
-
-```sql
-SELECT EXISTS(
-  SELECT 1 FROM vendas v
-  JOIN pedidos_producao p ON p.venda_id = v.id
-  WHERE p.id = p_pedido_id
-  AND (v.valor_pintura > 0 OR EXISTS(
-    SELECT 1 FROM produtos_vendas pv 
-    WHERE pv.venda_id = v.id AND pv.tipo_produto = 'pintura_epoxi'
-  ))
-) INTO v_tem_pintura;
-```
-
-### Código Corrigido
-
-```sql
-SELECT EXISTS(
-  SELECT 1 FROM pedidos_producao p
-  WHERE p.id = p_pedido_id
-  AND EXISTS(
-    SELECT 1 FROM produtos_vendas pv 
-    WHERE pv.venda_id = p.venda_id 
-    AND (pv.valor_pintura > 0 OR pv.tipo_produto = 'pintura_epoxi')
-  )
-) INTO v_tem_pintura;
-```
-
-**Mudanças**:
-1. Remove a referência direta a `vendas v` (já que não precisamos de colunas dela)
-2. Consulta diretamente `pedidos_producao` 
-3. Move a verificação de `valor_pintura` para a subconsulta em `produtos_vendas`
+| Tabela | Nova Coluna | Tipo | Descrição |
+|--------|-------------|------|-----------|
+| `ordens_separacao` | `quantidade_itens` | `INTEGER` | Quantidade de linhas/itens na ordem |
+| `ordens_qualidade` | `quantidade_pedidos` | `INTEGER DEFAULT 1` | Sempre 1 (referência ao pedido) |
+| `ordens_carregamento` | `quantidade_pedidos` | `INTEGER DEFAULT 1` | Sempre 1 (referência ao pedido) |
+| `instalacoes` | `metragem_quadrada` | `DECIMAL(10,2)` | Total m² das portas (largura × altura) |
+| `ordens_soldagem` | `metragem_quadrada` | `DECIMAL(10,2)` | Total m² das portas (largura × altura) |
 
 ---
 
-## Alteração Necessária
-
-### Nova Migração SQL
-
-Criar uma migração que substitui a função com a query corrigida:
+## Migração SQL
 
 ```sql
-CREATE OR REPLACE FUNCTION public.retroceder_pedido_unificado(...)
-RETURNS JSONB
-LANGUAGE plpgsql
-...
-AS $$
-DECLARE
-  ...
-BEGIN
-  -- Buscar etapa atual
-  SELECT etapa_atual INTO v_etapa_atual
-  FROM pedidos_producao WHERE id = p_pedido_id;
+-- Adicionar coluna quantidade_itens em ordens_separacao
+ALTER TABLE ordens_separacao 
+ADD COLUMN IF NOT EXISTS quantidade_itens INTEGER;
 
-  IF v_etapa_atual IS NULL THEN
-    RETURN jsonb_build_object('success', false, 'error', 'Pedido não encontrado');
-  END IF;
+-- Adicionar coluna quantidade_pedidos em ordens_qualidade (sempre 1)
+ALTER TABLE ordens_qualidade 
+ADD COLUMN IF NOT EXISTS quantidade_pedidos INTEGER DEFAULT 1;
 
-  -- CORREÇÃO: Verificar pintura em produtos_vendas
-  SELECT EXISTS(
-    SELECT 1 FROM pedidos_producao p
-    WHERE p.id = p_pedido_id
-    AND EXISTS(
-      SELECT 1 FROM produtos_vendas pv 
-      WHERE pv.venda_id = p.venda_id 
-      AND (pv.valor_pintura > 0 OR pv.tipo_produto = 'pintura_epoxi')
-    )
-  ) INTO v_tem_pintura;
+-- Adicionar coluna quantidade_pedidos em ordens_carregamento (sempre 1)
+ALTER TABLE ordens_carregamento 
+ADD COLUMN IF NOT EXISTS quantidade_pedidos INTEGER DEFAULT 1;
 
-  -- Resto da função permanece igual...
-END;
-$$;
+-- Adicionar coluna metragem_quadrada em instalacoes
+ALTER TABLE instalacoes 
+ADD COLUMN IF NOT EXISTS metragem_quadrada DECIMAL(10,2);
+
+-- Adicionar coluna metragem_quadrada em ordens_soldagem
+ALTER TABLE ordens_soldagem 
+ADD COLUMN IF NOT EXISTS metragem_quadrada DECIMAL(10,2);
+
+-- Adicionar comentários para documentação
+COMMENT ON COLUMN ordens_separacao.quantidade_itens IS 'Quantidade de itens/linhas na ordem de separação';
+COMMENT ON COLUMN ordens_qualidade.quantidade_pedidos IS 'Quantidade de pedidos (sempre 1)';
+COMMENT ON COLUMN ordens_carregamento.quantidade_pedidos IS 'Quantidade de pedidos (sempre 1)';
+COMMENT ON COLUMN instalacoes.metragem_quadrada IS 'Total de m² (largura x altura) das portas do pedido';
+COMMENT ON COLUMN ordens_soldagem.metragem_quadrada IS 'Total de m² (largura x altura) das portas do pedido';
 ```
+
+---
+
+## Estrutura Final por Tipo de Ordem
+
+| Ordem | Métrica de Desempenho | Status Após Migração |
+|-------|----------------------|---------------------|
+| **Soldagem** | `qtd_portas_p`, `qtd_portas_g`, **`metragem_quadrada`** | Completo |
+| **Perfiladeira** | `metragem_linear` | Já existente |
+| **Separação** | **`quantidade_itens`** | Completo |
+| **Qualidade** | **`quantidade_pedidos`** | Completo |
+| **Pintura** | `metragem_quadrada` | Já existente |
+| **Carregamento** | **`quantidade_pedidos`** | Completo |
+| **Instalação** | **`metragem_quadrada`** | Completo |
+
+---
+
+## Próximos Passos (Opcional)
+
+Após a migração, pode ser útil:
+1. Popular as métricas para ordens existentes via script UPDATE
+2. Criar triggers para calcular automaticamente ao criar novas ordens
 
 ---
 
 ## Resumo
 
-| Arquivo/Recurso | Alteração |
-|-----------------|-----------|
-| Migração SQL | Atualizar função `retroceder_pedido_unificado` para consultar `produtos_vendas` ao invés de `vendas` |
-
----
-
-## Impacto
-
-- **Correção imediata**: Retrocesso de pedidos funcionará sem erros
-- **Lógica preservada**: A verificação de pintura continua funcionando, apenas consultando a tabela correta
-- **Sem breaking changes**: Demais funcionalidades não são afetadas
+| Ação | Detalhes |
+|------|----------|
+| Migração SQL | Adicionar 5 colunas de métricas em 5 tabelas diferentes |
+| Impacto | Nenhum - apenas adiciona novas colunas opcionais |
+| Breaking Changes | Nenhum |
