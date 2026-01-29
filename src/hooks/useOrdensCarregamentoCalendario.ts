@@ -47,6 +47,7 @@ export const useOrdensCarregamentoCalendario = (
             bairro,
             data_prevista_entrega,
             tipo_entrega,
+            metodo_pagamento,
             produtos:produtos_vendas(
               tipo_produto,
               tamanho,
@@ -118,6 +119,7 @@ export const useOrdensCarregamentoCalendario = (
             bairro,
             data_prevista_entrega,
             tipo_entrega,
+            metodo_pagamento,
             produtos:produtos_vendas(
               tipo_produto,
               tamanho,
