@@ -4,6 +4,8 @@ import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
 import { ProducaoKanban } from "@/components/production/ProducaoKanban";
 import { OrdemDetalhesSheet } from "@/components/production/OrdemDetalhesSheet";
 import { ProcessoAvancoAutomaticoModal } from "@/components/pedidos/ProcessoAvancoAutomaticoModal";
+import { MetaProgressoFlutuante } from "@/components/metas/MetaProgressoFlutuante";
+import { useMetaProgresso } from "@/hooks/useMetaProgresso";
 import { useQueryClient } from "@tanstack/react-query";
 import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 
@@ -30,6 +32,7 @@ export default function ProducaoPerfiladeira() {
   const { user } = useProducaoAuth();
 
   const { tentarAvancoAutomatico, processos, modalOpen } = usePedidoAutoAvanco();
+  const { metaInfo, visible, mostrarProgresso, fechar } = useMetaProgresso();
 
   const {
     ordens,
@@ -57,9 +60,14 @@ export default function ProducaoPerfiladeira() {
     await capturarOrdem.mutateAsync(ordemId);
   };
 
-  const handleConcluirOrdem = (ordemId: string) => {
-    concluirOrdem.mutate(ordemId);
+  const handleConcluirOrdem = async (ordemId: string) => {
+    await concluirOrdem.mutateAsync(ordemId);
     setSheetOpen(false);
+    
+    // Mostrar progresso da meta
+    if (user?.user_id) {
+      mostrarProgresso(user.user_id, 'perfiladeira');
+    }
   };
 
   const handlePausarOrdem = async (ordemId: string, justificativa: string, linhaProblemaId?: string) => {
@@ -102,6 +110,12 @@ export default function ProducaoPerfiladeira() {
       <ProcessoAvancoAutomaticoModal
         open={modalOpen}
         processos={processos}
+      />
+
+      <MetaProgressoFlutuante
+        metaInfo={metaInfo}
+        visible={visible}
+        onClose={fechar}
       />
     </div>
   );

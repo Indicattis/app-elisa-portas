@@ -26,13 +26,32 @@ const tiposMetaOptions = [
 
 const getUnidadeDescricao = (tipo: string) => {
   switch (tipo) {
-    case "solda": return "Quantidade de portas";
-    case "perfiladeira": return "Metros lineares (m)";
-    case "separacao": return "Quantidade de itens/linhas";
-    case "qualidade": return "Quantidade de pedidos";
-    case "pintura": return "Metros quadrados (m²)";
-    case "carregamento": return "Quantidade de pedidos";
+    case "solda": return "Quantidade de portas produzidas";
+    case "perfiladeira": return "Metragem linear de perfis produzidos";
+    case "separacao": return "Quantidade de itens/linhas separados";
+    case "qualidade": return "Quantidade de pedidos inspecionados";
+    case "pintura": return "Metragem quadrada de portas pintadas";
+    case "carregamento": return "Quantidade de pedidos expedidos";
     default: return "Quantidade";
+  }
+};
+
+const getInputConfig = (tipo: string) => {
+  switch (tipo) {
+    case "solda":
+      return { placeholder: "Ex: 50", sufixo: "portas", step: "1" };
+    case "perfiladeira":
+      return { placeholder: "Ex: 150,5", sufixo: "metros", step: "0.1" };
+    case "separacao":
+      return { placeholder: "Ex: 200", sufixo: "itens", step: "1" };
+    case "qualidade":
+      return { placeholder: "Ex: 30", sufixo: "pedidos", step: "1" };
+    case "pintura":
+      return { placeholder: "Ex: 85,5", sufixo: "m²", step: "0.1" };
+    case "carregamento":
+      return { placeholder: "Ex: 25", sufixo: "pedidos", step: "1" };
+    default:
+      return { placeholder: "Ex: 100", sufixo: "", step: "1" };
   }
 };
 
@@ -45,6 +64,8 @@ export function MetaDialog({ open, onOpenChange, userId, metaParaEditar }: MetaD
 
   const criarMeta = useCriarMeta();
   const atualizarMeta = useAtualizarMeta();
+
+  const inputConfig = getInputConfig(tipoMeta);
 
   useEffect(() => {
     if (metaParaEditar) {
@@ -130,12 +151,19 @@ export function MetaDialog({ open, onOpenChange, userId, metaParaEditar }: MetaD
 
           <div className="space-y-2">
             <Label>Valor da Meta *</Label>
-            <Input
-              type="text"
-              placeholder="Ex: 100"
-              value={valorMeta}
-              onChange={(e) => setValorMeta(e.target.value)}
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                step={inputConfig.step}
+                placeholder={inputConfig.placeholder}
+                value={valorMeta}
+                onChange={(e) => setValorMeta(e.target.value)}
+                className="flex-1"
+              />
+              <span className="text-sm text-muted-foreground whitespace-nowrap min-w-[60px] text-right">
+                {inputConfig.sufixo}
+              </span>
+            </div>
             <p className="text-xs text-muted-foreground">
               {getUnidadeDescricao(tipoMeta)}
             </p>

@@ -8,18 +8,23 @@ import { OrdemDetalhesSheet } from "@/components/production/OrdemDetalhesSheet";
 import { ProcessoAvancoAutomaticoModal } from "@/components/pedidos/ProcessoAvancoAutomaticoModal";
 import { NovoInicioPinturaModal } from "@/components/production/NovoInicioPinturaModal";
 import { PinturaIniciosList } from "@/components/production/PinturaIniciosList";
+import { MetaProgressoFlutuante } from "@/components/metas/MetaProgressoFlutuante";
+import { useMetaProgresso } from "@/hooks/useMetaProgresso";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQueryClient } from "@tanstack/react-query";
+import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 
 export default function ProducaoPintura() {
   const [selectedOrdemId, setSelectedOrdemId] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [novoInicioOpen, setNovoInicioOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { user } = useProducaoAuth();
 
   const { tentarAvancoAutomatico, processos, modalOpen } = usePedidoAutoAvanco();
   const { inicios, isLoading: isLoadingInicios, criarInicio, toggleRecarga } = usePinturaInicios();
+  const { metaInfo, visible, mostrarProgresso, fechar } = useMetaProgresso();
 
   const {
     ordens,
@@ -36,6 +41,17 @@ export default function ProducaoPintura() {
   const handleOrdemClick = (ordem: any) => {
     setSelectedOrdemId(ordem.id);
     setDetailsOpen(true);
+  };
+
+  const handleFinalizarPintura = async () => {
+    if (!selectedOrdem) return;
+    await finalizarPintura.mutateAsync(selectedOrdem.id);
+    setDetailsOpen(false);
+    
+    // Mostrar progresso da meta
+    if (user?.user_id) {
+      mostrarProgresso(user.user_id, 'pintura');
+    }
   };
 
   const handleRefresh = () => {
@@ -97,7 +113,7 @@ export default function ProducaoPintura() {
         onCapturarOrdem={(ordemId) => capturarOrdem.mutate(ordemId)}
         isUpdating={marcarLinhaConcluida.isPending}
         isCapturing={capturarOrdem.isPending}
-        onFinalizarPintura={() => finalizarPintura.mutate(selectedOrdem?.id || '')}
+        onFinalizarPintura={handleFinalizarPintura}
         isFinalizando={finalizarPintura.isPending}
       />
 
@@ -111,6 +127,12 @@ export default function ProducaoPintura() {
         onOpenChange={setNovoInicioOpen}
         onConfirm={criarInicio.mutate}
         isLoading={criarInicio.isPending}
+      />
+
+      <MetaProgressoFlutuante
+        metaInfo={metaInfo}
+        visible={visible}
+        onClose={fechar}
       />
     </div>
   );

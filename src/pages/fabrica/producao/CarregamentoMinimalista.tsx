@@ -6,17 +6,22 @@ import { RefreshCw } from "lucide-react";
 import { useOrdensCarregamentoUnificadas, OrdemCarregamentoUnificada } from "@/hooks/useOrdensCarregamentoUnificadas";
 import { CarregamentoDownbar } from "@/components/carregamento/CarregamentoDownbar";
 import { CarregamentoKanban } from "@/components/carregamento/CarregamentoKanban";
+import { MetaProgressoFlutuante } from "@/components/metas/MetaProgressoFlutuante";
+import { useMetaProgresso } from "@/hooks/useMetaProgresso";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { useAuth } from "@/hooks/useAuth";
 
 type FiltroTipo = "todos" | "entrega" | "instalacao";
 
 export default function CarregamentoMinimalista() {
   const { ordens, isLoading, concluirCarregamento } = useOrdensCarregamentoUnificadas();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const [filtroTipo, setFiltroTipo] = useState<FiltroTipo>("todos");
   const [itemSelecionado, setItemSelecionado] = useState<OrdemCarregamentoUnificada | null>(null);
   const [downbarOpen, setDownbarOpen] = useState(false);
+  const { metaInfo, visible, mostrarProgresso, fechar } = useMetaProgresso();
 
   // Filtrar todas as ordens não concluídas (já filtrado pelo hook)
   const ordensDisponiveis = ordens;
@@ -40,6 +45,16 @@ export default function CarregamentoMinimalista() {
   const handleIniciarColeta = (ordem: OrdemCarregamentoUnificada) => {
     setItemSelecionado(ordem);
     setDownbarOpen(true);
+  };
+
+  const handleConcluirCarregamento = async ({ observacoes }: { observacoes?: string }) => {
+    if (!itemSelecionado) return;
+    await concluirCarregamento({ ordem: itemSelecionado, observacoes });
+    
+    // Mostrar progresso da meta
+    if (user?.id) {
+      mostrarProgresso(user.id, 'carregamento');
+    }
   };
 
   const handleRefresh = () => {
@@ -85,15 +100,19 @@ export default function CarregamentoMinimalista() {
           ordem={itemSelecionado}
           open={downbarOpen}
           onOpenChange={setDownbarOpen}
-          onConcluir={async ({ observacoes }) => {
-            await concluirCarregamento({ ordem: itemSelecionado, observacoes });
-          }}
+          onConcluir={handleConcluirCarregamento}
           onSuccess={() => {
             setDownbarOpen(false);
             setItemSelecionado(null);
           }}
         />
       )}
+
+      <MetaProgressoFlutuante
+        metaInfo={metaInfo}
+        visible={visible}
+        onClose={fechar}
+      />
     </MinimalistLayout>
   );
 }
