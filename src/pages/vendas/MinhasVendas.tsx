@@ -177,7 +177,7 @@ export default function MinhasVendas() {
 
   const totalVendas = vendasFiltradas.length;
   const valorTotal = vendasFiltradas.reduce((acc, v) => {
-    return acc + (v.valor_venda || 0) + (v.valor_credito || 0);
+    return acc + (v.valor_venda || 0) - (v.valor_frete || 0) + (v.valor_credito || 0);
   }, 0);
   const vendasFaturadas = vendasFiltradas.filter(v => v.comprovante_url).length;
 
@@ -302,7 +302,8 @@ export default function MinhasVendas() {
       case 'frete':
         return (venda.valor_frete || 0) > 0 ? formatCurrency(venda.valor_frete!) : '-';
       case 'valor':
-        return <span className="font-semibold">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</span>;
+        const valorSemFrete = (venda.valor_venda || 0) - (venda.valor_frete || 0) + (venda.valor_credito || 0);
+        return <span className="font-semibold">{formatCurrency(valorSemFrete)}</span>;
       case 'status':
         const status = venda.pedidos_producao?.status || null;
         return (
