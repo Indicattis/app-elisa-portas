@@ -1,24 +1,22 @@
 
-# Plano: Edição de Quantidade na Página de Edição de Venda e Remover Botão Serviço
+# Plano: Corrigir Botões e Edição de Quantidade na Página de Edição de Venda
 
 ## Resumo
 
-1. Remover o botão "Serviço" que ainda aparece na página de edição de venda
-2. Permitir edição de quantidade com suporte a decimais para itens vendidos por Metro/Kg/Litro
+1. Substituir os botões da página de edição para usar o mesmo estilo sofisticado da página de nova venda
+2. Verificar e garantir que a edição de quantidade funciona corretamente
 
 ---
 
 ## Problema Identificado
 
-### 1. Botão "Serviço" ainda visível
-- **Arquivo:** `src/pages/vendas/VendaEditarMinimalista.tsx` (linhas 470-483)
-- O botão "Serviço" ainda está presente, mas deveria ter sido removido conforme a regra de que "Manutenção" é um tipo de entrega, não um produto
+### 1. Estilo dos Botões
+- **Página Nova Venda**: Usa componente `ProductButton` com estilo gradiente azul sofisticado
+- **Página Edição**: Usa `Button` padrão com estilos diferentes
 
-### 2. Quantidade não editável
-- **Arquivo:** `src/pages/vendas/VendaEditarMinimalista.tsx`
-- O componente `ProdutosVendaTable` recebe `produtosFormatados` mas:
-  - Não recebe callback `onUpdateQuantidade`
-  - Não inclui o campo `unidade` no mapeamento de produtos
+### 2. Edição de Quantidade
+- O código atual já passa `onUpdateQuantidade` para `ProdutosVendaTable`
+- Preciso verificar se está funcionando corretamente
 
 ---
 
@@ -26,67 +24,66 @@
 
 ### Arquivo: `src/pages/vendas/VendaEditarMinimalista.tsx`
 
-#### 1. Remover o botão "Serviço" (linhas 470-483)
+#### 1. Adicionar componente ProductButton (igual ao da nova venda)
 
-**Código a remover:**
+Adicionar antes do return principal:
+
+```typescript
+const ProductButton = ({ 
+  label, 
+  onClick 
+}: { 
+  label: string; 
+  onClick: () => void;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="group flex items-center gap-2 h-10 px-4 rounded-lg
+               bg-gradient-to-r from-blue-500/10 to-blue-600/5 border border-blue-500/25 text-blue-200
+               hover:from-blue-500/20 hover:to-blue-600/10 hover:text-white hover:border-blue-400/40 hover:shadow-lg hover:shadow-blue-500/10
+               transition-all duration-200"
+  >
+    <Plus className="w-4 h-4 text-blue-400 group-hover:text-blue-300" />
+    <span className="text-sm font-medium">{label}</span>
+  </button>
+);
+```
+
+#### 2. Substituir os botões de adicionar produtos (linhas 444-495)
+
+**De:**
 ```typescript
 <Button 
   type="button"
   size="sm"
-  variant="outline"
-  className="border-primary/30 text-white hover:bg-primary/10"
-  onClick={() => {
-    setTipoInicial('manutencao');
-    setPermitirTrocaTipo(false);
-    setShowProdutoForm(true);
-  }}
+  onClick={() => {...}}
 >
   <Plus className="w-3.5 h-3.5 mr-1.5" />
-  Serviço
+  Porta de Enrolar
 </Button>
 ```
 
-#### 2. Adicionar `unidade` ao mapeamento de produtos (linhas 126-143)
-
-**Atualizar:**
+**Para:**
 ```typescript
-const produtosFormatados: ProdutoVenda[] = (produtos || []).map(p => ({
-  // ... campos existentes
-  descricao: p.descricao || '',
-  unidade: p.unidade || 'Unitário'  // NOVO CAMPO
-}));
-```
-
-#### 3. Adicionar função de atualização de quantidade
-
-**Adicionar handler:**
-```typescript
-const handleUpdateQuantidade = async (index: number, quantidade: number) => {
-  const produto = produtos?.[index];
-  if (!produto?.id) return;
-  
-  try {
-    await updateProduto({
-      produtoId: produto.id,
-      updates: { quantidade }
-    });
-  } catch (error) {
-    console.error('Erro ao atualizar quantidade:', error);
-  }
-};
-```
-
-#### 4. Passar `onUpdateQuantidade` para `ProdutosVendaTable`
-
-**Atualizar:**
-```typescript
-<ProdutosVendaTable 
-  produtos={produtosFormatados} 
-  onRemoveProduto={async (index: number) => { ... }}
-  onRemoverDesconto={handleRemoverDesconto}
-  onUpdateQuantidade={handleUpdateQuantidade}  // NOVO
+<ProductButton 
+  label="Porta de Enrolar"
+  onClick={() => {
+    setTipoInicial('porta_enrolar');
+    setPermitirTrocaTipo(false);
+    setShowProdutoForm(true);
+  }}
 />
 ```
+
+#### 3. Aplicar a todos os 4 botões de produto
+
+| Botão Atual | Novo Componente |
+|-------------|-----------------|
+| Porta de Enrolar | `<ProductButton label="Porta de Enrolar" ... />` |
+| Porta Social | `<ProductButton label="Porta Social" ... />` |
+| Pintura Eletrostática | `<ProductButton label="Pintura Eletrostática" ... />` |
+| Catálogo | `<ProductButton label="Catálogo" ... />` |
 
 ---
 
@@ -94,17 +91,28 @@ const handleUpdateQuantidade = async (index: number, quantidade: number) => {
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/pages/vendas/VendaEditarMinimalista.tsx` | Remover botão "Serviço" |
-| `src/pages/vendas/VendaEditarMinimalista.tsx` | Adicionar `unidade` ao mapeamento `produtosFormatados` |
-| `src/pages/vendas/VendaEditarMinimalista.tsx` | Criar handler `handleUpdateQuantidade` |
-| `src/pages/vendas/VendaEditarMinimalista.tsx` | Passar `onUpdateQuantidade` para `ProdutosVendaTable` |
+| `src/pages/vendas/VendaEditarMinimalista.tsx` | Adicionar componente `ProductButton` |
+| `src/pages/vendas/VendaEditarMinimalista.tsx` | Substituir 4 botões pelo novo componente |
 
 ---
 
 ## Resultado Esperado
 
-1. O botão "Serviço" não aparecerá mais na página de edição de venda
-2. A coluna "Qtd" na tabela de produtos terá inputs editáveis:
-   - Itens unitários: incremento de 1 em 1
-   - Itens vendidos por Metro/Kg/Litro: permitirá decimais (ex: 2.50m)
-   - Exibirá a abreviação da unidade ao lado (ex: "m", "kg")
+1. Os botões na página de edição terão o mesmo visual sofisticado da página de nova venda
+2. A edição de quantidade já está implementada e deve funcionar (o código já está correto)
+
+---
+
+## Comparação Visual
+
+### Antes (Edição):
+```text
+[+ Porta de Enrolar] [+ Porta Social] [+ Pintura Eletrostática] [+ Catálogo]
+   ↑ Botões simples com variant="outline"
+```
+
+### Depois (igual à Nova Venda):
+```text
+[+ Porta de Enrolar] [+ Porta Social] [+ Pintura Eletrostática] [+ Catálogo]
+   ↑ Botões com gradiente azul sofisticado e efeitos hover
+```
