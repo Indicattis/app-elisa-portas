@@ -86,20 +86,42 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
               <TableCell>{detalhes}</TableCell>
               <TableCell>
                 {onUpdateQuantidade ? (
-                  <Input
-                    type="number"
-                    min="1"
-                    value={produto.quantidade}
-                    onChange={(e) => {
-                      const novaQtd = parseInt(e.target.value);
-                      if (novaQtd >= 1) {
-                        onUpdateQuantidade(index, novaQtd);
-                      }
-                    }}
-                    className="w-20"
-                  />
+                  (() => {
+                    const permiteDecimal = produto.unidade?.toLowerCase() === 'metro' || 
+                                          produto.unidade?.toLowerCase() === 'kg' || 
+                                          produto.unidade?.toLowerCase() === 'litro';
+                    return (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          min={permiteDecimal ? "0.01" : "1"}
+                          step={permiteDecimal ? "0.01" : "1"}
+                          value={produto.quantidade}
+                          onChange={(e) => {
+                            const novaQtd = parseFloat(e.target.value);
+                            if (novaQtd >= 0.01) {
+                              onUpdateQuantidade(index, novaQtd);
+                            }
+                          }}
+                          className="w-20"
+                        />
+                        {produto.unidade && produto.unidade !== 'Unitário' && (
+                          <span className="text-xs text-muted-foreground">
+                            {produto.unidade === 'Metro' ? 'm' : produto.unidade.toLowerCase()}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()
                 ) : (
-                  produto.quantidade
+                  <span>
+                    {produto.quantidade}
+                    {produto.unidade && produto.unidade !== 'Unitário' && (
+                      <span className="text-xs text-muted-foreground ml-1">
+                        {produto.unidade === 'Metro' ? 'm' : produto.unidade.toLowerCase()}
+                      </span>
+                    )}
+                  </span>
                 )}
               </TableCell>
               <TableCell>R$ {((produto.valor_produto + produto.valor_pintura + produto.valor_instalacao)).toFixed(2)}</TableCell>
