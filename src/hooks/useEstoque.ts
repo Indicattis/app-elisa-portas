@@ -52,7 +52,7 @@ export interface ProdutoEstoque {
 export interface ProdutoEstoqueInput {
   nome_produto: string;
   descricao_produto?: string;
-  quantidade: number;
+  quantidade?: number;
   unidade?: string;
   categoria?: string;
   custo_unitario?: number;
