@@ -15,6 +15,7 @@ import { SelecionarAcessoriosModal } from "@/components/vendas/SelecionarAcessor
 import { DescontoVendaModal } from "@/components/vendas/DescontoVendaModal";
 import { CreditoVendaModal } from "@/components/vendas/CreditoVendaModal";
 import { ProdutosVendaTable } from "@/components/vendas/ProdutosVendaTable";
+import { VendaResumo } from "@/components/vendas/VendaResumo";
 import type { ProdutoVenda } from "@/hooks/useVendas";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 import { Badge } from "@/components/ui/badge";
@@ -273,6 +274,34 @@ export default function MinhasVendasEditar() {
       });
     } catch (error) {
       console.error('Erro ao remover desconto:', error);
+    }
+  };
+
+  const handleRemoverCredito = async () => {
+    if (!id) return;
+    
+    setIsSaving(true);
+    try {
+      await supabase
+        .from('vendas')
+        .update({ valor_credito: 0, percentual_credito: 0 })
+        .eq('id', id);
+      
+      setVenda(prev => prev ? { ...prev, valor_credito: 0, percentual_credito: 0 } : null);
+      
+      toast({
+        title: "Crédito removido",
+        description: "O crédito foi removido da venda"
+      });
+    } catch (error) {
+      console.error('Erro ao remover crédito:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível remover o crédito"
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -699,6 +728,17 @@ export default function MinhasVendasEditar() {
               )}
             </div>
 
+            {/* Resumo da Venda com visualização de crédito */}
+            {produtosFormatados.length > 0 && (
+              <VendaResumo
+                produtos={produtosFormatados}
+                valorFrete={venda.valor_frete || 0}
+                valorCredito={valorCreditoAtual}
+                percentualCredito={percentualCreditoAtual}
+                onRemoverCredito={valorCreditoAtual > 0 ? handleRemoverCredito : undefined}
+              />
+            )}
+
             {/* Botões de Desconto, Crédito e Salvar */}
             <div className="flex justify-end gap-2 pt-4 border-t border-blue-500/20">
               {produtosFormatados.length > 0 && valorCreditoAtual === 0 && (
@@ -714,7 +754,7 @@ export default function MinhasVendasEditar() {
                   {temDesconto ? 'Editar Desconto' : 'Adicionar Desconto'}
                 </Button>
               )}
-              {produtosFormatados.length > 0 && !temDesconto && (
+              {produtosFormatados.length > 0 && (!temDesconto || valorCreditoAtual > 0) && (
                 <Button 
                   type="button"
                   size="sm"
