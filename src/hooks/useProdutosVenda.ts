@@ -39,6 +39,7 @@ export const useProdutosVenda = (vendaId?: string) => {
         cor_id: produto.cor_id || null,
         acessorio_id: produto.acessorio_id || null,
         adicional_id: produto.adicional_id || null,
+        vendas_catalogo_id: produto.vendas_catalogo_id || null,
         descricao: produto.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produto.descricao || null),
       };
 
