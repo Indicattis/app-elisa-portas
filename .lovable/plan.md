@@ -1,134 +1,130 @@
 
-# Plano: Corrigir Erro de Coluna Inexistente ao Concluir Ordem de Qualidade
+# Plano: Corrigir Erro de Coluna Inexistente ao Retroceder Pedido
 
 ## Problema Identificado
 
-Ao tentar concluir uma ordem em `/producao/qualidade`, o sistema retorna o erro:
+Ao tentar retroceder um pedido para a etapa "Em Produção", o sistema retorna o erro:
 
 ```
-PGRST204: Could not find the 'linha_problema_id' column of 'ordens_qualidade' in the schema cache
+column v.valor_pintura does not exist
 ```
 
 ## Causa Raiz
 
-O hook `useOrdemProducao.ts` usa uma lógica genérica para todas as tabelas de ordens (`ordens_soldagem`, `ordens_perfiladeira`, `ordens_separacao`, `ordens_qualidade`). Na função `concluirOrdem` (linha 505-517), o código tenta resetar o campo `linha_problema_id`:
+A função SQL `retroceder_pedido_unificado` contém uma referência incorreta. Na linha 37, ela tenta acessar `v.valor_pintura` na tabela `vendas`:
 
-```tsx
-const { error } = await supabase
-  .from(tabelaOrdem)
-  .update({ 
-    status: 'concluido',
-    data_conclusao: new Date().toISOString(),
-    tempo_conclusao_segundos,
-    historico: true,
-    pausada: false,
-    pausada_em: null,
-    justificativa_pausa: null,
-    linha_problema_id: null,  // ❌ NÃO EXISTE EM ordens_qualidade
-  })
-  .eq('id', ordemId);
+```sql
+SELECT EXISTS(
+  SELECT 1 FROM vendas v
+  JOIN pedidos_producao p ON p.venda_id = v.id
+  WHERE p.id = p_pedido_id
+  AND (v.valor_pintura > 0 OR EXISTS(...))  -- ❌ v.valor_pintura NÃO EXISTE
+) INTO v_tem_pintura;
 ```
 
-**O problema**: A tabela `ordens_qualidade` não possui a coluna `linha_problema_id`, diferente das outras tabelas de ordens de produção.
+**Contexto**: A coluna `valor_pintura` foi removida da tabela `vendas` na migração `20251007164422` porque os valores de pintura agora estão na tabela `produtos_vendas` (itens individuais da venda).
 
 ---
 
-## Análise das Colunas por Tabela
+## Estrutura Atual das Tabelas
 
-| Tabela | linha_problema_id |
-|--------|-------------------|
-| ordens_soldagem | Sim |
-| ordens_perfiladeira | Sim |
-| ordens_separacao | Sim |
-| ordens_qualidade | **Não** |
+| Tabela | Coluna valor_pintura |
+|--------|---------------------|
+| vendas | **NÃO EXISTE** (removida) |
+| produtos_vendas | **SIM** (existe) |
 
 ---
 
 ## Solução
 
-Modificar a função `concluirOrdem` para incluir `linha_problema_id` apenas quando o tipo de ordem for diferente de `qualidade`:
+Atualizar a função `retroceder_pedido_unificado` para verificar a existência de pintura consultando a tabela `produtos_vendas` ao invés de `vendas`.
 
-```tsx
-// Construir objeto de atualização base
-const updateData: any = {
-  status: 'concluido',
-  data_conclusao: new Date().toISOString(),
-  tempo_conclusao_segundos,
-  historico: true,
-  pausada: false,
-  pausada_em: null,
-  justificativa_pausa: null,
-};
+### Código Atual (Incorreto)
 
-// Adicionar linha_problema_id apenas para ordens que possuem esse campo
-if (tipoOrdem !== 'qualidade') {
-  updateData.linha_problema_id = null;
-}
-
-const { error } = await supabase
-  .from(tabelaOrdem)
-  .update(updateData)
-  .eq('id', ordemId);
+```sql
+SELECT EXISTS(
+  SELECT 1 FROM vendas v
+  JOIN pedidos_producao p ON p.venda_id = v.id
+  WHERE p.id = p_pedido_id
+  AND (v.valor_pintura > 0 OR EXISTS(
+    SELECT 1 FROM produtos_vendas pv 
+    WHERE pv.venda_id = v.id AND pv.tipo_produto = 'pintura_epoxi'
+  ))
+) INTO v_tem_pintura;
 ```
+
+### Código Corrigido
+
+```sql
+SELECT EXISTS(
+  SELECT 1 FROM pedidos_producao p
+  WHERE p.id = p_pedido_id
+  AND EXISTS(
+    SELECT 1 FROM produtos_vendas pv 
+    WHERE pv.venda_id = p.venda_id 
+    AND (pv.valor_pintura > 0 OR pv.tipo_produto = 'pintura_epoxi')
+  )
+) INTO v_tem_pintura;
+```
+
+**Mudanças**:
+1. Remove a referência direta a `vendas v` (já que não precisamos de colunas dela)
+2. Consulta diretamente `pedidos_producao` 
+3. Move a verificação de `valor_pintura` para a subconsulta em `produtos_vendas`
 
 ---
 
 ## Alteração Necessária
 
-### Arquivo: `src/hooks/useOrdemProducao.ts`
+### Nova Migração SQL
 
-**Linhas 505-517**: Substituir o objeto inline por construção condicional:
+Criar uma migração que substitui a função com a query corrigida:
 
-```tsx
-// ANTES (Linhas 505-517)
-const { error } = await supabase
-  .from(tabelaOrdem)
-  .update({ 
-    status: 'concluido',
-    data_conclusao: new Date().toISOString(),
-    tempo_conclusao_segundos,
-    historico: true,
-    pausada: false,
-    pausada_em: null,
-    justificativa_pausa: null,
-    linha_problema_id: null,
-  })
-  .eq('id', ordemId);
+```sql
+CREATE OR REPLACE FUNCTION public.retroceder_pedido_unificado(...)
+RETURNS JSONB
+LANGUAGE plpgsql
+...
+AS $$
+DECLARE
+  ...
+BEGIN
+  -- Buscar etapa atual
+  SELECT etapa_atual INTO v_etapa_atual
+  FROM pedidos_producao WHERE id = p_pedido_id;
 
-// DEPOIS
-const updateData: Record<string, any> = {
-  status: 'concluido',
-  data_conclusao: new Date().toISOString(),
-  tempo_conclusao_segundos,
-  historico: true,
-  pausada: false,
-  pausada_em: null,
-  justificativa_pausa: null,
-};
+  IF v_etapa_atual IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Pedido não encontrado');
+  END IF;
 
-// linha_problema_id não existe em ordens_qualidade
-if (tipoOrdem !== 'qualidade') {
-  updateData.linha_problema_id = null;
-}
+  -- CORREÇÃO: Verificar pintura em produtos_vendas
+  SELECT EXISTS(
+    SELECT 1 FROM pedidos_producao p
+    WHERE p.id = p_pedido_id
+    AND EXISTS(
+      SELECT 1 FROM produtos_vendas pv 
+      WHERE pv.venda_id = p.venda_id 
+      AND (pv.valor_pintura > 0 OR pv.tipo_produto = 'pintura_epoxi')
+    )
+  ) INTO v_tem_pintura;
 
-const { error } = await supabase
-  .from(tabelaOrdem)
-  .update(updateData)
-  .eq('id', ordemId);
+  -- Resto da função permanece igual...
+END;
+$$;
 ```
 
 ---
 
 ## Resumo
 
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/hooks/useOrdemProducao.ts` | Condicionar inclusão de `linha_problema_id` ao tipo de ordem |
+| Arquivo/Recurso | Alteração |
+|-----------------|-----------|
+| Migração SQL | Atualizar função `retroceder_pedido_unificado` para consultar `produtos_vendas` ao invés de `vendas` |
 
 ---
 
 ## Impacto
 
-- **Correção imediata**: Ordens de qualidade poderão ser concluídas sem erro
-- **Sem breaking changes**: Ordens de soldagem, perfiladeira e separação continuam funcionando normalmente
-- **Manutenibilidade**: Código explicita a diferença entre as tabelas
+- **Correção imediata**: Retrocesso de pedidos funcionará sem erros
+- **Lógica preservada**: A verificação de pintura continua funcionando, apenas consultando a tabela correta
+- **Sem breaking changes**: Demais funcionalidades não são afetadas
