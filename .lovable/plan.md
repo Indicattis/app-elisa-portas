@@ -1,52 +1,69 @@
 
-# Plano: Remover Filtro de Quantidade no Modal de Seleção
+# Plano: Corrigir Adição de Produtos do Catálogo na Venda
 
-## Problema
-Produtos cadastrados no catálogo não aparecem no modal de seleção em `/vendas/minhas-vendas/nova` porque a query filtra por `quantidade > 0`.
+## Problema Identificado
+
+No arquivo `SelecionarAcessoriosModal.tsx`, o produto é criado com o campo `estoque_id: item.id` (linha 105), mas a tabela `produtos_vendas` no banco de dados possui o campo `vendas_catalogo_id`, não `estoque_id`. Isso causa erro na inserção do produto.
 
 ---
 
-## Alteração
+## Alterações Necessárias
 
-### Arquivo: `src/components/vendas/SelecionarAcessoriosModal.tsx`
+### 1. `src/components/vendas/SelecionarAcessoriosModal.tsx`
 
-**Remover linha 45:**
+**Linha 105 - Alterar:**
 ```typescript
-// REMOVER ESTA LINHA:
-.gt('quantidade', 0)
+// DE:
+estoque_id: item.id
+
+// PARA:
+vendas_catalogo_id: item.id
 ```
 
-**Query atual (linhas 41-47):**
+---
+
+### 2. `src/hooks/useVendas.ts`
+
+**Linha 17 - Atualizar interface ProdutoVenda:**
 ```typescript
-const { data, error } = await supabase
-  .from('vendas_catalogo')
-  .select('*')
-  .eq('ativo', true)
-  .gt('quantidade', 0)  // ← REMOVER
-  .order('destaque', { ascending: false })
-  .order('nome_produto');
+// DE:
+estoque_id?: string;
+
+// PARA:
+vendas_catalogo_id?: string;
 ```
 
-**Query corrigida:**
+---
+
+### 3. `src/hooks/useProdutosVenda.ts`
+
+**Linhas 34-43 - Adicionar tratamento do campo:**
 ```typescript
-const { data, error } = await supabase
-  .from('vendas_catalogo')
-  .select('*')
-  .eq('ativo', true)
-  .order('destaque', { ascending: false })
-  .order('nome_produto');
+const produtoLimpo = {
+  ...produto,
+  tamanho: produto.tamanho || (produto.largura && produto.altura ? `${produto.largura}x${produto.altura}` : ''),
+  largura: produto.largura || null,
+  altura: produto.altura || null,
+  cor_id: produto.cor_id || null,
+  acessorio_id: produto.acessorio_id || null,
+  adicional_id: produto.adicional_id || null,
+  vendas_catalogo_id: produto.vendas_catalogo_id || null, // ADICIONAR
+  descricao: produto.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produto.descricao || null),
+};
 ```
+
+---
+
+## Resumo das Mudanças
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `SelecionarAcessoriosModal.tsx` | Trocar `estoque_id` por `vendas_catalogo_id` |
+| `useVendas.ts` | Atualizar interface `ProdutoVenda` |
+| `useProdutosVenda.ts` | Incluir `vendas_catalogo_id` no objeto limpo |
 
 ---
 
 ## Resultado Esperado
 
-Todos os produtos ativos do catálogo aparecerão no modal de seleção, independentemente da quantidade em estoque.
-
----
-
-## Arquivo Afetado
-
-| Arquivo | Ação |
-|---------|------|
-| `src/components/vendas/SelecionarAcessoriosModal.tsx` | Remover filtro `.gt('quantidade', 0)` |
+Produtos selecionados do catálogo serão inseridos corretamente na tabela `produtos_vendas` com o campo `vendas_catalogo_id` vinculando ao item do catálogo.
