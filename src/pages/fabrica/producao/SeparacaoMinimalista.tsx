@@ -71,8 +71,8 @@ export default function SeparacaoMinimalista() {
     }
   };
 
-  const handlePausarOrdem = async (ordemId: string, justificativa: string, linhaProblemaId?: string) => {
-    await pausarOrdem.mutateAsync({ ordemId, justificativa, linhaProblemaId });
+  const handlePausarOrdem = async (ordemId: string, justificativa: string, linhasProblemaIds?: string[]) => {
+    await pausarOrdem.mutateAsync({ ordemId, justificativa, linhasProblemaIds });
     setSheetOpen(false);
   };
 

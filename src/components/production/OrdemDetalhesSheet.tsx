@@ -115,7 +115,7 @@ interface OrdemDetalhesSheetProps {
   isIniciando?: boolean;
   isFinalizando?: boolean;
   onRetornarProducao?: () => void;
-  onPausarOrdem?: (ordemId: string, justificativa: string, linhaProblemaId?: string) => Promise<void>;
+  onPausarOrdem?: (ordemId: string, justificativa: string, linhasProblemaIds?: string[]) => Promise<void>;
   isPausing?: boolean;
   onMarcarLinhaProblema?: (linhaId: string, ordemId: string, descricao: string) => void;
   isMarkingProblem?: boolean;
