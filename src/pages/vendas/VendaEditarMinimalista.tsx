@@ -281,6 +281,26 @@ export default function VendaEditarMinimalista() {
 
   const cardClass = "bg-primary/5 border-primary/10 backdrop-blur-xl";
 
+  const ProductButton = ({ 
+    label, 
+    onClick 
+  }: { 
+    label: string; 
+    onClick: () => void;
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex items-center gap-2 h-10 px-4 rounded-lg
+                 bg-gradient-to-r from-blue-500/10 to-blue-600/5 border border-blue-500/25 text-blue-200
+                 hover:from-blue-500/20 hover:to-blue-600/10 hover:text-white hover:border-blue-400/40 hover:shadow-lg hover:shadow-blue-500/10
+                 transition-all duration-200"
+    >
+      <Plus className="w-4 h-4 text-blue-400 group-hover:text-blue-300" />
+      <span className="text-sm font-medium">{label}</span>
+    </button>
+  );
+
   if (!canEdit && !loadingPermission) {
     return (
       <MinimalistLayout title="Editar Venda" backPath="/vendas/minhas-vendas">
@@ -442,56 +462,34 @@ export default function VendaEditarMinimalista() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex gap-2 flex-wrap">
-              <Button 
-                type="button"
-                size="sm"
+              <ProductButton 
+                label="Porta de Enrolar"
                 onClick={() => {
                   setTipoInicial('porta_enrolar');
                   setPermitirTrocaTipo(false);
                   setShowProdutoForm(true);
                 }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Porta de Enrolar
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-primary/30 text-white hover:bg-primary/10"
+              />
+              <ProductButton 
+                label="Porta Social"
                 onClick={() => {
                   setTipoInicial('porta_social');
                   setPermitirTrocaTipo(false);
                   setShowProdutoForm(true);
                 }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Porta Social
-              </Button>
-              <Button 
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-primary/30 text-white hover:bg-primary/10"
+              />
+              <ProductButton 
+                label="Pintura Eletrostática"
                 onClick={() => {
                   setTipoInicial('pintura_epoxi');
                   setPermitirTrocaTipo(false);
                   setShowProdutoForm(true);
                 }}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Pintura Eletrostática
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-primary/30 text-white hover:bg-primary/10"
+              />
+              <ProductButton 
+                label="Catálogo"
                 onClick={() => setAcessoriosModalOpen(true)}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Catálogo
-              </Button>
+              />
             </div>
 
             <ProdutoVendaForm 
