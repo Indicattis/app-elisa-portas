@@ -502,18 +502,24 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
 
       // Atualizar ordem como concluída E enviar para histórico
       // IMPORTANTE: Resetar campos de pausa para garantir que auto-avanço funcione
+      const updateData: Record<string, any> = {
+        status: 'concluido',
+        data_conclusao: new Date().toISOString(),
+        tempo_conclusao_segundos,
+        historico: true, // Enviar diretamente para histórico
+        pausada: false,
+        pausada_em: null,
+        justificativa_pausa: null,
+      };
+
+      // linha_problema_id não existe em ordens_qualidade
+      if (tipoOrdem !== 'qualidade') {
+        updateData.linha_problema_id = null;
+      }
+
       const { error } = await supabase
         .from(tabelaOrdem)
-        .update({ 
-          status: 'concluido',
-          data_conclusao: new Date().toISOString(),
-          tempo_conclusao_segundos,
-          historico: true, // Enviar diretamente para histórico
-          pausada: false,
-          pausada_em: null,
-          justificativa_pausa: null,
-          linha_problema_id: null,
-        })
+        .update(updateData)
         .eq('id', ordemId);
         
       if (error) throw error;
