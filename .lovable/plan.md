@@ -1,173 +1,134 @@
 
-
-# Plano: Corrigir Visualização e Edição de Acréscimo/Desconto
+# Plano: Corrigir Erro de Coluna Inexistente ao Concluir Ordem de Qualidade
 
 ## Problema Identificado
 
-Na página `/vendas/minhas-vendas/editar/:id`:
+Ao tentar concluir uma ordem em `/producao/qualidade`, o sistema retorna o erro:
 
-1. **Acréscimo não é exibido**: Não há nenhuma seção mostrando o valor do crédito (R$ 6.300) que a venda possui
-2. **Botão de Crédito não aparece**: A condição para exibir o botão não contempla o caso de edição de um crédito existente
-3. **Botão de Desconto não aparece**: A lógica atual oculta o botão quando há crédito, mas não oferece opção de remover o crédito para então aplicar desconto
-4. **Componente VendaResumo não é usado**: O resumo visual com totais e crédito não está na página de edição
+```
+PGRST204: Could not find the 'linha_problema_id' column of 'ordens_qualidade' in the schema cache
+```
+
+## Causa Raiz
+
+O hook `useOrdemProducao.ts` usa uma lógica genérica para todas as tabelas de ordens (`ordens_soldagem`, `ordens_perfiladeira`, `ordens_separacao`, `ordens_qualidade`). Na função `concluirOrdem` (linha 505-517), o código tenta resetar o campo `linha_problema_id`:
+
+```tsx
+const { error } = await supabase
+  .from(tabelaOrdem)
+  .update({ 
+    status: 'concluido',
+    data_conclusao: new Date().toISOString(),
+    tempo_conclusao_segundos,
+    historico: true,
+    pausada: false,
+    pausada_em: null,
+    justificativa_pausa: null,
+    linha_problema_id: null,  // ❌ NÃO EXISTE EM ordens_qualidade
+  })
+  .eq('id', ordemId);
+```
+
+**O problema**: A tabela `ordens_qualidade` não possui a coluna `linha_problema_id`, diferente das outras tabelas de ordens de produção.
 
 ---
 
-## Análise da Venda em Questão
+## Análise das Colunas por Tabela
 
-```
-ID: 20fbc47e-71a8-43f0-ba19-b549e9b4c24a
-Cliente: Ducatti Engenharia Ltda
-Valor Venda: R$ 22.300
-Valor Crédito: R$ 6.300 (81.82%)
-Desconto nos Produtos: R$ 0 (nenhum)
-```
-
----
-
-## Lógica Atual (Problemática)
-
-```tsx
-// Botão de Desconto - só aparece se NÃO há crédito
-{produtosFormatados.length > 0 && valorCreditoAtual === 0 && (
-  <Button>Adicionar/Editar Desconto</Button>
-)}
-
-// Botão de Crédito - só aparece se NÃO há desconto
-{produtosFormatados.length > 0 && !temDesconto && (
-  <Button>Adicionar/Editar Crédito</Button>
-)}
-```
-
-O problema: quando há crédito (`valorCreditoAtual > 0`), o botão de crédito deveria aparecer para permitir **editar** o crédito existente, mas a lógica não considera isso de forma visível.
+| Tabela | linha_problema_id |
+|--------|-------------------|
+| ordens_soldagem | Sim |
+| ordens_perfiladeira | Sim |
+| ordens_separacao | Sim |
+| ordens_qualidade | **Não** |
 
 ---
 
-## Solução Proposta
+## Solução
 
-### 1. Adicionar Componente VendaResumo
-
-Incluir o `VendaResumo` na página de edição para exibir:
-- Valor dos produtos
-- Valor do frete
-- Desconto aplicado (se houver)
-- **Crédito aplicado** (se houver) - com botão para remover
-- Total da venda
-
-### 2. Ajustar Lógica dos Botões
-
-Modificar as condições para:
-- **Botão Desconto**: Mostrar se não há crédito (manter)
-- **Botão Crédito**: Mostrar se não há desconto OU se já tem crédito (permitir edição)
+Modificar a função `concluirOrdem` para incluir `linha_problema_id` apenas quando o tipo de ordem for diferente de `qualidade`:
 
 ```tsx
-// Botão de Desconto - só se NÃO há crédito
-{produtosFormatados.length > 0 && valorCreditoAtual === 0 && (
-  <Button onClick={() => setDescontoModalOpen(true)}>
-    {temDesconto ? 'Editar Desconto' : 'Adicionar Desconto'}
-  </Button>
-)}
-
-// Botão de Crédito - se não há desconto OU já tem crédito
-{produtosFormatados.length > 0 && (!temDesconto || valorCreditoAtual > 0) && (
-  <Button onClick={() => setCreditoModalOpen(true)}>
-    {valorCreditoAtual > 0 ? 'Editar Crédito' : 'Adicionar Crédito'}
-  </Button>
-)}
-```
-
-### 3. Adicionar Handler para Remover Crédito
-
-Criar função para remover o crédito diretamente do resumo:
-
-```tsx
-const handleRemoverCredito = async () => {
-  if (!id) return;
-  
-  try {
-    await supabase
-      .from('vendas')
-      .update({ valor_credito: 0, percentual_credito: 0 })
-      .eq('id', id);
-    
-    setVenda(prev => prev ? { ...prev, valor_credito: 0, percentual_credito: 0 } : null);
-    
-    toast({
-      title: "Crédito removido",
-      description: "O crédito foi removido da venda"
-    });
-  } catch (error) {
-    toast({
-      variant: "destructive",
-      title: "Erro",
-      description: "Não foi possível remover o crédito"
-    });
-  }
+// Construir objeto de atualização base
+const updateData: any = {
+  status: 'concluido',
+  data_conclusao: new Date().toISOString(),
+  tempo_conclusao_segundos,
+  historico: true,
+  pausada: false,
+  pausada_em: null,
+  justificativa_pausa: null,
 };
+
+// Adicionar linha_problema_id apenas para ordens que possuem esse campo
+if (tipoOrdem !== 'qualidade') {
+  updateData.linha_problema_id = null;
+}
+
+const { error } = await supabase
+  .from(tabelaOrdem)
+  .update(updateData)
+  .eq('id', ordemId);
 ```
 
 ---
 
-## Alterações no Arquivo
+## Alteração Necessária
 
-### `src/pages/vendas/MinhasVendasEditar.tsx`
+### Arquivo: `src/hooks/useOrdemProducao.ts`
 
-| Linha | Alteração |
-|-------|-----------|
-| Imports | Adicionar import do `VendaResumo` |
-| ~255 | Adicionar função `handleRemoverCredito` |
-| ~700 | Renderizar o `VendaResumo` antes dos botões |
-| ~704-728 | Ajustar lógica de exibição dos botões |
+**Linhas 505-517**: Substituir o objeto inline por construção condicional:
 
----
+```tsx
+// ANTES (Linhas 505-517)
+const { error } = await supabase
+  .from(tabelaOrdem)
+  .update({ 
+    status: 'concluido',
+    data_conclusao: new Date().toISOString(),
+    tempo_conclusao_segundos,
+    historico: true,
+    pausada: false,
+    pausada_em: null,
+    justificativa_pausa: null,
+    linha_problema_id: null,
+  })
+  .eq('id', ordemId);
 
-## Resultado Visual Esperado
+// DEPOIS
+const updateData: Record<string, any> = {
+  status: 'concluido',
+  data_conclusao: new Date().toISOString(),
+  tempo_conclusao_segundos,
+  historico: true,
+  pausada: false,
+  pausada_em: null,
+  justificativa_pausa: null,
+};
 
-```text
-ANTES:
-┌─────────────────────────────────────┐
-│ Produtos da Venda                   │
-│ ┌───────────────────────────────┐   │
-│ │ Tabela de Produtos           │   │
-│ └───────────────────────────────┘   │
-│                                     │
-│                    [Salvar]         │  <- Nenhum botão de crédito/desconto!
-└─────────────────────────────────────┘
+// linha_problema_id não existe em ordens_qualidade
+if (tipoOrdem !== 'qualidade') {
+  updateData.linha_problema_id = null;
+}
 
-DEPOIS:
-┌─────────────────────────────────────┐
-│ Produtos da Venda                   │
-│ ┌───────────────────────────────┐   │
-│ │ Tabela de Produtos           │   │
-│ └───────────────────────────────┘   │
-│                                     │
-│ ┌─────────────────────────────────┐ │
-│ │ Resumo da Venda               │ │
-│ │ Valor Produtos: R$ 16.000,00  │ │
-│ │ Valor Frete: R$ 450,00        │ │
-│ │ Crédito: +R$ 6.300 (81.82%) [X]│ │
-│ │ ─────────────────────────────  │ │
-│ │ Total: R$ 22.750,00           │ │
-│ └─────────────────────────────────┘ │
-│                                     │
-│ [Editar Crédito]          [Salvar] │
-└─────────────────────────────────────┘
+const { error } = await supabase
+  .from(tabelaOrdem)
+  .update(updateData)
+  .eq('id', ordemId);
 ```
 
 ---
 
-## Resumo das Alterações
+## Resumo
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/pages/vendas/MinhasVendasEditar.tsx` | Importar VendaResumo, adicionar handler remover crédito, renderizar resumo, ajustar lógica botões |
+| `src/hooks/useOrdemProducao.ts` | Condicionar inclusão de `linha_problema_id` ao tipo de ordem |
 
 ---
 
 ## Impacto
 
-- **Visibilidade**: Usuário vê claramente o acréscimo/crédito aplicado
-- **Edição**: Botão "Editar Crédito" aparece quando há crédito existente
-- **Remoção**: Botão X no resumo permite remover o crédito
-- **Consistência**: Mesma experiência visual da página de nova venda
-
+- **Correção imediata**: Ordens de qualidade poderão ser concluídas sem erro
+- **Sem breaking changes**: Ordens de soldagem, perfiladeira e separação continuam funcionando normalmente
+- **Manutenibilidade**: Código explicita a diferença entre as tabelas
