@@ -71,7 +71,14 @@ export const CalendarioMensalDesktop = ({
         const pedido = activeData.pedido;
         const dataFormatada = format(novaData, 'yyyy-MM-dd');
 
-        // Criar instalação vinculada ao pedido
+        // Buscar dados de pagamento da venda
+        const { data: vendaData } = await supabase
+          .from('vendas')
+          .select('pagamento_na_entrega, valor_venda, metodo_pagamento')
+          .eq('id', pedido.venda.id)
+          .single();
+
+        // Criar instalação vinculada ao pedido com dados de pagamento
         const { error: insertError } = await supabase
           .from('instalacoes')
           .insert({
@@ -87,7 +94,9 @@ export const CalendarioMensalDesktop = ({
             status: 'pronta_fabrica',
             tipo_instalacao: null,
             responsavel_instalacao_id: null,
-            responsavel_instalacao_nome: null
+            responsavel_instalacao_nome: null,
+            valor_pagamento_entrega: vendaData?.pagamento_na_entrega ? vendaData.valor_venda : 0,
+            metodo_pagamento_entrega: vendaData?.pagamento_na_entrega ? vendaData.metodo_pagamento : null
           });
 
         if (insertError) throw insertError;

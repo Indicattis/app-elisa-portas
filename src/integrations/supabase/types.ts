@@ -2308,6 +2308,7 @@ export type Database = {
           last_geocoded_at: string | null
           latitude: number | null
           longitude: number | null
+          metodo_pagamento_entrega: string | null
           metragem_quadrada: number | null
           nome_cliente: string
           observacoes: string | null
@@ -2323,6 +2324,7 @@ export type Database = {
             | null
           tipo_instalacao: string | null
           updated_at: string
+          valor_pagamento_entrega: number | null
           venda_id: string | null
         }
         Insert: {
@@ -2348,6 +2350,7 @@ export type Database = {
           last_geocoded_at?: string | null
           latitude?: number | null
           longitude?: number | null
+          metodo_pagamento_entrega?: string | null
           metragem_quadrada?: number | null
           nome_cliente: string
           observacoes?: string | null
@@ -2363,6 +2366,7 @@ export type Database = {
             | null
           tipo_instalacao?: string | null
           updated_at?: string
+          valor_pagamento_entrega?: number | null
           venda_id?: string | null
         }
         Update: {
@@ -2388,6 +2392,7 @@ export type Database = {
           last_geocoded_at?: string | null
           latitude?: number | null
           longitude?: number | null
+          metodo_pagamento_entrega?: string | null
           metragem_quadrada?: number | null
           nome_cliente?: string
           observacoes?: string | null
@@ -2403,6 +2408,7 @@ export type Database = {
             | null
           tipo_instalacao?: string | null
           updated_at?: string
+          valor_pagamento_entrega?: number | null
           venda_id?: string | null
         }
         Relationships: [
