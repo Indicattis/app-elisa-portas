@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { 
   Package, Phone, MapPin, Calendar, DollarSign, ListChecks, 
   ShoppingCart, CheckCircle2, Clock, AlertCircle, XCircle,
-  FolderOpen, ChevronDown, User, Wrench, Factory, History
+  FolderOpen, ChevronDown, User, Wrench, Factory, History, ChevronRight
 } from "lucide-react";
 import { PedidoHistoricoMovimentacoes } from "./PedidoHistoricoMovimentacoes";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
@@ -17,6 +17,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatarNumeroPedidoMensal } from "@/utils/pedidoFormatters";
 import { PedidoFluxogramaMap } from "./PedidoFluxogramaMap";
+import { OrdemLinhasSheet } from "@/components/fabrica/OrdemLinhasSheet";
+import type { OrdemStatus, TipoOrdem, LinhaProblemaInfo, ResponsavelInfo } from "@/hooks/useOrdensPorPedido";
 
 interface PedidoDetalhesSheetProps {
   pedido: any;
@@ -28,10 +30,14 @@ interface OrdemProducao {
   id: string;
   numero_ordem: string | number;
   status: string;
-  tipo: string;
+  tipo: TipoOrdem;
+  tipoLabel: string;
   responsavel_id: string | null;
-  responsavel_foto: string | null;
-  responsavel_nome: string | null;
+  responsavel: ResponsavelInfo | null;
+  pausada: boolean;
+  justificativa_pausa: string | null;
+  pausada_em: string | null;
+  linha_problema: LinhaProblemaInfo | null;
 }
 
 export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalhesSheetProps) {
@@ -43,6 +49,8 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
   const [linhasOpen, setLinhasOpen] = useState(false);
   const [itensOpen, setItensOpen] = useState(false);
   const [historicoOpen, setHistoricoOpen] = useState(false);
+  const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemStatus | null>(null);
+  const [showOrdemLinhas, setShowOrdemLinhas] = useState(false);
   
   useEffect(() => {
     if (open && pedido?.id) {
@@ -50,67 +58,119 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
     }
   }, [open, pedido?.id]);
 
+  const getIniciais = (nome: string): string => {
+    const partes = nome.trim().split(/\s+/);
+    if (partes.length === 1) return partes[0].substring(0, 2).toUpperCase();
+    return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+  };
+
   const fetchOrdens = async () => {
     setLoadingOrdens(true);
     try {
       const ordensData: OrdemProducao[] = [];
 
       // Helper para buscar info do responsável
-      const fetchResponsavel = async (responsavel_id: string | null) => {
-        if (!responsavel_id) return { foto: null, nome: null };
+      const fetchResponsavel = async (responsavel_id: string | null): Promise<ResponsavelInfo | null> => {
+        if (!responsavel_id) return null;
         const { data: user } = await supabase
           .from('admin_users')
           .select('foto_perfil_url, nome')
           .eq('user_id', responsavel_id)
           .maybeSingle();
-        return { foto: user?.foto_perfil_url || null, nome: user?.nome || null };
+        if (!user) return null;
+        return { 
+          foto_url: user.foto_perfil_url || null, 
+          nome: user.nome,
+          iniciais: getIniciais(user.nome)
+        };
+      };
+
+      // Helper para processar linha problema
+      const processLinhaProblema = (linha: any): LinhaProblemaInfo | null => {
+        if (!linha) return null;
+        return {
+          id: linha.id,
+          item: linha.item,
+          quantidade: linha.quantidade,
+          tamanho: linha.tamanho,
+        };
       };
 
       // Buscar ordem de soldagem
       const { data: soldagem } = await supabase
         .from("ordens_soldagem")
-        .select("id, numero_ordem, status, responsavel_id")
+        .select(`
+          id, numero_ordem, status, responsavel_id, pausada, justificativa_pausa, pausada_em,
+          linha_problema:linha_problema_id (id, item, quantidade, tamanho)
+        `)
         .eq("pedido_id", pedido.id)
         .maybeSingle();
       if (soldagem) {
         const resp = await fetchResponsavel(soldagem.responsavel_id);
         ordensData.push({ 
-          ...soldagem, 
-          tipo: "Soldagem",
-          responsavel_foto: resp.foto,
-          responsavel_nome: resp.nome
+          id: soldagem.id,
+          numero_ordem: soldagem.numero_ordem,
+          status: soldagem.status,
+          tipo: "soldagem",
+          tipoLabel: "Soldagem",
+          responsavel_id: soldagem.responsavel_id,
+          responsavel: resp,
+          pausada: soldagem.pausada || false,
+          justificativa_pausa: soldagem.justificativa_pausa,
+          pausada_em: soldagem.pausada_em,
+          linha_problema: processLinhaProblema(soldagem.linha_problema),
         });
       }
 
       // Buscar ordem de perfiladeira
       const { data: perfiladeira } = await supabase
         .from("ordens_perfiladeira")
-        .select("id, numero_ordem, status, responsavel_id")
+        .select(`
+          id, numero_ordem, status, responsavel_id, pausada, justificativa_pausa, pausada_em,
+          linha_problema:linha_problema_id (id, item, quantidade, tamanho)
+        `)
         .eq("pedido_id", pedido.id)
         .maybeSingle();
       if (perfiladeira) {
         const resp = await fetchResponsavel(perfiladeira.responsavel_id);
         ordensData.push({ 
-          ...perfiladeira, 
-          tipo: "Perfiladeira",
-          responsavel_foto: resp.foto,
-          responsavel_nome: resp.nome
+          id: perfiladeira.id,
+          numero_ordem: perfiladeira.numero_ordem,
+          status: perfiladeira.status,
+          tipo: "perfiladeira",
+          tipoLabel: "Perfiladeira",
+          responsavel_id: perfiladeira.responsavel_id,
+          responsavel: resp,
+          pausada: perfiladeira.pausada || false,
+          justificativa_pausa: perfiladeira.justificativa_pausa,
+          pausada_em: perfiladeira.pausada_em,
+          linha_problema: processLinhaProblema(perfiladeira.linha_problema),
         });
       }
 
       // Buscar ordem de separação
       const { data: separacao } = await supabase
         .from("ordens_separacao")
-        .select("id, numero_ordem, status, responsavel_id")
+        .select(`
+          id, numero_ordem, status, responsavel_id, pausada, justificativa_pausa, pausada_em,
+          linha_problema:linha_problema_id (id, item, quantidade, tamanho)
+        `)
         .eq("pedido_id", pedido.id)
         .maybeSingle();
       if (separacao) {
         const resp = await fetchResponsavel(separacao.responsavel_id);
         ordensData.push({ 
-          ...separacao, 
-          tipo: "Separação",
-          responsavel_foto: resp.foto,
-          responsavel_nome: resp.nome
+          id: separacao.id,
+          numero_ordem: separacao.numero_ordem,
+          status: separacao.status,
+          tipo: "separacao",
+          tipoLabel: "Separação",
+          responsavel_id: separacao.responsavel_id,
+          responsavel: resp,
+          pausada: separacao.pausada || false,
+          justificativa_pausa: separacao.justificativa_pausa,
+          pausada_em: separacao.pausada_em,
+          linha_problema: processLinhaProblema(separacao.linha_problema),
         });
       }
 
@@ -123,10 +183,17 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
       if (qualidade) {
         const resp = await fetchResponsavel(qualidade.responsavel_id);
         ordensData.push({ 
-          ...qualidade, 
-          tipo: "Qualidade",
-          responsavel_foto: resp.foto,
-          responsavel_nome: resp.nome
+          id: qualidade.id,
+          numero_ordem: qualidade.numero_ordem,
+          status: qualidade.status,
+          tipo: "qualidade",
+          tipoLabel: "Qualidade",
+          responsavel_id: qualidade.responsavel_id,
+          responsavel: resp,
+          pausada: false,
+          justificativa_pausa: null,
+          pausada_em: null,
+          linha_problema: null,
         });
       }
 
@@ -139,10 +206,17 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
       if (pintura) {
         const resp = await fetchResponsavel(pintura.responsavel_id);
         ordensData.push({ 
-          ...pintura, 
-          tipo: "Pintura",
-          responsavel_foto: resp.foto,
-          responsavel_nome: resp.nome
+          id: pintura.id,
+          numero_ordem: pintura.numero_ordem,
+          status: pintura.status,
+          tipo: "pintura",
+          tipoLabel: "Pintura",
+          responsavel_id: pintura.responsavel_id,
+          responsavel: resp,
+          pausada: false,
+          justificativa_pausa: null,
+          pausada_em: null,
+          linha_problema: null,
         });
       }
 
@@ -152,6 +226,26 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
     } finally {
       setLoadingOrdens(false);
     }
+  };
+
+  const handleOrdemClick = (ordem: OrdemProducao) => {
+    const ordemStatus: OrdemStatus = {
+      existe: true,
+      id: ordem.id,
+      numero_ordem: String(ordem.numero_ordem),
+      status: ordem.status,
+      tipo: ordem.tipo,
+      responsavel: ordem.responsavel,
+      responsavel_id: ordem.responsavel_id,
+      pausada: ordem.pausada,
+      justificativa_pausa: ordem.justificativa_pausa,
+      pausada_em: ordem.pausada_em,
+      linha_problema: ordem.linha_problema,
+      linhas_concluidas: 0,
+      total_linhas: 0,
+    };
+    setOrdemSelecionada(ordemStatus);
+    setShowOrdemLinhas(true);
   };
 
   const getStatusIcon = (status: string) => {
@@ -190,17 +284,17 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
     return colors[status] || "bg-zinc-500/20 text-zinc-400 border-zinc-500/30";
   };
 
-  const getOrdemIcon = (tipo: string) => {
+  const getOrdemIcon = (tipo: TipoOrdem | string) => {
     switch (tipo) {
-      case "Soldagem":
+      case "soldagem":
         return <Wrench className="w-4 h-4 text-orange-400" />;
-      case "Perfiladeira":
+      case "perfiladeira":
         return <Factory className="w-4 h-4 text-purple-400" />;
-      case "Separação":
+      case "separacao":
         return <Package className="w-4 h-4 text-cyan-400" />;
-      case "Qualidade":
+      case "qualidade":
         return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
-      case "Pintura":
+      case "pintura":
         return <div className="w-4 h-4 rounded-full bg-gradient-to-br from-pink-400 to-purple-400" />;
       default:
         return <Package className="w-4 h-4 text-white/60" />;
@@ -378,35 +472,45 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
             ) : ordens.length > 0 ? (
               <div className="space-y-2">
                 {ordens.map((ordem) => (
-                  <div key={ordem.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+                  <button
+                    key={ordem.id}
+                    onClick={() => handleOrdemClick(ordem)}
+                    className="w-full flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+                  >
                     <div className="flex items-center gap-3">
                       {getOrdemIcon(ordem.tipo)}
-                      <div>
-                        <p className="font-medium text-white text-sm">{ordem.tipo}</p>
+                      <div className="text-left">
+                        <p className="font-medium text-white text-sm">{ordem.tipoLabel}</p>
                         <p className="text-[11px] text-white/40">#{ordem.numero_ordem}</p>
                       </div>
+                      {ordem.pausada && (
+                        <Badge className="text-[10px] bg-red-500/20 text-red-400 border-red-500/30">
+                          Pausada
+                        </Badge>
+                      )}
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      {ordem.responsavel_foto ? (
+                      {ordem.responsavel?.foto_url ? (
                         <Avatar className="h-7 w-7 border-2 border-white/20">
-                          <AvatarImage src={ordem.responsavel_foto} alt={ordem.responsavel_nome || ''} />
+                          <AvatarImage src={ordem.responsavel.foto_url} alt={ordem.responsavel.nome || ''} />
                           <AvatarFallback className="bg-white/10 text-white text-[10px]">
                             <User className="h-3 w-3" />
                           </AvatarFallback>
                         </Avatar>
-                      ) : ordem.responsavel_nome ? (
+                      ) : ordem.responsavel?.nome ? (
                         <Avatar className="h-7 w-7 border-2 border-white/20">
                           <AvatarFallback className="bg-white/10 text-white text-[10px]">
-                            {ordem.responsavel_nome.substring(0, 2).toUpperCase()}
+                            {ordem.responsavel.iniciais}
                           </AvatarFallback>
                         </Avatar>
                       ) : null}
                       <Badge className={cn("text-[11px] border", getStatusColor(ordem.status))}>
                         {getStatusLabel(ordem.status)}
                       </Badge>
+                      <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors" />
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             ) : (
@@ -450,6 +554,13 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
           </div>
         </div>
       </SheetContent>
+
+      {/* Sheet de linhas da ordem */}
+      <OrdemLinhasSheet
+        ordem={ordemSelecionada}
+        open={showOrdemLinhas}
+        onOpenChange={setShowOrdemLinhas}
+      />
     </Sheet>
   );
 }
