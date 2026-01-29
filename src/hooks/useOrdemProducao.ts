@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { calcularTempoExpediente } from "@/utils/calcularTempoExpediente";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade';
 
@@ -478,12 +479,22 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       
       pedidoId = (ordem as any).pedido_id;
 
-      // Calcular tempo de conclusão
+      // Buscar tempo acumulado da ordem
+      const { data: ordemCompleta } = await supabase
+        .from(tabelaOrdem)
+        .select('tempo_acumulado_segundos')
+        .eq('id', ordemId)
+        .maybeSingle();
+
+      const tempoAcumulado = (ordemCompleta as any)?.tempo_acumulado_segundos || 0;
+
+      // Calcular tempo de conclusão (apenas expediente: 7h-17h, seg-sex)
       let tempo_conclusao_segundos = null;
       if ((ordem as any)?.capturada_em) {
         const captura = new Date((ordem as any).capturada_em);
         const agora = new Date();
-        tempo_conclusao_segundos = Math.floor((agora.getTime() - captura.getTime()) / 1000);
+        const tempoSessao = calcularTempoExpediente(captura, agora);
+        tempo_conclusao_segundos = tempoAcumulado + tempoSessao;
       }
 
       // Marcar todas as linhas da ordem como concluídas
@@ -633,12 +644,12 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       if (ordemError) throw ordemError;
       if (!ordem) throw new Error('Ordem não encontrada');
 
-      // Calcular tempo trabalhado nesta sessão
+      // Calcular tempo trabalhado nesta sessão (apenas expediente: 7h-17h, seg-sex)
       let tempoSessao = 0;
       if (ordem.capturada_em) {
         const captura = new Date(ordem.capturada_em);
         const agora = new Date();
-        tempoSessao = Math.floor((agora.getTime() - captura.getTime()) / 1000);
+        tempoSessao = calcularTempoExpediente(captura, agora);
       }
 
       const tempoTotal = (ordem.tempo_acumulado_segundos || 0) + tempoSessao;
@@ -707,12 +718,12 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       if (ordemError) throw ordemError;
       if (!ordem) throw new Error('Ordem não encontrada');
 
-      // 3. Calcular tempo trabalhado nesta sessão
+      // 3. Calcular tempo trabalhado nesta sessão (apenas expediente: 7h-17h, seg-sex)
       let tempoSessao = 0;
       if (ordem.capturada_em) {
         const captura = new Date(ordem.capturada_em);
         const agora = new Date();
-        tempoSessao = Math.floor((agora.getTime() - captura.getTime()) / 1000);
+        tempoSessao = calcularTempoExpediente(captura, agora);
       }
 
       const tempoTotal = (ordem.tempo_acumulado_segundos || 0) + tempoSessao;

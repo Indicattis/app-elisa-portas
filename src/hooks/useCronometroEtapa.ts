@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { formatCronometroExtended } from '@/utils/timeFormat';
+import { calcularTempoExpediente, estaNoExpediente } from '@/utils/calcularTempoExpediente';
 
 interface UseCronometroEtapaParams {
   dataEntrada?: string | null;
@@ -12,8 +13,9 @@ interface CronometroEtapaResult {
   cor: 'green' | 'yellow' | 'red';
 }
 
-// Limite de tempo em segundos (10 dias)
-const LIMITE_VERDE = 10 * 24 * 60 * 60; // 10 dias
+// Limite de tempo em segundos (10 dias úteis de trabalho = 10h/dia * 10 dias = 100h = 360000 segundos)
+// Mas para simplificar, vamos manter o limite em segundos de expediente
+const LIMITE_VERDE = 10 * 10 * 60 * 60; // 10 dias úteis * 10h/dia = 100h = 360000 segundos
 
 export function useCronometroEtapa(params: UseCronometroEtapaParams | string | null | undefined): CronometroEtapaResult {
   const [segundos, setSegundos] = useState<number>(0);
@@ -32,14 +34,10 @@ export function useCronometroEtapa(params: UseCronometroEtapaParams | string | n
     const calcularTempo = () => {
       const agora = new Date();
       const inicio = new Date(dataEntrada as string);
-      const diff = agora.getTime() - inicio.getTime();
 
-      if (diff < 0) {
-        setSegundos(0);
-        return;
-      }
-
-      setSegundos(Math.floor(diff / 1000));
+      // Calcular tempo apenas dentro do expediente (7h-17h, seg-sex)
+      const segundosExpediente = calcularTempoExpediente(inicio, agora);
+      setSegundos(segundosExpediente);
     };
 
     // Calcular imediatamente
@@ -51,7 +49,7 @@ export function useCronometroEtapa(params: UseCronometroEtapaParams | string | n
     return () => clearInterval(interval);
   }, [dataEntrada]);
 
-  // Determinar cor baseado no tempo (verde < 10 dias, vermelho >= 10 dias)
+  // Determinar cor baseado no tempo (verde < 10 dias úteis, vermelho >= 10 dias)
   const cor = useMemo((): 'green' | 'yellow' | 'red' => {
     if (segundos < LIMITE_VERDE) return 'green';
     return 'red';
@@ -63,10 +61,16 @@ export function useCronometroEtapa(params: UseCronometroEtapaParams | string | n
     return formatCronometroExtended(segundos);
   }, [dataEntrada, segundos]);
 
+  // Animação baseada em estar no expediente
+  const deveAnimar = useMemo(() => {
+    if (!dataEntrada) return false;
+    return estaNoExpediente();
+  }, [dataEntrada]);
+
   return {
     tempoDecorrido,
     segundos,
-    deveAnimar: !!dataEntrada,
+    deveAnimar,
     cor
   };
 }
