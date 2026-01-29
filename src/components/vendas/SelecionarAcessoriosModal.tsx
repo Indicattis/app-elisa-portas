@@ -25,6 +25,7 @@ interface ItemSelecionavel {
   descricao?: string;
   categoria: string;
   imagem_url?: string;
+  unidade?: string;
 }
 
 export function SelecionarAcessoriosModal({
@@ -54,7 +55,8 @@ export function SelecionarAcessoriosModal({
         tipo: (item.categoria === 'acessório' ? 'acessorio' : 'adicional') as 'acessorio' | 'adicional',
         descricao: item.descricao_produto,
         categoria: item.categoria,
-        imagem_url: item.imagem_url
+        imagem_url: item.imagem_url,
+        unidade: item.unidade || 'Unitário'
       }));
     },
     enabled: open
@@ -98,7 +100,8 @@ export function SelecionarAcessoriosModal({
       desconto_valor: 0,
       desconto_percentual: 0,
       tipo_desconto: 'valor' as 'valor' | 'percentual',
-      vendas_catalogo_id: item.id
+      vendas_catalogo_id: item.id,
+      unidade: item.unidade
     }));
 
     onConfirm(produtos);

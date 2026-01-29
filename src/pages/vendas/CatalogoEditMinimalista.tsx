@@ -56,6 +56,7 @@ export default function CatalogoEditMinimalista() {
     tags: [],
     sku: "",
     tipo_fabricacao: "interno",
+    unidade: "Unitário",
   });
 
   // Carregar dados do produto
@@ -88,6 +89,7 @@ export default function CatalogoEditMinimalista() {
           tags: data.tags || [],
           sku: data.sku || "",
           tipo_fabricacao: (data.tipo_fabricacao as 'interno' | 'terceirizado') || "interno",
+          unidade: data.unidade || "Unitário",
         });
         setCategoriaSelecionada(data.categoria || "");
       }
@@ -310,7 +312,7 @@ export default function CatalogoEditMinimalista() {
           </div>
         </div>
 
-        {/* Preço */}
+        {/* Preço e Unidade */}
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -333,6 +335,26 @@ export default function CatalogoEditMinimalista() {
                 className="bg-white/5 border-white/10 text-white"
               />
             </div>
+          </div>
+          <div>
+            <label className="text-sm text-white/70 mb-1 block">Unidade de Venda *</label>
+            <Select
+              value={formData.unidade || "Unitário"}
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, unidade: value }))}
+            >
+              <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Unitário">Unitário</SelectItem>
+                <SelectItem value="Metro">Metro</SelectItem>
+                <SelectItem value="Kg">Kg</SelectItem>
+                <SelectItem value="Litro">Litro</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-white/50 mt-1">
+              Ex: Metro para itens vendidos por comprimento
+            </p>
           </div>
         </div>
 
