@@ -17,7 +17,9 @@ import {
   CreditCard, 
   FileText,
   Edit,
-  ExternalLink
+  ExternalLink,
+  ArrowDown,
+  ArrowUp
 } from "lucide-react";
 
 interface Produto {
@@ -29,7 +31,18 @@ interface Produto {
   valor_unitario: number;
   valor_total: number;
   desconto_percentual: number;
+  desconto_valor?: number;
   catalogo_cores?: { nome: string; codigo_hex: string } | null;
+}
+
+interface AutorizacaoDesconto {
+  id: string;
+  percentual_desconto: number;
+  tipo_autorizacao: string;
+  autorizador: {
+    nome: string;
+    foto_perfil_url: string | null;
+  } | null;
 }
 
 interface Atendente {
@@ -84,7 +97,7 @@ export default function VendaDetalhesDirecao() {
     try {
       setLoading(true);
 
-      // Buscar venda com produtos
+      // Buscar venda com produtos e autorização de desconto
       const { data: vendaData, error: vendaError } = await supabase
         .from("vendas")
         .select(`
@@ -98,7 +111,17 @@ export default function VendaDetalhesDirecao() {
             valor_produto,
             valor_total,
             desconto_percentual,
+            desconto_valor,
             catalogo_cores(nome, codigo_hex)
+          ),
+          autorizacao_desconto:vendas_autorizacoes_desconto(
+            id,
+            percentual_desconto,
+            tipo_autorizacao,
+            autorizador:admin_users!vendas_autorizacoes_desconto_autorizado_por_fkey(
+              nome,
+              foto_perfil_url
+            )
           )
         `)
         .eq("id", id)
@@ -209,7 +232,7 @@ export default function VendaDetalhesDirecao() {
               <DollarSign className="w-4 h-4" />
               Valor Total
             </div>
-            <p className="text-xl font-bold text-green-400">{formatCurrency(venda.valor_venda)}</p>
+            <p className="text-xl font-bold text-green-400">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</p>
           </div>
           
           <div className={`${cardClass} border-l-4 border-l-blue-500`}>
@@ -236,6 +259,68 @@ export default function VendaDetalhesDirecao() {
             <p className="text-xl font-bold text-purple-400">{formatCurrency(venda.valor_frete || 0)}</p>
           </div>
         </div>
+
+        {/* Descontos e Acréscimos */}
+        {(() => {
+          const totalDescontos = venda.produtos?.reduce(
+            (acc: number, p: Produto) => acc + (p.desconto_valor || 0), 
+            0
+          ) || 0;
+          const totalAcrescimos = venda.valor_credito || 0;
+          const autorizacao = (venda.autorizacao_desconto as AutorizacaoDesconto[] | undefined)?.[0];
+          
+          if (totalDescontos > 0 || totalAcrescimos > 0) {
+            return (
+              <div className={cardClass}>
+                <h3 className="text-white font-medium mb-4 flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                  Descontos e Acréscimos
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Card de Descontos */}
+                  <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <ArrowDown className="w-4 h-4 text-red-400" />
+                      <span className="text-sm font-medium text-red-400">Descontos</span>
+                    </div>
+                    <p className="text-2xl font-bold text-red-400">
+                      -{formatCurrency(totalDescontos)}
+                    </p>
+                    {autorizacao && (
+                      <div className="mt-3 pt-3 border-t border-red-500/20 space-y-1">
+                        <p className="text-xs text-white/50">
+                          Percentual: {autorizacao.percentual_desconto?.toFixed(2) || 0}%
+                        </p>
+                        <p className="text-xs text-white/50">
+                          Tipo: {autorizacao.tipo_autorizacao === 'master' 
+                            ? 'Senha Master' : 'Responsável do Setor'}
+                        </p>
+                        <p className="text-xs text-white/50">
+                          Autorizado por: {autorizacao.autorizador?.nome || 'Não informado'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Card de Acréscimos */}
+                  <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <ArrowUp className="w-4 h-4 text-emerald-400" />
+                      <span className="text-sm font-medium text-emerald-400">Acréscimos</span>
+                    </div>
+                    <p className="text-2xl font-bold text-emerald-400">
+                      +{formatCurrency(totalAcrescimos)}
+                    </p>
+                    {totalAcrescimos > 0 && (
+                      <p className="mt-2 text-xs text-white/50">Crédito do cliente</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
 
         {/* Produtos */}
         {venda.produtos && venda.produtos.length > 0 && (
