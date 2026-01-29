@@ -23,6 +23,7 @@ import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { NeoInstalacao, CriarNeoInstalacaoData } from "@/types/neoInstalacao";
+import { ESTADOS_BRASIL, getCidadesPorEstado } from "@/utils/estadosCidades";
 
 interface Equipe {
   id: string;
@@ -43,12 +44,6 @@ interface NeoInstalacaoModalProps {
   neoInstalacao?: NeoInstalacao | null;
   onConfirm: (dados: CriarNeoInstalacaoData) => Promise<void>;
 }
-
-const ESTADOS_BRASIL = [
-  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
-  "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
-  "RS", "RO", "RR", "SC", "SP", "SE", "TO"
-];
 
 export function NeoInstalacaoModal({
   open,
@@ -205,24 +200,33 @@ export function NeoInstalacaoModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="cidade">Cidade *</Label>
-              <Input
-                id="cidade"
-                placeholder="Cidade"
-                value={cidade}
-                onChange={(e) => setCidade(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="estado">Estado *</Label>
-              <Select value={estado} onValueChange={setEstado}>
+              <Select value={estado} onValueChange={(novoEstado) => {
+                setEstado(novoEstado);
+                setCidade("");
+              }}>
                 <SelectTrigger>
-                  <SelectValue placeholder="UF" />
+                  <SelectValue placeholder="Selecione o estado" />
                 </SelectTrigger>
                 <SelectContent modal={false}>
-                  {ESTADOS_BRASIL.map((uf) => (
-                    <SelectItem key={uf} value={uf}>
-                      {uf}
+                  {ESTADOS_BRASIL.map((e) => (
+                    <SelectItem key={e.sigla} value={e.sigla}>
+                      {e.sigla} - {e.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cidade">Cidade *</Label>
+              <Select value={cidade} onValueChange={setCidade} disabled={!estado}>
+                <SelectTrigger>
+                  <SelectValue placeholder={estado ? "Selecione a cidade" : "Selecione o estado primeiro"} />
+                </SelectTrigger>
+                <SelectContent modal={false}>
+                  {getCidadesPorEstado(estado).map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
                     </SelectItem>
                   ))}
                 </SelectContent>
