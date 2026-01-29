@@ -1,177 +1,226 @@
 
-# Plano: Visualizar Linhas da Ordem ao Clicar na Downbar de Gestao de Fabrica
+# Plano: Melhorar Inputs de Frete e Previsão de Entrega
 
-## Objetivo
+## Problema Identificado
 
-Ao clicar em uma ordem de producao (Soldagem, Perfiladeira, Separacao, Qualidade, Pintura) na downbar do pedido em `/direcao/gestao-fabrica`, abrir um sheet lateral exibindo as linhas contidas naquela ordem.
+Em `/vendas/minhas-vendas/nova`, os campos de "Frete" e "Previsão de Entrega" estão com implementação básica:
+
+```tsx
+// Frete: Input numérico simples
+<Input type="number" value={formData.valor_frete} ... />
+
+// Previsão Entrega: Input date nativo (inconsistente com o resto do sistema)
+<Input type="date" value={formData.data_prevista_entrega} ... />
+```
 
 ---
 
-## Situacao Atual
+## Solução Proposta
 
-A `PedidoDetalhesSheet` exibe as ordens de producao como cartoes informativos:
+### 1. Campo de Frete Sofisticado
 
+Criar um componente com:
+- **Sugestão automática** baseada na cidade/estado selecionados (usando `frete_cidades`)
+- **Ícone de caminhão** para indicar visualmente o campo
+- **Badge de sugestão** quando houver frete cadastrado para a localização
+- **Botão "Usar sugestão"** para aplicar o valor automaticamente
+- **Fallback** para digitação manual quando não houver sugestão
+
+```text
+┌──────────────────────────────────────────────────────┐
+│ FRETE (R$)                                           │
+│ ┌──────────────────────────────────────────────────┐ │
+│ │ 🚚  350,00                              [Editar] │ │
+│ └──────────────────────────────────────────────────┘ │
+│  💡 Sugerido: R$ 350,00 (Curitiba/PR)  [Usar]       │
+└──────────────────────────────────────────────────────┘
+```
+
+### 2. Campo de Previsão de Entrega com Calendar Popover
+
+Substituir o input date nativo por um Popover + Calendar estilizado, consistente com o resto do sistema:
+
+```text
+┌──────────────────────────────────────────────────────┐
+│ PREVISÃO ENTREGA *                                   │
+│ ┌──────────────────────────────────────────────────┐ │
+│ │ 📅  15/02/2026                          [▼]      │ │
+│ └──────────────────────────────────────────────────┘ │
+│                                                      │
+│ ┌─ Calendário (Popover) ───────────────────────────┐ │
+│ │        Janeiro 2026                              │ │
+│ │  D   S   T   Q   Q   S   S                       │ │
+│ │              1   2   3   4                       │ │
+│ │  5   6   7   8   9  10  11                       │ │
+│ │ ...                                              │ │
+│ └──────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────┘
+```
+
+---
+
+## Alterações Técnicas
+
+### Arquivo: `src/pages/vendas/VendaNovaMinimalista.tsx`
+
+#### Importações Adicionais
 ```tsx
-{ordens.map((ordem) => (
-  <div key={ordem.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-    {/* Ícone + nome do tipo + número */}
-    {/* Badge de status + Avatar do responsável */}
+import { useFretesCidades } from '@/hooks/useFretesCidades';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+```
+
+#### Novo Estado e Hook
+```tsx
+const { fretes } = useFretesCidades();
+const [dataEntrega, setDataEntrega] = useState<Date | undefined>();
+```
+
+#### Lógica de Sugestão de Frete
+```tsx
+const freteSugerido = useMemo(() => {
+  if (!formData.estado || !formData.cidade || !fretes) return null;
+  return fretes.find(
+    f => f.ativo && 
+         f.estado === formData.estado && 
+         f.cidade === formData.cidade
+  );
+}, [formData.estado, formData.cidade, fretes]);
+```
+
+#### Novo Campo de Frete (substituir linhas 779-791)
+```tsx
+<div className="space-y-2">
+  <Label htmlFor="valor_frete" className={labelClass}>Frete (R$)</Label>
+  <div className="relative">
+    <Truck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400/60" />
+    <Input
+      id="valor_frete"
+      type="number"
+      step="0.01"
+      min="0"
+      value={formData.valor_frete}
+      onChange={(e) => setFormData(prev => ({ 
+        ...prev, 
+        valor_frete: parseFloat(e.target.value) || 0 
+      }))}
+      placeholder="0,00"
+      className={cn(inputClass, "pl-10")}
+    />
   </div>
-))}
+  {freteSugerido && formData.valor_frete !== freteSugerido.valor_frete && (
+    <div className="flex items-center gap-2 text-xs">
+      <Badge variant="outline" className="bg-blue-500/10 border-blue-500/30 text-blue-300">
+        💡 Sugerido: R$ {freteSugerido.valor_frete.toFixed(2)}
+      </Badge>
+      <Button 
+        type="button"
+        variant="ghost" 
+        size="sm"
+        className="h-6 text-xs text-blue-400 hover:text-blue-300"
+        onClick={() => setFormData(prev => ({ 
+          ...prev, 
+          valor_frete: freteSugerido.valor_frete 
+        }))}
+      >
+        Usar
+      </Button>
+    </div>
+  )}
+</div>
 ```
 
-Esses cartoes nao sao clicaveis. O usuario nao consegue ver as linhas individuais da ordem.
-
----
-
-## Solucao
-
-Reutilizar o componente `OrdemLinhasSheet` ja existente (usado em `/fabrica/ordens-pedidos`) para exibir as linhas ao clicar em uma ordem na downbar.
-
-### Fluxo de Interacao
-
-```text
-Usuario clica em um pedido
-        |
-        v
-Downbar abre (PedidoDetalhesSheet)
-        |
-        v
-Usuario ve "Ordens de Producao"
-        |
-        v
-Clica em "Soldagem #OSO-2026-0001"
-        |
-        v
-OrdemLinhasSheet abre (lateral)
-mostrando linhas + checkboxes + progresso
-```
-
----
-
-## Alteracoes Tecnicas
-
-### Arquivo: `src/components/pedidos/PedidoDetalhesSheet.tsx`
-
-1. **Importar** o `OrdemLinhasSheet` e o tipo `OrdemStatus`
-
-2. **Adicionar estado** para controlar qual ordem esta selecionada:
-
+#### Novo Campo de Previsão de Entrega (substituir linhas 793-804)
 ```tsx
-const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemStatus | null>(null);
-const [showOrdemLinhas, setShowOrdemLinhas] = useState(false);
-```
-
-3. **Converter** a interface `OrdemProducao` (local) para ser compativel com `OrdemStatus` (do hook `useOrdensPorPedido`)
-
-4. **Tornar os cartoes de ordem clicaveis**:
-
-```tsx
-<button
-  key={ordem.id}
-  onClick={() => handleOrdemClick(ordem)}
-  className="w-full flex items-center justify-between p-3 bg-white/5 rounded-lg 
-             border border-white/5 hover:bg-white/10 transition-colors cursor-pointer"
->
-  {/* Conteúdo existente */}
-</button>
-```
-
-5. **Renderizar o OrdemLinhasSheet** ao final do componente:
-
-```tsx
-<OrdemLinhasSheet
-  ordem={ordemSelecionada}
-  open={showOrdemLinhas}
-  onOpenChange={setShowOrdemLinhas}
-/>
-```
-
----
-
-## Mapeamento de Dados
-
-O `OrdemLinhasSheet` espera um objeto do tipo `OrdemStatus`:
-
-```typescript
-interface OrdemStatus {
-  id: string | null;
-  numero_ordem: string | null;
-  status: string | null;
-  tipo: TipoOrdem; // 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura'
-  responsavel: { nome: string; foto_url: string | null; iniciais: string } | null;
-  pausada: boolean;
-  justificativa_pausa: string | null;
-  linha_problema: { id: string; item: string; quantidade: number; tamanho: string | null } | null;
-}
-```
-
-A interface local `OrdemProducao` na `PedidoDetalhesSheet` precisa ser adaptada para incluir esses campos:
-
-| Campo Atual | Novo Campo |
-|-------------|------------|
-| `tipo: string` (ex: "Soldagem") | `tipo: TipoOrdem` (ex: "soldagem") |
-| - | `pausada: boolean` |
-| - | `justificativa_pausa: string \| null` |
-| - | `linha_problema: object \| null` |
-
----
-
-## Busca Adicional de Dados
-
-Atualmente o `fetchOrdens` busca apenas campos basicos. Sera necessario adicionar:
-- `pausada`
-- `justificativa_pausa`
-- `pausada_em`
-- `linha_problema_id` (com join para obter item/quantidade/tamanho)
-
----
-
-## Resultado Visual
-
-```text
-ANTES:
-┌─────────────────────────────────────────┐
-│ Ordens de Producao (3)                  │
-│ ┌─────────────────────────────────────┐ │
-│ │ 🔧 Soldagem    #OSO-2026-001  ✅    │ │  <- Nao clicavel
-│ └─────────────────────────────────────┘ │
-│ ┌─────────────────────────────────────┐ │
-│ │ 🏭 Perfiladeira #OPE-2026-001 ⏳   │ │  <- Nao clicavel
-│ └─────────────────────────────────────┘ │
-└─────────────────────────────────────────┘
-
-DEPOIS:
-┌─────────────────────────────────────────┐
-│ Ordens de Producao (3)                  │
-│ ┌─────────────────────────────────────┐ │
-│ │ 🔧 Soldagem    #OSO-2026-001  ✅ >  │ │  <- Clicavel (hover com >)
-│ └─────────────────────────────────────┘ │
-│         |                                │
-│         v                                │
-│  ┌──────────────────────────┐           │
-│  │ Sheet lateral abre com   │           │
-│  │ linhas da ordem:         │           │
-│  │ ☑ Porta enrolar 5x4m     │           │
-│  │ ☐ Trilho superior        │           │
-│  │ ☐ Mola balanceadora      │           │
-│  └──────────────────────────┘           │
-└─────────────────────────────────────────┘
+<div className="space-y-2">
+  <Label className={labelClass}>Previsão Entrega *</Label>
+  <Popover>
+    <PopoverTrigger asChild>
+      <Button
+        type="button"
+        variant="outline"
+        className={cn(
+          "w-full justify-start text-left font-normal",
+          inputClass,
+          !dataEntrega && "text-blue-200/30"
+        )}
+      >
+        <CalendarIcon className="mr-2 h-4 w-4 text-blue-400/60" />
+        {dataEntrega ? (
+          format(dataEntrega, "dd/MM/yyyy", { locale: ptBR })
+        ) : (
+          <span>Selecione uma data</span>
+        )}
+      </Button>
+    </PopoverTrigger>
+    <PopoverContent className="w-auto p-0 bg-zinc-900 border-blue-500/20" align="start">
+      <Calendar
+        mode="single"
+        selected={dataEntrega}
+        onSelect={(date) => {
+          setDataEntrega(date);
+          setFormData(prev => ({
+            ...prev,
+            data_prevista_entrega: date ? format(date, 'yyyy-MM-dd') : ''
+          }));
+        }}
+        disabled={(date) => date < new Date()}
+        initialFocus
+        className="pointer-events-auto"
+      />
+    </PopoverContent>
+  </Popover>
+</div>
 ```
 
 ---
 
-## Resumo das Alteracoes
+## Comportamentos Implementados
 
-| Arquivo | Alteracao |
+| Feature | Descrição |
 |---------|-----------|
-| `src/components/pedidos/PedidoDetalhesSheet.tsx` | Adicionar estado para ordem selecionada, tornar cartoes clicaveis, integrar OrdemLinhasSheet |
+| **Sugestão de Frete** | Ao selecionar cidade/estado, busca na tabela `frete_cidades` e exibe sugestão |
+| **Aplicar Sugestão** | Botão "Usar" preenche o campo automaticamente |
+| **Frete Manual** | Usuário pode digitar qualquer valor mesmo com sugestão |
+| **Calendar Popover** | Substitui input date nativo por componente estilizado |
+| **Datas Futuras** | Calendar bloqueia datas passadas (disabled prop) |
+| **Ícones Visuais** | Truck para frete, CalendarIcon para data |
+| **Tema Consistente** | Mantém o tema azul sofisticado da página |
+
+---
+
+## Resultado Visual Esperado
+
+```text
+ANTES (simples):
+┌─────────────────────┐  ┌─────────────────────┐
+│ Frete (R$)          │  │ Previsão Entrega    │
+│ [ 0,00          ]   │  │ [ ____-__-__ ]      │  <- Input date nativo
+└─────────────────────┘  └─────────────────────┘
+
+DEPOIS (sofisticado):
+┌───────────────────────────────────┐  ┌───────────────────────────────────┐
+│ FRETE (R$)                        │  │ PREVISÃO ENTREGA *                │
+│ ┌───────────────────────────────┐ │  │ ┌───────────────────────────────┐ │
+│ │ 🚚  350,00                    │ │  │ │ 📅  15/02/2026              ▼│ │
+│ └───────────────────────────────┘ │  │ └───────────────────────────────┘ │
+│ 💡 Sugerido: R$ 350 (Curitiba) ↗  │  │                                   │
+└───────────────────────────────────┘  └───────────────────────────────────┘
+```
+
+---
+
+## Resumo das Alterações
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/pages/vendas/VendaNovaMinimalista.tsx` | Adicionar hook useFretesCidades, criar lógica de sugestão, substituir inputs por versões sofisticadas |
 
 ---
 
 ## Impacto
 
-- **Visibilidade**: Direcao pode ver detalhes granulares de cada ordem
-- **Gerenciamento**: Permite visualizar progresso de linhas individuais
-- **Consistencia**: Mesmo comportamento da pagina `/fabrica/ordens-pedidos`
-- **Sem nova UI**: Reutiliza componente ja existente e testado
+- **UX**: Inputs visualmente mais atrativos e consistentes com o resto do sistema
+- **Produtividade**: Sugestão automática de frete economiza tempo do vendedor
+- **Consistência**: Mesmo padrão de Calendar usado em outras páginas
+- **Dados**: Aproveita a tabela `frete_cidades` já existente
