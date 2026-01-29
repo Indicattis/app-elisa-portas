@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { MetaColaborador } from "@/hooks/useMetasColaboradorIndividual";
+import { format } from "date-fns";
 
 interface MetaCardProps {
   meta: MetaColaborador;
@@ -17,10 +18,10 @@ const tipoMetaConfig: Record<
 > = {
   solda: { label: "Solda", icon: Flame, cor: "text-orange-500", unidade: "portas" },
   perfiladeira: { label: "Perfiladeira", icon: Ruler, cor: "text-blue-500", unidade: "m" },
-  separacao: { label: "Separação", icon: Package, cor: "text-purple-500", unidade: "ordens" },
-  qualidade: { label: "Qualidade", icon: CheckCircle, cor: "text-green-500", unidade: "ordens" },
+  separacao: { label: "Separação", icon: Package, cor: "text-purple-500", unidade: "itens" },
+  qualidade: { label: "Qualidade", icon: CheckCircle, cor: "text-green-500", unidade: "pedidos" },
   pintura: { label: "Pintura", icon: Paintbrush, cor: "text-pink-500", unidade: "m²" },
-  carregamento: { label: "Expedição", icon: Truck, cor: "text-amber-500", unidade: "cargas" },
+  carregamento: { label: "Expedição", icon: Truck, cor: "text-amber-500", unidade: "pedidos" },
 };
 
 export function MetaCard({ meta, progressoAtual, onEdit, onDelete }: MetaCardProps) {
@@ -83,12 +84,7 @@ export function MetaCard({ meta, progressoAtual, onEdit, onDelete }: MetaCardPro
           <div className="flex items-center gap-1 text-muted-foreground">
             <Calendar className="h-3 w-3" />
             <span>
-              {vencida 
-                ? `Vencida há ${Math.abs(diasRestantes)} dias`
-                : diasRestantes === 0 
-                  ? "Vence hoje"
-                  : `${diasRestantes} dias restantes`
-              }
+              {format(new Date(meta.data_inicio), "dd/MM")} - {format(new Date(meta.data_termino), "dd/MM")}
             </span>
           </div>
           
