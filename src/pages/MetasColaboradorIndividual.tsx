@@ -111,7 +111,7 @@ export default function MetasColaboradorIndividual() {
   if (!colaborador) {
     return (
       <div className="min-h-screen bg-background p-4">
-        <Button variant="ghost" onClick={() => navigate("/direcao/metas")}>
+        <Button variant="ghost" onClick={() => navigate("/direcao/metas/fabrica")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
         </Button>
@@ -127,7 +127,7 @@ export default function MetasColaboradorIndividual() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background border-b border-border">
         <div className="p-4 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/direcao/metas")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/direcao/metas/fabrica")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <Avatar className="h-10 w-10">
