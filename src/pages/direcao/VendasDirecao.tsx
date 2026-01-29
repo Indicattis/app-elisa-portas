@@ -33,6 +33,7 @@ import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
 import { supabase } from '@/integrations/supabase/client';
 import { generateVendasRelatorioPDF } from '@/utils/vendasPDFGenerator';
+import { getFormaPagamentoLabel } from '@/utils/formatters';
 import { useToast } from '@/hooks/use-toast';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import {
@@ -52,6 +53,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'cidade', label: 'Cidade', defaultVisible: true },
   { id: 'previsao', label: 'Previsão Entrega', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
+  { id: 'pagamento', label: 'Pagamento', defaultVisible: true },
   { id: 'desconto', label: 'Desconto', defaultVisible: true },
   { id: 'acrescimo', label: 'Acréscimo', defaultVisible: true },
   { id: 'instalacao', label: 'Instalação', defaultVisible: true },
@@ -391,6 +393,8 @@ export default function VendasDirecao() {
           return <Truck className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-400 mx-auto" />;
         }
         return <span className="text-white/30 text-[10px]">-</span>;
+      case 'pagamento':
+        return <span className={textClass}>{getFormaPagamentoLabel(venda.metodo_pagamento)}</span>;
       case 'previsao':
         return (
           <span className={textMutedClass}>

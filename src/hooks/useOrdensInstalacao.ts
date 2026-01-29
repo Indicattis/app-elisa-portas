@@ -49,6 +49,7 @@ export interface OrdemInstalacao {
     estado: string | null;
     bairro: string | null;
     valor_venda: number | null;
+    metodo_pagamento: string | null;
     produtos?: Array<{
       tipo_produto: string;
       largura: number | null;
@@ -89,6 +90,7 @@ export const useOrdensInstalacao = () => {
             estado,
             bairro,
             valor_venda,
+            metodo_pagamento,
             produtos:produtos_vendas(
               tipo_produto,
               largura,

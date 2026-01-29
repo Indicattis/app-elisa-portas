@@ -22,3 +22,19 @@ export function formatarDimensoes(largura: number | null | undefined, altura: nu
   if (!largura || !altura) return '';
   return `${largura.toFixed(2)}m x ${altura.toFixed(2)}m`;
 }
+
+/**
+ * Formata o método de pagamento para exibição amigável
+ */
+export function getFormaPagamentoLabel(metodo: string | null | undefined): string {
+  if (!metodo) return '-';
+  
+  const labels: Record<string, string> = {
+    'boleto': 'Boleto',
+    'a_vista': 'À Vista',
+    'cartao_credito': 'Cartão',
+    'dinheiro': 'Dinheiro',
+  };
+  
+  return labels[metodo] || metodo.replace(/_/g, ' ');
+}

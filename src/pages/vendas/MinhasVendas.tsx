@@ -24,6 +24,8 @@ interface ProdutoVenda {
   desconto_valor: number | null;
 }
 
+import { getFormaPagamentoLabel } from '@/utils/formatters';
+
 interface Venda {
   id: string;
   cliente_nome: string | null;
@@ -38,6 +40,7 @@ interface Venda {
   data_prevista_entrega: string | null;
   tipo_entrega: string | null;
   comprovante_url: string | null;
+  metodo_pagamento: string | null;
   produtos_vendas: ProdutoVenda[];
   pedidos_producao: { id: string; status: string } | null;
   atendente_id: string | null;
@@ -50,6 +53,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'cidade', label: 'Cidade', defaultVisible: true },
   { id: 'previsao', label: 'Prev. Entrega', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
+  { id: 'pagamento', label: 'Pagamento', defaultVisible: true },
   { id: 'desconto', label: 'Desconto', defaultVisible: false },
   { id: 'acrescimo', label: 'Acréscimo', defaultVisible: false },
   { id: 'instalacao', label: 'Instalação', defaultVisible: false },
@@ -108,6 +112,7 @@ export default function MinhasVendas() {
           comprovante_url,
           atendente_id,
           frete_aprovado,
+          metodo_pagamento,
           produtos_vendas(id, tipo_produto, desconto_valor, faturamento),
           pedidos_producao!left(id, status)
         `)
@@ -285,6 +290,8 @@ export default function MinhasVendas() {
         return venda.tipo_entrega === 'instalacao' 
           ? <span title="Instalação"><Hammer className="h-4 w-4 text-orange-400" /></span>
           : <span title="Entrega"><Truck className="h-4 w-4 text-blue-400" /></span>;
+      case 'pagamento':
+        return getFormaPagamentoLabel(venda.metodo_pagamento);
       case 'desconto':
         const totalDesconto = venda.produtos_vendas?.reduce((acc, p) => acc + (p.desconto_valor || 0), 0) || 0;
         return totalDesconto > 0 ? formatCurrency(totalDesconto) : '-';

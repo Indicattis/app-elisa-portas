@@ -68,16 +68,20 @@ interface Venda {
   valor_credito?: number;
   lucro_total: number;
   frete_aprovado?: boolean;
+  metodo_pagamento?: string | null;
   portas?: any[];
   produtos?: any[];
   justificativa_nao_faturada?: string | null;
 }
+
+import { getFormaPagamentoLabel } from '@/utils/formatters';
 
 const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'data', label: 'Data', defaultVisible: true },
   { id: 'cliente', label: 'Cliente', defaultVisible: true },
   { id: 'atendente', label: 'Atendente', defaultVisible: true },
   { id: 'tipo_entrega', label: 'Tipo Entrega', defaultVisible: true },
+  { id: 'pagamento', label: 'Pagamento', defaultVisible: true },
   { id: 'valor_frete', label: 'Frete', defaultVisible: true },
   { id: 'valor_instalacao', label: 'Instalação', defaultVisible: true },
   { id: 'desconto_acrescimo', label: 'Desc./Acrés.', defaultVisible: true },
@@ -164,6 +168,7 @@ export default function FaturamentoMinimalista() {
           custo_total,
           frete_aprovado,
           justificativa_nao_faturada,
+          metodo_pagamento,
           produtos_vendas (
             id,
             tipo_produto,
@@ -479,6 +484,12 @@ export default function FaturamentoMinimalista() {
             <Truck className="h-4 w-4" />
             <span className="text-xs">Entrega</span>
           </div>
+        );
+      case 'pagamento':
+        return (
+          <span className="text-white/80 text-sm">
+            {getFormaPagamentoLabel(venda.metodo_pagamento)}
+          </span>
         );
       case 'valor_frete':
         return (

@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { OrdemInstalacao } from "@/hooks/useOrdensInstalacao";
 import { cn } from "@/lib/utils";
+import { getFormaPagamentoLabel } from "@/utils/formatters";
 
 interface OrdemInstalacaoRowProps {
   ordem: OrdemInstalacao;
@@ -65,6 +66,7 @@ export function OrdemInstalacaoRow({
   const cidade = ordem.venda?.cidade || ordem.cidade;
   const estado = ordem.venda?.estado || ordem.estado;
   const valorVenda = ordem.venda?.valor_venda;
+  const metodoPagamento = ordem.venda?.metodo_pagamento;
   const badges = calcularBadgesPorta(ordem.venda?.produtos);
   
   // Verificar se está atrasado
@@ -88,7 +90,7 @@ export function OrdemInstalacaoRow({
       )}
       onClick={() => onClick?.(ordem)}
       style={{ 
-        gridTemplateColumns: "28px 70px 1fr 100px 80px 80px 50px" 
+        gridTemplateColumns: "28px 70px 1fr 100px 60px 80px 80px 50px" 
       }}
     >
       {/* Avatar */}
@@ -173,6 +175,13 @@ export function OrdemInstalacaoRow({
         {badges.P === 0 && badges.G === 0 && badges.GG === 0 && (
           <span className="text-muted-foreground text-xs">—</span>
         )}
+      </div>
+      
+      {/* Pagamento */}
+      <div className="flex items-center">
+        <span className="text-xs text-muted-foreground truncate">
+          {getFormaPagamentoLabel(metodoPagamento)}
+        </span>
       </div>
       
       {/* Valor */}

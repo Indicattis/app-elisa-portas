@@ -1,9 +1,10 @@
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { Package, MapPin, Calendar, Clock, User, Phone, Truck, DoorOpen } from "lucide-react";
+import { Package, MapPin, Calendar, Clock, User, Phone, Truck, DoorOpen, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { getFormaPagamentoLabel } from "@/utils/formatters";
 
 interface OrdemCarregamentoDetailsProps {
   ordem: OrdemCarregamento | null;
@@ -62,13 +63,19 @@ export const OrdemCarregamentoDetails = ({
         
         {/* Header com gradiente */}
         <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-xl border-b border-white/10 px-6 py-4">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <Badge className={`text-[10px] h-5 border ${tipoConfig.className}`}>
               {tipoConfig.label}
             </Badge>
             <Badge className={`text-[10px] h-5 border ${statusConfig.className}`}>
               {statusConfig.label}
             </Badge>
+            {(ordem.venda as any)?.metodo_pagamento && (
+              <Badge className="text-[10px] h-5 border bg-indigo-500/20 text-indigo-300 border-indigo-500/30">
+                <CreditCard className="h-3 w-3 mr-1" />
+                {getFormaPagamentoLabel((ordem.venda as any).metodo_pagamento)}
+              </Badge>
+            )}
           </div>
           <SheetTitle className="text-white text-lg font-semibold">
             {ordem.nome_cliente}
