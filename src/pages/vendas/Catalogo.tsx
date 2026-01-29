@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, BookOpen, Star, Package } from 'lucide-react';
+import { Search, BookOpen, Star, Package, Plus } from 'lucide-react';
 import { useVendasCatalogo } from '@/hooks/useVendasCatalogo';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export default function Catalogo() {
   const navigate = useNavigate();
@@ -36,6 +37,15 @@ export default function Catalogo() {
         { label: "Vendas", path: "/vendas" },
         { label: "Catálogo" }
       ]}
+      headerActions={
+        <Button
+          onClick={() => navigate('/vendas/catalogo/new')}
+          className="bg-gradient-to-r from-green-500 to-green-700 hover:from-green-400 hover:to-green-600 text-white"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Produto
+        </Button>
+      }
     >
       {/* Filtros */}
       <div className="space-y-4 mb-6">
