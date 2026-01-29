@@ -30,7 +30,7 @@ export interface ProdutoCatalogoInput {
   descricao_produto?: string;
   categoria: string;
   subcategoria_id?: string;
-  quantidade: number;
+  quantidade?: number;
   unidade?: string;
   preco_venda: number;
   custo_produto?: number;
@@ -91,6 +91,7 @@ export function useVendasCatalogo(filtros?: {
         .from("vendas_catalogo")
         .insert({
           ...produto,
+          quantidade: produto.quantidade ?? 0,
           created_by: user.user?.id,
         })
         .select()
