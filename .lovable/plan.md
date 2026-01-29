@@ -1,150 +1,175 @@
 
-# Plano: Adicionar Botão "Editar Desconto" na Página de Edição de Venda
+# Plano: Exibir Forma de Pagamento nas Listagens
 
-## Problema Identificado
+## Objetivo
 
-Na página `/vendas/minhas-vendas/editar/:id`, a lógica atual dos botões de desconto e crédito é:
+Adicionar a exibição da forma de pagamento (coluna `metodo_pagamento`) nas listagens de vendas das seguintes páginas:
 
-| Condição | Botão Exibido |
-|----------|---------------|
-| `temDesconto = false` e `valorCredito = 0` | "Adicionar Desconto" ✅ + "Adicionar Crédito" ✅ |
-| `temDesconto = false` e `valorCredito > 0` | ❌ Nenhum botão de desconto + "Editar Crédito" ✅ |
-| `temDesconto = true` e `valorCredito = 0` | ❌ Nenhum botão de desconto + ❌ Nenhum botão de crédito |
-| `temDesconto = true` e `valorCredito > 0` | ❌ Nenhum botão de desconto + ❌ Nenhum botão de crédito |
-
-**Problema**: Quando a venda já tem desconto aplicado (`temDesconto = true`), não há forma de editar ou ajustar o desconto existente.
+1. `/vendas/minhas-vendas` - MinhasVendas.tsx
+2. `/direcao/vendas` - VendasDirecao.tsx
+3. `/logistica/instalacoes/ordens-instalacoes` - OrdensInstalacoesLogistica.tsx
+4. `/logistica/expedicao` - ExpedicaoMinimalista.tsx
+5. `/administrativo/financeiro/faturamento/vendas` - FaturamentoVendasMinimalista.tsx
 
 ---
 
-## Solução
+## Mapeamento de Valores
 
-Adicionar lógica para exibir **"Editar Desconto"** quando já existe desconto aplicado, permitindo ao usuário ajustar os descontos existentes respeitando as mesmas regras.
+O campo `metodo_pagamento` possui os seguintes valores no banco de dados:
 
-### Nova Lógica dos Botões
-
-| Condição | Botão Exibido |
-|----------|---------------|
-| `temDesconto = false` e `valorCredito = 0` | "Adicionar Desconto" + "Adicionar Crédito" |
-| `temDesconto = false` e `valorCredito > 0` | "Adicionar Desconto" (desabilitado c/ tooltip) + "Editar Crédito" |
-| **`temDesconto = true`** e `valorCredito = 0` | **"Editar Desconto"** + (crédito bloqueado) |
-| `temDesconto = true` e `valorCredito > 0` | (conflito - não deveria ocorrer) |
+| Valor no Banco | Label Exibido |
+|----------------|---------------|
+| `boleto` | Boleto |
+| `a_vista` | À Vista |
+| `cartao_credito` | Cartão |
+| `dinheiro` | Dinheiro |
+| `null` ou vazio | - |
 
 ---
 
-## Alterações Técnicas
+## Alteracoes por Pagina
 
-### Arquivo: `src/pages/vendas/MinhasVendasEditar.tsx`
+### 1. `/vendas/minhas-vendas` (MinhasVendas.tsx)
 
-#### Linhas 703-716 (Botão de Desconto)
+**Alteracoes:**
+- Adicionar `metodo_pagamento` na query do Supabase
+- Adicionar nova opcao em `COLUNAS_DISPONIVEIS`
+- Adicionar case no `renderCell` para exibir a forma de pagamento
 
-**Código Atual:**
 ```tsx
-{produtosFormatados.length > 0 && valorCreditoAtual === 0 && (
-  <Button 
-    type="button"
-    size="sm"
-    variant="outline"
-    onClick={() => setDescontoModalOpen(true)}
-    disabled={isSaving}
-    className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
-  >
-    <Percent className="w-3.5 h-3.5 mr-1.5" />
-    Adicionar Desconto
-  </Button>
-)}
+// COLUNAS_DISPONIVEIS - adicionar:
+{ id: 'pagamento', label: 'Pagamento', defaultVisible: true },
+
+// Query - adicionar campo:
+metodo_pagamento,
+
+// renderCell - adicionar case:
+case 'pagamento':
+  return getFormaPagamentoLabel(venda.metodo_pagamento);
 ```
 
-**Código Novo:**
+---
+
+### 2. `/direcao/vendas` (VendasDirecao.tsx)
+
+**Alteracoes:**
+- Adicionar nova opcao em `COLUNAS_DISPONIVEIS`
+- Adicionar case no `renderCell` para exibir pagamento
+- A query do hook `useVendas` ja traz todos os campos necessarios
+
 ```tsx
-{produtosFormatados.length > 0 && valorCreditoAtual === 0 && (
-  <Button 
-    type="button"
-    size="sm"
-    variant="outline"
-    onClick={() => setDescontoModalOpen(true)}
-    disabled={isSaving}
-    className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
-  >
-    <Percent className="w-3.5 h-3.5 mr-1.5" />
-    {temDesconto ? 'Editar Desconto' : 'Adicionar Desconto'}
-  </Button>
-)}
+// COLUNAS_DISPONIVEIS - adicionar:
+{ id: 'pagamento', label: 'Pagamento', defaultVisible: true },
+
+// renderCell - adicionar case:
+case 'pagamento':
+  return <span className={textClass}>{getFormaPagamentoLabel(venda.metodo_pagamento)}</span>;
 ```
 
-Esta alteração simples:
-1. Mantém a mesma condição de exibição (`valorCreditoAtual === 0`)
-2. Altera o texto do botão dinamicamente baseado em `temDesconto`
-3. Reutiliza o mesmo `DescontoVendaModal` que já existe e respeita todas as regras de desconto
+---
+
+### 3. `/logistica/instalacoes/ordens-instalacoes` (OrdensInstalacoesLogistica.tsx)
+
+**Alteracoes:**
+- Modificar o hook `useOrdensInstalacao` para buscar `metodo_pagamento` da venda
+- Atualizar o componente `OrdemInstalacaoRow` para exibir a forma de pagamento
+- Ajustar o grid-template-columns para acomodar a nova coluna
+
+```tsx
+// OrdemInstalacaoRow - ajustar grid e adicionar coluna:
+style={{ 
+  gridTemplateColumns: "28px 70px 1fr 100px 60px 80px 80px 50px" 
+}}
+
+// Adicionar coluna de pagamento no meio
+```
 
 ---
 
-## Comportamento do DescontoVendaModal
+### 4. `/logistica/expedicao` (ExpedicaoMinimalista.tsx)
 
-O modal já está preparado para lidar com descontos existentes:
+Esta pagina utiliza componentes de calendario (CalendarioMensalExpedicaoDesktop, etc.) que exibem cards de ordens. A forma de pagamento deve ser exibida nos detalhes da ordem.
 
-- **Linha 55-67**: Calcula `descontoAtual` somando todos os descontos já aplicados
-- **Linha 69**: Calcula `percentualDescontoAtual` para exibição
-- **Linha 170-172**: Exibe o desconto atual no card "Desconto Atual"
-- **Linha 104-136**: Ao aplicar, **soma** o novo desconto ao existente
-
-Isso significa que o modal permite adicionar **mais desconto** sobre o existente, respeitando os limites configurados.
+**Alteracoes:**
+- Modificar o hook `useOrdensCarregamentoCalendario` para buscar `metodo_pagamento`
+- Atualizar o componente `OrdemCarregamentoDetails` para exibir a forma de pagamento nos detalhes
 
 ---
 
-## Fluxo Visual
+### 5. `/administrativo/financeiro/faturamento/vendas` (FaturamentoVendasMinimalista.tsx)
+
+**Alteracoes:**
+- Adicionar `metodo_pagamento` na query fetchVendas
+- Adicionar nova coluna em `COLUNAS_DISPONIVEIS`
+- Adicionar case no `renderCell`
+
+```tsx
+// COLUNAS_DISPONIVEIS - adicionar:
+{ id: 'pagamento', label: 'Pagamento', defaultVisible: true },
+
+// fetchVendas - adicionar campo na query:
+metodo_pagamento,
+
+// renderCell - adicionar case
+```
+
+---
+
+## Funcao Utilitaria Compartilhada
+
+Criar uma funcao utilitaria para mapear valores de metodo de pagamento para labels amigaveis:
+
+```tsx
+// src/utils/formatters.ts (ou arquivo existente)
+export const getFormaPagamentoLabel = (metodo: string | null | undefined): string => {
+  if (!metodo) return '-';
+  
+  const labels: Record<string, string> = {
+    'boleto': 'Boleto',
+    'a_vista': 'À Vista',
+    'cartao_credito': 'Cartão',
+    'dinheiro': 'Dinheiro',
+  };
+  
+  return labels[metodo] || metodo.replace('_', ' ');
+};
+```
+
+---
+
+## Resumo das Alteracoes
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/utils/formatters.ts` | Criar funcao `getFormaPagamentoLabel` |
+| `src/pages/vendas/MinhasVendas.tsx` | Adicionar coluna de pagamento na tabela |
+| `src/pages/direcao/VendasDirecao.tsx` | Adicionar coluna de pagamento na tabela |
+| `src/pages/administrativo/FaturamentoVendasMinimalista.tsx` | Adicionar coluna de pagamento na tabela |
+| `src/hooks/useOrdensInstalacao.ts` | Adicionar `metodo_pagamento` na query da venda |
+| `src/components/instalacoes/OrdemInstalacaoRow.tsx` | Adicionar coluna de pagamento |
+| `src/hooks/useOrdensCarregamentoCalendario.ts` | Adicionar `metodo_pagamento` na query da venda |
+| `src/components/expedicao/OrdemCarregamentoDetails.tsx` | Exibir forma de pagamento nos detalhes |
+
+---
+
+## Resultado Visual Esperado
 
 ```text
-ANTES:
-┌─────────────────────────────────────────────────────────────┐
-│ [+ Porta Enrolar] [+ Porta Social] [+ Catálogo] ...         │
-│                                                             │
-│ Produtos Adicionados                                        │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │ Porta de Enrolar 3x4m  R$ 2.500,00  (-5%) R$ 2.375,00   │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│                                                             │
-│                                            [Salvar]         │  <- Sem botão de desconto!
-└─────────────────────────────────────────────────────────────┘
+ANTES (tabela de vendas):
+| Data | Cliente | Cidade | Valor | Status |
+|------|---------|--------|-------|--------|
 
-DEPOIS:
-┌─────────────────────────────────────────────────────────────┐
-│ [+ Porta Enrolar] [+ Porta Social] [+ Catálogo] ...         │
-│                                                             │
-│ Produtos Adicionados                                        │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │ Porta de Enrolar 3x4m  R$ 2.500,00  (-5%) R$ 2.375,00   │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│                                                             │
-│                        [% Editar Desconto]   [Salvar]       │  <- Botão visível!
-└─────────────────────────────────────────────────────────────┘
+DEPOIS (tabela de vendas):
+| Data | Cliente | Cidade | Pagamento | Valor | Status |
+|------|---------|--------|-----------|-------|--------|
+| 29/01 | João S. | Curitiba | Boleto | R$ 2.500 | Prod. |
+| 28/01 | Maria L. | Porto Alegre | Cartão | R$ 3.200 | Aguard. |
 ```
-
----
-
-## Regras de Desconto Respeitadas
-
-O `DescontoVendaModal` já implementa todas as regras de negócio:
-
-1. **Limite base**: 3% para pagamentos que não são cartão de crédito
-2. **Limite presencial**: +5% adicional para venda presencial
-3. **Senha do responsável**: Necessária para exceder o limite base (até +5%)
-4. **Senha master**: Necessária para descontos acima do limite máximo
-
-Essas regras são calculadas em `src/utils/descontoVendasRules.ts` e validadas pelo modal.
-
----
-
-## Resumo das Alterações
-
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/pages/vendas/MinhasVendasEditar.tsx` | Alterar texto do botão de desconto para exibir "Editar Desconto" quando `temDesconto = true` |
 
 ---
 
 ## Impacto
 
-- **UX**: Usuário consegue ajustar descontos de vendas existentes
-- **Consistência**: Mesmo comportamento do botão "Editar Crédito"
-- **Regras**: Todas as validações de desconto continuam sendo aplicadas
-- **Baixo risco**: Alteração mínima de código (apenas texto do botão)
+- **Visibilidade**: Gestores e vendedores podem ver rapidamente a forma de pagamento
+- **Decisoes**: Facilita identificar vendas por tipo de pagamento para cobrancas
+- **Consistencia**: Mesma informacao disponivel em todas as listagens relevantes
