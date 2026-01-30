@@ -35,6 +35,16 @@ export interface Conferencia {
   created_at: string;
 }
 
+export interface UsuarioConferencia {
+  user_id: string;
+  nome: string;
+  foto_perfil_url: string | null;
+}
+
+export interface ConferenciaComUsuario extends Conferencia {
+  usuario: UsuarioConferencia | null;
+}
+
 export const useConferenciaEstoque = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -55,7 +65,20 @@ export const useConferenciaEstoque = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Conferencia[];
+
+      // Buscar dados dos usuários responsáveis
+      const userIds = [...new Set(data.map(c => c.conferido_por))];
+      const { data: usersData } = await supabase
+        .from("admin_users")
+        .select("user_id, nome, foto_perfil_url")
+        .in("user_id", userIds);
+
+      const usersMap = new Map(usersData?.map(u => [u.user_id, u]) || []);
+
+      return data.map(conf => ({
+        ...conf,
+        usuario: usersMap.get(conf.conferido_por) || null,
+      })) as ConferenciaComUsuario[];
     },
   });
 
