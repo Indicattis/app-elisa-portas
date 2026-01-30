@@ -1,10 +1,10 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Play, Clock, Package, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Plus, Play, Clock, Package, CheckCircle2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useConferenciaEstoque } from "@/hooks/useConferenciaEstoque";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -132,16 +132,30 @@ export default function ConferenciaHub({ returnPath = "/estoque" }: ConferenciaH
                   <Card key={conferencia.id} className="relative overflow-hidden">
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-base">
-                            Conferência #{conferencia.id.substring(0, 8)}
-                          </CardTitle>
-                          <CardDescription>
-                            Iniciada em{" "}
-                            {format(new Date(conferencia.iniciada_em), "dd/MM/yyyy 'às' HH:mm", {
-                              locale: ptBR,
-                            })}
-                          </CardDescription>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage 
+                              src={conferencia.usuario?.foto_perfil_url || undefined} 
+                              alt={conferencia.usuario?.nome || "Usuário"} 
+                            />
+                            <AvatarFallback>
+                              {conferencia.usuario?.nome 
+                                ? conferencia.usuario.nome.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()
+                                : <User className="h-4 w-4" />
+                              }
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <CardTitle className="text-base">
+                              Conferência #{conferencia.id.substring(0, 8)}
+                            </CardTitle>
+                            <CardDescription>
+                              {conferencia.usuario?.nome || "Usuário"} •{" "}
+                              {format(new Date(conferencia.iniciada_em), "dd/MM 'às' HH:mm", {
+                                locale: ptBR,
+                              })}
+                            </CardDescription>
+                          </div>
                         </div>
                         <Badge variant={conferencia.pausada ? "secondary" : "default"}>
                           {conferencia.pausada ? "Pausada" : "Em andamento"}
