@@ -1953,7 +1953,7 @@ export type Database = {
           id: string
           produto_id: string
           quantidade_anterior: number
-          quantidade_conferida: number
+          quantidade_conferida: number | null
         }
         Insert: {
           conferencia_id: string
@@ -1962,7 +1962,7 @@ export type Database = {
           id?: string
           produto_id: string
           quantidade_anterior: number
-          quantidade_conferida: number
+          quantidade_conferida?: number | null
         }
         Update: {
           conferencia_id?: string
@@ -1971,7 +1971,7 @@ export type Database = {
           id?: string
           produto_id?: string
           quantidade_anterior?: number
-          quantidade_conferida?: number
+          quantidade_conferida?: number | null
         }
         Relationships: [
           {
