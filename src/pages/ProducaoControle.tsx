@@ -22,7 +22,6 @@ import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { useState, useMemo, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
-import { MinimalistLayout } from "@/components/MinimalistLayout";
 
 const ETAPA_ICONS = {
   aberto: Clock,
@@ -206,22 +205,18 @@ export default function ProducaoControle() {
   );
 
   return (
-    <MinimalistLayout 
-      title="Controle de Produção" 
-      subtitle="Acompanhe o progresso dos pedidos"
-      backPath="/producao"
-      breadcrumbItems={[
-        { label: "Home", path: "/home" },
-        { label: "Produção", path: "/producao" },
-        { label: "Controle de Produção" }
-      ]}
-      headerActions={headerActions}
-      fullWidth
-    >
-      {/* Portas por Etapa (Hoje) */}
-      <div className="mb-6">
-        <PortasPorEtapa />
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold">Controle de Produção</h1>
+          <p className="text-sm text-muted-foreground">Acompanhe o progresso dos pedidos</p>
+        </div>
+        {headerActions}
       </div>
+
+      {/* Portas por Etapa (Hoje) */}
+      <PortasPorEtapa />
 
       {/* Tabs de Etapas */}
       <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido)}>
@@ -527,6 +522,6 @@ export default function ProducaoControle() {
           isLoading={isAtribuindo}
         />
       )}
-    </MinimalistLayout>
+    </div>
   );
 }
