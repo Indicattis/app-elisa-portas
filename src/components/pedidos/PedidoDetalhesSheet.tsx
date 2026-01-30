@@ -19,6 +19,24 @@ import { formatarNumeroPedidoMensal } from "@/utils/pedidoFormatters";
 import { PedidoFluxogramaMap } from "./PedidoFluxogramaMap";
 import { OrdemLinhasSheet } from "@/components/fabrica/OrdemLinhasSheet";
 import type { OrdemStatus, TipoOrdem, LinhaProblemaInfo, ResponsavelInfo } from "@/hooks/useOrdensPorPedido";
+import {
+  OPCOES_INTERNA_EXTERNA,
+  OPCOES_LADO_MOTOR,
+  OPCOES_POSICAO_GUIA,
+  OPCOES_GUIA,
+  OPCOES_APARENCIA_TESTEIRA,
+} from "@/types/pedidoObservacoes";
+
+interface ObservacaoVisita {
+  id: string;
+  produto_venda_id: string;
+  indice_porta: number;
+  interna_externa: string;
+  lado_motor: string;
+  posicao_guia: string;
+  opcao_guia: string;
+  aparencia_testeira: string;
+}
 
 interface PedidoDetalhesSheetProps {
   pedido: any;
@@ -49,14 +67,33 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
   const [linhasOpen, setLinhasOpen] = useState(false);
   const [itensOpen, setItensOpen] = useState(false);
   const [historicoOpen, setHistoricoOpen] = useState(false);
+  const [observacoesOpen, setObservacoesOpen] = useState(false);
   const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemStatus | null>(null);
   const [showOrdemLinhas, setShowOrdemLinhas] = useState(false);
+  const [observacoesVisita, setObservacoesVisita] = useState<ObservacaoVisita[]>([]);
   
   useEffect(() => {
     if (open && pedido?.id) {
       fetchOrdens();
+      fetchObservacoesVisita();
     }
   }, [open, pedido?.id]);
+
+  const fetchObservacoesVisita = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('pedido_porta_observacoes')
+        .select('*')
+        .eq('pedido_id', pedido.id)
+        .order('indice_porta', { ascending: true });
+      
+      if (!error && data) {
+        setObservacoesVisita(data as ObservacaoVisita[]);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar observações:", error);
+    }
+  };
 
   const getIniciais = (nome: string): string => {
     const partes = nome.trim().split(/\s+/);
@@ -462,6 +499,53 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                 )}
               </CollapsibleContent>
             </Collapsible>
+
+            {/* Observações da Visita Técnica */}
+            {observacoesVisita.length > 0 && (
+              <Collapsible open={observacoesOpen} onOpenChange={setObservacoesOpen}>
+                <CollapsibleTrigger asChild>
+                  <div className="flex items-center justify-between p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 cursor-pointer hover:bg-amber-500/20 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <Wrench className="h-4 w-4 text-amber-400" />
+                      <span className="font-medium text-white text-sm">Especificações da Visita Técnica</span>
+                      <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">
+                        {observacoesVisita.length} {observacoesVisita.length === 1 ? 'porta' : 'portas'}
+                      </Badge>
+                    </div>
+                    <ChevronDown className={cn(
+                      "h-4 w-4 text-amber-400 transition-transform duration-200",
+                      observacoesOpen && "rotate-180"
+                    )} />
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2 space-y-2 pl-2">
+                  {observacoesVisita.map((obs, idx) => (
+                    <div key={obs.id || idx} className="p-3 bg-amber-500/5 rounded-lg border border-amber-500/10">
+                      <span className="text-xs font-medium text-amber-400 mb-2 block">
+                        Porta {obs.indice_porta + 1}
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        <Badge variant="outline" className="text-xs bg-amber-500/10 border-amber-500/30 text-amber-300">
+                          {OPCOES_INTERNA_EXTERNA[obs.interna_externa as keyof typeof OPCOES_INTERNA_EXTERNA] || obs.interna_externa}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs bg-blue-500/10 border-blue-500/30 text-blue-300">
+                          Motor: {OPCOES_LADO_MOTOR[obs.lado_motor as keyof typeof OPCOES_LADO_MOTOR] || obs.lado_motor}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs bg-purple-500/10 border-purple-500/30 text-purple-300">
+                          {OPCOES_POSICAO_GUIA[obs.posicao_guia as keyof typeof OPCOES_POSICAO_GUIA] || obs.posicao_guia}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs bg-green-500/10 border-green-500/30 text-green-300">
+                          {OPCOES_GUIA[obs.opcao_guia as keyof typeof OPCOES_GUIA] || obs.opcao_guia}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs bg-orange-500/10 border-orange-500/30 text-orange-300">
+                          Testeira: {OPCOES_APARENCIA_TESTEIRA[obs.aparencia_testeira as keyof typeof OPCOES_APARENCIA_TESTEIRA] || obs.aparencia_testeira}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            )}
           </div>
 
           {/* Ordens de Produção */}
