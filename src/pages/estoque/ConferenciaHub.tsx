@@ -25,9 +25,13 @@ function formatTempo(segundos: number): string {
 
 interface ConferenciaHubProps {
   returnPath?: string;
+  executionBasePath?: string;
 }
 
-export default function ConferenciaHub({ returnPath = "/estoque" }: ConferenciaHubProps) {
+export default function ConferenciaHub({ 
+  returnPath = "/estoque", 
+  executionBasePath = "/estoque/conferencia" 
+}: ConferenciaHubProps) {
   const navigate = useNavigate();
   const {
     conferenciasEmAndamento,
@@ -39,12 +43,12 @@ export default function ConferenciaHub({ returnPath = "/estoque" }: ConferenciaH
   const handleIniciarNova = async () => {
     const conferencia = await iniciarConferencia();
     if (conferencia) {
-      navigate(`/estoque/conferencia/${conferencia.id}`);
+      navigate(`${executionBasePath}/${conferencia.id}`);
     }
   };
 
   const handleRetomar = (conferenciaId: string) => {
-    navigate(`/estoque/conferencia/${conferenciaId}`);
+    navigate(`${executionBasePath}/${conferenciaId}`);
   };
 
   return (

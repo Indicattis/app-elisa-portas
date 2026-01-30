@@ -38,7 +38,13 @@ function formatTempo(segundos: number): string {
   return `${horas.toString().padStart(2, "0")}:${minutos.toString().padStart(2, "0")}:${segs.toString().padStart(2, "0")}`;
 }
 
-export default function ConferenciaExecucao() {
+interface ConferenciaExecucaoProps {
+  returnPath?: string;
+}
+
+export default function ConferenciaExecucao({ 
+  returnPath = "/estoque/conferencia" 
+}: ConferenciaExecucaoProps) {
   const { id: conferenciaId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -167,7 +173,7 @@ export default function ConferenciaExecucao() {
       conferenciaId,
       tempoSessao: segundosDecorridos,
     });
-    navigate("/estoque/conferencia");
+    navigate(returnPath);
   };
 
   const handleConcluir = async () => {
@@ -224,7 +230,7 @@ export default function ConferenciaExecucao() {
           <CardContent className="py-8 text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-3 text-destructive" />
             <p>Conferência não encontrada</p>
-            <Button className="mt-4" onClick={() => navigate("/estoque/conferencia")}>
+            <Button className="mt-4" onClick={() => navigate(returnPath)}>
               Voltar
             </Button>
           </CardContent>
@@ -246,7 +252,7 @@ export default function ConferenciaExecucao() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 md:h-9 md:w-9"
-                  onClick={() => navigate("/estoque/conferencia")}
+                  onClick={() => navigate(returnPath)}
                 >
                   <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
                 </Button>
