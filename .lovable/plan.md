@@ -1,70 +1,74 @@
 
-# Plano: Diagnosticar e Corrigir Ordens de Qualidade Nao Aparecendo
+# Plano: Corrigir Regras de Quebra de Etiquetas para Pintura
 
-## Analise Realizada
+## Problema Identificado
 
-1. **Banco de dados**: Confirmado 13 ordens de qualidade com `status='pendente'` e `historico=false`
-2. **API**: Requisicao GET retorna status 200 com os dados corretos
-3. **Relacionamentos**: Todas as ordens tem pedidos validos e vendas associadas
-4. **Linhas**: 50 linhas associadas as ordens de qualidade ativas
+As etiquetas de "Meia Cana Lisa" estão sendo impressas com quantidade errada (5 em 5) quando deveriam ser 10 em 10 para portas pequenas.
 
-## Possivel Causa
+### Análise do Banco de Dados
 
-A pagina pode estar usando codigo antigo apos as recentes alteracoes, ou pode haver um erro silencioso durante o processamento dos dados no hook `useOrdemProducao`.
+As regras cadastradas para o produto "Meia Cana Lisa" estão com os **divisores invertidos**:
+
+| Regra Atual | Condição | Divisor | Deveria Ser |
+|-------------|----------|---------|-------------|
+| "Meia Cana 0,70 maior que 6,5m" | largura > 6.5m | 10 | **5** |
+| "Meia Cana 0,70 menor que 6,5m" | largura < 6.5m | 5 | **10** |
+
+**Lógica correta (conforme informado)**:
+- Porta **pequena** (< 6,5m): quebra de **10 em 10**
+- Porta **grande** (> 6,5m): quebra de **5 em 5**
 
 ---
 
-## Solucao Proposta
+## Solução
 
-### Passo 1: Verificar se e um problema de cache
+A correção envolve **atualizar as regras no banco de dados** para inverter os divisores.
 
-Primeiro, tente **atualizar a pagina** (Ctrl+Shift+R ou Command+Shift+R) para garantir que o codigo mais recente esta sendo usado.
+### Opção 1: Atualização via Interface (Recomendado)
 
-### Passo 2: Se persistir, adicionar tratamento de erro
+1. Acessar `/administrativo/compras/estoque/editar-item/d9d2982d-1323-4f04-9783-7bd3e7eca88c`
+2. Na seção de regras de etiquetas:
+   - Regra "maior que 6,5m" → alterar divisor para **5**
+   - Regra "menor que 6,5m" → alterar divisor para **10**
+3. Salvar as alterações
 
-#### Arquivo: `src/hooks/useOrdemProducao.ts`
+### Opção 2: Atualização via SQL (Alternativa)
 
-Adicionar tratamento de erro melhorado na query para capturar qualquer problema:
+Executar no SQL Editor do Supabase:
 
-**Linha ~123 - Melhorar tratamento de erro:**
+```sql
+-- Corrigir regra para porta GRANDE (> 6.5m): divisor = 5
+UPDATE regras_etiquetas 
+SET divisor = 5
+WHERE id = '9a15ac7e-2f07-475d-9116-9930f370d3b3';
 
-```typescript
-if (ordensError) {
-  console.error('[useOrdemProducao] Erro ao buscar ordens:', ordensError);
-  throw ordensError;
-}
-
-console.log(`[useOrdemProducao] ${tipoOrdem}: ${ordensData?.length || 0} ordens encontradas`);
-
-if (!ordensData || ordensData.length === 0) return [];
+-- Corrigir regra para porta PEQUENA (< 6.5m): divisor = 10
+UPDATE regras_etiquetas 
+SET divisor = 10
+WHERE id = '49178130-f516-42f5-b645-039fb2286f08';
 ```
 
-**Linha ~138 - Capturar erro de linhas:**
+---
 
-```typescript
-if (linhasError) {
-  console.error('[useOrdemProducao] Erro ao buscar linhas:', linhasError);
-  // Continuar mesmo sem linhas, nao lancar erro
-}
-```
+## Problema Secundário: Largura Nula
 
-**Linha ~231 - Log do resultado final:**
+Algumas linhas de pintura não têm a largura preenchida (`largura: null`). Quando isso acontece:
+- O sistema usa `largura = 0`
+- Como `0 < 6.5`, aplica a regra de "menor que 6.5m"
+- Com a correção acima, isso resultará em divisor 10 (correto para portas pequenas)
 
-```typescript
-console.log(`[useOrdemProducao] ${tipoOrdem}: ${ordensProcessadas.length} ordens processadas`);
-return ordensProcessadas as Ordem[];
-```
+Se precisar que portas sem dimensão definida usem um divisor padrão diferente, será necessário criar uma regra adicional sem condição de dimensão.
 
 ---
 
 ## Resumo
 
-| Arquivo | Acao |
-|---------|------|
-| N/A | Primeiro: Atualizar pagina (Ctrl+Shift+R) |
-| `src/hooks/useOrdemProducao.ts` | Se persistir: Adicionar logs de debug |
+| Ação | Local |
+|------|-------|
+| Corrigir divisores das regras | Interface de edição do produto ou SQL |
 
 ## Resultado Esperado
 
-- Se for cache: Atualizar resolvera
-- Se for erro: Os logs no console mostrarao onde esta falhando
+Após a correção:
+- Portas pequenas (< 6,5m): etiquetas de **10 em 10**
+- Portas grandes (> 6,5m): etiquetas de **5 em 5**
