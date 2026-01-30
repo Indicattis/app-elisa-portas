@@ -92,34 +92,50 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
             .select('nome_produto, produto_venda_id, quantidade, tamanho')
             .eq('pedido_id', ordem.pedido_id);
           
-          // Processar linhas para usar nome atualizado do estoque, incluir requer_pintura e dimensões
+          // Processar linhas - usar match sequencial para evitar associações duplicadas
+          const linhasPedidoUsadas = new Set<string>();
+
           const linhas = linhasRaw?.map((linha: any) => {
             // Se a linha já tem produto_venda_id, usar direto
             let produtoVendaId = linha.produto_venda_id;
+            let linhaOriginal = null;
             
-            // Se não tem, buscar nas linhas originais do pedido pelo nome e quantidade
+            // Se não tem, buscar nas linhas originais do pedido
             if (!produtoVendaId && linhasPedido) {
-              const linhaOriginal = linhasPedido.find((lp: any) => 
+              // Encontrar TODAS as linhas que combinam
+              const linhasMatch = linhasPedido.filter((lp: any) => 
+                !linhasPedidoUsadas.has(lp.id) && // Ainda não usada
                 (lp.nome_produto === linha.item || 
                  lp.nome_produto?.includes(linha.item) || 
                  linha.item?.includes(lp.nome_produto) ||
                  linha.estoque?.nome_produto === lp.nome_produto) &&
                 lp.quantidade === linha.quantidade
               );
-              produtoVendaId = linhaOriginal?.produto_venda_id;
+              
+              // Se encontrou, usar a primeira NÃO USADA e marcar como usada
+              if (linhasMatch.length > 0) {
+                linhaOriginal = linhasMatch[0];
+                linhasPedidoUsadas.add(linhaOriginal.id);
+                produtoVendaId = linhaOriginal.produto_venda_id;
+              }
+            } else if (linhasPedido) {
+              // Se já tem produto_venda_id, ainda buscar linha original para tamanho
+              linhaOriginal = linhasPedido.find((lp: any) => 
+                !linhasPedidoUsadas.has(lp.id) &&
+                lp.produto_venda_id === produtoVendaId &&
+                (lp.nome_produto === linha.item || 
+                 lp.nome_produto?.includes(linha.item) || 
+                 linha.item?.includes(lp.nome_produto) ||
+                 linha.estoque?.nome_produto === lp.nome_produto) &&
+                lp.quantidade === linha.quantidade
+              );
+              if (linhaOriginal) {
+                linhasPedidoUsadas.add(linhaOriginal.id);
+              }
             }
             
-            // Buscar dimensões da porta usando o produto_venda_id recuperado
+            // Buscar dimensões da porta
             const produtoVenda = produtos.find((p: any) => p.id === produtoVendaId);
-            
-            // Buscar linha original do pedido para obter tamanho
-            const linhaOriginal = linhasPedido?.find((lp: any) => 
-              (lp.nome_produto === linha.item || 
-               lp.nome_produto?.includes(linha.item) || 
-               linha.item?.includes(lp.nome_produto) ||
-               linha.estoque?.nome_produto === lp.nome_produto) &&
-              lp.quantidade === linha.quantidade
-            );
 
             return {
               ...linha,
