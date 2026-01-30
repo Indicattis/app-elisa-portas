@@ -1,159 +1,234 @@
 
 
-# Plano: Conferencia do Estoque da Fabrica
+# Plano: Fluxo Completo de Conferencia de Estoque da Fabrica
 
-## Objetivo
+## Resumo do Fluxo Solicitado
 
-Criar um botao em `/producao/home` para conferencia do estoque da fabrica, onde o usuario informa a quantidade atual de cada item do estoque.
+```text
+1. Botao em secao separada no EstoqueHub → /estoque/conferencia
+2. Pagina inicial: Iniciar nova conferencia OU Retomar conferencia em andamento
+3. Conferencia em andamento: cronometro, salva progresso, pode pausar/continuar
+4. So pode finalizar quando TODOS os itens tiverem quantidade informada
+5. Mostra quantidade atual do sistema ao usuario
+6. Ao concluir: salva responsavel, duracao, data/hora
+7. Historico de conferencias em /estoque/auditoria
+```
 
 ---
 
-## Estrutura da Solucao
+## 1. Alteracoes no Banco de Dados
 
-### 1. Banco de Dados - Nova Tabela
+### Atualizar tabela `estoque_conferencias`
 
-Criar a tabela `estoque_conferencias` para registrar as conferencias:
+Adicionar novos campos para suportar o fluxo de pausar/retomar:
 
 ```sql
-CREATE TABLE estoque_conferencias (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  conferido_por UUID NOT NULL REFERENCES auth.users(id),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  observacoes TEXT
-);
+ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS status text DEFAULT 'em_andamento';
+ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS iniciada_em timestamptz DEFAULT now();
+ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS concluida_em timestamptz;
+ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS tempo_total_segundos integer DEFAULT 0;
+ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS pausada boolean DEFAULT false;
+ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS tempo_acumulado_segundos integer DEFAULT 0;
+ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS pausada_em timestamptz;
+ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS total_itens integer DEFAULT 0;
+ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS itens_conferidos integer DEFAULT 0;
+```
 
-CREATE TABLE estoque_conferencia_itens (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  conferencia_id UUID NOT NULL REFERENCES estoque_conferencias(id) ON DELETE CASCADE,
-  produto_id UUID NOT NULL REFERENCES estoque(id),
-  quantidade_anterior INTEGER NOT NULL,
-  quantidade_conferida INTEGER NOT NULL,
-  diferenca INTEGER GENERATED ALWAYS AS (quantidade_conferida - quantidade_anterior) STORED,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+### Permitir UPDATE na tabela (nova policy)
 
--- Indices para performance
-CREATE INDEX idx_estoque_conferencia_itens_conferencia ON estoque_conferencia_itens(conferencia_id);
-CREATE INDEX idx_estoque_conferencia_itens_produto ON estoque_conferencia_itens(produto_id);
+```sql
+CREATE POLICY "Usuarios autenticados podem atualizar conferencias" 
+ON estoque_conferencias FOR UPDATE TO authenticated 
+USING (conferido_por = auth.uid());
 
--- RLS Policies
-ALTER TABLE estoque_conferencias ENABLE ROW LEVEL SECURITY;
-ALTER TABLE estoque_conferencia_itens ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Usuarios autenticados podem ver conferencias" ON estoque_conferencias
-  FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "Usuarios autenticados podem criar conferencias" ON estoque_conferencias
-  FOR INSERT TO authenticated WITH CHECK (true);
-
-CREATE POLICY "Usuarios autenticados podem ver itens" ON estoque_conferencia_itens
-  FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "Usuarios autenticados podem criar itens" ON estoque_conferencia_itens
-  FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Usuarios autenticados podem atualizar itens" 
+ON estoque_conferencia_itens FOR UPDATE TO authenticated 
+USING (true);
 ```
 
 ---
 
-### 2. Nova Pagina - ConferenciaEstoqueFabrica.tsx
+## 2. Estrutura de Paginas
 
-Criar pagina `/producao/conferencia-estoque` com fluxo:
+### 2.1 Pagina Hub: `/estoque/conferencia`
 
-1. **Lista de Produtos**: Tabela com todos os itens do estoque da fabrica
-2. **Campos de Input**: Cada linha tera um campo para informar quantidade atual
-3. **Comparacao Visual**: Mostrar quantidade no sistema vs quantidade conferida com indicador de diferenca
-4. **Botao Finalizar**: Salva a conferencia e atualiza o estoque
+Lista conferencias em andamento e botao para iniciar nova.
 
-**Layout:**
-- Tabela com colunas: SKU, Produto, Categoria, Qtd Sistema, Qtd Conferida, Diferenca
-- Campo de busca para filtrar produtos
-- Botao "Finalizar Conferencia" que abre modal de confirmacao
+**Componentes:**
+- Botao "Iniciar Nova Conferencia"
+- Cards de conferencias em andamento (se existirem) com:
+  - Data de inicio
+  - Tempo decorrido
+  - Progresso (X de Y itens)
+  - Botao "Retomar"
+
+### 2.2 Pagina de Execucao: `/estoque/conferencia/:id`
+
+Onde o usuario preenche as quantidades.
+
+**Componentes:**
+- Cronometro visivel (usa `useCronometro`)
+- Tabela com todos os itens:
+  - SKU, Nome, Categoria
+  - Quantidade Sistema (readonly)
+  - Quantidade Conferida (input)
+  - Diferenca (calculado)
+- Barra de progresso (X de Y itens conferidos)
+- Botao "Pausar" (salva progresso e volta ao hub)
+- Botao "Concluir" (habilitado apenas quando 100% conferido)
+
+### 2.3 Pagina de Auditoria: `/estoque/auditoria`
+
+Historico completo de conferencias.
+
+**Componentes:**
+- Tabela com conferencias concluidas:
+  - Data/hora
+  - Responsavel
+  - Duracao
+  - Total de itens
+  - Itens com diferenca
+- Clique para ver detalhes de cada conferencia
 
 ---
 
-### 3. Hook - useEstoqueConferencia.ts
+## 3. Alteracoes no EstoqueHub
 
-```typescript
-// Funcionalidades:
-- Buscar todos os produtos do estoque (fabrica)
-- Criar conferencia com todos os itens
-- Atualizar quantidades no estoque apos conferencia
-```
-
----
-
-### 4. Alteracoes em ProducaoHome.tsx
-
-Adicionar novo botao ao lado de "Meu Historico":
+Adicionar nova secao abaixo dos botoes atuais:
 
 ```tsx
-<Button 
-  variant="outline" 
-  onClick={() => navigate('/producao/conferencia-estoque')}
->
-  <ClipboardCheck className="h-4 w-4 mr-2" />
-  Conferir Estoque
-</Button>
+{/* Secao Conferencia */}
+<div className="mt-8">
+  <h3>Conferencia de Estoque</h3>
+  <button onClick={() => navigate('/estoque/conferencia')}>
+    Conferencia de Estoque
+  </button>
+</div>
 ```
 
 ---
 
-### 5. Rota no App.tsx
+## 4. Hook Atualizado: `useEstoqueConferencia`
 
-Adicionar nova rota dentro do bloco de producao:
-
-```tsx
-<Route
-  path="/conferencia-estoque"
-  element={
-    <ProtectedProducaoRoute>
-      <ProducaoLayout>
-        <ConferenciaEstoqueFabrica />
-      </ProducaoLayout>
-    </ProtectedProducaoRoute>
-  }
-/>
-```
+Funcionalidades:
+- `iniciarConferencia()`: Cria nova conferencia com status "em_andamento"
+- `buscarConferenciasEmAndamento()`: Lista conferencias do usuario nao concluidas
+- `salvarProgresso(id, itens)`: Atualiza itens e tempo acumulado
+- `pausarConferencia(id)`: Marca como pausada, salva tempo
+- `retomarConferencia(id)`: Remove pausa, retorna dados
+- `concluirConferencia(id)`: Valida 100%, atualiza estoque, finaliza
 
 ---
 
-## Arquivos a Criar
+## 5. Arquivos a Criar
 
 | Arquivo | Descricao |
 |---------|-----------|
-| `src/pages/ConferenciaEstoqueFabrica.tsx` | Pagina principal da conferencia |
-| `src/hooks/useEstoqueConferencia.ts` | Hook para gerenciar conferencias |
-| `src/components/conferencia/ConferenciaItemRow.tsx` | Linha da tabela de conferencia |
-| `supabase/migrations/xxx_create_estoque_conferencias.sql` | Migracao do banco |
+| `src/pages/estoque/ConferenciaHub.tsx` | Pagina inicial da conferencia |
+| `src/pages/estoque/ConferenciaExecucao.tsx` | Pagina de execucao (preencher quantidades) |
+| `src/pages/estoque/AuditoriaEstoque.tsx` | Historico de conferencias |
+| `src/hooks/useConferenciaEstoque.ts` | Hook refatorado com novo fluxo |
+| `src/components/conferencia/ConferenciaCard.tsx` | Card para conferencia em andamento |
+| `src/components/conferencia/ConferenciaProgress.tsx` | Barra de progresso |
 
-## Arquivos a Modificar
+## 6. Arquivos a Modificar
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `src/pages/ProducaoHome.tsx` | Adicionar botao "Conferir Estoque" |
-| `src/App.tsx` | Adicionar rota `/producao/conferencia-estoque` |
+| `src/pages/estoque/EstoqueHub.tsx` | Adicionar secao com botao de conferencia |
+| `src/App.tsx` | Adicionar rotas `/estoque/conferencia`, `/estoque/conferencia/:id`, `/estoque/auditoria` |
+| `src/pages/ProducaoHome.tsx` | Remover botao de conferencia (mover para EstoqueHub) |
 
 ---
 
-## Fluxo do Usuario
+## 7. Fluxo Detalhado
 
 ```text
-1. Usuario acessa /producao/home
-2. Clica no botao "Conferir Estoque"
-3. Ve lista de todos os produtos do estoque da fabrica
-4. Preenche a quantidade atual de cada item
-5. Clica em "Finalizar Conferencia"
-6. Sistema salva conferencia e atualiza quantidades no estoque
-7. Usuario recebe confirmacao de sucesso
+[EstoqueHub]
+     │
+     ▼
+[Clica "Conferencia de Estoque"]
+     │
+     ▼
+[ConferenciaHub] ─────────────────────────────┐
+     │                                        │
+     ├─► "Iniciar Nova"                       │
+     │        │                               │
+     │        ▼                               │
+     │   Cria registro no BD                  │
+     │   status = 'em_andamento'              │
+     │   iniciada_em = now()                  │
+     │   Carrega todos itens do estoque       │
+     │        │                               │
+     ▼        ▼                               │
+[ConferenciaExecucao/:id]                     │
+     │                                        │
+     ├─► Cronometro rodando                   │
+     ├─► Usuario preenche quantidades         │
+     ├─► Cada alteracao salva no BD           │
+     │   (estoque_conferencia_itens)          │
+     │                                        │
+     ├─► [Pausar]                             │
+     │        │                               │
+     │        ▼                               │
+     │   Salva tempo_acumulado                │
+     │   pausada = true                       │
+     │   Volta ao ConferenciaHub ─────────────┤
+     │                                        │
+     └─► [Concluir] (so se 100%)              │
+              │                               │
+              ▼                               │
+         Atualiza estoque                     │
+         status = 'concluida'                 │
+         concluida_em = now()                 │
+         tempo_total_segundos = X             │
+              │                               │
+              ▼                               │
+         [AuditoriaEstoque] ◄─────────────────┘
+              │
+              ▼
+         Lista todas conferencias
+         concluidas com detalhes
 ```
 
 ---
 
-## Consideracoes Tecnicas
+## 8. Detalhes Tecnicos
 
-- A conferencia atualiza a tabela `estoque` com as novas quantidades
-- Registra movimentacao em `estoque_movimentacoes` para historico
-- Mostra diferenca visual (verde = aumento, vermelho = reducao)
-- Permite campo de observacoes geral na conferencia
-- Sao 95 itens ativos no estoque atualmente
+### Cronometro
+
+Usar o hook `useCronometro` existente, mas sincronizar com o BD:
+- Ao pausar: `tempo_acumulado += segundos_da_sessao`
+- Ao retomar: Carregar `tempo_acumulado` e continuar de onde parou
+- Ao concluir: `tempo_total = tempo_acumulado + segundos_da_sessao`
+
+### Salvamento Automatico
+
+Cada vez que o usuario altera uma quantidade:
+1. Atualiza ou insere em `estoque_conferencia_itens`
+2. Atualiza `itens_conferidos` em `estoque_conferencias`
+3. Nao atualiza `estoque` ainda (so na conclusao)
+
+### Validacao de Conclusao
+
+O botao "Concluir" so fica habilitado quando:
+```typescript
+itensConferidos === totalItens
+```
+
+### Atualizacao do Estoque
+
+Apenas ao concluir:
+1. Para cada item com diferenca, atualizar `estoque.quantidade`
+2. Registrar em `estoque_movimentacoes`
+
+---
+
+## Resultado Esperado
+
+- Conferencias podem ser pausadas e retomadas
+- Tempo cronometrado com precisao
+- Historico completo em `/estoque/auditoria`
+- So conclui se todos os itens forem conferidos
+- Botao separado no EstoqueHub (abaixo dos atuais)
 
