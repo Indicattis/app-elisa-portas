@@ -744,7 +744,12 @@ export function OrdemDetalhesSheet({
                             <div className="flex items-center gap-2">
                               <Package className="h-4 w-4 text-primary" />
                               <span className="font-semibold text-sm">
-                                Porta {index + 1}
+                                Porta {String(index + 1).padStart(2, '0')}
+                                {primeiraLinha.largura && primeiraLinha.altura && (
+                                  <span className="font-normal text-muted-foreground ml-2">
+                                    {formatarDimensoes(primeiraLinha.largura, primeiraLinha.altura)}
+                                  </span>
+                                )}
                               </span>
                               {todasConcluidasPorta && (
                                 <Badge variant="outline" className="bg-green-50">
@@ -756,11 +761,6 @@ export function OrdemDetalhesSheet({
                               <div className="text-xs text-muted-foreground">
                                 <span className="font-medium">Pintura:</span> {primeiraLinha.cor_nome}
                                 {primeiraLinha.tipo_pintura && ` (${primeiraLinha.tipo_pintura})`}
-                              </div>
-                            )}
-                            {primeiraLinha.largura && primeiraLinha.altura && (
-                              <div className="text-xs text-muted-foreground">
-                                <span className="font-medium">Dimensões:</span> {formatarDimensoes(primeiraLinha.largura, primeiraLinha.altura)}
                               </div>
                             )}
                           </div>
