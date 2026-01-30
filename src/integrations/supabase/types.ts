@@ -1945,6 +1945,72 @@ export type Database = {
         }
         Relationships: []
       }
+      estoque_conferencia_itens: {
+        Row: {
+          conferencia_id: string
+          created_at: string
+          diferenca: number | null
+          id: string
+          produto_id: string
+          quantidade_anterior: number
+          quantidade_conferida: number
+        }
+        Insert: {
+          conferencia_id: string
+          created_at?: string
+          diferenca?: number | null
+          id?: string
+          produto_id: string
+          quantidade_anterior: number
+          quantidade_conferida: number
+        }
+        Update: {
+          conferencia_id?: string
+          created_at?: string
+          diferenca?: number | null
+          id?: string
+          produto_id?: string
+          quantidade_anterior?: number
+          quantidade_conferida?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_conferencia_itens_conferencia_id_fkey"
+            columns: ["conferencia_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_conferencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_conferencia_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "estoque"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque_conferencias: {
+        Row: {
+          conferido_por: string
+          created_at: string
+          id: string
+          observacoes: string | null
+        }
+        Insert: {
+          conferido_por: string
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+        }
+        Update: {
+          conferido_por?: string
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+        }
+        Relationships: []
+      }
       estoque_movimentacoes: {
         Row: {
           categoria_anterior: string | null
