@@ -145,7 +145,7 @@ export default function ProducaoMinimalista() {
               key={route.key}
               onClick={() => {
                 // Mapear paths da tabela para paths minimalistas
-                const minimalPath = route.path.replace('/hub-fabrica/producao/', '/fabrica/producao/');
+                const minimalPath = route.path.replace('/producao/', '/fabrica/producao/');
                 navigate(minimalPath);
               }}
               className="group cursor-pointer rounded-xl p-5
