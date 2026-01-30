@@ -138,7 +138,7 @@ import { PaineisLayout } from "@/components/PaineisLayout";
 import { ProtectedProducaoRoute } from "@/components/ProtectedProducaoRoute";
 import ProducaoCarregamento from "./pages/ProducaoCarregamento";
 import ProducaoHome from "./pages/ProducaoHome";
-import ConferenciaEstoqueFabrica from "./pages/ConferenciaEstoqueFabrica";
+
 import ProducaoMeuHistorico from "./pages/ProducaoMeuHistorico";
 import ProducaoControle from "./pages/ProducaoControle";
 import Ordens from "./pages/Ordens";
@@ -238,6 +238,9 @@ import EstoqueFabrica from "./pages/estoque/EstoqueFabrica";
 import EstoqueFabricaEdit from "./pages/estoque/EstoqueFabricaEdit";
 import AlmoxarifadoPage from "./pages/estoque/AlmoxarifadoPage";
 import EstoqueFornecedores from "./pages/estoque/EstoqueFornecedores";
+import ConferenciaHub from "./pages/estoque/ConferenciaHub";
+import ConferenciaExecucao from "./pages/estoque/ConferenciaExecucao";
+import AuditoriaEstoque from "./pages/estoque/AuditoriaEstoque";
 
 // Hub Administrativo Minimalista
 import AdministrativoHub from "./pages/administrativo/AdministrativoHub";
@@ -430,6 +433,9 @@ const App = () => (
                 <Route path="/estoque/fabrica/editar-item/:id" element={<ProtectedRoute routeKey="estoque_fabrica"><EstoqueFabricaEdit /></ProtectedRoute>} />
                 <Route path="/estoque/almoxarifado" element={<ProtectedRoute routeKey="estoque_almoxarifado"><AlmoxarifadoPage /></ProtectedRoute>} />
                 <Route path="/estoque/fornecedores" element={<ProtectedRoute routeKey="estoque_fornecedores"><EstoqueFornecedores /></ProtectedRoute>} />
+                <Route path="/estoque/conferencia" element={<ProtectedRoute routeKey="estoque_hub"><ConferenciaHub /></ProtectedRoute>} />
+                <Route path="/estoque/conferencia/:id" element={<ProtectedRoute routeKey="estoque_hub"><ConferenciaExecucao /></ProtectedRoute>} />
+                <Route path="/estoque/auditoria" element={<ProtectedRoute routeKey="estoque_hub"><AuditoriaEstoque /></ProtectedRoute>} />
 
                 {/* Hub Administrativo Minimalista */}
                 <Route path="/administrativo" element={<ProtectedRoute routeKey="administrativo_hub"><AdministrativoHub /></ProtectedRoute>} />
@@ -588,16 +594,6 @@ const App = () => (
                               </ProducaoLayout>
                             </ProtectedProducaoRoute>
                           }
-                        />
-                        <Route 
-                          path="/conferencia-estoque" 
-                          element={
-                            <ProtectedProducaoRoute>
-                              <ProducaoLayout>
-                                <ConferenciaEstoqueFabrica />
-                              </ProducaoLayout>
-                            </ProtectedProducaoRoute>
-                          } 
                         />
                         <Route 
                           path="/home" 

@@ -1992,22 +1992,49 @@ export type Database = {
       }
       estoque_conferencias: {
         Row: {
+          concluida_em: string | null
           conferido_por: string
           created_at: string
           id: string
+          iniciada_em: string | null
+          itens_conferidos: number | null
           observacoes: string | null
+          pausada: boolean | null
+          pausada_em: string | null
+          status: string | null
+          tempo_acumulado_segundos: number | null
+          tempo_total_segundos: number | null
+          total_itens: number | null
         }
         Insert: {
+          concluida_em?: string | null
           conferido_por: string
           created_at?: string
           id?: string
+          iniciada_em?: string | null
+          itens_conferidos?: number | null
           observacoes?: string | null
+          pausada?: boolean | null
+          pausada_em?: string | null
+          status?: string | null
+          tempo_acumulado_segundos?: number | null
+          tempo_total_segundos?: number | null
+          total_itens?: number | null
         }
         Update: {
+          concluida_em?: string | null
           conferido_por?: string
           created_at?: string
           id?: string
+          iniciada_em?: string | null
+          itens_conferidos?: number | null
           observacoes?: string | null
+          pausada?: boolean | null
+          pausada_em?: string | null
+          status?: string | null
+          tempo_acumulado_segundos?: number | null
+          tempo_total_segundos?: number | null
+          total_itens?: number | null
         }
         Relationships: []
       }
