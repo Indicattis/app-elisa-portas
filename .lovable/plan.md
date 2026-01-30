@@ -1,46 +1,161 @@
 
-# Plano: Corrigir Constraint na Tabela estoque_conferencia_itens
+# Plano: Layout Mobile e Correção do Cronômetro
 
-## Problema Identificado
+## Problema 1: Layout não está otimizado para mobile
 
-O código em `useConferenciaEstoque.ts` (linha 150) insere `quantidade_conferida: null` ao criar os itens da conferência, pois itens ainda não foram conferidos. Porém, a coluna no banco de dados possui constraint NOT NULL.
+A tabela atual tem 6 colunas que não cabem bem em telas pequenas:
+- SKU
+- Produto
+- Categoria  
+- Qtd. Sistema
+- Qtd. Conferida (input)
+- Diferença
+
+## Problema 2: Cronômetro não está funcionando
+
+O bug está na lógica dos useEffects que iniciam o cronômetro:
 
 ```typescript
-// Linha 150 - Código atual
-quantidade_conferida: null as number | null,
+// O callback `start` muda de referência quando startTime muda
+const start = useCallback(() => {
+  setIsRunning(true);
+  if (!startTime) {
+    setStartTime(new Date()); // Isso muda startTime
+  }
+}, [startTime]); // <-- Dependência problemática
+
+// Este useEffect re-executa quando `start` muda referência
+useEffect(() => {
+  if (conferencia && conferenciaCarregada && !conferencia.pausada && !isRunning) {
+    start();
+  }
+}, [conferencia, conferenciaCarregada, isRunning, start]); // <-- start está aqui
 ```
 
-**Erro do Postgres:**
-```
-null value in column "quantidade_conferida" of relation "estoque_conferencia_itens" violates not-null constraint
-```
+Quando `start()` é chamado e seta `startTime`, a referência de `start` muda, causando possíveis re-renders e comportamento instável.
+
+---
 
 ## Solução
 
-Alterar a coluna `quantidade_conferida` para permitir valores NULL, já que:
-- NULL = item ainda não conferido
-- Número = quantidade verificada pelo conferente
+### 1. Layout Mobile Responsivo
 
-## Alteração Necessária
+Usar `useIsMobile()` e classes CSS responsivas para:
 
-### Migração SQL
+**Mobile (< 768px)**:
+- 3 colunas: Produto, Qtd. Atual, Input
+- Fontes menores (text-xs, text-sm)
+- Inputs compactos
 
-```sql
-ALTER TABLE estoque_conferencia_itens 
-ALTER COLUMN quantidade_conferida DROP NOT NULL;
+**Desktop (>= 768px)**:
+- Layout completo com todas as 6 colunas
+
+```tsx
+// Colunas responsivas
+<TableHead className="hidden md:table-cell">SKU</TableHead>
+<TableHead>Produto</TableHead>
+<TableHead className="hidden md:table-cell">Categoria</TableHead>
+<TableHead className="text-center">Atual</TableHead>
+<TableHead className="text-center">Conferida</TableHead>
+<TableHead className="hidden md:table-cell text-center">Dif.</TableHead>
 ```
 
-## Arquivos
+### 2. Correção do Cronômetro
 
-| Arquivo | Ação |
-|---------|------|
-| Banco de dados | Migração para tornar coluna nullable |
+Remover `startTime` da dependência do `start` usando `useRef`:
 
-Nenhuma alteração de código é necessária - o código já está correto para trabalhar com valores NULL.
+```typescript
+// useCronometro.ts - versão corrigida
+export function useCronometro() {
+  const [segundosDecorridos, setSegundosDecorridos] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const startTimeRef = useRef<Date | null>(null);
 
-## Resultado Esperado
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+    if (isRunning) {
+      intervalId = setInterval(() => {
+        setSegundosDecorridos(prev => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isRunning]);
 
-- Iniciar conferência funciona corretamente
-- Itens começam com `quantidade_conferida = NULL`
-- Ao conferir, usuário preenche a quantidade real
-- Diferença é calculada apenas quando `quantidade_conferida` não é NULL
+  // start agora é estável (sem dependências que mudam)
+  const start = useCallback(() => {
+    setIsRunning(true);
+    if (!startTimeRef.current) {
+      startTimeRef.current = new Date();
+    }
+  }, []);
+
+  const pause = useCallback(() => {
+    setIsRunning(false);
+  }, []);
+
+  const reset = useCallback(() => {
+    setIsRunning(false);
+    setSegundosDecorridos(0);
+    startTimeRef.current = null;
+  }, []);
+
+  return {
+    segundosDecorridos,
+    isRunning,
+    startTime: startTimeRef.current,
+    start,
+    pause,
+    reset
+  };
+}
+```
+
+E simplificar o useEffect na página:
+
+```typescript
+// ConferenciaExecucao.tsx
+// Usar ref para evitar múltiplas inicializações
+const cronometroIniciado = useRef(false);
+
+useEffect(() => {
+  if (conferencia && conferenciaCarregada && !cronometroIniciado.current) {
+    if (conferencia.pausada) {
+      retomarConferencia(conferenciaId!);
+    }
+    start();
+    cronometroIniciado.current = true;
+  }
+}, [conferencia, conferenciaCarregada]);
+```
+
+---
+
+## Arquivos a Modificar
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/hooks/useCronometro.ts` | Usar useRef para startTime, callbacks estáveis |
+| `src/pages/estoque/ConferenciaExecucao.tsx` | Layout responsivo + correção useEffect |
+
+---
+
+## Resultado Visual (Mobile)
+
+```text
+┌────────────────────────────────┐
+│ ← Conf. #06bcdfe4   00:05:23  │
+│ ████████████░░░░░░  12/20 60% │
+│ [Pausar] [Concluir]           │
+│ 🔍 Buscar...                  │
+├────────────────────────────────┤
+│ Produto          │ Atual │ ▢  │
+├────────────────────────────────┤
+│ Mesa Redonda     │  15   │[__]│
+│ Cadeira Estofada │   8   │[__]│
+│ Banco de Madeira │  22   │[__]│
+└────────────────────────────────┘
+```
+
+Fontes reduzidas: títulos text-sm, células text-xs, inputs h-7.
