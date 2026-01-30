@@ -1,161 +1,58 @@
 
-# Plano: Layout Mobile e Correção do Cronômetro
+# Plano: Ajustes no Hub de Conferência
 
-## Problema 1: Layout não está otimizado para mobile
+## Alterações Solicitadas
 
-A tabela atual tem 6 colunas que não cabem bem em telas pequenas:
-- SKU
-- Produto
-- Categoria  
-- Qtd. Sistema
-- Qtd. Conferida (input)
-- Diferença
+1. **Remover botão "Ver Histórico de Conferências"** (linhas 86-94)
+2. **Aumentar altura do botão "Iniciar Nova Conferência" no mobile**
+3. **Bloquear nova conferência se já existir uma em andamento**
 
-## Problema 2: Cronômetro não está funcionando
+## Implementação
 
-O bug está na lógica dos useEffects que iniciam o cronômetro:
+### Arquivo: `src/pages/estoque/ConferenciaHub.tsx`
 
-```typescript
-// O callback `start` muda de referência quando startTime muda
-const start = useCallback(() => {
-  setIsRunning(true);
-  if (!startTime) {
-    setStartTime(new Date()); // Isso muda startTime
-  }
-}, [startTime]); // <-- Dependência problemática
-
-// Este useEffect re-executa quando `start` muda referência
-useEffect(() => {
-  if (conferencia && conferenciaCarregada && !conferencia.pausada && !isRunning) {
-    start();
-  }
-}, [conferencia, conferenciaCarregada, isRunning, start]); // <-- start está aqui
-```
-
-Quando `start()` é chamado e seta `startTime`, a referência de `start` muda, causando possíveis re-renders e comportamento instável.
-
----
-
-## Solução
-
-### 1. Layout Mobile Responsivo
-
-Usar `useIsMobile()` e classes CSS responsivas para:
-
-**Mobile (< 768px)**:
-- 3 colunas: Produto, Qtd. Atual, Input
-- Fontes menores (text-xs, text-sm)
-- Inputs compactos
-
-**Desktop (>= 768px)**:
-- Layout completo com todas as 6 colunas
-
+**1. Remover o botão de histórico:**
 ```tsx
-// Colunas responsivas
-<TableHead className="hidden md:table-cell">SKU</TableHead>
-<TableHead>Produto</TableHead>
-<TableHead className="hidden md:table-cell">Categoria</TableHead>
-<TableHead className="text-center">Atual</TableHead>
-<TableHead className="text-center">Conferida</TableHead>
-<TableHead className="hidden md:table-cell text-center">Dif.</TableHead>
+// Remover completamente as linhas 86-94
+<Button
+  variant="outline"
+  size="lg"
+  onClick={() => navigate("/estoque/auditoria")}
+  className="flex-1 sm:flex-none"
+>
+  <CheckCircle2 className="h-5 w-5 mr-2" />
+  Ver Histórico de Conferências
+</Button>
 ```
 
-### 2. Correção do Cronômetro
+**2. Ajustar botão de iniciar com altura maior no mobile e bloquear se houver conferência:**
+```tsx
+const temConferenciaEmAndamento = conferenciasEmAndamento.length > 0;
 
-Remover `startTime` da dependência do `start` usando `useRef`:
-
-```typescript
-// useCronometro.ts - versão corrigida
-export function useCronometro() {
-  const [segundosDecorridos, setSegundosDecorridos] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const startTimeRef = useRef<Date | null>(null);
-
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
-    if (isRunning) {
-      intervalId = setInterval(() => {
-        setSegundosDecorridos(prev => prev + 1);
-      }, 1000);
-    }
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [isRunning]);
-
-  // start agora é estável (sem dependências que mudam)
-  const start = useCallback(() => {
-    setIsRunning(true);
-    if (!startTimeRef.current) {
-      startTimeRef.current = new Date();
-    }
-  }, []);
-
-  const pause = useCallback(() => {
-    setIsRunning(false);
-  }, []);
-
-  const reset = useCallback(() => {
-    setIsRunning(false);
-    setSegundosDecorridos(0);
-    startTimeRef.current = null;
-  }, []);
-
-  return {
-    segundosDecorridos,
-    isRunning,
-    startTime: startTimeRef.current,
-    start,
-    pause,
-    reset
-  };
-}
-```
-
-E simplificar o useEffect na página:
-
-```typescript
-// ConferenciaExecucao.tsx
-// Usar ref para evitar múltiplas inicializações
-const cronometroIniciado = useRef(false);
-
-useEffect(() => {
-  if (conferencia && conferenciaCarregada && !cronometroIniciado.current) {
-    if (conferencia.pausada) {
-      retomarConferencia(conferenciaId!);
-    }
-    start();
-    cronometroIniciado.current = true;
+<Button
+  size="lg"
+  onClick={handleIniciarNova}
+  disabled={iniciando || temConferenciaEmAndamento}
+  className="w-full sm:w-auto h-14 sm:h-10"
+>
+  <Plus className="h-5 w-5 mr-2" />
+  {iniciando 
+    ? "Iniciando..." 
+    : temConferenciaEmAndamento 
+      ? "Conferência em andamento" 
+      : "Iniciar Nova Conferência"
   }
-}, [conferencia, conferenciaCarregada]);
+</Button>
 ```
 
----
+## Resultado
 
-## Arquivos a Modificar
+| Alteração | Detalhe |
+|-----------|---------|
+| Botão de histórico | Removido |
+| Altura do botão (mobile) | `h-14` (56px) |
+| Altura do botão (desktop) | `h-10` (40px) |
+| Novo bloqueio | Desabilitado quando `conferenciasEmAndamento.length > 0` |
+| Texto quando bloqueado | "Conferência em andamento" |
 
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/hooks/useCronometro.ts` | Usar useRef para startTime, callbacks estáveis |
-| `src/pages/estoque/ConferenciaExecucao.tsx` | Layout responsivo + correção useEffect |
-
----
-
-## Resultado Visual (Mobile)
-
-```text
-┌────────────────────────────────┐
-│ ← Conf. #06bcdfe4   00:05:23  │
-│ ████████████░░░░░░  12/20 60% │
-│ [Pausar] [Concluir]           │
-│ 🔍 Buscar...                  │
-├────────────────────────────────┤
-│ Produto          │ Atual │ ▢  │
-├────────────────────────────────┤
-│ Mesa Redonda     │  15   │[__]│
-│ Cadeira Estofada │   8   │[__]│
-│ Banco de Madeira │  22   │[__]│
-└────────────────────────────────┘
-```
-
-Fontes reduzidas: títulos text-sm, células text-xs, inputs h-7.
+Também será possível remover o import do ícone `CheckCircle2` que não será mais usado.
