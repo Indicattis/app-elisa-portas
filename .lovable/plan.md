@@ -1,84 +1,244 @@
 
-# Plano: Separar Linhas de Pintura por Porta
+# Plano: Adicionar Observacoes do Pedido em Todas as Downbars
 
-## Problema Identificado
+## Contexto
 
-A ordem PINT-00064 foi criada sem o `produto_venda_id` nas linhas de pintura, mas essa informação EXISTE na tabela de origem (`pedido_linhas`). As linhas originais do pedido possuem:
-- Porta 1 (`2dbaac84...`): 15 itens - 2.94m x 2.62m
-- Porta 2 (`8fe6a751...`): 13 itens - 2.99m x 2.60m
+O usuario quer que as observacoes do pedido (com a data de atualizacao) aparecam em todas as downbars do sistema.
 
-## Solução
+## Analise do Estado Atual
 
-Modificar a lógica no frontend para buscar as linhas do pedido original (`pedido_linhas`) e fazer o match com as linhas de pintura pelo nome do item, recuperando assim o `produto_venda_id` correto.
+### Downbars Identificadas
+
+1. **OrdemDetalhesSheet** (producao) - JA mostra observacoes do pedido, mas SEM a data
+2. **CarregamentoDownbar** - NAO mostra observacoes do pedido
+3. **OrdemCarregamentoDetails** - Mostra apenas observacoes da ordem (nao do pedido)
+
+### Dados Necessarios
+
+O campo `observacoes` esta em `pedidos_producao.observacoes` e a data de atualizacao em `pedidos_producao.updated_at`.
 
 ---
 
-## Alterações Necessárias
+## Alteracoes Necessarias
 
-### Arquivo: `src/hooks/useOrdemPintura.ts`
+### 1. Hooks - Adicionar `updated_at` na Query
 
-Modificar a query para também buscar as linhas do pedido (`pedido_linhas`) e fazer o match para obter o `produto_venda_id`.
+#### Arquivo: `src/hooks/useOrdemProducao.ts`
 
-**Adicionar nova query após buscar o pedido:**
+Adicionar `updated_at` ao select do pedido:
+
 ```typescript
-// Buscar linhas do pedido (origem) que têm produto_venda_id
-const { data: linhasPedido } = await supabase
-  .from('pedido_linhas')
-  .select('nome_produto, produto_venda_id, quantidade')
-  .eq('pedido_id', ordem.pedido_id);
+pedido:pedidos_producao!pedido_id(
+  id,
+  numero_pedido,
+  cliente_nome,
+  venda_id,
+  prioridade_etapa,
+  em_backlog,
+  observacoes,
+  updated_at,  // ADICIONAR
+  vendas(...)
+)
 ```
 
-**Modificar o mapeamento das linhas:**
+#### Arquivo: `src/hooks/useOrdemPintura.ts`
+
+Adicionar `observacoes` e `updated_at` ao select do pedido:
+
 ```typescript
-const linhas = linhasRaw?.map((linha: any) => {
-  // Se a linha já tem produto_venda_id, usar direto
-  let produtoVendaId = linha.produto_venda_id;
-  
-  // Se não tem, buscar nas linhas originais do pedido pelo nome e quantidade
-  if (!produtoVendaId && linhasPedido) {
-    const linhaOriginal = linhasPedido.find((lp: any) => 
-      (lp.nome_produto === linha.item || lp.nome_produto?.includes(linha.item)) &&
-      lp.quantidade === linha.quantidade
-    );
-    produtoVendaId = linhaOriginal?.produto_venda_id;
-  }
-  
-  // Buscar dimensões da porta
-  const produtoVenda = produtos.find((p: any) => p.id === produtoVendaId);
-  
-  return {
-    ...linha,
-    item: linha.estoque?.nome_produto || linha.item,
-    requer_pintura: linha.estoque?.requer_pintura ?? true,
-    produto_venda_id: produtoVendaId, // Atualizado com valor correto
-    largura: linha.largura || produtoVenda?.largura || null,
-    altura: linha.altura || produtoVenda?.altura || null
-  };
-}) || [];
+.select(`
+  id, 
+  numero_pedido, 
+  cliente_nome,
+  venda_id,
+  prioridade_etapa,
+  em_backlog,
+  observacoes,    // ADICIONAR
+  updated_at,     // ADICIONAR
+  vendas(...)
+`)
+```
+
+#### Arquivo: `src/hooks/useOrdensCarregamentoUnificadas.ts`
+
+Adicionar `observacoes` e `updated_at` ao select do pedido:
+
+```typescript
+pedido:pedidos_producao!ordens_carregamento_pedido_id_fkey(
+  id,
+  numero_pedido,
+  etapa_atual,
+  observacoes,    // ADICIONAR
+  updated_at      // ADICIONAR
+)
 ```
 
 ---
 
-### Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
+### 2. Componentes - Exibir Observacoes com Data
 
-Remover o CASO 1 (visualização unificada) que adicionamos anteriormente e usar apenas o CASO 2 (agrupamento por porta), pois agora teremos os `produto_venda_id` corretos vindos do hook.
+#### Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
 
-**Simplificar a lógica de agrupamento (linhas 738-836):**
+**Linhas 653-666** - Adicionar data ao bloco existente:
 
-Remover o bloco `if (!temAgrupamentoPorPorta && portasEnrolar.length > 0)` e manter apenas o agrupamento padrão por `produto_venda_id`.
+```tsx
+{ordem.pedido?.observacoes && (
+  <>
+    <Separator />
+    <div className="space-y-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium flex items-center gap-2 text-amber-700 dark:text-amber-400">
+          <Package className="h-4 w-4" />
+          Observacoes Gerais do Pedido
+        </span>
+        {ordem.pedido?.updated_at && (
+          <span className="text-xs text-muted-foreground">
+            {format(new Date(ordem.pedido.updated_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+          </span>
+        )}
+      </div>
+      <p className="text-sm text-muted-foreground whitespace-pre-line">
+        {ordem.pedido.observacoes}
+      </p>
+    </div>
+  </>
+)}
+```
+
+#### Arquivo: `src/components/carregamento/CarregamentoDownbar.tsx`
+
+**Apos linha 259** (depois do progresso, antes do Separator) - Adicionar novo bloco:
+
+```tsx
+{/* Observacoes do Pedido */}
+{ordem.pedido?.observacoes && (
+  <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+    <div className="flex items-center justify-between mb-1">
+      <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+        Observacoes do Pedido
+      </span>
+      {ordem.pedido?.updated_at && (
+        <span className="text-xs text-amber-600/70 dark:text-amber-400/70">
+          {format(new Date(ordem.pedido.updated_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+        </span>
+      )}
+    </div>
+    <p className="text-xs text-amber-800 dark:text-amber-200 whitespace-pre-line">
+      {ordem.pedido.observacoes}
+    </p>
+  </div>
+)}
+```
+
+#### Arquivo: `src/components/expedicao/OrdemCarregamentoDetails.tsx`
+
+**Apos linha 246** (depois do card Pedido) - Adicionar novo bloco:
+
+```tsx
+{/* Card: Observacoes do Pedido */}
+{ordem.pedido?.observacoes && (
+  <div className="bg-amber-500/10 rounded-xl border border-amber-500/20 p-4">
+    <div className="flex items-center justify-between mb-2">
+      <h3 className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+        <FileText className="h-3.5 w-3.5" />
+        Observacoes do Pedido
+      </h3>
+      {ordem.pedido?.updated_at && (
+        <span className="text-[10px] text-amber-400/70">
+          {format(new Date(ordem.pedido.updated_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+        </span>
+      )}
+    </div>
+    <p className="text-sm text-white/80 whitespace-pre-wrap leading-relaxed">
+      {ordem.pedido.observacoes}
+    </p>
+  </div>
+)}
+```
 
 ---
 
-## Resumo das Mudanças
+### 3. Atualizacao de Interfaces TypeScript
 
-| Arquivo | Ação |
-|---------|------|
-| `src/hooks/useOrdemPintura.ts` | Buscar `pedido_linhas` e fazer match para recuperar `produto_venda_id` |
-| `src/components/production/OrdemDetalhesSheet.tsx` | Remover visualização unificada, usar agrupamento por porta |
+#### Arquivo: `src/hooks/useOrdemProducao.ts`
+
+Atualizar interface do pedido:
+
+```typescript
+pedido?: {
+  id: string;
+  numero_pedido: string;
+  cliente_nome: string;
+  venda_id?: string;
+  observacoes?: string;    // JA EXISTE
+  updated_at?: string;     // ADICIONAR
+  vendas?: {...};
+};
+```
+
+#### Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
+
+Atualizar interface Ordem:
+
+```typescript
+pedido?: {
+  id: string;
+  numero_pedido: string;
+  cliente_nome: string;
+  venda_id?: string;
+  observacoes?: string;
+  updated_at?: string;     // ADICIONAR
+  vendas?: {...};
+  produtos?: Array<{...}>;
+};
+```
+
+#### Arquivo: `src/types/ordemCarregamento.ts`
+
+Atualizar interface do pedido:
+
+```typescript
+pedido?: {
+  id: string;
+  numero_pedido: string;
+  etapa_atual?: string;
+  data_producao?: string | null;
+  observacoes?: string;    // ADICIONAR
+  updated_at?: string;     // ADICIONAR
+  instalacao?: Array<{...}> | null;
+};
+```
+
+#### Arquivo: `src/hooks/useOrdensCarregamentoUnificadas.ts`
+
+Atualizar interface OrdemCarregamentoUnificada:
+
+```typescript
+pedido?: {
+  id: string;
+  numero_pedido: string;
+  etapa_atual?: string;
+  observacoes?: string;    // ADICIONAR
+  updated_at?: string;     // ADICIONAR
+} | null;
+```
+
+---
+
+## Resumo das Alteracoes
+
+| Arquivo | Tipo | Acao |
+|---------|------|------|
+| `src/hooks/useOrdemProducao.ts` | Hook | Adicionar `updated_at` ao select + interface |
+| `src/hooks/useOrdemPintura.ts` | Hook | Adicionar `observacoes` e `updated_at` ao select |
+| `src/hooks/useOrdensCarregamentoUnificadas.ts` | Hook + Interface | Adicionar campos ao select e interface |
+| `src/types/ordemCarregamento.ts` | Tipo | Adicionar campos na interface |
+| `src/components/production/OrdemDetalhesSheet.tsx` | Componente | Adicionar data ao bloco existente + interface |
+| `src/components/carregamento/CarregamentoDownbar.tsx` | Componente | Adicionar bloco de observacoes |
+| `src/components/expedicao/OrdemCarregamentoDetails.tsx` | Componente | Adicionar bloco de observacoes |
 
 ## Resultado Esperado
 
-- PINT-00064 mostrará 2 grupos separados:
-  - **Porta 01** (2.94m x 2.62m): 5 itens de pintura
-  - **Porta 02** (2.99m x 2.60m): 5 itens de pintura
-- Funciona tanto para ordens novas quanto legadas
+- Todas as downbars mostrarao as observacoes do pedido quando existirem
+- Cada observacao tera a data/hora de atualizacao exibida no canto direito
+- O estilo sera consistente em todas as downbars (fundo amarelo/amber sutil)
