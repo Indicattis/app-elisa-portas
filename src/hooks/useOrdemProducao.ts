@@ -123,27 +123,27 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       if (ordensError) throw ordensError;
       if (!ordensData || ordensData.length === 0) return [];
       
-      // Buscar linhas para todas as ordens de uma vez, incluindo nome atualizado do estoque e dimensões do produto
+      // Buscar linhas para todas as ordens de uma vez, incluindo nome atualizado do estoque
       const ordemIds = ordensData.map((o: any) => o.id);
       const { data: linhasData, error: linhasError } = await supabase
         .from('linhas_ordens')
         .select(`
           *,
-          estoque:estoque_id (nome_produto),
-          produto_venda:produto_venda_id (largura, altura)
+          estoque:estoque_id (nome_produto)
         `)
         .in('ordem_id', ordemIds)
         .eq('tipo_ordem', tipoOrdem);
       
-      if (linhasError) throw linhasError;
+      if (linhasError) {
+        console.error('[useOrdemProducao] Erro ao buscar linhas:', linhasError);
+        // Continuar sem linhas, não quebrar a query
+      }
       
-      // Processar linhas para usar nome atualizado do estoque e dimensões do produto
-      const linhasProcessadas = linhasData?.map((linha: any) => ({
+      // Processar linhas para usar nome atualizado do estoque
+      const linhasProcessadas = (linhasData || []).map((linha: any) => ({
         ...linha,
         item: linha.estoque?.nome_produto || linha.item,
-        largura: linha.largura || linha.produto_venda?.largura || null,
-        altura: linha.altura || linha.produto_venda?.altura || null
-      })) || [];
+      }));
       
       // Buscar dados dos responsáveis se houver
       const responsavelIds = ordensData
