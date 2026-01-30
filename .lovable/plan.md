@@ -1,104 +1,95 @@
 
-
-# Correção: Match Preciso de Linhas de Pintura com Portas
+# Correção: Modal de Faturamento - Validação de Lucro
 
 ## Problema Identificado
 
-As `linhas_ordens` de pintura têm `pedido_linha_id` e `produto_venda_id` **nulos**. O match atual usa apenas nome+quantidade, que é **ambíguo** quando existem itens idênticos em portas diferentes.
+No modal `LucroItemModal.tsx`, a validação `lucro > produto.valor_total || lucro < 0` está falhando, provavelmente por:
 
-**Exemplo do pedido atual:**
-| Item | Qtd | Tamanho | Porta |
-|------|-----|---------|-------|
-| Meia cana lisa | 35 | 2,85 | 1 |
-| Meia cana lisa | 35 | 2,80 | 2 |
-| Meia cana lisa | 6 | 3,09 | 1 |
-| Meia cana lisa | 6 | 3,04 | 2 |
+1. **Inicialização incorreta**: O estado `lucro` pode estar como `NaN` se houver problemas de parsing
+2. **Dependência incompleta no useEffect**: Não re-inicializa corretamente quando o produto muda
+3. **Falta de tratamento para valores undefined/null**
 
-O match por nome+quantidade retorna o **primeiro** resultado encontrado, agrupando todos os itens na mesma porta incorretamente.
+## Diagnóstico
+
+- Os produtos no banco têm `valor_total: 600, 900, 705` (corretos)
+- A validação linha 45: `lucro > produto.valor_total || lucro < 0`
+- Se `lucro` for `NaN` ou `valor_total` for `undefined`, a comparação pode ter comportamentos inesperados
 
 ## Solução
 
-Usar associação sequencial: quando múltiplas linhas do pedido combinam com uma linha de pintura, "consumir" cada match conforme são encontrados, evitando repetições.
+### Arquivo: `src/components/vendas/LucroItemModal.tsx`
 
-## Alterações Técnicas
-
-### Arquivo: `src/hooks/useOrdemPintura.ts`
-
-**Substituir lógica de match (linhas 96-132):**
+**1. Corrigir inicialização e dependências (linhas 35-45):**
 
 ```typescript
-// Processar linhas - usar match sequencial para evitar associações duplicadas
-const linhasPedidoUsadas = new Set<string>();
+// ANTES:
+const [lucro, setLucro] = useState<number>(0);
 
-const linhas = linhasRaw?.map((linha: any) => {
-  // Se a linha já tem produto_venda_id, usar direto
-  let produtoVendaId = linha.produto_venda_id;
-  let linhaOriginal = null;
-  
-  // Se não tem, buscar nas linhas originais do pedido
-  if (!produtoVendaId && linhasPedido) {
-    // Encontrar TODAS as linhas que combinam
-    const linhasMatch = linhasPedido.filter((lp: any) => 
-      !linhasPedidoUsadas.has(lp.id) && // Ainda não usada
-      (lp.nome_produto === linha.item || 
-       lp.nome_produto?.includes(linha.item) || 
-       linha.item?.includes(lp.nome_produto) ||
-       linha.estoque?.nome_produto === lp.nome_produto) &&
-      lp.quantidade === linha.quantidade
-    );
-    
-    // Se encontrou, usar a primeira NÃO USADA e marcar como usada
-    if (linhasMatch.length > 0) {
-      linhaOriginal = linhasMatch[0];
-      linhasPedidoUsadas.add(linhaOriginal.id);
-      produtoVendaId = linhaOriginal.produto_venda_id;
-    }
-  } else if (linhasPedido) {
-    // Se já tem produto_venda_id, ainda buscar linha original para tamanho
-    linhaOriginal = linhasPedido.find((lp: any) => 
-      !linhasPedidoUsadas.has(lp.id) &&
-      lp.produto_venda_id === produtoVendaId &&
-      (lp.nome_produto === linha.item || 
-       lp.nome_produto?.includes(linha.item) || 
-       linha.item?.includes(lp.nome_produto) ||
-       linha.estoque?.nome_produto === lp.nome_produto) &&
-      lp.quantidade === linha.quantidade
-    );
-    if (linhaOriginal) {
-      linhasPedidoUsadas.add(linhaOriginal.id);
-    }
+useEffect(() => {
+  if (isOpen) {
+    setLucro(produto.lucro_item || 0);
   }
-  
-  // Buscar dimensões da porta
-  const produtoVenda = produtos.find((p: any) => p.id === produtoVendaId);
+}, [isOpen, produto.lucro_item]);
 
-  return {
-    ...linha,
-    item: linha.estoque?.nome_produto || linha.item,
-    requer_pintura: linha.estoque?.requer_pintura ?? true,
-    produto_venda_id: produtoVendaId,
-    largura: linha.largura || produtoVenda?.largura || null,
-    altura: linha.altura || produtoVenda?.altura || null,
-    tamanho: linha.tamanho || linhaOriginal?.tamanho || null
-  };
-}) || [];
+const custoCalculado = produto.valor_total - lucro;
+const margem = produto.valor_total > 0 ? (lucro / produto.valor_total) * 100 : 0;
+const isLucroInvalido = lucro > produto.valor_total || lucro < 0;
+
+// DEPOIS:
+const [lucro, setLucro] = useState<number>(0);
+
+// Usar produto.id como dependência para garantir reset quando trocar de produto
+useEffect(() => {
+  if (isOpen && produto) {
+    setLucro(produto.lucro_item ?? 0);
+  }
+}, [isOpen, produto?.id, produto?.lucro_item]);
+
+// Garantir valores numéricos válidos
+const valorTotal = Number(produto.valor_total) || 0;
+const lucroValido = Number.isFinite(lucro) ? lucro : 0;
+
+const custoCalculado = valorTotal - lucroValido;
+const margem = valorTotal > 0 ? (lucroValido / valorTotal) * 100 : 0;
+const isLucroInvalido = lucroValido > valorTotal || lucroValido < 0;
 ```
 
-## Como Funciona
+**2. Corrigir handler de onChange (linha 79):**
 
-1. Cria um `Set` para rastrear quais `pedido_linhas.id` já foram usadas
-2. Para cada linha de pintura, busca matches que ainda não foram usados
-3. Ao encontrar um match, marca o `id` como usado
-4. Isso garante associação sequencial: primeira linha de pintura → primeira linha de pedido, segunda → segunda, etc.
+```typescript
+// ANTES:
+onChange={(e) => setLucro(Number(e.target.value))}
+
+// DEPOIS:
+onChange={(e) => {
+  const valor = parseFloat(e.target.value);
+  setLucro(Number.isFinite(valor) ? valor : 0);
+}}
+```
+
+**3. Atualizar exibição de valores (linhas 93-108):**
+
+```typescript
+// ANTES:
+R$ {produto.valor_total.toFixed(2)}
+R$ {lucro.toFixed(2)}
+R$ {custoCalculado.toFixed(2)}
+
+// DEPOIS:
+R$ {valorTotal.toFixed(2)}
+R$ {lucroValido.toFixed(2)}
+R$ {custoCalculado.toFixed(2)}
+```
+
+## Alterações Resumidas
+
+| Local | Problema | Correção |
+|-------|----------|----------|
+| useState/useEffect | Dependência incompleta | Adicionar `produto.id` nas dependências |
+| Validação | Pode comparar com NaN/undefined | Normalizar valores com `Number.isFinite()` |
+| onChange | `Number()` retorna NaN para strings inválidas | Usar `parseFloat` + validação |
+| Exibição | Pode dar erro se valores undefined | Usar variáveis normalizadas |
 
 ## Resultado Esperado
 
-| Linha Pintura | Match Anterior | Match Corrigido |
-|--------------|----------------|-----------------|
-| Meia cana qtd 35 (1ª) | Porta 1 | Porta 1 |
-| Meia cana qtd 35 (2ª) | Porta 1 ❌ | Porta 2 ✅ |
-| Meia cana qtd 6 (1ª) | Porta 1 | Porta 1 |
-| Meia cana qtd 6 (2ª) | Porta 1 ❌ | Porta 2 ✅ |
-
-As linhas serão associadas corretamente às suas respectivas portas.
-
+O modal abrirá corretamente, permitindo ao usuário inserir valores de lucro entre R$ 0,00 e o valor total do produto, sem mensagens de erro falsas.
