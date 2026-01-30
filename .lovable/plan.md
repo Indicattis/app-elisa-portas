@@ -1,104 +1,84 @@
 
-# Plano: Corrigir Agrupamento de Portas na Downbar de Pintura
+# Plano: Separar Linhas de Pintura por Porta
 
 ## Problema Identificado
 
-A ordem PINT-00064 (Edimar) tem:
-- **2 portas de enrolar** na venda (`porta_enrolar`)
-- **2 serviços de pintura** na venda (`pintura_epoxi`)
-- **10 linhas de itens** para pintar, **todas com `produto_venda_id = NULL`**
+A ordem PINT-00064 foi criada sem o `produto_venda_id` nas linhas de pintura, mas essa informação EXISTE na tabela de origem (`pedido_linhas`). As linhas originais do pedido possuem:
+- Porta 1 (`2dbaac84...`): 15 itens - 2.94m x 2.62m
+- Porta 2 (`8fe6a751...`): 13 itens - 2.99m x 2.60m
 
-O header do card usa `CoresPortasEnrolar` que conta corretamente 2 portas baseado nos produtos da venda. Mas a downbar agrupa linhas por `produto_venda_id`, e como todas as linhas tem esse campo nulo, aparecem em um único grupo.
+## Solução
 
-## Solucao Proposta
-
-Modificar a logica de agrupamento na downbar para:
-1. Detectar quando nao ha `produto_venda_id` nas linhas
-2. Nesse caso, mostrar os itens como "Itens para Todas as Portas" em vez de agrupar por porta inexistente
-3. Mostrar um cabecalho indicando quantas portas serao pintadas (baseado nos produtos da venda)
+Modificar a lógica no frontend para buscar as linhas do pedido original (`pedido_linhas`) e fazer o match com as linhas de pintura pelo nome do item, recuperando assim o `produto_venda_id` correto.
 
 ---
 
-## Alteracoes Necessarias
+## Alterações Necessárias
+
+### Arquivo: `src/hooks/useOrdemPintura.ts`
+
+Modificar a query para também buscar as linhas do pedido (`pedido_linhas`) e fazer o match para obter o `produto_venda_id`.
+
+**Adicionar nova query após buscar o pedido:**
+```typescript
+// Buscar linhas do pedido (origem) que têm produto_venda_id
+const { data: linhasPedido } = await supabase
+  .from('pedido_linhas')
+  .select('nome_produto, produto_venda_id, quantidade')
+  .eq('pedido_id', ordem.pedido_id);
+```
+
+**Modificar o mapeamento das linhas:**
+```typescript
+const linhas = linhasRaw?.map((linha: any) => {
+  // Se a linha já tem produto_venda_id, usar direto
+  let produtoVendaId = linha.produto_venda_id;
+  
+  // Se não tem, buscar nas linhas originais do pedido pelo nome e quantidade
+  if (!produtoVendaId && linhasPedido) {
+    const linhaOriginal = linhasPedido.find((lp: any) => 
+      (lp.nome_produto === linha.item || lp.nome_produto?.includes(linha.item)) &&
+      lp.quantidade === linha.quantidade
+    );
+    produtoVendaId = linhaOriginal?.produto_venda_id;
+  }
+  
+  // Buscar dimensões da porta
+  const produtoVenda = produtos.find((p: any) => p.id === produtoVendaId);
+  
+  return {
+    ...linha,
+    item: linha.estoque?.nome_produto || linha.item,
+    requer_pintura: linha.estoque?.requer_pintura ?? true,
+    produto_venda_id: produtoVendaId, // Atualizado com valor correto
+    largura: linha.largura || produtoVenda?.largura || null,
+    altura: linha.altura || produtoVenda?.altura || null
+  };
+}) || [];
+```
+
+---
 
 ### Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
 
-**Linhas 722-850** - Modificar a logica de agrupamento para pintura:
+Remover o CASO 1 (visualização unificada) que adicionamos anteriormente e usar apenas o CASO 2 (agrupamento por porta), pois agora teremos os `produto_venda_id` corretos vindos do hook.
 
-**Logica atual (problematica):**
-```typescript
-// Agrupar linhas por produto_venda_id
-const linhasPorPorta = linhasQuePrecisaPintura.reduce((grupos, linha) => {
-  const key = linha.produto_venda_id || 'sem_porta';
-  // ...
-}, {});
+**Simplificar a lógica de agrupamento (linhas 738-836):**
 
-// Renderiza grupos assumindo que cada grupo = 1 porta
-Object.entries(linhasPorPorta).map(([portaId, linhasPorta], index) => {
-  // Mostra "Porta 01", "Porta 02", etc.
-});
-```
-
-**Nova logica:**
-```typescript
-// Verificar se ha produto_venda_id nas linhas
-const temAgrupamentoPorPorta = linhasQuePrecisaPintura.some(l => l.produto_venda_id);
-
-// Contar portas de enrolar do pedido
-const portasEnrolar = ordem.pedido?.produtos?.filter(
-  (p: any) => p.tipo_produto === 'porta_enrolar'
-) || [];
-
-if (!temAgrupamentoPorPorta && portasEnrolar.length > 0) {
-  // CASO 1: Linhas nao vinculadas a portas especificas
-  // Mostrar cabecalho com info das portas + lista unica de itens
-  return (
-    <div className="space-y-2 p-3 rounded-lg border bg-card">
-      <div className="flex items-center justify-between mb-2 pb-2 border-b">
-        <div className="flex items-center gap-2">
-          <Package className="h-4 w-4 text-primary" />
-          <span className="font-semibold text-sm">
-            Itens para {portasEnrolar.length} Porta{portasEnrolar.length > 1 ? 's' : ''}
-          </span>
-        </div>
-        {/* Mostrar dimensoes de cada porta */}
-        <div className="flex gap-2 text-xs text-muted-foreground">
-          {portasEnrolar.map((p, i) => (
-            <Badge key={i} variant="outline">
-              P{i+1}: {formatarDimensoes(p.largura, p.altura)}
-            </Badge>
-          ))}
-        </div>
-      </div>
-      {/* Lista unica de todos os itens */}
-      {linhasQuePrecisaPintura.map((linha) => (
-        // ... renderizar item
-      ))}
-    </div>
-  );
-} else {
-  // CASO 2: Linhas vinculadas a portas especificas (comportamento atual)
-  // Manter agrupamento por produto_venda_id
-}
-```
+Remover o bloco `if (!temAgrupamentoPorPorta && portasEnrolar.length > 0)` e manter apenas o agrupamento padrão por `produto_venda_id`.
 
 ---
 
-## Resumo das Mudancas
+## Resumo das Mudanças
 
-| Arquivo | Linhas | Acao |
-|---------|--------|------|
-| `src/components/production/OrdemDetalhesSheet.tsx` | 722-850 | Adicionar verificacao se ha `produto_venda_id` e mostrar layout adequado |
+| Arquivo | Ação |
+|---------|------|
+| `src/hooks/useOrdemPintura.ts` | Buscar `pedido_linhas` e fazer match para recuperar `produto_venda_id` |
+| `src/components/production/OrdemDetalhesSheet.tsx` | Remover visualização unificada, usar agrupamento por porta |
 
 ## Resultado Esperado
 
-- Quando linhas tem `produto_venda_id`: Agrupa por porta (comportamento atual)
-- Quando linhas NAO tem `produto_venda_id`: Mostra "Itens para X Portas" com dimensoes de cada porta no cabecalho
-
-Esta mudanca resolve a inconsistencia visual entre header (2 portas) e downbar (1 porta) quando os itens nao estao vinculados a portas especificas.
-
----
-
-## Consideracao Tecnica
-
-O problema de raiz e que a funcao SQL `criar_ordem_pintura` nao esta preenchendo o `produto_venda_id` nas linhas. Uma correcao mais completa seria ajustar essa funcao para vincular os itens as portas. Mas a solucao proposta acima resolve o problema visual imediatamente sem necessidade de migracao de dados.
+- PINT-00064 mostrará 2 grupos separados:
+  - **Porta 01** (2.94m x 2.62m): 5 itens de pintura
+  - **Porta 02** (2.99m x 2.60m): 5 itens de pintura
+- Funciona tanto para ordens novas quanto legadas
