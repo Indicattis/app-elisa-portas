@@ -234,6 +234,7 @@ import OrdensInstalacoesLogistica from "./pages/logistica/OrdensInstalacoesLogis
 // Hub de Estoque
 import EstoqueHub from "./pages/estoque/EstoqueHub";
 import EstoqueFabrica from "./pages/estoque/EstoqueFabrica";
+import EstoqueFabricaEdit from "./pages/estoque/EstoqueFabricaEdit";
 import AlmoxarifadoPage from "./pages/estoque/AlmoxarifadoPage";
 import EstoqueFornecedores from "./pages/estoque/EstoqueFornecedores";
 
@@ -425,7 +426,7 @@ const App = () => (
                 {/* Hub de Estoque */}
                 <Route path="/estoque" element={<ProtectedRoute routeKey="estoque_hub"><EstoqueHub /></ProtectedRoute>} />
                 <Route path="/estoque/fabrica" element={<ProtectedRoute routeKey="estoque_fabrica"><EstoqueFabrica /></ProtectedRoute>} />
-                <Route path="/estoque/fabrica/editar-item/:id" element={<ProtectedRoute routeKey="estoque_fabrica"><EstoqueEditMinimalista /></ProtectedRoute>} />
+                <Route path="/estoque/fabrica/editar-item/:id" element={<ProtectedRoute routeKey="estoque_fabrica"><EstoqueFabricaEdit /></ProtectedRoute>} />
                 <Route path="/estoque/almoxarifado" element={<ProtectedRoute routeKey="estoque_almoxarifado"><AlmoxarifadoPage /></ProtectedRoute>} />
                 <Route path="/estoque/fornecedores" element={<ProtectedRoute routeKey="estoque_fornecedores"><EstoqueFornecedores /></ProtectedRoute>} />
 

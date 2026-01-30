@@ -1831,6 +1831,7 @@ export type Database = {
           pontuacao_producao: number | null
           quantidade: number
           quantidade_ideal: number | null
+          quantidade_maxima: number | null
           requer_pintura: boolean | null
           setor_responsavel_producao:
             | Database["public"]["Enums"]["setor_producao"]
@@ -1858,6 +1859,7 @@ export type Database = {
           pontuacao_producao?: number | null
           quantidade?: number
           quantidade_ideal?: number | null
+          quantidade_maxima?: number | null
           requer_pintura?: boolean | null
           setor_responsavel_producao?:
             | Database["public"]["Enums"]["setor_producao"]
@@ -1885,6 +1887,7 @@ export type Database = {
           pontuacao_producao?: number | null
           quantidade?: number
           quantidade_ideal?: number | null
+          quantidade_maxima?: number | null
           requer_pintura?: boolean | null
           setor_responsavel_producao?:
             | Database["public"]["Enums"]["setor_producao"]
