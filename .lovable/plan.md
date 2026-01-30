@@ -1,156 +1,76 @@
 
-# Plano: Criar Página de Edição Simplificada para Estoque Fábrica
+# Plano: Adicionar Tamanho ao Lado da Numeração de Porta na Pintura
 
 ## Objetivo
 
-Criar uma nova página de edição específica para `/estoque/fabrica/editar-item/:id` que exibe apenas os campos relevantes para gerenciamento de estoque, removendo campos de produção.
+Modificar a exibição do cabeçalho do grupo de porta no setor de pintura para incluir as dimensões diretamente ao lado da numeração.
 
----
-
-## Análise do Banco de Dados
-
-### Campos existentes na tabela `estoque`:
-| Campo | Tipo | Uso |
-|-------|------|-----|
-| `quantidade` | integer | Quantidade atual em estoque |
-| `quantidade_ideal` | integer | Quantidade mínima desejada |
-| `custo_unitario` | numeric | Custo por unidade |
-| `unidade` | text | Unidade de medida (UN, KG, M, etc.) |
-| `fornecedor_id` | uuid | Referência ao fornecedor |
-
-### Campo faltante:
-- `quantidade_maxima` - **Não existe** na tabela atual
-
----
-
-## Alterações Necessárias
-
-### 1. Migration SQL - Adicionar coluna quantidade_maxima
-
-```sql
-ALTER TABLE estoque ADD COLUMN quantidade_maxima integer DEFAULT 0;
+**Antes:**
+```
+Porta 1
+Pintura: Branco RAL 9010
+Dimensões: 3.00m x 4.00m
 ```
 
-### 2. Novo Componente: `src/pages/estoque/EstoqueFabricaEdit.tsx`
-
-Campos que serão exibidos:
-- Nome do Produto
-- Descrição
-- Quantidade Atual (somente leitura - para referência)
-- Quantidade Mínima (quantidade_ideal)
-- Quantidade Máxima (nova coluna)
-- Custo Unitário
-- Unidade de Medida (UN, KG, M, L, M², CX)
-- Fornecedor (select dos fornecedores cadastrados)
-
-Campos REMOVIDOS (não aparecerão):
-- "Este item requer pintura na produção"
-- "Configurações de Cálculo Automático" (módulo, valor, eixo)
-- "Item padrão para porta de enrolar"
-- "Regras de Quebra de Etiquetas"
-- "Setor de Produção"
-
-### 3. Atualizar `src/App.tsx`
-
-Trocar o import para usar o novo componente:
-```typescript
-import EstoqueFabricaEdit from "./pages/estoque/EstoqueFabricaEdit";
-
-// Rota
-<Route path="/estoque/fabrica/editar-item/:id" element={
-  <ProtectedRoute routeKey="estoque_fabrica">
-    <EstoqueFabricaEdit />
-  </ProtectedRoute>
-} />
+**Depois:**
 ```
-
-### 4. Atualizar tipos em `src/hooks/useEstoque.ts`
-
-Adicionar `quantidade_maxima` nas interfaces.
+Porta 1 - 3.00m x 4.00m
+Pintura: Branco RAL 9010
+```
 
 ---
 
-## Estrutura Visual da Página
+## Alteração Necessária
+
+### Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
+
+**Localização:** Linhas 744-766 (cabeçalho do grupo de porta no tipoOrdem === 'pintura')
+
+**Mudanças:**
+
+1. Incluir as dimensões no título da porta (linha 747)
+2. Remover o bloco separado de dimensões (linhas 761-765) já que a informação estará no título
+
+**Código atual (linha 746-748):**
+```tsx
+<span className="font-semibold text-sm">
+  Porta {index + 1}
+</span>
+```
+
+**Código novo:**
+```tsx
+<span className="font-semibold text-sm">
+  Porta {String(index + 1).padStart(2, '0')}
+  {primeiraLinha.largura && primeiraLinha.altura && (
+    <span className="font-normal text-muted-foreground ml-2">
+      {formatarDimensoes(primeiraLinha.largura, primeiraLinha.altura)}
+    </span>
+  )}
+</span>
+```
+
+---
+
+## Resultado Visual
 
 ```text
-┌──────────────────────────────────────────────────────────────┐
-│ ← Editar Produto                                              │
-│   Gerencie as informações de estoque do produto               │
-├──────────────────────────────────────────────────────────────┤
-│ ┌──────────────────────────────────────────────────────────┐  │
-│ │ Informações do Produto                                   │  │
-│ │                                                          │  │
-│ │ Nome do Produto *                                        │  │
-│ │ [________________________]                               │  │
-│ │                                                          │  │
-│ │ Descrição                                                │  │
-│ │ [________________________]                               │  │
-│ └──────────────────────────────────────────────────────────┘  │
-│                                                               │
-│ ┌──────────────────────────────────────────────────────────┐  │
-│ │ Controle de Estoque                                      │  │
-│ │                                                          │  │
-│ │ ┌─────────────────┐  ┌─────────────────┐                 │  │
-│ │ │ Qtd. Atual: 150 │  │ Custo: R$ 12,50 │                 │  │
-│ │ └─────────────────┘  └─────────────────┘                 │  │
-│ │                                                          │  │
-│ │ Quantidade Mínima        Quantidade Máxima               │  │
-│ │ [___50___]               [___200___]                     │  │
-│ │                                                          │  │
-│ │ Custo Unitário (R$)      Unidade de Medida               │  │
-│ │ [___12.50___]            [Quilograma (KG) ▼]             │  │
-│ │                                                          │  │
-│ │ Fornecedor                                               │  │
-│ │ [Fornecedor ABC ▼]                                       │  │
-│ └──────────────────────────────────────────────────────────┘  │
-│                                                               │
-│ ┌──────────────────────────────────────────────────────────┐  │
-│ │ Histórico de Movimentações                               │  │
-│ │ ┌────────┬────────┬─────┬─────────┬─────────┬─────────┐  │  │
-│ │ │ Data   │ Tipo   │ Qtd │ Anterior│ Novo    │ Obs.    │  │  │
-│ │ ├────────┼────────┼─────┼─────────┼─────────┼─────────┤  │  │
-│ │ │ 30/01  │Entrada │ 50  │ 100     │ 150     │ Compra  │  │  │
-│ │ └────────┴────────┴─────┴─────────┴─────────┴─────────┘  │  │
-│ └──────────────────────────────────────────────────────────┘  │
-│                                                               │
-│              [🗑️ Excluir]  [Cancelar]  [Salvar Alterações]    │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│ 📦 Porta 01 - 3.00m x 4.00m                            ✓   │
+│    Pintura: Branco RAL 9010 (Epóxi)                        │
+├─────────────────────────────────────────────────────────────┤
+│ ☐ Lâminas - Qtd: 12 - 3.00m                                │
+│ ☐ Guias - Qtd: 2 - 4.00m                                   │
+│ ☐ Testeira - Qtd: 1                                        │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Indicadores Visuais de Estoque
+## Resumo
 
-A página mostrará alertas baseados nas quantidades:
-- **Verde**: Estoque dentro do ideal (entre min e max)
-- **Amarelo**: Estoque se aproximando do mínimo
-- **Vermelho**: Estoque abaixo do mínimo ou acima do máximo
+| Arquivo | Linha | Ação |
+|---------|-------|------|
+| `src/components/production/OrdemDetalhesSheet.tsx` | 746-765 | Mover dimensões para o título e remover bloco separado |
 
----
-
-## Resumo de Arquivos
-
-| Arquivo | Ação |
-|---------|------|
-| `supabase/migrations/[timestamp].sql` | Criar - adicionar coluna quantidade_maxima |
-| `src/pages/estoque/EstoqueFabricaEdit.tsx` | Criar - página de edição simplificada |
-| `src/App.tsx` | Editar - trocar componente da rota |
-| `src/hooks/useEstoque.ts` | Editar - adicionar quantidade_maxima nas interfaces |
-| `src/integrations/supabase/types.ts` | Será atualizado automaticamente |
-
----
-
-## Breadcrumb da Página
-
-```
-Home > Estoque > Fábrica > Editar Produto
-```
-
----
-
-## Observações
-
-1. O campo "Quantidade Atual" será exibido apenas como referência (somente leitura)
-2. Movimentações de estoque continuam sendo feitas pela lista principal
-3. O histórico de movimentações será mantido na página de edição
-4. Os fornecedores serão carregados do hook `useFornecedores` existente
+Alteração simples de ~10 linhas, mantendo a função `formatarDimensoes` já existente.
