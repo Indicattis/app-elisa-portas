@@ -1,74 +1,159 @@
 
-# Plano: Corrigir Regras de Quebra de Etiquetas para Pintura
 
-## Problema Identificado
+# Plano: Conferencia do Estoque da Fabrica
 
-As etiquetas de "Meia Cana Lisa" estão sendo impressas com quantidade errada (5 em 5) quando deveriam ser 10 em 10 para portas pequenas.
+## Objetivo
 
-### Análise do Banco de Dados
-
-As regras cadastradas para o produto "Meia Cana Lisa" estão com os **divisores invertidos**:
-
-| Regra Atual | Condição | Divisor | Deveria Ser |
-|-------------|----------|---------|-------------|
-| "Meia Cana 0,70 maior que 6,5m" | largura > 6.5m | 10 | **5** |
-| "Meia Cana 0,70 menor que 6,5m" | largura < 6.5m | 5 | **10** |
-
-**Lógica correta (conforme informado)**:
-- Porta **pequena** (< 6,5m): quebra de **10 em 10**
-- Porta **grande** (> 6,5m): quebra de **5 em 5**
+Criar um botao em `/producao/home` para conferencia do estoque da fabrica, onde o usuario informa a quantidade atual de cada item do estoque.
 
 ---
 
-## Solução
+## Estrutura da Solucao
 
-A correção envolve **atualizar as regras no banco de dados** para inverter os divisores.
+### 1. Banco de Dados - Nova Tabela
 
-### Opção 1: Atualização via Interface (Recomendado)
-
-1. Acessar `/administrativo/compras/estoque/editar-item/d9d2982d-1323-4f04-9783-7bd3e7eca88c`
-2. Na seção de regras de etiquetas:
-   - Regra "maior que 6,5m" → alterar divisor para **5**
-   - Regra "menor que 6,5m" → alterar divisor para **10**
-3. Salvar as alterações
-
-### Opção 2: Atualização via SQL (Alternativa)
-
-Executar no SQL Editor do Supabase:
+Criar a tabela `estoque_conferencias` para registrar as conferencias:
 
 ```sql
--- Corrigir regra para porta GRANDE (> 6.5m): divisor = 5
-UPDATE regras_etiquetas 
-SET divisor = 5
-WHERE id = '9a15ac7e-2f07-475d-9116-9930f370d3b3';
+CREATE TABLE estoque_conferencias (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conferido_por UUID NOT NULL REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  observacoes TEXT
+);
 
--- Corrigir regra para porta PEQUENA (< 6.5m): divisor = 10
-UPDATE regras_etiquetas 
-SET divisor = 10
-WHERE id = '49178130-f516-42f5-b645-039fb2286f08';
+CREATE TABLE estoque_conferencia_itens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conferencia_id UUID NOT NULL REFERENCES estoque_conferencias(id) ON DELETE CASCADE,
+  produto_id UUID NOT NULL REFERENCES estoque(id),
+  quantidade_anterior INTEGER NOT NULL,
+  quantidade_conferida INTEGER NOT NULL,
+  diferenca INTEGER GENERATED ALWAYS AS (quantidade_conferida - quantidade_anterior) STORED,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Indices para performance
+CREATE INDEX idx_estoque_conferencia_itens_conferencia ON estoque_conferencia_itens(conferencia_id);
+CREATE INDEX idx_estoque_conferencia_itens_produto ON estoque_conferencia_itens(produto_id);
+
+-- RLS Policies
+ALTER TABLE estoque_conferencias ENABLE ROW LEVEL SECURITY;
+ALTER TABLE estoque_conferencia_itens ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Usuarios autenticados podem ver conferencias" ON estoque_conferencias
+  FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Usuarios autenticados podem criar conferencias" ON estoque_conferencias
+  FOR INSERT TO authenticated WITH CHECK (true);
+
+CREATE POLICY "Usuarios autenticados podem ver itens" ON estoque_conferencia_itens
+  FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Usuarios autenticados podem criar itens" ON estoque_conferencia_itens
+  FOR INSERT TO authenticated WITH CHECK (true);
 ```
 
 ---
 
-## Problema Secundário: Largura Nula
+### 2. Nova Pagina - ConferenciaEstoqueFabrica.tsx
 
-Algumas linhas de pintura não têm a largura preenchida (`largura: null`). Quando isso acontece:
-- O sistema usa `largura = 0`
-- Como `0 < 6.5`, aplica a regra de "menor que 6.5m"
-- Com a correção acima, isso resultará em divisor 10 (correto para portas pequenas)
+Criar pagina `/producao/conferencia-estoque` com fluxo:
 
-Se precisar que portas sem dimensão definida usem um divisor padrão diferente, será necessário criar uma regra adicional sem condição de dimensão.
+1. **Lista de Produtos**: Tabela com todos os itens do estoque da fabrica
+2. **Campos de Input**: Cada linha tera um campo para informar quantidade atual
+3. **Comparacao Visual**: Mostrar quantidade no sistema vs quantidade conferida com indicador de diferenca
+4. **Botao Finalizar**: Salva a conferencia e atualiza o estoque
+
+**Layout:**
+- Tabela com colunas: SKU, Produto, Categoria, Qtd Sistema, Qtd Conferida, Diferenca
+- Campo de busca para filtrar produtos
+- Botao "Finalizar Conferencia" que abre modal de confirmacao
 
 ---
 
-## Resumo
+### 3. Hook - useEstoqueConferencia.ts
 
-| Ação | Local |
-|------|-------|
-| Corrigir divisores das regras | Interface de edição do produto ou SQL |
+```typescript
+// Funcionalidades:
+- Buscar todos os produtos do estoque (fabrica)
+- Criar conferencia com todos os itens
+- Atualizar quantidades no estoque apos conferencia
+```
 
-## Resultado Esperado
+---
 
-Após a correção:
-- Portas pequenas (< 6,5m): etiquetas de **10 em 10**
-- Portas grandes (> 6,5m): etiquetas de **5 em 5**
+### 4. Alteracoes em ProducaoHome.tsx
+
+Adicionar novo botao ao lado de "Meu Historico":
+
+```tsx
+<Button 
+  variant="outline" 
+  onClick={() => navigate('/producao/conferencia-estoque')}
+>
+  <ClipboardCheck className="h-4 w-4 mr-2" />
+  Conferir Estoque
+</Button>
+```
+
+---
+
+### 5. Rota no App.tsx
+
+Adicionar nova rota dentro do bloco de producao:
+
+```tsx
+<Route
+  path="/conferencia-estoque"
+  element={
+    <ProtectedProducaoRoute>
+      <ProducaoLayout>
+        <ConferenciaEstoqueFabrica />
+      </ProducaoLayout>
+    </ProtectedProducaoRoute>
+  }
+/>
+```
+
+---
+
+## Arquivos a Criar
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/pages/ConferenciaEstoqueFabrica.tsx` | Pagina principal da conferencia |
+| `src/hooks/useEstoqueConferencia.ts` | Hook para gerenciar conferencias |
+| `src/components/conferencia/ConferenciaItemRow.tsx` | Linha da tabela de conferencia |
+| `supabase/migrations/xxx_create_estoque_conferencias.sql` | Migracao do banco |
+
+## Arquivos a Modificar
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/pages/ProducaoHome.tsx` | Adicionar botao "Conferir Estoque" |
+| `src/App.tsx` | Adicionar rota `/producao/conferencia-estoque` |
+
+---
+
+## Fluxo do Usuario
+
+```text
+1. Usuario acessa /producao/home
+2. Clica no botao "Conferir Estoque"
+3. Ve lista de todos os produtos do estoque da fabrica
+4. Preenche a quantidade atual de cada item
+5. Clica em "Finalizar Conferencia"
+6. Sistema salva conferencia e atualiza quantidades no estoque
+7. Usuario recebe confirmacao de sucesso
+```
+
+---
+
+## Consideracoes Tecnicas
+
+- A conferencia atualiza a tabela `estoque` com as novas quantidades
+- Registra movimentacao em `estoque_movimentacoes` para historico
+- Mostra diferenca visual (verde = aumento, vermelho = reducao)
+- Permite campo de observacoes geral na conferencia
+- Sao 95 itens ativos no estoque atualmente
+
