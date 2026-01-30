@@ -1,40 +1,80 @@
 
-# Correção: Mostrar Campo Tamanho da Linha (não dimensões da porta)
+# Correção: Identificar Porta pelo produto_venda_id (não indice_porta)
 
-## Problema
+## Problema Identificado
 
-Na alteração anterior, priorizei mostrar `largura` x `altura` (dimensões da porta) ao invés do campo `tamanho` da própria linha da ordem. São dados diferentes:
-- `tamanho`: campo da linha da ordem (ex: "P", "M", "G" ou outra especificação)
-- `largura` x `altura`: dimensões da porta (usadas no cabeçalho do agrupamento)
+O campo `indice_porta` indica a posição dentro de portas **do mesmo tipo** (ex: se alguém compra 2 portas iguais, elas terão índice 0 e 1). Porém, quando são portas de tipos diferentes, cada uma tem `indice_porta = 0`.
 
-## Correção
+A exibição atual mostra "Porta 1" para todas as linhas porque usa diretamente `indice_porta + 1`.
 
-### Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
+## Solução
 
-**Linhas 830-837 - Reverter para mostrar apenas `tamanho`:**
+Identificar a porta com base na posição do `produto_venda_id` na lista de portas do pedido.
 
-De:
-```tsx
-<div className="mt-1.5 flex items-center gap-3 text-sm text-muted-foreground">
-  <span>Qtd: {linha.quantidade}</span>
-  {linha.largura && linha.altura && (
-    <span>{formatarDimensoes(linha.largura, linha.altura)}</span>
-  )}
-  {linha.tamanho && !linha.largura && !linha.altura && (
-    <span>{formatarTamanho(linha.tamanho)}</span>
-  )}
+## Alterações Técnicas
+
+### Arquivo: `src/pages/direcao/PedidoViewDirecao.tsx`
+
+**1. Buscar produtos_vendas do pedido (adicionar nova query)**
+
+Adicionar query para buscar os `produtos_vendas` (portas) do pedido para poder enumerar corretamente:
+
+```typescript
+// Buscar portas do pedido
+const { data: portasData } = await supabase
+  .from('produtos_vendas')
+  .select('id, largura, altura')
+  .eq('venda_id', pedidoData.venda_id)
+  .order('created_at', { ascending: true });
+
+// Criar mapa de produto_venda_id -> número da porta
+const portasMap = new Map<string, number>();
+(portasData || []).forEach((porta, idx) => {
+  portasMap.set(porta.id, idx + 1);
+});
 ```
 
-Para:
-```tsx
-<div className="mt-1.5 flex items-center gap-3 text-sm text-muted-foreground">
-  <span>Qtd: {linha.quantidade}</span>
-  {linha.tamanho && (
-    <span>{formatarTamanho(linha.tamanho)}</span>
-  )}
+**2. Atualizar interface para incluir `produto_venda_id`**
+
+```typescript
+interface PedidoLinha {
+  id: string;
+  nome_produto: string;
+  descricao_produto?: string | null;
+  quantidade: number;
+  tamanho?: string | null;
+  indice_porta?: number | null;
+  produto_venda_id?: string | null;  // ADICIONAR
+}
 ```
 
-## Resultado
+**3. Atualizar query de linhas**
 
-- Cada linha mostrará seu próprio campo `tamanho` (se existir)
-- As dimensões da porta continuam aparecendo no cabeçalho do agrupamento (ex: "Porta 01 - 3.00m x 4.00m")
+```typescript
+.select('id, nome_produto, descricao_produto, quantidade, tamanho, indice_porta, produto_venda_id')
+```
+
+**4. Atualizar exibição do badge**
+
+```tsx
+{linha.produto_venda_id && portasMap.get(linha.produto_venda_id) && (
+  <Badge variant="outline" className="...">
+    Porta {portasMap.get(linha.produto_venda_id)}
+    {linha.indice_porta !== null && linha.indice_porta > 0 && ` (${linha.indice_porta + 1})`}
+  </Badge>
+)}
+```
+
+## Lógica de Exibição
+
+| produto_venda_id | indice_porta | Exibição |
+|---|---|---|
+| Porta A (1ª cadastrada) | 0 | Porta 1 |
+| Porta A (1ª cadastrada) | 1 | Porta 1 (2) |
+| Porta B (2ª cadastrada) | 0 | Porta 2 |
+
+## Resultado Esperado
+
+- Itens da primeira porta: "Porta 1"
+- Itens da segunda porta: "Porta 2"
+- Se uma porta tiver quantidade > 1: "Porta 1 (2)" para a segunda unidade
