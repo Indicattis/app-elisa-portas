@@ -23,7 +23,11 @@ function formatTempo(segundos: number): string {
   return `${segs}s`;
 }
 
-export default function ConferenciaHub() {
+interface ConferenciaHubProps {
+  returnPath?: string;
+}
+
+export default function ConferenciaHub({ returnPath = "/estoque" }: ConferenciaHubProps) {
   const navigate = useNavigate();
   const {
     conferenciasEmAndamento,
@@ -52,7 +56,7 @@ export default function ConferenciaHub() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/estoque")}
+              onClick={() => navigate(returnPath)}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
