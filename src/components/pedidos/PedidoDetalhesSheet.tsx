@@ -36,6 +36,11 @@ interface ObservacaoVisita {
   posicao_guia: string;
   opcao_guia: string;
   aparencia_testeira: string;
+  produto?: {
+    largura?: number;
+    altura?: number;
+    tamanho?: string;
+  } | null;
 }
 
 interface PedidoDetalhesSheetProps {
@@ -83,7 +88,10 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
     try {
       const { data, error } = await supabase
         .from('pedido_porta_observacoes')
-        .select('*')
+        .select(`
+          *,
+          produto:produtos_vendas!produto_venda_id(largura, altura, tamanho)
+        `)
         .eq('pedido_id', pedido.id)
         .order('indice_porta', { ascending: true });
       
@@ -522,7 +530,14 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                   {observacoesVisita.map((obs, idx) => (
                     <div key={obs.id || idx} className="p-3 bg-amber-500/5 rounded-lg border border-amber-500/10">
                       <span className="text-xs font-medium text-amber-400 mb-2 block">
-                        Porta {obs.indice_porta + 1}
+                        Porta {idx + 1}
+                        {obs.produto && (
+                          <span className="text-amber-300/70 ml-2">
+                            - {obs.produto.largura && obs.produto.altura 
+                                ? `${obs.produto.largura}m × ${obs.produto.altura}m`
+                                : obs.produto.tamanho || ''}
+                          </span>
+                        )}
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         <Badge variant="outline" className="text-xs bg-amber-500/10 border-amber-500/30 text-amber-300">
