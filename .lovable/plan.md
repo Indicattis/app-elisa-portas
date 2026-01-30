@@ -1,108 +1,58 @@
 
-# Plano: Ranking de Equipes de Instalação
+# Plano: Adicionar Tamanho dos Itens nas Ordens de Pintura
 
-## Objetivo
-Criar uma nova página em `/logistica/instalacoes/ranking` que exiba um ranking das equipes de instalação baseado nas ordens de instalação concluídas.
+## Problema Identificado
 
-## Estrutura de Arquivos
+Na página `/producao/pintura`, ao visualizar os detalhes de uma ordem de pintura, as linhas dos itens não mostram as dimensões (largura x altura). O código já busca esses dados, mas não os exibe.
 
-```text
-src/
-├── hooks/
-│   └── useRankingEquipesInstalacao.ts  (NOVO)
-├── pages/
-│   └── logistica/
-│       └── RankingEquipesInstalacao.tsx  (NOVO)
+**Situação atual:**
+- Os dados `largura` e `altura` JÁ SÃO BUSCADOS no hook `useOrdemPintura.ts` (linhas 120-121)
+- No entanto, a exibição no `OrdemDetalhesSheet.tsx` só mostra `linha.tamanho` (que geralmente está vazio)
+
+## Solução
+
+Modificar a exibição dos itens para mostrar as dimensões quando disponíveis.
+
+## Alterações Técnicas
+
+### Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
+
+**1. Linha 830-838 (itens dentro do agrupamento por porta para pintura):**
+
+Antes:
+```tsx
+<div className="mt-1.5 flex items-center gap-3 text-sm text-muted-foreground">
+  <span>Qtd: {linha.quantidade}</span>
+  {linha.tamanho && <span>{formatarTamanho(linha.tamanho)}</span>}
+  ...
+</div>
 ```
 
-## Alterações Necessárias
-
-### 1. Criar Hook: `useRankingEquipesInstalacao.ts`
-
-Consulta que agrupa instalações concluídas por equipe:
-
-- Buscar todas as instalações onde `instalacao_concluida = true`
-- Agrupar por `responsavel_instalacao_id`
-- Fazer join com `equipes_instalacao` para nome e cor
-- Calcular métricas: quantidade de instalações, metragem total (se disponível)
-- Filtro por período (mês atual, ano, todo período)
-
-Interface do ranking:
-```typescript
-interface RankingEquipe {
-  equipe_id: string;
-  equipe_nome: string;
-  equipe_cor: string | null;
-  quantidade_instalacoes: number;
-  metragem_total: number;
-  ultima_instalacao: string | null;
-}
+Depois:
+```tsx
+<div className="mt-1.5 flex items-center gap-3 text-sm text-muted-foreground">
+  <span>Qtd: {linha.quantidade}</span>
+  {linha.largura && linha.altura && (
+    <span>{formatarDimensoes(linha.largura, linha.altura)}</span>
+  )}
+  {linha.tamanho && !linha.largura && !linha.altura && (
+    <span>{formatarTamanho(linha.tamanho)}</span>
+  )}
+  ...
+</div>
 ```
 
-### 2. Criar Página: `RankingEquipesInstalacao.tsx`
-
-Layout seguindo o padrão existente (`EquipesMinimalista.tsx`):
-- Usar `MinimalistLayout` com breadcrumbs
-- Filtros por período (Mês Atual, Este Ano, Todo Período)
-- Cards ou tabela com ranking das equipes
-- Mostrar posição (medalhas para top 3), nome da equipe, cor, quantidade de instalações
-- Barra de progresso visual comparando com a equipe líder
-
-### 3. Atualizar `InstalacoesHub.tsx`
-
-Adicionar novo item no menu:
-```typescript
-{
-  label: "Ranking Equipes",
-  icon: Trophy,
-  path: "/logistica/instalacoes/ranking",
-}
-```
-
-### 4. Atualizar `App.tsx`
-
-Adicionar rota:
-```typescript
-<Route 
-  path="/logistica/instalacoes/ranking" 
-  element={
-    <ProtectedRoute routeKey="logistica_hub">
-      <RankingEquipesInstalacao />
-    </ProtectedRoute>
-  } 
-/>
-```
-
-## Detalhes Técnicos
-
-### Query do Ranking
-
-```sql
--- Conceito da consulta
-SELECT 
-  i.responsavel_instalacao_id,
-  e.nome as equipe_nome,
-  e.cor as equipe_cor,
-  COUNT(*) as quantidade_instalacoes,
-  SUM(COALESCE(i.metragem_quadrada, 0)) as metragem_total,
-  MAX(i.instalacao_concluida_em) as ultima_instalacao
-FROM instalacoes i
-JOIN equipes_instalacao e ON e.id = i.responsavel_instalacao_id
-WHERE i.instalacao_concluida = true
-  AND e.ativa = true
-  -- Filtro de período opcional
-GROUP BY i.responsavel_instalacao_id, e.nome, e.cor
-ORDER BY quantidade_instalacoes DESC
-```
-
-### Componentes UI
-
-- Cards com a cor da equipe como borda/destaque
-- Medalhas para posições 1, 2 e 3
-- Barra de progresso proporcional ao líder
-- Badge com quantidade de instalações
-- Data da última instalação concluída
+**Lógica:**
+- Se tem `largura` E `altura` → mostra dimensões formatadas (ex: "2.80m x 3.00m")
+- Se não tem dimensões mas tem `tamanho` → mostra tamanho (fallback)
 
 ## Resultado Esperado
 
-Uma página de ranking mostrando as equipes ordenadas por quantidade de instalações concluídas, com visual similar ao ranking de vendedores existente, permitindo filtrar por diferentes períodos.
+| Antes | Depois |
+|-------|--------|
+| Qtd: 1 | Qtd: 1 • 2.80m x 3.00m |
+| Qtd: 2 | Qtd: 2 • 3.50m x 4.00m |
+
+## Observação
+
+A função `formatarDimensoes` já está importada no arquivo (linha 33), então não é necessário adicionar nenhuma nova importação.
