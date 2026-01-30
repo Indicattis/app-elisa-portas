@@ -116,7 +116,7 @@ export default function ProducaoHome() {
         <h2 className="text-xl font-semibold">Acesso aos Painéis</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {routes
-            .filter(route => !['hub_fabrica_pedidos', 'metas'].includes(route.key))
+            .filter(route => !['hub_fabrica_pedidos', 'metas', 'producao_hub'].includes(route.key))
             .map(route => {
               const Icon = getIcon(route.icon);
               const count = getRouteCount(route.key);
