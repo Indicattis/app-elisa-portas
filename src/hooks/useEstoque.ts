@@ -32,6 +32,7 @@ export interface ProdutoEstoque {
   setor_responsavel_producao: 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null;
   fornecedor_id: string | null;
   quantidade_ideal: number;
+  quantidade_maxima: number;
   requer_pintura: boolean;
   pontuacao_producao: number;
   // Novos campos de cálculo automático
@@ -61,6 +62,7 @@ export interface ProdutoEstoqueInput {
   setor_responsavel_producao?: 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null;
   fornecedor_id?: string | null;
   quantidade_ideal?: number;
+  quantidade_maxima?: number;
   requer_pintura?: boolean;
   pontuacao_producao?: number;
   // Novos campos de cálculo automático
