@@ -748,6 +748,17 @@ export function OrdemDetalhesSheet({
                     return grupos;
                   }, {} as Record<string, LinhaOrdem[]>);
 
+                  // Criar mapa de numeração baseado na ordem de aparição dos produto_venda_id únicos
+                  const uniquePortaIds = [...new Set(
+                    linhasQuePrecisaPintura
+                      .map(l => l.produto_venda_id)
+                      .filter((id): id is string => id !== null && id !== undefined)
+                  )];
+                  const portasNumeracaoMap = new Map<string, number>();
+                  uniquePortaIds.forEach((portaId, idx) => {
+                    portasNumeracaoMap.set(portaId, idx + 1);
+                  });
+
                   return Object.entries(linhasPorPorta).map(([portaId, linhasPorta], index) => {
                     const primeiraLinha = linhasPorta[0];
                     const todasConcluidasPorta = linhasPorta.every(l => l.concluida);
@@ -777,7 +788,7 @@ export function OrdemDetalhesSheet({
                             <div className="flex items-center gap-2">
                               <Package className="h-4 w-4 text-primary" />
                               <span className="font-semibold text-sm">
-                                Porta {String(index + 1).padStart(2, '0')}
+                                Porta {String(portasNumeracaoMap.get(portaId) || 1).padStart(2, '0')}
                                 {larguraPorta && alturaPorta && (
                                   <span className="font-normal text-muted-foreground ml-2">
                                     {formatarDimensoes(larguraPorta, alturaPorta)}
