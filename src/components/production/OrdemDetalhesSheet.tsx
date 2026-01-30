@@ -829,7 +829,12 @@ export function OrdemDetalhesSheet({
                                 
                                 <div className="mt-1.5 flex items-center gap-3 text-sm text-muted-foreground">
                                   <span>Qtd: {linha.quantidade}</span>
-                                  {linha.tamanho && <span>{formatarTamanho(linha.tamanho)}</span>}
+                                  {linha.largura && linha.altura && (
+                                    <span>{formatarDimensoes(linha.largura, linha.altura)}</span>
+                                  )}
+                                  {linha.tamanho && !linha.largura && !linha.altura && (
+                                    <span>{formatarTamanho(linha.tamanho)}</span>
+                                  )}
                                   {getEtiquetasRecomendadas(linha) !== null && (
                                     <Badge variant="outline" className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/30">
                                       <Tags className="h-3 w-3 mr-1" />
