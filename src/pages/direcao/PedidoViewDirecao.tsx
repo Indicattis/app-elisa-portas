@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, User, Package, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCw, Hammer, Paintbrush, Truck, FileDown, Printer, ExternalLink } from "lucide-react";
+import { MapPin, User, Package, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCw, Hammer, Paintbrush, Truck, FileDown, Printer, ExternalLink, FileText } from "lucide-react";
 import { baixarPedidoProducaoPDF, imprimirPedidoProducaoPDF, type PedidoProducaoPDFData } from "@/utils/pedidoProducaoPDFGenerator";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -44,6 +44,8 @@ interface Pedido {
   created_at: string;
   venda_id?: string;
   ficha_visita_url?: string | null;
+  observacoes?: string | null;
+  updated_at?: string;
   cliente_nome?: string;
   cidade?: string;
   estado?: string;
@@ -70,7 +72,7 @@ export default function PedidoViewDirecao() {
         .from('pedidos_producao')
         .select(`
           id, numero_pedido, etapa_atual, created_at, venda_id,
-          ficha_visita_url,
+          ficha_visita_url, observacoes, updated_at,
           vendas!inner(cliente_nome, cidade, estado, valor_venda, forma_pagamento, tipo_entrega, data_prevista_entrega)
         `)
         .eq('id', id)
@@ -132,6 +134,8 @@ export default function PedidoViewDirecao() {
         created_at: pedidoData.created_at,
         venda_id: pedidoData.venda_id || undefined,
         ficha_visita_url: pedidoData.ficha_visita_url,
+        observacoes: pedidoData.observacoes,
+        updated_at: pedidoData.updated_at,
         cliente_nome: venda?.cliente_nome,
         cidade: venda?.cidade,
         estado: venda?.estado,
@@ -394,6 +398,30 @@ export default function PedidoViewDirecao() {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Observações do Pedido */}
+        {pedido.observacoes && (
+          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm flex items-center gap-2 text-white">
+                  <FileText className="w-4 h-4" />
+                  Observações do Pedido
+                </CardTitle>
+                {pedido.updated_at && (
+                  <span className="text-xs text-white/50">
+                    Atualizado em {format(new Date(pedido.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  </span>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-white/80 whitespace-pre-wrap">
+                {pedido.observacoes}
+              </p>
             </CardContent>
           </Card>
         )}
