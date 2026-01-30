@@ -1,118 +1,80 @@
 
-# Plano: Rota de Conferência para Produção
+# Plano: Correção do Carregamento de Produtos na Conferência
 
-## Objetivo
+## Problema Identificado
 
-Criar rota `/producao/conferencia-estoque/:id` para que, ao acessar uma conferência a partir da área de produção, o botão "Voltar" e "Pausar" retornem para `/producao/conferencia-estoque` em vez de `/estoque/conferencia`.
+A página de execução da conferência (`ConferenciaExecucao.tsx`) não está exibindo os itens de estoque, mesmo quando os dados existem no banco de dados. A investigação mostrou:
 
-## Alterações Necessárias
+- Conferência `f4b21ee4-...` existe com **95 itens** no banco
+- Os itens de conferência estão corretamente criados em `estoque_conferencia_itens`
+- As políticas RLS permitem acesso para usuários autenticados
+- Os dados da tabela `estoque` estão acessíveis
 
-### 1. Criar wrapper `ConferenciaExecucaoProducao.tsx`
+O problema parece ser uma condição de corrida (race condition) onde a página pode renderizar antes dos produtos serem carregados corretamente.
 
-Novo arquivo que passa o `returnPath` correto:
+## Causa Raiz
 
-```tsx
-// src/pages/producao/ConferenciaExecucaoProducao.tsx
-import ConferenciaExecucao from "@/pages/estoque/ConferenciaExecucao";
+No código atual (linha 218), a página aguarda apenas `loadingConferencia` e `loadingItens`, mas NÃO aguarda `loadingProdutos` no nível da página. Isso pode causar:
 
-export default function ConferenciaExecucaoProducao() {
-  return <ConferenciaExecucao returnPath="/producao/conferencia-estoque" />;
-}
+1. A página renderiza com spinner de conferência/itens
+2. Quando esses carregam, a tabela é mostrada
+3. Mas `produtos` pode ainda não ter dados (se o cache não foi populado)
+
+## Solução
+
+### 1. Incluir `loadingProdutos` na verificação inicial
+
+Modificar a condição de loading inicial para incluir o carregamento de produtos:
+
+```typescript
+// Antes (linha 218)
+if (loadingConferencia || loadingItens) {
+
+// Depois
+if (loadingConferencia || loadingItens || loadingProdutos) {
 ```
 
-### 2. Modificar `ConferenciaExecucao.tsx`
+### 2. Adicionar mensagem quando não há produtos
 
-Adicionar prop `returnPath` com valor padrão `/estoque/conferencia`:
-
-```tsx
-interface ConferenciaExecucaoProps {
-  returnPath?: string;
-}
-
-export default function ConferenciaExecucao({ 
-  returnPath = "/estoque/conferencia" 
-}: ConferenciaExecucaoProps) {
-  // ...
-  
-  const handlePausar = async () => {
-    // ...
-    navigate(returnPath);  // Linha 170
-  };
-}
-```
-
-### 3. Modificar `ConferenciaHub.tsx`
-
-Adicionar prop `executionBasePath` para navegação contextual:
+Caso `produtos` retorne vazio (após carregado), exibir uma mensagem informativa em vez de tabela vazia:
 
 ```tsx
-interface ConferenciaHubProps {
-  returnPath?: string;
-  executionBasePath?: string;  // Nova prop
-}
-
-export default function ConferenciaHub({ 
-  returnPath = "/estoque", 
-  executionBasePath = "/estoque/conferencia"  // Valor padrão
-}: ConferenciaHubProps) {
-  
-  const handleIniciarNova = async () => {
-    const conferencia = await iniciarConferencia();
-    if (conferencia) {
-      navigate(`${executionBasePath}/${conferencia.id}`);  // Usar base contextual
-    }
-  };
-
-  const handleRetomar = (conferenciaId: string) => {
-    navigate(`${executionBasePath}/${conferenciaId}`);  // Usar base contextual
-  };
-}
+{!loadingProdutos && produtos.length === 0 ? (
+  <Card>
+    <CardContent className="py-8 text-center">
+      <AlertCircle className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+      <p>Nenhum produto encontrado no estoque</p>
+      <Button className="mt-4" onClick={() => window.location.reload()}>
+        Recarregar página
+      </Button>
+    </CardContent>
+  </Card>
+) : (
+  // Tabela existente...
+)}
 ```
 
-### 4. Atualizar `ConferenciaEstoqueProducao.tsx`
+### 3. Forçar refetch dos produtos ao entrar na página
 
-Passar a nova prop:
+Adicionar invalidação do cache ao montar o componente para garantir dados frescos:
 
-```tsx
-export default function ConferenciaEstoqueProducao() {
-  return (
-    <ConferenciaHub 
-      returnPath="/producao/home" 
-      executionBasePath="/producao/conferencia-estoque"
-    />
-  );
-}
+```typescript
+const queryClient = useQueryClient();
+
+useEffect(() => {
+  // Invalidar cache de produtos ao entrar na página para garantir dados frescos
+  queryClient.invalidateQueries({ queryKey: ["estoque-produtos"] });
+}, [queryClient]);
 ```
 
-### 5. Adicionar rota em `App.tsx`
+## Arquivo a Modificar
 
-```tsx
-import ConferenciaExecucaoProducao from "./pages/producao/ConferenciaExecucaoProducao";
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/pages/estoque/ConferenciaExecucao.tsx` | Ajustar loading inicial, adicionar refetch e mensagem de fallback |
 
-// Na seção de rotas:
-<Route 
-  path="/producao/conferencia-estoque/:id" 
-  element={
-    <ProtectedRoute routeKey="producao_hub">
-      <ConferenciaExecucaoProducao />
-    </ProtectedRoute>
-  } 
-/>
-```
+## Resultado Esperado
 
-## Fluxo Resultante
-
-| Origem | Hub | Execução | Voltar/Pausar |
-|--------|-----|----------|---------------|
-| Estoque | `/estoque/conferencia` | `/estoque/conferencia/:id` | → `/estoque/conferencia` |
-| Produção | `/producao/conferencia-estoque` | `/producao/conferencia-estoque/:id` | → `/producao/conferencia-estoque` |
-
-## Arquivos a Modificar
-
-| Arquivo | Ação |
-|---------|------|
-| `src/pages/producao/ConferenciaExecucaoProducao.tsx` | **Criar** |
-| `src/pages/estoque/ConferenciaExecucao.tsx` | Adicionar prop `returnPath` |
-| `src/pages/estoque/ConferenciaHub.tsx` | Adicionar prop `executionBasePath` |
-| `src/pages/producao/ConferenciaEstoqueProducao.tsx` | Passar `executionBasePath` |
-| `src/App.tsx` | Adicionar rota `/producao/conferencia-estoque/:id` |
+1. A página aguarda TODOS os dados necessários antes de exibir a tabela
+2. Se não houver produtos, uma mensagem clara é exibida com opção de recarregar
+3. O cache de produtos é invalidado ao entrar na página, garantindo dados frescos
