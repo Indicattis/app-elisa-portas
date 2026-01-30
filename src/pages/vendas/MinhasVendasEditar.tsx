@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCanEditVenda } from "@/hooks/useCanEditVenda";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Calendar, User, MapPin, CreditCard, Truck, MessageSquare, Store, Percent, Save, Loader2 } from "lucide-react";
+import { Plus, Calendar, User, MapPin, CreditCard, Truck, MessageSquare, Store, Percent, Save, Loader2, Paperclip, FileText, ExternalLink } from "lucide-react";
+import { ComprovanteUploadModal } from "@/components/vendas/ComprovanteUploadModal";
 import { Textarea } from "@/components/ui/textarea";
 import type { Tables } from "@/integrations/supabase/types";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
@@ -37,6 +38,7 @@ export default function MinhasVendasEditar() {
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const [observacoes, setObservacoes] = useState("");
   const [isSavingObservacoes, setIsSavingObservacoes] = useState(false);
+  const [comprovanteModalOpen, setComprovanteModalOpen] = useState(false);
   const { produtos, isLoading: isLoadingProdutos, addProduto, deleteProduto, updateProduto } = useProdutosVenda(id);
   const { canais } = useCanaisAquisicao();
 
@@ -596,6 +598,64 @@ export default function MinhasVendasEditar() {
                 className="bg-blue-500/10 border-blue-500/20 text-blue-100/90 placeholder:text-blue-300/40 focus:border-blue-400/50 focus:ring-blue-400/20"
               />
             </div>
+
+            {/* Comprovante de Pagamento */}
+            <div className="mt-6 pt-4 border-t border-blue-500/20">
+              <div className="flex items-center gap-2 text-sm font-medium text-blue-300/70 mb-3">
+                <Paperclip className="h-4 w-4" />
+                Comprovante de Pagamento
+              </div>
+              
+              {venda.comprovante_url ? (
+                <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                  <FileText className="h-5 w-5 text-blue-300" />
+                  <span className="text-sm text-blue-100 truncate flex-1">
+                    {venda.comprovante_nome || 'Comprovante'}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => window.open(venda.comprovante_url!, '_blank')}
+                    className="text-blue-300 hover:text-blue-100 hover:bg-blue-500/20"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setComprovanteModalOpen(true)}
+                    className="text-blue-300 hover:text-blue-100 hover:bg-blue-500/20"
+                  >
+                    Alterar
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setComprovanteModalOpen(true)}
+                  className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
+                >
+                  <Paperclip className="h-4 w-4 mr-2" />
+                  Anexar Comprovante
+                </Button>
+              )}
+            </div>
+
+            {/* Modal de Comprovante */}
+            <ComprovanteUploadModal
+              open={comprovanteModalOpen}
+              onOpenChange={(open) => {
+                setComprovanteModalOpen(open);
+                if (!open) fetchVenda();
+              }}
+              venda={venda ? {
+                id: venda.id,
+                cliente_nome: venda.cliente_nome || '',
+                comprovante_url: venda.comprovante_url,
+                comprovante_nome: venda.comprovante_nome
+              } : null}
+            />
           </CardContent>
         </Card>
 
