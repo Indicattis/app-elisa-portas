@@ -26,8 +26,8 @@ const menuItems = [
   { label: "Vendas", icon: ShoppingCart, path: "/vendas" },
   { label: "Fábrica", icon: Factory, path: "/fabrica" },
   { label: "Logística", icon: Truck, path: "/logistica" },
-  { label: "Administrativo", icon: Building2, path: "/administrativo" },
-  { label: "Estoque", icon: Warehouse, path: "/estoque" }
+  { label: "Estoque", icon: Warehouse, path: "/estoque" },
+  { label: "Administrativo", icon: Building2, path: "/administrativo" }
 ];
 
 export default function Home() {
