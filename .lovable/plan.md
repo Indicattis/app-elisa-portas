@@ -1,111 +1,134 @@
 
-# Plano: Adicionar Botoes de Conferencia e Auditoria
+# Plano: Corrigir Estilos e Navegacao
 
-## Problema 1: Botao de Conferencia em /producao/home
+## Resumo das Alteracoes
 
-A pagina `ProducaoHome.tsx` carrega rotas dinamicamente do banco de dados. Nao existe um botao fixo para "Conferencia de Estoque".
-
-### Solucao
-Adicionar um botao fixo "Conferencia de Estoque" na area de acoes (ao lado de "Meu Historico"), com icone `ClipboardCheck` e navegacao para `/estoque/conferencia`.
-
----
-
-## Problema 2: Botao de Auditoria em /estoque
-
-A pagina `EstoqueHub.tsx` tem o botao de "Conferencia de Estoque" mas falta um botao para acessar o historico de auditorias em `/estoque/auditoria`.
-
-### Solucao
-Adicionar um segundo botao "Auditoria" na secao de conferencia (tanto mobile quanto desktop), com icone `FileSearch` e navegacao para `/estoque/auditoria`.
+| Local | O que mudar |
+|-------|-------------|
+| /estoque | Auditoria vira item do hub (igual Fabrica), remover botoes especiais |
+| /estoque/auditoria | Usar MinimalistLayout (tema escuro minimalista) |
+| /producao/home | Card de conferencia em secao separada, navegacao contextual |
 
 ---
 
-## Arquivos a Modificar
+## 1. EstoqueHub.tsx - Auditoria como Item do Hub
 
-| Arquivo | Alteracao |
-|---------|-----------|
-| `src/pages/ProducaoHome.tsx` | Adicionar botao "Conferencia de Estoque" |
-| `src/pages/estoque/EstoqueHub.tsx` | Adicionar botao "Auditoria de Estoque" |
+Adicionar "Auditoria" no array `menuItems` com estilo identico aos demais:
+
+```typescript
+const menuItems = [
+  { label: "Fabrica", icon: Factory, path: "/estoque/fabrica", ativo: true },
+  { label: "Almoxarifado", icon: Package, path: "/estoque/almoxarifado", ativo: true },
+  { label: "Fornecedores", icon: Truck, path: "/estoque/fornecedores", ativo: true },
+  { label: "Auditoria", icon: FileSearch, path: "/estoque/auditoria", ativo: true },
+];
+```
+
+Remover completamente:
+- Botao verde de "Conferencia de Estoque" (mobile e desktop)
+- Botao amber de "Auditoria de Estoque" (mobile e desktop)
 
 ---
 
-## Alteracao 1: ProducaoHome.tsx
+## 2. AuditoriaEstoque.tsx - Estilo Minimalista
 
-Adicionar importacao do icone e botao na area de acoes:
+Refatorar para usar `MinimalistLayout` igual a EstoqueFabrica.tsx:
+
+```typescript
+import { MinimalistLayout } from "@/components/MinimalistLayout";
+
+export default function AuditoriaEstoque() {
+  const breadcrumbItems = [
+    { label: 'Home', path: '/home' },
+    { label: 'Estoque', path: '/estoque' },
+    { label: 'Auditoria' }
+  ];
+
+  return (
+    <MinimalistLayout
+      title="Auditoria de Estoque"
+      subtitle="Historico completo de conferencias realizadas"
+      backPath="/estoque"
+      breadcrumbItems={breadcrumbItems}
+    >
+      {/* Conteudo existente adaptado para tema escuro */}
+    </MinimalistLayout>
+  );
+}
+```
+
+Adaptar cards e tabelas para tema escuro (bg-white/5, text-white, border-white/10).
+
+---
+
+## 3. ProducaoHome.tsx - Card de Conferencia em Secao Separada
+
+Remover o Button do header e criar secao dedicada abaixo dos paineis:
 
 ```tsx
-// Importar
-import { ClipboardCheck } from "lucide-react";
-
-// Na area de botoes (linha ~105)
-<div className="flex gap-2 shrink-0">
-  <Button variant="outline" onClick={() => navigate('/estoque/conferencia')}>
-    <ClipboardCheck className="h-4 w-4 mr-2" />
-    Conferencia de Estoque
-  </Button>
-  <Button variant="outline" onClick={() => navigate('/producao/meu-historico')}>
-    <History className="h-4 w-4 mr-2" />
-    Meu Historico
-  </Button>
+{/* Secao Conferencia de Estoque */}
+<div className="space-y-3">
+  <h2 className="text-xl font-semibold">Conferencia</h2>
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+    <Card 
+      className="cursor-pointer hover:shadow-md transition-shadow hover:border-primary/50 group" 
+      onClick={() => navigate('/producao/conferencia-estoque')}
+    >
+      <div className="flex items-center justify-between p-4">
+        <div className="flex items-center gap-3 flex-1">
+          <div className="p-2 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
+            <ClipboardCheck className="h-5 w-5 text-primary" />
+          </div>
+          <span className="font-medium text-sm">Conferencia de Estoque</span>
+        </div>
+      </div>
+    </Card>
+  </div>
 </div>
 ```
 
 ---
 
-## Alteracao 2: EstoqueHub.tsx
+## 4. Nova Rota: /producao/conferencia-estoque
 
-Adicionar botao de auditoria ao lado do botao de conferencia:
+Criar wrapper que usa o mesmo componente de conferencia mas com navegacao para /producao/home:
 
-### Mobile (apos linha ~127)
+**Arquivo:** `src/pages/producao/ConferenciaEstoqueProducao.tsx`
+
 ```tsx
-{/* Botao Auditoria - Mobile */}
-<div className="p-1.5 rounded-xl backdrop-blur-xl border bg-white/5 border-white/10">
-  <button
-    onClick={() => navigate('/estoque/auditoria')}
-    className="w-full h-12 rounded-lg flex items-center gap-4 px-5
-               font-medium border transition-all duration-300
-               bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 
-               active:scale-[0.98] text-white shadow-lg shadow-amber-500/20 border-amber-400/30"
-  >
-    <FileSearch className="w-5 h-5" strokeWidth={1.5} />
-    <span className="text-sm font-medium flex-1 text-left">Auditoria de Estoque</span>
-  </button>
-</div>
+import ConferenciaEstoque from "@/pages/estoque/ConferenciaEstoque";
+
+export default function ConferenciaEstoqueProducao() {
+  // Renderiza o componente existente mas passa props de navegacao
+  return <ConferenciaEstoque returnPath="/producao/home" />;
+}
 ```
 
-### Desktop (apos linha ~196)
+Ou, se o componente original nao aceitar props, criar versao que sobrescreve o backPath.
+
+**Adicionar rota em App.tsx:**
 ```tsx
-{/* Botao Auditoria - Desktop */}
-<div className="p-2 rounded-2xl backdrop-blur-xl border bg-white/5 border-white/10">
-  <button
-    onClick={() => navigate('/estoque/auditoria')}
-    className="w-full h-16 rounded-xl flex items-center justify-center gap-3
-               font-medium border transition-all duration-300
-               bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 
-               hover:shadow-xl hover:shadow-amber-500/50 text-white shadow-lg shadow-amber-500/30 border-amber-400/30"
-  >
-    <FileSearch className="w-6 h-6" strokeWidth={1.5} />
-    <span className="text-sm font-medium tracking-wide">Auditoria de Estoque</span>
-  </button>
-</div>
+<Route path="/producao/conferencia-estoque" element={<ConferenciaEstoqueProducao />} />
 ```
 
 ---
 
-## Layout Proposto - /estoque
+## Arquivos a Modificar/Criar
 
-```text
-┌─────────────────────────────────────────────┐
-│  [Fabrica]  [Almoxarifado]  [Fornecedores]  │
-├─────────────────────────────────────────────┤
-│  [🟢 Conferencia de Estoque]                │
-│  [🟠 Auditoria de Estoque]                  │
-└─────────────────────────────────────────────┘
-```
+| Arquivo | Acao |
+|---------|------|
+| src/pages/estoque/EstoqueHub.tsx | Modificar - adicionar Auditoria no menu, remover botoes especiais |
+| src/pages/estoque/AuditoriaEstoque.tsx | Modificar - usar MinimalistLayout |
+| src/pages/ProducaoHome.tsx | Modificar - card em secao separada |
+| src/pages/estoque/ConferenciaEstoque.tsx | Modificar - aceitar prop returnPath |
+| src/pages/producao/ConferenciaEstoqueProducao.tsx | Criar - wrapper com returnPath |
+| src/App.tsx | Modificar - adicionar rota /producao/conferencia-estoque |
 
 ---
 
-## Resultado Esperado
+## Resultado Final
 
-- `/producao/home`: Botao "Conferencia de Estoque" visivel no header
-- `/estoque`: Dois botoes - "Conferencia" (verde) e "Auditoria" (amarelo/amber)
-- Navegacao consistente entre as paginas
+- **/estoque**: 4 botoes iguais (Fabrica, Almoxarifado, Fornecedores, Auditoria) - sem botoes especiais
+- **/estoque/auditoria**: Tema escuro minimalista igual /estoque/fabrica
+- **/producao/home**: Card de "Conferencia de Estoque" em secao propria, estilo igual aos paineis
+- **/producao/conferencia-estoque**: Mesma funcionalidade, mas voltar retorna para /producao/home
