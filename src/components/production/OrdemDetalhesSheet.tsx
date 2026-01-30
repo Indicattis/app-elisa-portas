@@ -829,10 +829,7 @@ export function OrdemDetalhesSheet({
                                 
                                 <div className="mt-1.5 flex items-center gap-3 text-sm text-muted-foreground">
                                   <span>Qtd: {linha.quantidade}</span>
-                                  {linha.largura && linha.altura && (
-                                    <span>{formatarDimensoes(linha.largura, linha.altura)}</span>
-                                  )}
-                                  {linha.tamanho && !linha.largura && !linha.altura && (
+                                  {linha.tamanho && (
                                     <span>{formatarTamanho(linha.tamanho)}</span>
                                   )}
                                   {getEtiquetasRecomendadas(linha) !== null && (
