@@ -1,80 +1,57 @@
 
-# Correção: Identificar Porta pelo produto_venda_id (não indice_porta)
 
-## Problema Identificado
+# Correção: Numerar Portas Baseado nas Linhas do Pedido
 
-O campo `indice_porta` indica a posição dentro de portas **do mesmo tipo** (ex: se alguém compra 2 portas iguais, elas terão índice 0 e 1). Porém, quando são portas de tipos diferentes, cada uma tem `indice_porta = 0`.
+## Problema
 
-A exibição atual mostra "Porta 1" para todas as linhas porque usa diretamente `indice_porta + 1`.
+A query atual busca **todos** os `produtos_vendas` da venda, mas nem todos são portas do pedido. As linhas do pedido referenciam apenas 2 produtos (o 3º e 4º da lista), resultando em "Porta 3" e "Porta 4" ao invés de "Porta 1" e "Porta 2".
 
 ## Solução
 
-Identificar a porta com base na posição do `produto_venda_id` na lista de portas do pedido.
+Criar o mapa de numeração baseado nos `produto_venda_id` únicos que existem nas linhas do pedido, não em todos os produtos da venda.
 
 ## Alterações Técnicas
 
 ### Arquivo: `src/pages/direcao/PedidoViewDirecao.tsx`
 
-**1. Buscar produtos_vendas do pedido (adicionar nova query)**
-
-Adicionar query para buscar os `produtos_vendas` (portas) do pedido para poder enumerar corretamente:
+**Linhas 93-106 - Alterar lógica de criação do mapa:**
 
 ```typescript
-// Buscar portas do pedido
-const { data: portasData } = await supabase
-  .from('produtos_vendas')
-  .select('id, largura, altura')
-  .eq('venda_id', pedidoData.venda_id)
-  .order('created_at', { ascending: true });
+// ANTES: Busca TODOS os produtos da venda
+if (pedidoData.venda_id) {
+  const { data: portasData } = await supabase
+    .from('produtos_vendas')
+    .select('id')
+    .eq('venda_id', pedidoData.venda_id)
+    .order('created_at', { ascending: true });
 
-// Criar mapa de produto_venda_id -> número da porta
-const portasMap = new Map<string, number>();
-(portasData || []).forEach((porta, idx) => {
-  portasMap.set(porta.id, idx + 1);
-});
-```
-
-**2. Atualizar interface para incluir `produto_venda_id`**
-
-```typescript
-interface PedidoLinha {
-  id: string;
-  nome_produto: string;
-  descricao_produto?: string | null;
-  quantidade: number;
-  tamanho?: string | null;
-  indice_porta?: number | null;
-  produto_venda_id?: string | null;  // ADICIONAR
+  const newPortasMap = new Map<string, number>();
+  (portasData || []).forEach((porta, idx) => {
+    newPortasMap.set(porta.id, idx + 1);
+  });
+  setPortasMap(newPortasMap);
 }
+
+// DEPOIS: Usa apenas os produto_venda_id únicos das linhas do pedido
+const uniquePortaIds = [...new Set(
+  (linhasData || [])
+    .map(l => l.produto_venda_id)
+    .filter((id): id is string => id !== null && id !== undefined)
+)];
+
+const newPortasMap = new Map<string, number>();
+uniquePortaIds.forEach((portaId, idx) => {
+  newPortasMap.set(portaId, idx + 1);
+});
+setPortasMap(newPortasMap);
 ```
 
-**3. Atualizar query de linhas**
+## Resultado
 
-```typescript
-.select('id, nome_produto, descricao_produto, quantidade, tamanho, indice_porta, produto_venda_id')
-```
+| produto_venda_id nas linhas | Numeração |
+|-----------------------------|-----------|
+| 8fe6a751-... (1º encontrado) | Porta 1 |
+| 2dbaac84-... (2º encontrado) | Porta 2 |
 
-**4. Atualizar exibição do badge**
+Os itens agora exibirão "Porta 1" e "Porta 2" corretamente.
 
-```tsx
-{linha.produto_venda_id && portasMap.get(linha.produto_venda_id) && (
-  <Badge variant="outline" className="...">
-    Porta {portasMap.get(linha.produto_venda_id)}
-    {linha.indice_porta !== null && linha.indice_porta > 0 && ` (${linha.indice_porta + 1})`}
-  </Badge>
-)}
-```
-
-## Lógica de Exibição
-
-| produto_venda_id | indice_porta | Exibição |
-|---|---|---|
-| Porta A (1ª cadastrada) | 0 | Porta 1 |
-| Porta A (1ª cadastrada) | 1 | Porta 1 (2) |
-| Porta B (2ª cadastrada) | 0 | Porta 2 |
-
-## Resultado Esperado
-
-- Itens da primeira porta: "Porta 1"
-- Itens da segunda porta: "Porta 2"
-- Se uma porta tiver quantidade > 1: "Porta 1 (2)" para a segunda unidade
