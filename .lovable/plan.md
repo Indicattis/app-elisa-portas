@@ -1,58 +1,118 @@
 
-# Plano: Ajustes no Hub de Conferência
+# Plano: Rota de Conferência para Produção
 
-## Alterações Solicitadas
+## Objetivo
 
-1. **Remover botão "Ver Histórico de Conferências"** (linhas 86-94)
-2. **Aumentar altura do botão "Iniciar Nova Conferência" no mobile**
-3. **Bloquear nova conferência se já existir uma em andamento**
+Criar rota `/producao/conferencia-estoque/:id` para que, ao acessar uma conferência a partir da área de produção, o botão "Voltar" e "Pausar" retornem para `/producao/conferencia-estoque` em vez de `/estoque/conferencia`.
 
-## Implementação
+## Alterações Necessárias
 
-### Arquivo: `src/pages/estoque/ConferenciaHub.tsx`
+### 1. Criar wrapper `ConferenciaExecucaoProducao.tsx`
 
-**1. Remover o botão de histórico:**
+Novo arquivo que passa o `returnPath` correto:
+
 ```tsx
-// Remover completamente as linhas 86-94
-<Button
-  variant="outline"
-  size="lg"
-  onClick={() => navigate("/estoque/auditoria")}
-  className="flex-1 sm:flex-none"
->
-  <CheckCircle2 className="h-5 w-5 mr-2" />
-  Ver Histórico de Conferências
-</Button>
+// src/pages/producao/ConferenciaExecucaoProducao.tsx
+import ConferenciaExecucao from "@/pages/estoque/ConferenciaExecucao";
+
+export default function ConferenciaExecucaoProducao() {
+  return <ConferenciaExecucao returnPath="/producao/conferencia-estoque" />;
+}
 ```
 
-**2. Ajustar botão de iniciar com altura maior no mobile e bloquear se houver conferência:**
-```tsx
-const temConferenciaEmAndamento = conferenciasEmAndamento.length > 0;
+### 2. Modificar `ConferenciaExecucao.tsx`
 
-<Button
-  size="lg"
-  onClick={handleIniciarNova}
-  disabled={iniciando || temConferenciaEmAndamento}
-  className="w-full sm:w-auto h-14 sm:h-10"
->
-  <Plus className="h-5 w-5 mr-2" />
-  {iniciando 
-    ? "Iniciando..." 
-    : temConferenciaEmAndamento 
-      ? "Conferência em andamento" 
-      : "Iniciar Nova Conferência"
-  }
-</Button>
+Adicionar prop `returnPath` com valor padrão `/estoque/conferencia`:
+
+```tsx
+interface ConferenciaExecucaoProps {
+  returnPath?: string;
+}
+
+export default function ConferenciaExecucao({ 
+  returnPath = "/estoque/conferencia" 
+}: ConferenciaExecucaoProps) {
+  // ...
+  
+  const handlePausar = async () => {
+    // ...
+    navigate(returnPath);  // Linha 170
+  };
+}
 ```
 
-## Resultado
+### 3. Modificar `ConferenciaHub.tsx`
 
-| Alteração | Detalhe |
-|-----------|---------|
-| Botão de histórico | Removido |
-| Altura do botão (mobile) | `h-14` (56px) |
-| Altura do botão (desktop) | `h-10` (40px) |
-| Novo bloqueio | Desabilitado quando `conferenciasEmAndamento.length > 0` |
-| Texto quando bloqueado | "Conferência em andamento" |
+Adicionar prop `executionBasePath` para navegação contextual:
 
-Também será possível remover o import do ícone `CheckCircle2` que não será mais usado.
+```tsx
+interface ConferenciaHubProps {
+  returnPath?: string;
+  executionBasePath?: string;  // Nova prop
+}
+
+export default function ConferenciaHub({ 
+  returnPath = "/estoque", 
+  executionBasePath = "/estoque/conferencia"  // Valor padrão
+}: ConferenciaHubProps) {
+  
+  const handleIniciarNova = async () => {
+    const conferencia = await iniciarConferencia();
+    if (conferencia) {
+      navigate(`${executionBasePath}/${conferencia.id}`);  // Usar base contextual
+    }
+  };
+
+  const handleRetomar = (conferenciaId: string) => {
+    navigate(`${executionBasePath}/${conferenciaId}`);  // Usar base contextual
+  };
+}
+```
+
+### 4. Atualizar `ConferenciaEstoqueProducao.tsx`
+
+Passar a nova prop:
+
+```tsx
+export default function ConferenciaEstoqueProducao() {
+  return (
+    <ConferenciaHub 
+      returnPath="/producao/home" 
+      executionBasePath="/producao/conferencia-estoque"
+    />
+  );
+}
+```
+
+### 5. Adicionar rota em `App.tsx`
+
+```tsx
+import ConferenciaExecucaoProducao from "./pages/producao/ConferenciaExecucaoProducao";
+
+// Na seção de rotas:
+<Route 
+  path="/producao/conferencia-estoque/:id" 
+  element={
+    <ProtectedRoute routeKey="producao_hub">
+      <ConferenciaExecucaoProducao />
+    </ProtectedRoute>
+  } 
+/>
+```
+
+## Fluxo Resultante
+
+| Origem | Hub | Execução | Voltar/Pausar |
+|--------|-----|----------|---------------|
+| Estoque | `/estoque/conferencia` | `/estoque/conferencia/:id` | → `/estoque/conferencia` |
+| Produção | `/producao/conferencia-estoque` | `/producao/conferencia-estoque/:id` | → `/producao/conferencia-estoque` |
+
+## Arquivos a Modificar
+
+| Arquivo | Ação |
+|---------|------|
+| `src/pages/producao/ConferenciaExecucaoProducao.tsx` | **Criar** |
+| `src/pages/estoque/ConferenciaExecucao.tsx` | Adicionar prop `returnPath` |
+| `src/pages/estoque/ConferenciaHub.tsx` | Adicionar prop `executionBasePath` |
+| `src/pages/producao/ConferenciaEstoqueProducao.tsx` | Passar `executionBasePath` |
+| `src/App.tsx` | Adicionar rota `/producao/conferencia-estoque/:id` |
