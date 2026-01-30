@@ -1,7 +1,7 @@
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { Package, MapPin, Calendar, Clock, User, Phone, Truck, DoorOpen, CreditCard } from "lucide-react";
+import { Package, MapPin, Calendar, Clock, User, Phone, Truck, DoorOpen, CreditCard, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getFormaPagamentoLabel } from "@/utils/formatters";
@@ -243,6 +243,26 @@ export const OrdemCarregamentoDetails = ({
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Card: Observações do Pedido */}
+          {ordem.pedido?.observacoes && (
+            <div className="bg-amber-500/10 rounded-xl border border-amber-500/20 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                  <FileText className="h-3.5 w-3.5" />
+                  Observações do Pedido
+                </h3>
+                {ordem.pedido?.updated_at && (
+                  <span className="text-[10px] text-amber-400/70">
+                    {format(new Date(ordem.pedido.updated_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-white/80 whitespace-pre-wrap leading-relaxed">
+                {ordem.pedido.observacoes}
+              </p>
             </div>
           )}
 
