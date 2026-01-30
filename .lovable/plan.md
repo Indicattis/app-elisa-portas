@@ -1,175 +1,121 @@
 
-# Plano: Criar Setor de Estoque em /home - ✅ CONCLUÍDO
+# Plano: Exibir Observação do Pedido na Página de Detalhes
 
 ## Resumo
 
-Novo setor "Estoque" adicionado na tela Home (/home) com hub centralizado e 3 sub-rotas implementadas.
+Adicionar uma seção na página `/direcao/pedidos/:id` para exibir a observação do pedido (`observacoes`) juntamente com a data da última atualização do pedido (`updated_at`).
 
 ---
 
-## Estrutura do Novo Setor
+## Dados Disponíveis
 
-```text
-/estoque (Hub)
-├── /estoque/fabrica        -> Gerencia itens de produção (tabela estoque existente)
-├── /estoque/almoxarifado   -> Gerencia insumos (nova tabela)
-└── /estoque/fornecedores   -> Gerencia fornecedores (tabela fornecedores existente)
+O pedido atual (`ac9a6d1e-f755-456a-a2b9-8471d4013ef7`) possui:
+- **Observação**: "Deixa 1 Meia cana Galvaniza de Cada Tamanho de Meia Cana, Restante das Meia Canas Serão na Cor Cinza Escuro"
+- **Última atualização**: 28/01/2026 às 12:38
+
+---
+
+## Alterações Necessárias
+
+### Arquivo: `src/pages/direcao/PedidoViewDirecao.tsx`
+
+#### 1. Atualizar interface Pedido (linha ~40-56)
+
+Adicionar campos:
+```typescript
+interface Pedido {
+  // ... campos existentes
+  observacoes?: string | null;      // ADICIONAR
+  updated_at?: string;              // ADICIONAR
+}
 ```
 
----
+#### 2. Atualizar query do Supabase (linha ~71-77)
 
-## 1. Banco de Dados
+Incluir `observacoes` e `updated_at` na consulta:
+```typescript
+.select(`
+  id, numero_pedido, etapa_atual, created_at, venda_id,
+  ficha_visita_url, observacoes, updated_at,
+  vendas!inner(cliente_nome, cidade, estado, valor_venda, forma_pagamento, tipo_entrega, data_prevista_entrega)
+`)
+```
 
-### Nova Tabela: `almoxarifado`
+#### 3. Atualizar setPedido (linha ~128-144)
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid | Chave primária |
-| nome | text | Nome do insumo |
-| fornecedor_id | uuid | FK para fornecedores |
-| quantidade_minima | numeric | Estoque mínimo |
-| quantidade_maxima | numeric | Estoque máximo |
-| quantidade_estoque | numeric | Quantidade atual |
-| data_ultima_conferencia | date | Data da última verificação |
-| custo | numeric | Custo unitário |
-| unidade | text | Un., Kg, Metro, etc. |
-| ativo | boolean | Soft delete |
-| created_at | timestamp | Data de criação |
-| updated_at | timestamp | Data de atualização |
-| created_by | uuid | Usuário que criou |
+Incluir os novos campos:
+```typescript
+setPedido({
+  // ... campos existentes
+  observacoes: pedidoData.observacoes,
+  updated_at: pedidoData.updated_at,
+});
+```
 
-**Campo calculado**: `total_estoque` = custo x quantidade_estoque (calculado no frontend)
-
----
-
-## 2. Alterações em Arquivos Existentes
-
-### `src/pages/Home.tsx`
-
-Adicionar item "Estoque" no array `menuItems` e no mapeamento `routeKeyMap`:
+#### 4. Adicionar import do ícone FileText (linha ~8)
 
 ```typescript
-// No routeKeyMap
-'/estoque': 'estoque_hub',
-
-// No menuItems (após Administrativo)
-{ label: "Estoque", icon: Warehouse, path: "/estoque" }
+import { ..., FileText } from "lucide-react";
 ```
 
-### `src/App.tsx`
-
-Adicionar imports e rotas:
+#### 5. Adicionar seção de Observações (após linha ~398, antes das Ordens de Produção)
 
 ```typescript
-// Imports
-import EstoqueHub from "./pages/estoque/EstoqueHub";
-import EstoqueFabrica from "./pages/estoque/EstoqueFabrica";
-import AlmoxarifadoPage from "./pages/estoque/AlmoxarifadoPage";
-import EstoqueFornecedores from "./pages/estoque/EstoqueFornecedores";
-
-// Rotas (após logística)
-<Route path="/estoque" element={<ProtectedRoute routeKey="estoque_hub"><EstoqueHub /></ProtectedRoute>} />
-<Route path="/estoque/fabrica" element={<ProtectedRoute routeKey="estoque_fabrica"><EstoqueFabrica /></ProtectedRoute>} />
-<Route path="/estoque/almoxarifado" element={<ProtectedRoute routeKey="estoque_almoxarifado"><AlmoxarifadoPage /></ProtectedRoute>} />
-<Route path="/estoque/fornecedores" element={<ProtectedRoute routeKey="estoque_fornecedores"><EstoqueFornecedores /></ProtectedRoute>} />
+{/* Observações do Pedido */}
+{pedido.observacoes && (
+  <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+    <CardHeader className="pb-3">
+      <div className="flex items-center justify-between">
+        <CardTitle className="text-sm flex items-center gap-2 text-white">
+          <FileText className="w-4 h-4" />
+          Observações do Pedido
+        </CardTitle>
+        {pedido.updated_at && (
+          <span className="text-xs text-white/50">
+            Atualizado em {format(new Date(pedido.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+          </span>
+        )}
+      </div>
+    </CardHeader>
+    <CardContent>
+      <p className="text-sm text-white/80 whitespace-pre-wrap">
+        {pedido.observacoes}
+      </p>
+    </CardContent>
+  </Card>
+)}
 ```
-
----
-
-## 3. Novos Arquivos
-
-### `src/pages/estoque/EstoqueHub.tsx`
-
-Hub central do setor Estoque (seguindo padrão do ComprasHub):
-- 3 botões: Fábrica, Almoxarifado, Fornecedores
-- Layout responsivo (mobile: lista vertical, desktop: grid 3 colunas)
-- Estilo minimalista com gradiente azul
-
-### `src/pages/estoque/EstoqueFabrica.tsx`
-
-Clone da página `EstoqueMinimalista.tsx` com ajustes:
-- Breadcrumb: Home > Estoque > Fábrica
-- BackPath: /estoque
-- Mesma tabela `estoque` do banco de dados
-- Exibe colunas simplificadas: SKU, Produto, Categoria, Setor, Pintura
-
-### `src/hooks/useAlmoxarifado.ts`
-
-Hook para gerenciar a tabela almoxarifado:
-- CRUD completo (listar, criar, atualizar, excluir)
-- Cálculo do total em estoque (custo x quantidade)
-
-### `src/pages/estoque/AlmoxarifadoPage.tsx`
-
-Nova página para gerenciar insumos:
-- Tabela com colunas: Nome, Fornecedor, Qtd. Mín., Qtd. Máx., Em Estoque, Última Conf., Custo, Un., Total
-- Modal de criação/edição com todos os campos
-- Select de fornecedores (usando useFornecedores)
-- Indicador visual quando estoque < mínimo (vermelho) ou > máximo (amarelo)
-
-### `src/pages/estoque/EstoqueFornecedores.tsx`
-
-Clone de `FornecedoresMinimalista.tsx` com ajustes:
-- Breadcrumb: Home > Estoque > Fornecedores
-- BackPath: /estoque
-
----
-
-## 4. Permissões (app_routes)
-
-Inserir registros na tabela `app_routes`:
-
-| key | label | path | parent_key |
-|-----|-------|------|------------|
-| estoque_hub | Estoque | /estoque | null |
-| estoque_fabrica | Fábrica | /estoque/fabrica | estoque_hub |
-| estoque_almoxarifado | Almoxarifado | /estoque/almoxarifado | estoque_hub |
-| estoque_fornecedores | Fornecedores | /estoque/fornecedores | estoque_hub |
-
----
-
-## 5. RLS Policies
-
-Criar policies para a nova tabela `almoxarifado`:
-- SELECT: Usuários autenticados podem ler
-- INSERT/UPDATE/DELETE: Usuários com acesso à rota `estoque_almoxarifado`
-
----
-
-## Resumo de Arquivos
-
-| Ação | Arquivo |
-|------|---------|
-| Editar | `src/pages/Home.tsx` |
-| Editar | `src/App.tsx` |
-| Criar | `src/pages/estoque/EstoqueHub.tsx` |
-| Criar | `src/pages/estoque/EstoqueFabrica.tsx` |
-| Criar | `src/pages/estoque/AlmoxarifadoPage.tsx` |
-| Criar | `src/pages/estoque/EstoqueFornecedores.tsx` |
-| Criar | `src/hooks/useAlmoxarifado.ts` |
 
 ---
 
 ## Resultado Visual
 
-### Home (/home)
+A página exibirá um novo card entre "Itens do Pedido" e "Ordens de Produção":
 
 ```text
-[Direção]  [Marketing]  [Vendas]
-[Fábrica]  [Logística]  [Administrativo]
-[Estoque]  <- NOVO
+┌──────────────────────────────────────────────────────┐
+│ 📄 Observações do Pedido       Atualizado em 28/01/2026 às 12:38 │
+├──────────────────────────────────────────────────────┤
+│ Deixa 1 Meia cana Galvaniza de Cada Tamanho de      │
+│ Meia Cana, Restante das Meia Canas Serão na Cor     │
+│ Cinza Escuro                                         │
+└──────────────────────────────────────────────────────┘
 ```
 
-### Hub de Estoque (/estoque)
+---
 
-```text
-Desktop:
-┌─────────────┐ ┌───────────────┐ ┌───────────────┐
-│   Fábrica   │ │  Almoxarifado │ │  Fornecedores │
-└─────────────┘ └───────────────┘ └───────────────┘
+## Resumo de Alterações
 
-Mobile:
-[Fábrica]
-[Almoxarifado]
-[Fornecedores]
-```
+| Local | Alteração |
+|-------|-----------|
+| Interface Pedido | Adicionar `observacoes` e `updated_at` |
+| Query Supabase | Incluir campos na consulta |
+| setPedido | Mapear novos campos |
+| JSX | Novo card para exibir observações |
+| Imports | Adicionar ícone `FileText` |
+
+---
+
+## Observação Técnica
+
+A data exibida será a última atualização do pedido (`updated_at`), que reflete quando qualquer campo foi modificado. Se futuramente for necessário rastrear especificamente quando a observação foi alterada, podemos criar um campo dedicado `observacoes_updated_at` no banco de dados.
