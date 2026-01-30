@@ -84,15 +84,37 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
             .eq('ordem_id', ordem.id)
             .eq('tipo_ordem', 'pintura');
           
+          // Buscar linhas do pedido (origem) que têm produto_venda_id para fazer match
+          const { data: linhasPedido } = await supabase
+            .from('pedido_linhas')
+            .select('nome_produto, produto_venda_id, quantidade')
+            .eq('pedido_id', ordem.pedido_id);
+          
           // Processar linhas para usar nome atualizado do estoque, incluir requer_pintura e dimensões
           const linhas = linhasRaw?.map((linha: any) => {
-            // Tentar encontrar dimensões no produto correspondente
-            const produtoVenda = produtos.find((p: any) => p.id === linha.produto_venda_id);
+            // Se a linha já tem produto_venda_id, usar direto
+            let produtoVendaId = linha.produto_venda_id;
+            
+            // Se não tem, buscar nas linhas originais do pedido pelo nome e quantidade
+            if (!produtoVendaId && linhasPedido) {
+              const linhaOriginal = linhasPedido.find((lp: any) => 
+                (lp.nome_produto === linha.item || 
+                 lp.nome_produto?.includes(linha.item) || 
+                 linha.item?.includes(lp.nome_produto) ||
+                 linha.estoque?.nome_produto === lp.nome_produto) &&
+                lp.quantidade === linha.quantidade
+              );
+              produtoVendaId = linhaOriginal?.produto_venda_id;
+            }
+            
+            // Buscar dimensões da porta usando o produto_venda_id recuperado
+            const produtoVenda = produtos.find((p: any) => p.id === produtoVendaId);
             
             return {
               ...linha,
               item: linha.estoque?.nome_produto || linha.item,
               requer_pintura: linha.estoque?.requer_pintura ?? true,
+              produto_venda_id: produtoVendaId, // Atualizado com valor recuperado
               largura: linha.largura || produtoVenda?.largura || null,
               altura: linha.altura || produtoVenda?.altura || null
             };
