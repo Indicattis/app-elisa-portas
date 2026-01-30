@@ -1,57 +1,48 @@
 
-# Plano: Corrigir Interface das Rotas do Estoque em /admin/permissions
+# Plano: Adicionar Rota de Edição de Item do Estoque Fábrica
 
 ## Problema Identificado
 
-As rotas do Estoque (`estoque_hub`, `estoque_fabrica`, `estoque_almoxarifado`, `estoque_fornecedores`) estão cadastradas na tabela `app_routes` com `interface: 'dashboard'`, mas o componente de permissões só exibe rotas com interfaces: `padrao`, `producao`, `paineis` ou `admin`.
+A página `/estoque/fabrica` (EstoqueFabrica.tsx) navega para `/estoque/fabrica/editar-item/:id` ao dar duplo clique em um produto, mas essa rota não existe no App.tsx, causando o erro 404.
 
 ## Solução
 
-Criar uma migration para atualizar o campo `interface` de todas as rotas do Estoque de `'dashboard'` para `'padrao'`.
+Adicionar a rota `/estoque/fabrica/editar-item/:id` no App.tsx, usando o mesmo componente `EstoqueEditMinimalista` já utilizado em `/administrativo/compras/estoque/editar-item/:id`.
 
 ---
 
-## Alteração Necessária
+## Alterações Necessárias
 
-### Nova Migration SQL
+### Arquivo: `src/App.tsx`
 
-```sql
--- Atualizar interface das rotas de Estoque para aparecerem em /admin/permissions
-UPDATE app_routes 
-SET interface = 'padrao'
-WHERE key IN ('estoque_hub', 'estoque_fabrica', 'estoque_almoxarifado', 'estoque_fornecedores');
+Adicionar nova rota após a linha 427 (rota `/estoque/fabrica`):
+
+```typescript
+<Route path="/estoque/fabrica/editar-item/:id" element={<ProtectedRoute routeKey="estoque_fabrica"><EstoqueEditMinimalista /></ProtectedRoute>} />
 ```
 
 ---
 
-## Resultado Esperado
+## Resultado
 
-Após a migration, em `/admin/permissions`:
+Antes:
+```
+/estoque/fabrica                    ✅ Funciona
+/estoque/fabrica/editar-item/:id    ❌ 404 Error
+```
 
-1. Selecione a interface **"Padrão"**
-2. O **Estoque** aparecerá como um Hub Principal (estilo dourado/amber)
-3. Com 3 sub-rotas:
-   - Fábrica (`/estoque/fabrica`)
-   - Almoxarifado (`/estoque/almoxarifado`)
-   - Fornecedores (`/estoque/fornecedores`)
-
-```text
-┌────────────────────────────────────────────────────┐
-│ Interface: [Padrão ▼]                              │
-├────────────────────────────────────────────────────┤
-│ ▼ 🟡 Estoque          Hub Principal   (3 sub-rotas)│
-│     ☐ Fábrica         /estoque/fabrica            │
-│     ☐ Almoxarifado    /estoque/almoxarifado       │
-│     ☐ Fornecedores    /estoque/fornecedores       │
-└────────────────────────────────────────────────────┘
+Depois:
+```
+/estoque/fabrica                    ✅ Funciona
+/estoque/fabrica/editar-item/:id    ✅ Funciona
 ```
 
 ---
 
 ## Resumo
 
-| Arquivo | Ação |
-|---------|------|
-| `supabase/migrations/[timestamp].sql` | Criar migration UPDATE |
+| Arquivo | Linha | Ação |
+|---------|-------|------|
+| `src/App.tsx` | ~428 | Adicionar rota de edição |
 
-Essa é uma correção simples de dados que não requer alterações em código React.
+A rota usará a mesma proteção (`estoque_fabrica`) e o mesmo componente de edição (`EstoqueEditMinimalista`) já existente no sistema.
