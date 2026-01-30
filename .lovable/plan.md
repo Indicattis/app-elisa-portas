@@ -1,76 +1,74 @@
 
-# Plano: Adicionar Tamanho ao Lado da Numeração de Porta na Pintura
+# Plano: Corrigir Query de Linhas de Pintura
 
-## Objetivo
+## Problema Identificado
 
-Modificar a exibição do cabeçalho do grupo de porta no setor de pintura para incluir as dimensões diretamente ao lado da numeração.
+A alteração anterior adicionou um JOIN inválido na query de `linhas_ordens`:
 
-**Antes:**
-```
-Porta 1
-Pintura: Branco RAL 9010
-Dimensões: 3.00m x 4.00m
+```typescript
+// LINHA 78 - PROBLEMÁTICA
+produto_venda:produto_venda_id (largura, altura)
 ```
 
-**Depois:**
-```
-Porta 1 - 3.00m x 4.00m
-Pintura: Branco RAL 9010
-```
+Não existe foreign key entre `linhas_ordens.produto_venda_id` e `produtos_vendas`, causando erro 400 em todas as requisições.
+
+## Solução
+
+Remover o JOIN problemático e buscar as dimensões diretamente dos produtos da venda que já estão sendo carregados no pedido.
 
 ---
 
 ## Alteração Necessária
 
-### Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
+### Arquivo: `src/hooks/useOrdemPintura.ts`
 
-**Localização:** Linhas 744-766 (cabeçalho do grupo de porta no tipoOrdem === 'pintura')
+**Linhas 73-90** - Remover o join inválido e ajustar o processamento:
 
-**Mudanças:**
-
-1. Incluir as dimensões no título da porta (linha 747)
-2. Remover o bloco separado de dimensões (linhas 761-765) já que a informação estará no título
-
-**Código atual (linha 746-748):**
-```tsx
-<span className="font-semibold text-sm">
-  Porta {index + 1}
-</span>
+**Código atual (quebrado):**
+```typescript
+const { data: linhasRaw } = await supabase
+  .from('linhas_ordens')
+  .select(`
+    id, item, quantidade, tamanho, concluida, largura, altura, estoque_id, produto_venda_id, cor_nome, tipo_pintura,
+    estoque:estoque_id (nome_produto, requer_pintura),
+    produto_venda:produto_venda_id (largura, altura)
+  `)
+  .eq('ordem_id', ordem.id)
+  .eq('tipo_ordem', 'pintura');
 ```
 
-**Código novo:**
-```tsx
-<span className="font-semibold text-sm">
-  Porta {String(index + 1).padStart(2, '0')}
-  {primeiraLinha.largura && primeiraLinha.altura && (
-    <span className="font-normal text-muted-foreground ml-2">
-      {formatarDimensoes(primeiraLinha.largura, primeiraLinha.altura)}
-    </span>
-  )}
-</span>
-```
+**Código corrigido:**
+```typescript
+const { data: linhasRaw } = await supabase
+  .from('linhas_ordens')
+  .select(`
+    id, item, quantidade, tamanho, concluida, largura, altura, estoque_id, produto_venda_id, cor_nome, tipo_pintura,
+    estoque:estoque_id (nome_produto, requer_pintura)
+  `)
+  .eq('ordem_id', ordem.id)
+  .eq('tipo_ordem', 'pintura');
 
----
-
-## Resultado Visual
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│ 📦 Porta 01 - 3.00m x 4.00m                            ✓   │
-│    Pintura: Branco RAL 9010 (Epóxi)                        │
-├─────────────────────────────────────────────────────────────┤
-│ ☐ Lâminas - Qtd: 12 - 3.00m                                │
-│ ☐ Guias - Qtd: 2 - 4.00m                                   │
-│ ☐ Testeira - Qtd: 1                                        │
-└─────────────────────────────────────────────────────────────┘
+// Buscar dimensões dos produtos da venda
+const linhas = linhasRaw?.map((linha: any) => {
+  // Tentar encontrar dimensões no produto correspondente
+  const produtoVenda = produtos.find((p: any) => p.id === linha.produto_venda_id);
+  
+  return {
+    ...linha,
+    item: linha.estoque?.nome_produto || linha.item,
+    requer_pintura: linha.estoque?.requer_pintura ?? true,
+    largura: linha.largura || produtoVenda?.largura || null,
+    altura: linha.altura || produtoVenda?.altura || null
+  };
+}) || [];
 ```
 
 ---
 
 ## Resumo
 
-| Arquivo | Linha | Ação |
-|---------|-------|------|
-| `src/components/production/OrdemDetalhesSheet.tsx` | 746-765 | Mover dimensões para o título e remover bloco separado |
+| Arquivo | Linhas | Ação |
+|---------|--------|------|
+| `src/hooks/useOrdemPintura.ts` | 73-90 | Remover JOIN inválido e usar produtos já carregados |
 
-Alteração simples de ~10 linhas, mantendo a função `formatarDimensoes` já existente.
+Esta correção vai restaurar o funcionamento das ordens de pintura imediatamente.
