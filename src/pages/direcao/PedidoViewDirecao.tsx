@@ -35,6 +35,7 @@ interface PedidoLinha {
   descricao_produto?: string | null;
   quantidade: number;
   tamanho?: string | null;
+  indice_porta?: number | null;
 }
 
 interface Pedido {
@@ -83,7 +84,7 @@ export default function PedidoViewDirecao() {
       // Buscar linhas do pedido
       const { data: linhasData } = await supabase
         .from('pedido_linhas')
-        .select('id, nome_produto, descricao_produto, quantidade, tamanho')
+        .select('id, nome_produto, descricao_produto, quantidade, tamanho, indice_porta')
         .eq('pedido_id', id)
         .order('ordem', { ascending: true });
 
@@ -386,7 +387,14 @@ export default function PedidoViewDirecao() {
                 {pedido.linhas.map((linha) => (
                   <div key={linha.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-sm">
                     <div className="flex-1">
-                      <p className="font-medium text-white">{linha.nome_produto}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-white">{linha.nome_produto}</p>
+                        {linha.indice_porta !== null && linha.indice_porta !== undefined && (
+                          <Badge variant="outline" className="text-xs px-1.5 py-0 bg-blue-500/10 text-blue-400 border-blue-500/30">
+                            Porta {linha.indice_porta + 1}
+                          </Badge>
+                        )}
+                      </div>
                       {linha.descricao_produto && (
                         <p className="text-xs text-white/60">{linha.descricao_produto}</p>
                       )}
