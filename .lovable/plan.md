@@ -1,74 +1,73 @@
 
 
-# Correção: Numeração de Portas no Agrupamento de Pintura
+# Exibir Tamanhos nas Linhas de Pintura
 
 ## Problema
 
-Em `/producao/pintura`, ao visualizar os detalhes de uma ordem, as portas são agrupadas corretamente por `produto_venda_id`, mas a numeração usa o índice do loop (`index + 1`), que não reflete a sequência correta quando o pedido não inclui todas as portas da venda.
+Os tamanhos dos itens (ex: "2,81m") existem em `pedido_linhas`, mas não estão sendo exibidos nas linhas de pintura porque o campo `tamanho` em `linhas_ordens` está vazio.
 
 ## Solução
 
-Aplicar a mesma lógica implementada em `PedidoViewDirecao.tsx`: criar um mapa de numeração baseado nos `produto_venda_id` únicos das linhas da ordem atual.
+Buscar o `tamanho` de `pedido_linhas` durante o carregamento das ordens de pintura e associar às linhas correspondentes.
 
 ## Alterações Técnicas
 
-### Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
+### Arquivo: `src/hooks/useOrdemPintura.ts`
 
-**Linhas 741-751 - Adicionar mapa de numeração antes do agrupamento:**
+**1. Atualizar query de pedido_linhas (linha 91-93):**
+
+Incluir o campo `tamanho` na seleção:
 
 ```typescript
-// ANTES (linha 741-751):
-const linhasPorPorta = linhasQuePrecisaPintura.reduce((grupos, linha) => {
-  const key = linha.produto_venda_id || 'sem_porta';
-  if (!grupos[key]) {
-    grupos[key] = [];
-  }
-  grupos[key].push(linha);
-  return grupos;
-}, {} as Record<string, LinhaOrdem[]>);
-
-return Object.entries(linhasPorPorta).map(([portaId, linhasPorta], index) => {
+// ANTES:
+const { data: linhasPedido } = await supabase
+  .from('pedido_linhas')
+  .select('nome_produto, produto_venda_id, quantidade')
+  .eq('pedido_id', ordem.pedido_id);
 
 // DEPOIS:
-const linhasPorPorta = linhasQuePrecisaPintura.reduce((grupos, linha) => {
-  const key = linha.produto_venda_id || 'sem_porta';
-  if (!grupos[key]) {
-    grupos[key] = [];
-  }
-  grupos[key].push(linha);
-  return grupos;
-}, {} as Record<string, LinhaOrdem[]>);
-
-// Criar mapa de numeração baseado na ordem de aparição dos produto_venda_id únicos
-const uniquePortaIds = [...new Set(
-  linhasQuePrecisaPintura
-    .map(l => l.produto_venda_id)
-    .filter((id): id is string => id !== null && id !== undefined)
-)];
-const portasNumeracaoMap = new Map<string, number>();
-uniquePortaIds.forEach((portaId, idx) => {
-  portasNumeracaoMap.set(portaId, idx + 1);
-});
-
-return Object.entries(linhasPorPorta).map(([portaId, linhasPorta]) => {
+const { data: linhasPedido } = await supabase
+  .from('pedido_linhas')
+  .select('nome_produto, produto_venda_id, quantidade, tamanho')
+  .eq('pedido_id', ordem.pedido_id);
 ```
 
-**Linha 780 - Usar mapa para numeração:**
+**2. Atualizar mapeamento das linhas (linhas 96-123):**
 
-```tsx
-// ANTES:
-Porta {String(index + 1).padStart(2, '0')}
+Usar o `tamanho` da linha original do pedido quando a linha de pintura não tiver:
 
-// DEPOIS:
-Porta {String(portasNumeracaoMap.get(portaId) || 1).padStart(2, '0')}
+```typescript
+const linhas = linhasRaw?.map((linha: any) => {
+  // ... lógica existente para encontrar produtoVendaId ...
+  
+  // Buscar linha original do pedido para obter tamanho
+  const linhaOriginal = linhasPedido?.find((lp: any) => 
+    (lp.nome_produto === linha.item || 
+     lp.nome_produto?.includes(linha.item) || 
+     linha.item?.includes(lp.nome_produto) ||
+     linha.estoque?.nome_produto === lp.nome_produto) &&
+    lp.quantidade === linha.quantidade
+  );
+  
+  return {
+    ...linha,
+    item: linha.estoque?.nome_produto || linha.item,
+    requer_pintura: linha.estoque?.requer_pintura ?? true,
+    produto_venda_id: produtoVendaId,
+    largura: linha.largura || produtoVenda?.largura || null,
+    altura: linha.altura || produtoVenda?.altura || null,
+    tamanho: linha.tamanho || linhaOriginal?.tamanho || null  // ADICIONAR
+  };
+}) || [];
 ```
 
 ## Resultado Esperado
 
-| produto_venda_id nas linhas | Numeração |
-|-----------------------------|-----------|
-| 8fe6a751-... (1º encontrado) | Porta 01 |
-| 2dbaac84-... (2º encontrado) | Porta 02 |
+Na visualização de ordens de pintura em `/producao/pintura`, cada linha mostrará seu tamanho (ex: "2.81m") ao lado da quantidade, assim como aparece em `/direcao/pedidos/:id`.
 
-As portas serão numeradas sequencialmente (01, 02, 03...) baseado apenas nas que existem nesta ordem de pintura específica.
+| Item | Quantidade | Tamanho |
+|------|------------|---------|
+| Eixo - 4" 1/2 | Qtd: 1 | 2.81m |
+| Guia M - 135mm | Qtd: 2 | 2.31m |
+| Meia cana lisa | Qtd: 35 | 2.85m |
 
