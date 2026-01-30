@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Play, Clock, Package, CheckCircle2, User } from "lucide-react";
+import { ArrowLeft, Plus, Play, Clock, Package, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -76,21 +76,16 @@ export default function ConferenciaHub({ returnPath = "/estoque" }: ConferenciaH
           <Button
             size="lg"
             onClick={handleIniciarNova}
-            disabled={iniciando}
-            className="flex-1 sm:flex-none"
+            disabled={iniciando || conferenciasEmAndamento.length > 0}
+            className="w-full sm:w-auto h-14 sm:h-10"
           >
             <Plus className="h-5 w-5 mr-2" />
-            {iniciando ? "Iniciando..." : "Iniciar Nova Conferência"}
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => navigate("/estoque/auditoria")}
-            className="flex-1 sm:flex-none"
-          >
-            <CheckCircle2 className="h-5 w-5 mr-2" />
-            Ver Histórico de Conferências
+            {iniciando 
+              ? "Iniciando..." 
+              : conferenciasEmAndamento.length > 0 
+                ? "Conferência em andamento" 
+                : "Iniciar Nova Conferência"
+            }
           </Button>
         </div>
 
