@@ -1,234 +1,153 @@
 
 
-# Plano: Fluxo Completo de Conferencia de Estoque da Fabrica
+# Plano: Adicionar Upload de Comprovante na Pagina de Edicao de Venda
 
-## Resumo do Fluxo Solicitado
+## Objetivo
 
-```text
-1. Botao em secao separada no EstoqueHub → /estoque/conferencia
-2. Pagina inicial: Iniciar nova conferencia OU Retomar conferencia em andamento
-3. Conferencia em andamento: cronometro, salva progresso, pode pausar/continuar
-4. So pode finalizar quando TODOS os itens tiverem quantidade informada
-5. Mostra quantidade atual do sistema ao usuario
-6. Ao concluir: salva responsavel, duracao, data/hora
-7. Historico de conferencias em /estoque/auditoria
+Permitir que o usuario anexe um comprovante de pagamento diretamente na pagina de edicao de venda (`/vendas/minhas-vendas/editar/:id`), caso ainda nao tenha anexado.
+
+---
+
+## Analise
+
+### Recursos Existentes
+
+1. **Componente pronto**: `ComprovanteUploadModal` em `src/components/vendas/ComprovanteUploadModal.tsx`
+   - Suporta upload de PNG, JPG e PDF (max 10MB)
+   - Faz upload para o bucket `comprovantes-pagamento`
+   - Atualiza campos `comprovante_url` e `comprovante_nome` na tabela `vendas`
+   - Permite visualizar, substituir e remover comprovantes
+
+2. **Campos no banco**: A tabela `vendas` ja possui:
+   - `comprovante_url` (text)
+   - `comprovante_nome` (text)
+
+3. **Dados carregados**: A pagina `MinhasVendasEditar` ja carrega a venda completa incluindo esses campos
+
+---
+
+## Solucao
+
+Adicionar uma secao na area de "Dados da Venda" ou no final do card para mostrar o comprovante (se existir) ou um botao para anexar.
+
+### Alteracoes em MinhasVendasEditar.tsx
+
+1. **Importar** o componente `ComprovanteUploadModal` e icones necessarios (`Paperclip`, `FileText`, `ExternalLink`)
+
+2. **Adicionar estado** para controlar a abertura do modal:
+   ```typescript
+   const [comprovanteModalOpen, setComprovanteModalOpen] = useState(false);
+   ```
+
+3. **Adicionar secao de Comprovante** no card de "Dados da Venda", apos as observacoes:
+   - Se nao tem comprovante: mostrar botao "Anexar Comprovante"
+   - Se tem comprovante: mostrar preview com link para abrir e botao para editar
+
+4. **Adicionar o modal** `ComprovanteUploadModal` passando os dados da venda
+
+---
+
+## Layout Proposto
+
+Dentro do card "Dados da Venda", apos a secao de Observacoes:
+
+```
+┌─────────────────────────────────────────────────┐
+│  📎 Comprovante de Pagamento                    │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  [Se nao tem comprovante]                       │
+│  ┌─────────────────────────────┐                │
+│  │  📎 Anexar Comprovante      │                │
+│  └─────────────────────────────┘                │
+│                                                 │
+│  [Se tem comprovante]                           │
+│  ┌─────────────────────────────────────┐        │
+│  │ 📄 nome_do_arquivo.pdf              │        │
+│  │ [Abrir] [Alterar]                   │        │
+│  └─────────────────────────────────────┘        │
+│                                                 │
+└─────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 1. Alteracoes no Banco de Dados
-
-### Atualizar tabela `estoque_conferencias`
-
-Adicionar novos campos para suportar o fluxo de pausar/retomar:
-
-```sql
-ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS status text DEFAULT 'em_andamento';
-ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS iniciada_em timestamptz DEFAULT now();
-ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS concluida_em timestamptz;
-ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS tempo_total_segundos integer DEFAULT 0;
-ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS pausada boolean DEFAULT false;
-ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS tempo_acumulado_segundos integer DEFAULT 0;
-ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS pausada_em timestamptz;
-ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS total_itens integer DEFAULT 0;
-ALTER TABLE estoque_conferencias ADD COLUMN IF NOT EXISTS itens_conferidos integer DEFAULT 0;
-```
-
-### Permitir UPDATE na tabela (nova policy)
-
-```sql
-CREATE POLICY "Usuarios autenticados podem atualizar conferencias" 
-ON estoque_conferencias FOR UPDATE TO authenticated 
-USING (conferido_por = auth.uid());
-
-CREATE POLICY "Usuarios autenticados podem atualizar itens" 
-ON estoque_conferencia_itens FOR UPDATE TO authenticated 
-USING (true);
-```
-
----
-
-## 2. Estrutura de Paginas
-
-### 2.1 Pagina Hub: `/estoque/conferencia`
-
-Lista conferencias em andamento e botao para iniciar nova.
-
-**Componentes:**
-- Botao "Iniciar Nova Conferencia"
-- Cards de conferencias em andamento (se existirem) com:
-  - Data de inicio
-  - Tempo decorrido
-  - Progresso (X de Y itens)
-  - Botao "Retomar"
-
-### 2.2 Pagina de Execucao: `/estoque/conferencia/:id`
-
-Onde o usuario preenche as quantidades.
-
-**Componentes:**
-- Cronometro visivel (usa `useCronometro`)
-- Tabela com todos os itens:
-  - SKU, Nome, Categoria
-  - Quantidade Sistema (readonly)
-  - Quantidade Conferida (input)
-  - Diferenca (calculado)
-- Barra de progresso (X de Y itens conferidos)
-- Botao "Pausar" (salva progresso e volta ao hub)
-- Botao "Concluir" (habilitado apenas quando 100% conferido)
-
-### 2.3 Pagina de Auditoria: `/estoque/auditoria`
-
-Historico completo de conferencias.
-
-**Componentes:**
-- Tabela com conferencias concluidas:
-  - Data/hora
-  - Responsavel
-  - Duracao
-  - Total de itens
-  - Itens com diferenca
-- Clique para ver detalhes de cada conferencia
-
----
-
-## 3. Alteracoes no EstoqueHub
-
-Adicionar nova secao abaixo dos botoes atuais:
-
-```tsx
-{/* Secao Conferencia */}
-<div className="mt-8">
-  <h3>Conferencia de Estoque</h3>
-  <button onClick={() => navigate('/estoque/conferencia')}>
-    Conferencia de Estoque
-  </button>
-</div>
-```
-
----
-
-## 4. Hook Atualizado: `useEstoqueConferencia`
-
-Funcionalidades:
-- `iniciarConferencia()`: Cria nova conferencia com status "em_andamento"
-- `buscarConferenciasEmAndamento()`: Lista conferencias do usuario nao concluidas
-- `salvarProgresso(id, itens)`: Atualiza itens e tempo acumulado
-- `pausarConferencia(id)`: Marca como pausada, salva tempo
-- `retomarConferencia(id)`: Remove pausa, retorna dados
-- `concluirConferencia(id)`: Valida 100%, atualiza estoque, finaliza
-
----
-
-## 5. Arquivos a Criar
-
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/pages/estoque/ConferenciaHub.tsx` | Pagina inicial da conferencia |
-| `src/pages/estoque/ConferenciaExecucao.tsx` | Pagina de execucao (preencher quantidades) |
-| `src/pages/estoque/AuditoriaEstoque.tsx` | Historico de conferencias |
-| `src/hooks/useConferenciaEstoque.ts` | Hook refatorado com novo fluxo |
-| `src/components/conferencia/ConferenciaCard.tsx` | Card para conferencia em andamento |
-| `src/components/conferencia/ConferenciaProgress.tsx` | Barra de progresso |
-
-## 6. Arquivos a Modificar
+## Arquivos a Modificar
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `src/pages/estoque/EstoqueHub.tsx` | Adicionar secao com botao de conferencia |
-| `src/App.tsx` | Adicionar rotas `/estoque/conferencia`, `/estoque/conferencia/:id`, `/estoque/auditoria` |
-| `src/pages/ProducaoHome.tsx` | Remover botao de conferencia (mover para EstoqueHub) |
+| `src/pages/vendas/MinhasVendasEditar.tsx` | Importar modal, adicionar estado, adicionar secao de comprovante |
 
 ---
 
-## 7. Fluxo Detalhado
+## Codigo da Secao de Comprovante
 
-```text
-[EstoqueHub]
-     │
-     ▼
-[Clica "Conferencia de Estoque"]
-     │
-     ▼
-[ConferenciaHub] ─────────────────────────────┐
-     │                                        │
-     ├─► "Iniciar Nova"                       │
-     │        │                               │
-     │        ▼                               │
-     │   Cria registro no BD                  │
-     │   status = 'em_andamento'              │
-     │   iniciada_em = now()                  │
-     │   Carrega todos itens do estoque       │
-     │        │                               │
-     ▼        ▼                               │
-[ConferenciaExecucao/:id]                     │
-     │                                        │
-     ├─► Cronometro rodando                   │
-     ├─► Usuario preenche quantidades         │
-     ├─► Cada alteracao salva no BD           │
-     │   (estoque_conferencia_itens)          │
-     │                                        │
-     ├─► [Pausar]                             │
-     │        │                               │
-     │        ▼                               │
-     │   Salva tempo_acumulado                │
-     │   pausada = true                       │
-     │   Volta ao ConferenciaHub ─────────────┤
-     │                                        │
-     └─► [Concluir] (so se 100%)              │
-              │                               │
-              ▼                               │
-         Atualiza estoque                     │
-         status = 'concluida'                 │
-         concluida_em = now()                 │
-         tempo_total_segundos = X             │
-              │                               │
-              ▼                               │
-         [AuditoriaEstoque] ◄─────────────────┘
-              │
-              ▼
-         Lista todas conferencias
-         concluidas com detalhes
+```tsx
+{/* Comprovante de Pagamento */}
+<div className="mt-6 pt-4 border-t border-blue-500/20">
+  <div className="flex items-center gap-2 text-sm font-medium text-blue-300/70 mb-3">
+    <Paperclip className="h-4 w-4" />
+    Comprovante de Pagamento
+  </div>
+  
+  {venda.comprovante_url ? (
+    <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+      <FileText className="h-5 w-5 text-blue-300" />
+      <span className="text-sm text-blue-100 truncate flex-1">
+        {venda.comprovante_nome || 'Comprovante'}
+      </span>
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={() => window.open(venda.comprovante_url!, '_blank')}
+        className="text-blue-300 hover:text-blue-100"
+      >
+        <ExternalLink className="h-4 w-4" />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={() => setComprovanteModalOpen(true)}
+        className="text-blue-300 hover:text-blue-100"
+      >
+        Alterar
+      </Button>
+    </div>
+  ) : (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => setComprovanteModalOpen(true)}
+      className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
+    >
+      <Paperclip className="h-4 w-4 mr-2" />
+      Anexar Comprovante
+    </Button>
+  )}
+</div>
+
+{/* Modal de Comprovante */}
+<ComprovanteUploadModal
+  open={comprovanteModalOpen}
+  onOpenChange={(open) => {
+    setComprovanteModalOpen(open);
+    if (!open) fetchVenda(); // Recarregar dados apos fechar
+  }}
+  venda={venda ? {
+    id: venda.id,
+    cliente_nome: venda.cliente_nome || '',
+    comprovante_url: venda.comprovante_url,
+    comprovante_nome: venda.comprovante_nome
+  } : null}
+/>
 ```
-
----
-
-## 8. Detalhes Tecnicos
-
-### Cronometro
-
-Usar o hook `useCronometro` existente, mas sincronizar com o BD:
-- Ao pausar: `tempo_acumulado += segundos_da_sessao`
-- Ao retomar: Carregar `tempo_acumulado` e continuar de onde parou
-- Ao concluir: `tempo_total = tempo_acumulado + segundos_da_sessao`
-
-### Salvamento Automatico
-
-Cada vez que o usuario altera uma quantidade:
-1. Atualiza ou insere em `estoque_conferencia_itens`
-2. Atualiza `itens_conferidos` em `estoque_conferencias`
-3. Nao atualiza `estoque` ainda (so na conclusao)
-
-### Validacao de Conclusao
-
-O botao "Concluir" so fica habilitado quando:
-```typescript
-itensConferidos === totalItens
-```
-
-### Atualizacao do Estoque
-
-Apenas ao concluir:
-1. Para cada item com diferenca, atualizar `estoque.quantidade`
-2. Registrar em `estoque_movimentacoes`
 
 ---
 
 ## Resultado Esperado
 
-- Conferencias podem ser pausadas e retomadas
-- Tempo cronometrado com precisao
-- Historico completo em `/estoque/auditoria`
-- So conclui se todos os itens forem conferidos
-- Botao separado no EstoqueHub (abaixo dos atuais)
+- Usuario pode anexar comprovante de pagamento na edicao da venda
+- Se ja existe comprovante, pode visualizar ou substituir
+- Usa o mesmo componente/fluxo ja existente em outras partes do sistema
+- Estilo visual consistente com o tema azul da area de vendas
 
