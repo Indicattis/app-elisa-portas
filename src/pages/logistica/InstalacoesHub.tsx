@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, CalendarDays, ArrowLeft, HardHat } from "lucide-react";
+import { Users, CalendarDays, ArrowLeft, HardHat, Trophy } from "lucide-react";
 
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 
@@ -19,6 +19,11 @@ const menuItems = [
     label: "Cronograma",
     icon: CalendarDays,
     path: "/logistica/instalacoes/cronograma",
+  },
+  {
+    label: "Ranking Equipes",
+    icon: Trophy,
+    path: "/logistica/instalacoes/ranking",
   },
 ];
 
