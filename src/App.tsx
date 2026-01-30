@@ -231,6 +231,12 @@ import EquipesMinimalista from "./pages/logistica/EquipesMinimalista";
 import CronogramaMinimalista from "./pages/logistica/CronogramaMinimalista";
 import OrdensInstalacoesLogistica from "./pages/logistica/OrdensInstalacoesLogistica";
 
+// Hub de Estoque
+import EstoqueHub from "./pages/estoque/EstoqueHub";
+import EstoqueFabrica from "./pages/estoque/EstoqueFabrica";
+import AlmoxarifadoPage from "./pages/estoque/AlmoxarifadoPage";
+import EstoqueFornecedores from "./pages/estoque/EstoqueFornecedores";
+
 // Hub Administrativo Minimalista
 import AdministrativoHub from "./pages/administrativo/AdministrativoHub";
 import PedidosAdminMinimalista from "./pages/administrativo/PedidosAdminMinimalista";
@@ -415,6 +421,12 @@ const App = () => (
                 <Route path="/logistica/instalacoes/ordens-instalacoes" element={<ProtectedRoute routeKey="logistica_hub"><OrdensInstalacoesLogistica /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/equipes" element={<ProtectedRoute routeKey="logistica_hub"><EquipesMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/cronograma" element={<ProtectedRoute routeKey="logistica_hub"><CronogramaMinimalista /></ProtectedRoute>} />
+
+                {/* Hub de Estoque */}
+                <Route path="/estoque" element={<ProtectedRoute routeKey="estoque_hub"><EstoqueHub /></ProtectedRoute>} />
+                <Route path="/estoque/fabrica" element={<ProtectedRoute routeKey="estoque_fabrica"><EstoqueFabrica /></ProtectedRoute>} />
+                <Route path="/estoque/almoxarifado" element={<ProtectedRoute routeKey="estoque_almoxarifado"><AlmoxarifadoPage /></ProtectedRoute>} />
+                <Route path="/estoque/fornecedores" element={<ProtectedRoute routeKey="estoque_fornecedores"><EstoqueFornecedores /></ProtectedRoute>} />
 
                 {/* Hub Administrativo Minimalista */}
                 <Route path="/administrativo" element={<ProtectedRoute routeKey="administrativo_hub"><AdministrativoHub /></ProtectedRoute>} />

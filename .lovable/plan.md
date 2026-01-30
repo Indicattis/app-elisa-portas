@@ -1,9 +1,9 @@
 
-# Plano: Criar Setor de Estoque em /home
+# Plano: Criar Setor de Estoque em /home - ✅ CONCLUÍDO
 
 ## Resumo
 
-Adicionar um novo setor "Estoque" na tela Home (/home) com um hub centralizado e 3 sub-rotas para gerenciar estoque da fábrica, almoxarifado de insumos e fornecedores.
+Novo setor "Estoque" adicionado na tela Home (/home) com hub centralizado e 3 sub-rotas implementadas.
 
 ---
 
