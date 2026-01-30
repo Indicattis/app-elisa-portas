@@ -1,57 +1,74 @@
 
 
-# Correção: Numerar Portas Baseado nas Linhas do Pedido
+# Correção: Numeração de Portas no Agrupamento de Pintura
 
 ## Problema
 
-A query atual busca **todos** os `produtos_vendas` da venda, mas nem todos são portas do pedido. As linhas do pedido referenciam apenas 2 produtos (o 3º e 4º da lista), resultando em "Porta 3" e "Porta 4" ao invés de "Porta 1" e "Porta 2".
+Em `/producao/pintura`, ao visualizar os detalhes de uma ordem, as portas são agrupadas corretamente por `produto_venda_id`, mas a numeração usa o índice do loop (`index + 1`), que não reflete a sequência correta quando o pedido não inclui todas as portas da venda.
 
 ## Solução
 
-Criar o mapa de numeração baseado nos `produto_venda_id` únicos que existem nas linhas do pedido, não em todos os produtos da venda.
+Aplicar a mesma lógica implementada em `PedidoViewDirecao.tsx`: criar um mapa de numeração baseado nos `produto_venda_id` únicos das linhas da ordem atual.
 
 ## Alterações Técnicas
 
-### Arquivo: `src/pages/direcao/PedidoViewDirecao.tsx`
+### Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
 
-**Linhas 93-106 - Alterar lógica de criação do mapa:**
+**Linhas 741-751 - Adicionar mapa de numeração antes do agrupamento:**
 
 ```typescript
-// ANTES: Busca TODOS os produtos da venda
-if (pedidoData.venda_id) {
-  const { data: portasData } = await supabase
-    .from('produtos_vendas')
-    .select('id')
-    .eq('venda_id', pedidoData.venda_id)
-    .order('created_at', { ascending: true });
+// ANTES (linha 741-751):
+const linhasPorPorta = linhasQuePrecisaPintura.reduce((grupos, linha) => {
+  const key = linha.produto_venda_id || 'sem_porta';
+  if (!grupos[key]) {
+    grupos[key] = [];
+  }
+  grupos[key].push(linha);
+  return grupos;
+}, {} as Record<string, LinhaOrdem[]>);
 
-  const newPortasMap = new Map<string, number>();
-  (portasData || []).forEach((porta, idx) => {
-    newPortasMap.set(porta.id, idx + 1);
-  });
-  setPortasMap(newPortasMap);
-}
+return Object.entries(linhasPorPorta).map(([portaId, linhasPorta], index) => {
 
-// DEPOIS: Usa apenas os produto_venda_id únicos das linhas do pedido
+// DEPOIS:
+const linhasPorPorta = linhasQuePrecisaPintura.reduce((grupos, linha) => {
+  const key = linha.produto_venda_id || 'sem_porta';
+  if (!grupos[key]) {
+    grupos[key] = [];
+  }
+  grupos[key].push(linha);
+  return grupos;
+}, {} as Record<string, LinhaOrdem[]>);
+
+// Criar mapa de numeração baseado na ordem de aparição dos produto_venda_id únicos
 const uniquePortaIds = [...new Set(
-  (linhasData || [])
+  linhasQuePrecisaPintura
     .map(l => l.produto_venda_id)
     .filter((id): id is string => id !== null && id !== undefined)
 )];
-
-const newPortasMap = new Map<string, number>();
+const portasNumeracaoMap = new Map<string, number>();
 uniquePortaIds.forEach((portaId, idx) => {
-  newPortasMap.set(portaId, idx + 1);
+  portasNumeracaoMap.set(portaId, idx + 1);
 });
-setPortasMap(newPortasMap);
+
+return Object.entries(linhasPorPorta).map(([portaId, linhasPorta]) => {
 ```
 
-## Resultado
+**Linha 780 - Usar mapa para numeração:**
+
+```tsx
+// ANTES:
+Porta {String(index + 1).padStart(2, '0')}
+
+// DEPOIS:
+Porta {String(portasNumeracaoMap.get(portaId) || 1).padStart(2, '0')}
+```
+
+## Resultado Esperado
 
 | produto_venda_id nas linhas | Numeração |
 |-----------------------------|-----------|
-| 8fe6a751-... (1º encontrado) | Porta 1 |
-| 2dbaac84-... (2º encontrado) | Porta 2 |
+| 8fe6a751-... (1º encontrado) | Porta 01 |
+| 2dbaac84-... (2º encontrado) | Porta 02 |
 
-Os itens agora exibirão "Porta 1" e "Porta 2" corretamente.
+As portas serão numeradas sequencialmente (01, 02, 03...) baseado apenas nas que existem nesta ordem de pintura específica.
 
