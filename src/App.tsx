@@ -141,6 +141,7 @@ import ProducaoHome from "./pages/ProducaoHome";
 
 import ProducaoMeuHistorico from "./pages/ProducaoMeuHistorico";
 import ProducaoControle from "./pages/ProducaoControle";
+import ConferenciaEstoqueProducao from "./pages/producao/ConferenciaEstoqueProducao";
 import Ordens from "./pages/Ordens";
 import AdminHub from "./pages/admin/AdminHub";
 import AdminPermissionsMinimalista from "./pages/admin/AdminPermissionsMinimalista";
@@ -601,6 +602,16 @@ const App = () => (
                             <ProtectedProducaoRoute>
                               <ProducaoLayout>
                                 <ProducaoHome />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          } 
+                        />
+                        <Route 
+                          path="/conferencia-estoque" 
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ConferenciaEstoqueProducao />
                               </ProducaoLayout>
                             </ProtectedProducaoRoute>
                           } 

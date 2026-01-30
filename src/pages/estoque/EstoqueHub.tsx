@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Factory, Package, Truck, Lock, ArrowLeft, ClipboardCheck, FileSearch } from 'lucide-react';
+import { Factory, Package, Truck, Lock, ArrowLeft, FileSearch } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
@@ -9,6 +9,7 @@ const menuItems = [
   { label: "Fábrica", icon: Factory, path: "/estoque/fabrica", ativo: true },
   { label: "Almoxarifado", icon: Package, path: "/estoque/almoxarifado", ativo: true },
   { label: "Fornecedores", icon: Truck, path: "/estoque/fornecedores", ativo: true },
+  { label: "Auditoria", icon: FileSearch, path: "/estoque/auditoria", ativo: true },
 ];
 
 export default function EstoqueHub() {
@@ -101,56 +102,12 @@ export default function EstoqueHub() {
               </div>
             );
           })}
-
-          {/* Seção Conferência - Mobile */}
-          <div
-            className="mt-4 p-1.5 rounded-xl backdrop-blur-xl border bg-white/5 border-white/10"
-            style={{
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
-              transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 340ms'
-            }}
-          >
-            <button
-              onClick={() => navigate('/estoque/conferencia')}
-              className="w-full h-12 rounded-lg
-                         flex items-center gap-4 px-5
-                         font-medium border transition-all duration-300
-                         bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 
-                         active:scale-[0.98] text-white shadow-lg shadow-emerald-500/20 border-emerald-400/30"
-            >
-              <ClipboardCheck className="w-5 h-5" strokeWidth={1.5} />
-              <span className="text-sm font-medium flex-1 text-left">Conferência de Estoque</span>
-            </button>
-          </div>
-
-          {/* Botão Auditoria - Mobile */}
-          <div
-            className="mt-2 p-1.5 rounded-xl backdrop-blur-xl border bg-white/5 border-white/10"
-            style={{
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
-              transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 420ms'
-            }}
-          >
-            <button
-              onClick={() => navigate('/estoque/auditoria')}
-              className="w-full h-12 rounded-lg
-                         flex items-center gap-4 px-5
-                         font-medium border transition-all duration-300
-                         bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 
-                         active:scale-[0.98] text-white shadow-lg shadow-amber-500/20 border-amber-400/30"
-            >
-              <FileSearch className="w-5 h-5" strokeWidth={1.5} />
-              <span className="text-sm font-medium flex-1 text-left">Auditoria de Estoque</span>
-            </button>
-          </div>
         </div>
       </div>
 
       {/* ========== VERSÃO DESKTOP ========== */}
       <div className="hidden md:flex relative z-10 flex-col items-center gap-8">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const delay = 200 + index * 100;
@@ -190,54 +147,6 @@ export default function EstoqueHub() {
               </div>
             );
           })}
-        </div>
-
-        {/* Seção Conferência - Desktop */}
-        <div
-          className="w-full max-w-md"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'translateY(0)' : 'translateY(30px)',
-            transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 500ms'
-          }}
-        >
-          <div className="p-2 rounded-2xl backdrop-blur-xl border bg-white/5 border-white/10">
-            <button
-              onClick={() => navigate('/estoque/conferencia')}
-              className="w-full h-16 rounded-xl
-                         flex items-center justify-center gap-3
-                         font-medium border transition-all duration-300
-                         bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 
-                         hover:shadow-xl hover:shadow-emerald-500/50 text-white shadow-lg shadow-emerald-500/30 border-emerald-400/30"
-            >
-              <ClipboardCheck className="w-6 h-6" strokeWidth={1.5} />
-              <span className="text-sm font-medium tracking-wide">Conferência de Estoque</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Botão Auditoria - Desktop */}
-        <div
-          className="w-full max-w-md"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'translateY(0)' : 'translateY(30px)',
-            transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 600ms'
-          }}
-        >
-          <div className="p-2 rounded-2xl backdrop-blur-xl border bg-white/5 border-white/10">
-            <button
-              onClick={() => navigate('/estoque/auditoria')}
-              className="w-full h-16 rounded-xl
-                         flex items-center justify-center gap-3
-                         font-medium border transition-all duration-300
-                         bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 
-                         hover:shadow-xl hover:shadow-amber-500/50 text-white shadow-lg shadow-amber-500/30 border-amber-400/30"
-            >
-              <FileSearch className="w-6 h-6" strokeWidth={1.5} />
-              <span className="text-sm font-medium tracking-wide">Auditoria de Estoque</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
