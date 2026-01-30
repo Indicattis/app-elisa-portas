@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Pause, Check, Search, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import { useCronometro } from "@/hooks/useCronometro";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 function formatTempo(segundos: number): string {
   const horas = Math.floor(segundos / 3600);
@@ -40,6 +41,7 @@ function formatTempo(segundos: number): string {
 export default function ConferenciaExecucao() {
   const { id: conferenciaId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState("");
   const [showConcluirDialog, setShowConcluirDialog] = useState(false);
   const [observacoes, setObservacoes] = useState("");
@@ -98,20 +100,19 @@ export default function ConferenciaExecucao() {
     }
   }, [itensConferencia, conferenciaCarregada]);
 
+  // Ref para evitar múltiplas inicializações do cronômetro
+  const cronometroIniciado = useRef(false);
+
   // Iniciar cronômetro quando conferência é carregada
   useEffect(() => {
-    if (conferencia && conferenciaCarregada && !conferencia.pausada && !isRunning) {
+    if (conferencia && conferenciaCarregada && !cronometroIniciado.current) {
+      if (conferencia.pausada) {
+        retomarConferencia(conferenciaId!);
+      }
       start();
+      cronometroIniciado.current = true;
     }
-  }, [conferencia, conferenciaCarregada, isRunning, start]);
-
-  // Retomar se estava pausada
-  useEffect(() => {
-    if (conferencia?.pausada && conferenciaCarregada) {
-      retomarConferencia(conferenciaId!);
-      start();
-    }
-  }, [conferencia?.pausada, conferenciaCarregada]);
+  }, [conferencia, conferenciaCarregada, conferenciaId, retomarConferencia, start]);
 
   const handleQuantidadeChange = useCallback(async (produtoId: string, valor: string) => {
     const quantidade = valor === "" ? null : parseInt(valor, 10);
@@ -210,60 +211,65 @@ export default function ConferenciaExecucao() {
     <div className="min-h-screen bg-background">
       {/* Header fixo */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex flex-col gap-3">
+        <div className="container mx-auto px-3 md:px-4 py-2 md:py-3">
+          <div className="flex flex-col gap-2 md:gap-3">
             {/* Linha 1: Navegação e cronômetro */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="h-8 w-8 md:h-9 md:w-9"
                   onClick={() => navigate("/estoque/conferencia")}
                 >
-                  <ArrowLeft className="h-5 w-5" />
+                  <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
                 </Button>
                 <div>
-                  <h1 className="text-lg font-semibold">
-                    Conferência #{conferenciaId?.substring(0, 8)}
+                  <h1 className="text-sm md:text-lg font-semibold">
+                    Conf. #{conferenciaId?.substring(0, 8)}
                   </h1>
                 </div>
               </div>
 
               {/* Cronômetro */}
-              <div className="flex items-center gap-2 bg-muted px-4 py-2 rounded-lg">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="font-mono text-lg font-semibold">
+              <div className="flex items-center gap-1.5 md:gap-2 bg-muted px-2 md:px-4 py-1.5 md:py-2 rounded-lg">
+                <Clock className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+                <span className="font-mono text-sm md:text-lg font-semibold">
                   {formatTempo(tempoTotal)}
                 </span>
               </div>
             </div>
 
             {/* Linha 2: Progresso e ações */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
               <div className="flex-1 space-y-1">
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-xs md:text-sm">
                   <span className="text-muted-foreground">
-                    {itensConferidosCount} de {totalItens} itens conferidos
+                    {itensConferidosCount}/{totalItens}
                   </span>
                   <span className="font-medium">{Math.round(progresso)}%</span>
                 </div>
-                <Progress value={progresso} className="h-2" />
+                <Progress value={progresso} className="h-1.5 md:h-2" />
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-1.5 md:gap-2">
                 <Button
                   variant="outline"
+                  size={isMobile ? "sm" : "default"}
                   onClick={handlePausar}
                   disabled={pausando}
+                  className="text-xs md:text-sm"
                 >
-                  <Pause className="h-4 w-4 mr-2" />
-                  {pausando ? "Pausando..." : "Pausar"}
+                  <Pause className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1 md:mr-2" />
+                  {pausando ? "..." : "Pausar"}
                 </Button>
                 <Button
+                  size={isMobile ? "sm" : "default"}
                   onClick={() => setShowConcluirDialog(true)}
                   disabled={!podeConcluir}
+                  className="text-xs md:text-sm"
                 >
-                  <Check className="h-4 w-4 mr-2" />
+                  <Check className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1 md:mr-2" />
                   Concluir
                 </Button>
               </div>
@@ -271,12 +277,12 @@ export default function ConferenciaExecucao() {
 
             {/* Busca */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 md:left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome, SKU ou categoria..."
+                placeholder="Buscar produto..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-8 md:pl-10 h-8 md:h-10 text-xs md:text-sm"
               />
             </div>
           </div>
@@ -294,12 +300,12 @@ export default function ConferenciaExecucao() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-24">SKU</TableHead>
-                  <TableHead>Produto</TableHead>
-                  <TableHead className="w-32">Categoria</TableHead>
-                  <TableHead className="w-28 text-center">Qtd. Sistema</TableHead>
-                  <TableHead className="w-32 text-center">Qtd. Conferida</TableHead>
-                  <TableHead className="w-24 text-center">Diferença</TableHead>
+                  <TableHead className="hidden md:table-cell w-24">SKU</TableHead>
+                  <TableHead className="text-xs md:text-sm">Produto</TableHead>
+                  <TableHead className="hidden md:table-cell w-32">Categoria</TableHead>
+                  <TableHead className="w-20 md:w-28 text-center text-xs md:text-sm">Atual</TableHead>
+                  <TableHead className="w-20 md:w-32 text-center text-xs md:text-sm">Conf.</TableHead>
+                  <TableHead className="hidden md:table-cell w-24 text-center">Diferença</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -313,17 +319,19 @@ export default function ConferenciaExecucao() {
 
                   return (
                     <TableRow key={produto.id}>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
+                      <TableCell className="hidden md:table-cell font-mono text-xs text-muted-foreground">
                         {produto.sku || "-"}
                       </TableCell>
-                      <TableCell className="font-medium">{produto.nome_produto}</TableCell>
-                      <TableCell>
+                      <TableCell className="font-medium text-xs md:text-sm max-w-[120px] md:max-w-none truncate">
+                        {produto.nome_produto}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <Badge variant="outline" className="text-xs">
                           {produto.categoria || "Sem categoria"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-center font-medium">
-                        {quantidadeAnterior} {produto.unidade}
+                      <TableCell className="text-center font-medium text-xs md:text-sm">
+                        {quantidadeAnterior}
                       </TableCell>
                       <TableCell>
                         <Input
@@ -332,10 +340,10 @@ export default function ConferenciaExecucao() {
                           placeholder="Qtd"
                           value={quantidadeConferida ?? ""}
                           onChange={(e) => handleQuantidadeChange(produto.id, e.target.value)}
-                          className="h-8 text-center"
+                          className="h-7 md:h-8 text-center text-xs md:text-sm"
                         />
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="hidden md:table-cell text-center">
                         {diferenca !== null ? (
                           <span
                             className={cn(

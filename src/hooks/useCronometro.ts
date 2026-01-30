@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export function useCronometro() {
   const [segundosDecorridos, setSegundosDecorridos] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const [startTime, setStartTime] = useState<Date | null>(null);
+  const startTimeRef = useRef<Date | null>(null);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
@@ -23,10 +23,10 @@ export function useCronometro() {
 
   const start = useCallback(() => {
     setIsRunning(true);
-    if (!startTime) {
-      setStartTime(new Date());
+    if (!startTimeRef.current) {
+      startTimeRef.current = new Date();
     }
-  }, [startTime]);
+  }, []);
 
   const pause = useCallback(() => {
     setIsRunning(false);
@@ -35,13 +35,13 @@ export function useCronometro() {
   const reset = useCallback(() => {
     setIsRunning(false);
     setSegundosDecorridos(0);
-    setStartTime(null);
+    startTimeRef.current = null;
   }, []);
 
   return {
     segundosDecorridos,
     isRunning,
-    startTime,
+    startTime: startTimeRef.current,
     start,
     pause,
     reset
