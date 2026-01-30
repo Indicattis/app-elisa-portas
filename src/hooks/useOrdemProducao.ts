@@ -102,6 +102,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
             prioridade_etapa,
             em_backlog,
             observacoes,
+            updated_at,
             vendas(
               data_prevista_entrega,
               observacoes_venda,

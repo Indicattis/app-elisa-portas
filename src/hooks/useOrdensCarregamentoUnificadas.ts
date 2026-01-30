@@ -36,6 +36,8 @@ export interface OrdemCarregamentoUnificada {
     id: string;
     numero_pedido: string;
     etapa_atual?: string;
+    observacoes?: string;
+    updated_at?: string;
   } | null;
   venda?: {
     id: string;
@@ -93,7 +95,9 @@ export const useOrdensCarregamentoUnificadas = () => {
           pedido:pedidos_producao!ordens_carregamento_pedido_id_fkey(
             id,
             numero_pedido,
-            etapa_atual
+            etapa_atual,
+            observacoes,
+            updated_at
           )
         `)
         .eq("carregamento_concluido", false)
@@ -151,7 +155,9 @@ export const useOrdensCarregamentoUnificadas = () => {
           pedido:pedidos_producao!instalacoes_pedido_id_fkey(
             id,
             numero_pedido,
-            etapa_atual
+            etapa_atual,
+            observacoes,
+            updated_at
           )
         `)
         .eq("carregamento_concluido", false)

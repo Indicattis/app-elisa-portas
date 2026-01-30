@@ -42,6 +42,8 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
               venda_id,
               prioridade_etapa,
               em_backlog,
+              observacoes,
+              updated_at,
               vendas(
                 id,
                 observacoes_venda,

@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PackageCheck, Loader2, Truck, Tags, Wrench } from "lucide-react";
+import { PackageCheck, Loader2, Truck, Tags, Wrench, FileText } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
@@ -256,6 +258,26 @@ export function CarregamentoDownbar({
               </span>
             </div>
           </div>
+
+          {/* Observações do Pedido */}
+          {ordem.pedido?.observacoes && (
+            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                  <FileText className="h-3 w-3" />
+                  Observações do Pedido
+                </span>
+                {ordem.pedido?.updated_at && (
+                  <span className="text-xs text-amber-600/70 dark:text-amber-400/70">
+                    {format(new Date(ordem.pedido.updated_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-amber-800 dark:text-amber-200 whitespace-pre-line">
+                {ordem.pedido.observacoes}
+              </p>
+            </div>
+          )}
 
           <Separator />
 
