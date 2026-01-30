@@ -34,15 +34,20 @@ export function LucroItemModal({
 }: LucroItemModalProps) {
   const [lucro, setLucro] = useState<number>(0);
 
+  // Usar produto.id como dependência para garantir reset quando trocar de produto
   useEffect(() => {
-    if (isOpen) {
-      setLucro(produto.lucro_item || 0);
+    if (isOpen && produto) {
+      setLucro(produto.lucro_item ?? 0);
     }
-  }, [isOpen, produto.lucro_item]);
+  }, [isOpen, produto?.id, produto?.lucro_item]);
 
-  const custoCalculado = produto.valor_total - lucro;
-  const margem = produto.valor_total > 0 ? (lucro / produto.valor_total) * 100 : 0;
-  const isLucroInvalido = lucro > produto.valor_total || lucro < 0;
+  // Garantir valores numéricos válidos
+  const valorTotal = Number(produto.valor_total) || 0;
+  const lucroValido = Number.isFinite(lucro) ? lucro : 0;
+
+  const custoCalculado = valorTotal - lucroValido;
+  const margem = valorTotal > 0 ? (lucroValido / valorTotal) * 100 : 0;
+  const isLucroInvalido = lucroValido > valorTotal || lucroValido < 0;
 
   const handleSave = async () => {
     if (isLucroInvalido) return;
@@ -76,7 +81,10 @@ export function LucroItemModal({
               max={produto.valor_total}
               step="0.01"
               value={lucro}
-              onChange={(e) => setLucro(Number(e.target.value))}
+              onChange={(e) => {
+                const valor = parseFloat(e.target.value);
+                setLucro(Number.isFinite(valor) ? valor : 0);
+              }}
               className={isLucroInvalido ? "border-destructive" : ""}
             />
             {isLucroInvalido && (
@@ -91,14 +99,14 @@ export function LucroItemModal({
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Valor Total:</span>
               <span className="font-semibold">
-                R$ {produto.valor_total.toFixed(2)}
+                R$ {valorTotal.toFixed(2)}
               </span>
             </div>
 
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Lucro Informado:</span>
               <span className="font-semibold text-green-600">
-                R$ {lucro.toFixed(2)}
+                R$ {lucroValido.toFixed(2)}
               </span>
             </div>
 
