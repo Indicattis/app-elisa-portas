@@ -346,18 +346,6 @@ export default function AlmoxarifadoPage() {
                 </Select>
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="data_ultima_conferencia">Data da Última Conferência</Label>
-              <Input
-                id="data_ultima_conferencia"
-                type="date"
-                value={formData.data_ultima_conferencia || ""}
-                onChange={(e) => setFormData({ ...formData, data_ultima_conferencia: e.target.value || null })}
-                className="bg-white/5 border-white/10 text-white"
-              />
-            </div>
-
             <DialogFooter>
               <Button 
                 type="button" 
