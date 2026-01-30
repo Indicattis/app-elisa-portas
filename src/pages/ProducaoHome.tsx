@@ -5,7 +5,7 @@ import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Hammer, Boxes, Package, Sparkles, CheckSquare, Truck, BarChart3, History } from "lucide-react";
+import { Hammer, Boxes, Package, Sparkles, CheckSquare, Truck, BarChart3, History, ClipboardCheck } from "lucide-react";
 import { useOrdensCount } from "@/hooks/useOrdensCount";
 interface ProducaoRoute {
   key: string;
@@ -102,10 +102,16 @@ export default function ProducaoHome() {
             Acompanhe as ordens de produção e acesse os diferentes painéis
           </p>
         </div>
-        <Button variant="outline" onClick={() => navigate('/producao/meu-historico')} className="shrink-0">
-          <History className="h-4 w-4 mr-2" />
-          Meu Histórico
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button variant="outline" onClick={() => navigate('/producao/conferencia-estoque')}>
+            <ClipboardCheck className="h-4 w-4 mr-2" />
+            Conferir Estoque
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/producao/meu-historico')}>
+            <History className="h-4 w-4 mr-2" />
+            Meu Histórico
+          </Button>
+        </div>
       </div>
 
       {/* Acesso aos Painéis */}

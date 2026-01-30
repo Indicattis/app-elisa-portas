@@ -138,6 +138,7 @@ import { PaineisLayout } from "@/components/PaineisLayout";
 import { ProtectedProducaoRoute } from "@/components/ProtectedProducaoRoute";
 import ProducaoCarregamento from "./pages/ProducaoCarregamento";
 import ProducaoHome from "./pages/ProducaoHome";
+import ConferenciaEstoqueFabrica from "./pages/ConferenciaEstoqueFabrica";
 import ProducaoMeuHistorico from "./pages/ProducaoMeuHistorico";
 import ProducaoControle from "./pages/ProducaoControle";
 import Ordens from "./pages/Ordens";
@@ -587,6 +588,16 @@ const App = () => (
                               </ProducaoLayout>
                             </ProtectedProducaoRoute>
                           }
+                        />
+                        <Route 
+                          path="/conferencia-estoque" 
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ConferenciaEstoqueFabrica />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          } 
                         />
                         <Route 
                           path="/home" 
