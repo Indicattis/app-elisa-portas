@@ -230,6 +230,62 @@ export type Database = {
           },
         ]
       }
+      almoxarifado: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          custo: number
+          data_ultima_conferencia: string | null
+          fornecedor_id: string | null
+          id: string
+          nome: string
+          quantidade_estoque: number
+          quantidade_maxima: number
+          quantidade_minima: number
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          custo?: number
+          data_ultima_conferencia?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          nome: string
+          quantidade_estoque?: number
+          quantidade_maxima?: number
+          quantidade_minima?: number
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          custo?: number
+          data_ultima_conferencia?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          nome?: string
+          quantidade_estoque?: number
+          quantidade_maxima?: number
+          quantidade_minima?: number
+          unidade?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "almoxarifado_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_routes: {
         Row: {
           active: boolean | null
