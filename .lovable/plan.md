@@ -1,54 +1,77 @@
 
 
-# Exibir Tamanhos nas Linhas de Pintura
+# Correção: Match Preciso de Linhas de Pintura com Portas
 
-## Problema
+## Problema Identificado
 
-Os tamanhos dos itens (ex: "2,81m") existem em `pedido_linhas`, mas não estão sendo exibidos nas linhas de pintura porque o campo `tamanho` em `linhas_ordens` está vazio.
+As `linhas_ordens` de pintura têm `pedido_linha_id` e `produto_venda_id` **nulos**. O match atual usa apenas nome+quantidade, que é **ambíguo** quando existem itens idênticos em portas diferentes.
+
+**Exemplo do pedido atual:**
+| Item | Qtd | Tamanho | Porta |
+|------|-----|---------|-------|
+| Meia cana lisa | 35 | 2,85 | 1 |
+| Meia cana lisa | 35 | 2,80 | 2 |
+| Meia cana lisa | 6 | 3,09 | 1 |
+| Meia cana lisa | 6 | 3,04 | 2 |
+
+O match por nome+quantidade retorna o **primeiro** resultado encontrado, agrupando todos os itens na mesma porta incorretamente.
 
 ## Solução
 
-Buscar o `tamanho` de `pedido_linhas` durante o carregamento das ordens de pintura e associar às linhas correspondentes.
+Usar associação sequencial: quando múltiplas linhas do pedido combinam com uma linha de pintura, "consumir" cada match conforme são encontrados, evitando repetições.
 
 ## Alterações Técnicas
 
 ### Arquivo: `src/hooks/useOrdemPintura.ts`
 
-**1. Atualizar query de pedido_linhas (linha 91-93):**
-
-Incluir o campo `tamanho` na seleção:
+**Substituir lógica de match (linhas 96-132):**
 
 ```typescript
-// ANTES:
-const { data: linhasPedido } = await supabase
-  .from('pedido_linhas')
-  .select('nome_produto, produto_venda_id, quantidade')
-  .eq('pedido_id', ordem.pedido_id);
+// Processar linhas - usar match sequencial para evitar associações duplicadas
+const linhasPedidoUsadas = new Set<string>();
 
-// DEPOIS:
-const { data: linhasPedido } = await supabase
-  .from('pedido_linhas')
-  .select('nome_produto, produto_venda_id, quantidade, tamanho')
-  .eq('pedido_id', ordem.pedido_id);
-```
-
-**2. Atualizar mapeamento das linhas (linhas 96-123):**
-
-Usar o `tamanho` da linha original do pedido quando a linha de pintura não tiver:
-
-```typescript
 const linhas = linhasRaw?.map((linha: any) => {
-  // ... lógica existente para encontrar produtoVendaId ...
+  // Se a linha já tem produto_venda_id, usar direto
+  let produtoVendaId = linha.produto_venda_id;
+  let linhaOriginal = null;
   
-  // Buscar linha original do pedido para obter tamanho
-  const linhaOriginal = linhasPedido?.find((lp: any) => 
-    (lp.nome_produto === linha.item || 
-     lp.nome_produto?.includes(linha.item) || 
-     linha.item?.includes(lp.nome_produto) ||
-     linha.estoque?.nome_produto === lp.nome_produto) &&
-    lp.quantidade === linha.quantidade
-  );
+  // Se não tem, buscar nas linhas originais do pedido
+  if (!produtoVendaId && linhasPedido) {
+    // Encontrar TODAS as linhas que combinam
+    const linhasMatch = linhasPedido.filter((lp: any) => 
+      !linhasPedidoUsadas.has(lp.id) && // Ainda não usada
+      (lp.nome_produto === linha.item || 
+       lp.nome_produto?.includes(linha.item) || 
+       linha.item?.includes(lp.nome_produto) ||
+       linha.estoque?.nome_produto === lp.nome_produto) &&
+      lp.quantidade === linha.quantidade
+    );
+    
+    // Se encontrou, usar a primeira NÃO USADA e marcar como usada
+    if (linhasMatch.length > 0) {
+      linhaOriginal = linhasMatch[0];
+      linhasPedidoUsadas.add(linhaOriginal.id);
+      produtoVendaId = linhaOriginal.produto_venda_id;
+    }
+  } else if (linhasPedido) {
+    // Se já tem produto_venda_id, ainda buscar linha original para tamanho
+    linhaOriginal = linhasPedido.find((lp: any) => 
+      !linhasPedidoUsadas.has(lp.id) &&
+      lp.produto_venda_id === produtoVendaId &&
+      (lp.nome_produto === linha.item || 
+       lp.nome_produto?.includes(linha.item) || 
+       linha.item?.includes(lp.nome_produto) ||
+       linha.estoque?.nome_produto === lp.nome_produto) &&
+      lp.quantidade === linha.quantidade
+    );
+    if (linhaOriginal) {
+      linhasPedidoUsadas.add(linhaOriginal.id);
+    }
+  }
   
+  // Buscar dimensões da porta
+  const produtoVenda = produtos.find((p: any) => p.id === produtoVendaId);
+
   return {
     ...linha,
     item: linha.estoque?.nome_produto || linha.item,
@@ -56,18 +79,26 @@ const linhas = linhasRaw?.map((linha: any) => {
     produto_venda_id: produtoVendaId,
     largura: linha.largura || produtoVenda?.largura || null,
     altura: linha.altura || produtoVenda?.altura || null,
-    tamanho: linha.tamanho || linhaOriginal?.tamanho || null  // ADICIONAR
+    tamanho: linha.tamanho || linhaOriginal?.tamanho || null
   };
 }) || [];
 ```
 
+## Como Funciona
+
+1. Cria um `Set` para rastrear quais `pedido_linhas.id` já foram usadas
+2. Para cada linha de pintura, busca matches que ainda não foram usados
+3. Ao encontrar um match, marca o `id` como usado
+4. Isso garante associação sequencial: primeira linha de pintura → primeira linha de pedido, segunda → segunda, etc.
+
 ## Resultado Esperado
 
-Na visualização de ordens de pintura em `/producao/pintura`, cada linha mostrará seu tamanho (ex: "2.81m") ao lado da quantidade, assim como aparece em `/direcao/pedidos/:id`.
+| Linha Pintura | Match Anterior | Match Corrigido |
+|--------------|----------------|-----------------|
+| Meia cana qtd 35 (1ª) | Porta 1 | Porta 1 |
+| Meia cana qtd 35 (2ª) | Porta 1 ❌ | Porta 2 ✅ |
+| Meia cana qtd 6 (1ª) | Porta 1 | Porta 1 |
+| Meia cana qtd 6 (2ª) | Porta 1 ❌ | Porta 2 ✅ |
 
-| Item | Quantidade | Tamanho |
-|------|------------|---------|
-| Eixo - 4" 1/2 | Qtd: 1 | 2.81m |
-| Guia M - 135mm | Qtd: 2 | 2.31m |
-| Meia cana lisa | Qtd: 35 | 2.85m |
+As linhas serão associadas corretamente às suas respectivas portas.
 
