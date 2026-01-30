@@ -90,20 +90,18 @@ export default function PedidoViewDirecao() {
         .eq('pedido_id', id)
         .order('ordem', { ascending: true });
 
-      // Buscar portas do pedido para enumerar corretamente
-      if (pedidoData.venda_id) {
-        const { data: portasData } = await supabase
-          .from('produtos_vendas')
-          .select('id')
-          .eq('venda_id', pedidoData.venda_id)
-          .order('created_at', { ascending: true });
+      // Criar mapa de portas baseado apenas nos produto_venda_id únicos das linhas do pedido
+      const uniquePortaIds = [...new Set(
+        (linhasData || [])
+          .map(l => l.produto_venda_id)
+          .filter((id): id is string => id !== null && id !== undefined)
+      )];
 
-        const newPortasMap = new Map<string, number>();
-        (portasData || []).forEach((porta, idx) => {
-          newPortasMap.set(porta.id, idx + 1);
-        });
-        setPortasMap(newPortasMap);
-      }
+      const newPortasMap = new Map<string, number>();
+      uniquePortaIds.forEach((portaId, idx) => {
+        newPortasMap.set(portaId, idx + 1);
+      });
+      setPortasMap(newPortasMap);
 
       // Buscar ordens de forma simples
       const ordensResult: Ordem[] = [];
