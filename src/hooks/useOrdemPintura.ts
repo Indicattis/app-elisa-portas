@@ -69,6 +69,11 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
             responsavel = data;
           }
 
+          // Processar produtos da venda PRIMEIRO
+          const vendasArray = Array.isArray(pedido?.vendas) ? pedido.vendas : [pedido?.vendas];
+          const primeiraVenda = vendasArray.length > 0 ? vendasArray[0] : null;
+          const produtos = primeiraVenda?.produtos || [];
+
           // Buscar linhas com nome atualizado do estoque e campo requer_pintura
           const { data: linhasRaw } = await supabase
             .from('linhas_ordens')
@@ -92,11 +97,6 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
               altura: linha.altura || produtoVenda?.altura || null
             };
           }) || [];
-
-          // Processar produtos da venda
-          const vendasArray = Array.isArray(pedido?.vendas) ? pedido.vendas : [pedido?.vendas];
-          const primeiraVenda = vendasArray.length > 0 ? vendasArray[0] : null;
-          const produtos = primeiraVenda?.produtos || [];
 
           return {
             ...ordem,
