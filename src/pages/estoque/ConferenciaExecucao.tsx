@@ -26,7 +26,7 @@ import {
 import { useConferenciaEstoque, ItemConferencia } from "@/hooks/useConferenciaEstoque";
 import { useCronometro } from "@/hooks/useCronometro";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -67,6 +67,12 @@ export default function ConferenciaExecucao({
   } = useConferenciaEstoque();
 
   const { segundosDecorridos, isRunning, start, pause, reset } = useCronometro();
+  const queryClient = useQueryClient();
+
+  // Invalidar cache de produtos ao entrar na página para garantir dados frescos
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["estoque-produtos"] });
+  }, [queryClient]);
 
   // Buscar dados da conferência
   const { data: conferencia, isLoading: loadingConferencia } = useQuery({
@@ -215,10 +221,27 @@ export default function ConferenciaExecucao({
     return item?.quantidade_anterior ?? 0;
   };
 
-  if (loadingConferencia || loadingItens) {
+  if (loadingConferencia || loadingItens || loadingProdutos) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Estado vazio: produtos não carregados
+  if (!loadingProdutos && produtos.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card>
+          <CardContent className="py-8 text-center">
+            <AlertCircle className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+            <p className="mb-4">Nenhum produto encontrado no estoque</p>
+            <Button onClick={() => window.location.reload()}>
+              Recarregar página
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
