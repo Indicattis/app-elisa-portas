@@ -142,6 +142,7 @@ import ProducaoHome from "./pages/ProducaoHome";
 import ProducaoMeuHistorico from "./pages/ProducaoMeuHistorico";
 import ProducaoControle from "./pages/ProducaoControle";
 import ConferenciaEstoqueProducao from "./pages/producao/ConferenciaEstoqueProducao";
+import ConferenciaExecucaoProducao from "./pages/producao/ConferenciaExecucaoProducao";
 import Ordens from "./pages/Ordens";
 import AdminHub from "./pages/admin/AdminHub";
 import AdminPermissionsMinimalista from "./pages/admin/AdminPermissionsMinimalista";
@@ -612,6 +613,16 @@ const App = () => (
                             <ProtectedProducaoRoute>
                               <ProducaoLayout>
                                 <ConferenciaEstoqueProducao />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          } 
+                        />
+                        <Route 
+                          path="/conferencia-estoque/:id" 
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ConferenciaExecucaoProducao />
                               </ProducaoLayout>
                             </ProtectedProducaoRoute>
                           } 
