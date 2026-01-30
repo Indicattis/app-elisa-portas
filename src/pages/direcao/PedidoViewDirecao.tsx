@@ -36,6 +36,7 @@ interface PedidoLinha {
   quantidade: number;
   tamanho?: string | null;
   indice_porta?: number | null;
+  produto_venda_id?: string | null;
 }
 
 interface Pedido {
@@ -62,6 +63,7 @@ export default function PedidoViewDirecao() {
   const { id } = useParams<{ id: string }>();
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [loading, setLoading] = useState(true);
+  const [portasMap, setPortasMap] = useState<Map<string, number>>(new Map());
   const { toast } = useToast();
 
   const fetchPedidoDetails = async () => {
@@ -84,9 +86,24 @@ export default function PedidoViewDirecao() {
       // Buscar linhas do pedido
       const { data: linhasData } = await supabase
         .from('pedido_linhas')
-        .select('id, nome_produto, descricao_produto, quantidade, tamanho, indice_porta')
+        .select('id, nome_produto, descricao_produto, quantidade, tamanho, indice_porta, produto_venda_id')
         .eq('pedido_id', id)
         .order('ordem', { ascending: true });
+
+      // Buscar portas do pedido para enumerar corretamente
+      if (pedidoData.venda_id) {
+        const { data: portasData } = await supabase
+          .from('produtos_vendas')
+          .select('id')
+          .eq('venda_id', pedidoData.venda_id)
+          .order('created_at', { ascending: true });
+
+        const newPortasMap = new Map<string, number>();
+        (portasData || []).forEach((porta, idx) => {
+          newPortasMap.set(porta.id, idx + 1);
+        });
+        setPortasMap(newPortasMap);
+      }
 
       // Buscar ordens de forma simples
       const ordensResult: Ordem[] = [];
@@ -389,9 +406,10 @@ export default function PedidoViewDirecao() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-white">{linha.nome_produto}</p>
-                        {linha.indice_porta !== null && linha.indice_porta !== undefined && (
+                        {linha.produto_venda_id && portasMap.get(linha.produto_venda_id) && (
                           <Badge variant="outline" className="text-xs px-1.5 py-0 bg-blue-500/10 text-blue-400 border-blue-500/30">
-                            Porta {linha.indice_porta + 1}
+                            Porta {portasMap.get(linha.produto_venda_id)}
+                            {linha.indice_porta !== null && linha.indice_porta !== undefined && linha.indice_porta > 0 && ` (${linha.indice_porta + 1})`}
                           </Badge>
                         )}
                       </div>
