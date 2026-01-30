@@ -49,6 +49,8 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
                   id,
                   tipo_produto,
                   cor_id,
+                  largura,
+                  altura,
                   catalogo_cores(nome, codigo_hex)
                 )
               )
@@ -67,21 +69,24 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
             responsavel = data;
           }
 
-          // Buscar linhas com nome atualizado do estoque e campo requer_pintura
+          // Buscar linhas com nome atualizado do estoque, campo requer_pintura e dimensões do produto
           const { data: linhasRaw } = await supabase
             .from('linhas_ordens')
             .select(`
               id, item, quantidade, tamanho, concluida, largura, altura, estoque_id, produto_venda_id, cor_nome, tipo_pintura,
-              estoque:estoque_id (nome_produto, requer_pintura)
+              estoque:estoque_id (nome_produto, requer_pintura),
+              produto_venda:produto_venda_id (largura, altura)
             `)
             .eq('ordem_id', ordem.id)
             .eq('tipo_ordem', 'pintura');
           
-          // Processar linhas para usar nome atualizado do estoque e incluir requer_pintura
+          // Processar linhas para usar nome atualizado do estoque, incluir requer_pintura e dimensões
           const linhas = linhasRaw?.map((linha: any) => ({
             ...linha,
             item: linha.estoque?.nome_produto || linha.item,
-            requer_pintura: linha.estoque?.requer_pintura ?? true // Assume true se não definido
+            requer_pintura: linha.estoque?.requer_pintura ?? true, // Assume true se não definido
+            largura: linha.largura || linha.produto_venda?.largura || null,
+            altura: linha.altura || linha.produto_venda?.altura || null
           })) || [];
 
           // Processar produtos da venda

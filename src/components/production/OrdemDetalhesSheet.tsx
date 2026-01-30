@@ -90,7 +90,10 @@ interface Ordem {
       observacoes_venda?: string;
     };
     produtos?: Array<{
+      id?: string;
       tipo_produto?: string;
+      largura?: number;
+      altura?: number;
       catalogo_cores?: { nome: string; codigo_hex: string } | null;
     }>;
   };
@@ -722,6 +725,11 @@ export function OrdemDetalhesSheet({
                   // Filtrar linhas que requerem pintura (exclui itens com requer_pintura = false)
                   const linhasQuePrecisaPintura = linhas.filter(l => l.requer_pintura !== false);
                   
+                  // Obter produtos do tipo porta_enrolar do pedido para buscar dimensões
+                  const portasEnrolar = ordem.pedido?.produtos?.filter(
+                    (p: any) => p.tipo_produto === 'porta_enrolar'
+                  ) || [];
+                  
                   // Agrupar linhas por produto_venda_id
                   const linhasPorPorta = linhasQuePrecisaPintura.reduce((grupos, linha) => {
                     const key = linha.produto_venda_id || 'sem_porta';
@@ -736,6 +744,23 @@ export function OrdemDetalhesSheet({
                     const primeiraLinha = linhasPorta[0];
                     const todasConcluidasPorta = linhasPorta.every(l => l.concluida);
                     
+                    // Buscar dimensões da linha ou do produto correspondente no pedido
+                    let larguraPorta = primeiraLinha.largura;
+                    let alturaPorta = primeiraLinha.altura;
+                    
+                    // Se não tem dimensões na linha, buscar no produto correspondente
+                    if (!larguraPorta || !alturaPorta) {
+                      // Tentar encontrar o produto pelo id
+                      const produtoCorrespondente = portaId !== 'sem_porta' 
+                        ? portasEnrolar.find((p: any) => p.id === portaId)
+                        : portasEnrolar[index]; // Usar índice se não tiver produto_venda_id
+                      
+                      if (produtoCorrespondente) {
+                        larguraPorta = larguraPorta || produtoCorrespondente.largura;
+                        alturaPorta = alturaPorta || produtoCorrespondente.altura;
+                      }
+                    }
+                    
                     return (
                       <div key={portaId} className="space-y-2 p-3 rounded-lg border bg-card">
                         {/* Cabeçalho do grupo de porta */}
@@ -745,9 +770,9 @@ export function OrdemDetalhesSheet({
                               <Package className="h-4 w-4 text-primary" />
                               <span className="font-semibold text-sm">
                                 Porta {String(index + 1).padStart(2, '0')}
-                                {primeiraLinha.largura && primeiraLinha.altura && (
+                                {larguraPorta && alturaPorta && (
                                   <span className="font-normal text-muted-foreground ml-2">
-                                    {formatarDimensoes(primeiraLinha.largura, primeiraLinha.altura)}
+                                    {formatarDimensoes(larguraPorta, alturaPorta)}
                                   </span>
                                 )}
                               </span>
