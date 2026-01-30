@@ -102,17 +102,43 @@ export default function ConferenciaExecucao() {
 
   // Ref para evitar múltiplas inicializações do cronômetro
   const cronometroIniciado = useRef(false);
+  const segundosRef = useRef(segundosDecorridos);
+  const isRunningRef = useRef(isRunning);
+
+  // Manter refs atualizados
+  useEffect(() => {
+    segundosRef.current = segundosDecorridos;
+  }, [segundosDecorridos]);
+
+  useEffect(() => {
+    isRunningRef.current = isRunning;
+  }, [isRunning]);
 
   // Iniciar cronômetro quando conferência é carregada
   useEffect(() => {
-    if (conferencia && conferenciaCarregada && !cronometroIniciado.current) {
-      if (conferencia.pausada) {
-        retomarConferencia(conferenciaId!);
+    const iniciarCronometro = async () => {
+      if (conferencia && conferenciaCarregada && !cronometroIniciado.current) {
+        cronometroIniciado.current = true;
+        if (conferencia.pausada) {
+          await retomarConferencia(conferenciaId!);
+        }
+        start();
       }
-      start();
-      cronometroIniciado.current = true;
-    }
+    };
+    iniciarCronometro();
   }, [conferencia, conferenciaCarregada, conferenciaId, retomarConferencia, start]);
+
+  // Auto-pausar ao sair da página
+  useEffect(() => {
+    return () => {
+      if (cronometroIniciado.current && conferenciaId && isRunningRef.current) {
+        pausarConferencia({
+          conferenciaId,
+          tempoSessao: segundosRef.current,
+        });
+      }
+    };
+  }, [conferenciaId, pausarConferencia]);
 
   const handleQuantidadeChange = useCallback(async (produtoId: string, valor: string) => {
     const quantidade = valor === "" ? null : parseInt(valor, 10);
