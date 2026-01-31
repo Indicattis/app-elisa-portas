@@ -7,6 +7,8 @@ export interface AutorizadoComPrecos {
   nome: string;
   cidade: string;
   estado: string;
+  etapa: string | null;
+  vendedor_nome: string | null;
   precos: {
     P: number;
     G: number;
@@ -31,7 +33,7 @@ export const useAutorizadosPrecos = () => {
       // Buscar autorizados ativos com etapa 'ativo' ou 'premium'
       const { data: autorizadosData, error: autorizadosError } = await supabase
         .from('autorizados')
-        .select('id, nome, cidade, estado')
+        .select('id, nome, cidade, estado, etapa, vendedor_id')
         .eq('ativo', true)
         .in('etapa', ['ativo', 'premium'])
         .order('nome');
@@ -44,6 +46,25 @@ export const useAutorizadosPrecos = () => {
         .select('autorizado_id, tamanho, valor');
 
       if (precosError) throw precosError;
+
+      // Buscar vendedores únicos
+      const vendedorIds = [...new Set(
+        (autorizadosData || [])
+          .map(a => a.vendedor_id)
+          .filter((id): id is string => !!id)
+      )];
+
+      let vendedoresMap = new Map<string, string>();
+      if (vendedorIds.length > 0) {
+        const { data: vendedoresData } = await supabase
+          .from('admin_users')
+          .select('id, nome')
+          .in('id', vendedorIds);
+        
+        vendedoresData?.forEach(v => {
+          vendedoresMap.set(v.id, v.nome);
+        });
+      }
 
       // Mapear preços por autorizado
       const precosMap = new Map<string, PrecosInput>();
@@ -59,6 +80,8 @@ export const useAutorizadosPrecos = () => {
         nome: aut.nome,
         cidade: aut.cidade || '',
         estado: aut.estado || '',
+        etapa: aut.etapa,
+        vendedor_nome: aut.vendedor_id ? vendedoresMap.get(aut.vendedor_id) || null : null,
         precos: precosMap.get(aut.id) || { P: 0, G: 0, GG: 0 },
       }));
 
@@ -103,6 +126,25 @@ export const useAutorizadosPrecos = () => {
     }
   };
 
+  const excluirAutorizado = async (autorizadoId: string) => {
+    try {
+      const { error } = await supabase
+        .from('autorizados')
+        .update({ ativo: false })
+        .eq('id', autorizadoId);
+
+      if (error) throw error;
+
+      toast.success('Autorizado excluído');
+      await fetchAutorizadosComPrecos();
+      return true;
+    } catch (error) {
+      console.error('Error deleting autorizado:', error);
+      toast.error('Erro ao excluir autorizado');
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchAutorizadosComPrecos();
   }, [fetchAutorizadosComPrecos]);
@@ -112,5 +154,6 @@ export const useAutorizadosPrecos = () => {
     loading,
     refetch: fetchAutorizadosComPrecos,
     upsertPrecos,
+    excluirAutorizado,
   };
 };
