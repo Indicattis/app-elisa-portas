@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
-import { Target, Trophy, Gift } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Target, Trophy, Gift, Unlock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MetaProgressoBarProps {
@@ -18,7 +19,9 @@ const UNIDADES: Record<string, string> = {
 };
 
 export function MetaProgressoBar({ userId, tipoMeta }: MetaProgressoBarProps) {
-  const { data: metaInfo } = useQuery({
+  const queryClient = useQueryClient();
+
+  const { data: metaInfo, isLoading } = useQuery({
     queryKey: ["meta-ativa-progresso", userId, tipoMeta],
     queryFn: async () => {
       const hoje = new Date().toISOString().split("T")[0];
@@ -118,15 +121,31 @@ export function MetaProgressoBar({ userId, tipoMeta }: MetaProgressoBarProps) {
         meta,
         progresso,
         porcentagem: Math.min((progresso / meta.valor_meta) * 100, 100),
+        desbloqueada: meta.desbloqueada ?? false,
       };
     },
     enabled: !!userId,
     refetchInterval: 30000,
   });
 
-  if (!metaInfo) return null;
+  const desbloquearMutation = useMutation({
+    mutationFn: async (metaId: string) => {
+      const { error } = await supabase
+        .from("metas_colaboradores")
+        .update({ desbloqueada: true })
+        .eq("id", metaId);
 
-  const { meta, progresso, porcentagem } = metaInfo;
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meta-ativa-progresso", userId, tipoMeta] });
+      queryClient.invalidateQueries({ queryKey: ["metas-colaborador", userId] });
+    },
+  });
+
+  if (!metaInfo || isLoading) return null;
+
+  const { meta, progresso, porcentagem, desbloqueada } = metaInfo;
   const atingida = porcentagem >= 100;
   const unidade = UNIDADES[tipoMeta] || '';
 
@@ -137,42 +156,76 @@ export function MetaProgressoBar({ userId, tipoMeta }: MetaProgressoBarProps) {
     return valor.toLocaleString('pt-BR');
   };
 
+  const handleDesbloquear = () => {
+    desbloquearMutation.mutate(meta.id);
+  };
+
+  // Estado Bloqueado - mostrar botão dourado
+  if (!desbloqueada) {
+    return (
+      <div className="rounded-xl p-6 border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-yellow-500/5">
+        <div className="flex flex-col items-center gap-4">
+          <Button
+            onClick={handleDesbloquear}
+            disabled={desbloquearMutation.isPending}
+            className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-semibold px-8 py-3 shadow-lg shadow-amber-500/25 transition-all hover:shadow-xl hover:shadow-amber-500/30"
+          >
+            <Unlock className="mr-2 h-5 w-5" />
+            {desbloquearMutation.isPending ? 'Desbloqueando...' : 'Desbloquear Meta'}
+          </Button>
+          
+          {meta.recompensa_valor > 0 && (
+            <div className="flex items-center gap-2">
+              <Gift className="h-5 w-5 text-amber-500" />
+              <span className="text-xl font-bold text-amber-500">
+                R$ {meta.recompensa_valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Estado Desbloqueado - mostrar barra de progresso
   return (
-    <div className={`rounded-lg p-3 border ${
+    <div className={`rounded-xl p-4 border ${
       atingida 
-        ? 'bg-green-500/10 border-green-500/30' 
-        : 'bg-primary/5 border-primary/20'
+        ? 'border-green-500/30 bg-green-500/5' 
+        : 'border-border/50 bg-card/50'
     }`}>
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           {atingida ? (
             <Trophy className="h-4 w-4 text-green-500" />
           ) : (
-            <Target className="h-4 w-4 text-primary" />
+            <Target className="h-4 w-4 text-muted-foreground" />
           )}
-          <span className="text-sm font-medium">
+          <span className="text-sm font-medium text-muted-foreground">
             {atingida ? 'Meta Atingida!' : 'Meta Ativa'}
           </span>
         </div>
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm font-medium">
           {formatarValor(progresso)}{unidade} / {formatarValor(meta.valor_meta)}{unidade}
         </span>
       </div>
       
       <Progress 
         value={porcentagem} 
-        className={`h-2 ${atingida ? '[&>div]:bg-green-500' : ''}`} 
+        className={`h-2.5 ${atingida ? '[&>div]:bg-green-500' : ''}`} 
       />
       
-      <div className="flex items-center justify-between mt-2">
+      <div className="flex items-center justify-between mt-3">
         <span className="text-xs text-muted-foreground">
           {porcentagem.toFixed(0)}% concluído
         </span>
         {meta.recompensa_valor > 0 && (
-          <span className="text-xs flex items-center gap-1 text-amber-600">
-            <Gift className="h-3 w-3" />
-            R$ {meta.recompensa_valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <Gift className="h-4 w-4 text-amber-500" />
+            <span className="text-lg font-bold text-amber-500">
+              R$ {meta.recompensa_valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </span>
+          </div>
         )}
       </div>
     </div>

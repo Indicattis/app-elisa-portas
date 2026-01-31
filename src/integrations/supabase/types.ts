@@ -2913,6 +2913,7 @@ export type Database = {
           created_by: string | null
           data_inicio: string
           data_termino: string
+          desbloqueada: boolean | null
           id: string
           recompensa_valor: number
           tipo_meta: string
@@ -2927,6 +2928,7 @@ export type Database = {
           created_by?: string | null
           data_inicio?: string
           data_termino: string
+          desbloqueada?: boolean | null
           id?: string
           recompensa_valor?: number
           tipo_meta: string
@@ -2941,6 +2943,7 @@ export type Database = {
           created_by?: string | null
           data_inicio?: string
           data_termino?: string
+          desbloqueada?: boolean | null
           id?: string
           recompensa_valor?: number
           tipo_meta?: string
