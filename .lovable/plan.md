@@ -1,146 +1,474 @@
 
-# Plano: Exibir Todas as Conferencias em Formato de Lista
+# Plano: Gestao de Estados e Cidades para Autorizados
 
 ## Resumo
 
-Alterar as paginas de auditoria (Fabrica e Almoxarifado) para exibir todas as conferencias (concluidas, em andamento e pausadas) em formato de tabela com as colunas: Data, Responsavel (com foto), Status, Tempo de Conferencia e Acoes.
+Implementar um sistema de gestao de estados e cidades em `/direcao/autorizados`, permitindo criar/editar/excluir estados e cidades, com autorizados agrupados automaticamente. Incluir funcionalidades de excluir, editar e definir como premium os autorizados diretamente nessa pagina.
 
-## Alteracoes
+## Arquitetura do Banco de Dados
 
-### 1. AuditoriaFabrica.tsx
+### Novas Tabelas
 
-**Mudancas na query:**
-```typescript
-// Antes: apenas concluidas
-.eq("status", "concluida")
-
-// Depois: todas as conferencias
-// Remover filtro de status
-.order("iniciada_em", { ascending: false })
-```
-
-**Buscar foto do responsavel:**
-```typescript
-.from("admin_users")
-.select("nome, email, foto_perfil_url")
-```
-
-**Nova estrutura de tabela:**
-
-| Data | Responsavel | Status | Tempo | Acoes |
-|------|-------------|--------|-------|-------|
-| 31/01/2026 14:30 | [Foto] Joao | Concluida | 2h 15m | [Ver detalhes] |
-| 30/01/2026 10:00 | [Foto] Maria | Em andamento | 45m | [Ver detalhes] |
-| 29/01/2026 09:15 | [Foto] Pedro | Pausada | 1h 30m | [Ver detalhes] |
-
-**Badges de status:**
-- `concluida` -> Verde (Concluida)
-- `em_andamento` -> Azul (Em andamento)
-- `pausada` -> Amarelo (Pausada)
-
-### 2. AuditoriaAlmoxarifado.tsx
-
-Mesmas alteracoes do AuditoriaFabrica.tsx, mantendo o filtro de setor = 'almoxarifado'.
-
-### 3. Estrutura da Tabela
-
-```typescript
-<Table>
-  <TableHeader>
-    <TableRow>
-      <TableHead>Data</TableHead>
-      <TableHead>Responsavel</TableHead>
-      <TableHead>Status</TableHead>
-      <TableHead>Tempo</TableHead>
-      <TableHead>Acoes</TableHead>
-    </TableRow>
-  </TableHeader>
-  <TableBody>
-    {conferencias.map((conf) => (
-      <TableRow key={conf.id}>
-        <TableCell>
-          {format(new Date(conf.iniciada_em), "dd/MM/yyyy HH:mm")}
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={usuario.foto_perfil_url} />
-              <AvatarFallback>{iniciais}</AvatarFallback>
-            </Avatar>
-            <span>{usuario.nome}</span>
-          </div>
-        </TableCell>
-        <TableCell>
-          <Badge variant={...}>{statusLabel}</Badge>
-        </TableCell>
-        <TableCell>{formatTempo(conf.tempo_total_segundos)}</TableCell>
-        <TableCell>
-          <Button variant="ghost" onClick={toggleDetalhes}>
-            {isOpen ? <ChevronUp /> : <ChevronDown />}
-          </Button>
-        </TableCell>
-      </TableRow>
-    ))}
-  </TableBody>
-</Table>
-```
-
-### 4. Mapeamento de Status
-
-```typescript
-const statusConfig = {
-  concluida: { label: "Concluida", className: "bg-emerald-500/20 text-emerald-400" },
-  em_andamento: { label: "Em andamento", className: "bg-blue-500/20 text-blue-400" },
-  pausada: { label: "Pausada", className: "bg-amber-500/20 text-amber-400" }
-};
-```
-
-### 5. Busca de Usuarios em Lote
-
-Para evitar N+1 queries, buscar todos os usuarios de uma vez:
-
-```typescript
-// Buscar conferencias
-const { data: conferencias } = await supabase
-  .from("estoque_conferencias")
-  .select("*")
-  .or("setor.eq.fabrica,setor.is.null")
-  .order("iniciada_em", { ascending: false });
-
-// Extrair IDs unicos de responsaveis
-const userIds = [...new Set(conferencias.map(c => c.conferido_por))];
-
-// Buscar todos os usuarios de uma vez
-const { data: usuarios } = await supabase
-  .from("admin_users")
-  .select("user_id, nome, email, foto_perfil_url")
-  .in("user_id", userIds);
-
-// Criar mapa para lookup rapido
-const usuariosMap = Object.fromEntries(
-  usuarios.map(u => [u.user_id, u])
+**1. estados_autorizados**
+```sql
+CREATE TABLE estados_autorizados (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sigla TEXT NOT NULL UNIQUE,
+  nome TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
+
+**2. cidades_autorizados**
+```sql
+CREATE TABLE cidades_autorizados (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  estado_id UUID REFERENCES estados_autorizados(id) ON DELETE CASCADE NOT NULL,
+  nome TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(estado_id, nome)
+);
+```
+
+### Politicas RLS
+
+```sql
+-- Estados
+ALTER TABLE estados_autorizados ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Usuarios autenticados podem ver estados" ON estados_autorizados FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Usuarios autenticados podem gerenciar estados" ON estados_autorizados FOR ALL TO authenticated USING (true);
+
+-- Cidades
+ALTER TABLE cidades_autorizados ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Usuarios autenticados podem ver cidades" ON cidades_autorizados FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Usuarios autenticados podem gerenciar cidades" ON cidades_autorizados FOR ALL TO authenticated USING (true);
+```
+
+## Layout da Interface
+
+```text
++------------------------------------------------------------------+
+|  Gestao de Autorizados                                           |
+|  [+ Novo Estado]                                                 |
++------------------------------------------------------------------+
+|                                                                  |
+|  ESTADOS                                                         |
+|  +------------------------+  +------------------------+          |
+|  | RS                     |  | SC                     |          |
+|  | 36 autorizados         |  | 22 autorizados         |          |
+|  | 5 cidades cadastradas  |  | 3 cidades cadastradas  |          |
+|  +------------------------+  +------------------------+          |
+|                                                                  |
++------------------------------------------------------------------+
+|  (Ao clicar em RS)                                               |
+|                                                                  |
+|  RIO GRANDE DO SUL  [+ Nova Cidade] [Editar] [Excluir]          |
+|                                                                  |
+|  > Caxias do Sul (8 autorizados)                    [v]          |
+|    +----------------------------------------------------------+  |
+|    | Autorizado      | Etapa    | Acoes                       |  |
+|    | Metalurgica X   | Ativo    | [Editar] [Premium] [Excluir]|  |
+|    | Serralheria Y   | Premium* | [Editar] [Premium] [Excluir]|  |
+|    +----------------------------------------------------------+  |
+|                                                                  |
+|  > Porto Alegre (5 autorizados)                     [v]          |
+|                                                                  |
+|  > Sem cidade cadastrada (3 autorizados)            [v]          |
+|    (autorizados com estado=RS mas sem cidade)                    |
++------------------------------------------------------------------+
+```
+
+## Arquivos a Criar
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/hooks/useEstadosCidades.ts` | Hook para gerenciar estados e cidades |
+| `src/components/autorizados/EstadoCard.tsx` | Card de estado com contadores |
+| `src/components/autorizados/CidadeCollapsible.tsx` | Cidade colapsavel com lista de autorizados |
+| `src/components/autorizados/EstadoDetalheView.tsx` | View detalhada do estado selecionado |
+| `src/components/autorizados/NovoEstadoDialog.tsx` | Dialog para criar/editar estado |
+| `src/components/autorizados/NovaCidadeDialog.tsx` | Dialog para criar/editar cidade |
+| `src/components/autorizados/AutorizadoRowActions.tsx` | Acoes inline do autorizado |
 
 ## Arquivos a Modificar
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `src/pages/direcao/estoque/AuditoriaFabrica.tsx` | Reescrever para formato de tabela com todas conferencias |
-| `src/pages/direcao/estoque/AuditoriaAlmoxarifado.tsx` | Mesma alteracao para almoxarifado |
+| `src/pages/direcao/AutorizadosPrecosDirecao.tsx` | Reescrever completamente com nova UI |
 
-## Componentes Necessarios
+## Detalhes de Implementacao
 
-- Avatar e AvatarImage de `@/components/ui/avatar`
-- Table components ja importados
-- Badge ja importado
+### 1. Hook useEstadosCidades
+
+```typescript
+interface Estado {
+  id: string;
+  sigla: string;
+  nome: string;
+  totalAutorizados: number;
+  totalCidades: number;
+}
+
+interface Cidade {
+  id: string;
+  estado_id: string;
+  nome: string;
+  autorizados: AutorizadoResumo[];
+}
+
+interface AutorizadoResumo {
+  id: string;
+  nome: string;
+  etapa: string;
+  cidade: string | null;
+  estado: string | null;
+}
+
+export const useEstadosCidades = () => {
+  // Estados
+  const [estados, setEstados] = useState<Estado[]>([]);
+  const [estadoSelecionado, setEstadoSelecionado] = useState<string | null>(null);
+  
+  // Cidades do estado selecionado
+  const [cidades, setCidades] = useState<Cidade[]>([]);
+  
+  // Autorizados orfaos (sem cidade)
+  const [autorizadosOrfaos, setAutorizadosOrfaos] = useState<AutorizadoResumo[]>([]);
+
+  // Funcoes CRUD
+  const criarEstado = async (sigla: string, nome: string) => {...};
+  const editarEstado = async (id: string, sigla: string, nome: string) => {...};
+  const excluirEstado = async (id: string) => {...};
+  
+  const criarCidade = async (estadoId: string, nome: string) => {...};
+  const editarCidade = async (id: string, nome: string) => {...};
+  const excluirCidade = async (id: string) => {...};
+
+  // Funcoes de autorizado
+  const definirPremium = async (autorizadoId: string) => {...};
+  const removerPremium = async (autorizadoId: string) => {...};
+  const excluirAutorizado = async (autorizadoId: string) => {...};
+  
+  return {...};
+};
+```
+
+### 2. Logica de Agrupamento
+
+```typescript
+// Ao selecionar um estado, buscar autorizados
+const fetchAutorizadosDoEstado = async (siglaEstado: string) => {
+  // 1. Buscar cidades cadastradas desse estado
+  const { data: cidadesCadastradas } = await supabase
+    .from('cidades_autorizados')
+    .select('id, nome')
+    .eq('estado_id', estadoId);
+
+  // 2. Buscar autorizados desse estado
+  const { data: autorizados } = await supabase
+    .from('autorizados')
+    .select('id, nome, cidade, estado, etapa')
+    .eq('ativo', true)
+    .eq('estado', siglaEstado)
+    .in('etapa', ['ativo', 'premium']);
+
+  // 3. Agrupar por cidade
+  const cidadesMap = new Map();
+  
+  cidadesCadastradas.forEach(cidade => {
+    const autorizadosDaCidade = autorizados.filter(
+      a => a.cidade?.toLowerCase() === cidade.nome.toLowerCase()
+    );
+    cidadesMap.set(cidade.id, {
+      ...cidade,
+      autorizados: autorizadosDaCidade
+    });
+  });
+
+  // 4. Identificar orfaos (com estado mas sem cidade cadastrada)
+  const cidadesNomes = cidadesCadastradas.map(c => c.nome.toLowerCase());
+  const orfaos = autorizados.filter(
+    a => !a.cidade || !cidadesNomes.includes(a.cidade.toLowerCase())
+  );
+
+  return { cidades: Array.from(cidadesMap.values()), orfaos };
+};
+```
+
+### 3. Componente EstadoCard
+
+```typescript
+interface EstadoCardProps {
+  estado: Estado;
+  onClick: () => void;
+  isSelected: boolean;
+}
+
+export function EstadoCard({ estado, onClick, isSelected }: EstadoCardProps) {
+  return (
+    <Card 
+      className={cn(
+        "cursor-pointer transition-all",
+        isSelected && "ring-2 ring-primary"
+      )}
+      onClick={onClick}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold">{estado.sigla}</h3>
+            <p className="text-sm text-muted-foreground">{estado.nome}</p>
+          </div>
+          <MapPin className="h-6 w-6 text-primary/50" />
+        </div>
+        <div className="mt-3 flex gap-4 text-xs">
+          <div className="flex items-center gap-1">
+            <Users className="h-3 w-3" />
+            <span>{estado.totalAutorizados} autorizados</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Building2 className="h-3 w-3" />
+            <span>{estado.totalCidades} cidades</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+### 4. Componente CidadeCollapsible
+
+```typescript
+interface CidadeCollapsibleProps {
+  cidade: Cidade;
+  onEditAutorizado: (id: string) => void;
+  onDeleteAutorizado: (id: string) => void;
+  onTogglePremium: (id: string, isPremium: boolean) => void;
+}
+
+export function CidadeCollapsible({
+  cidade,
+  onEditAutorizado,
+  onDeleteAutorizado,
+  onTogglePremium
+}: CidadeCollapsibleProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger className="w-full">
+        <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            <span className="font-medium">{cidade.nome}</span>
+            <Badge variant="secondary" className="text-xs">
+              {cidade.autorizados.length} autorizados
+            </Badge>
+          </div>
+          <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Autorizado</TableHead>
+              <TableHead>Etapa</TableHead>
+              <TableHead className="text-right">Acoes</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {cidade.autorizados.map(aut => (
+              <TableRow key={aut.id}>
+                <TableCell className="font-medium">
+                  {aut.nome}
+                  {aut.etapa === 'premium' && (
+                    <Star className="inline h-4 w-4 ml-1 text-yellow-500 fill-yellow-500" />
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge>{aut.etapa}</Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => onEditAutorizado(aut.id)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => onTogglePremium(aut.id, aut.etapa === 'premium')}
+                    >
+                      <Star className={cn(
+                        "h-4 w-4",
+                        aut.etapa === 'premium' && "fill-yellow-500 text-yellow-500"
+                      )} />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir autorizado?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta acao nao pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => onDeleteAutorizado(aut.id)}>
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+```
+
+### 5. Pagina Principal Atualizada
+
+```typescript
+export default function AutorizadosPrecosDirecao() {
+  const navigate = useNavigate();
+  const {
+    estados,
+    estadoSelecionado,
+    setEstadoSelecionado,
+    cidades,
+    autorizadosOrfaos,
+    criarEstado,
+    editarEstado,
+    excluirEstado,
+    criarCidade,
+    editarCidade,
+    excluirCidade,
+    definirPremium,
+    removerPremium,
+    excluirAutorizado,
+    loading
+  } = useEstadosCidades();
+
+  const [novoEstadoOpen, setNovoEstadoOpen] = useState(false);
+  const [novaCidadeOpen, setNovaCidadeOpen] = useState(false);
+
+  const handleTogglePremium = async (autorizadoId: string, isPremium: boolean) => {
+    if (isPremium) {
+      await removerPremium(autorizadoId);
+    } else {
+      await definirPremium(autorizadoId);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      {/* Breadcrumb */}
+      
+      {/* Header com botao Novo Estado */}
+      <header>
+        <h1>Gestao de Autorizados</h1>
+        <Button onClick={() => setNovoEstadoOpen(true)}>
+          <Plus /> Novo Estado
+        </Button>
+      </header>
+
+      {/* Grid de Estados */}
+      {!estadoSelecionado && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {estados.map(estado => (
+            <EstadoCard
+              key={estado.id}
+              estado={estado}
+              onClick={() => setEstadoSelecionado(estado.sigla)}
+              isSelected={false}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Detalhe do Estado Selecionado */}
+      {estadoSelecionado && (
+        <EstadoDetalheView
+          estadoSigla={estadoSelecionado}
+          cidades={cidades}
+          autorizadosOrfaos={autorizadosOrfaos}
+          onVoltar={() => setEstadoSelecionado(null)}
+          onNovaCidade={() => setNovaCidadeOpen(true)}
+          onEditAutorizado={(id) => navigate(`/dashboard/parceiros/${id}/edit/autorizado`)}
+          onDeleteAutorizado={excluirAutorizado}
+          onTogglePremium={handleTogglePremium}
+        />
+      )}
+
+      {/* Dialogs */}
+      <NovoEstadoDialog
+        open={novoEstadoOpen}
+        onOpenChange={setNovoEstadoOpen}
+        onSave={criarEstado}
+      />
+      <NovaCidadeDialog
+        open={novaCidadeOpen}
+        onOpenChange={setNovaCidadeOpen}
+        estadoId={estadoSelecionado}
+        onSave={criarCidade}
+      />
+    </div>
+  );
+}
+```
+
+## Fluxo de Dados
+
+```text
+1. Usuario abre /direcao/autorizados
+   |
+   v
+2. Hook carrega estados da tabela estados_autorizados
+   + Conta autorizados por estado (join com autorizados)
+   + Conta cidades por estado
+   |
+   v
+3. Usuario clica em um estado (ex: RS)
+   |
+   v
+4. Hook carrega:
+   - Cidades cadastradas desse estado
+   - Autorizados com estado=RS
+   - Agrupa autorizados nas cidades
+   - Separa orfaos (sem cidade ou cidade nao cadastrada)
+   |
+   v
+5. Usuario pode:
+   - Criar nova cidade -> abre dialog
+   - Expandir cidade -> ve autorizados
+   - Editar autorizado -> navega para /dashboard/parceiros/:id/edit
+   - Definir premium -> atualiza etapa para 'premium'
+   - Excluir autorizado -> confirma e deleta
+```
 
 ## Resultado Esperado
 
-1. Tabela listando todas as conferencias (nao apenas concluidas)
-2. Coluna de data mostra quando foi iniciada
-3. Coluna de responsavel mostra foto de perfil + nome
-4. Coluna de status com badge colorido indicando estado atual
-5. Coluna de tempo mostra duracao total
-6. Coluna de acoes permite expandir para ver detalhes (itens com diferenca)
-7. Ao expandir uma linha, mostra os detalhes da conferencia abaixo
+1. Ao abrir a pagina, usuario ve cards dos estados com contadores
+2. Ao clicar em um estado, ve as cidades cadastradas e autorizados agrupados
+3. Autorizados sem cidade aparecem em "Sem cidade cadastrada"
+4. Criar cidade agrupa automaticamente autorizados que possuem aquela cidade no campo texto
+5. Acoes rapidas de editar, definir premium e excluir autorizados
+6. Interface intuitiva com colapsaveis para cada cidade
