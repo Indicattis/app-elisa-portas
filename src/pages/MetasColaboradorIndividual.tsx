@@ -10,6 +10,7 @@ import {
   useExcluirMeta,
   MetaColaborador,
 } from "@/hooks/useMetasColaboradorIndividual";
+import { useMetaProgressoCalculado } from "@/hooks/useMetaProgressoCalculado";
 import { GraficoDesempenhoDiario } from "@/components/metas/GraficoDesempenhoDiario";
 import { MetaCard } from "@/components/metas/MetaCard";
 import { MetaDialog } from "@/components/metas/MetaDialog";
@@ -40,7 +41,7 @@ export default function MetasColaboradorIndividual() {
   const [metaParaEditar, setMetaParaEditar] = useState<MetaColaborador | null>(null);
   const [metaParaExcluir, setMetaParaExcluir] = useState<MetaColaborador | null>(null);
 
-  // Período: mês atual
+  // Período: mês atual (para gráficos de desempenho)
   const dataInicio = useMemo(() => {
     const hoje = new Date();
     return new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -58,27 +59,12 @@ export default function MetasColaboradorIndividual() {
     dataFim
   );
   const { data: metas, isLoading: loadingMetas } = useMetasColaborador(userId || "");
+  const { data: progressosPorMeta } = useMetaProgressoCalculado(userId || "", metas || []);
   const excluirMeta = useExcluirMeta();
 
-  // Calcular totais do mês para progresso das metas
-  const totaisMes = useMemo(() => {
-    if (!desempenho) return null;
-    return desempenho.reduce(
-      (acc, dia) => ({
-        solda: acc.solda + dia.solda_qtd,
-        perfiladeira: acc.perfiladeira + dia.perfiladeira_metros,
-        separacao: acc.separacao + dia.separacao_qtd,
-        qualidade: acc.qualidade + dia.qualidade_qtd,
-        pintura: acc.pintura + dia.pintura_m2,
-        carregamento: acc.carregamento + dia.carregamento_qtd,
-      }),
-      { solda: 0, perfiladeira: 0, separacao: 0, qualidade: 0, pintura: 0, carregamento: 0 }
-    );
-  }, [desempenho]);
-
-  const getProgressoMeta = (tipo: MetaColaborador["tipo_meta"]) => {
-    if (!totaisMes) return 0;
-    return totaisMes[tipo] || 0;
+  // Função para obter progresso específico de cada meta (respeitando datas de vigência)
+  const getProgressoMeta = (metaId: string) => {
+    return progressosPorMeta?.[metaId] || 0;
   };
 
   const handleEditarMeta = (meta: MetaColaborador) => {
@@ -227,7 +213,7 @@ export default function MetasColaboradorIndividual() {
                 <MetaCard
                   key={meta.id}
                   meta={meta}
-                  progressoAtual={getProgressoMeta(meta.tipo_meta)}
+                  progressoAtual={getProgressoMeta(meta.id)}
                   onEdit={() => handleEditarMeta(meta)}
                   onDelete={() => setMetaParaExcluir(meta)}
                 />
