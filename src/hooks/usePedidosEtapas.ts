@@ -286,6 +286,38 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         })
       );
 
+      // Função auxiliar para extrair primeira cor do pedido
+      const extrairPrimeiraCor = (pedido: any): string | null => {
+        const vendaData = Array.isArray(pedido.vendas) 
+          ? pedido.vendas[0] 
+          : pedido.vendas;
+        const produtos = vendaData?.produtos_vendas || [];
+        
+        // Buscar primeira cor válida
+        for (const produto of produtos) {
+          if (produto.cor?.nome) {
+            return produto.cor.nome;
+          }
+        }
+        return null;
+      };
+
+      // Ordenar por cor na etapa "aberto"
+      if (etapa === 'aberto') {
+        return pedidosComBacklog.sort((a, b) => {
+          const corA = extrairPrimeiraCor(a);
+          const corB = extrairPrimeiraCor(b);
+          
+          // Pedidos sem cor vão para o final
+          if (!corA && !corB) return 0;
+          if (!corA) return 1;
+          if (!corB) return -1;
+          
+          // Ordenar alfabeticamente por nome da cor
+          return corA.localeCompare(corB, 'pt-BR');
+        });
+      }
+
       return pedidosComBacklog;
     },
   });
