@@ -105,10 +105,10 @@ export default function FaturamentoEdit() {
     if (!venda || !produtos) return;
     
     const custoTotal = produtos.reduce((acc, p) => 
-      acc + ((p.custo_producao || 0) * p.quantidade), 0
+      acc + (p.custo_producao || 0), 0  // valor_total já é o total da linha
     );
     const lucroTotal = produtos.reduce((acc, p) => 
-      acc + ((p.lucro_item || 0) * p.quantidade), 0
+      acc + (p.lucro_item || 0), 0  // lucro_item já é o total da linha
     );
     
     const produtosIds = produtos.map(p => p.id);
@@ -179,8 +179,8 @@ export default function FaturamentoEdit() {
   // Cálculos
   const todosProdutosFaturados = produtos?.every(p => p.faturamento === true) || false;
   const vendaFaturada = todosProdutosFaturados && venda?.frete_aprovado === true;
-  const totalLucro = produtos?.reduce((acc, p) => acc + ((p.lucro_item || 0) * p.quantidade), 0) || 0;
-  const totalCusto = produtos?.reduce((acc, p) => acc + ((p.custo_producao || 0) * p.quantidade), 0) || 0;
+  const totalLucro = produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0;
+  const totalCusto = produtos?.reduce((acc, p) => acc + (p.custo_producao || 0), 0) || 0;
   const margem = venda && venda.valor_venda > 0 ? (totalLucro / venda.valor_venda) * 100 : 0;
   const produtosFaturados = produtos?.filter(p => p.lucro_item !== null && p.lucro_item !== undefined).length || 0;
   const totalProdutos = produtos?.length || 0;
