@@ -49,8 +49,8 @@ export function useRankingEquipesInstalacao() {
         (equipesData || []).map(eq => [eq.id, eq])
       );
 
-      // 2. Buscar instalações concluídas (equipes internas - tipo_instalacao = 'elisa')
-      let query = supabase
+      // 2. Buscar instalações vinculadas a pedidos (equipes internas - tipo_instalacao = 'elisa')
+      let queryInstalacoes = supabase
         .from('instalacoes')
         .select(`
           responsavel_instalacao_id,
@@ -59,20 +59,44 @@ export function useRankingEquipesInstalacao() {
         `)
         .eq('instalacao_concluida', true)
         .eq('tipo_instalacao', 'elisa')
-        .not('responsavel_instalacao_id', 'is', null);
+        .not('responsavel_instalacao_id', 'is', null)
+        .not('pedido_id', 'is', null); // Apenas instalações vinculadas a pedidos
 
-      // Aplicar filtro de período
+      // 3. Buscar neo instalações concluídas por equipes internas
+      let queryNeoInstalacoes = supabase
+        .from('neo_instalacoes')
+        .select(`
+          equipe_id,
+          concluida_em
+        `)
+        .eq('concluida', true)
+        .eq('tipo_responsavel', 'equipe_interna')
+        .not('equipe_id', 'is', null);
+
+      // Aplicar filtro de período em ambas as queries
       if (dataInicio && dataFim) {
-        query = query
+        queryInstalacoes = queryInstalacoes
           .gte('instalacao_concluida_em', dataInicio.toISOString())
           .lte('instalacao_concluida_em', dataFim.toISOString());
+        
+        queryNeoInstalacoes = queryNeoInstalacoes
+          .gte('concluida_em', dataInicio.toISOString())
+          .lte('concluida_em', dataFim.toISOString());
       }
 
-      const { data, error } = await query;
+      // Executar ambas as queries em paralelo
+      const [instalacoesResult, neoInstalacoesResult] = await Promise.all([
+        queryInstalacoes,
+        queryNeoInstalacoes
+      ]);
 
-      if (error) throw error;
+      if (instalacoesResult.error) throw instalacoesResult.error;
+      if (neoInstalacoesResult.error) throw neoInstalacoesResult.error;
 
-      // 3. Agrupar por equipe e calcular métricas usando o mapa
+      const instalacoesData = instalacoesResult.data || [];
+      const neoInstalacoesData = neoInstalacoesResult.data || [];
+
+      // 4. Agrupar por equipe e calcular métricas
       const agrupamento = new Map<string, {
         equipe_id: string;
         equipe_nome: string;
@@ -82,9 +106,10 @@ export function useRankingEquipesInstalacao() {
         ultima_instalacao: string | null;
       }>();
 
-      (data || []).forEach((instalacao: any) => {
+      // Processar instalações de pedidos (têm metragem)
+      instalacoesData.forEach((instalacao: any) => {
         const equipe = equipesMap.get(instalacao.responsavel_instalacao_id);
-        if (!equipe) return; // Equipe não encontrada ou inativa
+        if (!equipe) return;
 
         const equipeId = equipe.id;
         
@@ -106,6 +131,34 @@ export function useRankingEquipesInstalacao() {
         if (!item.ultima_instalacao || 
             (instalacao.instalacao_concluida_em && instalacao.instalacao_concluida_em > item.ultima_instalacao)) {
           item.ultima_instalacao = instalacao.instalacao_concluida_em;
+        }
+      });
+
+      // Processar neo instalações (não têm metragem)
+      neoInstalacoesData.forEach((neo: any) => {
+        const equipe = equipesMap.get(neo.equipe_id);
+        if (!equipe) return;
+
+        const equipeId = equipe.id;
+        
+        if (!agrupamento.has(equipeId)) {
+          agrupamento.set(equipeId, {
+            equipe_id: equipeId,
+            equipe_nome: equipe.nome,
+            equipe_cor: equipe.cor,
+            quantidade_instalacoes: 0,
+            metragem_total: 0,
+            ultima_instalacao: null
+          });
+        }
+
+        const item = agrupamento.get(equipeId)!;
+        item.quantidade_instalacoes += 1;
+        // Neo instalações não têm metragem, então não incrementamos
+        
+        if (!item.ultima_instalacao || 
+            (neo.concluida_em && neo.concluida_em > item.ultima_instalacao)) {
+          item.ultima_instalacao = neo.concluida_em;
         }
       });
 
