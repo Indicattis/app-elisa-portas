@@ -5,6 +5,7 @@ import { ProducaoKanban } from "@/components/production/ProducaoKanban";
 import { OrdemDetalhesSheet } from "@/components/production/OrdemDetalhesSheet";
 import { ProcessoAvancoAutomaticoModal } from "@/components/pedidos/ProcessoAvancoAutomaticoModal";
 import { MetaProgressoFlutuante } from "@/components/metas/MetaProgressoFlutuante";
+import { MetaProgressoBar } from "@/components/metas/MetaProgressoBar";
 import { useMetaProgresso } from "@/hooks/useMetaProgresso";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -87,6 +88,10 @@ export default function PerfiladeiraMinimalista() {
 
   return (
     <MinimalistLayout title="Perfiladeira" backPath="/fabrica/producao">
+      {user?.id && (
+        <MetaProgressoBar userId={user.id} tipoMeta="perfiladeira" />
+      )}
+
       <ProducaoKanban
         ordensAFazer={ordensAFazer}
         isLoading={isLoading}
