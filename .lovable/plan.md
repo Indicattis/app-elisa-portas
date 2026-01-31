@@ -1,90 +1,114 @@
 
-# Plano: Ranking com Instalações de Pedidos + Neo Instalações
+# Plano: Ordenação de Pedidos por Cor na Etapa "Em Aberto"
 
 ## Objetivo
 
-Ajustar o ranking das equipes de instalação para considerar:
-1. **Instalações vinculadas a pedidos** (`pedido_id IS NOT NULL`)
-2. **Neo Instalações concluídas** por equipes internas
+Na etapa "Em Aberto" (`aberto`), ordenar os pedidos automaticamente por cor da pintura, agrupando pedidos da mesma cor juntos para facilitar a organização da produção.
 
-## Dados Atuais no Banco
+## Comportamento Atual
 
-| Fonte | Total | Concluídas | Por Equipe Interna |
-|-------|-------|------------|-------------------|
-| instalacoes (com pedido) | a verificar | a verificar | a verificar |
-| neo_instalacoes | 51 | 16 | 10 |
+- Pedidos são ordenados por `prioridade_etapa` (DESC) e `created_at` (DESC)
+- Todos os pedidos novos entram com prioridade 0, ficando ordenados apenas por data de criação
+
+## Comportamento Desejado
+
+Na etapa "Em Aberto":
+1. Agrupar pedidos pela **primeira cor** encontrada nos produtos
+2. Cores ordenadas alfabeticamente (ex: Azul Escuro, Branco, Cinza Escuro, Preto...)
+3. Pedidos **sem cor** ficam ao final da lista
+
+## Estrutura de Dados
+
+A cor está em: `pedido.vendas.produtos_vendas[].cor.nome`
+
+Cores são associadas a produtos do tipo `pintura_epoxi`:
+```text
+Pedido 0187 → Cinza Escuro
+Pedido 0186 → Azul Escuro  
+Pedido 0185 → Branco, Preto (primeira = Branco)
+Pedido 0184 → Marrom Escuro
+Pedido 0183 → Sem cor
+```
 
 ## Alteração Técnica
 
-### Arquivo: `src/hooks/useRankingEquipesInstalacao.ts`
+### Arquivo: `src/hooks/usePedidosEtapas.ts`
 
-**Modificar a função `fetchRanking` para buscar e combinar duas fontes:**
+**Adicionar função auxiliar para extrair primeira cor:**
 
 ```typescript
-// 1. Buscar equipes ativas (já existente)
-const equipesMap = new Map(...);
-
-// 2. Buscar instalações vinculadas a pedidos
-let queryInstalacoes = supabase
-  .from('instalacoes')
-  .select('responsavel_instalacao_id, metragem_quadrada, instalacao_concluida_em')
-  .eq('instalacao_concluida', true)
-  .eq('tipo_instalacao', 'elisa')
-  .not('responsavel_instalacao_id', 'is', null)
-  .not('pedido_id', 'is', null);  // NOVO FILTRO
-
-// 3. Buscar neo instalações concluídas por equipes internas
-let queryNeoInstalacoes = supabase
-  .from('neo_instalacoes')
-  .select('equipe_id, concluida_em')
-  .eq('concluida', true)
-  .eq('tipo_responsavel', 'equipe_interna')
-  .not('equipe_id', 'is', null);
-
-// 4. Aplicar filtros de período em ambas as queries
-
-// 5. Combinar resultados no agrupamento
+const extrairPrimeiraCor = (pedido: any): string | null => {
+  const vendaData = Array.isArray(pedido.vendas) 
+    ? pedido.vendas[0] 
+    : pedido.vendas;
+  const produtos = vendaData?.produtos_vendas || [];
+  
+  // Buscar primeira cor válida (prioriza pintura_epoxi)
+  for (const produto of produtos) {
+    if (produto.cor?.nome) {
+      return produto.cor.nome;
+    }
+  }
+  return null;
+};
 ```
 
-### Lógica de Combinação
+**Modificar o retorno da query para ordenar por cor na etapa "aberto":**
+
+Após a linha ~289 onde retorna `pedidosComBacklog`, adicionar ordenação condicional:
 
 ```typescript
-const agrupamento = new Map<string, RankingEquipe>();
+// Ordenar por cor na etapa "aberto"
+if (etapa === 'aberto') {
+  return pedidosComBacklog.sort((a, b) => {
+    const corA = extrairPrimeiraCor(a);
+    const corB = extrairPrimeiraCor(b);
+    
+    // Pedidos sem cor vão para o final
+    if (!corA && !corB) return 0;
+    if (!corA) return 1;
+    if (!corB) return -1;
+    
+    // Ordenar alfabeticamente por nome da cor
+    return corA.localeCompare(corB, 'pt-BR');
+  });
+}
 
-// Processar instalações de pedidos
-(instalacoesData || []).forEach((instalacao) => {
-  const equipe = equipesMap.get(instalacao.responsavel_instalacao_id);
-  if (!equipe) return;
-  
-  // Incrementar quantidade e metragem
-  item.quantidade_instalacoes += 1;
-  item.metragem_total += instalacao.metragem_quadrada || 0;
-});
+return pedidosComBacklog;
+```
 
-// Processar neo instalações (não têm metragem)
-(neoInstalacoesData || []).forEach((neo) => {
-  const equipe = equipesMap.get(neo.equipe_id);
-  if (!equipe) return;
-  
-  // Incrementar apenas quantidade (neo instalações não têm metragem)
-  item.quantidade_instalacoes += 1;
-  // metragem não incrementa
-});
+## Fluxo da Ordenação
+
+```text
+Entrada (ordem por data):
+┌────────────────────────────────┐
+│ 0187 - Cinza Escuro            │
+│ 0186 - Azul Escuro             │
+│ 0185 - Branco                  │
+│ 0184 - Marrom Escuro           │
+│ 0183 - (sem cor)               │
+└────────────────────────────────┘
+
+Saída (ordenado por cor):
+┌────────────────────────────────┐
+│ 0186 - Azul Escuro             │
+│ 0185 - Branco                  │
+│ 0187 - Cinza Escuro            │
+│ 0184 - Marrom Escuro           │
+│ 0183 - (sem cor)               │
+└────────────────────────────────┘
 ```
 
 ## Considerações
 
-| Aspecto | Instalações de Pedidos | Neo Instalações |
-|---------|----------------------|-----------------|
-| Metragem | Sim (soma no total) | Não possui |
-| Equipe | `responsavel_instalacao_id` | `equipe_id` |
-| Filtro tipo | `tipo_instalacao = 'elisa'` | `tipo_responsavel = 'equipe_interna'` |
-| Data conclusão | `instalacao_concluida_em` | `concluida_em` |
+| Aspecto | Comportamento |
+|---------|--------------|
+| Etapa afetada | Apenas "aberto" |
+| Pedidos múltiplas cores | Usa a primeira cor encontrada |
+| Pedidos sem cor | Ficam ao final |
+| Prioridade manual | Quando usuário reorganiza manualmente, `prioridade_etapa` prevalece |
+| Outras etapas | Mantêm ordenação atual (prioridade + data) |
 
 ## Resultado Esperado
 
-O ranking mostrará o desempenho consolidado das equipes considerando:
-- Instalações que passaram pelo fluxo completo de produção (pedidos)
-- Serviços avulsos de instalação (neo instalações)
-
-A metragem total refletirá apenas as instalações de pedidos (que possuem esse dado).
+Na tela `/direcao/gestao-fabrica`, a aba "Em Aberto" mostrará os pedidos agrupados por cor automaticamente, facilitando a visualização e planejamento da produção.
