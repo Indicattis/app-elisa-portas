@@ -7,9 +7,46 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import type { Estado } from '@/hooks/useEstadosCidades';
+
+const ESTADOS_BRASIL = [
+  { sigla: 'AC', nome: 'Acre' },
+  { sigla: 'AL', nome: 'Alagoas' },
+  { sigla: 'AP', nome: 'Amapá' },
+  { sigla: 'AM', nome: 'Amazonas' },
+  { sigla: 'BA', nome: 'Bahia' },
+  { sigla: 'CE', nome: 'Ceará' },
+  { sigla: 'DF', nome: 'Distrito Federal' },
+  { sigla: 'ES', nome: 'Espírito Santo' },
+  { sigla: 'GO', nome: 'Goiás' },
+  { sigla: 'MA', nome: 'Maranhão' },
+  { sigla: 'MT', nome: 'Mato Grosso' },
+  { sigla: 'MS', nome: 'Mato Grosso do Sul' },
+  { sigla: 'MG', nome: 'Minas Gerais' },
+  { sigla: 'PA', nome: 'Pará' },
+  { sigla: 'PB', nome: 'Paraíba' },
+  { sigla: 'PR', nome: 'Paraná' },
+  { sigla: 'PE', nome: 'Pernambuco' },
+  { sigla: 'PI', nome: 'Piauí' },
+  { sigla: 'RJ', nome: 'Rio de Janeiro' },
+  { sigla: 'RN', nome: 'Rio Grande do Norte' },
+  { sigla: 'RS', nome: 'Rio Grande do Sul' },
+  { sigla: 'RO', nome: 'Rondônia' },
+  { sigla: 'RR', nome: 'Roraima' },
+  { sigla: 'SC', nome: 'Santa Catarina' },
+  { sigla: 'SP', nome: 'São Paulo' },
+  { sigla: 'SE', nome: 'Sergipe' },
+  { sigla: 'TO', nome: 'Tocantins' },
+];
 
 interface NovoEstadoDialogProps {
   open: boolean;
@@ -17,6 +54,7 @@ interface NovoEstadoDialogProps {
   onSave: (sigla: string, nome: string) => Promise<boolean>;
   estadoParaEditar?: Estado | null;
   onUpdate?: (id: string, sigla: string, nome: string) => Promise<boolean>;
+  estadosCadastrados?: string[];
 }
 
 export function NovoEstadoDialog({
@@ -24,43 +62,46 @@ export function NovoEstadoDialog({
   onOpenChange,
   onSave,
   estadoParaEditar,
-  onUpdate
+  onUpdate,
+  estadosCadastrados = []
 }: NovoEstadoDialogProps) {
-  const [sigla, setSigla] = useState('');
-  const [nome, setNome] = useState('');
+  const [estadoSelecionado, setEstadoSelecionado] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
   const isEditing = !!estadoParaEditar;
 
+  // Filtrar estados já cadastrados (exceto o que está sendo editado)
+  const estadosDisponiveis = ESTADOS_BRASIL.filter(
+    e => !estadosCadastrados.includes(e.sigla) || (isEditing && e.sigla === estadoParaEditar?.sigla)
+  );
+
   useEffect(() => {
     if (estadoParaEditar) {
-      setSigla(estadoParaEditar.sigla);
-      setNome(estadoParaEditar.nome);
+      setEstadoSelecionado(estadoParaEditar.sigla);
     } else {
-      setSigla('');
-      setNome('');
+      setEstadoSelecionado('');
     }
   }, [estadoParaEditar, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!sigla.trim() || !nome.trim()) return;
+    const estado = ESTADOS_BRASIL.find(e => e.sigla === estadoSelecionado);
+    if (!estado) return;
 
     setSaving(true);
     try {
       let success = false;
       
       if (isEditing && onUpdate) {
-        success = await onUpdate(estadoParaEditar.id, sigla, nome);
+        success = await onUpdate(estadoParaEditar.id, estado.sigla, estado.nome);
       } else {
-        success = await onSave(sigla, nome);
+        success = await onSave(estado.sigla, estado.nome);
       }
       
       if (success) {
         onOpenChange(false);
-        setSigla('');
-        setNome('');
+        setEstadoSelecionado('');
       }
     } finally {
       setSaving(false);
@@ -75,31 +116,25 @@ export function NovoEstadoDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="sigla">Sigla</Label>
-            <Input
-              id="sigla"
-              value={sigla}
-              onChange={(e) => setSigla(e.target.value.toUpperCase().slice(0, 2))}
-              placeholder="Ex: RS"
-              maxLength={2}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="nome">Nome do Estado</Label>
-            <Input
-              id="nome"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              placeholder="Ex: Rio Grande do Sul"
-              required
-            />
+            <Label htmlFor="estado">Estado</Label>
+            <Select value={estadoSelecionado} onValueChange={setEstadoSelecionado}>
+              <SelectTrigger className="w-full bg-background">
+                <SelectValue placeholder="Selecione um estado" />
+              </SelectTrigger>
+              <SelectContent className="bg-background border z-50">
+                {estadosDisponiveis.map(estado => (
+                  <SelectItem key={estado.sigla} value={estado.sigla}>
+                    {estado.sigla} - {estado.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving || !sigla.trim() || !nome.trim()}>
+            <Button type="submit" disabled={saving || !estadoSelecionado}>
               {saving ? 'Salvando...' : isEditing ? 'Atualizar' : 'Criar Estado'}
             </Button>
           </DialogFooter>
