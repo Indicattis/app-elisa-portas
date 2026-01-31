@@ -1,87 +1,150 @@
 
-# Correção: FaturamentoVendaMinimalista - Mesma Inconsistência de Valores
+# Plano: Nova Etapa "Aprovação CEO" no Fluxo de Pedidos
 
-## Problema
+## Visão Geral
 
-O arquivo `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` está com a **mesma lógica incorreta** que já foi corrigida em `FaturamentoEdit.tsx` e `FaturamentoProdutosTable.tsx`. Este é o componente real usado na rota `/administrativo/financeiro/faturamento/:id`.
+Adicionar uma nova etapa chamada **"Aprovação CEO"** entre "Em Aberto" e "Em Produção". Esta etapa permite que pedidos sejam revisados e aprovados pela diretoria antes de entrar em produção.
 
-Problemas específicos:
-- **Linha 497**: `valorTotalLinha = produto.valor_total * produto.quantidade` multiplica quando não deveria
-- **Linha 519**: Mostra `produto.valor_total` como "Valor Unitário" (600) quando deveria dividir
-- **Linha 535**: Multiplica `lucro_item * quantidade` no badge
-- **Linhas 171-176**: Calcula `custoTotal` e `lucroTotal` multiplicando por quantidade
-- **Linha 238**: Calcula `lucroProdutos` multiplicando por quantidade
+## Fluxo Atualizado
 
-## Solução
+```text
+┌──────────────┐    ┌────────────────┐    ┌──────────────┐
+│  Em Aberto   │ -> │ Aprovação CEO  │ -> │ Em Produção  │ -> ...
+└──────────────┘    └────────────────┘    └──────────────┘
+                            │
+                    [NOVA ETAPA]
+```
 
-Aplicar as mesmas correções já feitas nos outros componentes.
+## Funcionalidades da Nova Etapa
+
+| Característica | Descrição |
+|----------------|-----------|
+| **Nome interno** | `aprovacao_ceo` |
+| **Label** | "Aprovação CEO" |
+| **Cor** | Laranja (`bg-orange-500`) |
+| **Ícone** | `ShieldCheck` (verificação de segurança) |
+| **Checkboxes** | 2 itens para aprovação |
+
+### Checkboxes da Etapa
+
+1. **"Pedido revisado pela diretoria"** - Obrigatório
+2. **"Aprovado para produção"** - Obrigatório
 
 ## Alterações Técnicas
 
-### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
+### 1. Migração de Banco de Dados
 
-**1. Corrigir cálculos em executarFaturamento (linhas 171-176):**
+Atualizar as constraints CHECK nas tabelas `pedidos_producao` e `pedidos_etapas` para incluir o novo valor `aprovacao_ceo`.
 
-```typescript
-// ANTES:
-const custoTotal = produtos.reduce((acc, p) => 
-  acc + ((p.custo_producao || 0) * p.quantidade), 0
-);
-const lucroTotal = produtos.reduce((acc, p) => 
-  acc + ((p.lucro_item || 0) * p.quantidade), 0
-);
+```sql
+-- Remover constraints antigas
+ALTER TABLE pedidos_producao DROP CONSTRAINT IF EXISTS pedidos_producao_etapa_atual_check;
+ALTER TABLE pedidos_etapas DROP CONSTRAINT IF EXISTS pedidos_etapas_etapa_check;
 
-// DEPOIS:
-const custoTotal = produtos.reduce((acc, p) => 
-  acc + (p.custo_producao || 0), 0  // valor já é o total da linha
-);
-const lucroTotal = produtos.reduce((acc, p) => 
-  acc + (p.lucro_item || 0), 0  // valor já é o total da linha
-);
+-- Adicionar novas constraints com aprovacao_ceo
+ALTER TABLE pedidos_producao 
+ADD CONSTRAINT pedidos_producao_etapa_atual_check 
+CHECK (etapa_atual IN (
+  'aberto',
+  'aprovacao_ceo',  -- NOVA
+  'em_producao',
+  'inspecao_qualidade', 
+  'aguardando_pintura',
+  'aguardando_coleta',
+  'instalacoes',
+  'correcoes',
+  'finalizado'
+));
+
+-- Mesma atualização para pedidos_etapas
 ```
 
-**2. Corrigir cálculo de lucroProdutos (linha 238):**
+### 2. Tipos TypeScript (`src/types/pedidoEtapa.ts`)
 
+**Atualizar o tipo `EtapaPedido`:**
 ```typescript
-// ANTES:
-const lucroProdutos = produtos?.reduce((acc, p) => acc + ((p.lucro_item || 0) * p.quantidade), 0) || 0;
-
-// DEPOIS:
-const lucroProdutos = produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0;
+export type EtapaPedido = 
+  | 'aberto'
+  | 'aprovacao_ceo'  // NOVA
+  | 'em_producao'
+  | ...
 ```
 
-**3. Corrigir exibição na tabela (linhas 497-535):**
-
+**Adicionar configuração em `ETAPAS_CONFIG`:**
 ```typescript
-// ANTES (linha 497):
-const valorTotalLinha = produto.valor_total * produto.quantidade;
-
-// DEPOIS:
-const valorTotalLinha = produto.valor_total; // Já é o total da linha
-const valorUnitario = produto.quantidade > 0 ? produto.valor_total / produto.quantidade : 0;
-
-// ANTES (linha 519 - coluna "Valor Unit."):
-{formatCurrency(produto.valor_total)}
-
-// DEPOIS:
-{formatCurrency(valorUnitario)}
-
-// ANTES (linha 535 - badge de lucro):
-{formatCurrency(produto.lucro_item! * produto.quantidade)}
-
-// DEPOIS:
-{formatCurrency(produto.lucro_item!)}
+aprovacao_ceo: {
+  label: 'Aprovação CEO',
+  color: 'bg-orange-500',
+  icon: 'ShieldCheck',
+  checkboxes: [
+    { id: 'pedido_revisado', label: 'Pedido revisado pela diretoria', required: true },
+    { id: 'aprovado_producao', label: 'Aprovado para produção', required: true }
+  ]
+}
 ```
 
-## Resultado Esperado
+**Atualizar `ORDEM_ETAPAS`:**
+```typescript
+export const ORDEM_ETAPAS: EtapaPedido[] = [
+  'aberto',
+  'aprovacao_ceo',  // NOVA POSIÇÃO
+  'em_producao',
+  'inspecao_qualidade',
+  ...
+];
+```
 
-**Tabela após correção:**
-| Tipo | Produto | Valor Unit. | Qtd | Valor Total | Lucro |
-|------|---------|-------------|-----|-------------|-------|
-| Adicional | Meia cana micro | R$ 15,00 | 40 | R$ 600,00 | Pendente |
-| Adicional | Meia cana micro | R$ 15,00 | 60 | R$ 900,00 | Pendente |
-| Adicional | Meia cana micro | R$ 15,00 | 47 | R$ 705,00 | Pendente |
+### 3. Fluxograma (`src/utils/pedidoFluxograma.ts`)
 
-O lucro máximo que pode ser informado por produto será R$ 600,00, R$ 900,00 e R$ 705,00 (valores totais corretos de cada linha).
+Adicionar a nova etapa ao `FLUXOGRAMA_ETAPAS` e atualizar a função `determinarFluxograma()` para incluir a etapa de aprovação no fluxo base.
 
-A soma total será R$ 2.205,00 (valor correto da venda), não R$ 111.135,00.
+### 4. Hook de Contadores (`src/hooks/usePedidosEtapas.ts`)
+
+Adicionar `aprovacao_ceo: 0` ao objeto inicial de contadores.
+
+### 5. Páginas de Gestão de Pedidos
+
+Atualizar os mapeamentos de ícones em:
+- `src/pages/fabrica/PedidosProducaoMinimalista.tsx`
+- `src/pages/ProducaoControle.tsx`
+- `src/pages/logistica/ControleLogistica.tsx`
+- `src/pages/direcao/GestaoFabricaDirecao.tsx`
+
+Adicionar entrada para o ícone:
+```typescript
+const ETAPA_ICONS = {
+  aberto: Clock,
+  aprovacao_ceo: ShieldCheck,  // NOVA
+  em_producao: Factory,
+  ...
+};
+```
+
+### 6. Ajustes na Criação de Pedido (`src/hooks/usePedidoCreation.ts`)
+
+Verificar se pedidos de manutenção ainda devem pular esta etapa (provavelmente sim, já que vão direto para instalações).
+
+## Arquivos a Modificar
+
+| Arquivo | Tipo de Alteração |
+|---------|-------------------|
+| `src/types/pedidoEtapa.ts` | Tipo, Config, Ordem |
+| `src/utils/pedidoFluxograma.ts` | Mapeamento e fluxo |
+| `src/hooks/usePedidosEtapas.ts` | Contador inicial |
+| `src/pages/fabrica/PedidosProducaoMinimalista.tsx` | Ícone |
+| `src/pages/ProducaoControle.tsx` | Ícone |
+| `src/pages/logistica/ControleLogistica.tsx` | Ícone |
+| `src/pages/direcao/GestaoFabricaDirecao.tsx` | Ícone |
+| Nova migração SQL | Constraints do banco |
+
+## Comportamento Esperado
+
+1. **Pedido criado** → Entra em "Em Aberto"
+2. **Ao avançar de "Em Aberto"** → Vai para "Aprovação CEO"
+3. **Na etapa "Aprovação CEO"** → CEO/Diretor marca os checkboxes de revisão e aprovação
+4. **Ao avançar de "Aprovação CEO"** → Vai para "Em Produção" (criando ordens de produção)
+5. **Pedidos de manutenção** → Continuam indo direto para "Instalações"
+
+## Resultado Visual
+
+A nova aba aparecerá em todas as interfaces de gestão de pedidos, entre "Em Aberto" e "Em Produção", com contador próprio e funcionalidade completa de drag-and-drop para priorização.
