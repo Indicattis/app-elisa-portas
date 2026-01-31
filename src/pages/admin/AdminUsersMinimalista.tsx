@@ -440,6 +440,12 @@ export default function AdminUsersMinimalista() {
         onOpenChange={(open) => !open && setSelectedUser(null)}
         user={selectedUser}
         roleLabel={selectedUser ? (roleLabelsMap[selectedUser.role] || selectedUser.role) : ""}
+        onAvatarUpdate={(userId, url) => {
+          handleAvatarUpdate(userId, url);
+          if (selectedUser && selectedUser.user_id === userId) {
+            setSelectedUser({ ...selectedUser, foto_perfil_url: url });
+          }
+        }}
       />
 
       {resetPasswordUser && (

@@ -4,7 +4,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarUpload } from "@/components/AvatarUpload";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -41,19 +41,11 @@ interface UserDetailsModalProps {
   onOpenChange: (open: boolean) => void;
   user: AdminUser | null;
   roleLabel: string;
+  onAvatarUpdate?: (userId: string, newAvatarUrl: string | null) => void;
 }
 
-export function UserDetailsModal({ open, onOpenChange, user, roleLabel }: UserDetailsModalProps) {
+export function UserDetailsModal({ open, onOpenChange, user, roleLabel, onAvatarUpdate }: UserDetailsModalProps) {
   if (!user) return null;
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((word) => word.charAt(0))
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
 
   const formatCPF = (cpf: string | null) => {
     if (!cpf) return "Não informado";
@@ -104,13 +96,13 @@ export function UserDetailsModal({ open, onOpenChange, user, roleLabel }: UserDe
 
         <div className="space-y-6">
           {/* Header com Avatar e Info Principal */}
-          <div className="flex items-center gap-4 pb-4 border-b border-border">
-            <Avatar className="w-16 h-16">
-              <AvatarImage src={user.foto_perfil_url || undefined} alt={user.nome} />
-              <AvatarFallback className="bg-primary/20 text-primary text-lg font-semibold">
-                {getInitials(user.nome)}
-              </AvatarFallback>
-            </Avatar>
+          <div className="flex flex-col gap-4 pb-4 border-b border-border">
+            <AvatarUpload
+              userId={user.user_id}
+              currentAvatarUrl={user.foto_perfil_url}
+              userName={user.nome}
+              onAvatarUpdate={(url) => onAvatarUpdate?.(user.user_id, url)}
+            />
             <div className="flex-1 min-w-0">
               <h3 className="text-xl font-semibold text-foreground truncate">{user.nome}</h3>
               <p className="text-sm text-muted-foreground truncate">{user.email}</p>
