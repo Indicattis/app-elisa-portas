@@ -15,6 +15,7 @@ import { useFornecedores } from "@/hooks/useFornecedores";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { toast } from "sonner";
 import { baixarEstoquePDF, imprimirEstoquePDF } from "@/utils/estoquePDFGenerator";
+import { formatCurrency } from "@/lib/utils";
 
 export default function ProdutosFabrica() {
   const navigate = useNavigate();
@@ -406,15 +407,17 @@ export default function ProdutosFabrica() {
                 <TableRow className="border-white/10 hover:bg-transparent">
                   <TableHead className="text-xs font-medium text-white/60 w-24">SKU</TableHead>
                   <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
-                  <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>
-                  <TableHead className="text-xs font-medium text-white/60">Setor</TableHead>
-                  <TableHead className="text-center text-xs font-medium text-white/60">Pintura</TableHead>
+                  <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>
+                  <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>
+                  <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
+                  <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
+                  <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow className="border-white/10">
-                    <TableCell colSpan={5} className="text-center py-8 text-sm text-white/40">
+                    <TableCell colSpan={7} className="text-center py-8 text-sm text-white/40">
                       Carregando...
                     </TableCell>
                   </TableRow>
@@ -425,7 +428,7 @@ export default function ProdutosFabrica() {
                     p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
                   ).length === 0 ? (
                   <TableRow className="border-white/10">
-                    <TableCell colSpan={5} className="text-center py-8 text-sm text-white/40">
+                    <TableCell colSpan={7} className="text-center py-8 text-sm text-white/40">
                       {searchTerm ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
                     </TableCell>
                   </TableRow>
@@ -454,40 +457,26 @@ export default function ProdutosFabrica() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>
-                          {produto.categoria ? (
-                            <Badge 
-                              variant="outline" 
-                              className="text-xs border-white/20"
-                              style={{ 
-                                backgroundColor: `${getCategoriaColor(produto.categoria)}20`,
-                                borderColor: getCategoriaColor(produto.categoria),
-                                color: getCategoriaColor(produto.categoria)
-                              }}
-                            >
-                              {getCategoriaLabel(produto.categoria)}
-                            </Badge>
-                          ) : (
-                            <span className="text-xs text-white/40">-</span>
-                          )}
+                        <TableCell className="text-center text-white/80">
+                          {produto.quantidade_ideal || 0}
                         </TableCell>
-                        <TableCell>
-                          {produto.setor_responsavel_producao ? (
-                            <span className="text-xs text-white/60 capitalize">
-                              {produto.setor_responsavel_producao}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-white/40">-</span>
-                          )}
+                        <TableCell className="text-center text-white/80">
+                          {produto.quantidade_maxima || 0}
                         </TableCell>
                         <TableCell className="text-center">
-                          {produto.requer_pintura ? (
-                            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">
-                              Sim
-                            </Badge>
-                          ) : (
-                            <span className="text-xs text-white/40">-</span>
-                          )}
+                          <Badge className={
+                            produto.quantidade < (produto.quantidade_ideal || 0)
+                              ? "bg-red-500/20 text-red-400 border-red-500/30"
+                              : "bg-green-500/20 text-green-400 border-green-500/30"
+                          }>
+                            {produto.quantidade}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right text-white/80">
+                          {formatCurrency(produto.custo_unitario)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium text-white">
+                          {formatCurrency(produto.quantidade * produto.custo_unitario)}
                         </TableCell>
                       </TableRow>
                     ))

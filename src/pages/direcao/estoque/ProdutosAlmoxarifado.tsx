@@ -12,7 +12,6 @@ import { useAlmoxarifado, AlmoxarifadoItem, AlmoxarifadoFormData } from "@/hooks
 import { useFornecedores } from "@/hooks/useFornecedores";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { formatCurrency } from "@/lib/utils";
-import { format } from "date-fns";
 
 export default function ProdutosAlmoxarifado() {
   const { items, isLoading, createItem, updateItem, deleteItem, isCreating, isUpdating, isDeleting } = useAlmoxarifado();
@@ -150,14 +149,11 @@ export default function ProdutosAlmoxarifado() {
                 <TableHeader>
                   <TableRow className="border-white/10 hover:bg-transparent">
                     <TableHead className="text-white/60">Nome</TableHead>
-                    <TableHead className="text-white/60">Fornecedor</TableHead>
-                    <TableHead className="text-center text-white/60">Qtd. Mín.</TableHead>
-                    <TableHead className="text-center text-white/60">Qtd. Máx.</TableHead>
-                    <TableHead className="text-center text-white/60">Em Estoque</TableHead>
-                    <TableHead className="text-white/60">Última Conf.</TableHead>
-                    <TableHead className="text-right text-white/60">Custo</TableHead>
-                    <TableHead className="text-center text-white/60">Un.</TableHead>
-                    <TableHead className="text-right text-white/60">Total</TableHead>
+                    <TableHead className="text-center text-white/60">Est. Mín</TableHead>
+                    <TableHead className="text-center text-white/60">Est. Máx</TableHead>
+                    <TableHead className="text-center text-white/60">Atual</TableHead>
+                    <TableHead className="text-right text-white/60">Preço/Un</TableHead>
+                    <TableHead className="text-right text-white/60">Valor Total</TableHead>
                     <TableHead className="text-right text-white/60">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -178,9 +174,6 @@ export default function ProdutosAlmoxarifado() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="text-white/80">
-                          {item.fornecedor?.nome || "-"}
-                        </TableCell>
                         <TableCell className="text-center text-white/80">
                           {item.quantidade_minima}
                         </TableCell>
@@ -198,16 +191,8 @@ export default function ProdutosAlmoxarifado() {
                             {item.quantidade_estoque}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-white/80">
-                          {item.data_ultima_conferencia 
-                            ? format(new Date(item.data_ultima_conferencia), "dd/MM/yyyy")
-                            : "-"}
-                        </TableCell>
                         <TableCell className="text-right text-white/80">
                           {formatCurrency(item.custo)}
-                        </TableCell>
-                        <TableCell className="text-center text-white/80">
-                          {item.unidade}
                         </TableCell>
                         <TableCell className="text-right font-medium text-white">
                           {formatCurrency(item.total_estoque || 0)}
