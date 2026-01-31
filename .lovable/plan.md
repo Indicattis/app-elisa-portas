@@ -1,170 +1,181 @@
 
-# Plano: Sistema de Desbloqueio de Meta
 
-## Conceito
+# Plano: Mover Estoque para /direcao/estoque
 
-Quando uma meta e criada, ela fica "bloqueada" ate o colaborador clicar em um botao dourado "Desbloquear Meta" na pagina de producao. Apos desbloqueada, a barra de progresso aparece normalmente e a meta nunca volta a ser bloqueada.
+## Resumo da Mudanca
+
+Mover o setor de Estoque de `/estoque` para `/direcao/estoque`, transformando-o em um modulo de gestao gerencial com foco em auditoria e configuracoes.
+
+## Estrutura Nova
+
+```
+/direcao/estoque (Hub)
+├── Auditoria Fabrica      -> /direcao/estoque/auditoria/fabrica
+├── Auditoria Almoxarifado -> /direcao/estoque/auditoria/almoxarifado
+└── Configuracoes          -> /direcao/estoque/configuracoes
+```
 
 ## Alteracoes Necessarias
 
 ### 1. Banco de Dados
 
-Adicionar coluna `desbloqueada` na tabela `metas_colaboradores`:
+Adicionar coluna `setor` na tabela `estoque_conferencias` para distinguir origem:
 
 ```sql
-ALTER TABLE metas_colaboradores 
-ADD COLUMN desbloqueada BOOLEAN DEFAULT FALSE;
+ALTER TABLE estoque_conferencias 
+ADD COLUMN setor TEXT DEFAULT 'fabrica';
 ```
 
-### 2. Atualizar Interface TypeScript
+### 2. Arquivos a Criar
 
-**Arquivo:** `src/hooks/useMetasColaboradorIndividual.ts`
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/pages/direcao/estoque/DirecaoEstoqueHub.tsx` | Hub principal com 3 botoes |
+| `src/pages/direcao/estoque/AuditoriaFabrica.tsx` | Lista conferencias da fabrica |
+| `src/pages/direcao/estoque/AuditoriaAlmoxarifado.tsx` | Lista conferencias do almoxarifado |
+| `src/pages/direcao/estoque/ConfiguracoesEstoque.tsx` | Acesso a produtos e fornecedores |
 
-Adicionar campo ao tipo `MetaColaborador`:
-```typescript
-export interface MetaColaborador {
-  // ... campos existentes
-  desbloqueada: boolean; // NOVO
-}
-```
-
-Adicionar hook para desbloquear meta:
-```typescript
-export function useDesbloquearMeta() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ metaId, userId }: { metaId: string; userId: string }) => {
-      const { error } = await supabase
-        .from("metas_colaboradores")
-        .update({ desbloqueada: true })
-        .eq("id", metaId);
-      if (error) throw error;
-      return { metaId, userId };
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["metas-colaborador", variables.userId] });
-      queryClient.invalidateQueries({ queryKey: ["meta-ativa-progresso"] });
-    },
-  });
-}
-```
-
-### 3. Redesenhar MetaProgressoBar (Design Minimalista)
-
-**Arquivo:** `src/components/metas/MetaProgressoBar.tsx`
-
-Estados visuais:
-
-**Estado Bloqueado:**
-```
-┌─────────────────────────────────────────────────┐
-│                                                 │
-│     [Desbloquear Meta]  (botao dourado)         │
-│                                                 │
-│     Recompensa: R$ 150,00 (maior destaque)      │
-│                                                 │
-└─────────────────────────────────────────────────┘
-```
-
-**Estado Desbloqueado:**
-```
-┌─────────────────────────────────────────────────┐
-│  Meta Ativa                 500m / 10.000m      │
-│  ▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░  5%         │
-│                                                 │
-│           R$ 150,00  (recompensa grande)        │
-└─────────────────────────────────────────────────┘
-```
-
-Logica do componente:
-- Verificar `meta.desbloqueada`
-- Se `false`: mostrar botao dourado + recompensa
-- Se `true`: mostrar barra de progresso + recompensa em destaque
-
-Design do botao dourado:
-```tsx
-<Button
-  className="bg-gradient-to-r from-amber-500 to-yellow-500 
-             hover:from-amber-600 hover:to-yellow-600 
-             text-white font-semibold px-6 py-3 
-             shadow-lg shadow-amber-500/25"
-  onClick={handleDesbloquear}
->
-  <Unlock className="mr-2 h-5 w-5" />
-  Desbloquear Meta
-</Button>
-```
-
-Recompensa com destaque maior:
-```tsx
-<span className="text-lg font-bold text-amber-500">
-  R$ {recompensa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-</span>
-```
-
-### 4. Fluxo de Uso
-
-```text
-1. Admin cria meta para colaborador
-   └─> meta.desbloqueada = false
-
-2. Colaborador acessa /producao/perfiladeira
-   └─> Ve botao dourado "Desbloquear Meta"
-   └─> Ve valor da recompensa
-
-3. Colaborador clica no botao
-   └─> UPDATE metas_colaboradores SET desbloqueada = true
-   └─> Invalidar cache
-
-4. Tela atualiza
-   └─> Barra de progresso aparece
-   └─> Recompensa continua visivel (maior)
-
-5. Colaborador conclui ordens
-   └─> Progresso atualiza em tempo real
-```
-
-## Arquivos a Modificar
+### 3. Arquivos a Modificar
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| Banco de dados | Adicionar coluna `desbloqueada` |
-| `src/hooks/useMetasColaboradorIndividual.ts` | Adicionar campo e hook |
-| `src/components/metas/MetaProgressoBar.tsx` | Redesenhar com estados bloqueado/desbloqueado |
+| `src/pages/Home.tsx` | Remover botao Estoque |
+| `src/pages/direcao/DirecaoHub.tsx` | Adicionar botao Estoque |
+| `src/App.tsx` | Adicionar novas rotas em /direcao/estoque |
+| `src/hooks/useConferenciaEstoque.ts` | Adicionar filtro por setor |
 
-## Detalhes Tecnicos
+### 4. Design do Hub DirecaoEstoqueHub
 
-### Migracao SQL
-```sql
-ALTER TABLE metas_colaboradores 
-ADD COLUMN desbloqueada BOOLEAN DEFAULT FALSE;
+Layout minimalista com 3 botoes azuis:
+
+```
+┌───────────────────────────────────────────────────┐
+│  [←]                      Home > Direcao > Estoque│
+│                                                   │
+│  ┌─────────────────────────────────────────────┐  │
+│  │ 🔍 Auditoria Fabrica                        │  │
+│  └─────────────────────────────────────────────┘  │
+│                                                   │
+│  ┌─────────────────────────────────────────────┐  │
+│  │ 🔍 Auditoria Almoxarifado                   │  │
+│  └─────────────────────────────────────────────┘  │
+│                                                   │
+│  ┌─────────────────────────────────────────────┐  │
+│  │ ⚙️ Configuracoes                            │  │
+│  └─────────────────────────────────────────────┘  │
+│                                                   │
+└───────────────────────────────────────────────────┘
 ```
 
-### Verificacao no Componente
+### 5. Pagina de Configuracoes
+
+Hub secundario com 2 opcoes:
+
+```
+┌───────────────────────────────────────────────────┐
+│  [←]               Home > Direcao > Estoque > Config │
+│                                                   │
+│  ┌───────────────────┐  ┌───────────────────┐    │
+│  │  Produtos         │  │  Fornecedores     │    │
+│  │  Cadastro de      │  │  Gestao de        │    │
+│  │  produtos         │  │  fornecedores     │    │
+│  └───────────────────┘  └───────────────────┘    │
+│                                                   │
+└───────────────────────────────────────────────────┘
+```
+
+### 6. Fluxo de Rotas
+
+**Antes:**
+```
+/home -> /estoque -> /estoque/auditoria
+                  -> /estoque/fabrica
+                  -> /estoque/almoxarifado
+                  -> /estoque/fornecedores
+```
+
+**Depois:**
+```
+/home -> /direcao -> /direcao/estoque -> /direcao/estoque/auditoria/fabrica
+                                      -> /direcao/estoque/auditoria/almoxarifado
+                                      -> /direcao/estoque/configuracoes
+                                           -> /direcao/estoque/configuracoes/produtos
+                                           -> /direcao/estoque/configuracoes/fornecedores
+```
+
+### 7. Detalhes Tecnicos
+
+**Hook useConferenciaEstoque - Filtro por Setor:**
 ```typescript
-// Na query, incluir campo desbloqueada
-const { data: meta } = await supabase
-  .from("metas_colaboradores")
-  .select("*") // ja inclui desbloqueada
-  ...
-
-// No retorno
-return {
-  meta,
-  progresso,
-  porcentagem,
-  desbloqueada: meta.desbloqueada ?? false, // fallback para metas antigas
-};
+// Adicionar parametro setor nas queries
+const { data: conferenciasConcluidas } = useQuery({
+  queryKey: ["conferencias-concluidas", setor],
+  queryFn: async () => {
+    let query = supabase
+      .from("estoque_conferencias")
+      .select("*")
+      .eq("status", "concluida")
+      .order("concluida_em", { ascending: false });
+    
+    if (setor) {
+      query = query.eq("setor", setor);
+    }
+    
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  },
+});
 ```
 
-### Mutation para Desbloquear
+**DirecaoHub - Adicionar Botao:**
 ```typescript
-const desbloquear = useDesbloquearMeta();
-
-const handleDesbloquear = () => {
-  desbloquear.mutate({ 
-    metaId: metaInfo.meta.id, 
-    userId 
-  });
-};
+const menuItems = [
+  // ... botoes existentes
+  { label: 'Estoque', icon: Warehouse, path: '/direcao/estoque' }, // NOVO
+];
 ```
+
+**Home.tsx - Remover Botao:**
+```typescript
+const menuItems = [
+  { label: "Direcao", icon: Shield, path: "/direcao", isGold: true },
+  { label: "Marketing", icon: BarChart3, path: "/marketing" },
+  { label: "Vendas", icon: ShoppingCart, path: "/vendas" },
+  { label: "Fabrica", icon: Factory, path: "/fabrica" },
+  { label: "Logistica", icon: Truck, path: "/logistica" },
+  // REMOVIDO: { label: "Estoque", icon: Warehouse, path: "/estoque" },
+  { label: "Administrativo", icon: Building2, path: "/administrativo" }
+];
+```
+
+### 8. App.tsx - Novas Rotas
+
+```typescript
+// Hub Direcao Estoque
+import DirecaoEstoqueHub from "./pages/direcao/estoque/DirecaoEstoqueHub";
+import AuditoriaFabrica from "./pages/direcao/estoque/AuditoriaFabrica";
+import AuditoriaAlmoxarifado from "./pages/direcao/estoque/AuditoriaAlmoxarifado";
+import ConfiguracoesEstoque from "./pages/direcao/estoque/ConfiguracoesEstoque";
+
+// Rotas
+<Route path="/direcao/estoque" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoEstoqueHub /></ProtectedRoute>} />
+<Route path="/direcao/estoque/auditoria/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><AuditoriaFabrica /></ProtectedRoute>} />
+<Route path="/direcao/estoque/auditoria/almoxarifado" element={<ProtectedRoute routeKey="direcao_hub"><AuditoriaAlmoxarifado /></ProtectedRoute>} />
+<Route path="/direcao/estoque/configuracoes" element={<ProtectedRoute routeKey="direcao_hub"><ConfiguracoesEstoque /></ProtectedRoute>} />
+<Route path="/direcao/estoque/configuracoes/produtos" element={<ProtectedRoute routeKey="direcao_hub"><EstoqueFabrica /></ProtectedRoute>} />
+<Route path="/direcao/estoque/configuracoes/fornecedores" element={<ProtectedRoute routeKey="direcao_hub"><EstoqueFornecedores /></ProtectedRoute>} />
+```
+
+### 9. Rotas Antigas
+
+As rotas antigas em `/estoque/*` serao mantidas temporariamente para nao quebrar referencias existentes (producao usa `/estoque/conferencia`), mas o botao no /home sera removido.
+
+## Resultado Esperado
+
+1. Botao "Estoque" removido do /home
+2. Botao "Estoque" adicionado no /direcao
+3. Hub em /direcao/estoque com 3 opcoes
+4. Auditorias separadas por setor (fabrica/almoxarifado)
+5. Pagina de configuracoes com acesso a produtos e fornecedores
+
