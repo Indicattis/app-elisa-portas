@@ -1,54 +1,26 @@
 
-# Correção: Inconsistência de Valores na Tela de Faturamento
+# Correção: FaturamentoVendaMinimalista - Mesma Inconsistência de Valores
 
-## Problema Identificado
+## Problema
 
-O sistema tem uma confusão entre valores TOTAIS e valores POR UNIDADE:
+O arquivo `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` está com a **mesma lógica incorreta** que já foi corrigida em `FaturamentoEdit.tsx` e `FaturamentoProdutosTable.tsx`. Este é o componente real usado na rota `/administrativo/financeiro/faturamento/:id`.
 
-| Campo | Valor no Banco | Interpretação Atual | Problema |
-|-------|----------------|---------------------|----------|
-| `valor_total` | 600, 900, 705 | Tratado como unitário | Mostra "Valor Unit." na tabela e multiplica por qtd |
-| `lucro_item` | 0 | Tratado como por unidade | Multiplica por quantidade nos cálculos |
-| `custo_producao` | 0 | Tratado como por unidade | Calculado como `valor_total - lucro` (mistura!) |
-
-**Resultado:** A tabela mostra R$ 24.000,00 (600 x 40) quando deveria ser R$ 600,00.
+Problemas específicos:
+- **Linha 497**: `valorTotalLinha = produto.valor_total * produto.quantidade` multiplica quando não deveria
+- **Linha 519**: Mostra `produto.valor_total` como "Valor Unitário" (600) quando deveria dividir
+- **Linha 535**: Multiplica `lucro_item * quantidade` no badge
+- **Linhas 171-176**: Calcula `custoTotal` e `lucroTotal` multiplicando por quantidade
+- **Linha 238**: Calcula `lucroProdutos` multiplicando por quantidade
 
 ## Solução
 
-Padronizar tudo para valores TOTAIS da linha (não por unidade). Isso simplifica os cálculos e evita confusão.
+Aplicar as mesmas correções já feitas nos outros componentes.
 
 ## Alterações Técnicas
 
-### 1. `src/components/vendas/FaturamentoProdutosTable.tsx`
+### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-**Corrigir exibição (linhas 72, 94, 99-100, 115):**
-
-```typescript
-// ANTES:
-const valorTotalLinha = produto.valor_total * produto.quantidade;
-
-// DEPOIS:
-const valorTotalLinha = produto.valor_total; // Já é o total
-const valorUnitario = produto.quantidade > 0 ? produto.valor_total / produto.quantidade : 0;
-
-// Coluna "Valor Unit." - linha 94
-// ANTES:
-R$ {produto.valor_total.toFixed(2)}
-// DEPOIS:
-R$ {valorUnitario.toFixed(2)}
-
-// Coluna "Valor Total" - linha 100 (sem mudança, já usa valorTotalLinha)
-
-// Badge de lucro - linha 115
-// ANTES:
-R$ {(produto.lucro_item! * produto.quantidade).toFixed(2)}
-// DEPOIS:
-R$ {produto.lucro_item!.toFixed(2)} // Já é o total
-```
-
-### 2. `src/pages/FaturamentoEdit.tsx`
-
-**Corrigir cálculos de totais (linhas 107-112, 182-183):**
+**1. Corrigir cálculos em executarFaturamento (linhas 171-176):**
 
 ```typescript
 // ANTES:
@@ -61,52 +33,55 @@ const lucroTotal = produtos.reduce((acc, p) =>
 
 // DEPOIS:
 const custoTotal = produtos.reduce((acc, p) => 
-  acc + (p.custo_producao || 0), 0  // Já é total
+  acc + (p.custo_producao || 0), 0  // valor já é o total da linha
 );
 const lucroTotal = produtos.reduce((acc, p) => 
-  acc + (p.lucro_item || 0), 0  // Já é total
+  acc + (p.lucro_item || 0), 0  // valor já é o total da linha
 );
-
-// Mesma correção para linhas 182-183
-const totalLucro = produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0;
-const totalCusto = produtos?.reduce((acc, p) => acc + (p.custo_producao || 0), 0) || 0;
 ```
 
-### 3. `src/components/vendas/LucroItemModal.tsx`
-
-**Atualizar validação e exibição:**
-
-O modal já usa `valor_total` diretamente (600, 900, 705), que é correto. O lucro máximo permitido é o valor total da linha.
-
-**Adicionar clareza na UI (opcional):**
+**2. Corrigir cálculo de lucroProdutos (linha 238):**
 
 ```typescript
-// Adicionar info do valor unitário para contexto
-const valorUnitario = produto.quantidade > 0 ? valorTotal / produto.quantidade : 0;
+// ANTES:
+const lucroProdutos = produtos?.reduce((acc, p) => acc + ((p.lucro_item || 0) * p.quantidade), 0) || 0;
 
-// No JSX, adicionar:
-<div className="flex justify-between items-center">
-  <span className="text-sm text-muted-foreground">Valor Unitário:</span>
-  <span className="text-sm">R$ {valorUnitario.toFixed(2)}</span>
-</div>
+// DEPOIS:
+const lucroProdutos = produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0;
 ```
 
-## Resumo das Mudanças
+**3. Corrigir exibição na tabela (linhas 497-535):**
 
-| Arquivo | Mudança |
-|---------|---------|
-| `FaturamentoProdutosTable.tsx` | Calcular valor unitário dividindo, não multiplicar total por qtd |
-| `FaturamentoEdit.tsx` | Remover multiplicação por quantidade nos totais |
-| `LucroItemModal.tsx` | Adicionar exibição do valor unitário para clareza |
+```typescript
+// ANTES (linha 497):
+const valorTotalLinha = produto.valor_total * produto.quantidade;
+
+// DEPOIS:
+const valorTotalLinha = produto.valor_total; // Já é o total da linha
+const valorUnitario = produto.quantidade > 0 ? produto.valor_total / produto.quantidade : 0;
+
+// ANTES (linha 519 - coluna "Valor Unit."):
+{formatCurrency(produto.valor_total)}
+
+// DEPOIS:
+{formatCurrency(valorUnitario)}
+
+// ANTES (linha 535 - badge de lucro):
+{formatCurrency(produto.lucro_item! * produto.quantidade)}
+
+// DEPOIS:
+{formatCurrency(produto.lucro_item!)}
+```
 
 ## Resultado Esperado
 
-**Tabela de produtos:**
-| Produto | Valor Unit. | Qtd | Valor Total |
-|---------|-------------|-----|-------------|
-| Meia cana micro | R$ 15,00 | 40 | R$ 600,00 |
-| Meia cana micro | R$ 15,00 | 60 | R$ 900,00 |
-| Meia cana micro | R$ 15,00 | 47 | R$ 705,00 |
-| **Total** | | | **R$ 2.205,00** |
+**Tabela após correção:**
+| Tipo | Produto | Valor Unit. | Qtd | Valor Total | Lucro |
+|------|---------|-------------|-----|-------------|-------|
+| Adicional | Meia cana micro | R$ 15,00 | 40 | R$ 600,00 | Pendente |
+| Adicional | Meia cana micro | R$ 15,00 | 60 | R$ 900,00 | Pendente |
+| Adicional | Meia cana micro | R$ 15,00 | 47 | R$ 705,00 | Pendente |
 
-O lucro máximo que pode ser informado por produto será R$ 600, R$ 900, R$ 705 respectivamente, que são os valores totais corretos de cada linha.
+O lucro máximo que pode ser informado por produto será R$ 600,00, R$ 900,00 e R$ 705,00 (valores totais corretos de cada linha).
+
+A soma total será R$ 2.205,00 (valor correto da venda), não R$ 111.135,00.
