@@ -143,6 +143,8 @@ import ProducaoMeuHistorico from "./pages/ProducaoMeuHistorico";
 import ProducaoControle from "./pages/ProducaoControle";
 import ConferenciaEstoqueProducao from "./pages/producao/ConferenciaEstoqueProducao";
 import ConferenciaExecucaoProducao from "./pages/producao/ConferenciaExecucaoProducao";
+import ConferenciaAlmoxProducao from "./pages/producao/ConferenciaAlmoxProducao";
+import ConferenciaAlmoxExecucao from "./pages/producao/ConferenciaAlmoxExecucao";
 import Ordens from "./pages/Ordens";
 import AdminHub from "./pages/admin/AdminHub";
 import AdminPermissionsMinimalista from "./pages/admin/AdminPermissionsMinimalista";
@@ -647,6 +649,26 @@ const App = () => (
                             <ProtectedProducaoRoute>
                               <ProducaoLayout>
                                 <ConferenciaExecucaoProducao />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          } 
+                        />
+                        <Route 
+                          path="/conferencia-almox" 
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ConferenciaAlmoxProducao />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          } 
+                        />
+                        <Route 
+                          path="/conferencia-almox/:id" 
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ConferenciaAlmoxExecucao />
                               </ProducaoLayout>
                             </ProtectedProducaoRoute>
                           } 
