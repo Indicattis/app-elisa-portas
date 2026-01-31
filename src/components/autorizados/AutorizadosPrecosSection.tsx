@@ -35,7 +35,6 @@ export function AutorizadosPrecosSection() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAutorizado, setSelectedAutorizado] = useState<AutorizadoComPrecos | null>(null);
 
-  // Filtrar e ordenar por cidade
   const autorizadosFiltrados = useMemo(() => {
     return autorizados
       .filter((aut) => {
@@ -45,7 +44,6 @@ export function AutorizadosPrecosSection() {
         return matchSearch && matchEstado;
       })
       .sort((a, b) => {
-        // Ordenar por cidade (vazios no final)
         if (!a.cidade && !b.cidade) return a.nome.localeCompare(b.nome);
         if (!a.cidade) return 1;
         if (!b.cidade) return -1;
@@ -54,32 +52,6 @@ export function AutorizadosPrecosSection() {
         return a.nome.localeCompare(b.nome);
       });
   }, [autorizados, searchTerm, filterEstado]);
-
-  // Agrupar por cidade para exibição
-  const autorizadosPorCidade = useMemo(() => {
-    const grupos: { cidade: string; autorizados: AutorizadoComPrecos[] }[] = [];
-    let cidadeAtual = '';
-    let grupoAtual: AutorizadoComPrecos[] = [];
-
-    autorizadosFiltrados.forEach((aut) => {
-      const cidade = aut.cidade || 'Sem cidade';
-      if (cidade !== cidadeAtual) {
-        if (grupoAtual.length > 0) {
-          grupos.push({ cidade: cidadeAtual, autorizados: grupoAtual });
-        }
-        cidadeAtual = cidade;
-        grupoAtual = [aut];
-      } else {
-        grupoAtual.push(aut);
-      }
-    });
-
-    if (grupoAtual.length > 0) {
-      grupos.push({ cidade: cidadeAtual, autorizados: grupoAtual });
-    }
-
-    return grupos;
-  }, [autorizadosFiltrados]);
 
   const handleEdit = (autorizado: AutorizadoComPrecos) => {
     setSelectedAutorizado(autorizado);
@@ -127,74 +99,68 @@ export function AutorizadosPrecosSection() {
             </Select>
           </div>
 
-          {/* Tabela agrupada por cidade */}
-          {autorizadosPorCidade.length === 0 ? (
+          {/* Tabela simples */}
+          {autorizadosFiltrados.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-white/60">Nenhum autorizado encontrado</p>
             </div>
           ) : (
-            <div className="space-y-4 max-h-[500px] overflow-y-auto">
-              {autorizadosPorCidade.map((grupo) => (
-                <div key={grupo.cidade} className="space-y-2">
-                  <h4 className="text-sm font-medium text-primary px-2">
-                    {grupo.cidade} ({grupo.autorizados.length})
-                  </h4>
-                  <div className="rounded-lg overflow-hidden border border-primary/10">
-                    <Table className="text-xs">
-                      <TableHeader>
-                        <TableRow className="border-primary/10 hover:bg-transparent">
-                          <TableHead className="text-xs text-white/70">Autorizado</TableHead>
-                          <TableHead className="text-xs text-white/70">Estado</TableHead>
-                          <TableHead className="text-xs text-white/70 text-center">P (&lt;25m²)</TableHead>
-                          <TableHead className="text-xs text-white/70 text-center">G (25-50m²)</TableHead>
-                          <TableHead className="text-xs text-white/70 text-center">GG (&gt;50m²)</TableHead>
-                          <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {grupo.autorizados.map((aut) => (
-                          <TableRow 
-                            key={aut.id}
-                            className="cursor-pointer border-primary/10 hover:bg-primary/10 text-white/90"
-                            onClick={() => handleEdit(aut)}
+            <div className="rounded-lg overflow-hidden border border-primary/10">
+              <div className="max-h-[400px] overflow-y-auto">
+                <Table className="text-xs">
+                  <TableHeader className="sticky top-0 bg-black/90">
+                    <TableRow className="border-primary/10 hover:bg-transparent">
+                      <TableHead className="text-xs text-white/70">Autorizado</TableHead>
+                      <TableHead className="text-xs text-white/70">Cidade/UF</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center">P</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center">G</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center">GG</TableHead>
+                      <TableHead className="text-right text-xs text-white/70"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {autorizadosFiltrados.map((aut) => (
+                      <TableRow 
+                        key={aut.id}
+                        className="cursor-pointer border-primary/10 hover:bg-primary/10 text-white/90"
+                        onClick={() => handleEdit(aut)}
+                      >
+                        <TableCell className="font-medium">{aut.nome}</TableCell>
+                        <TableCell className="text-white/60">
+                          {aut.cidade ? `${aut.cidade}/${aut.estado}` : aut.estado || '-'}
+                        </TableCell>
+                        <TableCell className="text-center font-medium text-green-400">
+                          {aut.precos.P > 0 ? formatCurrency(aut.precos.P) : '-'}
+                        </TableCell>
+                        <TableCell className="text-center font-medium text-green-400">
+                          {aut.precos.G > 0 ? formatCurrency(aut.precos.G) : '-'}
+                        </TableCell>
+                        <TableCell className="text-center font-medium text-green-400">
+                          {aut.precos.GG > 0 ? formatCurrency(aut.precos.GG) : '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 hover:bg-primary/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(aut);
+                            }}
                           >
-                            <TableCell className="font-medium">{aut.nome}</TableCell>
-                            <TableCell className="text-white/60">{aut.estado || '-'}</TableCell>
-                            <TableCell className="text-center font-medium text-green-400">
-                              {aut.precos.P > 0 ? formatCurrency(aut.precos.P) : '-'}
-                            </TableCell>
-                            <TableCell className="text-center font-medium text-green-400">
-                              {aut.precos.G > 0 ? formatCurrency(aut.precos.G) : '-'}
-                            </TableCell>
-                            <TableCell className="text-center font-medium text-green-400">
-                              {aut.precos.GG > 0 ? formatCurrency(aut.precos.GG) : '-'}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0 hover:bg-primary/10"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEdit(aut);
-                                }}
-                              >
-                                <Edit2 className="h-3.5 w-3.5 text-white/60" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              ))}
+                            <Edit2 className="h-3.5 w-3.5 text-white/60" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Dialog de Edição de Preços */}
       <AutorizadoPrecosDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
