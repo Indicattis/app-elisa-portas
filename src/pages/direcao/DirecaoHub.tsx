@@ -11,9 +11,9 @@ const menuItems = [
   { label: 'Faturamento', icon: DollarSign, path: '/direcao/faturamento' },
   { label: 'Gestão de Fábrica', icon: Factory, path: '/direcao/gestao-fabrica' },
   { label: 'Gestão de Instalações', icon: Truck, path: '/direcao/gestao-instalacao' },
+  { label: 'Estoque', icon: Warehouse, path: '/direcao/estoque' },
   { label: 'Metas', icon: Target, path: '/direcao/metas' },
   { label: 'Autorizados', icon: Users, path: '/direcao/autorizados' },
-  { label: 'Estoque', icon: Warehouse, path: '/direcao/estoque' },
 ];
 
 export default function DirecaoHub() {
