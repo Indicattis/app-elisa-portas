@@ -195,9 +195,11 @@ export default function AutorizadosPrecosDirecao() {
           onOpenChange={handleCloseCidadeDialog}
           estadoId={estadoSelecionado.id}
           estadoNome={estadoSelecionado.nome}
+          estadoSigla={estadoSelecionado.sigla}
           onSave={criarCidade}
           cidadeParaEditar={cidadeParaEditar}
           onUpdate={editarCidade}
+          cidadesCadastradas={cidades.map(c => c.nome)}
         />
       )}
     </div>
