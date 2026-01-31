@@ -216,6 +216,11 @@ import DirecaoEstoqueHub from "./pages/direcao/estoque/DirecaoEstoqueHub";
 import AuditoriaFabrica from "./pages/direcao/estoque/AuditoriaFabrica";
 import AuditoriaAlmoxarifado from "./pages/direcao/estoque/AuditoriaAlmoxarifado";
 import ConfiguracoesEstoque from "./pages/direcao/estoque/ConfiguracoesEstoque";
+import ProdutosHub from "./pages/direcao/estoque/ProdutosHub";
+import ProdutosFabrica from "./pages/direcao/estoque/ProdutosFabrica";
+import ProdutosAlmoxarifado from "./pages/direcao/estoque/ProdutosAlmoxarifado";
+import ProdutosFabricaEdit from "./pages/direcao/estoque/ProdutosFabricaEdit";
+import FornecedoresDirecao from "./pages/direcao/estoque/FornecedoresDirecao";
 
 // Hub de Logística Minimalista
 import LogisticaHub from "./pages/logistica/LogisticaHub";
@@ -424,13 +429,16 @@ const App = () => (
                 <Route path="/direcao/pedidos/:id" element={<ProtectedRoute routeKey="direcao_hub"><PedidoViewDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados" element={<ProtectedRoute routeKey="direcao_hub"><AutorizadosPrecosDirecao /></ProtectedRoute>} />
                 
-                {/* Hub de Estoque da Direção */}
+{/* Hub de Estoque da Direção */}
                 <Route path="/direcao/estoque" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoEstoqueHub /></ProtectedRoute>} />
                 <Route path="/direcao/estoque/auditoria/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><AuditoriaFabrica /></ProtectedRoute>} />
                 <Route path="/direcao/estoque/auditoria/almoxarifado" element={<ProtectedRoute routeKey="direcao_hub"><AuditoriaAlmoxarifado /></ProtectedRoute>} />
                 <Route path="/direcao/estoque/configuracoes" element={<ProtectedRoute routeKey="direcao_hub"><ConfiguracoesEstoque /></ProtectedRoute>} />
-                <Route path="/direcao/estoque/configuracoes/produtos" element={<ProtectedRoute routeKey="direcao_hub"><EstoqueFabrica /></ProtectedRoute>} />
-                <Route path="/direcao/estoque/configuracoes/fornecedores" element={<ProtectedRoute routeKey="direcao_hub"><EstoqueFornecedores /></ProtectedRoute>} />
+                <Route path="/direcao/estoque/configuracoes/produtos" element={<ProtectedRoute routeKey="direcao_hub"><ProdutosHub /></ProtectedRoute>} />
+                <Route path="/direcao/estoque/configuracoes/produtos/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><ProdutosFabrica /></ProtectedRoute>} />
+                <Route path="/direcao/estoque/configuracoes/produtos/fabrica/editar/:id" element={<ProtectedRoute routeKey="direcao_hub"><ProdutosFabricaEdit /></ProtectedRoute>} />
+                <Route path="/direcao/estoque/configuracoes/produtos/almoxarifado" element={<ProtectedRoute routeKey="direcao_hub"><ProdutosAlmoxarifado /></ProtectedRoute>} />
+                <Route path="/direcao/estoque/configuracoes/fornecedores" element={<ProtectedRoute routeKey="direcao_hub"><FornecedoresDirecao /></ProtectedRoute>} />
 
                 {/* Hub de Logística Minimalista */}
                 <Route path="/logistica" element={<ProtectedRoute routeKey="logistica_hub"><LogisticaHub /></ProtectedRoute>} />
