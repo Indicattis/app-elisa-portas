@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Clock, User, Package, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Clock, Package, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -12,7 +14,6 @@ import {
 import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +36,12 @@ function formatTempo(segundos: number): string {
   return `${segs}s`;
 }
 
+const statusConfig: Record<string, { label: string; className: string }> = {
+  concluida: { label: "Concluída", className: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
+  em_andamento: { label: "Em andamento", className: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
+  pausada: { label: "Pausada", className: "bg-amber-500/20 text-amber-400 border-amber-500/30" }
+};
+
 interface Conferencia {
   id: string;
   conferido_por: string;
@@ -48,24 +55,29 @@ interface Conferencia {
   setor: string | null;
 }
 
-interface ConferenciaCardProps {
-  conferencia: Conferencia;
+interface Usuario {
+  user_id: string;
+  nome: string;
+  email: string;
+  foto_perfil_url: string | null;
 }
 
-function ConferenciaCard({ conferencia }: ConferenciaCardProps) {
-  const [isOpen, setIsOpen] = useState(false);
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase();
+}
 
-  const { data: usuario } = useQuery({
-    queryKey: ["usuario", conferencia.conferido_por],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("admin_users")
-        .select("nome, email")
-        .eq("user_id", conferencia.conferido_por)
-        .single();
-      return data;
-    },
-  });
+interface ConferenciaRowProps {
+  conferencia: Conferencia;
+  usuario: Usuario | undefined;
+}
+
+function ConferenciaRow({ conferencia, usuario }: ConferenciaRowProps) {
+  const [isOpen, setIsOpen] = useState(false);
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
     queryKey: ["itens-conferencia-auditoria-fabrica", conferencia.id],
@@ -102,141 +114,172 @@ function ConferenciaCard({ conferencia }: ConferenciaCardProps) {
   });
 
   const itensComDiferenca = itens.filter((i) => i.diferenca !== 0);
+  const status = statusConfig[conferencia.status] || statusConfig.pausada;
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
-        <CollapsibleTrigger asChild>
-          <div className="cursor-pointer hover:bg-white/5 transition-colors rounded-lg p-4">
-            <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <div className="text-base font-medium text-white flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                  Conferência #{conferencia.id.substring(0, 8)}
-                </div>
-                <div className="flex items-center gap-4 text-sm text-white/60">
-                  <span className="flex items-center gap-1">
-                    <User className="h-3 w-3" />
-                    {usuario?.nome || usuario?.email || "Carregando..."}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {formatTempo(conferencia.tempo_total_segundos)}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Package className="h-3 w-3" />
-                    {conferencia.total_itens} itens
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-sm font-medium text-white">
-                    {conferencia.concluida_em
-                      ? format(new Date(conferencia.concluida_em), "dd/MM/yyyy", { locale: ptBR })
-                      : "-"}
-                  </p>
-                  <p className="text-xs text-white/50">
-                    {conferencia.concluida_em
-                      ? format(new Date(conferencia.concluida_em), "HH:mm", { locale: ptBR })
-                      : ""}
-                  </p>
-                </div>
-                {isOpen ? (
-                  <ChevronUp className="h-5 w-5 text-white/50" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-white/50" />
-                )}
-              </div>
-            </div>
+    <>
+      <TableRow className="border-white/10 hover:bg-white/5">
+        <TableCell className="text-white/70">
+          <div>
+            <p className="font-medium text-white">
+              {format(new Date(conferencia.iniciada_em), "dd/MM/yyyy", { locale: ptBR })}
+            </p>
+            <p className="text-xs text-white/50">
+              {format(new Date(conferencia.iniciada_em), "HH:mm", { locale: ptBR })}
+            </p>
           </div>
-        </CollapsibleTrigger>
-
-        <CollapsibleContent>
-          <div className="border-t border-white/10 pt-4 px-4 pb-4">
-            {conferencia.observacoes && (
-              <div className="mb-4 p-3 bg-white/5 rounded-lg border border-white/10">
-                <p className="text-sm font-medium text-white mb-1">Observações:</p>
-                <p className="text-sm text-white/60">{conferencia.observacoes}</p>
-              </div>
-            )}
-
-            {loadingItens ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-              </div>
-            ) : itensComDiferenca.length === 0 ? (
-              <div className="text-center py-6 text-white/60">
-                <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-emerald-400" />
-                <p className="text-white">Nenhuma diferença encontrada</p>
-                <p className="text-sm">Todos os itens estavam de acordo com o sistema</p>
-              </div>
-            ) : (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle className="h-4 w-4 text-amber-400" />
-                  <span className="text-sm font-medium text-white">
-                    {itensComDiferenca.length} {itensComDiferenca.length === 1 ? "item com diferença" : "itens com diferença"}
-                  </span>
-                </div>
-                <div className="border border-white/10 rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-white/10 hover:bg-white/5">
-                        <TableHead className="w-24 text-white/70">SKU</TableHead>
-                        <TableHead className="text-white/70">Produto</TableHead>
-                        <TableHead className="w-28 text-center text-white/70">Anterior</TableHead>
-                        <TableHead className="w-28 text-center text-white/70">Conferido</TableHead>
-                        <TableHead className="w-24 text-center text-white/70">Diferença</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {itensComDiferenca.map((item) => (
-                        <TableRow key={item.id} className="border-white/10 hover:bg-white/5">
-                          <TableCell className="font-mono text-xs text-white/50">
-                            {item.sku || "-"}
-                          </TableCell>
-                          <TableCell className="font-medium text-white">{item.nome_produto}</TableCell>
-                          <TableCell className="text-center text-white/70">{item.quantidade_anterior}</TableCell>
-                          <TableCell className="text-center text-white/70">{item.quantidade_conferida}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge
-                              variant={item.diferenca > 0 ? "default" : "destructive"}
-                              className={cn(
-                                item.diferenca > 0 && "bg-emerald-600"
-                              )}
-                            >
-                              {item.diferenca > 0 ? `+${item.diferenca}` : item.diferenca}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            )}
+        </TableCell>
+        <TableCell>
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={usuario?.foto_perfil_url || undefined} />
+              <AvatarFallback className="bg-white/10 text-white text-xs">
+                {usuario ? getInitials(usuario.nome || usuario.email) : "?"}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-white text-sm">
+              {usuario?.nome || usuario?.email || "Carregando..."}
+            </span>
           </div>
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
+        </TableCell>
+        <TableCell>
+          <Badge className={cn("border", status.className)}>
+            {status.label}
+          </Badge>
+        </TableCell>
+        <TableCell className="text-white/70">
+          <div className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {formatTempo(conferencia.tempo_total_segundos)}
+          </div>
+        </TableCell>
+        <TableCell>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsOpen(!isOpen)}
+            className="text-white/70 hover:text-white hover:bg-white/10"
+          >
+            {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        </TableCell>
+      </TableRow>
+      
+      {isOpen && (
+        <TableRow className="border-white/10 hover:bg-transparent">
+          <TableCell colSpan={5} className="p-0">
+            <Collapsible open={isOpen}>
+              <CollapsibleContent>
+                <div className="p-4 bg-white/5 border-t border-white/10">
+                  {conferencia.observacoes && (
+                    <div className="mb-4 p-3 bg-white/5 rounded-lg border border-white/10">
+                      <p className="text-sm font-medium text-white mb-1">Observações:</p>
+                      <p className="text-sm text-white/60">{conferencia.observacoes}</p>
+                    </div>
+                  )}
+
+                  {loadingItens ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                    </div>
+                  ) : conferencia.status !== "concluida" ? (
+                    <div className="text-center py-6 text-white/60">
+                      <Clock className="h-8 w-8 mx-auto mb-2 text-blue-400" />
+                      <p className="text-white">Conferência em progresso</p>
+                      <p className="text-sm">{conferencia.itens_conferidos} de {conferencia.total_itens} itens conferidos</p>
+                    </div>
+                  ) : itensComDiferenca.length === 0 ? (
+                    <div className="text-center py-6 text-white/60">
+                      <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-emerald-400" />
+                      <p className="text-white">Nenhuma diferença encontrada</p>
+                      <p className="text-sm">Todos os itens estavam de acordo com o sistema</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <AlertTriangle className="h-4 w-4 text-amber-400" />
+                        <span className="text-sm font-medium text-white">
+                          {itensComDiferenca.length} {itensComDiferenca.length === 1 ? "item com diferença" : "itens com diferença"}
+                        </span>
+                      </div>
+                      <div className="border border-white/10 rounded-lg overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="border-white/10 hover:bg-white/5">
+                              <TableHead className="w-24 text-white/70">SKU</TableHead>
+                              <TableHead className="text-white/70">Produto</TableHead>
+                              <TableHead className="w-28 text-center text-white/70">Anterior</TableHead>
+                              <TableHead className="w-28 text-center text-white/70">Conferido</TableHead>
+                              <TableHead className="w-24 text-center text-white/70">Diferença</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {itensComDiferenca.map((item) => (
+                              <TableRow key={item.id} className="border-white/10 hover:bg-white/5">
+                                <TableCell className="font-mono text-xs text-white/50">
+                                  {item.sku || "-"}
+                                </TableCell>
+                                <TableCell className="font-medium text-white">{item.nome_produto}</TableCell>
+                                <TableCell className="text-center text-white/70">{item.quantidade_anterior}</TableCell>
+                                <TableCell className="text-center text-white/70">{item.quantidade_conferida}</TableCell>
+                                <TableCell className="text-center">
+                                  <Badge
+                                    variant={item.diferenca > 0 ? "default" : "destructive"}
+                                    className={cn(
+                                      item.diferenca > 0 && "bg-emerald-600"
+                                    )}
+                                  >
+                                    {item.diferenca > 0 ? `+${item.diferenca}` : item.diferenca}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 }
 
 export default function AuditoriaFabrica() {
-  const { data: conferenciasConcluidas = [], isLoading } = useQuery({
-    queryKey: ["conferencias-concluidas-fabrica"],
+  const { data: conferencias = [], isLoading } = useQuery({
+    queryKey: ["conferencias-todas-fabrica"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("estoque_conferencias")
         .select("*")
-        .eq("status", "concluida")
         .or("setor.eq.fabrica,setor.is.null")
-        .order("concluida_em", { ascending: false });
+        .order("iniciada_em", { ascending: false });
 
       if (error) throw error;
       return data as Conferencia[];
     },
+  });
+
+  const { data: usuariosMap = {} } = useQuery({
+    queryKey: ["usuarios-conferencias-fabrica", conferencias.map(c => c.conferido_por).join(",")],
+    queryFn: async () => {
+      const userIds = [...new Set(conferencias.map(c => c.conferido_por))];
+      if (userIds.length === 0) return {};
+
+      const { data } = await supabase
+        .from("admin_users")
+        .select("user_id, nome, email, foto_perfil_url")
+        .in("user_id", userIds);
+
+      return Object.fromEntries(
+        (data || []).map(u => [u.user_id, u])
+      ) as Record<string, Usuario>;
+    },
+    enabled: conferencias.length > 0,
   });
 
   const breadcrumbItems = [
@@ -257,18 +300,35 @@ export default function AuditoriaFabrica() {
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
         </div>
-      ) : conferenciasConcluidas.length === 0 ? (
+      ) : conferencias.length === 0 ? (
         <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
           <div className="py-12 text-center">
             <Package className="h-12 w-12 mx-auto mb-3 text-white/30" />
-            <p className="text-white/60">Nenhuma conferência concluída</p>
+            <p className="text-white/60">Nenhuma conferência encontrada</p>
           </div>
         </div>
       ) : (
-        <div className="space-y-4">
-          {conferenciasConcluidas.map((conferencia) => (
-            <ConferenciaCard key={conferencia.id} conferencia={conferencia} />
-          ))}
+        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-white/10 hover:bg-white/5">
+                <TableHead className="text-white/70">Data</TableHead>
+                <TableHead className="text-white/70">Responsável</TableHead>
+                <TableHead className="text-white/70">Status</TableHead>
+                <TableHead className="text-white/70">Tempo</TableHead>
+                <TableHead className="text-white/70 w-16">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {conferencias.map((conferencia) => (
+                <ConferenciaRow 
+                  key={conferencia.id} 
+                  conferencia={conferencia} 
+                  usuario={usuariosMap[conferencia.conferido_por]}
+                />
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
     </MinimalistLayout>
