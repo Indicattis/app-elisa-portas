@@ -44,6 +44,7 @@ export function LucroItemModal({
   // Garantir valores numéricos válidos
   const valorTotal = Number(produto.valor_total) || 0;
   const lucroValido = Number.isFinite(lucro) ? lucro : 0;
+  const valorUnitario = produto.quantidade > 0 ? valorTotal / produto.quantidade : 0;
 
   const custoCalculado = valorTotal - lucroValido;
   const margem = valorTotal > 0 ? (lucroValido / valorTotal) * 100 : 0;
@@ -97,7 +98,14 @@ export function LucroItemModal({
           {/* Valores Calculados */}
           <div className="space-y-3 rounded-lg border bg-muted/50 p-4">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Valor Total:</span>
+              <span className="text-sm text-muted-foreground">Valor Unitário:</span>
+              <span className="text-sm">
+                R$ {valorUnitario.toFixed(2)}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Valor Total (linha):</span>
               <span className="font-semibold">
                 R$ {valorTotal.toFixed(2)}
               </span>

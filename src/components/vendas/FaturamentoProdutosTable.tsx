@@ -69,8 +69,9 @@ export function FaturamentoProdutosTable({
         <TableBody>
           {produtos?.map((produto) => {
             const temLucro = produto.lucro_item !== null && produto.lucro_item !== undefined;
-            const valorTotalLinha = produto.valor_total * produto.quantidade;
-            const desconto = produto.desconto_percentual 
+            const valorTotalLinha = produto.valor_total; // Já é o total da linha no banco
+            const valorUnitario = produto.quantidade > 0 ? produto.valor_total / produto.quantidade : 0;
+            const desconto = produto.desconto_percentual
               ? `${produto.desconto_percentual}%` 
               : produto.desconto_valor 
                 ? `R$ ${produto.desconto_valor.toFixed(2)}`
@@ -91,7 +92,7 @@ export function FaturamentoProdutosTable({
                   {desconto}
                 </TableCell>
                 <TableCell className="text-right">
-                  R$ {produto.valor_total.toFixed(2)}
+                  R$ {valorUnitario.toFixed(2)}
                 </TableCell>
                 <TableCell className="text-center">
                   {produto.quantidade}
@@ -112,7 +113,7 @@ export function FaturamentoProdutosTable({
                     </Badge>
                   ) : temLucro ? (
                     <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                      R$ {(produto.lucro_item! * produto.quantidade).toFixed(2)}
+                      R$ {produto.lucro_item!.toFixed(2)}
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
