@@ -8,6 +8,7 @@ import { EstadoCard } from '@/components/autorizados/EstadoCard';
 import { EstadoDetalheView } from '@/components/autorizados/EstadoDetalheView';
 import { NovoEstadoDialog } from '@/components/autorizados/NovoEstadoDialog';
 import { NovaCidadeDialog } from '@/components/autorizados/NovaCidadeDialog';
+import { AutorizadosPrecosSection } from '@/components/autorizados/AutorizadosPrecosSection';
 
 export default function AutorizadosPrecosDirecao() {
   const navigate = useNavigate();
@@ -137,27 +138,36 @@ export default function AutorizadosPrecosDirecao() {
               <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
             </div>
           ) : !estadoSelecionado ? (
-            // Grid de Estados
-            estados.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-white/60 mb-4">Nenhum estado cadastrado</p>
-                <Button onClick={() => setNovoEstadoOpen(true)} variant="outline" className="bg-primary/10 border-primary/20">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Cadastrar Estado
-                </Button>
+            // Grid de Estados + Seção de Preços
+            <div className="space-y-8">
+              {/* Estados */}
+              <div>
+                <h2 className="text-sm font-medium text-white/70 mb-3">Estados Cadastrados</h2>
+                {estados.length === 0 ? (
+                  <div className="text-center py-8 bg-primary/5 rounded-lg border border-primary/10">
+                    <p className="text-white/60 mb-4">Nenhum estado cadastrado</p>
+                    <Button onClick={() => setNovoEstadoOpen(true)} variant="outline" className="bg-primary/10 border-primary/20">
+                      <Plus className="h-4 w-4 mr-1" />
+                      Cadastrar Estado
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {estados.map(estado => (
+                      <EstadoCard
+                        key={estado.id}
+                        estado={estado}
+                        onClick={() => selecionarEstado(estado)}
+                        isSelected={false}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {estados.map(estado => (
-                  <EstadoCard
-                    key={estado.id}
-                    estado={estado}
-                    onClick={() => selecionarEstado(estado)}
-                    isSelected={false}
-                  />
-                ))}
-              </div>
-            )
+
+              {/* Seção de Preços */}
+              <AutorizadosPrecosSection />
+            </div>
           ) : (
             // Detalhe do Estado
             <EstadoDetalheView
