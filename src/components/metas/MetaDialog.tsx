@@ -103,6 +103,7 @@ export function MetaDialog({ open, onOpenChange, userId, metaParaEditar }: MetaD
       data_inicio: dataInicio,
       data_termino: dataTermino,
       recompensa_valor: parseFloat(recompensaValor.replace(",", ".")) || 0,
+      desbloqueada: false,
     };
 
     try {

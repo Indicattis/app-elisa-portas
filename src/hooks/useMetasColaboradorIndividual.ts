@@ -23,6 +23,7 @@ export interface MetaColaborador {
   concluida: boolean;
   concluida_em: string | null;
   created_at: string;
+  desbloqueada: boolean;
 }
 
 export interface ColaboradorInfo {
@@ -163,6 +164,26 @@ export function useExcluirMeta() {
     },
     onSuccess: (variables) => {
       queryClient.invalidateQueries({ queryKey: ["metas-colaborador", variables.userId] });
+    },
+  });
+}
+
+export function useDesbloquearMeta() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ metaId, userId }: { metaId: string; userId: string }) => {
+      const { error } = await supabase
+        .from("metas_colaboradores")
+        .update({ desbloqueada: true })
+        .eq("id", metaId);
+
+      if (error) throw error;
+      return { metaId, userId };
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["metas-colaborador", variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ["meta-ativa-progresso"] });
     },
   });
 }
