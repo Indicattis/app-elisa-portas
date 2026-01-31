@@ -169,10 +169,10 @@ export default function FaturamentoVendaMinimalista() {
     if (!venda || !produtos) return;
     
     const custoTotal = produtos.reduce((acc, p) => 
-      acc + ((p.custo_producao || 0) * p.quantidade), 0
+      acc + (p.custo_producao || 0), 0  // valor já é o total da linha
     );
     const lucroTotal = produtos.reduce((acc, p) => 
-      acc + ((p.lucro_item || 0) * p.quantidade), 0
+      acc + (p.lucro_item || 0), 0  // valor já é o total da linha
     );
     
     // Calcular lucro da instalação (30% se houver valor)
@@ -235,7 +235,7 @@ export default function FaturamentoVendaMinimalista() {
   // Cálculos
   const todosProdutosFaturados = produtos?.every(p => p.faturamento === true) || false;
   const vendaFaturada = todosProdutosFaturados && venda?.frete_aprovado === true;
-  const lucroProdutos = produtos?.reduce((acc, p) => acc + ((p.lucro_item || 0) * p.quantidade), 0) || 0;
+  const lucroProdutos = produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0;  // valor já é o total da linha
   
   // Lucro da instalação: se já faturada usa o valor salvo, senão calcula 30%
   const valorInstalacao = venda?.valor_instalacao || 0;
@@ -494,7 +494,8 @@ export default function FaturamentoVendaMinimalista() {
                 <TableBody>
                   {produtos?.map((produto) => {
                     const temLucro = produto.lucro_item !== null && produto.lucro_item !== undefined;
-                    const valorTotalLinha = produto.valor_total * produto.quantidade;
+                    const valorTotalLinha = produto.valor_total; // Já é o total da linha no banco
+                    const valorUnitario = produto.quantidade > 0 ? produto.valor_total / produto.quantidade : 0;
                     const desconto = produto.desconto_percentual 
                       ? `${produto.desconto_percentual}%` 
                       : produto.desconto_valor 
@@ -516,7 +517,7 @@ export default function FaturamentoVendaMinimalista() {
                           {desconto}
                         </TableCell>
                         <TableCell className="text-right text-white/80">
-                          {formatCurrency(produto.valor_total)}
+                          {formatCurrency(valorUnitario)}
                         </TableCell>
                         <TableCell className="text-center text-white/80">
                           {produto.quantidade}
@@ -532,7 +533,7 @@ export default function FaturamentoVendaMinimalista() {
                             </Badge>
                           ) : temLucro ? (
                             <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                              {formatCurrency(produto.lucro_item! * produto.quantidade)}
+                              {formatCurrency(produto.lucro_item!)}
                             </Badge>
                           ) : (
                             <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
