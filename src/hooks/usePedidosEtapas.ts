@@ -78,6 +78,26 @@ export function usePedidosContadores() {
         counts.correcoes += neoCorrecaoCount;
       }
 
+      // Buscar neo_instalações concluídas para adicionar ao contador de finalizados
+      const { count: neoInstalacaoFinalizadaCount, error: neoInstalacaoFinalizadaError } = await supabase
+        .from('neo_instalacoes')
+        .select('*', { count: 'exact', head: true })
+        .eq('concluida', true);
+
+      if (!neoInstalacaoFinalizadaError && neoInstalacaoFinalizadaCount) {
+        counts.finalizado += neoInstalacaoFinalizadaCount;
+      }
+
+      // Buscar neo_correções concluídas para adicionar ao contador de finalizados
+      const { count: neoCorrecaoFinalizadaCount, error: neoCorrecaoFinalizadaError } = await supabase
+        .from('neo_correcoes')
+        .select('*', { count: 'exact', head: true })
+        .eq('concluida', true);
+
+      if (!neoCorrecaoFinalizadaError && neoCorrecaoFinalizadaCount) {
+        counts.finalizado += neoCorrecaoFinalizadaCount;
+      }
+
       return counts;
     },
     refetchInterval: 5000, // Atualizar a cada 5 segundos
