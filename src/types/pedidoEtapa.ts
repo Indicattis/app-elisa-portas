@@ -1,5 +1,6 @@
 export type EtapaPedido = 
   | 'aberto'
+  | 'aprovacao_ceo'
   | 'em_producao'
   | 'inspecao_qualidade'
   | 'aguardando_pintura'
@@ -43,6 +44,15 @@ export const ETAPAS_CONFIG: Record<EtapaPedido, {
       { id: 'pagamento_confirmado', label: 'Pagamento/Entrada confirmado', required: true },
       { id: 'dados_completos', label: 'Todos os dados do pedido estão completos', required: true },
       { id: 'pronto_producao', label: 'Pedido pronto para iniciar produção', required: false }
+    ]
+  },
+  aprovacao_ceo: {
+    label: 'Aprovação CEO',
+    color: 'bg-orange-500',
+    icon: 'ShieldCheck',
+    checkboxes: [
+      { id: 'pedido_revisado', label: 'Pedido revisado pela diretoria', required: true },
+      { id: 'aprovado_producao', label: 'Aprovado para produção', required: true }
     ]
   },
   em_producao: {
@@ -107,6 +117,7 @@ export const ETAPAS_CONFIG: Record<EtapaPedido, {
 
 export const ORDEM_ETAPAS: EtapaPedido[] = [
   'aberto',
+  'aprovacao_ceo',
   'em_producao',
   'inspecao_qualidade',
   'aguardando_pintura',
