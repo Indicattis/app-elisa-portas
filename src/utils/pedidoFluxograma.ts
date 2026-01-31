@@ -12,6 +12,11 @@ export const FLUXOGRAMA_ETAPAS: Record<EtapaPedido, FluxogramaEtapa> = {
     label: 'Pedidos em Aberto',
     color: 'bg-gray-500'
   },
+  aprovacao_ceo: {
+    id: 'aprovacao_ceo',
+    label: 'Aprovação CEO',
+    color: 'bg-orange-500'
+  },
   em_producao: {
     id: 'em_producao',
     label: 'Em Produção',
@@ -91,6 +96,7 @@ export function determinarFluxograma(pedido: any): FluxogramaEtapa[] {
   // Etapas base que todos os pedidos passam
   const baseFlow: FluxogramaEtapa[] = [
     FLUXOGRAMA_ETAPAS.aberto,
+    FLUXOGRAMA_ETAPAS.aprovacao_ceo,
     FLUXOGRAMA_ETAPAS.em_producao,
     FLUXOGRAMA_ETAPAS.inspecao_qualidade
   ];

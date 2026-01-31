@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, Trophy, HardHat, AlertTriangle } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, Trophy, HardHat, AlertTriangle, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
@@ -20,6 +20,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 // Mapa de ícones para cada etapa
 const ETAPA_ICONS: Record<EtapaPedido, React.ComponentType<{ className?: string }>> = {
   aberto: Clock,
+  aprovacao_ceo: ShieldCheck,
   em_producao: Factory,
   inspecao_qualidade: ClipboardCheck,
   aguardando_pintura: Paintbrush,

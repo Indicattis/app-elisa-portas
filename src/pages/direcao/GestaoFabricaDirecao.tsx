@@ -2,7 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus, ShieldCheck } from "lucide-react";
 import { CriarPedidoTesteModal } from "@/components/pedidos/CriarPedidoTesteModal";
 import { SelecionarResponsavelEtapaModal } from "@/components/pedidos/SelecionarResponsavelEtapaModal";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 
 const ETAPA_ICONS = {
   aberto: Clock,
+  aprovacao_ceo: ShieldCheck,
   em_producao: Factory,
   inspecao_qualidade: ClipboardCheck,
   aguardando_pintura: Paintbrush,
