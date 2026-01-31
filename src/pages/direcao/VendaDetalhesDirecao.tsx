@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmarExclusaoVendaModal } from "@/components/vendas/ConfirmarExclusaoVendaModal";
 import { 
   DollarSign, 
   Package, 
@@ -19,7 +20,8 @@ import {
   Edit,
   ExternalLink,
   ArrowDown,
-  ArrowUp
+  ArrowUp,
+  Trash2
 } from "lucide-react";
 
 interface Produto {
@@ -81,9 +83,38 @@ export default function VendaDetalhesDirecao() {
   const { id } = useParams<{ id: string }>();
   const [venda, setVenda] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [excluirModalOpen, setExcluirModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { isAdmin } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const handleDeleteVenda = async () => {
+    if (!id) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase.rpc('delete_venda_completa', {
+        p_venda_id: id
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Sucesso',
+        description: 'Venda e todos os itens vinculados excluídos com sucesso',
+      });
+      navigate('/direcao/vendas');
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao excluir venda',
+        description: error.message,
+      });
+    } finally {
+      setIsDeleting(false);
+      setExcluirModalOpen(false);
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -213,14 +244,25 @@ export default function VendaDetalhesDirecao() {
       backPath="/direcao/vendas"
       headerActions={
         isAdmin && (
-          <Button 
-            onClick={() => navigate(`/direcao/vendas/${id}/editar`)}
-            size="sm"
-            className="bg-primary/20 hover:bg-primary/30 border border-primary/30"
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Editar
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              onClick={() => navigate(`/direcao/vendas/${id}/editar`)}
+              size="sm"
+              className="bg-primary/20 hover:bg-primary/30 border border-primary/30"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Editar
+            </Button>
+            <Button 
+              onClick={() => setExcluirModalOpen(true)}
+              size="sm"
+              variant="destructive"
+              className="bg-destructive/20 hover:bg-destructive/30 border border-destructive/30 text-destructive"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Excluir
+            </Button>
+          </div>
         )
       }
     >
@@ -498,6 +540,15 @@ export default function VendaDetalhesDirecao() {
           </div>
         )}
       </div>
+
+      <ConfirmarExclusaoVendaModal
+        open={excluirModalOpen}
+        onOpenChange={setExcluirModalOpen}
+        vendaId={id || ''}
+        clienteNome={venda?.cliente_nome || ''}
+        onConfirm={handleDeleteVenda}
+        isDeleting={isDeleting}
+      />
     </MinimalistLayout>
   );
 }
