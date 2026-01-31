@@ -150,7 +150,7 @@ export function MetaDialog({ open, onOpenChange, userId, metaParaEditar }: MetaD
           </div>
 
           <div className="space-y-2">
-            <Label>Valor da Meta *</Label>
+            <Label>Quantidade da Meta *</Label>
             <div className="flex items-center gap-2">
               <Input
                 type="number"
