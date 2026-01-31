@@ -36,21 +36,29 @@ export function useRankingEquipesInstalacao() {
         dataFim = endOfYear(now);
       }
 
-      // Buscar instalações concluídas com responsável (equipe interna)
+      // 1. Buscar todas as equipes ativas primeiro
+      const { data: equipesData, error: equipesError } = await supabase
+        .from('equipes_instalacao')
+        .select('id, nome, cor, ativa')
+        .eq('ativa', true);
+
+      if (equipesError) throw equipesError;
+
+      // Criar mapa de equipes para lookup rápido
+      const equipesMap = new Map(
+        (equipesData || []).map(eq => [eq.id, eq])
+      );
+
+      // 2. Buscar instalações concluídas (equipes internas - tipo_instalacao = 'elisa')
       let query = supabase
         .from('instalacoes')
         .select(`
           responsavel_instalacao_id,
           metragem_quadrada,
-          instalacao_concluida_em,
-          equipe:equipes_instalacao!instalacoes_responsavel_instalacao_id_fkey (
-            id,
-            nome,
-            cor,
-            ativa
-          )
+          instalacao_concluida_em
         `)
         .eq('instalacao_concluida', true)
+        .eq('tipo_instalacao', 'elisa')
         .not('responsavel_instalacao_id', 'is', null);
 
       // Aplicar filtro de período
@@ -64,7 +72,7 @@ export function useRankingEquipesInstalacao() {
 
       if (error) throw error;
 
-      // Agrupar por equipe e calcular métricas
+      // 3. Agrupar por equipe e calcular métricas usando o mapa
       const agrupamento = new Map<string, {
         equipe_id: string;
         equipe_nome: string;
@@ -75,8 +83,8 @@ export function useRankingEquipesInstalacao() {
       }>();
 
       (data || []).forEach((instalacao: any) => {
-        const equipe = instalacao.equipe;
-        if (!equipe || !equipe.ativa) return;
+        const equipe = equipesMap.get(instalacao.responsavel_instalacao_id);
+        if (!equipe) return; // Equipe não encontrada ou inativa
 
         const equipeId = equipe.id;
         
