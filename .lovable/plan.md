@@ -1,84 +1,90 @@
 
-# Correção: Erro de Foreign Key no Ranking de Equipes
+# Plano: Ranking com Instalações de Pedidos + Neo Instalações
 
-## Problema
+## Objetivo
 
-A query Supabase está tentando usar um relacionamento de foreign key que não existe:
+Ajustar o ranking das equipes de instalação para considerar:
+1. **Instalações vinculadas a pedidos** (`pedido_id IS NOT NULL`)
+2. **Neo Instalações concluídas** por equipes internas
 
-```typescript
-equipe:equipes_instalacao!instalacoes_responsavel_instalacao_id_fkey (...)
-```
+## Dados Atuais no Banco
 
-O campo `responsavel_instalacao_id` na tabela `instalacoes` não possui uma foreign key formal para `equipes_instalacao`.
-
-## Solução
-
-Modificar a abordagem para buscar os dados em duas etapas:
-1. Buscar as instalações concluídas
-2. Buscar as equipes separadamente e fazer o join na aplicação
+| Fonte | Total | Concluídas | Por Equipe Interna |
+|-------|-------|------------|-------------------|
+| instalacoes (com pedido) | a verificar | a verificar | a verificar |
+| neo_instalacoes | 51 | 16 | 10 |
 
 ## Alteração Técnica
 
 ### Arquivo: `src/hooks/useRankingEquipesInstalacao.ts`
 
-**Substituir a query com join por duas queries separadas:**
+**Modificar a função `fetchRanking` para buscar e combinar duas fontes:**
 
 ```typescript
-// ANTES (linha 40-52):
-let query = supabase
+// 1. Buscar equipes ativas (já existente)
+const equipesMap = new Map(...);
+
+// 2. Buscar instalações vinculadas a pedidos
+let queryInstalacoes = supabase
   .from('instalacoes')
-  .select(`
-    responsavel_instalacao_id,
-    metragem_quadrada,
-    instalacao_concluida_em,
-    equipe:equipes_instalacao!instalacoes_responsavel_instalacao_id_fkey (
-      id, nome, cor, ativa
-    )
-  `)
-  ...
-
-// DEPOIS:
-// 1. Buscar todas as equipes ativas primeiro
-const { data: equipesData, error: equipesError } = await supabase
-  .from('equipes_instalacao')
-  .select('id, nome, cor, ativa')
-  .eq('ativa', true);
-
-if (equipesError) throw equipesError;
-
-// Criar mapa de equipes para lookup rápido
-const equipesMap = new Map(
-  (equipesData || []).map(eq => [eq.id, eq])
-);
-
-// 2. Buscar instalações concluídas
-let query = supabase
-  .from('instalacoes')
-  .select(`
-    responsavel_instalacao_id,
-    metragem_quadrada,
-    instalacao_concluida_em,
-    tipo_instalacao
-  `)
+  .select('responsavel_instalacao_id, metragem_quadrada, instalacao_concluida_em')
   .eq('instalacao_concluida', true)
-  .eq('tipo_instalacao', 'elisa')  // Apenas equipes internas
-  .not('responsavel_instalacao_id', 'is', null);
+  .eq('tipo_instalacao', 'elisa')
+  .not('responsavel_instalacao_id', 'is', null)
+  .not('pedido_id', 'is', null);  // NOVO FILTRO
 
-// 3. No processamento, usar o mapa de equipes
-(data || []).forEach((instalacao: any) => {
+// 3. Buscar neo instalações concluídas por equipes internas
+let queryNeoInstalacoes = supabase
+  .from('neo_instalacoes')
+  .select('equipe_id, concluida_em')
+  .eq('concluida', true)
+  .eq('tipo_responsavel', 'equipe_interna')
+  .not('equipe_id', 'is', null);
+
+// 4. Aplicar filtros de período em ambas as queries
+
+// 5. Combinar resultados no agrupamento
+```
+
+### Lógica de Combinação
+
+```typescript
+const agrupamento = new Map<string, RankingEquipe>();
+
+// Processar instalações de pedidos
+(instalacoesData || []).forEach((instalacao) => {
   const equipe = equipesMap.get(instalacao.responsavel_instalacao_id);
-  if (!equipe) return;  // Equipe não encontrada ou inativa
+  if (!equipe) return;
   
-  // ... resto do agrupamento
+  // Incrementar quantidade e metragem
+  item.quantidade_instalacoes += 1;
+  item.metragem_total += instalacao.metragem_quadrada || 0;
+});
+
+// Processar neo instalações (não têm metragem)
+(neoInstalacoesData || []).forEach((neo) => {
+  const equipe = equipesMap.get(neo.equipe_id);
+  if (!equipe) return;
+  
+  // Incrementar apenas quantidade (neo instalações não têm metragem)
+  item.quantidade_instalacoes += 1;
+  // metragem não incrementa
 });
 ```
 
-## Benefícios
+## Considerações
 
-1. Elimina a dependência de foreign key inexistente
-2. Query mais eficiente (busca equipes uma vez só)
-3. Filtra corretamente apenas equipes internas (`tipo_instalacao = 'elisa'`)
+| Aspecto | Instalações de Pedidos | Neo Instalações |
+|---------|----------------------|-----------------|
+| Metragem | Sim (soma no total) | Não possui |
+| Equipe | `responsavel_instalacao_id` | `equipe_id` |
+| Filtro tipo | `tipo_instalacao = 'elisa'` | `tipo_responsavel = 'equipe_interna'` |
+| Data conclusão | `instalacao_concluida_em` | `concluida_em` |
 
 ## Resultado Esperado
 
-A página `/logistica/instalacoes/ranking` carregará corretamente mostrando o ranking das equipes de instalação baseado nas instalações concluídas.
+O ranking mostrará o desempenho consolidado das equipes considerando:
+- Instalações que passaram pelo fluxo completo de produção (pedidos)
+- Serviços avulsos de instalação (neo instalações)
+
+A metragem total refletirá apenas as instalações de pedidos (que possuem esse dado).
