@@ -2001,6 +2001,7 @@ export type Database = {
           observacoes: string | null
           pausada: boolean | null
           pausada_em: string | null
+          setor: string | null
           status: string | null
           tempo_acumulado_segundos: number | null
           tempo_total_segundos: number | null
@@ -2016,6 +2017,7 @@ export type Database = {
           observacoes?: string | null
           pausada?: boolean | null
           pausada_em?: string | null
+          setor?: string | null
           status?: string | null
           tempo_acumulado_segundos?: number | null
           tempo_total_segundos?: number | null
@@ -2031,6 +2033,7 @@ export type Database = {
           observacoes?: string | null
           pausada?: boolean | null
           pausada_em?: string | null
+          setor?: string | null
           status?: string | null
           tempo_acumulado_segundos?: number | null
           tempo_total_segundos?: number | null
