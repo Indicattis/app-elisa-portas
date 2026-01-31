@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Search, Edit2 } from 'lucide-react';
+import { Search, Edit2, Trash2, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -18,6 +19,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useAutorizadosPrecos, type AutorizadoComPrecos } from '@/hooks/useAutorizadosPrecos';
 import { AutorizadoPrecosDialog } from '@/components/autorizados/AutorizadoPrecosDialog';
 import { formatCurrency } from '@/lib/utils';
@@ -29,7 +41,7 @@ const ESTADOS_BR = [
 ];
 
 export function AutorizadosPrecosSection() {
-  const { autorizados, loading, upsertPrecos } = useAutorizadosPrecos();
+  const { autorizados, loading, upsertPrecos, excluirAutorizado } = useAutorizadosPrecos();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEstado, setFilterEstado] = useState('todos');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -112,10 +124,11 @@ export function AutorizadosPrecosSection() {
                     <TableRow className="border-primary/10 hover:bg-transparent">
                       <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                       <TableHead className="text-xs text-white/70">Cidade/UF</TableHead>
+                      <TableHead className="text-xs text-white/70">Vendedor</TableHead>
                       <TableHead className="text-xs text-white/70 text-center">P</TableHead>
                       <TableHead className="text-xs text-white/70 text-center">G</TableHead>
                       <TableHead className="text-xs text-white/70 text-center">GG</TableHead>
-                      <TableHead className="text-right text-xs text-white/70"></TableHead>
+                      <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -125,9 +138,22 @@ export function AutorizadosPrecosSection() {
                         className="cursor-pointer border-primary/10 hover:bg-primary/10 text-white/90"
                         onClick={() => handleEdit(aut)}
                       >
-                        <TableCell className="font-medium">{aut.nome}</TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {aut.nome}
+                            {aut.etapa === 'premium' && (
+                              <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-[10px] px-1.5 py-0">
+                                <Star className="h-2.5 w-2.5 mr-0.5 fill-yellow-400" />
+                                Premium
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-white/60">
                           {aut.cidade ? `${aut.cidade}/${aut.estado}` : aut.estado || '-'}
+                        </TableCell>
+                        <TableCell className="text-white/60">
+                          {aut.vendedor_nome || '-'}
                         </TableCell>
                         <TableCell className="text-center font-medium text-green-400">
                           {aut.precos.P > 0 ? formatCurrency(aut.precos.P) : '-'}
@@ -139,17 +165,45 @@ export function AutorizadosPrecosSection() {
                           {aut.precos.GG > 0 ? formatCurrency(aut.precos.GG) : '-'}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 hover:bg-primary/10"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEdit(aut);
-                            }}
-                          >
-                            <Edit2 className="h-3.5 w-3.5 text-white/60" />
-                          </Button>
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 hover:bg-primary/10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(aut);
+                              }}
+                            >
+                              <Edit2 className="h-3.5 w-3.5 text-white/60" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 hover:bg-destructive/10 text-destructive"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Excluir autorizado?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    O autorizado "{aut.nome}" será desativado.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => excluirAutorizado(aut.id)}>
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
