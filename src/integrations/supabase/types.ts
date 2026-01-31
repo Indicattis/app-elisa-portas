@@ -735,6 +735,38 @@ export type Database = {
         }
         Relationships: []
       }
+      cidades_autorizados: {
+        Row: {
+          created_at: string | null
+          estado_id: string
+          id: string
+          nome: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          estado_id: string
+          id?: string
+          nome: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          estado_id?: string
+          id?: string
+          nome?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cidades_autorizados_estado_id_fkey"
+            columns: ["estado_id"]
+            isOneToOne: false
+            referencedRelation: "estados_autorizados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           ativo: boolean
@@ -1812,6 +1844,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      estados_autorizados: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+          sigla: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+          sigla: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+          sigla?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       estoque: {
         Row: {
