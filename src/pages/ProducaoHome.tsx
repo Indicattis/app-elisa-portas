@@ -160,7 +160,20 @@ export default function ProducaoHome() {
                 <div className="p-2 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   <ClipboardCheck className="h-5 w-5 text-primary" />
                 </div>
-                <span className="font-medium text-sm">Conferência de Estoque</span>
+                <span className="font-medium text-sm">Estoque da Fábrica</span>
+              </div>
+            </div>
+          </Card>
+          <Card
+            className="cursor-pointer hover:shadow-md transition-shadow hover:border-primary/50 group"
+            onClick={() => navigate('/producao/conferencia-almox')}
+          >
+            <div className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="p-2 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <Boxes className="h-5 w-5 text-primary" />
+                </div>
+                <span className="font-medium text-sm">Almoxarifado</span>
               </div>
             </div>
           </Card>
