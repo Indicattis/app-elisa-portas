@@ -186,6 +186,7 @@ export default function AutorizadosPrecosDirecao() {
         onSave={criarEstado}
         estadoParaEditar={estadoParaEditar}
         onUpdate={editarEstado}
+        estadosCadastrados={estados.map(e => e.sigla)}
       />
       
       {estadoSelecionado && (
