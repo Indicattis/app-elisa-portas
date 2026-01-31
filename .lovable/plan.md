@@ -1,150 +1,84 @@
 
-# Plano: Nova Etapa "Aprovação CEO" no Fluxo de Pedidos
+# Correção: Erro de Foreign Key no Ranking de Equipes
 
-## Visão Geral
+## Problema
 
-Adicionar uma nova etapa chamada **"Aprovação CEO"** entre "Em Aberto" e "Em Produção". Esta etapa permite que pedidos sejam revisados e aprovados pela diretoria antes de entrar em produção.
+A query Supabase está tentando usar um relacionamento de foreign key que não existe:
 
-## Fluxo Atualizado
-
-```text
-┌──────────────┐    ┌────────────────┐    ┌──────────────┐
-│  Em Aberto   │ -> │ Aprovação CEO  │ -> │ Em Produção  │ -> ...
-└──────────────┘    └────────────────┘    └──────────────┘
-                            │
-                    [NOVA ETAPA]
-```
-
-## Funcionalidades da Nova Etapa
-
-| Característica | Descrição |
-|----------------|-----------|
-| **Nome interno** | `aprovacao_ceo` |
-| **Label** | "Aprovação CEO" |
-| **Cor** | Laranja (`bg-orange-500`) |
-| **Ícone** | `ShieldCheck` (verificação de segurança) |
-| **Checkboxes** | 2 itens para aprovação |
-
-### Checkboxes da Etapa
-
-1. **"Pedido revisado pela diretoria"** - Obrigatório
-2. **"Aprovado para produção"** - Obrigatório
-
-## Alterações Técnicas
-
-### 1. Migração de Banco de Dados
-
-Atualizar as constraints CHECK nas tabelas `pedidos_producao` e `pedidos_etapas` para incluir o novo valor `aprovacao_ceo`.
-
-```sql
--- Remover constraints antigas
-ALTER TABLE pedidos_producao DROP CONSTRAINT IF EXISTS pedidos_producao_etapa_atual_check;
-ALTER TABLE pedidos_etapas DROP CONSTRAINT IF EXISTS pedidos_etapas_etapa_check;
-
--- Adicionar novas constraints com aprovacao_ceo
-ALTER TABLE pedidos_producao 
-ADD CONSTRAINT pedidos_producao_etapa_atual_check 
-CHECK (etapa_atual IN (
-  'aberto',
-  'aprovacao_ceo',  -- NOVA
-  'em_producao',
-  'inspecao_qualidade', 
-  'aguardando_pintura',
-  'aguardando_coleta',
-  'instalacoes',
-  'correcoes',
-  'finalizado'
-));
-
--- Mesma atualização para pedidos_etapas
-```
-
-### 2. Tipos TypeScript (`src/types/pedidoEtapa.ts`)
-
-**Atualizar o tipo `EtapaPedido`:**
 ```typescript
-export type EtapaPedido = 
-  | 'aberto'
-  | 'aprovacao_ceo'  // NOVA
-  | 'em_producao'
-  | ...
+equipe:equipes_instalacao!instalacoes_responsavel_instalacao_id_fkey (...)
 ```
 
-**Adicionar configuração em `ETAPAS_CONFIG`:**
-```typescript
-aprovacao_ceo: {
-  label: 'Aprovação CEO',
-  color: 'bg-orange-500',
-  icon: 'ShieldCheck',
-  checkboxes: [
-    { id: 'pedido_revisado', label: 'Pedido revisado pela diretoria', required: true },
-    { id: 'aprovado_producao', label: 'Aprovado para produção', required: true }
-  ]
-}
-```
+O campo `responsavel_instalacao_id` na tabela `instalacoes` não possui uma foreign key formal para `equipes_instalacao`.
 
-**Atualizar `ORDEM_ETAPAS`:**
+## Solução
+
+Modificar a abordagem para buscar os dados em duas etapas:
+1. Buscar as instalações concluídas
+2. Buscar as equipes separadamente e fazer o join na aplicação
+
+## Alteração Técnica
+
+### Arquivo: `src/hooks/useRankingEquipesInstalacao.ts`
+
+**Substituir a query com join por duas queries separadas:**
+
 ```typescript
-export const ORDEM_ETAPAS: EtapaPedido[] = [
-  'aberto',
-  'aprovacao_ceo',  // NOVA POSIÇÃO
-  'em_producao',
-  'inspecao_qualidade',
+// ANTES (linha 40-52):
+let query = supabase
+  .from('instalacoes')
+  .select(`
+    responsavel_instalacao_id,
+    metragem_quadrada,
+    instalacao_concluida_em,
+    equipe:equipes_instalacao!instalacoes_responsavel_instalacao_id_fkey (
+      id, nome, cor, ativa
+    )
+  `)
   ...
-];
+
+// DEPOIS:
+// 1. Buscar todas as equipes ativas primeiro
+const { data: equipesData, error: equipesError } = await supabase
+  .from('equipes_instalacao')
+  .select('id, nome, cor, ativa')
+  .eq('ativa', true);
+
+if (equipesError) throw equipesError;
+
+// Criar mapa de equipes para lookup rápido
+const equipesMap = new Map(
+  (equipesData || []).map(eq => [eq.id, eq])
+);
+
+// 2. Buscar instalações concluídas
+let query = supabase
+  .from('instalacoes')
+  .select(`
+    responsavel_instalacao_id,
+    metragem_quadrada,
+    instalacao_concluida_em,
+    tipo_instalacao
+  `)
+  .eq('instalacao_concluida', true)
+  .eq('tipo_instalacao', 'elisa')  // Apenas equipes internas
+  .not('responsavel_instalacao_id', 'is', null);
+
+// 3. No processamento, usar o mapa de equipes
+(data || []).forEach((instalacao: any) => {
+  const equipe = equipesMap.get(instalacao.responsavel_instalacao_id);
+  if (!equipe) return;  // Equipe não encontrada ou inativa
+  
+  // ... resto do agrupamento
+});
 ```
 
-### 3. Fluxograma (`src/utils/pedidoFluxograma.ts`)
+## Benefícios
 
-Adicionar a nova etapa ao `FLUXOGRAMA_ETAPAS` e atualizar a função `determinarFluxograma()` para incluir a etapa de aprovação no fluxo base.
+1. Elimina a dependência de foreign key inexistente
+2. Query mais eficiente (busca equipes uma vez só)
+3. Filtra corretamente apenas equipes internas (`tipo_instalacao = 'elisa'`)
 
-### 4. Hook de Contadores (`src/hooks/usePedidosEtapas.ts`)
+## Resultado Esperado
 
-Adicionar `aprovacao_ceo: 0` ao objeto inicial de contadores.
-
-### 5. Páginas de Gestão de Pedidos
-
-Atualizar os mapeamentos de ícones em:
-- `src/pages/fabrica/PedidosProducaoMinimalista.tsx`
-- `src/pages/ProducaoControle.tsx`
-- `src/pages/logistica/ControleLogistica.tsx`
-- `src/pages/direcao/GestaoFabricaDirecao.tsx`
-
-Adicionar entrada para o ícone:
-```typescript
-const ETAPA_ICONS = {
-  aberto: Clock,
-  aprovacao_ceo: ShieldCheck,  // NOVA
-  em_producao: Factory,
-  ...
-};
-```
-
-### 6. Ajustes na Criação de Pedido (`src/hooks/usePedidoCreation.ts`)
-
-Verificar se pedidos de manutenção ainda devem pular esta etapa (provavelmente sim, já que vão direto para instalações).
-
-## Arquivos a Modificar
-
-| Arquivo | Tipo de Alteração |
-|---------|-------------------|
-| `src/types/pedidoEtapa.ts` | Tipo, Config, Ordem |
-| `src/utils/pedidoFluxograma.ts` | Mapeamento e fluxo |
-| `src/hooks/usePedidosEtapas.ts` | Contador inicial |
-| `src/pages/fabrica/PedidosProducaoMinimalista.tsx` | Ícone |
-| `src/pages/ProducaoControle.tsx` | Ícone |
-| `src/pages/logistica/ControleLogistica.tsx` | Ícone |
-| `src/pages/direcao/GestaoFabricaDirecao.tsx` | Ícone |
-| Nova migração SQL | Constraints do banco |
-
-## Comportamento Esperado
-
-1. **Pedido criado** → Entra em "Em Aberto"
-2. **Ao avançar de "Em Aberto"** → Vai para "Aprovação CEO"
-3. **Na etapa "Aprovação CEO"** → CEO/Diretor marca os checkboxes de revisão e aprovação
-4. **Ao avançar de "Aprovação CEO"** → Vai para "Em Produção" (criando ordens de produção)
-5. **Pedidos de manutenção** → Continuam indo direto para "Instalações"
-
-## Resultado Visual
-
-A nova aba aparecerá em todas as interfaces de gestão de pedidos, entre "Em Aberto" e "Em Produção", com contador próprio e funcionalidade completa de drag-and-drop para priorização.
+A página `/logistica/instalacoes/ranking` carregará corretamente mostrando o ranking das equipes de instalação baseado nas instalações concluídas.
