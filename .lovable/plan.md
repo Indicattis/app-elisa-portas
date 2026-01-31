@@ -1,181 +1,164 @@
 
 
-# Plano: Mover Estoque para /direcao/estoque
+# Plano: Corrigir Rotas e Breadcrumbs do Estoque na Direcao
 
-## Resumo da Mudanca
+## Problemas Identificados
 
-Mover o setor de Estoque de `/estoque` para `/direcao/estoque`, transformando-o em um modulo de gestao gerencial com foco em auditoria e configuracoes.
+1. **Navegacao de Produtos sem Hub**: Ao clicar em "Produtos" em `/direcao/estoque/configuracoes`, vai direto para `EstoqueFabrica` em vez de um hub para escolher entre Fabrica e Almoxarifado
+2. **Breadcrumbs incorretos**: `EstoqueFabrica`, `AlmoxarifadoPage` e `EstoqueFornecedores` apontam para `/estoque` nos breadcrumbs e botao de voltar
+3. **Rotas de edicao faltando**: Quando edita um produto, navega para `/estoque/fabrica/editar-item/:id` em vez da rota correta
 
-## Estrutura Nova
+## Solucao
 
-```
-/direcao/estoque (Hub)
-├── Auditoria Fabrica      -> /direcao/estoque/auditoria/fabrica
-├── Auditoria Almoxarifado -> /direcao/estoque/auditoria/almoxarifado
-└── Configuracoes          -> /direcao/estoque/configuracoes
-```
+### 1. Criar Hub de Produtos
 
-## Alteracoes Necessarias
+**Novo arquivo:** `src/pages/direcao/estoque/ProdutosHub.tsx`
 
-### 1. Banco de Dados
-
-Adicionar coluna `setor` na tabela `estoque_conferencias` para distinguir origem:
-
-```sql
-ALTER TABLE estoque_conferencias 
-ADD COLUMN setor TEXT DEFAULT 'fabrica';
-```
-
-### 2. Arquivos a Criar
-
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/pages/direcao/estoque/DirecaoEstoqueHub.tsx` | Hub principal com 3 botoes |
-| `src/pages/direcao/estoque/AuditoriaFabrica.tsx` | Lista conferencias da fabrica |
-| `src/pages/direcao/estoque/AuditoriaAlmoxarifado.tsx` | Lista conferencias do almoxarifado |
-| `src/pages/direcao/estoque/ConfiguracoesEstoque.tsx` | Acesso a produtos e fornecedores |
-
-### 3. Arquivos a Modificar
-
-| Arquivo | Alteracao |
-|---------|-----------|
-| `src/pages/Home.tsx` | Remover botao Estoque |
-| `src/pages/direcao/DirecaoHub.tsx` | Adicionar botao Estoque |
-| `src/App.tsx` | Adicionar novas rotas em /direcao/estoque |
-| `src/hooks/useConferenciaEstoque.ts` | Adicionar filtro por setor |
-
-### 4. Design do Hub DirecaoEstoqueHub
-
-Layout minimalista com 3 botoes azuis:
-
-```
+```text
 ┌───────────────────────────────────────────────────┐
-│  [←]                      Home > Direcao > Estoque│
+│  [←]      Home > Direcao > Estoque > Config > Prod│
 │                                                   │
-│  ┌─────────────────────────────────────────────┐  │
-│  │ 🔍 Auditoria Fabrica                        │  │
-│  └─────────────────────────────────────────────┘  │
-│                                                   │
-│  ┌─────────────────────────────────────────────┐  │
-│  │ 🔍 Auditoria Almoxarifado                   │  │
-│  └─────────────────────────────────────────────┘  │
-│                                                   │
-│  ┌─────────────────────────────────────────────┐  │
-│  │ ⚙️ Configuracoes                            │  │
-│  └─────────────────────────────────────────────┘  │
-│                                                   │
-└───────────────────────────────────────────────────┘
-```
-
-### 5. Pagina de Configuracoes
-
-Hub secundario com 2 opcoes:
-
-```
-┌───────────────────────────────────────────────────┐
-│  [←]               Home > Direcao > Estoque > Config │
+│           📦 Produtos                             │
+│         Escolha o tipo de produto                 │
 │                                                   │
 │  ┌───────────────────┐  ┌───────────────────┐    │
-│  │  Produtos         │  │  Fornecedores     │    │
-│  │  Cadastro de      │  │  Gestao de        │    │
-│  │  produtos         │  │  fornecedores     │    │
+│  │  🏭 Fabrica       │  │  📦 Almoxarifado  │    │
+│  │  Insumos de       │  │  Insumos de       │    │
+│  │  producao         │  │  apoio            │    │
 │  └───────────────────┘  └───────────────────┘    │
 │                                                   │
 └───────────────────────────────────────────────────┘
 ```
 
-### 6. Fluxo de Rotas
+### 2. Criar Paginas de Produtos da Direcao
 
-**Antes:**
-```
-/home -> /estoque -> /estoque/auditoria
-                  -> /estoque/fabrica
-                  -> /estoque/almoxarifado
-                  -> /estoque/fornecedores
-```
+Criar wrappers que reutilizam os componentes existentes mas com breadcrumbs corretos:
 
-**Depois:**
-```
-/home -> /direcao -> /direcao/estoque -> /direcao/estoque/auditoria/fabrica
-                                      -> /direcao/estoque/auditoria/almoxarifado
-                                      -> /direcao/estoque/configuracoes
-                                           -> /direcao/estoque/configuracoes/produtos
-                                           -> /direcao/estoque/configuracoes/fornecedores
-```
+| Arquivo Novo | Funcao |
+|--------------|--------|
+| `src/pages/direcao/estoque/ProdutosFabrica.tsx` | Wrapper de EstoqueFabrica com paths corretos |
+| `src/pages/direcao/estoque/ProdutosAlmoxarifado.tsx` | Wrapper de AlmoxarifadoPage com paths corretos |
+| `src/pages/direcao/estoque/ProdutosFabricaEdit.tsx` | Wrapper de EstoqueFabricaEdit com paths corretos |
+| `src/pages/direcao/estoque/FornecedoresDirecao.tsx` | Wrapper de EstoqueFornecedores com paths corretos |
 
-### 7. Detalhes Tecnicos
+### 3. Atualizar ConfiguracoesEstoque
 
-**Hook useConferenciaEstoque - Filtro por Setor:**
+Mudar o path de "Produtos" para ir ao hub:
+
 ```typescript
-// Adicionar parametro setor nas queries
-const { data: conferenciasConcluidas } = useQuery({
-  queryKey: ["conferencias-concluidas", setor],
-  queryFn: async () => {
-    let query = supabase
-      .from("estoque_conferencias")
-      .select("*")
-      .eq("status", "concluida")
-      .order("concluida_em", { ascending: false });
-    
-    if (setor) {
-      query = query.eq("setor", setor);
-    }
-    
-    const { data, error } = await query;
-    if (error) throw error;
-    return data;
+const menuItems = [
+  { 
+    label: 'Produtos', 
+    icon: Package, 
+    path: '/direcao/estoque/configuracoes/produtos', // Vai para o hub
+    description: 'Cadastro de produtos' 
   },
-});
-```
-
-**DirecaoHub - Adicionar Botao:**
-```typescript
-const menuItems = [
-  // ... botoes existentes
-  { label: 'Estoque', icon: Warehouse, path: '/direcao/estoque' }, // NOVO
+  { 
+    label: 'Fornecedores', 
+    icon: Truck, 
+    path: '/direcao/estoque/configuracoes/fornecedores', 
+    description: 'Gestao de fornecedores' 
+  },
 ];
 ```
 
-**Home.tsx - Remover Botao:**
+### 4. Atualizar App.tsx - Novas Rotas
+
 ```typescript
-const menuItems = [
-  { label: "Direcao", icon: Shield, path: "/direcao", isGold: true },
-  { label: "Marketing", icon: BarChart3, path: "/marketing" },
-  { label: "Vendas", icon: ShoppingCart, path: "/vendas" },
-  { label: "Fabrica", icon: Factory, path: "/fabrica" },
-  { label: "Logistica", icon: Truck, path: "/logistica" },
-  // REMOVIDO: { label: "Estoque", icon: Warehouse, path: "/estoque" },
-  { label: "Administrativo", icon: Building2, path: "/administrativo" }
+// Importar novos componentes
+import ProdutosHub from "./pages/direcao/estoque/ProdutosHub";
+import ProdutosFabrica from "./pages/direcao/estoque/ProdutosFabrica";
+import ProdutosAlmoxarifado from "./pages/direcao/estoque/ProdutosAlmoxarifado";
+import ProdutosFabricaEdit from "./pages/direcao/estoque/ProdutosFabricaEdit";
+import FornecedoresDirecao from "./pages/direcao/estoque/FornecedoresDirecao";
+
+// Rotas atualizadas
+<Route path="/direcao/estoque/configuracoes/produtos" element={<ProtectedRoute routeKey="direcao_hub"><ProdutosHub /></ProtectedRoute>} />
+<Route path="/direcao/estoque/configuracoes/produtos/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><ProdutosFabrica /></ProtectedRoute>} />
+<Route path="/direcao/estoque/configuracoes/produtos/fabrica/editar/:id" element={<ProtectedRoute routeKey="direcao_hub"><ProdutosFabricaEdit /></ProtectedRoute>} />
+<Route path="/direcao/estoque/configuracoes/produtos/almoxarifado" element={<ProtectedRoute routeKey="direcao_hub"><ProdutosAlmoxarifado /></ProtectedRoute>} />
+<Route path="/direcao/estoque/configuracoes/fornecedores" element={<ProtectedRoute routeKey="direcao_hub"><FornecedoresDirecao /></ProtectedRoute>} />
+```
+
+### 5. Estrutura de Navegacao Corrigida
+
+```text
+/direcao/estoque (Hub)
+├── Auditoria Fabrica      -> /direcao/estoque/auditoria/fabrica
+├── Auditoria Almoxarifado -> /direcao/estoque/auditoria/almoxarifado
+└── Configuracoes          -> /direcao/estoque/configuracoes
+    ├── Produtos           -> /direcao/estoque/configuracoes/produtos (HUB)
+    │   ├── Fabrica        -> /direcao/estoque/configuracoes/produtos/fabrica
+    │   │   └── Editar     -> /direcao/estoque/configuracoes/produtos/fabrica/editar/:id
+    │   └── Almoxarifado   -> /direcao/estoque/configuracoes/produtos/almoxarifado
+    └── Fornecedores       -> /direcao/estoque/configuracoes/fornecedores
+```
+
+### 6. Breadcrumbs Corretos
+
+**ProdutosFabrica:**
+```typescript
+const breadcrumbItems = [
+  { label: 'Home', path: '/home' },
+  { label: 'Direcao', path: '/direcao' },
+  { label: 'Estoque', path: '/direcao/estoque' },
+  { label: 'Configuracoes', path: '/direcao/estoque/configuracoes' },
+  { label: 'Produtos', path: '/direcao/estoque/configuracoes/produtos' },
+  { label: 'Fabrica' }
 ];
+// backPath: '/direcao/estoque/configuracoes/produtos'
 ```
 
-### 8. App.tsx - Novas Rotas
-
+**FornecedoresDirecao:**
 ```typescript
-// Hub Direcao Estoque
-import DirecaoEstoqueHub from "./pages/direcao/estoque/DirecaoEstoqueHub";
-import AuditoriaFabrica from "./pages/direcao/estoque/AuditoriaFabrica";
-import AuditoriaAlmoxarifado from "./pages/direcao/estoque/AuditoriaAlmoxarifado";
-import ConfiguracoesEstoque from "./pages/direcao/estoque/ConfiguracoesEstoque";
-
-// Rotas
-<Route path="/direcao/estoque" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoEstoqueHub /></ProtectedRoute>} />
-<Route path="/direcao/estoque/auditoria/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><AuditoriaFabrica /></ProtectedRoute>} />
-<Route path="/direcao/estoque/auditoria/almoxarifado" element={<ProtectedRoute routeKey="direcao_hub"><AuditoriaAlmoxarifado /></ProtectedRoute>} />
-<Route path="/direcao/estoque/configuracoes" element={<ProtectedRoute routeKey="direcao_hub"><ConfiguracoesEstoque /></ProtectedRoute>} />
-<Route path="/direcao/estoque/configuracoes/produtos" element={<ProtectedRoute routeKey="direcao_hub"><EstoqueFabrica /></ProtectedRoute>} />
-<Route path="/direcao/estoque/configuracoes/fornecedores" element={<ProtectedRoute routeKey="direcao_hub"><EstoqueFornecedores /></ProtectedRoute>} />
+const breadcrumbItems = [
+  { label: 'Home', path: '/home' },
+  { label: 'Direcao', path: '/direcao' },
+  { label: 'Estoque', path: '/direcao/estoque' },
+  { label: 'Configuracoes', path: '/direcao/estoque/configuracoes' },
+  { label: 'Fornecedores' }
+];
+// backPath: '/direcao/estoque/configuracoes'
 ```
 
-### 9. Rotas Antigas
+### 7. Atualizar Permissoes (app_routes)
 
-As rotas antigas em `/estoque/*` serao mantidas temporariamente para nao quebrar referencias existentes (producao usa `/estoque/conferencia`), mas o botao no /home sera removido.
+Executar SQL para adicionar novas rotas ao sistema de permissoes:
+
+```sql
+-- Hub de Produtos na Direcao
+INSERT INTO app_routes (key, label, path, interface, parent_key, sort_order, active)
+VALUES 
+  ('direcao_estoque_hub', 'Estoque', '/direcao/estoque', 'padrao', 'direcao_hub', 90, true),
+  ('direcao_estoque_config', 'Configuracoes', '/direcao/estoque/configuracoes', 'padrao', 'direcao_estoque_hub', 91, true),
+  ('direcao_estoque_produtos', 'Produtos', '/direcao/estoque/configuracoes/produtos', 'padrao', 'direcao_estoque_config', 92, true),
+  ('direcao_estoque_fornecedores', 'Fornecedores', '/direcao/estoque/configuracoes/fornecedores', 'padrao', 'direcao_estoque_config', 93, true),
+  ('direcao_estoque_auditoria_fab', 'Auditoria Fabrica', '/direcao/estoque/auditoria/fabrica', 'padrao', 'direcao_estoque_hub', 94, true),
+  ('direcao_estoque_auditoria_alm', 'Auditoria Almoxarifado', '/direcao/estoque/auditoria/almoxarifado', 'padrao', 'direcao_estoque_hub', 95, true)
+ON CONFLICT (key) DO NOTHING;
+```
+
+## Arquivos a Criar
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/pages/direcao/estoque/ProdutosHub.tsx` | Hub para escolher Fabrica ou Almoxarifado |
+| `src/pages/direcao/estoque/ProdutosFabrica.tsx` | Lista de produtos da fabrica |
+| `src/pages/direcao/estoque/ProdutosAlmoxarifado.tsx` | Lista de produtos do almoxarifado |
+| `src/pages/direcao/estoque/ProdutosFabricaEdit.tsx` | Edicao de produto da fabrica |
+| `src/pages/direcao/estoque/FornecedoresDirecao.tsx` | Lista de fornecedores |
+
+## Arquivos a Modificar
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/App.tsx` | Atualizar rotas do estoque na direcao |
+| `src/pages/direcao/estoque/ConfiguracoesEstoque.tsx` | Path de produtos ja aponta corretamente |
 
 ## Resultado Esperado
 
-1. Botao "Estoque" removido do /home
-2. Botao "Estoque" adicionado no /direcao
-3. Hub em /direcao/estoque com 3 opcoes
-4. Auditorias separadas por setor (fabrica/almoxarifado)
-5. Pagina de configuracoes com acesso a produtos e fornecedores
+1. Clicar em "Produtos" em `/direcao/estoque/configuracoes` abre hub com opcoes Fabrica e Almoxarifado
+2. Botao voltar e breadcrumbs navegam corretamente dentro da hierarquia `/direcao/estoque/...`
+3. Edicao de produto navega para `/direcao/estoque/configuracoes/produtos/fabrica/editar/:id`
+4. Novas rotas visiveis em `/admin/permissions` para controle de acesso
 
