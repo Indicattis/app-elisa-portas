@@ -591,6 +591,62 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       // ===== CALCULAR ETAPA DESTINO ANTES DE CRIAR A NOVA ETAPA =====
       // Lógica condicional quando sai da inspeção de qualidade
       let etapaDestino = proximaEtapa;
+
+      // Lógica para pular inspeção de qualidade se pedido só tem separação
+      if (etapaAtualNome === 'em_producao') {
+        // Verificar se pedido tem linhas de soldagem ou perfiladeira
+        const { data: linhasProducao } = await supabase
+          .from('linhas_ordens')
+          .select('tipo_ordem')
+          .eq('pedido_id', pedidoId)
+          .in('tipo_ordem', ['soldagem', 'perfiladeira', 'separacao']);
+        
+        const temSoldaOuPerfiladeira = linhasProducao?.some(
+          l => l.tipo_ordem === 'soldagem' || l.tipo_ordem === 'perfiladeira'
+        );
+        
+        if (!temSoldaOuPerfiladeira) {
+          // Pedido só tem separação - pular inspeção de qualidade
+          console.log('[moverParaProximaEtapa] Pedido só tem separação - pulando inspeção de qualidade');
+          
+          const { data: pedidoData } = await supabase
+            .from('pedidos_producao')
+            .select('venda_id')
+            .eq('id', pedidoId)
+            .single();
+          
+          if (pedidoData?.venda_id) {
+            // Verificar se tem pintura
+            const { data: produtosComPintura } = await supabase
+              .from('produtos_vendas')
+              .select('id')
+              .eq('venda_id', pedidoData.venda_id)
+              .gt('valor_pintura', 0)
+              .limit(1);
+            
+            if (produtosComPintura && produtosComPintura.length > 0) {
+              etapaDestino = 'aguardando_pintura';
+              console.log('[moverParaProximaEtapa] → Destino: aguardando_pintura (tem pintura)');
+            } else {
+              // Não tem pintura → verificar tipo de entrega
+              const { data: venda } = await supabase
+                .from('vendas')
+                .select('tipo_entrega')
+                .eq('id', pedidoData.venda_id)
+                .single();
+              
+              if (venda?.tipo_entrega === 'entrega') {
+                etapaDestino = 'aguardando_coleta';
+                console.log('[moverParaProximaEtapa] → Destino: aguardando_coleta (entrega sem pintura)');
+              } else {
+                etapaDestino = 'instalacoes';
+                console.log('[moverParaProximaEtapa] → Destino: instalacoes (instalação sem pintura)');
+              }
+            }
+          }
+        }
+      }
+
       if (etapaAtualNome === 'inspecao_qualidade') {
         // Buscar venda associada ao pedido
         const { data: pedidoData } = await supabase
