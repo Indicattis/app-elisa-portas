@@ -8,8 +8,11 @@ import { format } from "date-fns";
 import { 
   Package, Phone, MapPin, Calendar, DollarSign, ListChecks, 
   ShoppingCart, CheckCircle2, Clock, AlertCircle, XCircle,
-  FolderOpen, ChevronDown, User, Wrench, Factory, History, ChevronRight, FileText
+  FolderOpen, ChevronDown, User, Wrench, Factory, History, ChevronRight, FileText, RefreshCw
 } from "lucide-react";
+import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
+import { ProcessoAvancoModal } from "./ProcessoAvancoModal";
+import { useToast } from "@/hooks/use-toast";
 import { PedidoHistoricoMovimentacoes } from "./PedidoHistoricoMovimentacoes";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
 import { useNavigate } from "react-router-dom";
@@ -67,6 +70,7 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
   const venda = pedido.vendas;
   const { linhas, isLoading } = usePedidoLinhas(pedido.id);
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [ordens, setOrdens] = useState<OrdemProducao[]>([]);
   const [loadingOrdens, setLoadingOrdens] = useState(false);
   const [linhasOpen, setLinhasOpen] = useState(false);
@@ -76,6 +80,9 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
   const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemStatus | null>(null);
   const [showOrdemLinhas, setShowOrdemLinhas] = useState(false);
   const [observacoesVisita, setObservacoesVisita] = useState<ObservacaoVisita[]>([]);
+  const [verificandoAvanco, setVerificandoAvanco] = useState(false);
+  
+  const { verificarEAvancarManual, processos, modalOpen, setModalOpen } = usePedidoAutoAvanco();
   
   useEffect(() => {
     if (open && pedido?.id) {
@@ -348,6 +355,25 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
         return <Package className="w-4 h-4 text-white/60" />;
     }
   };
+
+  const handleVerificarAvanco = async () => {
+    setVerificandoAvanco(true);
+    try {
+      const resultado = await verificarEAvancarManual(pedido.id);
+      if (!resultado.avancou && resultado.motivo) {
+        toast({
+          title: "Não foi possível avançar",
+          description: resultado.motivo,
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setVerificandoAvanco(false);
+    }
+  };
+
+  // Verificar se pode mostrar botão de verificar avanço
+  const podeVerificarAvanco = ['em_producao', 'inspecao_qualidade', 'aguardando_pintura'].includes(pedido.etapa_atual);
   
   if (!venda) return null;
 
@@ -381,6 +407,18 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                     </a>
                   </Button>
                 )}
+                {podeVerificarAvanco && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300"
+                    onClick={handleVerificarAvanco}
+                    disabled={verificandoAvanco}
+                  >
+                    <RefreshCw className={cn("w-4 h-4 mr-2", verificandoAvanco && "animate-spin")} />
+                    Verificar Avanço
+                  </Button>
+                )}
                 {venda.id && (
                   <Button
                     variant="outline"
@@ -396,6 +434,13 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                   </Button>
                 )}
               </div>
+              
+              {/* Modal de Progresso do Avanço */}
+              <ProcessoAvancoModal
+                open={modalOpen}
+                onClose={() => setModalOpen(false)}
+                processos={processos}
+              />
             </div>
           </SheetHeader>
         </div>
