@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { 
   Package, Phone, MapPin, Calendar, DollarSign, ListChecks, 
   ShoppingCart, CheckCircle2, Clock, AlertCircle, XCircle,
-  FolderOpen, ChevronDown, User, Wrench, Factory, History, ChevronRight
+  FolderOpen, ChevronDown, User, Wrench, Factory, History, ChevronRight, FileText
 } from "lucide-react";
 import { PedidoHistoricoMovimentacoes } from "./PedidoHistoricoMovimentacoes";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
@@ -367,20 +367,35 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                 <Package className="h-5 w-5 text-blue-400" />
                 Pedido {formatarNumeroPedidoMensal(pedido.numero_mes, pedido.mes_vigencia, pedido.numero_pedido)}
               </SheetTitle>
-              {venda.id && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/5 border-white/20 text-white hover:bg-white/10 hover:text-white"
-                  onClick={() => {
-                    onOpenChange(false);
-                    navigate(`/dashboard/vendas/${venda.id}/view`);
-                  }}
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Ver Venda
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {pedido.ficha_visita_url && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:text-amber-300"
+                    asChild
+                  >
+                    <a href={pedido.ficha_visita_url} target="_blank" rel="noopener noreferrer">
+                      <FileText className="w-4 h-4 mr-2" />
+                      Anexo
+                    </a>
+                  </Button>
+                )}
+                {venda.id && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/5 border-white/20 text-white hover:bg-white/10 hover:text-white"
+                    onClick={() => {
+                      onOpenChange(false);
+                      navigate(`/dashboard/vendas/${venda.id}/view`);
+                    }}
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    Ver Venda
+                  </Button>
+                )}
+              </div>
             </div>
           </SheetHeader>
         </div>
