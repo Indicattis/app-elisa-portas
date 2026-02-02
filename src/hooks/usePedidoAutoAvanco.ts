@@ -157,13 +157,131 @@ export function usePedidoAutoAvanco() {
     }
   };
 
+  const executarAvanco = useCallback(async (pedidoId: string): Promise<boolean> => {
+    // Inicializar processos
+    const processosIniciais: Processo[] = [
+      { id: 'verificacao', label: 'Verificando conclusão de ordens...', status: 'completed' },
+      { id: 'avanco', label: 'Avançando pedido...', status: 'in_progress' },
+    ];
+
+    setProcessos(processosIniciais);
+    setModalOpen(true);
+
+    // Aguardar um pouco para o modal aparecer
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    try {
+      await moverParaProximaEtapa.mutateAsync({
+        pedidoId,
+        skipCheckboxValidation: true,
+        onProgress: (label: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => {
+          const processo: Processo = {
+            id: label.toLowerCase().replace(/\s+/g, '_'),
+            label,
+            status
+          };
+
+          setProcessos(prev => {
+            const newProcessos = [...prev];
+            const verificacaoIdx = newProcessos.findIndex(p => p.id === 'verificacao');
+            if (verificacaoIdx !== -1) {
+              newProcessos[verificacaoIdx].status = 'completed';
+            }
+
+            const exists = newProcessos.find(p => p.id === processo.id);
+            if (!exists) {
+              newProcessos.push(processo);
+            } else {
+              const idx = newProcessos.findIndex(p => p.id === processo.id);
+              if (idx !== -1) {
+                newProcessos[idx] = processo;
+              }
+            }
+            return newProcessos;
+          });
+        }
+      });
+
+      setProcessos(prev => prev.map(p => ({ ...p, status: 'completed' as const })));
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      toast({
+        title: "Pedido avançado",
+        description: "O pedido foi movido para a próxima etapa com sucesso.",
+      });
+
+      setModalOpen(false);
+      setProcessos([]);
+      return true;
+    } catch (error) {
+      console.error('[Auto-Avanço] Erro ao avançar:', error);
+      setProcessos(prev => prev.map(p => ({ ...p, status: 'error' as const })));
+      
+      toast({
+        title: "Erro ao avançar pedido",
+        description: "Não foi possível avançar o pedido.",
+        variant: "destructive",
+      });
+
+      setTimeout(() => {
+        setModalOpen(false);
+        setProcessos([]);
+      }, 2000);
+      return false;
+    }
+  }, [moverParaProximaEtapa, toast]);
+
+  const verificarEAvancarManual = useCallback(async (pedidoId: string): Promise<{ avancou: boolean; motivo?: string }> => {
+    try {
+      console.log(`[Verificação Manual] Iniciando para pedido ${pedidoId}`);
+      
+      const etapaAtual = await buscarEtapaAtual(pedidoId);
+      if (!etapaAtual) {
+        return { avancou: false, motivo: 'Etapa atual não encontrada' };
+      }
+
+      console.log(`[Verificação Manual] Etapa atual: ${etapaAtual}`);
+
+      let deveAvancar = false;
+      let motivo = '';
+
+      if (etapaAtual === 'em_producao') {
+        deveAvancar = await verificarOrdensProducaoConcluidas(pedidoId);
+        if (!deveAvancar) {
+          motivo = 'Nem todas as ordens de produção estão concluídas';
+        }
+      } else if (etapaAtual === 'inspecao_qualidade') {
+        deveAvancar = await verificarOrdemQualidadeConcluida(pedidoId);
+        if (!deveAvancar) {
+          motivo = 'Ordem de qualidade não está concluída';
+        }
+      } else if (etapaAtual === 'aguardando_pintura') {
+        deveAvancar = await verificarOrdemPinturaConcluida(pedidoId);
+        if (!deveAvancar) {
+          motivo = 'Ordem de pintura não está concluída';
+        }
+      } else {
+        motivo = `Etapa "${etapaAtual}" não suporta avanço automático`;
+      }
+
+      if (deveAvancar) {
+        const avancou = await executarAvanco(pedidoId);
+        return { avancou, motivo: avancou ? undefined : 'Erro ao executar avanço' };
+      }
+
+      return { avancou: false, motivo };
+    } catch (error) {
+      console.error('[Verificação Manual] Erro:', error);
+      return { avancou: false, motivo: 'Erro ao verificar condições de avanço' };
+    }
+  }, [executarAvanco]);
+
   const tentarAvancoAutomatico = useCallback(async (pedidoId: string, tipoOrdemConcluida: TipoOrdem) => {
     try {
       console.log(`[Auto-Avanço] ========================================`);
       console.log(`[Auto-Avanço] Iniciando verificação para pedido ${pedidoId}`);
       console.log(`[Auto-Avanço] Tipo de ordem concluída: ${tipoOrdemConcluida}`);
 
-      // Buscar etapa atual do pedido
       const etapaAtual = await buscarEtapaAtual(pedidoId);
       if (!etapaAtual) {
         console.log('[Auto-Avanço] Etapa atual não encontrada');
@@ -174,9 +292,7 @@ export function usePedidoAutoAvanco() {
 
       let deveAvancar = false;
 
-      // Lógica de verificação baseada na etapa atual
       if (etapaAtual === 'em_producao') {
-        // Verificar se todas as ordens de produção (solda, perfiladeira, separação) estão concluídas
         if (['soldagem', 'perfiladeira', 'separacao'].includes(tipoOrdemConcluida)) {
           console.log(`[Auto-Avanço] Verificando se todas as ordens de produção estão concluídas...`);
           deveAvancar = await verificarOrdensProducaoConcluidas(pedidoId);
@@ -185,7 +301,6 @@ export function usePedidoAutoAvanco() {
           console.log(`[Auto-Avanço] Tipo ${tipoOrdemConcluida} não é ordem de produção, ignorando`);
         }
       } else if (etapaAtual === 'inspecao_qualidade') {
-        // Verificar se ordem de qualidade está concluída
         if (tipoOrdemConcluida === 'qualidade') {
           console.log(`[Auto-Avanço] Verificando se ordem de qualidade está concluída...`);
           deveAvancar = await verificarOrdemQualidadeConcluida(pedidoId);
@@ -194,7 +309,6 @@ export function usePedidoAutoAvanco() {
           console.log(`[Auto-Avanço] Tipo ${tipoOrdemConcluida} não é qualidade, ignorando`);
         }
       } else if (etapaAtual === 'aguardando_pintura') {
-        // Verificar se ordem de pintura está concluída
         if (tipoOrdemConcluida === 'pintura') {
           console.log(`[Auto-Avanço] Verificando se ordem de pintura está concluída...`);
           deveAvancar = await verificarOrdemPinturaConcluida(pedidoId);
@@ -206,103 +320,20 @@ export function usePedidoAutoAvanco() {
         console.log(`[Auto-Avanço] Etapa ${etapaAtual} não é tratada para tipo ${tipoOrdemConcluida}`);
       }
 
-      console.log(`[Auto-Avanço] deveAvancar: ${deveAvancar}`);
-
       console.log(`[Auto-Avanço] Decisão final: deveAvancar = ${deveAvancar}`);
       
       if (deveAvancar) {
         console.log('[Auto-Avanço] ✅ Iniciando avanço automático...');
-        
-        // Inicializar processos
-        const processosIniciais: Processo[] = [
-          { id: 'verificacao', label: 'Verificando conclusão de ordens...', status: 'completed' },
-          { id: 'avanco', label: 'Avançando pedido automaticamente...', status: 'in_progress' },
-        ];
-
-        setProcessos(processosIniciais);
-        setModalOpen(true);
-
-        // Aguardar um pouco para o modal aparecer
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        try {
-          // Chamar moverParaProximaEtapa com skipCheckboxValidation: true
-          // e capturar progresso através de um callback
-          let progressoCallback: ((processo: Processo) => void) | undefined;
-          
-          const progressoPromise = moverParaProximaEtapa.mutateAsync({
-            pedidoId,
-            skipCheckboxValidation: true,
-            onProgress: (label: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => {
-              const processo: Processo = {
-                id: label.toLowerCase().replace(/\s+/g, '_'),
-                label,
-                status
-              };
-
-              setProcessos(prev => {
-                const newProcessos = [...prev];
-                // Marcar verificação como completa
-                const verificacaoIdx = newProcessos.findIndex(p => p.id === 'verificacao');
-                if (verificacaoIdx !== -1) {
-                  newProcessos[verificacaoIdx].status = 'completed';
-                }
-
-                // Adicionar novos processos se não existirem
-                const exists = newProcessos.find(p => p.id === processo.id);
-                if (!exists) {
-                  newProcessos.push(processo);
-                } else {
-                  // Atualizar status do processo existente
-                  const idx = newProcessos.findIndex(p => p.id === processo.id);
-                  if (idx !== -1) {
-                    newProcessos[idx] = processo;
-                  }
-                }
-                return newProcessos;
-              });
-            }
-          });
-
-          await progressoPromise;
-
-          // Marcar todos como completos
-          setProcessos(prev => prev.map(p => ({ ...p, status: 'completed' as const })));
-
-          // Aguardar um pouco antes de fechar
-          await new Promise(resolve => setTimeout(resolve, 1000));
-
-          toast({
-            title: "Pedido avançado automaticamente",
-            description: "O pedido foi movido para a próxima etapa com sucesso.",
-          });
-
-          setModalOpen(false);
-          setProcessos([]);
-        } catch (error) {
-          console.error('[Auto-Avanço] Erro ao avançar:', error);
-          setProcessos(prev => prev.map(p => ({ ...p, status: 'error' as const })));
-          
-          toast({
-            title: "Erro ao avançar pedido",
-            description: "Não foi possível avançar o pedido automaticamente.",
-            variant: "destructive",
-          });
-
-          // Fechar modal após erro
-          setTimeout(() => {
-            setModalOpen(false);
-            setProcessos([]);
-          }, 2000);
-        }
+        await executarAvanco(pedidoId);
       }
     } catch (error) {
       console.error('[Auto-Avanço] Erro geral:', error);
     }
-  }, [moverParaProximaEtapa, toast]);
+  }, [executarAvanco]);
 
   return {
     tentarAvancoAutomatico,
+    verificarEAvancarManual,
     processos,
     modalOpen,
     setModalOpen,
