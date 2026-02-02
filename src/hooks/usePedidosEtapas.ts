@@ -677,10 +677,14 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
         const { error: etapaError } = await supabase
           .from('pedidos_etapas')
-          .insert({
+          .upsert({
             pedido_id: pedidoId,
             etapa: etapaDestino,
-            checkboxes: checkboxesNovos as any
+            checkboxes: checkboxesNovos as any,
+            data_entrada: new Date().toISOString(),
+            data_saida: null
+          }, {
+            onConflict: 'pedido_id,etapa'
           });
 
         if (etapaError) throw etapaError;
