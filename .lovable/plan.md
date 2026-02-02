@@ -1,61 +1,134 @@
 
-# Plano: Corrigir Erro de Duplicidade ao Avançar Pedidos
+# Plano: Pular Etapa de Inspeção de Qualidade para Pedidos Apenas com Separação
 
-## Problema Identificado
-O código atual faz `INSERT` direto na tabela `pedidos_etapas` (linha 678-686) sem considerar que:
-1. Um pedido pode revisitar a mesma etapa (ex: voltou de inspecao_qualidade para em_producao e agora precisa voltar)
-2. A constraint UNIQUE `(pedido_id, etapa)` bloqueia INSERTs duplicados
+## Contexto do Problema
+Pedidos que possuem **apenas linhas de separação** (sem soldagem/perfiladeira) estão travados na etapa "Inspeção de Qualidade" porque:
+1. A função `criar_ordem_qualidade` não cria ordem quando não há linhas de solda/perfiladeira
+2. O fluxo atual sempre avança para `inspecao_qualidade` após `em_producao`
+3. Sem ordem de qualidade, o pedido não consegue avançar
 
-## Solucao
+**Pedidos afetados identificados:** 0152, 0155, 0151
 
-### Modificar `src/hooks/usePedidosEtapas.ts`
+## Solução Proposta
 
-Substituir o INSERT simples por UPSERT com ON CONFLICT. Quando ja existir um registro para essa combinacao `(pedido_id, etapa)`:
-- Limpar o `data_saida` (marcando como etapa ativa novamente)
-- Atualizar os checkboxes para o estado inicial
-- Atualizar `data_entrada` para agora
+### Modificar lógica de avanço em `usePedidosEtapas.ts`
 
-**Codigo atual (linha 678-686):**
+Adicionar verificação quando o pedido sai de `em_producao`:
+
 ```typescript
-const { error: etapaError } = await supabase
-  .from('pedidos_etapas')
-  .insert({
-    pedido_id: pedidoId,
-    etapa: etapaDestino,
-    checkboxes: checkboxesNovos as any
-  });
+// Após linha ~578 (dentro do bloco de validação de em_producao)
+// Verificar se pedido só tem separação - se sim, pular inspeção de qualidade
+if (etapaAtualNome === 'em_producao') {
+  const { data: linhasProducao } = await supabase
+    .from('linhas_ordens')
+    .select('tipo_ordem')
+    .eq('pedido_id', pedidoId)
+    .in('tipo_ordem', ['soldagem', 'perfiladeira', 'separacao']);
+  
+  const temSoldaOuPerfiladeira = linhasProducao?.some(
+    l => l.tipo_ordem === 'soldagem' || l.tipo_ordem === 'perfiladeira'
+  );
+  
+  if (!temSoldaOuPerfiladeira) {
+    // Pular inspeção de qualidade - determinar próxima etapa
+    const { data: pedidoData } = await supabase
+      .from('pedidos_producao')
+      .select('venda_id')
+      .eq('id', pedidoId)
+      .single();
+    
+    if (pedidoData?.venda_id) {
+      // Verificar pintura
+      const { data: produtosComPintura } = await supabase
+        .from('produtos_vendas')
+        .select('id')
+        .eq('venda_id', pedidoData.venda_id)
+        .gt('valor_pintura', 0)
+        .limit(1);
+      
+      if (produtosComPintura?.length > 0) {
+        etapaDestino = 'aguardando_pintura';
+      } else {
+        // Verificar tipo de entrega
+        const { data: venda } = await supabase
+          .from('vendas')
+          .select('tipo_entrega')
+          .eq('id', pedidoData.venda_id)
+          .single();
+        
+        etapaDestino = venda?.tipo_entrega === 'entrega' 
+          ? 'aguardando_coleta' 
+          : 'instalacoes';
+      }
+    }
+    console.log('[moverParaProximaEtapa] Pedido só tem separação - pulando inspeção de qualidade → ' + etapaDestino);
+  }
+}
 ```
 
-**Codigo corrigido:**
-```typescript
-const { error: etapaError } = await supabase
-  .from('pedidos_etapas')
-  .upsert({
-    pedido_id: pedidoId,
-    etapa: etapaDestino,
-    checkboxes: checkboxesNovos as any,
-    data_entrada: new Date().toISOString(),
-    data_saida: null  // Limpar data_saida para marcar como ativa
-  }, {
-    onConflict: 'pedido_id,etapa'
-  });
+### Local exato da modificação
+
+**Arquivo:** `src/hooks/usePedidosEtapas.ts`
+
+Adicionar lógica de desvio condicional quando sai de `em_producao` (similar à lógica existente para `inspecao_qualidade` na linha 594).
+
+### Fluxo atualizado
+
+```text
+┌─────────────────────┐
+│    Em Produção      │
+└─────────┬───────────┘
+          │
+     ┌────┴────┐
+     │ Tem     │
+     │ Solda/  │
+     │ Perfil? │
+     └────┬────┘
+          │
+    ┌─────┴─────┐
+    │           │
+   Sim         Não
+    │           │
+    ▼           ▼
+┌─────────┐  ┌─────────────────┐
+│Inspeção │  │ Determinar      │
+│Qualidade│  │ próxima etapa   │
+└────┬────┘  └────────┬────────┘
+     │                │
+     │       ┌────────┴────────┐
+     │       │                 │
+     │   Tem Pintura?    Não Pintura?
+     │       │                 │
+     │       ▼                 ▼
+     │  ┌────────────┐   ┌──────────────┐
+     │  │ Aguardando │   │ Tipo Entrega │
+     │  │ Pintura    │   └──────┬───────┘
+     │  └────────────┘          │
+     │                  ┌───────┴───────┐
+     ▼                  ▼               ▼
+ (continua)        Coleta         Instalação
 ```
-
-### Locais para aplicar a correcao
-
-1. **Linha ~678-686** - `moverParaProximaEtapa` (avanco normal)
-2. **Linha ~830-840** - `criarOrdensEAvancar` (se houver INSERT similar)
-3. Verificar se ha outros pontos de INSERT em `pedidos_etapas`
-
-## Beneficios
-- Pedidos que revisitam etapas funcionarao corretamente
-- O historico de passagens anteriores e preservado (com data_saida preenchido)
-- A nova passagem tera data_entrada atualizada e data_saida null
 
 ## Arquivos a Modificar
-| Arquivo | Acao |
-|---------|------|
-| `src/hooks/usePedidosEtapas.ts` | Substituir INSERT por UPSERT com onConflict |
 
-## Correcao Imediata dos Pedidos Travados
-Apos aplicar a correcao no codigo, o botao "Verificar Avanco" funcionara. Os pedidos 24 e 8 poderao ser avancados normalmente clicando no botao.
+| Arquivo | Ação | Descrição |
+|---------|------|-----------|
+| `src/hooks/usePedidosEtapas.ts` | Modificar | Adicionar lógica de desvio para pedidos só com separação |
+
+## Correção dos Pedidos Travados
+
+Após implementar a correção, os pedidos 0152, 0155 e 0151 poderão ser avançados manualmente usando o botão "Verificar Avanço" já implementado.
+
+Alternativamente, executar SQL para corrigi-los imediatamente:
+```sql
+-- Identificar próxima etapa para cada pedido travado
+UPDATE pedidos_producao 
+SET etapa_atual = 'instalacoes', -- ou 'aguardando_pintura'/'aguardando_coleta' conforme tipo_entrega
+    updated_at = NOW()
+WHERE id IN ('ebc8af18-8c76-4ef0-9552-269b14f3132d', '44e47079-bb1c-4dfd-be92-51b41106ef52', '7380b0b5-e0f4-4088-ab17-0da326334133');
+```
+
+## Benefícios
+1. Pedidos apenas com separação fluirão corretamente sem travar
+2. Mantém inspeção de qualidade obrigatória para produtos soldados/perfilados
+3. Consistente com a regra de negócio: separação não requer inspeção formal
