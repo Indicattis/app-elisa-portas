@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, cn } from "@/lib/utils";
-import { format, formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2 } from "lucide-react";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
@@ -1178,7 +1178,7 @@ export function PedidoCard({
                           </span>
                           {dataCarregamento && (
                             <span className="text-xs font-bold text-zinc-500">
-                              {format(new Date(dataCarregamento), "dd/MM/yy")}
+                              {format(parseISO(dataCarregamento), "dd/MM/yy")}
                             </span>
                           )}
                         </div>
@@ -1194,7 +1194,7 @@ export function PedidoCard({
                     }
                     
                     // Verificar se está atrasado (data no passado e não concluído)
-                    const dataCarreg = new Date(dataCarregamento);
+                    const dataCarreg = parseISO(dataCarregamento);
                     const hoje = new Date();
                     hoje.setHours(0, 0, 0, 0);
                     dataCarreg.setHours(0, 0, 0, 0);
@@ -1212,7 +1212,7 @@ export function PedidoCard({
                           "text-xs font-bold",
                           atrasado ? "text-red-600" : "text-green-600"
                         )}>
-                          {format(new Date(dataCarregamento), "dd/MM/yy")}
+                          {format(parseISO(dataCarregamento), "dd/MM/yy")}
                         </span>
                       </div>
                     );
@@ -1222,7 +1222,7 @@ export function PedidoCard({
                   if (dataCarregamento) {
                     return (
                       <span title="Data de carregamento" className="text-[10px] font-medium text-muted-foreground">
-                        {format(new Date(dataCarregamento), "dd/MM/yy")}
+                        {format(parseISO(dataCarregamento), "dd/MM/yy")}
                       </span>
                     );
                   }
@@ -1704,7 +1704,7 @@ export function PedidoCard({
               </span>
               {dataCarregamento && (
                 <span className="text-[10px] text-muted-foreground" title="Data de carregamento">
-                  Carreg: {format(new Date(dataCarregamento), "dd/MM/yyyy")}
+                  Carreg: {format(parseISO(dataCarregamento), "dd/MM/yyyy")}
                 </span>
               )}
             </div>
