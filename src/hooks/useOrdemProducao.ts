@@ -528,6 +528,24 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         console.error('Erro ao marcar linhas como concluídas:', linhasError);
       }
 
+      // Para ordens de perfiladeira, calcular metragem_linear das linhas
+      let metragemLinear: number | undefined;
+      if (tipoOrdem === 'perfiladeira') {
+        const { data: linhasParaMetragem } = await supabase
+          .from('linhas_ordens')
+          .select('quantidade, tamanho')
+          .eq('ordem_id', ordemId)
+          .eq('tipo_ordem', 'perfiladeira');
+        
+        if (linhasParaMetragem) {
+          metragemLinear = linhasParaMetragem.reduce((acc, linha) => {
+            const metros = parseFloat(String(linha.tamanho || '0').replace(',', '.')) || 0;
+            const quantidade = linha.quantidade || 1;
+            return acc + (metros * quantidade);
+          }, 0);
+        }
+      }
+
       // Atualizar ordem como concluída E enviar para histórico
       // IMPORTANTE: Resetar campos de pausa para garantir que auto-avanço funcione
       const updateData: Record<string, any> = {
@@ -539,6 +557,11 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         pausada_em: null,
         justificativa_pausa: null,
       };
+
+      // Adicionar metragem linear para ordens de perfiladeira
+      if (metragemLinear !== undefined) {
+        updateData.metragem_linear = metragemLinear;
+      }
 
       // linha_problema_id não existe em ordens_qualidade
       if (tipoOrdem !== 'qualidade') {
