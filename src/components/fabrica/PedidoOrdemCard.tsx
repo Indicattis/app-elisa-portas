@@ -31,6 +31,8 @@ const getStatusStyle = (status: string | null, pausada: boolean = false) => {
       return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30 hover:bg-yellow-500/30';
     case 'em_andamento':
       return 'bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30';
+    case 'agendado':
+      return 'bg-purple-500/20 text-purple-300 border-purple-500/30 hover:bg-purple-500/30';
     case 'concluido':
       return 'bg-green-500/20 text-green-300 border-green-500/30 hover:bg-green-500/30';
     default:
@@ -44,6 +46,8 @@ const getStatusLabel = (status: string | null) => {
       return 'Pendente';
     case 'em_andamento':
       return 'Em andamento';
+    case 'agendado':
+      return 'Agendado';
     case 'concluido':
       return 'Concluído';
     default:
@@ -60,6 +64,8 @@ export function PedidoOrdemCard({ pedido, onOrdemClick }: PedidoOrdemCardProps) 
     pedido.ordens.separacao,
     pedido.ordens.qualidade,
     pedido.ordens.pintura,
+    pedido.ordens.carregamento,
+    pedido.ordens.instalacao,
   ];
 
   const ordensExistentes = ordens.filter(o => o.existe);
