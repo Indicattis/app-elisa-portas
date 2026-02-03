@@ -58,14 +58,25 @@ const getStatusLabel = (status: string | null) => {
 export function PedidoOrdemCard({ pedido, onOrdemClick }: PedidoOrdemCardProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const ordens: OrdemStatus[] = [
+  const ordensBase: OrdemStatus[] = [
     pedido.ordens.soldagem,
     pedido.ordens.perfiladeira,
     pedido.ordens.separacao,
     pedido.ordens.qualidade,
     pedido.ordens.pintura,
-    pedido.ordens.carregamento,
-    pedido.ordens.instalacao,
+  ];
+
+  // Filtrar baseado no tipo_entrega
+  // - Instalação: mostrar apenas ordem de instalação
+  // - Entrega: mostrar apenas ordem de carregamento
+  const ordens: OrdemStatus[] = [
+    ...ordensBase,
+    ...(pedido.tipo_entrega === 'instalacao' 
+      ? [pedido.ordens.instalacao] 
+      : pedido.tipo_entrega === 'entrega' 
+        ? [pedido.ordens.carregamento]
+        : []
+    ),
   ];
 
   const ordensExistentes = ordens.filter(o => o.existe);
