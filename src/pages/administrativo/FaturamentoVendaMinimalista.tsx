@@ -69,6 +69,7 @@ export default function FaturamentoVendaMinimalista() {
   const [showRemoverFaturamentoDialog, setShowRemoverFaturamentoDialog] = useState(false);
   const [pedidoExistenteId, setPedidoExistenteId] = useState<string | null>(null);
   const [checkingPedido, setCheckingPedido] = useState(false);
+  const [hasPedido, setHasPedido] = useState<boolean | null>(null);
   const { createPedidoFromVenda, checkExistingPedido } = usePedidoCreation();
   const { removerFaturamento, isRemovendo } = useFaturamento();
 
@@ -89,8 +90,18 @@ export default function FaturamentoVendaMinimalista() {
   useEffect(() => {
     if (id) {
       fetchVenda();
+      checkPedidoExistente();
     }
   }, [id]);
+
+  const checkPedidoExistente = async () => {
+    if (!id) return;
+    const pedidoId = await checkExistingPedido(id);
+    setHasPedido(!!pedidoId);
+    if (pedidoId) {
+      setPedidoExistenteId(pedidoId);
+    }
+  };
 
   // Auto-faturar produtos pintura_epoxi com 30% de lucro
   useEffect(() => {
@@ -337,14 +348,41 @@ export default function FaturamentoVendaMinimalista() {
           </div>
 
           {vendaFaturada && (
-            <Button
-              variant="outline"
-              className="bg-orange-500/10 border-orange-500/30 text-orange-400 hover:bg-orange-500/20"
-              onClick={() => setShowRemoverFaturamentoDialog(true)}
-            >
-              <Undo2 className="h-4 w-4 mr-2" />
-              Remover Faturamento
-            </Button>
+            <div className="flex gap-2">
+              {/* Botão Criar Pedido - só aparece se não tem pedido */}
+              {hasPedido === false && (
+                <Button
+                  variant="outline"
+                  className="bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                  onClick={() => setShowPedidoDialog(true)}
+                >
+                  <Package className="h-4 w-4 mr-2" />
+                  Criar Pedido
+                </Button>
+              )}
+              
+              {/* Botão Acessar Pedido - só aparece se já tem pedido */}
+              {hasPedido === true && pedidoExistenteId && (
+                <Button
+                  variant="outline"
+                  className="bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20"
+                  onClick={() => navigate(`/administrativo/pedidos/${pedidoExistenteId}`)}
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Acessar Pedido
+                </Button>
+              )}
+              
+              {/* Botão Remover Faturamento */}
+              <Button
+                variant="outline"
+                className="bg-orange-500/10 border-orange-500/30 text-orange-400 hover:bg-orange-500/20"
+                onClick={() => setShowRemoverFaturamentoDialog(true)}
+              >
+                <Undo2 className="h-4 w-4 mr-2" />
+                Remover Faturamento
+              </Button>
+            </div>
           )}
         </div>
 
@@ -673,7 +711,7 @@ export default function FaturamentoVendaMinimalista() {
           {!checkingPedido && (
             <AlertDialogFooter>
               <AlertDialogCancel 
-                onClick={() => navigate('/administrativo/financeiro/faturamento')}
+                onClick={() => setShowPedidoDialog(false)}
                 className="bg-white/5 border-white/20 text-white hover:bg-white/10"
               >
                 Não, criar depois
@@ -688,6 +726,7 @@ export default function FaturamentoVendaMinimalista() {
                   
                   if (pedidoExistente) {
                     setPedidoExistenteId(pedidoExistente);
+                    setHasPedido(true);
                     setShowPedidoDialog(false);
                     setShowPedidoDuplicadoDialog(true);
                     return;
@@ -698,6 +737,8 @@ export default function FaturamentoVendaMinimalista() {
                   setCheckingPedido(false);
                   setShowPedidoDialog(false);
                   if (pedidoId) {
+                    setHasPedido(true);
+                    setPedidoExistenteId(pedidoId);
                     toast({
                       title: "Pedido criado com sucesso!",
                       description: "O pedido está pronto para ser preenchido.",
