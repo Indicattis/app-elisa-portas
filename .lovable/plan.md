@@ -1,70 +1,106 @@
 
-# Plano: Corrigir Exibicao de Data de Carregamento (Problema de Timezone)
+# Plano: Permitir Qualquer Usuario Abrir Downbar e Imprimir Etiquetas
 
-## Diagnostico do Problema
+## Situacao Atual
 
-### Dados encontrados no banco:
-- Tabela `instalacoes` para pedido 0092: `data_carregamento = '2026-02-02'` (correto)
-- Tabela `ordens_carregamento`: registro antigo com `data_carregamento = null`
-
-### Causa raiz:
-O codigo em `PedidoCard.tsx` usa `new Date(dataCarregamento)` para interpretar a string de data. Quando JavaScript recebe uma string no formato `'2026-02-02'`:
-- Interpreta como UTC: `2026-02-02T00:00:00Z`
-- No fuso horario de Sao Paulo (UTC-3), isso vira `2026-02-01T21:00:00-03:00`
-- Ao formatar com `format()`, mostra **01/02** em vez de **02/02**
-
-### Solucao padrao do projeto:
-O projeto ja usa `parseISO()` do date-fns em 31 arquivos para evitar esse problema. A funcao `parseISO` interpreta a data como local, mantendo o dia correto.
-
----
-
-## Correcao Proposta
-
-### Modificar `src/components/pedidos/PedidoCard.tsx`
-
-Substituir todas as instancias de `new Date(dataCarregamento)` por `parseISO(dataCarregamento)`:
-
-**Linhas afetadas:**
-- Linha 1181: `format(new Date(dataCarregamento), "dd/MM/yy")`
-- Linha 1197: `const dataCarreg = new Date(dataCarregamento);`
-- Linha 1215: `format(new Date(dataCarregamento), "dd/MM/yy")`
-- Linha 1225: `format(new Date(dataCarregamento), "dd/MM/yy")`
-- Linha 1707: `format(new Date(dataCarregamento), "dd/MM/yyyy")`
-
-**Codigo corrigido:**
+### Em `ProducaoKanban.tsx` (linhas 119-137):
+O `handleCardClick` bloqueia usuarios que nao sao o responsavel:
 ```typescript
-// Adicionar import
-import { format, parseISO } from "date-fns";
-
-// Linha 1181
-{format(parseISO(dataCarregamento), "dd/MM/yy")}
-
-// Linha 1197
-const dataCarreg = parseISO(dataCarregamento);
-
-// Linha 1215
-{format(parseISO(dataCarregamento), "dd/MM/yy")}
-
-// Linha 1225
-{format(parseISO(dataCarregamento), "dd/MM/yy")}
-
-// Linha 1707
-{format(parseISO(dataCarregamento), "dd/MM/yyyy")}
+if (!isAdmin) {
+  if (ordem.responsavel_id && ordem.responsavel_id !== currentUserId) {
+    toast.error(`Esta ordem pertence a ${ordem.admin_users?.nome || 'outro responsável'}`);
+    return;
+  }
+  if (!ordem.responsavel_id) {
+    toast.info("Capture a ordem primeiro para acessar os detalhes");
+    return;
+  }
+}
 ```
 
----
+### Em `OrdemDetalhesSheet.tsx`:
+Os botoes de impressao de etiquetas sao restritos ao responsavel:
+- Linha 708: `{linhas.length > 0 && isResponsavel && (` - Botao "Imprimir Todas"
+- Linha 855-868: Botao de impressao individual (pintura)
+- Linha 956-969: Botao de impressao individual (outras ordens)
+
+## Mudancas Necessarias
+
+### 1. Modificar `src/components/production/ProducaoKanban.tsx`
+
+Remover restricao de abertura da downbar - permitir que qualquer usuario abra:
+
+**Antes (linhas 119-137):**
+```typescript
+const handleCardClick = () => {
+  const isAdmin = currentUserRole === 'administrador';
+  
+  if (!isAdmin) {
+    if (ordem.responsavel_id && ordem.responsavel_id !== currentUserId) {
+      toast.error(`Esta ordem pertence a ${ordem.admin_users?.nome || 'outro responsável'}`);
+      return;
+    }
+    if (!ordem.responsavel_id) {
+      toast.info("Capture a ordem primeiro para acessar os detalhes");
+      return;
+    }
+  }
+  
+  onOrdemClick(ordem);
+};
+```
+
+**Depois:**
+```typescript
+const handleCardClick = () => {
+  onOrdemClick(ordem);
+};
+```
+
+### 2. Modificar `src/components/production/OrdemDetalhesSheet.tsx`
+
+Remover restricao `isResponsavel` dos botoes de impressao:
+
+**Linha 708:** Remover condicao `isResponsavel`
+```typescript
+// ANTES
+{linhas.length > 0 && isResponsavel && (
+
+// DEPOIS  
+{linhas.length > 0 && (
+```
+
+**Linhas 855-868 (pintura):** Remover condicao `isResponsavel`
+```typescript
+// ANTES
+{isResponsavel && (
+  <Button ...
+
+// DEPOIS
+<Button ...
+```
+
+**Linhas 956-969 (outras ordens):** Remover condicao `isResponsavel`
+```typescript
+// ANTES
+{isResponsavel && (
+  <Button ...
+
+// DEPOIS
+<Button ...
+```
 
 ## Arquivos a Modificar
 
-| Arquivo | Acao | Descricao |
-|---------|------|-----------|
-| `src/components/pedidos/PedidoCard.tsx` | Modificar | Substituir `new Date()` por `parseISO()` para datas de carregamento |
-
----
+| Arquivo | Linha | Acao |
+|---------|-------|------|
+| `src/components/production/ProducaoKanban.tsx` | 119-137 | Simplificar `handleCardClick` |
+| `src/components/production/OrdemDetalhesSheet.tsx` | 708 | Remover `isResponsavel` do botao "Imprimir Todas" |
+| `src/components/production/OrdemDetalhesSheet.tsx` | 855-868 | Remover `isResponsavel` do botao individual (pintura) |
+| `src/components/production/OrdemDetalhesSheet.tsx` | 956-969 | Remover `isResponsavel` do botao individual (outros) |
 
 ## Resultado Esperado
 
-Apos a correcao, o pedido 0092 exibira corretamente:
-- Data de carregamento: **02/02/26** (em vez de 01/02/26)
-
-Esta correcao tambem previne o mesmo problema em outros pedidos com datas de carregamento.
+- Qualquer usuario podera clicar em uma ordem e abrir a downbar
+- Qualquer usuario podera imprimir etiquetas de qualquer ordem
+- As restricoes de marcar itens como concluidos continuam inalteradas (apenas responsavel pode marcar)
