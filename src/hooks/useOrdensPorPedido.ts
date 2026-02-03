@@ -35,6 +35,11 @@ export interface OrdemStatus {
   capturada_em: string | null;
   tempo_acumulado_segundos: number | null;
   tempo_conclusao_segundos: number | null;
+  // Campos para agendamento (carregamento/instalação)
+  data_agendamento: string | null;
+  hora_agendamento: string | null;
+  responsavel_nome: string | null;
+  tipo_responsavel: 'elisa' | 'autorizados' | 'terceiro' | null;
 }
 
 export interface CorInfo {
@@ -166,11 +171,11 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
           .in('pedido_id', pedidoIds),
         supabase
           .from('ordens_carregamento')
-          .select('id, pedido_id, status, responsavel_carregamento_id, data_carregamento, carregamento_concluido')
+          .select('id, pedido_id, status, responsavel_carregamento_id, responsavel_carregamento_nome, tipo_carregamento, data_carregamento, hora_carregamento, carregamento_concluido')
           .in('pedido_id', pedidoIds),
         supabase
           .from('instalacoes')
-          .select('id, pedido_id, status, responsavel_instalacao_id, responsavel_carregamento_id, data_instalacao, instalacao_concluida, carregamento_concluido')
+          .select('id, pedido_id, status, responsavel_instalacao_id, responsavel_instalacao_nome, tipo_instalacao, data_instalacao, hora, instalacao_concluida')
           .in('pedido_id', pedidoIds),
         vendaIds.length > 0
           ? supabase
@@ -285,6 +290,10 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
         ordensMap[ordem.pedido_id]['carregamento'] = {
           ...ordem,
           responsavel_id: ordem.responsavel_carregamento_id,
+          responsavel_nome: ordem.responsavel_carregamento_nome,
+          tipo_responsavel: ordem.tipo_carregamento,
+          data_agendamento: ordem.data_carregamento,
+          hora_agendamento: ordem.hora_carregamento,
           status: ordem.carregamento_concluido ? 'concluido' : (ordem.data_carregamento ? 'agendado' : 'pendente'),
         };
       });
@@ -297,6 +306,10 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
         ordensMap[ordem.pedido_id]['instalacao'] = {
           ...ordem,
           responsavel_id: ordem.responsavel_instalacao_id,
+          responsavel_nome: ordem.responsavel_instalacao_nome,
+          tipo_responsavel: ordem.tipo_instalacao,
+          data_agendamento: ordem.data_instalacao,
+          hora_agendamento: ordem.hora,
           status: ordem.instalacao_concluida ? 'concluido' : (ordem.data_instalacao ? 'agendado' : 'pendente'),
         };
       });
@@ -407,6 +420,11 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
             capturada_em: ordem?.capturada_em || null,
             tempo_acumulado_segundos: ordem?.tempo_acumulado_segundos || null,
             tempo_conclusao_segundos: ordem?.tempo_conclusao_segundos || null,
+            // Campos para agendamento (carregamento/instalação)
+            data_agendamento: ordem?.data_agendamento || null,
+            hora_agendamento: ordem?.hora_agendamento || null,
+            responsavel_nome: ordem?.responsavel_nome || null,
+            tipo_responsavel: ordem?.tipo_responsavel || null,
           };
         };
 

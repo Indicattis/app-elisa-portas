@@ -298,6 +298,10 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
       capturada_em: null,
       tempo_acumulado_segundos: null,
       tempo_conclusao_segundos: null,
+      data_agendamento: null,
+      hora_agendamento: null,
+      responsavel_nome: null,
+      tipo_responsavel: null,
     };
     setOrdemSelecionada(ordemStatus);
     setShowOrdemLinhas(true);
