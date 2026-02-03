@@ -1,77 +1,45 @@
 
-# Plano: Calcular Metragem Linear ao Concluir Ordem de Perfiladeira
+# Plano: Corrigir Metragem das Ordens do Giovanni
 
 ## Problema Identificado
 
-A função `concluirOrdem` em `useOrdemProducao.ts` não calcula o campo `metragem_linear` antes de concluir ordens de perfiladeira.
+Giovanni Jean da Silva tem **6 ordens de perfiladeira concluídas com metragem_linear = 0** que deveriam ter valores corretos. A mais crítica é a **OPE-2026-0047** que está dentro do período da meta ativa.
 
-### Dados da Ordem OPE-2026-0038:
-| Campo | Valor |
-|-------|-------|
-| metragem_linear | 0 (deveria ser ~1725m) |
-| Linhas | 17 linhas com tamanho preenchido |
-| Meta do colaborador | 10.000 metros |
-| Progresso atual | 0 metros |
+## Ordens a Corrigir
 
-## Solucao
+| Ordem | Metragem Calculada |
+|-------|-------------------|
+| OPE-2026-0047 | 1.516,32m |
+| OPE-2026-0050 | 323,44m |
+| OPE-2026-0049 | 144,16m |
+| OPE-2026-0048 | 80,32m |
+| OPE-2026-0044 | 579,00m |
+| OPE-2026-0040 | 126,69m |
+| **Total** | **2.769,93m** |
 
-### 1. Modificar `src/hooks/useOrdemProducao.ts`
+## Solução
 
-Na funcao `concluirOrdem`, antes de atualizar a ordem, calcular a metragem das linhas para ordens de perfiladeira:
-
-```typescript
-// Na função concluirOrdem, após marcar linhas como concluídas (linha 529):
-
-// Para ordens de perfiladeira, calcular metragem_linear das linhas
-if (tipoOrdem === 'perfiladeira') {
-  const { data: linhas } = await supabase
-    .from('linhas_ordens')
-    .select('quantidade, tamanho')
-    .eq('ordem_id', ordemId)
-    .eq('tipo_ordem', 'perfiladeira');
-  
-  if (linhas) {
-    const metragemTotal = linhas.reduce((acc, linha) => {
-      const metros = parseFloat(String(linha.tamanho || '0').replace(',', '.')) || 0;
-      const quantidade = linha.quantidade || 1;
-      return acc + (metros * quantidade);
-    }, 0);
-    
-    updateData.metragem_linear = metragemTotal;
-  }
-}
-```
-
-### 2. Correcao Imediata da Ordem OPE-2026-0038
-
-Executar uma query para calcular e atualizar a metragem da ordem que ja foi concluida:
+Executar uma query SQL para atualizar a metragem_linear de todas as ordens afetadas:
 
 ```sql
--- Calcular metragem das linhas da ordem
-WITH metragem AS (
-  SELECT 
-    SUM(
-      (CAST(REPLACE(COALESCE(tamanho, '0'), ',', '.') AS NUMERIC)) 
-      * COALESCE(quantidade, 1)
-    ) as total
-  FROM linhas_ordens 
-  WHERE ordem_id = '95f9bcf5-b030-4b00-aea2-e64c2447e209'
-)
-UPDATE ordens_perfiladeira 
-SET metragem_linear = (SELECT total FROM metragem)
-WHERE id = '95f9bcf5-b030-4b00-aea2-e64c2447e209';
+-- Atualizar metragem das ordens do Giovanni
+UPDATE ordens_perfiladeira SET metragem_linear = 1516.32 WHERE id = '6ff87734-c222-466f-8ec2-1b98554aa366';
+UPDATE ordens_perfiladeira SET metragem_linear = 323.44 WHERE id = '81f76a52-f16c-41a7-b5a2-e207f36d76e8';
+UPDATE ordens_perfiladeira SET metragem_linear = 144.16 WHERE id = '39e37d1f-926a-4a48-9fa3-f5c2b7d2042f';
+UPDATE ordens_perfiladeira SET metragem_linear = 80.32 WHERE id = 'f0c518c2-5a6d-4f20-91a6-0eb15e4c8c55';
+UPDATE ordens_perfiladeira SET metragem_linear = 579.00 WHERE id = '3d959980-7c36-440d-9617-e3f081bec6f9';
+UPDATE ordens_perfiladeira SET metragem_linear = 126.69 WHERE id = 'b3932605-3c88-46dd-acf8-8a9750d3e534';
 ```
 
-## Fluxo Corrigido
+## Impacto na Meta
 
-1. Operador conclui ordem de perfiladeira
-2. Sistema busca todas as linhas da ordem
-3. **NOVO:** Sistema calcula metragem total (tamanho x quantidade para cada linha)
-4. **NOVO:** Sistema salva `metragem_linear` na ordem
-5. Meta do colaborador contabiliza corretamente o progresso
+Após a correção:
+- Meta do Giovanni: 10.000 metros (período 02/02 a 06/02)
+- Progresso atual: 0 metros
+- **Novo progresso**: 1.516,32m (15,16%)
 
 ## Resultado Esperado
 
-- Ordem OPE-2026-0038 tera ~1725 metros registrados
-- Meta do Joao Vitor mostrara progresso de ~1725/10000 metros (17,25%)
-- Futuras ordens de perfiladeira terao metragem calculada automaticamente
+- Todas as 6 ordens terão metragem_linear corrigida
+- A meta do Giovanni mostrará progresso de ~1.516m/10.000m
+- O código já foi corrigido anteriormente, então futuras ordens calcularão automaticamente
