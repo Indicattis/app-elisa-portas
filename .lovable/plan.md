@@ -1,43 +1,100 @@
 
+# Plano: Adicionar Botao para Resolver Problema de Linha na Sidebar de Ordens
 
-# Plano: Adicionar Rotas de Conferencia ao Gerenciamento de Permissoes
+## Objetivo
 
-## Problema
+Adicionar um botao para resolver o problema de linhas marcadas com `com_problema` na sidebar lateral direita da pagina `/fabrica/ordens-pedidos` (componente `OrdemLinhasSheet`).
 
-As rotas de conferencia de estoque e almoxarifado existem no codigo da aplicacao, mas nao estao registradas na tabela `app_routes`. Por isso, nao aparecem na interface de gerenciamento de permissoes quando a interface "Producao" esta selecionada.
+## Arquivo a Modificar
 
-## Rotas a Adicionar
+| Arquivo | Modificacao |
+|---------|-------------|
+| `src/components/fabrica/OrdemLinhasSheet.tsx` | Adicionar mutation e botoes para resolver problemas |
 
-| Rota | Path | Label |
-|------|------|-------|
-| producao_conferencia_estoque | /producao/conferencia-estoque | Conferencia - Estoque da Fabrica |
-| producao_conferencia_almox | /producao/conferencia-almox | Conferencia - Almoxarifado |
+## Mudancas Tecnicas
 
-## Solucao
+### 1. Adicionar Mutation para Resolver Problema
 
-Executar uma query SQL para inserir as rotas de conferencia na tabela `app_routes` com `interface='producao'`.
+Adicionar uma mutation similar a que existe em `useOrdemProducao.ts`:
 
-```sql
-INSERT INTO app_routes (key, path, label, description, interface, active, sort_order)
-VALUES 
-  ('producao_conferencia_estoque', '/producao/conferencia-estoque', 'Conferência - Estoque', 'Conferência de estoque da fábrica', 'producao', true, 10),
-  ('producao_conferencia_almox', '/producao/conferencia-almox', 'Conferência - Almoxarifado', 'Conferência de produtos do almoxarifado', 'producao', true, 11);
+```typescript
+const resolverProblema = useMutation({
+  mutationFn: async (linhaId: string) => {
+    const { error } = await supabase
+      .from('linhas_ordens')
+      .update({
+        com_problema: false,
+        problema_descricao: null,
+        problema_reportado_em: null,
+        problema_reportado_por: null,
+      })
+      .eq('id', linhaId);
+
+    if (error) throw error;
+    return linhaId;
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['linhas-ordem', ordem?.id, ordem?.tipo] });
+    queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
+    toastHook({
+      title: "Problema resolvido",
+      description: "O item foi marcado como disponível.",
+    });
+  },
+  onError: () => {
+    toastHook({
+      title: "Erro",
+      description: "Não foi possível resolver o problema.",
+      variant: "destructive",
+    });
+  },
+});
 ```
 
-## Passos de Implementacao
+### 2. Adicionar Botao no Alerta de Linhas com Problema
 
-1. **Executar a query SQL** no banco de dados para adicionar as rotas
-2. As rotas aparecerao automaticamente na interface de permissoes ao selecionar "Producao"
-3. Nenhuma alteracao de codigo e necessaria - o componente `UserRouteAccessManager` ja busca todas as rotas com `interface='producao'`
+Na secao do alerta (linhas 304-318), adicionar um botao ao lado de cada linha com problema:
+
+```tsx
+{linhas.filter(l => l.com_problema).map(linha => (
+  <div key={linha.id} className="flex items-center justify-between gap-2">
+    <p className="text-sm text-white flex-1">
+      • {linha.estoque?.nome_produto || linha.item} - Qtd: {linha.quantidade}
+      {linha.tamanho && ` - Tam: ${linha.tamanho}`}
+    </p>
+    <Button
+      size="sm"
+      variant="ghost"
+      className="h-6 w-6 p-0 text-green-400 hover:text-green-300 hover:bg-green-500/20"
+      onClick={() => resolverProblema.mutate(linha.id)}
+      disabled={resolverProblema.isPending}
+      title="Resolver problema"
+    >
+      <CheckCircle2 className="h-4 w-4" />
+    </Button>
+  </div>
+))}
+```
+
+### 3. Adicionar Indicador Visual nas Linhas da Lista
+
+Na lista de linhas (linhas 420-478), adicionar indicador visual e botao para linhas com problema:
+
+- Adicionar borda/fundo vermelho para linhas com `com_problema`
+- Adicionar botao de resolver problema ao lado do botao de impressao
+- Importar icone `CheckCircle2` do lucide-react
+
+## Fluxo de Uso
+
+1. Usuario abre a sidebar de uma ordem com linhas problemáticas
+2. No alerta vermelho, ve as linhas com problema listadas
+3. Clica no botao verde (check) ao lado da linha
+4. Sistema limpa o flag `com_problema` e atualiza a interface
+5. Linha volta ao estado normal e pode ser concluida
 
 ## Resultado Esperado
 
-Ao selecionar a interface "Producao" em `/admin/permissions`:
-- Aparecerao as rotas existentes (Solda, Perfiladeira, Separacao, etc.)
-- **Novas:** Conferencia - Estoque e Conferencia - Almoxarifado
-- O administrador podera conceder/revogar acesso a essas rotas por usuario
-
-## Observacao
-
-Apos inserir as rotas no banco, pode ser necessario verificar se os componentes de producao que renderizam os links de conferencia (como `ProducaoHome.tsx`) respeitam as permissoes. Atualmente, os cards de conferencia sao exibidos fixamente - se desejar, posso tambem adicionar verificacao de permissao nesses links.
-
+A sidebar em `/fabrica/ordens-pedidos` permitira:
+- Visualizar claramente quais linhas tem problema (destacadas em vermelho)
+- Resolver problemas diretamente com um clique
+- Continuar o fluxo de producao sem precisar acessar outra interface
