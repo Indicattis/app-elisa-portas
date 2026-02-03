@@ -117,22 +117,6 @@ function OrdemCard({
   };
 
   const handleCardClick = () => {
-    const isAdmin = currentUserRole === 'administrador';
-    
-    // Administradores podem abrir qualquer ordem
-    if (!isAdmin) {
-      // Somente o responsável pode abrir a downbar
-      if (ordem.responsavel_id && ordem.responsavel_id !== currentUserId) {
-        toast.error(`Esta ordem pertence a ${ordem.admin_users?.nome || 'outro responsável'}`);
-        return;
-      }
-      
-      if (!ordem.responsavel_id) {
-        toast.info("Capture a ordem primeiro para acessar os detalhes");
-        return;
-      }
-    }
-    
     onOrdemClick(ordem);
   };
 
