@@ -9,7 +9,7 @@ import { OrdemCronometro } from "./OrdemCronometro";
 
 interface PedidoOrdemCardProps {
   pedido: PedidoComOrdens;
-  onOrdemClick: (ordem: OrdemStatus) => void;
+  onOrdemClick: (ordem: OrdemStatus, pedido: PedidoComOrdens) => void;
 }
 
 const ORDEM_LABELS: Record<TipoOrdem, string> = {
@@ -206,7 +206,7 @@ export function PedidoOrdemCard({ pedido, onOrdemClick }: PedidoOrdemCardProps) 
               {ordens.map((ordem) => (
                 <button
                   key={ordem.tipo}
-                  onClick={() => ordem.existe && onOrdemClick(ordem)}
+                  onClick={() => ordem.existe && onOrdemClick(ordem, pedido)}
                   disabled={!ordem.existe}
                   className={cn(
                     "px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",

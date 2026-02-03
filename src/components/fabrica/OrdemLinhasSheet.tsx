@@ -3,18 +3,23 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { Loader2, Package, RefreshCw, Pause, UserMinus } from "lucide-react";
+import { Loader2, Package, RefreshCw, Pause, UserMinus, Printer } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useLinhasOrdem, LinhaOrdem } from "@/hooks/useLinhasOrdem";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { RemoverResponsavelModal } from "@/components/pedidos/RemoverResponsavelModal";
+import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
+import { gerarPDFEtiquetaProducao } from "@/utils/etiquetasPDFGenerator";
 import type { OrdemStatus, TipoOrdem } from "@/hooks/useOrdensPorPedido";
 
 interface OrdemLinhasSheetProps {
   ordem: OrdemStatus | null;
+  numeroPedido?: string;
+  clienteNome?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -38,10 +43,19 @@ const TABLE_MAP: Record<TipoOrdem, string> = {
 // Tipos que suportam regeneração de linhas
 const TIPOS_COM_REGENERACAO: TipoOrdem[] = ['soldagem', 'perfiladeira', 'separacao', 'qualidade', 'pintura'];
 
-export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheetProps) {
-  const { toast } = useToast();
+const TIPO_ORDEM_ETIQUETA: Record<TipoOrdem, string> = {
+  soldagem: 'Soldagem',
+  perfiladeira: 'Perfiladeira',
+  separacao: 'Separação',
+  qualidade: 'Qualidade',
+  pintura: 'Pintura',
+};
+
+export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpenChange }: OrdemLinhasSheetProps) {
+  const { toast: toastHook } = useToast();
   const queryClient = useQueryClient();
   const [showRemoverModal, setShowRemoverModal] = useState(false);
+  const { calcularEtiquetasLinha } = useEtiquetasProducao();
   
   const { data: linhas = [], isLoading } = useLinhasOrdem(
     ordem?.id || null, 
@@ -79,7 +93,7 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
       if (context?.previousLinhas) {
         queryClient.setQueryData(['linhas-ordem', ordem?.id, ordem?.tipo], context.previousLinhas);
       }
-      toast({
+      toastHook({
         title: "Erro",
         description: "Não foi possível atualizar a linha.",
         variant: "destructive",
@@ -87,7 +101,7 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
-      toast({ title: "Atualizado" });
+      toastHook({ title: "Atualizado" });
     },
   });
 
@@ -123,14 +137,14 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
       console.log('[regenerarLinhas] Sucesso:', data);
       queryClient.invalidateQueries({ queryKey: ['linhas-ordem', ordem?.id, ordem?.tipo] });
       queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
-      toast({
+      toastHook({
         title: "Linhas regeneradas",
         description: `${data.linhas_criadas} linhas foram recriadas.`,
       });
     },
     onError: (error) => {
       console.error('[regenerarLinhas] onError:', error);
-      toast({
+      toastHook({
         title: "Erro",
         description: error instanceof Error ? error.message : "Não foi possível regenerar as linhas.",
         variant: "destructive",
@@ -157,13 +171,13 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
       setShowRemoverModal(false);
-      toast({
+      toastHook({
         title: "Responsável removido",
         description: "A ordem está disponível para captura novamente.",
       });
     },
     onError: () => {
-      toast({
+      toastHook({
         title: "Erro",
         description: "Não foi possível remover o responsável.",
         variant: "destructive",
@@ -178,6 +192,62 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
   // Pode remover responsável se: tem responsável E (está pausada OU status é pendente)
   const podeRemoverResponsavel = ordem?.responsavel && 
     (ordem?.pausada || ordem?.status === 'pendente');
+
+  const handleImprimirEtiqueta = (linha: LinhaOrdem) => {
+    try {
+      const linhaParaCalculo = {
+        id: linha.id,
+        item: linha.estoque?.nome_produto || linha.item,
+        quantidade: linha.quantidade,
+        tamanho: linha.tamanho || undefined,
+        largura: linha.largura || undefined,
+        altura: linha.altura || undefined,
+      };
+      
+      const calculo = calcularEtiquetasLinha(linhaParaCalculo);
+      
+      const tag = {
+        tagNumero: 1,
+        totalTags: calculo.etiquetasNecessarias,
+        nomeProduto: calculo.nomeProduto,
+        numeroPedido: numeroPedido || ordem?.numero_ordem || '',
+        quantidade: calculo.quantidade,
+        largura: calculo.largura,
+        altura: calculo.altura,
+        clienteNome: clienteNome,
+        tamanho: linha.tamanho,
+        origemOrdem: ordem?.tipo ? TIPO_ORDEM_ETIQUETA[ordem.tipo] : undefined,
+        responsavelNome: ordem?.responsavel?.nome,
+        divisor: calculo.divisor,
+        quantidadeParcial: calculo.divisor ? Math.ceil(calculo.quantidade / calculo.divisor) : undefined,
+        quantidadeTotal: calculo.quantidade,
+      };
+      
+      const doc = gerarPDFEtiquetaProducao(tag);
+      
+      const blobUrl = String(doc.output('bloburl'));
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = 'none';
+      iframe.src = blobUrl;
+      document.body.appendChild(iframe);
+      
+      iframe.onload = () => {
+        setTimeout(() => {
+          iframe.contentWindow?.print();
+        }, 500);
+      };
+      
+      toast.success('1 etiqueta pronta para impressão');
+    } catch (error) {
+      console.error('Erro ao gerar etiqueta:', error);
+      toast.error('Erro ao gerar etiqueta');
+    }
+  };
 
   return (
     <>
@@ -330,13 +400,14 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
                 {/* Header */}
                 <div 
                   className="grid gap-2 px-2 py-1.5 text-[10px] text-zinc-500 uppercase tracking-wide border-b border-zinc-700/50"
-                  style={{ gridTemplateColumns: '24px 1fr 45px 55px 85px' }}
+                  style={{ gridTemplateColumns: '24px 1fr 45px 55px 85px 36px' }}
                 >
                   <span></span>
                   <span>Item</span>
                   <span className="text-center">Qtd</span>
                   <span className="text-center">Tam</span>
                   <span className="text-center">Dims</span>
+                  <span></span>
                 </div>
 
                 {/* Rows */}
@@ -349,7 +420,7 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
                         ? "bg-green-500/10 border-green-500/30"
                         : "bg-zinc-800/30 border-zinc-700/30 hover:bg-zinc-800/50"
                     )}
-                    style={{ gridTemplateColumns: '24px 1fr 45px 55px 85px', alignItems: 'center' }}
+                    style={{ gridTemplateColumns: '24px 1fr 45px 55px 85px 36px', alignItems: 'center' }}
                   >
                     <div className="flex items-center justify-center h-full">
                       <Checkbox
@@ -384,6 +455,18 @@ export function OrdemLinhasSheet({ ordem, open, onOpenChange }: OrdemLinhasSheet
                           ? `${linha.largura}x${linha.altura}` 
                           : '-'}
                       </span>
+                    </div>
+                    
+                    <div className="flex items-center justify-center h-full">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 hover:bg-zinc-700/50"
+                        onClick={() => handleImprimirEtiqueta(linha)}
+                        title="Imprimir etiqueta"
+                      >
+                        <Printer className="h-4 w-4 text-zinc-400 hover:text-white" />
+                      </Button>
                     </div>
                   </div>
                 ))}
