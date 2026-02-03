@@ -158,7 +158,7 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
           .in('pedido_id', pedidoIds),
         supabase
           .from('ordens_pintura')
-          .select('id, pedido_id, numero_ordem, status, responsavel_id, metragem_quadrada, capturada_em, tempo_acumulado_segundos, tempo_conclusao_segundos')
+          .select('id, pedido_id, numero_ordem, status, responsavel_id, metragem_quadrada, capturada_em, tempo_conclusao_segundos')
           .in('pedido_id', pedidoIds),
         vendaIds.length > 0
           ? supabase
