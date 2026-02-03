@@ -30,6 +30,8 @@ const TIPO_LABELS: Record<TipoOrdem, string> = {
   separacao: 'Separação',
   qualidade: 'Qualidade',
   pintura: 'Pintura',
+  carregamento: 'Carregamento',
+  instalacao: 'Instalação',
 };
 
 const TABLE_MAP: Record<TipoOrdem, string> = {
@@ -38,6 +40,8 @@ const TABLE_MAP: Record<TipoOrdem, string> = {
   separacao: 'ordens_separacao',
   qualidade: 'ordens_qualidade',
   pintura: 'ordens_pintura',
+  carregamento: 'ordens_carregamento',
+  instalacao: 'instalacoes',
 };
 
 // Tipos que suportam regeneração de linhas
@@ -49,6 +53,8 @@ const TIPO_ORDEM_ETIQUETA: Record<TipoOrdem, string> = {
   separacao: 'Separação',
   qualidade: 'Qualidade',
   pintura: 'Pintura',
+  carregamento: 'Carregamento',
+  instalacao: 'Instalação',
 };
 
 export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpenChange }: OrdemLinhasSheetProps) {

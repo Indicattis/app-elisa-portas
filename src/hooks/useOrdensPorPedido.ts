@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 
-export type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
+export type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura' | 'carregamento' | 'instalacao';
 
 export interface ResponsavelInfo {
   nome: string;
@@ -68,6 +68,8 @@ export interface PedidoComOrdens {
     separacao: OrdemStatus;
     qualidade: OrdemStatus;
     pintura: OrdemStatus;
+    carregamento: OrdemStatus;
+    instalacao: OrdemStatus;
   };
 }
 
@@ -122,6 +124,8 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
         separacaoRes,
         qualidadeRes,
         pinturaRes,
+        carregamentoRes,
+        instalacaoRes,
         produtosRes,
         linhasRes,
       ] = await Promise.all([
@@ -160,6 +164,14 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
           .from('ordens_pintura')
           .select('id, pedido_id, numero_ordem, status, responsavel_id, metragem_quadrada, capturada_em, tempo_conclusao_segundos')
           .in('pedido_id', pedidoIds),
+        supabase
+          .from('ordens_carregamento')
+          .select('id, pedido_id, status, responsavel_carregamento_id, data_carregamento, carregamento_concluido')
+          .in('pedido_id', pedidoIds),
+        supabase
+          .from('instalacoes')
+          .select('id, pedido_id, status, responsavel_instalacao_id, responsavel_carregamento_id, data_instalacao, instalacao_concluida, carregamento_concluido')
+          .in('pedido_id', pedidoIds),
         vendaIds.length > 0
           ? supabase
               .from('produtos_vendas')
@@ -188,6 +200,14 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
             if (o.responsavel_id) allResponsavelIds.add(o.responsavel_id);
           });
         });
+      // Adicionar responsáveis de carregamento e instalação
+      carregamentoRes.data?.forEach((o: any) => {
+        if (o.responsavel_carregamento_id) allResponsavelIds.add(o.responsavel_carregamento_id);
+      });
+      instalacaoRes.data?.forEach((o: any) => {
+        if (o.responsavel_instalacao_id) allResponsavelIds.add(o.responsavel_instalacao_id);
+        if (o.responsavel_carregamento_id) allResponsavelIds.add(o.responsavel_carregamento_id);
+      });
 
       // Buscar dados dos responsáveis
       let responsaveisMap: Record<string, ResponsavelInfo> = {};
@@ -256,6 +276,30 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
       processOrdens(separacaoRes.data, 'separacao');
       processOrdens(qualidadeRes.data, 'qualidade');
       processOrdens(pinturaRes.data, 'pintura');
+      
+      // Processar carregamento - mapear responsavel_carregamento_id para responsavel_id
+      carregamentoRes.data?.forEach((ordem: any) => {
+        if (!ordensMap[ordem.pedido_id]) {
+          ordensMap[ordem.pedido_id] = {} as Record<TipoOrdem, any>;
+        }
+        ordensMap[ordem.pedido_id]['carregamento'] = {
+          ...ordem,
+          responsavel_id: ordem.responsavel_carregamento_id,
+          status: ordem.carregamento_concluido ? 'concluido' : (ordem.data_carregamento ? 'agendado' : 'pendente'),
+        };
+      });
+      
+      // Processar instalação - mapear responsavel_instalacao_id para responsavel_id
+      instalacaoRes.data?.forEach((ordem: any) => {
+        if (!ordensMap[ordem.pedido_id]) {
+          ordensMap[ordem.pedido_id] = {} as Record<TipoOrdem, any>;
+        }
+        ordensMap[ordem.pedido_id]['instalacao'] = {
+          ...ordem,
+          responsavel_id: ordem.responsavel_instalacao_id,
+          status: ordem.instalacao_concluida ? 'concluido' : (ordem.data_instalacao ? 'agendado' : 'pendente'),
+        };
+      });
 
       // Consolidar pedidos com ordens
       const resultado: PedidoComOrdens[] = pedidos.map(pedido => {
@@ -386,6 +430,8 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
             separacao: criarOrdemStatus('separacao'),
             qualidade: criarOrdemStatus('qualidade'),
             pintura: criarOrdemStatus('pintura'),
+            carregamento: criarOrdemStatus('carregamento'),
+            instalacao: criarOrdemStatus('instalacao'),
           },
         };
       });

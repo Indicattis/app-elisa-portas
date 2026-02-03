@@ -18,6 +18,8 @@ const ORDEM_LABELS: Record<TipoOrdem, string> = {
   separacao: 'Separação',
   qualidade: 'Qualidade',
   pintura: 'Pintura',
+  carregamento: 'Carregamento',
+  instalacao: 'Instalação',
 };
 
 const getStatusStyle = (status: string | null, pausada: boolean = false) => {
