@@ -1,15 +1,22 @@
 
-# Plano: Exibir Ordens de Carregamento e Instalacao no Card de Pedido
 
-## Problema Identificado
+# Plano: Filtrar Ordens por Tipo de Entrega
 
-O hook `useOrdensPorPedido.ts` ja busca as ordens de carregamento e instalacao corretamente (linhas 167-174 e 280-302), mas o componente `PedidoOrdemCard.tsx` nao inclui essas ordens no array que e renderizado na interface.
+## Problema
+
+Pedidos com `tipo_entrega='instalacao'` estao exibindo tanto a ordem de Carregamento quanto a de Instalacao, quando deveriam exibir apenas a ordem de Instalacao.
+
+Dados do banco confirmam que alguns pedidos de instalacao possuem registros em ambas as tabelas (`ordens_carregamento` e `instalacoes`), provavelmente por um bug na criacao das ordens.
+
+## Solucao
+
+Filtrar as ordens exibidas no `PedidoOrdemCard` baseado no `tipo_entrega` do pedido.
 
 ## Mudancas Necessarias
 
 ### Modificar `src/components/fabrica/PedidoOrdemCard.tsx`
 
-**1. Adicionar ordens de carregamento e instalacao ao array (linhas 57-63):**
+**Linhas 61-69 - Aplicar filtro condicional:**
 
 ```typescript
 // ANTES
@@ -19,54 +26,48 @@ const ordens: OrdemStatus[] = [
   pedido.ordens.separacao,
   pedido.ordens.qualidade,
   pedido.ordens.pintura,
+  pedido.ordens.carregamento,
+  pedido.ordens.instalacao,
 ];
 
 // DEPOIS
-const ordens: OrdemStatus[] = [
+const ordensBase: OrdemStatus[] = [
   pedido.ordens.soldagem,
   pedido.ordens.perfiladeira,
   pedido.ordens.separacao,
   pedido.ordens.qualidade,
   pedido.ordens.pintura,
-  pedido.ordens.carregamento,
-  pedido.ordens.instalacao,
+];
+
+// Filtrar baseado no tipo_entrega
+// - Instalacao: mostrar apenas ordem de instalacao
+// - Entrega: mostrar apenas ordem de carregamento
+const ordens: OrdemStatus[] = [
+  ...ordensBase,
+  ...(pedido.tipo_entrega === 'instalacao' 
+    ? [pedido.ordens.instalacao] 
+    : pedido.tipo_entrega === 'entrega' 
+      ? [pedido.ordens.carregamento]
+      : [] // Sem tipo definido, nao mostrar nenhuma
+  ),
 ];
 ```
 
-**2. Adicionar status "agendado" na funcao getStatusStyle (linhas 25-39):**
+## Logica do Filtro
 
-```typescript
-case 'agendado':
-  return 'bg-purple-500/20 text-purple-300 border-purple-500/30 hover:bg-purple-500/30';
-```
-
-**3. Adicionar label para status "agendado" na funcao getStatusLabel (linhas 41-52):**
-
-```typescript
-case 'agendado':
-  return 'Agendado';
-```
+| tipo_entrega | Ordens Exibidas |
+|--------------|-----------------|
+| `instalacao` | Soldagem, Perfiladeira, Separacao, Qualidade, Pintura, **Instalacao** |
+| `entrega` | Soldagem, Perfiladeira, Separacao, Qualidade, Pintura, **Carregamento** |
+| `null` | Soldagem, Perfiladeira, Separacao, Qualidade, Pintura |
 
 ## Arquivos a Modificar
 
 | Arquivo | Linhas | Acao |
 |---------|--------|------|
-| `src/components/fabrica/PedidoOrdemCard.tsx` | 57-63 | Adicionar carregamento e instalacao ao array |
-| `src/components/fabrica/PedidoOrdemCard.tsx` | 25-39 | Adicionar estilo para status "agendado" |
-| `src/components/fabrica/PedidoOrdemCard.tsx` | 41-52 | Adicionar label para status "agendado" |
+| `src/components/fabrica/PedidoOrdemCard.tsx` | 61-69 | Aplicar filtro condicional baseado em tipo_entrega |
 
 ## Resultado Esperado
 
-Apos a correcao, ao expandir um card de pedido em `/fabrica/ordens-pedidos`, serao exibidos 7 badges de ordens:
-- Soldagem
-- Perfiladeira
-- Separacao
-- Qualidade
-- Pintura
-- **Carregamento** (novo)
-- **Instalacao** (novo)
+Na etapa "Instalacoes", pedidos com `tipo_entrega='instalacao'` mostrarao apenas a badge de **Instalacao** (nao mais Carregamento).
 
-Os status possiveis para carregamento/instalacao serao:
-- Pendente (amarelo) - sem data agendada
-- Agendado (roxo) - com data marcada
-- Concluido (verde) - finalizado
