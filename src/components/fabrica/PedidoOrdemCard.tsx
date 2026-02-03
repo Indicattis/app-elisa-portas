@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Truck, Wrench, Ruler, PaintBucket, Pause } from "lucide-react";
+import { ChevronDown, ChevronRight, Truck, Wrench, Ruler, PaintBucket, Pause, Calendar, Clock } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -239,6 +240,31 @@ export function PedidoOrdemCard({ pedido, onOrdemClick }: PedidoOrdemCardProps) 
                     <span className="text-[10px] opacity-80">
                       {ordem.pausada ? 'Pausada' : (ordem.existe ? getStatusLabel(ordem.status) : 'Sem ordem')}
                     </span>
+                    
+                    {/* Informações de agendamento para carregamento/instalação */}
+                    {(ordem.tipo === 'carregamento' || ordem.tipo === 'instalacao') && ordem.data_agendamento && (
+                      <div className="flex flex-col gap-0.5 mt-0.5">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-2.5 h-2.5 opacity-70" />
+                          <span className="text-[9px] opacity-70">
+                            {format(parseISO(ordem.data_agendamento), 'dd/MM')}
+                          </span>
+                          {ordem.hora_agendamento && (
+                            <>
+                              <Clock className="w-2.5 h-2.5 opacity-70 ml-1" />
+                              <span className="text-[9px] opacity-70">
+                                {ordem.hora_agendamento.slice(0, 5)}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        {ordem.responsavel_nome && (
+                          <span className="text-[9px] opacity-70 truncate max-w-[120px]">
+                            {ordem.responsavel_nome}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex items-center gap-1.5 flex-shrink-0">
