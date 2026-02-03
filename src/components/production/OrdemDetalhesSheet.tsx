@@ -124,6 +124,8 @@ interface OrdemDetalhesSheetProps {
   onMarcarLinhaProblema?: (linhaId: string, ordemId: string, descricao: string) => void;
   isMarkingProblem?: boolean;
   onMarcarCienteAlteracao?: (ordemId: string, tipoOrdem: string) => Promise<void>;
+  onResolverProblemaLinha?: (linhaId: string) => void;
+  isResolvingProblem?: boolean;
 }
 
 const TIPO_LABELS: Record<TipoOrdem, string> = {
@@ -162,6 +164,8 @@ export function OrdemDetalhesSheet({
   onMarcarLinhaProblema,
   isMarkingProblem = false,
   onMarcarCienteAlteracao,
+  onResolverProblemaLinha,
+  isResolvingProblem = false,
 }: OrdemDetalhesSheetProps) {
   const { user } = useAuth();
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
@@ -934,6 +938,23 @@ export function OrdemDetalhesSheet({
                       </div>
                       
                       <div className="flex items-center gap-1 flex-shrink-0">
+                        {/* Botão de resolver problema - apenas para o responsável e linhas com problema */}
+                        {linha.com_problema && isResponsavel && onResolverProblemaLinha && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-11 w-11 p-0 text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/30"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              onResolverProblemaLinha(linha.id);
+                            }}
+                            disabled={isResolvingProblem}
+                            title="Problema resolvido - liberar linha"
+                          >
+                            <Check className="h-5 w-5" />
+                          </Button>
+                        )}
+                        
                         {/* Botão de informar falta - apenas para o responsável e linhas não concluídas */}
                         {isResponsavel && !linha.concluida && !linha.com_problema && (tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira' || tipoOrdem === 'soldagem') && onMarcarLinhaProblema && (
                           <Button

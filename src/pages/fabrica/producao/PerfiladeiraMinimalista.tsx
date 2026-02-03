@@ -45,6 +45,7 @@ export default function PerfiladeiraMinimalista() {
     concluirOrdem,
     pausarOrdem,
     marcarLinhaComProblema,
+    resolverProblemaLinha,
   } = useOrdemProducao('perfiladeira', tentarAvancoAutomatico);
 
   const ordemSelecionada = ordens.find(o => o.id === ordemSelecionadaId) || null;
@@ -80,6 +81,10 @@ export default function PerfiladeiraMinimalista() {
   const handleMarcarLinhaProblema = (linhaId: string, ordemId: string, descricao: string) => {
     marcarLinhaComProblema.mutate({ linhaId, ordemId, descricao });
     setSheetOpen(false);
+  };
+
+  const handleResolverProblema = (linhaId: string) => {
+    resolverProblemaLinha.mutate({ linhaId });
   };
 
   const handleRefresh = () => {
@@ -118,6 +123,8 @@ export default function PerfiladeiraMinimalista() {
         isPausing={pausarOrdem.isPending}
         onMarcarLinhaProblema={handleMarcarLinhaProblema}
         isMarkingProblem={marcarLinhaComProblema.isPending}
+        onResolverProblemaLinha={handleResolverProblema}
+        isResolvingProblem={resolverProblemaLinha.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal

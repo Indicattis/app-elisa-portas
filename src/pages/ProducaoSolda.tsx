@@ -42,6 +42,7 @@ export default function ProducaoSolda() {
     marcarLinhaConcluida,
     concluirOrdem,
     pausarOrdem,
+    resolverProblemaLinha,
   } = useOrdemProducao('soldagem', tentarAvancoAutomatico);
 
   // Sincronizar ordem selecionada com cache atualizado
@@ -103,6 +104,8 @@ export default function ProducaoSolda() {
         isPausing={pausarOrdem.isPending}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
         isCapturing={capturarOrdem.isPending}
+        onResolverProblemaLinha={(linhaId) => resolverProblemaLinha.mutate({ linhaId })}
+        isResolvingProblem={resolverProblemaLinha.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal
