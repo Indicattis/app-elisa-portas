@@ -1,100 +1,91 @@
 
-# Plano: Adicionar Botao para Resolver Problema de Linha na Sidebar de Ordens
+# Plano: Corrigir Recaptura de Ordem Pausada com Linhas Problemáticas
 
-## Objetivo
+## Problema Identificado
 
-Adicionar um botao para resolver o problema de linhas marcadas com `com_problema` na sidebar lateral direita da pagina `/fabrica/ordens-pedidos` (componente `OrdemLinhasSheet`).
+Quando uma ordem pausada é recapturada, os seguintes campos são resetados:
+- `pausada: false` ✓
+- `pausada_em: null` ✓
+- `justificativa_pausa: null` ✓
 
-## Arquivo a Modificar
+Porém, **NÃO** são resetados:
+- `linha_problema_id` na ordem
+- `com_problema` nas linhas da tabela `linhas_ordens`
 
-| Arquivo | Modificacao |
+Isso impede que o operador conclua a ordem mesmo após recapturá-la, pois o botão "Concluir" fica oculto quando há linhas com problema.
+
+## Dados Atuais da Ordem OPE-2026-0047
+
+| Campo | Valor |
+|-------|-------|
+| pausada | true |
+| responsavel_id | null |
+| linha_problema_id | definido |
+| Linhas com `com_problema` | 4 de 6 |
+| Linhas `concluida` | 6 de 6 |
+
+## Solução
+
+Modificar a função `capturarOrdem` em `useOrdemProducao.ts` para também limpar os campos de problema das linhas quando uma ordem pausada é recapturada.
+
+### Arquivo a Modificar
+
+| Arquivo | Modificação |
 |---------|-------------|
-| `src/components/fabrica/OrdemLinhasSheet.tsx` | Adicionar mutation e botoes para resolver problemas |
+| `src/hooks/useOrdemProducao.ts` | Adicionar limpeza de `com_problema` das linhas ao recapturar ordem pausada |
 
-## Mudancas Tecnicas
+### Mudança no Código
 
-### 1. Adicionar Mutation para Resolver Problema
-
-Adicionar uma mutation similar a que existe em `useOrdemProducao.ts`:
+Na função `capturarOrdem`, após limpar os campos de pausa da ordem (linhas 354-358), adicionar a limpeza das linhas:
 
 ```typescript
-const resolverProblema = useMutation({
-  mutationFn: async (linhaId: string) => {
-    const { error } = await supabase
-      .from('linhas_ordens')
-      .update({
-        com_problema: false,
-        problema_descricao: null,
-        problema_reportado_em: null,
-        problema_reportado_por: null,
-      })
-      .eq('id', linhaId);
-
-    if (error) throw error;
-    return linhaId;
-  },
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['linhas-ordem', ordem?.id, ordem?.tipo] });
-    queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
-    toastHook({
-      title: "Problema resolvido",
-      description: "O item foi marcado como disponível.",
-    });
-  },
-  onError: () => {
-    toastHook({
-      title: "Erro",
-      description: "Não foi possível resolver o problema.",
-      variant: "destructive",
-    });
-  },
-});
+// Se a ordem estava pausada, resetar os campos de pausa mas manter tempo_acumulado
+if (ordemAtual?.pausada) {
+  updateData.pausada = false;
+  updateData.pausada_em = null;
+  updateData.justificativa_pausa = null;
+  updateData.linha_problema_id = null; // NOVO: Limpar referência à linha problema
+  updateData.capturada_em = new Date().toISOString();
+  
+  // NOVO: Limpar flags de problema das linhas associadas à ordem
+  await supabase
+    .from('linhas_ordens')
+    .update({
+      com_problema: false,
+      problema_descricao: null,
+      problema_reportado_em: null,
+      problema_reportado_por: null,
+    })
+    .eq('ordem_id', ordemId)
+    .eq('tipo_ordem', tipoOrdem);
+}
 ```
 
-### 2. Adicionar Botao no Alerta de Linhas com Problema
+## Fluxo Corrigido
 
-Na secao do alerta (linhas 304-318), adicionar um botao ao lado de cada linha com problema:
+1. Operador clica em "Capturar" na ordem pausada
+2. Sistema limpa `pausada`, `pausada_em`, `justificativa_pausa`, `linha_problema_id`
+3. **NOVO:** Sistema limpa `com_problema` de todas as linhas da ordem
+4. Operador pode trabalhar normalmente e concluir a ordem
 
-```tsx
-{linhas.filter(l => l.com_problema).map(linha => (
-  <div key={linha.id} className="flex items-center justify-between gap-2">
-    <p className="text-sm text-white flex-1">
-      • {linha.estoque?.nome_produto || linha.item} - Qtd: {linha.quantidade}
-      {linha.tamanho && ` - Tam: ${linha.tamanho}`}
-    </p>
-    <Button
-      size="sm"
-      variant="ghost"
-      className="h-6 w-6 p-0 text-green-400 hover:text-green-300 hover:bg-green-500/20"
-      onClick={() => resolverProblema.mutate(linha.id)}
-      disabled={resolverProblema.isPending}
-      title="Resolver problema"
-    >
-      <CheckCircle2 className="h-4 w-4" />
-    </Button>
-  </div>
-))}
+## Correção Imediata para OPE-2026-0047
+
+Além da correção no código, executar uma query para limpar os dados da ordem afetada:
+
+```sql
+-- Limpar flags de problema das linhas
+UPDATE linhas_ordens 
+SET com_problema = false, problema_descricao = null, problema_reportado_em = null, problema_reportado_por = null
+WHERE ordem_id = '6ff87734-c222-466f-8ec2-1b98554aa366';
+
+-- Limpar estado de pausa da ordem
+UPDATE ordens_perfiladeira 
+SET pausada = false, pausada_em = null, justificativa_pausa = null, linha_problema_id = null
+WHERE id = '6ff87734-c222-466f-8ec2-1b98554aa366';
 ```
-
-### 3. Adicionar Indicador Visual nas Linhas da Lista
-
-Na lista de linhas (linhas 420-478), adicionar indicador visual e botao para linhas com problema:
-
-- Adicionar borda/fundo vermelho para linhas com `com_problema`
-- Adicionar botao de resolver problema ao lado do botao de impressao
-- Importar icone `CheckCircle2` do lucide-react
-
-## Fluxo de Uso
-
-1. Usuario abre a sidebar de uma ordem com linhas problemáticas
-2. No alerta vermelho, ve as linhas com problema listadas
-3. Clica no botao verde (check) ao lado da linha
-4. Sistema limpa o flag `com_problema` e atualiza a interface
-5. Linha volta ao estado normal e pode ser concluida
 
 ## Resultado Esperado
 
-A sidebar em `/fabrica/ordens-pedidos` permitira:
-- Visualizar claramente quais linhas tem problema (destacadas em vermelho)
-- Resolver problemas diretamente com um clique
-- Continuar o fluxo de producao sem precisar acessar outra interface
+- Ao recapturar uma ordem pausada, todas as marcações de problema são automaticamente limpas
+- O operador pode começar a trabalhar imediatamente sem precisar resolver problemas manualmente
+- O botão "Concluir" aparece assim que todas as linhas estiverem marcadas como concluídas
