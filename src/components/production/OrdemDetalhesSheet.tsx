@@ -221,17 +221,49 @@ export function OrdemDetalhesSheet({
       
       const doc = gerarPDFEtiquetaProducao(tag);
       
-      // Abrir PDF em nova aba para impressão (evita erro cross-origin)
+      // Criar iframe oculto para impressão na aba atual
       const blobUrl = String(doc.output('bloburl'));
-      const printWindow = window.open(blobUrl, '_blank');
-      if (printWindow) {
-        printWindow.onload = () => {
-          printWindow.print();
-        };
-        toast.success('1 etiqueta pronta para impressão');
-      } else {
-        toast.error('Permita pop-ups para imprimir');
-      }
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '1px';
+      iframe.style.height = '1px';
+      iframe.style.border = 'none';
+      iframe.style.opacity = '0';
+      iframe.style.pointerEvents = 'none';
+      document.body.appendChild(iframe);
+      
+      iframe.onload = () => {
+        setTimeout(() => {
+          try {
+            iframe.contentWindow?.print();
+            
+            window.addEventListener('focus', () => {
+              setTimeout(() => {
+                if (document.body.contains(iframe)) {
+                  document.body.removeChild(iframe);
+                }
+              }, 100);
+            }, { once: true });
+            
+            setTimeout(() => {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+            }, 10000);
+          } catch (error) {
+            console.error('Erro ao imprimir:', error);
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
+          }
+        }, 500);
+      };
+      
+      iframe.src = blobUrl;
+      
+      toast.success('1 etiqueta pronta para impressão');
     } catch (error) {
       console.error('Erro ao gerar etiqueta:', error);
       toast.error('Erro ao gerar etiqueta');
@@ -334,17 +366,47 @@ export function OrdemDetalhesSheet({
       // Gerar PDF com todas as etiquetas
       const doc = gerarPDFEtiquetasProducaoMultiplas(todasTags);
       
-      // Abrir PDF em nova aba para impressão (evita erro cross-origin)
+      // Criar iframe oculto para impressão
       const blobUrl = String(doc.output('bloburl'));
-      const printWindow = window.open(blobUrl, '_blank');
-      if (printWindow) {
-        printWindow.onload = () => {
-          printWindow.print();
-        };
-        toast.success(`${todasTags.length} etiqueta(s) pronta(s) para impressão`);
-      } else {
-        toast.error('Permita pop-ups para imprimir');
-      }
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '1px';
+      iframe.style.height = '1px';
+      iframe.style.border = 'none';
+      iframe.style.opacity = '0';
+      iframe.style.pointerEvents = 'none';
+      document.body.appendChild(iframe);
+      
+      iframe.onload = () => {
+        setTimeout(() => {
+          try {
+            iframe.contentWindow?.print();
+            window.addEventListener('focus', () => {
+              setTimeout(() => {
+                if (document.body.contains(iframe)) {
+                  document.body.removeChild(iframe);
+                }
+              }, 100);
+            }, { once: true });
+            setTimeout(() => {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+            }, 10000);
+          } catch (error) {
+            console.error('Erro ao imprimir:', error);
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
+          }
+        }, 500);
+      };
+      
+      iframe.src = blobUrl;
+      
+      toast.success(`${todasTags.length} etiqueta(s) pronta(s) para impressão`);
     } catch (error) {
       console.error('Erro ao gerar etiquetas:', error);
       toast.error('Erro ao gerar etiquetas');
