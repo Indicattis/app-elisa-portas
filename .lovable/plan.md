@@ -1,73 +1,152 @@
 
 
-# Plano: Filtrar Ordens por Tipo de Entrega
+# Plano: Exibir Informacoes de Agendamento nas Ordens de Carregamento e Instalacao
 
-## Problema
+## Objetivo
 
-Pedidos com `tipo_entrega='instalacao'` estao exibindo tanto a ordem de Carregamento quanto a de Instalacao, quando deveriam exibir apenas a ordem de Instalacao.
-
-Dados do banco confirmam que alguns pedidos de instalacao possuem registros em ambas as tabelas (`ordens_carregamento` e `instalacoes`), provavelmente por um bug na criacao das ordens.
-
-## Solucao
-
-Filtrar as ordens exibidas no `PedidoOrdemCard` baseado no `tipo_entrega` do pedido.
+Mostrar data, hora e nome do responsavel (equipe/veiculo/autorizado) nas badges de carregamento e instalacao no card de pedido.
 
 ## Mudancas Necessarias
 
-### Modificar `src/components/fabrica/PedidoOrdemCard.tsx`
+### 1. Expandir Interface OrdemStatus
 
-**Linhas 61-69 - Aplicar filtro condicional:**
+**Arquivo:** `src/hooks/useOrdensPorPedido.ts`
+
+Adicionar novos campos na interface `OrdemStatus`:
+
+```typescript
+export interface OrdemStatus {
+  // ... campos existentes
+  
+  // Novos campos para agendamento (carregamento/instalacao)
+  data_agendamento: string | null;
+  hora_agendamento: string | null;
+  responsavel_nome: string | null;
+  tipo_responsavel: 'elisa' | 'autorizados' | 'terceiro' | null;
+}
+```
+
+### 2. Atualizar Query de Carregamento
+
+**Arquivo:** `src/hooks/useOrdensPorPedido.ts` (linhas 167-170)
 
 ```typescript
 // ANTES
-const ordens: OrdemStatus[] = [
-  pedido.ordens.soldagem,
-  pedido.ordens.perfiladeira,
-  pedido.ordens.separacao,
-  pedido.ordens.qualidade,
-  pedido.ordens.pintura,
-  pedido.ordens.carregamento,
-  pedido.ordens.instalacao,
-];
+supabase
+  .from('ordens_carregamento')
+  .select('id, pedido_id, status, responsavel_carregamento_id, data_carregamento, carregamento_concluido')
 
 // DEPOIS
-const ordensBase: OrdemStatus[] = [
-  pedido.ordens.soldagem,
-  pedido.ordens.perfiladeira,
-  pedido.ordens.separacao,
-  pedido.ordens.qualidade,
-  pedido.ordens.pintura,
-];
-
-// Filtrar baseado no tipo_entrega
-// - Instalacao: mostrar apenas ordem de instalacao
-// - Entrega: mostrar apenas ordem de carregamento
-const ordens: OrdemStatus[] = [
-  ...ordensBase,
-  ...(pedido.tipo_entrega === 'instalacao' 
-    ? [pedido.ordens.instalacao] 
-    : pedido.tipo_entrega === 'entrega' 
-      ? [pedido.ordens.carregamento]
-      : [] // Sem tipo definido, nao mostrar nenhuma
-  ),
-];
+supabase
+  .from('ordens_carregamento')
+  .select('id, pedido_id, status, responsavel_carregamento_id, responsavel_carregamento_nome, tipo_carregamento, data_carregamento, hora_carregamento, carregamento_concluido')
 ```
 
-## Logica do Filtro
+### 3. Atualizar Query de Instalacao
 
-| tipo_entrega | Ordens Exibidas |
-|--------------|-----------------|
-| `instalacao` | Soldagem, Perfiladeira, Separacao, Qualidade, Pintura, **Instalacao** |
-| `entrega` | Soldagem, Perfiladeira, Separacao, Qualidade, Pintura, **Carregamento** |
-| `null` | Soldagem, Perfiladeira, Separacao, Qualidade, Pintura |
+**Arquivo:** `src/hooks/useOrdensPorPedido.ts` (linhas 171-174)
 
-## Arquivos a Modificar
+```typescript
+// ANTES
+supabase
+  .from('instalacoes')
+  .select('id, pedido_id, status, responsavel_instalacao_id, responsavel_carregamento_id, data_instalacao, instalacao_concluida, carregamento_concluido')
 
-| Arquivo | Linhas | Acao |
-|---------|--------|------|
-| `src/components/fabrica/PedidoOrdemCard.tsx` | 61-69 | Aplicar filtro condicional baseado em tipo_entrega |
+// DEPOIS
+supabase
+  .from('instalacoes')
+  .select('id, pedido_id, status, responsavel_instalacao_id, responsavel_instalacao_nome, tipo_instalacao, data_instalacao, hora, instalacao_concluida')
+```
+
+### 4. Processar Dados no Mapeamento
+
+**Arquivo:** `src/hooks/useOrdensPorPedido.ts` (linhas 280-302)
+
+Incluir os novos campos ao processar carregamento e instalacao:
+
+```typescript
+// Carregamento
+ordensMap[ordem.pedido_id]['carregamento'] = {
+  ...ordem,
+  responsavel_id: ordem.responsavel_carregamento_id,
+  responsavel_nome: ordem.responsavel_carregamento_nome,
+  tipo_responsavel: ordem.tipo_carregamento,
+  data_agendamento: ordem.data_carregamento,
+  hora_agendamento: ordem.hora_carregamento,
+  status: ordem.carregamento_concluido ? 'concluido' : (ordem.data_carregamento ? 'agendado' : 'pendente'),
+};
+
+// Instalacao
+ordensMap[ordem.pedido_id]['instalacao'] = {
+  ...ordem,
+  responsavel_id: ordem.responsavel_instalacao_id,
+  responsavel_nome: ordem.responsavel_instalacao_nome,
+  tipo_responsavel: ordem.tipo_instalacao,
+  data_agendamento: ordem.data_instalacao,
+  hora_agendamento: ordem.hora,
+  status: ordem.instalacao_concluida ? 'concluido' : (ordem.data_instalacao ? 'agendado' : 'pendente'),
+};
+```
+
+### 5. Atualizar criarOrdemStatus
+
+**Arquivo:** `src/hooks/useOrdensPorPedido.ts` (linhas 382-411)
+
+Adicionar os novos campos no retorno:
+
+```typescript
+return {
+  // ... campos existentes
+  data_agendamento: ordem?.data_agendamento || null,
+  hora_agendamento: ordem?.hora_agendamento || null,
+  responsavel_nome: ordem?.responsavel_nome || null,
+  tipo_responsavel: ordem?.tipo_responsavel || null,
+};
+```
+
+### 6. Atualizar UI no PedidoOrdemCard
+
+**Arquivo:** `src/components/fabrica/PedidoOrdemCard.tsx`
+
+Mostrar informacoes de agendamento para ordens de carregamento/instalacao:
+
+```tsx
+{/* Dentro do botao de ordem */}
+<div className="flex flex-col items-start gap-0.5 min-w-0">
+  <span className="font-medium text-xs">{ORDEM_LABELS[ordem.tipo]}</span>
+  <span className="text-[10px] opacity-80">
+    {ordem.pausada ? 'Pausada' : (ordem.existe ? getStatusLabel(ordem.status) : 'Sem ordem')}
+  </span>
+  
+  {/* Novo: Informacoes de agendamento para carregamento/instalacao */}
+  {(ordem.tipo === 'carregamento' || ordem.tipo === 'instalacao') && ordem.data_agendamento && (
+    <div className="flex flex-col gap-0.5 mt-0.5">
+      <span className="text-[9px] opacity-70">
+        {format(new Date(ordem.data_agendamento + 'T00:00:00'), 'dd/MM')}
+        {ordem.hora_agendamento && ` ${ordem.hora_agendamento.slice(0, 5)}`}
+      </span>
+      {ordem.responsavel_nome && (
+        <span className="text-[9px] opacity-70 truncate max-w-[100px]">
+          {ordem.responsavel_nome}
+        </span>
+      )}
+    </div>
+  )}
+</div>
+```
+
+## Resumo de Arquivos
+
+| Arquivo | Acao |
+|---------|------|
+| `src/hooks/useOrdensPorPedido.ts` | Expandir interface, queries e mapeamento |
+| `src/components/fabrica/PedidoOrdemCard.tsx` | Exibir data, hora e responsavel |
 
 ## Resultado Esperado
 
-Na etapa "Instalacoes", pedidos com `tipo_entrega='instalacao'` mostrarao apenas a badge de **Instalacao** (nao mais Carregamento).
+As badges de Carregamento e Instalacao mostrarao:
+- **Status**: Pendente / Agendado / Concluido
+- **Data**: formato dd/MM (ex: 15/01)
+- **Hora**: formato HH:mm (ex: 08:00)
+- **Responsavel**: Nome da equipe, veiculo ou autorizado
 
