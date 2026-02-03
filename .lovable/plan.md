@@ -1,106 +1,79 @@
 
-# Plano: Permitir Qualquer Usuario Abrir Downbar e Imprimir Etiquetas
+# Plano: Corrigir Impressao de Etiquetas (Erro Cross-Origin)
 
-## Situacao Atual
+## Problema Identificado
 
-### Em `ProducaoKanban.tsx` (linhas 119-137):
-O `handleCardClick` bloqueia usuarios que nao sao o responsavel:
+O console mostra o erro:
+```
+SecurityError: Failed to read a named property 'print' from 'Window': 
+Blocked a frame with origin "...lovableproject.com" from accessing a cross-origin frame.
+```
+
+### Causa raiz:
+O codigo atual cria um iframe oculto e tenta chamar `iframe.contentWindow?.print()`. Isso funciona em ambientes locais, mas no ambiente do Lovable Preview, o blob URL do PDF e o iframe estao em contextos de origem diferentes, causando bloqueio de seguranca.
+
+### Funcoes afetadas em `OrdemDetalhesSheet.tsx`:
+1. `handleImprimirEtiqueta` (linhas 201-271) - impressao individual
+2. `handleImprimirTodasEtiquetas` (linhas 313-414) - impressao multipla
+
+---
+
+## Solucao Proposta
+
+Substituir a abordagem de iframe por `window.open()` para abrir o PDF em uma nova aba. O usuario podera então imprimir usando Ctrl+P ou o menu de impressao do navegador.
+
+### Modificacoes em `src/components/production/OrdemDetalhesSheet.tsx`
+
+**Funcao `handleImprimirEtiqueta` (linhas 222-266):**
 ```typescript
-if (!isAdmin) {
-  if (ordem.responsavel_id && ordem.responsavel_id !== currentUserId) {
-    toast.error(`Esta ordem pertence a ${ordem.admin_users?.nome || 'outro responsável'}`);
-    return;
-  }
-  if (!ordem.responsavel_id) {
-    toast.info("Capture a ordem primeiro para acessar os detalhes");
-    return;
-  }
+// ANTES - iframe oculto
+const blobUrl = String(doc.output('bloburl'));
+const iframe = document.createElement('iframe');
+// ... codigo do iframe ...
+iframe.contentWindow?.print();
+
+// DEPOIS - nova aba
+const blobUrl = String(doc.output('bloburl'));
+const printWindow = window.open(blobUrl, '_blank');
+if (printWindow) {
+  printWindow.onload = () => {
+    printWindow.print();
+  };
 }
 ```
 
-### Em `OrdemDetalhesSheet.tsx`:
-Os botoes de impressao de etiquetas sao restritos ao responsavel:
-- Linha 708: `{linhas.length > 0 && isResponsavel && (` - Botao "Imprimir Todas"
-- Linha 855-868: Botao de impressao individual (pintura)
-- Linha 956-969: Botao de impressao individual (outras ordens)
-
-## Mudancas Necessarias
-
-### 1. Modificar `src/components/production/ProducaoKanban.tsx`
-
-Remover restricao de abertura da downbar - permitir que qualquer usuario abra:
-
-**Antes (linhas 119-137):**
+**Funcao `handleImprimirTodasEtiquetas` (linhas 369-407):**
 ```typescript
-const handleCardClick = () => {
-  const isAdmin = currentUserRole === 'administrador';
-  
-  if (!isAdmin) {
-    if (ordem.responsavel_id && ordem.responsavel_id !== currentUserId) {
-      toast.error(`Esta ordem pertence a ${ordem.admin_users?.nome || 'outro responsável'}`);
-      return;
-    }
-    if (!ordem.responsavel_id) {
-      toast.info("Capture a ordem primeiro para acessar os detalhes");
-      return;
-    }
-  }
-  
-  onOrdemClick(ordem);
-};
+// ANTES - iframe oculto
+const blobUrl = String(doc.output('bloburl'));
+const iframe = document.createElement('iframe');
+// ... codigo do iframe ...
+iframe.contentWindow?.print();
+
+// DEPOIS - nova aba
+const blobUrl = String(doc.output('bloburl'));
+const printWindow = window.open(blobUrl, '_blank');
+if (printWindow) {
+  printWindow.onload = () => {
+    printWindow.print();
+  };
+}
 ```
 
-**Depois:**
-```typescript
-const handleCardClick = () => {
-  onOrdemClick(ordem);
-};
-```
-
-### 2. Modificar `src/components/production/OrdemDetalhesSheet.tsx`
-
-Remover restricao `isResponsavel` dos botoes de impressao:
-
-**Linha 708:** Remover condicao `isResponsavel`
-```typescript
-// ANTES
-{linhas.length > 0 && isResponsavel && (
-
-// DEPOIS  
-{linhas.length > 0 && (
-```
-
-**Linhas 855-868 (pintura):** Remover condicao `isResponsavel`
-```typescript
-// ANTES
-{isResponsavel && (
-  <Button ...
-
-// DEPOIS
-<Button ...
-```
-
-**Linhas 956-969 (outras ordens):** Remover condicao `isResponsavel`
-```typescript
-// ANTES
-{isResponsavel && (
-  <Button ...
-
-// DEPOIS
-<Button ...
-```
+---
 
 ## Arquivos a Modificar
 
-| Arquivo | Linha | Acao |
-|---------|-------|------|
-| `src/components/production/ProducaoKanban.tsx` | 119-137 | Simplificar `handleCardClick` |
-| `src/components/production/OrdemDetalhesSheet.tsx` | 708 | Remover `isResponsavel` do botao "Imprimir Todas" |
-| `src/components/production/OrdemDetalhesSheet.tsx` | 855-868 | Remover `isResponsavel` do botao individual (pintura) |
-| `src/components/production/OrdemDetalhesSheet.tsx` | 956-969 | Remover `isResponsavel` do botao individual (outros) |
+| Arquivo | Linhas | Acao |
+|---------|--------|------|
+| `src/components/production/OrdemDetalhesSheet.tsx` | 222-266 | Substituir iframe por window.open em `handleImprimirEtiqueta` |
+| `src/components/production/OrdemDetalhesSheet.tsx` | 369-407 | Substituir iframe por window.open em `handleImprimirTodasEtiquetas` |
+
+---
 
 ## Resultado Esperado
 
-- Qualquer usuario podera clicar em uma ordem e abrir a downbar
-- Qualquer usuario podera imprimir etiquetas de qualquer ordem
-- As restricoes de marcar itens como concluidos continuam inalteradas (apenas responsavel pode marcar)
+1. Ao clicar no icone de impressora, o PDF abre em uma nova aba
+2. O navegador dispara automaticamente o dialogo de impressao
+3. O usuario pode imprimir normalmente sem erros de seguranca
+4. Se o popup for bloqueado, o usuario pode permitir popups para o site
