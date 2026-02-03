@@ -1,45 +1,119 @@
 
-# Plano: Corrigir Metragem das Ordens do Giovanni
+# Plano: Adicionar Botão "Criar Pedido" para Vendas Já Faturadas
 
 ## Problema Identificado
 
-Giovanni Jean da Silva tem **6 ordens de perfiladeira concluídas com metragem_linear = 0** que deveriam ter valores corretos. A mais crítica é a **OPE-2026-0047** que está dentro do período da meta ativa.
+Na página `/administrativo/financeiro/faturamento/:id`, quando uma venda já está faturada:
+- Só aparece o botão "Remover Faturamento"
+- Não há opção para criar pedido de produção
+- O diálogo de criação só aparece após completar o faturamento
 
-## Ordens a Corrigir
+Vendas faturadas anteriormente ou quando o usuário clicou "Não, criar depois" ficam sem forma de gerar o pedido.
 
-| Ordem | Metragem Calculada |
-|-------|-------------------|
-| OPE-2026-0047 | 1.516,32m |
-| OPE-2026-0050 | 323,44m |
-| OPE-2026-0049 | 144,16m |
-| OPE-2026-0048 | 80,32m |
-| OPE-2026-0044 | 579,00m |
-| OPE-2026-0040 | 126,69m |
-| **Total** | **2.769,93m** |
+## Arquivo a Modificar
 
-## Solução
+| Arquivo | Modificação |
+|---------|-------------|
+| `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` | Adicionar botão "Criar Pedido" e lógica para verificar se já existe pedido |
 
-Executar uma query SQL para atualizar a metragem_linear de todas as ordens afetadas:
+## Mudanças Técnicas
 
-```sql
--- Atualizar metragem das ordens do Giovanni
-UPDATE ordens_perfiladeira SET metragem_linear = 1516.32 WHERE id = '6ff87734-c222-466f-8ec2-1b98554aa366';
-UPDATE ordens_perfiladeira SET metragem_linear = 323.44 WHERE id = '81f76a52-f16c-41a7-b5a2-e207f36d76e8';
-UPDATE ordens_perfiladeira SET metragem_linear = 144.16 WHERE id = '39e37d1f-926a-4a48-9fa3-f5c2b7d2042f';
-UPDATE ordens_perfiladeira SET metragem_linear = 80.32 WHERE id = 'f0c518c2-5a6d-4f20-91a6-0eb15e4c8c55';
-UPDATE ordens_perfiladeira SET metragem_linear = 579.00 WHERE id = '3d959980-7c36-440d-9617-e3f081bec6f9';
-UPDATE ordens_perfiladeira SET metragem_linear = 126.69 WHERE id = 'b3932605-3c88-46dd-acf8-8a9750d3e534';
+### 1. Adicionar State para Controle de Pedido Existente
+
+```typescript
+const [hasPedido, setHasPedido] = useState<boolean | null>(null);
 ```
 
-## Impacto na Meta
+### 2. Verificar se Existe Pedido ao Carregar a Venda
 
-Após a correção:
-- Meta do Giovanni: 10.000 metros (período 02/02 a 06/02)
-- Progresso atual: 0 metros
-- **Novo progresso**: 1.516,32m (15,16%)
+No `useEffect` que busca a venda, adicionar verificação:
+
+```typescript
+useEffect(() => {
+  if (id) {
+    fetchVenda();
+    checkPedidoExistente();
+  }
+}, [id]);
+
+const checkPedidoExistente = async () => {
+  if (!id) return;
+  const pedidoId = await checkExistingPedido(id);
+  setHasPedido(!!pedidoId);
+  if (pedidoId) {
+    setPedidoExistenteId(pedidoId);
+  }
+};
+```
+
+### 3. Adicionar Botão "Criar Pedido" no Header
+
+Ao lado do botão "Remover Faturamento", adicionar:
+
+```tsx
+{vendaFaturada && (
+  <div className="flex gap-2">
+    {/* Botão Criar Pedido - só aparece se não tem pedido */}
+    {hasPedido === false && (
+      <Button
+        variant="outline"
+        className="bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+        onClick={() => setShowPedidoDialog(true)}
+      >
+        <Package className="h-4 w-4 mr-2" />
+        Criar Pedido
+      </Button>
+    )}
+    
+    {/* Botão Acessar Pedido - só aparece se já tem pedido */}
+    {hasPedido === true && pedidoExistenteId && (
+      <Button
+        variant="outline"
+        className="bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20"
+        onClick={() => navigate(`/administrativo/pedidos/${pedidoExistenteId}`)}
+      >
+        <ExternalLink className="h-4 w-4 mr-2" />
+        Acessar Pedido
+      </Button>
+    )}
+    
+    {/* Botão Remover Faturamento */}
+    <Button
+      variant="outline"
+      className="bg-orange-500/10 border-orange-500/30 text-orange-400 hover:bg-orange-500/20"
+      onClick={() => setShowRemoverFaturamentoDialog(true)}
+    >
+      <Undo2 className="h-4 w-4 mr-2" />
+      Remover Faturamento
+    </Button>
+  </div>
+)}
+```
+
+### 4. Atualizar Lógica do Modal de Criação
+
+Após criar o pedido com sucesso, atualizar o state:
+
+```typescript
+const pedidoId = await createPedidoFromVenda(venda.id);
+if (pedidoId) {
+  setHasPedido(true);
+  setPedidoExistenteId(pedidoId);
+  // ... toast success
+}
+```
+
+## Fluxo de Uso
+
+1. Usuário acessa venda já faturada em `/administrativo/financeiro/faturamento/:id`
+2. Sistema verifica automaticamente se existe pedido vinculado
+3. Se NÃO existe pedido: mostra botão verde "Criar Pedido"
+4. Se JÁ existe pedido: mostra botão azul "Acessar Pedido"
+5. Ao clicar em "Criar Pedido", abre o diálogo de confirmação
+6. Após criar, o botão muda para "Acessar Pedido"
 
 ## Resultado Esperado
 
-- Todas as 6 ordens terão metragem_linear corrigida
-- A meta do Giovanni mostrará progresso de ~1.516m/10.000m
-- O código já foi corrigido anteriormente, então futuras ordens calcularão automaticamente
+- Vendas faturadas sem pedido poderão ter o pedido criado a qualquer momento
+- Vendas que já têm pedido mostrarão link direto para acessá-lo
+- Interface clara indicando o estado atual (com ou sem pedido)
