@@ -44,6 +44,7 @@ export default function SeparacaoMinimalista() {
     concluirOrdem,
     pausarOrdem,
     marcarLinhaComProblema,
+    resolverProblemaLinha,
   } = useOrdemProducao('separacao', tentarAvancoAutomatico);
 
   const ordemSelecionada = ordens.find(o => o.id === ordemSelecionadaId) || null;
@@ -81,6 +82,10 @@ export default function SeparacaoMinimalista() {
     setSheetOpen(false);
   };
 
+  const handleResolverProblema = (linhaId: string) => {
+    resolverProblemaLinha.mutate({ linhaId });
+  };
+
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['ordens-producao', 'separacao'] });
   };
@@ -113,6 +118,8 @@ export default function SeparacaoMinimalista() {
         isPausing={pausarOrdem.isPending}
         onMarcarLinhaProblema={handleMarcarLinhaProblema}
         isMarkingProblem={marcarLinhaComProblema.isPending}
+        onResolverProblemaLinha={handleResolverProblema}
+        isResolvingProblem={resolverProblemaLinha.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal

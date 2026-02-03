@@ -44,6 +44,7 @@ export default function SoldaMinimalista() {
     concluirOrdem,
     pausarOrdem,
     marcarLinhaComProblema,
+    resolverProblemaLinha,
   } = useOrdemProducao('soldagem', tentarAvancoAutomatico);
 
   const ordemSelecionada = ordens.find(o => o.id === ordemSelecionadaId) || null;
@@ -81,6 +82,10 @@ export default function SoldaMinimalista() {
     setSheetOpen(false);
   };
 
+  const handleResolverProblema = (linhaId: string) => {
+    resolverProblemaLinha.mutate({ linhaId });
+  };
+
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['ordens-producao', 'soldagem'] });
   };
@@ -113,6 +118,8 @@ export default function SoldaMinimalista() {
         isPausing={pausarOrdem.isPending}
         onMarcarLinhaProblema={handleMarcarLinhaProblema}
         isMarkingProblem={marcarLinhaComProblema.isPending}
+        onResolverProblemaLinha={handleResolverProblema}
+        isResolvingProblem={resolverProblemaLinha.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal

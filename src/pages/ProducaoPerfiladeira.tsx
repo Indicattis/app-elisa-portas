@@ -43,6 +43,7 @@ export default function ProducaoPerfiladeira() {
     marcarLinhaConcluida,
     concluirOrdem,
     pausarOrdem,
+    resolverProblemaLinha,
   } = useOrdemProducao('perfiladeira', tentarAvancoAutomatico);
 
   // Sincronizar ordem selecionada com cache atualizado
@@ -110,6 +111,8 @@ export default function ProducaoPerfiladeira() {
         isPausing={pausarOrdem.isPending}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
         isCapturing={capturarOrdem.isPending}
+        onResolverProblemaLinha={(linhaId) => resolverProblemaLinha.mutate({ linhaId })}
+        isResolvingProblem={resolverProblemaLinha.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal

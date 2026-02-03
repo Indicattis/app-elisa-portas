@@ -43,6 +43,7 @@ export default function ProducaoSeparacao() {
     concluirOrdem,
     pausarOrdem,
     marcarLinhaComProblema,
+    resolverProblemaLinha,
   } = useOrdemProducao('separacao', tentarAvancoAutomatico);
 
   // Sincronizar ordem selecionada com cache atualizado
@@ -114,6 +115,8 @@ export default function ProducaoSeparacao() {
         isPausing={pausarOrdem.isPending}
         onMarcarLinhaProblema={handleMarcarLinhaProblema}
         isMarkingProblem={marcarLinhaComProblema.isPending}
+        onResolverProblemaLinha={(linhaId) => resolverProblemaLinha.mutate({ linhaId })}
+        isResolvingProblem={resolverProblemaLinha.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal
