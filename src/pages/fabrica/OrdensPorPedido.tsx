@@ -3,7 +3,7 @@ import { Loader2, ClipboardList, Search, ListTodo, AlertTriangle, Pause } from "
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { useOrdensPorPedido, OrdemStatus } from "@/hooks/useOrdensPorPedido";
+import { useOrdensPorPedido, OrdemStatus, PedidoComOrdens } from "@/hooks/useOrdensPorPedido";
 import { PedidoOrdemCard } from "@/components/fabrica/PedidoOrdemCard";
 import { OrdemLinhasSheet } from "@/components/fabrica/OrdemLinhasSheet";
 import { ORDEM_ETAPAS, ETAPAS_CONFIG, type EtapaPedido } from "@/types/pedidoEtapa";
@@ -15,6 +15,7 @@ export default function OrdensPorPedido() {
   const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('em_producao');
   const [searchTerm, setSearchTerm] = useState('');
   const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemStatus | null>(null);
+  const [pedidoInfo, setPedidoInfo] = useState<{ numeroPedido: string; clienteNome: string } | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const { data: pedidos = [], isLoading } = useOrdensPorPedido(etapaAtiva);
@@ -65,8 +66,9 @@ export default function OrdensPorPedido() {
     return { ordensPendentes, ordensSemLinhas, ordensPausadas };
   }, [pedidos]);
 
-  const handleOrdemClick = (ordem: OrdemStatus) => {
+  const handleOrdemClick = (ordem: OrdemStatus, pedido: PedidoComOrdens) => {
     setOrdemSelecionada(ordem);
+    setPedidoInfo({ numeroPedido: pedido.numero_pedido, clienteNome: pedido.cliente_nome });
     setSheetOpen(true);
   };
 
@@ -174,6 +176,8 @@ export default function OrdensPorPedido() {
       {/* Sheet de linhas da ordem */}
       <OrdemLinhasSheet
         ordem={ordemSelecionada}
+        numeroPedido={pedidoInfo?.numeroPedido}
+        clienteNome={pedidoInfo?.clienteNome}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
       />
