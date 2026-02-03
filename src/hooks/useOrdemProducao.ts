@@ -355,7 +355,20 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         updateData.pausada = false;
         updateData.pausada_em = null;
         updateData.justificativa_pausa = null;
+        updateData.linha_problema_id = null; // Limpar referência à linha problema
         updateData.capturada_em = new Date().toISOString(); // Nova sessão
+        
+        // Limpar flags de problema das linhas associadas à ordem
+        await supabase
+          .from('linhas_ordens')
+          .update({
+            com_problema: false,
+            problema_descricao: null,
+            problema_reportado_em: null,
+            problema_reportado_por: null,
+          })
+          .eq('ordem_id', ordemId)
+          .eq('tipo_ordem', tipoOrdem);
       } else if (!ordemAtual?.em_backlog || !ordemAtual?.capturada_em) {
         // Só atualizar capturada_em se NÃO estiver em backlog ou se ainda não tiver sido capturada
         updateData.capturada_em = new Date().toISOString();
