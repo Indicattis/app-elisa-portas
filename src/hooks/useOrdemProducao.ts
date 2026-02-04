@@ -219,10 +219,11 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         };
       });
 
-      // Ordenar pela prioridade_etapa do PEDIDO (maior = mais prioritário)
+      // Ordenar pela prioridade da ORDEM (maior = mais prioritário)
+      // Isso garante que a ordem definida no cronograma seja respeitada nas páginas de produção
       ordensProcessadas.sort((a: any, b: any) => {
-        const aPrio = a._prioridadeEtapa || 0;
-        const bPrio = b._prioridadeEtapa || 0;
+        const aPrio = a.prioridade || 0;
+        const bPrio = b.prioridade || 0;
         if (bPrio !== aPrio) return bPrio - aPrio;
         // Desempate por created_at (mais antiga primeiro)
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
