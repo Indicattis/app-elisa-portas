@@ -427,7 +427,7 @@ export default function VendasNova() {
         vendaData: {
           ...formData,
           forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
-          data_venda: dataVenda ? dataVenda.toISOString() : new Date().toISOString(),
+          data_venda: dataVenda ? `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z` : `${format(new Date(), 'yyyy-MM-dd')}T12:00:00.000Z`,
         }, 
         portas,
         pagamentoData,
@@ -456,7 +456,7 @@ export default function VendasNova() {
         vendaData: {
           ...formData,
           forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
-          data_venda: dataVenda ? dataVenda.toISOString() : new Date().toISOString(),
+          data_venda: dataVenda ? `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z` : `${format(new Date(), 'yyyy-MM-dd')}T12:00:00.000Z`,
         },
         portas: produtosComDesconto,
         pagamentoData,

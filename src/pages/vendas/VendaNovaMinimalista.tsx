@@ -439,7 +439,7 @@ export default function VendaNovaMinimalista() {
         vendaData: {
           ...formData,
           forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
-          data_venda: dataVenda.toISOString(),
+          data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
         },
         portas,
         pagamentoData,
@@ -468,7 +468,7 @@ export default function VendaNovaMinimalista() {
         vendaData: {
           ...formData,
           forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
-          data_venda: dataVenda.toISOString(),
+          data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
         },
         portas: produtosComDesconto,
         pagamentoData,

@@ -130,7 +130,7 @@ export default function VendaVinculacao() {
           valor_venda: valorTotal,
           forma_pagamento: formData.forma_pagamento || null,
           observacoes_venda: formData.observacoes_venda || null,
-          data_venda: date.toISOString(),
+          data_venda: `${format(date, 'yyyy-MM-dd')}T12:00:00.000Z`,
         });
 
       if (error) throw error;
