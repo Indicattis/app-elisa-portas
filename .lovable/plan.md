@@ -1,144 +1,93 @@
 
-# Plano: Exibir Informações Adicionais nas Ordens do Cronograma
+# Plano: Corrigir Salvamento de Data de Venda com Datas Passadas
 
-## Objetivo
+## Problema Identificado
 
-Exibir nas ordens listadas em `/fabrica/cronograma-producao`:
-1. Metragem linear (se houver)
-2. Metragem quadrada (se houver)
-3. Cores das portas
-4. Motivo da pausa (se estiver pausada)
+O bug ocorre devido a um problema de **timezone** no JavaScript:
 
-## Análise das Tabelas
+1. Usuario seleciona uma data (ex: 30/01/2026)
+2. O Calendar retorna um objeto Date com a data local a meia-noite: `Jan 30, 2026 00:00:00 (UTC-3)`
+3. Ao chamar `.toISOString()`, a data e convertida para UTC: `2026-01-29T21:00:00.000Z`
+4. O banco salva **29 de janeiro** ao inves de **30 de janeiro**
 
-| Tabela | metragem_linear | metragem_quadrada | pausada | justificativa_pausa |
-|--------|-----------------|-------------------|---------|---------------------|
-| ordens_perfiladeira | Sim | - | Sim | Sim |
-| ordens_soldagem | - | Sim | Sim | Sim |
-| ordens_separacao | - | - | Sim | Sim |
-| ordens_qualidade | - | - | Sim | Sim |
-| ordens_pintura | - | Sim | - | - |
+Este e um problema conhecido neste projeto, conforme documentado na memoria sobre `date-parsing-standardization`.
 
-As cores das portas vêm da tabela `venda_produtos` relacionada ao pedido via `pedidos_producao.venda_id`.
+## Solucao
 
-## Alterações
+Criar a string ISO de forma que preserve a data local selecionada, usando noon (12:00) UTC para evitar problemas de timezone:
 
-### 1. Hook `useOrdensProducaoPrioridade.ts`
-
-**Interface `OrdemProducaoSimples`** - Adicionar campos:
 ```typescript
-export interface OrdemProducaoSimples {
-  // ... campos existentes ...
-  metragem_linear?: number;
-  metragem_quadrada?: number;
-  justificativa_pausa?: string;
-  cores?: { nome: string; codigo_hex: string }[];
-}
+// De:
+data_venda: dataVenda.toISOString()
+
+// Para:
+data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`
 ```
 
-**Queries por tabela** - Adicionar campos específicos:
-
-- **Perfiladeira**: adicionar `metragem_linear, justificativa_pausa`
-- **Soldagem**: adicionar `metragem_quadrada, justificativa_pausa`
-- **Separação**: adicionar `justificativa_pausa`
-- **Qualidade**: adicionar `justificativa_pausa`
-- **Pintura**: adicionar `metragem_quadrada` (não tem campo de pausa)
-
-**Buscar cores** - Nova query para obter cores via pedido:
-```typescript
-// Após obter ordens, buscar venda_id dos pedidos
-const pedidoIds = data.map(o => o.pedido_id);
-const { data: pedidos } = await supabase
-  .from('pedidos_producao')
-  .select('id, venda_id')
-  .in('id', pedidoIds);
-
-// Buscar produtos com cores
-const vendaIds = pedidos.map(p => p.venda_id).filter(Boolean);
-const { data: produtos } = await supabase
-  .from('venda_produtos')
-  .select('venda_id, cor:cor_id(nome, codigo_hex)')
-  .in('venda_id', vendaIds);
-
-// Mapear cores por pedido_id
-```
-
-### 2. Componente `OrdemProducaoCard.tsx`
-
-**Layout atualizado**:
-
-```
-┌─────────────────────────────────────────┐
-│ ⋮⋮  ① SOLD-12345            ⏸ Pausada  │
-│     Cliente Nome • PED-001              │
-│     ┌──┐┌──┐ cores     12.5m² / 45.2m   │
-│     └──┘└──┘                            │
-│     ⚠️ Motivo da pausa aqui...          │
-│     [Disponível]        [Avatar] Nome   │
-└─────────────────────────────────────────┘
-```
-
-**Exibição condicional**:
-- Metragem linear: apenas se valor > 0 (perfiladeira)
-- Metragem quadrada: apenas se valor > 0 (soldagem/pintura)
-- Cores: círculos coloridos (max 4, "+N" se mais)
-- Motivo pausa: apenas se `pausada === true` e `justificativa_pausa` existir
-
-### 3. Implementação Visual
-
-**Cores das portas**:
-```tsx
-{ordem.cores && ordem.cores.length > 0 && (
-  <div className="flex items-center gap-1">
-    {ordem.cores.slice(0, 4).map((cor, i) => (
-      <div 
-        key={i}
-        className="w-4 h-4 rounded-full border border-white/20"
-        style={{ backgroundColor: cor.codigo_hex }}
-        title={cor.nome}
-      />
-    ))}
-    {ordem.cores.length > 4 && (
-      <span className="text-[10px] text-zinc-400">+{ordem.cores.length - 4}</span>
-    )}
-  </div>
-)}
-```
-
-**Metragens**:
-```tsx
-<div className="flex items-center gap-2 text-[10px] text-zinc-400">
-  {ordem.metragem_quadrada && ordem.metragem_quadrada > 0 && (
-    <span>{ordem.metragem_quadrada.toFixed(1)}m²</span>
-  )}
-  {ordem.metragem_linear && ordem.metragem_linear > 0 && (
-    <span>{ordem.metragem_linear.toFixed(1)}m</span>
-  )}
-</div>
-```
-
-**Motivo da pausa**:
-```tsx
-{ordem.pausada && ordem.justificativa_pausa && (
-  <div className="mt-2 p-1.5 rounded bg-amber-500/10 border border-amber-500/20">
-    <p className="text-[10px] text-amber-300 line-clamp-2">
-      {ordem.justificativa_pausa}
-    </p>
-  </div>
-)}
-```
+Usando `format()` do date-fns, extraimos a data local (ano-mes-dia) e criamos uma string ISO com horario fixo em 12:00 UTC. Isso garante que independente do fuso horario do usuario, a data sera interpretada corretamente.
 
 ## Arquivos a Modificar
 
-| Arquivo | Tipo de Alteração |
-|---------|-------------------|
-| `src/hooks/useOrdensProducaoPrioridade.ts` | Expandir interface e queries |
-| `src/components/cronograma/OrdemProducaoCard.tsx` | Adicionar exibição das novas informações |
+### 1. `src/pages/vendas/VendaNovaMinimalista.tsx`
+
+Atualizar as duas chamadas de `createVenda` (linhas 442 e 471):
+
+```typescript
+// Linha 442 - Submissao normal
+await createVenda({ 
+  vendaData: {
+    ...formData,
+    forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
+    data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
+  },
+  // ...
+});
+
+// Linha 471 - Submissao com autorizacao de desconto
+await createVenda({ 
+  vendaData: {
+    ...formData,
+    forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
+    data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
+  },
+  // ...
+});
+```
+
+### 2. `src/pages/VendaVinculacao.tsx`
+
+Aplicar a mesma correcao na linha 118:
+
+```typescript
+// De:
+data_venda: date.toISOString(),
+
+// Para:
+data_venda: `${format(date, 'yyyy-MM-dd')}T12:00:00.000Z`,
+```
+
+### 3. `src/pages/VendasNova.tsx` (se existir date picker)
+
+Verificar e aplicar a mesma correcao se houver campo de data de venda.
+
+## Exemplo Visual do Bug
+
+| Acao | Antes (Bug) | Depois (Corrigido) |
+|------|-------------|-------------------|
+| Usuario seleciona 30/01/2026 | `2026-01-29T21:00:00.000Z` | `2026-01-30T12:00:00.000Z` |
+| Data salva no banco | 29/01/2026 | 30/01/2026 |
+
+## Detalhes Tecnicos
+
+A funcao `format()` do date-fns ja e importada no arquivo (linha 21), entao nao e necessario adicionar novos imports.
+
+O horario `12:00:00.000Z` (meio-dia UTC) foi escolhido porque:
+- Evita problemas de mudanca de dia em qualquer fuso horario do mundo
+- Mantem compatibilidade com o formato ISO 8601 esperado pelo banco
+- E uma pratica padrao para armazenar "apenas datas" em timestamps
 
 ## Resultado Esperado
 
-Cards do cronograma exibirão:
-- Metragem linear para ordens de perfiladeira
-- Metragem quadrada para ordens de soldagem e pintura
-- Indicadores visuais de cores das portas do pedido
-- Justificativa de pausa destacada em fundo âmbar quando a ordem estiver pausada
+- Vendedores poderao cadastrar vendas com datas passadas corretamente
+- A data selecionada no calendario sera exatamente a data salva no banco
+- Nenhum impacto nas vendas existentes (apenas novas vendas)
