@@ -1,77 +1,144 @@
 
-# Plano: Adicionar Data de Criação da Venda Personalizável
+# Plano: Exibir Informações Adicionais nas Ordens do Cronograma
 
-## Contexto
+## Objetivo
 
-Atualmente, a página `/vendas/minhas-vendas/nova` define automaticamente a data da venda como a data atual (`new Date().toISOString()`) no momento da criação. O usuário deseja poder cadastrar vendas com datas passadas.
+Exibir nas ordens listadas em `/fabrica/cronograma-producao`:
+1. Metragem linear (se houver)
+2. Metragem quadrada (se houver)
+3. Cores das portas
+4. Motivo da pausa (se estiver pausada)
 
-## Alterações Necessárias
+## Análise das Tabelas
 
-### Arquivo: `src/pages/vendas/VendaNovaMinimalista.tsx`
+| Tabela | metragem_linear | metragem_quadrada | pausada | justificativa_pausa |
+|--------|-----------------|-------------------|---------|---------------------|
+| ordens_perfiladeira | Sim | - | Sim | Sim |
+| ordens_soldagem | - | Sim | Sim | Sim |
+| ordens_separacao | - | - | Sim | Sim |
+| ordens_qualidade | - | - | Sim | Sim |
+| ordens_pintura | - | Sim | - | - |
 
-**1. Adicionar estado para a data da venda (próximo à linha 48):**
+As cores das portas vêm da tabela `venda_produtos` relacionada ao pedido via `pedidos_producao.venda_id`.
 
+## Alterações
+
+### 1. Hook `useOrdensProducaoPrioridade.ts`
+
+**Interface `OrdemProducaoSimples`** - Adicionar campos:
 ```typescript
-const [dataVenda, setDataVenda] = useState<Date>(new Date());
+export interface OrdemProducaoSimples {
+  // ... campos existentes ...
+  metragem_linear?: number;
+  metragem_quadrada?: number;
+  justificativa_pausa?: string;
+  cores?: { nome: string; codigo_hex: string }[];
+}
 ```
 
-**2. Adicionar campo de Data da Venda na seção "Dados Adicionais" (após o campo de Frete, antes de Previsão de Entrega):**
+**Queries por tabela** - Adicionar campos específicos:
 
+- **Perfiladeira**: adicionar `metragem_linear, justificativa_pausa`
+- **Soldagem**: adicionar `metragem_quadrada, justificativa_pausa`
+- **Separação**: adicionar `justificativa_pausa`
+- **Qualidade**: adicionar `justificativa_pausa`
+- **Pintura**: adicionar `metragem_quadrada` (não tem campo de pausa)
+
+**Buscar cores** - Nova query para obter cores via pedido:
 ```typescript
-<div className="space-y-2">
-  <Label className={labelClass}>Data da Venda *</Label>
-  <Popover>
-    <PopoverTrigger asChild>
-      <Button
-        type="button"
-        variant="outline"
-        className={cn(
-          "w-full justify-start text-left font-normal",
-          inputClass
-        )}
-      >
-        <CalendarIcon className="mr-2 h-4 w-4 text-blue-400/60" />
-        {format(dataVenda, "dd/MM/yyyy", { locale: ptBR })}
-      </Button>
-    </PopoverTrigger>
-    <PopoverContent className="w-auto p-0 bg-zinc-900 border-blue-500/20" align="start">
-      <Calendar
-        mode="single"
-        selected={dataVenda}
-        onSelect={(date) => date && setDataVenda(date)}
-        disabled={(date) => date > new Date()}
-        initialFocus
-        className="pointer-events-auto"
+// Após obter ordens, buscar venda_id dos pedidos
+const pedidoIds = data.map(o => o.pedido_id);
+const { data: pedidos } = await supabase
+  .from('pedidos_producao')
+  .select('id, venda_id')
+  .in('id', pedidoIds);
+
+// Buscar produtos com cores
+const vendaIds = pedidos.map(p => p.venda_id).filter(Boolean);
+const { data: produtos } = await supabase
+  .from('venda_produtos')
+  .select('venda_id, cor:cor_id(nome, codigo_hex)')
+  .in('venda_id', vendaIds);
+
+// Mapear cores por pedido_id
+```
+
+### 2. Componente `OrdemProducaoCard.tsx`
+
+**Layout atualizado**:
+
+```
+┌─────────────────────────────────────────┐
+│ ⋮⋮  ① SOLD-12345            ⏸ Pausada  │
+│     Cliente Nome • PED-001              │
+│     ┌──┐┌──┐ cores     12.5m² / 45.2m   │
+│     └──┘└──┘                            │
+│     ⚠️ Motivo da pausa aqui...          │
+│     [Disponível]        [Avatar] Nome   │
+└─────────────────────────────────────────┘
+```
+
+**Exibição condicional**:
+- Metragem linear: apenas se valor > 0 (perfiladeira)
+- Metragem quadrada: apenas se valor > 0 (soldagem/pintura)
+- Cores: círculos coloridos (max 4, "+N" se mais)
+- Motivo pausa: apenas se `pausada === true` e `justificativa_pausa` existir
+
+### 3. Implementação Visual
+
+**Cores das portas**:
+```tsx
+{ordem.cores && ordem.cores.length > 0 && (
+  <div className="flex items-center gap-1">
+    {ordem.cores.slice(0, 4).map((cor, i) => (
+      <div 
+        key={i}
+        className="w-4 h-4 rounded-full border border-white/20"
+        style={{ backgroundColor: cor.codigo_hex }}
+        title={cor.nome}
       />
-    </PopoverContent>
-  </Popover>
+    ))}
+    {ordem.cores.length > 4 && (
+      <span className="text-[10px] text-zinc-400">+{ordem.cores.length - 4}</span>
+    )}
+  </div>
+)}
+```
+
+**Metragens**:
+```tsx
+<div className="flex items-center gap-2 text-[10px] text-zinc-400">
+  {ordem.metragem_quadrada && ordem.metragem_quadrada > 0 && (
+    <span>{ordem.metragem_quadrada.toFixed(1)}m²</span>
+  )}
+  {ordem.metragem_linear && ordem.metragem_linear > 0 && (
+    <span>{ordem.metragem_linear.toFixed(1)}m</span>
+  )}
 </div>
 ```
 
-**3. Atualizar as chamadas de createVenda para usar a data selecionada (linhas 441 e 470):**
-
-De:
-```typescript
-data_venda: new Date().toISOString(),
+**Motivo da pausa**:
+```tsx
+{ordem.pausada && ordem.justificativa_pausa && (
+  <div className="mt-2 p-1.5 rounded bg-amber-500/10 border border-amber-500/20">
+    <p className="text-[10px] text-amber-300 line-clamp-2">
+      {ordem.justificativa_pausa}
+    </p>
+  </div>
+)}
 ```
 
-Para:
-```typescript
-data_venda: dataVenda.toISOString(),
-```
+## Arquivos a Modificar
 
-## Comportamento
-
-| Aspecto | Valor |
-|---------|-------|
-| Valor padrão | Data atual |
-| Datas permitidas | Passadas e hoje (futuras bloqueadas) |
-| Campo obrigatório | Sim (sempre tem valor) |
-| Posição no formulário | Seção "Dados Adicionais", após Frete |
+| Arquivo | Tipo de Alteração |
+|---------|-------------------|
+| `src/hooks/useOrdensProducaoPrioridade.ts` | Expandir interface e queries |
+| `src/components/cronograma/OrdemProducaoCard.tsx` | Adicionar exibição das novas informações |
 
 ## Resultado Esperado
 
-- Usuário pode selecionar qualquer data passada ou a data atual
-- Datas futuras ficam desabilitadas no calendário
-- O campo inicia com a data de hoje por padrão
-- Layout consistente com o campo de "Previsão de Entrega" existente
+Cards do cronograma exibirão:
+- Metragem linear para ordens de perfiladeira
+- Metragem quadrada para ordens de soldagem e pintura
+- Indicadores visuais de cores das portas do pedido
+- Justificativa de pausa destacada em fundo âmbar quando a ordem estiver pausada
