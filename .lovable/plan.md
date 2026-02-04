@@ -1,119 +1,164 @@
 
-# Plano: Adicionar Botão "Criar Pedido" para Vendas Já Faturadas
+# Plano: Corrigir Calculo de Metro Quadrado no Ranking de Pintura
 
 ## Problema Identificado
 
-Na página `/administrativo/financeiro/faturamento/:id`, quando uma venda já está faturada:
-- Só aparece o botão "Remover Faturamento"
-- Não há opção para criar pedido de produção
-- O diálogo de criação só aparece após completar o faturamento
+As funcoes SQL que calculam o ranking de pintura em `/direcao/gestao-fabrica` estao filtrando por `status = 'concluido'`, mas as ordens de pintura sao finalizadas com `status = 'pronta'`.
 
-Vendas faturadas anteriormente ou quando o usuário clicou "Não, criar depois" ficam sem forma de gerar o pedido.
+### Evidencia:
+| Status | Quantidade | Ultima Conclusao |
+|--------|------------|------------------|
+| pronta | 13 ordens  | 2026-02-03 |
+| concluido | 0 ordens | - |
 
-## Arquivo a Modificar
-
-| Arquivo | Modificação |
-|---------|-------------|
-| `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` | Adicionar botão "Criar Pedido" e lógica para verificar se já existe pedido |
-
-## Mudanças Técnicas
-
-### 1. Adicionar State para Controle de Pedido Existente
-
+### Codigo Problematico (useOrdemPintura.ts linha 296):
 ```typescript
-const [hasPedido, setHasPedido] = useState<boolean | null>(null);
+.update({ 
+  status: 'pronta',  // <-- Pintura usa 'pronta', nao 'concluido'
+  data_conclusao: new Date().toISOString(),
+  ...
+})
 ```
 
-### 2. Verificar se Existe Pedido ao Carregar a Venda
+### Funcoes SQL Afetadas:
+1. `get_portas_por_etapa` - Calcula metragem total de pintura
+2. `get_desempenho_etapas` - Calcula ranking por colaborador
 
-No `useEffect` que busca a venda, adicionar verificação:
+Ambas filtram: `WHERE op.status = 'concluido'` (incorreto)
 
-```typescript
-useEffect(() => {
-  if (id) {
-    fetchVenda();
-    checkPedidoExistente();
-  }
-}, [id]);
+## Solucao
 
-const checkPedidoExistente = async () => {
-  if (!id) return;
-  const pedidoId = await checkExistingPedido(id);
-  setHasPedido(!!pedidoId);
-  if (pedidoId) {
-    setPedidoExistenteId(pedidoId);
-  }
-};
-```
+Atualizar as duas funcoes SQL para usar `status = 'pronta'` ao filtrar ordens de pintura concluidas.
 
-### 3. Adicionar Botão "Criar Pedido" no Header
+### Migracao SQL:
 
-Ao lado do botão "Remover Faturamento", adicionar:
-
-```tsx
-{vendaFaturada && (
-  <div className="flex gap-2">
-    {/* Botão Criar Pedido - só aparece se não tem pedido */}
-    {hasPedido === false && (
-      <Button
-        variant="outline"
-        className="bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
-        onClick={() => setShowPedidoDialog(true)}
-      >
-        <Package className="h-4 w-4 mr-2" />
-        Criar Pedido
-      </Button>
-    )}
+```sql
+-- Corrigir get_portas_por_etapa: usar status 'pronta' para pintura
+CREATE OR REPLACE FUNCTION public.get_portas_por_etapa(p_data_inicio date, p_data_fim date)
+RETURNS TABLE(
+  metros_perfilados numeric,
+  portas_soldadas bigint,
+  pedidos_separados bigint,
+  pintura_m2 numeric,
+  carregamentos bigint
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    -- Metros perfilados (sem alteracao)
+    COALESCE((
+      SELECT SUM(lo.quantidade * REPLACE(lo.tamanho, ',', '.')::numeric)
+      FROM linhas_ordens lo
+      JOIN ordens_perfiladeira op ON op.id = lo.ordem_id
+      WHERE lo.tipo_ordem = 'perfiladeira'
+        AND lo.concluida = true
+        AND lo.tamanho IS NOT NULL
+        AND op.data_conclusao::date BETWEEN p_data_inicio AND p_data_fim
+    ), 0)::numeric AS metros_perfilados,
     
-    {/* Botão Acessar Pedido - só aparece se já tem pedido */}
-    {hasPedido === true && pedidoExistenteId && (
-      <Button
-        variant="outline"
-        className="bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20"
-        onClick={() => navigate(`/administrativo/pedidos/${pedidoExistenteId}`)}
-      >
-        <ExternalLink className="h-4 w-4 mr-2" />
-        Acessar Pedido
-      </Button>
-    )}
+    -- Portas soldadas (sem alteracao)
+    COALESCE((
+      SELECT COUNT(*)
+      FROM ordens_soldagem os
+      WHERE os.status = 'concluido'
+        AND os.data_conclusao::date BETWEEN p_data_inicio AND p_data_fim
+    ), 0)::bigint AS portas_soldadas,
     
-    {/* Botão Remover Faturamento */}
-    <Button
-      variant="outline"
-      className="bg-orange-500/10 border-orange-500/30 text-orange-400 hover:bg-orange-500/20"
-      onClick={() => setShowRemoverFaturamentoDialog(true)}
-    >
-      <Undo2 className="h-4 w-4 mr-2" />
-      Remover Faturamento
-    </Button>
-  </div>
-)}
+    -- Pedidos separados (sem alteracao)
+    COALESCE((
+      SELECT COUNT(*)
+      FROM ordens_separacao osep
+      WHERE osep.status = 'concluido'
+        AND osep.data_conclusao::date BETWEEN p_data_inicio AND p_data_fim
+    ), 0)::bigint AS pedidos_separados,
+    
+    -- Pintura m² - CORRECAO: usar 'pronta' em vez de 'concluido'
+    COALESCE((
+      SELECT SUM(pl.largura * pl.altura / 1000000.0)
+      FROM ordens_pintura op
+      JOIN pedido_linhas pl ON pl.pedido_id = op.pedido_id
+      WHERE op.status = 'pronta'  -- CORRIGIDO
+        AND op.data_conclusao::date BETWEEN p_data_inicio AND p_data_fim
+        AND pl.largura IS NOT NULL
+        AND pl.altura IS NOT NULL
+    ), 0)::numeric AS pintura_m2,
+    
+    -- Carregamentos (sem alteracao)
+    COALESCE((
+      SELECT COUNT(*)
+      FROM instalacoes i
+      WHERE i.carregamento_concluido = true
+        AND i.carregamento_concluido_em::date BETWEEN p_data_inicio AND p_data_fim
+    ), 0)::bigint AS carregamentos;
+END;
+$$;
+
+-- Corrigir get_desempenho_etapas: usar status 'pronta' para pintura
+DROP FUNCTION IF EXISTS public.get_desempenho_etapas(date, date);
+
+CREATE OR REPLACE FUNCTION public.get_desempenho_etapas(p_data_inicio date, p_data_fim date)
+RETURNS TABLE(
+  user_id uuid,
+  nome text,
+  foto_perfil_url text,
+  perfiladas_metros numeric,
+  soldadas bigint,
+  soldadas_p bigint,
+  soldadas_g bigint,
+  separadas bigint,
+  pintura_m2 numeric,
+  carregamentos bigint
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    au.user_id,
+    au.nome,
+    au.foto_perfil_url,
+    
+    -- Metros perfilados (sem alteracao)
+    ...
+    
+    -- Pintura m² - CORRECAO: usar 'pronta' em vez de 'concluido'
+    COALESCE((
+      SELECT SUM(pl.largura * pl.altura / 1000000.0)
+      FROM ordens_pintura op
+      JOIN pedido_linhas pl ON pl.pedido_id = op.pedido_id
+      WHERE op.responsavel_id = au.user_id
+        AND op.status = 'pronta'  -- CORRIGIDO
+        AND op.data_conclusao::date BETWEEN p_data_inicio AND p_data_fim
+        AND pl.largura IS NOT NULL
+        AND pl.altura IS NOT NULL
+    ), 0)::numeric AS pintura_m2,
+    
+    ...
+  FROM admin_users au
+  WHERE au.ativo = true
+    AND au.eh_colaborador = true;
+END;
+$$;
 ```
 
-### 4. Atualizar Lógica do Modal de Criação
+## Arquivos a Modificar
 
-Após criar o pedido com sucesso, atualizar o state:
+| Tipo | Arquivo | Alteracao |
+|------|---------|-----------|
+| SQL Migration | Novo arquivo | Atualizar as 2 funcoes RPC |
 
-```typescript
-const pedidoId = await createPedidoFromVenda(venda.id);
-if (pedidoId) {
-  setHasPedido(true);
-  setPedidoExistenteId(pedidoId);
-  // ... toast success
-}
-```
+## Impacto
 
-## Fluxo de Uso
+- **Imediato**: As 13 ordens de pintura concluidas serao contabilizadas
+- **Ranking**: Colaboradores que pintaram verao seus m² corretamente
+- **Dashboard**: A metragem total de pintura aparecera em `/direcao/gestao-fabrica`
 
-1. Usuário acessa venda já faturada em `/administrativo/financeiro/faturamento/:id`
-2. Sistema verifica automaticamente se existe pedido vinculado
-3. Se NÃO existe pedido: mostra botão verde "Criar Pedido"
-4. Se JÁ existe pedido: mostra botão azul "Acessar Pedido"
-5. Ao clicar em "Criar Pedido", abre o diálogo de confirmação
-6. Após criar, o botão muda para "Acessar Pedido"
+## Nenhuma alteracao de codigo frontend
 
-## Resultado Esperado
-
-- Vendas faturadas sem pedido poderão ter o pedido criado a qualquer momento
-- Vendas que já têm pedido mostrarão link direto para acessá-lo
-- Interface clara indicando o estado atual (com ou sem pedido)
+O codigo TypeScript ja espera o campo `pintura_m2` - apenas o SQL estava filtrando incorretamente.
