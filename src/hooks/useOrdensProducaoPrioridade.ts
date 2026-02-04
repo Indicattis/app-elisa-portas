@@ -77,7 +77,7 @@ export function useOrdensProducaoPrioridade(tipo: TipoOrdemProducao) {
       } else if (tabela === 'ordens_pintura') {
         const result = await supabase
           .from('ordens_pintura')
-          .select('id, numero_ordem, pedido_id, status, prioridade, responsavel_id, pausada, pedido:pedidos_producao(numero_pedido, cliente_nome)')
+          .select('id, numero_ordem, pedido_id, status, prioridade, responsavel_id, pedido:pedidos_producao(numero_pedido, cliente_nome)')
           .eq('historico', false)
           .order('prioridade', { ascending: false })
           .order('created_at', { ascending: true });
