@@ -54,6 +54,7 @@ const inputClass = "h-10 bg-blue-500/5 border-blue-500/20 text-white placeholder
 const interfaces = [
   { value: 'padrao', label: 'Padrão', icon: Home },
   { value: 'producao', label: 'Produção', icon: Users },
+  { value: 'fabrica', label: 'Fábrica', icon: Factory },
   { value: 'paineis', label: 'Painéis', icon: Users },
   { value: 'admin', label: 'Admin', icon: Shield },
 ];
