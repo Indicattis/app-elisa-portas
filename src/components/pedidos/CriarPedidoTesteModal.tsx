@@ -1,4 +1,4 @@
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -254,14 +254,14 @@ export function CriarPedidoTesteModal({ open, onOpenChange, onSuccess }: CriarPe
             <Label className="text-muted-foreground">Fluxo previsto:</Label>
             <div className="flex flex-wrap items-center gap-1 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
               {fluxoPrevisto.map((etapa, index) => (
-                <Fragment key={etapa}>
+                <span key={etapa} className="contents">
                   <Badge variant="outline" className="text-xs bg-blue-500/10 border-blue-500/30 text-blue-400">
                     {etapa}
                   </Badge>
                   {index < fluxoPrevisto.length - 1 && (
                     <ArrowRight className="h-3 w-3 text-muted-foreground" />
                   )}
-                </Fragment>
+                </span>
               ))}
             </div>
           </div>
