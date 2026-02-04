@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, User, Pause, Ruler, Square } from "lucide-react";
+import { GripVertical, User, Pause, Ruler, Square, Truck, Wrench, Settings } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -40,7 +40,21 @@ export function OrdemProducaoCard({ ordem, posicao }: OrdemProducaoCardProps) {
     }
   };
 
+  const getTipoEntregaConfig = (tipo?: string) => {
+    switch (tipo) {
+      case 'instalacao':
+        return { label: 'Instalação', Icon: Wrench, className: 'bg-purple-500/20 text-purple-300 border-purple-500/30' };
+      case 'entrega':
+        return { label: 'Entrega', Icon: Truck, className: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' };
+      case 'manutencao':
+        return { label: 'Manutenção', Icon: Settings, className: 'bg-orange-500/20 text-orange-300 border-orange-500/30' };
+      default:
+        return null;
+    }
+  };
+
   const statusConfig = getStatusConfig(ordem.status, ordem.pausada);
+  const tipoEntregaConfig = getTipoEntregaConfig(ordem.tipo_entrega);
 
   return (
     <div
@@ -85,6 +99,16 @@ export function OrdemProducaoCard({ ordem, posicao }: OrdemProducaoCardProps) {
           <p className="text-xs text-zinc-400 truncate mb-1">
             {ordem.cliente_nome} • {ordem.numero_pedido}
           </p>
+
+          {/* Tipo de Entrega */}
+          {tipoEntregaConfig && (
+            <div className="mb-1">
+              <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 gap-1", tipoEntregaConfig.className)}>
+                <tipoEntregaConfig.Icon className="h-3 w-3" />
+                {tipoEntregaConfig.label}
+              </Badge>
+            </div>
+          )}
 
           {/* Cores e Metragens */}
           <div className="flex items-center justify-between gap-2 mb-2">

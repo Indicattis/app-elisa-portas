@@ -17,6 +17,7 @@ export interface OrdemProducaoSimples {
   metragem_quadrada?: number;
   justificativa_pausa?: string;
   cores?: { nome: string; codigo_hex: string }[];
+  tipo_entrega?: 'entrega' | 'instalacao' | 'manutencao' | 'servico' | 'correcao';
 }
 
 export type TipoOrdemProducao = 'perfiladeira' | 'soldagem' | 'separacao' | 'qualidade' | 'pintura';
@@ -45,7 +46,7 @@ export function useOrdensProducaoPrioridade(tipo: TipoOrdemProducao) {
       if (tabela === 'ordens_perfiladeira') {
         const result = await supabase
           .from('ordens_perfiladeira')
-          .select('id, numero_ordem, pedido_id, status, prioridade, responsavel_id, pausada, metragem_linear, justificativa_pausa, pedido:pedidos_producao(numero_pedido, cliente_nome, venda_id)')
+          .select('id, numero_ordem, pedido_id, status, prioridade, responsavel_id, pausada, metragem_linear, justificativa_pausa, pedido:pedidos_producao(numero_pedido, cliente_nome, venda_id, venda:vendas(tipo_entrega))')
           .eq('historico', false)
           .order('prioridade', { ascending: false })
           .order('created_at', { ascending: true });
@@ -54,7 +55,7 @@ export function useOrdensProducaoPrioridade(tipo: TipoOrdemProducao) {
       } else if (tabela === 'ordens_soldagem') {
         const result = await supabase
           .from('ordens_soldagem')
-          .select('id, numero_ordem, pedido_id, status, prioridade, responsavel_id, pausada, metragem_quadrada, justificativa_pausa, pedido:pedidos_producao(numero_pedido, cliente_nome, venda_id)')
+          .select('id, numero_ordem, pedido_id, status, prioridade, responsavel_id, pausada, metragem_quadrada, justificativa_pausa, pedido:pedidos_producao(numero_pedido, cliente_nome, venda_id, venda:vendas(tipo_entrega))')
           .eq('historico', false)
           .order('prioridade', { ascending: false })
           .order('created_at', { ascending: true });
@@ -63,7 +64,7 @@ export function useOrdensProducaoPrioridade(tipo: TipoOrdemProducao) {
       } else if (tabela === 'ordens_separacao') {
         const result = await supabase
           .from('ordens_separacao')
-          .select('id, numero_ordem, pedido_id, status, prioridade, responsavel_id, pausada, justificativa_pausa, pedido:pedidos_producao(numero_pedido, cliente_nome, venda_id)')
+          .select('id, numero_ordem, pedido_id, status, prioridade, responsavel_id, pausada, justificativa_pausa, pedido:pedidos_producao(numero_pedido, cliente_nome, venda_id, venda:vendas(tipo_entrega))')
           .eq('historico', false)
           .order('prioridade', { ascending: false })
           .order('created_at', { ascending: true });
@@ -72,7 +73,7 @@ export function useOrdensProducaoPrioridade(tipo: TipoOrdemProducao) {
       } else if (tabela === 'ordens_qualidade') {
         const result = await supabase
           .from('ordens_qualidade')
-          .select('id, numero_ordem, pedido_id, status, prioridade, responsavel_id, pausada, justificativa_pausa, pedido:pedidos_producao(numero_pedido, cliente_nome, venda_id)')
+          .select('id, numero_ordem, pedido_id, status, prioridade, responsavel_id, pausada, justificativa_pausa, pedido:pedidos_producao(numero_pedido, cliente_nome, venda_id, venda:vendas(tipo_entrega))')
           .eq('historico', false)
           .order('prioridade', { ascending: false })
           .order('created_at', { ascending: true });
@@ -81,7 +82,7 @@ export function useOrdensProducaoPrioridade(tipo: TipoOrdemProducao) {
       } else if (tabela === 'ordens_pintura') {
         const result = await supabase
           .from('ordens_pintura')
-          .select('id, numero_ordem, pedido_id, status, prioridade, responsavel_id, metragem_quadrada, pedido:pedidos_producao(numero_pedido, cliente_nome, venda_id)')
+          .select('id, numero_ordem, pedido_id, status, prioridade, responsavel_id, metragem_quadrada, pedido:pedidos_producao(numero_pedido, cliente_nome, venda_id, venda:vendas(tipo_entrega))')
           .eq('historico', false)
           .order('prioridade', { ascending: false })
           .order('created_at', { ascending: true });
@@ -113,23 +114,25 @@ export function useOrdensProducaoPrioridade(tipo: TipoOrdemProducao) {
 
       let coresPorVendaId = new Map<string, { nome: string; codigo_hex: string }[]>();
       if (vendaIds.length > 0) {
-        const produtosResult = await (supabase as any)
-          .from('venda_produtos')
+        const produtosResult = await supabase
+          .from('produtos_vendas')
           .select('venda_id, cor_id')
-          .in('venda_id', vendaIds);
-        const produtos = produtosResult.data as any[] | null;
+          .in('venda_id', vendaIds)
+          .in('tipo_produto', ['porta_enrolar', 'pintura_epoxi', 'porta_social'])
+          .not('cor_id', 'is', null);
+        const produtos = produtosResult.data;
 
         // Buscar as cores
-        const corIds = produtos?.map((p: any) => p.cor_id).filter(Boolean) || [];
+        const corIds = produtos?.map((p) => p.cor_id).filter(Boolean) || [];
         let coresMap = new Map<string, { nome: string; codigo_hex: string }>();
         if (corIds.length > 0) {
-          const coresResult = await (supabase as any)
+          const coresResult = await supabase
             .from('catalogo_cores')
             .select('id, nome, codigo_hex')
-            .in('id', corIds);
-          const cores = coresResult.data as any[] | null;
+            .in('id', corIds as string[]);
+          const cores = coresResult.data;
           
-          coresMap = new Map(cores?.map((c: any) => [c.id, { nome: c.nome, codigo_hex: c.codigo_hex }]) || []);
+          coresMap = new Map(cores?.map((c) => [c.id, { nome: c.nome, codigo_hex: c.codigo_hex }]) || []);
         }
 
         // Agrupar cores por venda_id (sem duplicatas)
@@ -163,6 +166,7 @@ export function useOrdensProducaoPrioridade(tipo: TipoOrdemProducao) {
         metragem_quadrada: ordem.metragem_quadrada,
         justificativa_pausa: ordem.justificativa_pausa,
         cores: ordem.pedido?.venda_id ? coresPorVendaId.get(ordem.pedido.venda_id) : undefined,
+        tipo_entrega: ordem.pedido?.venda?.tipo_entrega,
       })) as OrdemProducaoSimples[];
     },
   });
