@@ -306,38 +306,6 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         throw new Error(`Você já possui a ordem ${ordemExistente.numero_ordem} capturada. Conclua-a antes de capturar outra.`);
       }
       
-      // Verificar se esta ordem é a próxima na fila de prioridade
-      // Ordens pausadas têm prioridade (podem ser capturadas mesmo fora de ordem)
-      const { data: ordemParaCapturar } = await supabase
-        .from(tabelaOrdem)
-        .select('pausada')
-        .eq('id', ordemId)
-        .maybeSingle() as { data: { pausada?: boolean } | null };
-
-      // Permitir captura fora da ordem de prioridade apenas para ordens pausadas
-      // (podem ser recapturadas por qualquer operador)
-      if (!ordemParaCapturar?.pausada) {
-        const { data: ordensDisponiveis, error: ordensError } = await supabase
-          .from(tabelaOrdem)
-          .select('id, numero_ordem, prioridade, pausada')
-          .eq('historico', false)
-          .is('responsavel_id', null)
-          .eq('pausada', false) // Ignorar ordens pausadas na verificação de prioridade
-          .order('prioridade', { ascending: false })
-          .order('created_at', { ascending: true }) as { data: { id: string; numero_ordem: string; prioridade: number; pausada: boolean }[] | null; error: any };
-
-        if (ordensError) throw ordensError;
-
-        // Se há ordens disponíveis e esta não é a primeira (próxima na fila)
-        if (ordensDisponiveis && ordensDisponiveis.length > 0) {
-          const proximaOrdem = ordensDisponiveis[0];
-          
-          if (proximaOrdem.id !== ordemId) {
-            throw new Error(`Você deve capturar a ordem ${proximaOrdem.numero_ordem} primeiro. Siga a ordem de prioridade.`);
-          }
-        }
-      }
-      
       // Verificar se a ordem está em backlog ou pausada
       const { data: ordemAtual } = await supabase
         .from(tabelaOrdem)
