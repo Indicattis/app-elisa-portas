@@ -1,93 +1,116 @@
 
-# Plano: Corrigir Salvamento de Data de Venda com Datas Passadas
+# Plano: Corrigir Cores e Adicionar Tipo de Entrega no Cronograma
 
 ## Problema Identificado
 
-O bug ocorre devido a um problema de **timezone** no JavaScript:
+1. **Cores nao aparecem**: O codigo usa `venda_produtos` mas a tabela correta e `produtos_vendas`
+2. **Falta tipo de entrega**: Nao ha busca nem exibicao do tipo de entrega (instalacao/entrega/manutencao)
 
-1. Usuario seleciona uma data (ex: 30/01/2026)
-2. O Calendar retorna um objeto Date com a data local a meia-noite: `Jan 30, 2026 00:00:00 (UTC-3)`
-3. Ao chamar `.toISOString()`, a data e convertida para UTC: `2026-01-29T21:00:00.000Z`
-4. O banco salva **29 de janeiro** ao inves de **30 de janeiro**
+## Analise dos Dados
 
-Este e um problema conhecido neste projeto, conforme documentado na memoria sobre `date-parsing-standardization`.
+| Tabela | Campo | Valores |
+|--------|-------|---------|
+| `produtos_vendas` | `tipo_produto` | porta_enrolar, pintura_epoxi, porta_social, acessorio, adicional |
+| `produtos_vendas` | `cor_id` | UUID ligado a `catalogo_cores` |
+| `vendas` | `tipo_entrega` | entrega, instalacao, manutencao, servico, correcao |
 
-## Solucao
+## Alteracoes Necessarias
 
-Criar a string ISO de forma que preserve a data local selecionada, usando noon (12:00) UTC para evitar problemas de timezone:
+### 1. Hook `useOrdensProducaoPrioridade.ts`
+
+**Corrigir nome da tabela e filtrar por tipo de produto:**
 
 ```typescript
-// De:
-data_venda: dataVenda.toISOString()
+// ANTES (errado):
+const produtosResult = await (supabase as any)
+  .from('venda_produtos')  // Tabela errada
+  .select('venda_id, cor_id')
+  .in('venda_id', vendaIds);
 
-// Para:
-data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`
+// DEPOIS (correto):
+const produtosResult = await supabase
+  .from('produtos_vendas')  // Tabela correta
+  .select('venda_id, cor_id')
+  .in('venda_id', vendaIds)
+  .in('tipo_produto', ['porta_enrolar', 'pintura_epoxi', 'porta_social'])
+  .not('cor_id', 'is', null);
 ```
 
-Usando `format()` do date-fns, extraimos a data local (ano-mes-dia) e criamos uma string ISO com horario fixo em 12:00 UTC. Isso garante que independente do fuso horario do usuario, a data sera interpretada corretamente.
+**Adicionar tipo_entrega na query do pedido:**
+
+Atualizar as queries de cada tabela para incluir o `tipo_entrega` da venda:
+
+```typescript
+// Exemplo para perfiladeira:
+.select(`
+  id, numero_ordem, pedido_id, status, prioridade, responsavel_id, 
+  pausada, metragem_linear, justificativa_pausa, 
+  pedido:pedidos_producao(
+    numero_pedido, cliente_nome, venda_id,
+    venda:vendas(tipo_entrega)
+  )
+`)
+```
+
+**Atualizar interface:**
+
+```typescript
+export interface OrdemProducaoSimples {
+  // ... campos existentes ...
+  tipo_entrega?: 'entrega' | 'instalacao' | 'manutencao' | 'servico' | 'correcao';
+}
+```
+
+**Mapear tipo_entrega no retorno:**
+
+```typescript
+return (data || []).map((ordem: any) => ({
+  // ... campos existentes ...
+  tipo_entrega: ordem.pedido?.venda?.tipo_entrega,
+}));
+```
+
+### 2. Componente `OrdemProducaoCard.tsx`
+
+**Adicionar badge de tipo de entrega:**
+
+```typescript
+const getTipoEntregaConfig = (tipo?: string) => {
+  switch (tipo) {
+    case 'instalacao':
+      return { label: 'Instalacao', icon: Wrench, className: 'bg-purple-500/20 text-purple-300' };
+    case 'entrega':
+      return { label: 'Entrega', icon: Truck, className: 'bg-cyan-500/20 text-cyan-300' };
+    case 'manutencao':
+      return { label: 'Manutencao', icon: Settings, className: 'bg-orange-500/20 text-orange-300' };
+    default:
+      return null;
+  }
+};
+```
+
+**Layout atualizado do card:**
+
+```
++-------------------------------------------+
+| (grip) 1 ORD-12345              [Pausada] |
+|        Cliente Nome . PED-001             |
+|        [Instalacao]                       |  <-- NOVO: tipo entrega
+|        (o)(o)(o) cores       12.5m² 45m   |
+|        [!] Motivo da pausa...             |
+|        [Disponivel]         [Avatar] Nome |
++-------------------------------------------+
+```
 
 ## Arquivos a Modificar
 
-### 1. `src/pages/vendas/VendaNovaMinimalista.tsx`
-
-Atualizar as duas chamadas de `createVenda` (linhas 442 e 471):
-
-```typescript
-// Linha 442 - Submissao normal
-await createVenda({ 
-  vendaData: {
-    ...formData,
-    forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
-    data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
-  },
-  // ...
-});
-
-// Linha 471 - Submissao com autorizacao de desconto
-await createVenda({ 
-  vendaData: {
-    ...formData,
-    forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
-    data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
-  },
-  // ...
-});
-```
-
-### 2. `src/pages/VendaVinculacao.tsx`
-
-Aplicar a mesma correcao na linha 118:
-
-```typescript
-// De:
-data_venda: date.toISOString(),
-
-// Para:
-data_venda: `${format(date, 'yyyy-MM-dd')}T12:00:00.000Z`,
-```
-
-### 3. `src/pages/VendasNova.tsx` (se existir date picker)
-
-Verificar e aplicar a mesma correcao se houver campo de data de venda.
-
-## Exemplo Visual do Bug
-
-| Acao | Antes (Bug) | Depois (Corrigido) |
-|------|-------------|-------------------|
-| Usuario seleciona 30/01/2026 | `2026-01-29T21:00:00.000Z` | `2026-01-30T12:00:00.000Z` |
-| Data salva no banco | 29/01/2026 | 30/01/2026 |
-
-## Detalhes Tecnicos
-
-A funcao `format()` do date-fns ja e importada no arquivo (linha 21), entao nao e necessario adicionar novos imports.
-
-O horario `12:00:00.000Z` (meio-dia UTC) foi escolhido porque:
-- Evita problemas de mudanca de dia em qualquer fuso horario do mundo
-- Mantem compatibilidade com o formato ISO 8601 esperado pelo banco
-- E uma pratica padrao para armazenar "apenas datas" em timestamps
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/hooks/useOrdensProducaoPrioridade.ts` | Corrigir tabela, filtrar tipo_produto, adicionar tipo_entrega |
+| `src/components/cronograma/OrdemProducaoCard.tsx` | Exibir badge de tipo de entrega |
 
 ## Resultado Esperado
 
-- Vendedores poderao cadastrar vendas com datas passadas corretamente
-- A data selecionada no calendario sera exatamente a data salva no banco
-- Nenhum impacto nas vendas existentes (apenas novas vendas)
+- Cores das portas de enrolar aparecerao corretamente
+- Badge indicando se e Entrega, Instalacao ou Manutencao
+- Icones visuais para diferenciar rapidamente os tipos
