@@ -243,8 +243,8 @@ export default function VendaDetalhesDirecao() {
       title="Detalhes da Venda" 
       backPath="/direcao/vendas"
       headerActions={
-        isAdmin && (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          {isAdmin && (
             <Button 
               onClick={() => navigate(`/direcao/vendas/${id}/editar`)}
               size="sm"
@@ -253,17 +253,17 @@ export default function VendaDetalhesDirecao() {
               <Edit className="w-4 h-4 mr-2" />
               Editar
             </Button>
-            <Button 
-              onClick={() => setExcluirModalOpen(true)}
-              size="sm"
-              variant="destructive"
-              className="bg-destructive/20 hover:bg-destructive/30 border border-destructive/30 text-destructive"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Excluir
-            </Button>
-          </div>
-        )
+          )}
+          <Button 
+            onClick={() => setExcluirModalOpen(true)}
+            size="sm"
+            variant="destructive"
+            className="bg-destructive/20 hover:bg-destructive/30 border border-destructive/30 text-destructive"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Excluir
+          </Button>
+        </div>
       }
     >
       <div className="space-y-6">
