@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, User, Pause, Clock } from "lucide-react";
+import { GripVertical, User, Pause, Ruler, Square } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -82,9 +82,56 @@ export function OrdemProducaoCard({ ordem, posicao }: OrdemProducaoCardProps) {
           </div>
 
           {/* Client and Pedido */}
-          <p className="text-xs text-zinc-400 truncate mb-2">
+          <p className="text-xs text-zinc-400 truncate mb-1">
             {ordem.cliente_nome} • {ordem.numero_pedido}
           </p>
+
+          {/* Cores e Metragens */}
+          <div className="flex items-center justify-between gap-2 mb-2">
+            {/* Cores das portas */}
+            {ordem.cores && ordem.cores.length > 0 ? (
+              <div className="flex items-center gap-1">
+                {ordem.cores.slice(0, 4).map((cor, i) => (
+                  <div 
+                    key={i}
+                    className="w-4 h-4 rounded-full border border-white/20"
+                    style={{ backgroundColor: cor.codigo_hex }}
+                    title={cor.nome}
+                  />
+                ))}
+                {ordem.cores.length > 4 && (
+                  <span className="text-[10px] text-zinc-400">+{ordem.cores.length - 4}</span>
+                )}
+              </div>
+            ) : (
+              <div />
+            )}
+
+            {/* Metragens */}
+            <div className="flex items-center gap-2 text-[10px] text-zinc-400">
+              {ordem.metragem_quadrada && ordem.metragem_quadrada > 0 && (
+                <span className="flex items-center gap-0.5">
+                  <Square className="h-3 w-3" />
+                  {ordem.metragem_quadrada.toFixed(1)}m²
+                </span>
+              )}
+              {ordem.metragem_linear && ordem.metragem_linear > 0 && (
+                <span className="flex items-center gap-0.5">
+                  <Ruler className="h-3 w-3" />
+                  {ordem.metragem_linear.toFixed(1)}m
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Motivo da pausa */}
+          {ordem.pausada && ordem.justificativa_pausa && (
+            <div className="mb-2 p-1.5 rounded bg-amber-500/10 border border-amber-500/20">
+              <p className="text-[10px] text-amber-300 line-clamp-2">
+                {ordem.justificativa_pausa}
+              </p>
+            </div>
+          )}
 
           {/* Footer: Status + Responsavel */}
           <div className="flex items-center justify-between gap-2">
