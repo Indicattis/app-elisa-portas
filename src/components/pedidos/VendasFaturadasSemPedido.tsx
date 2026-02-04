@@ -7,12 +7,14 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { 
   PackageCheck,
   Clock,
   ChevronDown,
   ChevronUp,
-  ArrowRight
+  Plus,
+  Loader2
 } from "lucide-react";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -41,6 +43,21 @@ export function VendasFaturadasSemPedido() {
   const [vendas, setVendas] = useState<VendaFaturadaSemPedido[]>([]);
   const [loading, setLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [creatingPedido, setCreatingPedido] = useState<string | null>(null);
+  const { createPedidoFromVenda } = usePedidoCreation();
+
+  const handleCriarPedido = async (vendaId: string) => {
+    setCreatingPedido(vendaId);
+    try {
+      const pedidoId = await createPedidoFromVenda(vendaId);
+      if (pedidoId) {
+        setVendas(prev => prev.filter(v => v.id !== vendaId));
+        navigate(`/administrativo/pedidos/${pedidoId}`);
+      }
+    } finally {
+      setCreatingPedido(null);
+    }
+  };
 
   useEffect(() => {
     fetchVendasFaturadasSemPedido();
@@ -133,8 +150,10 @@ export function VendasFaturadasSemPedido() {
         };
       });
 
-      // Ordenar por dias desde faturamento (mais antigos primeiro)
-      vendasProcessadas.sort((a, b) => b.dias_desde_faturamento - a.dias_desde_faturamento);
+      // Ordenar por data decrescente (mais recentes primeiro)
+      vendasProcessadas.sort((a, b) => 
+        new Date(b.data_venda).getTime() - new Date(a.data_venda).getTime()
+      );
 
       setVendas(vendasProcessadas);
     } catch (error) {
@@ -252,15 +271,23 @@ export function VendasFaturadasSemPedido() {
                   </TableCell>
                   <TableCell className="text-center">
                     <Button
-                      variant="ghost"
+                      variant="default"
                       size="sm"
-                      className="h-7 px-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                      disabled={creatingPedido === venda.id}
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/administrativo/financeiro/faturamento/${venda.id}?from=pedidos`);
+                        handleCriarPedido(venda.id);
                       }}
+                      className="h-7 px-3 bg-emerald-600 hover:bg-emerald-500 text-white"
                     >
-                      <ArrowRight className="h-4 w-4" />
+                      {creatingPedido === venda.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <>
+                          <Plus className="h-3 w-3 mr-1" />
+                          Gerar Pedido
+                        </>
+                      )}
                     </Button>
                   </TableCell>
                 </TableRow>
