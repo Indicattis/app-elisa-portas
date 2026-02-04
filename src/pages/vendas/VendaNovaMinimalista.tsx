@@ -46,6 +46,7 @@ export default function VendaNovaMinimalista() {
   const { fretes } = useFretesCidades();
   
   const [dataEntrega, setDataEntrega] = useState<Date | undefined>();
+  const [dataVenda, setDataVenda] = useState<Date>(new Date());
   
   const [formData, setFormData] = useState<VendaFormData>({
     cliente_nome: '',
@@ -438,7 +439,7 @@ export default function VendaNovaMinimalista() {
         vendaData: {
           ...formData,
           forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
-          data_venda: new Date().toISOString(),
+          data_venda: dataVenda.toISOString(),
         },
         portas,
         pagamentoData,
@@ -467,7 +468,7 @@ export default function VendaNovaMinimalista() {
         vendaData: {
           ...formData,
           forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
-          data_venda: new Date().toISOString(),
+          data_venda: dataVenda.toISOString(),
         },
         portas: produtosComDesconto,
         pagamentoData,
@@ -790,6 +791,36 @@ export default function VendaNovaMinimalista() {
         {/* Dados Adicionais */}
         <Section title="Dados Adicionais" icon={FileText}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Campo de Data da Venda */}
+            <div className="space-y-2">
+              <Label className={labelClass}>Data da Venda *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      inputClass
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 text-blue-400/60" />
+                    {format(dataVenda, "dd/MM/yyyy", { locale: ptBR })}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-zinc-900 border-blue-500/20" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dataVenda}
+                    onSelect={(date) => date && setDataVenda(date)}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
             {/* Campo de Frete Sofisticado */}
             <div className="space-y-2">
               <Label htmlFor="valor_frete" className={labelClass}>Frete (R$)</Label>
