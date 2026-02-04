@@ -1,165 +1,152 @@
 
+# Plano: Adicionar Seção "Vendas Faturadas Sem Pedido" em /administrativo/pedidos
 
-# Plano: Corrigir Função get_desempenho_etapas - Erro na Coluna tamanho_porta
+## Objetivo
 
-## Problema Identificado
+Adicionar uma seção no topo da página `/administrativo/pedidos` que liste vendas faturadas dos últimos 3 meses que ainda não possuem pedidos de produção vinculados, permitindo ao usuário criar o pedido diretamente.
 
-A função `get_desempenho_etapas` está falhando com erro:
+## Componente a Criar
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/components/pedidos/VendasFaturadasSemPedido.tsx` | Novo componente que lista vendas faturadas sem pedido |
+
+## Arquivo a Modificar
+
+| Arquivo | Modificação |
+|---------|-------------|
+| `src/pages/administrativo/PedidosAdminMinimalista.tsx` | Importar e adicionar o novo componente antes das tabs |
+
+## Estrutura do Componente
+
+Baseado no componente existente `VendasNaoFaturadasHistorico`, o novo componente terá:
+
+### Interface de Dados
+```typescript
+interface VendaFaturadaSemPedido {
+  id: string;
+  data_venda: string;
+  cliente_nome: string | null;
+  atendente_nome: string;
+  atendente_foto: string | null;
+  valor_venda: number;
+  valor_credito: number;
+  dias_desde_faturamento: number;
+}
 ```
-column os.tamanho_porta does not exist
-```
 
-### Estrutura Real da Tabela ordens_soldagem:
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| qtd_portas_p | integer | Quantidade de portas tamanho P |
-| qtd_portas_g | integer | Quantidade de portas tamanho G |
+### Lógica de Busca
+1. Buscar vendas dos últimos 3 meses
+2. Filtrar vendas onde TODOS os produtos têm `faturamento = true`
+3. Verificar se existe pedido vinculado na tabela `pedidos_producao.venda_id`
+4. Retornar apenas as que NÃO têm pedido
 
-### Código Errado na Função:
+### Query SQL (lógica)
 ```sql
--- Portas P soldadas (ERRADO)
-SELECT COUNT(*)
-FROM ordens_soldagem os
-WHERE os.tamanho_porta = 'P'  -- Coluna não existe!
+-- Vendas com todos produtos faturados
+SELECT v.* FROM vendas v
+WHERE v.data_venda >= (now() - interval '3 months')
+  AND NOT EXISTS (
+    SELECT 1 FROM pedidos_producao pp WHERE pp.venda_id = v.id
+  )
+  AND (
+    SELECT COUNT(*) FROM produtos_vendas pv 
+    WHERE pv.venda_id = v.id AND pv.faturamento = true
+  ) = (
+    SELECT COUNT(*) FROM produtos_vendas pv WHERE pv.venda_id = v.id
+  )
 ```
 
-### Ordens de Pintura Concluídas (dados existentes):
-- 02/02/2026: 3 ordens
-- 30/01/2026: 4 ordens
-- 28/01/2026: 2 ordens
+### Visual
+- Card com gradiente verde (para indicar positividade - venda faturada)
+- Ícone de Package + Check
+- Tabela com: Data, Cliente, Atendente, Dias desde faturamento, Valor, Ação
+- Botão "Criar Pedido" em cada linha que navega para `/administrativo/financeiro/faturamento/:id`
+- Contador no header mostrando quantidade de vendas pendentes
 
-Ou seja, os dados estão corretos no banco, mas a função SQL está com erro de sintaxe.
+### Fluxo de Uso
+1. Usuário acessa `/administrativo/pedidos`
+2. Vê no topo a seção "Vendas Faturadas Sem Pedido (Últimos 3 Meses)"
+3. Clica na linha ou no botão "Criar Pedido"
+4. É redirecionado para a página de faturamento da venda onde pode criar o pedido
+5. Após criar, a venda some da lista automaticamente
 
-## Solução
+## Detalhes Técnicos
 
-Corrigir a função SQL para usar as colunas corretas:
+### Código do Componente (resumo)
+```tsx
+export function VendasFaturadasSemPedido() {
+  const navigate = useNavigate();
+  const [vendas, setVendas] = useState<VendaFaturadaSemPedido[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
-```sql
--- Portas P soldadas - CORRIGIDO
-COALESCE((
-  SELECT SUM(os.qtd_portas_p)
-  FROM ordens_soldagem os
-  WHERE os.responsavel_id = au.user_id
-    AND os.status = 'concluido'
-    AND os.data_conclusao::date BETWEEN p_data_inicio AND p_data_fim
-), 0)::bigint AS soldadas_p,
+  useEffect(() => {
+    fetchVendasFaturadasSemPedido();
+  }, []);
 
--- Portas G soldadas - CORRIGIDO
-COALESCE((
-  SELECT SUM(os.qtd_portas_g)
-  FROM ordens_soldagem os
-  WHERE os.responsavel_id = au.user_id
-    AND os.status = 'concluido'
-    AND os.data_conclusao::date BETWEEN p_data_inicio AND p_data_fim
-), 0)::bigint AS soldadas_g,
+  const fetchVendasFaturadasSemPedido = async () => {
+    // 1. Buscar vendas dos últimos 3 meses com produtos
+    const { data: vendasData } = await supabase
+      .from("vendas")
+      .select(`
+        id, data_venda, cliente_nome, atendente_id, valor_venda, valor_credito,
+        produtos_vendas (id, faturamento)
+      `)
+      .gte("data_venda", dataLimite);
+
+    // 2. Filtrar vendas totalmente faturadas
+    const vendasFaturadas = vendasData.filter(v => {
+      const produtos = v.produtos_vendas || [];
+      return produtos.length > 0 && produtos.every(p => p.faturamento === true);
+    });
+
+    // 3. Verificar quais NÃO têm pedido
+    const { data: pedidos } = await supabase
+      .from("pedidos_producao")
+      .select("venda_id")
+      .in("venda_id", vendasFaturadas.map(v => v.id));
+
+    const vendasComPedido = new Set(pedidos?.map(p => p.venda_id));
+    const vendasSemPedido = vendasFaturadas.filter(v => !vendasComPedido.has(v.id));
+
+    // 4. Processar e retornar
+    setVendas(processedVendas);
+  };
+
+  // Render: Card com tabela similar a VendasNaoFaturadasHistorico
+}
 ```
 
-## Migração SQL Completa
+### Integração na Página
+```tsx
+// Em PedidosAdminMinimalista.tsx
+import { VendasFaturadasSemPedido } from "@/components/pedidos/VendasFaturadasSemPedido";
 
-```sql
-CREATE OR REPLACE FUNCTION public.get_desempenho_etapas(p_data_inicio date, p_data_fim date)
-RETURNS TABLE(
-  user_id uuid,
-  nome text,
-  foto_perfil_url text,
-  perfiladas_metros numeric,
-  soldadas bigint,
-  soldadas_p bigint,
-  soldadas_g bigint,
-  separadas bigint,
-  pintura_m2 numeric,
-  carregamentos bigint
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  RETURN QUERY
-  SELECT
-    au.user_id,
-    au.nome,
-    au.foto_perfil_url,
-    
-    -- Metros perfilados por colaborador
-    COALESCE((
-      SELECT SUM(lo.quantidade * REPLACE(lo.tamanho, ',', '.')::numeric)
-      FROM linhas_ordens lo
-      JOIN ordens_perfiladeira op ON op.id = lo.ordem_id
-      WHERE lo.tipo_ordem = 'perfiladeira'
-        AND lo.concluida = true
-        AND lo.concluida_por = au.user_id
-        AND lo.tamanho IS NOT NULL
-        AND op.data_conclusao::date BETWEEN p_data_inicio AND p_data_fim
-    ), 0)::numeric AS perfiladas_metros,
-    
-    -- Portas soldadas total por colaborador
-    COALESCE((
-      SELECT COUNT(*)
-      FROM ordens_soldagem os
-      WHERE os.responsavel_id = au.user_id
-        AND os.status = 'concluido'
-        AND os.data_conclusao::date BETWEEN p_data_inicio AND p_data_fim
-    ), 0)::bigint AS soldadas,
-    
-    -- Portas P soldadas - CORRIGIDO: usar SUM(qtd_portas_p)
-    COALESCE((
-      SELECT SUM(os.qtd_portas_p)
-      FROM ordens_soldagem os
-      WHERE os.responsavel_id = au.user_id
-        AND os.status = 'concluido'
-        AND os.data_conclusao::date BETWEEN p_data_inicio AND p_data_fim
-    ), 0)::bigint AS soldadas_p,
-    
-    -- Portas G soldadas - CORRIGIDO: usar SUM(qtd_portas_g)
-    COALESCE((
-      SELECT SUM(os.qtd_portas_g)
-      FROM ordens_soldagem os
-      WHERE os.responsavel_id = au.user_id
-        AND os.status = 'concluido'
-        AND os.data_conclusao::date BETWEEN p_data_inicio AND p_data_fim
-    ), 0)::bigint AS soldadas_g,
-    
-    -- Pedidos separados por colaborador
-    COALESCE((
-      SELECT COUNT(*)
-      FROM ordens_separacao osep
-      WHERE osep.responsavel_id = au.user_id
-        AND osep.status = 'concluido'
-        AND osep.data_conclusao::date BETWEEN p_data_inicio AND p_data_fim
-    ), 0)::bigint AS separadas,
-    
-    -- Pintura m² (já corrigido para usar 'pronta')
-    COALESCE((
-      SELECT SUM(pl.largura * pl.altura / 1000000.0)
-      FROM ordens_pintura op
-      JOIN pedido_linhas pl ON pl.pedido_id = op.pedido_id
-      WHERE op.responsavel_id = au.user_id
-        AND op.status = 'pronta'
-        AND op.data_conclusao::date BETWEEN p_data_inicio AND p_data_fim
-        AND pl.largura IS NOT NULL
-        AND pl.altura IS NOT NULL
-    ), 0)::numeric AS pintura_m2,
-    
-    -- Carregamentos por colaborador
-    COALESCE((
-      SELECT COUNT(*)
-      FROM instalacoes i
-      WHERE i.carregamento_concluido_por = au.user_id
-        AND i.carregamento_concluido = true
-        AND i.carregamento_concluido_em::date BETWEEN p_data_inicio AND p_data_fim
-    ), 0)::bigint AS carregamentos
-    
-  FROM admin_users au
-  WHERE au.ativo = true
-    AND au.eh_colaborador = true;
-END;
-$$;
+// Adicionar antes das Tabs
+<VendasFaturadasSemPedido />
+
+<Tabs value={activeTab} onValueChange={setActiveTab}>
+  ...
+</Tabs>
 ```
 
-## Resultado Esperado
+## Resultado Visual Esperado
 
-Após a correção:
-- A função não retornará mais erro 400
-- O ranking de pintura mostrará os m² das 13 ordens concluídas
-- O ranking de soldagem mostrará corretamente a contagem de portas P e G por colaborador
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│ 📦✓ Vendas Faturadas Sem Pedido (Últimos 3 Meses)    [5]        │
+├─────────────────────────────────────────────────────────────────┤
+│ Data       │ Cliente         │ Atendente │ Dias │ Valor   │ Ação│
+│ 15/01/2026 │ João Silva      │ Maria     │ 20   │ R$5.000 │ [→] │
+│ 10/01/2026 │ Pedro Santos    │ Carlos    │ 25   │ R$3.200 │ [→] │
+│ ...                                                             │
+├─────────────────────────────────────────────────────────────────┤
+│ Total: R$ 15.000,00                        [Ver todas (5)]      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Arquivos a Criar/Modificar
+
+1. **Criar**: `src/components/pedidos/VendasFaturadasSemPedido.tsx`
+2. **Modificar**: `src/pages/administrativo/PedidosAdminMinimalista.tsx` - adicionar import e componente
