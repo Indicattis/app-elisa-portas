@@ -51,22 +51,25 @@ export function CronogramaSidebar({
     onPedidoClick(null, null);
   };
 
-  // Versão recolhida - barra fina
+  // Versão recolhida - apenas botão na mesma posição
   if (!open) {
     return (
-      <div className="w-10 flex flex-col items-center py-4 bg-zinc-900/30 border-r border-zinc-800/50">
+      <div className="p-4 pr-0">
         <button
           onClick={() => onOpenChange(true)}
-          className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
-          title="Expandir sidebar"
+          className={cn(
+            "flex items-center justify-center gap-2 h-10 px-3 rounded-xl border backdrop-blur-sm transition-all",
+            "bg-cyan-500/10 border-cyan-500/30 hover:bg-cyan-500/20",
+            "text-cyan-400 hover:text-cyan-300"
+          )}
+          title="Expandir pedidos"
         >
-          <PanelLeft className="h-5 w-5" />
+          <PanelLeft className="h-4 w-4" />
+          <span className="text-xs font-medium">Pedidos</span>
+          {pedidoFiltrado && (
+            <Filter className="h-3.5 w-3.5 text-cyan-300" />
+          )}
         </button>
-        {pedidoFiltrado && (
-          <div className="mt-2">
-            <Filter className="h-4 w-4 text-cyan-400" />
-          </div>
-        )}
       </div>
     );
   }
