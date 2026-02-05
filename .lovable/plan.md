@@ -1,158 +1,50 @@
 
-# Plano: Sistema de Arquivo Morto para Pedidos Finalizados
+# Plano: Corrigir Pedido 0081 e Arquivar
 
-## Contexto da Anomalia (Pedido 0081)
-O pedido foi finalizado em 02/02/2026 mas reapareceu indevidamente em producao em 05/02/2026 e foi avancado para qualidade. A solucao correta seria mante-lo em Finalizado e permitir arquivamento para evitar acoes acidentais.
+## Resumo da Correcao
+Mover o pedido 0081 diretamente para o Arquivo Morto, deletando apenas a ordem de qualidade duplicada que foi criada pela anomalia.
 
-## Objetivo
-Implementar um sistema de "Arquivo Morto" que:
-1. Permite arquivar pedidos finalizados (acao consciente do usuario)
-2. Cria uma pagina dedicada em `/fabrica/arquivo-morto` para visualizar pedidos arquivados
-3. Pedidos arquivados ficam protegidos contra movimentacoes acidentais
+## Acoes Necessarias
 
-## Estrutura Proposta
+### 1. Deletar Ordem Duplicada
+A ordem de qualidade `OQU-2026-0092` (id: `7c99ade7-5309-4acf-9db8-e7c3050ad19f`) foi criada erroneamente em 05/02 e deve ser removida.
 
-```text
-/fabrica (FabricaHub)
-├── Gestao de Pedidos
-├── Ordens por Pedido
-├── Cronograma Producao
-├── Controle de Estoque
-├── Producao
-└── [NOVO] Arquivo Morto  <-- Nova entrada
+```sql
+DELETE FROM ordens_qualidade 
+WHERE id = '7c99ade7-5309-4acf-9db8-e7c3050ad19f';
 ```
 
-## Arquivos a Criar/Modificar
+### 2. Atualizar Pedido para Arquivo Morto
+Corrigir o pedido retornando-o para `finalizado` e marcando como arquivado.
 
-| Arquivo | Acao | Descricao |
-|---------|------|-----------|
-| `src/pages/fabrica/ArquivoMorto.tsx` | CRIAR | Pagina de visualizacao de pedidos arquivados |
-| `src/hooks/usePedidosArquivados.ts` | CRIAR | Hook para buscar pedidos arquivados |
-| `src/pages/fabrica/FabricaHub.tsx` | MODIFICAR | Adicionar item de menu para Arquivo Morto |
-| `src/App.tsx` | MODIFICAR | Adicionar rota /fabrica/arquivo-morto |
-
----
-
-## Detalhes Tecnicos
-
-### 1. Hook `usePedidosArquivados.ts`
-
-```typescript
-interface PedidoArquivado {
-  id: string;
-  numero_pedido: string;
-  cliente_nome: string;
-  data_arquivamento: string;
-  arquivado_por: string;
-  arquivado_por_nome?: string;
-  etapa_atual: string; // sempre 'finalizado'
-  data_entrega: string | null;
-  tipo_entrega: string | null;
-  // dados da venda
-  valor_venda: number | null;
-}
-
-// Query: buscar de pedidos_producao WHERE arquivado = true
-// Ordenacao: data_arquivamento DESC (mais recentes primeiro)
-// Join com profiles para obter nome de quem arquivou
+```sql
+UPDATE pedidos_producao
+SET 
+  etapa_atual = 'finalizado',
+  arquivado = true,
+  data_arquivamento = now(),
+  arquivado_por = auth.uid()  -- usuario atual
+WHERE id = '1ed5836f-9448-4828-88b7-7f2aa8c74a71';
 ```
 
-### 2. Pagina `ArquivoMorto.tsx`
+## O Que Sera Preservado
+Todas as ordens de producao ja concluidas permanecerao intactas:
 
-Layout similar ao PedidosProducaoMinimalista mas simplificado:
+| Ordem | Numero | Status | Preservado |
+|-------|--------|--------|------------|
+| Soldagem | OSL-2026-0025 | concluido | Sim |
+| Perfiladeira | OPE-2026-0027 | concluido | Sim |
+| Separacao | OSE-2026-0026 | concluido | Sim |
+| Qualidade | OQU-2026-0081 | concluido | Sim |
+| Pintura | PINT-00073 | pronta | Sim |
+| Carregamento | - | concluida | Sim |
 
-```text
-+--------------------------------------------------+
-| [<] Arquivo Morto             [Busca] [Exportar] |
-+--------------------------------------------------+
-|                                                  |
-| Total: 45 pedidos arquivados                     |
-|                                                  |
-| +----------------------------------------------+ |
-| | PED-0045 | Cliente ABC | 02/02/2026          | |
-| | Arquivado por: Marcos                        | |
-| +----------------------------------------------+ |
-| | PED-0044 | Cliente XYZ | 01/02/2026          | |
-| | Arquivado por: Ana                           | |
-| +----------------------------------------------+ |
-|                                                  |
-| [Paginacao]                                      |
-+--------------------------------------------------+
-```
+## O Que Sera Removido
+Apenas a ordem de qualidade duplicada:
+- `OQU-2026-0092` (criada em 05/02 por anomalia)
 
-Funcionalidades:
-- Busca por numero do pedido ou nome do cliente
-- Filtro por periodo de arquivamento
-- Visualizacao detalhada ao clicar (apenas leitura)
-- Exportar lista em Excel (opcional)
-
-### 3. Card de Pedido Arquivado
-
-Componente simplificado mostrando:
-- Numero do pedido
-- Nome do cliente
-- Data de arquivamento
-- Quem arquivou
-- Valor total da venda (se disponivel)
-- Badge "Arquivado" verde
-
-### 4. Atualizacao do FabricaHub
-
-Adicionar novo item ao menu:
-
-```typescript
-const menuItems = [
-  { label: 'Gestao de Pedidos', icon: Package, path: '/fabrica/pedidos-producao' },
-  { label: 'Ordens por Pedido', icon: ClipboardList, path: '/fabrica/ordens-pedidos' },
-  { label: 'Cronograma Producao', icon: Calendar, path: '/fabrica/cronograma-producao' },
-  { label: 'Controle de Estoque', icon: Boxes, path: '/fabrica/controle-estoque' },
-  { label: 'Producao', icon: Factory, path: '/fabrica/producao' },
-  // NOVO
-  { label: 'Arquivo Morto', icon: Archive, path: '/fabrica/arquivo-morto' },
-];
-
-const routeKeyMap: Record<string, string> = {
-  // ... rotas existentes
-  '/fabrica/arquivo-morto': 'fabrica_arquivo_morto',
-};
-```
-
-### 5. Rota no App.tsx
-
-```typescript
-import ArquivoMorto from "./pages/fabrica/ArquivoMorto";
-
-// Na secao de rotas da fabrica:
-<Route 
-  path="/fabrica/arquivo-morto" 
-  element={
-    <ProtectedRoute routeKey="fabrica_arquivo_morto">
-      <ArquivoMorto />
-    </ProtectedRoute>
-  } 
-/>
-```
-
----
-
-## Fluxo de Uso
-
-1. Usuario finaliza o fluxo do pedido (chega em "Finalizado")
-2. Na etapa Finalizado, aparece botao "Arquivar"
-3. Usuario confirma arquivamento no modal existente (ArquivarPedidoModal)
-4. Pedido e movido para o Arquivo Morto
-5. Pedido desaparece das listagens de producao
-6. Pode ser consultado em /fabrica/arquivo-morto
-
-## Consideracoes sobre Permissoes
-
-- A rota `fabrica_arquivo_morto` deve ser adicionada a tabela `app_routes` para controle de acesso
-- Usuarios com permissao podem visualizar o arquivo
-- Desarquivar (se necessario no futuro) seria uma funcao administrativa
-
-## Correcao do Pedido 0081
-
-Apos implementacao, o pedido 0081 deve ser manualmente corrigido:
-1. Atualizar `etapa_atual` para 'finalizado'
-2. Deletar a ordem de qualidade duplicada (OQU-2026-0092)
-3. Arquivar o pedido para prevenir futuras anomalias
+## Resultado Final
+- Pedido 0081 estara no Arquivo Morto
+- Acessivel em `/fabrica/arquivo-morto`
+- Todas as ordens originais permanecem no historico
+- Nenhum colaborador precisara refazer trabalho
