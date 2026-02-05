@@ -2,7 +2,6 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, User, Pause } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { OrdemProducaoSimples, TipoOrdemProducao } from "@/hooks/useOrdensProducaoPrioridade";
 
@@ -27,22 +26,6 @@ export function OrdemProducaoCard({ ordem, posicao, tipo, onOrdemClick }: OrdemP
     transform: CSS.Transform.toString(transform),
     transition,
   };
-
-  const getStatusConfig = (status: string, pausada?: boolean) => {
-    if (pausada) {
-      return { label: 'P', variant: 'outline' as const, className: 'bg-amber-500/20 text-amber-300 border-amber-500/30' };
-    }
-    switch (status) {
-      case 'pendente':
-        return { label: 'Disp', variant: 'outline' as const, className: 'bg-blue-500/20 text-blue-300 border-blue-500/30' };
-      case 'em_andamento':
-        return { label: 'And', variant: 'outline' as const, className: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' };
-      default:
-        return { label: status?.substring(0, 3), variant: 'outline' as const, className: 'bg-zinc-500/20 text-zinc-300 border-zinc-500/30' };
-    }
-  };
-
-  const statusConfig = getStatusConfig(ordem.status, ordem.pausada);
   
   // Metragem: preferir m² se existir, senão m linear
   const metragem = ordem.metragem_quadrada && ordem.metragem_quadrada > 0 
@@ -57,15 +40,26 @@ export function OrdemProducaoCard({ ordem, posicao, tipo, onOrdemClick }: OrdemP
     onOrdemClick(ordem);
   };
 
+  // Determinar estilo do card baseado no status
+  const getCardStyle = () => {
+    if (ordem.pausada) {
+      return "bg-amber-500/15 border-amber-500/40 hover:bg-amber-500/25 hover:border-amber-500/50";
+    }
+    if (ordem.status === 'pendente') {
+      return "bg-blue-500/15 border-blue-500/40 hover:bg-blue-500/25 hover:border-blue-500/50";
+    }
+    return "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 hover:border-zinc-600/50";
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       onClick={handleClick}
       className={cn(
-        "h-[45px] bg-zinc-800/50 rounded-md border border-zinc-700/50 px-2",
-        "flex items-center gap-2 cursor-pointer",
-        "hover:bg-zinc-800 hover:border-zinc-600/50 transition-all",
+        "h-[45px] rounded-md border px-2",
+        "flex items-center gap-2 cursor-pointer transition-all",
+        getCardStyle(),
         isDragging && "opacity-50 shadow-xl z-50"
       )}
     >
@@ -74,23 +68,24 @@ export function OrdemProducaoCard({ ordem, posicao, tipo, onOrdemClick }: OrdemP
         {...attributes}
         {...listeners}
         onClick={(e) => e.stopPropagation()}
-        className="p-0.5 rounded hover:bg-zinc-700/50 cursor-grab active:cursor-grabbing text-zinc-500 hover:text-zinc-300 transition-colors flex-shrink-0"
+        className="p-0.5 rounded hover:bg-white/10 cursor-grab active:cursor-grabbing text-zinc-400 hover:text-zinc-200 transition-colors flex-shrink-0"
       >
         <GripVertical className="h-4 w-4" />
       </button>
 
       {/* Posição */}
-      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-semibold flex-shrink-0">
+      <span className={cn(
+        "flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-semibold flex-shrink-0",
+        ordem.pausada ? "bg-amber-500/30 text-amber-200" : "bg-blue-500/30 text-blue-200"
+      )}>
         {posicao}
       </span>
 
-      {/* Número ordem (truncado) */}
-      <span className="text-xs font-medium text-white w-[72px] truncate flex-shrink-0">
-        {ordem.numero_ordem}
-      </span>
-
-      {/* Cliente (truncado) */}
-      <span className="text-[10px] text-zinc-400 w-[70px] truncate flex-shrink-0 hidden sm:block">
+      {/* Cliente (truncado) - substituiu o número da ordem */}
+      <span className={cn(
+        "text-xs font-medium truncate flex-1 min-w-0",
+        ordem.pausada ? "text-amber-100" : ordem.status === 'pendente' ? "text-blue-100" : "text-white"
+      )}>
         {ordem.cliente_nome}
       </span>
 
@@ -107,7 +102,7 @@ export function OrdemProducaoCard({ ordem, posicao, tipo, onOrdemClick }: OrdemP
               />
             ))}
             {ordem.cores.length > 2 && (
-              <span className="text-[9px] text-zinc-500">+{ordem.cores.length - 2}</span>
+              <span className="text-[9px] text-zinc-400">+{ordem.cores.length - 2}</span>
             )}
           </>
         ) : (
@@ -117,21 +112,14 @@ export function OrdemProducaoCard({ ordem, posicao, tipo, onOrdemClick }: OrdemP
 
       {/* Metragem */}
       {metragem && (
-        <span className="text-[10px] text-zinc-400 w-[36px] text-right flex-shrink-0">
+        <span className="text-[10px] text-zinc-300 w-[36px] text-right flex-shrink-0">
           {metragem}
         </span>
       )}
 
-      {/* Spacer */}
-      <div className="flex-1 min-w-0" />
-
-      {/* Status - ícone de pausa ou badge compacto */}
-      {ordem.pausada ? (
-        <Pause className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
-      ) : (
-        <Badge variant={statusConfig.variant} className={cn("text-[9px] px-1.5 py-0 h-4 flex-shrink-0", statusConfig.className)}>
-          {statusConfig.label}
-        </Badge>
+      {/* Ícone de pausa se pausada */}
+      {ordem.pausada && (
+        <Pause className="h-3.5 w-3.5 text-amber-300 flex-shrink-0" />
       )}
 
       {/* Avatar responsável */}
