@@ -11,7 +11,12 @@ export interface PedidoAprovacao {
   data_entrega: string | null;
   created_at: string;
   produtos_resumo: string;
-  pedidoCompleto: any; // Full pedido data for details sheet
+  pedidoCompleto: any;
+  // Novos campos
+  tipo_entrega: 'instalacao' | 'entrega' | 'manutencao' | null;
+  data_entrada_etapa: string | null;
+  portasInfo: Array<{ tamanho: 'P' | 'G'; largura: number; altura: number }>;
+  cores: Array<{ nome: string; codigo_hex: string }>;
 }
 
 export function usePedidosAprovacaoCEO() {
@@ -29,7 +34,15 @@ export function usePedidosAprovacaoCEO() {
           *,
           vendas:venda_id (
             *,
-            produtos_vendas (*)
+            produtos_vendas (
+              *,
+              catalogo_cores:cor_id (nome, codigo_hex)
+            )
+          ),
+          pedidos_etapas (
+            data_entrada,
+            etapa,
+            data_saida
           )
         `)
         .eq('etapa_atual', 'aprovacao_ceo')
@@ -38,6 +51,50 @@ export function usePedidosAprovacaoCEO() {
 
       if (error) throw error;
       if (!pedidosData) return [];
+
+      // Funções auxiliares
+      const calcularPortasInfo = (produtos: any[]) => {
+        const portasEnrolar = produtos.filter(p => p.tipo_produto === 'porta_enrolar');
+        const lista: Array<{ tamanho: 'P' | 'G'; largura: number; altura: number }> = [];
+        
+        portasEnrolar.forEach(p => {
+          let largura = p.largura || 0;
+          let altura = p.altura || 0;
+          
+          if (largura === 0 && altura === 0 && p.tamanho) {
+            const match = p.tamanho.match(/(\d+[.,]?\d*)\s*[xX]\s*(\d+[.,]?\d*)/);
+            if (match) {
+              largura = parseFloat(match[1].replace(',', '.'));
+              altura = parseFloat(match[2].replace(',', '.'));
+            }
+          }
+          
+          const area = largura * altura;
+          const quantidade = p.quantidade || 1;
+          const tamanhoCategoria = area > 25 ? 'G' : 'P';
+          
+          for (let i = 0; i < quantidade; i++) {
+            lista.push({ tamanho: tamanhoCategoria, largura, altura });
+          }
+        });
+        
+        return lista;
+      };
+
+      const extrairCores = (produtos: any[]) => {
+        const coresMap = new Map<string, { nome: string; codigo_hex: string }>();
+        
+        produtos.forEach(p => {
+          if (p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'pintura_epoxi') {
+            const cor = p.catalogo_cores || p.cor;
+            if (cor?.nome && cor?.codigo_hex) {
+              coresMap.set(cor.nome, { nome: cor.nome, codigo_hex: cor.codigo_hex });
+            }
+          }
+        });
+        
+        return Array.from(coresMap.values());
+      };
 
       return pedidosData.map((pedido: any) => {
         const venda = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
@@ -56,6 +113,11 @@ export function usePedidosAprovacaoCEO() {
           .map(([tipo, qtd]) => `${qtd} ${tipo}${qtd > 1 ? 's' : ''}`)
           .join(', ') || 'Sem produtos';
 
+        // Buscar data_entrada da etapa atual
+        const etapaAtual = pedido.pedidos_etapas?.find(
+          (e: any) => e.etapa === 'aprovacao_ceo' && !e.data_saida
+        );
+
         return {
           id: pedido.id,
           numero_pedido: pedido.numero_pedido,
@@ -64,7 +126,11 @@ export function usePedidosAprovacaoCEO() {
           data_entrega: pedido.data_entrega,
           created_at: pedido.created_at,
           produtos_resumo: resumo,
-          pedidoCompleto: pedido // Full data for PedidoDetalhesSheet
+          pedidoCompleto: pedido,
+          tipo_entrega: venda?.tipo_entrega || null,
+          data_entrada_etapa: etapaAtual?.data_entrada || null,
+          portasInfo: calcularPortasInfo(produtos),
+          cores: extrairCores(produtos),
         } as PedidoAprovacao;
       });
     },
