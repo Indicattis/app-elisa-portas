@@ -13,6 +13,7 @@ interface ColunaOrdensProducaoProps {
   isLoading: boolean;
   cor: string;
   onOrdemClick: (ordem: OrdemProducaoSimples) => void;
+  isDragDisabled?: boolean;
 }
 
 const CORES_MAP: Record<string, { bg: string; border: string; text: string }> = {
@@ -23,7 +24,7 @@ const CORES_MAP: Record<string, { bg: string; border: string; text: string }> = 
   pink: { bg: 'bg-pink-500/10', border: 'border-pink-500/30', text: 'text-pink-400' },
 };
 
-export function ColunaOrdensProducao({ tipo, titulo, ordens, isLoading, cor, onOrdemClick }: ColunaOrdensProducaoProps) {
+export function ColunaOrdensProducao({ tipo, titulo, ordens, isLoading, cor, onOrdemClick, isDragDisabled = false }: ColunaOrdensProducaoProps) {
   const { setNodeRef, isOver } = useDroppable({ id: tipo });
   const cores = CORES_MAP[cor] || CORES_MAP.blue;
 
@@ -58,6 +59,19 @@ export function ColunaOrdensProducao({ tipo, titulo, ordens, isLoading, cor, onO
         ) : ordens.length === 0 ? (
           <div className="flex items-center justify-center h-32">
             <p className="text-sm text-zinc-500">Nenhuma ordem</p>
+          </div>
+        ) : isDragDisabled ? (
+          <div className="flex flex-col gap-1.5">
+            {ordens.map((ordem, index) => (
+              <OrdemProducaoCard 
+                key={ordem.id} 
+                ordem={ordem} 
+                posicao={index + 1}
+                tipo={tipo}
+                onOrdemClick={onOrdemClick}
+                isDragDisabled
+              />
+            ))}
           </div>
         ) : (
           <SortableContext items={ordens.map(o => o.id)} strategy={verticalListSortingStrategy}>
