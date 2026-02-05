@@ -10,9 +10,10 @@ interface OrdemProducaoCardProps {
   posicao: number;
   tipo: TipoOrdemProducao;
   onOrdemClick: (ordem: OrdemProducaoSimples) => void;
+  isDragDisabled?: boolean;
 }
 
-export function OrdemProducaoCard({ ordem, posicao, tipo, onOrdemClick }: OrdemProducaoCardProps) {
+export function OrdemProducaoCard({ ordem, posicao, tipo, onOrdemClick, isDragDisabled = false }: OrdemProducaoCardProps) {
   const {
     attributes,
     listeners,
@@ -63,15 +64,17 @@ export function OrdemProducaoCard({ ordem, posicao, tipo, onOrdemClick }: OrdemP
         isDragging && "opacity-50 shadow-xl z-50"
       )}
     >
-      {/* Drag Handle */}
-      <button
-        {...attributes}
-        {...listeners}
-        onClick={(e) => e.stopPropagation()}
-        className="p-0.5 rounded hover:bg-white/10 cursor-grab active:cursor-grabbing text-zinc-400 hover:text-zinc-200 transition-colors flex-shrink-0"
-      >
-        <GripVertical className="h-4 w-4" />
-      </button>
+      {/* Drag Handle - hidden when disabled */}
+      {!isDragDisabled && (
+        <button
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
+          className="p-0.5 rounded hover:bg-white/10 cursor-grab active:cursor-grabbing text-zinc-400 hover:text-zinc-200 transition-colors flex-shrink-0"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      )}
 
       {/* Posição */}
       <span className={cn(

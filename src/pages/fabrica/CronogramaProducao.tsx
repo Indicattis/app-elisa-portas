@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw, Filter, X } from "lucide-react";
 import {
   DndContext,
   DragEndEvent,
@@ -11,11 +11,13 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
 import { DelayedParticles } from "@/components/DelayedParticles";
 import { ColunaOrdensProducao } from "@/components/cronograma/ColunaOrdensProducao";
+import { CronogramaSidebar } from "@/components/cronograma/CronogramaSidebar";
 import { OrdemLinhasSheet } from "@/components/fabrica/OrdemLinhasSheet";
 import { useOrdensProducaoPrioridade, TipoOrdemProducao, OrdemProducaoSimples } from "@/hooks/useOrdensProducaoPrioridade";
 import type { OrdemStatus, TipoOrdem } from "@/hooks/useOrdensPorPedido";
@@ -32,7 +34,12 @@ export default function CronogramaProducao() {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
   
-  // Estado para controlar a sidebar de detalhes
+  // Estado para controlar a sidebar esquerda (pedidos)
+  const [sidebarAberta, setSidebarAberta] = useState(true);
+  const [pedidoFiltrado, setPedidoFiltrado] = useState<string | null>(null);
+  const [clienteFiltrado, setClienteFiltrado] = useState<string | null>(null);
+  
+  // Estado para controlar a sidebar de detalhes (direita)
   const [ordemSelecionada, setOrdemSelecionada] = useState<{
     ordem: OrdemStatus | null;
     numeroPedido: string;
@@ -59,6 +66,21 @@ export default function CronogramaProducao() {
     pintura,
   };
 
+  // Filtrar ordens por pedido_id quando filtro ativo
+  const filtrarOrdens = (ordens: OrdemProducaoSimples[]) => {
+    if (!pedidoFiltrado) return ordens;
+    return ordens.filter(o => o.pedido_id === pedidoFiltrado);
+  };
+
+  // Determinar se drag está desabilitado
+  const isDragDisabled = !!pedidoFiltrado;
+
+  // Handler para filtro de pedido
+  const handlePedidoClick = (pedidoId: string | null, clienteNome: string | null) => {
+    setPedidoFiltrado(pedidoId);
+    setClienteFiltrado(clienteNome);
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
     return () => clearTimeout(timer);
@@ -73,6 +95,9 @@ export default function CronogramaProducao() {
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
+    // Não permitir drag quando filtro ativo
+    if (isDragDisabled) return;
+    
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -163,15 +188,34 @@ export default function CronogramaProducao() {
             </div>
           </button>
 
-          <h1 
-            className="text-xl font-bold text-white"
-            style={{
-              opacity: mounted ? 1 : 0,
-              transition: 'opacity 0.5s ease 200ms'
-            }}
-          >
-            Cronograma de Produção
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 
+              className="text-xl font-bold text-white"
+              style={{
+                opacity: mounted ? 1 : 0,
+                transition: 'opacity 0.5s ease 200ms'
+              }}
+            >
+              Cronograma de Produção
+            </h1>
+            
+            {/* Badge de filtro ativo */}
+            {pedidoFiltrado && clienteFiltrado && (
+              <Badge 
+                variant="secondary" 
+                className="bg-blue-500/20 text-blue-200 border border-blue-500/30 gap-1.5"
+              >
+                <Filter className="h-3 w-3" />
+                {clienteFiltrado}
+                <button 
+                  onClick={() => handlePedidoClick(null, null)}
+                  className="ml-1 hover:bg-blue-500/30 rounded p-0.5"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
+          </div>
 
           <Button
             variant="outline"
@@ -189,40 +233,53 @@ export default function CronogramaProducao() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 relative z-10 p-4 overflow-hidden">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <ScrollArea className="h-full w-full">
-            <div 
-              className="flex gap-4 pb-4 min-h-[calc(100vh-140px)]"
-              style={{
-                opacity: mounted ? 1 : 0,
-                transform: mounted ? 'translateY(0)' : 'translateY(20px)',
-                transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 300ms'
-              }}
-            >
-              {COLUNAS.map((coluna) => (
-                <ColunaOrdensProducao
-                  key={coluna.tipo}
-                  tipo={coluna.tipo}
-                  titulo={coluna.titulo}
-                  ordens={ordensMap[coluna.tipo].ordens}
-                  isLoading={ordensMap[coluna.tipo].isLoading}
-                  cor={coluna.cor}
-                  onOrdemClick={(ordem) => handleOrdemClick(ordem, coluna.tipo)}
-                />
-              ))}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </DndContext>
+      {/* Main Content com Sidebar */}
+      <main className="flex-1 relative z-10 flex overflow-hidden">
+        {/* Sidebar Esquerda - Pedidos */}
+        <CronogramaSidebar
+          open={sidebarAberta}
+          onOpenChange={setSidebarAberta}
+          pedidoFiltrado={pedidoFiltrado}
+          clienteFiltrado={clienteFiltrado}
+          onPedidoClick={handlePedidoClick}
+        />
+
+        {/* Área das Colunas */}
+        <div className="flex-1 p-4 overflow-hidden">
+          <DndContext
+            sensors={isDragDisabled ? [] : sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <ScrollArea className="h-full w-full">
+              <div 
+                className="flex gap-4 pb-4 min-h-[calc(100vh-140px)]"
+                style={{
+                  opacity: mounted ? 1 : 0,
+                  transform: mounted ? 'translateY(0)' : 'translateY(20px)',
+                  transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 300ms'
+                }}
+              >
+                {COLUNAS.map((coluna) => (
+                  <ColunaOrdensProducao
+                    key={coluna.tipo}
+                    tipo={coluna.tipo}
+                    titulo={coluna.titulo}
+                    ordens={filtrarOrdens(ordensMap[coluna.tipo].ordens)}
+                    isLoading={ordensMap[coluna.tipo].isLoading}
+                    cor={coluna.cor}
+                    onOrdemClick={(ordem) => handleOrdemClick(ordem, coluna.tipo)}
+                    isDragDisabled={isDragDisabled}
+                  />
+                ))}
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          </DndContext>
+        </div>
       </main>
 
-      {/* Sidebar de detalhes da ordem */}
+      {/* Sidebar de detalhes da ordem (direita) */}
       <OrdemLinhasSheet
         ordem={ordemSelecionada?.ordem || null}
         numeroPedido={ordemSelecionada?.numeroPedido}
