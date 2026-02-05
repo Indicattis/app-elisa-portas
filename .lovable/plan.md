@@ -1,153 +1,111 @@
 
-# Plano: Hub de Aprovacoes e Pagina Aprovacoes Fabrica ✅ IMPLEMENTADO
+# Plano: Simplificar Aprovacao e Adicionar Downbar de Detalhes
 
 ## Objetivo
-Criar um novo hub de aprovacoes em `/direcao/aprovacoes` com uma pagina dedicada para aprovacao de pedidos na etapa "Aprovacao CEO", otimizada para dispositivos moveis.
+1. Remover os 2 checkboxes obrigatorios - ter apenas um botao "Aprovar"
+2. Ao clicar em "Ver Detalhes", abrir a downbar (PedidoDetalhesSheet) em vez de navegar para outra pagina
 
-## Estrutura de Navegacao
+## Alteracoes
 
-```text
-/direcao (DirecaoHub)
-├── Vendas
-├── Faturamento
-├── Gestao de Fabrica
-├── Gestao de Instalacoes
-├── Estoque
-├── Metas
-├── Autorizados
-└── [NOVO] Aprovacoes  --> /direcao/aprovacoes
-                              └── Aprovacoes Fabrica --> /direcao/aprovacoes/fabrica
-```
+### 1. AprovacoesProducao.tsx
 
-## Arquivos a Criar
+**Remover:**
+- Secao de checkboxes do card expandido
+- Funcao `todosCheckboxesMarcados`
+- Funcao `handleCheckboxChange`
+- Mensagem "Marque todos os itens obrigatorios..."
+- Import do Checkbox
 
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/pages/direcao/aprovacoes/DirecaoAprovacoesHub.tsx` | Hub de aprovacoes com mesmo estilo do DirecaoEstoqueHub |
-| `src/pages/direcao/aprovacoes/AprovacoesProducao.tsx` | Pagina mobile-first para aprovar pedidos |
-| `src/hooks/usePedidosAprovacaoCEO.ts` | Hook para buscar e aprovar pedidos na etapa aprovacao_ceo |
+**Adicionar:**
+- State para pedido selecionado e controle do sheet
+- Import do PedidoDetalhesSheet
+- Componente PedidoDetalhesSheet no final
 
-## Arquivos a Modificar
+**Modificar:**
+- Botao "Aprovar" sempre habilitado (sem verificacao de checkboxes)
+- Botao "Ver Detalhes" abre o sheet em vez de navegar
 
-| Arquivo | Alteracao |
-|---------|-----------|
-| `src/pages/direcao/DirecaoHub.tsx` | Adicionar botao "Aprovacoes" com icone ShieldCheck |
-| `src/App.tsx` | Adicionar rotas /direcao/aprovacoes e /direcao/aprovacoes/fabrica |
+### 2. usePedidosAprovacaoCEO.ts
+
+**Modificar:**
+- Query para buscar dados completos do pedido (necessarios para o PedidoDetalhesSheet)
+- Funcao `aprovarPedido` para nao validar checkboxes, apenas avancar diretamente
 
 ---
 
-## Detalhes Tecnicos
+## Codigo Resumido
 
-### 1. DirecaoHub.tsx - Novo Botao
-
-Adicionar ao array menuItems:
+### AprovacoesProducao.tsx
 
 ```typescript
-import { ShieldCheck } from 'lucide-react';
+import { PedidoDetalhesSheet } from '@/components/pedidos/PedidoDetalhesSheet';
 
-const menuItems = [
-  // ... itens existentes
-  { label: 'Aprovacoes', icon: ShieldCheck, path: '/direcao/aprovacoes' },
-];
+// Novos states
+const [selectedPedido, setSelectedPedido] = useState<any>(null);
+const [showDetalhes, setShowDetalhes] = useState(false);
+
+// Handler para abrir detalhes
+const handleOpenDetalhes = (pedido: any) => {
+  setSelectedPedido(pedido);
+  setShowDetalhes(true);
+};
+
+// Botao de aprovar (sem verificacao de checkboxes)
+<Button
+  onClick={() => handleAprovar(pedido.id)}
+  disabled={aprovarPedido.isPending}
+  className="w-full h-14 ..."
+>
+  Aprovar e Enviar para Producao
+</Button>
+
+// Botao de detalhes (abre sheet)
+<Button
+  variant="outline"
+  onClick={() => handleOpenDetalhes(pedido)}
+>
+  Ver Detalhes do Pedido
+</Button>
+
+// Sheet no final
+{selectedPedido && (
+  <PedidoDetalhesSheet 
+    pedido={selectedPedido} 
+    open={showDetalhes} 
+    onOpenChange={setShowDetalhes} 
+  />
+)}
 ```
 
-### 2. Hook usePedidosAprovacaoCEO.ts
+### usePedidosAprovacaoCEO.ts
 
 ```typescript
-interface PedidoAprovacao {
-  id: string;
-  numero_pedido: string;
-  cliente_nome: string;
-  valor_venda: number | null;
-  data_entrega: string | null;
-  created_at: string;
-  produtos_resumo: string; // Ex: "2 Portas, 1 Motor"
-}
+// Query expandida para incluir dados completos
+const { data: pedidosData } = await supabase
+  .from('pedidos_producao')
+  .select(`
+    *,
+    vendas:venda_id (
+      *,
+      produtos_vendas (*)
+    )
+  `)
+  .eq('etapa_atual', 'aprovacao_ceo')
+  .eq('arquivado', false);
 
-// Query: pedidos_producao WHERE etapa_atual = 'aprovacao_ceo' AND arquivado = false
-// Join com vendas para obter dados do cliente e produtos
-// Ordenacao: created_at ASC (mais antigos primeiro - FIFO)
-
-// Funcao aprovarPedido:
-// 1. Buscar pedidos_etapas atual
-// 2. Marcar checkboxes como checked
-// 3. Chamar funcao de avancar etapa
+// Aprovar sem validar checkboxes
+const aprovarPedido = useMutation({
+  mutationFn: async (pedidoId: string) => {
+    // Avancar diretamente sem validacao
+    await moverParaProximaEtapa.mutateAsync({ pedidoId });
+  },
+  ...
+});
 ```
 
-### 3. AprovacoesProducao.tsx - Layout Mobile-First
+## Resultado
 
-```text
-+------------------------------------------+
-| [<]  Aprovacoes Fabrica       [Atualizar] |
-+------------------------------------------+
-| 10 pedidos aguardando aprovacao          |
-+------------------------------------------+
-|                                          |
-| +--------------------------------------+ |
-| | PED-0190                        [>]  | |
-| | Helio Joao Barbosa                   | |
-| | Criado: 04/02/2026                   | |
-| | 2 Portas de Enrolar                  | |
-| |                                      | |
-| | [ ] Pedido revisado pela diretoria   | |
-| | [ ] Aprovado para producao           | |
-| |                                      | |
-| | [APROVAR E ENVIAR PARA PRODUCAO]     | |
-| +--------------------------------------+ |
-|                                          |
-| +--------------------------------------+ |
-| | PED-0188 ...                         | |
-| +--------------------------------------+ |
-+------------------------------------------+
-```
-
-Caracteristicas Mobile-First:
-- Cards em tela cheia com scroll vertical
-- Checkboxes grandes para toque facil (min-h-12)
-- Botao de aprovacao proeminente (h-14, full width)
-- Pull-to-refresh para atualizar lista
-- Feedback haptico ao aprovar (se disponivel)
-- Navegacao para detalhes do pedido ao clicar no header
-
-### 4. DirecaoAprovacoesHub.tsx
-
-Hub identico ao DirecaoEstoqueHub com:
-- Icone principal: ShieldCheck (laranja)
-- Titulo: "Aprovacoes"
-- Subtitulo: "Aprove pedidos e solicitacoes"
-- Breadcrumb: Home > Direcao > Aprovacoes
-- Botao inicial: "Aprovacoes Fabrica" (icone Factory)
-
-### 5. Rotas no App.tsx
-
-```typescript
-// Hub de Aprovacoes da Direcao
-<Route path="/direcao/aprovacoes" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoAprovacoesHub /></ProtectedRoute>} />
-<Route path="/direcao/aprovacoes/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><AprovacoesProducao /></ProtectedRoute>} />
-```
-
----
-
-## Fluxo de Aprovacao
-
-1. Diretor acessa /direcao/aprovacoes/fabrica
-2. Ve lista de pedidos na etapa "Aprovacao CEO" ordenados por data de criacao
-3. Para cada pedido, ve resumo (numero, cliente, produtos)
-4. Marca os 2 checkboxes obrigatorios:
-   - "Pedido revisado pela diretoria"
-   - "Aprovado para producao"
-5. Clica em "Aprovar e Enviar para Producao"
-6. Sistema avanca pedido para etapa "em_producao"
-7. Ordens de producao sao criadas automaticamente (soldagem, perfiladeira, etc)
-
-## Dados Atuais
-
-Existem 10+ pedidos aguardando aprovacao CEO no sistema, como:
-- PED-0190: Helio Joao Barbosa
-- PED-0188: HOPP PORTOES LTDA
-- PED-0186: Claudio Montezana dos Santos
-- E outros...
-
-## Migracao SQL
-
-Nenhuma alteracao de banco necessaria - utilizara estrutura existente de pedidos_producao, pedidos_etapas e hook usePedidosEtapas para avancar etapas.
+- Interface mais simples: card mostra resumo, botao unico "Aprovar"
+- Clique em "Ver Detalhes" abre a downbar completa do pedido
+- Diretor pode aprovar com um unico toque
+- Mantem todas as informacoes detalhadas acessiveis via downbar
