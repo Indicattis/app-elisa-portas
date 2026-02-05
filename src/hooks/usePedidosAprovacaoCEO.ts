@@ -11,12 +11,7 @@ export interface PedidoAprovacao {
   data_entrega: string | null;
   created_at: string;
   produtos_resumo: string;
-  checkboxes: Array<{
-    id: string;
-    label: string;
-    checked: boolean;
-    required: boolean;
-  }>;
+  pedidoCompleto: any; // Full pedido data for details sheet
 }
 
 export function usePedidosAprovacaoCEO() {
@@ -27,29 +22,18 @@ export function usePedidosAprovacaoCEO() {
   const { data: pedidos = [], isLoading, refetch } = useQuery({
     queryKey: ['pedidos-aprovacao-ceo'],
     queryFn: async () => {
-      // Buscar pedidos em aprovação CEO
+      // Buscar pedidos em aprovação CEO com dados completos para o sheet
       const { data: pedidosData, error } = await supabase
         .from('pedidos_producao')
         .select(`
-          id,
-          numero_pedido,
-          created_at,
-          data_entrega,
+          *,
           vendas:venda_id (
-            cliente_nome,
-            valor_venda,
-            produtos_vendas (
-              tipo_produto,
-              quantidade
-            )
-          ),
-          pedidos_etapas!inner (
-            checkboxes
+            *,
+            produtos_vendas (*)
           )
         `)
         .eq('etapa_atual', 'aprovacao_ceo')
         .eq('arquivado', false)
-        .is('pedidos_etapas.data_saida', null)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
@@ -72,13 +56,6 @@ export function usePedidosAprovacaoCEO() {
           .map(([tipo, qtd]) => `${qtd} ${tipo}${qtd > 1 ? 's' : ''}`)
           .join(', ') || 'Sem produtos';
 
-        // Checkboxes da etapa atual
-        const etapaAtual = pedido.pedidos_etapas?.[0];
-        const checkboxes = etapaAtual?.checkboxes || [
-          { id: 'revisado_diretoria', label: 'Pedido revisado pela diretoria', checked: false, required: true },
-          { id: 'aprovado_producao', label: 'Aprovado para produção', checked: false, required: true }
-        ];
-
         return {
           id: pedido.id,
           numero_pedido: pedido.numero_pedido,
@@ -87,81 +64,17 @@ export function usePedidosAprovacaoCEO() {
           data_entrega: pedido.data_entrega,
           created_at: pedido.created_at,
           produtos_resumo: resumo,
-          checkboxes: checkboxes as any[]
+          pedidoCompleto: pedido // Full data for PedidoDetalhesSheet
         } as PedidoAprovacao;
       });
     },
     refetchInterval: 10000,
   });
 
-  // Atualizar checkbox de um pedido
-  const atualizarCheckbox = useMutation({
-    mutationFn: async ({ 
-      pedidoId, 
-      checkboxId, 
-      checked 
-    }: { 
-      pedidoId: string; 
-      checkboxId: string; 
-      checked: boolean;
-    }) => {
-      // Buscar etapa atual
-      const { data: etapaAtual, error: etapaError } = await supabase
-        .from('pedidos_etapas')
-        .select('id, checkboxes')
-        .eq('pedido_id', pedidoId)
-        .eq('etapa', 'aprovacao_ceo')
-        .is('data_saida', null)
-        .single();
-
-      if (etapaError) throw etapaError;
-
-      const checkboxes = (etapaAtual.checkboxes as any[]) || [];
-      const updatedCheckboxes = checkboxes.map(cb =>
-        cb.id === checkboxId
-          ? { ...cb, checked, checked_at: checked ? new Date().toISOString() : undefined }
-          : cb
-      );
-
-      const { error } = await supabase
-        .from('pedidos_etapas')
-        .update({ checkboxes: updatedCheckboxes })
-        .eq('id', etapaAtual.id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos-aprovacao-ceo'] });
-    },
-    onError: (error) => {
-      toast.error('Erro ao atualizar: ' + error.message);
-    }
-  });
-
   // Aprovar pedido e avançar para produção
   const aprovarPedido = useMutation({
     mutationFn: async (pedidoId: string) => {
-      // Primeiro, garantir que todos os checkboxes estão marcados
-      const { data: etapaAtual, error: etapaError } = await supabase
-        .from('pedidos_etapas')
-        .select('id, checkboxes')
-        .eq('pedido_id', pedidoId)
-        .eq('etapa', 'aprovacao_ceo')
-        .is('data_saida', null)
-        .single();
-
-      if (etapaError) throw etapaError;
-
-      const checkboxes = (etapaAtual.checkboxes as any[]) || [];
-      const todosObrigatoriosMarcados = checkboxes
-        .filter(cb => cb.required)
-        .every(cb => cb.checked);
-
-      if (!todosObrigatoriosMarcados) {
-        throw new Error('Marque todos os itens obrigatórios antes de aprovar');
-      }
-
-      // Avançar para próxima etapa usando o hook existente
+      // Avançar diretamente para próxima etapa
       await moverParaProximaEtapa.mutateAsync({ pedidoId });
     },
     onSuccess: () => {
@@ -178,7 +91,6 @@ export function usePedidosAprovacaoCEO() {
     pedidos,
     isLoading,
     refetch,
-    atualizarCheckbox,
     aprovarPedido
   };
 }

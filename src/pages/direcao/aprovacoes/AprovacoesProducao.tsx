@@ -5,26 +5,23 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { usePedidosAprovacaoCEO, PedidoAprovacao } from '@/hooks/usePedidosAprovacaoCEO';
+import { PedidoDetalhesSheet } from '@/components/pedidos/PedidoDetalhesSheet';
 
 export default function AprovacoesProducao() {
   const navigate = useNavigate();
-  const { pedidos, isLoading, refetch, atualizarCheckbox, aprovarPedido } = usePedidosAprovacaoCEO();
+  const { pedidos, isLoading, refetch, aprovarPedido } = usePedidosAprovacaoCEO();
   const [expandedPedido, setExpandedPedido] = useState<string | null>(null);
-
-  const handleCheckboxChange = (pedidoId: string, checkboxId: string, checked: boolean) => {
-    atualizarCheckbox.mutate({ pedidoId, checkboxId, checked });
-  };
+  const [selectedPedido, setSelectedPedido] = useState<any>(null);
+  const [showDetalhes, setShowDetalhes] = useState(false);
 
   const handleAprovar = async (pedidoId: string) => {
     await aprovarPedido.mutateAsync(pedidoId);
   };
 
-  const todosCheckboxesMarcados = (pedido: PedidoAprovacao) => {
-    return pedido.checkboxes
-      .filter(cb => cb.required)
-      .every(cb => cb.checked);
+  const handleOpenDetalhes = (pedido: PedidoAprovacao) => {
+    setSelectedPedido(pedido.pedidoCompleto);
+    setShowDetalhes(true);
   };
 
   return (
@@ -90,9 +87,6 @@ export default function AprovacoesProducao() {
                     <span className="font-semibold text-orange-500">
                       {pedido.numero_pedido}
                     </span>
-                    {todosCheckboxesMarcados(pedido) && (
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    )}
                   </div>
                   <p className="font-medium truncate">{pedido.cliente_nome}</p>
                   <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
@@ -113,38 +107,11 @@ export default function AprovacoesProducao() {
               {/* Detalhes expandidos */}
               {expandedPedido === pedido.id && (
                 <div className="px-4 pb-4 space-y-4 border-t pt-4">
-                  {/* Checkboxes */}
-                  <div className="space-y-3">
-                    {pedido.checkboxes.map((checkbox) => (
-                      <label
-                        key={checkbox.id}
-                        className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30 cursor-pointer
-                                   active:bg-muted/50 transition-colors min-h-[56px]"
-                      >
-                        <Checkbox
-                          checked={checkbox.checked}
-                          onCheckedChange={(checked) => 
-                            handleCheckboxChange(pedido.id, checkbox.id, checked as boolean)
-                          }
-                          className="mt-0.5 h-5 w-5"
-                        />
-                        <div className="flex-1">
-                          <span className="text-sm font-medium">
-                            {checkbox.label}
-                            {checkbox.required && (
-                              <span className="text-destructive ml-1">*</span>
-                            )}
-                          </span>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-
                   {/* Botões de ação */}
                   <div className="flex flex-col gap-2">
                     <Button
                       onClick={() => handleAprovar(pedido.id)}
-                      disabled={!todosCheckboxesMarcados(pedido) || aprovarPedido.isPending}
+                      disabled={aprovarPedido.isPending}
                       className="w-full h-14 text-base font-semibold bg-gradient-to-r from-orange-500 to-orange-600 
                                  hover:from-orange-600 hover:to-orange-700 disabled:opacity-50"
                     >
@@ -158,25 +125,27 @@ export default function AprovacoesProducao() {
                     
                     <Button
                       variant="outline"
-                      onClick={() => navigate(`/direcao/pedidos/${pedido.id}`)}
+                      onClick={() => handleOpenDetalhes(pedido)}
                       className="w-full"
                     >
                       Ver Detalhes do Pedido
                     </Button>
                   </div>
-
-                  {!todosCheckboxesMarcados(pedido) && (
-                    <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      Marque todos os itens obrigatórios para aprovar
-                    </p>
-                  )}
                 </div>
               )}
             </div>
           ))
         )}
       </div>
+
+      {/* Downbar de detalhes */}
+      {selectedPedido && (
+        <PedidoDetalhesSheet 
+          pedido={selectedPedido} 
+          open={showDetalhes} 
+          onOpenChange={setShowDetalhes} 
+        />
+      )}
     </div>
   );
 }
