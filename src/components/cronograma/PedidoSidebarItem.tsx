@@ -32,17 +32,17 @@ export function PedidoSidebarItem({
     <button
       onClick={onClick}
       className={cn(
-        "w-full h-10 px-2 rounded-md border transition-all",
+        "w-full h-[45px] px-2 rounded-md border transition-all",
         "flex items-center gap-2 text-left",
         isSelected 
-          ? "bg-blue-500/20 border-blue-500/50 ring-1 ring-blue-500/30" 
-          : "bg-zinc-800/30 border-zinc-700/50 hover:bg-zinc-800/60 hover:border-zinc-600/50"
+          ? "bg-cyan-500/20 border-cyan-500/50 hover:bg-cyan-500/30" 
+          : "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 hover:border-zinc-600/50"
       )}
     >
       {/* Posição */}
       <span className={cn(
         "flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-semibold flex-shrink-0",
-        isSelected ? "bg-blue-500/30 text-blue-200" : "bg-zinc-700/50 text-zinc-400"
+        isSelected ? "bg-cyan-500/30 text-cyan-200" : "bg-zinc-700/50 text-zinc-400"
       )}>
         {posicao}
       </span>
@@ -50,7 +50,7 @@ export function PedidoSidebarItem({
       {/* Número do pedido */}
       <span className={cn(
         "text-[10px] font-medium flex-shrink-0",
-        isSelected ? "text-blue-200" : "text-zinc-400"
+        isSelected ? "text-cyan-200" : "text-zinc-400"
       )}>
         {pedido.numero_pedido}
       </span>
