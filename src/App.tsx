@@ -196,6 +196,7 @@ import TerceirizacaoMinimalista from "./pages/fabrica/producao/TerceirizacaoMini
 import MeuHistoricoMinimalista from "./pages/fabrica/producao/MeuHistoricoMinimalista";
 import OrdensPorPedido from "./pages/fabrica/OrdensPorPedido";
 import CronogramaProducao from "./pages/fabrica/CronogramaProducao";
+import ArquivoMorto from "./pages/fabrica/ArquivoMorto";
 
 // Hub da Direção Minimalista
 import DirecaoHub from "./pages/direcao/DirecaoHub";
@@ -413,6 +414,7 @@ const App = () => (
                 <Route path="/fabrica/producao/terceirizacao" element={<ProtectedRoute routeKey="fabrica_terceirizacao"><TerceirizacaoMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/producao/meu-historico" element={<ProtectedRoute routeKey="fabrica_meu_historico"><MeuHistoricoMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/cronograma-producao" element={<ProtectedRoute routeKey="fabrica_cronograma_producao"><CronogramaProducao /></ProtectedRoute>} />
+                <Route path="/fabrica/arquivo-morto" element={<ProtectedRoute routeKey="fabrica_arquivo_morto"><ArquivoMorto /></ProtectedRoute>} />
 
                 {/* Hub da Direção Minimalista */}
                 <Route path="/direcao" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoHub /></ProtectedRoute>} />
