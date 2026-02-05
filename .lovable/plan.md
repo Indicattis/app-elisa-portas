@@ -1,116 +1,236 @@
 
-# Plano: Corrigir Cores e Adicionar Tipo de Entrega no Cronograma
+# Plano: Cards Compactos de 45px com Sidebar de Detalhes
 
-## Problema Identificado
+## Objetivo
 
-1. **Cores nao aparecem**: O codigo usa `venda_produtos` mas a tabela correta e `produtos_vendas`
-2. **Falta tipo de entrega**: Nao ha busca nem exibicao do tipo de entrega (instalacao/entrega/manutencao)
+1. Reduzir os cards de ordens para linhas de 45px de altura
+2. Reorganizar elementos horizontalmente para caber no espaco compacto
+3. Adicionar funcionalidade de clique para abrir a sidebar lateral direita
 
-## Analise dos Dados
+## Analise do Layout Atual vs Proposto
 
-| Tabela | Campo | Valores |
-|--------|-------|---------|
-| `produtos_vendas` | `tipo_produto` | porta_enrolar, pintura_epoxi, porta_social, acessorio, adicional |
-| `produtos_vendas` | `cor_id` | UUID ligado a `catalogo_cores` |
-| `vendas` | `tipo_entrega` | entrega, instalacao, manutencao, servico, correcao |
+### Layout Atual (multi-linha, ~150px altura)
+```
++-----------------------------------------------+
+| (grip) [1] PERF-12345          [Pausada]      |
+|        Cliente Nome . PED-001                 |
+|        [Instalacao]                           |
+|        (o)(o)(o) cores       12.5m² / 45.2m   |
+|        [!] Motivo da pausa aqui...            |
+|        [Disponivel]         [Avatar] Nome     |
++-----------------------------------------------+
+```
+
+### Layout Proposto (linha unica, 45px altura)
+```
++-----------------------------------------------+
+| (grip) [1] PERF-12345 | Cliente | (o)(o) | 12m² | [Disp] | [Av] |
++-----------------------------------------------+
+```
+
+Elementos a exibir na linha compacta:
+- Grip handle para drag
+- Posicao (badge circular)
+- Numero da ordem (truncado)
+- Cliente (truncado, maximo 15 chars)
+- Cores (maximo 2 circulos + indicador +N)
+- Metragem principal (m² ou m linear, a que existir)
+- Status (badge compacto, apenas icone se pausada)
+- Avatar do responsavel (ou icone vazio)
 
 ## Alteracoes Necessarias
 
-### 1. Hook `useOrdensProducaoPrioridade.ts`
+### 1. Componente `OrdemProducaoCard.tsx`
 
-**Corrigir nome da tabela e filtrar por tipo de produto:**
+**Novo layout horizontal compacto:**
 
-```typescript
-// ANTES (errado):
-const produtosResult = await (supabase as any)
-  .from('venda_produtos')  // Tabela errada
-  .select('venda_id, cor_id')
-  .in('venda_id', vendaIds);
+```tsx
+<div
+  ref={setNodeRef}
+  style={style}
+  onClick={handleClick}
+  className={cn(
+    "h-[45px] bg-zinc-800/50 rounded-md border border-zinc-700/50 px-2",
+    "flex items-center gap-2 cursor-pointer",
+    "hover:bg-zinc-800 hover:border-zinc-600/50 transition-all",
+    isDragging && "opacity-50 shadow-xl z-50"
+  )}
+>
+  {/* Grip - apenas drag handle, nao propaga click */}
+  <button {...attributes} {...listeners} onClick={(e) => e.stopPropagation()}>
+    <GripVertical className="h-4 w-4" />
+  </button>
 
-// DEPOIS (correto):
-const produtosResult = await supabase
-  .from('produtos_vendas')  // Tabela correta
-  .select('venda_id, cor_id')
-  .in('venda_id', vendaIds)
-  .in('tipo_produto', ['porta_enrolar', 'pintura_epoxi', 'porta_social'])
-  .not('cor_id', 'is', null);
+  {/* Posicao */}
+  <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-300 text-[10px]">
+    {posicao}
+  </span>
+
+  {/* Numero ordem (truncado) */}
+  <span className="text-xs font-medium text-white w-20 truncate">
+    {ordem.numero_ordem}
+  </span>
+
+  {/* Cliente (truncado) */}
+  <span className="text-[10px] text-zinc-400 w-24 truncate">
+    {ordem.cliente_nome}
+  </span>
+
+  {/* Cores (max 2) */}
+  <div className="flex gap-0.5">
+    {ordem.cores?.slice(0,2).map(...)}
+    {ordem.cores?.length > 2 && <span>+{ordem.cores.length-2}</span>}
+  </div>
+
+  {/* Metragem */}
+  <span className="text-[10px] text-zinc-400">
+    {ordem.metragem_quadrada || ordem.metragem_linear}m
+  </span>
+
+  {/* Status */}
+  {ordem.pausada ? (
+    <Pause className="h-3 w-3 text-amber-400" />
+  ) : (
+    <Badge className="text-[9px] px-1 py-0">{statusConfig.label}</Badge>
+  )}
+
+  {/* Avatar responsavel */}
+  <Avatar className="h-5 w-5">...</Avatar>
+</div>
 ```
 
-**Adicionar tipo_entrega na query do pedido:**
-
-Atualizar as queries de cada tabela para incluir o `tipo_entrega` da venda:
+**Novas props:**
 
 ```typescript
-// Exemplo para perfiladeira:
-.select(`
-  id, numero_ordem, pedido_id, status, prioridade, responsavel_id, 
-  pausada, metragem_linear, justificativa_pausa, 
-  pedido:pedidos_producao(
-    numero_pedido, cliente_nome, venda_id,
-    venda:vendas(tipo_entrega)
-  )
-`)
-```
-
-**Atualizar interface:**
-
-```typescript
-export interface OrdemProducaoSimples {
-  // ... campos existentes ...
-  tipo_entrega?: 'entrega' | 'instalacao' | 'manutencao' | 'servico' | 'correcao';
+interface OrdemProducaoCardProps {
+  ordem: OrdemProducaoSimples;
+  posicao: number;
+  tipo: TipoOrdemProducao;  // NOVO: necessario para a sidebar
+  onOrdemClick: (ordem: OrdemProducaoSimples) => void;  // NOVO: callback
 }
 ```
 
-**Mapear tipo_entrega no retorno:**
+### 2. Componente `ColunaOrdensProducao.tsx`
+
+**Adicionar prop de callback e repassar para cards:**
 
 ```typescript
-return (data || []).map((ordem: any) => ({
-  // ... campos existentes ...
-  tipo_entrega: ordem.pedido?.venda?.tipo_entrega,
-}));
+interface ColunaOrdensProducaoProps {
+  tipo: TipoOrdemProducao;
+  titulo: string;
+  ordens: OrdemProducaoSimples[];
+  isLoading: boolean;
+  cor: string;
+  onOrdemClick: (ordem: OrdemProducaoSimples) => void;  // NOVO
+}
+
+// No map:
+{ordens.map((ordem, index) => (
+  <OrdemProducaoCard 
+    key={ordem.id} 
+    ordem={ordem} 
+    posicao={index + 1}
+    tipo={tipo}
+    onOrdemClick={onOrdemClick}
+  />
+))}
 ```
 
-### 2. Componente `OrdemProducaoCard.tsx`
+### 3. Pagina `CronogramaProducao.tsx`
 
-**Adicionar badge de tipo de entrega:**
+**Adicionar estado e Sheet:**
 
 ```typescript
-const getTipoEntregaConfig = (tipo?: string) => {
-  switch (tipo) {
-    case 'instalacao':
-      return { label: 'Instalacao', icon: Wrench, className: 'bg-purple-500/20 text-purple-300' };
-    case 'entrega':
-      return { label: 'Entrega', icon: Truck, className: 'bg-cyan-500/20 text-cyan-300' };
-    case 'manutencao':
-      return { label: 'Manutencao', icon: Settings, className: 'bg-orange-500/20 text-orange-300' };
-    default:
-      return null;
-  }
+import { OrdemLinhasSheet } from "@/components/fabrica/OrdemLinhasSheet";
+import { OrdemStatus, TipoOrdem } from "@/hooks/useOrdensPorPedido";
+
+// Estado para controlar a sidebar
+const [ordemSelecionada, setOrdemSelecionada] = useState<{
+  ordem: OrdemStatus | null;
+  numeroPedido: string;
+  clienteNome: string;
+} | null>(null);
+
+// Handler para converter OrdemProducaoSimples -> OrdemStatus
+const handleOrdemClick = (ordem: OrdemProducaoSimples, tipo: TipoOrdemProducao) => {
+  const ordemStatus: OrdemStatus = {
+    existe: true,
+    id: ordem.id,
+    numero_ordem: ordem.numero_ordem,
+    status: ordem.status,
+    tipo: tipo as TipoOrdem,
+    responsavel: ordem.responsavel_nome ? {
+      nome: ordem.responsavel_nome,
+      foto_url: null,
+      iniciais: ordem.responsavel_nome.substring(0, 2).toUpperCase()
+    } : null,
+    responsavel_id: ordem.responsavel_id || null,
+    pausada: ordem.pausada || false,
+    justificativa_pausa: ordem.justificativa_pausa || null,
+    pausada_em: null,
+    linha_problema: null,
+    linhas_concluidas: 0,
+    total_linhas: 0,
+    capturada_em: null,
+    tempo_acumulado_segundos: null,
+    tempo_conclusao_segundos: null,
+    data_agendamento: null,
+    hora_agendamento: null,
+    responsavel_nome: null,
+    tipo_responsavel: null,
+  };
+  
+  setOrdemSelecionada({
+    ordem: ordemStatus,
+    numeroPedido: ordem.numero_pedido,
+    clienteNome: ordem.cliente_nome,
+  });
 };
-```
 
-**Layout atualizado do card:**
-
-```
-+-------------------------------------------+
-| (grip) 1 ORD-12345              [Pausada] |
-|        Cliente Nome . PED-001             |
-|        [Instalacao]                       |  <-- NOVO: tipo entrega
-|        (o)(o)(o) cores       12.5m² 45m   |
-|        [!] Motivo da pausa...             |
-|        [Disponivel]         [Avatar] Nome |
-+-------------------------------------------+
+// Render da Sheet no final do JSX
+<OrdemLinhasSheet
+  ordem={ordemSelecionada?.ordem || null}
+  numeroPedido={ordemSelecionada?.numeroPedido}
+  clienteNome={ordemSelecionada?.clienteNome}
+  open={!!ordemSelecionada}
+  onOpenChange={(open) => !open && setOrdemSelecionada(null)}
+/>
 ```
 
 ## Arquivos a Modificar
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `src/hooks/useOrdensProducaoPrioridade.ts` | Corrigir tabela, filtrar tipo_produto, adicionar tipo_entrega |
-| `src/components/cronograma/OrdemProducaoCard.tsx` | Exibir badge de tipo de entrega |
+| `src/components/cronograma/OrdemProducaoCard.tsx` | Redesenhar para layout de 45px horizontal, adicionar click handler |
+| `src/components/cronograma/ColunaOrdensProducao.tsx` | Adicionar prop onOrdemClick e repassar para cards |
+| `src/pages/fabrica/CronogramaProducao.tsx` | Adicionar estado da sidebar, converter dados, renderizar OrdemLinhasSheet |
 
-## Resultado Esperado
+## Secao Tecnica: Conversao de Tipos
 
-- Cores das portas de enrolar aparecerao corretamente
-- Badge indicando se e Entrega, Instalacao ou Manutencao
-- Icones visuais para diferenciar rapidamente os tipos
+A `OrdemLinhasSheet` espera um `OrdemStatus` mas temos `OrdemProducaoSimples`. Campos mapeados:
+
+| OrdemProducaoSimples | OrdemStatus |
+|---------------------|-------------|
+| id | id |
+| numero_ordem | numero_ordem |
+| status | status |
+| (passado como prop) | tipo |
+| responsavel_nome | responsavel.nome |
+| responsavel_id | responsavel_id |
+| pausada | pausada |
+| justificativa_pausa | justificativa_pausa |
+
+## Resultado Visual Esperado
+
+Card compacto de 45px:
+```
++------------------------------------------------------+
+| ⋮ [1] PERF-123 | João Silv... | ●● | 12m² | [Disp] ● |
++------------------------------------------------------+
+```
+
+Ao clicar, abre a sidebar direita com:
+- Detalhes da ordem
+- Lista de linhas para marcar como concluidas
+- Status de pausa e motivo (se houver)
+- Acoes como regenerar linhas e remover responsavel
