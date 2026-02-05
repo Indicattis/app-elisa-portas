@@ -16,7 +16,9 @@ import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
 import { DelayedParticles } from "@/components/DelayedParticles";
 import { ColunaOrdensProducao } from "@/components/cronograma/ColunaOrdensProducao";
+import { OrdemLinhasSheet } from "@/components/fabrica/OrdemLinhasSheet";
 import { useOrdensProducaoPrioridade, TipoOrdemProducao, OrdemProducaoSimples } from "@/hooks/useOrdensProducaoPrioridade";
+import type { OrdemStatus, TipoOrdem } from "@/hooks/useOrdensPorPedido";
 
 const COLUNAS: { tipo: TipoOrdemProducao; titulo: string; cor: string }[] = [
   { tipo: 'perfiladeira', titulo: 'Perfiladeira', cor: 'blue' },
@@ -29,6 +31,13 @@ const COLUNAS: { tipo: TipoOrdemProducao; titulo: string; cor: string }[] = [
 export default function CronogramaProducao() {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
+  
+  // Estado para controlar a sidebar de detalhes
+  const [ordemSelecionada, setOrdemSelecionada] = useState<{
+    ordem: OrdemStatus | null;
+    numeroPedido: string;
+    clienteNome: string;
+  } | null>(null);
 
   // Hooks para cada tipo de ordem
   const perfiladeira = useOrdensProducaoPrioridade('perfiladeira');
@@ -83,6 +92,42 @@ export default function CronogramaProducao() {
 
   const handleRefreshAll = () => {
     Object.values(ordensMap).forEach(data => data.refetch());
+  };
+
+  // Handler para converter OrdemProducaoSimples -> OrdemStatus e abrir sidebar
+  const handleOrdemClick = (ordem: OrdemProducaoSimples, tipo: TipoOrdemProducao) => {
+    const ordemStatus: OrdemStatus = {
+      existe: true,
+      id: ordem.id,
+      numero_ordem: ordem.numero_ordem,
+      status: ordem.status,
+      tipo: tipo as TipoOrdem,
+      responsavel: ordem.responsavel_nome ? {
+        nome: ordem.responsavel_nome,
+        foto_url: null,
+        iniciais: ordem.responsavel_nome.substring(0, 2).toUpperCase(),
+      } : null,
+      responsavel_id: ordem.responsavel_id || null,
+      pausada: ordem.pausada || false,
+      justificativa_pausa: ordem.justificativa_pausa || null,
+      pausada_em: null,
+      linha_problema: null,
+      linhas_concluidas: 0,
+      total_linhas: 0,
+      capturada_em: null,
+      tempo_acumulado_segundos: null,
+      tempo_conclusao_segundos: null,
+      data_agendamento: null,
+      hora_agendamento: null,
+      responsavel_nome: null,
+      tipo_responsavel: null,
+    };
+    
+    setOrdemSelecionada({
+      ordem: ordemStatus,
+      numeroPedido: ordem.numero_pedido,
+      clienteNome: ordem.cliente_nome,
+    });
   };
 
   return (
@@ -168,6 +213,7 @@ export default function CronogramaProducao() {
                   ordens={ordensMap[coluna.tipo].ordens}
                   isLoading={ordensMap[coluna.tipo].isLoading}
                   cor={coluna.cor}
+                  onOrdemClick={(ordem) => handleOrdemClick(ordem, coluna.tipo)}
                 />
               ))}
             </div>
@@ -175,6 +221,15 @@ export default function CronogramaProducao() {
           </ScrollArea>
         </DndContext>
       </main>
+
+      {/* Sidebar de detalhes da ordem */}
+      <OrdemLinhasSheet
+        ordem={ordemSelecionada?.ordem || null}
+        numeroPedido={ordemSelecionada?.numeroPedido}
+        clienteNome={ordemSelecionada?.clienteNome}
+        open={!!ordemSelecionada}
+        onOpenChange={(open) => !open && setOrdemSelecionada(null)}
+      />
     </div>
   );
 }

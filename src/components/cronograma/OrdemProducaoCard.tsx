@@ -1,17 +1,19 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, User, Pause, Ruler, Square, Truck, Wrench, Settings } from "lucide-react";
+import { GripVertical, User, Pause } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { OrdemProducaoSimples } from "@/hooks/useOrdensProducaoPrioridade";
+import type { OrdemProducaoSimples, TipoOrdemProducao } from "@/hooks/useOrdensProducaoPrioridade";
 
 interface OrdemProducaoCardProps {
   ordem: OrdemProducaoSimples;
   posicao: number;
+  tipo: TipoOrdemProducao;
+  onOrdemClick: (ordem: OrdemProducaoSimples) => void;
 }
 
-export function OrdemProducaoCard({ ordem, posicao }: OrdemProducaoCardProps) {
+export function OrdemProducaoCard({ ordem, posicao, tipo, onOrdemClick }: OrdemProducaoCardProps) {
   const {
     attributes,
     listeners,
@@ -28,161 +30,122 @@ export function OrdemProducaoCard({ ordem, posicao }: OrdemProducaoCardProps) {
 
   const getStatusConfig = (status: string, pausada?: boolean) => {
     if (pausada) {
-      return { label: 'Pausada', variant: 'outline' as const, className: 'bg-amber-500/20 text-amber-300 border-amber-500/30' };
+      return { label: 'P', variant: 'outline' as const, className: 'bg-amber-500/20 text-amber-300 border-amber-500/30' };
     }
     switch (status) {
       case 'pendente':
-        return { label: 'Disponível', variant: 'outline' as const, className: 'bg-blue-500/20 text-blue-300 border-blue-500/30' };
+        return { label: 'Disp', variant: 'outline' as const, className: 'bg-blue-500/20 text-blue-300 border-blue-500/30' };
       case 'em_andamento':
-        return { label: 'Em Andamento', variant: 'outline' as const, className: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' };
+        return { label: 'And', variant: 'outline' as const, className: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' };
       default:
-        return { label: status, variant: 'outline' as const, className: 'bg-zinc-500/20 text-zinc-300 border-zinc-500/30' };
-    }
-  };
-
-  const getTipoEntregaConfig = (tipo?: string) => {
-    switch (tipo) {
-      case 'instalacao':
-        return { label: 'Instalação', Icon: Wrench, className: 'bg-purple-500/20 text-purple-300 border-purple-500/30' };
-      case 'entrega':
-        return { label: 'Entrega', Icon: Truck, className: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' };
-      case 'manutencao':
-        return { label: 'Manutenção', Icon: Settings, className: 'bg-orange-500/20 text-orange-300 border-orange-500/30' };
-      default:
-        return null;
+        return { label: status?.substring(0, 3), variant: 'outline' as const, className: 'bg-zinc-500/20 text-zinc-300 border-zinc-500/30' };
     }
   };
 
   const statusConfig = getStatusConfig(ordem.status, ordem.pausada);
-  const tipoEntregaConfig = getTipoEntregaConfig(ordem.tipo_entrega);
+  
+  // Metragem: preferir m² se existir, senão m linear
+  const metragem = ordem.metragem_quadrada && ordem.metragem_quadrada > 0 
+    ? `${ordem.metragem_quadrada.toFixed(0)}m²` 
+    : ordem.metragem_linear && ordem.metragem_linear > 0 
+      ? `${ordem.metragem_linear.toFixed(0)}m`
+      : null;
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Não propagar clique se estiver arrastando
+    if (isDragging) return;
+    onOrdemClick(ordem);
+  };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
+      onClick={handleClick}
       className={cn(
-        "bg-zinc-800/50 rounded-lg border border-zinc-700/50 p-3",
+        "h-[45px] bg-zinc-800/50 rounded-md border border-zinc-700/50 px-2",
+        "flex items-center gap-2 cursor-pointer",
         "hover:bg-zinc-800 hover:border-zinc-600/50 transition-all",
         isDragging && "opacity-50 shadow-xl z-50"
       )}
     >
-      <div className="flex items-start gap-2">
-        {/* Drag Handle */}
-        <button
-          {...attributes}
-          {...listeners}
-          className="p-1 rounded hover:bg-zinc-700/50 cursor-grab active:cursor-grabbing text-zinc-500 hover:text-zinc-300 transition-colors"
-        >
-          <GripVertical className="h-4 w-4" />
-        </button>
+      {/* Drag Handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        onClick={(e) => e.stopPropagation()}
+        className="p-0.5 rounded hover:bg-zinc-700/50 cursor-grab active:cursor-grabbing text-zinc-500 hover:text-zinc-300 transition-colors flex-shrink-0"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            {/* Position Badge */}
-            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold">
-              {posicao}
-            </span>
-            
-            {/* Order Number */}
-            <span className="font-medium text-sm text-white truncate">
-              {ordem.numero_ordem}
-            </span>
+      {/* Posição */}
+      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-semibold flex-shrink-0">
+        {posicao}
+      </span>
 
-            {/* Paused indicator */}
-            {ordem.pausada && (
-              <Pause className="h-3 w-3 text-amber-400" />
+      {/* Número ordem (truncado) */}
+      <span className="text-xs font-medium text-white w-[72px] truncate flex-shrink-0">
+        {ordem.numero_ordem}
+      </span>
+
+      {/* Cliente (truncado) */}
+      <span className="text-[10px] text-zinc-400 w-[70px] truncate flex-shrink-0 hidden sm:block">
+        {ordem.cliente_nome}
+      </span>
+
+      {/* Cores (max 2) */}
+      <div className="flex items-center gap-0.5 flex-shrink-0">
+        {ordem.cores && ordem.cores.length > 0 ? (
+          <>
+            {ordem.cores.slice(0, 2).map((cor, i) => (
+              <div 
+                key={i}
+                className="w-3.5 h-3.5 rounded-full border border-white/20"
+                style={{ backgroundColor: cor.codigo_hex }}
+                title={cor.nome}
+              />
+            ))}
+            {ordem.cores.length > 2 && (
+              <span className="text-[9px] text-zinc-500">+{ordem.cores.length - 2}</span>
             )}
-          </div>
-
-          {/* Client and Pedido */}
-          <p className="text-xs text-zinc-400 truncate mb-1">
-            {ordem.cliente_nome} • {ordem.numero_pedido}
-          </p>
-
-          {/* Tipo de Entrega */}
-          {tipoEntregaConfig && (
-            <div className="mb-1">
-              <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 gap-1", tipoEntregaConfig.className)}>
-                <tipoEntregaConfig.Icon className="h-3 w-3" />
-                {tipoEntregaConfig.label}
-              </Badge>
-            </div>
-          )}
-
-          {/* Cores e Metragens */}
-          <div className="flex items-center justify-between gap-2 mb-2">
-            {/* Cores das portas */}
-            {ordem.cores && ordem.cores.length > 0 ? (
-              <div className="flex items-center gap-1">
-                {ordem.cores.slice(0, 4).map((cor, i) => (
-                  <div 
-                    key={i}
-                    className="w-4 h-4 rounded-full border border-white/20"
-                    style={{ backgroundColor: cor.codigo_hex }}
-                    title={cor.nome}
-                  />
-                ))}
-                {ordem.cores.length > 4 && (
-                  <span className="text-[10px] text-zinc-400">+{ordem.cores.length - 4}</span>
-                )}
-              </div>
-            ) : (
-              <div />
-            )}
-
-            {/* Metragens */}
-            <div className="flex items-center gap-2 text-[10px] text-zinc-400">
-              {ordem.metragem_quadrada && ordem.metragem_quadrada > 0 && (
-                <span className="flex items-center gap-0.5">
-                  <Square className="h-3 w-3" />
-                  {ordem.metragem_quadrada.toFixed(1)}m²
-                </span>
-              )}
-              {ordem.metragem_linear && ordem.metragem_linear > 0 && (
-                <span className="flex items-center gap-0.5">
-                  <Ruler className="h-3 w-3" />
-                  {ordem.metragem_linear.toFixed(1)}m
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Motivo da pausa */}
-          {ordem.pausada && ordem.justificativa_pausa && (
-            <div className="mb-2 p-1.5 rounded bg-amber-500/10 border border-amber-500/20">
-              <p className="text-[10px] text-amber-300 line-clamp-2">
-                {ordem.justificativa_pausa}
-              </p>
-            </div>
-          )}
-
-          {/* Footer: Status + Responsavel */}
-          <div className="flex items-center justify-between gap-2">
-            <Badge variant={statusConfig.variant} className={cn("text-[10px] px-1.5 py-0", statusConfig.className)}>
-              {statusConfig.label}
-            </Badge>
-
-            {ordem.responsavel_nome ? (
-              <div className="flex items-center gap-1">
-                <Avatar className="h-5 w-5">
-                  <AvatarFallback className="text-[8px] bg-zinc-700 text-zinc-300">
-                    {ordem.responsavel_nome.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-[10px] text-zinc-400 truncate max-w-[60px]">
-                  {ordem.responsavel_nome.split(' ')[0]}
-                </span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 text-zinc-500">
-                <User className="h-3 w-3" />
-                <span className="text-[10px]">Livre</span>
-              </div>
-            )}
-          </div>
-        </div>
+          </>
+        ) : (
+          <div className="w-3.5 h-3.5 rounded-full bg-zinc-700 border border-zinc-600" />
+        )}
       </div>
+
+      {/* Metragem */}
+      {metragem && (
+        <span className="text-[10px] text-zinc-400 w-[36px] text-right flex-shrink-0">
+          {metragem}
+        </span>
+      )}
+
+      {/* Spacer */}
+      <div className="flex-1 min-w-0" />
+
+      {/* Status - ícone de pausa ou badge compacto */}
+      {ordem.pausada ? (
+        <Pause className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+      ) : (
+        <Badge variant={statusConfig.variant} className={cn("text-[9px] px-1.5 py-0 h-4 flex-shrink-0", statusConfig.className)}>
+          {statusConfig.label}
+        </Badge>
+      )}
+
+      {/* Avatar responsável */}
+      {ordem.responsavel_nome ? (
+        <Avatar className="h-5 w-5 flex-shrink-0">
+          <AvatarFallback className="text-[8px] bg-zinc-700 text-zinc-300">
+            {ordem.responsavel_nome.substring(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      ) : (
+        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 flex-shrink-0">
+          <User className="h-2.5 w-2.5 text-zinc-500" />
+        </div>
+      )}
     </div>
   );
 }
