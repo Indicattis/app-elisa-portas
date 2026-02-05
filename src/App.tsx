@@ -226,6 +226,10 @@ import ProdutosAlmoxarifado from "./pages/direcao/estoque/ProdutosAlmoxarifado";
 import ProdutosFabricaEdit from "./pages/direcao/estoque/ProdutosFabricaEdit";
 import FornecedoresDirecao from "./pages/direcao/estoque/FornecedoresDirecao";
 
+// Hub de Aprovações da Direção
+import DirecaoAprovacoesHub from "./pages/direcao/aprovacoes/DirecaoAprovacoesHub";
+import AprovacoesProducao from "./pages/direcao/aprovacoes/AprovacoesProducao";
+
 // Hub de Logística Minimalista
 import LogisticaHub from "./pages/logistica/LogisticaHub";
 import ControleLogistica from "./pages/logistica/ControleLogistica";
@@ -445,6 +449,10 @@ const App = () => (
                 <Route path="/direcao/estoque/configuracoes/produtos/fabrica/editar/:id" element={<ProtectedRoute routeKey="direcao_hub"><ProdutosFabricaEdit /></ProtectedRoute>} />
                 <Route path="/direcao/estoque/configuracoes/produtos/almoxarifado" element={<ProtectedRoute routeKey="direcao_hub"><ProdutosAlmoxarifado /></ProtectedRoute>} />
                 <Route path="/direcao/estoque/configuracoes/fornecedores" element={<ProtectedRoute routeKey="direcao_hub"><FornecedoresDirecao /></ProtectedRoute>} />
+
+                {/* Hub de Aprovações da Direção */}
+                <Route path="/direcao/aprovacoes" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoAprovacoesHub /></ProtectedRoute>} />
+                <Route path="/direcao/aprovacoes/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><AprovacoesProducao /></ProtectedRoute>} />
 
                 {/* Hub de Logística Minimalista */}
                 <Route path="/logistica" element={<ProtectedRoute routeKey="logistica_hub"><LogisticaHub /></ProtectedRoute>} />
