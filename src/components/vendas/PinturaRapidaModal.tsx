@@ -104,7 +104,7 @@ export function PinturaRapidaModal({
       desconto_percentual: 0,
       desconto_valor: 0,
       quantidade: 1,
-      descricao: `Pintura ${corSelecionada?.nome || ''}`
+      descricao: corSelecionada?.nome || ''
     };
 
     onConfirm(pintura);
