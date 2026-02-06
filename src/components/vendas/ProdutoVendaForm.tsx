@@ -281,7 +281,17 @@ export function ProdutoVendaForm({
       return;
     }
     
-    onAddProduto(formData);
+    const produtoFinal = { ...formData };
+
+    // Se for pintura, incluir nome da cor na descrição
+    if (produtoFinal.tipo_produto === 'pintura_epoxi' && produtoFinal.cor_id && cores) {
+      const corSelecionada = cores.find(c => c.id === produtoFinal.cor_id);
+      if (corSelecionada) {
+        produtoFinal.descricao = corSelecionada.nome;
+      }
+    }
+
+    onAddProduto(produtoFinal);
     onOpenChange(false);
   };
 
