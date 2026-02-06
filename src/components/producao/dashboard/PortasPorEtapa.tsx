@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,6 +13,7 @@ import { Cog, Flame, Package, Paintbrush, Truck, CalendarIcon } from "lucide-rea
 import { format, startOfWeek, startOfMonth, startOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { ColaboradorDesempenhoModal } from "@/components/producao/ColaboradorDesempenhoModal";
 
 type CampoDesempenho = keyof Pick<DesempenhoColaborador, 'perfiladas_metros' | 'soldadas' | 'separadas' | 'pintura_m2' | 'carregamentos'>;
 
@@ -107,13 +107,13 @@ function MiniRanking({ colaboradores, campo, unidade = "", isLoading, onColabora
 type Periodo = 'hoje' | 'semana' | 'mes' | 'ano' | 'dia' | 'personalizado';
 
 export function PortasPorEtapa() {
-  const navigate = useNavigate();
   const [periodo, setPeriodo] = useState<Periodo>('hoje');
   const [dataInicioCustom, setDataInicioCustom] = useState<Date | undefined>();
   const [dataFimCustom, setDataFimCustom] = useState<Date | undefined>();
+  const [selectedColaboradorId, setSelectedColaboradorId] = useState<string | null>(null);
 
   const handleColaboradorClick = (userId: string) => {
-    navigate(`/direcao/colaborador/${userId}`);
+    setSelectedColaboradorId(userId);
   };
 
   const { dataInicio, dataFim } = useMemo(() => {
@@ -368,6 +368,12 @@ export function PortasPorEtapa() {
           );
         })}
       </div>
+
+      <ColaboradorDesempenhoModal
+        userId={selectedColaboradorId}
+        open={!!selectedColaboradorId}
+        onOpenChange={(open) => { if (!open) setSelectedColaboradorId(null); }}
+      />
     </Card>
   );
 }
