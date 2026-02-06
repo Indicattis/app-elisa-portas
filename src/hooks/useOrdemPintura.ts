@@ -80,7 +80,7 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
           const { data: linhasRaw } = await supabase
             .from('linhas_ordens')
             .select(`
-              id, item, quantidade, tamanho, concluida, largura, altura, estoque_id, produto_venda_id, cor_nome, tipo_pintura,
+              id, item, quantidade, tamanho, concluida, largura, altura, estoque_id, produto_venda_id, indice_porta, cor_nome, tipo_pintura,
               estoque:estoque_id (nome_produto, requer_pintura)
             `)
             .eq('ordem_id', ordem.id)

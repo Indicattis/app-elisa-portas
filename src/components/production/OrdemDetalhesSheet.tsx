@@ -41,6 +41,7 @@ interface LinhaOrdem {
   tamanho?: string;
   concluida: boolean;
   produto_venda_id?: string;
+  indice_porta?: number | null;
   cor_nome?: string;
   tipo_pintura?: string;
   largura?: number;
@@ -628,7 +629,7 @@ export function OrdemDetalhesSheet({
                       <div key={obs.id || idx} className="space-y-2">
                         {idx > 0 && <Separator className="my-2" />}
                         <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                          Porta {obs.indice_porta + 1}
+                          Porta {idx + 1}
                         </span>
                         <div className="flex flex-wrap gap-1.5">
                           <Badge variant="outline" className="text-xs bg-amber-50 dark:bg-amber-950 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
@@ -746,7 +747,9 @@ export function OrdemDetalhesSheet({
                   
                   // Agrupar linhas por produto_venda_id (com fallback do hook que recupera via pedido_linhas)
                   const linhasPorPorta = linhasAgrupadas.reduce((grupos, linha) => {
-                    const key = linha.produto_venda_id || 'sem_porta';
+                    const key = linha.produto_venda_id 
+                      ? `${linha.produto_venda_id}_${linha.indice_porta ?? 0}` 
+                      : 'sem_porta';
                     if (!grupos[key]) {
                       grupos[key] = [];
                     }
@@ -754,15 +757,11 @@ export function OrdemDetalhesSheet({
                     return grupos;
                   }, {} as Record<string, LinhaOrdem[]>);
 
-                  // Criar mapa de numeração baseado na ordem de aparição dos produto_venda_id únicos
-                  const uniquePortaIds = [...new Set(
-                    linhasAgrupadas
-                      .map(l => l.produto_venda_id)
-                      .filter((id): id is string => id !== null && id !== undefined)
-                  )];
+                  // Criar mapa de numeração baseado na ordem de aparição das chaves únicas
+                  const uniquePortaKeys = Object.keys(linhasPorPorta).filter(k => k !== 'sem_porta');
                   const portasNumeracaoMap = new Map<string, number>();
-                  uniquePortaIds.forEach((portaId, idx) => {
-                    portasNumeracaoMap.set(portaId, idx + 1);
+                  uniquePortaKeys.forEach((key, idx) => {
+                    portasNumeracaoMap.set(key, idx + 1);
                   });
 
                   return Object.entries(linhasPorPorta).map(([portaId, linhasPortaRaw], index) => {
@@ -776,10 +775,11 @@ export function OrdemDetalhesSheet({
                     
                     // Se não tem dimensões na linha, buscar no produto correspondente
                     if (!larguraPorta || !alturaPorta) {
-                      // Tentar encontrar o produto pelo id
-                      const produtoCorrespondente = portaId !== 'sem_porta' 
-                        ? portasEnrolar.find((p: any) => p.id === portaId)
-                        : portasEnrolar[index]; // Usar índice se não tiver produto_venda_id
+                      // Extrair o produto_venda_id base (sem o sufixo _indice)
+                      const baseProdutoId = portaId !== 'sem_porta' ? portaId.split('_').slice(0, -1).join('_') : null;
+                      const produtoCorrespondente = baseProdutoId
+                        ? portasEnrolar.find((p: any) => p.id === baseProdutoId)
+                        : portasEnrolar[index];
                       
                       if (produtoCorrespondente) {
                         larguraPorta = larguraPorta || produtoCorrespondente.largura;
