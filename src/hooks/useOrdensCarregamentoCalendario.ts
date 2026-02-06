@@ -222,17 +222,20 @@ export const useOrdensCarregamentoCalendario = (
     }) => {
       // Rotear para a tabela correta baseado na fonte
       if (fonte === 'instalacoes') {
+        const updateData: Record<string, any> = {
+          updated_at: new Date().toISOString()
+        };
+        if (data.data_carregamento !== undefined) updateData.data_carregamento = data.data_carregamento;
+        if (data.hora !== undefined) updateData.hora_carregamento = data.hora;
+        if (data.hora_carregamento !== undefined) updateData.hora_carregamento = data.hora_carregamento;
+        if (data.tipo_carregamento !== undefined) updateData.tipo_carregamento = data.tipo_carregamento;
+        if (data.responsavel_carregamento_id !== undefined) updateData.responsavel_carregamento_id = data.responsavel_carregamento_id;
+        if (data.responsavel_carregamento_nome !== undefined) updateData.responsavel_carregamento_nome = data.responsavel_carregamento_nome;
+        if (data.status !== undefined) updateData.status = data.status;
+
         const { error } = await supabase
           .from("instalacoes")
-          .update({
-            data_carregamento: data.data_carregamento,
-            hora_carregamento: data.hora,
-            tipo_carregamento: data.tipo_carregamento,
-            responsavel_carregamento_id: data.responsavel_carregamento_id,
-            responsavel_carregamento_nome: data.responsavel_carregamento_nome,
-            status: 'agendada',
-            updated_at: new Date().toISOString()
-          })
+          .update(updateData)
           .eq("id", id);
 
         if (error) throw error;
@@ -252,6 +255,7 @@ export const useOrdensCarregamentoCalendario = (
       queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_calendario"] });
       queryClient.invalidateQueries({ queryKey: ["ordens_carregamento"] });
       queryClient.invalidateQueries({ queryKey: ["instalacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["ordens-carregamento-disponiveis"] });
     },
     onError: (error) => {
       console.error("Erro ao atualizar ordem:", error);
@@ -291,8 +295,20 @@ export const useOrdensCarregamentoCalendario = (
           table: 'ordens_carregamento'
         },
         () => {
-          // Invalidar queries para recarregar dados
           queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_calendario", inicio, fim] });
+          queryClient.invalidateQueries({ queryKey: ["ordens-carregamento-disponiveis"] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'instalacoes'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_calendario", inicio, fim] });
+          queryClient.invalidateQueries({ queryKey: ["ordens-carregamento-disponiveis"] });
         }
       )
       .subscribe();
