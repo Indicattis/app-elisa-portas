@@ -16,7 +16,7 @@ async function calcularProgressoMeta(
         .eq("responsavel_id", userId)
         .eq("status", "concluido")
         .gte("data_conclusao", data_inicio)
-        .lte("data_conclusao", data_termino);
+        .lte("data_conclusao", data_termino + "T23:59:59");
       return (data || []).reduce((acc: number, item: any) => 
         acc + (Number(item.metragem_linear) || 0), 0);
     }
@@ -27,7 +27,7 @@ async function calcularProgressoMeta(
         .eq("responsavel_id", userId)
         .eq("status", "concluido")
         .gte("data_conclusao", data_inicio)
-        .lte("data_conclusao", data_termino);
+        .lte("data_conclusao", data_termino + "T23:59:59");
       return (data || []).reduce((acc: number, item: any) => 
         acc + (Number(item.qtd_portas_p) || 0) + (Number(item.qtd_portas_g) || 0), 0);
     }
@@ -38,7 +38,7 @@ async function calcularProgressoMeta(
         .eq("responsavel_id", userId)
         .eq("status", "concluido")
         .gte("data_conclusao", data_inicio)
-        .lte("data_conclusao", data_termino);
+        .lte("data_conclusao", data_termino + "T23:59:59");
       return (data || []).reduce((acc: number, item: any) => 
         acc + (Number(item.quantidade_itens) || 0), 0);
     }
@@ -49,7 +49,7 @@ async function calcularProgressoMeta(
         .eq("responsavel_id", userId)
         .eq("status", "concluido")
         .gte("data_conclusao", data_inicio)
-        .lte("data_conclusao", data_termino);
+        .lte("data_conclusao", data_termino + "T23:59:59");
       return (data || []).length;
     }
     case 'pintura': {
@@ -59,7 +59,7 @@ async function calcularProgressoMeta(
         .eq("responsavel_id", userId)
         .eq("status", "concluido")
         .gte("data_conclusao", data_inicio)
-        .lte("data_conclusao", data_termino);
+        .lte("data_conclusao", data_termino + "T23:59:59");
       return (data || []).reduce((acc: number, item: any) => 
         acc + (Number(item.metragem_quadrada) || 0), 0);
     }
@@ -70,7 +70,7 @@ async function calcularProgressoMeta(
         .eq("responsavel_id", userId)
         .eq("status", "concluido")
         .gte("data_conclusao", data_inicio)
-        .lte("data_conclusao", data_termino) as any);
+        .lte("data_conclusao", data_termino + "T23:59:59") as any);
       return (data || []).length;
     }
     default:

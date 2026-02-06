@@ -52,7 +52,7 @@ export function MetaProgressoBar({ userId, tipoMeta }: MetaProgressoBarProps) {
             .eq("responsavel_id", userId)
             .eq("status", "concluido")
             .gte("data_conclusao", meta.data_inicio)
-            .lte("data_conclusao", meta.data_termino);
+            .lte("data_conclusao", meta.data_termino + "T23:59:59");
           progresso = (data || []).reduce((acc: number, item: any) => 
             acc + (Number(item.metragem_linear) || 0), 0);
           break;
@@ -64,7 +64,7 @@ export function MetaProgressoBar({ userId, tipoMeta }: MetaProgressoBarProps) {
             .eq("responsavel_id", userId)
             .eq("status", "concluido")
             .gte("data_conclusao", meta.data_inicio)
-            .lte("data_conclusao", meta.data_termino);
+            .lte("data_conclusao", meta.data_termino + "T23:59:59");
           progresso = (data || []).reduce((acc: number, item: any) => 
             acc + (Number(item.qtd_portas_p) || 0) + (Number(item.qtd_portas_g) || 0), 0);
           break;
@@ -76,7 +76,7 @@ export function MetaProgressoBar({ userId, tipoMeta }: MetaProgressoBarProps) {
             .eq("responsavel_id", userId)
             .eq("status", "concluido")
             .gte("data_conclusao", meta.data_inicio)
-            .lte("data_conclusao", meta.data_termino);
+            .lte("data_conclusao", meta.data_termino + "T23:59:59");
           progresso = (data || []).reduce((acc: number, item: any) => 
             acc + (Number(item.quantidade_itens) || 0), 0);
           break;
@@ -88,7 +88,7 @@ export function MetaProgressoBar({ userId, tipoMeta }: MetaProgressoBarProps) {
             .eq("responsavel_id", userId)
             .eq("status", "concluido")
             .gte("data_conclusao", meta.data_inicio)
-            .lte("data_conclusao", meta.data_termino);
+            .lte("data_conclusao", meta.data_termino + "T23:59:59");
           progresso = (data || []).length;
           break;
         }
@@ -99,7 +99,7 @@ export function MetaProgressoBar({ userId, tipoMeta }: MetaProgressoBarProps) {
             .eq("responsavel_id", userId)
             .eq("status", "concluido")
             .gte("data_conclusao", meta.data_inicio)
-            .lte("data_conclusao", meta.data_termino);
+            .lte("data_conclusao", meta.data_termino + "T23:59:59");
           progresso = (data || []).reduce((acc: number, item: any) => 
             acc + (Number(item.metragem_quadrada) || 0), 0);
           break;
@@ -111,7 +111,7 @@ export function MetaProgressoBar({ userId, tipoMeta }: MetaProgressoBarProps) {
             .eq("responsavel_id", userId)
             .eq("status", "concluido")
             .gte("data_conclusao", meta.data_inicio)
-            .lte("data_conclusao", meta.data_termino) as any);
+            .lte("data_conclusao", meta.data_termino + "T23:59:59") as any);
           progresso = (data || []).length;
           break;
         }

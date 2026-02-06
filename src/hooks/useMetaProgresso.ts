@@ -69,7 +69,7 @@ async function calcularProgressoSoldagem(userId: string, dataInicio: string, dat
     .eq("responsavel_id", userId)
     .eq("status", "concluido")
     .gte("data_conclusao", dataInicio)
-    .lte("data_conclusao", dataTermino);
+    .lte("data_conclusao", dataTermino + "T23:59:59");
   
   return (data || []).reduce((acc, item) => 
     acc + (Number(item.qtd_portas_p) || 0) + (Number(item.qtd_portas_g) || 0), 0);
@@ -82,7 +82,7 @@ async function calcularProgressoPerfiladeira(userId: string, dataInicio: string,
     .eq("responsavel_id", userId)
     .eq("status", "concluido")
     .gte("data_conclusao", dataInicio)
-    .lte("data_conclusao", dataTermino);
+    .lte("data_conclusao", dataTermino + "T23:59:59");
   
   return (data || []).reduce((acc, item) => acc + (Number(item.metragem_linear) || 0), 0);
 }
@@ -94,7 +94,7 @@ async function calcularProgressoSeparacao(userId: string, dataInicio: string, da
     .eq("responsavel_id", userId)
     .eq("status", "concluido")
     .gte("data_conclusao", dataInicio)
-    .lte("data_conclusao", dataTermino);
+    .lte("data_conclusao", dataTermino + "T23:59:59");
   
   return (data || []).reduce((acc, item) => acc + (Number(item.quantidade_itens) || 0), 0);
 }
@@ -106,7 +106,7 @@ async function calcularProgressoQualidade(userId: string, dataInicio: string, da
     .eq("responsavel_id", userId)
     .eq("status", "concluido")
     .gte("data_conclusao", dataInicio)
-    .lte("data_conclusao", dataTermino);
+    .lte("data_conclusao", dataTermino + "T23:59:59");
   
   return data?.length || 0;
 }
@@ -118,7 +118,7 @@ async function calcularProgressoPintura(userId: string, dataInicio: string, data
     .eq("responsavel_id", userId)
     .eq("status", "concluido")
     .gte("data_conclusao", dataInicio)
-    .lte("data_conclusao", dataTermino);
+    .lte("data_conclusao", dataTermino + "T23:59:59");
   
   return (data || []).reduce((acc, item) => acc + (Number(item.metragem_quadrada) || 0), 0);
 }
@@ -132,7 +132,7 @@ async function calcularProgressoCarregamento(userId: string, dataInicio: string,
       .eq("responsavel_carregamento_id", userId)
       .eq("carregamento_concluido", true)
       .gte("data_carregamento", dataInicio)
-      .lte("data_carregamento", dataTermino);
+      .lte("data_carregamento", dataTermino + "T23:59:59");
     
     return data?.length || 0;
   } catch {
