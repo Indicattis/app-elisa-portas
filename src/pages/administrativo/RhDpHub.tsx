@@ -8,7 +8,7 @@ import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 
 const menuItems = [
   { label: "Colaboradores", icon: Users, path: "/administrativo/rh-dp/colaboradores", ativo: true },
-  { label: "Vagas", icon: Briefcase, path: "/administrativo/rh-dp/vagas", ativo: false },
+  { label: "Vagas", icon: Briefcase, path: "/administrativo/rh-dp/vagas", ativo: true },
 ];
 
 export default function RhDpHub() {
