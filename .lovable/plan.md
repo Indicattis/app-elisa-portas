@@ -1,30 +1,26 @@
 
+# Agrupar linhas por porta na Qualidade (como Pintura)
 
-# Habilitar rota /fabrica/pedidos-producao para todos os usuarios
+## Objetivo
+Na sheet de detalhes em `/producao/qualidade`, as linhas aparecem em lista plana. Vamos agrupá-las por porta (usando `produto_venda_id`), da mesma forma que já é feito para pintura.
 
-## Situacao atual
+## Alteracao
 
-- A rota `fabrica_pedidos` ja existe na tabela `app_routes` com path `/fabrica/pedidos-producao`
-- 7 de 30 usuarios ativos ja possuem acesso
-- 23 usuarios precisam receber acesso
+### Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
 
-## Solucao
+Atualmente, a condicao na linha 734 verifica `tipoOrdem === 'pintura'` para decidir se agrupa por porta ou renderiza em lista plana. A mudanca consiste em:
 
-Criar uma migration SQL que insere registros na tabela `user_route_access` para todos os usuarios ativos que ainda nao possuem acesso a rota `fabrica_pedidos`.
+1. Alterar a condicao para `tipoOrdem === 'pintura' || tipoOrdem === 'qualidade'`
+2. No bloco de agrupamento, ajustar a filtragem inicial: para pintura, filtra por `requer_pintura !== false`; para qualidade, usa todas as linhas sem filtro
+3. Ocultar os campos especificos de pintura (cor, tipo_pintura) quando for qualidade
+4. Manter os botoes de "Informar falta/problema" e "Resolver problema" nos itens de qualidade (que existem na renderizacao plana mas nao no bloco de pintura)
 
-```sql
-INSERT INTO user_route_access (user_id, route_key, can_access)
-SELECT au.user_id, 'fabrica_pedidos', true
-FROM admin_users au
-WHERE au.ativo = true
-  AND au.user_id NOT IN (
-    SELECT ura.user_id FROM user_route_access ura WHERE ura.route_key = 'fabrica_pedidos'
-  )
-ON CONFLICT (user_id, route_key) DO UPDATE SET can_access = true;
-```
+### Detalhes tecnicos
 
-## Resultado
+- Linha 734: `tipoOrdem === 'pintura'` vira `tipoOrdem === 'pintura' || tipoOrdem === 'qualidade'`
+- Linha 738: A filtragem `linhas.filter(l => l.requer_pintura !== false)` precisa condicionar: se pintura, filtra; se qualidade, usa todas as linhas
+- Linha 808-812: A exibicao de cor/tipo_pintura sera condicional a `tipoOrdem === 'pintura'`
+- Nos itens individuais dentro do grupo (linhas 819-871): adicionar suporte para marcacao de problema e resolucao quando `tipoOrdem === 'qualidade'`, replicando os botoes de AlertTriangle e Check que existem na renderizacao plana (linhas 940-973)
+- Adicionar destaque visual para linhas com problema (borda vermelha, icone de alerta) como na renderizacao plana
 
-Todos os 30 usuarios ativos terao `can_access = true` para a rota `fabrica_pedidos`, tornando `/fabrica/pedidos-producao` acessivel a todos.
-
-**Arquivos:** 1 nova migration SQL
+Nenhum arquivo novo. Apenas `OrdemDetalhesSheet.tsx` sera editado.
