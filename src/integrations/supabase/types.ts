@@ -2509,6 +2509,7 @@ export type Database = {
           data_instalacao: string | null
           endereco: string | null
           estado: string | null
+          foto_carregamento_url: string | null
           geocode_precision: string | null
           hora: string
           hora_carregamento: string | null
@@ -2551,6 +2552,7 @@ export type Database = {
           data_instalacao?: string | null
           endereco?: string | null
           estado?: string | null
+          foto_carregamento_url?: string | null
           geocode_precision?: string | null
           hora?: string
           hora_carregamento?: string | null
@@ -2593,6 +2595,7 @@ export type Database = {
           data_instalacao?: string | null
           endereco?: string | null
           estado?: string | null
+          foto_carregamento_url?: string | null
           geocode_precision?: string | null
           hora?: string
           hora_carregamento?: string | null
@@ -3644,6 +3647,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           data_carregamento: string | null
+          foto_carregamento_url: string | null
           geocode_precision: string | null
           hora: string
           hora_carregamento: string | null
@@ -3671,6 +3675,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_carregamento?: string | null
+          foto_carregamento_url?: string | null
           geocode_precision?: string | null
           hora: string
           hora_carregamento?: string | null
@@ -3698,6 +3703,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_carregamento?: string | null
+          foto_carregamento_url?: string | null
           geocode_precision?: string | null
           hora?: string
           hora_carregamento?: string | null
