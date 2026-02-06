@@ -537,7 +537,7 @@ export default function GestaoFabricaDirecao() {
                       onReorganizar={handleReorganizar} 
                       onMoverPrioridade={handleMoverPrioridade}
                       onArquivar={handleArquivar}
-                      onDeletar={handleDeletarPedido}
+                      
                       onAvisoEspera={handleAvisoEspera}
                       enableDragAndDrop={true}
                     />

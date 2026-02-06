@@ -1404,9 +1404,15 @@ export function PedidoCard({
                 {renderOrdemStatus(ordens.pintura, 'Pintura')}
               </div>
               
-              {/* Col 13: Tempo na Etapa */}
-              <div className="text-center">
+              {/* Col 13: Tempo na Etapa + Total */}
+              <div className="text-center flex items-center justify-center gap-1">
                 <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact />
+                {pedido.created_at && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 font-mono bg-muted/50 text-muted-foreground border-muted-foreground/30">
+                    <Clock className="h-2.5 w-2.5 mr-0.5" />
+                    {formatDistanceToNow(new Date(pedido.created_at), { locale: ptBR })}
+                  </Badge>
+                )}
               </div>
               
               {/* Col 14: Botões de ação */}
@@ -1429,21 +1435,8 @@ export function PedidoCard({
                       );
                     }
 
-                    // Botão de excluir (vai no meio)
-                    if (isAberto && isAdmin && onDeletar) {
-                      middleButtons.push(
-                        <Button 
-                          key="excluir" 
-                          size="icon" 
-                          variant="outline" 
-                          onClick={(e) => { e.stopPropagation(); setShowExcluirPedido(true); }} 
-                          title="Excluir Pedido" 
-                          className="flex h-[20px] w-[20px] rounded-[3px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      );
-                    }
+
+
 
                     // Botões de avançar (vão para a direita)
                     if (isAberto && onMoverEtapa) {
@@ -1640,6 +1633,12 @@ export function PedidoCard({
             
             <div className="flex items-center gap-1.5">
               <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact />
+              {pedido.created_at && (
+                <Badge variant="outline" className="text-[10px] px-1 py-0 font-mono bg-muted/50 text-muted-foreground border-muted-foreground/30">
+                  <Clock className="h-2.5 w-2.5 mr-0.5" />
+                  {formatDistanceToNow(new Date(pedido.created_at), { locale: ptBR })}
+                </Badge>
+              )}
               
               {onMoverPrioridade && posicao && total && <>
                   <Button 
@@ -1865,24 +1864,6 @@ export function PedidoCard({
                     </Button>);
               }
 
-              // Botão de excluir (apenas admins em pedidos abertos)
-              if (isAberto && isAdmin && onDeletar) {
-                actionButtons.push(
-                  <Button 
-                    key="excluir" 
-                    size="icon" 
-                    variant="outline"
-                    onClick={(e) => { 
-                      e.stopPropagation(); 
-                      setShowExcluirPedido(true); 
-                    }} 
-                    title="Excluir Pedido" 
-                    className="flex w-full h-[35px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                );
-              }
               return <div className="w-full">
                     {actionButtons.length > 0 && <div className="grid grid-cols-4 gap-1.5 w-full">
                         {actionButtons}
