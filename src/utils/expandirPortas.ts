@@ -51,9 +51,19 @@ export function expandirPortasPorQuantidade<T extends { id: string; quantidade?:
 export function getLabelPortaExpandida(
   portaIndex: number,
   totalNoGrupo: number,
-  indicePorta: number
+  indicePorta: number,
+  tipoProduto?: string | null
 ): string {
-  const label = `Porta #${portaIndex + 1}`;
+  const TIPO_LABELS: Record<string, string> = {
+    porta_enrolar: 'Porta de Enrolar',
+    porta_social: 'Porta Social',
+    acessorio: 'Acessório',
+    adicional: 'Adicional',
+    manutencao: 'Manutenção',
+    pintura_epoxi: 'Pintura Epóxi',
+  };
+  const tipoLabel = tipoProduto ? (TIPO_LABELS[tipoProduto] || 'Item') : 'Porta';
+  const label = `${tipoLabel} #${portaIndex + 1}`;
   if (totalNoGrupo > 1) {
     return `${label} (${indicePorta + 1}/${totalNoGrupo})`;
   }

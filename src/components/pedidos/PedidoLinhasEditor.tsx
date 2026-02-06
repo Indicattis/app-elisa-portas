@@ -34,6 +34,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { expandirPortasPorQuantidade, getLabelPortaExpandida } from "@/utils/expandirPortas";
+import { getLabelProdutoExpandido, getLabelTipoProduto } from "@/utils/tipoProdutoLabels";
 
 interface LinhaEditData {
   produto_venda_id?: string | null;
@@ -244,7 +245,6 @@ export const PedidoLinhasEditor = ({
         .from('produtos_vendas')
         .select('*')
         .eq('venda_id', vendaId)
-        .ilike('tipo_produto', '%porta%')
         .order('created_at');
       
       if (error) throw error;
@@ -373,9 +373,7 @@ export const PedidoLinhasEditor = ({
   const handleSalvarNovaLinha = async () => {
     // Validações
     // produto_venda_id só é obrigatório se há portas enrolar
-    if (temPortasEnrolar && !rascunhoLinha.produto_venda_id) {
-      return;
-    }
+    // produto_venda_id é opcional - o usuário pode ou não associar a um item vendido
     if (!rascunhoLinha.estoque_id) {
       return;
     }
@@ -390,8 +388,8 @@ export const PedidoLinhasEditor = ({
     if (!produtoEstoque) return;
 
     const novaLinhaCompleta: PedidoLinhaNova = {
-      produto_venda_id: temPortasEnrolar ? parsePortaVirtualKey(rascunhoLinha.produto_venda_id).originalId : undefined,
-      indice_porta: temPortasEnrolar ? parsePortaVirtualKey(rascunhoLinha.produto_venda_id).indicePorta : 0,
+      produto_venda_id: rascunhoLinha.produto_venda_id ? parsePortaVirtualKey(rascunhoLinha.produto_venda_id).originalId : undefined,
+      indice_porta: rascunhoLinha.produto_venda_id ? parsePortaVirtualKey(rascunhoLinha.produto_venda_id).indicePorta : 0,
       estoque_id: rascunhoLinha.estoque_id,
       nome_produto: produtoEstoque.nome_produto,
       descricao_produto: produtoEstoque.descricao_produto,
@@ -457,7 +455,7 @@ export const PedidoLinhasEditor = ({
             
             if (itensPadraoDisponiveis.length === 0) return null;
             
-            const portaLabel = getLabelPortaExpandida(idx, porta._totalNoGrupo, porta._indicePorta);
+            const portaLabel = getLabelProdutoExpandido(idx, porta.tipo_produto, porta.largura, porta.altura, porta._totalNoGrupo, porta._indicePorta);
             
             return (
               <div key={porta._virtualKey} className="space-y-1">
@@ -555,13 +553,13 @@ export const PedidoLinhasEditor = ({
                               }
                             >
                               <SelectTrigger className="h-8 text-xs w-full mb-1">
-                                <SelectValue placeholder="Porta" />
+                                <SelectValue placeholder="Produto" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="_none">Nenhuma</SelectItem>
                                 {portas.map((porta, idx) => (
                                   <SelectItem key={porta._virtualKey} value={porta._virtualKey}>
-                                    {getLabelPortaExpandida(idx, porta._totalNoGrupo, porta._indicePorta)}
+                                    {getLabelProdutoExpandido(idx, porta.tipo_produto, porta.largura, porta.altura, porta._totalNoGrupo, porta._indicePorta)}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -768,8 +766,8 @@ export const PedidoLinhasEditor = ({
                         ? `${p.largura.toFixed(2)}m × ${p.altura.toFixed(2)}m` 
                         : '';
                       const label = p 
-                        ? getLabelPortaExpandida(grupo.portaIndex, p._totalNoGrupo, p._indicePorta)
-                        : `Porta #${portaNumero}`;
+                        ? getLabelProdutoExpandido(grupo.portaIndex, p.tipo_produto, p.largura, p.altura, p._totalNoGrupo, p._indicePorta)
+                        : `Item #${portaNumero}`;
                       
                       return (
                         <React.Fragment key={key}>
@@ -793,7 +791,7 @@ export const PedidoLinhasEditor = ({
                         <tr className="bg-muted/40">
                           <td colSpan={colCount} className="p-2">
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-xs font-semibold">Sem porta</Badge>
+                              <Badge variant="outline" className="text-xs font-semibold">Sem produto</Badge>
                               <span className="text-xs text-muted-foreground">
                                 ({semPorta.length} {semPorta.length === 1 ? 'item' : 'itens'})
                               </span>
@@ -819,12 +817,12 @@ export const PedidoLinhasEditor = ({
                         }
                       >
                         <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder={temPortasEnrolar ? "Selecione a porta" : "Porta (opcional)"} />
+                          <SelectValue placeholder="Selecione o produto" />
                         </SelectTrigger>
                         <SelectContent>
                           {portas.map((porta, idx) => (
-                            <SelectItem key={porta.id} value={porta.id}>
-                              Porta #{idx + 1} {porta.tamanho && `- ${porta.tamanho}`}
+                            <SelectItem key={porta._virtualKey} value={porta._virtualKey}>
+                              {getLabelProdutoExpandido(idx, porta.tipo_produto, porta.largura, porta.altura, porta._totalNoGrupo, porta._indicePorta)}
                             </SelectItem>
                           ))}
                         </SelectContent>
