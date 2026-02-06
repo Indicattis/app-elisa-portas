@@ -425,7 +425,7 @@ const App = () => (
                 <Route path="/direcao/vendas" element={<ProtectedRoute routeKey="direcao_hub"><VendasDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/regras-vendas" element={<ProtectedRoute routeKey="direcao_hub"><RegrasVendasDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/clientes" element={<ProtectedRoute routeKey="direcao_hub"><ClientesDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/vendas/tabela-precos" element={<ProtectedRoute routeKey="direcao_hub"><div className="p-4 md:p-6"><TabelaPrecos /></div></ProtectedRoute>} />
+                <Route path="/direcao/vendas/tabela-precos" element={<ProtectedRoute routeKey="direcao_hub"><TabelaPrecos /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/:id" element={<ProtectedRoute routeKey="direcao_hub"><VendaDetalhesDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/:id/editar" element={<ProtectedRoute routeKey="direcao_hub"><VendaEditarDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/faturamento" element={<ProtectedRoute routeKey="direcao_hub"><FaturamentoDirecao /></ProtectedRoute>} />
