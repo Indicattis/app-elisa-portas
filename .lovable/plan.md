@@ -1,37 +1,65 @@
 
 
-# Adicionar coluna "Porta" e agrupar itens por porta no pedido
+# Corrigir backfill de linhas de qualidade com dados de porta corretos
 
-## Objetivo
-Na pagina `/administrativo/pedidos/:id`, na secao "Itens do Pedido", mostrar a qual porta cada item pertence (inclusive em modo somente-leitura) e agrupar os itens por porta de enrolar.
+## Problema raiz
 
-## Alteracoes
+A migration de backfill (Parte 2) usou apenas `estoque_id` para fazer o match entre `linhas_ordens` e `pedido_linhas`. Como o mesmo `estoque_id` aparece em multiplas combinacoes de `produto_venda_id` + `indice_porta` (ex: "Meia cana lisa" existe nas 7 portas), o UPDATE do PostgreSQL atribuiu valores arbitrarios, resultando em apenas 3 grupos distintos ao inves de 7.
 
-### Arquivo: `src/components/pedidos/PedidoLinhasEditor.tsx`
+Dados atuais em `linhas_ordens` (qualidade):
+- `77df3fe8...` / indice 0 -> 15 linhas
+- `8decab36...` / indice 0 -> 8 linhas  
+- `bb26e29e...` / indice 2 -> 13 linhas (deveria haver indice 0, 1 e 2)
 
-1. **Mostrar coluna "Porta" tambem em modo read-only** (linha 503): Remover a condicao `!isReadOnly &&` do header "Porta" e da celula correspondente (linha 533-561), para que a porta seja sempre visivel.
+Dados corretos em `pedido_linhas`: 7 combinacoes distintas de `produto_venda_id` + `indice_porta`.
 
-2. **Agrupar linhas por porta**: Em vez de renderizar `linhas.map(...)` diretamente, agrupar as linhas por `produto_venda_id` + `indice_porta` e renderizar com headers visuais separando cada porta:
-   - Criar um agrupamento usando chave composta `produto_venda_id_indicePorta`
-   - Para cada grupo, exibir um header com badge colorido mostrando "Porta #N - LxA m" com as dimensoes da porta
-   - Linhas sem porta associada ficam em um grupo "Sem porta" no final
-   - A coluna "Porta" individual nas linhas pode ser removida ou simplificada ja que o header do grupo ja identifica a porta
+## Solucao
 
-3. **Buscar portas tambem em modo read-only**: Atualmente a query de portas so roda quando `!isReadOnly` (linha 253: `enabled: !!vendaId && !isReadOnly`). Alterar para `enabled: !!vendaId` para que os dados de portas estejam disponiveis para exibicao.
+### Migration SQL
 
-### Detalhes tecnicos
+A unica forma confiavel de corrigir e deletar as linhas de qualidade existentes e re-inseri-las a partir de `pedido_linhas` com os dados corretos. Para cada ordem de qualidade afetada:
 
-Na secao de renderizacao (a partir da linha 498), a logica sera:
+1. Identificar a `ordem_id` da ordem de qualidade
+2. Deletar todas as `linhas_ordens` dessa ordem
+3. Re-inserir a partir de `pedido_linhas` filtrando por `categoria_linha IN ('solda', 'perfiladeira')`, copiando `produto_venda_id` e `indice_porta`
 
+```sql
+-- Para TODAS as ordens de qualidade (nao apenas este pedido),
+-- deletar e recriar as linhas a partir de pedido_linhas
+
+-- 1. Deletar linhas de qualidade existentes
+DELETE FROM linhas_ordens
+WHERE tipo_ordem = 'qualidade';
+
+-- 2. Reinserir corretamente a partir de pedido_linhas
+INSERT INTO linhas_ordens (
+  pedido_id, ordem_id, tipo_ordem, item, quantidade,
+  tamanho, concluida, estoque_id, produto_venda_id, indice_porta
+)
+SELECT
+  oq.pedido_id,
+  oq.id,
+  'qualidade',
+  COALESCE(pl.nome_produto, pl.descricao_produto, 'Item'),
+  COALESCE(pl.quantidade, 1),
+  COALESCE(pl.tamanho, pl.largura::text || ' x ' || pl.altura::text),
+  false,
+  pl.estoque_id,
+  pl.produto_venda_id,
+  pl.indice_porta
+FROM ordens_qualidade oq
+JOIN pedido_linhas pl ON pl.pedido_id = oq.pedido_id
+  AND pl.categoria_linha IN ('solda', 'perfiladeira')
+WHERE oq.historico = false;
 ```
-- Agrupar linhas por (produto_venda_id + indice_porta)
-- Para cada grupo:
-  - Renderizar um <tr> de header com colspan, mostrando "Porta #N - LxA"
-  - Renderizar as linhas do grupo normalmente
-- Grupo "sem porta" por ultimo
-```
 
-A coluna "Porta" no header da tabela sera substituida por um indicador visual no header do grupo, tornando a tabela mais limpa. A coluna de Porta individual pode ser mantida de forma simplificada (apenas o numero) ou removida em favor do agrupamento visual.
+**Nota importante**: Isso reseta o campo `concluida` para `false` em todas as linhas de qualidade. Se houver ordens ja parcialmente concluidas, esse estado sera perdido. Para minimizar impacto, podemos limitar apenas a ordens com status `'pendente'` ou `'em_andamento'`.
 
-## Resultado
-Os itens do pedido aparecerao organizados por porta, com um cabecalho visual para cada porta mostrando suas dimensoes, tanto em modo de edicao quanto em modo somente-leitura.
+### Nenhuma alteracao no frontend
+
+O frontend ja esta usando a chave composta `produto_venda_id` + `indice_porta` para agrupamento. O problema e exclusivamente nos dados do banco.
+
+## Arquivos afetados
+
+1. Nova migration SQL (delete + re-insert das linhas de qualidade)
+
