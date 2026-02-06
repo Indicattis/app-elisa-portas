@@ -407,7 +407,7 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                   >
                     <a href={pedido.ficha_visita_url} target="_blank" rel="noopener noreferrer">
                       <FileText className="w-4 h-4 mr-2" />
-                      Anexo
+                      Documentos
                     </a>
                   </Button>
                 )}
@@ -421,20 +421,6 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                   >
                     <RefreshCw className={cn("w-4 h-4 mr-2", verificandoAvanco && "animate-spin")} />
                     Verificar Avanço
-                  </Button>
-                )}
-                {venda.id && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/5 border-white/20 text-white hover:bg-white/10 hover:text-white"
-                    onClick={() => {
-                      onOpenChange(false);
-                      navigate(`/dashboard/vendas/${venda.id}/view`);
-                    }}
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Ver Venda
                   </Button>
                 )}
               </div>
