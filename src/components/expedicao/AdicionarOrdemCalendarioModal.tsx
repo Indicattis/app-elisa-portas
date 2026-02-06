@@ -454,7 +454,7 @@ export function AdicionarOrdemCalendarioModal({
                           : "Selecione..."
                       } />
                     </SelectTrigger>
-                    <SelectContent modal={false}>
+                    <SelectContent>
                       {isEntrega && responsavelTipo === 'elisa' ? (
                         veiculos.filter(v => v.ativo).map((veiculo) => (
                           <SelectItem key={veiculo.id} value={veiculo.id}>
