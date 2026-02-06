@@ -3,6 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePedidosEtapas } from "./usePedidosEtapas";
 
+export interface ProdutoResumo {
+  tipo: string;
+  nome: string;
+  quantidade: number;
+  tamanho?: string;
+  corNome?: string;
+  corHex?: string;
+}
+
 export interface PedidoAprovacao {
   id: string;
   numero_pedido: string;
@@ -12,11 +21,11 @@ export interface PedidoAprovacao {
   created_at: string;
   produtos_resumo: string;
   pedidoCompleto: any;
-  // Novos campos
   tipo_entrega: 'instalacao' | 'entrega' | 'manutencao' | null;
   data_entrada_etapa: string | null;
   portasInfo: Array<{ tamanho: 'P' | 'G'; largura: number; altura: number }>;
   cores: Array<{ nome: string; codigo_hex: string }>;
+  produtosResumo: ProdutoResumo[];
 }
 
 export function usePedidosAprovacaoCEO() {
@@ -96,6 +105,49 @@ export function usePedidosAprovacaoCEO() {
         return Array.from(coresMap.values());
       };
 
+      const construirProdutosResumo = (produtos: any[]): ProdutoResumo[] => {
+        const lista: ProdutoResumo[] = [];
+
+        produtos.forEach((p: any) => {
+          const qtd = p.quantidade || 1;
+
+          if (p.tipo_produto === 'porta_enrolar') {
+            let largura = p.largura || 0;
+            let altura = p.altura || 0;
+            if (largura === 0 && altura === 0 && p.tamanho) {
+              const match = p.tamanho.match(/(\d+[.,]?\d*)\s*[xX]\s*(\d+[.,]?\d*)/);
+              if (match) {
+                largura = parseFloat(match[1].replace(',', '.'));
+                altura = parseFloat(match[2].replace(',', '.'));
+              }
+            }
+            const area = largura * altura;
+            const cat = area > 25 ? 'G' : 'P';
+            const tam = largura && altura ? `${largura.toFixed(2)} x ${altura.toFixed(2)}m (${cat})` : p.tamanho || '';
+            lista.push({ tipo: 'porta_enrolar', nome: 'Porta de Enrolar', quantidade: qtd, tamanho: tam });
+          } else if (p.tipo_produto === 'pintura_epoxi') {
+            const cor = p.catalogo_cores || p.cor;
+            lista.push({
+              tipo: 'pintura_epoxi',
+              nome: 'Pintura Epóxi',
+              quantidade: qtd,
+              corNome: cor?.nome || p.descricao || '',
+              corHex: cor?.codigo_hex || undefined,
+            });
+          } else if (p.tipo_produto === 'acessorio' || p.tipo_produto === 'adicional') {
+            lista.push({
+              tipo: p.tipo_produto,
+              nome: p.descricao || p.nome || (p.tipo_produto === 'acessorio' ? 'Acessório' : 'Adicional'),
+              quantidade: qtd,
+            });
+          } else if (p.tipo_produto === 'motor') {
+            lista.push({ tipo: 'motor', nome: p.descricao || 'Motor', quantidade: qtd });
+          }
+        });
+
+        return lista;
+      };
+
       return pedidosData.map((pedido: any) => {
         const venda = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
         const produtos = venda?.produtos_vendas || [];
@@ -131,6 +183,7 @@ export function usePedidosAprovacaoCEO() {
           data_entrada_etapa: etapaAtual?.data_entrada || null,
           portasInfo: calcularPortasInfo(produtos),
           cores: extrairCores(produtos),
+          produtosResumo: construirProdutosResumo(produtos),
         } as PedidoAprovacao;
       });
     },
