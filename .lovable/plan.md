@@ -1,73 +1,63 @@
 
 
-# Corrigir agrupamento por porta nas ordens de PINTURA
+# Mudar "Selecione a porta" para "Selecione o produto" e agrupar por item vendido
 
-## Problema
+## Contexto
 
-A funcao SQL `criar_ordem_pintura` copia linhas de producao (soldagem/perfiladeira/separacao) para criar linhas de pintura, mas NAO copia os campos `produto_venda_id` e `indice_porta`. Por isso, 201 das 283 linhas de pintura estao com esses campos NULL, impedindo o agrupamento por porta.
+Atualmente, o seletor no editor de linhas do pedido (`PedidoLinhasEditor.tsx`) busca apenas produtos com `tipo_produto` contendo "porta" e usa o label "Selecione a porta". Alem disso, a downbar de producao (`OrdemDetalhesSheet.tsx`) exibe o header como "Porta 01", "Porta 02", etc., mesmo quando o item vendido nao e uma porta.
 
-A PINT-00081 e um exemplo: todas as 7 linhas tem `produto_venda_id = NULL` e `indice_porta = NULL`, enquanto as linhas-fonte ja possuem os dados corretos.
+Os tipos de produto existentes sao: `porta_enrolar`, `porta_social`, `acessorio`, `adicional`, `manutencao`, `pintura_epoxi`.
 
-## Solucao
+## Alteracoes
 
-### 1. Corrigir a funcao `criar_ordem_pintura` (para novas ordens)
+### 1. PedidoLinhasEditor.tsx - Buscar TODOS os produtos da venda
 
-Adicionar `produto_venda_id` e `indice_porta` no SELECT e no INSERT dentro do loop da funcao:
+**Query** (linhas 239-254): Remover o filtro `.ilike('tipo_produto', '%porta%')` para que acessorios, adicionais, manutencoes etc. tambem aparecam como opcoes no seletor.
 
-```sql
-FOR v_linha IN
-  SELECT 
-    lo.estoque_id,
-    lo.quantidade,
-    lo.produto_venda_id,   -- NOVO
-    lo.indice_porta,       -- NOVO
-    e.nome_produto,
-    e.requer_pintura
-  FROM linhas_ordens lo
-  JOIN estoque e ON e.id = lo.estoque_id
-  WHERE ...
-LOOP
-  INSERT INTO linhas_ordens (
-    ..., produto_venda_id, indice_porta   -- NOVO
-  ) VALUES (
-    ..., v_linha.produto_venda_id, v_linha.indice_porta
-  );
-END LOOP;
-```
+**Labels**: 
+- Placeholder do Select: "Selecione o produto" (em vez de "Selecione a porta" / "Porta (opcional)")
+- Opcoes do Select: mostrar o `tipo_produto` formatado junto com o indice, ex: "Porta de Enrolar #1 - 4,65m x 6,00m", "Acessorio #1", "Manutencao #1"
+- Header de agrupamento na tabela: usar label baseado no tipo do produto em vez de "Porta #X"
 
-### 2. Backfill das linhas de pintura existentes
+**Logica de validacao** (linha 376): Remover a obrigatoriedade de `produto_venda_id` apenas quando `temPortasEnrolar`. Tornar opcional para todos os casos (o usuario pode ou nao associar a um item vendido).
 
-Como as linhas de pintura foram copiadas de linhas de producao com o mesmo `pedido_id` e `estoque_id`, podemos fazer o backfill usando match via `pedido_id` + `estoque_id` + `tipo_ordem` fonte. Porem, para pintura de porta unica (como PINT-00081) isso funciona. Para pedidos com multiplas portas, o `estoque_id` pode nao ser unico.
+### 2. OrdemDetalhesSheet.tsx - Labels dinamicos na downbar
 
-A abordagem mais segura: deletar e re-inserir as linhas de pintura (mesma estrategia usada com sucesso para qualidade):
+**Buscar todos os produtos** (linha 742-744): Remover o filtro `tipo_produto === 'porta_enrolar'` para buscar todos os produtos do pedido.
 
-```sql
-DELETE FROM linhas_ordens WHERE tipo_ordem = 'pintura';
+**Header do grupo** (linhas 795-802): Em vez de sempre mostrar "Porta XX", usar label baseado no tipo do produto encontrado:
+- `porta_enrolar` -> "Porta de Enrolar 01 - 4,65 x 6,00"
+- `porta_social` -> "Porta Social 01 - 0,80 x 2,10"
+- `acessorio` -> "Acessorio 01"
+- `manutencao` -> "Manutencao 01"
+- `adicional` -> "Adicional 01"
+- `pintura_epoxi` -> "Pintura Epoxi 01"
+- Sem match -> "Item 01"
 
-INSERT INTO linhas_ordens (
-  pedido_id, ordem_id, tipo_ordem, item, quantidade,
-  concluida, estoque_id, produto_venda_id, indice_porta
-)
-SELECT DISTINCT ON (op.id, lo.estoque_id, lo.produto_venda_id, lo.indice_porta)
-  op.pedido_id, op.id, 'pintura',
-  e.nome_produto, lo.quantidade,
-  false, lo.estoque_id, lo.produto_venda_id, lo.indice_porta
-FROM ordens_pintura op
-JOIN linhas_ordens lo ON lo.pedido_id = op.pedido_id
-  AND lo.tipo_ordem IN ('soldagem', 'perfiladeira', 'separacao')
-JOIN estoque e ON e.id = lo.estoque_id
-  AND e.categoria = 'componente'
-  AND e.requer_pintura = true
-WHERE op.historico = false;
-```
+### 3. expandirPortas.ts - Renomear/adaptar labels
 
-**Nota**: Isso reseta `concluida` para false nas linhas de pintura.
+Adaptar `getLabelPortaExpandida` para receber o `tipo_produto` e gerar label adequado (ex: "Acessorio #1" em vez de "Porta #1").
 
-## Nenhuma alteracao no frontend
+## Detalhes tecnicos
 
-O frontend ja suporta agrupamento por porta para todos os tipos. O problema e exclusivamente nos dados e na funcao SQL.
+### Arquivo: `src/components/pedidos/PedidoLinhasEditor.tsx`
+- Remover `.ilike('tipo_produto', '%porta%')` da query de `produtos_vendas` (linha 247)
+- Mudar placeholder de "Selecione a porta" para "Selecione o produto" (linha 822)
+- Atualizar labels nos `SelectItem` e headers de grupo para refletir o tipo do produto
+- Atualizar label "Porta" no Select de edicao inline (linha 558) para "Produto"
+- Tornar `produto_venda_id` opcional na validacao (linha 376)
+
+### Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
+- Remover filtro `tipo_produto === 'porta_enrolar'` (linha 742-744), buscar todos os produtos
+- Criar funcao helper para mapear `tipo_produto` para label legivel
+- Atualizar header "Porta XX" para usar label dinamico baseado no tipo do produto
+
+### Arquivo: `src/utils/expandirPortas.ts`
+- Adicionar parametro opcional `tipo_produto` em `getLabelPortaExpandida`
+- Retornar label adequado baseado no tipo (Porta, Acessorio, etc.)
 
 ## Arquivos afetados
-
-1. Nova migration SQL - corrigir funcao `criar_ordem_pintura` + backfill de dados
+1. `src/components/pedidos/PedidoLinhasEditor.tsx`
+2. `src/components/production/OrdemDetalhesSheet.tsx`
+3. `src/utils/expandirPortas.ts`
 
