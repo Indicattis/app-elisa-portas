@@ -1,51 +1,55 @@
 
-# Mostrar Cor da Pintura na Coluna "Detalhes" da Tabela de Produtos
+# Redesign Minimalista do Modal "Adicionar ao Calendario"
 
 ## Problema
 
-Ao adicionar um produto do tipo `pintura_epoxi`, a coluna "Detalhes" na tabela de produtos da venda mostra "-" porque o campo `descricao` nao e preenchido com o nome da cor selecionada.
+O Select de equipe/autorizado nao aparece corretamente porque o dropdown do Radix Select e cortado pelo `ScrollArea` com `max-h-[60vh]` e pelo `overflow` do `DialogContent`. Alem disso, o modal esta visualmente carregado e nao segue o padrao minimalista das demais paginas.
 
 ## Solucao
 
-Preencher automaticamente o campo `descricao` do produto com o nome da cor selecionada no momento em que o produto e adicionado/salvo.
+Redesenhar o modal inteiro com layout limpo, responsivo e funcional, corrigindo o problema do Select.
 
-## Alteracao
+## Alteracoes no arquivo `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx`
 
-### `src/components/vendas/ProdutoVendaForm.tsx`
+### 1. Corrigir o Select cortado
+- Remover o `ScrollArea` que envolve todo o conteudo (causa overflow:hidden que corta o dropdown)
+- Usar `overflow-y-auto` diretamente no container interno
+- Adicionar `position: "popper"` e `sideOffset` no `SelectContent` para garantir que o dropdown renderize fora do container
 
-Na funcao `handleSubmit` (por volta da linha 284), antes de chamar `onAddProduto(formData)`, resolver o nome da cor a partir do `cor_id` usando a lista de `cores` ja carregada no componente:
+### 2. Layout minimalista e responsivo
+- Usar `max-w-[95vw] sm:max-w-[500px]` para responsividade mobile
+- Remover o calendario inline (ocupa muito espaco) e substituir por um input date simples, mantendo a politica date-only (hora fixa "08:00")
+- Simplificar o header: titulo menor, sem descricao verbosa
+- Usar espacamento reduzido (`space-y-3` em vez de `space-y-4`)
+- Cards de ordem mais compactos com hover sutil
+- Botoes de acao com estilo mais limpo
+
+### 3. Estrutura final do modal
 
 ```
-const handleSubmit = () => {
-  // ... validacoes existentes ...
-
-  const produtoFinal = { ...formData };
-
-  // Se for pintura, incluir nome da cor na descricao
-  if (produtoFinal.tipo_produto === 'pintura_epoxi' && produtoFinal.cor_id && cores) {
-    const corSelecionada = cores.find(c => c.id === produtoFinal.cor_id);
-    if (corSelecionada) {
-      produtoFinal.descricao = corSelecionada.nome;
-    }
-  }
-
-  onAddProduto(produtoFinal);
-  onOpenChange(false);
-};
+Dialog
+  DialogContent (max-w-[95vw] sm:max-w-[500px], max-h-[85vh], flex flex-col)
+    DialogHeader (titulo simples)
+    div (overflow-y-auto, flex-1, space-y-3)
+      [Se sem pre-selecao] Input de busca + lista de ordens com scroll interno
+      [Se com pre-selecao] Card compacto da ordem
+      [Se ordem selecionada] Secao de configuracao:
+        - Input type="date" (simples, sem calendario inline)
+        - Toggle buttons para tipo (Elisa / Autorizado ou Terceiro)
+        - Select do responsavel (com portal para evitar corte)
+    div (footer fixo com botoes)
 ```
 
-Tambem aplicar a mesma logica no `PinturaRapidaModal.tsx` que adiciona pintura de forma rapida.
+### 4. Tipo de responsavel: toggle buttons em vez de RadioGroup
+- Substituir RadioGroup por botoes toggle lado a lado (estilo pill/segmented control)
+- Visual mais moderno e intuitivo
 
-### `src/components/vendas/PinturaRapidaModal.tsx`
-
-Ao montar o objeto `ProdutoVenda`, incluir o nome da cor no campo `descricao`.
+### 5. Select com portal
+- Usar a prop `container` ou garantir que o `SelectContent` tenha `position="popper"` com `className="z-[200]"` para renderizar acima do dialog
 
 ## Resultado
 
-A coluna "Detalhes" passara a exibir o nome da cor (ex: "Branco", "Preto") para produtos de pintura, em vez de "-".
-
-## Detalhes Tecnicos
-
-- A lista de cores (`cores`) ja esta carregada via `useQuery` no `ProdutoVendaForm`, entao nao ha consulta adicional ao banco
-- O campo `descricao` ja e exibido na tabela para tipos nao-porta (linha 77 do `ProdutosVendaTable`)
-- Apenas 2 arquivos modificados, sem mudanca na interface de tipos nem no banco de dados
+- Modal compacto, responsivo, minimalista
+- Select de equipe/autorizado visivel e funcional
+- Funciona bem em mobile e desktop
+- 1 arquivo modificado: `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx`
