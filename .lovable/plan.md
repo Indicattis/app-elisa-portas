@@ -1,79 +1,37 @@
 
-# Corrigir agrupamento por porta na downbar de Qualidade e Pintura
 
-## Problema
+# Adicionar coluna "Porta" e agrupar itens por porta no pedido
 
-Dois problemas interligados:
+## Objetivo
+Na pagina `/administrativo/pedidos/:id`, na secao "Itens do Pedido", mostrar a qual porta cada item pertence (inclusive em modo somente-leitura) e agrupar os itens por porta de enrolar.
 
-### 1. Linhas de qualidade sem `produto_venda_id` e `indice_porta`
-A funcao SQL `criar_ordem_qualidade` copia linhas de `pedido_linhas` para `linhas_ordens`, mas nao inclui os campos `produto_venda_id` e `indice_porta`. Resultado: todas as 28+ linhas de qualidade ficam com `produto_venda_id = NULL`, agrupando tudo em uma unica porta na downbar.
+## Alteracoes
 
-A tabela `pedido_linhas` tem esses dados corretamente (7 portas distintas com `produto_venda_id` + `indice_porta`), mas eles se perdem na criacao da ordem.
+### Arquivo: `src/components/pedidos/PedidoLinhasEditor.tsx`
 
-### 2. Numeracao das observacoes de visita
-Na downbar, a exibicao das observacoes usa `obs.indice_porta + 1` diretamente, que reinicia para cada `produto_venda_id` diferente. Resultado: em vez de "Porta 1, 2, 3, 4, 5, 6, 7", aparece "Porta 1, 1, 2, 3, 1, 2, 1".
+1. **Mostrar coluna "Porta" tambem em modo read-only** (linha 503): Remover a condicao `!isReadOnly &&` do header "Porta" e da celula correspondente (linha 533-561), para que a porta seja sempre visivel.
 
-## Solucao
+2. **Agrupar linhas por porta**: Em vez de renderizar `linhas.map(...)` diretamente, agrupar as linhas por `produto_venda_id` + `indice_porta` e renderizar com headers visuais separando cada porta:
+   - Criar um agrupamento usando chave composta `produto_venda_id_indicePorta`
+   - Para cada grupo, exibir um header com badge colorido mostrando "Porta #N - LxA m" com as dimensoes da porta
+   - Linhas sem porta associada ficam em um grupo "Sem porta" no final
+   - A coluna "Porta" individual nas linhas pode ser removida ou simplificada ja que o header do grupo ja identifica a porta
 
-### Parte 1: Migration SQL - Corrigir `criar_ordem_qualidade`
-Recriar a funcao para incluir `produto_venda_id` e `indice_porta` no INSERT das linhas:
+3. **Buscar portas tambem em modo read-only**: Atualmente a query de portas so roda quando `!isReadOnly` (linha 253: `enabled: !!vendaId && !isReadOnly`). Alterar para `enabled: !!vendaId` para que os dados de portas estejam disponiveis para exibicao.
 
-```sql
-INSERT INTO linhas_ordens (
-  pedido_id, ordem_id, tipo_ordem, item, quantidade, tamanho,
-  concluida, estoque_id, produto_venda_id, indice_porta
-) VALUES (
-  p_pedido_id, v_ordem_id, 'qualidade',
-  COALESCE(v_linha.nome_produto, v_linha.descricao_produto, 'Item'),
-  COALESCE(v_linha.quantidade, 1),
-  COALESCE(v_linha.tamanho, ...),
-  false, v_linha.estoque_id,
-  v_linha.produto_venda_id, v_linha.indice_porta
-);
+### Detalhes tecnicos
+
+Na secao de renderizacao (a partir da linha 498), a logica sera:
+
+```
+- Agrupar linhas por (produto_venda_id + indice_porta)
+- Para cada grupo:
+  - Renderizar um <tr> de header com colspan, mostrando "Porta #N - LxA"
+  - Renderizar as linhas do grupo normalmente
+- Grupo "sem porta" por ultimo
 ```
 
-### Parte 2: Migration SQL - Corrigir dados existentes
-Atualizar as linhas de qualidade ja criadas que estao com `produto_venda_id = NULL`, fazendo match pelo `pedido_id`, `estoque_id` e item:
+A coluna "Porta" no header da tabela sera substituida por um indicador visual no header do grupo, tornando a tabela mais limpa. A coluna de Porta individual pode ser mantida de forma simplificada (apenas o numero) ou removida em favor do agrupamento visual.
 
-```sql
-UPDATE linhas_ordens lo
-SET produto_venda_id = pl.produto_venda_id,
-    indice_porta = pl.indice_porta
-FROM pedido_linhas pl
-WHERE lo.tipo_ordem = 'qualidade'
-  AND lo.produto_venda_id IS NULL
-  AND lo.pedido_id = pl.pedido_id
-  AND lo.estoque_id = pl.estoque_id;
-```
-
-### Parte 3: Frontend - Numeracao global das observacoes
-No arquivo `src/components/production/OrdemDetalhesSheet.tsx`, na secao de observacoes (linha ~631), trocar `obs.indice_porta + 1` por `idx + 1` para usar numeracao sequencial global:
-
-De:
-```tsx
-Porta {obs.indice_porta + 1}
-```
-Para:
-```tsx
-Porta {idx + 1}
-```
-
-### Parte 4: Frontend - Agrupamento por porta expandida
-Atualmente o agrupamento no `OrdemDetalhesSheet.tsx` usa apenas `produto_venda_id` como chave. Para portas com quantidade > 1 (ex: 3 portas de 4.75x6.00), todas as linhas ficam no mesmo grupo. Precisamos agrupar por `produto_venda_id` + `indice_porta`:
-
-De:
-```tsx
-const key = linha.produto_venda_id || 'sem_porta';
-```
-Para:
-```tsx
-const key = linha.produto_venda_id 
-  ? `${linha.produto_venda_id}_${linha.indice_porta ?? 0}` 
-  : 'sem_porta';
-```
-
-E ajustar a busca de dimensoes para usar o `produto_venda_id` base (sem o indice) ao buscar no array de produtos.
-
-## Arquivos afetados
-1. Nova migration SQL (funcao + dados existentes)
-2. `src/components/production/OrdemDetalhesSheet.tsx` (numeracao observacoes + agrupamento por porta expandida)
+## Resultado
+Os itens do pedido aparecerao organizados por porta, com um cabecalho visual para cada porta mostrando suas dimensoes, tanto em modo de edicao quanto em modo somente-leitura.
