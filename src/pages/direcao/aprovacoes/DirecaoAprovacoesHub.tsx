@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Factory, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
@@ -14,6 +16,21 @@ export default function DirecaoAprovacoesHub() {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
 
+  const { data: countFabrica } = useQuery({
+    queryKey: ['aprovacoes-fabrica-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('pedidos_producao')
+        .select('*', { count: 'exact', head: true })
+        .eq('etapa_atual', 'aprovacao_ceo')
+        .eq('arquivado', false);
+      return count || 0;
+    },
+  });
+
+  const countsMap: Record<string, number> = {
+    '/direcao/aprovacoes/fabrica': countFabrica || 0,
+  };
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
     return () => clearTimeout(timer);
@@ -97,6 +114,11 @@ export default function DirecaoAprovacoesHub() {
                 >
                   <Icon className="w-5 h-5" strokeWidth={1.5} />
                   <span className="text-sm font-medium">{item.label}</span>
+                  {(countsMap[item.path] || 0) > 0 && (
+                    <span className="ml-auto bg-white/20 text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-[24px] text-center">
+                      {countsMap[item.path]}
+                    </span>
+                  )}
                 </button>
               </div>
             );
