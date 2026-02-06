@@ -108,15 +108,28 @@ export default function ExpedicaoMinimalista() {
     queryClient.invalidateQueries({ queryKey: ['ordens-carregamento-disponiveis'] });
   };
 
-  const handleRemoverDoCalendario = (ordemId: string) => {
-    updateOrdem({ 
-      id: ordemId, 
-      data: { 
-        data_carregamento: null, 
-        status: 'pendente' 
-      } 
-    });
-    toast.success("Ordem removida do calendário");
+  const handleRemoverDoCalendario = async (ordemId: string) => {
+    const ordem = ordens?.find(o => o.id === ordemId);
+    const fonte = ordem?.fonte || 'ordens_carregamento';
+    try {
+      await updateOrdem({ 
+        id: ordemId, 
+        data: { 
+          data_carregamento: null, 
+          status: 'pendente',
+          tipo_carregamento: null,
+          responsavel_carregamento_id: null,
+          responsavel_carregamento_nome: null,
+          hora_carregamento: null,
+        },
+        fonte
+      });
+      queryClient.invalidateQueries({ queryKey: ['ordens-carregamento-disponiveis'] });
+      toast.success("Ordem removida do calendário");
+    } catch (error) {
+      console.error("Erro ao remover:", error);
+      toast.error("Erro ao remover ordem do calendário");
+    }
   };
 
   const handleRemoverNeoInstalacaoDoCalendario = async (id: string) => {
