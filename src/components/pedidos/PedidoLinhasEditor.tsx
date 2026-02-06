@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -250,7 +250,7 @@ export const PedidoLinhasEditor = ({
       if (error) throw error;
       return data || [];
     },
-    enabled: !!vendaId && !isReadOnly,
+    enabled: !!vendaId,
   });
   
   // Expandir portas por quantidade
@@ -500,7 +500,6 @@ export const PedidoLinhasEditor = ({
           <table className="w-full">
             <thead>
               <tr className="border-b text-xs">
-                {!isReadOnly && <th className="text-left p-2 font-medium text-muted-foreground w-32">Porta</th>}
                 <th className="text-left p-2 font-medium text-muted-foreground">Produto</th>
                 <th className="text-left p-2 font-medium text-muted-foreground">Categoria</th>
                 <th className="text-center p-2 font-medium text-muted-foreground w-20">Qtd</th>
@@ -514,298 +513,322 @@ export const PedidoLinhasEditor = ({
               </tr>
             </thead>
             <tbody>
-              {linhas.map((linha) => {
-                const portaReferenciada = portas.find(p => 
-                  p._originalId === linha.produto_venda_id && 
-                  p._indicePorta === (linha.indice_porta ?? 0)
-                );
-                const portaIndex = portas.findIndex(p => 
-                  p._originalId === linha.produto_venda_id && 
-                  p._indicePorta === (linha.indice_porta ?? 0)
-                );
-                const estaEmEdicao = linhaEmEdicao === linha.id;
+              {(() => {
+                // Agrupar linhas por porta (produto_venda_id + indice_porta)
+                const grupos = new Map<string, { porta: typeof portas[0] | null; portaIndex: number; linhasGrupo: PedidoLinha[] }>();
+                const semPorta: PedidoLinha[] = [];
                 
-                return (
-                  <tr key={linha.id} className={cn(
-                    "border-b hover:bg-muted/30 transition-colors",
-                    estaEmEdicao && "bg-primary/5"
-                  )}>
-                    {!isReadOnly && (
-                      <td className="p-2 text-xs text-muted-foreground">
+                for (const linha of linhas) {
+                  if (linha.produto_venda_id) {
+                    const key = `${linha.produto_venda_id}_${linha.indice_porta ?? 0}`;
+                    if (!grupos.has(key)) {
+                      const portaIdx = portas.findIndex(p => 
+                        p._originalId === linha.produto_venda_id && 
+                        p._indicePorta === (linha.indice_porta ?? 0)
+                      );
+                      const porta = portaIdx >= 0 ? portas[portaIdx] : null;
+                      grupos.set(key, { porta, portaIndex: portaIdx, linhasGrupo: [] });
+                    }
+                    grupos.get(key)!.linhasGrupo.push(linha);
+                  } else {
+                    semPorta.push(linha);
+                  }
+                }
+
+                const gruposOrdenados = [...grupos.entries()].sort((a, b) => a[1].portaIndex - b[1].portaIndex);
+                let portaNumero = 0;
+
+                const renderLinha = (linha: PedidoLinha) => {
+                  const estaEmEdicao = linhaEmEdicao === linha.id;
+                  return (
+                    <tr key={linha.id} className={cn(
+                      "border-b hover:bg-muted/30 transition-colors",
+                      estaEmEdicao && "bg-primary/5"
+                    )}>
+                      <td className="p-2 text-sm font-medium">
                         {estaEmEdicao && dadosEdicao ? (
-                          <Select
-                            value={dadosEdicao.produto_venda_id}
-                            onValueChange={(value) => 
-                              setDadosEdicao({...dadosEdicao, produto_venda_id: value})
-                            }
-                          >
-                            <SelectTrigger className="h-8 text-xs w-28">
-                              <SelectValue placeholder="Porta" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="_none">Nenhuma</SelectItem>
-                              {portas.map((porta, idx) => (
-                                <SelectItem key={porta._virtualKey} value={porta._virtualKey}>
-                                  {getLabelPortaExpandida(idx, porta._totalNoGrupo, porta._indicePorta)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <div className="space-y-1">
+                            <Select
+                              value={dadosEdicao.produto_venda_id}
+                              onValueChange={(value) => 
+                                setDadosEdicao({...dadosEdicao, produto_venda_id: value})
+                              }
+                            >
+                              <SelectTrigger className="h-8 text-xs w-full mb-1">
+                                <SelectValue placeholder="Porta" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="_none">Nenhuma</SelectItem>
+                                {portas.map((porta, idx) => (
+                                  <SelectItem key={porta._virtualKey} value={porta._virtualKey}>
+                                    {getLabelPortaExpandida(idx, porta._totalNoGrupo, porta._indicePorta)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Popover open={popoverEdicaoAberto} onOpenChange={setPopoverEdicaoAberto}>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className="h-8 w-full justify-between text-xs"
+                                >
+                                  {dadosEdicao.estoque_id
+                                    ? produtos.find(p => p.id === dadosEdicao.estoque_id)?.nome_produto || "Selecione..."
+                                    : "Selecione um produto"}
+                                  <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-80 p-0" align="start">
+                                <Command>
+                                  <CommandInput 
+                                    placeholder="Buscar produto..." 
+                                    value={buscaEdicao}
+                                    onValueChange={setBuscaEdicao}
+                                    className="text-xs"
+                                  />
+                                  <CommandList>
+                                    <CommandEmpty className="text-xs p-2">Nenhum produto encontrado.</CommandEmpty>
+                                    <CommandGroup>
+                                      <ScrollArea className="h-48">
+                                        {produtos
+                                          .filter(p => 
+                                            p.nome_produto.toLowerCase().includes(buscaEdicao.toLowerCase()) ||
+                                            (p.sku && p.sku.toLowerCase().includes(buscaEdicao.toLowerCase()))
+                                          )
+                                          .map((produto) => (
+                                            <CommandItem
+                                              key={produto.id}
+                                              value={produto.id}
+                                              onSelect={() => {
+                                                setDadosEdicao({...dadosEdicao, estoque_id: produto.id});
+                                                setPopoverEdicaoAberto(false);
+                                                setBuscaEdicao("");
+                                              }}
+                                              className="text-xs"
+                                            >
+                                              <Check
+                                                className={cn(
+                                                  "mr-2 h-3 w-3",
+                                                  dadosEdicao.estoque_id === produto.id ? "opacity-100" : "opacity-0"
+                                                )}
+                                              />
+                                              <div className="flex flex-col">
+                                                <span>{produto.nome_produto}</span>
+                                                {produto.sku && (
+                                                  <span className="text-muted-foreground text-[10px]">SKU: {produto.sku}</span>
+                                                )}
+                                              </div>
+                                            </CommandItem>
+                                          ))}
+                                      </ScrollArea>
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
                         ) : (
-                          portaReferenciada ? (
-                            <span className="font-medium">
-                              {getLabelPortaExpandida(portaIndex, portaReferenciada._totalNoGrupo, portaReferenciada._indicePorta)}
-                            </span>
-                          ) : '-'
+                          linha.descricao_produto || linha.nome_produto
                         )}
                       </td>
-                    )}
-                    <td className="p-2 text-sm font-medium">
-                      {estaEmEdicao && dadosEdicao ? (
-                        <Popover open={popoverEdicaoAberto} onOpenChange={setPopoverEdicaoAberto}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              className="h-8 w-full justify-between text-xs"
-                            >
-                              {dadosEdicao.estoque_id
-                                ? produtos.find(p => p.id === dadosEdicao.estoque_id)?.nome_produto || "Selecione..."
-                                : "Selecione um produto"}
-                              <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-80 p-0" align="start">
-                            <Command>
-                              <CommandInput 
-                                placeholder="Buscar produto..." 
-                                value={buscaEdicao}
-                                onValueChange={setBuscaEdicao}
-                                className="text-xs"
-                              />
-                              <CommandList>
-                                <CommandEmpty className="text-xs p-2">Nenhum produto encontrado.</CommandEmpty>
-                                <CommandGroup>
-                                  <ScrollArea className="h-48">
-                                    {produtos
-                                      .filter(p => 
-                                        p.nome_produto.toLowerCase().includes(buscaEdicao.toLowerCase()) ||
-                                        (p.sku && p.sku.toLowerCase().includes(buscaEdicao.toLowerCase()))
-                                      )
-                                      .map((produto) => (
-                                        <CommandItem
-                                          key={produto.id}
-                                          value={produto.id}
-                                          onSelect={() => {
-                                            setDadosEdicao({...dadosEdicao, estoque_id: produto.id});
-                                            setPopoverEdicaoAberto(false);
-                                            setBuscaEdicao("");
-                                          }}
-                                          className="text-xs"
-                                        >
-                                          <Check
-                                            className={cn(
-                                              "mr-2 h-3 w-3",
-                                              dadosEdicao.estoque_id === produto.id ? "opacity-100" : "opacity-0"
-                                            )}
-                                          />
-                                          <div className="flex flex-col">
-                                            <span>{produto.nome_produto}</span>
-                                            {produto.sku && (
-                                              <span className="text-muted-foreground text-[10px]">SKU: {produto.sku}</span>
-                                            )}
-                                          </div>
-                                        </CommandItem>
-                                      ))}
-                                  </ScrollArea>
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                      ) : (
-                        linha.descricao_produto || linha.nome_produto
-                      )}
-                    </td>
-                    <td className="p-2">
-                      <Badge variant="outline" className={`text-xs ${getCategoriaBadgeClasses(linha.categoria_linha)}`}>
-                        {linha.categoria_linha || '-'}
-                      </Badge>
-                    </td>
-                    <td className="p-2 text-center">
-                      {!isReadOnly ? (
-                        <Input
-                          type="number"
-                          min="1"
-                          value={getValorEditado(linha, 'quantidade') as number}
-                          onChange={(e) => handleLinhaChange(linha.id, 'quantidade', parseInt(e.target.value) || 1)}
-                          className="h-7 w-16 text-xs text-center"
-                        />
-                      ) : (
-                        <Badge variant="secondary" className="text-xs">
-                          {linha.quantidade}x
+                      <td className="p-2">
+                        <Badge variant="outline" className={`text-xs ${getCategoriaBadgeClasses(linha.categoria_linha)}`}>
+                          {linha.categoria_linha || '-'}
                         </Badge>
-                      )}
-                    </td>
-                    <td className="p-2 text-center">
-                      {!isReadOnly ? (
-                        <Input
-                          type="text"
-                          placeholder="Tamanho"
-                          value={getValorEditado(linha, 'tamanho') as string || ''}
-                          onChange={(e) => handleLinhaChange(linha.id, 'tamanho', e.target.value)}
-                          className="h-7 w-20 text-xs text-center"
-                        />
-                      ) : (
-                        <span className="text-xs text-muted-foreground">{linha.tamanho || '-'}</span>
-                      )}
-                    </td>
-                  {todasOrdensConcluidas && onAtualizarCheckbox && (
-                    <td className="p-2">
-                      <div className="flex gap-3 items-center justify-center">
-                        <div className="flex items-center gap-1">
-                          <Checkbox
-                            id={`sep-${linha.id}`}
-                            checked={linha.check_separacao}
-                            onCheckedChange={(checked) => 
-                              handleCheckboxChange(linha.id, "check_separacao", checked as boolean)
-                            }
-                          />
-                          <Label htmlFor={`sep-${linha.id}`} className="text-xs cursor-pointer">
-                            Sep
-                          </Label>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Checkbox
-                            id={`qua-${linha.id}`}
-                            checked={linha.check_qualidade}
-                            onCheckedChange={(checked) => 
-                              handleCheckboxChange(linha.id, "check_qualidade", checked as boolean)
-                            }
-                          />
-                          <Label htmlFor={`qua-${linha.id}`} className="text-xs cursor-pointer">
-                            Qual
-                          </Label>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Checkbox
-                            id={`col-${linha.id}`}
-                            checked={linha.check_coleta}
-                            onCheckedChange={(checked) => 
-                              handleCheckboxChange(linha.id, "check_coleta", checked as boolean)
-                            }
-                          />
-                          <Label htmlFor={`col-${linha.id}`} className="text-xs cursor-pointer">
-                            Col
-                          </Label>
-                        </div>
-                      </div>
-                    </td>
-                  )}
-                    {!isReadOnly && (
-                      <td className="p-2 text-center">
-                        <div className="flex gap-1 justify-center">
-                          {estaEmEdicao ? (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleSalvarEdicao(linha.id)}
-                                className="text-green-600 hover:text-green-700 hover:bg-green-500/10"
-                                title="Salvar alterações"
-                              >
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleCancelarEdicao}
-                                className="text-muted-foreground hover:text-foreground hover:bg-muted"
-                                title="Cancelar edição"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              {onAtualizarLinhaCompleta && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleIniciarEdicao(linha)}
-                                  className="text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                  title="Editar porta e produto"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={async () => {
-                                  const novaLinhaCompleta: PedidoLinhaNova = {
-                                    produto_venda_id: linha.produto_venda_id || undefined,
-                                    indice_porta: linha.indice_porta ?? 0,
-                                    estoque_id: linha.estoque_id || undefined,
-                                    nome_produto: linha.nome_produto,
-                                    descricao_produto: linha.descricao_produto || '',
-                                    quantidade: linha.quantidade,
-                                    tamanho: linha.tamanho || undefined,
-                                    categoria_linha: linha.categoria_linha,
-                                  };
-                                  try {
-                                    await onAdicionarLinha(novaLinhaCompleta);
-                                    toast.success("Linha duplicada com sucesso");
-                                  } catch (error) {
-                                    toast.error("Erro ao duplicar linha");
-                                  }
-                                }}
-                                className="text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                title="Duplicar linha"
-                              >
-                                <Copy className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onRemoverLinha(linha.id)}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                title="Remover linha"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
                       </td>
+                      <td className="p-2 text-center">
+                        {!isReadOnly ? (
+                          <Input
+                            type="number"
+                            min="1"
+                            value={getValorEditado(linha, 'quantidade') as number}
+                            onChange={(e) => handleLinhaChange(linha.id, 'quantidade', parseInt(e.target.value) || 1)}
+                            className="h-7 w-16 text-xs text-center"
+                          />
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            {linha.quantidade}x
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="p-2 text-center">
+                        {!isReadOnly ? (
+                          <Input
+                            type="text"
+                            placeholder="Tamanho"
+                            value={getValorEditado(linha, 'tamanho') as string || ''}
+                            onChange={(e) => handleLinhaChange(linha.id, 'tamanho', e.target.value)}
+                            className="h-7 w-20 text-xs text-center"
+                          />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">{linha.tamanho || '-'}</span>
+                        )}
+                      </td>
+                      {todasOrdensConcluidas && onAtualizarCheckbox && (
+                        <td className="p-2">
+                          <div className="flex gap-3 items-center justify-center">
+                            <div className="flex items-center gap-1">
+                              <Checkbox
+                                id={`sep-${linha.id}`}
+                                checked={linha.check_separacao}
+                                onCheckedChange={(checked) => 
+                                  handleCheckboxChange(linha.id, "check_separacao", checked as boolean)
+                                }
+                              />
+                              <Label htmlFor={`sep-${linha.id}`} className="text-xs cursor-pointer">Sep</Label>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Checkbox
+                                id={`qua-${linha.id}`}
+                                checked={linha.check_qualidade}
+                                onCheckedChange={(checked) => 
+                                  handleCheckboxChange(linha.id, "check_qualidade", checked as boolean)
+                                }
+                              />
+                              <Label htmlFor={`qua-${linha.id}`} className="text-xs cursor-pointer">Qual</Label>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Checkbox
+                                id={`col-${linha.id}`}
+                                checked={linha.check_coleta}
+                                onCheckedChange={(checked) => 
+                                  handleCheckboxChange(linha.id, "check_coleta", checked as boolean)
+                                }
+                              />
+                              <Label htmlFor={`col-${linha.id}`} className="text-xs cursor-pointer">Col</Label>
+                            </div>
+                          </div>
+                        </td>
+                      )}
+                      {!isReadOnly && (
+                        <td className="p-2 text-center">
+                          <div className="flex gap-1 justify-center">
+                            {estaEmEdicao ? (
+                              <>
+                                <Button variant="ghost" size="sm" onClick={() => handleSalvarEdicao(linha.id)}
+                                  className="text-green-600 hover:text-green-700 hover:bg-green-500/10" title="Salvar alterações">
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={handleCancelarEdicao}
+                                  className="text-muted-foreground hover:text-foreground hover:bg-muted" title="Cancelar edição">
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                {onAtualizarLinhaCompleta && (
+                                  <Button variant="ghost" size="sm" onClick={() => handleIniciarEdicao(linha)}
+                                    className="text-muted-foreground hover:text-primary hover:bg-primary/10" title="Editar porta e produto">
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                <Button variant="ghost" size="sm"
+                                  onClick={async () => {
+                                    try {
+                                      await onAdicionarLinha({
+                                        produto_venda_id: linha.produto_venda_id || undefined,
+                                        indice_porta: linha.indice_porta ?? 0,
+                                        estoque_id: linha.estoque_id || undefined,
+                                        nome_produto: linha.nome_produto,
+                                        descricao_produto: linha.descricao_produto || '',
+                                        quantidade: linha.quantidade,
+                                        tamanho: linha.tamanho || undefined,
+                                        categoria_linha: linha.categoria_linha,
+                                      });
+                                      toast.success("Linha duplicada com sucesso");
+                                    } catch (error) {
+                                      toast.error("Erro ao duplicar linha");
+                                    }
+                                  }}
+                                  className="text-muted-foreground hover:text-primary hover:bg-primary/10" title="Duplicar linha">
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => onRemoverLinha(linha.id)}
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10" title="Remover linha">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                };
+
+                const colCount = 4 + (todasOrdensConcluidas && onAtualizarCheckbox ? 1 : 0) + (!isReadOnly ? 1 : 0);
+
+                return (
+                  <>
+                    {gruposOrdenados.map(([key, grupo]) => {
+                      portaNumero++;
+                      const p = grupo.porta;
+                      const dimensoes = p?.largura && p?.altura 
+                        ? `${p.largura.toFixed(2)}m × ${p.altura.toFixed(2)}m` 
+                        : '';
+                      const label = p 
+                        ? getLabelPortaExpandida(grupo.portaIndex, p._totalNoGrupo, p._indicePorta)
+                        : `Porta #${portaNumero}`;
+                      
+                      return (
+                        <React.Fragment key={key}>
+                          <tr className="bg-muted/40">
+                            <td colSpan={colCount} className="p-2">
+                              <div className="flex items-center gap-2">
+                                <Badge className="text-xs font-semibold">{label}</Badge>
+                                {dimensoes && <span className="text-xs text-muted-foreground">{dimensoes}</span>}
+                                <span className="text-xs text-muted-foreground">
+                                  ({grupo.linhasGrupo.length} {grupo.linhasGrupo.length === 1 ? 'item' : 'itens'})
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                          {grupo.linhasGrupo.map(renderLinha)}
+                        </React.Fragment>
+                      );
+                    })}
+                    {semPorta.length > 0 && (
+                      <>
+                        <tr className="bg-muted/40">
+                          <td colSpan={colCount} className="p-2">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs font-semibold">Sem porta</Badge>
+                              <span className="text-xs text-muted-foreground">
+                                ({semPorta.length} {semPorta.length === 1 ? 'item' : 'itens'})
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                        {semPorta.map(renderLinha)}
+                      </>
                     )}
-                  </tr>
+                  </>
                 );
-              })}
+              })()}
               
               {/* Linha de edição inline para novo produto */}
               {novaLinha && !isReadOnly && (
                 <tr className="border-b bg-muted/20">
                   <td className="p-2">
-                    <Select
-                      value={rascunhoLinha.produto_venda_id}
-                      onValueChange={(value) => 
-                        setRascunhoLinha({...rascunhoLinha, produto_venda_id: value})
-                      }
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder={temPortasEnrolar ? "Selecione a porta" : "Porta (opcional)"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {portas.map((porta, idx) => (
-                          <SelectItem key={porta.id} value={porta.id}>
-                            Porta #{idx + 1} {porta.tamanho && `- ${porta.tamanho}`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </td>
-                  <td className="p-2">
+                    <div className="space-y-1">
+                      <Select
+                        value={rascunhoLinha.produto_venda_id}
+                        onValueChange={(value) => 
+                          setRascunhoLinha({...rascunhoLinha, produto_venda_id: value})
+                        }
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder={temPortasEnrolar ? "Selecione a porta" : "Porta (opcional)"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {portas.map((porta, idx) => (
+                            <SelectItem key={porta.id} value={porta.id}>
+                              Porta #{idx + 1} {porta.tamanho && `- ${porta.tamanho}`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     <Popover open={produtoSelectOpen} onOpenChange={setProdutoSelectOpen}>
                       <PopoverTrigger asChild>
                         <Button
@@ -865,6 +888,7 @@ export const PedidoLinhasEditor = ({
                         </Command>
                       </PopoverContent>
                     </Popover>
+                    </div>
                   </td>
                   <td className="p-2">
                     <Badge variant="outline" className={`text-xs ${getCategoriaBadgeClasses(categoriaAutomatica)}`}>
