@@ -554,7 +554,9 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                       acessorio: 'Acessório',
                       adicional: 'Adicional',
                     };
-                    const nome = nomeMap[tipo] || tipo;
+                    const nome = (tipo === 'acessorio' || tipo === 'adicional') && (produto.descricao || produto.nome)
+                      ? (produto.descricao || produto.nome)
+                      : (nomeMap[tipo] || tipo);
 
                     // Resolve tamanho para portas
                     let tamanhoStr = '';
@@ -591,9 +593,6 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                               )}
                               <span className="text-white/40 text-[11px]">{cor.nome}</span>
                             </div>
-                          )}
-                          {(tipo === 'acessorio' || tipo === 'adicional') && descricao && (
-                            <p className="text-white/40 text-[11px] truncate">{descricao}</p>
                           )}
                         </div>
                       </div>
