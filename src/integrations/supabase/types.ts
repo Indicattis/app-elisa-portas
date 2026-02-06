@@ -4883,6 +4883,8 @@ export type Database = {
         Row: {
           arquivado: boolean
           arquivado_por: string | null
+          aviso_espera: string | null
+          aviso_espera_data: string | null
           cliente_bairro: string | null
           cliente_cpf: string | null
           cliente_email: string | null
@@ -4935,6 +4937,8 @@ export type Database = {
         Insert: {
           arquivado?: boolean
           arquivado_por?: string | null
+          aviso_espera?: string | null
+          aviso_espera_data?: string | null
           cliente_bairro?: string | null
           cliente_cpf?: string | null
           cliente_email?: string | null
@@ -4987,6 +4991,8 @@ export type Database = {
         Update: {
           arquivado?: boolean
           arquivado_por?: string | null
+          aviso_espera?: string | null
+          aviso_espera_data?: string | null
           cliente_bairro?: string | null
           cliente_cpf?: string | null
           cliente_email?: string | null

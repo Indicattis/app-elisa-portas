@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2 } from "lucide-react";
+import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2, Clock } from "lucide-react";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -17,6 +17,7 @@ import { AvancarQualidadeModal } from "./AvancarQualidadeModal";
 import { ConfirmarAvancoModal } from "./ConfirmarAvancoModal";
 import { ProcessoAvancoModal, Processo } from "./ProcessoAvancoModal";
 import { VisualizarBacklogModal } from "./VisualizarBacklogModal";
+import { AvisoEsperaModal } from "./AvisoEsperaModal";
 import { ArquivarPedidoModal } from "./ArquivarPedidoModal";
 import { ArquivamentoLoadingModal } from "./ArquivamentoLoadingModal";
 import { ConfirmarExpedicaoModal } from "./ConfirmarExpedicaoModal";
@@ -34,6 +35,7 @@ interface PedidoCardProps {
   onMoverEtapa?: (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
   onRetrocederEtapa?: (pedidoId: string, etapaDestino: EtapaPedido, motivo: string) => void;
   onMoverPrioridade?: (pedidoId: string, direcao: 'frente' | 'tras') => void;
+  onAvisoEspera?: (pedidoId: string, justificativa: string | null) => Promise<void>;
   isAberto?: boolean;
   isDragging?: boolean;
   dragHandleProps?: any;
@@ -52,6 +54,7 @@ export function PedidoCard({
   onMoverEtapa,
   onRetrocederEtapa,
   onMoverPrioridade,
+  onAvisoEspera,
   isAberto = false,
   isDragging = false,
   dragHandleProps,
@@ -77,6 +80,7 @@ export function PedidoCard({
   const [showRemoverResponsavel, setShowRemoverResponsavel] = useState(false);
   const [showExcluirPedido, setShowExcluirPedido] = useState(false);
   const [isExcluindo, setIsExcluindo] = useState(false);
+  const [showAvisoEspera, setShowAvisoEspera] = useState(false);
   const [ordemParaRemover, setOrdemParaRemover] = useState<{ ordem: any; nomeSetor: string } | null>(null);
   const [processos, setProcessos] = useState<Processo[]>([]);
   const {
@@ -983,17 +987,45 @@ export function PedidoCard({
   if (viewMode === 'list') {
     return <>
         <Card 
-          className={cn("hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", isDragging && "opacity-50 cursor-grabbing")}
+          className={cn(
+            "hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", 
+            isDragging && "opacity-50 cursor-grabbing",
+            pedido.aviso_espera && "border-amber-500/50 bg-amber-500/5"
+          )}
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
             <div className="grid items-center gap-2 h-full px-3 w-full" style={{ gridTemplateColumns: showEtapaBadge ? '24px 65px 24px 28px 1fr 70px 24px 50px 50px 95px 80px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' : '24px 24px 28px 1fr 70px 24px 50px 50px 95px 80px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}>
-              {/* Col 1: Drag Handle */}
+              {/* Col 1: Drag Handle ou Aviso de Espera */}
               <div>
                 {dragHandleProps ? (
                   <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing" onClick={(e) => e.stopPropagation()}>
                     <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>
+                ) : onAvisoEspera ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setShowAvisoEspera(true); }}
+                          className="flex items-center justify-center"
+                        >
+                          <Clock className={cn(
+                            "h-3.5 w-3.5",
+                            pedido.aviso_espera 
+                              ? "text-amber-500 animate-pulse" 
+                              : "text-muted-foreground hover:text-amber-500"
+                          )} />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-[250px]">
+                        {pedido.aviso_espera 
+                          ? <span className="text-xs">{pedido.aviso_espera}</span>
+                          : <span className="text-xs">Adicionar aviso de espera</span>
+                        }
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 ) : (
                   <span />
                 )}
@@ -1508,6 +1540,18 @@ export function PedidoCard({
 
         <VisualizarBacklogModal pedido={pedido} open={showVisualizarBacklog} onOpenChange={setShowVisualizarBacklog} />
 
+        {onAvisoEspera && (
+          <AvisoEsperaModal
+            open={showAvisoEspera}
+            onOpenChange={setShowAvisoEspera}
+            pedidoNumero={pedido.numero_pedido || pedido.id?.slice(0, 8)}
+            avisoAtual={pedido.aviso_espera}
+            avisoData={pedido.aviso_espera_data}
+            onSalvar={(justificativa) => onAvisoEspera(pedido.id, justificativa)}
+            onRemover={() => onAvisoEspera(pedido.id, null)}
+          />
+        )}
+
         <AvancarQualidadeModal open={showAvancarQualidade} onOpenChange={setShowAvancarQualidade} onConfirmar={async () => {
           setShowAvancarQualidade(false);
           const listaProcessos = await determinarProcessos(pedido.id);
@@ -1859,6 +1903,18 @@ export function PedidoCard({
       <RetrocederPedidoUnificadoModal pedido={pedido} open={showRetrocederEtapa} onOpenChange={setShowRetrocederEtapa} />
 
       <VisualizarBacklogModal pedido={pedido} open={showVisualizarBacklog} onOpenChange={setShowVisualizarBacklog} />
+
+      {onAvisoEspera && (
+        <AvisoEsperaModal
+          open={showAvisoEspera}
+          onOpenChange={setShowAvisoEspera}
+          pedidoNumero={pedido.numero_pedido || pedido.id?.slice(0, 8)}
+          avisoAtual={pedido.aviso_espera}
+          avisoData={pedido.aviso_espera_data}
+          onSalvar={(justificativa) => onAvisoEspera(pedido.id, justificativa)}
+          onRemover={() => onAvisoEspera(pedido.id, null)}
+        />
+      )}
 
       <ArquivarPedidoModal
         open={showArquivar}
