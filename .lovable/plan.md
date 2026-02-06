@@ -1,55 +1,55 @@
 
-# Redesign Minimalista do Modal "Adicionar ao Calendario"
+# Adicionar Informacoes de Produtos na Downbar de Aprovacoes Fabrica
 
-## Problema
+## O que sera feito
 
-O Select de equipe/autorizado nao aparece corretamente porque o dropdown do Radix Select e cortado pelo `ScrollArea` com `max-h-[60vh]` e pelo `overflow` do `DialogContent`. Alem disso, o modal esta visualmente carregado e nao segue o padrao minimalista das demais paginas.
+Na secao expandida (downbar) de cada card em `/direcao/aprovacoes/fabrica`, adicionar um resumo visual dos produtos do pedido com:
+- Cor da pintura (nome + bolinha colorida)
+- Tamanhos das portas de enrolar (largura x altura)
+- Nome/descricao dos acessorios e adicionais
 
-## Solucao
+## Alteracoes
 
-Redesenhar o modal inteiro com layout limpo, responsivo e funcional, corrigindo o problema do Select.
+### 1. `src/hooks/usePedidosAprovacaoCEO.ts`
 
-## Alteracoes no arquivo `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx`
+Adicionar um novo campo `produtosResumo` na interface `PedidoAprovacao` que expoe uma lista tipada dos produtos relevantes:
 
-### 1. Corrigir o Select cortado
-- Remover o `ScrollArea` que envolve todo o conteudo (causa overflow:hidden que corta o dropdown)
-- Usar `overflow-y-auto` diretamente no container interno
-- Adicionar `position: "popper"` e `sideOffset` no `SelectContent` para garantir que o dropdown renderize fora do container
-
-### 2. Layout minimalista e responsivo
-- Usar `max-w-[95vw] sm:max-w-[500px]` para responsividade mobile
-- Remover o calendario inline (ocupa muito espaco) e substituir por um input date simples, mantendo a politica date-only (hora fixa "08:00")
-- Simplificar o header: titulo menor, sem descricao verbosa
-- Usar espacamento reduzido (`space-y-3` em vez de `space-y-4`)
-- Cards de ordem mais compactos com hover sutil
-- Botoes de acao com estilo mais limpo
-
-### 3. Estrutura final do modal
-
-```
-Dialog
-  DialogContent (max-w-[95vw] sm:max-w-[500px], max-h-[85vh], flex flex-col)
-    DialogHeader (titulo simples)
-    div (overflow-y-auto, flex-1, space-y-3)
-      [Se sem pre-selecao] Input de busca + lista de ordens com scroll interno
-      [Se com pre-selecao] Card compacto da ordem
-      [Se ordem selecionada] Secao de configuracao:
-        - Input type="date" (simples, sem calendario inline)
-        - Toggle buttons para tipo (Elisa / Autorizado ou Terceiro)
-        - Select do responsavel (com portal para evitar corte)
-    div (footer fixo com botoes)
+```ts
+produtosResumo: Array<{
+  tipo: string;
+  nome: string;
+  quantidade: number;
+  tamanho?: string;
+  corNome?: string;
+  corHex?: string;
+}>
 ```
 
-### 4. Tipo de responsavel: toggle buttons em vez de RadioGroup
-- Substituir RadioGroup por botoes toggle lado a lado (estilo pill/segmented control)
-- Visual mais moderno e intuitivo
+No mapeamento dos pedidos, construir essa lista a partir de `produtos_vendas`:
+- Para `porta_enrolar`: incluir `tamanho` (ou `largura x altura` formatado)
+- Para `pintura_epoxi`: incluir `corNome` e `corHex` do `catalogo_cores`
+- Para `acessorio` e `adicional`: incluir `descricao` como nome
 
-### 5. Select com portal
-- Usar a prop `container` ou garantir que o `SelectContent` tenha `position="popper"` com `className="z-[200]"` para renderizar acima do dialog
+### 2. `src/pages/direcao/aprovacoes/AprovacoesProducao.tsx`
 
-## Resultado
+Na secao expandida (entre o `border-t` e os botoes de acao), adicionar um bloco de resumo dos produtos:
 
-- Modal compacto, responsivo, minimalista
-- Select de equipe/autorizado visivel e funcional
-- Funciona bem em mobile e desktop
-- 1 arquivo modificado: `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx`
+```
+Detalhes expandidos:
+  [Resumo de produtos]         <-- NOVO
+    - Porta de Enrolar 3,00 x 3,50m (P)
+    - Porta de Enrolar 5,00 x 4,00m (G)
+    - Pintura Epoxi [bolinha cor] Branco
+    - Acessorio: Fechadura Tetra
+  [Botao Aprovar]
+  [Botao Ver Detalhes]
+```
+
+Cada item sera exibido como uma linha compacta com icone, nome, e metadados relevantes (tamanho, cor, descricao).
+
+## Detalhes Tecnicos
+
+- Os dados de `produtos_vendas` ja sao buscados pelo hook (incluindo `catalogo_cores:cor_id`), portanto nao ha query adicional
+- Para acessorios/adicionais, o campo `descricao` do `produtos_vendas` contem o nome do item
+- O layout dos itens segue o estilo minimalista existente: fundo `bg-muted/50`, borda sutil, texto compacto
+- 2 arquivos modificados, nenhum arquivo novo
