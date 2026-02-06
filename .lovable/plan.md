@@ -1,63 +1,64 @@
 
+# Aviso de Espera nos Pedidos
 
-# Mudar "Selecione a porta" para "Selecione o produto" e agrupar por item vendido
+## O que sera feito
 
-## Contexto
-
-Atualmente, o seletor no editor de linhas do pedido (`PedidoLinhasEditor.tsx`) busca apenas produtos com `tipo_produto` contendo "porta" e usa o label "Selecione a porta". Alem disso, a downbar de producao (`OrdemDetalhesSheet.tsx`) exibe o header como "Porta 01", "Porta 02", etc., mesmo quando o item vendido nao e uma porta.
-
-Os tipos de produto existentes sao: `porta_enrolar`, `porta_social`, `acessorio`, `adicional`, `manutencao`, `pintura_epoxi`.
+Adicionar um botao na primeira coluna de cada linha (onde fica o drag handle) que permite ao usuario registrar um "aviso de espera" com justificativa. Ao preencher o aviso, o pedido vai automaticamente para a ultima posicao na lista (prioridade minima).
 
 ## Alteracoes
 
-### 1. PedidoLinhasEditor.tsx - Buscar TODOS os produtos da venda
+### 1. Banco de dados - Novos campos em `pedidos_producao`
 
-**Query** (linhas 239-254): Remover o filtro `.ilike('tipo_produto', '%porta%')` para que acessorios, adicionais, manutencoes etc. tambem aparecam como opcoes no seletor.
+Criar migration adicionando dois campos:
+- `aviso_espera` (text, nullable) - justificativa do motivo de espera
+- `aviso_espera_data` (timestamptz, nullable) - data em que o aviso foi registrado
 
-**Labels**: 
-- Placeholder do Select: "Selecione o produto" (em vez de "Selecione a porta" / "Porta (opcional)")
-- Opcoes do Select: mostrar o `tipo_produto` formatado junto com o indice, ex: "Porta de Enrolar #1 - 4,65m x 6,00m", "Acessorio #1", "Manutencao #1"
-- Header de agrupamento na tabela: usar label baseado no tipo do produto em vez de "Porta #X"
+### 2. PedidoCard.tsx - Botao de aviso na primeira coluna
 
-**Logica de validacao** (linha 376): Remover a obrigatoriedade de `produto_venda_id` apenas quando `temPortasEnrolar`. Tornar opcional para todos os casos (o usuario pode ou nao associar a um item vendido).
+Na primeira coluna da lista (Col 1, onde fica o drag handle ou espaco vazio):
+- Quando nao tem drag handle, mostrar um botao com icone de relogio/pausa para abrir o modal de aviso
+- Se ja tem aviso de espera, mostrar um indicador visual (icone amarelo/laranja piscando) com tooltip mostrando a justificativa
+- Ao clicar, abre um modal para preencher ou remover o aviso
 
-### 2. OrdemDetalhesSheet.tsx - Labels dinamicos na downbar
+Adicionar uma nova prop `onAvisoEspera` no PedidoCard para chamar a funcao de salvar.
 
-**Buscar todos os produtos** (linha 742-744): Remover o filtro `tipo_produto === 'porta_enrolar'` para buscar todos os produtos do pedido.
+Se o pedido tem aviso de espera, destacar a linha visualmente (borda amarela/laranja sutil).
 
-**Header do grupo** (linhas 795-802): Em vez de sempre mostrar "Porta XX", usar label baseado no tipo do produto encontrado:
-- `porta_enrolar` -> "Porta de Enrolar 01 - 4,65 x 6,00"
-- `porta_social` -> "Porta Social 01 - 0,80 x 2,10"
-- `acessorio` -> "Acessorio 01"
-- `manutencao` -> "Manutencao 01"
-- `adicional` -> "Adicional 01"
-- `pintura_epoxi` -> "Pintura Epoxi 01"
-- Sem match -> "Item 01"
+### 3. Novo componente - AvisoEsperaModal.tsx
 
-### 3. expandirPortas.ts - Renomear/adaptar labels
+Modal com:
+- Textarea para justificativa (obrigatorio)
+- Botao "Registrar Aviso" que salva no banco e muda prioridade para 0 (ultima posicao)
+- Se ja tem aviso, mostrar o aviso atual com opcao de "Remover Aviso" (restaura prioridade padrao)
 
-Adaptar `getLabelPortaExpandida` para receber o `tipo_produto` e gerar label adequado (ex: "Acessorio #1" em vez de "Porta #1").
+### 4. PedidosAdminMinimalista.tsx - Handler de aviso de espera
+
+Adicionar funcao `handleAvisoEspera` que:
+1. Salva o aviso no campo `aviso_espera` e `aviso_espera_data` do pedido
+2. Atualiza `prioridade_etapa` para 0 (minima, vai para o final da lista ordenada por prioridade decrescente)
+3. Invalida o cache para atualizar a lista
+
+Passar a funcao como prop para o PedidoCard.
+
+### 5. usePedidosEtapas.ts - Buscar campos de aviso
+
+Incluir `aviso_espera` e `aviso_espera_data` no select da query de pedidos para que os dados estejam disponiveis no PedidoCard.
 
 ## Detalhes tecnicos
 
-### Arquivo: `src/components/pedidos/PedidoLinhasEditor.tsx`
-- Remover `.ilike('tipo_produto', '%porta%')` da query de `produtos_vendas` (linha 247)
-- Mudar placeholder de "Selecione a porta" para "Selecione o produto" (linha 822)
-- Atualizar labels nos `SelectItem` e headers de grupo para refletir o tipo do produto
-- Atualizar label "Porta" no Select de edicao inline (linha 558) para "Produto"
-- Tornar `produto_venda_id` opcional na validacao (linha 376)
+### Grid da lista (PedidoCard.tsx)
+A primeira coluna (24px) atualmente mostra o drag handle ou um espaco vazio. A alteracao sera:
+- Se tem `dragHandleProps`: manter drag handle
+- Se nao tem `dragHandleProps` E nao tem aviso: mostrar botao de relogio para adicionar aviso
+- Se tem aviso: mostrar icone de alerta/pausa com cor amarela e tooltip com a justificativa (clicavel para editar/remover)
 
-### Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
-- Remover filtro `tipo_produto === 'porta_enrolar'` (linha 742-744), buscar todos os produtos
-- Criar funcao helper para mapear `tipo_produto` para label legivel
-- Atualizar header "Porta XX" para usar label dinamico baseado no tipo do produto
+### Prioridade (ultima posicao)
+O sistema ordena por `prioridade_etapa DESC`. Ao registrar aviso, setar `prioridade_etapa = 0`. Como pedidos normais tem prioridades >= 10, o pedido ira para o final. Ao remover o aviso, setar `prioridade_etapa = 1` (logo acima de 0, para nao pular a fila).
 
-### Arquivo: `src/utils/expandirPortas.ts`
-- Adicionar parametro opcional `tipo_produto` em `getLabelPortaExpandida`
-- Retornar label adequado baseado no tipo (Porta, Acessorio, etc.)
-
-## Arquivos afetados
-1. `src/components/pedidos/PedidoLinhasEditor.tsx`
-2. `src/components/production/OrdemDetalhesSheet.tsx`
-3. `src/utils/expandirPortas.ts`
-
+### Arquivos afetados
+1. Nova migration SQL - campos `aviso_espera` e `aviso_espera_data`
+2. `src/components/pedidos/AvisoEsperaModal.tsx` - novo componente
+3. `src/components/pedidos/PedidoCard.tsx` - botao na col 1 + destaque visual
+4. `src/pages/administrativo/PedidosAdminMinimalista.tsx` - handler + prop
+5. `src/hooks/usePedidosEtapas.ts` - incluir campos no select
+6. `src/integrations/supabase/types.ts` - tipos atualizados
