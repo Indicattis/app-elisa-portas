@@ -3,11 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Calendar } from "@/components/ui/calendar";
 import { OrdemCarregamentoUnificada } from "@/types/ordemCarregamentoUnificada";
 import { useOrdensCarregamentoUnificadas } from "@/hooks/useOrdensCarregamentoUnificadas";
 import { useVeiculos } from "@/hooks/useVeiculos";
@@ -51,7 +49,7 @@ export function AdicionarOrdemCalendarioModal({
 }: AdicionarOrdemCalendarioModalProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemCarregamentoUnificada | null>(null);
-  const [dataSelecionadaCalendario, setDataSelecionadaCalendario] = useState<Date | undefined>(undefined);
+  const [dataSelecionadaCalendario, setDataSelecionadaCalendario] = useState<string>("");
   const [responsavelTipo, setResponsavelTipo] = useState<"elisa" | "autorizados" | "terceiro">("elisa");
   const [responsavelId, setResponsavelId] = useState("");
   const [responsavelNomeTerceiro, setResponsavelNomeTerceiro] = useState("");
@@ -60,20 +58,16 @@ export function AdicionarOrdemCalendarioModal({
   const [loadingResponsaveis, setLoadingResponsaveis] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Usar hook unificado que busca de ambas as fontes (ordens_carregamento e instalacoes)
   const { ordens: todasOrdens, isLoading: loadingOrdens } = useOrdensCarregamentoUnificadas();
   const { veiculos, isLoading: loadingVeiculos } = useVeiculos();
   
-  // Filtrar apenas ordens SEM data de carregamento (disponíveis para agendamento)
   const ordens = todasOrdens.filter(o => !o.data_carregamento);
-
   const isEntrega = ordemSelecionada?.tipo_entrega === 'entrega';
 
   useEffect(() => {
     if (open) {
       loadResponsaveis();
       
-      // Se tem ordem pré-selecionada, usa ela
       if (ordemPreSelecionada) {
         setOrdemSelecionada(ordemPreSelecionada);
       } else {
@@ -81,7 +75,7 @@ export function AdicionarOrdemCalendarioModal({
       }
       
       setSearchTerm("");
-      setDataSelecionadaCalendario(dataSelecionada);
+      setDataSelecionadaCalendario(format(dataSelecionada, "yyyy-MM-dd"));
       setResponsavelTipo("elisa");
       setResponsavelId("");
       setResponsavelNomeTerceiro("");
@@ -118,7 +112,6 @@ export function AdicionarOrdemCalendarioModal({
     }
   };
 
-  // Formatar tamanhos das portas de enrolar
   const formatarTamanhosPortas = (ordem: OrdemCarregamentoUnificada): string | null => {
     const produtos = ordem.venda?.produtos;
     if (!produtos || produtos.length === 0) return null;
@@ -137,7 +130,6 @@ export function AdicionarOrdemCalendarioModal({
     }).filter(Boolean).join(', ');
   };
 
-  // Filtrar ordens por termo de busca
   const ordensFiltradas = ordens.filter((ordem) => {
     const termo = searchTerm.toLowerCase();
     return (
@@ -166,7 +158,6 @@ export function AdicionarOrdemCalendarioModal({
       return;
     }
 
-    // Validações específicas por tipo
     if (isEntrega) {
       if (responsavelTipo === 'elisa' && !responsavelId) {
         toast.error("Selecione um veículo");
@@ -206,13 +197,12 @@ export function AdicionarOrdemCalendarioModal({
         responsavelNome = responsavel?.nome || '';
       }
 
-      // Hora padrão "08:00" para todos (removido campo de hora)
       const horaFinal = "08:00";
 
       await onConfirm({
         ordemId: ordemSelecionada.id,
         fonte: ordemSelecionada.fonte,
-        data_carregamento: format(dataSelecionadaCalendario, "yyyy-MM-dd"),
+        data_carregamento: dataSelecionadaCalendario,
         hora: horaFinal,
         tipo_carregamento: responsavelTipo,
         responsavel_carregamento_id: finalResponsavelId,
@@ -230,57 +220,55 @@ export function AdicionarOrdemCalendarioModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[650px] max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>
-            Adicionar ao Calendário
-          </DialogTitle>
+      <DialogContent className="max-w-[95vw] sm:max-w-[500px] max-h-[85vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-5 pt-5 pb-3">
+          <DialogTitle className="text-base">Adicionar ao Calendário</DialogTitle>
           <DialogDescription className="sr-only">
             Selecione uma ordem e configure o agendamento
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[60vh] pr-4">
-          <div className="space-y-4">
+        <div className="overflow-y-auto flex-1 px-5 space-y-3">
           {/* Busca e Lista de Ordens */}
           {!ordemPreSelecionada && (
             <>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por cliente, pedido, localização..."
+                  placeholder="Buscar cliente, pedido..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 h-9 text-sm"
                 />
               </div>
 
-              <ScrollArea className="h-[200px] border rounded-lg">
+              <ScrollArea className="h-[180px] border rounded-md">
                 {loadingOrdens ? (
                   <div className="flex items-center justify-center h-full p-4">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   </div>
                 ) : ordensFiltradas.length === 0 ? (
-                  <div className="flex items-center justify-center h-full p-4 text-muted-foreground text-sm">
+                  <div className="flex items-center justify-center h-full p-4 text-muted-foreground text-xs">
                     Nenhuma ordem disponível
                   </div>
                 ) : (
-                  <div className="p-2 space-y-1">
+                  <div className="p-1.5 space-y-0.5">
                     {ordensFiltradas.map((ordem) => (
                       <button
                         key={ordem.id}
                         type="button"
-                        className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                        className={cn(
+                          "w-full text-left px-3 py-2 rounded-md transition-colors text-sm",
                           ordemSelecionada?.id === ordem.id
-                            ? "border-primary bg-primary/5"
-                            : "border-transparent hover:bg-muted/50"
-                        }`}
+                            ? "bg-primary/10 ring-1 ring-primary/30"
+                            : "hover:bg-muted/60"
+                        )}
                         onClick={() => handleSelectOrdem(ordem)}
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium truncate">{ordem.nome_cliente}</div>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                            <div className="font-medium truncate text-sm">{ordem.nome_cliente}</div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                               <span className="flex items-center gap-1">
                                 <Package className="h-3 w-3" />
                                 {ordem.pedido?.numero_pedido || 'N/A'}
@@ -299,22 +287,22 @@ export function AdicionarOrdemCalendarioModal({
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             <Badge
                               variant={ordem.tipo_entrega === 'entrega' ? 'default' : 'secondary'}
                               className={cn(
-                                "text-xs shrink-0",
+                                "text-[10px] px-1.5 py-0 h-5 shrink-0",
                                 ordem.tipo_entrega === 'instalacao' && "bg-orange-500/20 text-orange-600 border-orange-500/30",
                                 ordem.tipo_entrega === 'manutencao' && "bg-purple-500/20 text-purple-600 border-purple-500/30"
                               )}
                             >
-                              {ordem.tipo_entrega === 'entrega' && <Truck className="h-3 w-3 mr-1" />}
-                              {ordem.tipo_entrega !== 'entrega' && <Wrench className="h-3 w-3 mr-1" />}
+                              {ordem.tipo_entrega === 'entrega' && <Truck className="h-2.5 w-2.5 mr-0.5" />}
+                              {ordem.tipo_entrega !== 'entrega' && <Wrench className="h-2.5 w-2.5 mr-0.5" />}
                               {ordem.tipo_entrega === 'entrega' ? 'Entrega' : 
                                ordem.tipo_entrega === 'manutencao' ? 'Manutenção' : 'Instalação'}
                             </Badge>
                             {ordemSelecionada?.id === ordem.id && (
-                              <Check className="h-4 w-4 text-primary shrink-0" />
+                              <Check className="h-3.5 w-3.5 text-primary shrink-0" />
                             )}
                           </div>
                         </div>
@@ -328,11 +316,11 @@ export function AdicionarOrdemCalendarioModal({
 
           {/* Ordem pré-selecionada */}
           {ordemPreSelecionada && ordemSelecionada && (
-            <div className="p-3 bg-muted rounded-lg">
+            <div className="p-3 bg-muted/50 rounded-md">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">{ordemSelecionada.nome_cliente}</p>
-                  <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground mt-1">
+                  <p className="font-medium text-sm">{ordemSelecionada.nome_cliente}</p>
+                  <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
                     <span className="flex items-center gap-1">
                       <Package className="h-3 w-3" />
                       {ordemSelecionada.pedido?.numero_pedido || 'N/A'}
@@ -351,110 +339,106 @@ export function AdicionarOrdemCalendarioModal({
                     )}
                   </div>
                 </div>
-                <Badge variant={isEntrega ? 'default' : 'secondary'}>
-                  {isEntrega ? 'Entrega' : 'Instalação'}
+                <Badge 
+                  variant={isEntrega ? 'default' : 'secondary'}
+                  className="text-[10px] px-1.5 py-0 h-5"
+                >
+                  {isEntrega ? 'Entrega' : ordemSelecionada.tipo_entrega === 'manutencao' ? 'Manutenção' : 'Instalação'}
                 </Badge>
               </div>
             </div>
           )}
 
-          {/* Configuração - só aparece quando ordem está selecionada */}
+          {/* Configuração */}
           {ordemSelecionada && (
-            <div className="space-y-4 pt-2 border-t">
-              <div className="text-sm font-medium text-muted-foreground">
-                Configurar {isEntrega ? 'Entrega' : 'Instalação'}
+            <div className="space-y-3 pt-3 border-t">
+              {/* Data */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Data</Label>
+                <Input
+                  type="date"
+                  value={dataSelecionadaCalendario}
+                  onChange={(e) => setDataSelecionadaCalendario(e.target.value)}
+                  className="h-9 text-sm"
+                  min={format(new Date(), "yyyy-MM-dd")}
+                />
               </div>
 
-              {/* Calendário compacto para selecionar data */}
-              <div className="space-y-2">
-                <Label>Data do Carregamento *</Label>
-                <div className="border rounded-lg flex justify-center py-2">
-                  <Calendar
-                    mode="single"
-                    selected={dataSelecionadaCalendario}
-                    onSelect={setDataSelecionadaCalendario}
-                    locale={ptBR}
-                    disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
-                    className={cn(
-                      "p-0 pointer-events-auto",
-                      "[&_table]:text-xs",
-                      "[&_th]:p-1 [&_th]:text-xs [&_th]:font-medium",
-                      "[&_td]:p-0",
-                      "[&_.rdp-button]:h-8 [&_.rdp-button]:w-8 [&_.rdp-button]:text-xs",
-                      "[&_.rdp-head_button]:h-7 [&_.rdp-head_button]:w-7",
-                      "[&_.rdp-caption]:text-sm [&_.rdp-caption]:py-1"
-                    )}
-                  />
-                </div>
-                {dataSelecionadaCalendario && (
-                  <p className="text-sm text-muted-foreground text-center">
-                    {format(dataSelecionadaCalendario, "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                  </p>
-                )}
-              </div>
-
-              {/* Tipo de Responsável */}
-              <div className="space-y-3">
-                <Label>
-                  {isEntrega ? 'Tipo de Carregamento' : 'Responsável pela Instalação'} *
+              {/* Toggle tipo responsável */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">
+                  {isEntrega ? 'Tipo' : 'Responsável'}
                 </Label>
-                <RadioGroup
-                  value={responsavelTipo}
-                  onValueChange={(value) => {
-                    setResponsavelTipo(value as "elisa" | "autorizados" | "terceiro");
-                    setResponsavelId("");
-                    setResponsavelNomeTerceiro("");
-                  }}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="elisa" id="elisa" />
-                    <Label htmlFor="elisa" className="font-normal cursor-pointer">
-                      {isEntrega ? 'Elisa' : 'Equipe Elisa'}
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={isEntrega ? "terceiro" : "autorizados"} id="outros" />
-                    <Label htmlFor="outros" className="font-normal cursor-pointer">
-                      {isEntrega ? 'Terceiro' : 'Autorizado'}
-                    </Label>
-                  </div>
-                </RadioGroup>
+                <div className="flex rounded-md border bg-muted/30 p-0.5">
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex-1 text-xs font-medium py-1.5 px-3 rounded-sm transition-all",
+                      responsavelTipo === "elisa"
+                        ? "bg-background shadow-sm text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    onClick={() => {
+                      setResponsavelTipo("elisa");
+                      setResponsavelId("");
+                      setResponsavelNomeTerceiro("");
+                    }}
+                  >
+                    {isEntrega ? 'Elisa' : 'Equipe Elisa'}
+                  </button>
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex-1 text-xs font-medium py-1.5 px-3 rounded-sm transition-all",
+                      responsavelTipo === (isEntrega ? "terceiro" : "autorizados")
+                        ? "bg-background shadow-sm text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    onClick={() => {
+                      setResponsavelTipo(isEntrega ? "terceiro" : "autorizados");
+                      setResponsavelId("");
+                      setResponsavelNomeTerceiro("");
+                    }}
+                  >
+                    {isEntrega ? 'Terceiro' : 'Autorizado'}
+                  </button>
+                </div>
               </div>
 
-              {/* Select do responsável */}
-              {isEntrega && responsavelTipo === 'terceiro' ? (
-                <div className="space-y-2">
-                  <Label htmlFor="nome-terceiro">Nome do Terceiro *</Label>
+              {/* Select/Input do responsável */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">
+                  {isEntrega 
+                    ? (responsavelTipo === 'elisa' ? 'Veículo' : 'Nome do Terceiro')
+                    : (responsavelTipo === 'elisa' ? 'Equipe' : 'Autorizado')
+                  }
+                </Label>
+                {isEntrega && responsavelTipo === 'terceiro' ? (
                   <Input
-                    id="nome-terceiro"
                     type="text"
                     placeholder="Digite o nome do responsável"
                     value={responsavelNomeTerceiro}
                     onChange={(e) => setResponsavelNomeTerceiro(e.target.value)}
+                    className="h-9 text-sm"
                   />
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Label>
-                    {isEntrega 
-                      ? 'Veículo *'
-                      : (responsavelTipo === 'elisa' ? 'Equipe *' : 'Autorizado *')
-                    }
-                  </Label>
+                ) : (
                   <Select
                     value={responsavelId}
                     onValueChange={setResponsavelId}
                     disabled={loadingResponsaveis || (isEntrega && loadingVeiculos)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9 text-sm">
                       <SelectValue placeholder={
                         loadingResponsaveis || (isEntrega && loadingVeiculos)
                           ? "Carregando..."
                           : "Selecione..."
                       } />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent 
+                      position="popper" 
+                      sideOffset={4} 
+                      className="z-[200] max-h-[200px]"
+                    >
                       {isEntrega && responsavelTipo === 'elisa' ? (
                         veiculos.filter(v => v.ativo).map((veiculo) => (
                           <SelectItem key={veiculo.id} value={veiculo.id}>
@@ -467,7 +451,7 @@ export function AdicionarOrdemCalendarioModal({
                             <div className="flex items-center gap-2">
                               {equipe.cor && (
                                 <span
-                                  className="h-3 w-3 rounded-full shrink-0"
+                                  className="h-2.5 w-2.5 rounded-full shrink-0"
                                   style={{ backgroundColor: equipe.cor }}
                                 />
                               )}
@@ -484,28 +468,30 @@ export function AdicionarOrdemCalendarioModal({
                       )}
                     </SelectContent>
                   </Select>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
-          </div>
-        </ScrollArea>
+        </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t mt-4 shrink-0">
+        {/* Footer fixo */}
+        <div className="flex justify-end gap-2 px-5 py-4 border-t mt-3 shrink-0">
           <Button
             variant="outline"
+            size="sm"
             onClick={() => onOpenChange(false)}
             disabled={submitting}
           >
             Cancelar
           </Button>
           <Button 
+            size="sm"
             onClick={handleConfirm} 
             disabled={submitting || !ordemSelecionada}
           >
             {submitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                 Adicionando...
               </>
             ) : (
