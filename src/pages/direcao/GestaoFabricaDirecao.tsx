@@ -22,6 +22,7 @@ import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
 import { useState, useMemo, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 
@@ -211,6 +212,23 @@ export default function GestaoFabricaDirecao() {
 
   const handleDeletarPedido = async (pedidoId: string) => {
     await deletarPedido.mutateAsync(pedidoId);
+  };
+
+  const handleAvisoEspera = async (pedidoId: string, justificativa: string | null) => {
+    const { error } = await supabase
+      .from('pedidos_producao')
+      .update({
+        aviso_espera: justificativa,
+        aviso_espera_data: justificativa ? new Date().toISOString() : null,
+        prioridade_etapa: justificativa ? 0 : 1,
+      })
+      .eq('id', pedidoId);
+    if (error) {
+      toast({ title: "Erro", description: "Não foi possível salvar o aviso de espera", variant: "destructive" });
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+    }
   };
 
   const headerActions = (
@@ -520,6 +538,7 @@ export default function GestaoFabricaDirecao() {
                       onMoverPrioridade={handleMoverPrioridade}
                       onArquivar={handleArquivar}
                       onDeletar={handleDeletarPedido}
+                      onAvisoEspera={handleAvisoEspera}
                       enableDragAndDrop={true}
                     />
                     

@@ -33,9 +33,10 @@ interface PedidosDraggableListProps {
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
   onArquivar?: (pedidoId: string) => Promise<void>;
   onDeletar?: (pedidoId: string) => Promise<void>;
-  enableDragAndDrop?: boolean; // Habilita drag-and-drop e botões de prioridade (apenas em "Em Produção")
-  showPosicao?: boolean; // Mostra o índice de posição/prioridade (default: true)
-  disableClienteClick?: boolean; // Desabilita clique no nome do cliente
+  onAvisoEspera?: (pedidoId: string, justificativa: string | null) => Promise<void>;
+  enableDragAndDrop?: boolean;
+  showPosicao?: boolean;
+  disableClienteClick?: boolean;
 }
 
 interface SortableItemProps {
@@ -50,6 +51,7 @@ interface SortableItemProps {
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
   onArquivar?: (pedidoId: string) => Promise<void>;
   onDeletar?: (pedidoId: string) => Promise<void>;
+  onAvisoEspera?: (pedidoId: string, justificativa: string | null) => Promise<void>;
   disableClienteClick?: boolean;
 }
 
@@ -65,6 +67,7 @@ function SortableItem({
   onMoverPrioridade,
   onArquivar,
   onDeletar,
+  onAvisoEspera,
   disableClienteClick,
 }: SortableItemProps) {
   const {
@@ -94,6 +97,7 @@ function SortableItem({
         onMoverPrioridade={onMoverPrioridade}
         onArquivar={onArquivar}
         onDeletar={onDeletar}
+        onAvisoEspera={onAvisoEspera}
         isDragging={isDragging}
         dragHandleProps={{ ...attributes, ...listeners }}
         posicao={posicao}
@@ -116,6 +120,7 @@ export function PedidosDraggableList({
   onMoverPrioridade,
   onArquivar,
   onDeletar,
+  onAvisoEspera,
   enableDragAndDrop = true,
   showPosicao = true,
   disableClienteClick = false,
@@ -186,6 +191,7 @@ export function PedidosDraggableList({
               onRetrocederEtapa={onRetrocederEtapa}
               onArquivar={onArquivar}
               onDeletar={onDeletar}
+              onAvisoEspera={onAvisoEspera}
               posicao={showPosicao ? index + 1 : undefined}
               total={showPosicao ? pedidos.length : undefined}
               disableClienteClick={disableClienteClick}
@@ -229,6 +235,7 @@ export function PedidosDraggableList({
               onMoverPrioridade={onMoverPrioridade}
               onArquivar={onArquivar}
               onDeletar={onDeletar}
+              onAvisoEspera={onAvisoEspera}
               disableClienteClick={disableClienteClick}
             />
           ))}
