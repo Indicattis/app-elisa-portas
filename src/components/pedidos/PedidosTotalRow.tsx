@@ -127,8 +127,8 @@ export function PedidosTotalRow({ pedidos }: PedidosTotalRowProps) {
         className="bg-muted/50 border-t-2 border-primary/20 rounded-md px-2 py-2 mt-2"
         style={{
           display: 'grid',
-          gridTemplateColumns: '24px 24px 1fr 24px 50px 50px 95px 80px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px',
-          gap: '4px',
+          gridTemplateColumns: '20px 20px 1fr 20px 45px 45px 90px 75px 110px 90px 80px 24px 24px 24px 24px 24px 65px 55px',
+          gap: '6px',
           alignItems: 'center',
         }}
       >
