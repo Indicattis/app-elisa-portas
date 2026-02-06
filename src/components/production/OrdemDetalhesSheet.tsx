@@ -732,10 +732,8 @@ export function OrdemDetalhesSheet({
             </div>
 
             <div className="space-y-4">
-              {(tipoOrdem === 'pintura' || tipoOrdem === 'qualidade') ? (
-                // Agrupamento por porta para pintura e qualidade
-                (() => {
-                  // Filtrar linhas: pintura filtra por requer_pintura, qualidade usa todas
+              {(() => {
+                  // Filtrar linhas: pintura filtra por requer_pintura, demais usam todas
                   const linhasAgrupadas = tipoOrdem === 'pintura' 
                     ? linhas.filter(l => l.requer_pintura !== false)
                     : linhas;
@@ -883,8 +881,8 @@ export function OrdemDetalhesSheet({
                             </Label>
                               
                             <div className="flex items-center gap-1 flex-shrink-0">
-                              {/* Botão de resolver problema - qualidade */}
-                              {tipoOrdem === 'qualidade' && linha.com_problema && isResponsavel && onResolverProblemaLinha && (
+                              {/* Botão de resolver problema */}
+                              {linha.com_problema && isResponsavel && onResolverProblemaLinha && (
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -900,8 +898,8 @@ export function OrdemDetalhesSheet({
                                 </Button>
                               )}
                               
-                              {/* Botão de informar falta - qualidade */}
-                              {tipoOrdem === 'qualidade' && isResponsavel && !linha.concluida && !linha.com_problema && onMarcarLinhaProblema && (
+                              {/* Botão de informar falta/problema */}
+                              {isResponsavel && !linha.concluida && !linha.com_problema && onMarcarLinhaProblema && (
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -937,120 +935,7 @@ export function OrdemDetalhesSheet({
                     );
                   });
                 })()
-              ) : (
-                // Renderização normal para outras ordens
-                linhas.map((linha) => (
-                  <div
-                    key={linha.id}
-                    className={`p-4 rounded-lg border bg-card transition-colors ${
-                      linha.com_problema 
-                        ? 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/20' 
-                        : 'hover:bg-accent/50'
-                    }`}
-                  >
-                    <Label
-                      htmlFor={`checkbox-${linha.id}`}
-                      className="flex items-start gap-4 cursor-pointer"
-                    >
-                      <Checkbox
-                        id={`checkbox-${linha.id}`}
-                        checked={linha.concluida}
-                        onCheckedChange={(checked) => onMarcarLinha(linha.id, checked as boolean)}
-                        disabled={ordem.status === 'concluido' || ordem.status === 'pronta' || isUpdating || !podeMarcarLinhas || linha.com_problema}
-                        className="mt-1"
-                      />
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          {linha.com_problema ? (
-                            <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
-                          ) : linha.concluida ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
-                          ) : (
-                            <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                          )}
-                          <span className={`text-base font-medium ${
-                            linha.com_problema 
-                              ? 'text-red-700 dark:text-red-300' 
-                              : linha.concluida 
-                                ? 'line-through text-muted-foreground' 
-                                : ''
-                          }`}>
-                            {linha.item}
-                          </span>
-                        </div>
-                        
-                        {/* Mostrar descrição do problema se houver */}
-                        {linha.com_problema && linha.problema_descricao && (
-                          <div className="mt-2 p-2 rounded bg-red-100 dark:bg-red-900/30 text-sm text-red-700 dark:text-red-300">
-                            <strong>Problema:</strong> {linha.problema_descricao}
-                          </div>
-                        )}
-                        
-                        <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>Qtd: {linha.quantidade}</span>
-                          {linha.tamanho && <span>Tamanho: {formatarTamanho(linha.tamanho)}</span>}
-                          {getEtiquetasRecomendadas(linha) !== null && (
-                            <Badge variant="outline" className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/30">
-                              <Tags className="h-3 w-3 mr-1" />
-                              {getEtiquetasRecomendadas(linha)} etiq.
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        {/* Botão de resolver problema - apenas para o responsável e linhas com problema */}
-                        {linha.com_problema && isResponsavel && onResolverProblemaLinha && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-11 w-11 p-0 text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/30"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              onResolverProblemaLinha(linha.id);
-                            }}
-                            disabled={isResolvingProblem}
-                            title="Problema resolvido - liberar linha"
-                          >
-                            <Check className="h-5 w-5" />
-                          </Button>
-                        )}
-                        
-                        {/* Botão de informar falta - apenas para o responsável e linhas não concluídas */}
-                        {isResponsavel && !linha.concluida && !linha.com_problema && (tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira' || tipoOrdem === 'soldagem') && onMarcarLinhaProblema && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-11 w-11 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setLinhaSelecionada(linha);
-                              setLinhaProblemaModalOpen(true);
-                            }}
-                            title="Informar falta/problema"
-                          >
-                            <AlertTriangle className="h-5 w-5" />
-                          </Button>
-                        )}
-                        
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-11 w-11 p-0 flex-shrink-0"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleImprimirEtiqueta(linha);
-                          }}
-                          title="Imprimir etiqueta"
-                        >
-                          <Printer className="h-5 w-5" />
-                        </Button>
-                      </div>
-                    </Label>
-                  </div>
-                ))
-              )}
+              }
 
               {linhas.length === 0 && (
                 <div className="text-center py-8 text-sm text-muted-foreground">
