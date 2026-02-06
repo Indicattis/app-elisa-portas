@@ -1,36 +1,32 @@
 
-
-# Corrigir nome dos Acessorios e Adicionais na lista de produtos
+# Cronometro vermelho apos 2 horas na Qualidade
 
 ## Problema
-
-Na lista de itens da venda (dentro do PedidoDetalhesSheet), acessorios e adicionais mostram apenas o tipo generico ("8x Adicional") em vez do nome/descricao real do item (ex: "8x Fechadura Tetra").
-
-Isso acontece porque o codigo usa um `nomeMap` que traduz o `tipo_produto` para um label fixo, e a descricao real so aparece como subtexto secundario abaixo.
+O cronometro da inspecao de qualidade em `/producao/qualidade` nao muda de cor independentemente do tempo. O requisito e que fique vermelho apos 2 horas corridas (7200 segundos).
 
 ## Solucao
 
-No arquivo `src/components/pedidos/PedidoDetalhesSheet.tsx`, para tipos `acessorio` e `adicional`, usar a `descricao` do produto como nome principal (quando disponivel), em vez do label generico.
+### 1. `src/hooks/useCronometroOrdem.ts`
+Adicionar um campo `segundosTotais` no retorno do hook para expor o valor numerico do tempo decorrido, permitindo que o componente faca logica de cor.
 
-### Alteracao (linha 557)
+Retorno atual: `{ tempoDecorrido, deveAnimar }`
+Retorno novo: `{ tempoDecorrido, deveAnimar, segundosTotais }`
 
-De:
-```ts
-const nome = nomeMap[tipo] || tipo;
-```
+### 2. `src/components/production/ProducaoKanban.tsx`
 
-Para:
-```ts
-const nome = (tipo === 'acessorio' || tipo === 'adicional') && (produto.descricao || produto.nome)
-  ? (produto.descricao || produto.nome)
-  : (nomeMap[tipo] || tipo);
-```
+**2a.** Passar `tipoOrdem` para o componente `OrdemCard` (ja disponivel no `ProducaoKanban` pai).
 
-Alem disso, remover o subtexto redundante nas linhas 595-597 (que mostrava a descricao embaixo), ja que agora ela faz parte do nome principal.
+**2b.** No `OrdemCard`, usar `segundosTotais` do hook para determinar a cor do cronometro quando `tipoOrdem === 'qualidade'`:
+- Menos de 2h: cor padrao (`text-primary`, `border-primary`, `bg-primary/10`)
+- 2h ou mais: cor vermelha (`text-red-500`, `border-red-500`, `bg-red-500/10`)
 
-### Resultado
+O circulo do cronometro e os textos mudarao dinamicamente de cor.
 
-- "8x Adicional" passa a ser "8x Fechadura Tetra" (ou o nome real do item)
-- Se nao houver descricao, continua mostrando "Adicional" como fallback
-- 1 arquivo modificado, 1 trecho alterado
+### 3. `src/components/fabrica/OrdemCronometro.tsx`
+Aplicar a mesma logica de cor vermelha apos 2h para o componente compacto usado em `/fabrica/ordens-pedidos`, adicionando uma prop opcional `tipoOrdem`.
 
+## Detalhes Tecnicos
+
+- Limite: `const LIMITE_QUALIDADE = 2 * 60 * 60` (7200 segundos)
+- A contagem e de tempo corrido (nao de expediente), conforme solicitado
+- 3 arquivos modificados, nenhum arquivo novo
