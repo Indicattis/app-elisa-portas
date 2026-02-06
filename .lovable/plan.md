@@ -1,43 +1,22 @@
 
 
-# Correcao: Layout do Modal de Agendamento - Calendario Muito Grande
+# Adicionar Botao de Tabela de Precos no Header de /direcao/vendas
 
-## Problema
+## O que sera feito
 
-O calendario (`Calendar` component) dentro do `AdicionarOrdemCalendarioModal` ocupa muito espaco vertical, empurrando os campos de responsavel e o botao de confirmar para fora da area visivel do modal. Como o conteudo nao esta dentro de um `ScrollArea`, o usuario nao consegue acessar os demais inputs.
+Adicionar um botao com icone `DollarSign` no header da pagina `/direcao/vendas` que navega para `/direcao/vendas/tabela-precos`, e registrar essa rota no `App.tsx` apontando para o componente `TabelaPrecos` ja existente.
 
-## Correcao
+## Alteracoes
 
-### Arquivo: `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx`
+### 1. `src/pages/direcao/VendasDirecao.tsx`
+- Adicionar um novo botao no `headerActions` (antes do botao de Regras), com icone `DollarSign` e title "Tabela de Precos", navegando para `/direcao/vendas/tabela-precos`
 
-1. **Envolver a secao de configuracao em ScrollArea**: A area que aparece apos selecionar uma ordem (calendario + tipo responsavel + select) precisa ser scrollavel para caber no modal.
+### 2. `src/App.tsx`
+- Adicionar a rota `/direcao/vendas/tabela-precos` apontando para o componente `TabelaPrecos` (ja importado), protegida com `routeKey="direcao_hub"` seguindo o padrao das demais rotas de direcao
 
-2. **Reduzir o tamanho do calendario**: Aplicar classes CSS para compactar o calendario (`text-xs`, celulas menores com `[&_table]:text-xs [&_td]:p-0 [&_th]:p-0 [&_button]:h-8 [&_button]:w-8`).
+## Detalhes Tecnicos
 
-3. **Estrutura proposta**:
-
-```
-DialogContent (max-h-[90vh])
-  DialogHeader
-  ScrollArea (flex-1, overflow)
-    Busca + Lista de ordens (se nao pre-selecionada)
-    Ordem pre-selecionada (se aplicavel)
-    Configuracao (quando ordem selecionada):
-      Calendar (compacto, ~250px)
-      RadioGroup (tipo responsavel)
-      Select/Input (responsavel)
-  DialogFooter (fixo no fundo)
-    Botao Cancelar + Confirmar
-```
-
-Mudancas especificas:
-- Mover os botoes de acao para fora do `ScrollArea` em um `DialogFooter` fixo
-- Envolver todo o conteudo (busca + configuracao) em um unico `ScrollArea`
-- Reduzir padding e tamanho das celulas do calendario com classes utilitarias
-- Limitar altura do calendario com `[&_.rdp]:text-sm` e celulas de 32px
-
-### Resultado Esperado
-
-- O calendario aparece em tamanho compacto dentro do modal
-- O usuario consegue rolar para ver todos os campos do formulario
-- Os botoes de acao ficam sempre visiveis no rodape do modal
+- O componente `TabelaPrecos` ja existe em `src/pages/TabelaPrecos.tsx` e ja esta importado no `App.tsx`, porem sem rota associada
+- O icone `DollarSign` ja esta importado no `VendasDirecao.tsx`
+- A rota sera adicionada antes da rota `/direcao/vendas/:id` para evitar conflitos de matching
+- 2 arquivos modificados, nenhum arquivo novo
