@@ -116,7 +116,7 @@ export default function ExpedicaoMinimalista() {
         id: ordemId, 
         data: { 
           data_carregamento: null, 
-          status: 'pendente',
+          status: fonte === 'instalacoes' ? 'pendente_producao' : 'pendente',
           tipo_carregamento: null,
           responsavel_carregamento_id: null,
           responsavel_carregamento_nome: null,
