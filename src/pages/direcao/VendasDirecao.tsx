@@ -558,6 +558,15 @@ export default function VendasDirecao() {
         variant="outline" 
         size="sm" 
         className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+        onClick={() => navigate('/direcao/vendas/tabela-precos')}
+        title="Tabela de Preços"
+      >
+        <DollarSign className="h-4 w-4" />
+      </Button>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
         onClick={() => navigate('/direcao/vendas/regras-vendas')}
         title="Regras de Vendas"
       >
