@@ -1,32 +1,58 @@
 
-# Cronometro vermelho apos 2 horas na Qualidade
+
+# Corrigir erro "invalid input syntax for type numeric" nas funcoes de metricas
 
 ## Problema
-O cronometro da inspecao de qualidade em `/producao/qualidade` nao muda de cor independentemente do tempo. O requisito e que fique vermelho apos 2 horas corridas (7200 segundos).
+
+As funcoes SQL `get_portas_por_etapa` e `get_desempenho_etapas` calculam metros perfilados com a expressao:
+
+```sql
+SUM(lo.quantidade * REPLACE(lo.tamanho, ',', '.')::numeric)
+```
+
+Porem, a coluna `linhas_ordens.tamanho` contem valores no formato de dimensoes como `"4.75x6.00"` ou `"4,72x6,00"`. Quando o SQL tenta converter esses valores para `numeric`, ocorre o erro `invalid input syntax for type numeric: "4.75x6.00"`.
+
+## Dados afetados
+
+Existem pelo menos 20 registros com o formato "LARGURAxALTURA" na coluna `tamanho` (ex: `4.75x6.00`, `4,72x6,00`, `3.3x2.8`).
 
 ## Solucao
 
-### 1. `src/hooks/useCronometroOrdem.ts`
-Adicionar um campo `segundosTotais` no retorno do hook para expor o valor numerico do tempo decorrido, permitindo que o componente faca logica de cor.
+Atualizar ambas as funcoes SQL para extrair apenas o primeiro numero (antes do "x") quando o valor contem "x", usando `SPLIT_PART`. A expressao sera:
 
-Retorno atual: `{ tempoDecorrido, deveAnimar }`
-Retorno novo: `{ tempoDecorrido, deveAnimar, segundosTotais }`
+```sql
+REPLACE(SPLIT_PART(lo.tamanho, 'x', 1), ',', '.')::numeric
+```
 
-### 2. `src/components/production/ProducaoKanban.tsx`
+Isso transforma:
+- `"4.75x6.00"` -> `"4.75"` -> `4.75`
+- `"4,72x6,00"` -> `"4,72"` -> `"4.72"` -> `4.72`
+- `"2.81"` (sem x) -> `"2.81"` -> `2.81` (sem alteracao)
 
-**2a.** Passar `tipoOrdem` para o componente `OrdemCard` (ja disponivel no `ProducaoKanban` pai).
+### Detalhes tecnicos
 
-**2b.** No `OrdemCard`, usar `segundosTotais` do hook para determinar a cor do cronometro quando `tipoOrdem === 'qualidade'`:
-- Menos de 2h: cor padrao (`text-primary`, `border-primary`, `bg-primary/10`)
-- 2h ou mais: cor vermelha (`text-red-500`, `border-red-500`, `bg-red-500/10`)
+Criar uma nova migration SQL que recria as duas funcoes, alterando apenas a linha do calculo de metros perfilados:
 
-O circulo do cronometro e os textos mudarao dinamicamente de cor.
+**De:**
+```sql
+SUM(lo.quantidade * REPLACE(lo.tamanho, ',', '.')::numeric)
+```
 
-### 3. `src/components/fabrica/OrdemCronometro.tsx`
-Aplicar a mesma logica de cor vermelha apos 2h para o componente compacto usado em `/fabrica/ordens-pedidos`, adicionando uma prop opcional `tipoOrdem`.
+**Para:**
+```sql
+SUM(lo.quantidade * REPLACE(SPLIT_PART(lo.tamanho, 'x', 1), ',', '.')::numeric)
+```
 
-## Detalhes Tecnicos
+Essa alteracao aparece em 2 lugares:
+1. Na funcao `get_portas_por_etapa` (linha 19 da versao atual)
+2. Na funcao `get_desempenho_etapas` (linha 94 da versao atual)
 
-- Limite: `const LIMITE_QUALIDADE = 2 * 60 * 60` (7200 segundos)
-- A contagem e de tempo corrido (nao de expediente), conforme solicitado
-- 3 arquivos modificados, nenhum arquivo novo
+Adicionalmente, incluir um filtro extra para seguranca contra valores inesperados:
+```sql
+AND lo.tamanho ~ '^\d'
+```
+
+Isso garante que apenas valores que comecam com digitos sejam processados.
+
+**Arquivos:** 1 nova migration SQL
+
