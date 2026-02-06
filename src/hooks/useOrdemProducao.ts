@@ -106,11 +106,13 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
             vendas(
               data_prevista_entrega,
               observacoes_venda,
-              produtos:produtos_vendas(
+            produtos:produtos_vendas(
                 id,
                 tipo_produto,
                 cor_id,
                 quantidade,
+                largura,
+                altura,
                 catalogo_cores(nome, codigo_hex)
               )
             )
