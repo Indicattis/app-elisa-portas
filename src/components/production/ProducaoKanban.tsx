@@ -74,6 +74,8 @@ interface Ordem {
 }
 
 // Componente separado para o card de ordem
+const LIMITE_QUALIDADE = 2 * 60 * 60; // 7200 segundos
+
 interface OrdemCardProps {
   ordem: Ordem;
   isConcluida: boolean;
@@ -82,6 +84,7 @@ interface OrdemCardProps {
   isCapturing?: boolean;
   currentUserId?: string;
   currentUserRole?: string;
+  tipoOrdem?: TipoOrdem;
 }
 
 function OrdemCard({
@@ -92,6 +95,7 @@ function OrdemCard({
   isCapturing = false,
   currentUserId,
   currentUserRole,
+  tipoOrdem,
 }: OrdemCardProps) {
   const [backlogModalOpen, setBacklogModalOpen] = useState(false);
   const linhas = ordem.linhas || [];
@@ -101,7 +105,7 @@ function OrdemCard({
 
   const { data: ordemProgress } = useOrdemProgress(ordem.pedido_id);
 
-  const { tempoDecorrido, deveAnimar } = useCronometroOrdem({
+  const { tempoDecorrido, deveAnimar, segundosTotais } = useCronometroOrdem({
     capturada_em: ordem.capturada_em,
     tempo_conclusao_segundos: ordem.tempo_conclusao_segundos,
     todas_linhas_concluidas: todasConcluidas && ordem.status === 'concluido',
@@ -254,15 +258,26 @@ function OrdemCard({
                 <span className="text-xs font-semibold">Capturar</span>
               </Button>
             ) : ordem.capturada_em && tempoDecorrido !== '--:--:--' && ordem.responsavel_id ? (
-              <div 
-                className="h-12 w-full sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] sm:rounded-full rounded-lg bg-primary/10 flex flex-row sm:flex-col items-center justify-center gap-2 sm:gap-1 border-2 border-primary relative overflow-hidden"
-              >
-                {deveAnimar && (
-                  <div className="absolute inset-0 sm:rounded-full rounded-lg border-4 border-transparent border-t-primary/50 animate-spin" style={{ animationDuration: '3s' }} />
-                )}
-                <Timer className="h-4 w-4 sm:h-5 sm:w-5 text-primary relative z-10" />
-                <span className="text-xs sm:text-sm font-mono font-bold text-primary relative z-10">{tempoDecorrido}</span>
-              </div>
+              (() => {
+                const isVermelho = tipoOrdem === 'qualidade' && segundosTotais >= LIMITE_QUALIDADE;
+                return (
+                  <div 
+                    className={cn(
+                      "h-12 w-full sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] sm:rounded-full rounded-lg flex flex-row sm:flex-col items-center justify-center gap-2 sm:gap-1 border-2 relative overflow-hidden",
+                      isVermelho ? "bg-red-500/10 border-red-500" : "bg-primary/10 border-primary"
+                    )}
+                  >
+                    {deveAnimar && (
+                      <div className={cn(
+                        "absolute inset-0 sm:rounded-full rounded-lg border-4 border-transparent animate-spin",
+                        isVermelho ? "border-t-red-500/50" : "border-t-primary/50"
+                      )} style={{ animationDuration: '3s' }} />
+                    )}
+                    <Timer className={cn("h-4 w-4 sm:h-5 sm:w-5 relative z-10", isVermelho ? "text-red-500" : "text-primary")} />
+                    <span className={cn("text-xs sm:text-sm font-mono font-bold relative z-10", isVermelho ? "text-red-500" : "text-primary")}>{tempoDecorrido}</span>
+                  </div>
+                );
+              })()
             ) : (
               <div 
                 className="h-12 w-full sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] rounded-lg bg-muted/30 flex items-center justify-center"
@@ -400,6 +415,7 @@ export function ProducaoKanban({
               isCapturing={isCapturing}
               currentUserId={currentUserId}
               currentUserRole={currentUserRole}
+              tipoOrdem={tipoOrdem}
             />
           ))
         ) : (

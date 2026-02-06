@@ -14,11 +14,13 @@ interface UseCronometroOrdemParams {
 interface CronometroResult {
   tempoDecorrido: string;
   deveAnimar: boolean;
+  segundosTotais: number;
 }
 
 export function useCronometroOrdem(params: UseCronometroOrdemParams | string | null | undefined): CronometroResult {
   const [tempoDecorrido, setTempoDecorrido] = useState<string>('00:00:00');
   const [deveAnimar, setDeveAnimar] = useState<boolean>(false);
+  const [segundosTotais, setSegundosTotais] = useState<number>(0);
 
   // Suporte para ambos os formatos: objeto ou string direta (retrocompatibilidade)
   const capturadaEm = typeof params === 'string' || params === null || params === undefined 
@@ -46,7 +48,8 @@ export function useCronometroOrdem(params: UseCronometroOrdemParams | string | n
       const formatado = formatCronometroExtended(tempoConclusao);
       setTempoDecorrido(formatado);
       setDeveAnimar(false);
-      return; // Não iniciar intervalo, cronômetro parado
+      setSegundosTotais(tempoConclusao);
+      return;
     }
 
     // Se está pausada, mostrar tempo acumulado (estático, sem animação)
@@ -54,13 +57,15 @@ export function useCronometroOrdem(params: UseCronometroOrdemParams | string | n
       const formatado = formatCronometroExtended(tempoAcumulado || 0);
       setTempoDecorrido(formatado);
       setDeveAnimar(false);
-      return; // Não iniciar intervalo, cronômetro parado
+      setSegundosTotais(tempoAcumulado || 0);
+      return;
     }
 
     // Se não está capturada ou não tem responsável, não mostrar tempo (sem animação)
     if (!capturadaEm || !responsavelId) {
       setTempoDecorrido('--:--:--');
       setDeveAnimar(false);
+      setSegundosTotais(0);
       return;
     }
 
@@ -74,6 +79,7 @@ export function useCronometroOrdem(params: UseCronometroOrdemParams | string | n
       
       const formatado = formatCronometroExtended(segundosTotal);
       setTempoDecorrido(formatado);
+      setSegundosTotais(segundosTotal);
       
       // Animar apenas se estiver dentro do horário de expediente
       setDeveAnimar(estaNoExpediente());
@@ -88,5 +94,5 @@ export function useCronometroOrdem(params: UseCronometroOrdemParams | string | n
     return () => clearInterval(interval);
   }, [capturadaEm, tempoConclusao, todasLinhasConcluidas, responsavelId, pausada, tempoAcumulado]);
 
-  return { tempoDecorrido, deveAnimar };
+  return { tempoDecorrido, deveAnimar, segundosTotais };
 }
