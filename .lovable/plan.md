@@ -1,31 +1,51 @@
 
-# Aplicar Estilo Minimalista com Breadcrumb na Tabela de Precos
+# Mostrar Cor da Pintura na Coluna "Detalhes" da Tabela de Produtos
 
-## O que sera feito
+## Problema
 
-Envolver o conteudo da pagina `TabelaPrecos` com o componente `MinimalistLayout` (mesmo padrao usado nas demais paginas de direcao), adicionando breadcrumb automatico e removendo o header interno duplicado.
+Ao adicionar um produto do tipo `pintura_epoxi`, a coluna "Detalhes" na tabela de produtos da venda mostra "-" porque o campo `descricao` nao e preenchido com o nome da cor selecionada.
 
-## Alteracoes
+## Solucao
 
-### 1. `src/pages/TabelaPrecos.tsx`
+Preencher automaticamente o campo `descricao` do produto com o nome da cor selecionada no momento em que o produto e adicionado/salvo.
 
-- Importar `MinimalistLayout` de `@/components/MinimalistLayout`
-- Envolver todo o conteudo no `MinimalistLayout` com:
-  - `title="Tabela de Precos"`
-  - `subtitle="Gestao de precos das portas por tamanho"`
-  - `backPath="/direcao/vendas"`
-  - `breadcrumbItems` com: Home > Direcao > Vendas > Tabela de Precos
-  - `headerActions` com os botoes "Upload em Massa" e "Novo Item"
-- Remover o bloco de header interno (linhas 91-114) que duplicaria titulo e botoes
+## Alteracao
 
-### 2. `src/App.tsx`
+### `src/components/vendas/ProdutoVendaForm.tsx`
 
-- Remover o `<div className="p-4 md:p-6">` wrapper da rota, pois o `MinimalistLayout` ja cuida do espacamento
+Na funcao `handleSubmit` (por volta da linha 284), antes de chamar `onAddProduto(formData)`, resolver o nome da cor a partir do `cor_id` usando a lista de `cores` ja carregada no componente:
+
+```
+const handleSubmit = () => {
+  // ... validacoes existentes ...
+
+  const produtoFinal = { ...formData };
+
+  // Se for pintura, incluir nome da cor na descricao
+  if (produtoFinal.tipo_produto === 'pintura_epoxi' && produtoFinal.cor_id && cores) {
+    const corSelecionada = cores.find(c => c.id === produtoFinal.cor_id);
+    if (corSelecionada) {
+      produtoFinal.descricao = corSelecionada.nome;
+    }
+  }
+
+  onAddProduto(produtoFinal);
+  onOpenChange(false);
+};
+```
+
+Tambem aplicar a mesma logica no `PinturaRapidaModal.tsx` que adiciona pintura de forma rapida.
+
+### `src/components/vendas/PinturaRapidaModal.tsx`
+
+Ao montar o objeto `ProdutoVenda`, incluir o nome da cor no campo `descricao`.
+
+## Resultado
+
+A coluna "Detalhes" passara a exibir o nome da cor (ex: "Branco", "Preto") para produtos de pintura, em vez de "-".
 
 ## Detalhes Tecnicos
 
-- O `MinimalistLayout` ja aplica fundo preto, texto branco, breadcrumb animado, botao voltar e padding interno
-- Os botoes de acao serao movidos para `headerActions` prop, aparecendo no header minimalista
-- O breadcrumb sera explicito: `[{label: 'Home', path: '/home'}, {label: 'Direcao', path: '/direcao'}, {label: 'Vendas', path: '/direcao/vendas'}, {label: 'Tabela de Precos'}]`
-- Cards e tabela precisarao de ajuste de cores para fundo escuro (usar classes como `bg-white/5`, `border-white/10`, `text-white/60` no lugar de `bg-primary/5`, `text-muted-foreground`)
-- 2 arquivos modificados, nenhum arquivo novo
+- A lista de cores (`cores`) ja esta carregada via `useQuery` no `ProdutoVendaForm`, entao nao ha consulta adicional ao banco
+- O campo `descricao` ja e exibido na tabela para tipos nao-porta (linha 77 do `ProdutosVendaTable`)
+- Apenas 2 arquivos modificados, sem mudanca na interface de tipos nem no banco de dados
