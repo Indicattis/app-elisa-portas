@@ -731,11 +731,13 @@ export function OrdemDetalhesSheet({
             </div>
 
             <div className="space-y-4">
-              {tipoOrdem === 'pintura' ? (
-                // Agrupamento por porta para pintura
+              {(tipoOrdem === 'pintura' || tipoOrdem === 'qualidade') ? (
+                // Agrupamento por porta para pintura e qualidade
                 (() => {
-                  // Filtrar linhas que requerem pintura (exclui itens com requer_pintura = false)
-                  const linhasQuePrecisaPintura = linhas.filter(l => l.requer_pintura !== false);
+                  // Filtrar linhas: pintura filtra por requer_pintura, qualidade usa todas
+                  const linhasAgrupadas = tipoOrdem === 'pintura' 
+                    ? linhas.filter(l => l.requer_pintura !== false)
+                    : linhas;
                   
                   // Obter produtos do tipo porta_enrolar do pedido para buscar dimensões
                   const portasEnrolar = ordem.pedido?.produtos?.filter(
@@ -743,7 +745,7 @@ export function OrdemDetalhesSheet({
                   ) || [];
                   
                   // Agrupar linhas por produto_venda_id (com fallback do hook que recupera via pedido_linhas)
-                  const linhasPorPorta = linhasQuePrecisaPintura.reduce((grupos, linha) => {
+                  const linhasPorPorta = linhasAgrupadas.reduce((grupos, linha) => {
                     const key = linha.produto_venda_id || 'sem_porta';
                     if (!grupos[key]) {
                       grupos[key] = [];
@@ -754,7 +756,7 @@ export function OrdemDetalhesSheet({
 
                   // Criar mapa de numeração baseado na ordem de aparição dos produto_venda_id únicos
                   const uniquePortaIds = [...new Set(
-                    linhasQuePrecisaPintura
+                    linhasAgrupadas
                       .map(l => l.produto_venda_id)
                       .filter((id): id is string => id !== null && id !== undefined)
                   )];
@@ -763,7 +765,8 @@ export function OrdemDetalhesSheet({
                     portasNumeracaoMap.set(portaId, idx + 1);
                   });
 
-                  return Object.entries(linhasPorPorta).map(([portaId, linhasPorta], index) => {
+                  return Object.entries(linhasPorPorta).map(([portaId, linhasPortaRaw], index) => {
+                    const linhasPorta = linhasPortaRaw as LinhaOrdem[];
                     const primeiraLinha = linhasPorta[0];
                     const todasConcluidasPorta = linhasPorta.every(l => l.concluida);
                     
@@ -805,7 +808,7 @@ export function OrdemDetalhesSheet({
                                 </Badge>
                               )}
                             </div>
-                            {primeiraLinha.cor_nome && (
+                            {tipoOrdem === 'pintura' && primeiraLinha.cor_nome && (
                               <div className="text-xs text-muted-foreground">
                                 <span className="font-medium">Pintura:</span> {primeiraLinha.cor_nome}
                                 {primeiraLinha.tipo_pintura && ` (${primeiraLinha.tipo_pintura})`}
@@ -817,30 +820,52 @@ export function OrdemDetalhesSheet({
                         {/* Itens da porta */}
                         <div className="space-y-2">
                           {linhasPorta.map((linha) => (
-                            <Label
+                            <div
                               key={linha.id}
+                              className={`flex items-start gap-3 p-3 rounded-md transition-colors ${
+                                linha.com_problema 
+                                  ? 'border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/20' 
+                                  : 'hover:bg-accent/50'
+                              }`}
+                            >
+                            <Label
                               htmlFor={`checkbox-${linha.id}`}
-                              className="flex items-start gap-3 p-3 rounded-md hover:bg-accent/50 transition-colors cursor-pointer"
+                              className="flex items-start gap-3 flex-1 cursor-pointer"
                             >
                               <Checkbox
                                 id={`checkbox-${linha.id}`}
                                 checked={linha.concluida}
                                 onCheckedChange={(checked) => onMarcarLinha(linha.id, checked as boolean)}
-                                disabled={ordem.status === 'concluido' || ordem.status === 'pronta' || isUpdating || !podeMarcarLinhas}
+                                disabled={ordem.status === 'concluido' || ordem.status === 'pronta' || isUpdating || !podeMarcarLinhas || (tipoOrdem === 'qualidade' && linha.com_problema)}
                                 className="mt-1"
                               />
                               
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                  {linha.concluida ? (
+                                  {linha.com_problema ? (
+                                    <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0" />
+                                  ) : linha.concluida ? (
                                     <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
                                   ) : (
                                     <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                   )}
-                                  <span className={`text-base font-medium ${linha.concluida ? 'line-through text-muted-foreground' : ''}`}>
+                                  <span className={`text-base font-medium ${
+                                    linha.com_problema 
+                                      ? 'text-red-700 dark:text-red-300' 
+                                      : linha.concluida 
+                                        ? 'line-through text-muted-foreground' 
+                                        : ''
+                                  }`}>
                                     {linha.item}
                                   </span>
                                 </div>
+                                
+                                {/* Mostrar descrição do problema se houver */}
+                                {linha.com_problema && linha.problema_descricao && (
+                                  <div className="mt-1 p-1.5 rounded bg-red-100 dark:bg-red-900/30 text-xs text-red-700 dark:text-red-300">
+                                    <strong>Problema:</strong> {linha.problema_descricao}
+                                  </div>
+                                )}
                                 
                                 <div className="mt-1.5 flex items-center gap-3 text-sm text-muted-foreground">
                                   <span>Qtd: {linha.quantidade}</span>
@@ -855,6 +880,42 @@ export function OrdemDetalhesSheet({
                                   )}
                                 </div>
                               </div>
+                            </Label>
+                              
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {/* Botão de resolver problema - qualidade */}
+                              {tipoOrdem === 'qualidade' && linha.com_problema && isResponsavel && onResolverProblemaLinha && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-10 w-10 p-0 text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/30"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    onResolverProblemaLinha(linha.id);
+                                  }}
+                                  disabled={isResolvingProblem}
+                                  title="Problema resolvido - liberar linha"
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                              )}
+                              
+                              {/* Botão de informar falta - qualidade */}
+                              {tipoOrdem === 'qualidade' && isResponsavel && !linha.concluida && !linha.com_problema && onMarcarLinhaProblema && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-10 w-10 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setLinhaSelecionada(linha);
+                                    setLinhaProblemaModalOpen(true);
+                                  }}
+                                  title="Informar falta/problema"
+                                >
+                                  <AlertTriangle className="h-4 w-4" />
+                                </Button>
+                              )}
                               
                               <Button
                                 variant="ghost"
@@ -868,7 +929,8 @@ export function OrdemDetalhesSheet({
                               >
                                 <Printer className="h-5 w-5" />
                               </Button>
-                            </Label>
+                            </div>
+                            </div>
                           ))}
                         </div>
                       </div>
