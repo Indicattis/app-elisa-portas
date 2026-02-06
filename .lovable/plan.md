@@ -1,58 +1,30 @@
 
 
-# Corrigir erro "invalid input syntax for type numeric" nas funcoes de metricas
+# Habilitar rota /fabrica/pedidos-producao para todos os usuarios
 
-## Problema
+## Situacao atual
 
-As funcoes SQL `get_portas_por_etapa` e `get_desempenho_etapas` calculam metros perfilados com a expressao:
-
-```sql
-SUM(lo.quantidade * REPLACE(lo.tamanho, ',', '.')::numeric)
-```
-
-Porem, a coluna `linhas_ordens.tamanho` contem valores no formato de dimensoes como `"4.75x6.00"` ou `"4,72x6,00"`. Quando o SQL tenta converter esses valores para `numeric`, ocorre o erro `invalid input syntax for type numeric: "4.75x6.00"`.
-
-## Dados afetados
-
-Existem pelo menos 20 registros com o formato "LARGURAxALTURA" na coluna `tamanho` (ex: `4.75x6.00`, `4,72x6,00`, `3.3x2.8`).
+- A rota `fabrica_pedidos` ja existe na tabela `app_routes` com path `/fabrica/pedidos-producao`
+- 7 de 30 usuarios ativos ja possuem acesso
+- 23 usuarios precisam receber acesso
 
 ## Solucao
 
-Atualizar ambas as funcoes SQL para extrair apenas o primeiro numero (antes do "x") quando o valor contem "x", usando `SPLIT_PART`. A expressao sera:
+Criar uma migration SQL que insere registros na tabela `user_route_access` para todos os usuarios ativos que ainda nao possuem acesso a rota `fabrica_pedidos`.
 
 ```sql
-REPLACE(SPLIT_PART(lo.tamanho, 'x', 1), ',', '.')::numeric
+INSERT INTO user_route_access (user_id, route_key, can_access)
+SELECT au.user_id, 'fabrica_pedidos', true
+FROM admin_users au
+WHERE au.ativo = true
+  AND au.user_id NOT IN (
+    SELECT ura.user_id FROM user_route_access ura WHERE ura.route_key = 'fabrica_pedidos'
+  )
+ON CONFLICT (user_id, route_key) DO UPDATE SET can_access = true;
 ```
 
-Isso transforma:
-- `"4.75x6.00"` -> `"4.75"` -> `4.75`
-- `"4,72x6,00"` -> `"4,72"` -> `"4.72"` -> `4.72`
-- `"2.81"` (sem x) -> `"2.81"` -> `2.81` (sem alteracao)
+## Resultado
 
-### Detalhes tecnicos
-
-Criar uma nova migration SQL que recria as duas funcoes, alterando apenas a linha do calculo de metros perfilados:
-
-**De:**
-```sql
-SUM(lo.quantidade * REPLACE(lo.tamanho, ',', '.')::numeric)
-```
-
-**Para:**
-```sql
-SUM(lo.quantidade * REPLACE(SPLIT_PART(lo.tamanho, 'x', 1), ',', '.')::numeric)
-```
-
-Essa alteracao aparece em 2 lugares:
-1. Na funcao `get_portas_por_etapa` (linha 19 da versao atual)
-2. Na funcao `get_desempenho_etapas` (linha 94 da versao atual)
-
-Adicionalmente, incluir um filtro extra para seguranca contra valores inesperados:
-```sql
-AND lo.tamanho ~ '^\d'
-```
-
-Isso garante que apenas valores que comecam com digitos sejam processados.
+Todos os 30 usuarios ativos terao `can_access = true` para a rota `fabrica_pedidos`, tornando `/fabrica/pedidos-producao` acessivel a todos.
 
 **Arquivos:** 1 nova migration SQL
-
