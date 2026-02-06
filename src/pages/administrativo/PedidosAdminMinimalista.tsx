@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Package, RefreshCw, Search, Factory, CheckCircle, Paintbrush, Truck, HardHat, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Package, RefreshCw, Search, Factory, CheckCircle, Paintbrush, Truck, HardHat, AlertTriangle, CheckCircle2, ShieldCheck } from "lucide-react";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,14 @@ const ETAPAS_CONFIG: EtapaConfig[] = [
     icon: Package, 
     color: 'text-blue-400', 
     bgColor: 'bg-blue-500/20' 
+  },
+  { 
+    id: 'aprovacao_ceo' as EtapaPedido, 
+    label: 'Aprovação CEO', 
+    shortLabel: 'Aprovação',
+    icon: ShieldCheck, 
+    color: 'text-orange-400', 
+    bgColor: 'bg-orange-500/20' 
   },
   { 
     id: 'em_producao', 
@@ -109,6 +117,7 @@ export default function PedidosAdminMinimalista() {
     retrocederEtapa,
     deletarPedido
   } = usePedidosEtapas("aberto");
+  const { pedidos: pedidosAprovacao, isLoading: isLoadingAprovacao } = usePedidosEtapas("aprovacao_ceo");
   const { pedidos: pedidosProducao, isLoading: isLoadingProducao } = usePedidosEtapas("em_producao");
   const { pedidos: pedidosQualidade, isLoading: isLoadingQualidade } = usePedidosEtapas("inspecao_qualidade");
   const { pedidos: pedidosPintura, isLoading: isLoadingPintura } = usePedidosEtapas("aguardando_pintura");
@@ -120,6 +129,7 @@ export default function PedidosAdminMinimalista() {
   // Mapeamento de pedidos e loading por etapa
   const pedidosPorEtapa: Record<string, any[]> = {
     aberto: pedidosAberto,
+    aprovacao_ceo: pedidosAprovacao,
     em_producao: pedidosProducao,
     inspecao_qualidade: pedidosQualidade,
     aguardando_pintura: pedidosPintura,
@@ -131,6 +141,7 @@ export default function PedidosAdminMinimalista() {
 
   const loadingPorEtapa: Record<string, boolean> = {
     aberto: isLoadingAberto,
+    aprovacao_ceo: isLoadingAprovacao,
     em_producao: isLoadingProducao,
     inspecao_qualidade: isLoadingQualidade,
     aguardando_pintura: isLoadingPintura,
