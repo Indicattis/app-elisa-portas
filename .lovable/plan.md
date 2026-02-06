@@ -1,47 +1,73 @@
 
-# Agrupamento por porta em TODAS as paginas de producao
 
-## Problema atual
+# Corrigir agrupamento por porta nas ordens de PINTURA
 
-O agrupamento por porta na downbar so funciona para Pintura e Qualidade (condicao na linha 735 do `OrdemDetalhesSheet.tsx`). Alem disso, a coluna `indice_porta` esta NULL para praticamente todas as linhas de soldagem, perfiladeira e separacao no banco de dados, e a funcao SQL de criacao de ordens nao copia esse campo.
+## Problema
 
-## Alteracoes necessarias
+A funcao SQL `criar_ordem_pintura` copia linhas de producao (soldagem/perfiladeira/separacao) para criar linhas de pintura, mas NAO copia os campos `produto_venda_id` e `indice_porta`. Por isso, 201 das 283 linhas de pintura estao com esses campos NULL, impedindo o agrupamento por porta.
 
-### 1. Frontend - Habilitar agrupamento para todos os tipos
+A PINT-00081 e um exemplo: todas as 7 linhas tem `produto_venda_id = NULL` e `indice_porta = NULL`, enquanto as linhas-fonte ja possuem os dados corretos.
 
-**Arquivo**: `src/components/production/OrdemDetalhesSheet.tsx`
+## Solucao
 
-- Remover a condicao `(tipoOrdem === 'pintura' || tipoOrdem === 'qualidade')` na linha 735
-- Usar o agrupamento por porta para TODOS os tipos de ordem (soldagem, perfiladeira, separacao, qualidade, pintura)
-- Manter o fallback "sem_porta" para linhas sem `produto_venda_id`
+### 1. Corrigir a funcao `criar_ordem_pintura` (para novas ordens)
 
-### 2. SQL - Corrigir funcao `criar_ordens_producao_automaticas`
-
-**Migration SQL**: Recriar a funcao adicionando `indice_porta` nas colunas do INSERT para soldagem, perfiladeira e separacao:
-
-```
-INSERT INTO linhas_ordens (..., indice_porta)
-SELECT ..., pl.indice_porta
-FROM pedido_linhas pl ...
-```
-
-### 3. SQL - Backfill dos dados existentes
-
-Atualizar as linhas existentes que possuem `pedido_linha_id` (a maioria tem), copiando o `indice_porta` de `pedido_linhas`:
+Adicionar `produto_venda_id` e `indice_porta` no SELECT e no INSERT dentro do loop da funcao:
 
 ```sql
-UPDATE linhas_ordens lo
-SET indice_porta = pl.indice_porta
-FROM pedido_linhas pl
-WHERE lo.pedido_linha_id = pl.id
-  AND lo.tipo_ordem IN ('soldagem', 'perfiladeira', 'separacao')
-  AND lo.indice_porta IS NULL
-  AND pl.indice_porta IS NOT NULL;
+FOR v_linha IN
+  SELECT 
+    lo.estoque_id,
+    lo.quantidade,
+    lo.produto_venda_id,   -- NOVO
+    lo.indice_porta,       -- NOVO
+    e.nome_produto,
+    e.requer_pintura
+  FROM linhas_ordens lo
+  JOIN estoque e ON e.id = lo.estoque_id
+  WHERE ...
+LOOP
+  INSERT INTO linhas_ordens (
+    ..., produto_venda_id, indice_porta   -- NOVO
+  ) VALUES (
+    ..., v_linha.produto_venda_id, v_linha.indice_porta
+  );
+END LOOP;
 ```
 
-Este UPDATE e seguro pois usa `pedido_linha_id` (chave unica), diferente do backfill anterior que usava `estoque_id` (nao unico).
+### 2. Backfill das linhas de pintura existentes
+
+Como as linhas de pintura foram copiadas de linhas de producao com o mesmo `pedido_id` e `estoque_id`, podemos fazer o backfill usando match via `pedido_id` + `estoque_id` + `tipo_ordem` fonte. Porem, para pintura de porta unica (como PINT-00081) isso funciona. Para pedidos com multiplas portas, o `estoque_id` pode nao ser unico.
+
+A abordagem mais segura: deletar e re-inserir as linhas de pintura (mesma estrategia usada com sucesso para qualidade):
+
+```sql
+DELETE FROM linhas_ordens WHERE tipo_ordem = 'pintura';
+
+INSERT INTO linhas_ordens (
+  pedido_id, ordem_id, tipo_ordem, item, quantidade,
+  concluida, estoque_id, produto_venda_id, indice_porta
+)
+SELECT DISTINCT ON (op.id, lo.estoque_id, lo.produto_venda_id, lo.indice_porta)
+  op.pedido_id, op.id, 'pintura',
+  e.nome_produto, lo.quantidade,
+  false, lo.estoque_id, lo.produto_venda_id, lo.indice_porta
+FROM ordens_pintura op
+JOIN linhas_ordens lo ON lo.pedido_id = op.pedido_id
+  AND lo.tipo_ordem IN ('soldagem', 'perfiladeira', 'separacao')
+JOIN estoque e ON e.id = lo.estoque_id
+  AND e.categoria = 'componente'
+  AND e.requer_pintura = true
+WHERE op.historico = false;
+```
+
+**Nota**: Isso reseta `concluida` para false nas linhas de pintura.
+
+## Nenhuma alteracao no frontend
+
+O frontend ja suporta agrupamento por porta para todos os tipos. O problema e exclusivamente nos dados e na funcao SQL.
 
 ## Arquivos afetados
 
-1. `src/components/production/OrdemDetalhesSheet.tsx` - remover condicao de tipo
-2. Nova migration SQL - corrigir funcao + backfill de `indice_porta`
+1. Nova migration SQL - corrigir funcao `criar_ordem_pintura` + backfill de dados
+
