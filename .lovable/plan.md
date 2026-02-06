@@ -1,55 +1,36 @@
 
-# Adicionar Informacoes de Produtos na Downbar de Aprovacoes Fabrica
 
-## O que sera feito
+# Corrigir nome dos Acessorios e Adicionais na lista de produtos
 
-Na secao expandida (downbar) de cada card em `/direcao/aprovacoes/fabrica`, adicionar um resumo visual dos produtos do pedido com:
-- Cor da pintura (nome + bolinha colorida)
-- Tamanhos das portas de enrolar (largura x altura)
-- Nome/descricao dos acessorios e adicionais
+## Problema
 
-## Alteracoes
+Na lista de itens da venda (dentro do PedidoDetalhesSheet), acessorios e adicionais mostram apenas o tipo generico ("8x Adicional") em vez do nome/descricao real do item (ex: "8x Fechadura Tetra").
 
-### 1. `src/hooks/usePedidosAprovacaoCEO.ts`
+Isso acontece porque o codigo usa um `nomeMap` que traduz o `tipo_produto` para um label fixo, e a descricao real so aparece como subtexto secundario abaixo.
 
-Adicionar um novo campo `produtosResumo` na interface `PedidoAprovacao` que expoe uma lista tipada dos produtos relevantes:
+## Solucao
 
+No arquivo `src/components/pedidos/PedidoDetalhesSheet.tsx`, para tipos `acessorio` e `adicional`, usar a `descricao` do produto como nome principal (quando disponivel), em vez do label generico.
+
+### Alteracao (linha 557)
+
+De:
 ```ts
-produtosResumo: Array<{
-  tipo: string;
-  nome: string;
-  quantidade: number;
-  tamanho?: string;
-  corNome?: string;
-  corHex?: string;
-}>
+const nome = nomeMap[tipo] || tipo;
 ```
 
-No mapeamento dos pedidos, construir essa lista a partir de `produtos_vendas`:
-- Para `porta_enrolar`: incluir `tamanho` (ou `largura x altura` formatado)
-- Para `pintura_epoxi`: incluir `corNome` e `corHex` do `catalogo_cores`
-- Para `acessorio` e `adicional`: incluir `descricao` como nome
-
-### 2. `src/pages/direcao/aprovacoes/AprovacoesProducao.tsx`
-
-Na secao expandida (entre o `border-t` e os botoes de acao), adicionar um bloco de resumo dos produtos:
-
-```
-Detalhes expandidos:
-  [Resumo de produtos]         <-- NOVO
-    - Porta de Enrolar 3,00 x 3,50m (P)
-    - Porta de Enrolar 5,00 x 4,00m (G)
-    - Pintura Epoxi [bolinha cor] Branco
-    - Acessorio: Fechadura Tetra
-  [Botao Aprovar]
-  [Botao Ver Detalhes]
+Para:
+```ts
+const nome = (tipo === 'acessorio' || tipo === 'adicional') && (produto.descricao || produto.nome)
+  ? (produto.descricao || produto.nome)
+  : (nomeMap[tipo] || tipo);
 ```
 
-Cada item sera exibido como uma linha compacta com icone, nome, e metadados relevantes (tamanho, cor, descricao).
+Alem disso, remover o subtexto redundante nas linhas 595-597 (que mostrava a descricao embaixo), ja que agora ela faz parte do nome principal.
 
-## Detalhes Tecnicos
+### Resultado
 
-- Os dados de `produtos_vendas` ja sao buscados pelo hook (incluindo `catalogo_cores:cor_id`), portanto nao ha query adicional
-- Para acessorios/adicionais, o campo `descricao` do `produtos_vendas` contem o nome do item
-- O layout dos itens segue o estilo minimalista existente: fundo `bg-muted/50`, borda sutil, texto compacto
-- 2 arquivos modificados, nenhum arquivo novo
+- "8x Adicional" passa a ser "8x Fechadura Tetra" (ou o nome real do item)
+- Se nao houver descricao, continua mostrando "Adicional" como fallback
+- 1 arquivo modificado, 1 trecho alterado
+
