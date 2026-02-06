@@ -1443,7 +1443,7 @@ export function PedidoCard({
                       const validacao = getValidacaoAvancoEtapa('aberto');
                       avancarButtons.push(
                         <ButtonWithTooltip key="iniciar" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
-                          <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!validacao.podeAvancar} className="flex h-[20px] w-[20px] rounded-[3px]">
+                          <Button size="icon" onClick={(e) => { e.stopPropagation(); setShowConfirmarAvanco(true); }} disabled={!validacao.podeAvancar} className="flex h-[20px] w-full rounded-[3px]">
                             <ArrowRight className="h-3 w-3" />
                           </Button>
                         </ButtonWithTooltip>
