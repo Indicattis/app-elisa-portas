@@ -30,17 +30,19 @@ export const useProdutosVenda = (vendaId?: string) => {
   // Adicionar produto
   const addProdutoMutation = useMutation({
     mutationFn: async (produto: ProdutoVenda & { venda_id: string }) => {
-      // Limpar campos UUID vazios e garantir valores default
+      // Remover campos que nao existem na tabela produtos_vendas
+      const { unidade, ...produtoSemExtra } = produto as any;
+      
       const produtoLimpo = {
-        ...produto,
-        tamanho: produto.tamanho || (produto.largura && produto.altura ? `${produto.largura}x${produto.altura}` : ''),
-        largura: produto.largura || null,
-        altura: produto.altura || null,
-        cor_id: produto.cor_id || null,
-        acessorio_id: produto.acessorio_id || null,
-        adicional_id: produto.adicional_id || null,
-        vendas_catalogo_id: produto.vendas_catalogo_id || null,
-        descricao: produto.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produto.descricao || null),
+        ...produtoSemExtra,
+        tamanho: produtoSemExtra.tamanho || (produtoSemExtra.largura && produtoSemExtra.altura ? `${produtoSemExtra.largura}x${produtoSemExtra.altura}` : ''),
+        largura: produtoSemExtra.largura || null,
+        altura: produtoSemExtra.altura || null,
+        cor_id: produtoSemExtra.cor_id || null,
+        acessorio_id: produtoSemExtra.acessorio_id || null,
+        adicional_id: produtoSemExtra.adicional_id || null,
+        vendas_catalogo_id: produtoSemExtra.vendas_catalogo_id || null,
+        descricao: produtoSemExtra.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produtoSemExtra.descricao || null),
       };
 
       const { data, error } = await supabase
