@@ -383,6 +383,15 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
 
   const produtos = venda.produtos_vendas || [];
 
+  // Extrair cores únicas dos produtos
+  const coresUnicasMap = new Map<string, { nome: string; codigo_hex: string }>();
+  produtos.forEach((p: any) => {
+    if (p.cor?.nome && p.cor?.codigo_hex) {
+      coresUnicasMap.set(p.cor.nome, { nome: p.cor.nome, codigo_hex: p.cor.codigo_hex });
+    }
+  });
+  const coresUnicas = Array.from(coresUnicasMap.values());
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
@@ -458,6 +467,25 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                       <Phone className="h-3.5 w-3.5 text-green-400" />
                       {venda.cliente_telefone}
                     </span>
+                  )}
+                </div>
+
+                {/* Cores do Pedido */}
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  {coresUnicas.length > 0 ? (
+                    coresUnicas.map((cor) => (
+                      <div key={cor.nome} className="flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-1 border border-white/20">
+                        <div
+                          className="w-3 h-3 rounded-full border border-white/30"
+                          style={{ backgroundColor: cor.codigo_hex }}
+                        />
+                        <span className="text-xs text-white/80">{cor.nome}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-1 border border-white/20">
+                      <span className="text-xs text-white/60">Galvanizada</span>
+                    </div>
                   )}
                 </div>
               </div>
