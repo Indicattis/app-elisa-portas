@@ -7,6 +7,7 @@ import { AdicionarLinhaModal } from "./AdicionarLinhaModal";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getLabelProdutoExpandido } from "@/utils/tipoProdutoLabels";
 import type { PedidoLinha, PedidoLinhaNova, PedidoLinhaUpdate, CategoriaLinha } from "@/hooks/usePedidoLinhas";
 
 interface LinhasAgrupadasPorPortaProps {
@@ -170,9 +171,7 @@ export function LinhasAgrupadasPorPorta({
           );
           
           // Label considerando expansão
-          const portaLabel = porta._totalNoGrupo && porta._totalNoGrupo > 1
-            ? `Porta #${idx + 1} (${indicePorta + 1}/${porta._totalNoGrupo})`
-            : `Porta #${idx + 1}`;
+          const portaLabel = getLabelProdutoExpandido(idx, porta.tipo_produto, porta.largura, porta.altura, porta._totalNoGrupo, porta._indicePorta);
         
           return (
             <Collapsible key={virtualKey} defaultOpen={false}>

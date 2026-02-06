@@ -31,6 +31,7 @@ import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
 import { AvisoFaltaModal } from "./AvisoFaltaModal";
 import { InformarFaltaLinhaModal } from "./InformarFaltaLinhaModal";
 import { formatarTamanho, formatarDimensoes } from "@/utils/formatters";
+import { getLabelTipoProduto } from "@/utils/tipoProdutoLabels";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
 
@@ -739,9 +740,8 @@ export function OrdemDetalhesSheet({
                     : linhas;
                   
                   // Obter produtos do tipo porta_enrolar do pedido para buscar dimensões
-                  const portasEnrolar = ordem.pedido?.produtos?.filter(
-                    (p: any) => p.tipo_produto === 'porta_enrolar'
-                  ) || [];
+                  // Obter todos os produtos do pedido para buscar dimensões e tipos
+                  const todosProdutos = ordem.pedido?.produtos || [];
                   
                   // Agrupar linhas por produto_venda_id (com fallback do hook que recupera via pedido_linhas)
                   const linhasPorPorta = linhasAgrupadas.reduce((grupos, linha) => {
@@ -776,8 +776,8 @@ export function OrdemDetalhesSheet({
                       // Extrair o produto_venda_id base (sem o sufixo _indice)
                       const baseProdutoId = portaId !== 'sem_porta' ? portaId.split('_').slice(0, -1).join('_') : null;
                       const produtoCorrespondente = baseProdutoId
-                        ? portasEnrolar.find((p: any) => p.id === baseProdutoId)
-                        : portasEnrolar[index];
+                        ? todosProdutos.find((p: any) => p.id === baseProdutoId)
+                        : todosProdutos[index];
                       
                       if (produtoCorrespondente) {
                         larguraPorta = larguraPorta || produtoCorrespondente.largura;
@@ -793,7 +793,13 @@ export function OrdemDetalhesSheet({
                             <div className="flex items-center gap-2">
                               <Package className="h-4 w-4 text-primary" />
                               <span className="font-semibold text-sm">
-                                Porta {String(portasNumeracaoMap.get(portaId) || 1).padStart(2, '0')}
+                                {(() => {
+                                  const baseProdutoId2 = portaId !== 'sem_porta' ? portaId.split('_').slice(0, -1).join('_') : null;
+                                  const prod = baseProdutoId2 ? todosProdutos.find((p: any) => p.id === baseProdutoId2) : null;
+                                  const tipoLabel = getLabelTipoProduto(prod?.tipo_produto);
+                                  const num = String(portasNumeracaoMap.get(portaId) || 1).padStart(2, '0');
+                                  return `${tipoLabel} ${num}`;
+                                })()}
                                 {larguraPorta && alturaPorta && (
                                   <span className="font-normal text-muted-foreground ml-2">
                                     {formatarDimensoes(larguraPorta, alturaPorta)}
