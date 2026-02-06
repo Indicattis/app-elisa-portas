@@ -1,29 +1,83 @@
 
-# Plano: Padronizar botoes de avanco em todas as etapas
+# Plano: Modal de Desempenho do Colaborador no Ranking
 
 ## O que muda
 
-Na pagina `/direcao/gestao-fabrica`, os botoes de avancar etapa em todas as etapas terao a mesma largura do botao da etapa "Em Aberto" (`w-full` em vez de `w-[20px]`), ocupando toda a largura da coluna de acoes.
+Ao clicar em um colaborador no ranking (componente PortasPorEtapa dentro de `/direcao/gestao-fabrica`), em vez de navegar para outra pagina, abrira um **modal/dialog** com:
+
+1. **Desempenho da semana** - graficos de desempenho diario do colaborador na semana atual
+2. **Metas existentes** - lista das metas definidas com progresso
+3. **Botao "Nova Meta"** - para criar uma meta diretamente do modal
+
+---
 
 ## Detalhes Tecnicos
 
-### Arquivo: `src/components/pedidos/PedidoCard.tsx`
+### 1. Novo componente: `src/components/producao/ColaboradorDesempenhoModal.tsx`
 
-Alterar a classe `w-[20px]` para `w-full` nos botoes de avancar de todas as etapas:
+Um Dialog que recebe `userId` e `open/onOpenChange`, contendo:
 
-1. **Linha 1477** - Etapa `em_producao`: `w-[20px]` para `w-full`
-2. **Linha 1501** - Etapa `inspecao_qualidade`: `w-[20px]` para `w-full`
-3. **Linha 1510** - Etapa `aguardando_pintura`: `w-[20px]` para `w-full`
-4. **Linha 1526** - Etapas `aguardando_coleta` / `instalacoes`: `w-[20px]` para `w-full`
-5. **Linha 1534** - Etapas genericas (fallback): `w-[20px]` para `w-full`
+- **Header**: Avatar, nome do colaborador e periodo (semana atual)
+- **Secao "Desempenho Semanal"**: Reutiliza o componente `GraficoDesempenhoDiario` com dados da semana (segunda a hoje), usando o hook `useDesempenhoDiarioColaborador`
+- **Secao "Metas"**: Lista de metas usando o componente `MetaCard` existente, com hook `useMetasColaborador` e `useMetaProgressoCalculado`
+- **Botao "Nova Meta"**: Abre o `MetaDialog` existente passando o `userId`
+- **Botao "Editar/Excluir Meta"**: Reusa a mesma logica do `MetasColaboradorIndividual`
 
-Cada botao passara de:
+Hooks reutilizados (ja existem):
+- `useColaboradorInfo(userId)` - info do colaborador
+- `useDesempenhoDiarioColaborador(userId, dataInicio, dataFim)` - desempenho diario
+- `useMetasColaborador(userId)` - metas do colaborador
+- `useMetaProgressoCalculado(userId, metas)` - progresso das metas
+
+Componentes reutilizados (ja existem):
+- `GraficoDesempenhoDiario` - graficos de barras por tipo
+- `MetaCard` - card de meta com progresso
+- `MetaDialog` - dialog de criar/editar meta
+
+### 2. Alterar: `src/components/producao/dashboard/PortasPorEtapa.tsx`
+
+- Adicionar estado `selectedColaboradorId` e `modalOpen`
+- Alterar `handleColaboradorClick` para abrir o modal em vez de navegar:
+
 ```tsx
-className="flex h-[20px] w-[20px] rounded-[3px]"
-```
-Para:
-```tsx
-className="flex h-[20px] w-full rounded-[3px]"
+const [selectedColaboradorId, setSelectedColaboradorId] = useState<string | null>(null);
+
+const handleColaboradorClick = (userId: string) => {
+  setSelectedColaboradorId(userId);
+};
 ```
 
-Nenhum outro arquivo precisa ser alterado - a grid template ja e a mesma para todas as etapas.
+- Renderizar o `ColaboradorDesempenhoModal` no final do componente:
+
+```tsx
+<ColaboradorDesempenhoModal
+  userId={selectedColaboradorId}
+  open={!!selectedColaboradorId}
+  onOpenChange={(open) => { if (!open) setSelectedColaboradorId(null); }}
+/>
+```
+
+### 3. Estrutura do Modal
+
+```text
++------------------------------------------+
+| [Avatar] Nome do Colaborador        [X]  |
+| Semana: 03/02 - 07/02/2026              |
++------------------------------------------+
+| Desempenho Semanal                       |
+| [Grafico Solda] [Grafico Perfiladeira]   |
+| [Grafico Separacao] [Grafico Qualidade]  |
+| [Grafico Pintura] [Grafico Expedicao]    |
++------------------------------------------+
+| Metas                    [+ Nova Meta]   |
+| [MetaCard 1] [MetaCard 2]               |
+| ou "Nenhuma meta definida"               |
++------------------------------------------+
+```
+
+O modal usara `sm:max-w-3xl` para ter espaco suficiente para os graficos lado a lado. Sera scrollavel internamente para acomodar todo o conteudo.
+
+### Arquivos modificados/criados
+
+1. **Criar**: `src/components/producao/ColaboradorDesempenhoModal.tsx`
+2. **Modificar**: `src/components/producao/dashboard/PortasPorEtapa.tsx` (trocar navegacao por abertura de modal)
