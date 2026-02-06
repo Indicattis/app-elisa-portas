@@ -269,36 +269,53 @@ export const useOrdensCarregamentoUnificadas = () => {
 
   // Mutation para concluir carregamento (diferenciada por fonte)
   const concluirCarregamentoMutation = useMutation({
-    mutationFn: async ({ ordem, observacoes }: { ordem: OrdemCarregamentoUnificada; observacoes?: string }) => {
+    mutationFn: async ({ ordem, observacoes, fotoFile }: { ordem: OrdemCarregamentoUnificada; observacoes?: string; fotoFile?: File }) => {
       console.log('[concluirCarregamentoUnificado] Concluindo:', ordem.id, 'Fonte:', ordem.fonte);
+
+      // Upload da foto se fornecida
+      let fotoUrl: string | null = null;
+      if (fotoFile) {
+        const ext = fotoFile.name.split('.').pop() || 'jpg';
+        const path = `${ordem.id}/${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from('fotos-carregamento')
+          .upload(path, fotoFile);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage
+          .from('fotos-carregamento')
+          .getPublicUrl(path);
+        fotoUrl = urlData.publicUrl;
+      }
       
       if (ordem.fonte === 'ordens_carregamento') {
-        // Concluir via ordens_carregamento (entregas)
-        if (observacoes) {
+        const updateData: Record<string, any> = {};
+        if (observacoes) updateData.observacoes = observacoes;
+        if (fotoUrl) updateData.foto_carregamento_url = fotoUrl;
+        if (Object.keys(updateData).length > 0) {
           await supabase
             .from("ordens_carregamento")
-            .update({ observacoes })
+            .update(updateData)
             .eq("id", ordem.id);
         }
 
         const { error } = await supabase.rpc('concluir_carregamento_e_avancar_pedido', {
           p_ordem_carregamento_id: ordem.id
         });
-
         if (error) throw error;
       } else {
-        // Concluir via instalacoes
-        if (observacoes) {
+        const updateData: Record<string, any> = {};
+        if (observacoes) updateData.observacoes = observacoes;
+        if (fotoUrl) updateData.foto_carregamento_url = fotoUrl;
+        if (Object.keys(updateData).length > 0) {
           await supabase
             .from("instalacoes")
-            .update({ observacoes })
+            .update(updateData)
             .eq("id", ordem.id);
         }
 
         const { error } = await supabase.rpc('concluir_carregamento_instalacao', {
           p_instalacao_id: ordem.id
         });
-
         if (error) throw error;
       }
     },

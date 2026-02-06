@@ -45,9 +45,9 @@ export default function ProducaoCarregamento() {
     setDownbarOpen(true);
   };
 
-  const handleConcluirCarregamento = async ({ observacoes }: { observacoes?: string }) => {
+  const handleConcluirCarregamento = async ({ observacoes, fotoFile }: { observacoes?: string; fotoFile?: File }) => {
     if (!itemSelecionado) return;
-    await concluirCarregamento({ ordem: itemSelecionado, observacoes });
+    await concluirCarregamento({ ordem: itemSelecionado, observacoes, fotoFile });
     
     // Mostrar progresso da meta
     if (user?.user_id) {
