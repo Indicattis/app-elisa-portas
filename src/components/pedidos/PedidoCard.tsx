@@ -995,7 +995,7 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid items-center gap-1.5 h-full px-2 w-full" style={{ gridTemplateColumns: showEtapaBadge ? '20px 60px 20px 24px 1fr 65px 20px 45px 45px 90px 75px 110px 90px 80px 24px 24px 24px 24px 24px 65px 55px' : '20px 20px 24px 1fr 65px 20px 45px 45px 90px 75px 110px 90px 80px 24px 24px 24px 24px 24px 65px 55px' }}>
+            <div className="grid items-center gap-1.5 h-full px-2 w-full" style={{ gridTemplateColumns: showEtapaBadge ? '20px 60px 20px 24px 1fr 55px 20px 40px 40px 80px 70px 100px 100px 80px 24px 24px 24px 24px 24px 65px 55px' : '20px 20px 24px 1fr 55px 20px 40px 40px 80px 70px 100px 100px 80px 24px 24px 24px 24px 24px 65px 55px' }}>
               {/* Col 1: Drag Handle ou Aviso de Espera */}
               <div>
                 {dragHandleProps ? (
