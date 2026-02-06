@@ -1,51 +1,47 @@
 
+# Agrupamento por porta em TODAS as paginas de producao
 
-# Mostrar dimensoes da porta no header de agrupamento (downbar qualidade)
+## Problema atual
 
-## Problema
+O agrupamento por porta na downbar so funciona para Pintura e Qualidade (condicao na linha 735 do `OrdemDetalhesSheet.tsx`). Alem disso, a coluna `indice_porta` esta NULL para praticamente todas as linhas de soldagem, perfiladeira e separacao no banco de dados, e a funcao SQL de criacao de ordens nao copia esse campo.
 
-O header do agrupamento por porta na downbar de qualidade mostra apenas "Porta 01", "Porta 02", etc., sem as dimensoes. Isso ocorre porque a query em `useOrdemProducao.ts` nao busca `largura` e `altura` dos `produtos_vendas`, entao o fallback no `OrdemDetalhesSheet.tsx` nao encontra as dimensoes.
+## Alteracoes necessarias
 
-A query de pintura (`useOrdemPintura.ts`) ja busca esses campos corretamente -- so falta corrigir no hook de producao.
+### 1. Frontend - Habilitar agrupamento para todos os tipos
 
-## Solucao
+**Arquivo**: `src/components/production/OrdemDetalhesSheet.tsx`
 
-### Arquivo: `src/hooks/useOrdemProducao.ts` (linha 109-115)
+- Remover a condicao `(tipoOrdem === 'pintura' || tipoOrdem === 'qualidade')` na linha 735
+- Usar o agrupamento por porta para TODOS os tipos de ordem (soldagem, perfiladeira, separacao, qualidade, pintura)
+- Manter o fallback "sem_porta" para linhas sem `produto_venda_id`
 
-Adicionar `largura` e `altura` na sub-query de `produtos_vendas`:
+### 2. SQL - Corrigir funcao `criar_ordens_producao_automaticas`
 
-De:
+**Migration SQL**: Recriar a funcao adicionando `indice_porta` nas colunas do INSERT para soldagem, perfiladeira e separacao:
+
 ```
-produtos:produtos_vendas(
-  id,
-  tipo_produto,
-  cor_id,
-  quantidade,
-  catalogo_cores(nome, codigo_hex)
-)
-```
-
-Para:
-```
-produtos:produtos_vendas(
-  id,
-  tipo_produto,
-  cor_id,
-  quantidade,
-  largura,
-  altura,
-  catalogo_cores(nome, codigo_hex)
-)
+INSERT INTO linhas_ordens (..., indice_porta)
+SELECT ..., pl.indice_porta
+FROM pedido_linhas pl ...
 ```
 
-Isso e suficiente porque o `OrdemDetalhesSheet.tsx` ja tem a logica de fallback implementada (linhas 777-788) que busca as dimensoes em `ordem.pedido.produtos` quando nao estao na propria linha. So faltava o dado estar disponivel.
+### 3. SQL - Backfill dos dados existentes
 
-## Resultado
+Atualizar as linhas existentes que possuem `pedido_linha_id` (a maioria tem), copiando o `indice_porta` de `pedido_linhas`:
 
-Os headers de agrupamento na downbar de qualidade passarao a mostrar:
-- Porta 01 - 4,61m x 5,00m
-- Porta 02 - 4,75m x 6,00m
-- etc.
+```sql
+UPDATE linhas_ordens lo
+SET indice_porta = pl.indice_porta
+FROM pedido_linhas pl
+WHERE lo.pedido_linha_id = pl.id
+  AND lo.tipo_ordem IN ('soldagem', 'perfiladeira', 'separacao')
+  AND lo.indice_porta IS NULL
+  AND pl.indice_porta IS NOT NULL;
+```
 
-## Arquivo afetado
-1. `src/hooks/useOrdemProducao.ts` (adicionar 2 campos na query)
+Este UPDATE e seguro pois usa `pedido_linha_id` (chave unica), diferente do backfill anterior que usava `estoque_id` (nao unico).
+
+## Arquivos afetados
+
+1. `src/components/production/OrdemDetalhesSheet.tsx` - remover condicao de tipo
+2. Nova migration SQL - corrigir funcao + backfill de `indice_porta`
