@@ -1,53 +1,44 @@
 
-# Plano: Contador de Itens Pendentes nos Botoes do Hub de Aprovacoes
+# Correcao: Contabilizacao de Metragem na Meta do Colaborador
 
-## Objetivo
-Adicionar um badge/span em cada botao do hub `/direcao/aprovacoes` mostrando a quantidade de itens aguardando aprovacao.
+## Problema Identificado
 
-## Alteracao
+O filtro de data nas queries de progresso usa `.lte("data_conclusao", data_termino)` onde `data_termino` e uma string de data sem horario (ex: `"2026-02-06"`). O Supabase interpreta como `2026-02-06T00:00:00`, excluindo todas as ordens concluidas **durante** o ultimo dia da meta.
 
-### Arquivo: `src/pages/direcao/aprovacoes/DirecaoAprovacoesHub.tsx`
+No caso do Joao Vitor, 2.486,25m de metragem estao sendo ignorados (ordens OPE-2026-0031 e OPE-2026-0058 concluidas em 06/02).
 
-**O que muda:**
-- Importar `useQuery` e `supabase` para buscar a contagem de pedidos na etapa `aprovacao_ceo`
-- Exibir um span com a contagem ao lado do label de cada botao
+## Correcao
 
-**Layout do botao atualizado:**
+Alterar o filtro `lte` para incluir o dia inteiro do termino, adicionando `T23:59:59` ao `data_termino`.
 
-```text
-+----------------------------------------------------+
-| [Factory]  Aprovações Fábrica              (12)    |
-+----------------------------------------------------+
-```
+### Arquivos a Modificar
 
-## Detalhes Tecnicos
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/hooks/useMetaProgressoCalculado.ts` | Corrigir `.lte("data_conclusao", data_termino)` para `.lte("data_conclusao", data_termino + "T23:59:59")` em todos os 6 cases do switch |
+| `src/components/metas/MetaProgressoBar.tsx` | Mesma correcao nos 6 cases do switch dentro da queryFn |
 
-1. Adicionar uma query simples que conta pedidos em `aprovacao_ceo`:
+### Detalhes Tecnicos
+
+Em ambos os arquivos, cada `case` do switch faz:
 
 ```typescript
-const { data: countFabrica } = useQuery({
-  queryKey: ['aprovacoes-fabrica-count'],
-  queryFn: async () => {
-    const { count } = await supabase
-      .from('pedidos_producao')
-      .select('*', { count: 'exact', head: true })
-      .eq('etapa_atual', 'aprovacao_ceo')
-      .eq('arquivado', false);
-    return count || 0;
-  },
-});
+// ANTES (bug):
+.lte("data_conclusao", data_termino)
+
+// DEPOIS (corrigido):
+.lte("data_conclusao", data_termino + "T23:59:59")
 ```
 
-2. Associar a contagem ao item do menu via um mapa de contagens (para escalar quando houver mais botoes no futuro).
+Tambem aplicar a mesma logica ao `data_inicio` para consistencia:
 
-3. Renderizar o span como um badge circular alinhado a direita do botao, com estilo `bg-white/20 text-white` para manter consistencia visual. Se a contagem for 0, o badge nao aparece.
-
-```tsx
-{count > 0 && (
-  <span className="ml-auto bg-white/20 text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-[24px] text-center">
-    {count}
-  </span>
-)}
+```typescript
+// data_inicio ja esta correto com .gte() pois "2026-01-31" = "2026-01-31T00:00:00"
+// que inclui o dia inteiro a partir da meia-noite. Nenhuma mudanca necessaria.
 ```
 
-Apenas o arquivo `DirecaoAprovacoesHub.tsx` sera modificado.
+### Resultado Esperado
+
+- Progresso do Joao Vitor passara de ~2.833m para ~5.319m (53% da meta de 10.000m)
+- Todas as ordens concluidas no ultimo dia da meta serao contabilizadas corretamente
+- Correcao beneficia todos os colaboradores e todos os tipos de meta
