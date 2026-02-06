@@ -1,122 +1,56 @@
 
-# Correcao: Calendario Expedicao - Atualizacao Instantanea e Remocao do Calendario
+# Correcao: Erro ao Adicionar Item de Catalogo na Edicao de Venda
 
-## Problemas Identificados
+## Problema Identificado
 
-### Problema 1: "Remover do calendario" nao funciona
-Em `ExpedicaoMinimalista.tsx` (linha 111-119), o `handleRemoverDoCalendario` nao passa o campo `fonte` ao chamar `updateOrdem`. Como o calendario combina ordens de duas tabelas (`ordens_carregamento` e `instalacoes`), quando a ordem vem da tabela `instalacoes`, a atualizacao tenta modificar a tabela errada (`ordens_carregamento`) e falha silenciosamente.
+Ao adicionar um item do catalogo na pagina de edicao de venda (`/direcao/vendas/:id/editar`), o campo `unidade` e enviado na insercao mas **nao existe** na tabela `produtos_vendas`. Isso causa um erro silencioso no Supabase que impede a criacao do produto.
 
-```typescript
-// ATUAL (bug) - linha 111-119:
-const handleRemoverDoCalendario = (ordemId: string) => {
-  updateOrdem({ 
-    id: ordemId, 
-    data: { data_carregamento: null, status: 'pendente' } 
-    // FALTA: fonte da ordem!
-  });
-};
-```
+O fluxo do problema:
+1. O `SelecionarAcessoriosModal` retorna produtos com o campo `unidade` (ex: "Unitario", "Metro")
+2. O `VendaEditarDirecao` chama `addProduto({ ...produto, venda_id: id })`
+3. O hook `useProdutosVenda` faz spread de todos os campos no insert: `{ ...produto }`
+4. O Supabase rejeita o insert porque a coluna `unidade` nao existe em `produtos_vendas`
 
-### Problema 2: Calendario e listagem nao atualizam instantaneamente
-1. O `handleRemoverDoCalendario` nao usa `await`, entao o toast aparece antes da operacao completar.
-2. Apos remocao/agendamento, as queries da listagem (`ordens-carregamento-disponiveis`) nao sao invalidadas.
-3. A subscription em tempo real so escuta a tabela `ordens_carregamento` mas nao a tabela `instalacoes`.
-4. A mutation `onSuccess` no hook `useOrdensCarregamentoCalendario` nao invalida `ordens-carregamento-disponiveis`.
+Itens do tipo `porta_enrolar` funcionam normalmente porque nao possuem o campo `unidade`.
 
----
+## Correcao
 
-## Correcoes
+### Arquivo: `src/hooks/useProdutosVenda.ts`
 
-### Arquivo: `src/pages/logistica/ExpedicaoMinimalista.tsx`
-
-**Correcao 1**: Passar `fonte` no `handleRemoverDoCalendario` buscando a ordem correta dos dados:
+Remover campos que nao pertencem a tabela `produtos_vendas` antes do insert. Adicionar uma limpeza explicita para excluir `unidade` e qualquer outro campo extra.
 
 ```typescript
-const handleRemoverDoCalendario = async (ordemId: string) => {
-  // Encontrar a ordem para saber a fonte
-  const ordem = ordens?.find(o => o.id === ordemId);
-  const fonte = ordem?.fonte || 'ordens_carregamento';
+// Dentro do mutationFn do addProdutoMutation (linha 32-53)
+mutationFn: async (produto: ProdutoVenda & { venda_id: string }) => {
+  // Remover campos que nao existem na tabela produtos_vendas
+  const { unidade, ...produtoSemExtra } = produto as any;
   
-  await updateOrdem({ 
-    id: ordemId, 
-    data: { 
-      data_carregamento: null, 
-      status: 'pendente' 
-    },
-    fonte
-  });
-  
-  queryClient.invalidateQueries({ queryKey: ['ordens-carregamento-disponiveis'] });
-  toast.success("Ordem removida do calendário");
-};
-```
+  const produtoLimpo = {
+    ...produtoSemExtra,
+    tamanho: produtoSemExtra.tamanho || (produtoSemExtra.largura && produtoSemExtra.altura ? `${produtoSemExtra.largura}x${produtoSemExtra.altura}` : ''),
+    largura: produtoSemExtra.largura || null,
+    altura: produtoSemExtra.altura || null,
+    cor_id: produtoSemExtra.cor_id || null,
+    acessorio_id: produtoSemExtra.acessorio_id || null,
+    adicional_id: produtoSemExtra.adicional_id || null,
+    vendas_catalogo_id: produtoSemExtra.vendas_catalogo_id || null,
+    descricao: produtoSemExtra.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produtoSemExtra.descricao || null),
+  };
 
-### Arquivo: `src/hooks/useOrdensCarregamentoCalendario.ts`
+  const { data, error } = await supabase
+    .from('produtos_vendas')
+    .insert([produtoLimpo])
+    .select()
+    .single();
 
-**Correcao 2**: Na mutation `onSuccess`, tambem invalidar `ordens-carregamento-disponiveis`:
-
-```typescript
-onSuccess: () => {
-  queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_calendario"] });
-  queryClient.invalidateQueries({ queryKey: ["ordens_carregamento"] });
-  queryClient.invalidateQueries({ queryKey: ["instalacoes"] });
-  queryClient.invalidateQueries({ queryKey: ["ordens-carregamento-disponiveis"] });
+  if (error) throw error;
+  return data;
 },
 ```
 
-**Correcao 3**: Adicionar subscription na tabela `instalacoes` para atualizacao em tempo real:
+### Resultado Esperado
 
-```typescript
-useEffect(() => {
-  const channel = supabase
-    .channel('ordens-carregamento-calendar-changes')
-    .on('postgres_changes', {
-      event: '*', schema: 'public', table: 'ordens_carregamento'
-    }, () => {
-      queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_calendario", inicio, fim] });
-    })
-    .on('postgres_changes', {
-      event: '*', schema: 'public', table: 'instalacoes'
-    }, () => {
-      queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_calendario", inicio, fim] });
-      queryClient.invalidateQueries({ queryKey: ["ordens-carregamento-disponiveis"] });
-    })
-    .subscribe();
-
-  return () => { supabase.removeChannel(channel); };
-}, [inicio, fim, queryClient]);
-```
-
-**Correcao 4**: Corrigir a logica de update para `instalacoes` quando a operacao for remover do calendario (status e campos corretos):
-
-```typescript
-// Dentro do mutationFn, caso fonte === 'instalacoes':
-if (fonte === 'instalacoes') {
-  const updateData: Record<string, any> = {
-    updated_at: new Date().toISOString()
-  };
-  
-  if (data.data_carregamento !== undefined) updateData.data_carregamento = data.data_carregamento;
-  if (data.hora !== undefined) updateData.hora_carregamento = data.hora;
-  if (data.tipo_carregamento !== undefined) updateData.tipo_carregamento = data.tipo_carregamento;
-  if (data.responsavel_carregamento_id !== undefined) updateData.responsavel_carregamento_id = data.responsavel_carregamento_id;
-  if (data.responsavel_carregamento_nome !== undefined) updateData.responsavel_carregamento_nome = data.responsavel_carregamento_nome;
-  if (data.status !== undefined) updateData.status = data.status;
-  
-  const { error } = await supabase
-    .from("instalacoes")
-    .update(updateData)
-    .eq("id", id);
-
-  if (error) throw error;
-}
-```
-
----
-
-## Resultado Esperado
-
-- Clicar em "Remover do calendario" vai funcionar para ordens de ambas as tabelas
-- O calendario atualiza instantaneamente apos agendamento ou remocao
-- A listagem de ordens disponiveis tambem atualiza instantaneamente
-- Mudancas feitas por outros usuarios aparecem em tempo real (via subscriptions)
+- Itens do catalogo serao adicionados corretamente na edicao de venda
+- O campo `unidade` sera descartado antes da insercao no banco
+- Nenhuma alteracao no banco de dados necessaria
+- Apenas 1 arquivo modificado: `src/hooks/useProdutosVenda.ts`
