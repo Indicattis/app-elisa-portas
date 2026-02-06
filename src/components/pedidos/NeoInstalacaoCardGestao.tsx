@@ -49,8 +49,8 @@ export function NeoInstalacaoCardGestao({
           <CardContent className="p-0 h-full">
             {/* Grid layout IDÊNTICO ao PedidoCard */}
             <div 
-              className="grid items-center gap-2 h-full px-3 w-full" 
-              style={{ gridTemplateColumns: '24px 24px 1fr 70px 24px 50px 50px 95px 80px 120px 50px 80px 28px 28px 28px 28px 28px 70px 60px' }}
+              className="grid items-center gap-1.5 h-full px-2 w-full" 
+              style={{ gridTemplateColumns: '20px 20px 1fr 65px 20px 45px 45px 90px 75px 110px 90px 80px 24px 24px 24px 24px 24px 65px 55px' }}
             >
               {/* Col 1: Espaço do drag handle (vazio para manter alinhamento) */}
               <div />
