@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, RefreshCw, ChevronRight, CheckCircle2, Factory, ShieldCheck, Truck, Hammer, Wrench } from 'lucide-react';
+import { ArrowLeft, RefreshCw, ChevronRight, CheckCircle2, Factory, ShieldCheck, Truck, Hammer, Wrench, Paintbrush, DoorOpen, Package, Cog } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -158,7 +158,37 @@ export default function AprovacoesProducao() {
 
                 {/* Detalhes expandidos */}
                 {expandedPedido === pedido.id && (
-                  <div className="px-4 pb-4 space-y-4 border-t pt-4">
+                  <div className="px-4 pb-4 space-y-3 border-t pt-4">
+                    {/* Resumo de produtos */}
+                    {pedido.produtosResumo.length > 0 && (
+                      <div className="space-y-1.5">
+                        {pedido.produtosResumo.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-2 text-sm bg-muted/50 rounded-lg px-3 py-2">
+                            {item.tipo === 'porta_enrolar' && <DoorOpen className="w-4 h-4 text-orange-500 flex-shrink-0" />}
+                            {item.tipo === 'pintura_epoxi' && <Paintbrush className="w-4 h-4 text-blue-500 flex-shrink-0" />}
+                            {item.tipo === 'motor' && <Cog className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
+                            {(item.tipo === 'acessorio' || item.tipo === 'adicional') && <Package className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
+                            
+                            <span className="flex-1 min-w-0 truncate">
+                              {item.quantidade > 1 && <span className="font-medium">{item.quantidade}x </span>}
+                              {item.nome}
+                              {item.tamanho && <span className="text-muted-foreground ml-1">{item.tamanho}</span>}
+                            </span>
+
+                            {item.corHex && (
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                <div
+                                  className="w-4 h-4 rounded-full border border-border shadow-sm"
+                                  style={{ backgroundColor: item.corHex }}
+                                />
+                                <span className="text-xs text-muted-foreground">{item.corNome}</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     {/* Botões de ação */}
                     <div className="flex flex-col gap-2">
                       <Button
