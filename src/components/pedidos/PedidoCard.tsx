@@ -1383,7 +1383,9 @@ export function PedidoCard({
                     )}
                   </>
                 ) : (
-                  <span className="text-gray-300 text-[10px]">—</span>
+                  <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-gray-200/20 text-gray-500 border-gray-400/30">
+                    Galvanizada
+                  </Badge>
                 )}
               </div>
 
