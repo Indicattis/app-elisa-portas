@@ -240,7 +240,8 @@ export function AdicionarOrdemCalendarioModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 space-y-4 overflow-hidden flex flex-col">
+        <ScrollArea className="flex-1 max-h-[60vh] pr-4">
+          <div className="space-y-4">
           {/* Busca e Lista de Ordens */}
           {!ordemPreSelecionada && (
             <>
@@ -364,17 +365,25 @@ export function AdicionarOrdemCalendarioModal({
                 Configurar {isEntrega ? 'Entrega' : 'Instalação'}
               </div>
 
-              {/* Calendário para selecionar data */}
+              {/* Calendário compacto para selecionar data */}
               <div className="space-y-2">
                 <Label>Data do Carregamento *</Label>
-                <div className="border rounded-lg flex justify-center">
+                <div className="border rounded-lg flex justify-center py-2">
                   <Calendar
                     mode="single"
                     selected={dataSelecionadaCalendario}
                     onSelect={setDataSelecionadaCalendario}
                     locale={ptBR}
                     disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
-                    className={cn("p-3 pointer-events-auto")}
+                    className={cn(
+                      "p-0 pointer-events-auto",
+                      "[&_table]:text-xs",
+                      "[&_th]:p-1 [&_th]:text-xs [&_th]:font-medium",
+                      "[&_td]:p-0",
+                      "[&_.rdp-button]:h-8 [&_.rdp-button]:w-8 [&_.rdp-button]:text-xs",
+                      "[&_.rdp-head_button]:h-7 [&_.rdp-head_button]:w-7",
+                      "[&_.rdp-caption]:text-sm [&_.rdp-caption]:py-1"
+                    )}
                   />
                 </div>
                 {dataSelecionadaCalendario && (
@@ -479,9 +488,10 @@ export function AdicionarOrdemCalendarioModal({
               )}
             </div>
           )}
-        </div>
+          </div>
+        </ScrollArea>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
+        <div className="flex justify-end gap-2 pt-4 border-t mt-4 shrink-0">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
