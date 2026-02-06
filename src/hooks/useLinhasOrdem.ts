@@ -10,6 +10,8 @@ export interface LinhaOrdem {
   altura: number | null;
   concluida: boolean;
   com_problema?: boolean;
+  produto_venda_id?: string | null;
+  indice_porta?: number | null;
   estoque?: {
     nome_produto: string;
     unidade: string | null;
@@ -33,6 +35,8 @@ export function useLinhasOrdem(ordemId: string | null, tipoOrdem: string | null)
           altura,
           concluida,
           com_problema,
+          produto_venda_id,
+          indice_porta,
           estoque:estoque_id (nome_produto, unidade)
         `)
         .eq("ordem_id", ordemId)
