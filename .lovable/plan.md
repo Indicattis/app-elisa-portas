@@ -1,99 +1,37 @@
 
 
-# Visualizacao Mobile dedicada para Gestao de Fabrica
+# Fix: Erro ao aprovar pedido na etapa Aprovacao CEO
 
-## Resumo
+## Problema
 
-Criar um componente mobile que substitui a visualizacao desktop em `/direcao/gestao-fabrica` quando em tela pequena. Usa carrossel horizontal (swipe) para navegar entre etapas, lista minimalista de pedidos por etapa, downbar ao clicar num pedido, e desempenho compacto.
+Ao clicar "Aprovar" em `/direcao/aprovacoes/fabrica`, o sistema tenta mover o pedido para a proxima etapa mas a validacao de checkboxes obrigatorios bloqueia o avanco. A etapa `aprovacao_ceo` tem 2 checkboxes obrigatorios definidos em `ETAPAS_CONFIG`, e a chamada em `usePedidosAprovacaoCEO.ts` nao envia `skipCheckboxValidation: true`.
 
-## Estrutura
+## Causa raiz
 
-### 1. Novo componente: `src/components/direcao/GestaoFabricaMobile.tsx`
-
-Componente completo para a visualizacao mobile contendo:
-
-**Header de desempenho (compacto)**
-- Carrossel horizontal com os 5 cards de desempenho (Perfiladas, Soldadas, Separadas, Pintura, Carregamentos)
-- Cada card mostra icone + valor + top 1 colaborador
-- Usa Embla Carousel para swipe suave
-- Seletor de periodo simplificado (apenas Hoje/Semana/Mes)
-
-**Carrossel de etapas (corpo principal)**
-- Usa Embla Carousel (ja instalado) com 9 slides, um por etapa
-- Indicadores de etapa no topo: pills horizontais com icone + contador, scroll horizontal
-- A pill ativa sincroniza com o slide visivel
-- Cada slide contem a lista de pedidos daquela etapa
-- Swipe esquerda/direita para navegar
-
-**Card de pedido mobile (minimalista)**
-- Uma linha por pedido: numero do pedido, nome do cliente (truncado), cidade, cronometro
-- Altura fixa ~48px por item
-- Ao tocar, abre `PedidoDetalhesSheet` (downbar ja existente)
-
-**Integracao com neo instalacoes/correcoes**
-- Na etapa "instalacoes", mostra neo instalacoes acima dos pedidos
-- Na etapa "correcoes", mostra neo correcoes acima dos pedidos
-
-### 2. Modificacao: `src/pages/direcao/GestaoFabricaDirecao.tsx`
-
-- Importar `useIsMobile` e `GestaoFabricaMobile`
-- No return, condicionar: se mobile renderiza `GestaoFabricaMobile`, senao renderiza o layout atual
-- Passar todos os handlers e dados necessarios como props
-
-## Detalhes tecnicos
-
-### Props do GestaoFabricaMobile
+Em `src/hooks/usePedidosAprovacaoCEO.ts`, linha 197:
 
 ```typescript
-interface GestaoFabricaMobileProps {
-  contadores: Record<string, number>;
-  onRefresh: () => void;
-}
+await moverParaProximaEtapa.mutateAsync({ pedidoId });
 ```
 
-O componente mobile fara suas proprias queries internamente (usePedidosEtapas, usePortasPorEtapa, useDesempenhoEtapas) para manter independencia e simplicidade, mudando a etapa ativa conforme o carrossel se move.
+Falta o parametro `skipCheckboxValidation: true`.
 
-### Carrossel de etapas
+## Solucao
 
+Adicionar `skipCheckboxValidation: true` na chamada de `moverParaProximaEtapa` dentro do `aprovarPedido` mutation, ja que a aprovacao do CEO e por si so a validacao necessaria — nao precisa de checkboxes.
+
+## Detalhe tecnico
+
+### Arquivo: `src/hooks/usePedidosAprovacaoCEO.ts`
+
+Linha 197, alterar de:
 ```typescript
-const [emblaRef, emblaApi] = useEmblaCarousel({ 
-  align: 'start',
-  containScroll: false 
-});
-
-// Sincronizar etapa ativa com slide visivel
-useEffect(() => {
-  if (!emblaApi) return;
-  const onSelect = () => {
-    const index = emblaApi.selectedScrollSnap();
-    setEtapaAtiva(ORDEM_ETAPAS[index]);
-  };
-  emblaApi.on('select', onSelect);
-  return () => { emblaApi.off('select', onSelect); };
-}, [emblaApi]);
+await moverParaProximaEtapa.mutateAsync({ pedidoId });
 ```
 
-### Card mobile do pedido
-
+Para:
 ```typescript
-// Cada pedido renderiza como:
-<div onClick={() => setSelectedPedido(pedido)} className="...">
-  <span className="text-xs font-mono">#{numeroPedido}</span>
-  <span className="text-sm truncate flex-1">{clienteNome}</span>
-  <CronometroEtapaBadge ... />
-</div>
+await moverParaProximaEtapa.mutateAsync({ pedidoId, skipCheckboxValidation: true });
 ```
 
-### Downbar
-
-Reutiliza o `PedidoDetalhesSheet` ja existente, que e aberto quando o usuario toca num pedido.
-
-### Desempenho mobile
-
-Carrossel horizontal com cards compactos (icone + valor grande + label). Cada card ocupa ~70% da largura da tela, permitindo ver parte do proximo. Sem ranking de colaboradores no mobile para manter minimalista.
-
-## Arquivos
-
-1. **Criar**: `src/components/direcao/GestaoFabricaMobile.tsx`
-2. **Editar**: `src/pages/direcao/GestaoFabricaDirecao.tsx` (condicionar mobile vs desktop)
-
+Apenas 1 linha alterada em 1 arquivo.
