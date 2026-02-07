@@ -194,7 +194,7 @@ export function usePedidosAprovacaoCEO() {
   const aprovarPedido = useMutation({
     mutationFn: async (pedidoId: string) => {
       // Avançar diretamente para próxima etapa
-      await moverParaProximaEtapa.mutateAsync({ pedidoId });
+      await moverParaProximaEtapa.mutateAsync({ pedidoId, skipCheckboxValidation: true });
     },
     onSuccess: () => {
       toast.success('Pedido aprovado e enviado para produção!');
