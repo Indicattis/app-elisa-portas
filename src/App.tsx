@@ -229,6 +229,7 @@ import FornecedoresDirecao from "./pages/direcao/estoque/FornecedoresDirecao";
 // Hub de Aprovações da Direção
 import DirecaoAprovacoesHub from "./pages/direcao/aprovacoes/DirecaoAprovacoesHub";
 import AprovacoesProducao from "./pages/direcao/aprovacoes/AprovacoesProducao";
+import AprovacoesVendas from "./pages/direcao/aprovacoes/AprovacoesVendas";
 
 // Hub de Logística Minimalista
 import LogisticaHub from "./pages/logistica/LogisticaHub";
@@ -455,6 +456,7 @@ const App = () => (
                 {/* Hub de Aprovações da Direção */}
                 <Route path="/direcao/aprovacoes" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoAprovacoesHub /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><AprovacoesProducao /></ProtectedRoute>} />
+                <Route path="/direcao/aprovacoes/vendas" element={<ProtectedRoute routeKey="direcao_hub"><AprovacoesVendas /></ProtectedRoute>} />
 
                 {/* Hub de Logística Minimalista */}
                 <Route path="/logistica" element={<ProtectedRoute routeKey="logistica_hub"><LogisticaHub /></ProtectedRoute>} />

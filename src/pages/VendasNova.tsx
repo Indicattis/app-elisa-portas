@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useVendas, VendaFormData, ProdutoVenda } from '@/hooks/useVendas';
+import { useRequisicaoAprovacaoVenda } from '@/hooks/useRequisicaoAprovacaoVenda';
 import { Cliente } from '@/hooks/useClientes';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ export default function VendasNova() {
   const orcamentoId = searchParams.get('orcamento_id');
   const { toast } = useToast();
   const { createVenda, isCreating } = useVendas();
+  const { criarRequisicao } = useRequisicaoAprovacaoVenda();
   const { user } = useAuth();
   const { limites: configLimites } = useConfiguracoesVendas();
   
@@ -472,6 +474,35 @@ export default function VendasNova() {
       navigate('/dashboard/vendas');
     } catch (error) {
       console.error('Erro ao criar venda:', error);
+    }
+  };
+
+  const handleSolicitarAprovacao = async () => {
+    if (!user || !tipoAutorizacaoNecessaria) return;
+    
+    const validacao = validarDesconto(
+      portas,
+      formData.forma_pagamento,
+      formData.venda_presencial,
+      configLimitesObj
+    );
+
+    try {
+      await criarRequisicao.mutateAsync({
+        dados_venda: {
+          ...formData,
+          forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
+          data_venda: dataVenda ? `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z` : `${format(new Date(), 'yyyy-MM-dd')}T12:00:00.000Z`,
+        },
+        dados_produtos: portas,
+        dados_pagamento: pagamentoData,
+        dados_credito: { valorCredito: 0, percentualCredito: 0 },
+        percentual_desconto: validacao.percentualDesconto,
+        tipo_autorizacao: tipoAutorizacaoNecessaria,
+      });
+      navigate('/dashboard/vendas');
+    } catch (error) {
+      console.error('Erro ao solicitar aprovação:', error);
     }
   };
 
@@ -989,6 +1020,7 @@ export default function VendasNova() {
           open={autorizacaoDescontoOpen}
           onOpenChange={setAutorizacaoDescontoOpen}
           onAutorizado={handleAutorizacaoDesconto}
+          onSolicitarAprovacao={handleSolicitarAprovacao}
           percentualDesconto={validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial).percentualDesconto}
           tipoAutorizacao={tipoAutorizacaoNecessaria}
           limitePermitido={limitePermitido}
