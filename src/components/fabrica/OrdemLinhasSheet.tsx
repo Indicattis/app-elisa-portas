@@ -110,6 +110,8 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+      queryClient.invalidateQueries({ queryKey: ['linhas-ordem'] });
       toastHook({ title: "Atualizado" });
     },
   });
@@ -236,12 +238,19 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
         ) + ((ordem as any).tempo_acumulado_segundos || 0);
       }
 
-      // Marcar todas linhas como concluídas
+      // Marcar todas linhas pendentes como concluídas (com metadata para produção)
+      const { data: { user } } = await supabase.auth.getUser();
       await supabase
         .from('linhas_ordens')
-        .update({ concluida: true, updated_at: new Date().toISOString() })
+        .update({
+          concluida: true,
+          concluida_em: new Date().toISOString(),
+          concluida_por: user?.id || null,
+          updated_at: new Date().toISOString(),
+        })
         .eq('ordem_id', ordem.id)
-        .eq('tipo_ordem', ordem.tipo);
+        .eq('tipo_ordem', ordem.tipo)
+        .eq('concluida', false);
 
       // Concluir a ordem
       const { error } = await supabase
@@ -258,6 +267,8 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+      queryClient.invalidateQueries({ queryKey: ['linhas-ordem'] });
       onOpenChange(false);
       toast.success('Ordem concluída com sucesso!');
     },
