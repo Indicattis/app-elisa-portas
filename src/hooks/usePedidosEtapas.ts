@@ -322,18 +322,22 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         return null;
       };
 
-      // Ordenar por cor na etapa "aberto"
+      // Ordenar na etapa "aberto": prioridade manual primeiro, cor como desempate
       if (etapa === 'aberto') {
         return pedidosComBacklog.sort((a, b) => {
+          // Prioridade manual tem precedência (maior primeiro)
+          const prioA = (a as any).prioridade_etapa || 0;
+          const prioB = (b as any).prioridade_etapa || 0;
+          if (prioB !== prioA) return prioB - prioA;
+
+          // Desempate por cor (alfabética)
           const corA = extrairPrimeiraCor(a);
           const corB = extrairPrimeiraCor(b);
           
-          // Pedidos sem cor vão para o final
           if (!corA && !corB) return 0;
           if (!corA) return 1;
           if (!corB) return -1;
           
-          // Ordenar alfabeticamente por nome da cor
           return corA.localeCompare(corB, 'pt-BR');
         });
       }
