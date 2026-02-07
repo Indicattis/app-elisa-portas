@@ -1,43 +1,61 @@
 
+# Permitir reordenacao manual na etapa "Em Aberto"
 
-# Fix: Checkbox flicker persistente em /fabrica/ordens-pedidos
+## Problema
 
-## Problema real
-
-Mover invalidacoes para `onSettled` nao resolve porque o `invalidateQueries` na key `['linhas-ordem', ordem?.id, ordem?.tipo]` ainda dispara um refetch. Se o banco retornar dados "stale" (cache do Supabase, replicacao, etc.), o optimistic update e sobrescrito.
-
-O optimistic update ja garante o estado correto na UI. Nao ha necessidade de refazer o fetch da mesma query logo apos a mutation individual de checkbox.
+Na etapa "Em Aberto" de `/direcao/gestao-fabrica`, existe uma ordenacao fixa por nome de cor (alfabetica) que **sobrescreve** qualquer alteracao manual de prioridade. Quando voce tenta mover um pedido galvanizado para o topo usando as setas ou drag-and-drop, a prioridade e salva no banco (`prioridade_etapa`), mas na proxima renderizacao o sort por cor reordena tudo, ignorando a prioridade.
 
 ## Solucao
 
-Remover a invalidacao de `linhas-ordem` do `onSettled` da mutation `marcarLinha`. Manter apenas as invalidacoes de `ordens-por-pedido` e `ordens-producao` (que sao queries diferentes e precisam atualizar contadores).
+Alterar a logica de ordenacao na etapa "aberto" para usar `prioridade_etapa` como criterio principal e a cor como criterio de desempate. Assim, pedidos com prioridade manual definida ficam no topo, e entre pedidos com mesma prioridade, a ordenacao por cor e mantida.
 
 ## Detalhe tecnico
 
-### Arquivo: `src/components/fabrica/OrdemLinhasSheet.tsx`
+### Arquivo: `src/hooks/usePedidosEtapas.ts` (linhas 325-338)
 
-**Linha 114-118 - Remover invalidacao de linhas-ordem do onSettled:**
-
-De:
+**De:**
 ```typescript
-onSettled: () => {
-  queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
-  queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
-  queryClient.invalidateQueries({ queryKey: ['linhas-ordem', ordem?.id, ordem?.tipo] });
-},
+if (etapa === 'aberto') {
+  return pedidosComBacklog.sort((a, b) => {
+    const corA = extrairPrimeiraCor(a);
+    const corB = extrairPrimeiraCor(b);
+    
+    if (!corA && !corB) return 0;
+    if (!corA) return 1;
+    if (!corB) return -1;
+    
+    return corA.localeCompare(corB, 'pt-BR');
+  });
+}
 ```
 
-Para:
+**Para:**
 ```typescript
-onSettled: () => {
-  queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
-  queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
-},
+if (etapa === 'aberto') {
+  return pedidosComBacklog.sort((a, b) => {
+    // Prioridade manual tem precedencia (maior primeiro)
+    const prioA = (a as any).prioridade_etapa || 0;
+    const prioB = (b as any).prioridade_etapa || 0;
+    if (prioB !== prioA) return prioB - prioA;
+
+    // Desempate por cor (alfabetica)
+    const corA = extrairPrimeiraCor(a);
+    const corB = extrairPrimeiraCor(b);
+    
+    if (!corA && !corB) return 0;
+    if (!corA) return 1;
+    if (!corB) return -1;
+    
+    return corA.localeCompare(corB, 'pt-BR');
+  });
+}
 ```
 
-O optimistic update no `onMutate` ja atualiza o cache local corretamente. Se houver erro, o `onError` reverte. Nao ha necessidade de refetch.
+Isso garante que:
+- Pedidos com prioridade manual mais alta aparecem primeiro
+- Pedidos com mesma prioridade continuam agrupados por cor
+- O drag-and-drop e as setas de prioridade funcionam corretamente
 
 ## Arquivo modificado
 
-1. **Editar**: `src/components/fabrica/OrdemLinhasSheet.tsx`
-
+1. **Editar**: `src/hooks/usePedidosEtapas.ts`
