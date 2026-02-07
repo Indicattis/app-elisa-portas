@@ -114,7 +114,6 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
       queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
-      queryClient.invalidateQueries({ queryKey: ['linhas-ordem', ordem?.id, ordem?.tipo] });
     },
   });
 
