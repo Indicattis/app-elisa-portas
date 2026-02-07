@@ -1,45 +1,64 @@
 
 
-# Fix: Trigger sobrescreve etapa_atual durante retrocesso
+# Agrupar itens do pedido por porta em grid de pastas (PedidoViewDirecao)
 
-## Problema
+## Resumo
 
-Ao retroceder o pedido, as ordens foram excluídas corretamente mas o `etapa_atual` permaneceu em `inspecao_qualidade`. Isso acontece por causa de um **conflito entre a funcao e um trigger**.
+Transformar a lista flat de itens do pedido na pagina `/direcao/pedidos/:id` em um layout de pastas em grid, agrupando as linhas por porta (`produto_venda_id` + `indice_porta`), similar ao que ja foi feito no `PedidoLinhasEditor`.
 
-### Causa raiz
+## O que muda visualmente
 
-Existe um trigger `sync_pedido_etapa_atual` na tabela `pedidos_etapas` que sincroniza automaticamente o campo `etapa_atual` em `pedidos_producao`. A sequencia atual da funcao e:
+A secao "Itens do Pedido" atual (lista simples) sera substituida por:
 
-1. `UPDATE pedidos_producao SET etapa_atual = 'aberto'` (funcao define corretamente)
-2. `UPDATE pedidos_etapas SET data_saida = now()` (fecha etapas abertas — **trigger dispara e sobrescreve etapa_atual de volta para inspecao_qualidade**)
-3. `INSERT/UPSERT pedidos_etapas` (abre nova etapa — trigger dispara novamente, mas com timestamp ambiguo)
+1. **Grid de cards/pastas** (2 colunas mobile, 3 colunas desktop) - cada pasta representa uma porta
+2. **Ao clicar** numa pasta, a lista de itens daquela porta aparece abaixo do grid
+3. **Pastas sem porta** aparecem como card separado ("Sem produto")
 
-O resultado e que o trigger sobrescreve o valor correto que a funcao acabou de definir.
+## Detalhes tecnicos
 
-## Solucao
+### Arquivo modificado: `src/pages/direcao/PedidoViewDirecao.tsx`
 
-### 1. Corrigir os dados do pedido afetado
+1. **Buscar dados das portas**: Adicionar query a `produtos_vendas` usando os `produto_venda_id` unicos das linhas para obter `tipo_produto`, `largura`, `altura`. Isso substitui o `portasMap` atual (que so guarda indice numerico).
 
-Atualizar manualmente o pedido para o estado correto:
+2. **Estado de pasta aberta**: `const [pastaAberta, setPastaAberta] = useState<string | null>(null)`
 
-```sql
-UPDATE pedidos_producao 
-SET etapa_atual = 'aberto', em_backlog = false, status = 'pendente'
-WHERE id = '5ee4873b-caf7-4be8-b00e-acca2e00f55d';
+3. **Agrupar linhas por porta**: Usar `useMemo` para agrupar `pedido.linhas` por chave `${produto_venda_id}_${indice_porta}`, gerando array de grupos com label, dimensoes e contagem.
+
+4. **Renderizar grid**: Substituir o bloco de linhas (linhas 392-427) por:
+   - Grid de cards usando o estilo do dark theme da pagina (bg-white/5, text-white)
+   - Cada card mostra: label da porta, dimensoes, contagem de itens
+   - Card selecionado destaca com borda
+   - Abaixo do grid, lista expandida com os itens da pasta selecionada
+
+5. **Adaptar PortaFolderCard ou criar inline**: Como o `PortaFolderCard` existente usa `CategoriaLinha` (que nao existe nesta pagina), criarei cards inline com o estilo dark da pagina, sem depender de `CategoriaLinha`.
+
+### Interface da porta (dados buscados)
+
+```typescript
+interface PortaInfo {
+  id: string;
+  tipo_produto: string;
+  largura: number;
+  altura: number;
+}
 ```
 
-### 2. Corrigir a funcao `retroceder_pedido_unificado`
+### Logica de agrupamento
 
-Mover o `UPDATE pedidos_producao SET etapa_atual = ...` para **depois** das operacoes em `pedidos_etapas`. Assim:
+```typescript
+// Chave: "produto_venda_id_indicePorta" ou "sem_porta"
+const grupos = useMemo(() => {
+  const map = new Map();
+  pedido.linhas.forEach(linha => {
+    const key = linha.produto_venda_id 
+      ? `${linha.produto_venda_id}_${linha.indice_porta ?? 0}` 
+      : 'sem_porta';
+    // agrupar...
+  });
+  return [...map.entries()];
+}, [pedido.linhas]);
+```
 
-1. Fecha etapas → trigger dispara (valor temporario)
-2. Upsert nova etapa → trigger dispara (valor possivelmente correto)
-3. **UPDATE explicito define o valor definitivo** → sobrescreve qualquer coisa que o trigger tenha feito
+### Sem mudancas em outros arquivos
 
-A mudanca e apenas na **ordem das operacoes** dentro da funcao — mover o bloco `UPDATE pedidos_producao SET etapa_atual = ...` dos CASOS 1/2/3 para depois do bloco comum de `pedidos_etapas`.
-
-### Arquivos alterados
-
-1. **Migracao de banco**: Recriar `retroceder_pedido_unificado` com a ordem correta
-2. **Correcao de dados**: UPDATE no pedido especifico
-
+Apenas `PedidoViewDirecao.tsx` sera modificado.
