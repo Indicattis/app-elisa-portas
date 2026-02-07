@@ -239,7 +239,22 @@ export default function PedidoViewDirecao() {
       map.get(key)!.linhas.push(linha);
     });
     
-    return [...map.values()];
+    const grupos = [...map.values()];
+
+    // Renumerar sequencialmente por tipo para evitar duplicatas
+    const contadorPorTipo = new Map<string, number>();
+    grupos.forEach(grupo => {
+      if (grupo.key === 'sem_porta') return;
+      const match = grupo.label.match(/^(.+) #\d+$/);
+      if (match) {
+        const tipo = match[1];
+        const count = (contadorPorTipo.get(tipo) || 0) + 1;
+        contadorPorTipo.set(tipo, count);
+        grupo.label = `${tipo} #${count}`;
+      }
+    });
+
+    return grupos;
   }, [pedido, portasInfo]);
 
   const getEtapaLabel = (etapa: string) => {
