@@ -847,11 +847,11 @@ export function OrdemDetalhesSheet({
                                   const prod = baseProdutoId2 ? todosProdutos.find((p: any) => p.id === baseProdutoId2) : null;
                                   const tipoLabel = getLabelTipoProduto(prod?.tipo_produto);
                                   const num = String(portasNumeracaoMap.get(portaId) || 1).padStart(2, '0');
-                                  return `${tipoLabel} ${num}`;
+                                  return `${tipoLabel} #${num}`;
                                 })()}
                                 {larguraPorta && alturaPorta && (
-                                  <span className="font-normal text-muted-foreground ml-2">
-                                    {formatarDimensoes(larguraPorta, alturaPorta)}
+                                   <span className="font-normal text-muted-foreground ml-2">
+                                    — {formatarDimensoes(larguraPorta, alturaPorta)}
                                   </span>
                                 )}
                               </span>
@@ -921,9 +921,9 @@ export function OrdemDetalhesSheet({
                                 )}
                                 
                                 <div className="mt-1.5 flex items-center gap-3 text-sm text-muted-foreground">
-                                  <span>Qtd: {linha.quantidade}</span>
+                                  <span>Qtd: {linha.quantidade}x</span>
                                   {linha.tamanho && (
-                                    <span>{formatarTamanho(linha.tamanho)}</span>
+                                    <span className="before:content-['·'] before:mx-1 before:text-muted-foreground/50">{formatarTamanho(linha.tamanho)}</span>
                                   )}
                                   {getEtiquetasRecomendadas(linha) !== null && (
                                     <Badge variant="outline" className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/30">
