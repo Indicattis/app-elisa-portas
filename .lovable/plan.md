@@ -1,59 +1,49 @@
 
 
-# Sincronizar conclusao de linhas entre /fabrica/ordens-pedidos e /producao/
+# Fix: Checkbox marca e desmarca rapidamente em /fabrica/ordens-pedidos
 
 ## Problema
 
-Quando linhas sao concluidas (individualmente ou em lote ao concluir a ordem) em `/fabrica/ordens-pedidos`, elas ja atualizam a tabela `linhas_ordens` no banco. Porem existem dois problemas:
-
-1. **Conclusao em lote incompleta**: O botao "Concluir Ordem" marca `concluida: true` mas NAO registra `concluida_em` e `concluida_por`, campos que as downbars da producao usam para exibir o estado correto.
-2. **Cache desatualizado**: As queries da producao (`ordens-producao`, `linhas-ordem`) nao sao invalidadas quando alteracoes sao feitas pelo painel administrativo.
+O checkbox da linha usa **optimistic update** (atualiza a UI antes do servidor responder). Porem, no `onSuccess` da mutation, o codigo invalida a query `['linhas-ordem']`, que dispara um refetch imediato. Essa refetch pode retornar o valor antigo se chegar antes da escrita no banco ser totalmente confirmada, causando o flicker (marca -> desmarca -> marca).
 
 ## Solucao
 
+Mover as invalidacoes de queries do `onSuccess` para o `onSettled` da mutation `marcarLinha`. Isso garante que:
+1. O optimistic update mantem o estado correto na UI
+2. Se houver erro, o `onError` reverte para o estado anterior
+3. O refetch so acontece apos tudo finalizar, sem competir com o optimistic update
+
+## Detalhe tecnico
+
 ### Arquivo: `src/components/fabrica/OrdemLinhasSheet.tsx`
 
-**1. Corrigir a mutation `concluirOrdem` (linha 240-244)**
+Remover as invalidacoes do `onSuccess` e adiciona-las no `onSettled`:
 
-Adicionar `concluida_em` e `concluida_por` na atualizacao em lote das linhas, e invalidar as queries da producao.
-
-De:
+**De (linhas 111-116):**
 ```typescript
-await supabase
-  .from('linhas_ordens')
-  .update({ concluida: true, updated_at: new Date().toISOString() })
-  .eq('ordem_id', ordem.id)
-  .eq('tipo_ordem', ordem.tipo);
+onSuccess: () => {
+  queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
+  queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+  queryClient.invalidateQueries({ queryKey: ['linhas-ordem'] });
+  toastHook({ title: "Atualizado" });
+},
 ```
 
-Para:
+**Para:**
 ```typescript
-const { data: { user } } = await supabase.auth.getUser();
-
-await supabase
-  .from('linhas_ordens')
-  .update({
-    concluida: true,
-    concluida_em: new Date().toISOString(),
-    concluida_por: user?.id || null,
-    updated_at: new Date().toISOString(),
-  })
-  .eq('ordem_id', ordem.id)
-  .eq('tipo_ordem', ordem.tipo)
-  .eq('concluida', false);
+onSuccess: () => {
+  toastHook({ title: "Atualizado" });
+},
+onSettled: () => {
+  queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
+  queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+  queryClient.invalidateQueries({ queryKey: ['linhas-ordem', ordem?.id, ordem?.tipo] });
+},
 ```
 
-**2. Invalidar queries da producao no `onSuccess` de `concluirOrdem` e `marcarLinha`**
-
-Adicionar invalidacoes para que a producao atualize em tempo real:
-
-```typescript
-queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
-queryClient.invalidateQueries({ queryKey: ['linhas-ordem'] });
-```
-
-Estas invalidacoes serao adicionadas tanto no `onSuccess` do `concluirOrdem` quanto no do `marcarLinha`.
+Nota: a invalidacao de `linhas-ordem` passa a usar a chave especifica (`ordem?.id, ordem?.tipo`) em vez da chave generica, evitando refetch desnecessario de outras queries.
 
 ## Arquivo modificado
 
 1. **Editar**: `src/components/fabrica/OrdemLinhasSheet.tsx`
+
