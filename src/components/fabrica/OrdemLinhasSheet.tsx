@@ -109,10 +109,12 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
       });
     },
     onSuccess: () => {
+      toastHook({ title: "Atualizado" });
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
       queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
-      queryClient.invalidateQueries({ queryKey: ['linhas-ordem'] });
-      toastHook({ title: "Atualizado" });
+      queryClient.invalidateQueries({ queryKey: ['linhas-ordem', ordem?.id, ordem?.tipo] });
     },
   });
 
