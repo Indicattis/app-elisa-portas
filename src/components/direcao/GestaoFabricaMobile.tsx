@@ -173,15 +173,41 @@ function PedidoCardMobile({ pedido, onClick }: { pedido: any; onClick: () => voi
   const clienteNome = venda?.cliente_nome || 'Sem cliente';
   const cidade = venda?.cliente_cidade || '';
   const estado = venda?.cliente_estado || '';
-  const numeroPedido = pedido.numero_pedido;
   const etapaAtual = pedido.pedidos_etapas?.find((e: any) => e.etapa === pedido.etapa_atual);
+
+  // Extract unique colors from products
+  const cores: { nome: string; hex: string | null }[] = [];
+  const produtos = venda?.produtos_vendas || [];
+  const coresVistas = new Set<string>();
+  produtos.forEach((p: any) => {
+    const corNome = p.cor?.nome;
+    if (corNome && !coresVistas.has(corNome)) {
+      coresVistas.add(corNome);
+      cores.push({ nome: corNome, hex: p.cor?.codigo_hex || null });
+    }
+  });
+  const semCor = cores.length === 0;
 
   return (
     <button
       onClick={onClick}
       className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-card/30 border border-border/30 hover:bg-card/60 active:bg-card/80 transition-colors text-left"
     >
-      <span className="text-xs font-mono text-muted-foreground w-8 shrink-0">#{numeroPedido}</span>
+      {/* Color indicators */}
+      <div className="flex items-center gap-0.5 shrink-0">
+        {semCor ? (
+          <span className="text-[9px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">Galv.</span>
+        ) : (
+          cores.slice(0, 3).map((cor, i) => (
+            <div
+              key={i}
+              className="h-4 w-4 rounded-full border border-border/50"
+              style={{ backgroundColor: cor.hex || '#888' }}
+              title={cor.nome}
+            />
+          ))
+        )}
+      </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm text-foreground truncate">{clienteNome}</p>
         {cidade && (
