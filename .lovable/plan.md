@@ -1,39 +1,45 @@
 
 
-# Fix: Unique constraint violation when rolling back pedido
+# Fix: Trigger sobrescreve etapa_atual durante retrocesso
 
-## Problem
+## Problema
 
-The `retroceder_pedido_unificado` database function fails with `duplicate key value violates unique constraint "pedidos_etapas_pedido_id_etapa_unique"` when rolling a pedido back to an etapa it has already visited (e.g., back to "aberto").
+Ao retroceder o pedido, as ordens foram excluídas corretamente mas o `etapa_atual` permaneceu em `inspecao_qualidade`. Isso acontece por causa de um **conflito entre a funcao e um trigger**.
 
-**Root cause**: Line 191-192 of the function uses a plain `INSERT INTO pedidos_etapas` which fails when a record for that `(pedido_id, etapa)` combination already exists.
+### Causa raiz
 
-## Solution
+Existe um trigger `sync_pedido_etapa_atual` na tabela `pedidos_etapas` que sincroniza automaticamente o campo `etapa_atual` em `pedidos_producao`. A sequencia atual da funcao e:
 
-Replace the plain `INSERT` with an `INSERT ... ON CONFLICT` (upsert) that reactivates the existing etapa record instead of creating a duplicate.
+1. `UPDATE pedidos_producao SET etapa_atual = 'aberto'` (funcao define corretamente)
+2. `UPDATE pedidos_etapas SET data_saida = now()` (fecha etapas abertas — **trigger dispara e sobrescreve etapa_atual de volta para inspecao_qualidade**)
+3. `INSERT/UPSERT pedidos_etapas` (abre nova etapa — trigger dispara novamente, mas com timestamp ambiguo)
 
-### Database Migration
+O resultado e que o trigger sobrescreve o valor correto que a funcao acabou de definir.
 
-Update lines 191-192 of the function from:
+## Solucao
+
+### 1. Corrigir os dados do pedido afetado
+
+Atualizar manualmente o pedido para o estado correto:
 
 ```sql
-INSERT INTO pedidos_etapas (pedido_id, etapa, data_entrada, checkboxes)
-VALUES (p_pedido_id, p_etapa_destino, now(), '[]'::jsonb);
+UPDATE pedidos_producao 
+SET etapa_atual = 'aberto', em_backlog = false, status = 'pendente'
+WHERE id = '5ee4873b-caf7-4be8-b00e-acca2e00f55d';
 ```
 
-To:
+### 2. Corrigir a funcao `retroceder_pedido_unificado`
 
-```sql
-INSERT INTO pedidos_etapas (pedido_id, etapa, data_entrada, checkboxes)
-VALUES (p_pedido_id, p_etapa_destino, now(), '[]'::jsonb)
-ON CONFLICT (pedido_id, etapa) DO UPDATE SET
-  data_entrada = now(),
-  data_saida = NULL,
-  checkboxes = '[]'::jsonb;
-```
+Mover o `UPDATE pedidos_producao SET etapa_atual = ...` para **depois** das operacoes em `pedidos_etapas`. Assim:
 
-This follows the existing upsert pattern already documented in the project's architecture (see memory note on `pedidos_etapas` integrity).
+1. Fecha etapas → trigger dispara (valor temporario)
+2. Upsert nova etapa → trigger dispara (valor possivelmente correto)
+3. **UPDATE explicito define o valor definitivo** → sobrescreve qualquer coisa que o trigger tenha feito
 
-### Files changed
+A mudanca e apenas na **ordem das operacoes** dentro da funcao — mover o bloco `UPDATE pedidos_producao SET etapa_atual = ...` dos CASOS 1/2/3 para depois do bloco comum de `pedidos_etapas`.
 
-- **1 database migration**: Recreate `retroceder_pedido_unificado` function with the upsert fix. No frontend code changes needed.
+### Arquivos alterados
+
+1. **Migracao de banco**: Recriar `retroceder_pedido_unificado` com a ordem correta
+2. **Correcao de dados**: UPDATE no pedido especifico
+
