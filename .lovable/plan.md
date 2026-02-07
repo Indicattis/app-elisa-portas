@@ -1,57 +1,99 @@
 
 
-# Fix: Numeracao duplicada de portas nos cards
+# Visualizacao Mobile dedicada para Gestao de Fabrica
 
-## Problema
+## Resumo
 
-A numeracao das pastas usa `indice_porta` que e relativo a cada `produto_venda_id`. Como existem 4 produtos de venda diferentes neste pedido, cada um comeca do indice 0, resultando em multiplas "Porta de Enrolar #1".
+Criar um componente mobile que substitui a visualizacao desktop em `/direcao/gestao-fabrica` quando em tela pequena. Usa carrossel horizontal (swipe) para navegar entre etapas, lista minimalista de pedidos por etapa, downbar ao clicar num pedido, e desempenho compacto.
 
-Dados do pedido:
-- `produto_venda_id` A: indice 0 -> "#1"
-- `produto_venda_id` B: indices 0, 1, 2 -> "#1", "#2", "#3"
-- `produto_venda_id` C: indices 0, 1 -> "#1", "#2"
-- `produto_venda_id` D: indice 0 -> "#1"
+## Estrutura
 
-Resultado: tres pastas chamadas "#1", duas "#2", etc.
+### 1. Novo componente: `src/components/direcao/GestaoFabricaMobile.tsx`
 
-## Solucao
+Componente completo para a visualizacao mobile contendo:
 
-Atribuir numeracao sequencial global apos o agrupamento, contando todas as portas do mesmo tipo em ordem. Assim teremos:
+**Header de desempenho (compacto)**
+- Carrossel horizontal com os 5 cards de desempenho (Perfiladas, Soldadas, Separadas, Pintura, Carregamentos)
+- Cada card mostra icone + valor + top 1 colaborador
+- Usa Embla Carousel para swipe suave
+- Seletor de periodo simplificado (apenas Hoje/Semana/Mes)
 
-- Porta de Enrolar #1 (4.61m x 5.00m)
-- Porta de Enrolar #2 (4.75m x 6.00m)
-- Porta de Enrolar #3 (4.75m x 6.00m)
-- Porta de Enrolar #4 (4.75m x 6.00m)
-- Porta de Enrolar #5 (4.72m x 6.00m)
-- Porta de Enrolar #6 (4.72m x 6.00m)
-- Porta de Enrolar #7 (4.65m x 6.00m)
+**Carrossel de etapas (corpo principal)**
+- Usa Embla Carousel (ja instalado) com 9 slides, um por etapa
+- Indicadores de etapa no topo: pills horizontais com icone + contador, scroll horizontal
+- A pill ativa sincroniza com o slide visivel
+- Cada slide contem a lista de pedidos daquela etapa
+- Swipe esquerda/direita para navegar
 
-## Detalhe tecnico
+**Card de pedido mobile (minimalista)**
+- Uma linha por pedido: numero do pedido, nome do cliente (truncado), cidade, cronometro
+- Altura fixa ~48px por item
+- Ao tocar, abre `PedidoDetalhesSheet` (downbar ja existente)
 
-### Arquivo: `src/pages/direcao/PedidoViewDirecao.tsx`
+**Integracao com neo instalacoes/correcoes**
+- Na etapa "instalacoes", mostra neo instalacoes acima dos pedidos
+- Na etapa "correcoes", mostra neo correcoes acima dos pedidos
 
-No `useMemo` de `gruposPortas` (linhas 212-243), apos construir os grupos no Map, fazer um segundo passo para renumerar sequencialmente por tipo de produto:
+### 2. Modificacao: `src/pages/direcao/GestaoFabricaDirecao.tsx`
+
+- Importar `useIsMobile` e `GestaoFabricaMobile`
+- No return, condicionar: se mobile renderiza `GestaoFabricaMobile`, senao renderiza o layout atual
+- Passar todos os handlers e dados necessarios como props
+
+## Detalhes tecnicos
+
+### Props do GestaoFabricaMobile
 
 ```typescript
-// Apos construir o map...
-const grupos = [...map.values()];
-
-// Renumerar sequencialmente por tipo
-const contadorPorTipo = new Map<string, number>();
-grupos.forEach(grupo => {
-  if (grupo.key === 'sem_porta') return;
-  // Extrair o tipo base (ex: "Porta de Enrolar")
-  const match = grupo.label.match(/^(.+) #\d+$/);
-  if (match) {
-    const tipo = match[1];
-    const count = (contadorPorTipo.get(tipo) || 0) + 1;
-    contadorPorTipo.set(tipo, count);
-    grupo.label = `${tipo} #${count}`;
-  }
-});
-
-return grupos;
+interface GestaoFabricaMobileProps {
+  contadores: Record<string, number>;
+  onRefresh: () => void;
+}
 ```
 
-Apenas 1 arquivo modificado, apenas a logica de label muda.
+O componente mobile fara suas proprias queries internamente (usePedidosEtapas, usePortasPorEtapa, useDesempenhoEtapas) para manter independencia e simplicidade, mudando a etapa ativa conforme o carrossel se move.
+
+### Carrossel de etapas
+
+```typescript
+const [emblaRef, emblaApi] = useEmblaCarousel({ 
+  align: 'start',
+  containScroll: false 
+});
+
+// Sincronizar etapa ativa com slide visivel
+useEffect(() => {
+  if (!emblaApi) return;
+  const onSelect = () => {
+    const index = emblaApi.selectedScrollSnap();
+    setEtapaAtiva(ORDEM_ETAPAS[index]);
+  };
+  emblaApi.on('select', onSelect);
+  return () => { emblaApi.off('select', onSelect); };
+}, [emblaApi]);
+```
+
+### Card mobile do pedido
+
+```typescript
+// Cada pedido renderiza como:
+<div onClick={() => setSelectedPedido(pedido)} className="...">
+  <span className="text-xs font-mono">#{numeroPedido}</span>
+  <span className="text-sm truncate flex-1">{clienteNome}</span>
+  <CronometroEtapaBadge ... />
+</div>
+```
+
+### Downbar
+
+Reutiliza o `PedidoDetalhesSheet` ja existente, que e aberto quando o usuario toca num pedido.
+
+### Desempenho mobile
+
+Carrossel horizontal com cards compactos (icone + valor grande + label). Cada card ocupa ~70% da largura da tela, permitindo ver parte do proximo. Sem ranking de colaboradores no mobile para manter minimalista.
+
+## Arquivos
+
+1. **Criar**: `src/components/direcao/GestaoFabricaMobile.tsx`
+2. **Editar**: `src/pages/direcao/GestaoFabricaDirecao.tsx` (condicionar mobile vs desktop)
 
