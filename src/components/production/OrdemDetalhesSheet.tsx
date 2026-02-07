@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer, Tags, RotateCcw, AlertTriangle, PauseCircle, Wrench, ChevronDown, Check } from "lucide-react";
+import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Printer, Tags, RotateCcw, AlertTriangle, PauseCircle, Wrench, ChevronDown, Check, FileText, Image as ImageIcon, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
@@ -89,6 +89,8 @@ interface Ordem {
     venda_id?: string;
     observacoes?: string;
     updated_at?: string;
+    ficha_visita_url?: string;
+    ficha_visita_nome?: string;
     vendas?: {
       observacoes_venda?: string;
     };
@@ -654,6 +656,53 @@ export function OrdemDetalhesSheet({
                   </div>
                 </CollapsibleContent>
               </Collapsible>
+            </>
+          )}
+
+          {/* Ficha de Visita Técnica */}
+          {ordem.pedido?.ficha_visita_url && (
+            <>
+              <Separator />
+              <div className="space-y-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                <span className="text-sm font-medium flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                  <FileText className="h-4 w-4" />
+                  Ficha de Visita Técnica
+                </span>
+                {(() => {
+                  const url = ordem.pedido.ficha_visita_url!;
+                  const nome = ordem.pedido.ficha_visita_nome || 'Ficha de visita';
+                  const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(url);
+                  
+                  if (isImage) {
+                    return (
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+                        <img 
+                          src={url} 
+                          alt={nome}
+                          className="w-full max-h-48 object-cover rounded-md border cursor-pointer hover:opacity-90 transition-opacity"
+                        />
+                        <span className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                          <ExternalLink className="h-3 w-3" />
+                          {nome}
+                        </span>
+                      </a>
+                    );
+                  }
+                  
+                  return (
+                    <a 
+                      href={url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 p-2 rounded-md border hover:bg-accent/50 transition-colors"
+                    >
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-sm truncate flex-1">{nome}</span>
+                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                    </a>
+                  );
+                })()}
+              </div>
             </>
           )}
 

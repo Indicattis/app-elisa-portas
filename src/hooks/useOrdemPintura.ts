@@ -44,6 +44,8 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
               em_backlog,
               observacoes,
               updated_at,
+              ficha_visita_url,
+              ficha_visita_nome,
               vendas(
                 id,
                 observacoes_venda,
@@ -148,6 +150,12 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
             };
           }) || [];
 
+          // Buscar observações da visita técnica
+          const { data: observacoesVisita } = await supabase
+            .from('pedido_porta_observacoes')
+            .select('*')
+            .eq('pedido_id', ordem.pedido_id);
+
           return {
             ...ordem,
             pedido: pedido ? {
@@ -157,6 +165,7 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
             } : { id: '', numero_pedido: '', cliente_nome: 'Cliente não encontrado', venda_id: undefined, produtos: [], vendas: undefined },
             admin_users: responsavel,
             linhas: linhas || [],
+            observacoesVisita: observacoesVisita || [],
           };
         })
       );
