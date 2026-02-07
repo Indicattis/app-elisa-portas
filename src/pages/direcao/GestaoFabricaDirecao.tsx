@@ -25,6 +25,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { GestaoFabricaMobile } from "@/components/direcao/GestaoFabricaMobile";
 
 const ETAPA_ICONS = {
   aberto: Clock,
@@ -40,6 +42,7 @@ const ETAPA_ICONS = {
 };
 
 export default function GestaoFabricaDirecao() {
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('aberto');
@@ -247,6 +250,10 @@ export default function GestaoFabricaDirecao() {
       </Button>
     </div>
   );
+
+  if (isMobile) {
+    return <GestaoFabricaMobile />;
+  }
 
   return (
     <MinimalistLayout 
