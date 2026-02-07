@@ -1,49 +1,55 @@
 
 
-# Plano: Adicionar informacoes da visita tecnica na downbar de Pintura
+# Plano: Corrigir formatacao visual confusa na downbar de ordens
 
-## Resumo
+## Problema
 
-A downbar de pintura (`OrdemDetalhesSheet` com `tipoOrdem="pintura"`) ja exibe as informacoes de visita tecnica (`observacoesVisita`) quando elas estao presentes na ordem. Porem, o hook `useOrdemPintura` nao busca esses dados. O mesmo vale para a `ficha_visita_url` (foto/PDF da ficha de visita tecnica) que esta na tabela `pedidos_producao`.
+Na downbar do `OrdemDetalhesSheet`, os numeros estao se juntando visualmente, causando confusao:
 
-A correcao envolve apenas atualizar o hook para buscar e incluir esses dados.
+- O numero da porta "07" colado na dimensao "4.72m" parece "074.72m"
+- A quantidade "7" colada no tamanho "4.85m" parece "74.85m"
+- A quantidade "1" colada no tamanho "4.61m" parece "14.61m"
 
----
+Os dados no banco estao corretos. O problema e puramente visual.
 
-## Detalhes Tecnicos
+## Solucao
 
-### 1. Modificar `src/hooks/useOrdemPintura.ts`
+Modificar `src/components/production/OrdemDetalhesSheet.tsx` em dois pontos:
 
-Dentro do `queryFn`, para cada ordem, adicionar duas buscas:
+### 1. Cabecalho do grupo (numero da porta + dimensoes)
 
-**a) Buscar observacoes da visita tecnica** (tabela `pedido_porta_observacoes`):
-```typescript
-const { data: observacoesVisita } = await supabase
-  .from('pedido_porta_observacoes')
-  .select('*')
-  .eq('pedido_id', ordem.pedido_id);
+**Antes (linha ~849):**
+```
+Porta de Enrolar 07  4.72m x 6.00m
+                   ↑ visualmente colados
 ```
 
-**b) Buscar ficha de visita tecnica** (campos `ficha_visita_url` e `ficha_visita_nome` da tabela `pedidos_producao` - ja buscada, apenas adicionar os campos no select):
+**Depois:**
+```
+Porta de Enrolar #07 - 4.72m x 6.00m
+```
 
-Atualizar o select do `pedidos_producao` para incluir `ficha_visita_url, ficha_visita_nome`.
+Adicionar "#" antes do numero e " - " antes das dimensoes para separar claramente.
 
-**c) Incluir no retorno** da ordem mapeada:
-- `observacoesVisita` no objeto retornado
-- `ficha_visita_url` e `ficha_visita_nome` no objeto `pedido`
+### 2. Quantidade e tamanho das linhas
 
-### 2. Atualizar `OrdemDetalhesSheet.tsx` para exibir a ficha de visita
+**Antes (linhas ~923-927):**
+```
+Qtd: 7  4.85m
+       ↑ visualmente colados
+```
 
-Adicionar a exibicao da ficha de visita tecnica (imagem ou PDF) na downbar, caso exista. Sera uma secao com link para visualizar o arquivo, similar ao `FichaVisitaUpload` mas em modo somente leitura:
-- Se for imagem (png/jpg/webp): exibir preview clicavel
-- Se for PDF: exibir link com icone de documento
+**Depois:**
+```
+Qtd: 7x  |  4.85m
+```
 
-Adicionar os campos `ficha_visita_url` e `ficha_visita_nome` na interface `Ordem` do componente.
+Adicionar "x" apos a quantidade e um separador visual (ponto ou barra) antes do tamanho.
 
-A secao sera posicionada logo abaixo das especificacoes da visita tecnica (ou no mesmo local, caso nao haja observacoes).
+### Arquivo modificado
 
-### Arquivos modificados
-
-1. **Modificar**: `src/hooks/useOrdemPintura.ts` - Buscar `pedido_porta_observacoes` e campos `ficha_visita_url/nome`
-2. **Modificar**: `src/components/production/OrdemDetalhesSheet.tsx` - Adicionar interface fields e secao de ficha de visita
+1. **Modificar**: `src/components/production/OrdemDetalhesSheet.tsx`
+   - Linha ~849: Alterar template do cabecalho para incluir "#" e " - "
+   - Linha ~924: Alterar display de quantidade para "{quantidade}x"
+   - Linha ~926: Adicionar separador visual antes do tamanho (ex: bullet point ou pipe)
 
