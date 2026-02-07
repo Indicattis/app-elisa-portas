@@ -1,39 +1,25 @@
 
 
-# Fix: Checkbox marca e desmarca rapidamente em /fabrica/ordens-pedidos
+# Fix: Checkbox flicker persistente em /fabrica/ordens-pedidos
 
-## Problema
+## Problema real
 
-O checkbox da linha usa **optimistic update** (atualiza a UI antes do servidor responder). Porem, no `onSuccess` da mutation, o codigo invalida a query `['linhas-ordem']`, que dispara um refetch imediato. Essa refetch pode retornar o valor antigo se chegar antes da escrita no banco ser totalmente confirmada, causando o flicker (marca -> desmarca -> marca).
+Mover invalidacoes para `onSettled` nao resolve porque o `invalidateQueries` na key `['linhas-ordem', ordem?.id, ordem?.tipo]` ainda dispara um refetch. Se o banco retornar dados "stale" (cache do Supabase, replicacao, etc.), o optimistic update e sobrescrito.
+
+O optimistic update ja garante o estado correto na UI. Nao ha necessidade de refazer o fetch da mesma query logo apos a mutation individual de checkbox.
 
 ## Solucao
 
-Mover as invalidacoes de queries do `onSuccess` para o `onSettled` da mutation `marcarLinha`. Isso garante que:
-1. O optimistic update mantem o estado correto na UI
-2. Se houver erro, o `onError` reverte para o estado anterior
-3. O refetch so acontece apos tudo finalizar, sem competir com o optimistic update
+Remover a invalidacao de `linhas-ordem` do `onSettled` da mutation `marcarLinha`. Manter apenas as invalidacoes de `ordens-por-pedido` e `ordens-producao` (que sao queries diferentes e precisam atualizar contadores).
 
 ## Detalhe tecnico
 
 ### Arquivo: `src/components/fabrica/OrdemLinhasSheet.tsx`
 
-Remover as invalidacoes do `onSuccess` e adiciona-las no `onSettled`:
+**Linha 114-118 - Remover invalidacao de linhas-ordem do onSettled:**
 
-**De (linhas 111-116):**
+De:
 ```typescript
-onSuccess: () => {
-  queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
-  queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
-  queryClient.invalidateQueries({ queryKey: ['linhas-ordem'] });
-  toastHook({ title: "Atualizado" });
-},
-```
-
-**Para:**
-```typescript
-onSuccess: () => {
-  toastHook({ title: "Atualizado" });
-},
 onSettled: () => {
   queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
   queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
@@ -41,7 +27,15 @@ onSettled: () => {
 },
 ```
 
-Nota: a invalidacao de `linhas-ordem` passa a usar a chave especifica (`ordem?.id, ordem?.tipo`) em vez da chave generica, evitando refetch desnecessario de outras queries.
+Para:
+```typescript
+onSettled: () => {
+  queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
+  queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+},
+```
+
+O optimistic update no `onMutate` ja atualiza o cache local corretamente. Se houver erro, o `onError` reverte. Nao ha necessidade de refetch.
 
 ## Arquivo modificado
 
