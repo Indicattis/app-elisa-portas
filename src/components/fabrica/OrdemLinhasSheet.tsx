@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { Loader2, Package, RefreshCw, Pause, UserMinus, Printer } from "lucide-react";
+import { Loader2, Package, RefreshCw, Pause, UserMinus, Printer, UserPlus, CheckCircle2 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useLinhasOrdem, LinhaOrdem } from "@/hooks/useLinhasOrdem";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -12,8 +12,10 @@ import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { RemoverResponsavelModal } from "@/components/pedidos/RemoverResponsavelModal";
+import { DelegacaoModal } from "@/components/production/DelegacaoModal";
 import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
 import { gerarPDFEtiquetaProducao } from "@/utils/etiquetasPDFGenerator";
+import { calcularTempoExpediente } from "@/utils/calcularTempoExpediente";
 import type { OrdemStatus, TipoOrdem } from "@/hooks/useOrdensPorPedido";
 
 interface OrdemLinhasSheetProps {
@@ -61,6 +63,7 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
   const { toast: toastHook } = useToast();
   const queryClient = useQueryClient();
   const [showRemoverModal, setShowRemoverModal] = useState(false);
+  const [showDelegacaoModal, setShowDelegacaoModal] = useState(false);
   const { calcularEtiquetasLinha } = useEtiquetasProducao();
   
   const { data: linhas = [], isLoading } = useLinhasOrdem(
@@ -191,6 +194,82 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
     },
   });
 
+  // Delegar responsável
+  const delegarResponsavel = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!ordem?.id || !ordem?.tipo) throw new Error('Ordem inválida');
+      const tableName = TABLE_MAP[ordem.tipo];
+      const { error } = await supabase
+        .from(tableName as any)
+        .update({
+          responsavel_id: userId,
+          capturada_em: new Date().toISOString(),
+        })
+        .eq('id', ordem.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
+      queryClient.invalidateQueries({ queryKey: ['linhas-ordem'] });
+      setShowDelegacaoModal(false);
+      toast.success('Responsável delegado com sucesso');
+    },
+    onError: () => {
+      toastHook({
+        title: "Erro",
+        description: "Não foi possível delegar o responsável.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Concluir ordem
+  const concluirOrdem = useMutation({
+    mutationFn: async () => {
+      if (!ordem?.id || !ordem?.tipo) throw new Error('Ordem inválida');
+      const tableName = TABLE_MAP[ordem.tipo];
+
+      let tempo_conclusao_segundos: number | null = null;
+      if (ordem.capturada_em) {
+        tempo_conclusao_segundos = calcularTempoExpediente(
+          new Date(ordem.capturada_em), new Date()
+        ) + ((ordem as any).tempo_acumulado_segundos || 0);
+      }
+
+      // Marcar todas linhas como concluídas
+      await supabase
+        .from('linhas_ordens')
+        .update({ concluida: true, updated_at: new Date().toISOString() })
+        .eq('ordem_id', ordem.id)
+        .eq('tipo_ordem', ordem.tipo);
+
+      // Concluir a ordem
+      const { error } = await supabase
+        .from(tableName as any)
+        .update({
+          status: 'concluido',
+          historico: true,
+          data_conclusao: new Date().toISOString(),
+          tempo_conclusao_segundos,
+        })
+        .eq('id', ordem.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
+      onOpenChange(false);
+      toast.success('Ordem concluída com sucesso!');
+    },
+    onError: (error) => {
+      toastHook({
+        title: "Erro ao concluir",
+        description: error instanceof Error ? error.message : "Não foi possível concluir a ordem.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const linhasConcluidas = linhas.filter(l => l.concluida).length;
   const totalLinhas = linhas.length;
   const isOrdemConcluida = ordem?.status === 'concluido';
@@ -198,6 +277,12 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
   // Pode remover responsável se: tem responsável E (está pausada OU status é pendente)
   const podeRemoverResponsavel = ordem?.responsavel && 
     (ordem?.pausada || ordem?.status === 'pendente');
+
+  // Pode delegar se: NÃO tem responsável e NÃO está concluída
+  const podeDelegarResponsavel = !ordem?.responsavel && !isOrdemConcluida;
+
+  // Pode concluir se: tem responsável e não está concluída
+  const podeConcluir = !!ordem?.responsavel && !isOrdemConcluida;
 
   const handleImprimirEtiqueta = (linha: LinhaOrdem) => {
     try {
@@ -258,7 +343,7 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="bg-zinc-900 border-zinc-800 text-white w-full sm:max-w-lg">
+        <SheetContent className="bg-zinc-900 border-zinc-800 text-white w-full sm:max-w-lg flex flex-col">
           <SheetHeader>
             <SheetTitle className="text-white flex items-center gap-2 pr-8">
               <Package className="w-5 h-5 text-blue-400" />
@@ -280,6 +365,9 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
                 {ordem?.responsavel && (
                   <span className="text-xs">Responsável: {ordem.responsavel.nome}</span>
                 )}
+                {!ordem?.responsavel && !isOrdemConcluida && (
+                  <span className="text-xs text-amber-400">Sem responsável delegado</span>
+                )}
                 {totalLinhas > 0 && (
                   <span className="flex items-center gap-2">
                     Progresso: {linhasConcluidas}/{totalLinhas} linhas concluídas
@@ -300,7 +388,6 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
                 <span className="text-sm font-medium text-red-300">Ordem Pausada</span>
               </div>
               
-              {/* Mostrar todas as linhas com problema */}
               {linhas.filter(l => l.com_problema).length > 0 && (
                 <div className="mb-2 p-2 rounded bg-red-500/20">
                   <p className="text-xs text-red-200 font-medium mb-1">
@@ -317,7 +404,6 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
                 </div>
               )}
               
-              {/* Fallback para ordem.linha_problema se não houver linhas com com_problema marcado */}
               {linhas.filter(l => l.com_problema).length === 0 && ordem.linha_problema && (
                 <div className="mb-2 p-2 rounded bg-red-500/20">
                   <p className="text-xs text-red-200 font-medium">Linha com problema:</p>
@@ -337,9 +423,29 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
             </div>
           )}
 
-          {/* Ações da ordem - abaixo do header para evitar conflito com botão fechar */}
+          {/* Ações da ordem */}
           <div className="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-zinc-700/50">
             <TooltipProvider>
+              {/* Botão Delegar Responsável */}
+              {podeDelegarResponsavel && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowDelegacaoModal(true)}
+                      className="h-8 gap-2 border-blue-500/50 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      <span className="text-xs">Delegar Responsável</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Delegar um colaborador como responsável desta ordem
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
               {/* Botão Remover Responsável */}
               {podeRemoverResponsavel && (
                 <Tooltip>
@@ -360,7 +466,7 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
                 </Tooltip>
               )}
 
-              {/* Botão Regenerar Linhas - apenas para tipos suportados */}
+              {/* Botão Regenerar Linhas */}
               {ordem?.tipo && TIPOS_COM_REGENERACAO.includes(ordem.tipo) && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -392,7 +498,7 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
             </TooltipProvider>
           </div>
 
-          <div className="mt-6 max-h-[calc(100vh-200px)] overflow-y-auto">
+          <div className="flex-1 mt-6 overflow-y-auto">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
@@ -479,6 +585,39 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
               </div>
             )}
           </div>
+
+          {/* Botão Concluir Ordem - fixo no rodapé */}
+          {ordem && !isOrdemConcluida && (
+            <div className="mt-4 pt-4 border-t border-zinc-700/50">
+              <Button
+                onClick={() => concluirOrdem.mutate()}
+                disabled={!podeConcluir || concluirOrdem.isPending}
+                className={cn(
+                  "w-full h-11 gap-2 text-sm font-medium",
+                  podeConcluir
+                    ? "bg-green-600 hover:bg-green-700 text-white"
+                    : "bg-zinc-700 text-zinc-400 cursor-not-allowed"
+                )}
+              >
+                {concluirOrdem.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Concluindo...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    Concluir Ordem
+                  </>
+                )}
+              </Button>
+              {!ordem?.responsavel && (
+                <p className="text-xs text-amber-400 text-center mt-2">
+                  Delegue um responsável antes de concluir
+                </p>
+              )}
+            </div>
+          )}
         </SheetContent>
       </Sheet>
 
@@ -491,6 +630,14 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
         responsavelFoto={ordem?.responsavel?.foto_url || null}
         nomeSetor={ordem?.tipo ? TIPO_LABELS[ordem.tipo] : 'Ordem'}
         isLoading={removerResponsavel.isPending}
+      />
+
+      {/* Modal de delegação de responsável */}
+      <DelegacaoModal
+        open={showDelegacaoModal}
+        onOpenChange={setShowDelegacaoModal}
+        onConfirm={(userId) => delegarResponsavel.mutate(userId)}
+        isLoading={delegarResponsavel.isPending}
       />
     </>
   );
