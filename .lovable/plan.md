@@ -1,56 +1,39 @@
 
-# Plano: Agrupar linhas por porta em layout de pastas em grid
 
-## Resumo
+# Fix: Unique constraint violation when rolling back pedido
 
-Transformar a exibicao atual das linhas do pedido (tabela unica com headers de grupo) em um layout de "pastas" em grid, onde cada porta aparece como um card/pasta independente que pode ser expandido para ver suas linhas.
+## Problem
 
-## Layout proposto
+The `retroceder_pedido_unificado` database function fails with `duplicate key value violates unique constraint "pedidos_etapas_pedido_id_etapa_unique"` when rolling a pedido back to an etapa it has already visited (e.g., back to "aberto").
 
-```text
-+---------------------------+  +---------------------------+
-| Porta de Enrolar #1       |  | Porta de Enrolar #2       |
-| 4.65m x 6.00m             |  | 4.72m x 6.00m             |
-| 17 itens                  |  | 12 itens                  |
-| [Expandir]                |  | [Expandir]                |
-+---------------------------+  +---------------------------+
+**Root cause**: Line 191-192 of the function uses a plain `INSERT INTO pedidos_etapas` which fails when a record for that `(pedido_id, etapa)` combination already exists.
 
-+---------------------------+  +---------------------------+
-| Porta de Enrolar #3 (1/3) |  | Porta de Enrolar #4 (2/3) |
-| 4.75m x 6.00m             |  | 4.75m x 6.00m             |
-| 8 itens                   |  | 8 itens                   |
-| [Expandir]                |  | [Expandir]                |
-+---------------------------+  +---------------------------+
+## Solution
+
+Replace the plain `INSERT` with an `INSERT ... ON CONFLICT` (upsert) that reactivates the existing etapa record instead of creating a duplicate.
+
+### Database Migration
+
+Update lines 191-192 of the function from:
+
+```sql
+INSERT INTO pedidos_etapas (pedido_id, etapa, data_entrada, checkboxes)
+VALUES (p_pedido_id, p_etapa_destino, now(), '[]'::jsonb);
 ```
 
-Ao expandir uma pasta, a tabela de linhas daquela porta aparece abaixo do grid (fora do grid, em largura total), mostrando produto, categoria, quantidade, tamanho e acoes.
+To:
 
-## Detalhes Tecnicos
+```sql
+INSERT INTO pedidos_etapas (pedido_id, etapa, data_entrada, checkboxes)
+VALUES (p_pedido_id, p_etapa_destino, now(), '[]'::jsonb)
+ON CONFLICT (pedido_id, etapa) DO UPDATE SET
+  data_entrada = now(),
+  data_saida = NULL,
+  checkboxes = '[]'::jsonb;
+```
 
-### Arquivo modificado: `src/components/pedidos/PedidoLinhasEditor.tsx`
+This follows the existing upsert pattern already documented in the project's architecture (see memory note on `pedidos_etapas` integrity).
 
-Substituir o bloco de renderizacao principal (linhas ~496-961) que atualmente usa `<table>` com headers de grupo, por:
+### Files changed
 
-1. **Grid de cards (pastas)**: `grid grid-cols-2 md:grid-cols-3 gap-3`
-   - Cada card mostra: label da porta, dimensoes, contagem de linhas, badges de categorias presentes
-   - Card clicavel para expandir/selecionar
-
-2. **Estado de pasta aberta**: Novo estado `const [pastaAberta, setPastaAberta] = useState<string | null>(null)`
-   - Ao clicar num card, abre a pasta (toggle)
-   - A tabela de linhas da porta selecionada aparece em largura total abaixo do grid
-
-3. **Tabela de linhas expandida**: Quando uma pasta esta aberta, renderizar a tabela existente (mesma logica de `renderLinha`) filtrada apenas para as linhas daquela porta
-
-4. **Grupo "Sem produto"**: Aparece como um card adicional no grid para linhas sem `produto_venda_id`
-
-5. **Formulario de nova linha**: O botao "Adicionar Produto" e o formulario inline continuam funcionando, mas dentro da pasta aberta (pre-selecionando a porta)
-
-6. **Sugestoes de itens padrao**: Movidas para dentro da pasta aberta (ao inves de no topo geral)
-
-### Preservar funcionalidades existentes
-- Edicao inline de quantidade/tamanho
-- Edicao completa (porta + produto) via popover
-- Duplicar/remover linhas
-- Checkboxes (separacao/qualidade/coleta)
-- Adicionar nova linha
-- Itens padrao sugeridos
+- **1 database migration**: Recreate `retroceder_pedido_unificado` function with the upsert fix. No frontend code changes needed.
