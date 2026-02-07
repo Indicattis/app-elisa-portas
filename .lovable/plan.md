@@ -1,118 +1,59 @@
 
-# Concluir ordens e delegar responsavel na sidebar de /fabrica/ordens-pedidos
 
-## Resumo
+# Sincronizar conclusao de linhas entre /fabrica/ordens-pedidos e /producao/
 
-Adicionar ao `OrdemLinhasSheet` (sidebar que abre ao clicar numa ordem) a capacidade de:
-1. **Delegar um colaborador** como responsavel da ordem (quando nao tem responsavel)
-2. **Concluir a ordem** apos marcar as linhas e ter um responsavel delegado
+## Problema
 
-## Alteracoes
+Quando linhas sao concluidas (individualmente ou em lote ao concluir a ordem) em `/fabrica/ordens-pedidos`, elas ja atualizam a tabela `linhas_ordens` no banco. Porem existem dois problemas:
 
-### 1. Editar: `src/components/fabrica/OrdemLinhasSheet.tsx`
+1. **Conclusao em lote incompleta**: O botao "Concluir Ordem" marca `concluida: true` mas NAO registra `concluida_em` e `concluida_por`, campos que as downbars da producao usam para exibir o estado correto.
+2. **Cache desatualizado**: As queries da producao (`ordens-producao`, `linhas-ordem`) nao sao invalidadas quando alteracoes sao feitas pelo painel administrativo.
 
-**Adicionar delegacao de responsavel:**
-- Importar `DelegacaoModal` e adicionar estado para controlar o modal
-- Quando a ordem nao tem responsavel, exibir botao "Delegar Responsavel" na area de acoes
-- Ao clicar, abre o `DelegacaoModal` (ja existente) para selecionar o colaborador
-- Ao confirmar, faz update na tabela correspondente (usando `TABLE_MAP`) setando `responsavel_id` e `capturada_em`
+## Solucao
 
-**Adicionar botao "Concluir Ordem":**
-- Botao fixo no rodape da sheet, visivel quando a ordem existe e nao esta concluida
-- Ao clicar, executa a logica de conclusao:
-  - Marca todas as linhas como concluidas
-  - Atualiza o status da ordem para `concluido`
-  - Registra `historico: true` e `data_conclusao`
-  - Calcula `tempo_conclusao_segundos` baseado em `capturada_em`
-  - Fecha a sheet
-- Botao desabilitado se nao tem responsavel delegado
+### Arquivo: `src/components/fabrica/OrdemLinhasSheet.tsx`
 
-**Logica de conclusao (mutation no proprio componente):**
-- Similar ao `concluirOrdem` de `useOrdemProducao.ts`, porem simplificada para uso pontual
-- Atualiza `status: 'concluido'`, `historico: true`, `data_conclusao`, `tempo_conclusao_segundos`
-- Marca linhas pendentes como concluidas
-- Invalida queries `ordens-por-pedido`
+**1. Corrigir a mutation `concluirOrdem` (linha 240-244)**
 
-### 2. Nenhum arquivo novo necessario
+Adicionar `concluida_em` e `concluida_por` na atualizacao em lote das linhas, e invalidar as queries da producao.
 
-O `DelegacaoModal` ja existe em `src/components/production/DelegacaoModal.tsx` e sera reutilizado.
-
-## Detalhes tecnicos
-
-### Delegacao - mutation
-
+De:
 ```typescript
-const delegarResponsavel = useMutation({
-  mutationFn: async (userId: string) => {
-    if (!ordem?.id || !ordem?.tipo) throw new Error('Ordem invalida');
-    const tableName = TABLE_MAP[ordem.tipo];
-    const { error } = await supabase
-      .from(tableName as any)
-      .update({
-        responsavel_id: userId,
-        capturada_em: new Date().toISOString(),
-      })
-      .eq('id', ordem.id);
-    if (error) throw error;
-  },
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
-    queryClient.invalidateQueries({ queryKey: ['linhas-ordem'] });
-    setShowDelegacaoModal(false);
-    toast.success('Responsavel delegado com sucesso');
-  },
-});
+await supabase
+  .from('linhas_ordens')
+  .update({ concluida: true, updated_at: new Date().toISOString() })
+  .eq('ordem_id', ordem.id)
+  .eq('tipo_ordem', ordem.tipo);
 ```
 
-### Conclusao - mutation
-
+Para:
 ```typescript
-const concluirOrdem = useMutation({
-  mutationFn: async () => {
-    if (!ordem?.id || !ordem?.tipo) throw new Error('Ordem invalida');
-    const tableName = TABLE_MAP[ordem.tipo];
+const { data: { user } } = await supabase.auth.getUser();
 
-    // Calcular tempo de conclusao
-    let tempo_conclusao_segundos = null;
-    if (ordem.capturada_em) {
-      tempo_conclusao_segundos = calcularTempoExpediente(
-        new Date(ordem.capturada_em), new Date()
-      ) + (ordem.tempo_acumulado_segundos || 0);
-    }
-
-    // Marcar todas linhas como concluidas
-    await supabase
-      .from('linhas_ordens')
-      .update({ concluida: true, updated_at: new Date().toISOString() })
-      .eq('ordem_id', ordem.id)
-      .eq('tipo_ordem', ordem.tipo);
-
-    // Concluir a ordem
-    const { error } = await supabase
-      .from(tableName as any)
-      .update({
-        status: 'concluido',
-        historico: true,
-        data_conclusao: new Date().toISOString(),
-        tempo_conclusao_segundos,
-      })
-      .eq('id', ordem.id);
-
-    if (error) throw error;
-  },
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
-    onOpenChange(false);
-    toast.success('Ordem concluida com sucesso!');
-  },
-});
+await supabase
+  .from('linhas_ordens')
+  .update({
+    concluida: true,
+    concluida_em: new Date().toISOString(),
+    concluida_por: user?.id || null,
+    updated_at: new Date().toISOString(),
+  })
+  .eq('ordem_id', ordem.id)
+  .eq('tipo_ordem', ordem.tipo)
+  .eq('concluida', false);
 ```
 
-### UI na sheet
+**2. Invalidar queries da producao no `onSuccess` de `concluirOrdem` e `marcarLinha`**
 
-- Botao "Delegar Responsavel" ao lado do botao "Remover Responsavel" (exibido quando NAO tem responsavel)
-- Botao "Concluir Ordem" grande e verde no final da lista de linhas, desabilitado se nao tem responsavel
+Adicionar invalidacoes para que a producao atualize em tempo real:
 
-## Arquivos modificados
+```typescript
+queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+queryClient.invalidateQueries({ queryKey: ['linhas-ordem'] });
+```
+
+Estas invalidacoes serao adicionadas tanto no `onSuccess` do `concluirOrdem` quanto no do `marcarLinha`.
+
+## Arquivo modificado
 
 1. **Editar**: `src/components/fabrica/OrdemLinhasSheet.tsx`
