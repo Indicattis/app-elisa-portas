@@ -5419,6 +5419,79 @@ export type Database = {
           },
         ]
       }
+      requisicoes_aprovacao_venda: {
+        Row: {
+          aprovado_por: string | null
+          created_at: string
+          dados_credito: Json | null
+          dados_pagamento: Json | null
+          dados_produtos: Json
+          dados_venda: Json
+          id: string
+          observacoes: string | null
+          percentual_desconto: number
+          solicitante_id: string
+          status: string
+          tipo_autorizacao: string
+          updated_at: string
+          venda_id: string | null
+        }
+        Insert: {
+          aprovado_por?: string | null
+          created_at?: string
+          dados_credito?: Json | null
+          dados_pagamento?: Json | null
+          dados_produtos: Json
+          dados_venda: Json
+          id?: string
+          observacoes?: string | null
+          percentual_desconto: number
+          solicitante_id: string
+          status?: string
+          tipo_autorizacao: string
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Update: {
+          aprovado_por?: string | null
+          created_at?: string
+          dados_credito?: Json | null
+          dados_pagamento?: Json | null
+          dados_produtos?: Json
+          dados_venda?: Json
+          id?: string
+          observacoes?: string | null
+          percentual_desconto?: number
+          solicitante_id?: string
+          status?: string
+          tipo_autorizacao?: string
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requisicoes_aprovacao_venda_aprovado_por_fkey"
+            columns: ["aprovado_por"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "requisicoes_aprovacao_venda_solicitante_id_fkey"
+            columns: ["solicitante_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "requisicoes_aprovacao_venda_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       requisicoes_compra: {
         Row: {
           aprovado_por: string | null

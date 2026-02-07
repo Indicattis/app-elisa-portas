@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Factory, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Factory, ArrowLeft, ShieldCheck, ShoppingCart } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -10,6 +10,7 @@ import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
   { label: 'Aprovações Fábrica', icon: Factory, path: '/direcao/aprovacoes/fabrica' },
+  { label: 'Aprovações Vendas', icon: ShoppingCart, path: '/direcao/aprovacoes/vendas' },
 ];
 
 export default function DirecaoAprovacoesHub() {
@@ -28,8 +29,20 @@ export default function DirecaoAprovacoesHub() {
     },
   });
 
+  const { data: countVendas } = useQuery({
+    queryKey: ['aprovacoes-vendas-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('requisicoes_aprovacao_venda' as any)
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pendente');
+      return count || 0;
+    },
+  });
+
   const countsMap: Record<string, number> = {
     '/direcao/aprovacoes/fabrica': countFabrica || 0,
+    '/direcao/aprovacoes/vendas': (countVendas as number) || 0,
   };
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);

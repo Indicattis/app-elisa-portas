@@ -14,6 +14,7 @@ interface AutorizacaoDescontoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAutorizado: (autorizadorId: string) => void;
+  onSolicitarAprovacao?: () => void;
   percentualDesconto: number;
   tipoAutorizacao: 'responsavel_setor' | 'master';
   limitePermitido: number;
@@ -23,6 +24,7 @@ export function AutorizacaoDescontoModal({
   open,
   onOpenChange,
   onAutorizado,
+  onSolicitarAprovacao,
   percentualDesconto,
   tipoAutorizacao,
   limitePermitido
@@ -234,27 +236,42 @@ export function AutorizacaoDescontoModal({
           )}
         </div>
 
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-          >
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleAutorizar}
-            disabled={loading || !senha || !autorizadorId}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Verificando...
-              </>
-            ) : (
-              'Autorizar'
-            )}
-          </Button>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          {onSolicitarAprovacao && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                onSolicitarAprovacao();
+                onOpenChange(false);
+              }}
+              disabled={loading}
+              className="w-full sm:w-auto border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+            >
+              Solicitar Aprovação
+            </Button>
+          )}
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleAutorizar}
+              disabled={loading || !senha || !autorizadorId}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verificando...
+                </>
+              ) : (
+                'Autorizar'
+              )}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
