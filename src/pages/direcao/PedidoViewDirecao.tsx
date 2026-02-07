@@ -1,16 +1,33 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, User, Package, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCw, Hammer, Paintbrush, Truck, FileDown, Printer, ExternalLink, FileText } from "lucide-react";
+import { MapPin, User, Package, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCw, Hammer, Paintbrush, Truck, FileDown, Printer, ExternalLink, FileText, FolderOpen, Folder } from "lucide-react";
 import { baixarPedidoProducaoPDF, imprimirPedidoProducaoPDF, type PedidoProducaoPDFData } from "@/utils/pedidoProducaoPDFGenerator";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PedidoHistoricoMovimentacoes } from "@/components/pedidos/PedidoHistoricoMovimentacoes";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { getLabelTipoProduto } from "@/utils/tipoProdutoLabels";
+import { formatarDimensoes } from "@/utils/formatters";
+import { cn } from "@/lib/utils";
+
+interface PortaInfo {
+  id: string;
+  tipo_produto: string;
+  largura: number | null;
+  altura: number | null;
+}
+
+interface PortaGrupo {
+  key: string;
+  label: string;
+  dimensoes: string;
+  linhas: PedidoLinha[];
+}
 
 interface OrdemLinha {
   id: string;
@@ -63,7 +80,8 @@ export default function PedidoViewDirecao() {
   const { id } = useParams<{ id: string }>();
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [loading, setLoading] = useState(true);
-  const [portasMap, setPortasMap] = useState<Map<string, number>>(new Map());
+  const [portasInfo, setPortasInfo] = useState<Map<string, PortaInfo>>(new Map());
+  const [pastaAberta, setPastaAberta] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchPedidoDetails = async () => {
@@ -90,18 +108,30 @@ export default function PedidoViewDirecao() {
         .eq('pedido_id', id)
         .order('ordem', { ascending: true });
 
-      // Criar mapa de portas baseado apenas nos produto_venda_id únicos das linhas do pedido
+      // Buscar dados das portas (tipo_produto, largura, altura)
       const uniquePortaIds = [...new Set(
         (linhasData || [])
           .map(l => l.produto_venda_id)
           .filter((id): id is string => id !== null && id !== undefined)
       )];
 
-      const newPortasMap = new Map<string, number>();
-      uniquePortaIds.forEach((portaId, idx) => {
-        newPortasMap.set(portaId, idx + 1);
-      });
-      setPortasMap(newPortasMap);
+      const newPortasInfo = new Map<string, PortaInfo>();
+      if (uniquePortaIds.length > 0) {
+        const { data: portasData } = await supabase
+          .from('produtos_vendas')
+          .select('id, tipo_produto, largura, altura')
+          .in('id', uniquePortaIds);
+        
+        (portasData || []).forEach((p: any) => {
+          newPortasInfo.set(p.id, {
+            id: p.id,
+            tipo_produto: p.tipo_produto,
+            largura: p.largura,
+            altura: p.altura,
+          });
+        });
+      }
+      setPortasInfo(newPortasInfo);
 
       // Buscar ordens de forma simples
       const ordensResult: Ordem[] = [];
@@ -177,6 +207,40 @@ export default function PedidoViewDirecao() {
   useEffect(() => {
     fetchPedidoDetails();
   }, [id]);
+
+  // Agrupar linhas por porta
+  const gruposPortas = useMemo((): PortaGrupo[] => {
+    if (!pedido) return [];
+    const map = new Map<string, PortaGrupo>();
+    
+    pedido.linhas.forEach((linha) => {
+      const key = linha.produto_venda_id
+        ? `${linha.produto_venda_id}_${linha.indice_porta ?? 0}`
+        : 'sem_porta';
+      
+      if (!map.has(key)) {
+        let label = 'Sem produto';
+        let dimensoes = '';
+        
+        if (linha.produto_venda_id) {
+          const porta = portasInfo.get(linha.produto_venda_id);
+          const idx = linha.indice_porta ?? 0;
+          if (porta) {
+            label = `${getLabelTipoProduto(porta.tipo_produto)} #${idx + 1}`;
+            dimensoes = formatarDimensoes(porta.largura, porta.altura);
+          } else {
+            label = `Porta #${idx + 1}`;
+          }
+        }
+        
+        map.set(key, { key, label, dimensoes, linhas: [] });
+      }
+      
+      map.get(key)!.linhas.push(linha);
+    });
+    
+    return [...map.values()];
+  }, [pedido, portasInfo]);
 
   const getEtapaLabel = (etapa: string) => {
     const labels: Record<string, string> = {
@@ -389,7 +453,7 @@ export default function PedidoViewDirecao() {
         </div>
 
         {/* Itens do Pedido */}
-        {pedido.linhas.length > 0 && (
+        {gruposPortas.length > 0 && (
           <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2 text-white">
@@ -398,30 +462,68 @@ export default function PedidoViewDirecao() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {pedido.linhas.map((linha) => (
-                  <div key={linha.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-sm">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-white">{linha.nome_produto}</p>
-                        {linha.produto_venda_id && portasMap.get(linha.produto_venda_id) && (
-                          <Badge variant="outline" className="text-xs px-1.5 py-0 bg-blue-500/10 text-blue-400 border-blue-500/30">
-                            Porta {portasMap.get(linha.produto_venda_id)}
-                            {linha.indice_porta !== null && linha.indice_porta !== undefined && linha.indice_porta > 0 && ` (${linha.indice_porta + 1})`}
-                          </Badge>
-                        )}
-                      </div>
-                      {linha.descricao_produto && (
-                        <p className="text-xs text-white/60">{linha.descricao_produto}</p>
+              {/* Grid de pastas */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                {gruposPortas.map((grupo) => {
+                  const isOpen = pastaAberta === grupo.key;
+                  const isSemProduto = grupo.key === 'sem_porta';
+                  return (
+                    <div
+                      key={grupo.key}
+                      className={cn(
+                        "p-3 rounded-lg cursor-pointer transition-all border-2",
+                        isSemProduto ? "border-dashed" : "",
+                        isOpen
+                          ? "border-blue-500/50 bg-blue-500/10"
+                          : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
                       )}
+                      onClick={() => setPastaAberta(isOpen ? null : grupo.key)}
+                    >
+                      <div className="flex items-start gap-2">
+                        {isOpen ? (
+                          <FolderOpen className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
+                        ) : (
+                          <Folder className="h-5 w-5 text-white/50 shrink-0 mt-0.5" />
+                        )}
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <p className="text-sm font-semibold text-white leading-tight truncate">{grupo.label}</p>
+                          {grupo.dimensoes && (
+                            <p className="text-xs text-white/50">{grupo.dimensoes}</p>
+                          )}
+                          <Badge variant="outline" className="text-[10px] h-5 bg-white/5 text-white/70 border-white/20">
+                            {grupo.linhas.length} {grupo.linhas.length === 1 ? 'item' : 'itens'}
+                          </Badge>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 text-white/60 text-xs">
-                      {linha.tamanho && <span>{linha.tamanho}</span>}
-                      <span>Qtd: {linha.quantidade}</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
+
+              {/* Lista expandida da pasta selecionada */}
+              {pastaAberta && (() => {
+                const grupo = gruposPortas.find(g => g.key === pastaAberta);
+                if (!grupo) return null;
+                return (
+                  <div className="space-y-2 pt-2 border-t border-white/10">
+                    <p className="text-xs text-white/50 font-medium">{grupo.label}</p>
+                    {grupo.linhas.map((linha) => (
+                      <div key={linha.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-sm">
+                        <div className="flex-1">
+                          <p className="font-medium text-white">{linha.nome_produto}</p>
+                          {linha.descricao_produto && (
+                            <p className="text-xs text-white/60">{linha.descricao_produto}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 text-white/60 text-xs">
+                          {linha.tamanho && <span>{linha.tamanho}</span>}
+                          <span>Qtd: {linha.quantidade}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         )}
