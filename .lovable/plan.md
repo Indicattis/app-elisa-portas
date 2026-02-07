@@ -1,64 +1,57 @@
 
 
-# Agrupar itens do pedido por porta em grid de pastas (PedidoViewDirecao)
+# Fix: Numeracao duplicada de portas nos cards
 
-## Resumo
+## Problema
 
-Transformar a lista flat de itens do pedido na pagina `/direcao/pedidos/:id` em um layout de pastas em grid, agrupando as linhas por porta (`produto_venda_id` + `indice_porta`), similar ao que ja foi feito no `PedidoLinhasEditor`.
+A numeracao das pastas usa `indice_porta` que e relativo a cada `produto_venda_id`. Como existem 4 produtos de venda diferentes neste pedido, cada um comeca do indice 0, resultando em multiplas "Porta de Enrolar #1".
 
-## O que muda visualmente
+Dados do pedido:
+- `produto_venda_id` A: indice 0 -> "#1"
+- `produto_venda_id` B: indices 0, 1, 2 -> "#1", "#2", "#3"
+- `produto_venda_id` C: indices 0, 1 -> "#1", "#2"
+- `produto_venda_id` D: indice 0 -> "#1"
 
-A secao "Itens do Pedido" atual (lista simples) sera substituida por:
+Resultado: tres pastas chamadas "#1", duas "#2", etc.
 
-1. **Grid de cards/pastas** (2 colunas mobile, 3 colunas desktop) - cada pasta representa uma porta
-2. **Ao clicar** numa pasta, a lista de itens daquela porta aparece abaixo do grid
-3. **Pastas sem porta** aparecem como card separado ("Sem produto")
+## Solucao
 
-## Detalhes tecnicos
+Atribuir numeracao sequencial global apos o agrupamento, contando todas as portas do mesmo tipo em ordem. Assim teremos:
 
-### Arquivo modificado: `src/pages/direcao/PedidoViewDirecao.tsx`
+- Porta de Enrolar #1 (4.61m x 5.00m)
+- Porta de Enrolar #2 (4.75m x 6.00m)
+- Porta de Enrolar #3 (4.75m x 6.00m)
+- Porta de Enrolar #4 (4.75m x 6.00m)
+- Porta de Enrolar #5 (4.72m x 6.00m)
+- Porta de Enrolar #6 (4.72m x 6.00m)
+- Porta de Enrolar #7 (4.65m x 6.00m)
 
-1. **Buscar dados das portas**: Adicionar query a `produtos_vendas` usando os `produto_venda_id` unicos das linhas para obter `tipo_produto`, `largura`, `altura`. Isso substitui o `portasMap` atual (que so guarda indice numerico).
+## Detalhe tecnico
 
-2. **Estado de pasta aberta**: `const [pastaAberta, setPastaAberta] = useState<string | null>(null)`
+### Arquivo: `src/pages/direcao/PedidoViewDirecao.tsx`
 
-3. **Agrupar linhas por porta**: Usar `useMemo` para agrupar `pedido.linhas` por chave `${produto_venda_id}_${indice_porta}`, gerando array de grupos com label, dimensoes e contagem.
-
-4. **Renderizar grid**: Substituir o bloco de linhas (linhas 392-427) por:
-   - Grid de cards usando o estilo do dark theme da pagina (bg-white/5, text-white)
-   - Cada card mostra: label da porta, dimensoes, contagem de itens
-   - Card selecionado destaca com borda
-   - Abaixo do grid, lista expandida com os itens da pasta selecionada
-
-5. **Adaptar PortaFolderCard ou criar inline**: Como o `PortaFolderCard` existente usa `CategoriaLinha` (que nao existe nesta pagina), criarei cards inline com o estilo dark da pagina, sem depender de `CategoriaLinha`.
-
-### Interface da porta (dados buscados)
+No `useMemo` de `gruposPortas` (linhas 212-243), apos construir os grupos no Map, fazer um segundo passo para renumerar sequencialmente por tipo de produto:
 
 ```typescript
-interface PortaInfo {
-  id: string;
-  tipo_produto: string;
-  largura: number;
-  altura: number;
-}
+// Apos construir o map...
+const grupos = [...map.values()];
+
+// Renumerar sequencialmente por tipo
+const contadorPorTipo = new Map<string, number>();
+grupos.forEach(grupo => {
+  if (grupo.key === 'sem_porta') return;
+  // Extrair o tipo base (ex: "Porta de Enrolar")
+  const match = grupo.label.match(/^(.+) #\d+$/);
+  if (match) {
+    const tipo = match[1];
+    const count = (contadorPorTipo.get(tipo) || 0) + 1;
+    contadorPorTipo.set(tipo, count);
+    grupo.label = `${tipo} #${count}`;
+  }
+});
+
+return grupos;
 ```
 
-### Logica de agrupamento
+Apenas 1 arquivo modificado, apenas a logica de label muda.
 
-```typescript
-// Chave: "produto_venda_id_indicePorta" ou "sem_porta"
-const grupos = useMemo(() => {
-  const map = new Map();
-  pedido.linhas.forEach(linha => {
-    const key = linha.produto_venda_id 
-      ? `${linha.produto_venda_id}_${linha.indice_porta ?? 0}` 
-      : 'sem_porta';
-    // agrupar...
-  });
-  return [...map.entries()];
-}, [pedido.linhas]);
-```
-
-### Sem mudancas em outros arquivos
-
-Apenas `PedidoViewDirecao.tsx` sera modificado.
