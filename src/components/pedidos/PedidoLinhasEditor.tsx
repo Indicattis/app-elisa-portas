@@ -1011,6 +1011,18 @@ export const PedidoLinhasEditor = ({
         </div>
       )}
 
+      {/* Formulário de nova linha quando nenhuma pasta aberta */}
+      {!isReadOnly && novaLinha && !pastaAberta && (
+        <div className="border rounded-lg overflow-hidden">
+          <div className="flex items-center justify-between bg-muted/50 px-3 py-2 border-b">
+            <span className="text-sm font-semibold">Novo item</span>
+          </div>
+          <div className="p-2">
+            {renderLinhasTable([])}
+          </div>
+        </div>
+      )}
+
       {/* Botão global de adicionar (quando nenhuma pasta aberta) */}
       {!isReadOnly && !novaLinha && !pastaAberta && (
         <Button variant="outline" className="w-full" onClick={() => setNovaLinha(true)}>
