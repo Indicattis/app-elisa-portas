@@ -45,15 +45,34 @@ export function CidadeCollapsible({
 }: CidadeCollapsibleProps) {
   const [open, setOpen] = useState(false);
 
+  const totalAutorizados = cidade.autorizados.length;
+  const totalPremium = cidade.autorizados.filter(a => a.etapa === 'premium').length;
+  const isGreen = totalPremium >= 2;
+  const isRed = totalAutorizados === 0;
+
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="w-full">
       <CollapsibleTrigger className="w-full">
-        <div className="flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+        <div className={cn(
+          "flex items-center justify-between p-3 rounded-lg transition-colors border",
+          isGreen
+            ? "bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/20"
+            : isRed
+              ? "bg-red-500/10 hover:bg-red-500/20 border-red-500/20"
+              : "bg-white/5 hover:bg-white/10 border-transparent"
+        )}>
           <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-white/60" />
+            <Building2 className={cn("h-4 w-4", isGreen ? "text-emerald-400" : isRed ? "text-red-400" : "text-white/60")} />
             <span className="font-medium text-white">{cidade.nome}</span>
-            <Badge variant="secondary" className="text-xs bg-primary/20 text-primary">
-              {cidade.autorizados.length} autorizados
+            <Badge variant="secondary" className={cn(
+              "text-xs",
+              isGreen
+                ? "bg-emerald-500/20 text-emerald-400"
+                : isRed
+                  ? "bg-red-500/20 text-red-400"
+                  : "bg-primary/20 text-primary"
+            )}>
+              {totalAutorizados} autorizados
             </Badge>
           </div>
           <div className="flex items-center gap-2">
@@ -98,7 +117,7 @@ export function CidadeCollapsible({
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <ChevronDown className={cn("h-4 w-4 text-white/60 transition-transform", open && "rotate-180")} />
+            <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180", isGreen ? "text-emerald-400" : isRed ? "text-red-400" : "text-white/60")} />
           </div>
         </div>
       </CollapsibleTrigger>
