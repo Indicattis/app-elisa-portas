@@ -29,7 +29,7 @@ export function MetaCard({ meta, progressoAtual, onEdit, onDelete }: MetaCardPro
   const Icon = config.icon;
   
   const porcentagem = Math.min((progressoAtual / meta.valor_meta) * 100, 100);
-  const dataTermino = new Date(meta.data_termino);
+  const dataTermino = new Date(meta.data_termino + "T12:00:00");
   const hoje = new Date();
   const diasRestantes = Math.ceil((dataTermino.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
   const vencida = diasRestantes < 0 && !meta.concluida;
@@ -84,7 +84,7 @@ export function MetaCard({ meta, progressoAtual, onEdit, onDelete }: MetaCardPro
           <div className="flex items-center gap-1 text-muted-foreground">
             <Calendar className="h-3 w-3" />
             <span>
-              {format(new Date(meta.data_inicio), "dd/MM")} - {format(new Date(meta.data_termino), "dd/MM")}
+              {format(new Date(meta.data_inicio + "T12:00:00"), "dd/MM")} - {format(new Date(meta.data_termino + "T12:00:00"), "dd/MM")}
             </span>
           </div>
           
