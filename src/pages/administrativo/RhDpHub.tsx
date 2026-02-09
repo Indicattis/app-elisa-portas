@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Users, Briefcase, ClipboardList, Lock, ArrowLeft } from "lucide-react";
+import { Users, Briefcase, ClipboardList, Tag, Lock, ArrowLeft } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -10,6 +10,7 @@ const menuItems = [
   { label: "Colaboradores", icon: Users, path: "/administrativo/rh-dp/colaboradores", ativo: true },
   { label: "Vagas", icon: Briefcase, path: "/administrativo/rh-dp/vagas", ativo: true },
   { label: "Responsabilidades", icon: ClipboardList, path: "/administrativo/rh-dp/responsabilidades", ativo: true },
+  { label: "Funções", icon: Tag, path: "/administrativo/rh-dp/funcoes", ativo: true },
 ];
 
 export default function RhDpHub() {
@@ -108,7 +109,7 @@ export default function RhDpHub() {
 
       {/* ========== VERSÃO DESKTOP ========== */}
       <div className="hidden md:flex relative z-10 flex-col items-center gap-8">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const delay = 200 + index * 100;
