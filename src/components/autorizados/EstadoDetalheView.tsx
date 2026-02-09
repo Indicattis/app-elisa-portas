@@ -47,66 +47,6 @@ export function EstadoDetalheView({
 }: EstadoDetalheViewProps) {
   return (
     <div className="space-y-4">
-      {/* Header do Estado */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onVoltar}
-            className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-white/80" />
-          </button>
-          <div>
-            <h2 className="text-xl font-bold text-white">{estado.nome}</h2>
-            <p className="text-sm text-white/60">{estado.sigla}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onNovaCidade}
-            className="bg-primary/10 border-primary/20 hover:bg-primary/20"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Nova Cidade
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onEditEstado}
-            className="hover:bg-primary/10"
-          >
-            <Pencil className="h-4 w-4 text-white/60" />
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Excluir estado?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  O estado "{estado.nome}" e todas as suas cidades cadastradas serão excluídos. Os autorizados não serão afetados.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={onDeleteEstado}>
-                  Excluir
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </div>
-
       {/* Lista de Cidades */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
