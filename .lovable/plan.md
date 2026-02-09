@@ -1,82 +1,43 @@
 
 
-# Integrar Terceirizacao (Porta Social) ao fluxo de producao
+# Corrigir erro de retorno da Qualidade para Producao
 
-## Contexto
+## Problema
 
-Atualmente, a ordem de porta social (`ordens_porta_social`) e criada corretamente quando o pedido avanca para "Em Producao", mas ela e tratada de forma isolada -- sua conclusao nao impede o avanco do pedido, nao aparece no progresso geral, e seus itens nao sao incluidos na pintura.
+A funcao SQL `retornar_pedido_para_producao` faz um `INSERT` direto na tabela `pedidos_etapas` (linha 145-146), sem tratar o caso em que o registro `(pedido_id, em_producao)` ja existe. Como o pedido ja passou por essa etapa antes, a constraint `pedidos_etapas_pedido_id_etapa_unique` impede a insercao duplicada.
 
-## Problemas identificados
+## Causa raiz
 
-1. **Avanco ignora porta social**: A funcao `verificarOrdensProducaoConcluidas` em `usePedidoAutoAvanco.ts` so verifica soldagem, perfiladeira e separacao. A ordem de porta social nao e considerada.
+```sql
+-- Linha 145-146 da funcao atual (ERRADO)
+INSERT INTO pedidos_etapas (pedido_id, etapa, data_entrada, checkboxes)
+VALUES (p_pedido_id, 'em_producao', now(), '[]'::jsonb);
+```
 
-2. **Tipo `porta_social` nao existe no tipo `TipoOrdem`**: O tipo e `'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura'`. A pagina de terceirizacao usa `as any` para contornar isso.
-
-3. **Auto-avanco rejeita `porta_social`**: Quando o tipo de ordem concluida e `porta_social`, o `tentarAvancoAutomatico` ignora porque nao esta na lista `['soldagem', 'perfiladeira', 'separacao']`.
-
-4. **Progresso nao inclui porta social**: `useOrdemProgress.ts` nao consulta `ordens_porta_social`.
-
-5. **Pintura nao inclui itens de porta social**: `criar_ordem_pintura` busca linhas apenas de `tipo_ordem IN ('soldagem', 'perfiladeira', 'separacao')`.
-
-6. **Pagina de terceirizacao sem informacoes detalhadas**: A pagina atual so mostra delegar/concluir, sem as informacoes detalhadas que as demais producoes exibem (linhas do pedido, observacoes de visita, cores, produtos, etc.).
+Deveria usar `ON CONFLICT ... DO UPDATE` (UPSERT), como ja documentado na memoria do projeto (`database-pedidos-etapas-integrity`).
 
 ## Solucao
 
-### 1. Adicionar `porta_social` ao tipo `TipoOrdem` e ao fluxo de verificacao
+Substituir o `INSERT` por um `INSERT ... ON CONFLICT` que reativa a etapa existente:
 
-**Arquivo: `src/hooks/usePedidoAutoAvanco.ts`**
+```sql
+INSERT INTO pedidos_etapas (pedido_id, etapa, data_entrada, checkboxes)
+VALUES (p_pedido_id, 'em_producao', now(), '[]'::jsonb)
+ON CONFLICT (pedido_id, etapa) DO UPDATE SET
+  data_entrada = now(),
+  data_saida = NULL,
+  checkboxes = '[]'::jsonb;
+```
 
-- Linha 7: Adicionar `'porta_social'` ao tipo `TipoOrdem`
-- Na funcao `verificarOrdensProducaoConcluidas`: apos verificar soldagem/perfiladeira/separacao, adicionar verificacao de `ordens_porta_social` (status deve ser `concluido`)
-- Linha 296: Incluir `'porta_social'` na lista de tipos que disparam verificacao em `em_producao`
+Isso limpa a `data_saida`, reseta os checkboxes e atualiza a `data_entrada`, permitindo que a etapa seja revisitada sem violar a constraint.
 
-### 2. Incluir porta social no progresso do pedido
+## Detalhe tecnico
 
-**Arquivo: `src/hooks/useOrdemProgress.ts`**
+### Nova migracao SQL
 
-- Adicionar consulta a `ordens_porta_social` no `Promise.all`
-- Incluir no array de ordens para calculo de progresso
-
-### 3. Incluir itens de porta social na pintura (SQL)
-
-**Nova migracao SQL**
-
-Atualizar a funcao `criar_ordem_pintura` para tambem buscar itens de `pedido_linhas` que pertencem a porta social (`categoria_linha` correspondente ou produto com `tipo_produto = 'porta_social'`). Os itens da porta social que requerem pintura devem aparecer nas linhas da ordem de pintura.
-
-Como a porta social nao gera `linhas_ordens` no fluxo de producao padrao (ela e uma ordem sem linhas detalhadas), a pintura precisa buscar diretamente de `pedido_linhas` os itens com `categoria_linha` que correspondem a porta social e cujo estoque tem `requer_pintura = true`.
-
-### 4. Enriquecer a pagina de terceirizacao com informacoes do pedido
-
-**Arquivo: `src/components/production/ProducaoTerceirizacaoKanban.tsx`**
-
-Adicionar ao card de cada ordem:
-- Icones dos tipos de produto do pedido (componente `ProdutosIcons`)
-- Cores das portas de enrolar (componente `CoresPortasEnrolar`)
-- Progresso geral do pedido (componente via `useOrdemProgress`)
-- Observacoes da venda (ja parcialmente exibidas)
-- Lista das linhas do pedido (itens que compoe a porta social)
-
-**Arquivo: `src/hooks/useOrdemPortaSocial.ts`**
-
-Enriquecer a query para trazer tambem os dados de `produtos_vendas` (tipos de produto, cores) e as `pedido_linhas` associadas, para poder exibir informacoes completas no card.
-
-### 5. Remover `as any` da pagina de terceirizacao
-
-**Arquivos: `src/pages/ProducaoTerceirizacao.tsx` e `src/pages/fabrica/producao/TerceirizacaoMinimalista.tsx`**
-
-Remover o cast `'porta_social' as any` agora que o tipo sera adicionado a `TipoOrdem`.
-
-### 6. Ajustar retrocesso para porta social
-
-Verificar que a funcao `retroceder_pedido_unificado` ja lida com `ordens_porta_social` (confirmado: ja faz `DELETE FROM ordens_porta_social`). Nenhuma alteracao necessaria aqui.
+Recriar a funcao `retornar_pedido_para_producao` com a unica alteracao sendo o UPSERT na linha 145-146. Todo o restante da funcao permanece identico.
 
 ## Arquivos modificados
 
-1. **Editar**: `src/hooks/usePedidoAutoAvanco.ts` -- adicionar `porta_social` ao tipo e a verificacao
-2. **Editar**: `src/hooks/useOrdemProgress.ts` -- incluir `ordens_porta_social`
-3. **Editar**: `src/components/production/ProducaoTerceirizacaoKanban.tsx` -- enriquecer cards com info do pedido
-4. **Editar**: `src/hooks/useOrdemPortaSocial.ts` -- trazer dados adicionais (produtos, cores)
-5. **Editar**: `src/pages/ProducaoTerceirizacao.tsx` -- remover `as any`
-6. **Editar**: `src/pages/fabrica/producao/TerceirizacaoMinimalista.tsx` -- remover `as any`
-7. **Nova migracao SQL**: atualizar `criar_ordem_pintura` para incluir itens de porta social
+1. **Nova migracao SQL**: `CREATE OR REPLACE FUNCTION retornar_pedido_para_producao` -- corrigir INSERT para UPSERT com ON CONFLICT
 
