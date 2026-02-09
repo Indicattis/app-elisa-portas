@@ -48,6 +48,7 @@ export default function ProducaoQualidade() {
     capturarOrdem,
     marcarLinhaConcluida,
     concluirOrdem,
+    pausarOrdem,
   } = useOrdemProducao('qualidade', tentarAvancoAutomatico);
 
   // Sincronizar ordem selecionada com cache atualizado
@@ -111,6 +112,11 @@ export default function ProducaoQualidade() {
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
         isCapturing={capturarOrdem.isPending}
         onRetornarProducao={handleRetornarProducao}
+        onPausarOrdem={async (ordemId, justificativa, linhasProblemaIds) => {
+          await pausarOrdem.mutateAsync({ ordemId, justificativa, linhasProblemaIds });
+          setSheetOpen(false);
+        }}
+        isPausing={pausarOrdem.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal
