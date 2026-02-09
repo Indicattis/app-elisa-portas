@@ -59,7 +59,20 @@ export function useOrdemPortaSocial(onOrdemConcluida?: (pedidoId: string) => voi
             em_backlog,
             vendas(
               data_prevista_entrega,
-              observacoes_venda
+              observacoes_venda,
+              produtos_vendas(
+                id,
+                tipo_produto,
+                tamanho,
+                cor_id,
+                valor_pintura,
+                quantidade,
+                descricao,
+                largura,
+                altura,
+                tipo_fabricacao,
+                catalogo_cores:cor_id(nome, codigo_hex)
+              )
             )
           )
         `)
@@ -103,12 +116,23 @@ export function useOrdemPortaSocial(onOrdemConcluida?: (pedidoId: string) => voi
           const vendasArray = Array.isArray(ordem.pedido.vendas) ? ordem.pedido.vendas : [ordem.pedido.vendas];
           const primeiraVenda = vendasArray.length > 0 ? vendasArray[0] : null;
 
+          // Processar produtos_vendas com cores
+          const produtos = primeiraVenda?.produtos_vendas?.map((pv: any) => {
+            const corData = Array.isArray(pv.catalogo_cores) ? pv.catalogo_cores[0] : pv.catalogo_cores;
+            return {
+              ...pv,
+              cor_nome: corData?.nome,
+              cor_codigo_hex: corData?.codigo_hex,
+            };
+          }) || [];
+
           pedidoProcessado = {
             id: ordem.pedido.id,
             numero_pedido: ordem.pedido.numero_pedido,
             cliente_nome: ordem.pedido.cliente_nome,
             venda_id: ordem.pedido.venda_id,
-            vendas: primeiraVenda,
+            vendas: primeiraVenda ? { ...primeiraVenda, produtos_vendas: undefined } : null,
+            produtos,
           };
         }
 

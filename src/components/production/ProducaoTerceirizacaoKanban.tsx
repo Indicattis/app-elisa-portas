@@ -2,9 +2,12 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Package, Clock, UserPlus, Timer, AlertTriangle, RefreshCw, CheckCircle } from "lucide-react";
+import { Package, Clock, UserPlus, Timer, AlertTriangle, RefreshCw, CheckCircle, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
+import { useOrdemProgress } from "@/hooks/useOrdemProgress";
+import { ProdutosIcons } from "@/components/pedidos/ProdutosIcons";
+import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
 import { cn } from "@/lib/utils";
 
 interface OrdemPortaSocial {
@@ -27,6 +30,14 @@ interface OrdemPortaSocial {
       data_prevista_entrega?: string;
       observacoes_venda?: string;
     };
+    produtos?: Array<{
+      tipo_produto?: string;
+      cor_nome?: string;
+      cor_codigo_hex?: string;
+      tamanho?: string;
+      quantidade?: number;
+      descricao?: string;
+    }>;
   };
   delegado_para?: {
     nome: string;
@@ -53,6 +64,7 @@ function OrdemCard({
   isConcluindo = false,
 }: OrdemCardProps) {
   const todasConcluidas = ordem.status === 'concluido';
+  const { data: ordemProgress } = useOrdemProgress(ordem.pedido_id);
 
   const { tempoDecorrido, deveAnimar } = useCronometroOrdem({
     capturada_em: ordem.capturada_em,
@@ -97,6 +109,9 @@ function OrdemCard({
             </span>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 mt-1 sm:mt-0">
+            {ordem.pedido?.produtos && ordem.pedido.produtos.length > 0 && (
+              <ProdutosIcons produtos={ordem.pedido.produtos} />
+            )}
             <Badge variant="secondary" className="text-[10px] sm:text-xs">
               <Package className="h-3 w-3 mr-1" />
               Porta Social
@@ -161,9 +176,24 @@ function OrdemCard({
               </div>
             )}
 
+            {ordemProgress && ordemProgress.total > 0 && (
+              <div>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Progresso Geral</p>
+                <Badge variant="outline" className="text-[10px] sm:text-xs mt-0.5 sm:mt-1 h-5">
+                  {ordemProgress.concluidas}/{ordemProgress.total} ordens
+                </Badge>
+              </div>
+            )}
+
+            <div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Cores das Portas</p>
+              <CoresPortasEnrolar produtos={ordem.pedido?.produtos} />
+            </div>
+
             {ordem.pedido?.vendas?.observacoes_venda && (
               <div className="col-span-1 sm:col-span-2">
-                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">
+                <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1 font-medium">
+                  <FileText className="h-3 w-3" />
                   Observações Gerais
                 </p>
                 <p className="text-[10px] sm:text-xs line-clamp-2">{ordem.pedido.vendas.observacoes_venda}</p>
