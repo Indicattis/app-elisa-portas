@@ -1034,8 +1034,8 @@ export function OrdemDetalhesSheet({
                 </Button>
               )}
 
-              {/* Botão Aviso de Falta - para separação, perfiladeira e soldagem */}
-              {(tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira' || tipoOrdem === 'soldagem') && podeMarcarLinhas && !ordem.pausada && onPausarOrdem && (
+              {/* Botão Aviso de Falta - para separação, perfiladeira, soldagem e qualidade */}
+              {(tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira' || tipoOrdem === 'soldagem' || tipoOrdem === 'qualidade') && podeMarcarLinhas && !ordem.pausada && onPausarOrdem && (
                 <Button
                   variant="destructive"
                   className="w-full"
@@ -1077,7 +1077,7 @@ export function OrdemDetalhesSheet({
         )}
 
         {/* Modal de Aviso de Falta (ordem inteira) */}
-      {(tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira' || tipoOrdem === 'soldagem') && ordem && onPausarOrdem && (
+      {(tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira' || tipoOrdem === 'soldagem' || tipoOrdem === 'qualidade') && ordem && onPausarOrdem && (
         <AvisoFaltaModal
           open={avisoFaltaModalOpen}
           onOpenChange={setAvisoFaltaModalOpen}

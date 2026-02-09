@@ -643,7 +643,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      const tabelaOrdem = TABELA_MAP[tipoOrdem] as 'ordens_separacao' | 'ordens_perfiladeira' | 'ordens_soldagem';
+      const tabelaOrdem = TABELA_MAP[tipoOrdem] as 'ordens_separacao' | 'ordens_perfiladeira' | 'ordens_soldagem' | 'ordens_qualidade';
 
       // Se houver linhas selecionadas, marcar todas como com_problema
       if (linhasProblemaIds && linhasProblemaIds.length > 0) {
@@ -680,17 +680,22 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       const tempoTotal = (ordem.tempo_acumulado_segundos || 0) + tempoSessao;
 
       // Atualizar ordem como pausada
-      // Armazenar a primeira linha como linha_problema_id para compatibilidade
+      // Armazenar a primeira linha como linha_problema_id para compatibilidade (exceto qualidade)
+      const updateData: Record<string, any> = {
+        pausada: true,
+        pausada_em: new Date().toISOString(),
+        justificativa_pausa: justificativa,
+        tempo_acumulado_segundos: tempoTotal,
+        responsavel_id: null, // Liberar a ordem para outro operador
+      };
+
+      if (tipoOrdem !== 'qualidade') {
+        updateData.linha_problema_id = linhasProblemaIds?.[0] || null;
+      }
+
       const { error } = await supabase
         .from(tabelaOrdem)
-        .update({
-          pausada: true,
-          pausada_em: new Date().toISOString(),
-          justificativa_pausa: justificativa,
-          linha_problema_id: linhasProblemaIds?.[0] || null,
-          tempo_acumulado_segundos: tempoTotal,
-          responsavel_id: null, // Liberar a ordem para outro operador
-        })
+        .update(updateData)
         .eq('id', ordemId);
 
       if (error) throw error;
