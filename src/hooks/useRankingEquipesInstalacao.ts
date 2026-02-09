@@ -5,6 +5,14 @@ import { startOfMonth, startOfYear, endOfMonth, endOfYear } from 'date-fns';
 
 export type PeriodoFiltro = 'mes' | 'ano' | 'todos';
 
+export interface InstalacaoDetalhe {
+  id: string;
+  nome_cliente: string;
+  data_conclusao: string | null;
+  metragem?: number | null;
+  origem: 'pedido' | 'neo';
+}
+
 export interface RankingEquipe {
   equipe_id: string;
   equipe_nome: string;
@@ -12,6 +20,7 @@ export interface RankingEquipe {
   quantidade_instalacoes: number;
   metragem_total: number;
   ultima_instalacao: string | null;
+  instalacoes_detalhes: InstalacaoDetalhe[];
 }
 
 export function useRankingEquipesInstalacao() {
@@ -23,7 +32,6 @@ export function useRankingEquipesInstalacao() {
     try {
       setLoading(true);
 
-      // Calcular datas de filtro
       const now = new Date();
       let dataInicio: Date | null = null;
       let dataFim: Date | null = null;
@@ -36,7 +44,6 @@ export function useRankingEquipesInstalacao() {
         dataFim = endOfYear(now);
       }
 
-      // 1. Buscar todas as equipes ativas primeiro
       const { data: equipesData, error: equipesError } = await supabase
         .from('equipes_instalacao')
         .select('id, nome, cor, ativa')
@@ -44,36 +51,36 @@ export function useRankingEquipesInstalacao() {
 
       if (equipesError) throw equipesError;
 
-      // Criar mapa de equipes para lookup rápido
       const equipesMap = new Map(
         (equipesData || []).map(eq => [eq.id, eq])
       );
 
-      // 2. Buscar instalações vinculadas a pedidos (equipes internas - tipo_instalacao = 'elisa')
       let queryInstalacoes = supabase
         .from('instalacoes')
         .select(`
+          id,
           responsavel_instalacao_id,
           metragem_quadrada,
-          instalacao_concluida_em
+          instalacao_concluida_em,
+          nome_cliente
         `)
         .eq('instalacao_concluida', true)
         .eq('tipo_instalacao', 'elisa')
         .not('responsavel_instalacao_id', 'is', null)
-        .not('pedido_id', 'is', null); // Apenas instalações vinculadas a pedidos
+        .not('pedido_id', 'is', null);
 
-      // 3. Buscar neo instalações concluídas por equipes internas
       let queryNeoInstalacoes = supabase
         .from('neo_instalacoes')
         .select(`
+          id,
           equipe_id,
-          concluida_em
+          concluida_em,
+          nome_cliente
         `)
         .eq('concluida', true)
         .eq('tipo_responsavel', 'equipe_interna')
         .not('equipe_id', 'is', null);
 
-      // Aplicar filtro de período em ambas as queries
       if (dataInicio && dataFim) {
         queryInstalacoes = queryInstalacoes
           .gte('instalacao_concluida_em', dataInicio.toISOString())
@@ -84,7 +91,6 @@ export function useRankingEquipesInstalacao() {
           .lte('concluida_em', dataFim.toISOString());
       }
 
-      // Executar ambas as queries em paralelo
       const [instalacoesResult, neoInstalacoesResult] = await Promise.all([
         queryInstalacoes,
         queryNeoInstalacoes
@@ -96,17 +102,8 @@ export function useRankingEquipesInstalacao() {
       const instalacoesData = instalacoesResult.data || [];
       const neoInstalacoesData = neoInstalacoesResult.data || [];
 
-      // 4. Agrupar por equipe e calcular métricas
-      const agrupamento = new Map<string, {
-        equipe_id: string;
-        equipe_nome: string;
-        equipe_cor: string | null;
-        quantidade_instalacoes: number;
-        metragem_total: number;
-        ultima_instalacao: string | null;
-      }>();
+      const agrupamento = new Map<string, RankingEquipe>();
 
-      // Processar instalações de pedidos (têm metragem)
       instalacoesData.forEach((instalacao: any) => {
         const equipe = equipesMap.get(instalacao.responsavel_instalacao_id);
         if (!equipe) return;
@@ -120,13 +117,21 @@ export function useRankingEquipesInstalacao() {
             equipe_cor: equipe.cor,
             quantidade_instalacoes: 0,
             metragem_total: 0,
-            ultima_instalacao: null
+            ultima_instalacao: null,
+            instalacoes_detalhes: []
           });
         }
 
         const item = agrupamento.get(equipeId)!;
         item.quantidade_instalacoes += 1;
         item.metragem_total += instalacao.metragem_quadrada || 0;
+        item.instalacoes_detalhes.push({
+          id: instalacao.id,
+          nome_cliente: instalacao.nome_cliente,
+          data_conclusao: instalacao.instalacao_concluida_em,
+          metragem: instalacao.metragem_quadrada,
+          origem: 'pedido'
+        });
         
         if (!item.ultima_instalacao || 
             (instalacao.instalacao_concluida_em && instalacao.instalacao_concluida_em > item.ultima_instalacao)) {
@@ -134,7 +139,6 @@ export function useRankingEquipesInstalacao() {
         }
       });
 
-      // Processar neo instalações (não têm metragem)
       neoInstalacoesData.forEach((neo: any) => {
         const equipe = equipesMap.get(neo.equipe_id);
         if (!equipe) return;
@@ -148,13 +152,20 @@ export function useRankingEquipesInstalacao() {
             equipe_cor: equipe.cor,
             quantidade_instalacoes: 0,
             metragem_total: 0,
-            ultima_instalacao: null
+            ultima_instalacao: null,
+            instalacoes_detalhes: []
           });
         }
 
         const item = agrupamento.get(equipeId)!;
         item.quantidade_instalacoes += 1;
-        // Neo instalações não têm metragem, então não incrementamos
+        item.instalacoes_detalhes.push({
+          id: neo.id,
+          nome_cliente: neo.nome_cliente,
+          data_conclusao: neo.concluida_em,
+          metragem: null,
+          origem: 'neo'
+        });
         
         if (!item.ultima_instalacao || 
             (neo.concluida_em && neo.concluida_em > item.ultima_instalacao)) {
@@ -162,9 +173,17 @@ export function useRankingEquipesInstalacao() {
         }
       });
 
-      // Converter para array e ordenar por quantidade de instalações
       const rankingArray = Array.from(agrupamento.values())
         .sort((a, b) => b.quantidade_instalacoes - a.quantidade_instalacoes);
+
+      // Sort details by date desc within each team
+      rankingArray.forEach(eq => {
+        eq.instalacoes_detalhes.sort((a, b) => {
+          if (!a.data_conclusao) return 1;
+          if (!b.data_conclusao) return -1;
+          return b.data_conclusao.localeCompare(a.data_conclusao);
+        });
+      });
 
       setRanking(rankingArray);
     } catch (error) {
