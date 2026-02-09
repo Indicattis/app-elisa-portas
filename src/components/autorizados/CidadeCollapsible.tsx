@@ -113,6 +113,7 @@ export function CidadeCollapsible({
                 <TableRow className="border-primary/10 hover:bg-transparent">
                   <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                   <TableHead className="text-xs text-white/70">Etapa</TableHead>
+                  <TableHead className="text-xs text-white/70">Cidades Sec.</TableHead>
                   <TableHead className="text-xs text-white/70 text-center">P</TableHead>
                   <TableHead className="text-xs text-white/70 text-center">G</TableHead>
                   <TableHead className="text-xs text-white/70 text-center">GG</TableHead>
@@ -171,6 +172,11 @@ function AutorizadoRow({ autorizado, onEdit, onDelete, onTogglePremium }: Autori
         >
           {autorizado.etapa || 'ativo'}
         </Badge>
+      </TableCell>
+      <TableCell className="text-white/60 text-xs max-w-[150px]">
+        {autorizado.cidadesSecundarias && autorizado.cidadesSecundarias.length > 0
+          ? autorizado.cidadesSecundarias.join(', ')
+          : '-'}
       </TableCell>
       <TableCell className="text-center text-white/80">{formatCurrency(autorizado.precos?.P)}</TableCell>
       <TableCell className="text-center text-white/80">{formatCurrency(autorizado.precos?.G)}</TableCell>
@@ -263,6 +269,7 @@ export function OrfaosCollapsible({
                 <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                 <TableHead className="text-xs text-white/70">Cidade (texto)</TableHead>
                 <TableHead className="text-xs text-white/70">Etapa</TableHead>
+                <TableHead className="text-xs text-white/70">Cidades Sec.</TableHead>
                 <TableHead className="text-xs text-white/70 text-center">P</TableHead>
                 <TableHead className="text-xs text-white/70 text-center">G</TableHead>
                 <TableHead className="text-xs text-white/70 text-center">GG</TableHead>
@@ -295,6 +302,11 @@ export function OrfaosCollapsible({
                     >
                       {aut.etapa || 'ativo'}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-white/60 text-xs max-w-[150px]">
+                    {aut.cidadesSecundarias && aut.cidadesSecundarias.length > 0
+                      ? aut.cidadesSecundarias.join(', ')
+                      : '-'}
                   </TableCell>
                   <TableCell className="text-center text-white/80">{aut.precos?.P != null ? `R$ ${aut.precos.P.toFixed(2)}` : '-'}</TableCell>
                   <TableCell className="text-center text-white/80">{aut.precos?.G != null ? `R$ ${aut.precos.G.toFixed(2)}` : '-'}</TableCell>
