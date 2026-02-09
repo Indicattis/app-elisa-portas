@@ -1,45 +1,36 @@
 
+# Priorizar autorizados premium no topo da listagem por cidade
 
-# Remover tabela de precos e adicionar drag-and-drop nos estados
+## O que sera feito
 
-## Resumo
-
-1. Remover a secao "Precos por Autorizado" da pagina `/direcao/autorizados`.
-2. Adicionar coluna `ordem` na tabela `estados_autorizados` no banco de dados.
-3. Implementar drag-and-drop nos cards de estados para reordenar suas posicoes, persistindo a ordem no banco.
+Ordenar a lista de autorizados dentro de cada cidade (e tambem na secao de orfaos) para que os premium aparecam sempre no topo, seguidos dos ativos.
 
 ## Detalhes tecnicos
 
-### 1. Remover secao de precos
+### Editar: `src/components/autorizados/CidadeCollapsible.tsx`
 
-**Editar `src/pages/direcao/AutorizadosPrecosDirecao.tsx`**:
-- Remover o import de `AutorizadosPrecosSection`.
-- Remover o bloco `<AutorizadosPrecosSection />` dentro do grid de estados.
-- O `div.space-y-8` que envolvia estados + precos pode ser simplificado.
+Duas alteracoes simples:
 
-### 2. Adicionar coluna `ordem` no banco
+1. **No componente `CidadeCollapsible`** (linha 123): antes de renderizar `cidade.autorizados.map(...)`, ordenar o array com premium primeiro:
 
-Executar migration SQL para adicionar a coluna `ordem` (integer, default 0) na tabela `estados_autorizados`. Isso permite persistir a ordem definida pelo usuario.
+```typescript
+{[...cidade.autorizados]
+  .sort((a, b) => (a.etapa === 'premium' ? -1 : 1) - (b.etapa === 'premium' ? -1 : 1))
+  .map(aut => (
+    <AutorizadoRow ... />
+  ))}
+```
 
-### 3. Implementar drag-and-drop nos estados
+2. **No componente `OrfaosCollapsible`** (linha 271): aplicar a mesma ordenacao antes do `.map(...)`:
 
-**Editar `src/hooks/useEstadosCidades.ts`**:
-- Alterar o `fetchEstados` para ordenar por `ordem` ao inves de `sigla`.
-- Adicionar funcao `reordenarEstados` que recebe o array reordenado e atualiza a coluna `ordem` de cada registro no banco.
+```typescript
+{[...autorizados]
+  .sort((a, b) => (a.etapa === 'premium' ? -1 : 1) - (b.etapa === 'premium' ? -1 : 1))
+  .map(aut => (
+    ...
+  ))}
+```
 
-**Editar `src/pages/direcao/AutorizadosPrecosDirecao.tsx`**:
-- Importar componentes do `@dnd-kit/core` e `@dnd-kit/sortable` (ja instalados no projeto).
-- Envolver o grid de estados com `DndContext` e `SortableContext`.
-- Ao finalizar o drag (`onDragEnd`), reordenar o array local e chamar `reordenarEstados` para persistir.
+### Arquivo modificado
 
-**Editar `src/components/autorizados/EstadoCard.tsx`**:
-- Criar um wrapper `SortableEstadoCard` que usa `useSortable` do dnd-kit para tornar cada card arrastavel.
-- Aplicar os atributos de listeners e transform no card.
-
-### Arquivos modificados
-
-1. **SQL**: Adicionar coluna `ordem` em `estados_autorizados`
-2. **Editar**: `src/pages/direcao/AutorizadosPrecosDirecao.tsx` -- remover precos, adicionar DndContext
-3. **Editar**: `src/hooks/useEstadosCidades.ts` -- ordenar por `ordem`, adicionar `reordenarEstados`
-4. **Editar**: `src/components/autorizados/EstadoCard.tsx` -- adicionar wrapper sortable
-
+- `src/components/autorizados/CidadeCollapsible.tsx`
