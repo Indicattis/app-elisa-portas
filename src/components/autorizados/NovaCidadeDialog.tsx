@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
+import { getCidadesPorEstado } from '@/utils/estadosCidades';
 import type { Cidade } from '@/hooks/useEstadosCidades';
 
 interface NovaCidadeDialogProps {
@@ -44,49 +44,18 @@ export function NovaCidadeDialog({
 }: NovaCidadeDialogProps) {
   const [nome, setNome] = useState('');
   const [saving, setSaving] = useState(false);
-  const [cidadesDisponiveis, setCidadesDisponiveis] = useState<string[]>([]);
-  const [loadingCidades, setLoadingCidades] = useState(false);
 
   const isEditing = !!cidadeParaEditar;
 
-  // Buscar cidades únicas dos autorizados deste estado
-  useEffect(() => {
-    const fetchCidadesAutorizados = async () => {
-      if (!open || !estadoSigla) return;
-      
-      setLoadingCidades(true);
-      try {
-        const { data, error } = await supabase
-          .from('autorizados')
-          .select('cidade')
-          .ilike('estado', estadoSigla)
-          .not('cidade', 'is', null);
-        
-        if (error) throw error;
-        
-        // Extrair cidades únicas e ordenar
-        const cidadesUnicas = [...new Set(
-          (data || [])
-            .map(a => a.cidade)
-            .filter((c): c is string => !!c && c.trim() !== '')
-        )].sort();
-        
-        // Filtrar cidades já cadastradas (exceto a que está sendo editada)
-        const cidadesFiltradas = cidadesUnicas.filter(
-          c => !cidadesCadastradas.map(cc => cc.toLowerCase()).includes(c.toLowerCase()) ||
-               (isEditing && c.toLowerCase() === cidadeParaEditar?.nome.toLowerCase())
-        );
-        
-        setCidadesDisponiveis(cidadesFiltradas);
-      } catch (error) {
-        console.error('Erro ao buscar cidades:', error);
-      } finally {
-        setLoadingCidades(false);
-      }
-    };
-
-    fetchCidadesAutorizados();
-  }, [open, estadoSigla, cidadesCadastradas, isEditing, cidadeParaEditar]);
+  // Todas as cidades do estado, filtrando as já cadastradas
+  const cidadesDisponiveis = useMemo(() => {
+    if (!estadoSigla) return [];
+    const todas = getCidadesPorEstado(estadoSigla);
+    return todas.filter(
+      c => !cidadesCadastradas.map(cc => cc.toLowerCase()).includes(c.toLowerCase()) ||
+           (isEditing && c.toLowerCase() === cidadeParaEditar?.nome.toLowerCase())
+    );
+  }, [estadoSigla, cidadesCadastradas, isEditing, cidadeParaEditar]);
 
   useEffect(() => {
     if (cidadeParaEditar) {
@@ -132,11 +101,7 @@ export function NovaCidadeDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="cidade">Cidade</Label>
-            {loadingCidades ? (
-              <div className="flex items-center justify-center py-2">
-                <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-              </div>
-            ) : cidadesDisponiveis.length > 0 ? (
+            {cidadesDisponiveis.length > 0 ? (
               <Select value={nome} onValueChange={setNome}>
                 <SelectTrigger className="w-full bg-background">
                   <SelectValue placeholder="Selecione uma cidade" />
@@ -160,8 +125,8 @@ export function NovaCidadeDialog({
             )}
             <p className="text-xs text-muted-foreground">
               {cidadesDisponiveis.length > 0 
-                ? 'Cidades encontradas nos autorizados cadastrados.'
-                : 'Nenhuma cidade encontrada nos autorizados. Digite manualmente.'
+                ? `${cidadesDisponiveis.length} cidades disponíveis no estado.`
+                : 'Nenhuma cidade encontrada. Digite manualmente.'
               }
             </p>
           </div>
