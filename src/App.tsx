@@ -394,13 +394,13 @@ const App = () => (
                 <Route path="/forbidden" element={<Forbidden />} />
 
                 {/* Hub de Marketing Minimalista */}
-                <Route path="/marketing" element={<ProtectedRoute routeKey="marketing_hub"><MarketingHub /></ProtectedRoute>} />
+                <Route path="/marketing" element={<ProtectedRoute routeKeyPrefix="marketing_"><MarketingHub /></ProtectedRoute>} />
             <Route path="/marketing/performance" element={<ProtectedRoute routeKey="marketing_performance"><PerformanceMinimalista /></ProtectedRoute>} />
             <Route path="/marketing/canais-aquisicao" element={<ProtectedRoute routeKey="marketing_canais_aquisicao"><CanaisAquisicaoMinimalista /></ProtectedRoute>} />
             <Route path="/marketing/investimentos" element={<ProtectedRoute routeKey="marketing_investimentos"><InvestimentosMinimalista /></ProtectedRoute>} />
 
                 {/* Hub de Vendas Minimalista */}
-                <Route path="/vendas" element={<ProtectedRoute routeKey="vendas_hub"><VendasHub /></ProtectedRoute>} />
+                <Route path="/vendas" element={<ProtectedRoute routeKeyPrefix="vendas_"><VendasHub /></ProtectedRoute>} />
                 <Route path="/vendas/minhas-vendas" element={<ProtectedRoute routeKey="vendas_hub"><MinhasVendas /></ProtectedRoute>} />
                 <Route path="/vendas/minhas-vendas/nova" element={<ProtectedRoute routeKey="vendas_hub"><VendaNovaMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/minhas-vendas/editar/:id" element={<ProtectedRoute routeKey="vendas_hub"><MinhasVendasEditar /></ProtectedRoute>} />
@@ -413,7 +413,7 @@ const App = () => (
                 <Route path="/vendas/acompanhar-pedido" element={<ProtectedRoute routeKey="vendas_hub"><AcompanharPedido /></ProtectedRoute>} />
 
                 {/* Hub da Fábrica Minimalista */}
-                <Route path="/fabrica" element={<ProtectedRoute routeKey="fabrica_hub"><FabricaHub /></ProtectedRoute>} />
+                <Route path="/fabrica" element={<ProtectedRoute routeKeyPrefix="fabrica_"><FabricaHub /></ProtectedRoute>} />
                 <Route path="/fabrica/pedidos-producao" element={<ProtectedRoute routeKey="fabrica_pedidos"><PedidosProducaoMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/ordens-pedidos" element={<ProtectedRoute routeKey="fabrica_ordens_pedidos"><OrdensPorPedido /></ProtectedRoute>} />
                 <Route path="/fabrica/controle-estoque" element={<ProtectedRoute routeKey="fabrica_estoque"><ControleEstoqueMinimalista /></ProtectedRoute>} />
@@ -430,7 +430,7 @@ const App = () => (
                 <Route path="/fabrica/arquivo-morto" element={<ProtectedRoute routeKey="fabrica_arquivo_morto"><ArquivoMorto /></ProtectedRoute>} />
 
                 {/* Hub da Direção Minimalista */}
-                <Route path="/direcao" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoHub /></ProtectedRoute>} />
+                <Route path="/direcao" element={<ProtectedRoute routeKeyPrefix="direcao_"><DirecaoHub /></ProtectedRoute>} />
                 <Route path="/direcao/vendas" element={<ProtectedRoute routeKey="direcao_hub"><VendasDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/regras-vendas" element={<ProtectedRoute routeKey="direcao_hub"><RegrasVendasDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/clientes" element={<ProtectedRoute routeKey="direcao_hub"><ClientesDirecao /></ProtectedRoute>} />
@@ -475,7 +475,7 @@ const App = () => (
                 <Route path="/direcao/aprovacoes/vendas" element={<ProtectedRoute routeKey="direcao_hub"><AprovacoesVendas /></ProtectedRoute>} />
 
                 {/* Hub de Logística Minimalista */}
-                <Route path="/logistica" element={<ProtectedRoute routeKey="logistica_hub"><LogisticaHub /></ProtectedRoute>} />
+                <Route path="/logistica" element={<ProtectedRoute routeKeyPrefix="logistica_"><LogisticaHub /></ProtectedRoute>} />
                 <Route path="/logistica/controle" element={<ProtectedRoute routeKey="logistica_hub"><ControleLogistica /></ProtectedRoute>} />
                 <Route path="/logistica/expedicao" element={<ProtectedRoute routeKey="logistica_hub"><ExpedicaoMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/frota" element={<ProtectedRoute routeKey="logistica_hub"><FrotaMinimalista /></ProtectedRoute>} />
@@ -502,7 +502,7 @@ const App = () => (
                 <Route path="/estoque/auditoria" element={<ProtectedRoute routeKey="estoque_hub"><AuditoriaEstoque /></ProtectedRoute>} />
 
                 {/* Hub Administrativo Minimalista */}
-                <Route path="/administrativo" element={<ProtectedRoute routeKey="administrativo_hub"><AdministrativoHub /></ProtectedRoute>} />
+                <Route path="/administrativo" element={<ProtectedRoute routeKeyPrefix="administrativo_"><AdministrativoHub /></ProtectedRoute>} />
                 <Route path="/administrativo/pedidos" element={<ProtectedRoute routeKey="administrativo_hub"><PedidosAdminMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/pedidos/:id" element={<ProtectedRoute routeKey="administrativo_hub"><PedidoViewMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/vendas/:id" element={<ProtectedRoute routeKey="administrativo_hub"><VendaDetalhesMinimalista /></ProtectedRoute>} />
