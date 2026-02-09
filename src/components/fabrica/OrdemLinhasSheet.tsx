@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { Loader2, Package, RefreshCw, Pause, UserMinus, Printer, UserPlus, CheckCircle2 } from "lucide-react";
+import { Loader2, Package, RefreshCw, Pause, UserMinus, Printer, UserPlus, CheckCircle2, RotateCcw } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useLinhasOrdem, LinhaOrdem } from "@/hooks/useLinhasOrdem";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -13,6 +13,10 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { RemoverResponsavelModal } from "@/components/pedidos/RemoverResponsavelModal";
 import { DelegacaoModal } from "@/components/production/DelegacaoModal";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
 import { gerarPDFEtiquetaProducao } from "@/utils/etiquetasPDFGenerator";
 import { calcularTempoExpediente } from "@/utils/calcularTempoExpediente";
@@ -64,6 +68,7 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
   const queryClient = useQueryClient();
   const [showRemoverModal, setShowRemoverModal] = useState(false);
   const [showDelegacaoModal, setShowDelegacaoModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
   const { calcularEtiquetasLinha } = useEtiquetasProducao();
   
   const { data: linhas = [], isLoading } = useLinhasOrdem(
@@ -277,6 +282,51 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
       toastHook({
         title: "Erro ao concluir",
         description: error instanceof Error ? error.message : "Não foi possível concluir a ordem.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Resetar ordem
+  const resetarOrdem = useMutation({
+    mutationFn: async () => {
+      if (!ordem?.id || !ordem?.tipo) throw new Error('Ordem inválida');
+      const tableName = TABLE_MAP[ordem.tipo];
+
+      await supabase
+        .from('linhas_ordens')
+        .update({ concluida: false, concluida_em: null, concluida_por: null })
+        .eq('ordem_id', ordem.id)
+        .eq('tipo_ordem', ordem.tipo);
+
+      const { error } = await supabase
+        .from(tableName as any)
+        .update({
+          status: 'pendente',
+          responsavel_id: null,
+          capturada_em: null,
+          data_conclusao: null,
+          historico: false,
+          pausada: false,
+          justificativa_pausa: null,
+          tempo_acumulado_segundos: 0,
+        })
+        .eq('id', ordem.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+      queryClient.invalidateQueries({ queryKey: ['linhas-ordem', ordem?.id, ordem?.tipo] });
+      setShowResetModal(false);
+      onOpenChange(false);
+      toast.success('Ordem resetada com sucesso');
+    },
+    onError: () => {
+      toastHook({
+        title: "Erro",
+        description: "Não foi possível resetar a ordem.",
         variant: "destructive",
       });
     },
@@ -507,6 +557,26 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
                   </TooltipContent>
                 </Tooltip>
               )}
+              {/* Botão Resetar Ordem */}
+              {ordem && ordem.status !== 'pendente' && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowResetModal(true)}
+                      disabled={resetarOrdem.isPending}
+                      className="h-8 gap-2 border-red-500/50 bg-red-500/10 hover:bg-red-500/20 text-red-300"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      <span className="text-xs">Resetar</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Resetar ordem para pendente, remover responsável e desmarcar linhas
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </TooltipProvider>
           </div>
 
@@ -651,6 +721,29 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
         onConfirm={(userId) => delegarResponsavel.mutate(userId)}
         isLoading={delegarResponsavel.isPending}
       />
+
+      {/* Modal de confirmação para resetar ordem */}
+      <AlertDialog open={showResetModal} onOpenChange={setShowResetModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resetar ordem</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza? A ordem voltará ao status "pendente", todas as linhas serão
+              desmarcadas e o responsável será removido.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resetarOrdem.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); resetarOrdem.mutate(); }}
+              disabled={resetarOrdem.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {resetarOrdem.isPending ? "Resetando..." : "Resetar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
