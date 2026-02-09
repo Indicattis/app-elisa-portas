@@ -1,43 +1,45 @@
 
 
-# Corrigir erro de retorno da Qualidade para Producao
+# Corrigir botao da Fabrica em /home para usuarios com acesso parcial
 
 ## Problema
 
-A funcao SQL `retornar_pedido_para_producao` faz um `INSERT` direto na tabela `pedidos_etapas` (linha 145-146), sem tratar o caso em que o registro `(pedido_id, em_producao)` ja existe. Como o pedido ja passou por essa etapa antes, a constraint `pedidos_etapas_pedido_id_etapa_unique` impede a insercao duplicada.
+Na pagina `/home`, o botao "Fabrica" verifica se o usuario tem acesso a rota `fabrica_hub`. Porem, usuarios que so possuem acesso a sub-rotas (como `fabrica_pedidos`) nao conseguem clicar no botao, pois `fabrica_hub` nao esta na lista de permissoes deles.
 
-## Causa raiz
-
-```sql
--- Linha 145-146 da funcao atual (ERRADO)
-INSERT INTO pedidos_etapas (pedido_id, etapa, data_entrada, checkboxes)
-VALUES (p_pedido_id, 'em_producao', now(), '[]'::jsonb);
-```
-
-Deveria usar `ON CONFLICT ... DO UPDATE` (UPSERT), como ja documentado na memoria do projeto (`database-pedidos-etapas-integrity`).
+O mesmo problema se aplica aos demais modulos (Vendas, Logistica, etc.).
 
 ## Solucao
 
-Substituir o `INSERT` por um `INSERT ... ON CONFLICT` que reativa a etapa existente:
+Alterar a logica de verificacao em `src/pages/Home.tsx` para considerar que o usuario tem acesso a um modulo se possuir acesso ao hub **OU** a qualquer sub-rota daquele modulo.
 
-```sql
-INSERT INTO pedidos_etapas (pedido_id, etapa, data_entrada, checkboxes)
-VALUES (p_pedido_id, 'em_producao', now(), '[]'::jsonb)
-ON CONFLICT (pedido_id, etapa) DO UPDATE SET
-  data_entrada = now(),
-  data_saida = NULL,
-  checkboxes = '[]'::jsonb;
+### Mudanca tecnica
+
+**Arquivo: `src/pages/Home.tsx`**
+
+1. Expandir o `routeKeyMap` com um prefixo por modulo (ex: `fabrica` para `/fabrica`).
+2. Na query, buscar **todas** as permissoes do usuario (remover o filtro `.in('route_key', routeKeys)` restrito aos hubs).
+3. Na funcao `hasAccess`, verificar se o usuario tem `fabrica_hub` **ou** qualquer `route_key` que comece com `fabrica_` (como `fabrica_pedidos`, `fabrica_producao`, etc.).
+
+Exemplo da nova logica:
+
+```text
+routePrefixMap = {
+  '/fabrica': 'fabrica_',
+  '/vendas': 'vendas_',
+  '/logistica': 'logistica_',
+  ...
+}
+
+hasAccess('/fabrica'):
+  - bypass? -> true
+  - userAccess inclui 'fabrica_hub'? -> true
+  - userAccess inclui alguma key que comeca com 'fabrica_'? -> true
+  - senao -> false
 ```
 
-Isso limpa a `data_saida`, reseta os checkboxes e atualiza a `data_entrada`, permitindo que a etapa seja revisitada sem violar a constraint.
-
-## Detalhe tecnico
-
-### Nova migracao SQL
-
-Recriar a funcao `retornar_pedido_para_producao` com a unica alteracao sendo o UPSERT na linha 145-146. Todo o restante da funcao permanece identico.
+Isso garante que qualquer usuario com pelo menos uma permissao dentro do modulo consiga acessar o hub correspondente.
 
 ## Arquivos modificados
 
-1. **Nova migracao SQL**: `CREATE OR REPLACE FUNCTION retornar_pedido_para_producao` -- corrigir INSERT para UPSERT com ON CONFLICT
+1. **Editar**: `src/pages/Home.tsx` -- ajustar query e logica `hasAccess`
 
