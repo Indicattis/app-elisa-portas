@@ -87,7 +87,7 @@ export default function AutorizadosPrecosDirecao() {
   };
 
   const handleEditAutorizado = (id: string) => {
-    navigate(`/dashboard/parceiros/${id}/edit/autorizado`);
+    navigate(`/direcao/autorizados/${id}/editar`);
   };
 
   const handleCloseEstadoDialog = (open: boolean) => {
