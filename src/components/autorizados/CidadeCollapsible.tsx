@@ -113,6 +113,9 @@ export function CidadeCollapsible({
                 <TableRow className="border-primary/10 hover:bg-transparent">
                   <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                   <TableHead className="text-xs text-white/70">Etapa</TableHead>
+                  <TableHead className="text-xs text-white/70 text-center">P</TableHead>
+                  <TableHead className="text-xs text-white/70 text-center">G</TableHead>
+                  <TableHead className="text-xs text-white/70 text-center">GG</TableHead>
                   <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -144,6 +147,7 @@ interface AutorizadoRowProps {
 
 function AutorizadoRow({ autorizado, onEdit, onDelete, onTogglePremium }: AutorizadoRowProps) {
   const isPremium = autorizado.etapa === 'premium';
+  const formatCurrency = (val?: number) => val != null ? `R$ ${val.toFixed(2)}` : '-';
   
   return (
     <TableRow className="border-primary/10 hover:bg-primary/5">
@@ -166,6 +170,9 @@ function AutorizadoRow({ autorizado, onEdit, onDelete, onTogglePremium }: Autori
           {autorizado.etapa || 'ativo'}
         </Badge>
       </TableCell>
+      <TableCell className="text-center text-white/80">{formatCurrency(autorizado.precos?.P)}</TableCell>
+      <TableCell className="text-center text-white/80">{formatCurrency(autorizado.precos?.G)}</TableCell>
+      <TableCell className="text-center text-white/80">{formatCurrency(autorizado.precos?.GG)}</TableCell>
       <TableCell className="text-right">
         <div className="flex justify-end gap-1">
           <Button 
@@ -249,11 +256,14 @@ export function OrfaosCollapsible({
       <CollapsibleContent>
         <div className="mt-2 rounded-lg overflow-hidden border border-amber-500/20">
           <Table className="text-xs">
-            <TableHeader>
+              <TableHeader>
               <TableRow className="border-amber-500/20 hover:bg-transparent">
                 <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                 <TableHead className="text-xs text-white/70">Cidade (texto)</TableHead>
                 <TableHead className="text-xs text-white/70">Etapa</TableHead>
+                <TableHead className="text-xs text-white/70 text-center">P</TableHead>
+                <TableHead className="text-xs text-white/70 text-center">G</TableHead>
+                <TableHead className="text-xs text-white/70 text-center">GG</TableHead>
                 <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -282,6 +292,9 @@ export function OrfaosCollapsible({
                       {aut.etapa || 'ativo'}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-center text-white/80">{aut.precos?.P != null ? `R$ ${aut.precos.P.toFixed(2)}` : '-'}</TableCell>
+                  <TableCell className="text-center text-white/80">{aut.precos?.G != null ? `R$ ${aut.precos.G.toFixed(2)}` : '-'}</TableCell>
+                  <TableCell className="text-center text-white/80">{aut.precos?.GG != null ? `R$ ${aut.precos.GG.toFixed(2)}` : '-'}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       <Button 
