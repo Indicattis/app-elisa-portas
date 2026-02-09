@@ -1,47 +1,61 @@
 
-# Adicionar Produtos da Venda e Ficha de Visita Tecnica na pagina de Direção
+# Editar Medidas e Cores dos Produtos da Venda no Pedido
 
-## Problema
+## Funcionalidade
 
-A pagina `/direcao/pedidos/:id` (`PedidoViewDirecao.tsx`) nao exibe os **produtos da venda** nem a **ficha de visita tecnica**, diferente da pagina administrativa (`PedidoViewMinimalista.tsx`) que possui ambas as secoes.
+Adicionar botoes de edicao inline na tabela "Produtos da Venda" da pagina `/administrativo/pedidos/:id` para:
 
-## O que sera adicionado
+1. **Alterar largura e altura** dos produtos tipo `porta_enrolar` e `porta_social`
+2. **Alterar a cor** dos produtos tipo `pintura_epoxi`
 
-### 1. Produtos da Venda
-- Buscar os dados de `produtos_vendas` associados a venda do pedido (incluindo cor via `catalogo_cores`)
-- Exibir uma tabela com: Tipo, Descricao, Tamanho, Cor, Fabricacao (interno/terceirizado), Peso, Meia Canas e Quantidade
-- Versao mobile com cards compactos
-- Logica de calculo de peso e meia canas igual a pagina administrativa
+## Comportamento
 
-### 2. Ficha de Visita Tecnica
-- Exibir a ficha ja existente em `pedido.ficha_visita_url` usando o componente `FichaVisitaUpload` em modo somente leitura (disabled)
-- Posicionada entre as informacoes do cliente e os itens do pedido
+- Cada produto editavel tera um botao de editar (icone de lapis) ao lado dos campos editaveis
+- Ao clicar, os campos se transformam em inputs inline (largura/altura ou select de cor)
+- Um botao de salvar (check) e cancelar (X) aparece ao lado
+- Ao salvar, atualiza diretamente na tabela `produtos_vendas` via Supabase e recarrega os dados do pedido
+- Peso e Meia Canas sao recalculados automaticamente apos a edicao das medidas
 
 ## Detalhes tecnicos
 
-### Arquivo: `src/pages/direcao/PedidoViewDirecao.tsx`
+### Arquivo: `src/pages/administrativo/PedidoViewMinimalista.tsx`
 
-1. **Importar** `FichaVisitaUpload`, `ClipboardList` icon, e `Badge` (ja importado)
+1. **Novos estados**:
+   - `editandoProduto: string | null` -- ID do produto sendo editado
+   - `editLargura: number` e `editAltura: number` -- valores temporarios para medidas
+   - `editCorId: string` -- valor temporario para cor
+   - `salvandoProduto: boolean` -- loading durante o save
 
-2. **Atualizar interface Pedido** para incluir:
-   - `ficha_visita_nome?: string | null`
-   - `produtos_venda?: any[]`
+2. **Buscar catalogo de cores** para o select:
+   - Adicionar query `catalogo_cores` com `useQuery` para buscar todas as cores ativas (`ativa = true`)
 
-3. **Atualizar `fetchPedidoDetails`**:
-   - Apos buscar os dados da venda, buscar tambem `produtos_vendas` com join em `catalogo_cores` para a cor
-   - Adicionar `ficha_visita_nome` ao estado do pedido
+3. **Funcao `handleSalvarProduto`**:
+   - Para portas: atualiza `largura`, `altura` e `tamanho` (string formatada `LxA`) na tabela `produtos_vendas`
+   - Para pintura: atualiza `cor_id` e `descricao` (nome da cor selecionada) na tabela `produtos_vendas`
+   - Apos sucesso, chama `fetchPedidoDetails()` para recarregar dados
 
-4. **Adicionar funcoes utilitarias** `calcularPeso` e `calcularMeiaCanas` (copiadas do PedidoViewMinimalista)
+4. **Coluna "Tamanho" na tabela desktop** (linhas 565-578):
+   - Se o produto esta em edicao e e porta: exibir dois inputs (largura e altura) com botoes salvar/cancelar
+   - Senao: exibir valor atual como texto
 
-5. **Adicionar secao "Ficha de Visita Tecnica"** apos o grid de informacoes do cliente:
-   - Usar `FichaVisitaUpload` com `disabled={true}` (somente visualizacao na direcao)
-   - Exibir somente se houver `ficha_visita_url`
+5. **Coluna "Cor" na tabela desktop** (linhas 579):
+   - Se o produto esta em edicao e e pintura: exibir select com cores do catalogo
+   - Senao: exibir nome da cor atual
 
-6. **Adicionar secao "Produtos da Venda"** antes dos itens do pedido:
-   - Tabela desktop com colunas: Tipo, Descricao, Tamanho, Cor, Fabricacao, Peso, Meia Canas, Qtd
-   - Cards mobile com as mesmas informacoes
-   - Exibir somente se houver produtos
+6. **Nova coluna "Acoes"** na tabela:
+   - Botao de lapis para iniciar edicao (apenas para portas e pinturas)
+   - Quando em edicao: botoes de salvar (check verde) e cancelar (X)
 
-### Arquivo editado
+7. **Versao mobile** (linhas 596-610):
+   - Mesma logica de edicao adaptada para o layout de cards
 
-1. **Editar**: `src/pages/direcao/PedidoViewDirecao.tsx`
+### Campos atualizados no banco
+
+- **Portas** (`porta_enrolar`, `porta_social`): `largura`, `altura`, `tamanho` (string `LxA`)
+- **Pintura** (`pintura_epoxi`): `cor_id`, `descricao` (nome da cor)
+
+### Imports adicionais
+
+- `Select, SelectContent, SelectItem, SelectTrigger, SelectValue` de `@/components/ui/select`
+- `Check` de `lucide-react`
+- `Input` de `@/components/ui/input`
