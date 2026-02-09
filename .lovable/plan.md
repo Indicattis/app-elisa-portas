@@ -1,25 +1,40 @@
 
-# Botao de PDF na pagina de Colaboradores
+# Adicionar botao "Funcoes" no hub RH/DP e criar pagina de gerenciamento
 
 ## O que sera feito
 
-Adicionar um botao "Gerar PDF" na barra de acoes do header da pagina `/administrativo/rh-dp/colaboradores` que gera um PDF com a lista de colaboradores **filtrada** (respeitando busca, setor e funcao).
+1. Adicionar um novo botao "Funcoes" no hub `/administrativo/rh-dp` que direciona para `/administrativo/rh-dp/funcoes`.
+2. Criar uma nova pagina no estilo minimalista para cadastrar e gerenciar funcoes (cargos) dos colaboradores, usando a tabela `system_roles` existente.
+3. Registrar a rota no `App.tsx`.
 
 ## Detalhes tecnicos
 
-### 1. Novo arquivo: `src/utils/colaboradoresPDFGenerator.ts`
+### 1. Editar: `src/pages/administrativo/RhDpHub.tsx`
 
-Criar um gerador de PDF seguindo o mesmo padrao do `usuariosPDFGenerator.ts` existente, mas adaptado para colaboradores:
+- Adicionar novo item no array `menuItems` com icone `Tag` (ou `BadgeCheck`), path `/administrativo/rh-dp/funcoes` e `ativo: true`.
+- O grid desktop passara de 3 para 4 colunas (`grid-cols-4`).
 
-- Cabecalho com logo da empresa e dados
-- Tabela com colunas: Nome, Email, CPF, Funcao, Setor, Salario, Modalidade, Em Folha
-- Resumo estatistico ao final (total, por setor, por funcao)
-- Rodape com dados da empresa
+### 2. Criar: `src/pages/administrativo/FuncoesPage.tsx`
 
-### 2. Editar: `src/pages/administrativo/ColaboradoresMinimalista.tsx`
+Pagina minimalista usando `MinimalistLayout` (mesmo padrao de `AdminRolesMinimalista.tsx`) com:
 
-- Importar o novo gerador de PDF e o icone `FileDown` do lucide-react
-- Adicionar funcao `handleGerarPDF` que passa `filteredColaboradores` para o gerador
-- Adicionar botao "Gerar PDF" no `headerActions`, ao lado dos botoes existentes ("Gerar Folha", "Solicitacoes")
+- Lista de funcoes vindas da tabela `system_roles` (campos: key, label, setor, descricao, ativo, ordem).
+- Contagem de colaboradores por funcao (query em `admin_users`).
+- Botao "Nova Funcao" no header abrindo modal de criacao (reutilizando `CreateRoleModal`).
+- Botao "Editar" por funcao abrindo modal de edicao (reutilizando `EditRoleModal`).
+- Botao "Ver" por funcao abrindo dialog com lista de colaboradores ativos com aquele cargo.
+- Breadcrumb: Home > Administrativo > RH/DP > Funcoes.
+- `backPath` apontando para `/administrativo/rh-dp`.
 
-O botao usara os dados ja filtrados (`filteredColaboradores`) garantindo que o PDF respeite os filtros aplicados na tela.
+Essencialmente sera uma versao da `AdminRolesMinimalista.tsx` com breadcrumb e backPath ajustados para o contexto de RH/DP.
+
+### 3. Editar: `src/App.tsx`
+
+- Importar `FuncoesPage` (lazy import).
+- Adicionar rota: `/administrativo/rh-dp/funcoes` com `routeKey="administrativo_hub"`, seguindo o padrao das demais rotas de RH/DP.
+
+## Arquivos modificados
+
+1. **Editar**: `src/pages/administrativo/RhDpHub.tsx` -- adicionar item "Funcoes" ao menu
+2. **Criar**: `src/pages/administrativo/FuncoesPage.tsx` -- pagina de gerenciamento de funcoes
+3. **Editar**: `src/App.tsx` -- registrar nova rota
