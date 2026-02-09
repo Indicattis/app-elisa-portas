@@ -1,50 +1,51 @@
 
-# Melhorias no Ranking de Equipes de Instalacao
+# Ajustes no Ranking de Equipes de Instalacao
 
-## 1. Estilo visual ouro/prata/bronze
+## 1. Remover coloracao das equipes (azul, roxa, vermelha)
 
-Os cards das 3 primeiras posicoes terao bordas e fundos tematicos:
-- **1o lugar (Ouro)**: borda e fundo com tons dourados (`border-yellow-500/30`, `bg-gradient-to-r from-yellow-500/10 to-amber-500/5`)
-- **2o lugar (Prata)**: tons prateados (`border-gray-400/30`, `bg-gradient-to-r from-gray-400/10 to-slate-400/5`)
-- **3o lugar (Bronze)**: tons bronze (`border-orange-700/30`, `bg-gradient-to-r from-orange-700/10 to-amber-700/5`)
-- **Demais**: estilo atual (`bg-white/5 border-white/10`)
+Remover os seguintes elementos visuais baseados em `equipe.equipe_cor`:
+- Borda esquerda colorida do card (linha 147)
+- Bolinha colorida ao lado do nome da equipe (linhas 161-166)
+- Badge de quantidade com cor da equipe (linhas 204-211) -- trocar para cor neutra
 
-A barra de progresso tambem tera cor tematica (dourada, prateada, bronze) para as 3 primeiras posicoes.
+## 2. Classificacao P/G/GG no modal de instalacoes
 
-## 2. Exibir integrantes das equipes
+Adicionar classificacao de tamanho baseada na metragem quadrada:
+- P: menos de 25m2
+- G: 25 a 50m2
+- GG: mais de 50m2
 
-- Buscar todos os membros de todas as equipes usando o hook `useEquipesMembros` (sem filtro de equipeId, traz todos)
-- Filtrar os membros por equipe no render e exibir os avatares compactos abaixo do nome da equipe usando o componente `EquipeMembrosList` ja existente no modo `compact`
+Exibir como badge ao lado de cada instalacao no dialog. Somente para instalacoes de pedido que tenham metragem.
 
-## 3. Dialog com lista de instalacoes ao clicar
+## 3. Melhorar o modal com informacoes adicionais
 
-- Ao clicar em um card de equipe, abrir um `Dialog` mostrando todas as instalacoes concluidas daquela equipe no periodo selecionado
-- O hook `useRankingEquipesInstalacao` sera atualizado para retornar tambem os dados individuais das instalacoes (nome do cliente, data de conclusao, metragem, e origem: pedido ou neo)
-- A lista no dialog mostrara: nome do cliente, data de conclusao, metragem (quando disponivel), e um badge indicando a origem
+- Manter a separacao visual entre instalacoes de pedido e neo (badges "Pedido" e "Avulso")
+- Exibir o tamanho P/G/GG como badge quando a metragem estiver disponivel
+- Manter nome do cliente, data e metragem como ja esta
 
 ## Detalhes tecnicos
 
-### Arquivo: `src/hooks/useRankingEquipesInstalacao.ts`
-
-- Adicionar mais campos no select das queries:
-  - `instalacoes`: adicionar `id, nome_cliente` 
-  - `neo_instalacoes`: adicionar `id, nome_cliente`
-- Criar nova interface `InstalacaoDetalhe` com campos: `id`, `nome_cliente`, `data_conclusao`, `metragem`, `origem` ('pedido' | 'neo')
-- Adicionar campo `instalacoes_detalhes: InstalacaoDetalhe[]` na interface `RankingEquipe`
-- Ao processar cada instalacao, alem de incrementar contadores, guardar os detalhes individuais no array
-
 ### Arquivo: `src/pages/logistica/RankingEquipesInstalacao.tsx`
 
-1. Importar `useEquipesMembros`, `EquipeMembrosList`, `Dialog` e componentes relacionados
-2. Adicionar estado `selectedEquipe` para controlar qual equipe foi clicada
-3. Criar funcao `getCardStyles(posicao)` que retorna classes CSS de borda/fundo tematicas
-4. No render de cada card:
-   - Aplicar estilos tematicos via `getCardStyles`
-   - Adicionar `cursor-pointer` e `onClick` para abrir o dialog
-   - Renderizar `EquipeMembrosList` em modo compact abaixo do nome
-5. Adicionar `Dialog` com scroll area listando as instalacoes da equipe selecionada
+1. **Remover cores da equipe**:
+   - Remover `style={{ borderLeft: ... }}` do Card (linha 147)
+   - Remover o bloco da bolinha colorida (linhas 161-166)
+   - Trocar o badge de quantidade para usar cor fixa (branco/cinza) em vez de `equipe.equipe_cor` (linhas 204-211)
+
+2. **Adicionar funcao de classificacao de tamanho**:
+   ```
+   function classificarPorta(metragem: number | null | undefined): string | null {
+     if (!metragem || metragem <= 0) return null;
+     if (metragem < 25) return 'P';
+     if (metragem <= 50) return 'G';
+     return 'GG';
+   }
+   ```
+
+3. **Atualizar dialog de instalacoes**:
+   - Adicionar badge de tamanho (P/G/GG) para cada instalacao que tenha metragem
+   - Manter badges de origem (Pedido/Avulso) como ja estao
 
 ### Arquivos
 
-1. **Editar**: `src/hooks/useRankingEquipesInstalacao.ts` -- incluir detalhes individuais das instalacoes
-2. **Editar**: `src/pages/logistica/RankingEquipesInstalacao.tsx` -- estilos tematicos, membros, dialog de instalacoes
+1. **Editar**: `src/pages/logistica/RankingEquipesInstalacao.tsx`
