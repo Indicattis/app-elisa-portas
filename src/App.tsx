@@ -242,6 +242,7 @@ import ComprasHub from "./pages/administrativo/ComprasHub";
 import RhDpHub from "./pages/administrativo/RhDpHub";
 import ColaboradoresMinimalista from "./pages/administrativo/ColaboradoresMinimalista";
 import VagasPage from "./pages/administrativo/VagasPage";
+import ResponsabilidadesPage from "./pages/administrativo/ResponsabilidadesPage";
 import EstoqueMinimalista from "./pages/administrativo/EstoqueMinimalista";
 import EstoqueEditMinimalista from "./pages/administrativo/EstoqueEditMinimalista";
 import RequisicoesMinimalista from "./pages/administrativo/RequisicoesMinimalista";
@@ -505,6 +506,7 @@ const App = () => (
                 <Route path="/administrativo/rh-dp" element={<ProtectedRoute routeKey="administrativo_hub"><RhDpHub /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/colaboradores" element={<ProtectedRoute routeKey="administrativo_hub"><ColaboradoresMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/vagas" element={<ProtectedRoute routeKey="administrativo_hub"><VagasPage /></ProtectedRoute>} />
+                <Route path="/administrativo/rh-dp/responsabilidades" element={<ProtectedRoute routeKey="administrativo_hub"><ResponsabilidadesPage /></ProtectedRoute>} />
 
                 {/* Hub de Compras Minimalista */}
                 <Route path="/administrativo/compras" element={<ProtectedRoute routeKey="administrativo_hub"><ComprasHub /></ProtectedRoute>} />
