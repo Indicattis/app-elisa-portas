@@ -1,75 +1,74 @@
 
 
-# Adicionar funcionalidade de pausar ordens de qualidade
+# Melhorar layout das etiquetas de producao
 
-## Problema
+## Resumo
 
-A pagina `/producao/qualidade` nao permite pausar ordens (Aviso de Falta), diferente das demais paginas de producao (solda, perfiladeira, separacao). A tabela `ordens_qualidade` ja possui os campos necessarios (`pausada`, `pausada_em`, `justificativa_pausa`, `tempo_acumulado_segundos`), faltando apenas conectar a logica no frontend.
+Reestruturar o layout do PDF das etiquetas para exibir:
+- **Topo**: Logo da empresa + identificacao da porta (ex: "Porta #01 -- 4,00m x 2,00m")
+- **Tabela**: CLIENTE, PRODUTO, TAMANHO (campo separado, novo), QUANTIDADE, RESPONSAVEL
 
-## O que sera feito
-
-Habilitar o botao "Aviso de Falta" e o modal de pausa nas paginas de qualidade, permitindo que operadores pausem ordens com justificativa.
+Remover as linhas de DIMENSOES e PINTURA da tabela, ja que as dimensoes vao para o cabecalho junto com a porta.
 
 ## Detalhe tecnico
 
-### 1. Arquivo: `src/hooks/useOrdemProducao.ts`
+### 1. Arquivo: `src/types/etiqueta.ts`
 
-Na mutation `pausarOrdem` (linha 646), o type cast exclui `ordens_qualidade`. Atualizar para incluir:
-
-```typescript
-// De:
-const tabelaOrdem = TABELA_MAP[tipoOrdem] as 'ordens_separacao' | 'ordens_perfiladeira' | 'ordens_soldagem';
-
-// Para:
-const tabelaOrdem = TABELA_MAP[tipoOrdem] as 'ordens_separacao' | 'ordens_perfiladeira' | 'ordens_soldagem' | 'ordens_qualidade';
-```
-
-Na linha 690, o campo `linha_problema_id` nao existe em `ordens_qualidade`. Condicionar:
+Adicionar campo `portaLabel` ao tipo `TagProducao`:
 
 ```typescript
-// De:
-linha_problema_id: linhasProblemaIds?.[0] || null,
-
-// Para: (condicional, fora do update principal)
-// Adicionar linha_problema_id apenas para tipos que nao sejam qualidade
+portaLabel?: string;  // Ex: "Porta #01 — 4,00m x 2,00m"
 ```
 
-Reestruturar o update para montar o objeto dinamicamente, similar ao que ja e feito em `concluirOrdem` (linhas 537-540).
+### 2. Arquivo: `src/utils/etiquetasPDFGenerator.ts`
 
-### 2. Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
+Reescrever a funcao `desenharEtiquetaProducao` para o novo layout:
 
-Nas linhas 1038 e 1080, adicionar `'qualidade'` a condicao que exibe o botao e o modal de pausa:
+**Cabecalho (topo)**:
+- Logo centralizada (como ja esta)
+- Abaixo da logo, texto da porta centralizado em fonte grande (ex: "Porta #01 -- 4,00m x 2,00m"), usando `tag.portaLabel` se disponivel
+
+**Tabela (5 linhas fixas)**:
+1. CLIENTE -- `tag.clienteNome`
+2. PRODUTO -- `tag.nomeProduto`
+3. TAMANHO -- `tag.tamanho` formatado (ou `tag.largura x tag.altura` como fallback)
+4. QUANTIDADE -- `tag.quantidade`
+5. RESPONSAVEL -- `tag.responsavelNome`
+
+Remover as linhas condicionais de DIMENSOES e PINTURA. Remover o rodape de cor.
+
+### 3. Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
+
+No `handleImprimirEtiqueta` (~linha 214), montar o `portaLabel` a partir dos dados da linha:
 
 ```typescript
-// De:
-(tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira' || tipoOrdem === 'soldagem')
-
-// Para:
-(tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira' || tipoOrdem === 'soldagem' || tipoOrdem === 'qualidade')
+// Determinar label da porta
+const portaKey = linha.produto_venda_id
+  ? `${linha.produto_venda_id}_${linha.indice_porta ?? 0}`
+  : null;
+const portaNum = portaKey ? portasNumeracaoMap.get(portaKey) : null;
+// portaLabel sera algo como "Porta #01 -- 4,00m x 2,00m"
 ```
 
-### 3. Arquivo: `src/pages/ProducaoQualidade.tsx`
+Adicionar `portaLabel` ao objeto tag.
 
-Destructurar `pausarOrdem` do hook e passar as props ao `OrdemDetalhesSheet`:
+### 4. Arquivo: `src/components/fabrica/OrdemLinhasSheet.tsx`
 
-```typescript
-const { ..., pausarOrdem } = useOrdemProducao('qualidade', tentarAvancoAutomatico);
+No `handleImprimirEtiqueta` (~linha 349), montar o `portaLabel` de forma similar, usando `indice_porta` da linha.
 
-// No OrdemDetalhesSheet:
-onPausarOrdem={async (ordemId, justificativa, linhasProblemaIds) => {
-  await pausarOrdem.mutateAsync({ ordemId, justificativa, linhasProblemaIds });
-  setSheetOpen(false);
-}}
-isPausing={pausarOrdem.isPending}
-```
+### 5. Arquivo: `src/components/ordens/ImprimirEtiquetasModal.tsx`
 
-### 4. Arquivo: `src/pages/fabrica/producao/QualidadeMinimalista.tsx`
+No `criarTagProducao`, nao ha informacao de porta disponivel neste contexto (etiquetas do pedido, nao da ordem). O campo `portaLabel` ficara `undefined` e o cabecalho mostrara apenas a logo.
 
-Mesma alteracao da pagina legada: destructurar `pausarOrdem` e conectar ao sheet.
+### 6. Arquivo: `src/components/carregamento/CarregamentoDownbar.tsx`
+
+Verificar se ha dados de porta disponivel para popular `portaLabel`. Caso contrario, fica sem o label (apenas logo).
 
 ## Arquivos modificados
 
-1. **Editar**: `src/hooks/useOrdemProducao.ts` -- incluir `ordens_qualidade` no cast e condicionar `linha_problema_id`
-2. **Editar**: `src/components/production/OrdemDetalhesSheet.tsx` -- adicionar `qualidade` nas condicoes de pausa
-3. **Editar**: `src/pages/ProducaoQualidade.tsx` -- conectar `pausarOrdem` ao sheet
-4. **Editar**: `src/pages/fabrica/producao/QualidadeMinimalista.tsx` -- conectar `pausarOrdem` ao sheet
+1. **Editar**: `src/types/etiqueta.ts` -- adicionar `portaLabel`
+2. **Editar**: `src/utils/etiquetasPDFGenerator.ts` -- novo layout da tabela
+3. **Editar**: `src/components/production/OrdemDetalhesSheet.tsx` -- montar `portaLabel`
+4. **Editar**: `src/components/fabrica/OrdemLinhasSheet.tsx` -- montar `portaLabel`
+5. **Editar**: `src/components/ordens/ImprimirEtiquetasModal.tsx` -- sem alteracao funcional, apenas compatibilidade
+6. **Editar**: `src/components/carregamento/CarregamentoDownbar.tsx` -- verificar e adicionar `portaLabel` se disponivel
