@@ -4,11 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck, FileDown, Printer, ClipboardList, MessageSquare, AlertTriangle } from "lucide-react";
+import { MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck, FileDown, Printer, ClipboardList, MessageSquare, AlertTriangle, Pencil, Check, X } from "lucide-react";
 import { FichaVisitaUpload } from "@/components/pedidos/FichaVisitaUpload";
 import { toast as sonnerToast } from "sonner";
+import { useCatalogoCores } from "@/hooks/useCatalogoCores";
 import { baixarPedidoProducaoPDF, imprimirPedidoProducaoPDF, type PedidoProducaoPDFData } from "@/utils/pedidoProducaoPDFGenerator";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -102,8 +105,14 @@ export default function PedidoViewMinimalista() {
   const [mostrarModalAvancar, setMostrarModalAvancar] = useState(false);
   const [observacoesTexto, setObservacoesTexto] = useState("");
   const [salvandoObservacoes, setSalvandoObservacoes] = useState(false);
+  const [editandoProduto, setEditandoProduto] = useState<string | null>(null);
+  const [editLargura, setEditLargura] = useState<number>(0);
+  const [editAltura, setEditAltura] = useState<number>(0);
+  const [editCorId, setEditCorId] = useState<string>("");
+  const [salvandoProduto, setSalvandoProduto] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { coresAtivas } = useCatalogoCores();
 
   const { linhas, adicionarLinha, removerLinha, atualizarCheckbox, atualizarLinhasEmLote, atualizarLinhasComPropagacao, atualizarLinha } = usePedidoLinhas(id || "");
   const { moverParaProximaEtapa } = usePedidosEtapas();
@@ -270,6 +279,59 @@ export default function PedidoViewMinimalista() {
       sonnerToast.error('Erro ao salvar observação');
     } finally {
       setSalvandoObservacoes(false);
+    }
+  };
+
+  const handleIniciarEdicaoProduto = (produto: any) => {
+    setEditandoProduto(produto.id);
+    if (produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social') {
+      setEditLargura(produto.largura || 0);
+      setEditAltura(produto.altura || 0);
+    } else if (produto.tipo_produto === 'pintura_epoxi') {
+      setEditCorId(produto.cor_id || "");
+    }
+  };
+
+  const handleCancelarEdicaoProduto = () => {
+    setEditandoProduto(null);
+  };
+
+  const handleSalvarProduto = async (produto: any) => {
+    setSalvandoProduto(true);
+    try {
+      const isPorta = produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social';
+      const isPintura = produto.tipo_produto === 'pintura_epoxi';
+
+      if (isPorta) {
+        const { error } = await supabase
+          .from('produtos_vendas')
+          .update({
+            largura: editLargura,
+            altura: editAltura,
+            tamanho: `${editLargura}x${editAltura}`,
+          })
+          .eq('id', produto.id);
+        if (error) throw error;
+      } else if (isPintura) {
+        const corSelecionada = coresAtivas.find(c => c.id === editCorId);
+        const { error } = await supabase
+          .from('produtos_vendas')
+          .update({
+            cor_id: editCorId,
+            descricao: corSelecionada?.nome || produto.descricao,
+          })
+          .eq('id', produto.id);
+        if (error) throw error;
+      }
+
+      setEditandoProduto(null);
+      sonnerToast.success('Produto atualizado com sucesso');
+      fetchPedidoDetails();
+    } catch (error) {
+      console.error('Erro ao salvar produto:', error);
+      sonnerToast.error('Erro ao salvar produto');
+    } finally {
+      setSalvandoProduto(false);
     }
   };
 
@@ -568,45 +630,156 @@ export default function PedidoViewMinimalista() {
                       <th className="text-right p-2 font-medium text-white/50">Peso (kg)</th>
                       <th className="text-right p-2 font-medium text-white/50">M. Canas</th>
                       <th className="text-center p-2 font-medium text-white/50">Qtd</th>
+                      <th className="text-center p-2 font-medium text-white/50">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {pedido.venda.produtos.map((produto: any) => (
-                      <tr key={produto.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                        <td className="p-2 text-xs text-white/80">{produto.tipo_produto || '-'}</td>
-                        <td className="p-2 text-xs text-white/80">{produto.descricao || '-'}</td>
-                        <td className="p-2 text-xs text-white/80">{produto.tamanho || '-'}</td>
-                        <td className="p-2 text-xs text-white/80">{produto.cor?.nome || '-'}</td>
-                        <td className="p-2 text-xs">
-                          <Badge variant={produto.tipo_fabricacao === 'terceirizado' ? 'secondary' : 'outline'} className={`text-xs ${produto.tipo_fabricacao === 'terceirizado' ? 'bg-orange-500/20 text-orange-400' : 'border-white/20 text-white/60'}`}>
-                            {produto.tipo_fabricacao === 'terceirizado' ? 'Terceirizado' : 'Interno'}
-                          </Badge>
-                        </td>
-                        <td className="p-2 text-xs text-right text-white/80">{calcularPeso(produto) || '-'}</td>
-                        <td className="p-2 text-xs text-right text-white/80">{calcularMeiaCanas(produto) || '-'}</td>
-                        <td className="p-2 text-center">
-                          <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
-                        </td>
-                      </tr>
-                    ))}
+                    {pedido.venda.produtos.map((produto: any) => {
+                      const isEditing = editandoProduto === produto.id;
+                      const isPorta = produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social';
+                      const isPintura = produto.tipo_produto === 'pintura_epoxi';
+                      const isEditavel = isPorta || isPintura;
+
+                      return (
+                        <tr key={produto.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                          <td className="p-2 text-xs text-white/80">{produto.tipo_produto || '-'}</td>
+                          <td className="p-2 text-xs text-white/80">{produto.descricao || '-'}</td>
+                          <td className="p-2 text-xs text-white/80">
+                            {isEditing && isPorta ? (
+                              <div className="flex items-center gap-1">
+                                <Input type="number" step="0.01" value={editLargura} onChange={e => setEditLargura(parseFloat(e.target.value) || 0)} className="h-7 w-16 text-xs" placeholder="Larg" />
+                                <span className="text-white/50">x</span>
+                                <Input type="number" step="0.01" value={editAltura} onChange={e => setEditAltura(parseFloat(e.target.value) || 0)} className="h-7 w-16 text-xs" placeholder="Alt" />
+                              </div>
+                            ) : (
+                              produto.tamanho || '-'
+                            )}
+                          </td>
+                          <td className="p-2 text-xs text-white/80">
+                            {isEditing && isPintura ? (
+                              <Select value={editCorId} onValueChange={setEditCorId}>
+                                <SelectTrigger className="h-7 w-32 text-xs">
+                                  <SelectValue placeholder="Cor" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {coresAtivas.map(cor => (
+                                    <SelectItem key={cor.id} value={cor.id}>
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full border" style={{ backgroundColor: cor.codigo_hex }} />
+                                        {cor.nome}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              produto.cor?.nome || '-'
+                            )}
+                          </td>
+                          <td className="p-2 text-xs">
+                            <Badge variant={produto.tipo_fabricacao === 'terceirizado' ? 'secondary' : 'outline'} className={`text-xs ${produto.tipo_fabricacao === 'terceirizado' ? 'bg-orange-500/20 text-orange-400' : 'border-white/20 text-white/60'}`}>
+                              {produto.tipo_fabricacao === 'terceirizado' ? 'Terceirizado' : 'Interno'}
+                            </Badge>
+                          </td>
+                          <td className="p-2 text-xs text-right text-white/80">{calcularPeso(produto) || '-'}</td>
+                          <td className="p-2 text-xs text-right text-white/80">{calcularMeiaCanas(produto) || '-'}</td>
+                          <td className="p-2 text-center">
+                            <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
+                          </td>
+                          <td className="p-2 text-center">
+                            {isEditavel && !isEditing && (
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleIniciarEdicaoProduto(produto)}>
+                                <Pencil className="w-3 h-3 text-white/60" />
+                              </Button>
+                            )}
+                            {isEditing && (
+                              <div className="flex items-center justify-center gap-1">
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-green-400 hover:text-green-300" onClick={() => handleSalvarProduto(produto)} disabled={salvandoProduto}>
+                                  <Check className="w-3 h-3" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-red-400 hover:text-red-300" onClick={handleCancelarEdicaoProduto} disabled={salvandoProduto}>
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
               
               <div className="md:hidden space-y-3">
-                {pedido.venda.produtos.map((produto: any) => (
-                  <div key={produto.id} className="p-3 border border-white/10 rounded-lg space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm text-white">{produto.tipo_produto || '-'}</span>
-                      <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
+                {pedido.venda.produtos.map((produto: any) => {
+                  const isEditing = editandoProduto === produto.id;
+                  const isPorta = produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social';
+                  const isPintura = produto.tipo_produto === 'pintura_epoxi';
+                  const isEditavel = isPorta || isPintura;
+
+                  return (
+                    <div key={produto.id} className="p-3 border border-white/10 rounded-lg space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm text-white">{produto.tipo_produto || '-'}</span>
+                        <div className="flex items-center gap-2">
+                          {isEditavel && !isEditing && (
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleIniciarEdicaoProduto(produto)}>
+                              <Pencil className="w-3 h-3 text-white/60" />
+                            </Button>
+                          )}
+                          {isEditing && (
+                            <>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 text-green-400" onClick={() => handleSalvarProduto(produto)} disabled={salvandoProduto}>
+                                <Check className="w-3 h-3" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 text-red-400" onClick={handleCancelarEdicaoProduto} disabled={salvandoProduto}>
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </>
+                          )}
+                          <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
+                        </div>
+                      </div>
+                      {produto.descricao && <p className="text-xs text-white/50">{produto.descricao}</p>}
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-white/50">Tamanho: </span>
+                          {isEditing && isPorta ? (
+                            <div className="flex items-center gap-1 mt-1">
+                              <Input type="number" step="0.01" value={editLargura} onChange={e => setEditLargura(parseFloat(e.target.value) || 0)} className="h-7 w-16 text-xs" placeholder="L" />
+                              <span className="text-white/50">x</span>
+                              <Input type="number" step="0.01" value={editAltura} onChange={e => setEditAltura(parseFloat(e.target.value) || 0)} className="h-7 w-16 text-xs" placeholder="A" />
+                            </div>
+                          ) : (
+                            <span className="font-medium text-white/80">{produto.tamanho || '-'}</span>
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-white/50">Cor: </span>
+                          {isEditing && isPintura ? (
+                            <Select value={editCorId} onValueChange={setEditCorId}>
+                              <SelectTrigger className="h-7 text-xs mt-1">
+                                <SelectValue placeholder="Cor" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {coresAtivas.map(cor => (
+                                  <SelectItem key={cor.id} value={cor.id}>
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 rounded-full border" style={{ backgroundColor: cor.codigo_hex }} />
+                                      {cor.nome}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <span className="font-medium text-white/80">{produto.cor?.nome || '-'}</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    {produto.descricao && <p className="text-xs text-white/50">{produto.descricao}</p>}
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div><span className="text-white/50">Tamanho: </span><span className="font-medium text-white/80">{produto.tamanho || '-'}</span></div>
-                      <div><span className="text-white/50">Cor: </span><span className="font-medium text-white/80">{produto.cor?.nome || '-'}</span></div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
