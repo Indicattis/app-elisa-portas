@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Truck } from "lucide-react";
+import { Truck, HardHat, ArrowLeft } from "lucide-react";
 
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 
@@ -10,6 +10,12 @@ const menuItems = [
     description: "Agendamento de carregamentos",
     icon: Truck,
     path: "/direcao/calendario-expedicao",
+  },
+  {
+    title: "Instalações",
+    description: "Gestão de instalações",
+    icon: HardHat,
+    path: "/direcao/gestao-instalacao/instalacoes",
   },
 ];
 
@@ -35,6 +41,22 @@ export default function GestaoInstalacaoDirecao() {
       />
 
       
+
+      {/* Botão Voltar */}
+      <button
+        onClick={() => navigate('/direcao')}
+        className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
+                   hover:bg-white/10 transition-all duration-300"
+        style={{
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? 'translateX(0)' : 'translateX(-20px)',
+          transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 100ms'
+        }}
+      >
+        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20">
+          <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+        </div>
+      </button>
 
       {/* Lista de botões centralizada */}
       <div className="relative z-10 flex flex-col items-center justify-center px-6 py-10 w-full max-w-md">
