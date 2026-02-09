@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LogoUpload } from "@/components/LogoUpload";
 import { ContratoUpload } from "@/components/ContratoUpload";
 import { ArrowLeft, MapPin, Loader2, RotateCcw, Plus, X, User, Upload } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { getEtapasByTipo } from "@/utils/parceiros";
@@ -74,6 +74,9 @@ export default function EditarAutorizadoDirecao() {
   const [estadoInfo, setEstadoInfo] = useState<{ id: string; nome: string } | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const contexto = pathname.startsWith('/logistica') ? 'logistica' : 'direcao';
+  const basePath = `/${contexto}/autorizados`;
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
@@ -268,7 +271,7 @@ export default function EditarAutorizadoDirecao() {
       queryClient.invalidateQueries({ queryKey: ['autorizados-performance'] });
 
       toast({ title: 'Sucesso', description: 'Autorizado atualizado com sucesso.' });
-      navigate('/direcao/autorizados');
+      navigate(basePath);
     } catch (error) {
       console.error('Erro ao atualizar autorizado:', error);
       toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao atualizar autorizado.' });
@@ -338,13 +341,13 @@ export default function EditarAutorizadoDirecao() {
 
   const breadcrumbItems = [
     { label: "Home", path: "/home" },
-    { label: "Direção", path: "/direcao" },
-    { label: "Autorizados", path: "/direcao/autorizados" },
-    ...(estadoInfo ? [{ label: estadoInfo.nome, path: `/direcao/autorizados/estado/${estadoInfo.id}` }] : []),
+    { label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' },
+    { label: "Autorizados", path: basePath },
+    ...(estadoInfo ? [{ label: estadoInfo.nome, path: `${basePath}/estado/${estadoInfo.id}` }] : []),
     { label: "Editar" }
   ];
 
-  const backPath = estadoInfo ? `/direcao/autorizados/estado/${estadoInfo.id}` : '/direcao/autorizados';
+  const backPath = estadoInfo ? `${basePath}/estado/${estadoInfo.id}` : basePath;
 
   if (loading) {
     return (
