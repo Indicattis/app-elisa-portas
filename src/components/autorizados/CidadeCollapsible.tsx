@@ -120,7 +120,9 @@ export function CidadeCollapsible({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cidade.autorizados.map(aut => (
+                {[...cidade.autorizados]
+                  .sort((a, b) => (a.etapa === 'premium' ? -1 : 1) - (b.etapa === 'premium' ? -1 : 1))
+                  .map(aut => (
                   <AutorizadoRow
                     key={aut.id}
                     autorizado={aut}
@@ -268,7 +270,9 @@ export function OrfaosCollapsible({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {autorizados.map(aut => (
+              {[...autorizados]
+                .sort((a, b) => (a.etapa === 'premium' ? -1 : 1) - (b.etapa === 'premium' ? -1 : 1))
+                .map(aut => (
                 <TableRow key={aut.id} className="border-amber-500/20 hover:bg-amber-500/5">
                   <TableCell className="font-medium text-white">
                     {aut.nome}
