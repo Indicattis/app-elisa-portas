@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, User, Package, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCw, Hammer, Paintbrush, Truck, FileDown, Printer, ExternalLink, FileText, FolderOpen, Folder } from "lucide-react";
+import { MapPin, User, Package, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCw, Hammer, Paintbrush, Truck, FileDown, Printer, ExternalLink, FileText, FolderOpen, Folder, ClipboardList } from "lucide-react";
 import { baixarPedidoProducaoPDF, imprimirPedidoProducaoPDF, type PedidoProducaoPDFData } from "@/utils/pedidoProducaoPDFGenerator";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,6 +14,37 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { getLabelTipoProduto } from "@/utils/tipoProdutoLabels";
 import { formatarDimensoes } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
+import { FichaVisitaUpload } from "@/components/pedidos/FichaVisitaUpload";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+const calcularPeso = (produto: any) => {
+  if (produto.largura && produto.altura) {
+    return (((produto.largura * produto.altura * 12) * 2) * 0.3).toFixed(1);
+  }
+  if (produto.tamanho) {
+    const match = produto.tamanho.match(/(\d+\.?\d*)\s*[xX×]\s*(\d+\.?\d*)/);
+    if (match) {
+      const largura = parseFloat(match[1]);
+      const altura = parseFloat(match[2]);
+      return (((largura * altura * 12) * 2) * 0.3).toFixed(1);
+    }
+  }
+  return null;
+};
+
+const calcularMeiaCanas = (produto: any) => {
+  if (produto.altura) {
+    return (produto.altura / 0.076).toFixed(2);
+  }
+  if (produto.tamanho) {
+    const match = produto.tamanho.match(/(\d+\.?\d*)\s*[xX×]\s*(\d+\.?\d*)/);
+    if (match) {
+      const altura = parseFloat(match[2]);
+      return (altura / 0.076).toFixed(2);
+    }
+  }
+  return null;
+};
 
 interface PortaInfo {
   id: string;
@@ -63,6 +94,7 @@ interface Pedido {
   created_at: string;
   venda_id?: string;
   ficha_visita_url?: string | null;
+  ficha_visita_nome?: string | null;
   observacoes?: string | null;
   updated_at?: string;
   cliente_nome?: string;
@@ -74,6 +106,7 @@ interface Pedido {
   data_prevista_entrega?: string;
   linhas: PedidoLinha[];
   ordens: Ordem[];
+  produtos_venda?: any[];
 }
 
 export default function PedidoViewDirecao() {
@@ -83,6 +116,7 @@ export default function PedidoViewDirecao() {
   const [portasInfo, setPortasInfo] = useState<Map<string, PortaInfo>>(new Map());
   const [pastaAberta, setPastaAberta] = useState<string | null>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const fetchPedidoDetails = async () => {
     if (!id) return;
@@ -93,13 +127,25 @@ export default function PedidoViewDirecao() {
         .from('pedidos_producao')
         .select(`
           id, numero_pedido, etapa_atual, created_at, venda_id,
-          ficha_visita_url, observacoes, updated_at,
-          vendas!inner(cliente_nome, cidade, estado, valor_venda, forma_pagamento, tipo_entrega, data_prevista_entrega)
+          ficha_visita_url, ficha_visita_nome, observacoes, updated_at,
+          vendas!inner(id, cliente_nome, cidade, estado, valor_venda, forma_pagamento, tipo_entrega, data_prevista_entrega)
         `)
         .eq('id', id)
         .single();
       
       if (pedidoError) throw pedidoError;
+
+      // Buscar produtos da venda
+      let produtosVenda: any[] = [];
+      const vendaObj = (pedidoData as any).vendas;
+      if (vendaObj?.id) {
+        const { data: produtos } = await supabase
+          .from('produtos_vendas')
+          .select(`*, cor:catalogo_cores(nome)`)
+          .eq('venda_id', vendaObj.id)
+          .order('created_at');
+        produtosVenda = produtos || [];
+      }
 
       // Buscar linhas do pedido
       const { data: linhasData } = await supabase
@@ -171,7 +217,7 @@ export default function PedidoViewDirecao() {
         ordem.linhas = (linhasOrdem as OrdemLinha[]) || [];
       }
 
-      const venda = (pedidoData as any).vendas;
+      const venda = vendaObj;
       
       setPedido({
         id: pedidoData.id,
@@ -180,6 +226,7 @@ export default function PedidoViewDirecao() {
         created_at: pedidoData.created_at,
         venda_id: pedidoData.venda_id || undefined,
         ficha_visita_url: pedidoData.ficha_visita_url,
+        ficha_visita_nome: (pedidoData as any).ficha_visita_nome,
         observacoes: pedidoData.observacoes,
         updated_at: pedidoData.updated_at,
         cliente_nome: venda?.cliente_nome,
@@ -191,6 +238,7 @@ export default function PedidoViewDirecao() {
         data_prevista_entrega: venda?.data_prevista_entrega,
         linhas: ((linhasData as any) || []) as PedidoLinha[],
         ordens: ordensResult,
+        produtos_venda: produtosVenda,
       });
     } catch (error) {
       console.error('Erro ao buscar pedido:', error);
@@ -466,6 +514,96 @@ export default function PedidoViewDirecao() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Ficha de Visita Técnica */}
+        {pedido.ficha_visita_url && (
+          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2 text-white">
+                <ClipboardList className="w-4 h-4" />
+                Ficha de Visita Técnica
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FichaVisitaUpload
+                fichaUrl={pedido.ficha_visita_url}
+                fichaNome={pedido.ficha_visita_nome}
+                onFichaChange={() => {}}
+                disabled={true}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Produtos da Venda */}
+        {pedido.produtos_venda && pedido.produtos_venda.length > 0 && (
+          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2 text-white">
+                <Package className="w-4 h-4" />
+                Produtos da Venda
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!isMobile ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-white/10 text-xs">
+                        <th className="text-left p-2 font-medium text-white/50">Tipo</th>
+                        <th className="text-left p-2 font-medium text-white/50">Descrição</th>
+                        <th className="text-left p-2 font-medium text-white/50">Tamanho</th>
+                        <th className="text-left p-2 font-medium text-white/50">Cor</th>
+                        <th className="text-left p-2 font-medium text-white/50">Fabricação</th>
+                        <th className="text-right p-2 font-medium text-white/50">Peso (kg)</th>
+                        <th className="text-right p-2 font-medium text-white/50">M. Canas</th>
+                        <th className="text-center p-2 font-medium text-white/50">Qtd</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pedido.produtos_venda.map((produto: any) => (
+                        <tr key={produto.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                          <td className="p-2 text-xs text-white/80">{produto.tipo_produto || '-'}</td>
+                          <td className="p-2 text-xs text-white/80">{produto.descricao || '-'}</td>
+                          <td className="p-2 text-xs text-white/80">{produto.tamanho || '-'}</td>
+                          <td className="p-2 text-xs text-white/80">{produto.cor?.nome || '-'}</td>
+                          <td className="p-2 text-xs">
+                            <Badge variant={produto.tipo_fabricacao === 'terceirizado' ? 'secondary' : 'outline'} className={`text-xs ${produto.tipo_fabricacao === 'terceirizado' ? 'bg-orange-500/20 text-orange-400' : 'border-white/20 text-white/60'}`}>
+                              {produto.tipo_fabricacao === 'terceirizado' ? 'Terceirizado' : 'Interno'}
+                            </Badge>
+                          </td>
+                          <td className="p-2 text-xs text-right text-white/80">{calcularPeso(produto) || '-'}</td>
+                          <td className="p-2 text-xs text-right text-white/80">{calcularMeiaCanas(produto) || '-'}</td>
+                          <td className="p-2 text-center">
+                            <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {pedido.produtos_venda.map((produto: any) => (
+                    <div key={produto.id} className="p-3 border border-white/10 rounded-lg space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm text-white">{produto.tipo_produto || '-'}</span>
+                        <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
+                      </div>
+                      {produto.descricao && <p className="text-xs text-white/50">{produto.descricao}</p>}
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div><span className="text-white/50">Tamanho: </span><span className="font-medium text-white/80">{produto.tamanho || '-'}</span></div>
+                        <div><span className="text-white/50">Cor: </span><span className="font-medium text-white/80">{produto.cor?.nome || '-'}</span></div>
+                        <div><span className="text-white/50">Peso: </span><span className="font-medium text-white/80">{calcularPeso(produto) || '-'} kg</span></div>
+                        <div><span className="text-white/50">M. Canas: </span><span className="font-medium text-white/80">{calcularMeiaCanas(produto) || '-'}</span></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Itens do Pedido */}
         {gruposPortas.length > 0 && (
