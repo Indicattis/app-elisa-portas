@@ -1,45 +1,25 @@
 
+# Botao de PDF na pagina de Colaboradores
 
-# Corrigir botao da Fabrica em /home para usuarios com acesso parcial
+## O que sera feito
 
-## Problema
+Adicionar um botao "Gerar PDF" na barra de acoes do header da pagina `/administrativo/rh-dp/colaboradores` que gera um PDF com a lista de colaboradores **filtrada** (respeitando busca, setor e funcao).
 
-Na pagina `/home`, o botao "Fabrica" verifica se o usuario tem acesso a rota `fabrica_hub`. Porem, usuarios que so possuem acesso a sub-rotas (como `fabrica_pedidos`) nao conseguem clicar no botao, pois `fabrica_hub` nao esta na lista de permissoes deles.
+## Detalhes tecnicos
 
-O mesmo problema se aplica aos demais modulos (Vendas, Logistica, etc.).
+### 1. Novo arquivo: `src/utils/colaboradoresPDFGenerator.ts`
 
-## Solucao
+Criar um gerador de PDF seguindo o mesmo padrao do `usuariosPDFGenerator.ts` existente, mas adaptado para colaboradores:
 
-Alterar a logica de verificacao em `src/pages/Home.tsx` para considerar que o usuario tem acesso a um modulo se possuir acesso ao hub **OU** a qualquer sub-rota daquele modulo.
+- Cabecalho com logo da empresa e dados
+- Tabela com colunas: Nome, Email, CPF, Funcao, Setor, Salario, Modalidade, Em Folha
+- Resumo estatistico ao final (total, por setor, por funcao)
+- Rodape com dados da empresa
 
-### Mudanca tecnica
+### 2. Editar: `src/pages/administrativo/ColaboradoresMinimalista.tsx`
 
-**Arquivo: `src/pages/Home.tsx`**
+- Importar o novo gerador de PDF e o icone `FileDown` do lucide-react
+- Adicionar funcao `handleGerarPDF` que passa `filteredColaboradores` para o gerador
+- Adicionar botao "Gerar PDF" no `headerActions`, ao lado dos botoes existentes ("Gerar Folha", "Solicitacoes")
 
-1. Expandir o `routeKeyMap` com um prefixo por modulo (ex: `fabrica` para `/fabrica`).
-2. Na query, buscar **todas** as permissoes do usuario (remover o filtro `.in('route_key', routeKeys)` restrito aos hubs).
-3. Na funcao `hasAccess`, verificar se o usuario tem `fabrica_hub` **ou** qualquer `route_key` que comece com `fabrica_` (como `fabrica_pedidos`, `fabrica_producao`, etc.).
-
-Exemplo da nova logica:
-
-```text
-routePrefixMap = {
-  '/fabrica': 'fabrica_',
-  '/vendas': 'vendas_',
-  '/logistica': 'logistica_',
-  ...
-}
-
-hasAccess('/fabrica'):
-  - bypass? -> true
-  - userAccess inclui 'fabrica_hub'? -> true
-  - userAccess inclui alguma key que comeca com 'fabrica_'? -> true
-  - senao -> false
-```
-
-Isso garante que qualquer usuario com pelo menos uma permissao dentro do modulo consiga acessar o hub correspondente.
-
-## Arquivos modificados
-
-1. **Editar**: `src/pages/Home.tsx` -- ajustar query e logica `hasAccess`
-
+O botao usara os dados ja filtrados (`filteredColaboradores`) garantindo que o PDF respeite os filtros aplicados na tela.
