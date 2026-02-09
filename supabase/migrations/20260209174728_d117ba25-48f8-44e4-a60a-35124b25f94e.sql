@@ -1,0 +1,1 @@
+ALTER TABLE public.estados_autorizados ADD COLUMN ordem integer NOT NULL DEFAULT 0;

@@ -4,11 +4,12 @@ import { ArrowLeft, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { useEstadosCidades, type Cidade } from '@/hooks/useEstadosCidades';
-import { EstadoCard } from '@/components/autorizados/EstadoCard';
+import { SortableEstadoCard } from '@/components/autorizados/EstadoCard';
 import { EstadoDetalheView } from '@/components/autorizados/EstadoDetalheView';
 import { NovoEstadoDialog } from '@/components/autorizados/NovoEstadoDialog';
 import { NovaCidadeDialog } from '@/components/autorizados/NovaCidadeDialog';
-import { AutorizadosPrecosSection } from '@/components/autorizados/AutorizadosPrecosSection';
+import { DndContext, closestCenter, type DragEndEvent, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 
 export default function AutorizadosPrecosDirecao() {
   const navigate = useNavigate();
@@ -30,8 +31,24 @@ export default function AutorizadosPrecosDirecao() {
     excluirCidade,
     definirPremium,
     removerPremium,
-    excluirAutorizado
+    excluirAutorizado,
+    reordenarEstados
   } = useEstadosCidades();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      const oldIndex = estados.findIndex(e => e.id === active.id);
+      const newIndex = estados.findIndex(e => e.id === over?.id);
+      const newOrder = arrayMove(estados, oldIndex, newIndex);
+      reordenarEstados(newOrder);
+    }
+  };
 
   const [novoEstadoOpen, setNovoEstadoOpen] = useState(false);
   const [novaCidadeOpen, setNovaCidadeOpen] = useState(false);
@@ -138,35 +155,32 @@ export default function AutorizadosPrecosDirecao() {
               <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
             </div>
           ) : !estadoSelecionado ? (
-            // Grid de Estados + Seção de Preços
-            <div className="space-y-8">
-              {/* Estados */}
-              <div>
-                <h2 className="text-sm font-medium text-white/70 mb-3">Estados Cadastrados</h2>
-                {estados.length === 0 ? (
-                  <div className="text-center py-8 bg-primary/5 rounded-lg border border-primary/10">
-                    <p className="text-white/60 mb-4">Nenhum estado cadastrado</p>
-                    <Button onClick={() => setNovoEstadoOpen(true)} variant="outline" className="bg-primary/10 border-primary/20">
-                      <Plus className="h-4 w-4 mr-1" />
-                      Cadastrar Estado
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {estados.map(estado => (
-                      <EstadoCard
-                        key={estado.id}
-                        estado={estado}
-                        onClick={() => selecionarEstado(estado)}
-                        isSelected={false}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Seção de Preços */}
-              <AutorizadosPrecosSection />
+            <div>
+              <h2 className="text-sm font-medium text-white/70 mb-3">Estados Cadastrados</h2>
+              {estados.length === 0 ? (
+                <div className="text-center py-8 bg-primary/5 rounded-lg border border-primary/10">
+                  <p className="text-white/60 mb-4">Nenhum estado cadastrado</p>
+                  <Button onClick={() => setNovoEstadoOpen(true)} variant="outline" className="bg-primary/10 border-primary/20">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Cadastrar Estado
+                  </Button>
+                </div>
+              ) : (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={estados.map(e => e.id)} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {estados.map(estado => (
+                        <SortableEstadoCard
+                          key={estado.id}
+                          estado={estado}
+                          onClick={() => selecionarEstado(estado)}
+                          isSelected={false}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              )}
             </div>
           ) : (
             // Detalhe do Estado
