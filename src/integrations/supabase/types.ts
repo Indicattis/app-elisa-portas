@@ -404,6 +404,38 @@ export type Database = {
         }
         Relationships: []
       }
+      autorizado_cidades_secundarias: {
+        Row: {
+          autorizado_id: string
+          cidade: string
+          created_at: string
+          estado: string
+          id: string
+        }
+        Insert: {
+          autorizado_id: string
+          cidade: string
+          created_at?: string
+          estado: string
+          id?: string
+        }
+        Update: {
+          autorizado_id?: string
+          cidade?: string
+          created_at?: string
+          estado?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autorizado_cidades_secundarias_autorizado_id_fkey"
+            columns: ["autorizado_id"]
+            isOneToOne: false
+            referencedRelation: "autorizados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       autorizado_precos_portas: {
         Row: {
           autorizado_id: string

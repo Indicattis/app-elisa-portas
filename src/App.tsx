@@ -252,6 +252,7 @@ import FrotaMinimalista from "./pages/logistica/FrotaMinimalista";
 import FreteMinimalista from "./pages/logistica/FreteMinimalista";
 import AcordosAutorizados from "./pages/logistica/AcordosAutorizados";
 import AutorizadosPrecosDirecao from "./pages/direcao/AutorizadosPrecosDirecao";
+import NovoAutorizadoDirecao from "./pages/direcao/NovoAutorizadoDirecao";
 import InstalacoesHub from "./pages/logistica/InstalacoesHub";
 import EquipesMinimalista from "./pages/logistica/EquipesMinimalista";
 import CronogramaMinimalista from "./pages/logistica/CronogramaMinimalista";
@@ -443,6 +444,7 @@ const App = () => (
                 <Route path="/direcao/metas/fabrica/:userId" element={<ProtectedRoute routeKey="direcao_hub"><MetasColaboradorIndividual /></ProtectedRoute>} />
                 <Route path="/direcao/pedidos/:id" element={<ProtectedRoute routeKey="direcao_hub"><PedidoViewDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados" element={<ProtectedRoute routeKey="direcao_hub"><AutorizadosPrecosDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/autorizados/novo" element={<ProtectedRoute routeKey="direcao_hub"><NovoAutorizadoDirecao /></ProtectedRoute>} />
                 
 {/* Hub de Estoque da Direção */}
                 <Route path="/direcao/estoque" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoEstoqueHub /></ProtectedRoute>} />

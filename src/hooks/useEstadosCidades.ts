@@ -17,6 +17,7 @@ export interface AutorizadoResumo {
   cidade: string | null;
   estado: string | null;
   precos: { P?: number; G?: number; GG?: number };
+  cidadesSecundarias?: string[];
 }
 
 export interface Cidade {
@@ -118,6 +119,7 @@ export const useEstadosCidades = () => {
       // Buscar preços dos autorizados
       const autorizadoIds = (autorizados || []).map(a => a.id);
       let precosMap: Record<string, { P?: number; G?: number; GG?: number }> = {};
+      let cidadesSecMap: Record<string, string[]> = {};
       
       if (autorizadoIds.length > 0) {
         const { data: precos, error: errorPrecos } = await supabase
@@ -131,6 +133,19 @@ export const useEstadosCidades = () => {
             precosMap[p.autorizado_id][p.tamanho as 'P' | 'G' | 'GG'] = p.valor;
           }
         }
+
+        // Buscar cidades secundárias
+        const { data: cidadesSec, error: errorCidadesSec } = await supabase
+          .from('autorizado_cidades_secundarias')
+          .select('autorizado_id, cidade, estado')
+          .in('autorizado_id', autorizadoIds);
+        
+        if (!errorCidadesSec && cidadesSec) {
+          for (const cs of cidadesSec) {
+            if (!cidadesSecMap[cs.autorizado_id]) cidadesSecMap[cs.autorizado_id] = [];
+            cidadesSecMap[cs.autorizado_id].push(`${cs.cidade}/${cs.estado}`);
+          }
+        }
       }
 
       // Agrupar autorizados nas cidades
@@ -140,13 +155,13 @@ export const useEstadosCidades = () => {
         ...cidade,
         autorizados: (autorizados || []).filter(
           a => a.cidade?.toLowerCase() === cidade.nome.toLowerCase()
-        ).map(a => ({ ...a, precos: precosMap[a.id] || {} }))
+        ).map(a => ({ ...a, precos: precosMap[a.id] || {}, cidadesSecundarias: cidadesSecMap[a.id] || [] }))
       }));
 
       // Identificar órfãos (sem cidade ou cidade não cadastrada)
       const orfaos = (autorizados || []).filter(
         a => !a.cidade || !cidadesNomes.includes(a.cidade.toLowerCase())
-      ).map(a => ({ ...a, precos: precosMap[a.id] || {} }));
+      ).map(a => ({ ...a, precos: precosMap[a.id] || {}, cidadesSecundarias: cidadesSecMap[a.id] || [] }));
 
       setCidades(cidadesComAutorizados);
       setAutorizadosOrfaos(orfaos);

@@ -137,13 +137,23 @@ export default function AutorizadosPrecosDirecao() {
               </div>
             </div>
             {!estadoSelecionado && (
-              <Button
-                onClick={() => setNovoEstadoOpen(true)}
-                className="bg-primary/20 hover:bg-primary/30 border border-primary/30"
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Novo Estado
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => navigate('/direcao/autorizados/novo')}
+                  className="bg-primary/20 hover:bg-primary/30 border border-primary/30"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Novo Autorizado
+                </Button>
+                <Button
+                  onClick={() => setNovoEstadoOpen(true)}
+                  variant="outline"
+                  className="border-primary/30 text-white/80"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Novo Estado
+                </Button>
+              </div>
             )}
           </div>
         </header>
