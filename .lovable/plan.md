@@ -1,51 +1,47 @@
 
-# Ajustes no Ranking de Equipes de Instalacao
+# Adicionar Produtos da Venda e Ficha de Visita Tecnica na pagina de Direção
 
-## 1. Remover coloracao das equipes (azul, roxa, vermelha)
+## Problema
 
-Remover os seguintes elementos visuais baseados em `equipe.equipe_cor`:
-- Borda esquerda colorida do card (linha 147)
-- Bolinha colorida ao lado do nome da equipe (linhas 161-166)
-- Badge de quantidade com cor da equipe (linhas 204-211) -- trocar para cor neutra
+A pagina `/direcao/pedidos/:id` (`PedidoViewDirecao.tsx`) nao exibe os **produtos da venda** nem a **ficha de visita tecnica**, diferente da pagina administrativa (`PedidoViewMinimalista.tsx`) que possui ambas as secoes.
 
-## 2. Classificacao P/G/GG no modal de instalacoes
+## O que sera adicionado
 
-Adicionar classificacao de tamanho baseada na metragem quadrada:
-- P: menos de 25m2
-- G: 25 a 50m2
-- GG: mais de 50m2
+### 1. Produtos da Venda
+- Buscar os dados de `produtos_vendas` associados a venda do pedido (incluindo cor via `catalogo_cores`)
+- Exibir uma tabela com: Tipo, Descricao, Tamanho, Cor, Fabricacao (interno/terceirizado), Peso, Meia Canas e Quantidade
+- Versao mobile com cards compactos
+- Logica de calculo de peso e meia canas igual a pagina administrativa
 
-Exibir como badge ao lado de cada instalacao no dialog. Somente para instalacoes de pedido que tenham metragem.
-
-## 3. Melhorar o modal com informacoes adicionais
-
-- Manter a separacao visual entre instalacoes de pedido e neo (badges "Pedido" e "Avulso")
-- Exibir o tamanho P/G/GG como badge quando a metragem estiver disponivel
-- Manter nome do cliente, data e metragem como ja esta
+### 2. Ficha de Visita Tecnica
+- Exibir a ficha ja existente em `pedido.ficha_visita_url` usando o componente `FichaVisitaUpload` em modo somente leitura (disabled)
+- Posicionada entre as informacoes do cliente e os itens do pedido
 
 ## Detalhes tecnicos
 
-### Arquivo: `src/pages/logistica/RankingEquipesInstalacao.tsx`
+### Arquivo: `src/pages/direcao/PedidoViewDirecao.tsx`
 
-1. **Remover cores da equipe**:
-   - Remover `style={{ borderLeft: ... }}` do Card (linha 147)
-   - Remover o bloco da bolinha colorida (linhas 161-166)
-   - Trocar o badge de quantidade para usar cor fixa (branco/cinza) em vez de `equipe.equipe_cor` (linhas 204-211)
+1. **Importar** `FichaVisitaUpload`, `ClipboardList` icon, e `Badge` (ja importado)
 
-2. **Adicionar funcao de classificacao de tamanho**:
-   ```
-   function classificarPorta(metragem: number | null | undefined): string | null {
-     if (!metragem || metragem <= 0) return null;
-     if (metragem < 25) return 'P';
-     if (metragem <= 50) return 'G';
-     return 'GG';
-   }
-   ```
+2. **Atualizar interface Pedido** para incluir:
+   - `ficha_visita_nome?: string | null`
+   - `produtos_venda?: any[]`
 
-3. **Atualizar dialog de instalacoes**:
-   - Adicionar badge de tamanho (P/G/GG) para cada instalacao que tenha metragem
-   - Manter badges de origem (Pedido/Avulso) como ja estao
+3. **Atualizar `fetchPedidoDetails`**:
+   - Apos buscar os dados da venda, buscar tambem `produtos_vendas` com join em `catalogo_cores` para a cor
+   - Adicionar `ficha_visita_nome` ao estado do pedido
 
-### Arquivos
+4. **Adicionar funcoes utilitarias** `calcularPeso` e `calcularMeiaCanas` (copiadas do PedidoViewMinimalista)
 
-1. **Editar**: `src/pages/logistica/RankingEquipesInstalacao.tsx`
+5. **Adicionar secao "Ficha de Visita Tecnica"** apos o grid de informacoes do cliente:
+   - Usar `FichaVisitaUpload` com `disabled={true}` (somente visualizacao na direcao)
+   - Exibir somente se houver `ficha_visita_url`
+
+6. **Adicionar secao "Produtos da Venda"** antes dos itens do pedido:
+   - Tabela desktop com colunas: Tipo, Descricao, Tamanho, Cor, Fabricacao, Peso, Meia Canas, Qtd
+   - Cards mobile com as mesmas informacoes
+   - Exibir somente se houver produtos
+
+### Arquivo editado
+
+1. **Editar**: `src/pages/direcao/PedidoViewDirecao.tsx`
