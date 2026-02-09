@@ -1,37 +1,48 @@
 
-# Estilizacao condicional das pastas de cidades
 
-## Resumo
+# Corrigir acesso ao hub /fabrica para usuarios com permissoes parciais
 
-Alterar a cor de fundo/borda do trigger colapsavel de cada cidade com base no numero de autorizados premium:
+## Problema
 
-- **Verde**: 2 ou mais autorizados premium
-- **Vermelho**: 0 autorizados (cidade vazia)
-- **Normal** (atual): qualquer outro caso
+O usuario Magno tem permissao `fabrica_pedidos` mas nao tem `fabrica_hub`. Quando tenta acessar `/fabrica`, o `ProtectedRoute` verifica a chave `fabrica_hub` e bloqueia o acesso.
 
-## Detalhes tecnicos
+Na pagina `/home`, os botoes de modulos ja usam logica de prefixo (se o usuario tem qualquer `fabrica_*`, o botao aparece). Porem, ao clicar e ir para `/fabrica`, o `ProtectedRoute` exige `fabrica_hub` especificamente.
 
-### Arquivo: `src/components/autorizados/CidadeCollapsible.tsx`
+## Solucao
 
-No componente `CidadeCollapsible`, calcular o numero de autorizados premium e o total de autorizados para determinar a cor:
+Existem duas opcoes:
 
-```typescript
-const totalAutorizados = cidade.autorizados.length;
-const totalPremium = cidade.autorizados.filter(a => a.etapa === 'premium').length;
+**Opcao A - Banco de dados**: Inserir `fabrica_hub` no `user_route_access` para o Magno (e futuros usuarios com acesso parcial).
 
-// Verde: 2+ premium | Vermelho: 0 autorizados | Normal: restante
-const isGreen = totalPremium >= 2;
-const isRed = totalAutorizados === 0;
-```
+**Opcao B - Logica de prefixo no hub (recomendada)**: Criar uma nova prop no `ProtectedRoute` chamada `routeKeyPrefix` que verifica se o usuario tem **qualquer** permissao com aquele prefixo. Isso e consistente com a logica dos botoes na home.
 
-Aplicar classes condicionais no div do `CollapsibleTrigger` (linha 51):
+A opcao B e mais sustentavel porque evita a necessidade de conceder manualmente `fabrica_hub` toda vez que alguem receber acesso a uma sub-rota.
 
-- **Verde**: `bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20` + icone e badge em tons de verde
-- **Vermelho**: `bg-red-500/10 hover:bg-red-500/20 border border-red-500/20` + icone e badge em tons de vermelho
-- **Normal**: manter `bg-white/5 hover:bg-white/10` atual
+## Alteracoes (Opcao B)
 
-Tambem ajustar as cores do icone `Building2`, do texto do badge e do `ChevronDown` conforme a variante.
+### 1. Criar hook `useRouteAccessByPrefix`
+- Novo hook em `src/hooks/useRouteAccessByPrefix.ts`
+- Consulta `user_route_access` filtrando por `route_key LIKE prefix%` e `can_access = true`
+- Retorna `true` se existir pelo menos um registro
 
-### Arquivo unico
+### 2. Atualizar `ProtectedRoute.tsx`
+- Adicionar prop opcional `routeKeyPrefix?: string`
+- Quando `routeKeyPrefix` for passado, usar o novo hook para verificar acesso por prefixo em vez de chave exata
+- Manter compatibilidade total com a prop `routeKey` existente
 
-1. **Editar**: `src/components/autorizados/CidadeCollapsible.tsx` -- adicionar logica condicional de cores no trigger da cidade
+### 3. Atualizar `App.tsx`
+- Trocar o `routeKey="fabrica_hub"` da rota `/fabrica` por `routeKeyPrefix="fabrica_"`
+- Aplicar a mesma logica para outros hubs que tenham o mesmo problema:
+  - `/vendas` -> `routeKeyPrefix="vendas_"`
+  - `/logistica` -> `routeKeyPrefix="logistica_"`
+  - `/administrativo` -> `routeKeyPrefix="administrativo_"`
+  - `/direcao` -> `routeKeyPrefix="direcao_"`
+  - `/marketing` -> `routeKeyPrefix="marketing_"`
+
+Dessa forma, qualquer usuario com pelo menos uma permissao dentro do modulo consegue acessar o hub correspondente.
+
+### Arquivos
+
+1. **Criar**: `src/hooks/useRouteAccessByPrefix.ts`
+2. **Editar**: `src/components/ProtectedRoute.tsx` -- adicionar suporte a `routeKeyPrefix`
+3. **Editar**: `src/App.tsx` -- trocar `routeKey` por `routeKeyPrefix` nas rotas de hub
