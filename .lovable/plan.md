@@ -1,43 +1,38 @@
 
-
-# Copiar hub de Instalacoes para dentro de Direcao > Gestao de Instalacoes
+# Pagina de edicao de autorizado no estilo minimalista
 
 ## Resumo
 
-Adicionar um botao "Instalacoes" no hub `GestaoInstalacaoDirecao` e criar uma nova pagina `InstalacoesHubDirecao` que eh uma copia de `InstalacoesHub` com paths e breadcrumbs ajustados para `/direcao/gestao-instalacao/instalacoes/...`. As 4 sub-paginas (ordens, equipes, cronograma, ranking) serao reutilizadas diretamente, apenas registradas em novas rotas sob `/direcao/gestao-instalacao/instalacoes/`.
+Criar uma nova pagina de edicao em `/direcao/autorizados/:id/editar` com o tema escuro (estilo minimalista) consistente com a pagina de criacao (`NovoAutorizadoDirecao`). A pagina sera baseada em `ParceiroEdit.tsx` mas adaptada para o contexto da direcao, incluindo gerenciamento de cidades secundarias. O botao de editar na listagem sera atualizado para apontar para a nova rota.
 
 ## Detalhes tecnicos
 
-### 1. Adicionar botao "Instalacoes" no hub existente
+### 1. Criar pagina de edicao
 
-**Editar `src/pages/direcao/GestaoInstalacaoDirecao.tsx`**:
-- Adicionar item ao `menuItems`:
-  ```typescript
-  { title: "Instalações", icon: HardHat, path: "/direcao/gestao-instalacao/instalacoes" }
-  ```
-- Adicionar botao voltar e importar `ArrowLeft`, `HardHat`.
+**Criar `src/pages/direcao/EditarAutorizadoDirecao.tsx`**:
+- Copia adaptada de `ParceiroEdit.tsx` com:
+  - Tipo fixo `autorizado` (sem selecao de tipo parceiro).
+  - Tema escuro: fundo preto, inputs com `bg-white/5 border-white/10 text-white`.
+  - `AnimatedBreadcrumb`: Home > Direcao > Autorizados > Editar.
+  - Header com botao voltar para `/direcao/autorizados`.
+  - Secao de cidades secundarias (carregar existentes de `autorizado_cidades_secundarias`, permitir adicionar/remover).
+  - Ao salvar, sincronizar cidades secundarias (deletar todas e reinserir).
+  - Navegacao pos-save volta para `/direcao/autorizados`.
+  - Manter funcionalidades: logo upload, contrato upload, geocodificacao, reset de tempo.
 
-### 2. Criar nova pagina hub
-
-**Criar `src/pages/direcao/InstalacoesHubDirecao.tsx`**:
-- Copia de `InstalacoesHub.tsx` com:
-  - Paths apontando para `/direcao/gestao-instalacao/instalacoes/ordens-instalacoes`, `.../equipes`, `.../cronograma`, `.../ranking`.
-  - Breadcrumb: Home > Direcao > Gestao de Instalacoes > Instalacoes.
-  - Botao voltar para `/direcao/gestao-instalacao`.
-
-### 3. Registrar rotas no App.tsx
+### 2. Registrar rota
 
 **Editar `src/App.tsx`**:
-- Importar `InstalacoesHubDirecao`.
-- Adicionar 5 novas rotas com `ProtectedRoute routeKey="direcao_hub"`:
-  - `/direcao/gestao-instalacao/instalacoes` -> `InstalacoesHubDirecao`
-  - `/direcao/gestao-instalacao/instalacoes/ordens-instalacoes` -> `OrdensInstalacoesLogistica` (reutilizado)
-  - `/direcao/gestao-instalacao/instalacoes/equipes` -> `EquipesMinimalista` (reutilizado)
-  - `/direcao/gestao-instalacao/instalacoes/cronograma` -> `CronogramaMinimalista` (reutilizado)
-  - `/direcao/gestao-instalacao/instalacoes/ranking` -> `RankingEquipesInstalacao` (reutilizado)
+- Importar `EditarAutorizadoDirecao`.
+- Adicionar rota `/direcao/autorizados/:id/editar` com `ProtectedRoute routeKey="direcao_hub"`.
+
+### 3. Atualizar navegacao de edicao
+
+**Editar `src/pages/direcao/AutorizadosPrecosDirecao.tsx`**:
+- Alterar `handleEditAutorizado` de `navigate('/dashboard/parceiros/${id}/edit/autorizado')` para `navigate('/direcao/autorizados/${id}/editar')`.
 
 ### Arquivos
 
-1. **Editar**: `src/pages/direcao/GestaoInstalacaoDirecao.tsx` -- adicionar botao Instalacoes + botao voltar
-2. **Criar**: `src/pages/direcao/InstalacoesHubDirecao.tsx` -- hub com paths da direcao
-3. **Editar**: `src/App.tsx` -- 5 novas rotas
+1. **Criar**: `src/pages/direcao/EditarAutorizadoDirecao.tsx`
+2. **Editar**: `src/App.tsx` -- nova rota
+3. **Editar**: `src/pages/direcao/AutorizadosPrecosDirecao.tsx` -- atualizar navigate do botao editar
