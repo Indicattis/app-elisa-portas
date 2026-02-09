@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Building2, ChevronDown, Edit, Star, Trash2, Pencil } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -111,6 +112,7 @@ export function CidadeCollapsible({
             <Table className="text-xs">
               <TableHeader>
                 <TableRow className="border-primary/10 hover:bg-transparent">
+                  <TableHead className="text-xs text-white/70 w-10"></TableHead>
                   <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                   <TableHead className="text-xs text-white/70">Etapa</TableHead>
                   <TableHead className="text-xs text-white/70">Cidades Sec.</TableHead>
@@ -154,6 +156,14 @@ function AutorizadoRow({ autorizado, onEdit, onDelete, onTogglePremium }: Autori
   
   return (
     <TableRow className="border-primary/10 hover:bg-primary/5">
+      <TableCell className="w-10 pr-0">
+        <Avatar className="h-7 w-7">
+          {autorizado.logo_url && <AvatarImage src={autorizado.logo_url} alt={autorizado.nome} />}
+          <AvatarFallback className="text-[10px] bg-primary/20 text-primary">
+            {autorizado.nome.substring(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      </TableCell>
       <TableCell className="font-medium text-white">
         {autorizado.nome}
         {isPremium && (
@@ -266,6 +276,7 @@ export function OrfaosCollapsible({
           <Table className="text-xs">
               <TableHeader>
               <TableRow className="border-amber-500/20 hover:bg-transparent">
+                <TableHead className="text-xs text-white/70 w-10"></TableHead>
                 <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                 <TableHead className="text-xs text-white/70">Cidade (texto)</TableHead>
                 <TableHead className="text-xs text-white/70">Etapa</TableHead>
@@ -281,6 +292,14 @@ export function OrfaosCollapsible({
                 .sort((a, b) => (a.etapa === 'premium' ? -1 : 1) - (b.etapa === 'premium' ? -1 : 1))
                 .map(aut => (
                 <TableRow key={aut.id} className="border-amber-500/20 hover:bg-amber-500/5">
+                  <TableCell className="w-10 pr-0">
+                    <Avatar className="h-7 w-7">
+                      {aut.logo_url && <AvatarImage src={aut.logo_url} alt={aut.nome} />}
+                      <AvatarFallback className="text-[10px] bg-primary/20 text-primary">
+                        {aut.nome.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TableCell>
                   <TableCell className="font-medium text-white">
                     {aut.nome}
                     {aut.etapa === 'premium' && (

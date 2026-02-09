@@ -18,6 +18,7 @@ export interface AutorizadoResumo {
   estado: string | null;
   precos: { P?: number; G?: number; GG?: number };
   cidadesSecundarias?: string[];
+  logo_url?: string | null;
 }
 
 export interface Cidade {
@@ -108,7 +109,7 @@ export const useEstadosCidades = () => {
       // Buscar autorizados desse estado
       const { data: autorizados, error: errorAutorizados } = await supabase
         .from('autorizados')
-        .select('id, nome, cidade, estado, etapa')
+        .select('id, nome, cidade, estado, etapa, logo_url')
         .eq('ativo', true)
         .ilike('estado', estado.sigla)
         .in('etapa', ['ativo', 'premium'])
