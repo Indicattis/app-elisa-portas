@@ -270,9 +270,9 @@ export function UserRouteAccessManager() {
       const folderHasAccess = hasFolderAccess(node);
       
       return (
-        <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-1">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-0.5">
           <div 
-            className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer
+            className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-all cursor-pointer
                        ${isHub
                          ? folderHasAccess
                            ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/10 border-2 border-amber-500/40 shadow-lg shadow-amber-500/10'
@@ -317,11 +317,11 @@ export function UserRouteAccessManager() {
                 )}
                 <span className="text-xs text-white/40">({node.children.length} sub-rotas)</span>
               </div>
-              <div className="text-xs text-white/40 mt-0.5">{node.path}</div>
+              
             </label>
           </div>
           
-          <CollapsibleContent className="space-y-1 mt-1">
+          <CollapsibleContent className="space-y-0.5 mt-0.5">
             {node.children.map(child => (
               <RouteTreeItem key={child.key} node={child} level={level + 1} />
             ))}
@@ -334,7 +334,7 @@ export function UserRouteAccessManager() {
 
     return (
       <div 
-        className={`flex items-center gap-3 p-3 rounded-lg transition-all
+        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-all
                    ${isHomeRoute
                      ? 'bg-gradient-to-r from-green-500/20 to-emerald-600/10 border border-green-500/30'
                      : routeHasAccess 
@@ -362,7 +362,6 @@ export function UserRouteAccessManager() {
               </span>
             )}
           </div>
-          <div className="text-xs text-white/40 mt-0.5">{node.path}</div>
         </label>
       </div>
     );
@@ -624,19 +623,17 @@ export function UserRouteAccessManager() {
                 )}
               </div>
             ) : (
-              <ScrollArea className="h-[500px] pr-4">
-                <div className="space-y-2">
-                  {routeTree.length > 0 ? (
-                    routeTree.map(node => (
-                      <RouteTreeItem key={node.key} node={node} />
-                    ))
-                  ) : (
-                    <p className="text-center py-8 text-white/40">
-                      Nenhuma rota encontrada para esta interface
-                    </p>
-                  )}
-                </div>
-              </ScrollArea>
+              <div className="space-y-1">
+                {routeTree.length > 0 ? (
+                  routeTree.map(node => (
+                    <RouteTreeItem key={node.key} node={node} />
+                  ))
+                ) : (
+                  <p className="text-center py-8 text-white/40">
+                    Nenhuma rota encontrada para esta interface
+                  </p>
+                )}
+              </div>
             )}
           </div>
         </div>
