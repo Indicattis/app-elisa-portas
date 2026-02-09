@@ -254,6 +254,7 @@ import AcordosAutorizados from "./pages/logistica/AcordosAutorizados";
 import AutorizadosPrecosDirecao from "./pages/direcao/AutorizadosPrecosDirecao";
 import NovoAutorizadoDirecao from "./pages/direcao/NovoAutorizadoDirecao";
 import InstalacoesHub from "./pages/logistica/InstalacoesHub";
+import InstalacoesHubDirecao from "./pages/direcao/InstalacoesHubDirecao";
 import EquipesMinimalista from "./pages/logistica/EquipesMinimalista";
 import CronogramaMinimalista from "./pages/logistica/CronogramaMinimalista";
 import OrdensInstalacoesLogistica from "./pages/logistica/OrdensInstalacoesLogistica";
@@ -438,6 +439,11 @@ const App = () => (
                 <Route path="/direcao/gestao-fabrica" element={<ProtectedRoute routeKey="direcao_hub"><GestaoFabricaDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/gestao-instalacao" element={<ProtectedRoute routeKey="direcao_hub"><GestaoInstalacaoDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/gestao-instalacao/ordens-instalacoes" element={<ProtectedRoute routeKey="direcao_hub"><OrdensInstalacoesDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/gestao-instalacao/instalacoes" element={<ProtectedRoute routeKey="direcao_hub"><InstalacoesHubDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/gestao-instalacao/instalacoes/ordens-instalacoes" element={<ProtectedRoute routeKey="direcao_hub"><OrdensInstalacoesLogistica /></ProtectedRoute>} />
+                <Route path="/direcao/gestao-instalacao/instalacoes/equipes" element={<ProtectedRoute routeKey="direcao_hub"><EquipesMinimalista /></ProtectedRoute>} />
+                <Route path="/direcao/gestao-instalacao/instalacoes/cronograma" element={<ProtectedRoute routeKey="direcao_hub"><CronogramaMinimalista /></ProtectedRoute>} />
+                <Route path="/direcao/gestao-instalacao/instalacoes/ranking" element={<ProtectedRoute routeKey="direcao_hub"><RankingEquipesInstalacao /></ProtectedRoute>} />
                 <Route path="/direcao/calendario-expedicao" element={<ProtectedRoute routeKey="direcao_hub"><CalendarioExpedicaoDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/metas" element={<ProtectedRoute routeKey="direcao_hub"><MetasHubDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/metas/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><MetasFabricaDirecao /></ProtectedRoute>} />
