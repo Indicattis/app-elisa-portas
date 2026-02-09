@@ -16,6 +16,7 @@ export interface AutorizadoResumo {
   etapa: string | null;
   cidade: string | null;
   estado: string | null;
+  precos: { P?: number; G?: number; GG?: number };
 }
 
 export interface Cidade {
@@ -114,6 +115,24 @@ export const useEstadosCidades = () => {
       
       if (errorAutorizados) throw errorAutorizados;
 
+      // Buscar preços dos autorizados
+      const autorizadoIds = (autorizados || []).map(a => a.id);
+      let precosMap: Record<string, { P?: number; G?: number; GG?: number }> = {};
+      
+      if (autorizadoIds.length > 0) {
+        const { data: precos, error: errorPrecos } = await supabase
+          .from('autorizado_precos_portas')
+          .select('autorizado_id, tamanho, valor')
+          .in('autorizado_id', autorizadoIds);
+        
+        if (!errorPrecos && precos) {
+          for (const p of precos) {
+            if (!precosMap[p.autorizado_id]) precosMap[p.autorizado_id] = {};
+            precosMap[p.autorizado_id][p.tamanho as 'P' | 'G' | 'GG'] = p.valor;
+          }
+        }
+      }
+
       // Agrupar autorizados nas cidades
       const cidadesNomes = (cidadesCadastradas || []).map(c => c.nome.toLowerCase());
       
@@ -121,13 +140,13 @@ export const useEstadosCidades = () => {
         ...cidade,
         autorizados: (autorizados || []).filter(
           a => a.cidade?.toLowerCase() === cidade.nome.toLowerCase()
-        )
+        ).map(a => ({ ...a, precos: precosMap[a.id] || {} }))
       }));
 
       // Identificar órfãos (sem cidade ou cidade não cadastrada)
       const orfaos = (autorizados || []).filter(
         a => !a.cidade || !cidadesNomes.includes(a.cidade.toLowerCase())
-      );
+      ).map(a => ({ ...a, precos: precosMap[a.id] || {} }));
 
       setCidades(cidadesComAutorizados);
       setAutorizadosOrfaos(orfaos);
