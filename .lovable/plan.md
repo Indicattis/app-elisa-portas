@@ -1,74 +1,56 @@
 
 
-# Melhorar layout das etiquetas de producao
+# Corrigir impossibilidade de adicionar linhas em pedidos sem portas
 
-## Resumo
+## Problema
 
-Reestruturar o layout do PDF das etiquetas para exibir:
-- **Topo**: Logo da empresa + identificacao da porta (ex: "Porta #01 -- 4,00m x 2,00m")
-- **Tabela**: CLIENTE, PRODUTO, TAMANHO (campo separado, novo), QUANTIDADE, RESPONSAVEL
+O pedido `5cb99bc7` esta vinculado a uma venda que possui apenas produtos do tipo "adicional" (sem portas de enrolar ou social). Quando nao existem linhas e nenhuma porta, o componente `PedidoLinhasEditor` entra num estado "morto":
 
-Remover as linhas de DIMENSOES e PINTURA da tabela, ja que as dimensoes vao para o cabecalho junto com a porta.
+1. O usuario clica em "Adicionar Produto" (`novaLinha = true`)
+2. O componente sai do estado vazio (linha 928)
+3. Renderiza o grid de pastas -- que esta vazio (sem portas, sem linhas)
+4. O formulario de nova linha so aparece dentro de `renderLinhasTable`, que so e chamado quando uma pasta esta aberta
+5. Sem pastas, nao ha onde abrir, e o formulario nunca aparece
+
+## Solucao
+
+Quando `novaLinha` estiver ativo e nao houver nenhuma pasta aberta (nem pastas disponiveis), renderizar o formulario de nova linha diretamente, fora do contexto de pastas.
 
 ## Detalhe tecnico
 
-### 1. Arquivo: `src/types/etiqueta.ts`
+### Arquivo: `src/components/pedidos/PedidoLinhasEditor.tsx`
 
-Adicionar campo `portaLabel` ao tipo `TagProducao`:
-
-```typescript
-portaLabel?: string;  // Ex: "Porta #01 — 4,00m x 2,00m"
-```
-
-### 2. Arquivo: `src/utils/etiquetasPDFGenerator.ts`
-
-Reescrever a funcao `desenharEtiquetaProducao` para o novo layout:
-
-**Cabecalho (topo)**:
-- Logo centralizada (como ja esta)
-- Abaixo da logo, texto da porta centralizado em fonte grande (ex: "Porta #01 -- 4,00m x 2,00m"), usando `tag.portaLabel` se disponivel
-
-**Tabela (5 linhas fixas)**:
-1. CLIENTE -- `tag.clienteNome`
-2. PRODUTO -- `tag.nomeProduto`
-3. TAMANHO -- `tag.tamanho` formatado (ou `tag.largura x tag.altura` como fallback)
-4. QUANTIDADE -- `tag.quantidade`
-5. RESPONSAVEL -- `tag.responsavelNome`
-
-Remover as linhas condicionais de DIMENSOES e PINTURA. Remover o rodape de cor.
-
-### 3. Arquivo: `src/components/production/OrdemDetalhesSheet.tsx`
-
-No `handleImprimirEtiqueta` (~linha 214), montar o `portaLabel` a partir dos dados da linha:
+Na secao apos o grid de pastas (linha ~1012), antes do botao global de adicionar (linha 1014), adicionar uma condicao para renderizar a tabela com o formulario de nova linha quando:
+- `novaLinha` esta ativo
+- Nenhuma pasta esta aberta (`!pastaAberta`)
+- Nao ha pastas disponiveis OU o usuario quer adicionar sem contexto de porta
 
 ```typescript
-// Determinar label da porta
-const portaKey = linha.produto_venda_id
-  ? `${linha.produto_venda_id}_${linha.indice_porta ?? 0}`
-  : null;
-const portaNum = portaKey ? portasNumeracaoMap.get(portaKey) : null;
-// portaLabel sera algo como "Porta #01 -- 4,00m x 2,00m"
+// Apos o bloco da pasta expandida (linha ~1012)
+// Formulario de nova linha quando nao ha pasta aberta
+{!isReadOnly && novaLinha && !pastaAberta && (
+  <div className="border rounded-lg overflow-hidden">
+    <div className="flex items-center justify-between bg-muted/50 px-3 py-2 border-b">
+      <span className="text-sm font-semibold">Novo item</span>
+    </div>
+    <div className="p-2">
+      {renderLinhasTable([])}
+    </div>
+  </div>
+)}
 ```
 
-Adicionar `portaLabel` ao objeto tag.
+Tambem ajustar o botao de confirmar na linha 842 para nao exigir `produto_venda_id` quando nao ha portas de enrolar:
 
-### 4. Arquivo: `src/components/fabrica/OrdemLinhasSheet.tsx`
+```typescript
+// Linha 842: a condicao ja esta correta
+disabled={(temPortasEnrolar && !rascunhoLinha.produto_venda_id) || !rascunhoLinha.estoque_id}
+```
 
-No `handleImprimirEtiqueta` (~linha 349), montar o `portaLabel` de forma similar, usando `indice_porta` da linha.
+A condicao `temPortasEnrolar` ja permite que o botao funcione sem porta selecionada. Portanto a unica mudanca necessaria e exibir o formulario fora do grid de pastas.
 
-### 5. Arquivo: `src/components/ordens/ImprimirEtiquetasModal.tsx`
-
-No `criarTagProducao`, nao ha informacao de porta disponivel neste contexto (etiquetas do pedido, nao da ordem). O campo `portaLabel` ficara `undefined` e o cabecalho mostrara apenas a logo.
-
-### 6. Arquivo: `src/components/carregamento/CarregamentoDownbar.tsx`
-
-Verificar se ha dados de porta disponivel para popular `portaLabel`. Caso contrario, fica sem o label (apenas logo).
+Alem disso, remover o botao global "Adicionar Produto" quando `novaLinha` ja esta ativo, para nao duplicar (ja esta coberto pela condicao `!novaLinha` na linha 1015).
 
 ## Arquivos modificados
 
-1. **Editar**: `src/types/etiqueta.ts` -- adicionar `portaLabel`
-2. **Editar**: `src/utils/etiquetasPDFGenerator.ts` -- novo layout da tabela
-3. **Editar**: `src/components/production/OrdemDetalhesSheet.tsx` -- montar `portaLabel`
-4. **Editar**: `src/components/fabrica/OrdemLinhasSheet.tsx` -- montar `portaLabel`
-5. **Editar**: `src/components/ordens/ImprimirEtiquetasModal.tsx` -- sem alteracao funcional, apenas compatibilidade
-6. **Editar**: `src/components/carregamento/CarregamentoDownbar.tsx` -- verificar e adicionar `portaLabel` se disponivel
+1. **Editar**: `src/components/pedidos/PedidoLinhasEditor.tsx` -- renderizar formulario de nova linha quando nenhuma pasta disponivel/aberta
