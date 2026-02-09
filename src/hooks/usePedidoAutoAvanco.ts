@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePedidosEtapas } from "./usePedidosEtapas";
 import type { Processo } from "@/components/pedidos/ProcessoAvancoModal";
 
-type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
+type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura' | 'porta_social';
 
 export function usePedidoAutoAvanco() {
   const [processos, setProcessos] = useState<Processo[]>([]);
@@ -61,7 +61,24 @@ export function usePedidoAutoAvanco() {
         }
       }
 
-      // 3. Verificar se há linhas com problema
+      // 3. Verificar se a ordem de porta social (terceirização) está concluída
+      const { data: ordensPortaSocial, error: portaSocialError } = await supabase
+        .from('ordens_porta_social')
+        .select('status')
+        .eq('pedido_id', pedidoId)
+        .eq('historico', false);
+
+      if (portaSocialError) throw portaSocialError;
+
+      if (ordensPortaSocial && ordensPortaSocial.length > 0) {
+        const todasPortaSocialConcluidas = ordensPortaSocial.every(o => o.status === 'concluido');
+        if (!todasPortaSocialConcluidas) {
+          console.log('[Auto-Avanço] Ordem de porta social ainda não concluída');
+          return false;
+        }
+      }
+
+      // 4. Verificar se há linhas com problema
       const { data: linhasComProblema, error: linhasProblemaError } = await supabase
         .from('linhas_ordens')
         .select('id')
@@ -293,7 +310,7 @@ export function usePedidoAutoAvanco() {
       let deveAvancar = false;
 
       if (etapaAtual === 'em_producao') {
-        if (['soldagem', 'perfiladeira', 'separacao'].includes(tipoOrdemConcluida)) {
+        if (['soldagem', 'perfiladeira', 'separacao', 'porta_social'].includes(tipoOrdemConcluida)) {
           console.log(`[Auto-Avanço] Verificando se todas as ordens de produção estão concluídas...`);
           deveAvancar = await verificarOrdensProducaoConcluidas(pedidoId);
           console.log(`[Auto-Avanço] Resultado da verificação: deveAvancar = ${deveAvancar}`);

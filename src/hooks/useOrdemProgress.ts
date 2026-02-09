@@ -7,7 +7,7 @@ export function useOrdemProgress(pedidoId: string | undefined) {
     queryFn: async () => {
       if (!pedidoId) return { concluidas: 0, total: 0 };
 
-      const [soldagem, perfiladeira, separacao, qualidade, pintura] = await Promise.all([
+      const [soldagem, perfiladeira, separacao, qualidade, pintura, portaSocial] = await Promise.all([
         supabase
           .from("ordens_soldagem")
           .select("id, status")
@@ -33,6 +33,12 @@ export function useOrdemProgress(pedidoId: string | undefined) {
           .select("id, status")
           .eq("pedido_id", pedidoId)
           .maybeSingle(),
+        supabase
+          .from("ordens_porta_social")
+          .select("id, status")
+          .eq("pedido_id", pedidoId)
+          .eq("historico", false)
+          .maybeSingle(),
       ]);
 
       const ordens = [
@@ -41,6 +47,7 @@ export function useOrdemProgress(pedidoId: string | undefined) {
         separacao.data,
         qualidade.data,
         pintura.data,
+        portaSocial.data,
       ].filter(Boolean);
 
       const total = ordens.length;

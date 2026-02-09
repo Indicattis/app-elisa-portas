@@ -13,7 +13,7 @@ export default function ProducaoTerceirizacao() {
   const { tentarAvancoAutomatico, processos, modalOpen, setModalOpen } = usePedidoAutoAvanco();
 
   const { ordensAFazer, isLoading, delegarOrdem, concluirOrdem } = useOrdemPortaSocial(
-    (pedidoId) => tentarAvancoAutomatico(pedidoId, 'porta_social' as any)
+    (pedidoId) => tentarAvancoAutomatico(pedidoId, 'porta_social')
   );
 
   const handleDelegarOrdem = (ordemId: string) => {
