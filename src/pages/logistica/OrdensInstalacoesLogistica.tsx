@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
-import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
+
 
 import { useOrdensInstalacao, OrdemInstalacao } from "@/hooks/useOrdensInstalacao";
 import { useNeoInstalacoesListagem, useNeoInstalacoesFinalizadas } from "@/hooks/useNeoInstalacoes";
@@ -208,14 +208,18 @@ export default function OrdensInstalacoesLogistica() {
     setRetrocederDialog({ open: true, ordem });
   };
 
-  const breadcrumbItems = [
-    { label: "Logística", href: "/logistica" },
-    { label: "Instalações", href: "/logistica/instalacoes" },
-    { label: "Ordens de Instalação" }
-  ];
 
   return (
-    <MinimalistLayout title="Ordens de Instalação">
+    <MinimalistLayout 
+      title="Ordens de Instalação" 
+      backPath="/logistica/instalacoes"
+      breadcrumbItems={[
+        { label: 'Home', path: '/home' },
+        { label: 'Logística', path: '/logistica' },
+        { label: 'Instalações', path: '/logistica/instalacoes' },
+        { label: 'Ordens de Instalação' }
+      ]}
+    >
       <div className="min-h-screen p-4 md:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
@@ -223,17 +227,6 @@ export default function OrdensInstalacoesLogistica() {
             "flex flex-col gap-4 transition-all duration-500",
             mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           )}>
-            <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => navigate("/logistica/instalacoes")}
-                className="shrink-0"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <AnimatedBreadcrumb items={breadcrumbItems} mounted={mounted} />
-            </div>
 
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
