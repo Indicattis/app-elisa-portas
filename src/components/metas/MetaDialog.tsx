@@ -100,8 +100,8 @@ export function MetaDialog({ open, onOpenChange, userId, metaParaEditar }: MetaD
       user_id: userId,
       tipo_meta: tipoMeta,
       valor_meta: parseFloat(valorMeta.replace(",", ".")),
-      data_inicio: dataInicio,
-      data_termino: dataTermino,
+      data_inicio: dataInicio + "T12:00:00.000Z",
+      data_termino: dataTermino + "T12:00:00.000Z",
       recompensa_valor: parseFloat(recompensaValor.replace(",", ".")) || 0,
       desbloqueada: false,
     };
