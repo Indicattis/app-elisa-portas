@@ -59,7 +59,6 @@ export function NovaCidadeDialog({
         const { data, error } = await supabase
           .from('autorizados')
           .select('cidade')
-          .eq('ativo', true)
           .ilike('estado', estadoSigla)
           .not('cidade', 'is', null);
         
