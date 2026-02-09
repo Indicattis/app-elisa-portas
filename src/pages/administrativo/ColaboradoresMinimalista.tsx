@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Search, X, Edit, Loader2, FileText, Plus, Bell } from "lucide-react";
+import { Search, X, Edit, Loader2, FileText, Plus, Bell, FileDown } from "lucide-react";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ROLE_LABELS } from "@/types/permissions";
 import { EditColaboradorModal } from "@/components/colaboradores/EditColaboradorModal";
 import { AddColaboradorDialog } from "@/components/colaboradores/AddColaboradorDialog";
+import { gerarColaboradoresPDF } from "@/utils/colaboradoresPDFGenerator";
 
 interface Colaborador {
   id: string;
@@ -169,6 +170,15 @@ export default function ColaboradoresMinimalista() {
       <AddColaboradorDialog 
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ["colaboradores-minimalista"] })} 
       />
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => gerarColaboradoresPDF(filteredColaboradores)}
+        className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+      >
+        <FileDown className="w-4 h-4 mr-2" />
+        Gerar PDF
+      </Button>
       <Button
         variant="outline"
         size="sm"
