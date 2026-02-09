@@ -1,7 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -131,9 +142,53 @@ export default function EstadoAutorizadosDirecao() {
               <div>
                 <h1 className="text-lg font-semibold text-white">{estadoSelecionado.nome}</h1>
                 <p className="text-xs text-white/60">
-                  {cidades.length} cidades cadastradas
+                  {estadoSelecionado.sigla} · {cidades.length} cidades cadastradas
                 </p>
               </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setNovaCidadeOpen(true)}
+                className="bg-primary/10 border-primary/20 hover:bg-primary/20"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Nova Cidade
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleEditEstado}
+                className="hover:bg-primary/10"
+              >
+                <Pencil className="h-4 w-4 text-white/60" />
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir estado?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      O estado "{estadoSelecionado.nome}" e todas as suas cidades cadastradas serão excluídos. Os autorizados não serão afetados.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteEstado}>
+                      Excluir
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </header>
