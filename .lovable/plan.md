@@ -1,143 +1,59 @@
 
-# Adicionar botao "Resetar Ordem" na sidebar de /fabrica/ordens-pedidos
 
-## O que sera feito
+# Adicionar pagina "Responsabilidades" ao hub RH/DP
 
-Adicionar um botao "Resetar Ordem" na sidebar (OrdemLinhasSheet) que, ao ser clicado, exibe um modal de confirmacao e executa as seguintes acoes:
+## Resumo
 
-1. Define o status da ordem como `pendente`
-2. Remove o responsavel (`responsavel_id: null`, `capturada_em: null`)
-3. Reseta campos de conclusao/pausa (`data_conclusao: null`, `historico: false`, `pausada: false`, `justificativa_pausa: null`, `tempo_acumulado_segundos: 0`)
-4. Marca todas as linhas da ordem como nao concluidas (`concluida: false`, `concluida_em: null`, `concluida_por: null`)
+Adicionar um novo botao "Responsabilidades" no hub `/administrativo/rh-dp` e criar a pagina `/administrativo/rh-dp/responsabilidades` onde o usuario podera cadastrar funcoes, obrigacoes e responsabilidades de cada colaborador.
 
-## Detalhe tecnico
+## Etapas
 
-### Arquivo: `src/components/fabrica/OrdemLinhasSheet.tsx`
+### 1. Criar tabela no banco de dados
 
-**1. Adicionar icone `RotateCcw` ao import do lucide-react (linha 6)**
+Criar a tabela `colaborador_responsabilidades` para armazenar os registros:
 
-Adicionar `RotateCcw` a lista de icones importados.
+| Coluna | Tipo | Descricao |
+|--------|------|-----------|
+| id | uuid (PK) | Identificador unico |
+| colaborador_id | uuid (FK -> admin_users.id) | Colaborador associado |
+| titulo | text | Titulo da funcao/responsabilidade |
+| descricao | text | Descricao detalhada |
+| tipo | text | Tipo: "funcao", "obrigacao" ou "responsabilidade" |
+| created_at | timestamptz | Data de criacao |
+| updated_at | timestamptz | Data de atualizacao |
 
-**2. Adicionar estado para o modal de reset (apos linha 66)**
+Politicas RLS para usuarios autenticados com roles admin/administrador.
 
-```typescript
-const [showResetModal, setShowResetModal] = useState(false);
+### 2. Adicionar botao no hub RH/DP
+
+No arquivo `src/pages/administrativo/RhDpHub.tsx`:
+- Importar o icone `ClipboardList` do lucide-react
+- Adicionar item ao array `menuItems`:
+  ```
+  { label: "Responsabilidades", icon: ClipboardList, path: "/administrativo/rh-dp/responsabilidades", ativo: true }
+  ```
+- Atualizar o grid desktop de `grid-cols-2` para `grid-cols-3` para acomodar 3 botoes
+
+### 3. Criar a pagina de Responsabilidades
+
+Criar `src/pages/administrativo/ResponsabilidadesPage.tsx` seguindo o mesmo padrao visual das demais paginas (fundo preto, glassmorphism, breadcrumb, botao voltar). A pagina tera:
+
+- **Seletor de colaborador**: dropdown para escolher o colaborador (usando dados de `admin_users` com `eh_colaborador = true`)
+- **Lista de responsabilidades**: cards mostrando as funcoes/obrigacoes/responsabilidades do colaborador selecionado, agrupadas por tipo
+- **Botao adicionar**: abre um modal/dialog para cadastrar novo registro com campos: titulo, descricao, tipo (funcao/obrigacao/responsabilidade)
+- **Acoes por item**: editar e excluir cada registro
+
+### 4. Registrar rota no App.tsx
+
+Adicionar a rota protegida:
+```
+<Route path="/administrativo/rh-dp/responsabilidades" element={<ProtectedRoute routeKey="administrativo_hub"><ResponsabilidadesPage /></ProtectedRoute>} />
 ```
 
-**3. Adicionar mutation `resetarOrdem` (apos a mutation `concluirOrdem`, ~linha 283)**
+## Arquivos envolvidos
 
-```typescript
-const resetarOrdem = useMutation({
-  mutationFn: async () => {
-    if (!ordem?.id || !ordem?.tipo) throw new Error('Ordem invalida');
-    const tableName = TABLE_MAP[ordem.tipo];
+1. **Criar tabela**: migration SQL para `colaborador_responsabilidades` com RLS
+2. **Editar**: `src/pages/administrativo/RhDpHub.tsx` -- novo item no menu + grid 3 colunas
+3. **Criar**: `src/pages/administrativo/ResponsabilidadesPage.tsx` -- pagina completa
+4. **Editar**: `src/App.tsx` -- import + rota
 
-    // Resetar todas as linhas
-    await supabase
-      .from('linhas_ordens')
-      .update({
-        concluida: false,
-        concluida_em: null,
-        concluida_por: null,
-      })
-      .eq('ordem_id', ordem.id)
-      .eq('tipo_ordem', ordem.tipo);
-
-    // Resetar a ordem
-    const { error } = await supabase
-      .from(tableName as any)
-      .update({
-        status: 'pendente',
-        responsavel_id: null,
-        capturada_em: null,
-        data_conclusao: null,
-        historico: false,
-        pausada: false,
-        justificativa_pausa: null,
-        tempo_acumulado_segundos: 0,
-      })
-      .eq('id', ordem.id);
-
-    if (error) throw error;
-  },
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
-    queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
-    queryClient.invalidateQueries({ queryKey: ['linhas-ordem', ordem?.id, ordem?.tipo] });
-    setShowResetModal(false);
-    onOpenChange(false);
-    toast.success('Ordem resetada com sucesso');
-  },
-  onError: () => {
-    toastHook({
-      title: "Erro",
-      description: "Nao foi possivel resetar a ordem.",
-      variant: "destructive",
-    });
-  },
-});
-```
-
-**4. Adicionar botao "Resetar Ordem" na area de acoes (~linha 509, antes do fechamento do TooltipProvider)**
-
-Exibir o botao quando a ordem nao estiver pendente (`ordem?.status !== 'pendente'`):
-
-```typescript
-{ordem && ordem.status !== 'pendente' && (
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => setShowResetModal(true)}
-        disabled={resetarOrdem.isPending}
-        className="h-8 gap-2 border-red-500/50 bg-red-500/10 hover:bg-red-500/20 text-red-300"
-      >
-        <RotateCcw className="h-4 w-4" />
-        <span className="text-xs">Resetar</span>
-      </Button>
-    </TooltipTrigger>
-    <TooltipContent>
-      Resetar ordem para pendente, remover responsavel e desmarcar linhas
-    </TooltipContent>
-  </Tooltip>
-)}
-```
-
-**5. Adicionar modal de confirmacao (apos o DelegacaoModal, ~linha 653)**
-
-Reutilizar o componente `AlertDialog` para confirmar a acao:
-
-```typescript
-<AlertDialog open={showResetModal} onOpenChange={setShowResetModal}>
-  <AlertDialogContent>
-    <AlertDialogHeader>
-      <AlertDialogTitle>Resetar ordem</AlertDialogTitle>
-      <AlertDialogDescription>
-        Tem certeza? A ordem voltara ao status "pendente", todas as linhas serao
-        desmarcadas e o responsavel sera removido.
-      </AlertDialogDescription>
-    </AlertDialogHeader>
-    <AlertDialogFooter>
-      <AlertDialogCancel disabled={resetarOrdem.isPending}>Cancelar</AlertDialogCancel>
-      <AlertDialogAction
-        onClick={(e) => { e.preventDefault(); resetarOrdem.mutate(); }}
-        disabled={resetarOrdem.isPending}
-        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-      >
-        {resetarOrdem.isPending ? "Resetando..." : "Resetar"}
-      </AlertDialogAction>
-    </AlertDialogFooter>
-  </AlertDialogContent>
-</AlertDialog>
-```
-
-### Imports adicionais necessarios
-
-Adicionar ao topo do arquivo:
-- `RotateCcw` do lucide-react
-- `AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle` do alert-dialog
-
-## Arquivo modificado
-
-1. **Editar**: `src/components/fabrica/OrdemLinhasSheet.tsx`
