@@ -835,6 +835,44 @@ export type Database = {
           },
         ]
       }
+      colaborador_responsabilidades: {
+        Row: {
+          colaborador_id: string
+          created_at: string
+          descricao: string | null
+          id: string
+          tipo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          colaborador_id: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          tipo: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          colaborador_id?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colaborador_responsabilidades_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_settings: {
         Row: {
           cep: string
@@ -7062,7 +7100,9 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
-      is_admin_user: { Args: never; Returns: boolean }
+      is_admin_user:
+        | { Args: never; Returns: boolean }
+        | { Args: { _user_id: string }; Returns: boolean }
       is_factory_operator: { Args: { _user_id: string }; Returns: boolean }
       is_lead_attendant: { Args: { lead_uuid: string }; Returns: boolean }
       map_etapa_to_instalacao_status: {
