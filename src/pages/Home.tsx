@@ -9,14 +9,14 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { DelayedParticles } from "@/components/DelayedParticles";
 
-// Mapeamento de path para route_key no banco
-const routeKeyMap: Record<string, string> = {
-  '/marketing': 'marketing_hub',
-  '/direcao': 'direcao_hub',
-  '/vendas': 'vendas_hub',
-  '/fabrica': 'fabrica_hub',
-  '/logistica': 'logistica_hub',
-  '/administrativo': 'administrativo_hub'
+// Mapeamento de path para prefixo de route_key no banco
+const routePrefixMap: Record<string, string> = {
+  '/marketing': 'marketing_',
+  '/direcao': 'direcao_',
+  '/vendas': 'vendas_',
+  '/fabrica': 'fabrica_',
+  '/logistica': 'logistica_',
+  '/administrativo': 'administrativo_'
 };
 
 const menuItems = [
@@ -37,20 +37,17 @@ export default function Home() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
-  // Buscar acessos do usuário às rotas principais
+  // Buscar todos os acessos do usuário
   const { data: userAccess } = useQuery({
     queryKey: ['user-home-access', user?.id, hasBypassPermissions],
     queryFn: async () => {
-      if (!user?.id) return [];
-      
-      const routeKeys = Object.values(routeKeyMap);
+      if (!user?.id) return [] as string[];
       
       const { data, error } = await supabase
         .from('user_route_access')
         .select('route_key')
         .eq('user_id', user.id)
-        .eq('can_access', true)
-        .in('route_key', routeKeys);
+        .eq('can_access', true);
       
       if (error) throw error;
       return data?.map(r => r.route_key) || [];
@@ -58,15 +55,14 @@ export default function Home() {
     enabled: !!user?.id && !hasBypassPermissions,
   });
 
-  // Verificar se usuário tem acesso a uma rota
+  // Verificar se usuário tem acesso a um módulo (hub ou qualquer sub-rota)
   const hasAccess = (path: string): boolean => {
-    // Apenas bypass_permissions tem acesso irrestrito
     if (hasBypassPermissions) return true;
     
-    const routeKey = routeKeyMap[path];
-    if (!routeKey) return true;
+    const prefix = routePrefixMap[path];
+    if (!prefix) return true;
     
-    return userAccess?.includes(routeKey) || false;
+    return userAccess?.some(key => key.startsWith(prefix)) || false;
   };
 
   useEffect(() => {
