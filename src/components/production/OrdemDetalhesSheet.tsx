@@ -210,6 +210,35 @@ export function OrdemDetalhesSheet({
     try {
       const calculo = calcularEtiquetasLinha(linha);
       
+      // Montar portaLabel a partir dos dados da linha
+      let portaLabel: string | undefined;
+      if (linha.produto_venda_id && ordem?.pedido?.produtos) {
+        const portaKey = `${linha.produto_venda_id}_${linha.indice_porta ?? 0}`;
+        const todosProdutos = ordem.pedido.produtos || [];
+        // Recalcular numeração de portas
+        const linhasAgrupadas = linhas || [];
+        const portaKeys = new Set<string>();
+        const portaKeysOrdenadas: string[] = [];
+        linhasAgrupadas.forEach((l: LinhaOrdem) => {
+          const key = l.produto_venda_id ? `${l.produto_venda_id}_${l.indice_porta ?? 0}` : 'sem_porta';
+          if (key !== 'sem_porta' && !portaKeys.has(key)) {
+            portaKeys.add(key);
+            portaKeysOrdenadas.push(key);
+          }
+        });
+        const portaNum = portaKeysOrdenadas.indexOf(portaKey);
+        if (portaNum >= 0) {
+          const baseProdutoId = linha.produto_venda_id;
+          const prod = baseProdutoId ? todosProdutos.find((p: any) => p.id === baseProdutoId) : null;
+          const tipoLabel = getLabelTipoProduto(prod?.tipo_produto);
+          const num = String(portaNum + 1).padStart(2, '0');
+          const larguraPorta = linha.largura || prod?.largura;
+          const alturaPorta = linha.altura || prod?.altura;
+          const dimTexto = larguraPorta && alturaPorta ? ` — ${formatarDimensoes(larguraPorta, alturaPorta)}` : '';
+          portaLabel = `${tipoLabel} #${num}${dimTexto}`;
+        }
+      }
+      
       // Gerar apenas 1 etiqueta individual
       const tag = {
         tagNumero: 1,
@@ -225,6 +254,7 @@ export function OrdemDetalhesSheet({
         tipoPintura: linha.tipo_pintura,
         origemOrdem: origemOrdemLabel,
         responsavelNome: ordem?.admin_users?.nome,
+        portaLabel,
       };
       
       const doc = gerarPDFEtiquetaProducao(tag);

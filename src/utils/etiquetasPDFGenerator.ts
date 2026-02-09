@@ -215,11 +215,11 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
   const tableWidth = pageWidth - (tableMargin * 2);
   const labelColWidth = 280;
   const valueColWidth = tableWidth - labelColWidth;
-  const rowHeight = 52; // Altura reduzida para menos espaçamento
-  const fontSize = 80; // Fonte bem maior
-  const headerFontSize = 88; // Fonte de cabeçalho bem maior
+  const rowHeight = 52;
+  const fontSize = 80;
+  const headerFontSize = 88;
   
-  // Logo no topo - centralizada e menor
+  // Logo no topo - centralizada
   const logoSize = 70;
   const logoX = (pageWidth - logoSize) / 2;
   const logoY = 15;
@@ -227,7 +227,6 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
   try {
     doc.addImage(logoEtiquetaLateral, 'PNG', logoX, logoY, logoSize, logoSize);
   } catch (error) {
-    // Fallback: desenhar um retângulo com texto se a logo não carregar
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(2);
     doc.rect(logoX, logoY, logoSize, logoSize, 'S');
@@ -238,8 +237,19 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
     doc.text('PORTAS', logoX + logoSize / 2, logoY + logoSize / 2 + 25, { align: 'center' });
   }
   
-  // Início da tabela (abaixo da logo)
-  let tableY = logoY + logoSize + 25;
+  // Porta label abaixo da logo (se disponível)
+  let tableY = logoY + logoSize + 15;
+  
+  if (tag.portaLabel) {
+    doc.setFontSize(60);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(40, 40, 40);
+    doc.text(tag.portaLabel, pageWidth / 2, tableY + 20, { align: 'center' });
+    tableY += 45;
+  } else {
+    tableY += 10;
+  }
+  
   const tableX = tableMargin;
   
   // Função para desenhar uma linha da tabela
@@ -273,49 +283,24 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
     tableY += rowHeight;
   };
   
-  // Desenhar linhas da tabela
-  if (tag.clienteNome) {
-    drawTableRow('CLIENTE', tag.clienteNome, true);
-  }
+  // Desenhar linhas da tabela (5 linhas fixas)
+  drawTableRow('CLIENTE', tag.clienteNome || '—', true);
+  drawTableRow('PRODUTO', tag.nomeProduto, true);
   
-  // Produto e tamanho unificados em uma única linha
-  const tamanhoFormatado = tag.tamanho 
+  // Tamanho: usar tamanho formatado, ou largura x altura como fallback
+  const tamanhoTexto = tag.tamanho 
     ? `${parseFloat(String(tag.tamanho).replace(',', '.')).toFixed(2)}m`
-    : null;
-  const produtoComTamanho = tamanhoFormatado 
-    ? `${tag.nomeProduto} - ${tamanhoFormatado}` 
-    : tag.nomeProduto;
-  drawTableRow('PRODUTO', produtoComTamanho, true);
+    : (tag.largura && tag.altura ? `${tag.largura.toFixed(2)}m x ${tag.altura.toFixed(2)}m` : '—');
+  drawTableRow('TAMANHO', tamanhoTexto);
   
-  if (tag.largura && tag.altura) {
-    drawTableRow('DIMENSÕES', `${tag.largura.toFixed(2)}m x ${tag.altura.toFixed(2)}m`);
-  }
-  
-  if (tag.corNome || tag.tipoPintura) {
-    const pinturaTexto = [tag.corNome, tag.tipoPintura].filter(Boolean).join(' - ');
-    drawTableRow('PINTURA', pinturaTexto || 'Sem pintura');
-  }
-  
-  // Quantidade - usar formato "parcial - total" se disponível
+  // Quantidade
   const quantidadeTexto = tag.quantidadeParcial !== undefined && tag.quantidadeTotal !== undefined && tag.divisor && tag.divisor > 1
     ? `${tag.quantidadeParcial} - ${tag.quantidadeTotal} unidades`
     : `${tag.quantidade} unidade${tag.quantidade !== 1 ? 's' : ''}`;
   drawTableRow('QUANTIDADE', quantidadeTexto);
   
   // Responsável
-  if (tag.responsavelNome) {
-    drawTableRow('RESPONSÁVEL', tag.responsavelNome);
-  }
-  
-  const tableEndY = tableY;
-  
-  // Rodapé com cor da porta
-  if (tag.corNome) {
-    doc.setFontSize(40);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(80, 80, 80);
-    doc.text(`Cor: ${tag.corNome}`, pageWidth / 2, tableEndY + 25, { align: 'center' });
-  }
+  drawTableRow('RESPONSÁVEL', tag.responsavelNome || '—');
 }
 
 export function gerarPDFEtiquetaProducao(tag: TagProducao): jsPDF {
