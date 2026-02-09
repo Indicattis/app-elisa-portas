@@ -192,7 +192,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
             </div>
             <div className="flex items-center gap-2">
               <Button
-                onClick={() => navigate('/direcao/autorizados/novo')}
+                onClick={() => navigate(`/${contexto}/autorizados/novo`)}
                 className="bg-primary/20 hover:bg-primary/30 border border-primary/30"
               >
                 <Plus className="h-4 w-4 mr-1" />
@@ -243,7 +243,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                         <SortableEstadoCard
                           key={estado.id}
                           estado={estado}
-                          onClick={() => navigate(`/direcao/autorizados/estado/${estado.id}`)}
+                          onClick={() => navigate(`/${contexto}/autorizados/estado/${estado.id}`)}
                           isSelected={false}
                         />
                       ))}

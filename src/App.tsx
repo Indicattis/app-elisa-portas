@@ -481,6 +481,10 @@ const App = () => (
                 <Route path="/logistica/frota" element={<ProtectedRoute routeKey="logistica_hub"><FrotaMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/frete" element={<ProtectedRoute routeKey="logistica_hub"><FreteMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/autorizados" element={<ProtectedRoute routeKey="logistica_hub"><AutorizadosLogistica /></ProtectedRoute>} />
+                <Route path="/logistica/autorizados/estado/:estadoId" element={<ProtectedRoute routeKey="logistica_hub"><EstadoAutorizadosDirecao /></ProtectedRoute>} />
+                <Route path="/logistica/autorizados/estado/:estadoId/novo" element={<ProtectedRoute routeKey="logistica_hub"><NovoAutorizadoDirecao /></ProtectedRoute>} />
+                <Route path="/logistica/autorizados/novo" element={<ProtectedRoute routeKey="logistica_hub"><NovoAutorizadoDirecao /></ProtectedRoute>} />
+                <Route path="/logistica/autorizados/:id/editar" element={<ProtectedRoute routeKey="logistica_hub"><EditarAutorizadoDirecao /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes" element={<ProtectedRoute routeKey="logistica_hub"><InstalacoesHub /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/ordens-instalacoes" element={<ProtectedRoute routeKey="logistica_hub"><OrdensInstalacoesLogistica /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/equipes" element={<ProtectedRoute routeKey="logistica_hub"><EquipesMinimalista /></ProtectedRoute>} />

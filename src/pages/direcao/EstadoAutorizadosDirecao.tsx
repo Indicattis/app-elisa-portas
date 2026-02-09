@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +24,9 @@ import { useEstadosCidades } from '@/hooks/useEstadosCidades';
 
 export default function EstadoAutorizadosDirecao() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const contexto = pathname.startsWith('/logistica') ? 'logistica' : 'direcao';
+  const basePath = `/${contexto}/autorizados`;
   const { estadoId } = useParams<{ estadoId: string }>();
   const [mounted, setMounted] = useState(false);
 
@@ -63,10 +66,10 @@ export default function EstadoAutorizadosDirecao() {
         selecionarEstado(estado);
       } else {
         toast.error('Estado não encontrado');
-        navigate('/direcao/autorizados');
+        navigate(basePath);
       }
     }
-  }, [estadoId, estados, estadoSelecionado, selecionarEstado, navigate]);
+  }, [estadoId, estados, estadoSelecionado, selecionarEstado, navigate, basePath]);
 
   const handleTogglePremium = async (autorizadoId: string, isPremium: boolean) => {
     if (isPremium) {
@@ -86,7 +89,7 @@ export default function EstadoAutorizadosDirecao() {
   const handleDeleteEstado = async () => {
     if (estadoSelecionado) {
       await excluirEstado(estadoSelecionado.id);
-      navigate('/direcao/autorizados');
+      navigate(basePath);
     }
   };
 
@@ -96,7 +99,7 @@ export default function EstadoAutorizadosDirecao() {
   };
 
   const handleEditAutorizado = (id: string) => {
-    navigate(`/direcao/autorizados/${id}/editar`);
+    navigate(`${basePath}/${id}/editar`);
   };
 
   const handleCloseEstadoDialog = (open: boolean) => {
@@ -122,8 +125,8 @@ export default function EstadoAutorizadosDirecao() {
       <AnimatedBreadcrumb
         items={[
           { label: "Home", path: "/home" },
-          { label: "Direção", path: "/direcao" },
-          { label: "Autorizados", path: "/direcao/autorizados" },
+          { label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' },
+          { label: "Autorizados", path: basePath },
           { label: estadoSelecionado.nome }
         ]}
         mounted={mounted}
@@ -134,7 +137,7 @@ export default function EstadoAutorizadosDirecao() {
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => navigate('/direcao/autorizados')}
+                onClick={() => navigate(basePath)}
                 className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
               >
                 <ArrowLeft className="w-5 h-5 text-white/80" />
@@ -199,7 +202,7 @@ export default function EstadoAutorizadosDirecao() {
             cidades={cidades}
             autorizadosOrfaos={autorizadosOrfaos}
             loading={loadingCidades}
-            onVoltar={() => navigate('/direcao/autorizados')}
+            onVoltar={() => navigate(basePath)}
             onNovaCidade={() => setNovaCidadeOpen(true)}
             onEditEstado={handleEditEstado}
             onDeleteEstado={handleDeleteEstado}

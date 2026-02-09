@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload, User, Plus, X } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { getEtapasByTipo } from "@/utils/parceiros";
 import { ESTADOS_BRASIL, getCidadesPorEstado } from "@/utils/estadosCidades";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
@@ -63,6 +63,9 @@ export default function NovoAutorizadoDirecao() {
   const [estadoInfo, setEstadoInfo] = useState<{ id: string; nome: string; sigla: string } | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const contexto = pathname.startsWith('/logistica') ? 'logistica' : 'direcao';
+  const basePath = `/${contexto}/autorizados`;
 
   // Fetch estado info if coming from estado page
   useEffect(() => {
@@ -205,7 +208,7 @@ export default function NovoAutorizadoDirecao() {
       }
 
       toast({ title: 'Sucesso', description: 'Autorizado criado com sucesso.' });
-      navigate('/direcao/autorizados');
+      navigate(basePath);
     } catch (error) {
       console.error('Erro ao criar autorizado:', error);
       toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao criar autorizado.' });
@@ -216,13 +219,13 @@ export default function NovoAutorizadoDirecao() {
 
   const breadcrumbItems = [
     { label: "Home", path: "/home" },
-    { label: "Direção", path: "/direcao" },
-    { label: "Autorizados", path: "/direcao/autorizados" },
-    ...(estadoInfo ? [{ label: estadoInfo.nome, path: `/direcao/autorizados/estado/${estadoInfo.id}` }] : []),
+    { label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' },
+    { label: "Autorizados", path: basePath },
+    ...(estadoInfo ? [{ label: estadoInfo.nome, path: `${basePath}/estado/${estadoInfo.id}` }] : []),
     { label: "Novo" }
   ];
 
-  const backPath = estadoInfo ? `/direcao/autorizados/estado/${estadoInfo.id}` : '/direcao/autorizados';
+  const backPath = estadoInfo ? `${basePath}/estado/${estadoInfo.id}` : basePath;
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative">
