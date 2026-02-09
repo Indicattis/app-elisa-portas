@@ -18,6 +18,13 @@ const periodosOptions: { value: PeriodoFiltro; label: string; icon: React.Elemen
   { value: 'todos', label: 'Todo Período', icon: CalendarRange },
 ];
 
+function classificarPorta(metragem: number | null | undefined): string | null {
+  if (!metragem || metragem <= 0) return null;
+  if (metragem < 25) return 'P';
+  if (metragem <= 50) return 'G';
+  return 'GG';
+}
+
 function getMedalIcon(posicao: number) {
   if (posicao <= 3) {
     const colors: Record<number, string> = {
@@ -141,12 +148,7 @@ export default function RankingEquipesInstalacao() {
                 className={`p-1.5 rounded-xl backdrop-blur-xl border cursor-pointer transition-all hover:scale-[1.01] hover:shadow-lg ${getCardStyles(posicao)}`}
                 onClick={() => setSelectedEquipe(equipe)}
               >
-                <Card 
-                  className="bg-transparent border-0 shadow-none"
-                  style={{
-                    borderLeft: equipe.equipe_cor ? `4px solid ${equipe.equipe_cor}` : undefined
-                  }}
-                >
+                <Card className="bg-transparent border-0 shadow-none">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-4">
                       {/* Medalha/Posição */}
@@ -154,17 +156,9 @@ export default function RankingEquipesInstalacao() {
 
                       {/* Info da Equipe */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-white font-semibold truncate">
-                            {equipe.equipe_nome}
-                          </h3>
-                          {equipe.equipe_cor && (
-                            <div 
-                              className="w-3 h-3 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: equipe.equipe_cor }}
-                            />
-                          )}
-                        </div>
+                        <h3 className="text-white font-semibold truncate mb-1">
+                          {equipe.equipe_nome}
+                        </h3>
 
                         {/* Membros da equipe */}
                         {equipeMembros.length > 0 && (
@@ -201,13 +195,7 @@ export default function RankingEquipesInstalacao() {
 
                       {/* Badge de Quantidade */}
                       <div className="flex-shrink-0">
-                        <div 
-                          className="px-4 py-2 rounded-lg font-bold text-lg text-white"
-                          style={{ 
-                            backgroundColor: equipe.equipe_cor || '#3B82F6',
-                            opacity: 0.9
-                          }}
-                        >
+                        <div className="px-4 py-2 rounded-lg font-bold text-lg text-white bg-white/15">
                           {equipe.quantidade_instalacoes}
                         </div>
                       </div>
@@ -224,12 +212,7 @@ export default function RankingEquipesInstalacao() {
       <Dialog open={!!selectedEquipe} onOpenChange={(open) => !open && setSelectedEquipe(null)}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-slate-900 border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {selectedEquipe?.equipe_cor && (
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: selectedEquipe.equipe_cor }} />
-              )}
-              {selectedEquipe?.equipe_nome} — Instalações
-            </DialogTitle>
+            <DialogTitle>{selectedEquipe?.equipe_nome} — Instalações</DialogTitle>
           </DialogHeader>
 
           {selectedEquipe && selectedEquipe.instalacoes_detalhes.length === 0 && (
@@ -238,33 +221,43 @@ export default function RankingEquipesInstalacao() {
 
           {selectedEquipe && selectedEquipe.instalacoes_detalhes.length > 0 && (
             <div className="space-y-2 mt-2">
-              {selectedEquipe.instalacoes_detalhes.map((inst) => (
-                <div key={inst.id} className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-white truncate">{inst.nome_cliente}</p>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-white/50">
-                        {inst.data_conclusao && (
-                          <span>{format(new Date(inst.data_conclusao), "dd/MM/yyyy", { locale: ptBR })}</span>
+              {selectedEquipe.instalacoes_detalhes.map((inst) => {
+                const tamanho = classificarPorta(inst.metragem);
+                return (
+                  <div key={inst.id} className="p-3 rounded-lg bg-white/5 border border-white/10">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-white truncate">{inst.nome_cliente}</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-white/50">
+                          {inst.data_conclusao && (
+                            <span>{format(new Date(inst.data_conclusao), "dd/MM/yyyy", { locale: ptBR })}</span>
+                          )}
+                          {inst.metragem && inst.metragem > 0 && (
+                            <span>{inst.metragem.toFixed(1)} m²</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {tamanho && (
+                          <Badge variant="outline" className="text-xs border-white/20 text-white/70">
+                            {tamanho}
+                          </Badge>
                         )}
-                        {inst.metragem && inst.metragem > 0 && (
-                          <span>{inst.metragem.toFixed(1)} m²</span>
-                        )}
+                        <Badge 
+                          variant="outline" 
+                          className={`text-xs ${
+                            inst.origem === 'pedido' 
+                              ? 'border-blue-500/40 text-blue-400' 
+                              : 'border-emerald-500/40 text-emerald-400'
+                          }`}
+                        >
+                          {inst.origem === 'pedido' ? 'Pedido' : 'Avulso'}
+                        </Badge>
                       </div>
                     </div>
-                    <Badge 
-                      variant="outline" 
-                      className={`text-xs flex-shrink-0 ${
-                        inst.origem === 'pedido' 
-                          ? 'border-blue-500/40 text-blue-400' 
-                          : 'border-emerald-500/40 text-emerald-400'
-                      }`}
-                    >
-                      {inst.origem === 'pedido' ? 'Pedido' : 'Avulso'}
-                    </Badge>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </DialogContent>
