@@ -1,57 +1,49 @@
 
-# Fundir paginas de autorizados (Direcao + Logistica)
+# Rotas contextuais para estados em /logistica/autorizados
 
 ## Resumo
 
-A pagina `/direcao/autorizados` atualmente exibe apenas a grade de estados. A pagina `/logistica/autorizados` exibe apenas a tabela de acordos. A proposta e criar um componente unificado que exibe **ambas as secoes** (estados + acordos), recebendo props para adaptar breadcrumbs e navegacao conforme o contexto (direcao ou logistica).
-
-## Estrutura final
-
-Ambas as rotas renderizarao o mesmo conteudo:
-1. Header com titulo, botoes "Novo Autorizado", "Novo Estado" e "Novo Acordo"
-2. Secao "Estados Cadastrados" com grid de cards arrastavel (drag-and-drop)
-3. Secao "Acordos com Autorizados" com tabela filtravel (busca + filtro de status)
+Atualmente, ao clicar num estado em `/logistica/autorizados`, a navegacao vai para `/direcao/autorizados/estado/:id` porque os caminhos estao hardcoded. A correcao fara com que a navegacao respeite o contexto (direcao ou logistica).
 
 ## Alteracoes
 
-### 1. Expandir `AutorizadosPrecosDirecao.tsx` para incluir acordos
-- Importar `useAcordosAutorizados` e `NovoAcordoDialog`
-- Adicionar secao de acordos abaixo dos estados (filtros de busca/status + tabela completa)
-- Adicionar botao "Novo Acordo" no header
-- Reutilizar toda a logica de filtros, badges de portas, status e acoes (editar/excluir) da pagina atual de `AcordosAutorizados.tsx`
-- Receber prop opcional `contexto` ('direcao' | 'logistica') para ajustar breadcrumbs e botao voltar
+### 1. `AutorizadosPrecosDirecao.tsx` (linha 246)
+- Trocar o navigate hardcoded para usar o prefixo correto baseado na prop `contexto`
+- De: `navigate('/direcao/autorizados/estado/${estado.id}')`
+- Para: `navigate('/${contexto === 'logistica' ? 'logistica' : 'direcao'}/autorizados/estado/${estado.id}')`
 
-### 2. Criar pagina wrapper `src/pages/logistica/AutorizadosLogistica.tsx`
-- Componente simples que importa e renderiza `AutorizadosPrecosDirecao` com `contexto="logistica"`
-- Isso garante que `/logistica/autorizados` seja uma copia identica
+### 2. `EstadoAutorizadosDirecao.tsx`
+- Adicionar prop `contexto?: 'direcao' | 'logistica'` (ou detectar pelo pathname via `useLocation`)
+- Atualizar todos os paths hardcoded (breadcrumbs, botao voltar, navigate para editar) para usar o prefixo correto
+- Paths afetados: breadcrumb "Direcao"/"Logistica", breadcrumb "Autorizados", botao voltar, navigate de editar autorizado
 
-### 3. Atualizar `App.tsx`
-- Alterar a rota `/logistica/autorizados` para apontar para o novo wrapper `AutorizadosLogistica`
-- Manter import de `AcordosAutorizados` se usado em outro lugar, ou remover
+### 3. `App.tsx`
+- Adicionar rotas espelhadas para logistica:
+  - `/logistica/autorizados/estado/:estadoId` -> `EstadoAutorizadosDirecao` (com contexto logistica)
+  - `/logistica/autorizados/estado/:estadoId/novo` -> `NovoAutorizadoDirecao`
+  - `/logistica/autorizados/novo` -> `NovoAutorizadoDirecao`
+  - `/logistica/autorizados/:id/editar` -> `EditarAutorizadoDirecao`
 
-### 4. Adaptar breadcrumbs e navegacao por contexto
-- Direcao: `Home > Direcao > Autorizados` com botao voltar para `/direcao`
-- Logistica: `Home > Logistica > Autorizados` com botao voltar para `/logistica`
-- As rotas de estado continuam usando `/direcao/autorizados/estado/:id` em ambos os contextos
+### 4. Criar wrapper `src/pages/logistica/EstadoAutorizadosLogistica.tsx`
+- Componente simples que renderiza `EstadoAutorizadosDirecao` com `contexto="logistica"`
+
+### 5. `NovoAutorizadoDirecao.tsx` e `EditarAutorizadoDirecao.tsx`
+- Detectar contexto pelo pathname (se contem `/logistica/`) e ajustar breadcrumbs e navegacao de volta
 
 ## Detalhes tecnicos
 
-O componente `AutorizadosPrecosDirecao` passara a aceitar uma prop:
+A abordagem mais simples e detectar o contexto pelo pathname usando `useLocation()`, evitando a necessidade de props em todos os componentes de pagina. Exemplo:
 
 ```typescript
-interface Props {
-  contexto?: 'direcao' | 'logistica';
-}
+const { pathname } = useLocation();
+const contexto = pathname.startsWith('/logistica') ? 'logistica' : 'direcao';
+const basePath = `/${contexto}/autorizados`;
 ```
-
-A secao de acordos sera adicionada logo apos a secao de estados, com um separador visual. Incluira:
-- Campo de busca e filtro de status
-- Tabela com colunas: Cliente, Autorizado, Portas, Valor, Status, Data, Criado por, Acoes
-- Dialog de novo/editar acordo
-- Dialog de confirmacao de exclusao
 
 ### Arquivos
 
-1. **Editar**: `src/pages/direcao/AutorizadosPrecosDirecao.tsx` -- adicionar secao de acordos e prop de contexto
-2. **Criar**: `src/pages/logistica/AutorizadosLogistica.tsx` -- wrapper que renderiza o componente com contexto logistica
-3. **Editar**: `src/App.tsx` -- atualizar rota `/logistica/autorizados`
+1. **Editar**: `src/pages/direcao/AutorizadosPrecosDirecao.tsx` -- usar contexto no navigate do estado
+2. **Editar**: `src/pages/direcao/EstadoAutorizadosDirecao.tsx` -- detectar contexto e ajustar paths
+3. **Editar**: `src/pages/direcao/NovoAutorizadoDirecao.tsx` -- detectar contexto e ajustar breadcrumbs/back
+4. **Editar**: `src/pages/direcao/EditarAutorizadoDirecao.tsx` -- detectar contexto e ajustar breadcrumbs/back
+5. **Editar**: `src/App.tsx` -- adicionar rotas espelhadas para logistica
