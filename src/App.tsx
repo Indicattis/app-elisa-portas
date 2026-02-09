@@ -252,6 +252,7 @@ import FrotaMinimalista from "./pages/logistica/FrotaMinimalista";
 import FreteMinimalista from "./pages/logistica/FreteMinimalista";
 import AcordosAutorizados from "./pages/logistica/AcordosAutorizados";
 import AutorizadosPrecosDirecao from "./pages/direcao/AutorizadosPrecosDirecao";
+import EstadoAutorizadosDirecao from "./pages/direcao/EstadoAutorizadosDirecao";
 import NovoAutorizadoDirecao from "./pages/direcao/NovoAutorizadoDirecao";
 import EditarAutorizadoDirecao from "./pages/direcao/EditarAutorizadoDirecao";
 import InstalacoesHub from "./pages/logistica/InstalacoesHub";
@@ -451,6 +452,8 @@ const App = () => (
                 <Route path="/direcao/metas/fabrica/:userId" element={<ProtectedRoute routeKey="direcao_hub"><MetasColaboradorIndividual /></ProtectedRoute>} />
                 <Route path="/direcao/pedidos/:id" element={<ProtectedRoute routeKey="direcao_hub"><PedidoViewDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados" element={<ProtectedRoute routeKey="direcao_hub"><AutorizadosPrecosDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/autorizados/estado/:estadoId" element={<ProtectedRoute routeKey="direcao_hub"><EstadoAutorizadosDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/autorizados/estado/:estadoId/novo" element={<ProtectedRoute routeKey="direcao_hub"><NovoAutorizadoDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados/novo" element={<ProtectedRoute routeKey="direcao_hub"><NovoAutorizadoDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados/:id/editar" element={<ProtectedRoute routeKey="direcao_hub"><EditarAutorizadoDirecao /></ProtectedRoute>} />
                 

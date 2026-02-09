@@ -71,6 +71,7 @@ export default function EditarAutorizadoDirecao() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [contratoUrl, setContratoUrl] = useState<string | null>(null);
   const [contratoNome, setContratoNome] = useState<string | null>(null);
+  const [estadoInfo, setEstadoInfo] = useState<{ id: string; nome: string } | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -321,6 +322,30 @@ export default function EditarAutorizadoDirecao() {
     }
   };
 
+  // Fetch estado info for breadcrumb
+  useEffect(() => {
+    if (form.estado) {
+      supabase
+        .from('estados_autorizados')
+        .select('id, nome')
+        .ilike('sigla', form.estado)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) setEstadoInfo(data);
+        });
+    }
+  }, [form.estado]);
+
+  const breadcrumbItems = [
+    { label: "Home", path: "/home" },
+    { label: "Direção", path: "/direcao" },
+    { label: "Autorizados", path: "/direcao/autorizados" },
+    ...(estadoInfo ? [{ label: estadoInfo.nome, path: `/direcao/autorizados/estado/${estadoInfo.id}` }] : []),
+    { label: "Editar" }
+  ];
+
+  const backPath = estadoInfo ? `/direcao/autorizados/estado/${estadoInfo.id}` : '/direcao/autorizados';
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -332,12 +357,7 @@ export default function EditarAutorizadoDirecao() {
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative">
       <AnimatedBreadcrumb
-        items={[
-          { label: "Home", path: "/home" },
-          { label: "Direção", path: "/direcao" },
-          { label: "Autorizados", path: "/direcao/autorizados" },
-          { label: "Editar" }
-        ]}
+        items={breadcrumbItems}
         mounted={mounted}
       />
 
@@ -346,7 +366,7 @@ export default function EditarAutorizadoDirecao() {
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => navigate('/direcao/autorizados')}
+                onClick={() => navigate(backPath)}
                 className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
               >
                 <ArrowLeft className="w-5 h-5 text-white/80" />

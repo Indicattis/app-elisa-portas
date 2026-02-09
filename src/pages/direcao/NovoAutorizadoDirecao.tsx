@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload, User, Plus, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { getEtapasByTipo } from "@/utils/parceiros";
 import { ESTADOS_BRASIL, getCidadesPorEstado } from "@/utils/estadosCidades";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
@@ -41,6 +41,7 @@ interface Vendedor {
 }
 
 export default function NovoAutorizadoDirecao() {
+  const { estadoId } = useParams<{ estadoId?: string }>();
   const { etapas, order } = getEtapasByTipo('autorizado');
   const [mounted, setMounted] = useState(false);
 
@@ -59,8 +60,27 @@ export default function NovoAutorizadoDirecao() {
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [estadoInfo, setEstadoInfo] = useState<{ id: string; nome: string; sigla: string } | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Fetch estado info if coming from estado page
+  useEffect(() => {
+    if (estadoId) {
+      supabase
+        .from('estados_autorizados')
+        .select('id, nome, sigla')
+        .eq('id', estadoId)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            setEstadoInfo(data);
+            setForm(prev => ({ ...prev, estado: data.sigla }));
+            setCidadesDisponiveis(getCidadesPorEstado(data.sigla));
+          }
+        });
+    }
+  }, [estadoId]);
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
@@ -194,15 +214,20 @@ export default function NovoAutorizadoDirecao() {
     }
   };
 
+  const breadcrumbItems = [
+    { label: "Home", path: "/home" },
+    { label: "Direção", path: "/direcao" },
+    { label: "Autorizados", path: "/direcao/autorizados" },
+    ...(estadoInfo ? [{ label: estadoInfo.nome, path: `/direcao/autorizados/estado/${estadoInfo.id}` }] : []),
+    { label: "Novo" }
+  ];
+
+  const backPath = estadoInfo ? `/direcao/autorizados/estado/${estadoInfo.id}` : '/direcao/autorizados';
+
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative">
       <AnimatedBreadcrumb
-        items={[
-          { label: "Home", path: "/home" },
-          { label: "Direção", path: "/direcao" },
-          { label: "Autorizados", path: "/direcao/autorizados" },
-          { label: "Novo" }
-        ]}
+        items={breadcrumbItems}
         mounted={mounted}
       />
 
@@ -210,7 +235,7 @@ export default function NovoAutorizadoDirecao() {
         <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-primary/10">
           <div className="max-w-4xl mx-auto flex items-center gap-3">
             <button
-              onClick={() => navigate('/direcao/autorizados')}
+              onClick={() => navigate(backPath)}
               className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-white/80" />
