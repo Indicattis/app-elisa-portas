@@ -1,21 +1,25 @@
 
 
-# Corrigir 404 na rota de edicao do autorizado
+# Corrigir datas das metas sendo salvas um dia anterior
 
-## Diagnostico
+## Problema
 
-Apos investigacao completa, a rota `/direcao/autorizados/:id/editar` **ja esta corretamente registrada** no `App.tsx` (linha 455) e o componente `EditarAutorizadoDirecao` **existe e exporta corretamente**. O erro 404 ocorre porque o navegador ainda esta executando uma versao anterior do codigo que nao inclui a nova rota.
+Ao criar/editar uma meta no `MetaDialog`, as datas de inicio e termino sao salvas um dia antes do selecionado. Isso ocorre porque o input `type="date"` retorna `YYYY-MM-DD` (sem horario), e o Supabase/PostgreSQL interpreta como `YYYY-MM-DDT00:00:00.000Z` (meia-noite UTC). No fuso de Brasilia (UTC-3), isso resulta no dia anterior.
 
 ## Solucao
 
-O problema sera resolvido com uma alteracao minima no `App.tsx` para forcar o Vite a recompilar e o preview a recarregar com o codigo atualizado. Basta adicionar um comentario na linha da rota para disparar o hot-reload.
+Aplicar a padronizacao ja estabelecida no projeto: ao salvar, concatenar `T12:00:00.000Z` nas datas para garantir que a data local seja preservada apos conversao UTC.
 
 ## Detalhes tecnicos
 
-**Editar `src/App.tsx`**:
-- Adicionar um comentario na linha 455 (onde a rota ja esta registrada) para forcar a recompilacao do modulo pelo Vite.
+**Editar `src/components/metas/MetaDialog.tsx`**:
+- No `handleSubmit`, alterar `data_inicio` e `data_termino`:
+  - De: `data_inicio: dataInicio` e `data_termino: dataTermino`
+  - Para: `data_inicio: dataInicio + "T12:00:00.000Z"` e `data_termino: dataTermino + "T12:00:00.000Z"`
+
+Apenas 2 linhas alteradas no objeto `metaData` dentro do `handleSubmit`.
 
 ### Arquivos
 
-1. **Editar**: `src/App.tsx` -- forcar recompilacao (touch na linha da rota)
+1. **Editar**: `src/components/metas/MetaDialog.tsx` -- concatenar `T12:00:00.000Z` nas datas
 
