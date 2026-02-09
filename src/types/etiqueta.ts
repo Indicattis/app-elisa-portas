@@ -48,6 +48,7 @@ export interface TagProducao extends TagIndividual {
   tipoPintura?: string;
   origemOrdem?: string;
   responsavelNome?: string;
+  portaLabel?: string;  // Ex: "Porta #01 — 4,00m x 2,00m"
   // Campos para distribuição de quantidade
   quantidadeParcial?: number;  // Quantidade específica desta etiqueta
   quantidadeTotal?: number;    // Quantidade total da linha

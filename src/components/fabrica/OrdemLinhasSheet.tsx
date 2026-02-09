@@ -359,6 +359,29 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
       
       const calculo = calcularEtiquetasLinha(linhaParaCalculo);
       
+      // Montar portaLabel a partir dos dados da linha
+      let portaLabel: string | undefined;
+      if (linha.produto_venda_id) {
+        const portaKey = `${linha.produto_venda_id}_${linha.indice_porta ?? 0}`;
+        const portaKeys = new Set<string>();
+        const portaKeysOrdenadas: string[] = [];
+        linhas.forEach((l: LinhaOrdem) => {
+          const key = l.produto_venda_id ? `${l.produto_venda_id}_${l.indice_porta ?? 0}` : 'sem_porta';
+          if (key !== 'sem_porta' && !portaKeys.has(key)) {
+            portaKeys.add(key);
+            portaKeysOrdenadas.push(key);
+          }
+        });
+        const portaNum = portaKeysOrdenadas.indexOf(portaKey);
+        if (portaNum >= 0) {
+          const num = String(portaNum + 1).padStart(2, '0');
+          const dimTexto = linha.largura && linha.altura 
+            ? ` — ${Number(linha.largura).toFixed(2)}m x ${Number(linha.altura).toFixed(2)}m` 
+            : '';
+          portaLabel = `Porta #${num}${dimTexto}`;
+        }
+      }
+      
       const tag = {
         tagNumero: 1,
         totalTags: calculo.etiquetasNecessarias,
@@ -374,6 +397,7 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
         divisor: calculo.divisor,
         quantidadeParcial: calculo.divisor ? Math.ceil(calculo.quantidade / calculo.divisor) : undefined,
         quantidadeTotal: calculo.quantidade,
+        portaLabel,
       };
       
       const doc = gerarPDFEtiquetaProducao(tag);
