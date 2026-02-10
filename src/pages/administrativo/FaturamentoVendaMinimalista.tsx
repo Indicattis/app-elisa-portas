@@ -204,6 +204,7 @@ export default function FaturamentoVendaMinimalista() {
       });
       
       setShowConfirmDialog(false);
+      await fetchVenda();
       setShowPedidoDialog(true);
     } catch (error) {
       console.error('Erro ao finalizar faturamento:', error);
