@@ -47,6 +47,9 @@ export interface OrdemCarregamento {
     estado?: string | null;
     cep?: string | null;
     bairro?: string | null;
+    cliente?: {
+      endereco?: string | null;
+    } | null;
     data_prevista_entrega?: string | null;
     cliente_email?: string | null;
     valor_instalacao?: number | null;

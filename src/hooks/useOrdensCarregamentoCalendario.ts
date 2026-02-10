@@ -48,6 +48,9 @@ export const useOrdensCarregamentoCalendario = (
             data_prevista_entrega,
             tipo_entrega,
             metodo_pagamento,
+            cliente:clientes(
+              endereco
+            ),
             produtos:produtos_vendas(
               tipo_produto,
               tamanho,
@@ -120,6 +123,9 @@ export const useOrdensCarregamentoCalendario = (
             data_prevista_entrega,
             tipo_entrega,
             metodo_pagamento,
+            cliente:clientes(
+              endereco
+            ),
             produtos:produtos_vendas(
               tipo_produto,
               tamanho,
