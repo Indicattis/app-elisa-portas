@@ -98,6 +98,7 @@ import VendasCatalogo from "./pages/VendasCatalogo";
 import VendasCatalogoNovo from "./pages/VendasCatalogoNovo";
 import CatalogoEditMinimalista from "./pages/vendas/CatalogoEditMinimalista";
 import CatalogoCores from "./pages/CatalogoCores";
+import CatalogoCoresMinimalista from "./pages/vendas/CatalogoCores";
 import Representantes from "./pages/Representantes";
 import Franqueados from "./pages/Franqueados";
 import CronogramaInstalacoes from "./pages/CronogramaInstalacoes";
@@ -408,6 +409,7 @@ const App = () => (
                 <Route path="/vendas/catalogo" element={<ProtectedRoute routeKey="vendas_hub"><CatalogoMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/catalogo/new" element={<ProtectedRoute routeKey="vendas_hub"><CatalogoNovoMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/catalogo/editar/:id" element={<ProtectedRoute routeKey="vendas_hub"><CatalogoEditMinimalista /></ProtectedRoute>} />
+                <Route path="/vendas/catalogo/cores" element={<ProtectedRoute routeKey="vendas_hub"><CatalogoCoresMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/meus-orcamentos" element={<ProtectedRoute routeKey="vendas_hub"><MeusOrcamentos /></ProtectedRoute>} />
                 <Route path="/vendas/meus-parceiros" element={<ProtectedRoute routeKey="vendas_hub"><MeusParceiros /></ProtectedRoute>} />
                 <Route path="/vendas/acompanhar-pedido" element={<ProtectedRoute routeKey="vendas_hub"><AcompanharPedido /></ProtectedRoute>} />
