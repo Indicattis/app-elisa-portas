@@ -326,7 +326,9 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         updateData.pausada = false;
         updateData.pausada_em = null;
         updateData.justificativa_pausa = null;
-        updateData.linha_problema_id = null; // Limpar referência à linha problema
+        if (tipoOrdem !== 'qualidade') {
+          updateData.linha_problema_id = null; // Limpar referência à linha problema
+        }
         updateData.capturada_em = new Date().toISOString(); // Nova sessão
         
         // Limpar flags de problema das linhas associadas à ordem
