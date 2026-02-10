@@ -173,7 +173,7 @@ export const useOrdensInstalacao = () => {
           instalacao_concluida: true,
           instalacao_concluida_em: new Date().toISOString(),
           instalacao_concluida_por: user.user?.id,
-          status: 'concluida',
+          status: 'finalizada',
           updated_at: new Date().toISOString(),
         })
         .eq("id", instalacaoId);
