@@ -1,65 +1,69 @@
 
-# Duas alteracoes: foto de perfil em Colaboradores + toggle colaborador em Users
+# Adicionar pagina de gestao de cores em /vendas/catalogo/cores
 
-## 1. Foto de perfil no modal de edicao de colaboradores (`/administrativo/rh-dp/colaboradores`)
+## Resumo
 
-Adicionar o componente `AvatarUpload` no modal `EditColaboradorModal.tsx`, permitindo alterar a foto de perfil do colaborador diretamente na edicao.
+Adicionar um botao no header do catalogo que leva a uma nova pagina dedicada a gestao de cores, reutilizando o hook `useCatalogoCores` ja existente.
 
-### Arquivo: `src/components/colaboradores/EditColaboradorModal.tsx`
+## Alteracoes
 
-- Importar o componente `AvatarUpload`
-- Adicionar o `AvatarUpload` no topo do formulario, acima dos campos existentes
-- Usar `colaborador.user_id` e `colaborador.foto_perfil_url` como props
-- No callback `onAvatarUpdate`, invalidar a query `colaboradores-minimalista` para atualizar a listagem
+### 1. Botao no header do Catalogo (`src/pages/vendas/Catalogo.tsx`)
 
-## 2. Toggle "Colaborador" na edicao de usuarios (`/admin/users`)
+Adicionar um botao com icone `Palette` ao lado do botao "Novo Produto" no `headerActions`, direcionando para `/vendas/catalogo/cores`.
 
-A pagina `AdminUsersMinimalista.tsx` ja salva `eh_colaborador` no `handleSave` (linha 117), e ja carrega o campo no `handleEdit` (linha 100). Porem, nao existe nenhum campo visivel na interface inline para editar esse valor.
+### 2. Nova pagina de Cores (`src/pages/vendas/CatalogoCores.tsx`)
 
-### Arquivo: `src/pages/admin/AdminUsersMinimalista.tsx`
+Criar pagina usando `MinimalistLayout` com breadcrumbs (Home > Vendas > Catalogo > Cores). Funcionalidades:
 
-- Adicionar, na area de edicao inline (dentro do bloco que aparece quando `editingUser === user.id`), um toggle/switch ou badge clicavel para alterar `eh_colaborador`
-- Posicionar ao lado dos badges existentes (status ativo, role, setor)
-- Usar um `Switch` ou `Badge` clicavel com visual claro indicando se e colaborador ou nao
-- O valor ja e salvo corretamente no `handleSave`, entao basta adicionar o controle visual
+- Listar cores existentes com preview da cor (circulo colorido), nome e codigo hex
+- Botao para adicionar nova cor (dialog/modal com campos nome, codigo hex com color picker, e toggle ativa/inativa)
+- Editar cor existente (mesmo modal)
+- Toggle para ativar/desativar cor
+- Reutilizar o hook `useCatalogoCores` que ja possui todas as mutations necessarias (adicionar, editar, toggleAtiva)
+
+### 3. Rota no App.tsx
+
+Registrar a nova rota `/vendas/catalogo/cores` com `ProtectedRoute routeKey="vendas_hub"`, ao lado das outras rotas do catalogo.
 
 ## Detalhes tecnicos
 
-### EditColaboradorModal.tsx
+### Catalogo.tsx - headerActions
 ```typescript
-// Adicionar import
-import { AvatarUpload } from "@/components/AvatarUpload";
-import { useQueryClient } from "@tanstack/react-query";
-
-// Dentro do form, antes dos campos, adicionar:
-<div className="flex justify-center pb-4">
-  <AvatarUpload
-    userId={colaborador.user_id}
-    currentAvatarUrl={colaborador.foto_perfil_url}
-    userName={colaborador.nome}
-    onAvatarUpdate={() => {
-      queryClient.invalidateQueries({ queryKey: ["colaboradores-minimalista"] });
-    }}
-  />
-</div>
+headerActions={
+  <div className="flex items-center gap-2">
+    <Button
+      variant="outline"
+      onClick={() => navigate('/vendas/catalogo/cores')}
+      className="border-white/20 text-white hover:bg-white/10"
+    >
+      <Palette className="w-4 h-4 mr-2" />
+      Cores
+    </Button>
+    <Button
+      onClick={() => navigate('/vendas/catalogo/new')}
+      className="bg-gradient-to-r from-green-500 to-green-700 ..."
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Novo Produto
+    </Button>
+  </div>
+}
 ```
 
-### AdminUsersMinimalista.tsx
-```typescript
-// Adicionar import do Switch
-import { Switch } from "@/components/ui/switch";
+### CatalogoCores.tsx - Estrutura principal
+- `MinimalistLayout` com tema escuro consistente
+- Lista de cores em grid/cards com circulo colorido, nome, hex, badge ativa/inativa
+- Dialog para criar/editar cor com input de nome, input color para hex, switch ativa
+- Usa `useCatalogoCores()` para dados e mutations
 
-// Na area de edicao inline, adicionar controle para eh_colaborador
-// junto aos outros campos editaveis (role, setor)
-<div className="flex items-center gap-2">
-  <span className="text-xs text-white/60">Colaborador</span>
-  <Switch
-    checked={editForm.eh_colaborador || false}
-    onCheckedChange={(checked) => setEditForm({ ...editForm, eh_colaborador: checked })}
-  />
-</div>
+### App.tsx - Nova rota
+```typescript
+<Route path="/vendas/catalogo/cores" element={
+  <ProtectedRoute routeKey="vendas_hub"><CatalogoCores /></ProtectedRoute>
+} />
 ```
 
-### Arquivos editados
-1. `src/components/colaboradores/EditColaboradorModal.tsx` - Adicionar AvatarUpload
-2. `src/pages/admin/AdminUsersMinimalista.tsx` - Adicionar switch eh_colaborador na edicao inline
+### Arquivos
+1. `src/pages/vendas/Catalogo.tsx` - Adicionar botao Cores no header
+2. `src/pages/vendas/CatalogoCores.tsx` - Nova pagina (criar)
+3. `src/App.tsx` - Registrar rota
