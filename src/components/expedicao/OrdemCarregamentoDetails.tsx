@@ -92,20 +92,23 @@ export const OrdemCarregamentoDetails = ({
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           
           {/* Card: Endereço Completo */}
-          {ordem.venda && (ordem.venda.cidade || ordem.venda.bairro || ordem.venda.cep) && (
+          {ordem.venda && (ordem.venda.cidade || ordem.venda.bairro || ordem.venda.cep || ordem.venda.cliente?.endereco) && (
             <div className="bg-white/5 rounded-xl border border-white/10 p-4">
               <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-3 flex items-center gap-2">
                 <MapPin className="h-3.5 w-3.5 text-blue-400" />
                 Endereço de Entrega
               </h3>
               <div className="space-y-2 pl-5">
-                {ordem.venda.cidade && ordem.venda.estado && (
-                  <p className="text-white font-medium">
-                    {ordem.venda.cidade} - {ordem.venda.estado}
-                  </p>
+                {ordem.venda.cliente?.endereco && (
+                  <p className="text-white font-medium">{ordem.venda.cliente.endereco}</p>
                 )}
                 {ordem.venda.bairro && (
                   <p className="text-sm text-white/70">{ordem.venda.bairro}</p>
+                )}
+                {ordem.venda.cidade && ordem.venda.estado && (
+                  <p className="text-sm text-white/70">
+                    {ordem.venda.cidade} - {ordem.venda.estado}
+                  </p>
                 )}
                 {ordem.venda.cep && (
                   <p className="text-sm text-white/50">CEP: {ordem.venda.cep}</p>
