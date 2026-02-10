@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, BookOpen, Star, Package, Plus } from 'lucide-react';
+import { Search, BookOpen, Star, Package, Plus, Palette } from 'lucide-react';
 import { useVendasCatalogo } from '@/hooks/useVendasCatalogo';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Input } from '@/components/ui/input';
@@ -38,13 +38,23 @@ export default function Catalogo() {
         { label: "Catálogo" }
       ]}
       headerActions={
-        <Button
-          onClick={() => navigate('/vendas/catalogo/new')}
-          className="bg-gradient-to-r from-green-500 to-green-700 hover:from-green-400 hover:to-green-600 text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Produto
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/vendas/catalogo/cores')}
+            className="border-white/20 text-white hover:bg-white/10"
+          >
+            <Palette className="w-4 h-4 mr-2" />
+            Cores
+          </Button>
+          <Button
+            onClick={() => navigate('/vendas/catalogo/new')}
+            className="bg-gradient-to-r from-green-500 to-green-700 hover:from-green-400 hover:to-green-600 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Produto
+          </Button>
+        </div>
       }
     >
       {/* Filtros */}
