@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
@@ -374,11 +375,19 @@ export default function AdminUsersMinimalista() {
                       )}
                     </div>
 
-                    {user.setor && (
+                    {editingUser === user.id ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-white/60">Colaborador</span>
+                        <Switch
+                          checked={editForm.eh_colaborador || false}
+                          onCheckedChange={(checked) => setEditForm({ ...editForm, eh_colaborador: checked })}
+                        />
+                      </div>
+                    ) : user.setor ? (
                       <Badge variant="secondary" className="capitalize bg-white/10 text-white/60">
                         {user.setor}
                       </Badge>
-                    )}
+                    ) : null}
                   </div>
 
                   <div className="flex items-center gap-2">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { AvatarUpload } from "@/components/AvatarUpload";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,6 +134,18 @@ export function EditColaboradorModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {colaborador && (
+            <div className="flex justify-center pb-4">
+              <AvatarUpload
+                userId={colaborador.user_id}
+                currentAvatarUrl={colaborador.foto_perfil_url}
+                userName={colaborador.nome}
+                onAvatarUpdate={() => {
+                  queryClient.invalidateQueries({ queryKey: ["colaboradores-minimalista"] });
+                }}
+              />
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <Label htmlFor="nome" className="text-xs">Nome</Label>
