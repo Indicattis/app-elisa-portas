@@ -1,34 +1,31 @@
 
-# Corrigir erro ao recapturar ordem pausada de qualidade
+# Corrigir erro ao concluir instalacao em /logistica/instalacoes/ordens-instalacoes
 
 ## Problema
 
-Ao tentar recapturar uma ordem de qualidade que estava pausada, o sistema tenta atualizar a coluna `linha_problema_id` na tabela `ordens_qualidade`, mas essa coluna nao existe nessa tabela. Isso causa o erro `PGRST204`.
+Ao concluir uma instalacao, o codigo define `status: 'concluida'` na tabela `instalacoes`, mas a constraint `instalacoes_status_check` so permite os valores:
+- `pendente_producao`
+- `pronta_fabrica`
+- `finalizada`
 
-O erro esta na linha 329 do arquivo `src/hooks/useOrdemProducao.ts`, dentro da logica de captura de ordens pausadas, onde `linha_problema_id = null` e adicionado ao update sem verificar se o tipo da ordem e qualidade.
+O valor `'concluida'` nao e permitido, causando o erro `23514`.
 
 ## Solucao
 
-Adicionar a mesma verificacao que ja existe na logica de conclusao (linha 538): so incluir `linha_problema_id` no update se `tipoOrdem !== 'qualidade'`.
+Alterar o valor do status de `'concluida'` para `'finalizada'` na funcao `concluirOrdemMutation` do hook `useOrdensInstalacao.ts`.
 
 ## Detalhes tecnicos
 
-### Arquivo: `src/hooks/useOrdemProducao.ts`
+### Arquivo: `src/hooks/useOrdensInstalacao.ts`
 
-Na funcao `capturarOrdem` (linha 329), envolver a atribuicao de `linha_problema_id` com a condicao:
+Na linha 176, dentro da funcao `concluirOrdemMutation`, trocar:
 
 ```typescript
-// Antes (linha 329):
-updateData.linha_problema_id = null;
+// Antes:
+status: 'concluida',
 
 // Depois:
-if (tipoOrdem !== 'qualidade') {
-  updateData.linha_problema_id = null;
-}
+status: 'finalizada',
 ```
 
-Isso replica o mesmo padrao ja usado na funcao `concluirOrdem` (linhas 537-540).
-
-### Arquivo editado
-
-1. **Editar**: `src/hooks/useOrdemProducao.ts` (linha 329)
+Apenas uma linha precisa ser alterada.
