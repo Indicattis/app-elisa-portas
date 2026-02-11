@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, CalendarIcon, CheckCircle2, Clock, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, TrendingUp, Target, Paintbrush, Wrench, AlertCircle, Calculator, Info } from "lucide-react";
+import { Search, DollarSign, CalendarIcon, CheckCircle2, Clock, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, TrendingUp, Target, Paintbrush, Wrench, AlertCircle, Calculator, Info, Package, PlusCircle } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -398,7 +398,7 @@ export default function FaturamentoDirecao() {
     const valorBrutoPortas = filteredVendas.reduce((acc, v) => {
       const portas = v.portas || [];
       return acc + portas
-        .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
+        .filter((p: any) => ['porta', 'porta_enrolar', 'porta_social'].includes(p.tipo_produto))
         .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
     }, 0);
     
@@ -411,6 +411,20 @@ export default function FaturamentoDirecao() {
     
     const valorBrutoInstalacoes = filteredVendas.reduce((acc, v) => 
       acc + (v.valor_instalacao || 0), 0);
+
+    const valorBrutoAcessorios = filteredVendas.reduce((acc, v) => {
+      const portas = v.portas || [];
+      return acc + portas
+        .filter((p: any) => p.tipo_produto === 'acessorio')
+        .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+    }, 0);
+
+    const valorBrutoAdicionais = filteredVendas.reduce((acc, v) => {
+      const portas = v.portas || [];
+      return acc + portas
+        .filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))
+        .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+    }, 0);
     
     return {
       faturamentoTotal: filteredVendas.reduce((acc, v) => 
@@ -419,7 +433,7 @@ export default function FaturamentoDirecao() {
       quantidadePortas: filteredVendas.reduce((acc, v) => {
         const portas = v.portas || [];
         return acc + portas.filter((p: any) => 
-          ['porta', 'porta_enrolar'].includes(p.tipo_produto)
+          ['porta', 'porta_enrolar', 'porta_social'].includes(p.tipo_produto)
         ).reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
       }, 0),
       
@@ -427,7 +441,7 @@ export default function FaturamentoDirecao() {
       lucroPortas: vendasFaturadas.reduce((acc, v) => {
         const portas = v.portas || [];
         return acc + portas
-          .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
+          .filter((p: any) => ['porta', 'porta_enrolar', 'porta_social'].includes(p.tipo_produto))
           .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
       }, 0),
       
@@ -440,14 +454,28 @@ export default function FaturamentoDirecao() {
       }, 0),
       
       valorBrutoInstalacoes,
-      // Lucro de instalações: usa lucro_instalacao quando faturada, senão 0
       lucroInstalacoes: vendasFaturadas.reduce((acc, v) => 
         acc + (v.lucro_instalacao || 0), 0),
+
+      valorBrutoAcessorios,
+      lucroAcessorios: vendasFaturadas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        return acc + portas
+          .filter((p: any) => p.tipo_produto === 'acessorio')
+          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+      }, 0),
+
+      valorBrutoAdicionais,
+      lucroAdicionais: vendasFaturadas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        return acc + portas
+          .filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))
+          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+      }, 0),
       
       fretesTotais: filteredVendas.reduce((acc, v) => 
         acc + (v.valor_frete || 0), 0),
       
-      // Lucro total inclui lucro dos produtos + lucro das instalações faturadas
       lucroLiquidoTotal: vendasFaturadas.reduce((acc, v) => {
         const portas = v.portas || [];
         const lucroItens = portas.reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
@@ -723,7 +751,7 @@ export default function FaturamentoDirecao() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
             <div className="text-center p-4 rounded-lg bg-white/5">
               <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
                 <DollarSign className="h-3 w-3 text-blue-400" />
@@ -758,6 +786,30 @@ export default function FaturamentoDirecao() {
               </p>
               <p className="text-emerald-400 text-sm mt-1">
                 Lucro: {formatCurrency(indicadores.lucroInstalacoes)}
+              </p>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
+                <Package className="h-3 w-3 text-pink-400" />
+                Acessórios
+              </div>
+              <p className="text-pink-400 font-bold text-lg">
+                {formatCurrency(indicadores.valorBrutoAcessorios)}
+              </p>
+              <p className="text-emerald-400 text-sm mt-1">
+                Lucro: {formatCurrency(indicadores.lucroAcessorios)}
+              </p>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
+                <PlusCircle className="h-3 w-3 text-indigo-400" />
+                Adicionais
+              </div>
+              <p className="text-indigo-400 font-bold text-lg">
+                {formatCurrency(indicadores.valorBrutoAdicionais)}
+              </p>
+              <p className="text-emerald-400 text-sm mt-1">
+                Lucro: {formatCurrency(indicadores.lucroAdicionais)}
               </p>
             </div>
             <div className="text-center p-4 rounded-lg bg-white/5">
