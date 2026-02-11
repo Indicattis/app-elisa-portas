@@ -1,56 +1,63 @@
 
-
-# Corrigir listagem de acessorios e adicionais em /administrativo/financeiro/faturamento/produtos
+# Corrigir indicadores de faturamento em /direcao/faturamento
 
 ## Problema
 
-Ao expandir as pastas de acessorios e adicionais, todos aparecem agrupados como "Acessorio sem nome" ou "Adicional sem nome". Isso acontece porque muitos produtos na tabela `produtos_vendas` nao possuem `acessorio_id` ou `adicional_id` preenchidos, mas todos possuem o campo `descricao` com o nome correto (ex: "Controle Avulso", "Nobreak", "Caixa de fechamento (1m-3m)").
+Os indicadores do periodo mostram apenas Portas, Pintura e Instalacoes, mas nao incluem Acessorios, Adicionais, Manutencao e Porta Social. A soma das categorias (R$ 900.800) nao bate com o faturamento total (R$ 1.134.729,91) porque faltam ~R$ 234.000 dessas categorias ausentes.
+
+Tipos de produto existentes no banco:
+- `porta_enrolar` (maior volume)
+- `adicional` (R$ 93.780 em valor_produto)
+- `acessorio` (R$ 71.300)
+- `porta_social` (R$ 32.510)
+- `manutencao` (R$ 18.803)
+- `pintura_epoxi` (valor em valor_pintura, nao valor_produto)
 
 ## Solucao
 
-Alterar o hook `useFaturamentoDetalhado.ts` para usar o campo `descricao` como fallback (e como chave de agrupamento) quando `acessorio_id` ou `adicional_id` estiverem nulos.
+Adicionar dois novos indicadores na grid e ajustar o calculo de Portas para incluir `porta_social`.
 
-## Detalhes tecnicos
+### Alteracoes no arquivo `src/pages/direcao/FaturamentoDirecao.tsx`
 
-### Arquivo: `src/hooks/useFaturamentoDetalhado.ts`
+**1. No `useMemo` dos indicadores (linhas 394-458):**
 
-Na logica de determinacao do nome do detalhe (linhas 129-134), alterar para:
+- Incluir `porta_social` no filtro de portas (junto com `porta` e `porta_enrolar`)
+- Adicionar calculo de `valorBrutoAcessorios`: soma de `valor_produto` para tipos `acessorio`
+- Adicionar calculo de `valorBrutoAdicionais`: soma de `valor_produto` para tipos `adicional` e `manutencao`
+- Adicionar calculo de lucro para acessorios e adicionais (das vendas faturadas)
 
-**Acessorios (linha 129-131):**
-- Se `acessorio_id` existe, buscar nome no map (comportamento atual)
-- Se nao, usar `produto.descricao` como nome e como chave de agrupamento
-- Fallback final: "Acessorio sem nome"
+**2. Na grid de indicadores (linhas 726-790):**
 
-**Adicionais (linha 132-134):**
-- Se `adicional_id` existe, buscar nome no map (comportamento atual)
-- Se nao, usar `produto.descricao` como nome e como chave de agrupamento
-- Fallback final: "Adicional sem nome"
+- Adicionar card "Acessorios" com icone e valores
+- Adicionar card "Adicionais" com icone e valores (incluindo manutencao)
+- Ajustar grid de `lg:grid-cols-6` para `lg:grid-cols-8` para acomodar os novos cards
+
+### Detalhes tecnicos
+
+Novos campos no objeto `indicadores`:
 
 ```typescript
 // Acessorios
-if (tipo === 'acessorios' || tipo === 'acessorio') {
-  if (produto.acessorio_id) {
-    detalheId = produto.acessorio_id;
-    detalheNome = acessoriosMap.get(produto.acessorio_id) || produto.descricao || 'Acessorio nao encontrado';
-  } else {
-    detalheId = produto.descricao || 'sem_nome';
-    detalheNome = produto.descricao || 'Acessorio sem nome';
-  }
-}
+valorBrutoAcessorios: filteredVendas.reduce((acc, v) => {
+  const portas = v.portas || [];
+  return acc + portas
+    .filter((p: any) => p.tipo_produto === 'acessorio')
+    .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+}, 0),
 
-// Adicionais
-if (tipo === 'adicionais' || tipo === 'adicional') {
-  if (produto.adicional_id) {
-    detalheId = produto.adicional_id;
-    detalheNome = adicionaisMap.get(produto.adicional_id) || produto.descricao || 'Adicional nao encontrado';
-  } else {
-    detalheId = produto.descricao || 'sem_nome';
-    detalheNome = produto.descricao || 'Adicional sem nome';
-  }
-}
+// Adicionais + Manutencao
+valorBrutoAdicionais: filteredVendas.reduce((acc, v) => {
+  const portas = v.portas || [];
+  return acc + portas
+    .filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))
+    .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+}, 0),
 ```
 
-Isso fara com que os itens sejam agrupados pelo nome da descricao (ex: todos "Controle Avulso" juntos, todos "Nobreak" juntos), mostrando corretamente na listagem expandida.
+Incluir `porta_social` no filtro de portas:
+```typescript
+.filter((p: any) => ['porta', 'porta_enrolar', 'porta_social'].includes(p.tipo_produto))
+```
 
 ### Arquivo editado
-1. `src/hooks/useFaturamentoDetalhado.ts` - Usar `descricao` como fallback para nome e agrupamento
+1. `src/pages/direcao/FaturamentoDirecao.tsx`
