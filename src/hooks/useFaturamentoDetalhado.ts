@@ -127,11 +127,21 @@ export const useFaturamentoDetalhado = ({
           let corHex = '';
           
           if (tipo === 'acessorios' || tipo === 'acessorio') {
-            detalheId = produto.acessorio_id || 'sem_id';
-            detalheNome = produto.acessorio_id ? (acessoriosMap.get(produto.acessorio_id) || 'Acessório não encontrado') : 'Acessório sem nome';
+            if (produto.acessorio_id) {
+              detalheId = produto.acessorio_id;
+              detalheNome = acessoriosMap.get(produto.acessorio_id) || produto.descricao || 'Acessório não encontrado';
+            } else {
+              detalheId = produto.descricao || 'sem_nome';
+              detalheNome = produto.descricao || 'Acessório sem nome';
+            }
           } else if (tipo === 'adicionais' || tipo === 'adicional') {
-            detalheId = produto.adicional_id || 'sem_id';
-            detalheNome = produto.adicional_id ? (adicionaisMap.get(produto.adicional_id) || 'Adicional não encontrado') : 'Adicional sem nome';
+            if (produto.adicional_id) {
+              detalheId = produto.adicional_id;
+              detalheNome = adicionaisMap.get(produto.adicional_id) || produto.descricao || 'Adicional não encontrado';
+            } else {
+              detalheId = produto.descricao || 'sem_nome';
+              detalheNome = produto.descricao || 'Adicional sem nome';
+            }
           } else if (tipo === 'manutencao') {
             detalheId = produto.descricao || 'sem_descricao';
             detalheNome = produto.descricao || 'Sem descrição';
