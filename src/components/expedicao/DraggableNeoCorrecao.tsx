@@ -1,5 +1,5 @@
 import { useDraggable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
+
 import { NeoCorrecao } from "@/types/neoCorrecao";
 import { NeoCorrecaoCard } from "./NeoCorrecaoCard";
 
@@ -34,9 +34,8 @@ export const DraggableNeoCorrecao = ({
   });
 
   const style = {
-    transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.5 : 1,
-    cursor: disableDrag ? "pointer" : isDragging ? "grabbing" : "grab",
+    opacity: isDragging ? 0.3 : 1,
+    cursor: disableDrag ? "pointer" : "grab",
   };
 
   return (

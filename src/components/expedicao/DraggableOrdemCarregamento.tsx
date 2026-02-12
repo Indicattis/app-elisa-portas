@@ -1,5 +1,5 @@
 import { useDraggable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
+
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { OrdemCarregamentoCard } from "./OrdemCarregamentoCard";
 
@@ -27,9 +27,8 @@ export const DraggableOrdemCarregamento = ({
   });
 
   const style = {
-    transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.5 : 1,
-    cursor: disableDrag ? "pointer" : isDragging ? "grabbing" : "grab",
+    opacity: isDragging ? 0.3 : 1,
+    cursor: disableDrag ? "pointer" : "grab",
   };
 
   return (
