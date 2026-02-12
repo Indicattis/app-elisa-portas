@@ -155,14 +155,22 @@ export const CalendarioMensalExpedicaoDesktop = ({
 
       // Se não for neo instalação/correção, trata como ordem de carregamento
       const ordemId = active.id as string;
+      const ordem = ordens.find((o) => o.id === ordemId);
+      if (!ordem) return;
+
+      if (ordem.data_carregamento) {
+        const dataAtual = new Date(ordem.data_carregamento);
+        if (isSameDay(dataAtual, novaData)) return;
+      }
       
       if (onUpdateOrdem) {
         await onUpdateOrdem({
           id: ordemId,
           data: {
             data_carregamento: dataFormatada,
-            status: 'agendada',
+            status: ordem.fonte === 'instalacoes' ? 'pronta_fabrica' : 'agendada',
           },
+          fonte: ordem.fonte,
         });
         toast.success("Data de carregamento atualizada");
       }

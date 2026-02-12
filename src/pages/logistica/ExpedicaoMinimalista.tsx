@@ -94,7 +94,7 @@ export default function ExpedicaoMinimalista() {
 
   const handleSaveEdit = async (data: any) => {
     if (editingOrdem) {
-      await updateOrdem({ id: editingOrdem.id, data });
+      await updateOrdem({ id: editingOrdem.id, data, fonte: editingOrdem.fonte });
       setEditDrawerOpen(false);
       setEditingOrdem(null);
     }
