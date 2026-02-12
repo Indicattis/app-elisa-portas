@@ -1,67 +1,52 @@
 
-# Corrigir drag-and-drop e edicao de instalacoes em /logistica/expedicao
+
+# Corrigir posicao do card durante drag-and-drop
 
 ## Problema
 
-Ao arrastar um card de instalacao para outro dia ou editar sua data, a alteracao nao persiste. O toast de sucesso aparece, mas a data nao muda. Isso ocorre porque a atualizacao esta sendo enviada para a tabela `ordens_carregamento` em vez da tabela `instalacoes`.
+Ao arrastar um card no calendario de expedicao, o overlay (copia visual do card) aparece muito distante do cursor. Isso ocorre porque os componentes draggable aplicam `CSS.Translate.toString(transform)` no elemento original, movendo-o junto com o cursor, enquanto o `DragOverlay` renderiza uma segunda copia separada. Essa duplicidade causa o deslocamento visual.
 
-## Causa raiz
+## Solucao
 
-Tres pontos no codigo chamam `updateOrdem` sem passar a propriedade `fonte`, que determina qual tabela atualizar. O valor padrao e `'ordens_carregamento'`, entao instalacoes (que devem atualizar a tabela `instalacoes`) sao enviadas para a tabela errada.
-
-## Correcoes
-
-### 1. Drag semanal (`src/components/expedicao/CalendarioSemanalExpedicaoDesktop.tsx`)
-
-Na funcao `handleDragEnd`, ao tratar ordens normais (linha 175-184), buscar a `fonte` do objeto `ordem` e passar junto, alem de usar o status correto:
-
-```typescript
-const ordem = ordens.find((o) => o.id === ordemId);
-if (!ordem) return;
-
-// ...
-await onUpdateOrdem({
-  id: ordemId,
-  data: {
-    data_carregamento: dataFormatada,
-    status: ordem.fonte === 'instalacoes' ? 'pronta_fabrica' : 'agendada',
-  },
-  fonte: ordem.fonte,
-});
-```
-
-### 2. Drag mensal (`src/components/expedicao/CalendarioMensalExpedicaoDesktop.tsx`)
-
-Mesmo problema na funcao `handleDragEnd` (linhas 156-168). Precisa receber `ordens` como prop, buscar a ordem pelo ID para obter `fonte`, e passar no update. Tambem ajustar o status.
-
-### 3. Edicao via drawer (`src/pages/logistica/ExpedicaoMinimalista.tsx`)
-
-Na funcao `handleSaveEdit` (linha 97), passar `fonte` do `editingOrdem`:
-
-```typescript
-const handleSaveEdit = async (data: any) => {
-  if (editingOrdem) {
-    await updateOrdem({ 
-      id: editingOrdem.id, 
-      data,
-      fonte: editingOrdem.fonte 
-    });
-    setEditDrawerOpen(false);
-    setEditingOrdem(null);
-  }
-};
-```
+Remover a transformacao CSS dos componentes draggable e deixar apenas o `DragOverlay` ser responsavel pela representacao visual durante o arrasto. Os componentes originais devem apenas ficar com opacidade reduzida (ou ocultos) durante o drag.
 
 ## Detalhes tecnicos
 
-### Arquivos editados
+### Arquivos a editar
 
-1. **`src/components/expedicao/CalendarioSemanalExpedicaoDesktop.tsx`** - Passar `fonte` da ordem no handleDragEnd, usar status correto para instalacoes
-2. **`src/components/expedicao/CalendarioMensalExpedicaoDesktop.tsx`** - Adicionar `ordens` como prop, buscar fonte da ordem no handleDragEnd, usar status correto
-3. **`src/pages/logistica/ExpedicaoMinimalista.tsx`** - Passar `fonte` no handleSaveEdit e passar `ordens` para o calendario mensal
+**1. `src/components/expedicao/DraggableOrdemCarregamento.tsx`**
+- Remover `transform: CSS.Translate.toString(transform)` do style
+- Manter apenas `opacity: isDragging ? 0.3 : 1` para indicar visualmente que o item esta sendo arrastado
+- Remover import de `CSS` do `@dnd-kit/utilities`
 
-### Logica de status por fonte
-- `fonte === 'instalacoes'`: status deve ser `'pronta_fabrica'`
-- `fonte === 'ordens_carregamento'`: status deve ser `'agendada'`
+**2. `src/components/expedicao/DraggableNeoInstalacao.tsx`**
+- Mesma alteracao: remover transform, manter apenas opacity
+- Remover import de `CSS`
 
-Isso e consistente com o padrao ja usado em `handleRemoverDoCalendario` (linha 119) que ja faz essa distincao corretamente.
+**3. `src/components/expedicao/DraggableNeoCorrecao.tsx`**
+- Mesma alteracao: remover transform, manter apenas opacity
+- Remover import de `CSS`
+
+### Exemplo da mudanca (aplicado nos 3 arquivos)
+
+De:
+```typescript
+import { CSS } from "@dnd-kit/utilities";
+
+const style = {
+  transform: CSS.Translate.toString(transform),
+  opacity: isDragging ? 0.5 : 1,
+  cursor: disableDrag ? "pointer" : isDragging ? "grabbing" : "grab",
+};
+```
+
+Para:
+```typescript
+const style = {
+  opacity: isDragging ? 0.3 : 1,
+  cursor: disableDrag ? "pointer" : "grab",
+};
+```
+
+Isso faz com que apenas o `DragOverlay` (ja configurado nos calendarios semanal e mensal) acompanhe o cursor, eliminando o problema de posicionamento.
+
