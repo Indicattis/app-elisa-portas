@@ -177,8 +177,9 @@ export const CalendarioSemanalExpedicaoDesktop = ({
           id: ordemId,
           data: {
             data_carregamento: dataFormatada,
-            status: 'agendada',
+            status: ordem.fonte === 'instalacoes' ? 'pronta_fabrica' : 'agendada',
           },
+          fonte: ordem.fonte,
         });
         toast.success("Data de carregamento atualizada");
       }
