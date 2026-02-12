@@ -1,63 +1,67 @@
 
-# Corrigir indicadores de faturamento em /direcao/faturamento
+# Corrigir drag-and-drop e edicao de instalacoes em /logistica/expedicao
 
 ## Problema
 
-Os indicadores do periodo mostram apenas Portas, Pintura e Instalacoes, mas nao incluem Acessorios, Adicionais, Manutencao e Porta Social. A soma das categorias (R$ 900.800) nao bate com o faturamento total (R$ 1.134.729,91) porque faltam ~R$ 234.000 dessas categorias ausentes.
+Ao arrastar um card de instalacao para outro dia ou editar sua data, a alteracao nao persiste. O toast de sucesso aparece, mas a data nao muda. Isso ocorre porque a atualizacao esta sendo enviada para a tabela `ordens_carregamento` em vez da tabela `instalacoes`.
 
-Tipos de produto existentes no banco:
-- `porta_enrolar` (maior volume)
-- `adicional` (R$ 93.780 em valor_produto)
-- `acessorio` (R$ 71.300)
-- `porta_social` (R$ 32.510)
-- `manutencao` (R$ 18.803)
-- `pintura_epoxi` (valor em valor_pintura, nao valor_produto)
+## Causa raiz
 
-## Solucao
+Tres pontos no codigo chamam `updateOrdem` sem passar a propriedade `fonte`, que determina qual tabela atualizar. O valor padrao e `'ordens_carregamento'`, entao instalacoes (que devem atualizar a tabela `instalacoes`) sao enviadas para a tabela errada.
 
-Adicionar dois novos indicadores na grid e ajustar o calculo de Portas para incluir `porta_social`.
+## Correcoes
 
-### Alteracoes no arquivo `src/pages/direcao/FaturamentoDirecao.tsx`
+### 1. Drag semanal (`src/components/expedicao/CalendarioSemanalExpedicaoDesktop.tsx`)
 
-**1. No `useMemo` dos indicadores (linhas 394-458):**
-
-- Incluir `porta_social` no filtro de portas (junto com `porta` e `porta_enrolar`)
-- Adicionar calculo de `valorBrutoAcessorios`: soma de `valor_produto` para tipos `acessorio`
-- Adicionar calculo de `valorBrutoAdicionais`: soma de `valor_produto` para tipos `adicional` e `manutencao`
-- Adicionar calculo de lucro para acessorios e adicionais (das vendas faturadas)
-
-**2. Na grid de indicadores (linhas 726-790):**
-
-- Adicionar card "Acessorios" com icone e valores
-- Adicionar card "Adicionais" com icone e valores (incluindo manutencao)
-- Ajustar grid de `lg:grid-cols-6` para `lg:grid-cols-8` para acomodar os novos cards
-
-### Detalhes tecnicos
-
-Novos campos no objeto `indicadores`:
+Na funcao `handleDragEnd`, ao tratar ordens normais (linha 175-184), buscar a `fonte` do objeto `ordem` e passar junto, alem de usar o status correto:
 
 ```typescript
-// Acessorios
-valorBrutoAcessorios: filteredVendas.reduce((acc, v) => {
-  const portas = v.portas || [];
-  return acc + portas
-    .filter((p: any) => p.tipo_produto === 'acessorio')
-    .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
-}, 0),
+const ordem = ordens.find((o) => o.id === ordemId);
+if (!ordem) return;
 
-// Adicionais + Manutencao
-valorBrutoAdicionais: filteredVendas.reduce((acc, v) => {
-  const portas = v.portas || [];
-  return acc + portas
-    .filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))
-    .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
-}, 0),
+// ...
+await onUpdateOrdem({
+  id: ordemId,
+  data: {
+    data_carregamento: dataFormatada,
+    status: ordem.fonte === 'instalacoes' ? 'pronta_fabrica' : 'agendada',
+  },
+  fonte: ordem.fonte,
+});
 ```
 
-Incluir `porta_social` no filtro de portas:
+### 2. Drag mensal (`src/components/expedicao/CalendarioMensalExpedicaoDesktop.tsx`)
+
+Mesmo problema na funcao `handleDragEnd` (linhas 156-168). Precisa receber `ordens` como prop, buscar a ordem pelo ID para obter `fonte`, e passar no update. Tambem ajustar o status.
+
+### 3. Edicao via drawer (`src/pages/logistica/ExpedicaoMinimalista.tsx`)
+
+Na funcao `handleSaveEdit` (linha 97), passar `fonte` do `editingOrdem`:
+
 ```typescript
-.filter((p: any) => ['porta', 'porta_enrolar', 'porta_social'].includes(p.tipo_produto))
+const handleSaveEdit = async (data: any) => {
+  if (editingOrdem) {
+    await updateOrdem({ 
+      id: editingOrdem.id, 
+      data,
+      fonte: editingOrdem.fonte 
+    });
+    setEditDrawerOpen(false);
+    setEditingOrdem(null);
+  }
+};
 ```
 
-### Arquivo editado
-1. `src/pages/direcao/FaturamentoDirecao.tsx`
+## Detalhes tecnicos
+
+### Arquivos editados
+
+1. **`src/components/expedicao/CalendarioSemanalExpedicaoDesktop.tsx`** - Passar `fonte` da ordem no handleDragEnd, usar status correto para instalacoes
+2. **`src/components/expedicao/CalendarioMensalExpedicaoDesktop.tsx`** - Adicionar `ordens` como prop, buscar fonte da ordem no handleDragEnd, usar status correto
+3. **`src/pages/logistica/ExpedicaoMinimalista.tsx`** - Passar `fonte` no handleSaveEdit e passar `ordens` para o calendario mensal
+
+### Logica de status por fonte
+- `fonte === 'instalacoes'`: status deve ser `'pronta_fabrica'`
+- `fonte === 'ordens_carregamento'`: status deve ser `'agendada'`
+
+Isso e consistente com o padrao ja usado em `handleRemoverDoCalendario` (linha 119) que ja faz essa distincao corretamente.
