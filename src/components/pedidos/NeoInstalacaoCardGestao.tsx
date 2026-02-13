@@ -42,6 +42,17 @@ export function NeoInstalacaoCardGestao({
     .slice(0, 2)
     .join('')
     .toUpperCase();
+
+  const atrasado = (() => {
+    const dataStr = neoInstalacao.data_instalacao;
+    if (!dataStr) return false;
+    const data = new Date(dataStr + 'T12:00:00');
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    data.setHours(0, 0, 0, 0);
+    return data < hoje;
+  })();
+
   if (viewMode === 'list') {
     return (
       <TooltipProvider>
@@ -120,10 +131,10 @@ export function NeoInstalacaoCardGestao({
               <div className="text-center">
                 {neoInstalacao.data_instalacao ? (
                   <div className="flex flex-col items-center leading-tight">
-                    <span className="text-[9px] font-medium text-blue-400">
-                      Agendado
+                    <span className={`text-[9px] font-medium ${atrasado ? 'text-red-500' : 'text-blue-400'}`}>
+                      {atrasado ? 'Atrasado' : 'Agendado'}
                     </span>
-                    <span className="text-xs font-bold text-blue-400">
+                    <span className={`text-xs font-bold ${atrasado ? 'text-red-500' : 'text-blue-400'}`}>
                       {format(parseISO(neoInstalacao.data_instalacao), "dd/MM/yy")}
                     </span>
                   </div>
@@ -288,7 +299,7 @@ export function NeoInstalacaoCardGestao({
 
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           {neoInstalacao.data_instalacao && (
-            <div className="flex items-center gap-1">
+            <div className={`flex items-center gap-1 ${atrasado ? 'text-red-500' : ''}`}>
               <Calendar className="h-4 w-4" />
               <span>
                 {format(parseISO(neoInstalacao.data_instalacao), "dd/MM/yyyy", { locale: ptBR })}
