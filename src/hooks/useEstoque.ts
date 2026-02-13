@@ -40,6 +40,7 @@ export interface ProdutoEstoque {
   valor_calculo: number | null;
   eixo_calculo: 'largura' | 'altura' | null;
   item_padrao_porta_enrolar: boolean;
+  conferir_estoque: boolean;
   subcategoria?: {
     id: string;
     nome: string;
@@ -70,6 +71,7 @@ export interface ProdutoEstoqueInput {
   valor_calculo?: number | null;
   eixo_calculo?: 'largura' | 'altura' | null;
   item_padrao_porta_enrolar?: boolean;
+  conferir_estoque?: boolean;
 }
 
 export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null = null) => {

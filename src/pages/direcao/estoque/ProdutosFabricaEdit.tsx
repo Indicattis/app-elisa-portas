@@ -15,6 +15,7 @@ import { useEstoque } from "@/hooks/useEstoque";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save, Trash2, Package, AlertTriangle, CheckCircle2, TrendingDown, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -46,6 +47,7 @@ export default function ProdutosFabricaEdit() {
     custo_unitario: 0,
     unidade: "UN",
     fornecedor_id: "",
+    conferir_estoque: true,
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -91,6 +93,7 @@ export default function ProdutosFabricaEdit() {
         custo_unitario: produto.custo_unitario || 0,
         unidade: produto.unidade || "UN",
         fornecedor_id: produto.fornecedor_id || "",
+        conferir_estoque: produto.conferir_estoque ?? true,
       });
     }
   }, [produto]);
@@ -113,6 +116,7 @@ export default function ProdutosFabricaEdit() {
           custo_unitario: formData.custo_unitario,
           unidade: formData.unidade,
           fornecedor_id: formData.fornecedor_id || null,
+          conferir_estoque: formData.conferir_estoque,
         })
         .eq("id", id);
 
@@ -239,6 +243,16 @@ export default function ProdutosFabricaEdit() {
                 placeholder="Descrição do produto (opcional)"
                 rows={2}
               />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="conferir_estoque"
+                checked={formData.conferir_estoque}
+                onCheckedChange={(checked) => setFormData({ ...formData, conferir_estoque: !!checked })}
+              />
+              <Label htmlFor="conferir_estoque" className="text-sm font-normal cursor-pointer">
+                Conferir na conferência de estoque
+              </Label>
             </div>
           </CardContent>
         </Card>
