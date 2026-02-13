@@ -448,6 +448,7 @@ export const PedidoLinhasEditor = ({
     const grupos = new Map<string, { porta: typeof portas[0] | null; portaIndex: number; linhasGrupo: PedidoLinha[] }>();
     const semPortaArr: PedidoLinha[] = [];
     
+    // 1. Agrupar linhas existentes por porta
     for (const linha of linhas) {
       if (linha.produto_venda_id) {
         const key = `${linha.produto_venda_id}_${linha.indice_porta ?? 0}`;
@@ -462,6 +463,15 @@ export const PedidoLinhasEditor = ({
         grupos.get(key)!.linhasGrupo.push(linha);
       } else {
         semPortaArr.push(linha);
+      }
+    }
+
+    // 2. Criar pastas para portas da venda que ainda não têm linhas
+    for (let i = 0; i < portas.length; i++) {
+      const porta = portas[i];
+      const key = `${porta._originalId}_${porta._indicePorta}`;
+      if (!grupos.has(key)) {
+        grupos.set(key, { porta, portaIndex: i, linhasGrupo: [] });
       }
     }
 
