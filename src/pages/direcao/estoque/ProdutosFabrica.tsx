@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { Plus, Tags, FileDown, Printer, GripVertical } from "lucide-react";
+import { Plus, Tags, FileDown, Printer, GripVertical, DollarSign, Package, AlertTriangle, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -174,7 +174,7 @@ export default function ProdutosFabrica() {
   const activeProduto = activeId ? localProdutos.find(p => p.id === activeId) ?? null : null;
 
   const totals = useMemo(() => {
-    return filteredProdutos.reduce(
+    const base = filteredProdutos.reduce(
       (acc, p) => ({
         ideal: acc.ideal + (p.quantidade_ideal || 0),
         maxima: acc.maxima + (p.quantidade_maxima || 0),
@@ -183,6 +183,9 @@ export default function ProdutosFabrica() {
       }),
       { ideal: 0, maxima: 0, atual: 0, valor: 0 }
     );
+    const estoqueBaixo = filteredProdutos.filter(p => p.quantidade < (p.quantidade_ideal || 0)).length;
+    const estoqueExcesso = filteredProdutos.filter(p => p.quantidade > (p.quantidade_maxima || Infinity)).length;
+    return { ...base, estoqueBaixo, estoqueExcesso };
   }, [filteredProdutos]);
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -540,16 +543,48 @@ export default function ProdutosFabrica() {
       breadcrumbItems={breadcrumbItems}
     >
       <div className="space-y-4">
-        {/* Barra de busca */}
+        {/* Barra de busca + indicadores */}
         <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
-          <div className="p-4 rounded-lg">
-            <Input
-              placeholder="Buscar produtos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm bg-white/5 border-white/10 text-white placeholder:text-white/40"
-            />
-            <p className="text-xs text-white/40 mt-2">
+          <div className="p-4 rounded-lg space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <Input
+                placeholder="Buscar produtos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm bg-white/5 border-white/10 text-white placeholder:text-white/40"
+              />
+              <div className="flex flex-wrap gap-3 flex-1">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <DollarSign className="h-4 w-4 text-emerald-400" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-emerald-400/70 uppercase font-medium leading-none">Valor Estoque</span>
+                    <span className="text-sm font-bold text-emerald-400">{formatCurrency(totals.valor)}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                  <Package className="h-4 w-4 text-blue-400" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-blue-400/70 uppercase font-medium leading-none">Itens</span>
+                    <span className="text-sm font-bold text-blue-400">{filteredProdutos.length}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <AlertTriangle className="h-4 w-4 text-red-400" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-red-400/70 uppercase font-medium leading-none">Estoque Baixo</span>
+                    <span className="text-sm font-bold text-red-400">{totals.estoqueBaixo}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <TrendingUp className="h-4 w-4 text-amber-400" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-amber-400/70 uppercase font-medium leading-none">Em Excesso</span>
+                    <span className="text-sm font-bold text-amber-400">{totals.estoqueExcesso}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-white/40">
               Dica: Clique duas vezes em um item para editá-lo. {!isDragDisabled && "Arraste para reordenar."}
             </p>
           </div>
