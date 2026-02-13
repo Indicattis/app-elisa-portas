@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { DndContext } from "@dnd-kit/core";
 import { useNavigate } from "react-router-dom";
 import { Calendar, CalendarDays, ArrowLeft, LogOut, AlertCircle } from "lucide-react";
 
@@ -223,6 +224,7 @@ export default function CronogramaMinimalista() {
           ) : (
             <div className="max-w-7xl mx-auto space-y-4">
               {/* Calendário - Modo Somente Visualização */}
+              <DndContext onDragEnd={() => {}}>
               <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
                 <CardContent className="p-4">
                   {isMobile ? (
@@ -259,6 +261,7 @@ export default function CronogramaMinimalista() {
                   )}
                 </CardContent>
               </Card>
+              </DndContext>
             </div>
           )}
         </main>
