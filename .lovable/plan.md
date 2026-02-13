@@ -1,18 +1,29 @@
 
 
-# Fix: Botao "Novo" em /administrativo/documentos redirecionando para /home
+# Adicionar checkbox "Conferir no Estoque" na edicao de produto
 
-## Problema
-O botao "Novo" na pagina de Documentos aponta para `/dashboard/documentos/novo`, mas essa rota nao existe no App.tsx. Como nenhuma rota corresponde, o sistema redireciona para `/home`.
+## Resumo
+Adicionar um campo booleano na tabela `estoque` e um checkbox na pagina de edicao de produto para definir se o item deve aparecer na conferencia de estoque. Apenas itens marcados aparecerao na conferencia.
 
-## Correcao
+## Alteracoes
 
-### 1. Arquivo: `src/pages/administrativo/DocumentosMinimalista.tsx`
-- Alterar todos os `Link to="/dashboard/documentos/novo"` para `Link to="/administrativo/documentos/novo"` (linhas 69 e 141)
+### 1. Migracao de banco de dados
+- Adicionar coluna `conferir_estoque` (boolean, default `true`) na tabela `estoque`
+- Default `true` para que todos os produtos existentes continuem aparecendo na conferencia
 
-### 2. Arquivo: `src/App.tsx`
-- Adicionar nova rota `/administrativo/documentos/novo` apontando para o componente `DocumentoNovo`, protegida com `routeKey="administrativo_hub"`, logo apos a rota de `/administrativo/documentos`
+### 2. Arquivo: `src/pages/direcao/estoque/ProdutosFabricaEdit.tsx`
+- Importar o componente `Checkbox` de `@/components/ui/checkbox`
+- Adicionar `conferir_estoque: true` ao estado `formData` (linha 40)
+- Carregar o valor do banco no `useEffect` (linha 83)
+- Incluir `conferir_estoque` no `handleSave` (linha 106)
+- Adicionar um checkbox com label "Conferir na conferencia de estoque" no card "Informacoes do Produto", abaixo da descricao (apos linha 242)
 
-### 3. Arquivo: `src/pages/DocumentoNovo.tsx`
-- Alterar o botao voltar e o botao cancelar de `navigate('/dashboard/documentos')` para `navigate('/administrativo/documentos')` (linhas 97 e 171)
+### 3. Arquivo: `src/hooks/useConferenciaEstoque.ts`
+- Na query de produtos (linha 104), adicionar filtro `.eq("conferir_estoque", true)` para que apenas itens marcados aparecam na lista de conferencia
+- Na query de contagem ao iniciar conferencia (linha 140), adicionar o mesmo filtro
+- Na query de criacao de itens da conferencia (linha 163), adicionar o mesmo filtro
+
+### 4. Arquivo: `src/hooks/useEstoque.ts` (tipo)
+- Adicionar `conferir_estoque: boolean` ao interface `ProdutoEstoque` (linha 44)
+- Adicionar `conferir_estoque?: boolean` ao interface `ProdutoEstoqueInput` (linha 65)
 
