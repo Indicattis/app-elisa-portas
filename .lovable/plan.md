@@ -1,39 +1,36 @@
 
+# Exibir portas sociais na secao "Itens do Pedido" em PedidoViewDirecao
 
-# Adicionar linha de totais na tabela de Produtos Fabrica
+## Problema atual
+Na pagina `/direcao/pedidos/:id`, a secao "Itens do Pedido" so exibe pastas (folders) para produtos que possuem linhas de pedido (`pedido_linhas`) associadas. Portas sociais geralmente nao possuem linhas de producao vinculadas, entao nao aparecem nesta secao.
 
-## O que sera feito
-Adicionar uma linha fixa no rodape da tabela com os totais calculados de todas as colunas numericas visiveis.
+## Solucao
+Alterar a logica de agrupamento (`gruposPortas`) para tambem incluir pastas para produtos da venda que nao possuem linhas, especialmente portas sociais. Isso garante que todas as portas aparecem como folders na grid, mesmo sem itens de producao, exibindo informacoes uteis como tipo, dimensoes e cor.
 
-## Totais exibidos
+## Alteracoes
 
-| Coluna | Calculo |
-|--------|---------|
-| Produto | Texto "TOTAL (X itens)" |
-| Est. Min | Soma de `quantidade_ideal` |
-| Est. Max | Soma de `quantidade_maxima` |
-| Atual | Soma de `quantidade` |
-| Preco/Un | Media ponderada ou "---" |
-| Valor Total | Soma de `quantidade * custo_unitario` |
+### Arquivo: `src/pages/direcao/PedidoViewDirecao.tsx`
 
-## Detalhes tecnicos
+1. **Expandir o `gruposPortas` (useMemo)** para, alem de agrupar linhas existentes por porta, tambem criar pastas vazias para todos os `produtos_venda` do pedido que ainda nao possuem linhas. Isso segue o mesmo padrao ja usado no `PedidoLinhasEditor` (linhas 469-476), garantindo que portas sociais (e qualquer outro produto) aparecam como folders.
 
-### Arquivo: `src/pages/direcao/estoque/ProdutosFabrica.tsx`
+2. **Usar `produtos_venda` para enriquecer as informacoes das pastas** -- ao inves de depender apenas do `portasInfo` (que so contem portas referenciadas pelas linhas), buscar tipo, dimensoes e cor diretamente de `produtos_venda`. Isso permite exibir detalhes completos na pasta, incluindo a cor da porta social.
 
-1. Calcular os totais a partir de `filteredProdutos`:
-   - `totalIdeal` = soma de `quantidade_ideal`
-   - `totalMaxima` = soma de `quantidade_maxima`
-   - `totalAtual` = soma de `quantidade`
-   - `totalValor` = soma de `quantidade * custo_unitario`
+3. **Exibir informacao de "Somente exibicao"** -- quando uma pasta nao tiver linhas, mostrar uma mensagem como "Nenhum item de producao vinculado" dentro da pasta expandida, deixando claro que e apenas informativa.
 
-2. Adicionar um `TableFooter` (ja exportado pelo componente `Table`) apos o `TableBody`/`SortableContext`, dentro da `<Table>`, com uma unica `TableRow` contendo:
-   - Celula vazia para o drag handle
-   - Celula com texto bold "TOTAL (N itens)"
-   - Celulas com os valores calculados, estilizados com `font-bold text-white`
-   - Coluna Preco/Un exibira "---" (nao faz sentido somar precos unitarios)
-   - Coluna Valor Total exibira a soma formatada com `formatCurrency`
+4. **Renumerar corretamente** -- ajustar a numeracao sequencial para incluir as novas pastas na contagem por tipo (ex: "Porta Social #1").
 
-3. Estilo da linha: fundo `bg-white/5` com borda superior `border-t border-white/20` para destaque visual, texto em branco com peso bold.
+### Detalhes tecnicos
 
-4. A linha de totais so aparece quando ha produtos na lista (`filteredProdutos.length > 0`).
+```text
+Antes (gruposPortas):
+  Itera apenas pedido.linhas
+  Cria folders somente para produto_venda_ids presentes nas linhas
+  Porta social sem linhas = nao aparece
 
+Depois (gruposPortas):
+  1. Itera pedido.linhas (agrupa como antes)
+  2. Itera pedido.produtos_venda (cria folders vazios para os que faltam)
+  Porta social sem linhas = aparece como folder vazio com info do produto
+```
+
+A pasta vazia da porta social exibira cor, dimensoes (se houver), e a badge "0 itens" -- informando o usuario que nao ha itens de producao, mas mostrando o produto no contexto do pedido.
