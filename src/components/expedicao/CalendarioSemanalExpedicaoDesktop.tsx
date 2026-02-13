@@ -38,6 +38,8 @@ interface CalendarioSemanalExpedicaoDesktopProps {
   onExcluirNeoCorrecao?: (id: string) => void;
   onEditarNeoInstalacao?: (neo: NeoInstalacao) => void;
   onEditarNeoCorrecao?: (neo: NeoCorrecao) => void;
+  activeLegend?: string | null;
+  onLegendToggle?: (legend: string) => void;
   readOnly?: boolean;
 }
 
@@ -65,6 +67,8 @@ export const CalendarioSemanalExpedicaoDesktop = ({
   onExcluirNeoCorrecao,
   onEditarNeoInstalacao,
   onEditarNeoCorrecao,
+  activeLegend,
+  onLegendToggle,
   readOnly = false,
 }: CalendarioSemanalExpedicaoDesktopProps) => {
   const [activeOrdem, setActiveOrdem] = useState<OrdemCarregamento | null>(null);
@@ -217,7 +221,7 @@ export const CalendarioSemanalExpedicaoDesktop = ({
       </div>
 
       {/* Legendas */}
-      <CalendarioLegendas />
+      <CalendarioLegendas activeLegend={activeLegend} onToggle={onLegendToggle} />
 
       {/* Grid de dias */}
       <div className="grid grid-cols-7 gap-4">
