@@ -21,7 +21,10 @@ import { useAuth } from "@/hooks/useAuth";
 export default function CronogramaMinimalista() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { signOut } = useAuth();
+  const { signOut, isAdmin, userRole, hasBypassPermissions } = useAuth();
+
+  const ROLES_GERENTE = ['administrador', 'gerente_fabril', 'gerente_instalacoes', 'diretor'];
+  const isGerente = isAdmin || hasBypassPermissions || (userRole?.role ? ROLES_GERENTE.includes(userRole.role) : false);
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<'week' | 'month'>('week');
@@ -35,13 +38,13 @@ export default function CronogramaMinimalista() {
     equipeNome,
     equipeCor,
     temEquipe 
-  } = useInstalacoesMinhaEquipeCalendario(currentDate, viewType);
+  } = useInstalacoesMinhaEquipeCalendario(currentDate, viewType, isGerente);
 
   // Hook para neo instalações da equipe
   const { 
     neoInstalacoes,
     isLoading: isLoadingNeo 
-  } = useNeoInstalacoesMinhaEquipe(currentDate, viewType);
+  } = useNeoInstalacoesMinhaEquipe(currentDate, viewType, isGerente);
 
   const isLoading = isLoadingOrdens || isLoadingNeo;
 
@@ -71,7 +74,7 @@ export default function CronogramaMinimalista() {
   useEffect(() => { setMounted(true); }, []);
 
   // Se não tem equipe, mostrar mensagem
-  if (!isLoading && !temEquipe) {
+  if (!isLoading && !temEquipe && !isGerente) {
     return (
       <div className="min-h-screen bg-black text-white overflow-hidden relative">
         <AnimatedBreadcrumb 

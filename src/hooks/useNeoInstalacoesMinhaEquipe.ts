@@ -6,17 +6,17 @@ import { NeoInstalacao } from "@/types/neoInstalacao";
 
 export const useNeoInstalacoesMinhaEquipe = (
   currentDate: Date,
-  periodo: 'week' | 'month' = 'week'
+  periodo: 'week' | 'month' = 'week',
+  verTodas: boolean = false
 ) => {
   const { user } = useAuth();
 
-  // Buscar a equipe do usuário
+  // Buscar a equipe do usuário (só quando NÃO verTodas)
   const { data: equipeData, isLoading: isLoadingEquipe } = useQuery({
     queryKey: ["minha_equipe_neo_instalacao", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
 
-      // Buscar a equipe do usuário via tabela de membros
       const { data: membroData, error: membroError } = await supabase
         .from("equipes_instalacao_membros")
         .select("equipe_id")
@@ -29,7 +29,6 @@ export const useNeoInstalacoesMinhaEquipe = (
       }
 
       if (!membroData?.equipe_id) {
-        // Verificar se é responsável de alguma equipe
         const { data: equipeResponsavel } = await supabase
           .from("equipes_instalacao")
           .select("id, nome, cor")
@@ -40,7 +39,6 @@ export const useNeoInstalacoesMinhaEquipe = (
         return equipeResponsavel;
       }
 
-      // Buscar detalhes da equipe
       const { data: equipe, error: equipeError } = await supabase
         .from("equipes_instalacao")
         .select("id, nome, cor")
@@ -55,7 +53,7 @@ export const useNeoInstalacoesMinhaEquipe = (
 
       return equipe;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !verTodas,
   });
 
   // Calcular intervalo de datas
@@ -75,41 +73,46 @@ export const useNeoInstalacoesMinhaEquipe = (
 
   const { inicio, fim } = getDateRange();
 
-  // Buscar neo instalações da equipe
+  // Buscar neo instalações
   const { data: neoInstalacoes = [], isLoading: isLoadingNeo } = useQuery({
-    queryKey: ["neo_instalacoes_minha_equipe", equipeData?.id, inicio, fim],
+    queryKey: ["neo_instalacoes_minha_equipe", verTodas ? "todas" : equipeData?.id, inicio, fim],
     queryFn: async () => {
-      if (!equipeData?.id) return [];
+      if (!verTodas && !equipeData?.id) return [];
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("neo_instalacoes")
-        .select("*")
-        .eq("equipe_id", equipeData.id)
+        .select(verTodas ? "*, equipe:equipes_instalacao(id, nome, cor)" : "*")
         .eq("concluida", false)
         .gte("data_instalacao", inicio)
         .lte("data_instalacao", fim)
         .order("data_instalacao", { ascending: true });
+
+      if (!verTodas && equipeData?.id) {
+        query = query.eq("equipe_id", equipeData.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("Erro ao buscar neo instalações:", error);
         throw error;
       }
 
-      return (data || []).map(item => ({
+      return (data || []).map((item: any) => ({
         ...item,
         _tipo: 'neo_instalacao' as const,
-        equipe: equipeData
+        equipe: verTodas ? item.equipe : equipeData
       })) as NeoInstalacao[];
     },
-    enabled: !!equipeData?.id,
+    enabled: verTodas || !!equipeData?.id,
   });
 
   return {
     neoInstalacoes,
-    isLoading: isLoadingEquipe || isLoadingNeo,
-    equipeId: equipeData?.id || null,
-    equipeNome: equipeData?.nome || null,
-    equipeCor: equipeData?.cor || null,
-    temEquipe: !!equipeData?.id,
+    isLoading: verTodas ? isLoadingNeo : (isLoadingEquipe || isLoadingNeo),
+    equipeId: verTodas ? null : (equipeData?.id || null),
+    equipeNome: verTodas ? "Todas as equipes" : (equipeData?.nome || null),
+    equipeCor: verTodas ? null : (equipeData?.cor || null),
+    temEquipe: verTodas ? true : !!equipeData?.id,
   };
 };
