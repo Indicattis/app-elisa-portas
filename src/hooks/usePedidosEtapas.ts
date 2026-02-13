@@ -175,7 +175,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             .maybeSingle();
 
           // Buscar status das ordens de produção (incluindo campos de métricas)
-          const [soldagem, perfiladeira, separacao, qualidade, pintura] = await Promise.all([
+          const [soldagem, perfiladeira, separacao, qualidade, pintura, embalagem] = await Promise.all([
             supabase
               .from('ordens_soldagem')
               .select('id, status, responsavel_id, pausada, justificativa_pausa, qtd_portas_p, qtd_portas_g')
@@ -199,6 +199,11 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             supabase
               .from('ordens_pintura')
               .select('id, status, responsavel_id, metragem_quadrada')
+              .eq('pedido_id', pedido.id)
+              .maybeSingle(),
+            supabase
+              .from('ordens_embalagem')
+              .select('id, status, responsavel_id')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
           ]);
@@ -280,12 +285,13 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             };
           };
 
-          const [ordemSoldagem, ordemPerfiladeira, ordemSeparacao, ordemQualidade, ordemPintura] = await Promise.all([
+          const [ordemSoldagem, ordemPerfiladeira, ordemSeparacao, ordemQualidade, ordemPintura, ordemEmbalagem] = await Promise.all([
             buildOrdemStatus(soldagem, 'soldagem'),
             buildOrdemStatus(perfiladeira, 'perfiladeira'),
             buildOrdemStatus(separacao, 'separacao'),
             buildOrdemStatus(qualidade, 'qualidade'),
             buildOrdemStatus(pintura, 'pintura'),
+            buildOrdemStatus(embalagem, 'embalagem'),
           ]);
 
           // Buscar linhas de perfiladeira para cálculo de metragem linear
@@ -302,6 +308,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               separacao: ordemSeparacao,
               qualidade: ordemQualidade,
               pintura: ordemPintura,
+              embalagem: ordemEmbalagem,
             }
           };
         })
@@ -1434,6 +1441,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         separacao: 'ordens_separacao',
         qualidade: 'ordens_qualidade',
         pintura: 'ordens_pintura',
+        embalagem: 'ordens_embalagem',
       };
 
       const tabela = tabelaMap[tipoOrdem];
