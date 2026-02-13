@@ -32,6 +32,11 @@ export const FLUXOGRAMA_ETAPAS: Record<EtapaPedido, FluxogramaEtapa> = {
     label: 'Aguardando Pintura',
     color: 'bg-pink-500'
   },
+  embalagem: {
+    id: 'embalagem',
+    label: 'Embalagem',
+    color: 'bg-cyan-600'
+  },
   aguardando_coleta: {
     id: 'aguardando_coleta',
     label: 'Expedição Coleta',
@@ -105,6 +110,9 @@ export function determinarFluxograma(pedido: any): FluxogramaEtapa[] {
   if (temPintura) {
     baseFlow.push(FLUXOGRAMA_ETAPAS.aguardando_pintura);
   }
+  
+  // Embalagem é obrigatória para todos (exceto manutenção)
+  baseFlow.push(FLUXOGRAMA_ETAPAS.embalagem);
   
   // Define etapa final baseada no tipo de entrega
   if (tipoEntrega === 'entrega') {

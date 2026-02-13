@@ -192,6 +192,7 @@ import PerfiladeiraMinimalista from "./pages/fabrica/producao/PerfiladeiraMinima
 import SeparacaoMinimalista from "./pages/fabrica/producao/SeparacaoMinimalista";
 import QualidadeMinimalista from "./pages/fabrica/producao/QualidadeMinimalista";
 import PinturaMinimalista from "./pages/fabrica/producao/PinturaMinimalista";
+import EmbalagemMinimalista from "./pages/fabrica/producao/EmbalagemMinimalista";
 import CarregamentoMinimalista from "./pages/fabrica/producao/CarregamentoMinimalista";
 import TerceirizacaoMinimalista from "./pages/fabrica/producao/TerceirizacaoMinimalista";
 import MeuHistoricoMinimalista from "./pages/fabrica/producao/MeuHistoricoMinimalista";
@@ -425,6 +426,7 @@ const App = () => (
                 <Route path="/fabrica/producao/separacao" element={<ProtectedRoute routeKey="fabrica_separacao"><SeparacaoMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/producao/qualidade" element={<ProtectedRoute routeKey="fabrica_qualidade"><QualidadeMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/producao/pintura" element={<ProtectedRoute routeKey="fabrica_pintura"><PinturaMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/producao/embalagem" element={<ProtectedRoute routeKey="fabrica_embalagem"><EmbalagemMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/producao/carregamento" element={<ProtectedRoute routeKey="fabrica_carregamento"><CarregamentoMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/producao/terceirizacao" element={<ProtectedRoute routeKey="fabrica_terceirizacao"><TerceirizacaoMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/producao/meu-historico" element={<ProtectedRoute routeKey="fabrica_meu_historico"><MeuHistoricoMinimalista /></ProtectedRoute>} />

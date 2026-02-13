@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePedidosEtapas } from "./usePedidosEtapas";
 import type { Processo } from "@/components/pedidos/ProcessoAvancoModal";
 
-type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura' | 'porta_social';
+type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura' | 'porta_social' | 'embalagem';
 
 export function usePedidoAutoAvanco() {
   const [processos, setProcessos] = useState<Processo[]>([]);
@@ -157,6 +157,35 @@ export function usePedidoAutoAvanco() {
     }
   };
 
+  const verificarOrdemEmbalagemConcluida = async (pedidoId: string): Promise<boolean> => {
+    try {
+      const { data: ordemEmbalagem, error: ordemError } = await supabase
+        .from('ordens_embalagem')
+        .select('id, status')
+        .eq('pedido_id', pedidoId)
+        .eq('historico', false)
+        .maybeSingle();
+
+      if (ordemError) throw ordemError;
+      if (!ordemEmbalagem) return true;
+      if (ordemEmbalagem.status === 'concluido') return true;
+
+      const { data: linhas, error } = await supabase
+        .from('linhas_ordens')
+        .select('concluida')
+        .eq('pedido_id', pedidoId)
+        .eq('tipo_ordem', 'embalagem');
+
+      if (error) throw error;
+      if (!linhas || linhas.length === 0) return true;
+
+      return linhas.every(linha => linha.concluida === true);
+    } catch (error) {
+      console.error('Erro ao verificar ordem de embalagem:', error);
+      return false;
+    }
+  };
+
   const buscarEtapaAtual = async (pedidoId: string): Promise<string | null> => {
     try {
       // Buscar o pedido para pegar a etapa atual
@@ -277,6 +306,11 @@ export function usePedidoAutoAvanco() {
         if (!deveAvancar) {
           motivo = 'Ordem de pintura não está concluída';
         }
+      } else if (etapaAtual === 'embalagem') {
+        deveAvancar = await verificarOrdemEmbalagemConcluida(pedidoId);
+        if (!deveAvancar) {
+          motivo = 'Ordem de embalagem não está concluída';
+        }
       } else {
         motivo = `Etapa "${etapaAtual}" não suporta avanço automático`;
       }
@@ -332,6 +366,14 @@ export function usePedidoAutoAvanco() {
           console.log(`[Auto-Avanço] Resultado da verificação: deveAvancar = ${deveAvancar}`);
         } else {
           console.log(`[Auto-Avanço] Tipo ${tipoOrdemConcluida} não é pintura, ignorando`);
+        }
+      } else if (etapaAtual === 'embalagem') {
+        if (tipoOrdemConcluida === 'embalagem') {
+          console.log(`[Auto-Avanço] Verificando se ordem de embalagem está concluída...`);
+          deveAvancar = await verificarOrdemEmbalagemConcluida(pedidoId);
+          console.log(`[Auto-Avanço] Resultado da verificação: deveAvancar = ${deveAvancar}`);
+        } else {
+          console.log(`[Auto-Avanço] Tipo ${tipoOrdemConcluida} não é embalagem, ignorando`);
         }
       } else {
         console.log(`[Auto-Avanço] Etapa ${etapaAtual} não é tratada para tipo ${tipoOrdemConcluida}`);

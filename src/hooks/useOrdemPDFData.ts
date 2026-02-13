@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
+type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura' | 'embalagem';
 
 interface OrdemPDFData {
   ordem: {

@@ -3838,6 +3838,69 @@ export type Database = {
           },
         ]
       }
+      ordens_embalagem: {
+        Row: {
+          capturada_em: string | null
+          created_at: string
+          data_conclusao: string | null
+          em_backlog: boolean
+          historico: boolean
+          id: string
+          numero_ordem: string
+          pedido_id: string
+          prioridade: number
+          responsavel_id: string | null
+          status: string
+          tempo_conclusao_segundos: number | null
+          updated_at: string
+        }
+        Insert: {
+          capturada_em?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          em_backlog?: boolean
+          historico?: boolean
+          id?: string
+          numero_ordem: string
+          pedido_id: string
+          prioridade?: number
+          responsavel_id?: string | null
+          status?: string
+          tempo_conclusao_segundos?: number | null
+          updated_at?: string
+        }
+        Update: {
+          capturada_em?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          em_backlog?: boolean
+          historico?: boolean
+          id?: string
+          numero_ordem?: string
+          pedido_id?: string
+          prioridade?: number
+          responsavel_id?: string | null
+          status?: string
+          tempo_conclusao_segundos?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordens_embalagem_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "ordens_embalagem_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ordens_perfiladeira: {
         Row: {
           capturada_em: string | null
@@ -6880,6 +6943,10 @@ export type Database = {
           table_name: string
         }[]
       }
+      criar_ordem_embalagem: {
+        Args: { p_pedido_id: string }
+        Returns: undefined
+      }
       criar_ordem_pintura: { Args: { p_pedido_id: string }; Returns: undefined }
       criar_ordem_qualidade: {
         Args: { p_pedido_id: string }
@@ -7205,16 +7272,26 @@ export type Database = {
         }
         Returns: Json
       }
-      retroceder_pedido_unificado: {
-        Args: {
-          p_etapa_destino: string
-          p_motivo: string
-          p_ordens_config?: Json
-          p_pedido_id: string
-          p_user_id?: string
-        }
-        Returns: Json
-      }
+      retroceder_pedido_unificado:
+        | {
+            Args: {
+              p_etapa_destino: string
+              p_motivo?: string
+              p_pedido_id: string
+              p_user_id?: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_etapa_destino: string
+              p_motivo: string
+              p_ordens_config?: Json
+              p_pedido_id: string
+              p_user_id?: string
+            }
+            Returns: Json
+          }
       verificar_ordem_pintura_concluida: {
         Args: { p_pedido_id: string }
         Returns: boolean

@@ -33,7 +33,7 @@ import { InformarFaltaLinhaModal } from "./InformarFaltaLinhaModal";
 import { formatarTamanho, formatarDimensoes } from "@/utils/formatters";
 import { getLabelTipoProduto } from "@/utils/tipoProdutoLabels";
 
-type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
+type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura' | 'embalagem';
 
 interface LinhaOrdem {
   id: string;
@@ -138,6 +138,7 @@ const TIPO_LABELS: Record<TipoOrdem, string> = {
   separacao: 'Separação',
   qualidade: 'Qualidade',
   pintura: 'Pintura',
+  embalagem: 'Embalagem',
 };
 
 const TIPO_ORDEM_ETIQUETA: Record<TipoOrdem, string> = {
@@ -146,6 +147,7 @@ const TIPO_ORDEM_ETIQUETA: Record<TipoOrdem, string> = {
   separacao: 'Ordem de Separação',
   qualidade: 'Ordem de Qualidade',
   pintura: 'Ordem de Pintura',
+  embalagem: 'Ordem de Embalagem',
 };
 
 export function OrdemDetalhesSheet({
