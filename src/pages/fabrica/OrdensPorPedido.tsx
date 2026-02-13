@@ -43,6 +43,7 @@ export default function OrdensPorPedido() {
         pedido.ordens.separacao,
         pedido.ordens.qualidade,
         pedido.ordens.pintura,
+        pedido.ordens.embalagem,
       ];
 
       ordens.forEach(ordem => {

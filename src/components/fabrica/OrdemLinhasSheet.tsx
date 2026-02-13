@@ -36,6 +36,7 @@ const TIPO_LABELS: Record<TipoOrdem, string> = {
   separacao: 'Separação',
   qualidade: 'Qualidade',
   pintura: 'Pintura',
+  embalagem: 'Embalagem',
   carregamento: 'Carregamento',
   instalacao: 'Instalação',
 };
@@ -46,6 +47,7 @@ const TABLE_MAP: Record<TipoOrdem, string> = {
   separacao: 'ordens_separacao',
   qualidade: 'ordens_qualidade',
   pintura: 'ordens_pintura',
+  embalagem: 'ordens_embalagem',
   carregamento: 'ordens_carregamento',
   instalacao: 'instalacoes',
 };
@@ -59,6 +61,7 @@ const TIPO_ORDEM_ETIQUETA: Record<TipoOrdem, string> = {
   separacao: 'Separação',
   qualidade: 'Qualidade',
   pintura: 'Pintura',
+  embalagem: 'Embalagem',
   carregamento: 'Carregamento',
   instalacao: 'Instalação',
 };

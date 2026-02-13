@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 
-export type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura' | 'carregamento' | 'instalacao';
+export type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura' | 'embalagem' | 'carregamento' | 'instalacao';
 
 export interface ResponsavelInfo {
   nome: string;
@@ -73,6 +73,7 @@ export interface PedidoComOrdens {
     separacao: OrdemStatus;
     qualidade: OrdemStatus;
     pintura: OrdemStatus;
+    embalagem: OrdemStatus;
     carregamento: OrdemStatus;
     instalacao: OrdemStatus;
   };
@@ -129,6 +130,7 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
         separacaoRes,
         qualidadeRes,
         pinturaRes,
+        embalagemRes,
         carregamentoRes,
         instalacaoRes,
         produtosRes,
@@ -170,6 +172,10 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
           .select('id, pedido_id, numero_ordem, status, responsavel_id, metragem_quadrada, capturada_em, tempo_conclusao_segundos')
           .in('pedido_id', pedidoIds),
         supabase
+          .from('ordens_embalagem')
+          .select('id, pedido_id, numero_ordem, status, responsavel_id, capturada_em, tempo_conclusao_segundos')
+          .in('pedido_id', pedidoIds),
+        supabase
           .from('ordens_carregamento')
           .select('id, pedido_id, status, responsavel_carregamento_id, responsavel_carregamento_nome, tipo_carregamento, data_carregamento, hora_carregamento, carregamento_concluido')
           .in('pedido_id', pedidoIds),
@@ -199,7 +205,7 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
 
       // Coletar todos os responsavel_ids únicos
       const allResponsavelIds = new Set<string>();
-      [soldagemRes.data, perfiladeiraRes.data, separacaoRes.data, qualidadeRes.data, pinturaRes.data]
+      [soldagemRes.data, perfiladeiraRes.data, separacaoRes.data, qualidadeRes.data, pinturaRes.data, embalagemRes.data]
         .forEach(ordens => {
           ordens?.forEach((o: any) => {
             if (o.responsavel_id) allResponsavelIds.add(o.responsavel_id);
@@ -281,6 +287,7 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
       processOrdens(separacaoRes.data, 'separacao');
       processOrdens(qualidadeRes.data, 'qualidade');
       processOrdens(pinturaRes.data, 'pintura');
+      processOrdens(embalagemRes.data, 'embalagem');
       
       // Processar carregamento - mapear responsavel_carregamento_id para responsavel_id
       carregamentoRes.data?.forEach((ordem: any) => {
@@ -448,6 +455,7 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
             separacao: criarOrdemStatus('separacao'),
             qualidade: criarOrdemStatus('qualidade'),
             pintura: criarOrdemStatus('pintura'),
+            embalagem: criarOrdemStatus('embalagem'),
             carregamento: criarOrdemStatus('carregamento'),
             instalacao: criarOrdemStatus('instalacao'),
           },
