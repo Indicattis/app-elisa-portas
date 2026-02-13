@@ -22,6 +22,7 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { baixarCronogramaMinimalistaPDF } from "@/utils/cronogramaMinimalistaPDF";
+import { useAutorizadosAptos } from "@/hooks/useAutorizadosAptos";
 
 
 export default function CronogramaMinimalista() {
@@ -37,6 +38,9 @@ export default function CronogramaMinimalista() {
   const [selectedItem, setSelectedItem] = useState<OrdemCarregamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [equipeIdFiltro, setEquipeIdFiltro] = useState<string | null>(null);
+  const [autorizadoIdFiltro, setAutorizadoIdFiltro] = useState<string | null>(null);
+
+  const { autorizados: autorizadosAptos } = useAutorizadosAptos();
 
   // Buscar equipes ativas (para filtro de gerentes)
   const { data: equipesAtivas = [] } = useQuery({
@@ -266,6 +270,30 @@ export default function CronogramaMinimalista() {
                             />
                           )}
                           {equipe.nome}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {/* Filtro de autorizados (só para gerentes) */}
+              {isGerente && (
+                <Select
+                  value={autorizadoIdFiltro || "todos"}
+                  onValueChange={(val) => setAutorizadoIdFiltro(val === "todos" ? null : val)}
+                >
+                  <SelectTrigger className="w-[160px] h-8 text-xs bg-amber-500/10 border-amber-500/20 text-white">
+                    <Filter className="h-3 w-3 mr-1" />
+                    <SelectValue placeholder="Autorizado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos autorizados</SelectItem>
+                    {autorizadosAptos.map((aut) => (
+                      <SelectItem key={aut.id} value={aut.id}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-amber-500" />
+                          {aut.nome}
                         </div>
                       </SelectItem>
                     ))}
