@@ -45,6 +45,7 @@ export function usePedidosContadores() {
         em_producao: 0,
         inspecao_qualidade: 0,
         aguardando_pintura: 0,
+        embalagem: 0,
         aguardando_coleta: 0,
         instalacoes: 0,
         correcoes: 0,
@@ -650,20 +651,9 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               etapaDestino = 'aguardando_pintura';
               console.log('[moverParaProximaEtapa] → Destino: aguardando_pintura (tem pintura)');
             } else {
-              // Não tem pintura → verificar tipo de entrega
-              const { data: venda } = await supabase
-                .from('vendas')
-                .select('tipo_entrega')
-                .eq('id', pedidoData.venda_id)
-                .single();
-              
-              if (venda?.tipo_entrega === 'entrega') {
-                etapaDestino = 'aguardando_coleta';
-                console.log('[moverParaProximaEtapa] → Destino: aguardando_coleta (entrega sem pintura)');
-              } else {
-                etapaDestino = 'instalacoes';
-                console.log('[moverParaProximaEtapa] → Destino: instalacoes (instalação sem pintura)');
-              }
+              // Não tem pintura → vai para embalagem
+              etapaDestino = 'embalagem';
+              console.log('[moverParaProximaEtapa] → Destino: embalagem (sem pintura, só separação)');
             }
           }
         }
@@ -690,31 +680,25 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             // Tem pintura → avançar para aguardando_pintura
             etapaDestino = 'aguardando_pintura';
           } else {
-            // Não tem pintura → verificar tipo de entrega
-            const { data: venda } = await supabase
-              .from('vendas')
-              .select('tipo_entrega')
-              .eq('id', pedidoData.venda_id)
-              .single();
-            
-            if (venda?.tipo_entrega === 'entrega') {
-              etapaDestino = 'aguardando_coleta';
-            } else {
-              etapaDestino = 'instalacoes';
-            }
+            // Não tem pintura → vai para embalagem
+            etapaDestino = 'embalagem';
           }
         }
       }
 
-      // Lógica condicional quando sai de aguardando_pintura
+      // Lógica condicional quando sai de aguardando_pintura → vai para embalagem
       if (etapaAtualNome === 'aguardando_pintura') {
+        etapaDestino = 'embalagem';
+        console.log('[moverParaProximaEtapa] Saindo de aguardando_pintura → embalagem');
+      }
+
+      // Lógica condicional quando sai de embalagem → verificar tipo_entrega
+      if (etapaAtualNome === 'embalagem') {
         const { data: pedidoData } = await supabase
           .from('pedidos_producao')
           .select('venda_id')
           .eq('id', pedidoId)
           .single();
-        
-        console.log('[moverParaProximaEtapa] Saindo de aguardando_pintura, pedidoId:', pedidoId, 'vendaId:', pedidoData?.venda_id);
         
         if (pedidoData?.venda_id) {
           const { data: venda } = await supabase
@@ -723,17 +707,12 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             .eq('id', pedidoData.venda_id)
             .single();
           
-          console.log('[moverParaProximaEtapa] tipo_entrega da venda:', venda?.tipo_entrega);
-          
           if (venda?.tipo_entrega === 'entrega') {
             etapaDestino = 'aguardando_coleta';
-            console.log('[moverParaProximaEtapa] ✓ Pedido é ENTREGA → indo para aguardando_coleta');
-          } else if (venda?.tipo_entrega === 'instalacao') {
-            etapaDestino = 'instalacoes';
-            console.log('[moverParaProximaEtapa] ✓ Pedido é INSTALAÇÃO → indo para instalacoes');
+            console.log('[moverParaProximaEtapa] Saindo de embalagem → aguardando_coleta');
           } else {
-            console.warn('[moverParaProximaEtapa] ⚠️ tipo_entrega desconhecido:', venda?.tipo_entrega, '→ usando instalacoes por padrão');
             etapaDestino = 'instalacoes';
+            console.log('[moverParaProximaEtapa] Saindo de embalagem → instalacoes');
           }
         }
       }
@@ -874,6 +853,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           etapaDestino === 'em_producao' ? 'em_producao' :
           etapaDestino === 'inspecao_qualidade' ? 'em_producao' :
           etapaDestino === 'aguardando_pintura' ? 'em_producao' :
+          etapaDestino === 'embalagem' ? 'em_producao' :
           etapaDestino === 'instalacoes' ? 'pronta_fabrica' :
           etapaDestino === 'finalizado' ? 'finalizada' :
           'pendente_producao';
@@ -1083,6 +1063,24 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           console.log('[moverParaProximaEtapa] Ordem de pintura criada com sucesso');
         });
         if (onProgress) onProgress('criar_ordem_pintura', 'completed');
+      }
+
+      // Se avançou para embalagem, criar ordem de embalagem
+      if (etapaDestino === 'embalagem') {
+        if (onProgress) onProgress('criar_ordem_embalagem', 'in_progress');
+        await executarComDelay(async () => {
+          console.log('[moverParaProximaEtapa] Criando ordem de embalagem para pedido:', pedidoId);
+          const { error: embalagemError } = await supabase.rpc('criar_ordem_embalagem', {
+            p_pedido_id: pedidoId
+          });
+
+          if (embalagemError) {
+            console.error('[moverParaProximaEtapa] Erro ao criar ordem de embalagem:', embalagemError);
+            throw embalagemError;
+          }
+          console.log('[moverParaProximaEtapa] Ordem de embalagem criada com sucesso');
+        });
+        if (onProgress) onProgress('criar_ordem_embalagem', 'completed');
       }
 
       // Se avançou para aguardando_coleta

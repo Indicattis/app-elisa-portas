@@ -6,7 +6,7 @@ interface OrdemProducaoPDFData {
   ordem: {
     id: string;
     numero_ordem: string;
-    tipo_ordem: 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
+    tipo_ordem: 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura' | 'embalagem';
     status: string;
     observacoes?: string;
     created_at: string;

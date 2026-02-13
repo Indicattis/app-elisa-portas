@@ -4,6 +4,7 @@ export type EtapaPedido =
   | 'em_producao'
   | 'inspecao_qualidade'
   | 'aguardando_pintura'
+  | 'embalagem'
   | 'aguardando_coleta'
   | 'instalacoes'
   | 'correcoes'
@@ -83,6 +84,12 @@ export const ETAPAS_CONFIG: Record<EtapaPedido, {
       { id: 'superficie_preparada', label: 'Superfície preparada', required: true }
     ]
   },
+  embalagem: {
+    label: 'Embalagem',
+    color: 'bg-cyan-600',
+    icon: 'Package',
+    checkboxes: []
+  },
   aguardando_coleta: {
     label: 'Expedição Coleta',
     color: 'bg-indigo-500',
@@ -121,6 +128,7 @@ export const ORDEM_ETAPAS: EtapaPedido[] = [
   'em_producao',
   'inspecao_qualidade',
   'aguardando_pintura',
+  'embalagem',
   'aguardando_coleta',
   'instalacoes',
   'correcoes',

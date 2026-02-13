@@ -6,7 +6,7 @@ export function useOrdensCount() {
     queryKey: ["ordens-count"],
     queryFn: async () => {
       // Buscar ordens pendentes de cada tipo e contar no cliente
-      const [soldagemRes, perfiladeiraRes, separacaoRes, qualidadeRes, pinturaRes, carregamentoRes] = await Promise.all([
+      const [soldagemRes, perfiladeiraRes, separacaoRes, qualidadeRes, pinturaRes, carregamentoRes, embalagemRes] = await Promise.all([
         supabase
           .from("ordens_soldagem")
           .select("id")
@@ -31,6 +31,10 @@ export function useOrdensCount() {
           .from("ordens_carregamento")
           .select("id")
           .neq("status", "concluido"),
+        supabase
+          .from("ordens_embalagem")
+          .select("id")
+          .neq("status", "concluido"),
       ]);
 
       return {
@@ -40,6 +44,7 @@ export function useOrdensCount() {
         qualidade: qualidadeRes.data?.length || 0,
         pintura: pinturaRes.data?.length || 0,
         carregamento: carregamentoRes.data?.length || 0,
+        embalagem: embalagemRes.data?.length || 0,
       };
     },
     refetchInterval: 30000, // Atualizar a cada 30 segundos
