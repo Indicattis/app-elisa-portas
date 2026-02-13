@@ -8,7 +8,8 @@ export const useNeoCorrecoesMinhaEquipe = (
   currentDate: Date,
   periodo: 'week' | 'month' = 'week',
   verTodas: boolean = false,
-  equipeIdFiltro?: string | null
+  equipeIdFiltro?: string | null,
+  autorizadoIdFiltro?: string | null
 ) => {
   const { user } = useAuth();
 
@@ -66,7 +67,7 @@ export const useNeoCorrecoesMinhaEquipe = (
 
   // Buscar neo correções
   const { data: neoCorrecoes = [], isLoading: isLoadingNeo } = useQuery({
-    queryKey: ["neo_correcoes_minha_equipe", verTodas ? "todas" : equipeData?.id, inicio, fim, equipeIdFiltro],
+    queryKey: ["neo_correcoes_minha_equipe", verTodas ? "todas" : equipeData?.id, inicio, fim, equipeIdFiltro, autorizadoIdFiltro],
     queryFn: async () => {
       if (!verTodas && !equipeData?.id) return [];
 
@@ -78,7 +79,9 @@ export const useNeoCorrecoesMinhaEquipe = (
         .lte("data_correcao", fim)
         .order("data_correcao", { ascending: true });
 
-      if (equipeIdFiltro) {
+      if (autorizadoIdFiltro) {
+        query = query.eq("autorizado_id", autorizadoIdFiltro);
+      } else if (equipeIdFiltro) {
         query = query.eq("equipe_id", equipeIdFiltro);
       } else if (!verTodas && equipeData?.id) {
         query = query.eq("equipe_id", equipeData.id);

@@ -8,7 +8,8 @@ export const useInstalacoesMinhaEquipeCalendario = (
   currentDate: Date,
   periodo: 'week' | 'month' = 'week',
   verTodas: boolean = false,
-  equipeIdFiltro?: string | null
+  equipeIdFiltro?: string | null,
+  autorizadoIdFiltro?: string | null
 ) => {
   const { user } = useAuth();
 
@@ -94,7 +95,7 @@ export const useInstalacoesMinhaEquipeCalendario = (
 
   // Buscar instalações da tabela instalacoes (fonte de verdade)
   const { data: ordens = [], isLoading: isLoadingOrdens } = useQuery({
-    queryKey: ["instalacoes_minha_equipe_calendario", verTodas ? "todas" : equipeData?.id, inicio, fim, equipeIdFiltro],
+    queryKey: ["instalacoes_minha_equipe_calendario", verTodas ? "todas" : equipeData?.id, inicio, fim, equipeIdFiltro, autorizadoIdFiltro],
     queryFn: async () => {
       if (!verTodas && !equipeData?.id) return [];
 
@@ -119,7 +120,9 @@ export const useInstalacoesMinhaEquipeCalendario = (
         .lte("data_carregamento", fim)
         .order("data_carregamento", { ascending: true });
 
-      if (equipeIdFiltro) {
+      if (autorizadoIdFiltro) {
+        query = query.eq("responsavel_carregamento_id", autorizadoIdFiltro);
+      } else if (equipeIdFiltro) {
         query = query.eq("responsavel_carregamento_id", equipeIdFiltro);
       } else if (!verTodas && equipeData?.id) {
         query = query.eq("responsavel_carregamento_id", equipeData.id);
