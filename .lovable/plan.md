@@ -1,43 +1,39 @@
 
 
-# Corrigir drag-and-drop na pagina de Produtos Fabrica
+# Adicionar linha de totais na tabela de Produtos Fabrica
 
-## Problemas identificados
+## O que sera feito
+Adicionar uma linha fixa no rodape da tabela com os totais calculados de todas as colunas numericas visiveis.
 
-### 1. Ordem nao muda apos soltar o item
-O `handleDragEnd` busca os indices em `produtos` (lista completa do hook), mas o `SortableContext` recebe `filteredProdutos`. Alem disso, nao ha atualizacao otimista da UI -- o componente espera o refetch do React Query, que pode nao refletir a mudanca imediatamente. A lista precisa ser atualizada localmente antes de salvar no banco.
+## Totais exibidos
 
-### 2. Item nao acompanha o scroll
-O `@dnd-kit` tem auto-scroll habilitado por padrao, porem o container de scroll pode nao ser detectado corretamente. O `DragOverlay` precisa ser renderizado via `createPortal` no `document.body` para ficar fora do container com overflow e acompanhar o scroll corretamente (mesmo padrao usado em `PedidosDraggableList.tsx`).
+| Coluna | Calculo |
+|--------|---------|
+| Produto | Texto "TOTAL (X itens)" |
+| Est. Min | Soma de `quantidade_ideal` |
+| Est. Max | Soma de `quantidade_maxima` |
+| Atual | Soma de `quantidade` |
+| Preco/Un | Media ponderada ou "---" |
+| Valor Total | Soma de `quantidade * custo_unitario` |
 
-## Alteracoes
+## Detalhes tecnicos
 
 ### Arquivo: `src/pages/direcao/estoque/ProdutosFabrica.tsx`
 
-1. **Adicionar estado local para a lista ordenada** -- usar `useState` + `useEffect` para manter uma copia local de `produtos` que e atualizada otimisticamente no `onDragEnd` antes de salvar no banco.
+1. Calcular os totais a partir de `filteredProdutos`:
+   - `totalIdeal` = soma de `quantidade_ideal`
+   - `totalMaxima` = soma de `quantidade_maxima`
+   - `totalAtual` = soma de `quantidade`
+   - `totalValor` = soma de `quantidade * custo_unitario`
 
-2. **Renderizar DragOverlay via createPortal** -- importar `createPortal` de `react-dom` e renderizar o `DragOverlay` dentro de `createPortal(..., document.body)`. Isso garante que o overlay fique no topo do DOM e acompanhe o cursor/scroll corretamente.
+2. Adicionar um `TableFooter` (ja exportado pelo componente `Table`) apos o `TableBody`/`SortableContext`, dentro da `<Table>`, com uma unica `TableRow` contendo:
+   - Celula vazia para o drag handle
+   - Celula com texto bold "TOTAL (N itens)"
+   - Celulas com os valores calculados, estilizados com `font-bold text-white`
+   - Coluna Preco/Un exibira "---" (nao faz sentido somar precos unitarios)
+   - Coluna Valor Total exibira a soma formatada com `formatCurrency`
 
-3. **Adicionar modifier `restrictToWindowEdges`** -- importar de `@dnd-kit/modifiers` e aplicar ao `DragOverlay` para evitar que o item saia da tela (seguindo o padrao de `PedidosDraggableList`).
+3. Estilo da linha: fundo `bg-white/5` com borda superior `border-t border-white/20` para destaque visual, texto em branco com peso bold.
 
-4. **Corrigir logica do handleDragEnd** -- usar a lista local (`localProdutos`) em vez de `produtos` para calcular indices e fazer a reordenacao. Atualizar o estado local imediatamente (otimista) e depois chamar `reordenarProdutos`.
-
-5. **Filtrar a partir da lista local** -- `filteredProdutos` deve derivar de `localProdutos` em vez de `produtos`.
-
-### Resumo das mudancas tecnicas
-
-```text
-Antes:
-  produtos (react-query) --> filteredProdutos --> SortableContext
-  handleDragEnd --> arrayMove(produtos) --> reordenarProdutos --> invalidateQueries --> refetch
-
-Depois:
-  produtos (react-query) --> localProdutos (estado local, sync via useEffect)
-  localProdutos --> filteredProdutos --> SortableContext
-  handleDragEnd --> arrayMove(localProdutos) --> setLocalProdutos (otimista) --> reordenarProdutos
-  DragOverlay renderizado via createPortal no document.body
-```
-
-### Arquivo unico editado
-- `src/pages/direcao/estoque/ProdutosFabrica.tsx`
+4. A linha de totais so aparece quando ha produtos na lista (`filteredProdutos.length > 0`).
 
