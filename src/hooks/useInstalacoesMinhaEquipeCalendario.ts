@@ -92,14 +92,14 @@ export const useInstalacoesMinhaEquipeCalendario = (
 
   const { inicio, fim } = getDateRange();
 
-  // Buscar ordens de carregamento
+  // Buscar instalações da tabela instalacoes (fonte de verdade)
   const { data: ordens = [], isLoading: isLoadingOrdens } = useQuery({
-    queryKey: ["ordens_minha_equipe_calendario", verTodas ? "todas" : equipeData?.id, inicio, fim, equipeIdFiltro],
+    queryKey: ["instalacoes_minha_equipe_calendario", verTodas ? "todas" : equipeData?.id, inicio, fim, equipeIdFiltro],
     queryFn: async () => {
       if (!verTodas && !equipeData?.id) return [];
 
       let query = supabase
-        .from("ordens_carregamento")
+        .from("instalacoes")
         .select(`
           *,
           venda:vendas(
@@ -110,26 +110,25 @@ export const useInstalacoesMinhaEquipeCalendario = (
             estado,
             cidade,
             cep,
-            bairro,
-            tipo_entrega
+            bairro
           )
         `)
-        .neq("status", "concluida")
-        .not("data_carregamento", "is", null)
-        .gte("data_carregamento", inicio)
-        .lte("data_carregamento", fim)
-        .order("data_carregamento", { ascending: true });
+        .eq("instalacao_concluida", false)
+        .not("data_instalacao", "is", null)
+        .gte("data_instalacao", inicio)
+        .lte("data_instalacao", fim)
+        .order("data_instalacao", { ascending: true });
 
       if (equipeIdFiltro) {
-        query = query.eq("responsavel_carregamento_id", equipeIdFiltro);
+        query = query.eq("responsavel_instalacao_id", equipeIdFiltro);
       } else if (!verTodas && equipeData?.id) {
-        query = query.eq("responsavel_carregamento_id", equipeData.id);
+        query = query.eq("responsavel_instalacao_id", equipeData.id);
       }
 
       const { data, error } = await query;
 
       if (error) {
-        console.error("Erro ao buscar ordens:", error);
+        console.error("Erro ao buscar instalações:", error);
         throw error;
       }
 
@@ -141,13 +140,34 @@ export const useInstalacoesMinhaEquipeCalendario = (
         });
       }
 
-      // Filter only instalações (exclude entregas)
-      const filtered = (data || []).filter(item => item.venda?.tipo_entrega === 'instalacao');
-
-      return filtered.map(item => ({
-        ...item,
+      // Mapear campos da tabela instalacoes para OrdemCarregamento
+      return (data || []).map(item => ({
+        id: item.id,
+        pedido_id: item.pedido_id,
+        venda_id: item.venda_id,
+        nome_cliente: item.nome_cliente,
+        tipo_carregamento: null,
+        data_carregamento: item.data_instalacao,
+        hora: item.hora,
+        hora_carregamento: item.hora_carregamento,
+        responsavel_carregamento_id: item.responsavel_instalacao_id,
+        responsavel_carregamento_nome: item.responsavel_instalacao_nome,
+        status: item.status,
+        carregamento_concluido: item.instalacao_concluida,
+        carregamento_concluido_em: item.instalacao_concluida_em,
+        carregamento_concluido_por: item.instalacao_concluida_por,
+        latitude: null,
+        longitude: null,
+        geocode_precision: null,
+        last_geocoded_at: null,
+        observacoes: item.observacoes,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        created_by: item.created_by,
+        fonte: 'instalacoes' as const,
+        venda: item.venda,
         _corEquipe: verTodas
-          ? equipesMap.get(item.responsavel_carregamento_id) || undefined
+          ? equipesMap.get(item.responsavel_instalacao_id) || undefined
           : equipeData?.cor
       })) as unknown as OrdemCarregamento[];
     },
