@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Plus, Tags, FileDown, Printer, GripVertical } from "lucide-react";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useEstoque } from "@/hooks/useEstoque";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useSubcategorias } from "@/hooks/useSubcategorias";
@@ -172,6 +172,18 @@ export default function ProdutosFabrica() {
   );
 
   const activeProduto = activeId ? localProdutos.find(p => p.id === activeId) ?? null : null;
+
+  const totals = useMemo(() => {
+    return filteredProdutos.reduce(
+      (acc, p) => ({
+        ideal: acc.ideal + (p.quantidade_ideal || 0),
+        maxima: acc.maxima + (p.quantidade_maxima || 0),
+        atual: acc.atual + (p.quantidade || 0),
+        valor: acc.valor + (p.quantidade || 0) * (p.custo_unitario || 0),
+      }),
+      { ideal: 0, maxima: 0, atual: 0, valor: 0 }
+    );
+  }, [filteredProdutos]);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -589,7 +601,32 @@ export default function ProdutosFabrica() {
                       ))
                     )}
                   </TableBody>
-                </SortableContext>
+              </SortableContext>
+              {filteredProdutos.length > 0 && (
+                <TableFooter className="bg-white/5 border-t border-white/20">
+                  <TableRow className="border-white/10 hover:bg-transparent">
+                    <TableCell className="w-10 px-1" />
+                    <TableCell className="font-bold text-white">
+                      TOTAL ({filteredProdutos.length} itens)
+                    </TableCell>
+                    <TableCell className="text-center font-bold text-white">
+                      {totals.ideal}
+                    </TableCell>
+                    <TableCell className="text-center font-bold text-white">
+                      {totals.maxima}
+                    </TableCell>
+                    <TableCell className="text-center font-bold text-white">
+                      {totals.atual}
+                    </TableCell>
+                    <TableCell className="text-right font-bold text-white/50">
+                      ---
+                    </TableCell>
+                    <TableCell className="text-right font-bold text-white">
+                      {formatCurrency(totals.valor)}
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
+              )}
               </Table>
               {createPortal(
                 <DragOverlay
