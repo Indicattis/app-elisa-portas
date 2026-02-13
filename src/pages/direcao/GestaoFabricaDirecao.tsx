@@ -446,47 +446,6 @@ export default function GestaoFabricaDirecao() {
                   </div>
                 ) : (
                   <>
-                    {/* Neo Instalações - apenas na etapa instalacoes */}
-                    {etapaAtiva === 'instalacoes' && neoInstalacoes.length > 0 && (
-                      <div className="mb-4 space-y-2">
-                        <h3 className="text-sm font-medium text-white/70 mb-2">Instalações Avulsas ({neoInstalacoes.length})</h3>
-                        <div className="space-y-1">
-                          {neoInstalacoes.map((neo) => (
-                            <NeoInstalacaoCardGestao
-                              key={neo.id}
-                              neoInstalacao={neo}
-                              viewMode={viewMode}
-                              onConcluir={handleConcluirNeoInstalacao}
-                              isConcluindo={isConcluindo}
-                            />
-                          ))}
-                        </div>
-                        {pedidosFiltrados.length > 0 && (
-                          <h3 className="text-sm font-medium text-white/70 mt-4 mb-2">Pedidos ({pedidosFiltrados.length})</h3>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Neo Correções - apenas na etapa correcoes */}
-                    {etapaAtiva === 'correcoes' && neoCorrecoes.length > 0 && (
-                      <div className="mb-4 space-y-2">
-                        <h3 className="text-sm font-medium text-white/70 mb-2">Correções Avulsas ({neoCorrecoes.length})</h3>
-                        <div className="space-y-1">
-                          {neoCorrecoes.map((neo) => (
-                            <NeoCorrecaoCardGestao
-                              key={neo.id}
-                              neoCorrecao={neo}
-                              viewMode={viewMode}
-                              onConcluir={handleConcluirNeoCorrecao}
-                            />
-                          ))}
-                        </div>
-                        {pedidosFiltrados.length > 0 && (
-                          <h3 className="text-sm font-medium text-white/70 mt-4 mb-2">Pedidos ({pedidosFiltrados.length})</h3>
-                        )}
-                      </div>
-                    )}
-
                     {/* Neo Finalizados - apenas na etapa finalizado */}
                     {etapaAtiva === 'finalizado' && (neoInstalacoesFinalizadas.length > 0 || neoCorrecoesFinalizadas.length > 0) && (
                       <div className="mb-4 space-y-2">
@@ -496,7 +455,6 @@ export default function GestaoFabricaDirecao() {
                           <span className="text-xs text-white/40 ml-auto">últimos 30 dias</span>
                         </h3>
                         <div className="space-y-1">
-                          {/* Instalações finalizadas */}
                           {neoInstalacoesFinalizadas
                             .sort((a, b) => {
                               const dateA = a.concluida_em ? new Date(a.concluida_em).getTime() : 0;
@@ -511,7 +469,6 @@ export default function GestaoFabricaDirecao() {
                                 showConcluido={true}
                               />
                             ))}
-                          {/* Correções finalizadas */}
                           {neoCorrecoesFinalizadas
                             .sort((a, b) => {
                               const dateA = a.concluida_em ? new Date(a.concluida_em).getTime() : 0;
@@ -548,6 +505,41 @@ export default function GestaoFabricaDirecao() {
                       onAvisoEspera={handleAvisoEspera}
                       enableDragAndDrop={true}
                     />
+
+                    {/* Neo Instalações - abaixo dos pedidos normais */}
+                    {etapaAtiva === 'instalacoes' && neoInstalacoes.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        <h3 className="text-sm font-medium text-white/70 mb-2">Instalações Avulsas ({neoInstalacoes.length})</h3>
+                        <div className="space-y-1">
+                          {neoInstalacoes.map((neo) => (
+                            <NeoInstalacaoCardGestao
+                              key={neo.id}
+                              neoInstalacao={neo}
+                              viewMode={viewMode}
+                              onConcluir={handleConcluirNeoInstalacao}
+                              isConcluindo={isConcluindo}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Neo Correções - abaixo dos pedidos normais */}
+                    {etapaAtiva === 'correcoes' && neoCorrecoes.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        <h3 className="text-sm font-medium text-white/70 mb-2">Correções Avulsas ({neoCorrecoes.length})</h3>
+                        <div className="space-y-1">
+                          {neoCorrecoes.map((neo) => (
+                            <NeoCorrecaoCardGestao
+                              key={neo.id}
+                              neoCorrecao={neo}
+                              viewMode={viewMode}
+                              onConcluir={handleConcluirNeoCorrecao}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     
                   </>
                 )}
