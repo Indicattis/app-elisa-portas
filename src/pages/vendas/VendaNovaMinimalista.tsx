@@ -35,6 +35,76 @@ import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from '@/com
 import { ClienteVendaSection } from '@/components/vendas/ClienteVendaSection';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 
+// Estilos sofisticados (fora do componente para estabilidade de referência)
+const sectionWrapperClass = "p-1.5 rounded-xl bg-gradient-to-br from-blue-500/5 to-blue-900/10 backdrop-blur-xl border border-blue-500/20";
+const cardClass = "bg-transparent border-0 shadow-none";
+const labelClass = "text-xs font-semibold text-blue-300/80 uppercase tracking-wider";
+const inputClass = "h-10 bg-blue-500/5 border-blue-500/20 text-white placeholder:text-blue-200/30 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30 focus:bg-blue-500/10 transition-all";
+const textareaClass = "bg-blue-500/5 border-blue-500/20 text-white placeholder:text-blue-200/30 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30 focus:bg-blue-500/10 transition-all resize-none";
+
+const Section = ({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) => (
+  <div className={sectionWrapperClass}>
+    <div className="px-4 py-3 border-b border-blue-500/10 bg-gradient-to-r from-blue-500/10 to-transparent">
+      <div className="flex items-center gap-2.5">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/30">
+          <Icon className="w-4 h-4 text-white" />
+        </div>
+        <h3 className="text-sm font-semibold text-blue-100 tracking-wide">{title}</h3>
+      </div>
+    </div>
+    <div className="p-4">{children}</div>
+  </div>
+);
+
+const ProductButton = ({ label, onClick }: { label: string; onClick: () => void }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="group flex items-center gap-2 h-10 px-4 rounded-lg bg-gradient-to-r from-blue-500/10 to-blue-600/5 border border-blue-500/25 text-blue-200 hover:from-blue-500/20 hover:to-blue-600/10 hover:text-white hover:border-blue-400/40 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
+  >
+    <Plus className="w-4 h-4 text-blue-400 group-hover:text-blue-300" />
+    <span className="text-sm font-medium">{label}</span>
+  </button>
+);
+
+const SophisticatedCheckbox = ({ id, checked, onCheckedChange, label, description }: { id: string; checked: boolean; onCheckedChange: (checked: boolean) => void; label: string; description?: string }) => (
+  <label
+    htmlFor={id}
+    className={cn(
+      "flex items-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
+      checked
+        ? "bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/50 shadow-lg shadow-blue-500/10"
+        : "bg-blue-500/5 border-blue-500/20 hover:border-blue-400/40 hover:bg-blue-500/10"
+    )}
+  >
+    <div className={cn(
+      "flex items-center justify-center w-5 h-5 rounded border-2 transition-all",
+      checked ? "bg-gradient-to-br from-blue-500 to-blue-700 border-blue-400 shadow-lg shadow-blue-500/50" : "bg-transparent border-blue-400/40"
+    )}>
+      {checked && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+    </div>
+    <Checkbox id={id} checked={checked} onCheckedChange={onCheckedChange} className="sr-only" />
+    <div className="flex-1">
+      <span className="text-sm font-medium text-blue-100">{label}</span>
+      {description && <span className="text-xs text-blue-300/60 ml-2">{description}</span>}
+    </div>
+  </label>
+);
+
+const GradientButton = ({ children, onClick, variant = 'blue', className: extraClassName = '', type = 'button', disabled = false, size = 'default' }: { children: React.ReactNode; onClick?: () => void; variant?: 'blue' | 'amber' | 'outline' | 'ghost'; className?: string; type?: 'button' | 'submit'; disabled?: boolean; size?: 'sm' | 'default' }) => {
+  const baseClass = size === 'sm' ? "h-9 px-4 text-sm" : "h-11 px-5";
+  if (variant === 'outline') {
+    return (<button type={type} onClick={onClick} disabled={disabled} className={cn(baseClass, "rounded-lg font-medium border border-blue-500/30 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 hover:text-blue-200 hover:border-blue-400/50 transition-all duration-200 disabled:opacity-50", extraClassName)}>{children}</button>);
+  }
+  if (variant === 'ghost') {
+    return (<button type={type} onClick={onClick} disabled={disabled} className={cn(baseClass, "rounded-lg font-medium text-blue-300/70 hover:bg-blue-500/10 hover:text-blue-200 transition-all duration-200 disabled:opacity-50", extraClassName)}>{children}</button>);
+  }
+  const gradientClass = variant === 'amber' 
+    ? "bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 border-amber-300/50 shadow-lg shadow-amber-500/20"
+    : "bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30 shadow-lg shadow-blue-500/30";
+  return (<button type={type} onClick={onClick} disabled={disabled} className={cn(baseClass, "rounded-lg font-medium text-white border hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100", gradientClass, extraClassName)}>{children}</button>);
+};
+
 export default function VendaNovaMinimalista() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -487,188 +557,7 @@ export default function VendaNovaMinimalista() {
     }
   };
 
-  // Estilos sofisticados baseados em /home com mais azul
-  const sectionWrapperClass = "p-1.5 rounded-xl bg-gradient-to-br from-blue-500/5 to-blue-900/10 backdrop-blur-xl border border-blue-500/20";
-  const cardClass = "bg-transparent border-0 shadow-none";
-  const labelClass = "text-xs font-semibold text-blue-300/80 uppercase tracking-wider";
-  const inputClass = "h-10 bg-blue-500/5 border-blue-500/20 text-white placeholder:text-blue-200/30 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30 focus:bg-blue-500/10 transition-all";
-  const textareaClass = "bg-blue-500/5 border-blue-500/20 text-white placeholder:text-blue-200/30 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30 focus:bg-blue-500/10 transition-all resize-none";
-
-  // Botão estilo Home com gradiente
-  const GradientButton = ({ 
-    children, 
-    onClick, 
-    variant = 'blue',
-    className = '',
-    type = 'button',
-    disabled = false,
-    size = 'default'
-  }: { 
-    children: React.ReactNode; 
-    onClick?: () => void; 
-    variant?: 'blue' | 'amber' | 'outline' | 'ghost';
-    className?: string;
-    type?: 'button' | 'submit';
-    disabled?: boolean;
-    size?: 'sm' | 'default';
-  }) => {
-    const baseClass = size === 'sm' ? "h-9 px-4 text-sm" : "h-11 px-5";
-    
-    if (variant === 'outline') {
-      return (
-        <button
-          type={type}
-          onClick={onClick}
-          disabled={disabled}
-          className={cn(
-            baseClass,
-            "rounded-lg font-medium border border-blue-500/30 bg-blue-500/10 text-blue-300",
-            "hover:bg-blue-500/20 hover:text-blue-200 hover:border-blue-400/50",
-            "transition-all duration-200 disabled:opacity-50",
-            className
-          )}
-        >
-          {children}
-        </button>
-      );
-    }
-
-    if (variant === 'ghost') {
-      return (
-        <button
-          type={type}
-          onClick={onClick}
-          disabled={disabled}
-          className={cn(
-            baseClass,
-            "rounded-lg font-medium text-blue-300/70",
-            "hover:bg-blue-500/10 hover:text-blue-200",
-            "transition-all duration-200 disabled:opacity-50",
-            className
-          )}
-        >
-          {children}
-        </button>
-      );
-    }
-    
-    const gradientClass = variant === 'amber' 
-      ? "bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 border-amber-300/50 shadow-lg shadow-amber-500/20"
-      : "bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30 shadow-lg shadow-blue-500/30";
-    
-    return (
-      <button
-        type={type}
-        onClick={onClick}
-        disabled={disabled}
-        className={cn(
-          baseClass,
-          "rounded-lg font-medium text-white border",
-          "hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/40",
-          "transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100",
-          gradientClass,
-          className
-        )}
-      >
-        {children}
-      </button>
-    );
-  };
-
-  // Componente de Seção com título elegante
-  const Section = ({ 
-    title, 
-    icon: Icon, 
-    children 
-  }: { 
-    title: string; 
-    icon: React.ElementType; 
-    children: React.ReactNode;
-  }) => (
-    <div className={sectionWrapperClass}>
-      <div className="px-4 py-3 border-b border-blue-500/10 bg-gradient-to-r from-blue-500/10 to-transparent">
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/30">
-            <Icon className="w-4 h-4 text-white" />
-          </div>
-          <h3 className="text-sm font-semibold text-blue-100 tracking-wide">{title}</h3>
-        </div>
-      </div>
-      <div className="p-4">
-        {children}
-      </div>
-    </div>
-  );
-
-  // Botão de produto sofisticado
-  const ProductButton = ({ 
-    label, 
-    onClick 
-  }: { 
-    label: string; 
-    onClick: () => void;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group flex items-center gap-2 h-10 px-4 rounded-lg
-                 bg-gradient-to-r from-blue-500/10 to-blue-600/5 border border-blue-500/25 text-blue-200
-                 hover:from-blue-500/20 hover:to-blue-600/10 hover:text-white hover:border-blue-400/40 hover:shadow-lg hover:shadow-blue-500/10
-                 transition-all duration-200"
-    >
-      <Plus className="w-4 h-4 text-blue-400 group-hover:text-blue-300" />
-      <span className="text-sm font-medium">{label}</span>
-    </button>
-  );
-
-  // Checkbox sofisticado
-  const SophisticatedCheckbox = ({
-    id,
-    checked,
-    onCheckedChange,
-    label,
-    description
-  }: {
-    id: string;
-    checked: boolean;
-    onCheckedChange: (checked: boolean) => void;
-    label: string;
-    description?: string;
-  }) => (
-    <label
-      htmlFor={id}
-      className={cn(
-        "flex items-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200",
-        "border-2",
-        checked
-          ? "bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/50 shadow-lg shadow-blue-500/10"
-          : "bg-blue-500/5 border-blue-500/20 hover:border-blue-400/40 hover:bg-blue-500/10"
-      )}
-    >
-      <div className={cn(
-        "flex items-center justify-center w-5 h-5 rounded border-2 transition-all",
-        checked
-          ? "bg-gradient-to-br from-blue-500 to-blue-700 border-blue-400 shadow-lg shadow-blue-500/50"
-          : "bg-transparent border-blue-400/40"
-      )}>
-        {checked && (
-          <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-        )}
-      </div>
-      <Checkbox 
-        id={id}
-        checked={checked}
-        onCheckedChange={onCheckedChange}
-        className="sr-only"
-      />
-      <div className="flex-1">
-        <span className="text-sm font-medium text-blue-100">{label}</span>
-        {description && (
-          <span className="text-xs text-blue-300/60 ml-2">{description}</span>
-        )}
-      </div>
-    </label>
-  );
+  
 
   return (
     <MinimalistLayout 
