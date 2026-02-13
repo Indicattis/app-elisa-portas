@@ -1,33 +1,32 @@
 
-# Corrigir exibicao de instalacoes no cronograma minimalista
+# Corrigir instalacoes no cronograma minimalista
 
 ## Problema
-O cronograma em `/logistica/instalacoes/cronograma` usa o hook `useInstalacoesMinhaEquipeCalendario` que busca dados da tabela `ordens_carregamento`. Porem, as instalacoes regulares (nao-neo) estao armazenadas na tabela `instalacoes`, que e a fonte de verdade. Por isso, elas nao aparecem.
+O hook `useInstalacoesMinhaEquipeCalendario` filtra por `data_instalacao` e `responsavel_instalacao_id`, mas as instalacoes agendadas no calendario usam os campos `data_carregamento` e `responsavel_carregamento_id`. O campo `data_instalacao` esta `null` para esses registros, por isso nao aparecem.
+
+A pagina `/logistica/expedicao` funciona porque o hook `useOrdensCarregamentoCalendario` busca corretamente por `data_carregamento` na tabela `instalacoes`.
 
 ## Solucao
-Criar um novo hook ou adaptar a logica para buscar instalacoes da tabela `instalacoes` (igual ao `useOrdensInstalacaoCalendario` faz), aplicando os filtros de equipe e periodo, e passar esses dados para o calendario.
+Alterar `useInstalacoesMinhaEquipeCalendario.ts` para usar os campos corretos:
 
-## Detalhes tecnicos
+### Arquivo: `src/hooks/useInstalacoesMinhaEquipeCalendario.ts`
+Trocar todos os campos de instalacao pelos campos de carregamento na query:
 
-### 1. `src/hooks/useInstalacoesMinhaEquipeCalendario.ts`
-Alterar a query principal para buscar da tabela `instalacoes` em vez de `ordens_carregamento`:
-- Trocar `from("ordens_carregamento")` por `from("instalacoes")`
-- Ajustar os campos de filtro:
-  - `data_carregamento` -> `data_instalacao`
-  - `responsavel_carregamento_id` -> `responsavel_instalacao_id`
-  - `status !== 'concluida'` -> `instalacao_concluida = false`
-- Remover o filtro client-side de `tipo_entrega === 'instalacao'` (ja nao e necessario pois a tabela `instalacoes` so contem instalacoes)
-- Ajustar o join com `vendas` para usar os campos corretos
-- Mapear o resultado para o tipo `OrdemCarregamento` mantendo compatibilidade com os componentes do calendario
+| Campo atual (errado)           | Campo correto                    |
+|-------------------------------|----------------------------------|
+| `data_instalacao`             | `data_carregamento`              |
+| `responsavel_instalacao_id`   | `responsavel_carregamento_id`    |
+| `responsavel_instalacao_nome` | `responsavel_carregamento_nome`  |
+| `instalacao_concluida`        | `carregamento_concluido`         |
 
-### 2. Mapeamento de campos
-Os componentes do calendario esperam o tipo `OrdemCarregamento`. O mapeamento dos campos da tabela `instalacoes` sera:
-- `data_carregamento` <- `data_instalacao`
-- `responsavel_carregamento_id` <- `responsavel_instalacao_id`
-- `responsavel_carregamento_nome` <- `responsavel_instalacao_nome`
-- `cliente_nome` <- `nome_cliente` ou `venda.cliente_nome`
-- `status` <- derivado de `instalacao_concluida`
-- `_corEquipe` <- mapeado via `equipes_instalacao`
+Ajustes especificos:
+- Filtro `.eq("instalacao_concluida", false)` -> `.eq("carregamento_concluido", false)`
+- Filtro `.not("data_instalacao", "is", null)` -> `.not("data_carregamento", "is", null)`
+- Filtros de range `.gte/.lte("data_instalacao", ...)` -> `.gte/.lte("data_carregamento", ...)`
+- Filtros de equipe `.eq("responsavel_instalacao_id", ...)` -> `.eq("responsavel_carregamento_id", ...)`
+- Order `.order("data_instalacao", ...)` -> `.order("data_carregamento", ...)`
+- No mapeamento, usar `item.data_carregamento`, `item.responsavel_carregamento_id`, `item.responsavel_carregamento_nome`, `item.carregamento_concluido` diretamente
+- No `equipesMap.get`, usar `item.responsavel_carregamento_id`
 
 ### Arquivo editado
 - `src/hooks/useInstalacoesMinhaEquipeCalendario.ts`
