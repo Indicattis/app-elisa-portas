@@ -61,6 +61,7 @@ function calcularTotaisOrdens(pedidos: any[]) {
     separacao: 0,
     qualidade: 0,
     pintura: 0,
+    embalagem: 0,
   };
 
   pedidos.forEach(pedido => {
@@ -78,6 +79,9 @@ function calcularTotaisOrdens(pedidos: any[]) {
 
     const ordensPintura = pedido.ordens_pintura || [];
     totais.pintura += ordensPintura.length;
+
+    const ordensEmbalagem = pedido.ordens_embalagem || [];
+    totais.embalagem += ordensEmbalagem.length;
   });
 
   return totais;
@@ -127,7 +131,7 @@ export function PedidosTotalRow({ pedidos }: PedidosTotalRowProps) {
         className="bg-muted/50 border-t-2 border-primary/20 rounded-md px-2 py-2 mt-2"
         style={{
           display: 'grid',
-          gridTemplateColumns: '20px 20px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 24px 24px 24px 24px 24px 1fr 55px',
+          gridTemplateColumns: '20px 20px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 24px 24px 24px 24px 24px 24px 1fr 55px',
           gap: '6px',
           alignItems: 'center',
         }}
@@ -283,6 +287,13 @@ export function PedidosTotalRow({ pedidos }: PedidosTotalRowProps) {
         <div className="flex items-center justify-center">
           <span className="text-[11px] font-bold text-pink-500">
             {ordensStats.pintura}
+          </span>
+        </div>
+        
+        {/* Embalagem */}
+        <div className="flex items-center justify-center">
+          <span className="text-[11px] font-bold text-cyan-500">
+            {ordensStats.embalagem}
           </span>
         </div>
         
