@@ -1,22 +1,19 @@
 
+# Filtrar pastas de itens do pedido para mostrar apenas portas
 
-# Aceitar PNG e JPG alem de PDF no upload de documentos
+## Problema
+Atualmente, todos os produtos da venda (incluindo adicionais, acessorios, manutencao, pintura) aparecem como "pastas" no editor de linhas do pedido. O esperado e que apenas portas de enrolar e portas sociais gerem pastas.
 
-## Resumo
-Atualizar a pagina de upload de documentos para aceitar imagens PNG e JPG alem de PDF.
+## Alteracao
 
-## Alteracoes
+### Arquivo: `src/components/pedidos/PedidoLinhasEditor.tsx`
+- Na linha 258, filtrar `portasRaw` antes de expandir, mantendo apenas produtos com `tipo_produto` igual a `porta_enrolar` ou `porta_social`:
 
-### Arquivo: `src/pages/DocumentoNovo.tsx`
+```
+const portasFiltradas = portasRaw.filter(
+  (p: any) => p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'porta_social'
+);
+const portas = expandirPortasPorQuantidade(portasFiltradas);
+```
 
-1. **Validacao de tipo** (linha 38): Trocar a verificacao `file.type !== 'application/pdf'` por uma lista de tipos permitidos: `['application/pdf', 'image/png', 'image/jpeg']`
-2. **Mensagem de erro** (linha 41): Atualizar para "Apenas arquivos PDF, PNG e JPG sao permitidos"
-3. **Mensagem de erro no submit** (linha 64): Atualizar de "Selecione um arquivo PDF" para "Selecione um arquivo"
-4. **Subtitulo da pagina** (linha 110): Alterar "Adicione um novo documento PDF" para "Adicione um novo documento"
-5. **Descricao do card** (linha 119): Alterar "upload do arquivo PDF" para "upload do arquivo"
-6. **Label do campo** (linha 163): Alterar "Arquivo PDF *" para "Arquivo *"
-7. **Texto do botao** (linha 171): Alterar "Escolher arquivo PDF" para "Escolher arquivo"
-8. **Input accept** (linha 177): Alterar `accept=".pdf"` para `accept=".pdf,.png,.jpg,.jpeg"`
-9. **Texto informativo** (linha 182): Alterar "Apenas arquivos PDF" para "PDF, PNG ou JPG"
-10. **Icone do arquivo selecionado** (linha 190): Mostrar icone de imagem (`Image` do lucide-react) quando for PNG/JPG, mantendo `FileText` para PDF
-
+Isso garante que adicionais, acessorios, manutencao e pintura epoxi nao gerem pastas no editor de itens do pedido.
