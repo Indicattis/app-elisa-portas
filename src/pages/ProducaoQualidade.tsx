@@ -112,11 +112,6 @@ export default function ProducaoQualidade() {
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
         isCapturing={capturarOrdem.isPending}
         onRetornarProducao={handleRetornarProducao}
-        onPausarOrdem={async (ordemId, justificativa, linhasProblemaIds) => {
-          await pausarOrdem.mutateAsync({ ordemId, justificativa, linhasProblemaIds });
-          setSheetOpen(false);
-        }}
-        isPausing={pausarOrdem.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal
