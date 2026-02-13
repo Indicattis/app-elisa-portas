@@ -1,37 +1,57 @@
 
-# Habilitar visualizacao completa do cronograma para gerentes e administradores
+# Cronograma: Filtrar apenas instalacoes, adicionar neo correcoes, filtro de equipes e PDF
 
 ## Objetivo
-Permitir que usuarios com role `administrador`, `gerente_fabril`, `gerente_instalacoes`, `diretor` ou com `bypass_permissions` vejam o cronograma completo de todas as equipes em `/logistica/instalacoes/cronograma`, em vez de apenas a sua equipe.
-
-## Solucao
-
-Modificar os dois hooks de dados (`useInstalacoesMinhaEquipeCalendario` e `useNeoInstalacoesMinhaEquipe`) para aceitar um parametro `verTodas` que remove o filtro por equipe. Na pagina `CronogramaMinimalista`, detectar se o usuario e admin/gerente e passar esse parametro.
+1. Remover entregas do cronograma -- exibir apenas instalacoes (ordens com `tipo_entrega = 'instalacao'`)
+2. Adicionar neo correcoes ao calendario (atualmente so mostra neo instalacoes)
+3. Adicionar filtro por equipe no header
+4. Adicionar botao para baixar PDF filtrado
 
 ## Detalhes tecnicos
 
 ### 1. `src/hooks/useInstalacoesMinhaEquipeCalendario.ts`
+- Adicionar filtro na query de `ordens_carregamento` para buscar apenas registros cuja venda tenha `tipo_entrega = 'instalacao'` (usar inner join filtering ou filtrar no client side apos o fetch)
+- Como o join com `vendas` ja existe e inclui `tipo_entrega`, filtrar no resultado: `data.filter(item => item.venda?.tipo_entrega === 'instalacao')`
+- Adicionar parametro opcional `equipeIdFiltro?: string | null` para filtrar por equipe especifica (quando gerente seleciona uma equipe no filtro)
 
-- Adicionar parametro opcional `verTodas: boolean`
-- Quando `verTodas === true`, pular a busca de equipe do usuario e buscar TODAS as ordens de carregamento no periodo (sem filtro `responsavel_carregamento_id`)
-- Buscar tambem todas as equipes ativas para mapear cores (`_corEquipe`) por `responsavel_carregamento_id`
-- Retornar `temEquipe: true` quando `verTodas` for true
-
-### 2. `src/hooks/useNeoInstalacoesMinhaEquipe.ts`
-
-- Adicionar parametro opcional `verTodas: boolean`
-- Quando `verTodas === true`, buscar TODAS as neo instalacoes no periodo (sem filtro `equipe_id`)
-- Incluir join com `equipes_instalacao` para trazer nome e cor da equipe de cada item
+### 2. Criar `src/hooks/useNeoCorrecoesMinhaEquipe.ts`
+- Novo hook similar a `useNeoInstalacoesMinhaEquipe.ts` mas para `neo_correcoes`
+- Aceita `verTodas`, `equipeIdFiltro` opcionais
+- Busca de `neo_correcoes` com join em `equipes_instalacao` para cores
+- Filtra por `data_correcao` no periodo e `concluida = false`
 
 ### 3. `src/pages/logistica/CronogramaMinimalista.tsx`
+- Importar e usar o novo hook `useNeoCorrecoesMinhaEquipe`
+- Adicionar state `equipeIdFiltro` para o filtro de equipes
+- Buscar lista de equipes ativas com query simples
+- Adicionar no header um `Select` dropdown com as equipes (apenas para gerentes, ja que usuarios normais so veem sua propria equipe)
+- Passar `neoCorrecoes` para os componentes do calendario (`CalendarioSemanalExpedicaoDesktop`, `CalendarioSemanalExpedicaoMobile`, `CalendarioMensalExpedicaoDesktop`)
+- Filtrar `ordens` e `neoInstalacoes` pelo `equipeIdFiltro` no client side quando selecionado
+- Adicionar botao de download PDF no header (icone de download)
+- Ao clicar, gerar PDF com os dados filtrados usando uma funcao adaptada
 
-- Importar `useAuth` e extrair `isAdmin`, `userRole`, `hasBypassPermissions`
-- Calcular `isGerente` verificando se o role e `administrador`, `gerente_fabril`, `gerente_instalacoes`, `diretor` ou se tem `bypass_permissions`
-- Passar `verTodas={isGerente}` para ambos os hooks
-- Quando `isGerente`, nao exibir a mensagem "Sem equipe vinculada" (pois vera todas)
-- Atualizar o titulo/badge do header para mostrar "Todas as equipes" quando `isGerente` em vez do nome de uma equipe especifica
+### 4. Criar `src/utils/cronogramaMinimalistaPDF.ts`
+- Funcao `gerarCronogramaMinimalistaPDF` que recebe:
+  - ordens filtradas (apenas instalacoes)
+  - neo instalacoes filtradas
+  - neo correcoes filtradas
+  - periodo (inicio/fim)
+  - equipe selecionada (ou "Todas")
+- Layout similar ao `cronogramaPDFGenerator.ts` existente mas adaptado:
+  - Titulo: "CRONOGRAMA DE INSTALACOES"
+  - Tabela semanal agrupada por dia com secoes para: Instalacoes, Neo Instalacoes, Neo Correcoes
+  - Legenda com cores das equipes
+  - Resumo estatistico
+
+### 5. Ajuste nos parametros dos hooks
+- `useInstalacoesMinhaEquipeCalendario`: adicionar `equipeIdFiltro?: string | null`
+  - Quando `equipeIdFiltro` estiver preenchido, usar esse ID no filtro `responsavel_carregamento_id` em vez do ID da equipe do usuario
+- `useNeoInstalacoesMinhaEquipe`: adicionar `equipeIdFiltro?: string | null`
+  - Quando preenchido, filtrar por `equipe_id = equipeIdFiltro`
 
 ### Arquivos editados
-1. `src/hooks/useInstalacoesMinhaEquipeCalendario.ts`
-2. `src/hooks/useNeoInstalacoesMinhaEquipe.ts`
-3. `src/pages/logistica/CronogramaMinimalista.tsx`
+1. `src/hooks/useInstalacoesMinhaEquipeCalendario.ts` -- filtrar tipo_entrega + parametro equipeIdFiltro
+2. `src/hooks/useNeoInstalacoesMinhaEquipe.ts` -- parametro equipeIdFiltro
+3. `src/hooks/useNeoCorrecoesMinhaEquipe.ts` -- novo hook
+4. `src/pages/logistica/CronogramaMinimalista.tsx` -- filtro equipes, neo correcoes, botao PDF
+5. `src/utils/cronogramaMinimalistaPDF.ts` -- novo gerador de PDF
