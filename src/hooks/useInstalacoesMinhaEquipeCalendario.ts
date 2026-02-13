@@ -146,7 +146,7 @@ export const useInstalacoesMinhaEquipeCalendario = (
         pedido_id: item.pedido_id,
         venda_id: item.venda_id,
         nome_cliente: item.nome_cliente,
-        tipo_carregamento: null,
+        tipo_carregamento: item.tipo_carregamento,
         data_carregamento: item.data_carregamento,
         hora: item.hora,
         hora_carregamento: item.hora_carregamento,
