@@ -7,7 +7,8 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 export const useInstalacoesMinhaEquipeCalendario = (
   currentDate: Date,
   periodo: 'week' | 'month' = 'week',
-  verTodas: boolean = false
+  verTodas: boolean = false,
+  equipeIdFiltro?: string | null
 ) => {
   const { user } = useAuth();
 
@@ -93,7 +94,7 @@ export const useInstalacoesMinhaEquipeCalendario = (
 
   // Buscar ordens de carregamento
   const { data: ordens = [], isLoading: isLoadingOrdens } = useQuery({
-    queryKey: ["ordens_minha_equipe_calendario", verTodas ? "todas" : equipeData?.id, inicio, fim],
+    queryKey: ["ordens_minha_equipe_calendario", verTodas ? "todas" : equipeData?.id, inicio, fim, equipeIdFiltro],
     queryFn: async () => {
       if (!verTodas && !equipeData?.id) return [];
 
@@ -119,7 +120,9 @@ export const useInstalacoesMinhaEquipeCalendario = (
         .lte("data_carregamento", fim)
         .order("data_carregamento", { ascending: true });
 
-      if (!verTodas && equipeData?.id) {
+      if (equipeIdFiltro) {
+        query = query.eq("responsavel_carregamento_id", equipeIdFiltro);
+      } else if (!verTodas && equipeData?.id) {
         query = query.eq("responsavel_carregamento_id", equipeData.id);
       }
 
@@ -138,7 +141,10 @@ export const useInstalacoesMinhaEquipeCalendario = (
         });
       }
 
-      return (data || []).map(item => ({
+      // Filter only instalações (exclude entregas)
+      const filtered = (data || []).filter(item => item.venda?.tipo_entrega === 'instalacao');
+
+      return filtered.map(item => ({
         ...item,
         _corEquipe: verTodas
           ? equipesMap.get(item.responsavel_carregamento_id) || undefined
