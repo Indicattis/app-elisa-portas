@@ -8,7 +8,8 @@ export const useNeoInstalacoesMinhaEquipe = (
   currentDate: Date,
   periodo: 'week' | 'month' = 'week',
   verTodas: boolean = false,
-  equipeIdFiltro?: string | null
+  equipeIdFiltro?: string | null,
+  autorizadoIdFiltro?: string | null
 ) => {
   const { user } = useAuth();
 
@@ -76,7 +77,7 @@ export const useNeoInstalacoesMinhaEquipe = (
 
   // Buscar neo instalações
   const { data: neoInstalacoes = [], isLoading: isLoadingNeo } = useQuery({
-    queryKey: ["neo_instalacoes_minha_equipe", verTodas ? "todas" : equipeData?.id, inicio, fim, equipeIdFiltro],
+    queryKey: ["neo_instalacoes_minha_equipe", verTodas ? "todas" : equipeData?.id, inicio, fim, equipeIdFiltro, autorizadoIdFiltro],
     queryFn: async () => {
       if (!verTodas && !equipeData?.id) return [];
 
@@ -88,7 +89,9 @@ export const useNeoInstalacoesMinhaEquipe = (
         .lte("data_instalacao", fim)
         .order("data_instalacao", { ascending: true });
 
-      if (equipeIdFiltro) {
+      if (autorizadoIdFiltro) {
+        query = query.eq("autorizado_id", autorizadoIdFiltro);
+      } else if (equipeIdFiltro) {
         query = query.eq("equipe_id", equipeIdFiltro);
       } else if (!verTodas && equipeData?.id) {
         query = query.eq("equipe_id", equipeData.id);

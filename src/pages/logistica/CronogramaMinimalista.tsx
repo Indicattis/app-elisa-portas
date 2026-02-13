@@ -63,19 +63,19 @@ export default function CronogramaMinimalista() {
     equipeNome,
     equipeCor,
     temEquipe 
-  } = useInstalacoesMinhaEquipeCalendario(currentDate, viewType, isGerente, equipeIdFiltro);
+  } = useInstalacoesMinhaEquipeCalendario(currentDate, viewType, isGerente, equipeIdFiltro, autorizadoIdFiltro);
 
   // Hook para neo instalações da equipe
   const { 
     neoInstalacoes,
     isLoading: isLoadingNeo 
-  } = useNeoInstalacoesMinhaEquipe(currentDate, viewType, isGerente, equipeIdFiltro);
+  } = useNeoInstalacoesMinhaEquipe(currentDate, viewType, isGerente, equipeIdFiltro, autorizadoIdFiltro);
 
   // Hook para neo correções da equipe
   const { 
     neoCorrecoes,
     isLoading: isLoadingCorrecoes 
-  } = useNeoCorrecoesMinhaEquipe(currentDate, viewType, isGerente, equipeIdFiltro);
+  } = useNeoCorrecoesMinhaEquipe(currentDate, viewType, isGerente, equipeIdFiltro, autorizadoIdFiltro);
 
   const isLoading = isLoadingOrdens || isLoadingNeo || isLoadingCorrecoes;
 
