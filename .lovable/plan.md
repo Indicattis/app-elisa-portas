@@ -1,31 +1,22 @@
 
-# Fix: Filtro de Autorizados no Cronograma
 
-## Problema
-O estado `autorizadoIdFiltro` e criado e atualizado pelo Select, mas nunca e passado para os 3 hooks de dados (`useInstalacoesMinhaEquipeCalendario`, `useNeoInstalacoesMinhaEquipe`, `useNeoCorrecoesMinhaEquipe`). Por isso, selecionar um autorizado nao altera os dados exibidos.
+# Aceitar PNG e JPG alem de PDF no upload de documentos
+
+## Resumo
+Atualizar a pagina de upload de documentos para aceitar imagens PNG e JPG alem de PDF.
 
 ## Alteracoes
 
-### 1. Hook: `src/hooks/useInstalacoesMinhaEquipeCalendario.ts`
-- Adicionar parametro `autorizadoIdFiltro?: string | null` na assinatura (linha 11)
-- Adicionar `autorizadoIdFiltro` na queryKey (linha 97)
-- Na query, quando `autorizadoIdFiltro` estiver definido, filtrar por `.eq("responsavel_carregamento_id", autorizadoIdFiltro)` (apos linha 122)
+### Arquivo: `src/pages/DocumentoNovo.tsx`
 
-### 2. Hook: `src/hooks/useNeoInstalacoesMinhaEquipe.ts`
-- Adicionar parametro `autorizadoIdFiltro?: string | null` na assinatura (linha 11)
-- Adicionar `autorizadoIdFiltro` na queryKey (linha 79)
-- Na query, quando `autorizadoIdFiltro` estiver definido, filtrar por `.eq("autorizado_id", autorizadoIdFiltro)` (apos linha 91)
+1. **Validacao de tipo** (linha 38): Trocar a verificacao `file.type !== 'application/pdf'` por uma lista de tipos permitidos: `['application/pdf', 'image/png', 'image/jpeg']`
+2. **Mensagem de erro** (linha 41): Atualizar para "Apenas arquivos PDF, PNG e JPG sao permitidos"
+3. **Mensagem de erro no submit** (linha 64): Atualizar de "Selecione um arquivo PDF" para "Selecione um arquivo"
+4. **Subtitulo da pagina** (linha 110): Alterar "Adicione um novo documento PDF" para "Adicione um novo documento"
+5. **Descricao do card** (linha 119): Alterar "upload do arquivo PDF" para "upload do arquivo"
+6. **Label do campo** (linha 163): Alterar "Arquivo PDF *" para "Arquivo *"
+7. **Texto do botao** (linha 171): Alterar "Escolher arquivo PDF" para "Escolher arquivo"
+8. **Input accept** (linha 177): Alterar `accept=".pdf"` para `accept=".pdf,.png,.jpg,.jpeg"`
+9. **Texto informativo** (linha 182): Alterar "Apenas arquivos PDF" para "PDF, PNG ou JPG"
+10. **Icone do arquivo selecionado** (linha 190): Mostrar icone de imagem (`Image` do lucide-react) quando for PNG/JPG, mantendo `FileText` para PDF
 
-### 3. Hook: `src/hooks/useNeoCorrecoesMinhaEquipe.ts`
-- Adicionar parametro `autorizadoIdFiltro?: string | null` na assinatura (linha 11)
-- Adicionar `autorizadoIdFiltro` na queryKey (linha 69)
-- Na query, quando `autorizadoIdFiltro` estiver definido, filtrar por `.eq("autorizado_id", autorizadoIdFiltro)` (apos linha 81)
-
-### 4. Pagina: `src/pages/logistica/CronogramaMinimalista.tsx`
-- Passar `autorizadoIdFiltro` como 5o argumento nos 3 hooks (linhas 66, 72, 78):
-  - `useInstalacoesMinhaEquipeCalendario(currentDate, viewType, isGerente, equipeIdFiltro, autorizadoIdFiltro)`
-  - `useNeoInstalacoesMinhaEquipe(currentDate, viewType, isGerente, equipeIdFiltro, autorizadoIdFiltro)`
-  - `useNeoCorrecoesMinhaEquipe(currentDate, viewType, isGerente, equipeIdFiltro, autorizadoIdFiltro)`
-
-## Logica de filtro
-Quando `autorizadoIdFiltro` esta definido, ele tem prioridade sobre o filtro de equipe, pois autorizados sao entidades diferentes de equipes internas. Os dois filtros operam de forma exclusiva: ao selecionar um autorizado, os dados sao filtrados pelo ID do autorizado; ao selecionar uma equipe, sao filtrados pelo ID da equipe.
