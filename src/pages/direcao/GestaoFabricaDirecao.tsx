@@ -34,6 +34,7 @@ const ETAPA_ICONS = {
   em_producao: Factory,
   inspecao_qualidade: ClipboardCheck,
   aguardando_pintura: Paintbrush,
+  embalagem: Package,
   aguardando_coleta: Package,
   aguardando_instalacao: Wrench,
   instalacoes: HardHat,
