@@ -452,6 +452,7 @@ export default function PedidosAdminMinimalista() {
       title="Pedidos" 
       subtitle={`${totalPedidosAtivos} pedidos ativos`}
       backPath="/administrativo"
+      fullWidth
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Administrativo", path: "/administrativo" },
