@@ -1,16 +1,32 @@
 
 
-# Fix: Adicionar icone da etapa Embalagem em GestaoFabricaDirecao
+# Adicionar Ordem de Embalagem em /fabrica/ordens-pedidos
 
-## Problema
-A pagina `/direcao/gestao-fabrica` esta quebrando porque o mapa `ETAPA_ICONS` (linha 31-42) nao inclui a nova etapa `embalagem`. Quando o componente itera sobre `ORDEM_ETAPAS` (que agora inclui `embalagem`) e tenta renderizar `ETAPA_ICONS['embalagem']`, recebe `undefined`, causando o erro "Element type is invalid".
+## Resumo
+Incluir a ordem de embalagem junto das demais ordens (soldagem, perfiladeira, separacao, qualidade, pintura) na pagina de Ordens por Pedido.
 
-## Correcao
+## Alteracoes
 
-### Arquivo: `src/pages/direcao/GestaoFabricaDirecao.tsx`
+### 1. Hook `src/hooks/useOrdensPorPedido.ts`
 
-1. Importar o icone `Package` (ja importado na linha 5) -- pode reutilizar ou usar outro icone adequado como `PackageCheck` ou `BoxSelect`.
-2. Adicionar `embalagem: Package` ao mapa `ETAPA_ICONS` na linha 38, entre `aguardando_pintura` e `aguardando_coleta`.
+- Adicionar `'embalagem'` ao type `TipoOrdem` (linha 5)
+- Adicionar `embalagem: OrdemStatus` ao interface `PedidoComOrdens.ordens` (linha 76, entre pintura e carregamento)
+- Na funcao `useOrdensPorPedido`, adicionar query para `ordens_embalagem` no `Promise.all` (entre pinturaRes e carregamentoRes):
+  ```
+  supabase.from('ordens_embalagem')
+    .select('id, pedido_id, numero_ordem, status, responsavel_id, capturada_em, tempo_conclusao_segundos')
+    .in('pedido_id', pedidoIds)
+  ```
+- Adicionar `embalagemRes` ao array de coleta de `allResponsavelIds`
+- Chamar `processOrdens(embalagemRes.data, 'embalagem')` no mapeamento de ordens
+- Adicionar `embalagem: criarOrdemStatus('embalagem')` ao objeto `ordens` retornado
 
-Resultado: a tab "Embalagem" aparecera na lista de etapas com o icone correto, sem mais crashes.
+### 2. Componente `src/components/fabrica/PedidoOrdemCard.tsx`
+
+- Adicionar `embalagem: 'Embalagem'` ao `ORDEM_LABELS` (linha 23, entre pintura e carregamento)
+- Adicionar `pedido.ordens.embalagem` ao array `ordensBase` (linha 68, entre pintura e o fechamento do array)
+
+### 3. Pagina `src/pages/fabrica/OrdensPorPedido.tsx`
+
+- Adicionar `pedido.ordens.embalagem` ao array de ordens no calculo de metricas (linha 43, entre qualidade e pintura)
 
