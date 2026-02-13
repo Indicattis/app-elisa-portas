@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Package, Settings, ArrowLeft, Warehouse } from 'lucide-react';
+import { Package, Settings, ArrowLeft, Warehouse, Factory } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
-  { label: 'Auditoria Fábrica', icon: Search, path: '/direcao/estoque/auditoria/fabrica' },
-  { label: 'Auditoria Almoxarifado', icon: Package, path: '/direcao/estoque/auditoria/almoxarifado' },
-  { label: 'Configurações', icon: Settings, path: '/direcao/estoque/configuracoes' },
+  { label: 'Auditoria Fábrica', icon: Factory, path: '/direcao/estoque/auditoria/fabrica', gradient: 'from-gray-400 to-gray-600', hoverGradient: 'hover:from-gray-300 hover:to-gray-500', shadow: 'shadow-gray-500/20', border: 'border-gray-400/30' },
+  { label: 'Auditoria Almoxarifado', icon: Package, path: '/direcao/estoque/auditoria/almoxarifado', gradient: 'from-gray-600 to-gray-800', hoverGradient: 'hover:from-gray-500 hover:to-gray-700', shadow: 'shadow-gray-700/20', border: 'border-gray-500/30' },
+  { label: 'Configurações', icon: Settings, path: '/direcao/estoque/configuracoes', gradient: 'from-blue-500 to-blue-700', hoverGradient: 'hover:from-blue-400 hover:to-blue-600', shadow: 'shadow-blue-500/20', border: 'border-blue-400/30' },
 ];
 
 export default function DirecaoEstoqueHub() {
@@ -87,15 +87,15 @@ export default function DirecaoEstoqueHub() {
               >
                 <button
                   onClick={() => navigate(item.path)}
-                  className="w-full h-12 rounded-lg
-                             bg-gradient-to-r from-blue-500 to-blue-700
-                             hover:from-blue-400 hover:to-blue-600
+                  className={`w-full h-12 rounded-lg
+                             bg-gradient-to-r ${item.gradient}
+                             ${item.hoverGradient}
                              active:scale-[0.98]
                              flex items-center gap-4 px-5
                              text-white font-medium 
-                             shadow-lg shadow-blue-500/20
-                             border border-blue-400/30
-                             transition-all duration-300"
+                             shadow-lg ${item.shadow}
+                             border ${item.border}
+                             transition-all duration-300`}
                 >
                   <Icon className="w-5 h-5" strokeWidth={1.5} />
                   <span className="text-sm font-medium">{item.label}</span>
