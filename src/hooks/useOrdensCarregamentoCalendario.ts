@@ -205,8 +205,14 @@ export const useOrdensCarregamentoCalendario = (
         };
       });
 
-      // 4. Marcar ordens_carregamento com fonte
-      const ordensComFonte = (ordensCarregamento || []).map((ordem: any) => ({
+      // 4. Filtrar apenas entregas (instalações vêm da tabela instalacoes)
+      const ordensEntrega = (ordensCarregamento || []).filter(
+        (ordem: any) => {
+          const tipoEntrega = ordem.venda?.tipo_entrega;
+          return tipoEntrega === 'entrega' || !tipoEntrega;
+        }
+      );
+      const ordensComFonte = ordensEntrega.map((ordem: any) => ({
         ...ordem,
         fonte: 'ordens_carregamento' as const
       }));
