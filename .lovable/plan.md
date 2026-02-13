@@ -1,28 +1,33 @@
 
+# Corrigir exibicao de instalacoes no cronograma minimalista
 
-# Limitar captura de ordens de pintura a 3 por usuario
+## Problema
+O cronograma em `/logistica/instalacoes/cronograma` usa o hook `useInstalacoesMinhaEquipeCalendario` que busca dados da tabela `ordens_carregamento`. Porem, as instalacoes regulares (nao-neo) estao armazenadas na tabela `instalacoes`, que e a fonte de verdade. Por isso, elas nao aparecem.
 
-## Objetivo
-Cada usuario so podera capturar no maximo 3 ordens de pintura simultaneamente. Se ja tiver 3 ordens capturadas (com `responsavel_id` igual ao usuario e status `pendente`), a captura sera bloqueada.
+## Solucao
+Criar um novo hook ou adaptar a logica para buscar instalacoes da tabela `instalacoes` (igual ao `useOrdensInstalacaoCalendario` faz), aplicando os filtros de equipe e periodo, e passar esses dados para o calendario.
 
 ## Detalhes tecnicos
 
-### Arquivo: `src/hooks/useOrdemPintura.ts`
+### 1. `src/hooks/useInstalacoesMinhaEquipeCalendario.ts`
+Alterar a query principal para buscar da tabela `instalacoes` em vez de `ordens_carregamento`:
+- Trocar `from("ordens_carregamento")` por `from("instalacoes")`
+- Ajustar os campos de filtro:
+  - `data_carregamento` -> `data_instalacao`
+  - `responsavel_carregamento_id` -> `responsavel_instalacao_id`
+  - `status !== 'concluida'` -> `instalacao_concluida = false`
+- Remover o filtro client-side de `tipo_entrega === 'instalacao'` (ja nao e necessario pois a tabela `instalacoes` so contem instalacoes)
+- Ajustar o join com `vendas` para usar os campos corretos
+- Mapear o resultado para o tipo `OrdemCarregamento` mantendo compatibilidade com os componentes do calendario
 
-Na funcao `capturarOrdem.mutationFn` (linha 217), antes de fazer o update, adicionar uma verificacao:
+### 2. Mapeamento de campos
+Os componentes do calendario esperam o tipo `OrdemCarregamento`. O mapeamento dos campos da tabela `instalacoes` sera:
+- `data_carregamento` <- `data_instalacao`
+- `responsavel_carregamento_id` <- `responsavel_instalacao_id`
+- `responsavel_carregamento_nome` <- `responsavel_instalacao_nome`
+- `cliente_nome` <- `nome_cliente` ou `venda.cliente_nome`
+- `status` <- derivado de `instalacao_concluida`
+- `_corEquipe` <- mapeado via `equipes_instalacao`
 
-1. Contar quantas ordens de pintura o usuario atual ja tem capturadas (onde `responsavel_id = user.id` e `historico = false`)
-2. Se o total for >= 3, lancar erro com mensagem explicativa
-3. O toast de erro ja exibe `error.message`, entao a mensagem aparecera automaticamente para o usuario
-
-```text
-Fluxo:
-  Usuario clica "Capturar"
-    -> Buscar contagem de ordens com responsavel_id = user.id e historico = false
-    -> Se >= 3: erro "Voce ja possui 3 ordens capturadas. Finalize uma antes de capturar outra."
-    -> Se < 3: prosseguir com captura normalmente
-```
-
-### Arquivo unico editado
-- `src/hooks/useOrdemPintura.ts` -- adicionar query de contagem antes do update na mutationFn de `capturarOrdem`
-
+### Arquivo editado
+- `src/hooks/useInstalacoesMinhaEquipeCalendario.ts`
