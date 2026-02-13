@@ -88,7 +88,7 @@ export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfila
           fornecedor:fornecedores(id, nome)
         `)
         .eq("ativo", true)
-        .order("nome_produto");
+        .order("ordem", { ascending: true });
 
       if (searchTerm) {
         query = query.or(
@@ -351,6 +351,29 @@ export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfila
     },
   });
 
+  const reordenarProdutos = useMutation({
+    mutationFn: async (items: { id: string; ordem: number }[]) => {
+      // Update each item's ordem
+      for (const item of items) {
+        const { error } = await supabase
+          .from("estoque")
+          .update({ ordem: item.ordem })
+          .eq("id", item.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["estoque"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao reordenar",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const buscarProdutos = async (termo: string) => {
     setSearchTerm(termo);
   };
@@ -365,5 +388,6 @@ export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfila
     movimentarEstoque: movimentarEstoque.mutateAsync,
     alterarCategoria: alterarCategoria.mutateAsync,
     buscarMovimentacoes,
+    reordenarProdutos: reordenarProdutos.mutateAsync,
   };
 };
