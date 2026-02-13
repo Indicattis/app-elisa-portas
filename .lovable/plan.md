@@ -1,32 +1,30 @@
 
-# Corrigir instalacoes no cronograma minimalista
+# Substituir SKU por drag-and-drop para ordenar produtos da fabrica
 
-## Problema
-O hook `useInstalacoesMinhaEquipeCalendario` filtra por `data_instalacao` e `responsavel_instalacao_id`, mas as instalacoes agendadas no calendario usam os campos `data_carregamento` e `responsavel_carregamento_id`. O campo `data_instalacao` esta `null` para esses registros, por isso nao aparecem.
+## Resumo
+Substituir a coluna SKU na tabela de produtos da fabrica por um botao de arraste (drag handle) que permite reordenar os itens. A nova ordem sera salva no banco de dados.
 
-A pagina `/logistica/expedicao` funciona porque o hook `useOrdensCarregamentoCalendario` busca corretamente por `data_carregamento` na tabela `instalacoes`.
+## Alteracoes necessarias
 
-## Solucao
-Alterar `useInstalacoesMinhaEquipeCalendario.ts` para usar os campos corretos:
+### 1. Adicionar coluna `ordem` na tabela `estoque`
+- Criar coluna `ordem` do tipo `integer` com valor default `0`
+- Inicializar os registros existentes com valores sequenciais baseados no nome
 
-### Arquivo: `src/hooks/useInstalacoesMinhaEquipeCalendario.ts`
-Trocar todos os campos de instalacao pelos campos de carregamento na query:
+### 2. Alterar `src/hooks/useEstoque.ts`
+- Trocar `.order("nome_produto")` por `.order("ordem", { ascending: true })`
+- Adicionar funcao `reordenarProdutos` que recebe array de `{ id, ordem }` e faz update em batch na tabela `estoque`
 
-| Campo atual (errado)           | Campo correto                    |
-|-------------------------------|----------------------------------|
-| `data_instalacao`             | `data_carregamento`              |
-| `responsavel_instalacao_id`   | `responsavel_carregamento_id`    |
-| `responsavel_instalacao_nome` | `responsavel_carregamento_nome`  |
-| `instalacao_concluida`        | `carregamento_concluido`         |
+### 3. Alterar `src/pages/direcao/estoque/ProdutosFabrica.tsx`
+- Importar `DndContext`, `SortableContext`, `useSortable`, `closestCenter` do `@dnd-kit`
+- Importar icone `GripVertical` do lucide-react
+- Remover coluna "SKU" do header da tabela e substituir por coluna estreita sem titulo (para o drag handle)
+- Extrair o conteudo de cada `TableRow` para um componente `SortableProductRow` definido **fora** do componente principal (seguindo o padrao de estabilidade de componentes)
+- No `SortableProductRow`, usar `useSortable` e exibir o icone `GripVertical` na primeira celula como drag handle
+- Envolver a `TableBody` com `DndContext` e `SortableContext`
+- No `onDragEnd`, calcular a nova ordem e chamar `reordenarProdutos`
+- Desabilitar drag-and-drop quando houver termo de busca ativo (pois a lista filtrada nao representa a ordem completa)
 
-Ajustes especificos:
-- Filtro `.eq("instalacao_concluida", false)` -> `.eq("carregamento_concluido", false)`
-- Filtro `.not("data_instalacao", "is", null)` -> `.not("data_carregamento", "is", null)`
-- Filtros de range `.gte/.lte("data_instalacao", ...)` -> `.gte/.lte("data_carregamento", ...)`
-- Filtros de equipe `.eq("responsavel_instalacao_id", ...)` -> `.eq("responsavel_carregamento_id", ...)`
-- Order `.order("data_instalacao", ...)` -> `.order("data_carregamento", ...)`
-- No mapeamento, usar `item.data_carregamento`, `item.responsavel_carregamento_id`, `item.responsavel_carregamento_nome`, `item.carregamento_concluido` diretamente
-- No `equipesMap.get`, usar `item.responsavel_carregamento_id`
-
-### Arquivo editado
-- `src/hooks/useInstalacoesMinhaEquipeCalendario.ts`
+### Detalhes de implementacao
+- O drag handle sera um icone `GripVertical` com estilo `cursor-grab text-white/30 hover:text-white/60`
+- A ordenacao usara a mesma abordagem do `PedidosDraggableList` ja existente no projeto (com `@dnd-kit`)
+- Ao arrastar, a linha tera opacidade reduzida e o overlay mostrara o nome do produto
