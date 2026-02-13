@@ -61,6 +61,7 @@ export default function ExpedicaoMinimalista() {
   const [neoInstalacaoDetailsOpen, setNeoInstalacaoDetailsOpen] = useState(false);
   const [selectedNeoCorrecao, setSelectedNeoCorrecao] = useState<NeoCorrecao | null>(null);
   const [neoCorrecaoDetailsOpen, setNeoCorrecaoDetailsOpen] = useState(false);
+  const [legendaFiltro, setLegendaFiltro] = useState<string | null>(null);
 
   const { ordens, isLoading, updateOrdem } = useOrdensCarregamentoCalendario(currentDate, viewType);
   const { neoInstalacoes, createNeoInstalacao, updateNeoInstalacao, deleteNeoInstalacao, concluirNeoInstalacao, isConcluindo: isConcluindoInstalacao } = useNeoInstalacoes(currentDate, viewType);
@@ -238,6 +239,20 @@ export default function ExpedicaoMinimalista() {
     await updateNeoCorrecaoSemData({ id, data: { data_correcao: data, hora: null } });
   };
 
+  const handleLegendToggle = (legend: string) => {
+    setLegendaFiltro(prev => prev === legend ? null : legend);
+  };
+
+  // Filtragem por legenda
+  const ordensFiltradas = !legendaFiltro ? (ordens || [])
+    : legendaFiltro === 'elisa' ? (ordens || []).filter(o => o.tipo_carregamento === 'elisa' && o.venda?.tipo_entrega !== 'entrega')
+    : legendaFiltro === 'autorizados' ? (ordens || []).filter(o => o.tipo_carregamento === 'autorizados')
+    : legendaFiltro === 'entrega' ? (ordens || []).filter(o => o.venda?.tipo_entrega === 'entrega')
+    : [];
+
+  const neoInstalacoesFiltradas = !legendaFiltro || legendaFiltro === 'neo_instalacao' ? (neoInstalacoes || []) : [];
+  const neoCorrecoesFiltradas = !legendaFiltro || legendaFiltro === 'neo_correcao' ? (neoCorrecoes || []) : [];
+
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -346,9 +361,11 @@ export default function ExpedicaoMinimalista() {
                   {isMobile ? (
                     <CalendarioSemanalExpedicaoMobile
                       startDate={weekStart}
-                      ordens={ordens || []}
-                      neoInstalacoes={neoInstalacoes || []}
-                      neoCorrecoes={neoCorrecoes || []}
+                      ordens={ordensFiltradas}
+                      neoInstalacoes={neoInstalacoesFiltradas}
+                      neoCorrecoes={neoCorrecoesFiltradas}
+                      activeLegend={legendaFiltro}
+                      onLegendToggle={handleLegendToggle}
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
@@ -365,9 +382,11 @@ export default function ExpedicaoMinimalista() {
                   ) : viewType === 'week' ? (
                     <CalendarioSemanalExpedicaoDesktop
                       startDate={weekStart}
-                      ordens={ordens || []}
-                      neoInstalacoes={neoInstalacoes || []}
-                      neoCorrecoes={neoCorrecoes || []}
+                      ordens={ordensFiltradas}
+                      neoInstalacoes={neoInstalacoesFiltradas}
+                      neoCorrecoes={neoCorrecoesFiltradas}
+                      activeLegend={legendaFiltro}
+                      onLegendToggle={handleLegendToggle}
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
@@ -395,9 +414,11 @@ export default function ExpedicaoMinimalista() {
                   ) : (
                     <CalendarioMensalExpedicaoDesktop
                       currentMonth={currentDate}
-                      ordens={ordens || []}
-                      neoInstalacoes={neoInstalacoes || []}
-                      neoCorrecoes={neoCorrecoes || []}
+                      ordens={ordensFiltradas}
+                      neoInstalacoes={neoInstalacoesFiltradas}
+                      neoCorrecoes={neoCorrecoesFiltradas}
+                      activeLegend={legendaFiltro}
+                      onLegendToggle={handleLegendToggle}
                       onMonthChange={handleMonthChange}
                       onUpdateOrdem={handleUpdateOrdem}
                       onUpdateNeoInstalacao={async (params) => {

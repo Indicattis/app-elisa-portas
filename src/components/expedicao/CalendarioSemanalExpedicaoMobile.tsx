@@ -2,6 +2,7 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { NeoInstalacao } from "@/types/neoInstalacao";
 import { NeoCorrecao } from "@/types/neoCorrecao";
 import { DiaCardExpedicao } from "./DiaCardExpedicao";
+import { CalendarioLegendas } from "./CalendarioLegendas";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, addDays, startOfWeek } from "date-fns";
@@ -26,6 +27,8 @@ interface CalendarioSemanalExpedicaoMobileProps {
   onOpenNeoCorrecaoDetails?: (neoCorrecao: NeoCorrecao) => void;
   onExcluirNeoInstalacao?: (id: string) => void;
   onExcluirNeoCorrecao?: (id: string) => void;
+  activeLegend?: string | null;
+  onLegendToggle?: (legend: string) => void;
 }
 
 export const CalendarioSemanalExpedicaoMobile = ({
@@ -46,6 +49,8 @@ export const CalendarioSemanalExpedicaoMobile = ({
   onOpenNeoCorrecaoDetails,
   onExcluirNeoInstalacao,
   onExcluirNeoCorrecao,
+  activeLegend,
+  onLegendToggle,
 }: CalendarioSemanalExpedicaoMobileProps) => {
   // Configuração dos sensores para DnD
   const mouseSensor = useSensor(MouseSensor);
@@ -83,6 +88,9 @@ export const CalendarioSemanalExpedicaoMobile = ({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Legendas */}
+        <CalendarioLegendas activeLegend={activeLegend} onToggle={onLegendToggle} />
 
         {/* Grid de dias - Mobile First */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
