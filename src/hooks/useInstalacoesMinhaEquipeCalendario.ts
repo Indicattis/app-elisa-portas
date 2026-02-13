@@ -6,17 +6,30 @@ import { OrdemCarregamento } from "@/types/ordemCarregamento";
 
 export const useInstalacoesMinhaEquipeCalendario = (
   currentDate: Date,
-  periodo: 'week' | 'month' = 'week'
+  periodo: 'week' | 'month' = 'week',
+  verTodas: boolean = false
 ) => {
   const { user } = useAuth();
 
-  // Buscar a equipe do usuário
+  // Buscar todas as equipes ativas (para mapear cores quando verTodas)
+  const { data: todasEquipes } = useQuery({
+    queryKey: ["todas_equipes_instalacao"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("equipes_instalacao")
+        .select("id, nome, cor")
+        .eq("ativa", true);
+      return data || [];
+    },
+    enabled: verTodas,
+  });
+
+  // Buscar a equipe do usuário (só quando NÃO verTodas)
   const { data: equipeData, isLoading: isLoadingEquipe } = useQuery({
     queryKey: ["minha_equipe_instalacao_calendario", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
 
-      // Buscar a equipe do usuário via tabela de membros
       const { data: membroData, error: membroError } = await supabase
         .from("equipes_instalacao_membros")
         .select("equipe_id")
@@ -31,7 +44,6 @@ export const useInstalacoesMinhaEquipeCalendario = (
       let equipeId = membroData?.equipe_id;
 
       if (!equipeId) {
-        // Verificar se é responsável de alguma equipe
         const { data: equipeResponsavel } = await supabase
           .from("equipes_instalacao")
           .select("id, nome, cor")
@@ -45,7 +57,6 @@ export const useInstalacoesMinhaEquipeCalendario = (
         return null;
       }
 
-      // Buscar detalhes da equipe
       const { data: equipe, error: equipeError } = await supabase
         .from("equipes_instalacao")
         .select("id, nome, cor")
@@ -60,7 +71,7 @@ export const useInstalacoesMinhaEquipeCalendario = (
 
       return equipe;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !verTodas,
   });
 
   // Calcular intervalo de datas
@@ -80,13 +91,13 @@ export const useInstalacoesMinhaEquipeCalendario = (
 
   const { inicio, fim } = getDateRange();
 
-  // Buscar ordens de carregamento da equipe
+  // Buscar ordens de carregamento
   const { data: ordens = [], isLoading: isLoadingOrdens } = useQuery({
-    queryKey: ["ordens_minha_equipe_calendario", equipeData?.id, inicio, fim],
+    queryKey: ["ordens_minha_equipe_calendario", verTodas ? "todas" : equipeData?.id, inicio, fim],
     queryFn: async () => {
-      if (!equipeData?.id) return [];
+      if (!verTodas && !equipeData?.id) return [];
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("ordens_carregamento")
         .select(`
           *,
@@ -102,32 +113,47 @@ export const useInstalacoesMinhaEquipeCalendario = (
             tipo_entrega
           )
         `)
-        .eq("responsavel_carregamento_id", equipeData.id)
         .neq("status", "concluida")
         .not("data_carregamento", "is", null)
         .gte("data_carregamento", inicio)
         .lte("data_carregamento", fim)
         .order("data_carregamento", { ascending: true });
 
+      if (!verTodas && equipeData?.id) {
+        query = query.eq("responsavel_carregamento_id", equipeData.id);
+      }
+
+      const { data, error } = await query;
+
       if (error) {
-        console.error("Erro ao buscar ordens da equipe:", error);
+        console.error("Erro ao buscar ordens:", error);
         throw error;
+      }
+
+      // Mapear cores das equipes
+      const equipesMap = new Map<string, string>();
+      if (verTodas && todasEquipes) {
+        todasEquipes.forEach(e => {
+          if (e.cor) equipesMap.set(e.id, e.cor);
+        });
       }
 
       return (data || []).map(item => ({
         ...item,
-        _corEquipe: equipeData.cor
+        _corEquipe: verTodas
+          ? equipesMap.get(item.responsavel_carregamento_id) || undefined
+          : equipeData?.cor
       })) as unknown as OrdemCarregamento[];
     },
-    enabled: !!equipeData?.id,
+    enabled: verTodas || !!equipeData?.id,
   });
 
   return {
     ordens: ordens as OrdemCarregamento[],
-    isLoading: isLoadingEquipe || isLoadingOrdens,
-    equipeId: equipeData?.id || null,
-    equipeNome: equipeData?.nome || null,
-    equipeCor: equipeData?.cor || null,
-    temEquipe: !!equipeData?.id,
+    isLoading: verTodas ? isLoadingOrdens : (isLoadingEquipe || isLoadingOrdens),
+    equipeId: verTodas ? null : (equipeData?.id || null),
+    equipeNome: verTodas ? "Todas as equipes" : (equipeData?.nome || null),
+    equipeCor: verTodas ? null : (equipeData?.cor || null),
+    temEquipe: verTodas ? true : !!equipeData?.id,
   };
 };
