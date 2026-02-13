@@ -256,11 +256,12 @@ export default function PedidoViewDirecao() {
     fetchPedidoDetails();
   }, [id]);
 
-  // Agrupar linhas por porta
+  // Agrupar linhas por porta (incluindo produtos sem linhas)
   const gruposPortas = useMemo((): PortaGrupo[] => {
     if (!pedido) return [];
     const map = new Map<string, PortaGrupo>();
     
+    // 1. Agrupar linhas existentes por produto_venda_id
     pedido.linhas.forEach((linha) => {
       const key = linha.produto_venda_id
         ? `${linha.produto_venda_id}_${linha.indice_porta ?? 0}`
@@ -285,6 +286,19 @@ export default function PedidoViewDirecao() {
       }
       
       map.get(key)!.linhas.push(linha);
+    });
+    
+    // 2. Criar pastas para produtos da venda que não possuem linhas
+    const produtosVenda = pedido.produtos_venda || [];
+    produtosVenda.forEach((pv: any) => {
+      const key = `${pv.id}_0`;
+      if (!map.has(key)) {
+        const tipoLabel = getLabelTipoProduto(pv.tipo_produto);
+        const dimensoes = formatarDimensoes(pv.largura, pv.altura);
+        const corNome = pv.cor?.nome;
+        const dimensoesComCor = [dimensoes, corNome].filter(Boolean).join(' • ');
+        map.set(key, { key, label: `${tipoLabel} #0`, dimensoes: dimensoesComCor, linhas: [] });
+      }
     });
     
     const grupos = [...map.values()];
@@ -660,20 +674,26 @@ export default function PedidoViewDirecao() {
                 return (
                   <div className="space-y-2 pt-2 border-t border-white/10">
                     <p className="text-xs text-white/50 font-medium">{grupo.label}</p>
-                    {grupo.linhas.map((linha) => (
-                      <div key={linha.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-sm">
-                        <div className="flex-1">
-                          <p className="font-medium text-white">{linha.nome_produto}</p>
-                          {linha.descricao_produto && (
-                            <p className="text-xs text-white/60">{linha.descricao_produto}</p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4 text-white/60 text-xs">
-                          {linha.tamanho && <span>{linha.tamanho}</span>}
-                          <span>Qtd: {linha.quantidade}</span>
-                        </div>
+                    {grupo.linhas.length === 0 ? (
+                      <div className="p-3 rounded-lg bg-white/5 text-sm text-white/40 text-center italic">
+                        Nenhum item de produção vinculado
                       </div>
-                    ))}
+                    ) : (
+                      grupo.linhas.map((linha) => (
+                        <div key={linha.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-sm">
+                          <div className="flex-1">
+                            <p className="font-medium text-white">{linha.nome_produto}</p>
+                            {linha.descricao_produto && (
+                              <p className="text-xs text-white/60">{linha.descricao_produto}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4 text-white/60 text-xs">
+                            {linha.tamanho && <span>{linha.tamanho}</span>}
+                            <span>Qtd: {linha.quantidade}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 );
               })()}
