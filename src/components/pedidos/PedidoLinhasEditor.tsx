@@ -255,7 +255,10 @@ export const PedidoLinhasEditor = ({
   });
   
   // Expandir portas por quantidade
-  const portas = expandirPortasPorQuantidade(portasRaw);
+  const portasFiltradas = portasRaw.filter(
+    (p: any) => p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'porta_social'
+  );
+  const portas = expandirPortasPorQuantidade(portasFiltradas);
 
   // Estado para itens padrão de porta de enrolar
   const [itensPadrao, setItensPadrao] = useState<ItemPadraoPortaEnrolar[]>([]);
