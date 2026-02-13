@@ -1,30 +1,43 @@
 
-# Substituir SKU por drag-and-drop para ordenar produtos da fabrica
 
-## Resumo
-Substituir a coluna SKU na tabela de produtos da fabrica por um botao de arraste (drag handle) que permite reordenar os itens. A nova ordem sera salva no banco de dados.
+# Corrigir drag-and-drop na pagina de Produtos Fabrica
 
-## Alteracoes necessarias
+## Problemas identificados
 
-### 1. Adicionar coluna `ordem` na tabela `estoque`
-- Criar coluna `ordem` do tipo `integer` com valor default `0`
-- Inicializar os registros existentes com valores sequenciais baseados no nome
+### 1. Ordem nao muda apos soltar o item
+O `handleDragEnd` busca os indices em `produtos` (lista completa do hook), mas o `SortableContext` recebe `filteredProdutos`. Alem disso, nao ha atualizacao otimista da UI -- o componente espera o refetch do React Query, que pode nao refletir a mudanca imediatamente. A lista precisa ser atualizada localmente antes de salvar no banco.
 
-### 2. Alterar `src/hooks/useEstoque.ts`
-- Trocar `.order("nome_produto")` por `.order("ordem", { ascending: true })`
-- Adicionar funcao `reordenarProdutos` que recebe array de `{ id, ordem }` e faz update em batch na tabela `estoque`
+### 2. Item nao acompanha o scroll
+O `@dnd-kit` tem auto-scroll habilitado por padrao, porem o container de scroll pode nao ser detectado corretamente. O `DragOverlay` precisa ser renderizado via `createPortal` no `document.body` para ficar fora do container com overflow e acompanhar o scroll corretamente (mesmo padrao usado em `PedidosDraggableList.tsx`).
 
-### 3. Alterar `src/pages/direcao/estoque/ProdutosFabrica.tsx`
-- Importar `DndContext`, `SortableContext`, `useSortable`, `closestCenter` do `@dnd-kit`
-- Importar icone `GripVertical` do lucide-react
-- Remover coluna "SKU" do header da tabela e substituir por coluna estreita sem titulo (para o drag handle)
-- Extrair o conteudo de cada `TableRow` para um componente `SortableProductRow` definido **fora** do componente principal (seguindo o padrao de estabilidade de componentes)
-- No `SortableProductRow`, usar `useSortable` e exibir o icone `GripVertical` na primeira celula como drag handle
-- Envolver a `TableBody` com `DndContext` e `SortableContext`
-- No `onDragEnd`, calcular a nova ordem e chamar `reordenarProdutos`
-- Desabilitar drag-and-drop quando houver termo de busca ativo (pois a lista filtrada nao representa a ordem completa)
+## Alteracoes
 
-### Detalhes de implementacao
-- O drag handle sera um icone `GripVertical` com estilo `cursor-grab text-white/30 hover:text-white/60`
-- A ordenacao usara a mesma abordagem do `PedidosDraggableList` ja existente no projeto (com `@dnd-kit`)
-- Ao arrastar, a linha tera opacidade reduzida e o overlay mostrara o nome do produto
+### Arquivo: `src/pages/direcao/estoque/ProdutosFabrica.tsx`
+
+1. **Adicionar estado local para a lista ordenada** -- usar `useState` + `useEffect` para manter uma copia local de `produtos` que e atualizada otimisticamente no `onDragEnd` antes de salvar no banco.
+
+2. **Renderizar DragOverlay via createPortal** -- importar `createPortal` de `react-dom` e renderizar o `DragOverlay` dentro de `createPortal(..., document.body)`. Isso garante que o overlay fique no topo do DOM e acompanhe o cursor/scroll corretamente.
+
+3. **Adicionar modifier `restrictToWindowEdges`** -- importar de `@dnd-kit/modifiers` e aplicar ao `DragOverlay` para evitar que o item saia da tela (seguindo o padrao de `PedidosDraggableList`).
+
+4. **Corrigir logica do handleDragEnd** -- usar a lista local (`localProdutos`) em vez de `produtos` para calcular indices e fazer a reordenacao. Atualizar o estado local imediatamente (otimista) e depois chamar `reordenarProdutos`.
+
+5. **Filtrar a partir da lista local** -- `filteredProdutos` deve derivar de `localProdutos` em vez de `produtos`.
+
+### Resumo das mudancas tecnicas
+
+```text
+Antes:
+  produtos (react-query) --> filteredProdutos --> SortableContext
+  handleDragEnd --> arrayMove(produtos) --> reordenarProdutos --> invalidateQueries --> refetch
+
+Depois:
+  produtos (react-query) --> localProdutos (estado local, sync via useEffect)
+  localProdutos --> filteredProdutos --> SortableContext
+  handleDragEnd --> arrayMove(localProdutos) --> setLocalProdutos (otimista) --> reordenarProdutos
+  DragOverlay renderizado via createPortal no document.body
+```
+
+### Arquivo unico editado
+- `src/pages/direcao/estoque/ProdutosFabrica.tsx`
+
