@@ -34,6 +34,17 @@ export function NeoCorrecaoCardGestao({
     .slice(0, 2)
     .join('')
     .toUpperCase();
+
+  const atrasado = (() => {
+    const dataStr = neoCorrecao.data_correcao;
+    if (!dataStr) return false;
+    const data = new Date(dataStr + 'T12:00:00');
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    data.setHours(0, 0, 0, 0);
+    return data < hoje;
+  })();
+
   if (viewMode === 'list') {
     return (
       <TooltipProvider>
@@ -112,10 +123,10 @@ export function NeoCorrecaoCardGestao({
               <div className="text-center">
                 {neoCorrecao.data_correcao ? (
                   <div className="flex flex-col items-center leading-tight">
-                    <span className="text-[9px] font-medium text-purple-400">
-                      Agendado
+                    <span className={`text-[9px] font-medium ${atrasado ? 'text-red-500' : 'text-purple-400'}`}>
+                      {atrasado ? 'Atrasado' : 'Agendado'}
                     </span>
-                    <span className="text-xs font-bold text-purple-400">
+                    <span className={`text-xs font-bold ${atrasado ? 'text-red-500' : 'text-purple-400'}`}>
                       {format(parseISO(neoCorrecao.data_correcao), "dd/MM/yy")}
                     </span>
                   </div>
@@ -267,7 +278,7 @@ export function NeoCorrecaoCardGestao({
         </div>
 
         {neoCorrecao.data_correcao && (
-          <div className="flex items-center gap-1">
+          <div className={`flex items-center gap-1 ${atrasado ? 'text-red-500' : ''}`}>
             <Calendar className="h-3 w-3" />
             {format(parseISO(neoCorrecao.data_correcao), "dd/MM/yyyy", { locale: ptBR })}
             {neoCorrecao.hora && ` às ${neoCorrecao.hora.slice(0, 5)}`}
