@@ -1956,6 +1956,7 @@ export type Database = {
           item_padrao_porta_enrolar: boolean | null
           modulo_calculo: string | null
           nome_produto: string
+          ordem: number
           peso_porta: number | null
           pontuacao_producao: number | null
           quantidade: number
@@ -1984,6 +1985,7 @@ export type Database = {
           item_padrao_porta_enrolar?: boolean | null
           modulo_calculo?: string | null
           nome_produto: string
+          ordem?: number
           peso_porta?: number | null
           pontuacao_producao?: number | null
           quantidade?: number
@@ -2012,6 +2014,7 @@ export type Database = {
           item_padrao_porta_enrolar?: boolean | null
           modulo_calculo?: string | null
           nome_produto?: string
+          ordem?: number
           peso_porta?: number | null
           pontuacao_producao?: number | null
           quantidade?: number

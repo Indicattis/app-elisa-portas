@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Tags, FileDown, Printer } from "lucide-react";
+import { Plus, Tags, FileDown, Printer, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -16,16 +16,121 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { toast } from "sonner";
 import { baixarEstoquePDF, imprimirEstoquePDF } from "@/utils/estoquePDFGenerator";
 import { formatCurrency } from "@/lib/utils";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { ProdutoEstoque } from "@/hooks/useEstoque";
+
+// Componente SortableProductRow definido FORA do componente principal para estabilidade
+interface SortableProductRowProps {
+  produto: ProdutoEstoque;
+  onDoubleClick: (id: string) => void;
+  isDragDisabled: boolean;
+}
+
+function SortableProductRow({ produto, onDoubleClick, isDragDisabled }: SortableProductRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: produto.id, disabled: isDragDisabled });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+
+  return (
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className="border-white/10 hover:bg-white/5 cursor-pointer"
+      onDoubleClick={() => onDoubleClick(produto.id)}
+    >
+      <TableCell className="w-10 px-1">
+        {!isDragDisabled && (
+          <div
+            className="cursor-grab active:cursor-grabbing text-white/30 hover:text-white/60 p-1"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </div>
+        )}
+      </TableCell>
+      <TableCell>
+        <div>
+          <p className="text-sm font-medium text-white">{produto.nome_produto}</p>
+          {produto.descricao_produto && (
+            <p className="text-xs text-white/50">{produto.descricao_produto}</p>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className="text-center text-white/80">
+        {produto.quantidade_ideal || 0}
+      </TableCell>
+      <TableCell className="text-center text-white/80">
+        {produto.quantidade_maxima || 0}
+      </TableCell>
+      <TableCell className="text-center">
+        <Badge className={
+          produto.quantidade < (produto.quantidade_ideal || 0)
+            ? "bg-red-500/20 text-red-400 border-red-500/30"
+            : "bg-green-500/20 text-green-400 border-green-500/30"
+        }>
+          {produto.quantidade}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-right text-white/80">
+        {formatCurrency(produto.custo_unitario)}
+      </TableCell>
+      <TableCell className="text-right font-medium text-white">
+        {formatCurrency(produto.quantidade * produto.custo_unitario)}
+      </TableCell>
+    </TableRow>
+  );
+}
+
+// Overlay component for drag
+function DragOverlayRow({ produto }: { produto: ProdutoEstoque | null }) {
+  if (!produto) return null;
+  return (
+    <div className="bg-zinc-800 rounded-lg px-4 py-2 shadow-xl ring-2 ring-blue-500 text-white text-sm font-medium">
+      {produto.nome_produto}
+    </div>
+  );
+}
 
 export default function ProdutosFabrica() {
   const navigate = useNavigate();
-  const { produtos, loading, adicionarProduto } = useEstoque();
+  const { produtos, loading, adicionarProduto, reordenarProdutos } = useEstoque();
   const { categorias } = useCategorias();
   const { subcategorias } = useSubcategorias();
   const { fornecedores } = useFornecedores();
   
   const [novoModal, setNovoModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     nome_produto: "",
     descricao_produto: "",
@@ -43,6 +148,43 @@ export default function ProdutosFabrica() {
     eixo_calculo: "",
     item_padrao_porta_enrolar: false,
   });
+
+  const isDragDisabled = searchTerm.length > 0;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const filteredProdutos = produtos.filter(p =>
+    !searchTerm ||
+    p.nome_produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.descricao_produto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const activeProduto = activeId ? produtos.find(p => p.id === activeId) ?? null : null;
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (over && active.id !== over.id) {
+      const oldIndex = produtos.findIndex(p => p.id === active.id);
+      const newIndex = produtos.findIndex(p => p.id === over.id);
+      const reordered = arrayMove(produtos, oldIndex, newIndex);
+      const updates = reordered.map((p, i) => ({ id: p.id, ordem: i + 1 }));
+      try {
+        await reordenarProdutos(updates);
+      } catch {
+        // error handled by hook
+      }
+    }
+  };
 
   const getCategoriaColor = (categoriaId: string) => {
     const cat = categorias.find(c => c.id === categoriaId);
@@ -110,15 +252,8 @@ export default function ProdutosFabrica() {
       categoriasMap[cat.id] = cat.nome;
     });
     
-    const produtosFiltrados = produtos.filter(p => 
-      !searchTerm || 
-      p.nome_produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.descricao_produto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    
     baixarEstoquePDF({
-      produtos: produtosFiltrados,
+      produtos: filteredProdutos,
       categoriasMap,
     });
     
@@ -131,15 +266,8 @@ export default function ProdutosFabrica() {
       categoriasMap[cat.id] = cat.nome;
     });
     
-    const produtosFiltrados = produtos.filter(p => 
-      !searchTerm || 
-      p.nome_produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.descricao_produto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    
     imprimirEstoquePDF({
-      produtos: produtosFiltrados,
+      produtos: filteredProdutos,
       categoriasMap,
     });
   };
@@ -394,7 +522,7 @@ export default function ProdutosFabrica() {
               className="max-w-sm bg-white/5 border-white/10 text-white placeholder:text-white/40"
             />
             <p className="text-xs text-white/40 mt-2">
-              Dica: Clique duas vezes em um item para editá-lo
+              Dica: Clique duas vezes em um item para editá-lo. {!isDragDisabled && "Arraste para reordenar."}
             </p>
           </div>
         </div>
@@ -402,87 +530,55 @@ export default function ProdutosFabrica() {
         {/* Tabela */}
         <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
           <div className="rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/10 hover:bg-transparent">
-                  <TableHead className="text-xs font-medium text-white/60 w-24">SKU</TableHead>
-                  <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
-                  <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>
-                  <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>
-                  <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
-                  <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
-                  <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow className="border-white/10">
-                    <TableCell colSpan={7} className="text-center py-8 text-sm text-white/40">
-                      Carregando...
-                    </TableCell>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/10 hover:bg-transparent">
+                    <TableHead className="w-10 px-1" />
+                    <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
+                    <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>
+                    <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>
+                    <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
+                    <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
+                    <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
                   </TableRow>
-                ) : produtos.filter(p => 
-                    !searchTerm || 
-                    p.nome_produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    p.descricao_produto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-                  ).length === 0 ? (
-                  <TableRow className="border-white/10">
-                    <TableCell colSpan={7} className="text-center py-8 text-sm text-white/40">
-                      {searchTerm ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  produtos
-                    .filter(p => 
-                      !searchTerm || 
-                      p.nome_produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      p.descricao_produto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-                    )
-                    .map((produto) => (
-                      <TableRow 
-                        key={produto.id} 
-                        className="border-white/10 hover:bg-white/5 cursor-pointer"
-                        onDoubleClick={() => handleDoubleClick(produto.id)}
-                      >
-                        <TableCell className="text-xs font-mono text-white/40">
-                          {produto.sku || "-"}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="text-sm font-medium text-white">{produto.nome_produto}</p>
-                            {produto.descricao_produto && (
-                              <p className="text-xs text-white/50">{produto.descricao_produto}</p>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center text-white/80">
-                          {produto.quantidade_ideal || 0}
-                        </TableCell>
-                        <TableCell className="text-center text-white/80">
-                          {produto.quantidade_maxima || 0}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge className={
-                            produto.quantidade < (produto.quantidade_ideal || 0)
-                              ? "bg-red-500/20 text-red-400 border-red-500/30"
-                              : "bg-green-500/20 text-green-400 border-green-500/30"
-                          }>
-                            {produto.quantidade}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right text-white/80">
-                          {formatCurrency(produto.custo_unitario)}
-                        </TableCell>
-                        <TableCell className="text-right font-medium text-white">
-                          {formatCurrency(produto.quantidade * produto.custo_unitario)}
+                </TableHeader>
+                <SortableContext items={filteredProdutos.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow className="border-white/10">
+                        <TableCell colSpan={7} className="text-center py-8 text-sm text-white/40">
+                          Carregando...
                         </TableCell>
                       </TableRow>
-                    ))
-                )}
-              </TableBody>
-            </Table>
+                    ) : filteredProdutos.length === 0 ? (
+                      <TableRow className="border-white/10">
+                        <TableCell colSpan={7} className="text-center py-8 text-sm text-white/40">
+                          {searchTerm ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredProdutos.map((produto) => (
+                        <SortableProductRow
+                          key={produto.id}
+                          produto={produto}
+                          onDoubleClick={handleDoubleClick}
+                          isDragDisabled={isDragDisabled}
+                        />
+                      ))
+                    )}
+                  </TableBody>
+                </SortableContext>
+              </Table>
+              <DragOverlay>
+                <DragOverlayRow produto={activeProduto} />
+              </DragOverlay>
+            </DndContext>
           </div>
         </div>
       </div>
