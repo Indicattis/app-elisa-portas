@@ -339,6 +339,24 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           if (!corB) return -1;
           
           return corA.localeCompare(corB, 'pt-BR');
+      });
+      }
+
+      // Ordenar na etapa "aguardando_pintura": prioridade manual primeiro, cor como desempate
+      if (etapa === 'aguardando_pintura') {
+        return pedidosComBacklog.sort((a, b) => {
+          const prioA = (a as any).prioridade_etapa || 0;
+          const prioB = (b as any).prioridade_etapa || 0;
+          if (prioB !== prioA) return prioB - prioA;
+
+          const corA = extrairPrimeiraCor(a);
+          const corB = extrairPrimeiraCor(b);
+          
+          if (!corA && !corB) return 0;
+          if (!corA) return 1;
+          if (!corB) return -1;
+          
+          return corA.localeCompare(corB, 'pt-BR');
         });
       }
 
@@ -761,7 +779,81 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         descricao: `Pedido avançou de ${ETAPAS_CONFIG[etapaAtualNome].label} para ${ETAPAS_CONFIG[etapaDestino].label}`
       });
 
-      // Atualizar pedido e resetar prioridade
+      // Calcular prioridade automática para aguardando_pintura (agrupar por cor)
+      let novaPrioridade = 0;
+      
+      if (etapaDestino === 'aguardando_pintura') {
+        try {
+          // Buscar pedidos atuais na etapa com suas cores e prioridades
+          const { data: pedidosNaEtapa } = await supabase
+            .from('pedidos_producao')
+            .select(`
+              id, prioridade_etapa,
+              vendas:venda_id (
+                produtos_vendas (
+                  cor:catalogo_cores (nome)
+                )
+              )
+            `)
+            .eq('etapa_atual', 'aguardando_pintura')
+            .eq('arquivado', false)
+            .order('prioridade_etapa', { ascending: false });
+
+          // Buscar cor do pedido que está sendo movido
+          const { data: pedidoAtual } = await supabase
+            .from('pedidos_producao')
+            .select(`vendas:venda_id (produtos_vendas (cor:catalogo_cores (nome)))`)
+            .eq('id', pedidoId)
+            .single();
+
+          // Extrair cor do pedido atual
+          const extrairCorDoPedido = (p: any): string | null => {
+            const vendaData = Array.isArray(p?.vendas) ? p.vendas[0] : p?.vendas;
+            const produtos = vendaData?.produtos_vendas || [];
+            for (const prod of produtos) {
+              if (prod.cor?.nome) return prod.cor.nome;
+            }
+            return null;
+          };
+
+          const corAtual = extrairCorDoPedido(pedidoAtual);
+          
+          if (corAtual && pedidosNaEtapa && pedidosNaEtapa.length > 0) {
+            // Encontrar o último pedido com a mesma cor (menor prioridade entre os da mesma cor)
+            let ultimoPrioridadeMesmaCor: number | null = null;
+            
+            for (const p of pedidosNaEtapa) {
+              const corP = extrairCorDoPedido(p);
+              if (corP === corAtual) {
+                const prio = (p as any).prioridade_etapa || 0;
+                if (ultimoPrioridadeMesmaCor === null || prio < ultimoPrioridadeMesmaCor) {
+                  ultimoPrioridadeMesmaCor = prio;
+                }
+              }
+            }
+            
+            if (ultimoPrioridadeMesmaCor !== null) {
+              // Posicionar logo abaixo do último pedido com mesma cor
+              novaPrioridade = ultimoPrioridadeMesmaCor - 1;
+            } else {
+              // Nenhum pedido com mesma cor: posicionar no final
+              const menorPrioridade = Math.min(...pedidosNaEtapa.map((p: any) => (p as any).prioridade_etapa || 0));
+              novaPrioridade = menorPrioridade - 1;
+            }
+          } else if (pedidosNaEtapa && pedidosNaEtapa.length > 0) {
+            // Sem cor definida: posicionar no final
+            const menorPrioridade = Math.min(...pedidosNaEtapa.map((p: any) => (p as any).prioridade_etapa || 0));
+            novaPrioridade = menorPrioridade - 1;
+          }
+          
+          console.log('[moverParaProximaEtapa] Prioridade calculada para aguardando_pintura:', { corAtual, novaPrioridade });
+        } catch (err) {
+          console.error('[moverParaProximaEtapa] Erro ao calcular prioridade por cor:', err);
+          novaPrioridade = 0;
+        }
+      }
+
+      // Atualizar pedido e definir prioridade
       if (onProgress) onProgress('atualizar_pedido', 'in_progress');
       await executarComDelay(async () => {
         const { error: updateError } = await supabase
@@ -769,7 +861,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           .update({ 
             etapa_atual: etapaDestino,
             status: etapaDestino === 'finalizado' ? 'concluido' : 'em_andamento',
-            prioridade_etapa: 0
+            prioridade_etapa: novaPrioridade
           })
           .eq('id', pedidoId);
 
