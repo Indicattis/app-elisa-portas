@@ -1,32 +1,18 @@
 
 
-# Adicionar Ordem de Embalagem em /fabrica/ordens-pedidos
+# Fix: Botao "Novo" em /administrativo/documentos redirecionando para /home
 
-## Resumo
-Incluir a ordem de embalagem junto das demais ordens (soldagem, perfiladeira, separacao, qualidade, pintura) na pagina de Ordens por Pedido.
+## Problema
+O botao "Novo" na pagina de Documentos aponta para `/dashboard/documentos/novo`, mas essa rota nao existe no App.tsx. Como nenhuma rota corresponde, o sistema redireciona para `/home`.
 
-## Alteracoes
+## Correcao
 
-### 1. Hook `src/hooks/useOrdensPorPedido.ts`
+### 1. Arquivo: `src/pages/administrativo/DocumentosMinimalista.tsx`
+- Alterar todos os `Link to="/dashboard/documentos/novo"` para `Link to="/administrativo/documentos/novo"` (linhas 69 e 141)
 
-- Adicionar `'embalagem'` ao type `TipoOrdem` (linha 5)
-- Adicionar `embalagem: OrdemStatus` ao interface `PedidoComOrdens.ordens` (linha 76, entre pintura e carregamento)
-- Na funcao `useOrdensPorPedido`, adicionar query para `ordens_embalagem` no `Promise.all` (entre pinturaRes e carregamentoRes):
-  ```
-  supabase.from('ordens_embalagem')
-    .select('id, pedido_id, numero_ordem, status, responsavel_id, capturada_em, tempo_conclusao_segundos')
-    .in('pedido_id', pedidoIds)
-  ```
-- Adicionar `embalagemRes` ao array de coleta de `allResponsavelIds`
-- Chamar `processOrdens(embalagemRes.data, 'embalagem')` no mapeamento de ordens
-- Adicionar `embalagem: criarOrdemStatus('embalagem')` ao objeto `ordens` retornado
+### 2. Arquivo: `src/App.tsx`
+- Adicionar nova rota `/administrativo/documentos/novo` apontando para o componente `DocumentoNovo`, protegida com `routeKey="administrativo_hub"`, logo apos a rota de `/administrativo/documentos`
 
-### 2. Componente `src/components/fabrica/PedidoOrdemCard.tsx`
-
-- Adicionar `embalagem: 'Embalagem'` ao `ORDEM_LABELS` (linha 23, entre pintura e carregamento)
-- Adicionar `pedido.ordens.embalagem` ao array `ordensBase` (linha 68, entre pintura e o fechamento do array)
-
-### 3. Pagina `src/pages/fabrica/OrdensPorPedido.tsx`
-
-- Adicionar `pedido.ordens.embalagem` ao array de ordens no calculo de metricas (linha 43, entre qualidade e pintura)
+### 3. Arquivo: `src/pages/DocumentoNovo.tsx`
+- Alterar o botao voltar e o botao cancelar de `navigate('/dashboard/documentos')` para `navigate('/administrativo/documentos')` (linhas 97 e 171)
 
