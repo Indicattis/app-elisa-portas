@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Plus, Tags, FileDown, Printer, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { ProdutoEstoque } from "@/hooks/useEstoque";
 
 // Componente SortableProductRow definido FORA do componente principal para estabilidade
@@ -128,9 +130,15 @@ export default function ProdutosFabrica() {
   const { subcategorias } = useSubcategorias();
   const { fornecedores } = useFornecedores();
   
+  const [localProdutos, setLocalProdutos] = useState<ProdutoEstoque[]>([]);
   const [novoModal, setNovoModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  // Sync local state with React Query data
+  useEffect(() => {
+    setLocalProdutos(produtos);
+  }, [produtos]);
   const [formData, setFormData] = useState({
     nome_produto: "",
     descricao_produto: "",
@@ -156,14 +164,14 @@ export default function ProdutosFabrica() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const filteredProdutos = produtos.filter(p =>
+  const filteredProdutos = localProdutos.filter(p =>
     !searchTerm ||
     p.nome_produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.descricao_produto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const activeProduto = activeId ? produtos.find(p => p.id === activeId) ?? null : null;
+  const activeProduto = activeId ? localProdutos.find(p => p.id === activeId) ?? null : null;
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -174,14 +182,22 @@ export default function ProdutosFabrica() {
     setActiveId(null);
 
     if (over && active.id !== over.id) {
-      const oldIndex = produtos.findIndex(p => p.id === active.id);
-      const newIndex = produtos.findIndex(p => p.id === over.id);
-      const reordered = arrayMove(produtos, oldIndex, newIndex);
-      const updates = reordered.map((p, i) => ({ id: p.id, ordem: i + 1 }));
+      const oldIndex = localProdutos.findIndex(p => p.id === active.id);
+      const newIndex = localProdutos.findIndex(p => p.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const reordered = arrayMove(localProdutos, oldIndex, newIndex);
+      const updatedWithOrder = reordered.map((p, i) => ({ ...p, ordem: i + 1 }));
+      
+      // Optimistic update
+      setLocalProdutos(updatedWithOrder);
+
+      const updates = updatedWithOrder.map(p => ({ id: p.id, ordem: p.ordem }));
       try {
         await reordenarProdutos(updates);
       } catch {
-        // error handled by hook
+        // Rollback on error
+        setLocalProdutos(produtos);
       }
     }
   };
@@ -575,9 +591,18 @@ export default function ProdutosFabrica() {
                   </TableBody>
                 </SortableContext>
               </Table>
-              <DragOverlay>
-                <DragOverlayRow produto={activeProduto} />
-              </DragOverlay>
+              {createPortal(
+                <DragOverlay
+                  modifiers={[restrictToWindowEdges]}
+                  dropAnimation={{
+                    duration: 200,
+                    easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+                  }}
+                >
+                  {activeProduto ? <DragOverlayRow produto={activeProduto} /> : null}
+                </DragOverlay>,
+                document.body
+              )}
             </DndContext>
           </div>
         </div>
