@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Upload, FileText } from 'lucide-react';
+import { ArrowLeft, Upload, FileText, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -35,10 +35,11 @@ export default function DocumentoNovo() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.type !== 'application/pdf') {
+      const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg'];
+      if (!allowedTypes.includes(file.type)) {
         toast({
           title: "Erro",
-          description: "Apenas arquivos PDF são permitidos",
+          description: "Apenas arquivos PDF, PNG e JPG são permitidos",
           variant: "destructive",
         });
         return;
@@ -61,7 +62,7 @@ export default function DocumentoNovo() {
     if (!selectedFile) {
       toast({
         title: "Erro",
-        description: "Selecione um arquivo PDF",
+        description: "Selecione um arquivo",
         variant: "destructive",
       });
       return;
@@ -107,7 +108,7 @@ export default function DocumentoNovo() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold">Novo Documento</h1>
-          <p className="text-muted-foreground">Adicione um novo documento PDF</p>
+          <p className="text-muted-foreground">Adicione um novo documento</p>
         </div>
       </div>
 
@@ -116,7 +117,7 @@ export default function DocumentoNovo() {
           <CardHeader>
             <CardTitle>Informações do Documento</CardTitle>
             <CardDescription>
-              Preencha as informações e faça upload do arquivo PDF
+              Preencha as informações e faça upload do arquivo
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -160,7 +161,7 @@ export default function DocumentoNovo() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="arquivo">Arquivo PDF *</Label>
+              <Label htmlFor="arquivo">Arquivo *</Label>
               <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
                 <div className="text-center">
                   <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -168,18 +169,18 @@ export default function DocumentoNovo() {
                     <Label htmlFor="arquivo" className="cursor-pointer">
                       <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
                         <Upload className="h-4 w-4" />
-                        {selectedFile ? 'Trocar arquivo' : 'Escolher arquivo PDF'}
+                        {selectedFile ? 'Trocar arquivo' : 'Escolher arquivo'}
                       </div>
                     </Label>
                     <Input
                       id="arquivo"
                       type="file"
-                      accept=".pdf"
+                      accept=".pdf,.png,.jpg,.jpeg"
                       onChange={handleFileChange}
                       className="hidden"
                     />
                     <p className="text-sm text-muted-foreground">
-                      Máximo 20MB • Apenas arquivos PDF
+                      Máximo 20MB • PDF, PNG ou JPG
                     </p>
                   </div>
                 </div>
@@ -187,7 +188,11 @@ export default function DocumentoNovo() {
                 {selectedFile && (
                   <div className="mt-4 p-3 bg-muted rounded-md">
                     <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-red-600" />
+                      {selectedFile.type.startsWith('image/') ? (
+                        <Image className="h-4 w-4 text-primary" />
+                      ) : (
+                        <FileText className="h-4 w-4 text-red-600" />
+                      )}
                       <span className="text-sm font-medium">{selectedFile.name}</span>
                       <span className="text-xs text-muted-foreground ml-auto">
                         {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
