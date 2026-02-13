@@ -1,22 +1,27 @@
 import { useState, useEffect } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { useNavigate } from "react-router-dom";
-import { Calendar, CalendarDays, ArrowLeft, LogOut, AlertCircle } from "lucide-react";
+import { Calendar, CalendarDays, ArrowLeft, LogOut, AlertCircle, Download, Filter } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useInstalacoesMinhaEquipeCalendario } from "@/hooks/useInstalacoesMinhaEquipeCalendario";
 import { useNeoInstalacoesMinhaEquipe } from "@/hooks/useNeoInstalacoesMinhaEquipe";
+import { useNeoCorrecoesMinhaEquipe } from "@/hooks/useNeoCorrecoesMinhaEquipe";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
 import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
 import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { format, addDays, startOfWeek, startOfMonth } from "date-fns";
+import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { baixarCronogramaMinimalistaPDF } from "@/utils/cronogramaMinimalistaPDF";
 
 
 export default function CronogramaMinimalista() {
@@ -31,23 +36,44 @@ export default function CronogramaMinimalista() {
   const [viewType, setViewType] = useState<'week' | 'month'>('week');
   const [selectedItem, setSelectedItem] = useState<OrdemCarregamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [equipeIdFiltro, setEquipeIdFiltro] = useState<string | null>(null);
 
-  // Hook para ordens de carregamento da equipe
+  // Buscar equipes ativas (para filtro de gerentes)
+  const { data: equipesAtivas = [] } = useQuery({
+    queryKey: ["equipes_instalacao_ativas_filtro"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("equipes_instalacao")
+        .select("id, nome, cor")
+        .eq("ativa", true)
+        .order("nome");
+      return data || [];
+    },
+    enabled: isGerente,
+  });
+
+  // Hook para ordens de carregamento da equipe (apenas instalações)
   const { 
     ordens,
     isLoading: isLoadingOrdens, 
     equipeNome,
     equipeCor,
     temEquipe 
-  } = useInstalacoesMinhaEquipeCalendario(currentDate, viewType, isGerente);
+  } = useInstalacoesMinhaEquipeCalendario(currentDate, viewType, isGerente, equipeIdFiltro);
 
   // Hook para neo instalações da equipe
   const { 
     neoInstalacoes,
     isLoading: isLoadingNeo 
-  } = useNeoInstalacoesMinhaEquipe(currentDate, viewType, isGerente);
+  } = useNeoInstalacoesMinhaEquipe(currentDate, viewType, isGerente, equipeIdFiltro);
 
-  const isLoading = isLoadingOrdens || isLoadingNeo;
+  // Hook para neo correções da equipe
+  const { 
+    neoCorrecoes,
+    isLoading: isLoadingCorrecoes 
+  } = useNeoCorrecoesMinhaEquipe(currentDate, viewType, isGerente, equipeIdFiltro);
+
+  const isLoading = isLoadingOrdens || isLoadingNeo || isLoadingCorrecoes;
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -69,6 +95,29 @@ export default function CronogramaMinimalista() {
 
   const handleMonthChange = (date: Date) => {
     setCurrentDate(date);
+  };
+
+  const handleDownloadPDF = () => {
+    const periodoInicio = viewType === 'week'
+      ? startOfWeek(currentDate, { weekStartsOn: 0 })
+      : startOfMonth(currentDate);
+    const periodoFim = viewType === 'week'
+      ? endOfWeek(currentDate, { weekStartsOn: 0 })
+      : endOfMonth(currentDate);
+
+    const equipeFiltrada = equipeIdFiltro
+      ? equipesAtivas.find(e => e.id === equipeIdFiltro)?.nome || "Equipe"
+      : (isGerente ? "Todas as equipes" : (equipeNome || "Minha equipe"));
+
+    baixarCronogramaMinimalistaPDF({
+      ordens,
+      neoInstalacoes,
+      neoCorrecoes,
+      periodoInicio,
+      periodoFim,
+      equipeNome: equipeFiltrada,
+      tipoVisualizacao: viewType,
+    });
   };
 
   const [mounted, setMounted] = useState(false);
@@ -137,6 +186,14 @@ export default function CronogramaMinimalista() {
     );
   }
 
+  const displayEquipeNome = equipeIdFiltro
+    ? equipesAtivas.find(e => e.id === equipeIdFiltro)?.nome || equipeNome
+    : equipeNome;
+
+  const displayEquipeCor = equipeIdFiltro
+    ? equipesAtivas.find(e => e.id === equipeIdFiltro)?.cor || null
+    : equipeCor;
+
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative">
       <AnimatedBreadcrumb 
@@ -164,16 +221,16 @@ export default function CronogramaMinimalista() {
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-lg font-semibold text-white">Cronograma</h1>
-                  {equipeNome && (
+                  {displayEquipeNome && (
                     <span 
                       className="text-xs px-2 py-0.5 rounded-full"
                       style={{ 
-                        backgroundColor: equipeCor ? `${equipeCor}20` : 'rgba(59, 130, 246, 0.2)',
-                        color: equipeCor || '#3B82F6',
-                        border: `1px solid ${equipeCor || '#3B82F6'}40`
+                        backgroundColor: displayEquipeCor ? `${displayEquipeCor}20` : 'rgba(59, 130, 246, 0.2)',
+                        color: displayEquipeCor || '#3B82F6',
+                        border: `1px solid ${displayEquipeCor || '#3B82F6'}40`
                       }}
                     >
-                      {equipeNome}
+                      {displayEquipeNome}
                     </span>
                   )}
                 </div>
@@ -187,6 +244,35 @@ export default function CronogramaMinimalista() {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Filtro de equipes (só para gerentes) */}
+              {isGerente && (
+                <Select
+                  value={equipeIdFiltro || "todas"}
+                  onValueChange={(val) => setEquipeIdFiltro(val === "todas" ? null : val)}
+                >
+                  <SelectTrigger className="w-[160px] h-8 text-xs bg-primary/10 border-primary/20 text-white">
+                    <Filter className="h-3 w-3 mr-1" />
+                    <SelectValue placeholder="Equipe" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todas">Todas as equipes</SelectItem>
+                    {equipesAtivas.map((equipe) => (
+                      <SelectItem key={equipe.id} value={equipe.id}>
+                        <div className="flex items-center gap-2">
+                          {equipe.cor && (
+                            <div 
+                              className="w-2 h-2 rounded-full" 
+                              style={{ backgroundColor: equipe.cor }} 
+                            />
+                          )}
+                          {equipe.nome}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
               <Button
                 variant="ghost"
                 size="sm"
@@ -202,6 +288,15 @@ export default function CronogramaMinimalista() {
                 className="text-white/80 hover:text-white hover:bg-primary/10 text-xs"
               >
                 Hoje
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDownloadPDF}
+                className="text-white/80 hover:text-white hover:bg-primary/10"
+                title="Baixar PDF"
+              >
+                <Download className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
@@ -232,6 +327,7 @@ export default function CronogramaMinimalista() {
                       startDate={weekStart}
                       ordens={ordens}
                       neoInstalacoes={neoInstalacoes}
+                      neoCorrecoes={neoCorrecoes}
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
@@ -243,6 +339,7 @@ export default function CronogramaMinimalista() {
                       startDate={weekStart}
                       ordens={ordens}
                       neoInstalacoes={neoInstalacoes}
+                      neoCorrecoes={neoCorrecoes}
                       onPreviousWeek={handlePreviousWeek}
                       onNextWeek={handleNextWeek}
                       onToday={handleToday}
@@ -254,6 +351,7 @@ export default function CronogramaMinimalista() {
                       currentMonth={currentDate}
                       ordens={ordens}
                       neoInstalacoes={neoInstalacoes}
+                      neoCorrecoes={neoCorrecoes}
                       onMonthChange={handleMonthChange}
                       onOrdemClick={handleOrdemClick}
                       readOnly

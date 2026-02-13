@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
-import { NeoInstalacao } from "@/types/neoInstalacao";
+import { NeoCorrecao } from "@/types/neoCorrecao";
 
-export const useNeoInstalacoesMinhaEquipe = (
+export const useNeoCorrecoesMinhaEquipe = (
   currentDate: Date,
   periodo: 'week' | 'month' = 'week',
   verTodas: boolean = false,
@@ -14,20 +14,15 @@ export const useNeoInstalacoesMinhaEquipe = (
 
   // Buscar a equipe do usuário (só quando NÃO verTodas)
   const { data: equipeData, isLoading: isLoadingEquipe } = useQuery({
-    queryKey: ["minha_equipe_neo_instalacao", user?.id],
+    queryKey: ["minha_equipe_neo_correcao", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
 
-      const { data: membroData, error: membroError } = await supabase
+      const { data: membroData } = await supabase
         .from("equipes_instalacao_membros")
         .select("equipe_id")
         .eq("user_id", user.id)
         .maybeSingle();
-
-      if (membroError) {
-        console.error("Erro ao buscar membro da equipe:", membroError);
-        return null;
-      }
 
       if (!membroData?.equipe_id) {
         const { data: equipeResponsavel } = await supabase
@@ -40,17 +35,12 @@ export const useNeoInstalacoesMinhaEquipe = (
         return equipeResponsavel;
       }
 
-      const { data: equipe, error: equipeError } = await supabase
+      const { data: equipe } = await supabase
         .from("equipes_instalacao")
         .select("id, nome, cor")
         .eq("id", membroData.equipe_id)
         .eq("ativa", true)
         .maybeSingle();
-
-      if (equipeError) {
-        console.error("Erro ao buscar equipe:", equipeError);
-        return null;
-      }
 
       return equipe;
     },
@@ -74,19 +64,19 @@ export const useNeoInstalacoesMinhaEquipe = (
 
   const { inicio, fim } = getDateRange();
 
-  // Buscar neo instalações
-  const { data: neoInstalacoes = [], isLoading: isLoadingNeo } = useQuery({
-    queryKey: ["neo_instalacoes_minha_equipe", verTodas ? "todas" : equipeData?.id, inicio, fim, equipeIdFiltro],
+  // Buscar neo correções
+  const { data: neoCorrecoes = [], isLoading: isLoadingNeo } = useQuery({
+    queryKey: ["neo_correcoes_minha_equipe", verTodas ? "todas" : equipeData?.id, inicio, fim, equipeIdFiltro],
     queryFn: async () => {
       if (!verTodas && !equipeData?.id) return [];
 
       let query = supabase
-        .from("neo_instalacoes")
+        .from("neo_correcoes")
         .select(verTodas ? "*, equipe:equipes_instalacao(id, nome, cor)" : "*")
         .eq("concluida", false)
-        .gte("data_instalacao", inicio)
-        .lte("data_instalacao", fim)
-        .order("data_instalacao", { ascending: true });
+        .gte("data_correcao", inicio)
+        .lte("data_correcao", fim)
+        .order("data_correcao", { ascending: true });
 
       if (equipeIdFiltro) {
         query = query.eq("equipe_id", equipeIdFiltro);
@@ -97,25 +87,22 @@ export const useNeoInstalacoesMinhaEquipe = (
       const { data, error } = await query;
 
       if (error) {
-        console.error("Erro ao buscar neo instalações:", error);
+        console.error("Erro ao buscar neo correções:", error);
         throw error;
       }
 
       return (data || []).map((item: any) => ({
         ...item,
-        _tipo: 'neo_instalacao' as const,
+        _tipo: 'neo_correcao' as const,
+        tipo_responsavel: (item.tipo_responsavel as 'equipe_interna' | 'autorizado' | null) || 'equipe_interna',
         equipe: verTodas ? item.equipe : equipeData
-      })) as NeoInstalacao[];
+      })) as NeoCorrecao[];
     },
     enabled: verTodas || !!equipeData?.id,
   });
 
   return {
-    neoInstalacoes,
+    neoCorrecoes,
     isLoading: verTodas ? isLoadingNeo : (isLoadingEquipe || isLoadingNeo),
-    equipeId: verTodas ? null : (equipeData?.id || null),
-    equipeNome: verTodas ? "Todas as equipes" : (equipeData?.nome || null),
-    equipeCor: verTodas ? null : (equipeData?.cor || null),
-    temEquipe: verTodas ? true : !!equipeData?.id,
   };
 };
