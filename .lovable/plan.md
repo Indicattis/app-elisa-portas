@@ -1,52 +1,50 @@
 
-
-# Corrigir posicao do card durante drag-and-drop
+# Corrigir ordens duplicadas em /logistica/expedicao
 
 ## Problema
 
-Ao arrastar um card no calendario de expedicao, o overlay (copia visual do card) aparece muito distante do cursor. Isso ocorre porque os componentes draggable aplicam `CSS.Translate.toString(transform)` no elemento original, movendo-o junto com o cursor, enquanto o `DragOverlay` renderiza uma segunda copia separada. Essa duplicidade causa o deslocamento visual.
+A tabela `ordens_carregamento` contém 32 registros com `tipo_entrega = 'instalacao'` que são legados/órfãos. Esses mesmos pedidos também existem na tabela `instalacoes`. Quando ambos aparecem no calendário ou na lista, geram duplicatas.
 
-## Solucao
+O hook `useOrdensCarregamentoUnificadas` (lista de disponíveis) já filtra corretamente por `tipo_entrega === 'entrega'`, mas o hook `useOrdensCarregamentoCalendario` (calendário) não faz essa filtragem — busca TODOS os registros de `ordens_carregamento` sem distinção.
 
-Remover a transformacao CSS dos componentes draggable e deixar apenas o `DragOverlay` ser responsavel pela representacao visual durante o arrasto. Os componentes originais devem apenas ficar com opacidade reduzida (ou ocultos) durante o drag.
+## Solução
 
-## Detalhes tecnicos
+Aplicar a mesma lógica de filtragem no hook do calendário: excluir registros de `ordens_carregamento` cujo `tipo_entrega` da venda vinculada seja `'instalacao'` ou `'manutencao'`, pois esses já vêm da tabela `instalacoes`.
 
-### Arquivos a editar
+## Detalhes técnicos
 
-**1. `src/components/expedicao/DraggableOrdemCarregamento.tsx`**
-- Remover `transform: CSS.Translate.toString(transform)` do style
-- Manter apenas `opacity: isDragging ? 0.3 : 1` para indicar visualmente que o item esta sendo arrastado
-- Remover import de `CSS` do `@dnd-kit/utilities`
+### Arquivo: `src/hooks/useOrdensCarregamentoCalendario.ts`
 
-**2. `src/components/expedicao/DraggableNeoInstalacao.tsx`**
-- Mesma alteracao: remover transform, manter apenas opacity
-- Remover import de `CSS`
+**1. Incluir `tipo_entrega` no select de `ordens_carregamento`** (já vem via `venda:vendas(...)`, que inclui `tipo_entrega` indiretamente, mas precisamos garantir o acesso).
 
-**3. `src/components/expedicao/DraggableNeoCorrecao.tsx`**
-- Mesma alteracao: remover transform, manter apenas opacity
-- Remover import de `CSS`
+**2. Filtrar ordens_carregamento em JS** antes de combinar, similar ao que `useOrdensCarregamentoUnificadas` faz:
 
-### Exemplo da mudanca (aplicado nos 3 arquivos)
-
-De:
 ```typescript
-import { CSS } from "@dnd-kit/utilities";
-
-const style = {
-  transform: CSS.Translate.toString(transform),
-  opacity: isDragging ? 0.5 : 1,
-  cursor: disableDrag ? "pointer" : isDragging ? "grabbing" : "grab",
-};
+// Filtrar apenas entregas (instalações vêm da tabela instalacoes)
+const ordensEntrega = (ordensCarregamento || []).filter(
+  (ordem: any) => {
+    const tipoEntrega = ordem.venda?.tipo_entrega;
+    return tipoEntrega === 'entrega' || !tipoEntrega;
+  }
+);
 ```
 
-Para:
+Na linha 208-212, substituir:
 ```typescript
-const style = {
-  opacity: isDragging ? 0.3 : 1,
-  cursor: disableDrag ? "pointer" : "grab",
-};
+const ordensComFonte = (ordensCarregamento || []).map(...)
+```
+por:
+```typescript
+const ordensEntrega = (ordensCarregamento || []).filter(
+  (ordem: any) => {
+    const tipoEntrega = ordem.venda?.tipo_entrega;
+    return tipoEntrega === 'entrega' || !tipoEntrega;
+  }
+);
+const ordensComFonte = ordensEntrega.map(...)
 ```
 
-Isso faz com que apenas o `DragOverlay` (ja configurado nos calendarios semanal e mensal) acompanhe o cursor, eliminando o problema de posicionamento.
+Isso garante que registros de instalação/manutenção na `ordens_carregamento` sejam ignorados, eliminando duplicatas com a tabela `instalacoes`.
 
+### Arquivo editado
+1. `src/hooks/useOrdensCarregamentoCalendario.ts`
