@@ -113,16 +113,16 @@ export const useInstalacoesMinhaEquipeCalendario = (
             bairro
           )
         `)
-        .eq("instalacao_concluida", false)
-        .not("data_instalacao", "is", null)
-        .gte("data_instalacao", inicio)
-        .lte("data_instalacao", fim)
-        .order("data_instalacao", { ascending: true });
+        .eq("carregamento_concluido", false)
+        .not("data_carregamento", "is", null)
+        .gte("data_carregamento", inicio)
+        .lte("data_carregamento", fim)
+        .order("data_carregamento", { ascending: true });
 
       if (equipeIdFiltro) {
-        query = query.eq("responsavel_instalacao_id", equipeIdFiltro);
+        query = query.eq("responsavel_carregamento_id", equipeIdFiltro);
       } else if (!verTodas && equipeData?.id) {
-        query = query.eq("responsavel_instalacao_id", equipeData.id);
+        query = query.eq("responsavel_carregamento_id", equipeData.id);
       }
 
       const { data, error } = await query;
@@ -147,15 +147,15 @@ export const useInstalacoesMinhaEquipeCalendario = (
         venda_id: item.venda_id,
         nome_cliente: item.nome_cliente,
         tipo_carregamento: null,
-        data_carregamento: item.data_instalacao,
+        data_carregamento: item.data_carregamento,
         hora: item.hora,
         hora_carregamento: item.hora_carregamento,
-        responsavel_carregamento_id: item.responsavel_instalacao_id,
-        responsavel_carregamento_nome: item.responsavel_instalacao_nome,
+        responsavel_carregamento_id: item.responsavel_carregamento_id,
+        responsavel_carregamento_nome: item.responsavel_carregamento_nome,
         status: item.status,
-        carregamento_concluido: item.instalacao_concluida,
-        carregamento_concluido_em: item.instalacao_concluida_em,
-        carregamento_concluido_por: item.instalacao_concluida_por,
+        carregamento_concluido: item.carregamento_concluido,
+        carregamento_concluido_em: item.carregamento_concluido_em,
+        carregamento_concluido_por: item.carregamento_concluido_por,
         latitude: null,
         longitude: null,
         geocode_precision: null,
@@ -167,7 +167,7 @@ export const useInstalacoesMinhaEquipeCalendario = (
         fonte: 'instalacoes' as const,
         venda: item.venda,
         _corEquipe: verTodas
-          ? equipesMap.get(item.responsavel_instalacao_id) || undefined
+          ? equipesMap.get(item.responsavel_carregamento_id) || undefined
           : equipeData?.cor
       })) as unknown as OrdemCarregamento[];
     },
