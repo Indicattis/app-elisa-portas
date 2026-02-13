@@ -7,6 +7,7 @@ import { CronogramaInstalacaoMensal } from "@/components/cronograma/CronogramaIn
 import { GerenciarEquipes } from "@/components/cronograma/GerenciarEquipes";
 import { useOrdensInstalacaoCalendario } from "@/hooks/useOrdensInstalacaoCalendario";
 import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
+import { useAutorizadosAptos } from "@/hooks/useAutorizadosAptos";
 import { format, addDays, startOfWeek, addMonths, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { baixarCronogramaPDF } from "@/utils/cronogramaPDFGenerator";
@@ -28,16 +29,30 @@ export default function CronogramaInstalacoes() {
   const [equipesModalOpen, setEquipesModalOpen] = useState(false);
   const [weekStartDate, setWeekStartDate] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [equipesSelecionadas, setEquipesSelecionadas] = useState<string[]>([]);
+  const [autorizadosSelecionados, setAutorizadosSelecionados] = useState<string[]>([]);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [menuOpen, setMenuOpen] = useState(false);
 
   const { instalacoes, isLoading } = useOrdensInstalacaoCalendario(weekStartDate, viewMode);
   const { equipes, loading: equipesLoading } = useEquipesInstalacao();
+  const { autorizados, loading: autorizadosLoading } = useAutorizadosAptos();
 
   const equipesFiltradas = equipesSelecionadas.length > 0 
     ? equipes.filter(eq => equipesSelecionadas.includes(eq.id))
     : equipes;
+
+  const autorizadosFiltrados = autorizadosSelecionados
+    .map(id => autorizados.find(a => a.id === id))
+    .filter(Boolean)
+    .map(a => ({
+      id: a!.id,
+      nome: a!.nome,
+      cor: '#f59e0b',
+      ativa: true,
+    }));
+
+  const responsaveisFiltrados = [...equipesFiltradas, ...autorizadosFiltrados];
 
   const toggleEquipe = (equipeId: string) => {
     setEquipesSelecionadas(prev =>
@@ -47,8 +62,17 @@ export default function CronogramaInstalacoes() {
     );
   };
 
+  const toggleAutorizado = (autorizadoId: string) => {
+    setAutorizadosSelecionados(prev =>
+      prev.includes(autorizadoId)
+        ? prev.filter(id => id !== autorizadoId)
+        : [...prev, autorizadoId]
+    );
+  };
+
   const limparFiltros = () => {
     setEquipesSelecionadas([]);
+    setAutorizadosSelecionados([]);
   };
 
   const handleDownloadPDF = () => {
@@ -57,7 +81,7 @@ export default function CronogramaInstalacoes() {
     try {
       baixarCronogramaPDF({
         instalacoes,
-        equipes: equipesFiltradas,
+        equipes: responsaveisFiltrados,
         weekStart: weekStartDate
       });
       
@@ -94,7 +118,7 @@ export default function CronogramaInstalacoes() {
     }
   };
 
-  if (isLoading || equipesLoading) {
+  if (isLoading || equipesLoading || autorizadosLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -207,6 +231,46 @@ export default function CronogramaInstalacoes() {
 
                 <Separator />
 
+                {/* Filtrar Autorizados */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-semibold">Filtrar por Autorizados</Label>
+                    {autorizadosSelecionados.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setAutorizadosSelecionados([])}
+                        className="h-auto p-1 text-xs"
+                      >
+                        Limpar
+                      </Button>
+                    )}
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {autorizados.map((autorizado) => (
+                      <div key={autorizado.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`aut-${autorizado.id}`}
+                          checked={autorizadosSelecionados.includes(autorizado.id)}
+                          onCheckedChange={() => toggleAutorizado(autorizado.id)}
+                        />
+                        <Label
+                          htmlFor={`aut-${autorizado.id}`}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: '#f59e0b' }}
+                          />
+                          {autorizado.nome}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
                 {/* Ações */}
                 <div className="space-y-3">
                   <Label className="text-sm font-semibold">Ações</Label>
@@ -267,13 +331,13 @@ export default function CronogramaInstalacoes() {
               <CronogramaInstalacao
                 currentWeek={weekStartDate}
                 onEditPonto={() => {}}
-                equipesFiltradas={equipesFiltradas}
+                equipesFiltradas={responsaveisFiltrados}
               />
             ) : (
               <CronogramaInstalacaoMensal
                 currentMonth={weekStartDate}
                 onEditPonto={() => {}}
-                equipesFiltradas={equipesFiltradas}
+                equipesFiltradas={responsaveisFiltrados}
               />
             )}
           </div>
