@@ -218,6 +218,18 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
+      // Verificar limite de 3 ordens capturadas
+      const { count, error: countError } = await supabase
+        .from('ordens_pintura')
+        .select('*', { count: 'exact', head: true })
+        .eq('responsavel_id', user.id)
+        .eq('historico', false);
+
+      if (countError) throw countError;
+      if (count !== null && count >= 3) {
+        throw new Error('Você já possui 3 ordens capturadas. Finalize uma antes de capturar outra.');
+      }
+
       // Verificar se a ordem está em backlog
       const { data: ordemAtual } = await supabase
         .from("ordens_pintura")
@@ -249,11 +261,11 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
         description: "Você agora é responsável por esta ordem",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Erro ao capturar ordem:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível capturar a ordem",
+        description: error.message || "Não foi possível capturar a ordem",
         variant: "destructive",
       });
     },
