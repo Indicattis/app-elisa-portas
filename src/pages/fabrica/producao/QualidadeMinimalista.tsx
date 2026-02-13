@@ -98,11 +98,6 @@ export default function QualidadeMinimalista() {
         onCapturarOrdem={handleCapturarOrdem}
         isUpdating={marcarLinhaConcluida.isPending || concluirOrdem.isPending}
         isCapturing={capturarOrdem.isPending}
-        onPausarOrdem={async (ordemId, justificativa, linhasProblemaIds) => {
-          await pausarOrdem.mutateAsync({ ordemId, justificativa, linhasProblemaIds });
-          setSheetOpen(false);
-        }}
-        isPausing={pausarOrdem.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal
