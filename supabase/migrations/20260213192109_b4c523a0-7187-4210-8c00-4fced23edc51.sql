@@ -1,0 +1,1 @@
+ALTER TABLE public.estoque ADD COLUMN conferir_estoque boolean NOT NULL DEFAULT true;

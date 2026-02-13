@@ -105,6 +105,7 @@ export const useConferenciaEstoque = () => {
         .from("estoque")
         .select("id, sku, nome_produto, categoria, quantidade, unidade")
         .eq("ativo", true)
+        .eq("conferir_estoque", true)
         .order("nome_produto");
 
       if (searchTerm) {
@@ -140,7 +141,8 @@ export const useConferenciaEstoque = () => {
       const { count } = await supabase
         .from("estoque")
         .select("*", { count: "exact", head: true })
-        .eq("ativo", true);
+        .eq("ativo", true)
+        .eq("conferir_estoque", true);
 
       // Criar conferência
       const { data: conferencia, error } = await supabase
@@ -163,7 +165,8 @@ export const useConferenciaEstoque = () => {
       const { data: produtosData } = await supabase
         .from("estoque")
         .select("id, quantidade")
-        .eq("ativo", true);
+        .eq("ativo", true)
+        .eq("conferir_estoque", true);
 
       if (produtosData && produtosData.length > 0) {
         const itens = produtosData.map((p) => ({
