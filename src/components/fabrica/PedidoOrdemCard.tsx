@@ -19,6 +19,7 @@ const ORDEM_LABELS: Record<TipoOrdem, string> = {
   separacao: 'Separação',
   qualidade: 'Qualidade',
   pintura: 'Pintura',
+  embalagem: 'Embalagem',
   carregamento: 'Carregamento',
   instalacao: 'Instalação',
 };
@@ -65,6 +66,7 @@ export function PedidoOrdemCard({ pedido, onOrdemClick }: PedidoOrdemCardProps) 
     pedido.ordens.separacao,
     pedido.ordens.qualidade,
     pedido.ordens.pintura,
+    pedido.ordens.embalagem,
   ];
 
   // Filtrar baseado no tipo_entrega
