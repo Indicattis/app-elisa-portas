@@ -66,7 +66,7 @@ export default function DocumentosMinimalista() {
         size="sm"
         className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white border-0"
       >
-        <Link to="/dashboard/documentos/novo">
+        <Link to="/administrativo/documentos/novo">
           <Plus className="h-4 w-4 mr-1" />
           Novo
         </Link>
@@ -138,7 +138,7 @@ export default function DocumentosMinimalista() {
               asChild
               className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white border-0"
             >
-              <Link to="/dashboard/documentos/novo">
+              <Link to="/administrativo/documentos/novo">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar Documento
               </Link>

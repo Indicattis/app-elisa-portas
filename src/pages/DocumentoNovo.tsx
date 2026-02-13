@@ -91,7 +91,7 @@ export default function DocumentoNovo() {
         ativo: true,
       });
 
-      navigate('/dashboard/documentos');
+      navigate('/administrativo/documentos');
     } catch (error) {
       console.error('Erro ao criar documento:', error);
     }
@@ -102,7 +102,7 @@ export default function DocumentoNovo() {
   return (
     <div className="container mx-auto p-6 max-w-2xl">
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="outline" onClick={() => navigate('/dashboard/documentos')}>
+        <Button variant="outline" onClick={() => navigate('/administrativo/documentos')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
@@ -204,7 +204,7 @@ export default function DocumentoNovo() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate('/dashboard/documentos')}
+            onClick={() => navigate('/administrativo/documentos')}
             disabled={isLoading}
           >
             Cancelar
