@@ -1,36 +1,54 @@
 
-# Exibir portas sociais na secao "Itens do Pedido" em PedidoViewDirecao
+# Adicionar filtro de Autorizados no Cronograma de Instalacoes
 
-## Problema atual
-Na pagina `/direcao/pedidos/:id`, a secao "Itens do Pedido" so exibe pastas (folders) para produtos que possuem linhas de pedido (`pedido_linhas`) associadas. Portas sociais geralmente nao possuem linhas de producao vinculadas, entao nao aparecem nesta secao.
-
-## Solucao
-Alterar a logica de agrupamento (`gruposPortas`) para tambem incluir pastas para produtos da venda que nao possuem linhas, especialmente portas sociais. Isso garante que todas as portas aparecem como folders na grid, mesmo sem itens de producao, exibindo informacoes uteis como tipo, dimensoes e cor.
+## O que sera feito
+Adicionar uma secao "Filtrar por Autorizados" no menu lateral (Sheet) do cronograma, logo abaixo do filtro de equipes existente. Autorizados selecionados aparecerao como linhas adicionais na grid semanal e como filtro na visao mensal, no mesmo formato visual das equipes.
 
 ## Alteracoes
 
-### Arquivo: `src/pages/direcao/PedidoViewDirecao.tsx`
+### Arquivo: `src/pages/CronogramaInstalacoes.tsx`
 
-1. **Expandir o `gruposPortas` (useMemo)** para, alem de agrupar linhas existentes por porta, tambem criar pastas vazias para todos os `produtos_venda` do pedido que ainda nao possuem linhas. Isso segue o mesmo padrao ja usado no `PedidoLinhasEditor` (linhas 469-476), garantindo que portas sociais (e qualquer outro produto) aparecam como folders.
+1. **Importar `useAutorizadosAptos`** do hook existente para buscar a lista de autorizados ativos/premium.
 
-2. **Usar `produtos_venda` para enriquecer as informacoes das pastas** -- ao inves de depender apenas do `portasInfo` (que so contem portas referenciadas pelas linhas), buscar tipo, dimensoes e cor diretamente de `produtos_venda`. Isso permite exibir detalhes completos na pasta, incluindo a cor da porta social.
+2. **Adicionar estado `autorizadosSelecionados`** (`useState<string[]>([])`) para rastrear quais autorizados estao filtrados, seguindo o mesmo padrao de `equipesSelecionadas`.
 
-3. **Exibir informacao de "Somente exibicao"** -- quando uma pasta nao tiver linhas, mostrar uma mensagem como "Nenhum item de producao vinculado" dentro da pasta expandida, deixando claro que e apenas informativa.
+3. **Criar lista `autorizadosFiltrados`** que mapeia os autorizados selecionados para o mesmo formato de "equipe" (com `id`, `nome`, `cor`) para que possam ser renderizados como linhas na grid. Cor padrao dos autorizados: `#f59e0b` (amber) para diferenciar visualmente das equipes internas.
 
-4. **Renumerar corretamente** -- ajustar a numeracao sequencial para incluir as novas pastas na contagem por tipo (ex: "Porta Social #1").
+4. **Combinar `equipesFiltradas` + `autorizadosFiltrados`** em uma unica lista `responsaveisFiltrados` que sera passada como prop `equipesFiltradas` para `CronogramaInstalacao` e `CronogramaInstalacaoMensal`.
+
+5. **Adicionar secao no Sheet** entre o filtro de equipes e as acoes:
+   - Separator
+   - Label "Filtrar por Autorizados"
+   - Botao "Limpar" (condicional)
+   - Lista de checkboxes com nome do autorizado e bolinha amber
+   - Segue o mesmo padrao visual do filtro de equipes
+
+6. **Atualizar `limparFiltros`** para tambem limpar `autorizadosSelecionados`.
 
 ### Detalhes tecnicos
 
 ```text
-Antes (gruposPortas):
-  Itera apenas pedido.linhas
-  Cria folders somente para produto_venda_ids presentes nas linhas
-  Porta social sem linhas = nao aparece
+Estado:
+  equipesSelecionadas: string[]        (existente)
+  autorizadosSelecionados: string[]    (novo)
 
-Depois (gruposPortas):
-  1. Itera pedido.linhas (agrupa como antes)
-  2. Itera pedido.produtos_venda (cria folders vazios para os que faltam)
-  Porta social sem linhas = aparece como folder vazio com info do produto
+Dados:
+  equipes <- useEquipesInstalacao()           (existente)
+  autorizados <- useAutorizadosAptos()        (novo)
+
+Filtro combinado:
+  equipesFiltradas = equipesSelecionadas.length > 0 ? equipes.filter(...) : equipes
+  autorizadosFiltrados = autorizadosSelecionados.map(id => ({
+    id, nome, cor: '#f59e0b', ativa: true, ...
+  }))
+  
+  // Se nenhum filtro ativo: so equipes (comportamento atual)
+  // Se equipes filtradas: equipes selecionadas + autorizados selecionados
+  // Se autorizados filtrados: equipes (todas ou filtradas) + autorizados selecionados
+  responsaveisFiltrados = [...equipesFiltradas, ...autorizadosFiltrados]
 ```
 
-A pasta vazia da porta social exibira cor, dimensoes (se houver), e a badge "0 itens" -- informando o usuario que nao ha itens de producao, mas mostrando o produto no contexto do pedido.
+A grid semanal ja renderiza linhas baseadas em `equipesFiltradas`, entao autorizados aparecerao automaticamente como linhas extras com a cor amber. Ordens atribuidas a um autorizado (`responsavel_carregamento_id` = autorizado.id) aparecerao na linha correspondente.
+
+### Arquivo unico editado
+- `src/pages/CronogramaInstalacoes.tsx`
