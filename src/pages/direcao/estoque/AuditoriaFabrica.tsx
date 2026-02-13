@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Clock, Package, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -74,9 +75,10 @@ function getInitials(name: string): string {
 interface ConferenciaRowProps {
   conferencia: Conferencia;
   usuario: Usuario | undefined;
+  onRowClick: () => void;
 }
 
-function ConferenciaRow({ conferencia, usuario }: ConferenciaRowProps) {
+function ConferenciaRow({ conferencia, usuario, onRowClick }: ConferenciaRowProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
@@ -118,7 +120,10 @@ function ConferenciaRow({ conferencia, usuario }: ConferenciaRowProps) {
 
   return (
     <>
-      <TableRow className="border-white/10 hover:bg-white/5">
+      <TableRow 
+        className="border-white/10 hover:bg-white/5 cursor-pointer"
+        onClick={onRowClick}
+      >
         <TableCell className="text-white/70">
           <div>
             <p className="font-medium text-white">
@@ -250,6 +255,7 @@ function ConferenciaRow({ conferencia, usuario }: ConferenciaRowProps) {
 }
 
 export default function AuditoriaFabrica() {
+  const navigate = useNavigate();
   const { data: conferencias = [], isLoading } = useQuery({
     queryKey: ["conferencias-todas-fabrica"],
     queryFn: async () => {
@@ -325,6 +331,7 @@ export default function AuditoriaFabrica() {
                   key={conferencia.id} 
                   conferencia={conferencia} 
                   usuario={usuariosMap[conferencia.conferido_por]}
+                  onRowClick={() => navigate('/direcao/estoque/configuracoes/produtos/fabrica')}
                 />
               ))}
             </TableBody>
