@@ -1,28 +1,47 @@
 
-# Atualizar modal de adicao de produtos
+
+# Atualizar pagina de Almoxarifado para igualar layout da Fabrica
 
 ## Resumo
-O modal de adicao de produtos esta faltando dois campos que existem como colunas na listagem:
-1. **Quantidade Maxima (Est. Max)** - campo numerico para definir o limite maximo de estoque
-2. **Conferir Estoque** - checkbox para definir se o item deve ser conferido
+Redesenhar a pagina `/direcao/estoque/configuracoes/produtos/almoxarifado` para seguir exatamente o mesmo layout e design da pagina de Fabrica, incluindo barra de busca, indicadores, tabela com footer de totais e estilizacao consistente.
 
-## Alteracoes no arquivo `src/pages/direcao/estoque/ProdutosFabrica.tsx`
+## Alteracoes no arquivo `src/pages/direcao/estoque/ProdutosAlmoxarifado.tsx`
 
-### 1. Adicionar campos ao estado `formData` (linha 220-237)
-- Adicionar `quantidade_maxima: 0` ao estado inicial
-- Adicionar `conferir_estoque: false` ao estado inicial
+### 1. Adicionar barra de busca com indicadores
+- Adicionar estado `searchTerm` para filtro de busca
+- Adicionar bloco de indicadores identico ao da Fabrica:
+  - **Valor Estoque** (verde) - soma de `total_estoque` dos itens
+  - **Itens** (azul) - quantidade de itens filtrados
+  - **Estoque Baixo** (vermelho) - itens com `quantidade_estoque < quantidade_minima`
+  - **Em Excesso** (amarelo) - itens com `quantidade_estoque > quantidade_maxima`
+- Importar icones `DollarSign`, `Package`, `AlertTriangle`, `TrendingUp`
 
-### 2. Adicionar campo "Quantidade Maxima" no formulario (apos linha 506)
-- Inserir um terceiro campo no grid de quantidades (ja tem Quantidade e Qtd. Ideal)
-- Transformar o grid de `grid-cols-3` para `grid-cols-4` ou manter em 3 colunas adicionando a nova linha
-- O campo sera um Input numerico similar ao de Qtd. Ideal
+### 2. Reformular estrutura da tabela
+- Adicionar coluna **Fornecedor** (ja disponivel no join do hook)
+- Manter colunas: Produto (com descricao se houver), Fornecedor, Est. Min, Est. Max, Atual (com Badge colorido), Preco/Un, Valor Total, Acoes
+- Estilizar headers com `text-xs font-medium text-white/60`
+- Adicionar **footer** com totais (ideal, maxima, atual, valor)
 
-### 3. Adicionar checkbox "Conferir Estoque" no formulario (apos linha 591)
-- Adicionar um checkbox similar ao "Requer Pintura" ja existente
-- Label: "Conferir estoque deste item"
+### 3. Ajustar design dos cards
+- Usar mesma estrutura de cards: `p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10`
+- Separar barra de busca/indicadores do bloco da tabela (dois cards)
+- Adicionar texto de dica: "Dica: Clique em editar para modificar o item."
 
-### 4. Atualizar o handleSubmit (linhas 313-328)
-- Incluir `quantidade_maxima` e `conferir_estoque` nos dados enviados ao `adicionarProduto`
+### 4. Logica de filtragem e totais
+- Filtrar itens pelo `searchTerm` (busca por nome)
+- Calcular totais via `useMemo` filtrando itens visiveis
+- Usar mesma logica de cores nos Badges de quantidade
 
-### 5. Atualizar o reset do formData (linhas 331-347)
-- Incluir `quantidade_maxima: 0` e `conferir_estoque: false` no reset apos sucesso
+### 5. Simplificar coluna Acoes
+- Manter apenas botao de excluir (icone Trash2) com `confirm()` direto, sem AlertDialog separado
+- Remover botao de editar (manter duplo clique ou remover edicao inline por enquanto)
+
+### 6. Importacoes adicionais
+- Adicionar: `useMemo` do React
+- Adicionar icones: `DollarSign`, `Package`, `TrendingUp`
+- Remover: `AlertDialog` (usar `confirm()` nativo), `Pencil`
+- Adicionar: `TableFooter`
+
+### Arquivo alterado
+- `src/pages/direcao/estoque/ProdutosAlmoxarifado.tsx`
+
