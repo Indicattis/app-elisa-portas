@@ -1,47 +1,49 @@
 
 
-# Atualizar pagina de Almoxarifado para igualar layout da Fabrica
+# Adicionar funcionalidade "Conferir" ao Almoxarifado
 
 ## Resumo
-Redesenhar a pagina `/direcao/estoque/configuracoes/produtos/almoxarifado` para seguir exatamente o mesmo layout e design da pagina de Fabrica, incluindo barra de busca, indicadores, tabela com footer de totais e estilizacao consistente.
+Adicionar a coluna `conferir_estoque` na tabela `almoxarifado` do banco de dados e implementar a mesma logica de toggle que existe na pagina de Fabrica, onde itens com conferencia desativada ocultam metricas de estoque.
 
-## Alteracoes no arquivo `src/pages/direcao/estoque/ProdutosAlmoxarifado.tsx`
+## Etapas
 
-### 1. Adicionar barra de busca com indicadores
-- Adicionar estado `searchTerm` para filtro de busca
-- Adicionar bloco de indicadores identico ao da Fabrica:
-  - **Valor Estoque** (verde) - soma de `total_estoque` dos itens
-  - **Itens** (azul) - quantidade de itens filtrados
-  - **Estoque Baixo** (vermelho) - itens com `quantidade_estoque < quantidade_minima`
-  - **Em Excesso** (amarelo) - itens com `quantidade_estoque > quantidade_maxima`
-- Importar icones `DollarSign`, `Package`, `AlertTriangle`, `TrendingUp`
+### 1. Criar coluna no banco de dados
+- Adicionar coluna `conferir_estoque` (boolean, default false) na tabela `almoxarifado` via migracao SQL
 
-### 2. Reformular estrutura da tabela
-- Adicionar coluna **Fornecedor** (ja disponivel no join do hook)
-- Manter colunas: Produto (com descricao se houver), Fornecedor, Est. Min, Est. Max, Atual (com Badge colorido), Preco/Un, Valor Total, Acoes
-- Estilizar headers com `text-xs font-medium text-white/60`
-- Adicionar **footer** com totais (ideal, maxima, atual, valor)
+### 2. Atualizar o hook `useAlmoxarifado`
+- Adicionar `conferir_estoque` a interface `AlmoxarifadoItem`
+- Adicionar `conferir_estoque` a interface `AlmoxarifadoFormData`
 
-### 3. Ajustar design dos cards
-- Usar mesma estrutura de cards: `p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10`
-- Separar barra de busca/indicadores do bloco da tabela (dois cards)
-- Adicionar texto de dica: "Dica: Clique em editar para modificar o item."
+### 3. Atualizar a pagina `ProdutosAlmoxarifado.tsx`
 
-### 4. Logica de filtragem e totais
-- Filtrar itens pelo `searchTerm` (busca por nome)
-- Calcular totais via `useMemo` filtrando itens visiveis
-- Usar mesma logica de cores nos Badges de quantidade
+**Coluna "Conferir" na tabela:**
+- Adicionar coluna "Conferir" no header (entre "Valor Total" e "Acoes")
+- Adicionar Checkbox em cada linha com toggle direto no banco (mesmo padrao da Fabrica)
+- Implementar funcao `handleToggleConferir` que faz update direto no Supabase
 
-### 5. Simplificar coluna Acoes
-- Manter apenas botao de excluir (icone Trash2) com `confirm()` direto, sem AlertDialog separado
-- Remover botao de editar (manter duplo clique ou remover edicao inline por enquanto)
+**Logica condicional nas colunas:**
+- Quando `conferir_estoque` for `false`, exibir "---" nas colunas Est. Min, Est. Max, Atual, Preco/Un e Valor Total (igual Fabrica)
+- Quando `conferir_estoque` for `true`, exibir os valores normalmente
 
-### 6. Importacoes adicionais
-- Adicionar: `useMemo` do React
-- Adicionar icones: `DollarSign`, `Package`, `TrendingUp`
-- Remover: `AlertDialog` (usar `confirm()` nativo), `Pencil`
-- Adicionar: `TableFooter`
+**Indicadores e totais:**
+- Calcular indicadores (Valor Estoque, Estoque Baixo, Em Excesso) apenas com itens onde `conferir_estoque === true`
+- Footer de totais tambem considera apenas itens conferidos
 
-### Arquivo alterado
-- `src/pages/direcao/estoque/ProdutosAlmoxarifado.tsx`
+**Modal de criacao/edicao:**
+- Adicionar checkbox "Conferir estoque deste item" no formulario
+- Incluir campo no estado `formData`, no `handleSubmit` e no reset
+
+### 4. Atualizar colSpan
+- Ajustar colSpan das celulas de loading/empty e footer para acomodar a nova coluna (de 8 para 9)
+
+## Secao tecnica
+
+### Migracao SQL
+```sql
+ALTER TABLE almoxarifado ADD COLUMN conferir_estoque boolean DEFAULT false;
+```
+
+### Arquivos alterados
+- `src/hooks/useAlmoxarifado.ts` - interfaces
+- `src/pages/direcao/estoque/ProdutosAlmoxarifado.tsx` - UI e logica
 
