@@ -1,79 +1,34 @@
 
-# Corrigir calculo de metros quadrados na Pintura
+# Adicionar colunas "Pedidos" e "Conferir" na tabela de Produtos Fabrica
 
-## Problema
-O ranking de pintura por m2 em "Desempenho por Etapa" mostra 0 m2 porque:
+## Resumo
+Adicionar duas novas colunas na tabela de produtos da fabrica:
+1. **Qtd Pedidos** - Quantidade de pedidos de producao que usam esse item (contagem via `pedido_linhas.estoque_id`)
+2. **Conferir** - Checkbox rapido para ativar/desativar o campo `conferir_estoque` diretamente na listagem
 
-1. As funcoes SQL (`get_portas_por_etapa` e `get_desempenho_etapas`) tentam buscar `largura` e `altura` da tabela `pedido_linhas`, mas essa tabela nao tem esses dados preenchidos (todos NULL)
-2. As dimensoes reais das portas estao na tabela `produtos_vendas` (vinculada via `pedidos_producao.venda_id`)
-3. A coluna `metragem_quadrada` em `ordens_pintura` tambem nao e preenchida na criacao (quase todas com valor 0)
+## Detalhes Tecnicos
 
-## Solucao
+### 1. Buscar contagem de pedidos por produto
+- Criar uma query separada (ou inline no componente) que faz `SELECT estoque_id, COUNT(DISTINCT pedido_id) FROM pedido_linhas GROUP BY estoque_id` para obter a contagem de pedidos por item de estoque
+- Usar um `useQuery` adicional no componente `ProdutosFabrica.tsx` para buscar esses dados
+- Exibir o numero em uma nova coluna "Pedidos" na tabela
 
-### 1. Corrigir as funcoes SQL de ranking
+### 2. Checkbox "Conferir"
+- Usar o componente `Checkbox` existente (`@/components/ui/checkbox`)
+- Ao clicar, chamar `supabase.from("estoque").update({ conferir_estoque: !valor_atual }).eq("id", produto.id)` diretamente
+- Invalidar a query de estoque apos a atualizacao para refletir o estado atualizado
+- Nao exigir confirmacao - acao imediata ao clicar
 
-Alterar ambas as funcoes para calcular m2 a partir de `produtos_vendas` em vez de `pedido_linhas`:
+### 3. Alteracoes no arquivo `src/pages/direcao/estoque/ProdutosFabrica.tsx`
+- Importar `Checkbox` de `@/components/ui/checkbox`
+- Importar `supabase` e `useQueryClient` (ja disponivel via `useEstoque`)
+- Adicionar `useQuery` para buscar contagem de pedidos
+- Adicionar props `pedidosCount` e `onToggleConferir` ao `SortableProductRow`
+- Adicionar 2 novas colunas no `TableHeader`: "Pedidos" e "Conferir"
+- Adicionar 2 novas celulas no `SortableProductRow`
+- Atualizar todos os `colSpan` de 8 para 10
+- Adicionar 2 celulas extras no `TableFooter`
 
-**Logica atual (errada):**
-```text
-SELECT SUM(pl.largura * pl.altura / 1000000.0)
-FROM ordens_pintura op
-JOIN pedido_linhas pl ON pl.pedido_id = op.pedido_id
-WHERE ...
-```
-
-**Logica corrigida:**
-```text
-SELECT SUM(pv.largura * pv.altura)
-FROM ordens_pintura op
-JOIN pedidos_producao pp ON pp.id = op.pedido_id
-JOIN produtos_vendas pv ON pv.venda_id = pp.venda_id
-  AND pv.tipo_produto IN ('porta_enrolar', 'porta_social')
-  AND pv.largura IS NOT NULL
-  AND pv.altura IS NOT NULL
-WHERE op.status = 'pronta'
-  AND op.data_conclusao::date BETWEEN p_data_inicio AND p_data_fim
-```
-
-Nota: as dimensoes em `produtos_vendas` ja estao em metros (ex: 5.58 x 5.8), entao nao e necessario dividir por 1000000.
-
-### 2. Atualizar `criar_ordem_pintura` para preencher `metragem_quadrada`
-
-Adicionar calculo automatico da metragem ao criar a ordem:
-```text
-UPDATE ordens_pintura SET metragem_quadrada = (
-  SELECT COALESCE(SUM(pv.largura * pv.altura), 0)
-  FROM produtos_vendas pv
-  WHERE pv.venda_id = v_venda_id
-    AND pv.tipo_produto IN ('porta_enrolar', 'porta_social')
-    AND pv.largura IS NOT NULL AND pv.altura IS NOT NULL
-) WHERE id = v_ordem_id;
-```
-
-### 3. Backfill das ordens existentes
-
-Atualizar todas as `ordens_pintura` existentes que tem `metragem_quadrada = 0`:
-```text
-UPDATE ordens_pintura op SET metragem_quadrada = (
-  SELECT COALESCE(SUM(pv.largura * pv.altura), 0)
-  FROM pedidos_producao pp
-  JOIN produtos_vendas pv ON pv.venda_id = pp.venda_id
-  WHERE pp.id = op.pedido_id
-    AND pv.tipo_produto IN ('porta_enrolar', 'porta_social')
-    AND pv.largura IS NOT NULL AND pv.altura IS NOT NULL
-) WHERE op.metragem_quadrada = 0 OR op.metragem_quadrada IS NULL;
-```
-
-## Secao Tecnica
-
-### Arquivo afetado
-- 1 migration SQL contendo:
-  - `CREATE OR REPLACE FUNCTION get_portas_por_etapa` — corrigir subquery de pintura_m2
-  - `CREATE OR REPLACE FUNCTION get_desempenho_etapas` — corrigir subquery de pintura_m2 por colaborador
-  - `CREATE OR REPLACE FUNCTION criar_ordem_pintura` — adicionar calculo de metragem_quadrada
-  - UPDATE de backfill para ordens existentes
-
-### Impacto
-- Nenhuma alteracao de codigo frontend necessaria (os hooks e componentes ja exibem corretamente o valor retornado)
-- O ranking passara a mostrar dados imediatamente apos o backfill
-- Novas ordens terao metragem calculada automaticamente
+### 4. Nenhuma alteracao de banco de dados necessaria
+- O campo `conferir_estoque` ja existe na tabela `estoque`
+- A tabela `pedido_linhas` ja tem a coluna `estoque_id` para a contagem
