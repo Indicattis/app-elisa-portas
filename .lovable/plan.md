@@ -1,34 +1,28 @@
 
-# Ocultar dados de estoque para itens nao conferidos
+# Atualizar modal de adicao de produtos
 
 ## Resumo
-Itens com `conferir_estoque = false` nao devem exibir quantidade atual, estoque minimo, estoque maximo e valor em estoque. Essas celulas ficam vazias (exibindo "---" ou em branco), e os totais do rodape tambem devem excluir esses itens do calculo.
+O modal de adicao de produtos esta faltando dois campos que existem como colunas na listagem:
+1. **Quantidade Maxima (Est. Max)** - campo numerico para definir o limite maximo de estoque
+2. **Conferir Estoque** - checkbox para definir se o item deve ser conferido
 
-## Alteracoes
+## Alteracoes no arquivo `src/pages/direcao/estoque/ProdutosFabrica.tsx`
 
-### 1. Componente `SortableProductRow` (linhas 54-133)
-- Nas celulas de **Est. Min** (linha 100), **Est. Max** (linha 102), **Atual** (linha 105-114) e **Valor Total** (linha 128-130): exibir "---" quando `produto.conferir_estoque` for `false`
-- O **Preco/Un** continua visivel independentemente do status
+### 1. Adicionar campos ao estado `formData` (linha 220-237)
+- Adicionar `quantidade_maxima: 0` ao estado inicial
+- Adicionar `conferir_estoque: false` ao estado inicial
 
-### 2. Calculo dos totais (linhas 229-242)
-- Filtrar apenas produtos com `conferir_estoque === true` para calcular os totais de `ideal`, `maxima`, `atual`, `valor`, `estoqueBaixo` e `estoqueExcesso`
-- Isso garante que os indicadores no topo (Valor Estoque, Estoque Baixo, Em Excesso) e o rodape reflitam somente itens conferidos
+### 2. Adicionar campo "Quantidade Maxima" no formulario (apos linha 506)
+- Inserir um terceiro campo no grid de quantidades (ja tem Quantidade e Qtd. Ideal)
+- Transformar o grid de `grid-cols-3` para `grid-cols-4` ou manter em 3 colunas adicionando a nova linha
+- O campo sera um Input numerico similar ao de Qtd. Ideal
 
-### 3. Celulas do rodape (linhas 706-721)
-- Nenhuma alteracao estrutural necessaria, pois os totais ja serao recalculados corretamente
+### 3. Adicionar checkbox "Conferir Estoque" no formulario (apos linha 591)
+- Adicionar um checkbox similar ao "Requer Pintura" ja existente
+- Label: "Conferir estoque deste item"
 
-## Detalhes tecnicos
+### 4. Atualizar o handleSubmit (linhas 313-328)
+- Incluir `quantidade_maxima` e `conferir_estoque` nos dados enviados ao `adicionarProduto`
 
-No `SortableProductRow`, a logica sera:
-```
-conferir_estoque ? valor : "---"
-```
-
-No calculo de totais:
-```
-const produtosConferidos = filteredProdutos.filter(p => p.conferir_estoque);
-```
-E usar `produtosConferidos` em vez de `filteredProdutos` no `reduce` e nos filtros de estoque baixo/excesso.
-
-### Arquivo alterado
-- `src/pages/direcao/estoque/ProdutosFabrica.tsx`
+### 5. Atualizar o reset do formData (linhas 331-347)
+- Incluir `quantidade_maxima: 0` e `conferir_estoque: false` no reset apos sucesso
