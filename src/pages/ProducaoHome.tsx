@@ -1,5 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useOrdensCount } from "@/hooks/useOrdensCount";
+import { useProducaoAuth } from "@/hooks/useProducaoAuth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,25 +17,50 @@ interface Botao {
   icon: LucideIcon;
   path: string;
   countKey?: string;
+  routeKey: string;
 }
 
 const BOTOES: Botao[] = [
-  { label: "Solda", icon: Hammer, path: "/producao/solda", countKey: "solda" },
-  { label: "Perfiladeira", icon: Rows3, path: "/producao/perfiladeira", countKey: "perfiladeira" },
-  { label: "Separação", icon: Package, path: "/producao/separacao", countKey: "separacao" },
-  { label: "Qualidade", icon: CheckSquare, path: "/producao/qualidade", countKey: "qualidade" },
-  { label: "Pintura", icon: Paintbrush, path: "/producao/pintura", countKey: "pintura" },
-  { label: "Embalagem", icon: PackageCheck, path: "/producao/embalagem", countKey: "embalagem" },
-  { label: "Carregamento", icon: Truck, path: "/producao/carregamento", countKey: "carregamento" },
-  { label: "Instalações", icon: Wrench, path: "/producao/instalacoes" },
-  { label: "Terceirização", icon: Building2, path: "/producao/terceirizacao" },
-  { label: "Estoque", icon: ClipboardCheck, path: "/producao/conferencia-estoque" },
-  { label: "Almoxarifado", icon: Boxes, path: "/producao/conferencia-almox" },
+  { label: "Solda", icon: Hammer, path: "/producao/solda", countKey: "solda", routeKey: "producao_solda" },
+  { label: "Perfiladeira", icon: Rows3, path: "/producao/perfiladeira", countKey: "perfiladeira", routeKey: "producao_perfiladeira" },
+  { label: "Separação", icon: Package, path: "/producao/separacao", countKey: "separacao", routeKey: "producao_separacao" },
+  { label: "Qualidade", icon: CheckSquare, path: "/producao/qualidade", countKey: "qualidade", routeKey: "producao_qualidade" },
+  { label: "Pintura", icon: Paintbrush, path: "/producao/pintura", countKey: "pintura", routeKey: "producao_pintura" },
+  { label: "Embalagem", icon: PackageCheck, path: "/producao/embalagem", countKey: "embalagem", routeKey: "producao_embalagem" },
+  { label: "Carregamento", icon: Truck, path: "/producao/carregamento", countKey: "carregamento", routeKey: "producao_carregamento" },
+  { label: "Instalações", icon: Wrench, path: "/producao/instalacoes", routeKey: "producao_instalacoes" },
+  { label: "Terceirização", icon: Building2, path: "/producao/terceirizacao", routeKey: "producao_terceirizacao" },
+  { label: "Estoque", icon: ClipboardCheck, path: "/producao/conferencia-estoque", routeKey: "producao_conferencia_estoque" },
+  { label: "Almoxarifado", icon: Boxes, path: "/producao/conferencia-almox", routeKey: "producao_conferencia_almox" },
 ];
+
+const ADMIN_ROLES = ['administrador', 'admin'];
 
 export default function ProducaoHome() {
   const navigate = useNavigate();
   const { data: ordensCount } = useOrdensCount();
+  const { user } = useProducaoAuth();
+
+  const isAdmin = user?.role ? ADMIN_ROLES.includes(user.role) : false;
+
+  const { data: accessibleKeys = [] } = useQuery({
+    queryKey: ['producao-home-access', user?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('user_route_access' as any)
+        .select('route_key')
+        .eq('user_id', user!.user_id)
+        .eq('can_access', true)
+        .like('route_key', 'producao_%');
+      return (data as any[])?.map((r: any) => r.route_key) || [];
+    },
+    enabled: !!user?.user_id && !isAdmin,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const botoesVisiveis = isAdmin
+    ? BOTOES
+    : BOTOES.filter(btn => accessibleKeys.includes(btn.routeKey));
 
   const getCount = (key?: string) => {
     if (!key || !ordensCount) return 0;
@@ -61,7 +89,7 @@ export default function ProducaoHome() {
 
         {/* Grid de botões */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {BOTOES.map((btn) => {
+          {botoesVisiveis.map((btn) => {
             const Icon = btn.icon;
             const count = getCount(btn.countKey);
             return (
