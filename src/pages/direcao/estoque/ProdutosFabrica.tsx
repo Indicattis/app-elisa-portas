@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { Plus, Tags, FileDown, Printer, GripVertical, DollarSign, Package, AlertTriangle, TrendingUp } from "lucide-react";
+import { Plus, Tags, FileDown, Printer, GripVertical, DollarSign, Package, AlertTriangle, TrendingUp, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -49,9 +49,10 @@ interface SortableProductRowProps {
   isDragDisabled: boolean;
   pedidosCount: number;
   onToggleConferir: (id: string, currentStatus: boolean) => void;
+  onExcluir: (id: string) => void;
 }
 
-function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir }: SortableProductRowProps) {
+function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir }: SortableProductRowProps) {
   const {
     attributes,
     listeners,
@@ -132,6 +133,16 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
       <TableCell className="text-right font-medium text-white">
         {produto.conferir_estoque ? formatCurrency(produto.quantidade * produto.custo_unitario) : "---"}
       </TableCell>
+      <TableCell className="text-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+          onClick={(e) => { e.stopPropagation(); onExcluir(produto.id); }}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </TableCell>
     </TableRow>
   );
 }
@@ -148,7 +159,7 @@ function DragOverlayRow({ produto }: { produto: ProdutoEstoque | null }) {
 
 export default function ProdutosFabrica() {
   const navigate = useNavigate();
-  const { produtos, loading, adicionarProduto, reordenarProdutos } = useEstoque();
+  const { produtos, loading, adicionarProduto, reordenarProdutos, excluirProduto } = useEstoque();
   const { categorias } = useCategorias();
   const { subcategorias } = useSubcategorias();
   const { fornecedores } = useFornecedores();
@@ -184,6 +195,16 @@ export default function ProdutosFabrica() {
       .eq("id", id);
     if (!error) {
       queryClient.invalidateQueries({ queryKey: ["estoque"] });
+    }
+  };
+
+  const handleExcluir = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir este produto?")) return;
+    try {
+      await excluirProduto(id);
+      toast.success("Produto excluído com sucesso");
+    } catch {
+      toast.error("Erro ao excluir produto");
     }
   };
 
@@ -670,19 +691,20 @@ export default function ProdutosFabrica() {
                     <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>
                     <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
                     <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
+                    <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <SortableContext items={filteredProdutos.map(p => p.id)} strategy={verticalListSortingStrategy}>
                   <TableBody>
                     {loading ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={10} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={11} className="text-center py-8 text-sm text-white/40">
                           Carregando...
                         </TableCell>
                       </TableRow>
                     ) : filteredProdutos.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={10} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={11} className="text-center py-8 text-sm text-white/40">
                           {searchTerm ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
                         </TableCell>
                       </TableRow>
@@ -695,6 +717,7 @@ export default function ProdutosFabrica() {
                           isDragDisabled={isDragDisabled}
                           pedidosCount={pedidosCountMap[produto.id] || 0}
                           onToggleConferir={handleToggleConferir}
+                          onExcluir={handleExcluir}
                         />
                       ))
                     )}
@@ -725,6 +748,7 @@ export default function ProdutosFabrica() {
                     <TableCell className="text-right font-bold text-white">
                       {formatCurrency(totals.valor)}
                     </TableCell>
+                    <TableCell />
                   </TableRow>
                 </TableFooter>
               )}
