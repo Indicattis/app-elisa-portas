@@ -162,7 +162,7 @@ function ConferenciaRow({ conferencia, usuario, onRowClick }: ConferenciaRowProp
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
             className="text-white/70 hover:text-white hover:bg-white/10"
           >
             {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
