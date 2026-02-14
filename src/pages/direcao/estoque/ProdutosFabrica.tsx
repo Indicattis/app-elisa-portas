@@ -2,6 +2,9 @@ import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Plus, Tags, FileDown, Printer, GripVertical, DollarSign, Package, AlertTriangle, TrendingUp } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -44,9 +47,11 @@ interface SortableProductRowProps {
   produto: ProdutoEstoque;
   onDoubleClick: (id: string) => void;
   isDragDisabled: boolean;
+  pedidosCount: number;
+  onToggleConferir: (id: string, currentStatus: boolean) => void;
 }
 
-function SortableProductRow({ produto, onDoubleClick, isDragDisabled }: SortableProductRowProps) {
+function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir }: SortableProductRowProps) {
   const {
     attributes,
     listeners,
@@ -108,6 +113,15 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled }: Sortable
           {produto.quantidade}
         </Badge>
       </TableCell>
+      <TableCell className="text-center text-white/60 text-sm">
+        {pedidosCount || 0}
+      </TableCell>
+      <TableCell className="text-center">
+        <Checkbox
+          checked={produto.conferir_estoque}
+          onCheckedChange={() => onToggleConferir(produto.id, !!produto.conferir_estoque)}
+        />
+      </TableCell>
       <TableCell className="text-right text-white/80">
         {formatCurrency(produto.custo_unitario)}
       </TableCell>
@@ -135,6 +149,40 @@ export default function ProdutosFabrica() {
   const { subcategorias } = useSubcategorias();
   const { fornecedores } = useFornecedores();
   
+  const queryClient = useQueryClient();
+
+  // Fetch pedidos count per estoque item
+  const { data: pedidosCountMap = {} } = useQuery({
+    queryKey: ["pedidos-count-by-estoque"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pedido_linhas")
+        .select("estoque_id, pedido_id");
+      if (error) throw error;
+      const countMap: Record<string, number> = {};
+      const seen: Record<string, Set<string>> = {};
+      for (const row of data || []) {
+        if (!row.estoque_id) continue;
+        if (!seen[row.estoque_id]) seen[row.estoque_id] = new Set();
+        seen[row.estoque_id].add(row.pedido_id);
+      }
+      for (const [estoqueId, pedidoSet] of Object.entries(seen)) {
+        countMap[estoqueId] = pedidoSet.size;
+      }
+      return countMap;
+    },
+  });
+
+  const handleToggleConferir = async (id: string, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from("estoque")
+      .update({ conferir_estoque: !currentStatus })
+      .eq("id", id);
+    if (!error) {
+      queryClient.invalidateQueries({ queryKey: ["estoque"] });
+    }
+  };
+
   const [localProdutos, setLocalProdutos] = useState<ProdutoEstoque[]>([]);
   const [novoModal, setNovoModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -613,6 +661,8 @@ export default function ProdutosFabrica() {
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
+                    <TableHead className="text-center text-xs font-medium text-white/60">Pedidos</TableHead>
+                    <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>
                     <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
                     <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
                   </TableRow>
@@ -621,13 +671,13 @@ export default function ProdutosFabrica() {
                   <TableBody>
                     {loading ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={8} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={10} className="text-center py-8 text-sm text-white/40">
                           Carregando...
                         </TableCell>
                       </TableRow>
                     ) : filteredProdutos.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={8} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={10} className="text-center py-8 text-sm text-white/40">
                           {searchTerm ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
                         </TableCell>
                       </TableRow>
@@ -638,6 +688,8 @@ export default function ProdutosFabrica() {
                           produto={produto}
                           onDoubleClick={handleDoubleClick}
                           isDragDisabled={isDragDisabled}
+                          pedidosCount={pedidosCountMap[produto.id] || 0}
+                          onToggleConferir={handleToggleConferir}
                         />
                       ))
                     )}
@@ -660,6 +712,8 @@ export default function ProdutosFabrica() {
                     <TableCell className="text-center font-bold text-white">
                       {totals.atual}
                     </TableCell>
+                    <TableCell />
+                    <TableCell />
                     <TableCell className="text-right font-bold text-white/50">
                       ---
                     </TableCell>
