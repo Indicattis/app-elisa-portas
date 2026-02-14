@@ -1,34 +1,34 @@
 
-# Adicionar colunas "Pedidos" e "Conferir" na tabela de Produtos Fabrica
+# Ocultar dados de estoque para itens nao conferidos
 
 ## Resumo
-Adicionar duas novas colunas na tabela de produtos da fabrica:
-1. **Qtd Pedidos** - Quantidade de pedidos de producao que usam esse item (contagem via `pedido_linhas.estoque_id`)
-2. **Conferir** - Checkbox rapido para ativar/desativar o campo `conferir_estoque` diretamente na listagem
+Itens com `conferir_estoque = false` nao devem exibir quantidade atual, estoque minimo, estoque maximo e valor em estoque. Essas celulas ficam vazias (exibindo "---" ou em branco), e os totais do rodape tambem devem excluir esses itens do calculo.
 
-## Detalhes Tecnicos
+## Alteracoes
 
-### 1. Buscar contagem de pedidos por produto
-- Criar uma query separada (ou inline no componente) que faz `SELECT estoque_id, COUNT(DISTINCT pedido_id) FROM pedido_linhas GROUP BY estoque_id` para obter a contagem de pedidos por item de estoque
-- Usar um `useQuery` adicional no componente `ProdutosFabrica.tsx` para buscar esses dados
-- Exibir o numero em uma nova coluna "Pedidos" na tabela
+### 1. Componente `SortableProductRow` (linhas 54-133)
+- Nas celulas de **Est. Min** (linha 100), **Est. Max** (linha 102), **Atual** (linha 105-114) e **Valor Total** (linha 128-130): exibir "---" quando `produto.conferir_estoque` for `false`
+- O **Preco/Un** continua visivel independentemente do status
 
-### 2. Checkbox "Conferir"
-- Usar o componente `Checkbox` existente (`@/components/ui/checkbox`)
-- Ao clicar, chamar `supabase.from("estoque").update({ conferir_estoque: !valor_atual }).eq("id", produto.id)` diretamente
-- Invalidar a query de estoque apos a atualizacao para refletir o estado atualizado
-- Nao exigir confirmacao - acao imediata ao clicar
+### 2. Calculo dos totais (linhas 229-242)
+- Filtrar apenas produtos com `conferir_estoque === true` para calcular os totais de `ideal`, `maxima`, `atual`, `valor`, `estoqueBaixo` e `estoqueExcesso`
+- Isso garante que os indicadores no topo (Valor Estoque, Estoque Baixo, Em Excesso) e o rodape reflitam somente itens conferidos
 
-### 3. Alteracoes no arquivo `src/pages/direcao/estoque/ProdutosFabrica.tsx`
-- Importar `Checkbox` de `@/components/ui/checkbox`
-- Importar `supabase` e `useQueryClient` (ja disponivel via `useEstoque`)
-- Adicionar `useQuery` para buscar contagem de pedidos
-- Adicionar props `pedidosCount` e `onToggleConferir` ao `SortableProductRow`
-- Adicionar 2 novas colunas no `TableHeader`: "Pedidos" e "Conferir"
-- Adicionar 2 novas celulas no `SortableProductRow`
-- Atualizar todos os `colSpan` de 8 para 10
-- Adicionar 2 celulas extras no `TableFooter`
+### 3. Celulas do rodape (linhas 706-721)
+- Nenhuma alteracao estrutural necessaria, pois os totais ja serao recalculados corretamente
 
-### 4. Nenhuma alteracao de banco de dados necessaria
-- O campo `conferir_estoque` ja existe na tabela `estoque`
-- A tabela `pedido_linhas` ja tem a coluna `estoque_id` para a contagem
+## Detalhes tecnicos
+
+No `SortableProductRow`, a logica sera:
+```
+conferir_estoque ? valor : "---"
+```
+
+No calculo de totais:
+```
+const produtosConferidos = filteredProdutos.filter(p => p.conferir_estoque);
+```
+E usar `produtosConferidos` em vez de `filteredProdutos` no `reduce` e nos filtros de estoque baixo/excesso.
+
+### Arquivo alterado
+- `src/pages/direcao/estoque/ProdutosFabrica.tsx`
