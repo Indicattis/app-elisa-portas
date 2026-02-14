@@ -63,7 +63,7 @@ export default function ProducaoMeuHistorico() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/producao/home')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/producao')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>

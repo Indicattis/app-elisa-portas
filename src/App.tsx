@@ -549,7 +549,15 @@ const App = () => (
                 <Route path="/administrativo/fiscal/notas-fiscais/emitir-nfse" element={<ProtectedRoute routeKey="administrativo_hub"><EmitirNfseMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/fiscal/configuracoes" element={<ProtectedRoute routeKey="administrativo_hub"><ConfiguracoesFiscaisMinimalista /></ProtectedRoute>} />
 
-                <Route path="/producao" element={<HubFabrica />} />
+                <Route path="/producao" element={
+                  <ProducaoAuthProvider>
+                    <ProtectedProducaoRoute>
+                      <ProducaoLayout>
+                        <ProducaoHome />
+                      </ProducaoLayout>
+                    </ProtectedProducaoRoute>
+                  </ProducaoAuthProvider>
+                } />
                 <Route path="/producao/login" element={<ProducaoLogin />} />
                 <Route path="/producao/forbidden" element={<ForbiddenProducao />} />
 
@@ -688,16 +696,6 @@ const App = () => (
                               </ProducaoLayout>
                             </ProtectedProducaoRoute>
                           }
-                        />
-                        <Route 
-                          path="/home" 
-                          element={
-                            <ProtectedProducaoRoute>
-                              <ProducaoLayout>
-                                <ProducaoHome />
-                              </ProducaoLayout>
-                            </ProtectedProducaoRoute>
-                          } 
                         />
                         <Route 
                           path="/conferencia-estoque" 
