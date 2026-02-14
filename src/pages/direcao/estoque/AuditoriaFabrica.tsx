@@ -1,9 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Clock, Package, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Clock, Package, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -16,8 +26,9 @@ import {
   Collapsible,
   CollapsibleContent,
 } from "@/components/ui/collapsible";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -76,9 +87,10 @@ interface ConferenciaRowProps {
   conferencia: Conferencia;
   usuario: Usuario | undefined;
   onRowClick: () => void;
+  onDelete: (id: string) => void;
 }
 
-function ConferenciaRow({ conferencia, usuario, onRowClick }: ConferenciaRowProps) {
+function ConferenciaRow({ conferencia, usuario, onRowClick, onDelete }: ConferenciaRowProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
@@ -159,14 +171,24 @@ function ConferenciaRow({ conferencia, usuario, onRowClick }: ConferenciaRowProp
           </div>
         </TableCell>
         <TableCell>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
-            className="text-white/70 hover:text-white hover:bg-white/10"
-          >
-            {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+              className="text-white/70 hover:text-white hover:bg-white/10"
+            >
+              {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); onDelete(conferencia.id); }}
+              className="text-red-400/70 hover:text-red-400 hover:bg-red-500/10"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </TableCell>
       </TableRow>
       
@@ -256,6 +278,10 @@ function ConferenciaRow({ conferencia, usuario, onRowClick }: ConferenciaRowProp
 
 export default function AuditoriaFabrica() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const { data: conferencias = [], isLoading } = useQuery({
     queryKey: ["conferencias-todas-fabrica"],
     queryFn: async () => {
@@ -287,6 +313,25 @@ export default function AuditoriaFabrica() {
     },
     enabled: conferencias.length > 0,
   });
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    try {
+      // Delete items first, then the conference
+      await supabase.from("estoque_conferencia_itens").delete().eq("conferencia_id", deleteId);
+      const { error } = await supabase.from("estoque_conferencias").delete().eq("id", deleteId);
+      if (error) throw error;
+      toast.success("Conferência excluída com sucesso");
+      queryClient.invalidateQueries({ queryKey: ["conferencias-todas-fabrica"] });
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao excluir conferência");
+    } finally {
+      setDeleting(false);
+      setDeleteId(null);
+    }
+  };
 
   const breadcrumbItems = [
     { label: 'Home', path: '/home' },
@@ -322,7 +367,7 @@ export default function AuditoriaFabrica() {
                 <TableHead className="text-white/70">Responsável</TableHead>
                 <TableHead className="text-white/70">Status</TableHead>
                 <TableHead className="text-white/70">Tempo</TableHead>
-                <TableHead className="text-white/70 w-16">Ações</TableHead>
+                <TableHead className="text-white/70 w-24">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -332,12 +377,34 @@ export default function AuditoriaFabrica() {
                   conferencia={conferencia} 
                   usuario={usuariosMap[conferencia.conferido_por]}
                   onRowClick={() => navigate('/direcao/estoque/configuracoes/produtos/fabrica')}
+                  onDelete={(id) => setDeleteId(id)}
                 />
               ))}
             </TableBody>
           </Table>
         </div>
       )}
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conferência?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Todos os dados desta conferência serão removidos permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MinimalistLayout>
   );
 }
