@@ -26,10 +26,12 @@ export function ProducaoHeader() {
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
       <div className="flex items-center justify-between px-4 h-14">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={handleVoltar}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
+          {!isProducaoHome && (
+            <Button variant="ghost" size="sm" onClick={handleVoltar}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Button>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground hidden sm:block">
