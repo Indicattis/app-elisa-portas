@@ -233,6 +233,7 @@ export type Database = {
       almoxarifado: {
         Row: {
           ativo: boolean
+          conferir_estoque: boolean | null
           created_at: string
           created_by: string | null
           custo: number
@@ -248,6 +249,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          conferir_estoque?: boolean | null
           created_at?: string
           created_by?: string | null
           custo?: number
@@ -263,6 +265,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          conferir_estoque?: boolean | null
           created_at?: string
           created_by?: string | null
           custo?: number

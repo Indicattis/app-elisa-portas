@@ -14,6 +14,7 @@ export interface AlmoxarifadoItem {
   custo: number;
   unidade: string;
   ativo: boolean;
+  conferir_estoque: boolean;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -34,6 +35,7 @@ export interface AlmoxarifadoFormData {
   data_ultima_conferencia?: string | null;
   custo: number;
   unidade: string;
+  conferir_estoque?: boolean;
 }
 
 export const useAlmoxarifado = () => {

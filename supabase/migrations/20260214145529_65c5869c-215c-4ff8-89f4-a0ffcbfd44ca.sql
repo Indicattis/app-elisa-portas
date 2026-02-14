@@ -1,0 +1,1 @@
+ALTER TABLE almoxarifado ADD COLUMN conferir_estoque boolean DEFAULT false;
