@@ -224,11 +224,13 @@ export default function ProdutosFabrica() {
     subcategoria_id: "",
     quantidade: 0,
     quantidade_ideal: 0,
+    quantidade_maxima: 0,
     custo_unitario: 0,
     unidade: "UN",
     setor_responsavel_producao: "",
     fornecedor_id: "",
     requer_pintura: false,
+    conferir_estoque: false,
     modulo_calculo: "",
     valor_calculo: 0,
     eixo_calculo: "",
@@ -315,6 +317,7 @@ export default function ProdutosFabrica() {
         descricao_produto: formData.descricao_produto || null,
         quantidade: formData.quantidade,
         quantidade_ideal: formData.quantidade_ideal,
+        quantidade_maxima: formData.quantidade_maxima,
         custo_unitario: formData.custo_unitario,
         unidade: formData.unidade,
         categoria: formData.categoria || null,
@@ -322,12 +325,13 @@ export default function ProdutosFabrica() {
         setor_responsavel_producao: formData.setor_responsavel_producao ? formData.setor_responsavel_producao as any : null,
         fornecedor_id: formData.fornecedor_id || null,
         requer_pintura: formData.requer_pintura,
+        conferir_estoque: formData.conferir_estoque,
         modulo_calculo: formData.modulo_calculo ? formData.modulo_calculo as any : null,
         valor_calculo: formData.valor_calculo || null,
         eixo_calculo: formData.eixo_calculo ? formData.eixo_calculo as any : null,
         item_padrao_porta_enrolar: formData.item_padrao_porta_enrolar,
       });
-      
+
       setFormData({
         nome_produto: "",
         descricao_produto: "",
@@ -335,11 +339,13 @@ export default function ProdutosFabrica() {
         subcategoria_id: "",
         quantidade: 0,
         quantidade_ideal: 0,
+        quantidade_maxima: 0,
         custo_unitario: 0,
         unidade: "UN",
         setor_responsavel_producao: "",
         fornecedor_id: "",
         requer_pintura: false,
+        conferir_estoque: false,
         modulo_calculo: "",
         valor_calculo: 0,
         eixo_calculo: "",
@@ -506,6 +512,16 @@ export default function ProdutosFabrica() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="quantidade_maxima">Qtd. Máxima</Label>
+                <Input
+                  id="quantidade_maxima"
+                  type="number"
+                  value={formData.quantidade_maxima}
+                  onChange={(e) => setFormData({ ...formData, quantidade_maxima: Number(e.target.value) })}
+                  className="bg-white/5 border-white/10 text-white"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="unidade">Unidade</Label>
                 <Select
                   value={formData.unidade}
@@ -587,6 +603,19 @@ export default function ProdutosFabrica() {
               />
               <Label htmlFor="requer_pintura" className="cursor-pointer">
                 Este item requer pintura
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="conferir_estoque"
+                checked={formData.conferir_estoque}
+                onChange={(e) => setFormData({ ...formData, conferir_estoque: e.target.checked })}
+                className="h-4 w-4 rounded border-white/20 bg-white/5"
+              />
+              <Label htmlFor="conferir_estoque" className="cursor-pointer">
+                Conferir estoque deste item
               </Label>
             </div>
 
