@@ -6,15 +6,20 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, DollarSign, Package, AlertTriangle, TrendingUp } from "lucide-react";
 import { useAlmoxarifado, AlmoxarifadoItem, AlmoxarifadoFormData } from "@/hooks/useAlmoxarifado";
 import { useFornecedores } from "@/hooks/useFornecedores";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { formatCurrency } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "@/hooks/use-toast";
 
 export default function ProdutosAlmoxarifado() {
   const { items, isLoading, createItem, updateItem, deleteItem, isCreating, isUpdating, isDeleting } = useAlmoxarifado();
   const { fornecedores } = useFornecedores();
+  const queryClient = useQueryClient();
   
   const [formOpen, setFormOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<AlmoxarifadoItem | undefined>();
@@ -29,6 +34,7 @@ export default function ProdutosAlmoxarifado() {
     data_ultima_conferencia: null,
     custo: 0,
     unidade: "Un.",
+    conferir_estoque: false,
   });
 
   const filteredItems = items.filter(item =>
@@ -37,7 +43,8 @@ export default function ProdutosAlmoxarifado() {
   );
 
   const totals = useMemo(() => {
-    const base = filteredItems.reduce(
+    const conferidos = filteredItems.filter(item => item.conferir_estoque);
+    const base = conferidos.reduce(
       (acc, item) => ({
         minima: acc.minima + (item.quantidade_minima || 0),
         maxima: acc.maxima + (item.quantidade_maxima || 0),
@@ -46,10 +53,24 @@ export default function ProdutosAlmoxarifado() {
       }),
       { minima: 0, maxima: 0, atual: 0, valor: 0 }
     );
-    const estoqueBaixo = filteredItems.filter(item => item.quantidade_estoque < item.quantidade_minima).length;
-    const estoqueExcesso = filteredItems.filter(item => item.quantidade_estoque > item.quantidade_maxima).length;
+    const estoqueBaixo = conferidos.filter(item => item.quantidade_estoque < item.quantidade_minima).length;
+    const estoqueExcesso = conferidos.filter(item => item.quantidade_estoque > item.quantidade_maxima).length;
     return { ...base, estoqueBaixo, estoqueExcesso };
   }, [filteredItems]);
+
+  const handleToggleConferir = async (item: AlmoxarifadoItem) => {
+    const newValue = !item.conferir_estoque;
+    const { error } = await supabase
+      .from("almoxarifado")
+      .update({ conferir_estoque: newValue } as any)
+      .eq("id", item.id);
+
+    if (error) {
+      toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["almoxarifado"] });
+  };
 
   const handleEdit = (item: AlmoxarifadoItem) => {
     setSelectedItem(item);
@@ -62,6 +83,7 @@ export default function ProdutosAlmoxarifado() {
       data_ultima_conferencia: item.data_ultima_conferencia,
       custo: item.custo,
       unidade: item.unidade,
+      conferir_estoque: item.conferir_estoque,
     });
     setFormOpen(true);
   };
@@ -77,6 +99,7 @@ export default function ProdutosAlmoxarifado() {
       data_ultima_conferencia: null,
       custo: 0,
       unidade: "Un.",
+      conferir_estoque: false,
     });
     setFormOpen(true);
   };
@@ -193,25 +216,27 @@ export default function ProdutosAlmoxarifado() {
                   <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
                   <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
                   <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
+                  <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>
                   <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow className="border-white/10">
-                    <TableCell colSpan={8} className="text-center py-8 text-sm text-white/40">
+                    <TableCell colSpan={9} className="text-center py-8 text-sm text-white/40">
                       Carregando...
                     </TableCell>
                   </TableRow>
                 ) : filteredItems.length === 0 ? (
                   <TableRow className="border-white/10">
-                    <TableCell colSpan={8} className="text-center py-8 text-sm text-white/40">
+                    <TableCell colSpan={9} className="text-center py-8 text-sm text-white/40">
                       {searchTerm ? "Nenhum insumo encontrado" : "Nenhum insumo cadastrado. Clique em \"Novo Item\" para começar."}
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredItems.map((item) => {
                     const status = getStockStatus(item);
+                    const conferido = item.conferir_estoque;
                     return (
                       <TableRow
                         key={item.id}
@@ -225,27 +250,36 @@ export default function ProdutosAlmoxarifado() {
                           {item.fornecedor?.nome || <span className="text-white/30">—</span>}
                         </TableCell>
                         <TableCell className="text-center text-white/80">
-                          {item.quantidade_minima}
+                          {conferido ? item.quantidade_minima : <span className="text-white/30">---</span>}
                         </TableCell>
                         <TableCell className="text-center text-white/80">
-                          {item.quantidade_maxima}
+                          {conferido ? item.quantidade_maxima : <span className="text-white/30">---</span>}
                         </TableCell>
                         <TableCell className="text-center">
-                          <Badge className={
-                            status === "low"
-                              ? "bg-red-500/20 text-red-400 border-red-500/30"
-                              : status === "high"
-                              ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                              : "bg-green-500/20 text-green-400 border-green-500/30"
-                          }>
-                            {item.quantidade_estoque}
-                          </Badge>
+                          {conferido ? (
+                            <Badge className={
+                              status === "low"
+                                ? "bg-red-500/20 text-red-400 border-red-500/30"
+                                : status === "high"
+                                ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                                : "bg-green-500/20 text-green-400 border-green-500/30"
+                            }>
+                              {item.quantidade_estoque}
+                            </Badge>
+                          ) : <span className="text-white/30">---</span>}
                         </TableCell>
                         <TableCell className="text-right text-white/80">
-                          {formatCurrency(item.custo)}
+                          {conferido ? formatCurrency(item.custo) : <span className="text-white/30">---</span>}
                         </TableCell>
                         <TableCell className="text-right font-medium text-white">
-                          {formatCurrency(item.total_estoque || 0)}
+                          {conferido ? formatCurrency(item.total_estoque || 0) : <span className="text-white/30">---</span>}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Checkbox
+                            checked={item.conferir_estoque}
+                            onCheckedChange={() => handleToggleConferir(item)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
                         </TableCell>
                         <TableCell className="text-center">
                           <Button
@@ -284,6 +318,7 @@ export default function ProdutosAlmoxarifado() {
                     <TableCell className="text-right font-bold text-white">
                       {formatCurrency(totals.valor)}
                     </TableCell>
+                    <TableCell />
                     <TableCell />
                   </TableRow>
                 </TableFooter>
@@ -400,6 +435,18 @@ export default function ProdutosAlmoxarifado() {
                 </Select>
               </div>
             </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="conferir_estoque"
+                checked={formData.conferir_estoque}
+                onCheckedChange={(checked) => setFormData({ ...formData, conferir_estoque: !!checked })}
+              />
+              <Label htmlFor="conferir_estoque" className="text-sm text-white/80 cursor-pointer">
+                Conferir estoque deste item
+              </Label>
+            </div>
+
             <DialogFooter>
               <Button 
                 type="button" 
