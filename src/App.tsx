@@ -193,6 +193,8 @@ import SeparacaoMinimalista from "./pages/fabrica/producao/SeparacaoMinimalista"
 import QualidadeMinimalista from "./pages/fabrica/producao/QualidadeMinimalista";
 import PinturaMinimalista from "./pages/fabrica/producao/PinturaMinimalista";
 import EmbalagemMinimalista from "./pages/fabrica/producao/EmbalagemMinimalista";
+import ProducaoEmbalagem from "./pages/producao/ProducaoEmbalagem";
+import ProducaoInstalacoes from "./pages/producao/ProducaoInstalacoes";
 import CarregamentoMinimalista from "./pages/fabrica/producao/CarregamentoMinimalista";
 import TerceirizacaoMinimalista from "./pages/fabrica/producao/TerceirizacaoMinimalista";
 import MeuHistoricoMinimalista from "./pages/fabrica/producao/MeuHistoricoMinimalista";
@@ -613,6 +615,26 @@ const App = () => (
                             <ProtectedProducaoRoute routeKey="producao_carregamento">
                               <ProducaoLayout>
                                 <ProducaoCarregamento />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/embalagem"
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ProducaoEmbalagem />
+                              </ProducaoLayout>
+                            </ProtectedProducaoRoute>
+                          }
+                        />
+                        <Route
+                          path="/instalacoes"
+                          element={
+                            <ProtectedProducaoRoute>
+                              <ProducaoLayout>
+                                <ProducaoInstalacoes />
                               </ProducaoLayout>
                             </ProtectedProducaoRoute>
                           }
