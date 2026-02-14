@@ -88,6 +88,9 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled }: Sortable
           )}
         </div>
       </TableCell>
+      <TableCell className="text-white/60 text-sm">
+        {produto.fornecedor?.nome || <span className="text-white/30">—</span>}
+      </TableCell>
       <TableCell className="text-center text-white/80">
         {produto.quantidade_ideal || 0}
       </TableCell>
@@ -604,6 +607,7 @@ export default function ProdutosFabrica() {
                   <TableRow className="border-white/10 hover:bg-transparent">
                     <TableHead className="w-10 px-1" />
                     <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
@@ -615,13 +619,13 @@ export default function ProdutosFabrica() {
                   <TableBody>
                     {loading ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={7} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={8} className="text-center py-8 text-sm text-white/40">
                           Carregando...
                         </TableCell>
                       </TableRow>
                     ) : filteredProdutos.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={7} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={8} className="text-center py-8 text-sm text-white/40">
                           {searchTerm ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
                         </TableCell>
                       </TableRow>
@@ -644,6 +648,7 @@ export default function ProdutosFabrica() {
                     <TableCell className="font-bold text-white">
                       TOTAL ({filteredProdutos.length} itens)
                     </TableCell>
+                    <TableCell />
                     <TableCell className="text-center font-bold text-white">
                       {totals.ideal}
                     </TableCell>
