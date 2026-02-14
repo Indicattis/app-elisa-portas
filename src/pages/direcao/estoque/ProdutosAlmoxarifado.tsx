@@ -1,13 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, AlertTriangle, AlertCircle } from "lucide-react";
+import { Plus, Trash2, DollarSign, Package, AlertTriangle, TrendingUp } from "lucide-react";
 import { useAlmoxarifado, AlmoxarifadoItem, AlmoxarifadoFormData } from "@/hooks/useAlmoxarifado";
 import { useFornecedores } from "@/hooks/useFornecedores";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
@@ -19,8 +18,7 @@ export default function ProdutosAlmoxarifado() {
   
   const [formOpen, setFormOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<AlmoxarifadoItem | undefined>();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   
   const [formData, setFormData] = useState<AlmoxarifadoFormData>({
     nome: "",
@@ -32,6 +30,26 @@ export default function ProdutosAlmoxarifado() {
     custo: 0,
     unidade: "Un.",
   });
+
+  const filteredItems = items.filter(item =>
+    !searchTerm ||
+    item.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totals = useMemo(() => {
+    const base = filteredItems.reduce(
+      (acc, item) => ({
+        minima: acc.minima + (item.quantidade_minima || 0),
+        maxima: acc.maxima + (item.quantidade_maxima || 0),
+        atual: acc.atual + (item.quantidade_estoque || 0),
+        valor: acc.valor + (item.total_estoque || 0),
+      }),
+      { minima: 0, maxima: 0, atual: 0, valor: 0 }
+    );
+    const estoqueBaixo = filteredItems.filter(item => item.quantidade_estoque < item.quantidade_minima).length;
+    const estoqueExcesso = filteredItems.filter(item => item.quantidade_estoque > item.quantidade_maxima).length;
+    return { ...base, estoqueBaixo, estoqueExcesso };
+  }, [filteredItems]);
 
   const handleEdit = (item: AlmoxarifadoItem) => {
     setSelectedItem(item);
@@ -63,17 +81,9 @@ export default function ProdutosAlmoxarifado() {
     setFormOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setItemToDelete(id);
-    setDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (itemToDelete) {
-      await deleteItem(itemToDelete);
-      setDeleteDialogOpen(false);
-      setItemToDelete(null);
-    }
+  const handleExcluir = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir este item?")) return;
+    await deleteItem(id);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,12 +99,8 @@ export default function ProdutosAlmoxarifado() {
   };
 
   const getStockStatus = (item: AlmoxarifadoItem) => {
-    if (item.quantidade_estoque < item.quantidade_minima) {
-      return "low";
-    }
-    if (item.quantidade_estoque > item.quantidade_maxima) {
-      return "high";
-    }
+    if (item.quantidade_estoque < item.quantidade_minima) return "low";
+    if (item.quantidade_estoque > item.quantidade_maxima) return "high";
     return "normal";
   };
 
@@ -126,53 +132,97 @@ export default function ProdutosAlmoxarifado() {
       headerActions={headerActions}
       breadcrumbItems={breadcrumbItems}
     >
-      <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
-        <div className="p-4 rounded-lg">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold text-white">Lista de Insumos</h3>
-            <p className="text-sm text-white/60">
-              {items.length} item(s) cadastrado(s)
+      <div className="space-y-4">
+        {/* Barra de busca + indicadores */}
+        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+          <div className="p-4 rounded-lg space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <Input
+                placeholder="Buscar insumos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm bg-white/5 border-white/10 text-white placeholder:text-white/40"
+              />
+              <div className="flex flex-wrap gap-3 flex-1">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <DollarSign className="h-4 w-4 text-emerald-400" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-emerald-400/70 uppercase font-medium leading-none">Valor Estoque</span>
+                    <span className="text-sm font-bold text-emerald-400">{formatCurrency(totals.valor)}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                  <Package className="h-4 w-4 text-blue-400" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-blue-400/70 uppercase font-medium leading-none">Itens</span>
+                    <span className="text-sm font-bold text-blue-400">{filteredItems.length}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <AlertTriangle className="h-4 w-4 text-red-400" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-red-400/70 uppercase font-medium leading-none">Estoque Baixo</span>
+                    <span className="text-sm font-bold text-red-400">{totals.estoqueBaixo}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <TrendingUp className="h-4 w-4 text-amber-400" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-amber-400/70 uppercase font-medium leading-none">Em Excesso</span>
+                    <span className="text-sm font-bold text-amber-400">{totals.estoqueExcesso}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-white/40">
+              Dica: Clique duas vezes em um item para editá-lo.
             </p>
           </div>
+        </div>
 
-          {isLoading ? (
-            <div className="text-center py-8 text-white/40">
-              Carregando insumos...
-            </div>
-          ) : items.length === 0 ? (
-            <div className="text-center py-8 text-white/40">
-              Nenhum insumo cadastrado. Clique em "Novo Item" para começar.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-white/10 hover:bg-transparent">
-                    <TableHead className="text-white/60">Nome</TableHead>
-                    <TableHead className="text-center text-white/60">Est. Mín</TableHead>
-                    <TableHead className="text-center text-white/60">Est. Máx</TableHead>
-                    <TableHead className="text-center text-white/60">Atual</TableHead>
-                    <TableHead className="text-right text-white/60">Preço/Un</TableHead>
-                    <TableHead className="text-right text-white/60">Valor Total</TableHead>
-                    <TableHead className="text-right text-white/60">Ações</TableHead>
+        {/* Tabela */}
+        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+          <div className="rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/10 hover:bg-transparent">
+                  <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
+                  <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>
+                  <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>
+                  <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>
+                  <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
+                  <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
+                  <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
+                  <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow className="border-white/10">
+                    <TableCell colSpan={8} className="text-center py-8 text-sm text-white/40">
+                      Carregando...
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((item) => {
+                ) : filteredItems.length === 0 ? (
+                  <TableRow className="border-white/10">
+                    <TableCell colSpan={8} className="text-center py-8 text-sm text-white/40">
+                      {searchTerm ? "Nenhum insumo encontrado" : "Nenhum insumo cadastrado. Clique em \"Novo Item\" para começar."}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredItems.map((item) => {
                     const status = getStockStatus(item);
-                    
                     return (
-                      <TableRow key={item.id} className="border-white/10 hover:bg-white/5">
-                        <TableCell className="font-medium text-white">
-                          <div className="flex items-center gap-2">
-                            {item.nome}
-                            {status === "low" && (
-                              <AlertCircle className="h-4 w-4 text-red-400" />
-                            )}
-                            {status === "high" && (
-                              <AlertTriangle className="h-4 w-4 text-yellow-400" />
-                            )}
-                          </div>
+                      <TableRow
+                        key={item.id}
+                        className="border-white/10 hover:bg-white/5 cursor-pointer"
+                        onDoubleClick={() => handleEdit(item)}
+                      >
+                        <TableCell>
+                          <p className="text-sm font-medium text-white">{item.nome}</p>
+                        </TableCell>
+                        <TableCell className="text-white/60 text-sm">
+                          {item.fornecedor?.nome || <span className="text-white/30">—</span>}
                         </TableCell>
                         <TableCell className="text-center text-white/80">
                           {item.quantidade_minima}
@@ -182,7 +232,7 @@ export default function ProdutosAlmoxarifado() {
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge className={
-                            status === "low" 
+                            status === "low"
                               ? "bg-red-500/20 text-red-400 border-red-500/30"
                               : status === "high"
                               ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
@@ -197,33 +247,49 @@ export default function ProdutosAlmoxarifado() {
                         <TableCell className="text-right font-medium text-white">
                           {formatCurrency(item.total_estoque || 0)}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(item)}
-                              className="text-white/60 hover:text-white hover:bg-white/10"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(item.id)}
-                              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                        <TableCell className="text-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                            onClick={(e) => { e.stopPropagation(); handleExcluir(item.id); }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                  })
+                )}
+              </TableBody>
+              {filteredItems.length > 0 && (
+                <TableFooter className="bg-white/5 border-t border-white/20">
+                  <TableRow className="border-white/10 hover:bg-transparent">
+                    <TableCell className="font-bold text-white">
+                      TOTAL ({filteredItems.length} itens)
+                    </TableCell>
+                    <TableCell />
+                    <TableCell className="text-center font-bold text-white">
+                      {totals.minima}
+                    </TableCell>
+                    <TableCell className="text-center font-bold text-white">
+                      {totals.maxima}
+                    </TableCell>
+                    <TableCell className="text-center font-bold text-white">
+                      {totals.atual}
+                    </TableCell>
+                    <TableCell className="text-right font-bold text-white/50">
+                      ---
+                    </TableCell>
+                    <TableCell className="text-right font-bold text-white">
+                      {formatCurrency(totals.valor)}
+                    </TableCell>
+                    <TableCell />
+                  </TableRow>
+                </TableFooter>
+              )}
+            </Table>
+          </div>
         </div>
       </div>
 
@@ -354,30 +420,6 @@ export default function ProdutosAlmoxarifado() {
           </form>
         </DialogContent>
       </Dialog>
-
-      {/* Dialog de Confirmação de Exclusão */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-zinc-900 border-white/10 text-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription className="text-white/60">
-              Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/10 text-white hover:bg-white/10">
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDelete} 
-              disabled={isDeleting} 
-              className="bg-red-500 hover:bg-red-600"
-            >
-              {isDeleting ? "Excluindo..." : "Excluir"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </MinimalistLayout>
   );
 }
