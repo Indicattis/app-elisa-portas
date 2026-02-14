@@ -15,7 +15,7 @@ const menuItems = [
     title: "Colaboradores",
     description: "Interface de produção",
     icon: Factory,
-    path: "/producao/home",
+    path: "/producao",
   },
 ];
 
