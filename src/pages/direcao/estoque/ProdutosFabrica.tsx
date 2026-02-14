@@ -97,21 +97,25 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         {produto.fornecedor?.nome || <span className="text-white/30">—</span>}
       </TableCell>
       <TableCell className="text-center text-white/80">
-        {produto.quantidade_ideal || 0}
+        {produto.conferir_estoque ? (produto.quantidade_ideal || 0) : "---"}
       </TableCell>
       <TableCell className="text-center text-white/80">
-        {produto.quantidade_maxima || 0}
+        {produto.conferir_estoque ? (produto.quantidade_maxima || 0) : "---"}
       </TableCell>
       <TableCell className="text-center">
-        <Badge className={
-          produto.quantidade < (produto.quantidade_ideal || 0)
-            ? "bg-red-500/20 text-red-400 border-red-500/30"
-            : produto.quantidade > (produto.quantidade_maxima || Infinity)
-              ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-              : "bg-green-500/20 text-green-400 border-green-500/30"
-        }>
-          {produto.quantidade}
-        </Badge>
+        {produto.conferir_estoque ? (
+          <Badge className={
+            produto.quantidade < (produto.quantidade_ideal || 0)
+              ? "bg-red-500/20 text-red-400 border-red-500/30"
+              : produto.quantidade > (produto.quantidade_maxima || Infinity)
+                ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                : "bg-green-500/20 text-green-400 border-green-500/30"
+          }>
+            {produto.quantidade}
+          </Badge>
+        ) : (
+          <span className="text-white/30">---</span>
+        )}
       </TableCell>
       <TableCell className="text-center text-white/60 text-sm">
         {pedidosCount || 0}
@@ -126,7 +130,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         {formatCurrency(produto.custo_unitario)}
       </TableCell>
       <TableCell className="text-right font-medium text-white">
-        {formatCurrency(produto.quantidade * produto.custo_unitario)}
+        {produto.conferir_estoque ? formatCurrency(produto.quantidade * produto.custo_unitario) : "---"}
       </TableCell>
     </TableRow>
   );
@@ -227,7 +231,8 @@ export default function ProdutosFabrica() {
   const activeProduto = activeId ? localProdutos.find(p => p.id === activeId) ?? null : null;
 
   const totals = useMemo(() => {
-    const base = filteredProdutos.reduce(
+    const produtosConferidos = filteredProdutos.filter(p => p.conferir_estoque);
+    const base = produtosConferidos.reduce(
       (acc, p) => ({
         ideal: acc.ideal + (p.quantidade_ideal || 0),
         maxima: acc.maxima + (p.quantidade_maxima || 0),
@@ -236,8 +241,8 @@ export default function ProdutosFabrica() {
       }),
       { ideal: 0, maxima: 0, atual: 0, valor: 0 }
     );
-    const estoqueBaixo = filteredProdutos.filter(p => p.quantidade < (p.quantidade_ideal || 0)).length;
-    const estoqueExcesso = filteredProdutos.filter(p => p.quantidade > (p.quantidade_maxima || Infinity)).length;
+    const estoqueBaixo = produtosConferidos.filter(p => p.quantidade < (p.quantidade_ideal || 0)).length;
+    const estoqueExcesso = produtosConferidos.filter(p => p.quantidade > (p.quantidade_maxima || Infinity)).length;
     return { ...base, estoqueBaixo, estoqueExcesso };
   }, [filteredProdutos]);
 
