@@ -69,6 +69,14 @@ const ETAPAS_CONFIG: EtapaConfig[] = [
     bgColor: 'bg-pink-500/20' 
   },
   { 
+    id: 'embalagem', 
+    label: 'Embalagem', 
+    shortLabel: 'Embalagem',
+    icon: Package, 
+    color: 'text-cyan-400', 
+    bgColor: 'bg-cyan-500/20' 
+  },
+  { 
     id: 'aguardando_coleta', 
     label: 'Expedição Coleta', 
     shortLabel: 'Coleta',
@@ -123,6 +131,7 @@ export default function PedidosAdminMinimalista() {
   const { pedidos: pedidosProducao, isLoading: isLoadingProducao } = usePedidosEtapas("em_producao");
   const { pedidos: pedidosQualidade, isLoading: isLoadingQualidade } = usePedidosEtapas("inspecao_qualidade");
   const { pedidos: pedidosPintura, isLoading: isLoadingPintura } = usePedidosEtapas("aguardando_pintura");
+  const { pedidos: pedidosEmbalagem, isLoading: isLoadingEmbalagem } = usePedidosEtapas("embalagem");
   const { pedidos: pedidosColeta, isLoading: isLoadingColeta } = usePedidosEtapas("aguardando_coleta");
   const { pedidos: pedidosInstalacoes, isLoading: isLoadingInstalacoes } = usePedidosEtapas("instalacoes");
   const { pedidos: pedidosCorrecoes, isLoading: isLoadingCorrecoes } = usePedidosEtapas("correcoes");
@@ -135,6 +144,7 @@ export default function PedidosAdminMinimalista() {
     em_producao: pedidosProducao,
     inspecao_qualidade: pedidosQualidade,
     aguardando_pintura: pedidosPintura,
+    embalagem: pedidosEmbalagem,
     aguardando_coleta: pedidosColeta,
     instalacoes: pedidosInstalacoes,
     correcoes: pedidosCorrecoes,
@@ -147,6 +157,7 @@ export default function PedidosAdminMinimalista() {
     em_producao: isLoadingProducao,
     inspecao_qualidade: isLoadingQualidade,
     aguardando_pintura: isLoadingPintura,
+    embalagem: isLoadingEmbalagem,
     aguardando_coleta: isLoadingColeta,
     instalacoes: isLoadingInstalacoes,
     correcoes: isLoadingCorrecoes,
