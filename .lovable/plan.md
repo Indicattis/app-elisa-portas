@@ -1,51 +1,51 @@
 
 
-# Adicionar rotas de Embalagem e Instalacoes nas permissoes
+# Mover conteudo de /producao/home para /producao
 
 ## Resumo
-Inserir 2 novos registros na tabela `app_routes` para que as paginas `/producao/embalagem` e `/producao/instalacoes` aparecam no gerenciamento de permissoes em `/admin/permissions` dentro da interface "Producao".
+O login em `/producao/login` redireciona para `/producao`, mas essa rota renderiza `HubFabrica` em vez do conteudo correto (`ProducaoHome`). A solucao e substituir o `HubFabrica` por `ProducaoHome` na rota `/producao` (protegida com `ProtectedProducaoRoute`) e remover a rota `/producao/home`.
 
-## O que sera feito
+## Alteracoes
 
-1. **Inserir rota `producao_embalagem`** na tabela `app_routes` com:
-   - key: `producao_embalagem`
-   - path: `/producao/embalagem`
-   - label: `Embalagem`
-   - interface: `producao`
-   - sort_order: 7 (entre Pintura=6 e Carregamento=8)
+### 1. `src/App.tsx`
+- **Linha 552**: Substituir `<HubFabrica />` por `ProducaoHome` envolto em `ProducaoAuthProvider`, `ProtectedProducaoRoute` e `ProducaoLayout`
+- **Linhas 692-701**: Remover a rota `/home` do bloco de rotas aninhadas (nao existe mais)
 
-2. **Inserir rota `producao_instalacoes`** na tabela `app_routes` com:
-   - key: `producao_instalacoes`
-   - path: `/producao/instalacoes`
-   - label: `Instalacoes`
-   - interface: `producao`
-   - sort_order: 8 (apos Embalagem)
+### 2. `src/components/producao/ProducaoHeader.tsx`
+- Atualizar `navigate('/producao/home')` para `navigate('/producao')` no botao voltar
 
-3. **Reordenar rotas existentes** para acomodar as novas:
-   - Carregamento: sort_order 7 -> 9
-   - Terceirizacao: sort_order 8 -> 10
-   - Conferencia Estoque: sort_order 10 -> 11
-   - Conferencia Almoxarifado: sort_order 11 -> 12
+### 3. `src/pages/ProducaoMeuHistorico.tsx`
+- Atualizar `navigate('/producao/home')` para `navigate('/producao')`
 
-Nenhuma alteracao de codigo e necessaria. O componente `UserRouteAccessManager` ja busca todas as rotas ativas da interface selecionada dinamicamente.
+### 4. `src/pages/producao/ConferenciaEstoqueProducao.tsx`
+- Atualizar `returnPath="/producao/home"` para `returnPath="/producao"`
+
+### 5. `src/pages/producao/ConferenciaAlmoxProducao.tsx`
+- Atualizar `returnPath="/producao/home"` para `returnPath="/producao"`
+
+### 6. `src/pages/HubFabrica.tsx`
+- Atualizar `path: "/producao/home"` para `path: "/producao"`
 
 ## Secao Tecnica
 
-### SQL a executar (INSERT, nao migration)
+### Rota principal (App.tsx)
+A rota `/producao` deixa de ser simples (`<HubFabrica />`) e passa a ser:
 ```text
--- Reordenar existentes
-UPDATE app_routes SET sort_order = 9 WHERE key = 'producao_carregamento';
-UPDATE app_routes SET sort_order = 10 WHERE key = 'producao_terceirizacao';
-UPDATE app_routes SET sort_order = 11 WHERE key = 'producao_conferencia_estoque';
-UPDATE app_routes SET sort_order = 12 WHERE key = 'producao_conferencia_almox';
-
--- Inserir novas rotas
-INSERT INTO app_routes (key, path, label, interface, sort_order, active)
-VALUES 
-  ('producao_embalagem', '/producao/embalagem', 'Embalagem', 'producao', 7, true),
-  ('producao_instalacoes', '/producao/instalacoes', 'Instalações', 'producao', 8, true);
+<Route path="/producao" element={
+  <ProducaoAuthProvider>
+    <ProtectedProducaoRoute>
+      <ProducaoLayout>
+        <ProducaoHome />
+      </ProducaoLayout>
+    </ProtectedProducaoRoute>
+  </ProducaoAuthProvider>
+} />
 ```
 
 ### Arquivos afetados
-Nenhum arquivo de codigo precisa ser alterado — apenas dados no banco.
-
+1. `src/App.tsx` - substituir elemento da rota `/producao` + remover rota `/home`
+2. `src/components/producao/ProducaoHeader.tsx` - atualizar navegacao
+3. `src/pages/ProducaoMeuHistorico.tsx` - atualizar navegacao
+4. `src/pages/producao/ConferenciaEstoqueProducao.tsx` - atualizar returnPath
+5. `src/pages/producao/ConferenciaAlmoxProducao.tsx` - atualizar returnPath
+6. `src/pages/HubFabrica.tsx` - atualizar path do botao
