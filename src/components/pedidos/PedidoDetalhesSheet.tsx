@@ -21,6 +21,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatarNumeroPedidoMensal } from "@/utils/pedidoFormatters";
 import { PedidoFluxogramaMap } from "./PedidoFluxogramaMap";
 import { OrdemLinhasSheet } from "@/components/fabrica/OrdemLinhasSheet";
+import { ETAPAS_CONFIG } from "@/types/pedidoEtapa";
+import type { EtapaPedido } from "@/types/pedidoEtapa";
+import { formatDuration } from "@/utils/timeFormat";
+import { useCronometroEtapa } from "@/hooks/useCronometroEtapa";
 import type { OrdemStatus, TipoOrdem, LinhaProblemaInfo, ResponsavelInfo } from "@/hooks/useOrdensPorPedido";
 import {
   OPCOES_INTERNA_EXTERNA,
@@ -66,6 +70,12 @@ interface OrdemProducao {
   linha_problema: LinhaProblemaInfo | null;
 }
 
+// Mini componente para cronômetro da etapa atual
+function EtapaAtualCronometro({ dataEntrada }: { dataEntrada: string }) {
+  const { tempoDecorrido } = useCronometroEtapa({ dataEntrada });
+  return <span className="text-xs font-mono text-green-400">{tempoDecorrido}</span>;
+}
+
 export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalhesSheetProps) {
   const venda = pedido.vendas;
   const { linhas, isLoading } = usePedidoLinhas(pedido.id);
@@ -81,6 +91,8 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
   const [showOrdemLinhas, setShowOrdemLinhas] = useState(false);
   const [observacoesVisita, setObservacoesVisita] = useState<ObservacaoVisita[]>([]);
   const [verificandoAvanco, setVerificandoAvanco] = useState(false);
+  const [etapasHistorico, setEtapasHistorico] = useState<any[]>([]);
+  const [tempoEtapasOpen, setTempoEtapasOpen] = useState(false);
   
   const { verificarEAvancarManual, processos, modalOpen, setModalOpen } = usePedidoAutoAvanco();
   
@@ -88,6 +100,7 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
     if (open && pedido?.id) {
       fetchOrdens();
       fetchObservacoesVisita();
+      fetchEtapasHistorico();
     }
   }, [open, pedido?.id]);
 
@@ -107,6 +120,22 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
       }
     } catch (error) {
       console.error("Erro ao buscar observações:", error);
+    }
+  };
+
+  const fetchEtapasHistorico = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('pedidos_etapas')
+        .select('id, etapa, data_entrada, data_saida, tempo_permanencia_segundos')
+        .eq('pedido_id', pedido.id)
+        .order('data_entrada', { ascending: true });
+      
+      if (!error && data) {
+        setEtapasHistorico(data);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar etapas:", error);
     }
   };
 
@@ -743,6 +772,58 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
               <p className="text-sm text-white/50">Nenhuma ordem vinculada</p>
             )}
           </div>
+
+          {/* Tempo por Etapa */}
+          {etapasHistorico.length > 0 && (
+            <Collapsible open={tempoEtapasOpen} onOpenChange={setTempoEtapasOpen}>
+              <CollapsibleTrigger asChild>
+                <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-cyan-400" />
+                    <span className="font-medium text-white text-sm">Tempo por Etapa</span>
+                    <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30 text-xs">
+                      {etapasHistorico.length}
+                    </Badge>
+                  </div>
+                  <ChevronDown className={cn(
+                    "h-4 w-4 text-white/60 transition-transform duration-200",
+                    tempoEtapasOpen && "rotate-180"
+                  )} />
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2 space-y-1.5 pl-2">
+                {etapasHistorico.map((etapa: any) => {
+                  const config = ETAPAS_CONFIG[etapa.etapa as EtapaPedido];
+                  const label = config?.label || etapa.etapa;
+                  const isAtual = !etapa.data_saida;
+                  const tempoSalvo = etapa.tempo_permanencia_segundos;
+
+                  return (
+                    <div key={etapa.id} className="flex items-center justify-between p-2.5 bg-white/5 rounded-lg border border-white/5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className={cn("w-2 h-2 rounded-full flex-shrink-0", isAtual ? "bg-green-400 animate-pulse" : "bg-white/30")} />
+                        <span className="text-sm text-white truncate">{label}</span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {isAtual ? (
+                          <EtapaAtualCronometro dataEntrada={etapa.data_entrada} />
+                        ) : tempoSalvo != null ? (
+                          <span className="text-xs font-mono text-white/70">{formatDuration(Math.round(tempoSalvo))}</span>
+                        ) : (
+                          <span className="text-xs text-white/40">—</span>
+                        )}
+                        {etapa.data_entrada && (
+                          <span className="text-[10px] text-white/30">
+                            {format(new Date(etapa.data_entrada), "dd/MM")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
 
           {/* Histórico de Movimentações */}
           <Collapsible open={historicoOpen} onOpenChange={setHistoricoOpen}>
