@@ -1,43 +1,36 @@
 
 
-# Adicionar observacao da venda na pagina do pedido
+# Adicionar botoes de download PDF e Excel em Minhas Vendas
 
-## Problema
-A pagina de detalhes do pedido administrativo nao exibe a observacao cadastrada na venda (`observacoes_venda`), mesmo que essa informacao exista no banco de dados.
+## Objetivo
+Adicionar um dropdown de exportacao (PDF e Excel) na pagina `/vendas/minhas-vendas`, reutilizando a mesma logica ja existente em `src/pages/Vendas.tsx`.
 
-## Solucao
-Buscar o campo `observacoes_venda` da tabela `vendas` e exibi-lo na pagina do pedido como um card de leitura, separado das observacoes editaveis do pedido.
+## Alteracoes em `src/pages/vendas/MinhasVendas.tsx`
 
-## Alteracoes no arquivo `src/pages/administrativo/PedidoViewMinimalista.tsx`
+### 1. Novos imports
+- `Download, FileText, FileSpreadsheet` do lucide-react
+- `DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger` do radix
+- `* as XLSX` do pacote xlsx
+- `generateVendasRelatorioPDF` de `@/utils/vendasPDFGenerator`
+- `toast` do sonner (ou useToast)
 
-### 1. Atualizar a interface `Pedido`
-Adicionar `observacoes_venda?: string` dentro do objeto `venda` (junto aos campos existentes como `cliente_nome`, `cidade`, etc.)
+### 2. Adicionar funcao `handleExportarPDF`
+Mapear `vendasFiltradas` para o formato esperado pelo `generateVendasRelatorioPDF`, passando as stats (totalVendas, valorTotal, totalPortasEnrolar contando produtos do tipo `porta_enrolar`).
 
-### 2. Atualizar a query de busca da venda
-Na linha 186, adicionar `observacoes_venda` na lista de campos do select:
-```
-.select(`id, cliente_nome, cidade, estado, valor_venda, forma_pagamento, tipo_entrega, data_prevista_entrega, atendente_id, observacoes_venda`)
-```
+### 3. Adicionar funcao `handleExportarExcel`
+Mapear `vendasFiltradas` para colunas amigaveis e gerar arquivo `.xlsx` usando a lib `xlsx`, seguindo o mesmo padrao de `Vendas.tsx`.
 
-### 3. Exibir a observacao da venda na interface
-Adicionar um card logo antes da secao "Observacoes do Pedido" (antes da linha 571), exibindo o texto da observacao em modo somente leitura:
+### 4. Adicionar botao na area de filtros
+Ao lado do `ColumnManager` (linha 422-428), adicionar um `DropdownMenu` com icone `Download` contendo duas opcoes:
+- "Exportar PDF" com icone `FileText`
+- "Exportar Excel" com icone `FileSpreadsheet`
 
-```
-{pedido.venda?.observacoes_venda && (
-  <Card>
-    <CardHeader>
-      <CardTitle>
-        <FileText /> Observacoes da Venda
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <p>{pedido.venda.observacoes_venda}</p>
-    </CardContent>
-  </Card>
-)}
-```
+O botao seguira o mesmo estilo visual dos outros botoes de filtro (border-blue-500/20, bg-blue-500/5, etc.)
+
+## Arquivo alterado
+- `src/pages/vendas/MinhasVendas.tsx`
 
 ## Impacto
-- Apenas leitura, sem alteracao de dados
-- Sem migracao de banco necessaria
-- O campo so aparece quando a venda possui observacao cadastrada
+- Nenhuma alteracao de banco de dados
+- Reutiliza utilitarios existentes (vendasPDFGenerator, xlsx)
+- Exporta apenas as vendas filtradas visiveis na tela
