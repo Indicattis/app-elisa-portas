@@ -1,26 +1,59 @@
 
 
-# Remover Finalizados e renomear seção
+# Exibir contagem de agendamentos no tooltip da data de carregamento
 
 ## Resumo
-Remover a seção "Finalizados" da página de Ordens de Instalação e renomear "Prontas para Instalação" para "Carregadas".
+Adicionar uma coluna `vezes_agendado` em cada tabela relevante e criar triggers no banco para incrementar automaticamente esse contador sempre que a data de agendamento for definida ou alterada. No front-end, exibir essa contagem no tooltip ao passar o mouse sobre a data de carregamento/agendamento.
 
-## Mudanças
+## Mudancas no Banco de Dados
 
-### Arquivo: `src/pages/logistica/OrdensInstalacoesLogistica.tsx`
+### Migration SQL
+Adicionar coluna `vezes_agendado` (integer, default 0) nas 4 tabelas:
+- `ordens_carregamento`
+- `instalacoes`
+- `neo_instalacoes`
+- `neo_correcoes`
 
-**Remover seção Finalizados**
-- Remover o AccordionItem "finalizados" (linhas 286-314)
-- Remover os hooks `useNeoInstalacoesFinalizadas` e `useNeoCorrecoesFinalizadas` e suas variáveis derivadas (`finalizados`, `isLoadingFinalizados`)
-- Remover os imports não mais utilizados: `useNeoInstalacoesFinalizadas`, `useNeoCorrecoesFinalizadas`, `NeoFinalizadoRow`, `CheckCircle2`
+Criar uma trigger function que incrementa `vezes_agendado` quando o campo de data muda de NULL para um valor, ou muda de um valor para outro valor diferente:
 
-**Renomear seção**
-- Alterar o texto "Prontas para Instalação" para "Carregadas" no AccordionTrigger (linha 357)
-- Ajustar a mensagem de vazio de "Nenhuma instalação pronta (carregada)." para "Nenhuma instalação carregada."
+- **ordens_carregamento**: monitora `data_carregamento`
+- **instalacoes**: monitora `data_carregamento` (fonte de verdade para agendamento)
+- **neo_instalacoes**: monitora `data_instalacao`
+- **neo_correcoes**: monitora `data_correcao`
 
-**Ajustar subtítulo do header**
-- Atualizar o texto de resumo (linha 220) para refletir a nova nomenclatura: trocar "prontas" por "carregadas"
+A trigger nao incrementa quando a data e removida (set para NULL), apenas quando e definida ou alterada.
 
-### Arquivos envolvidos
-- `src/pages/logistica/OrdensInstalacoesLogistica.tsx`
+## Mudancas no Front-end
 
+### 1. `src/components/pedidos/PedidoCard.tsx`
+- Na query `pedido-carregamento` (linha ~332), incluir `vezes_agendado` no select tanto de `instalacoes` quanto de `ordens_carregamento`
+- Retornar `vezesAgendado` no objeto de resultado
+- Na Col 6 (Data de Carregamento, linha ~1217), envolver o bloco existente com um `Tooltip` que mostra "Agendado X vez(es)" ao passar o mouse
+
+### 2. `src/components/pedidos/NeoInstalacaoCardGestao.tsx`
+- Buscar `vezes_agendado` do tipo `NeoInstalacao` (garantir que o hook ja retorna esse campo)
+- Na Col 8 (Data de Agendamento, linha ~156), envolver com `Tooltip` mostrando a contagem
+
+### 3. `src/components/pedidos/NeoCorrecaoCardGestao.tsx`
+- Mesmo padrao: envolver a Col 8 (Data de Agendamento, linha ~140) com `Tooltip` mostrando a contagem
+
+### 4. Tipos (`src/types/neoInstalacao.ts` e `src/types/neoCorrecao.ts`)
+- Adicionar campo `vezes_agendado: number` aos tipos
+
+### 5. Hooks de dados
+- Garantir que os hooks `useNeoInstalacoes` e `useNeoCorrecoes` incluem `vezes_agendado` nos selects
+
+## Formato do Tooltip
+Ao passar o mouse sobre a data de carregamento/agendamento:
+- Se `vezes_agendado` <= 1: nao exibir nada extra (primeira vez e o padrao)
+- Se `vezes_agendado` >= 2: exibir "Reagendado X vezes" em texto pequeno dentro do tooltip
+
+## Arquivos envolvidos
+- Nova migration SQL (coluna + triggers)
+- `src/components/pedidos/PedidoCard.tsx`
+- `src/components/pedidos/NeoInstalacaoCardGestao.tsx`
+- `src/components/pedidos/NeoCorrecaoCardGestao.tsx`
+- `src/types/neoInstalacao.ts`
+- `src/types/neoCorrecao.ts`
+- `src/hooks/useNeoInstalacoes.ts`
+- `src/hooks/useNeoCorrecoes.ts`
