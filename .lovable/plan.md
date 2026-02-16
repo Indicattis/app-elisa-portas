@@ -1,35 +1,48 @@
 
-# Adicionar campos de Valor Total e Valor a Receber nos modais e sidebars da Expedicao
 
-## Resumo
-Adicionar dois campos monetarios (Valor Total e Valor a Receber) nos modais de criacao/edicao e nas sidebars de detalhes das Neo Instalacoes e Neo Correcoes em /logistica/expedicao. Os campos ja existem no banco de dados e nos tipos TypeScript -- so falta a UI.
+# Corrigir acrescimo nao incluido nas parcelas de pagamento
 
-## Mudancas
+## Problema
+O `valorTotalMemo` calculado na pagina de nova venda (linha 261-268 de `VendaNovaMinimalista.tsx`) soma apenas os creditos por produto (`p.valor_credito`) mas NAO inclui o credito a nivel de venda (`valorCredito` state). Isso faz com que o `PagamentoSection` receba um valor total sem o acrescimo, gerando parcelas com valores incorretos.
 
-### 1. NeoInstalacaoModal.tsx (modal de criacao/edicao)
-- Adicionar dois estados: `valorTotal` e `valorAReceber` (inicializados com 0)
-- No useEffect de preenchimento ao editar, carregar `neoInstalacao.valor_total` e `neoInstalacao.valor_a_receber`
-- Adicionar uma linha com dois inputs tipo number (lado a lado) antes do campo Descricao:
-  - "Valor Total (R$)" 
-  - "Valor a Receber (R$)"
-- No `handleConfirm`, incluir `valor_total` e `valor_a_receber` no objeto `dados`
+Enquanto isso, o backend em `useVendas.ts` (linha 198) calcula corretamente: `valor_total_venda = totais.valor_total + valorCreditoVenda + valor_frete`. Ha uma inconsistencia entre frontend e backend.
 
-### 2. NeoCorrecaoModal.tsx (modal de criacao/edicao)
-- Mesma logica do NeoInstalacaoModal: dois estados, preenchimento ao editar, dois inputs e inclusao no submit
-- O NeoCorrecao ja tem `valor_total` e `valor_a_receber` no tipo `CriarNeoCorrecaoData`
+## Solucao
+Incluir `valorCredito` (credito a nivel de venda) no calculo de `valorTotalMemo`.
 
-### 3. NeoInstalacaoDetails.tsx (sidebar de detalhes)
-- Adicionar secao de valores financeiros (entre Responsavel e Descricao) com icone DollarSign
-- Exibir "Valor Total" e "Valor a Receber" formatados em moeda brasileira
-- So exibir a secao se algum dos valores for maior que 0
+## Mudanca
 
-### 4. NeoCorrecaoDetails.tsx (sidebar de detalhes)
-- Mesma secao de valores financeiros, seguindo o layout ja existente com Separator
+**Arquivo: `src/pages/vendas/VendaNovaMinimalista.tsx`**
 
-### Nao ha necessidade de migracao SQL -- as colunas ja existem no banco.
+Alterar o `useMemo` do `valorTotalMemo` (linhas 261-268) de:
 
-### Arquivos envolvidos
-- `src/components/expedicao/NeoInstalacaoModal.tsx`
-- `src/components/expedicao/NeoCorrecaoModal.tsx`
-- `src/components/expedicao/NeoInstalacaoDetails.tsx`
-- `src/components/expedicao/NeoCorrecaoDetails.tsx`
+```typescript
+const valorTotalMemo = useMemo(() => {
+  return portas.reduce((acc, p) => {
+    const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+    const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
+    const credito = (p.valor_credito || 0) * (p.quantidade || 1);
+    return acc + valorBase - desconto + credito;
+  }, 0) + (formData.valor_frete || 0);
+}, [portas, formData.valor_frete]);
+```
+
+Para:
+
+```typescript
+const valorTotalMemo = useMemo(() => {
+  return portas.reduce((acc, p) => {
+    const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+    const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
+    const credito = (p.valor_credito || 0) * (p.quantidade || 1);
+    return acc + valorBase - desconto + credito;
+  }, 0) + (formData.valor_frete || 0) + valorCredito;
+}, [portas, formData.valor_frete, valorCredito]);
+```
+
+A unica diferenca e adicionar `+ valorCredito` ao final da soma e incluir `valorCredito` nas dependencias do `useMemo`.
+
+Isso garante que o `PagamentoSection` receba o valor total correto (incluindo o acrescimo) e as parcelas sejam calculadas com o valor correto.
+
+### Arquivo envolvido
+- `src/pages/vendas/VendaNovaMinimalista.tsx` (1 linha alterada)
