@@ -1423,10 +1423,26 @@ export function PedidoCard({
               <div className="text-center flex items-center justify-center gap-1">
                 <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact />
                 {pedido.created_at && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 font-mono bg-muted/50 text-muted-foreground border-muted-foreground/30">
-                    <Clock className="h-2.5 w-2.5 mr-0.5" />
-                    {formatDistanceToNow(new Date(pedido.created_at), { locale: ptBR })}
-                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 font-mono bg-muted/50 text-muted-foreground border-muted-foreground/30 cursor-default">
+                        <Clock className="h-2.5 w-2.5 mr-0.5" />
+                        {formatDistanceToNow(new Date(pedido.created_at), { locale: ptBR })}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="p-3">
+                      <div className="space-y-1 text-xs">
+                        {venda?.created_at && (
+                          <p>Venda criada: {format(new Date(venda.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                        )}
+                        <p>Faturada: {format(new Date(pedido.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                        <p>Pedido criado: {format(new Date(pedido.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                        {dataEntradaEtapaAtual && (
+                          <p>Etapa atual: {format(new Date(dataEntradaEtapaAtual), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                        )}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </div>
               
@@ -1699,10 +1715,26 @@ className="flex h-[20px] w-full rounded-[3px]"
             <div className="flex items-center gap-1.5">
               <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact />
               {pedido.created_at && (
-                <Badge variant="outline" className="text-[10px] px-1 py-0 font-mono bg-muted/50 text-muted-foreground border-muted-foreground/30">
-                  <Clock className="h-2.5 w-2.5 mr-0.5" />
-                  {formatDistanceToNow(new Date(pedido.created_at), { locale: ptBR })}
-                </Badge>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="text-[10px] px-1 py-0 font-mono bg-muted/50 text-muted-foreground border-muted-foreground/30 cursor-default">
+                      <Clock className="h-2.5 w-2.5 mr-0.5" />
+                      {formatDistanceToNow(new Date(pedido.created_at), { locale: ptBR })}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="p-3">
+                    <div className="space-y-1 text-xs">
+                      {venda?.created_at && (
+                        <p>Venda criada: {format(new Date(venda.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                      )}
+                      <p>Faturada: {format(new Date(pedido.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                      <p>Pedido criado: {format(new Date(pedido.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                      {dataEntradaEtapaAtual && (
+                        <p>Etapa atual: {format(new Date(dataEntradaEtapaAtual), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
               )}
               
               {onMoverPrioridade && posicao && total && <>
