@@ -10,11 +10,13 @@ import {
   CheckCircle, 
   Hammer,
   Users,
-  FileText
+  FileText,
+  DollarSign
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NeoInstalacao } from "@/types/neoInstalacao";
+import { formatCurrency } from "@/lib/utils";
 
 interface NeoInstalacaoCardGestaoProps {
   neoInstalacao: NeoInstalacao;
@@ -93,6 +95,9 @@ export function NeoInstalacaoCardGestao({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{neoInstalacao.nome_cliente}</p>
+                  {neoInstalacao.descricao && (
+                    <p className="text-[10px] text-muted-foreground mt-1 max-w-[250px]">{neoInstalacao.descricao}</p>
+                  )}
                 </TooltipContent>
               </Tooltip>
 
@@ -117,14 +122,28 @@ export function NeoInstalacaoCardGestao({
               {/* Col 5: Terceirização placeholder */}
               <div />
 
-              {/* Col 6: Metragem Linear placeholder */}
+              {/* Col 6: Valor Total */}
               <div className="text-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-[9px] text-muted-foreground font-medium cursor-help">
+                      {neoInstalacao.valor_total ? formatCurrency(neoInstalacao.valor_total).replace('R$\u00a0', '') : '—'}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent><p className="text-xs">Valor Total: {formatCurrency(neoInstalacao.valor_total || 0)}</p></TooltipContent>
+                </Tooltip>
               </div>
 
-              {/* Col 7: Metragem Quadrada placeholder */}
+              {/* Col 7: Valor a Receber */}
               <div className="text-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className={`text-[9px] font-medium cursor-help ${neoInstalacao.valor_a_receber ? 'text-emerald-400' : 'text-muted-foreground/50'}`}>
+                      {neoInstalacao.valor_a_receber ? formatCurrency(neoInstalacao.valor_a_receber).replace('R$\u00a0', '') : '—'}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent><p className="text-xs">A Receber: {formatCurrency(neoInstalacao.valor_a_receber || 0)}</p></TooltipContent>
+                </Tooltip>
               </div>
 
               {/* Col 8: Data de Agendamento */}
@@ -313,6 +332,18 @@ export function NeoInstalacaoCardGestao({
             </div>
           )}
         </div>
+
+        {(neoInstalacao.valor_total > 0 || neoInstalacao.valor_a_receber > 0) && (
+          <div className="flex items-center gap-3 text-sm">
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            {neoInstalacao.valor_total > 0 && (
+              <span className="text-muted-foreground">Total: {formatCurrency(neoInstalacao.valor_total)}</span>
+            )}
+            {neoInstalacao.valor_a_receber > 0 && (
+              <span className="text-emerald-500">A receber: {formatCurrency(neoInstalacao.valor_a_receber)}</span>
+            )}
+          </div>
+        )}
 
         {neoInstalacao.descricao && (
           <div className="text-sm text-muted-foreground line-clamp-2 pt-2 border-t">

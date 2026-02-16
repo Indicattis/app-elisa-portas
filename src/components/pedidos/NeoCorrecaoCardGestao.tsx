@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Calendar, Clock, AlertTriangle, Check } from "lucide-react";
+import { MapPin, Calendar, Clock, AlertTriangle, Check, DollarSign } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -85,6 +86,9 @@ export function NeoCorrecaoCardGestao({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{neoCorrecao.nome_cliente}</p>
+                  {neoCorrecao.descricao && (
+                    <p className="text-[10px] text-muted-foreground mt-1 max-w-[250px]">{neoCorrecao.descricao}</p>
+                  )}
                 </TooltipContent>
               </Tooltip>
 
@@ -109,14 +113,28 @@ export function NeoCorrecaoCardGestao({
               {/* Col 5: Terceirização placeholder */}
               <div />
 
-              {/* Col 6: Metragem Linear placeholder */}
+              {/* Col 6: Valor Total */}
               <div className="text-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-[9px] text-muted-foreground font-medium cursor-help">
+                      {neoCorrecao.valor_total ? formatCurrency(neoCorrecao.valor_total).replace('R$\u00a0', '') : '—'}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent><p className="text-xs">Valor Total: {formatCurrency(neoCorrecao.valor_total || 0)}</p></TooltipContent>
+                </Tooltip>
               </div>
 
-              {/* Col 7: Metragem Quadrada placeholder */}
+              {/* Col 7: Valor a Receber */}
               <div className="text-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className={`text-[9px] font-medium cursor-help ${neoCorrecao.valor_a_receber ? 'text-emerald-400' : 'text-muted-foreground/50'}`}>
+                      {neoCorrecao.valor_a_receber ? formatCurrency(neoCorrecao.valor_a_receber).replace('R$\u00a0', '') : '—'}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent><p className="text-xs">A Receber: {formatCurrency(neoCorrecao.valor_a_receber || 0)}</p></TooltipContent>
+                </Tooltip>
               </div>
 
               {/* Col 8: Data de Agendamento */}
@@ -303,6 +321,18 @@ export function NeoCorrecaoCardGestao({
           <p className="text-muted-foreground italic line-clamp-2">
             {neoCorrecao.descricao}
           </p>
+        )}
+
+        {(neoCorrecao.valor_total > 0 || neoCorrecao.valor_a_receber > 0) && (
+          <div className="flex items-center gap-3 text-sm">
+            <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+            {neoCorrecao.valor_total > 0 && (
+              <span className="text-muted-foreground">Total: {formatCurrency(neoCorrecao.valor_total)}</span>
+            )}
+            {neoCorrecao.valor_a_receber > 0 && (
+              <span className="text-emerald-500">A receber: {formatCurrency(neoCorrecao.valor_a_receber)}</span>
+            )}
+          </div>
         )}
       </div>
 
