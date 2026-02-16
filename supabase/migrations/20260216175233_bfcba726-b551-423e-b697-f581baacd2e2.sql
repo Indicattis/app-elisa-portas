@@ -1,0 +1,1 @@
+ALTER TABLE produtos_vendas ALTER COLUMN quantidade TYPE numeric USING quantidade::numeric;
