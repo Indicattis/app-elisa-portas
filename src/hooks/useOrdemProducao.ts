@@ -487,11 +487,14 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         tempo_conclusao_segundos = tempoAcumulado + tempoSessao;
       }
 
-      // Marcar todas as linhas da ordem como concluídas
+      // Marcar todas as linhas da ordem como concluídas (sync preventivo)
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
       const { error: linhasError } = await supabase
         .from('linhas_ordens')
         .update({ 
           concluida: true, 
+          concluida_em: new Date().toISOString(),
+          concluida_por: currentUser?.id || null,
           updated_at: new Date().toISOString() 
         })
         .eq('ordem_id', ordemId)
