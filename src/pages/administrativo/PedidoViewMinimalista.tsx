@@ -62,6 +62,7 @@ interface Pedido {
     forma_pagamento?: string;
     tipo_entrega?: string;
     data_prevista_entrega?: string;
+    observacoes_venda?: string;
     produtos?: any[];
   };
 }
@@ -183,7 +184,7 @@ export default function PedidoViewMinimalista() {
       if (pedidoData.venda_id) {
         const { data } = await supabase
           .from("vendas")
-          .select(`id, cliente_nome, cidade, estado, valor_venda, forma_pagamento, tipo_entrega, data_prevista_entrega, atendente_id`)
+          .select(`id, cliente_nome, cidade, estado, valor_venda, forma_pagamento, tipo_entrega, data_prevista_entrega, atendente_id, observacoes_venda`)
           .eq("id", pedidoData.venda_id)
           .maybeSingle();
         vendaData = data;
@@ -567,6 +568,21 @@ export default function PedidoViewMinimalista() {
             />
           </CardContent>
         </Card>
+
+        {/* Observações da Venda */}
+        {pedido.venda?.observacoes_venda && (
+          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2 text-white">
+                <FileText className="w-4 h-4" />
+                Observações da Venda
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-white/80 whitespace-pre-wrap">{pedido.venda.observacoes_venda}</p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Observações do Pedido */}
         <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
