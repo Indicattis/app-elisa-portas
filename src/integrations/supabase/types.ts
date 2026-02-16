@@ -3142,6 +3142,7 @@ export type Database = {
           equipe_id: string | null
           equipe_nome: string | null
           estado: string
+          etapa_causadora: string | null
           hora: string | null
           id: string
           nome_cliente: string
@@ -3166,6 +3167,7 @@ export type Database = {
           equipe_id?: string | null
           equipe_nome?: string | null
           estado: string
+          etapa_causadora?: string | null
           hora?: string | null
           id?: string
           nome_cliente: string
@@ -3190,6 +3192,7 @@ export type Database = {
           equipe_id?: string | null
           equipe_nome?: string | null
           estado?: string
+          etapa_causadora?: string | null
           hora?: string | null
           id?: string
           nome_cliente?: string
@@ -3232,6 +3235,7 @@ export type Database = {
           equipe_id: string | null
           equipe_nome: string | null
           estado: string
+          etapa_causadora: string | null
           hora: string | null
           id: string
           nome_cliente: string
@@ -3256,6 +3260,7 @@ export type Database = {
           equipe_id?: string | null
           equipe_nome?: string | null
           estado: string
+          etapa_causadora?: string | null
           hora?: string | null
           id?: string
           nome_cliente: string
@@ -3280,6 +3285,7 @@ export type Database = {
           equipe_id?: string | null
           equipe_nome?: string | null
           estado?: string
+          etapa_causadora?: string | null
           hora?: string | null
           id?: string
           nome_cliente?: string

@@ -63,6 +63,7 @@ export function NeoInstalacaoModal({
   const [descricao, setDescricao] = useState("");
   const [valorTotal, setValorTotal] = useState("");
   const [valorAReceber, setValorAReceber] = useState("");
+  const [etapaCausadora, setEtapaCausadora] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const [equipes, setEquipes] = useState<Equipe[]>([]);
@@ -89,6 +90,7 @@ export function NeoInstalacaoModal({
       setDescricao(neoInstalacao.descricao || "");
       setValorTotal(neoInstalacao.valor_total ? String(neoInstalacao.valor_total) : "");
       setValorAReceber(neoInstalacao.valor_a_receber ? String(neoInstalacao.valor_a_receber) : "");
+      setEtapaCausadora(neoInstalacao.etapa_causadora || "");
     } else if (open && !neoInstalacao) {
       // Reset para criação
       setNomeCliente("");
@@ -101,6 +103,7 @@ export function NeoInstalacaoModal({
       setDescricao("");
       setValorTotal("");
       setValorAReceber("");
+      setEtapaCausadora("");
     }
   }, [open, neoInstalacao]);
 
@@ -171,6 +174,7 @@ export function NeoInstalacaoModal({
         descricao: descricao.trim() || undefined,
         valor_total: valorTotal ? Number(valorTotal) : 0,
         valor_a_receber: valorAReceber ? Number(valorAReceber) : 0,
+        etapa_causadora: etapaCausadora || null,
       };
 
       await onConfirm(dados);
@@ -362,6 +366,24 @@ export function NeoInstalacaoModal({
               onChange={(e) => setDescricao(e.target.value)}
               rows={3}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="etapaCausadora">Etapa Causadora <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+            <Select value={etapaCausadora} onValueChange={setEtapaCausadora}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a etapa" />
+              </SelectTrigger>
+              <SelectContent modal={false}>
+                <SelectItem value="soldagem">Produção (Soldagem)</SelectItem>
+                <SelectItem value="perfiladeira">Produção (Perfiladeira)</SelectItem>
+                <SelectItem value="separacao">Produção (Separação)</SelectItem>
+                <SelectItem value="inspecao_qualidade">Inspeção de Qualidade</SelectItem>
+                <SelectItem value="pintura">Pintura</SelectItem>
+                <SelectItem value="expedicao">Expedição</SelectItem>
+                <SelectItem value="instalacao">Instalação</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

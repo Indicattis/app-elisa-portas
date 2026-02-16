@@ -21,6 +21,7 @@ export interface NeoCorrecao {
   created_at: string;
   updated_at: string;
   vezes_agendado: number;
+  etapa_causadora: string | null;
   // Campo para identificar tipo na listagem combinada
   _tipo?: 'neo_correcao';
   // Dados da equipe (join)
@@ -58,4 +59,5 @@ export interface CriarNeoCorrecaoData {
   descricao?: string;
   valor_total?: number;
   valor_a_receber?: number;
+  etapa_causadora?: string | null;
 }
