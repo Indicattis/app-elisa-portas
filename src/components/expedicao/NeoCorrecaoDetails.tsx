@@ -17,8 +17,10 @@ import {
   Users,
   AlertTriangle,
   Building2,
-  Pencil
+  Pencil,
+  DollarSign
 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -136,6 +138,29 @@ export function NeoCorrecaoDetails({
               </Badge>
             </div>
           </div>
+
+          {/* Valores financeiros */}
+          {(neoCorrecao.valor_total > 0 || neoCorrecao.valor_a_receber > 0) && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  Financeiro
+                </h4>
+                <div className="pl-6 grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Valor Total</p>
+                    <p className="text-sm font-medium">{formatCurrency(neoCorrecao.valor_total)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Valor a Receber</p>
+                    <p className="text-sm font-medium text-green-500">{formatCurrency(neoCorrecao.valor_a_receber)}</p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Descrição */}
           {neoCorrecao.descricao && (
