@@ -344,7 +344,7 @@ export function PedidoCard({
       if (pedido.etapa_atual === 'instalacoes') {
         const { data: instalacao } = await supabase
           .from('instalacoes')
-          .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento')
+          .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento, vezes_agendado')
           .eq('pedido_id', pedido.id)
           .maybeSingle();
 
@@ -356,7 +356,8 @@ export function PedidoCard({
           temData,
           dataCarregamento: instalacao?.data_carregamento || null,
           responsavelNome: instalacao?.responsavel_carregamento_nome || null,
-          tipoCarregamento: instalacao?.tipo_carregamento || null
+          tipoCarregamento: instalacao?.tipo_carregamento || null,
+          vezesAgendado: instalacao?.vezes_agendado || 0
         };
       }
 
@@ -365,7 +366,7 @@ export function PedidoCard({
         data: ordemCarregamento
       } = await supabase
         .from('ordens_carregamento')
-        .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento')
+        .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento, vezes_agendado')
         .eq('pedido_id', pedido.id)
         .maybeSingle();
 
@@ -377,7 +378,8 @@ export function PedidoCard({
         temData,
         dataCarregamento: ordemCarregamento?.data_carregamento || null,
         responsavelNome: ordemCarregamento?.responsavel_carregamento_nome || null,
-        tipoCarregamento: ordemCarregamento?.tipo_carregamento || null
+        tipoCarregamento: ordemCarregamento?.tipo_carregamento || null,
+        vezesAgendado: ordemCarregamento?.vezes_agendado || 0
       };
     },
     enabled: pedido.etapa_atual === 'aguardando_coleta' || pedido.etapa_atual === 'instalacoes'
@@ -385,6 +387,7 @@ export function PedidoCard({
   const carregamentoConcluido = carregamentoCompleto?.concluido || false;
   const temDataCarregamento = carregamentoCompleto?.temData || false;
   const dataCarregamento = carregamentoCompleto?.dataCarregamento || null;
+  const vezesAgendado = carregamentoCompleto?.vezesAgendado || 0;
 
   // Verificar se está em backlog usando a view
   const emBacklog = pedido.backlog && pedido.backlog.length > 0;
@@ -1223,16 +1226,25 @@ export function PedidoCard({
                     // Se carregamento concluído, mostrar "Carregada"
                     if (carregamentoConcluido) {
                       return (
-                        <div className="flex flex-col items-center leading-tight">
-                          <span className="text-[9px] font-medium text-zinc-400">
-                            Carregada
-                          </span>
-                          {dataCarregamento && (
-                            <span className="text-xs font-bold text-zinc-500">
-                              {format(parseISO(dataCarregamento), "dd/MM/yy")}
-                            </span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex flex-col items-center leading-tight cursor-help">
+                              <span className="text-[9px] font-medium text-zinc-400">
+                                Carregada
+                              </span>
+                              {dataCarregamento && (
+                                <span className="text-xs font-bold text-zinc-500">
+                                  {format(parseISO(dataCarregamento), "dd/MM/yy")}
+                                </span>
+                              )}
+                            </div>
+                          </TooltipTrigger>
+                          {vezesAgendado >= 2 && (
+                            <TooltipContent>
+                              <p className="text-xs">Reagendado {vezesAgendado} vezes</p>
+                            </TooltipContent>
                           )}
-                        </div>
+                        </Tooltip>
                       );
                     }
                     
@@ -1252,20 +1264,29 @@ export function PedidoCard({
                     const atrasado = dataCarreg < hoje;
                     
                     return (
-                      <div className="flex flex-col items-center leading-tight">
-                        <span className={cn(
-                          "text-[9px] font-medium",
-                          atrasado ? "text-red-600" : "text-green-600"
-                        )}>
-                          {atrasado ? "Atrasado" : "Agendado"}
-                        </span>
-                        <span className={cn(
-                          "text-xs font-bold",
-                          atrasado ? "text-red-600" : "text-green-600"
-                        )}>
-                          {format(parseISO(dataCarregamento), "dd/MM/yy")}
-                        </span>
-                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex flex-col items-center leading-tight cursor-help">
+                            <span className={cn(
+                              "text-[9px] font-medium",
+                              atrasado ? "text-red-600" : "text-green-600"
+                            )}>
+                              {atrasado ? "Atrasado" : "Agendado"}
+                            </span>
+                            <span className={cn(
+                              "text-xs font-bold",
+                              atrasado ? "text-red-600" : "text-green-600"
+                            )}>
+                              {format(parseISO(dataCarregamento), "dd/MM/yy")}
+                            </span>
+                          </div>
+                        </TooltipTrigger>
+                        {vezesAgendado >= 2 && (
+                          <TooltipContent>
+                            <p className="text-xs">Reagendado {vezesAgendado} vezes</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
                     );
                   }
                   

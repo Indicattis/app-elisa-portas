@@ -20,6 +20,7 @@ export interface NeoCorrecao {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  vezes_agendado: number;
   // Campo para identificar tipo na listagem combinada
   _tipo?: 'neo_correcao';
   // Dados da equipe (join)

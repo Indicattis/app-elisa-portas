@@ -156,14 +156,23 @@ export function NeoInstalacaoCardGestao({
               {/* Col 8: Data de Agendamento */}
               <div className="text-center">
                 {neoInstalacao.data_instalacao ? (
-                  <div className="flex flex-col items-center leading-tight">
-                    <span className={`text-[9px] font-medium ${atrasado ? 'text-red-500' : 'text-blue-400'}`}>
-                      {atrasado ? 'Atrasado' : 'Agendado'}
-                    </span>
-                    <span className={`text-xs font-bold ${atrasado ? 'text-red-500' : 'text-blue-400'}`}>
-                      {format(parseISO(neoInstalacao.data_instalacao), "dd/MM/yy")}
-                    </span>
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex flex-col items-center leading-tight cursor-help">
+                        <span className={`text-[9px] font-medium ${atrasado ? 'text-red-500' : 'text-blue-400'}`}>
+                          {atrasado ? 'Atrasado' : 'Agendado'}
+                        </span>
+                        <span className={`text-xs font-bold ${atrasado ? 'text-red-500' : 'text-blue-400'}`}>
+                          {format(parseISO(neoInstalacao.data_instalacao), "dd/MM/yy")}
+                        </span>
+                      </div>
+                    </TooltipTrigger>
+                    {neoInstalacao.vezes_agendado >= 2 && (
+                      <TooltipContent>
+                        <p className="text-xs">Reagendado {neoInstalacao.vezes_agendado} vezes</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
                 ) : (
                   <span className="text-[10px] font-bold text-destructive">
                     Não agendado
