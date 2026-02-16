@@ -35,7 +35,8 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { format, startOfMonth, endOfMonth, differenceInDays, differenceInHours } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
+import { calcularTempoExpediente } from "@/utils/calcularTempoExpediente";
 import { ptBR } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
@@ -377,23 +378,17 @@ export default function FaturamentoMinimalista() {
     lucroBrutoTotal,
   };
 
-  // Função para calcular tempo de faturamento
+  // Função para calcular tempo de faturamento (apenas horário comercial 7h-17h, seg-sex)
   const calcularTempoFaturamento = (venda: Venda) => {
     const dataVenda = new Date(venda.data_venda);
-    const agora = new Date();
-    
-    // Se foi faturada, calcular até a data de faturamento (usando a última porta faturada)
-    // Por enquanto, usamos a data atual como referência
-    const dias = differenceInDays(agora, dataVenda);
-    const horas = differenceInHours(agora, dataVenda) % 24;
-    
-    if (dias === 0) {
-      return `${horas}h`;
-    } else if (dias === 1) {
-      return `1 dia`;
-    } else {
-      return `${dias} dias`;
-    }
+    const segundosExpediente = calcularTempoExpediente(dataVenda, new Date());
+    const horasTotais = Math.floor(segundosExpediente / 3600);
+    const dias = Math.floor(horasTotais / 10);
+    const horas = horasTotais % 10;
+
+    if (dias === 0) return `${horas}h`;
+    if (dias === 1) return horas > 0 ? `1d ${horas}h` : `1 dia`;
+    return horas > 0 ? `${dias}d ${horas}h` : `${dias} dias`;
   };
 
   const handleGeneratePDF = () => {
