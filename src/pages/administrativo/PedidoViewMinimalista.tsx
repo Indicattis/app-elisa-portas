@@ -28,6 +28,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useQuery } from "@tanstack/react-query";
 import { expandirPortasPorQuantidade, getLabelPortaExpandida } from "@/utils/expandirPortas";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { MedidasPortasSection } from "@/components/pedidos/MedidasPortasSection";
 
 interface Ordem {
   id: string;
@@ -625,6 +626,14 @@ export default function PedidoViewMinimalista() {
         </Card>
 
         {/* Produtos da Venda */}
+        {/* Medidas das Portas de Enrolar */}
+        {pedido.venda?.produtos && pedido.venda.produtos.some((p: any) => p.tipo_produto === 'porta_enrolar') && (
+          <MedidasPortasSection
+            produtos={pedido.venda.produtos}
+            onRefresh={fetchPedidoDetails}
+          />
+        )}
+
         {pedido.venda?.produtos && pedido.venda.produtos.length > 0 && (
           <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
@@ -652,25 +661,13 @@ export default function PedidoViewMinimalista() {
                   <tbody>
                     {pedido.venda.produtos.map((produto: any) => {
                       const isEditing = editandoProduto === produto.id;
-                      const isPorta = produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social';
                       const isPintura = produto.tipo_produto === 'pintura_epoxi';
-                      const isEditavel = isPorta || isPintura;
 
                       return (
                         <tr key={produto.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                           <td className="p-2 text-xs text-white/80">{produto.tipo_produto || '-'}</td>
                           <td className="p-2 text-xs text-white/80">{produto.descricao || '-'}</td>
-                          <td className="p-2 text-xs text-white/80">
-                            {isEditing && isPorta ? (
-                              <div className="flex items-center gap-1">
-                                <Input type="number" step="0.01" value={editLargura} onChange={e => setEditLargura(parseFloat(e.target.value) || 0)} className="h-7 w-16 text-xs" placeholder="Larg" />
-                                <span className="text-white/50">x</span>
-                                <Input type="number" step="0.01" value={editAltura} onChange={e => setEditAltura(parseFloat(e.target.value) || 0)} className="h-7 w-16 text-xs" placeholder="Alt" />
-                              </div>
-                            ) : (
-                              produto.tamanho || '-'
-                            )}
-                          </td>
+                          <td className="p-2 text-xs text-white/80">{produto.tamanho || '-'}</td>
                           <td className="p-2 text-xs text-white/80">
                             {isEditing && isPintura ? (
                               <Select value={editCorId} onValueChange={setEditCorId}>
@@ -703,7 +700,7 @@ export default function PedidoViewMinimalista() {
                             <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
                           </td>
                           <td className="p-2 text-center">
-                            {isEditavel && !isEditing && (
+                            {isPintura && !isEditing && (
                               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleIniciarEdicaoProduto(produto)}>
                                 <Pencil className="w-3 h-3 text-white/60" />
                               </Button>
@@ -729,16 +726,14 @@ export default function PedidoViewMinimalista() {
               <div className="md:hidden space-y-3">
                 {pedido.venda.produtos.map((produto: any) => {
                   const isEditing = editandoProduto === produto.id;
-                  const isPorta = produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social';
                   const isPintura = produto.tipo_produto === 'pintura_epoxi';
-                  const isEditavel = isPorta || isPintura;
 
                   return (
                     <div key={produto.id} className="p-3 border border-white/10 rounded-lg space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-sm text-white">{produto.tipo_produto || '-'}</span>
                         <div className="flex items-center gap-2">
-                          {isEditavel && !isEditing && (
+                          {isPintura && !isEditing && (
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleIniciarEdicaoProduto(produto)}>
                               <Pencil className="w-3 h-3 text-white/60" />
                             </Button>
@@ -760,15 +755,7 @@ export default function PedidoViewMinimalista() {
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div>
                           <span className="text-white/50">Tamanho: </span>
-                          {isEditing && isPorta ? (
-                            <div className="flex items-center gap-1 mt-1">
-                              <Input type="number" step="0.01" value={editLargura} onChange={e => setEditLargura(parseFloat(e.target.value) || 0)} className="h-7 w-16 text-xs" placeholder="L" />
-                              <span className="text-white/50">x</span>
-                              <Input type="number" step="0.01" value={editAltura} onChange={e => setEditAltura(parseFloat(e.target.value) || 0)} className="h-7 w-16 text-xs" placeholder="A" />
-                            </div>
-                          ) : (
-                            <span className="font-medium text-white/80">{produto.tamanho || '-'}</span>
-                          )}
+                          <span className="font-medium text-white/80">{produto.tamanho || '-'}</span>
                         </div>
                         <div>
                           <span className="text-white/50">Cor: </span>
