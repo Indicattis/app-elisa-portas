@@ -1,59 +1,24 @@
 
-
-# Exibir contagem de agendamentos no tooltip da data de carregamento
+# Habilitar botão de concluir nos Finalizados da gestão de fábrica
 
 ## Resumo
-Adicionar uma coluna `vezes_agendado` em cada tabela relevante e criar triggers no banco para incrementar automaticamente esse contador sempre que a data de agendamento for definida ou alterada. No front-end, exibir essa contagem no tooltip ao passar o mouse sobre a data de carregamento/agendamento.
+Na etapa "Finalizado" de `/direcao/gestao-fabrica`, as neo instalações e neo correções finalizadas são exibidas apenas com status visual (ícone verde + tempo relativo), sem opção de ação. O objetivo é adicionar o botão de concluir nesses cards para permitir removê-los da exibição.
 
-## Mudancas no Banco de Dados
+## Esclarecimento
+Atualmente os cards na seção "Serviços Avulsos Finalizados" já estão concluídos (`concluida = true`). Para "remover da exibição", a abordagem será: trocar o `showConcluido` pelo `onConcluir`, exibindo o botão de concluir ao invés do ícone de check estático. Quando clicado, a ação de concluir será chamada novamente (o que na prática já está feito, mas permitirá a interação).
 
-### Migration SQL
-Adicionar coluna `vezes_agendado` (integer, default 0) nas 4 tabelas:
-- `ordens_carregamento`
-- `instalacoes`
-- `neo_instalacoes`
-- `neo_correcoes`
+**Correção de abordagem**: Como esses itens já estão concluídos, o botão não faz sentido para "concluir de novo". A intenção do usuário parece ser ter um botão para **remover/ocultar** da listagem. A forma mais simples é passar o `onConcluir` handler nos cards da etapa finalizado, que já marca como concluído e remove da query ativa.
 
-Criar uma trigger function que incrementa `vezes_agendado` quando o campo de data muda de NULL para um valor, ou muda de um valor para outro valor diferente:
+## Mudanças
 
-- **ordens_carregamento**: monitora `data_carregamento`
-- **instalacoes**: monitora `data_carregamento` (fonte de verdade para agendamento)
-- **neo_instalacoes**: monitora `data_instalacao`
-- **neo_correcoes**: monitora `data_correcao`
+### Arquivo: `src/pages/direcao/GestaoFabricaDirecao.tsx`
 
-A trigger nao incrementa quando a data e removida (set para NULL), apenas quando e definida ou alterada.
+**Neo Instalações Finalizadas (linhas 466-471)**
+- Adicionar `onConcluir={handleConcluirNeoInstalacao}` e `isConcluindo={isConcluindo}` aos cards de `NeoInstalacaoCardGestao`
+- Remover `showConcluido={true}` para que o botão de concluir apareça no lugar do ícone estático
 
-## Mudancas no Front-end
+**Neo Correções Finalizadas (linhas 480-485)**
+- Adicionar `onConcluir={handleConcluirNeoCorrecao}` aos cards de `NeoCorrecaoCardGestao`
+- Remover `showConcluido={true}`
 
-### 1. `src/components/pedidos/PedidoCard.tsx`
-- Na query `pedido-carregamento` (linha ~332), incluir `vezes_agendado` no select tanto de `instalacoes` quanto de `ordens_carregamento`
-- Retornar `vezesAgendado` no objeto de resultado
-- Na Col 6 (Data de Carregamento, linha ~1217), envolver o bloco existente com um `Tooltip` que mostra "Agendado X vez(es)" ao passar o mouse
-
-### 2. `src/components/pedidos/NeoInstalacaoCardGestao.tsx`
-- Buscar `vezes_agendado` do tipo `NeoInstalacao` (garantir que o hook ja retorna esse campo)
-- Na Col 8 (Data de Agendamento, linha ~156), envolver com `Tooltip` mostrando a contagem
-
-### 3. `src/components/pedidos/NeoCorrecaoCardGestao.tsx`
-- Mesmo padrao: envolver a Col 8 (Data de Agendamento, linha ~140) com `Tooltip` mostrando a contagem
-
-### 4. Tipos (`src/types/neoInstalacao.ts` e `src/types/neoCorrecao.ts`)
-- Adicionar campo `vezes_agendado: number` aos tipos
-
-### 5. Hooks de dados
-- Garantir que os hooks `useNeoInstalacoes` e `useNeoCorrecoes` incluem `vezes_agendado` nos selects
-
-## Formato do Tooltip
-Ao passar o mouse sobre a data de carregamento/agendamento:
-- Se `vezes_agendado` <= 1: nao exibir nada extra (primeira vez e o padrao)
-- Se `vezes_agendado` >= 2: exibir "Reagendado X vezes" em texto pequeno dentro do tooltip
-
-## Arquivos envolvidos
-- Nova migration SQL (coluna + triggers)
-- `src/components/pedidos/PedidoCard.tsx`
-- `src/components/pedidos/NeoInstalacaoCardGestao.tsx`
-- `src/components/pedidos/NeoCorrecaoCardGestao.tsx`
-- `src/types/neoInstalacao.ts`
-- `src/types/neoCorrecao.ts`
-- `src/hooks/useNeoInstalacoes.ts`
-- `src/hooks/useNeoCorrecoes.ts`
+Isso fará com que os cards exibam o botão verde de concluir. Ao clicar, a mutação será disparada e o item será removido da listagem (pois o hook de finalizadas recarrega os dados).
