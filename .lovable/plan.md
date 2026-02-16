@@ -1,58 +1,26 @@
 
-# Melhorar exibicao das Ordens de Instalacao
+
+# Remover Finalizados e renomear seção
 
 ## Resumo
-Reorganizar a pagina de Ordens de Instalacao usando Accordion (pastas colapsaveis) onde abrir uma fecha a outra, remover botao de retroceder, mostrar botao de concluir apenas em instalacoes carregadas, e mover finalizados para o topo.
+Remover a seção "Finalizados" da página de Ordens de Instalação e renomear "Prontas para Instalação" para "Carregadas".
 
-## Mudancas
+## Mudanças
 
-### 1. Arquivo: `src/pages/logistica/OrdensInstalacoesLogistica.tsx`
+### Arquivo: `src/pages/logistica/OrdensInstalacoesLogistica.tsx`
 
-**Accordion colapsavel (abrir uma fecha outra)**
-- Substituir as 5 secoes fixas por um componente `Accordion` (tipo "single") do Radix, ja disponivel no projeto
-- Cada secao vira um `AccordionItem` com trigger mostrando icone + titulo + badge de contagem
-- Comportamento "single" garante que ao abrir uma, a outra fecha automaticamente
+**Remover seção Finalizados**
+- Remover o AccordionItem "finalizados" (linhas 286-314)
+- Remover os hooks `useNeoInstalacoesFinalizadas` e `useNeoCorrecoesFinalizadas` e suas variáveis derivadas (`finalizados`, `isLoadingFinalizados`)
+- Remover os imports não mais utilizados: `useNeoInstalacoesFinalizadas`, `useNeoCorrecoesFinalizadas`, `NeoFinalizadoRow`, `CheckCircle2`
 
-**Reordenar secoes**
-- Mover "Finalizados" para ser o primeiro AccordionItem
-- Ordem final: Finalizados, Aguardando Carregamento, Prontas para Instalacao, Instalacoes Avulsas, Correcoes Avulsas
+**Renomear seção**
+- Alterar o texto "Prontas para Instalação" para "Carregadas" no AccordionTrigger (linha 357)
+- Ajustar a mensagem de vazio de "Nenhuma instalação pronta (carregada)." para "Nenhuma instalação carregada."
 
-**Remover botao de retroceder**
-- Remover o state `retrocederDialog` e a funcao `handleRetroceder`
-- Remover o import de `RetrocederPedidoUnificadoModal`
-- Remover a prop `onRetroceder` ao renderizar `OrdemInstalacaoRow`
-- Remover o componente `RetrocederPedidoUnificadoModal` do JSX
-
-**Botao concluir apenas em carregadas**
-- Na secao "Aguardando Carregamento" (`ordensNaoCarregadas`): nao passar `onConcluir` para o `OrdemInstalacaoRow`, fazendo o botao nao aparecer
-- Na secao "Prontas para Instalacao" (`ordensCarregadas`): manter `onConcluir` normalmente
-
-### 2. Arquivo: `src/components/instalacoes/OrdemInstalacaoRow.tsx`
-
-- Tornar `onConcluir` opcional (tipo `(ordem: OrdemInstalacao) => void` para `((ordem: OrdemInstalacao) => void) | undefined`)
-- Renderizar o botao de concluir condicionalmente apenas quando `onConcluir` for passado
-- Remover a prop `onRetroceder` da interface (limpeza)
-
-### Detalhes tecnicos
-
-A estrutura do Accordion ficara assim:
-
-```tsx
-<Accordion type="single" collapsible className="space-y-3">
-  <AccordionItem value="finalizados">
-    <AccordionTrigger>Finalizados (badge)</AccordionTrigger>
-    <AccordionContent>...lista...</AccordionContent>
-  </AccordionItem>
-  <AccordionItem value="aguardando">
-    <AccordionTrigger>Aguardando Carregamento (badge)</AccordionTrigger>
-    <AccordionContent>...lista...</AccordionContent>
-  </AccordionItem>
-  <!-- ... demais secoes -->
-</Accordion>
-```
-
-O tipo "single" com `collapsible` permite que apenas uma secao fique aberta por vez, e clicar na mesma fecha-a.
+**Ajustar subtítulo do header**
+- Atualizar o texto de resumo (linha 220) para refletir a nova nomenclatura: trocar "prontas" por "carregadas"
 
 ### Arquivos envolvidos
-- `src/pages/logistica/OrdensInstalacoesLogistica.tsx` (reestruturar secoes em Accordion, remover retroceder, reordenar)
-- `src/components/instalacoes/OrdemInstalacaoRow.tsx` (tornar onConcluir opcional, remover onRetroceder)
+- `src/pages/logistica/OrdensInstalacoesLogistica.tsx`
+
