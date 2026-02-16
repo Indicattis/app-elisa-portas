@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Plus, Pencil, Trash2, Loader2, Wrench } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -9,12 +9,6 @@ import { toast } from "sonner";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,10 +23,8 @@ import { Badge } from "@/components/ui/badge";
 
 import { useNeoInstalacoesListagem } from "@/hooks/useNeoInstalacoes";
 import { useNeoCorrecoesListagem } from "@/hooks/useNeoCorrecoes";
-import { NeoInstalacaoModal } from "@/components/expedicao/NeoInstalacaoModal";
-import { NeoCorrecaoModal } from "@/components/expedicao/NeoCorrecaoModal";
-import { NeoInstalacao, CriarNeoInstalacaoData } from "@/types/neoInstalacao";
-import { NeoCorrecao, CriarNeoCorrecaoData } from "@/types/neoCorrecao";
+import { NeoInstalacao } from "@/types/neoInstalacao";
+import { NeoCorrecao } from "@/types/neoCorrecao";
 
 const ETAPA_LABELS: Record<string, string> = {
   soldagem: "Produção (Soldagem)",
@@ -45,80 +37,14 @@ const ETAPA_LABELS: Record<string, string> = {
 };
 
 export default function NeosCadastro() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { neoInstalacoes, isLoading: isLoadingInst } = useNeoInstalacoesListagem();
   const { neoCorrecoes, isLoading: isLoadingCorr } = useNeoCorrecoesListagem();
 
-  const [openInstalacaoModal, setOpenInstalacaoModal] = useState(false);
-  const [openCorrecaoModal, setOpenCorrecaoModal] = useState(false);
-  const [editingInstalacao, setEditingInstalacao] = useState<NeoInstalacao | null>(null);
-  const [editingCorrecao, setEditingCorrecao] = useState<NeoCorrecao | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; tipo: "instalacao" | "correcao" } | null>(null);
 
   const isLoading = isLoadingInst || isLoadingCorr;
-
-  // Create mutations
-  const createInstalacao = useMutation({
-    mutationFn: async (dados: CriarNeoInstalacaoData) => {
-      const { data: user } = await supabase.auth.getUser();
-      const { error } = await supabase.from("neo_instalacoes").insert({
-        ...dados,
-        created_by: user.user?.id,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Neo instalação criada!");
-      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_listagem"] });
-    },
-    onError: () => toast.error("Erro ao criar neo instalação"),
-  });
-
-  const createCorrecao = useMutation({
-    mutationFn: async (dados: CriarNeoCorrecaoData) => {
-      const { data: user } = await supabase.auth.getUser();
-      const { error } = await supabase.from("neo_correcoes").insert({
-        ...dados,
-        created_by: user.user?.id,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Neo correção criada!");
-      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_listagem"] });
-    },
-    onError: () => toast.error("Erro ao criar neo correção"),
-  });
-
-  const updateInstalacao = useMutation({
-    mutationFn: async ({ id, dados }: { id: string; dados: CriarNeoInstalacaoData }) => {
-      const { error } = await supabase.from("neo_instalacoes").update({
-        ...dados,
-        updated_at: new Date().toISOString(),
-      }).eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Neo instalação atualizada!");
-      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_listagem"] });
-    },
-    onError: () => toast.error("Erro ao atualizar"),
-  });
-
-  const updateCorrecao = useMutation({
-    mutationFn: async ({ id, dados }: { id: string; dados: CriarNeoCorrecaoData }) => {
-      const { error } = await supabase.from("neo_correcoes").update({
-        ...dados,
-        updated_at: new Date().toISOString(),
-      }).eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Neo correção atualizada!");
-      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_listagem"] });
-    },
-    onError: () => toast.error("Erro ao atualizar"),
-  });
 
   const deleteMutation = useMutation({
     mutationFn: async ({ id, tipo }: { id: string; tipo: "instalacao" | "correcao" }) => {
@@ -134,22 +60,6 @@ export default function NeosCadastro() {
     },
     onError: () => toast.error("Erro ao excluir"),
   });
-
-  const handleConfirmInstalacao = async (dados: CriarNeoInstalacaoData) => {
-    if (editingInstalacao) {
-      await updateInstalacao.mutateAsync({ id: editingInstalacao.id, dados });
-    } else {
-      await createInstalacao.mutateAsync(dados);
-    }
-  };
-
-  const handleConfirmCorrecao = async (dados: CriarNeoCorrecaoData) => {
-    if (editingCorrecao) {
-      await updateCorrecao.mutateAsync({ id: editingCorrecao.id, dados });
-    } else {
-      await createCorrecao.mutateAsync(dados);
-    }
-  };
 
   const allItems = useMemo(() => {
     const inst = neoInstalacoes.map(i => ({ ...i, _tipo: "neo_instalacao" as const }));
@@ -187,15 +97,7 @@ export default function NeosCadastro() {
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => {
-                if (isInstalacao) {
-                  setEditingInstalacao(item as NeoInstalacao);
-                  setOpenInstalacaoModal(true);
-                } else {
-                  setEditingCorrecao(item as NeoCorrecao);
-                  setOpenCorrecaoModal(true);
-                }
-              }}
+              onClick={() => navigate("/logistica/neos/novo", { state: { editData: item } })}
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -275,22 +177,10 @@ export default function NeosCadastro() {
                 <TabsTrigger value="correcoes">Correções ({neoCorrecoes.length})</TabsTrigger>
               </TabsList>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Novo
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => { setEditingInstalacao(null); setOpenInstalacaoModal(true); }}>
-                    Neo Instalação
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setEditingCorrecao(null); setOpenCorrecaoModal(true); }}>
-                    Neo Correção
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button size="sm" className="gap-2" onClick={() => navigate("/logistica/neos/novo")}>
+                <Plus className="h-4 w-4" />
+                Novo
+              </Button>
             </div>
 
             <TabsContent value="todos" className="mt-4">
@@ -305,21 +195,6 @@ export default function NeosCadastro() {
           </Tabs>
         </div>
       </div>
-
-      {/* Modais */}
-      <NeoInstalacaoModal
-        open={openInstalacaoModal}
-        onOpenChange={(open) => { setOpenInstalacaoModal(open); if (!open) setEditingInstalacao(null); }}
-        neoInstalacao={editingInstalacao}
-        onConfirm={handleConfirmInstalacao}
-      />
-
-      <NeoCorrecaoModal
-        open={openCorrecaoModal}
-        onOpenChange={(open) => { setOpenCorrecaoModal(open); if (!open) setEditingCorrecao(null); }}
-        neoCorrecao={editingCorrecao}
-        onConfirm={handleConfirmCorrecao}
-      />
 
       {/* Dialog de confirmação de exclusão */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
