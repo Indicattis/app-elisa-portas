@@ -246,7 +246,7 @@ export function NeoInstalacaoCardGestao({
               {/* Col 18: Data criação + Cronômetro */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="flex flex-col items-center justify-center gap-0.5 cursor-help">
+                  <div className="flex items-center justify-center gap-1 cursor-help">
                     <span className="text-[9px] text-muted-foreground leading-none">
                       {format(new Date(neoInstalacao.created_at), "dd/MM/yy")}
                     </span>
