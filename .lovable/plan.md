@@ -1,36 +1,41 @@
 
-
-# Adicionar botoes de download PDF e Excel em Minhas Vendas
+# Adicionar tooltip com datas no cronometro do pedido
 
 ## Objetivo
-Adicionar um dropdown de exportacao (PDF e Excel) na pagina `/vendas/minhas-vendas`, reutilizando a mesma logica ja existente em `src/pages/Vendas.tsx`.
+Ao passar o mouse sobre o badge de tempo total do pedido (o cronometro que mostra "ha X dias") na pagina /direcao/gestao-fabrica, exibir um tooltip com 4 datas importantes.
 
-## Alteracoes em `src/pages/vendas/MinhasVendas.tsx`
+## Dados disponiveis
 
-### 1. Novos imports
-- `Download, FileText, FileSpreadsheet` do lucide-react
-- `DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger` do radix
-- `* as XLSX` do pacote xlsx
-- `generateVendasRelatorioPDF` de `@/utils/vendasPDFGenerator`
-- `toast` do sonner (ou useToast)
+| Informacao | Fonte | Ja disponivel no PedidoCard? |
+|---|---|---|
+| Data da venda | `vendas.created_at` (via `pedido.vendas`) | Sim - ja vem na query |
+| Data do faturamento | Nao existe campo especifico. O pedido e criado quando a venda e faturada, entao `pedido.created_at` serve como proxy | Sim |
+| Data do pedido criado | `pedido.created_at` | Sim |
+| Data entrada etapa atual | `pedidos_etapas.data_entrada` (etapa sem data_saida) | Sim - ja calculado como `dataEntradaEtapaAtual` |
 
-### 2. Adicionar funcao `handleExportarPDF`
-Mapear `vendasFiltradas` para o formato esperado pelo `generateVendasRelatorioPDF`, passando as stats (totalVendas, valorTotal, totalPortasEnrolar contando produtos do tipo `porta_enrolar`).
+## Alteracao em `src/components/pedidos/PedidoCard.tsx`
 
-### 3. Adicionar funcao `handleExportarExcel`
-Mapear `vendasFiltradas` para colunas amigaveis e gerar arquivo `.xlsx` usando a lib `xlsx`, seguindo o mesmo padrao de `Vendas.tsx`.
+### Envolver o Badge de tempo total com Tooltip
+Nos dois locais onde o badge de tempo total aparece (linhas 1425-1430 para desktop/list e linhas 1701-1706 para mobile/compact), envolver o Badge existente com os componentes `Tooltip`, `TooltipTrigger` e `TooltipContent`.
 
-### 4. Adicionar botao na area de filtros
-Ao lado do `ColumnManager` (linha 422-428), adicionar um `DropdownMenu` com icone `Download` contendo duas opcoes:
-- "Exportar PDF" com icone `FileText`
-- "Exportar Excel" com icone `FileSpreadsheet`
+O conteudo do tooltip sera:
+```
+Venda criada: dd/MM/yyyy as HH:mm
+Faturada: dd/MM/yyyy as HH:mm
+Pedido criado: dd/MM/yyyy as HH:mm
+Etapa atual: dd/MM/yyyy as HH:mm
+```
 
-O botao seguira o mesmo estilo visual dos outros botoes de filtro (border-blue-500/20, bg-blue-500/5, etc.)
+### Implementacao
+- Reutilizar os componentes `Tooltip/TooltipTrigger/TooltipContent` ja importados no arquivo
+- Usar `format(date, "dd/MM/yyyy 'as' HH:mm", { locale: ptBR })` para formatacao (ja importado)
+- As datas serao extraidas de:
+  - `venda?.created_at` para data da venda
+  - `pedido.created_at` para data do faturamento/pedido (sao efetivamente o mesmo momento)
+  - `dataEntradaEtapaAtual` para data de entrada na etapa atual
 
 ## Arquivo alterado
-- `src/pages/vendas/MinhasVendas.tsx`
+- `src/components/pedidos/PedidoCard.tsx` - adicionar tooltip nos 2 locais do badge de tempo total
 
-## Impacto
-- Nenhuma alteracao de banco de dados
-- Reutiliza utilitarios existentes (vendasPDFGenerator, xlsx)
-- Exporta apenas as vendas filtradas visiveis na tela
+## Observacao tecnica
+Nao existe um campo `data_faturamento` no banco de dados. O faturamento e marcado por um boolean em cada produto. A data de criacao do pedido (`pedido.created_at`) e o melhor indicador de quando a venda foi faturada, pois o pedido e gerado automaticamente apos o faturamento completo.
