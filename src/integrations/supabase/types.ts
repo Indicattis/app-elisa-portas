@@ -5060,6 +5060,7 @@ export type Database = {
           ficha_visita_url: string | null
           forma_pagamento: string | null
           id: string
+          is_correcao: boolean | null
           mes_vigencia: string | null
           modalidade_instalacao: string | null
           motivo_backlog: string | null
@@ -5073,6 +5074,7 @@ export type Database = {
           ordens_pintura: Json | null
           ordens_separacao: Json | null
           ordens_soldagem: Json | null
+          pedido_origem_id: string | null
           prioridade_etapa: number | null
           produtos: Json | null
           status: string
@@ -5114,6 +5116,7 @@ export type Database = {
           ficha_visita_url?: string | null
           forma_pagamento?: string | null
           id?: string
+          is_correcao?: boolean | null
           mes_vigencia?: string | null
           modalidade_instalacao?: string | null
           motivo_backlog?: string | null
@@ -5127,6 +5130,7 @@ export type Database = {
           ordens_pintura?: Json | null
           ordens_separacao?: Json | null
           ordens_soldagem?: Json | null
+          pedido_origem_id?: string | null
           prioridade_etapa?: number | null
           produtos?: Json | null
           status?: string
@@ -5168,6 +5172,7 @@ export type Database = {
           ficha_visita_url?: string | null
           forma_pagamento?: string | null
           id?: string
+          is_correcao?: boolean | null
           mes_vigencia?: string | null
           modalidade_instalacao?: string | null
           motivo_backlog?: string | null
@@ -5181,6 +5186,7 @@ export type Database = {
           ordens_pintura?: Json | null
           ordens_separacao?: Json | null
           ordens_soldagem?: Json | null
+          pedido_origem_id?: string | null
           prioridade_etapa?: number | null
           produtos?: Json | null
           status?: string
@@ -5194,6 +5200,20 @@ export type Database = {
           venda_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "pedidos_producao_pedido_origem_id_fkey"
+            columns: ["pedido_origem_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "pedidos_producao_pedido_origem_id_fkey"
+            columns: ["pedido_origem_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pedidos_producao_venda_id_fkey"
             columns: ["venda_id"]
