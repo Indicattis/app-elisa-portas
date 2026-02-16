@@ -1,58 +1,42 @@
 
+# Pagina Dedicada de Cadastro de Neos
 
-# Adicionar campo "Etapa Causadora" nos servicos Neo
+## Objetivo
+Criar uma pagina `/logistica/neos` dedicada a listar, criar e editar Neo Instalacoes e Neo Correcoes em um unico lugar, separado do calendario de expedicao.
 
-## Resumo
-Adicionar um campo selectbox nos modais de criacao e edicao de Neo Correcoes e Neo Instalacoes para que o usuario informe qual etapa do processo de producao causou a necessidade do servico.
+## Estrutura da pagina
 
-## Alteracoes
+A pagina usara o `MinimalistLayout` com backPath `/logistica` e tera:
 
-### 1. Banco de dados - nova coluna
-Criar migration adicionando a coluna `etapa_causadora` (tipo `text`, nullable) em ambas as tabelas:
-- `neo_correcoes`
-- `neo_instalacoes`
+1. **Header** com titulo "Servicos Neo" e botao "+ Novo" (dropdown com opcoes "Neo Instalacao" e "Neo Correcao")
+2. **Tabs** para alternar entre "Instalacoes", "Correcoes" e "Todos"
+3. **Tabela/Lista** exibindo os registros com colunas: Cliente, Cidade/Estado, Responsavel, Etapa Causadora, Valor Total, Valor a Receber, Status, Data, Acoes (editar/excluir)
+4. **Modais** reutilizando os componentes existentes `NeoInstalacaoModal` e `NeoCorrecaoModal`
 
-### 2. Tipos TypeScript
-Atualizar `src/types/neoCorrecao.ts` e `src/types/neoInstalacao.ts` para incluir `etapa_causadora: string | null` no tipo principal e `etapa_causadora?: string | null` no tipo de criacao.
+## Detalhes tecnicos
 
-### 3. Modal de Neo Correcao
-**Arquivo:** `src/components/expedicao/NeoCorrecaoModal.tsx`
-- Adicionar state `etapaCausadora`
-- Preencher ao editar / resetar ao criar
-- Adicionar um Select entre o campo de descricao e os valores, com as opcoes:
-  - Producao (Soldagem)
-  - Producao (Perfiladeira)
-  - Producao (Separacao)
-  - Inspecao de Qualidade
-  - Pintura
-  - Expedicao
-  - Instalacao
-- Incluir o campo no objeto `dados` enviado ao `onConfirm`
+### 1. Nova pagina: `src/pages/logistica/NeosCadastro.tsx`
+- Usa `MinimalistLayout` com breadcrumb Home > Logistica > Servicos Neo
+- Usa os hooks existentes `useNeoInstalacoesListagem` e `useNeoCorrecoesListagem` para buscar dados
+- Reutiliza `NeoInstalacaoModal` e `NeoCorrecaoModal` para criar/editar
+- Tabs com Radix UI (`@radix-ui/react-tabs`) para filtrar por tipo
+- Cada linha tera botoes de editar e excluir com confirmacao
 
-### 4. Modal de Neo Instalacao
-**Arquivo:** `src/components/expedicao/NeoInstalacaoModal.tsx`
-- Mesma logica do modal de correcao: state, preenchimento, Select e inclusao no objeto de dados.
+### 2. Rota no App.tsx
+- Adicionar rota `/logistica/neos` com `routeKey="logistica_hub"`
+- Importar o componente com lazy loading seguindo o padrao existente
 
-### 5. Opcoes da selectbox
-Valores armazenados no banco e seus labels:
+### 3. Link no Hub de Logistica
+- Adicionar item "Servicos Neo" no array `menuItems` de `LogisticaHub.tsx` com icone `Wrench` ou `Hammer`
 
-| Valor | Label |
-|-------|-------|
-| soldagem | Producao (Soldagem) |
-| perfiladeira | Producao (Perfiladeira) |
-| separacao | Producao (Separacao) |
-| inspecao_qualidade | Inspecao de Qualidade |
-| pintura | Pintura |
-| expedicao | Expedicao |
-| instalacao | Instalacao |
+### 4. Funcionalidades da lista
+- Exibir badge colorido para diferenciar Instalacao (laranja) e Correcao (roxo)
+- Mostrar etapa causadora formatada (label legivel)
+- Botao de editar abre o modal correspondente preenchido
+- Botao de excluir com dialog de confirmacao
+- Indicador visual de status (pendente, agendada, concluida)
 
-O campo sera opcional (sem validacao obrigatoria).
-
-## Arquivos envolvidos
-- Migration SQL (nova)
-- `src/types/neoCorrecao.ts`
-- `src/types/neoInstalacao.ts`
-- `src/components/expedicao/NeoCorrecaoModal.tsx`
-- `src/components/expedicao/NeoInstalacaoModal.tsx`
-- `src/integrations/supabase/types.ts` (regenerado automaticamente)
-
+### Arquivos envolvidos
+- `src/pages/logistica/NeosCadastro.tsx` (novo)
+- `src/App.tsx` (nova rota)
+- `src/pages/logistica/LogisticaHub.tsx` (novo item no menu)
