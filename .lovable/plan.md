@@ -1,31 +1,19 @@
 
 
-# Atualizar cores dos cronometros dos pedidos
+# Alterar tempo de faturamento para horario comercial
 
-## Resumo
-Duas alteracoes nos limites de cor dos cronometros na pagina de gestao de fabrica:
+## Arquivo: `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
 
-1. **Cronometro da etapa**: ficar vermelho apos **5 dias uteis** (atualmente esta em 10 dias)
-2. **Cronometro total do pedido**: ficar vermelho apos **10 dias uteis** (atualmente nao tem logica de cor)
+### 1. Atualizar imports (linha 38)
+Remover `differenceInDays` e `differenceInHours` (nao serao mais usados) e adicionar import do `calcularTempoExpediente`.
 
-## Alteracoes
+### 2. Reescrever funcao `calcularTempoFaturamento` (linhas 380-397)
+Substituir o calculo atual baseado em dias corridos por calculo usando `calcularTempoExpediente`, que conta apenas segundos dentro do horario 7h-17h de segunda a sexta.
 
-### 1. `src/hooks/useCronometroEtapa.ts`
-Reduzir o `LIMITE_VERDE` de 10 dias uteis (360.000 segundos) para 5 dias uteis (180.000 segundos):
-```
-const LIMITE_VERDE = 5 * 10 * 60 * 60; // 5 dias uteis * 10h/dia = 50h = 180000 segundos
-```
+A nova logica:
+- Calcula segundos de expediente desde `data_venda` ate agora
+- Converte para horas totais e depois em dias uteis (10h por dia)
+- Formata como "Xh", "1 dia", "Xd Yh" ou "X dias"
 
-### 2. `src/components/pedidos/PedidoCard.tsx`
-Adicionar logica de cor ao Badge do tempo total (criacao do pedido), nos dois locais (desktop e mobile):
-
-- Calcular os segundos de expediente desde `pedido.created_at` usando `calcularTempoExpediente`
-- Se >= 10 dias uteis (360.000 segundos): aplicar classes vermelhas (`bg-red-500/10 text-red-500 border-red-500/30`)
-- Caso contrario: manter o estilo atual (`bg-muted/50 text-muted-foreground`)
-
-Sera necessario importar `calcularTempoExpediente` e usar um estado/memo para calcular o tempo decorrido em segundos de expediente desde a criacao do pedido.
-
-## Arquivos alterados
-- `src/hooks/useCronometroEtapa.ts` - alterar limite de 10 para 5 dias
-- `src/components/pedidos/PedidoCard.tsx` - adicionar cor vermelha condicional no badge de tempo total
+Nenhum outro arquivo precisa ser alterado.
 
