@@ -264,8 +264,8 @@ export default function VendaNovaMinimalista() {
       const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
       const credito = (p.valor_credito || 0) * (p.quantidade || 1);
       return acc + valorBase - desconto + credito;
-    }, 0) + (formData.valor_frete || 0);
-  }, [portas, formData.valor_frete]);
+    }, 0) + (formData.valor_frete || 0) + valorCredito;
+  }, [portas, formData.valor_frete, valorCredito]);
 
   const configLimitesObj: ConfigLimites = useMemo(() => ({
     avista: configLimites.avista,
