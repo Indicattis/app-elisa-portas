@@ -1,42 +1,61 @@
 
-# Pagina Dedicada de Cadastro de Neos
+# Reformular pagina /logistica/neos como formulario de cadastro
 
-## Objetivo
-Criar uma pagina `/logistica/neos` dedicada a listar, criar e editar Neo Instalacoes e Neo Correcoes em um unico lugar, separado do calendario de expedicao.
+## O que muda
+A pagina atual e uma listagem com tabela e modais. O usuario quer uma **pagina de formulario dedicada** onde se escolhe o tipo (Instalacao ou Correcao) e preenche os campos diretamente na pagina, sem modais.
 
-## Estrutura da pagina
+## Estrutura da nova pagina
 
-A pagina usara o `MinimalistLayout` com backPath `/logistica` e tera:
+### Layout
+- `MinimalistLayout` com titulo "Novo Servico Neo", breadcrumb Home > Logistica > Servicos Neo
+- Seletor de tipo no topo: tabs ou radio para alternar entre "Neo Instalacao" e "Neo Correcao"
+- Formulario completo renderizado na pagina (sem modal)
+- Botoes "Cancelar" (volta para /logistica) e "Salvar" no rodape
 
-1. **Header** com titulo "Servicos Neo" e botao "+ Novo" (dropdown com opcoes "Neo Instalacao" e "Neo Correcao")
-2. **Tabs** para alternar entre "Instalacoes", "Correcoes" e "Todos"
-3. **Tabela/Lista** exibindo os registros com colunas: Cliente, Cidade/Estado, Responsavel, Etapa Causadora, Valor Total, Valor a Receber, Status, Data, Acoes (editar/excluir)
-4. **Modais** reutilizando os componentes existentes `NeoInstalacaoModal` e `NeoCorrecaoModal`
+### Campos do formulario
+Todos os campos ja existentes nos modais, agora inline:
+- Cliente (input texto)
+- Estado e Cidade (selects)
+- Data e Hora (inputs date/time — hora so para correcao)
+- Tipo de Responsavel (radio: Equipe Interna / Autorizado)
+- Equipe ou Autorizado (select condicional)
+- Valor Total e Valor a Receber (inputs numericos)
+- Descricao (textarea)
+- Etapa Causadora (select)
+
+### Modo edicao
+- A rota aceitara um parametro opcional: `/logistica/neos/editar/:tipo/:id`
+- Ou alternativamente, a pagina de listagem (que sera mantida como segunda rota ou integrada) passara state via `navigate`
+- Para simplicidade, a pagina de cadastro recebera dados de edicao via `location.state`
+
+### Fluxo
+1. Usuario clica "Novo" na listagem ou no hub → vai para `/logistica/neos/novo`
+2. Escolhe o tipo (Instalacao ou Correcao)
+3. Preenche o formulario
+4. Clica "Salvar" → insere no banco → redireciona para `/logistica/neos` (listagem)
+5. Para editar: clica no item na listagem → navega para `/logistica/neos/novo` com state contendo os dados
 
 ## Detalhes tecnicos
 
-### 1. Nova pagina: `src/pages/logistica/NeosCadastro.tsx`
-- Usa `MinimalistLayout` com breadcrumb Home > Logistica > Servicos Neo
-- Usa os hooks existentes `useNeoInstalacoesListagem` e `useNeoCorrecoesListagem` para buscar dados
-- Reutiliza `NeoInstalacaoModal` e `NeoCorrecaoModal` para criar/editar
-- Tabs com Radix UI (`@radix-ui/react-tabs`) para filtrar por tipo
-- Cada linha tera botoes de editar e excluir com confirmacao
+### Arquivo: `src/pages/logistica/NeosCadastroForm.tsx` (novo)
+- Pagina de formulario completo
+- Usa `MinimalistLayout` com backPath `/logistica/neos`
+- State local para todos os campos
+- Tabs no topo para escolher tipo (instalacao/correcao)
+- Ao trocar tipo, reseta campos especificos (hora so existe em correcao)
+- Mutations de criacao/edicao com React Query + Supabase
+- Apos salvar, `navigate('/logistica/neos')` com toast de sucesso
+- Se receber `location.state.editData`, preenche campos para edicao
 
-### 2. Rota no App.tsx
-- Adicionar rota `/logistica/neos` com `routeKey="logistica_hub"`
-- Importar o componente com lazy loading seguindo o padrao existente
+### Arquivo: `src/pages/logistica/NeosCadastro.tsx` (atualizado)
+- Manter a listagem existente
+- Botao "Novo" agora faz `navigate('/logistica/neos/novo')`
+- Botao de editar em cada item faz `navigate('/logistica/neos/novo', { state: { editData: item } })`
 
-### 3. Link no Hub de Logistica
-- Adicionar item "Servicos Neo" no array `menuItems` de `LogisticaHub.tsx` com icone `Wrench` ou `Hammer`
+### Arquivo: `src/App.tsx`
+- Adicionar rota `/logistica/neos/novo` apontando para `NeosCadastroForm`
 
-### 4. Funcionalidades da lista
-- Exibir badge colorido para diferenciar Instalacao (laranja) e Correcao (roxo)
-- Mostrar etapa causadora formatada (label legivel)
-- Botao de editar abre o modal correspondente preenchido
-- Botao de excluir com dialog de confirmacao
-- Indicador visual de status (pendente, agendada, concluida)
-
-### Arquivos envolvidos
-- `src/pages/logistica/NeosCadastro.tsx` (novo)
+## Arquivos envolvidos
+- `src/pages/logistica/NeosCadastroForm.tsx` (novo)
+- `src/pages/logistica/NeosCadastro.tsx` (ajustar botoes para navegar)
 - `src/App.tsx` (nova rota)
-- `src/pages/logistica/LogisticaHub.tsx` (novo item no menu)
