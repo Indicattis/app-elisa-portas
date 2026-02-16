@@ -2620,6 +2620,7 @@ export type Database = {
           updated_at: string
           valor_pagamento_entrega: number | null
           venda_id: string | null
+          vezes_agendado: number
         }
         Insert: {
           carregamento_concluido?: boolean | null
@@ -2663,6 +2664,7 @@ export type Database = {
           updated_at?: string
           valor_pagamento_entrega?: number | null
           venda_id?: string | null
+          vezes_agendado?: number
         }
         Update: {
           carregamento_concluido?: boolean | null
@@ -2706,6 +2708,7 @@ export type Database = {
           updated_at?: string
           valor_pagamento_entrega?: number | null
           venda_id?: string | null
+          vezes_agendado?: number
         }
         Relationships: [
           {
@@ -3147,6 +3150,7 @@ export type Database = {
           updated_at: string
           valor_a_receber: number | null
           valor_total: number | null
+          vezes_agendado: number
         }
         Insert: {
           autorizado_id?: string | null
@@ -3170,6 +3174,7 @@ export type Database = {
           updated_at?: string
           valor_a_receber?: number | null
           valor_total?: number | null
+          vezes_agendado?: number
         }
         Update: {
           autorizado_id?: string | null
@@ -3193,6 +3198,7 @@ export type Database = {
           updated_at?: string
           valor_a_receber?: number | null
           valor_total?: number | null
+          vezes_agendado?: number
         }
         Relationships: [
           {
@@ -3234,6 +3240,7 @@ export type Database = {
           updated_at: string
           valor_a_receber: number | null
           valor_total: number | null
+          vezes_agendado: number
         }
         Insert: {
           autorizado_id?: string | null
@@ -3257,6 +3264,7 @@ export type Database = {
           updated_at?: string
           valor_a_receber?: number | null
           valor_total?: number | null
+          vezes_agendado?: number
         }
         Update: {
           autorizado_id?: string | null
@@ -3280,6 +3288,7 @@ export type Database = {
           updated_at?: string
           valor_a_receber?: number | null
           valor_total?: number | null
+          vezes_agendado?: number
         }
         Relationships: [
           {
@@ -3761,6 +3770,7 @@ export type Database = {
             | null
           updated_at: string
           venda_id: string | null
+          vezes_agendado: number
         }
         Insert: {
           carregamento_concluido?: boolean | null
@@ -3789,6 +3799,7 @@ export type Database = {
             | null
           updated_at?: string
           venda_id?: string | null
+          vezes_agendado?: number
         }
         Update: {
           carregamento_concluido?: boolean | null
@@ -3817,6 +3828,7 @@ export type Database = {
             | null
           updated_at?: string
           venda_id?: string | null
+          vezes_agendado?: number
         }
         Relationships: [
           {
