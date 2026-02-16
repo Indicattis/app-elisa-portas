@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
 import { 
   MapPin, 
   Calendar, 
@@ -242,35 +243,10 @@ export function NeoInstalacaoCardGestao({
                 <span className="text-[9px] text-muted-foreground/50">—</span>
               </div>
 
-              {/* Col 18: Data de criação + tempo decorrido */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex flex-col items-center leading-tight cursor-help">
-                    <span className="text-[9px] text-muted-foreground">
-                      {format(new Date(neoInstalacao.created_at), "dd/MM/yy")}
-                    </span>
-                    <span className="text-[9px] font-medium text-primary">
-                      {(() => {
-                        const diffMs = Date.now() - new Date(neoInstalacao.created_at).getTime();
-                        const diffMins = Math.floor(diffMs / 60000);
-                        const diffHours = Math.floor(diffMs / 3600000);
-                        const diffDays = Math.floor(diffMs / 86400000);
-                        const diffWeeks = Math.floor(diffDays / 7);
-                        if (diffMins < 60) return `há ${diffMins}min`;
-                        if (diffHours < 24) return `há ${diffHours}h`;
-                        if (diffDays < 30) return `há ${diffDays}d`;
-                        return `há ${diffWeeks}sem`;
-                      })()}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Criado em: {format(new Date(neoInstalacao.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
-                  {neoInstalacao.hora && (
-                    <p className="text-[10px] text-muted-foreground">Hora agendada: {neoInstalacao.hora.substring(0, 5)}</p>
-                  )}
-                </TooltipContent>
-              </Tooltip>
+              {/* Col 18: Cronômetro desde criação */}
+              <div className="flex items-center justify-center">
+                <CronometroEtapaBadge dataEntrada={neoInstalacao.created_at} compact />
+              </div>
 
               {/* Col 19: Botões de ação ou status concluído */}
               <div className="flex items-center justify-end gap-1">
