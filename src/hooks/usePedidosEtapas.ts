@@ -558,6 +558,29 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
         // Validar ordens de produção concluídas antes de sair de em_producao
         if (etapaAtualNome === 'em_producao') {
+          // Buscar status das ordens principais para validação resiliente
+          const tabelasOrdensPrincipais = ['ordens_soldagem', 'ordens_perfiladeira', 'ordens_separacao'] as const;
+          const tipoOrdemMap: Record<string, string> = {
+            ordens_soldagem: 'soldagem',
+            ordens_perfiladeira: 'perfiladeira',
+            ordens_separacao: 'separacao',
+          };
+          
+          // Buscar quais tipos de ordem têm a ordem principal já concluída
+          const tiposComOrdemConcluida = new Set<string>();
+          for (const tabela of tabelasOrdensPrincipais) {
+            const { data: ordemPrincipal } = await supabase
+              .from(tabela)
+              .select('status')
+              .eq('pedido_id', pedidoId)
+              .eq('historico', false)
+              .maybeSingle();
+            
+            if (ordemPrincipal && (ordemPrincipal.status === 'concluido' || ordemPrincipal.status === 'pronta')) {
+              tiposComOrdemConcluida.add(tipoOrdemMap[tabela]);
+            }
+          }
+
           const { data: linhasProducao } = await supabase
             .from('linhas_ordens')
             .select('concluida, tipo_ordem')
@@ -565,7 +588,10 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             .in('tipo_ordem', ['soldagem', 'perfiladeira', 'separacao']);
           
           if (linhasProducao && linhasProducao.length > 0) {
-            const linhasNaoConcluidas = linhasProducao.filter(l => !l.concluida);
+            // Filtrar linhas não concluídas, ignorando tipos cuja ordem principal já está concluída
+            const linhasNaoConcluidas = linhasProducao.filter(
+              l => !l.concluida && !tiposComOrdemConcluida.has(l.tipo_ordem)
+            );
             
             if (linhasNaoConcluidas.length > 0) {
               // Contar por tipo para mensagem detalhada
