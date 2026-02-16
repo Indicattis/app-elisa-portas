@@ -1,46 +1,51 @@
 
-
-# Pular Embalagem para pedidos apenas com separacao
+# Corrigir verificacao de ordem de pintura concluida
 
 ## Problema
-Pedidos que contem apenas itens de separacao (sem soldagem/perfiladeira) estao sendo direcionados para a etapa de Embalagem desnecessariamente. Esses pedidos devem ir diretamente para Expedicao Coleta ou Instalacoes, assim como ja pulam a Inspecao de Qualidade.
+O pedido `601eb600` esta preso na etapa "Aguardando Pintura" mesmo com a ordem de pintura concluida. Ao tentar avancar manualmente, aparece a mensagem "Conclua a ordem de pintura antes de avancar para expedicao".
+
+## Causa raiz
+A funcao SQL `verificar_ordem_pintura_concluida` (usada pelo PedidoCard para habilitar o botao de avanco) verifica se o status da ordem e `'pronta'`, mas a ordem esta com status `'concluido'`. A funcao retorna `false` incorretamente.
+
+Da mesma forma, o hook `usePedidoAutoAvanco` na funcao `verificarOrdemPinturaConcluida` tambem verifica apenas `status === 'pronta'`.
 
 ## Solucao
-Alterar a logica de roteamento em `src/hooks/usePedidosEtapas.ts` para que, quando o pedido sai de `em_producao` e contem apenas separacao (sem pintura), ele va direto para `aguardando_coleta` ou `instalacoes` conforme o `tipo_entrega` da venda, pulando tanto a inspecao de qualidade quanto a embalagem.
 
-## Alteracao
+### 1. Atualizar funcao SQL `verificar_ordem_pintura_concluida`
+Alterar a verificacao para aceitar ambos os status `'pronta'` e `'concluido'`:
 
-No bloco que trata `etapaAtualNome === 'em_producao'` (linhas 626-666), o trecho que atualmente direciona para `embalagem` quando nao tem pintura (linha 662) sera alterado para consultar o `tipo_entrega` e direcionar para `aguardando_coleta` ou `instalacoes`.
-
-Logica atual (linha 660-663):
-```
-} else {
-  etapaDestino = 'embalagem';
-}
-```
-
-Nova logica:
-```
-} else {
-  // Sem pintura e só separação → pular embalagem também
-  const { data: vendaEntrega } = await supabase
-    .from('vendas')
-    .select('tipo_entrega')
-    .eq('id', pedidoData.venda_id)
-    .single();
-
-  if (vendaEntrega?.tipo_entrega === 'entrega') {
-    etapaDestino = 'aguardando_coleta';
-  } else {
-    etapaDestino = 'instalacoes';
-  }
-}
+```sql
+CREATE OR REPLACE FUNCTION public.verificar_ordem_pintura_concluida(p_pedido_id uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+AS $function$
+DECLARE
+  v_status TEXT;
+BEGIN
+  SELECT status INTO v_status
+  FROM ordens_pintura
+  WHERE pedido_id = p_pedido_id
+  LIMIT 1;
+  
+  IF v_status IS NULL THEN
+    RETURN false;
+  END IF;
+  
+  RETURN v_status IN ('pronta', 'concluido');
+END;
+$function$;
 ```
 
-## Arquivo alterado
-- `src/hooks/usePedidosEtapas.ts` - bloco de roteamento condicional ao sair de `em_producao`
+### 2. Atualizar hook `usePedidoAutoAvanco.ts`
+Na funcao `verificarOrdemPinturaConcluida` (linha 139), alterar:
+- De: `ordemPintura.status === 'pronta'`
+- Para: `ordemPintura.status === 'pronta' || ordemPintura.status === 'concluido'`
+
+## Arquivos alterados
+- Migracao SQL (nova) - atualizar funcao `verificar_ordem_pintura_concluida`
+- `src/hooks/usePedidoAutoAvanco.ts` - aceitar ambos os status na verificacao do hook
 
 ## Impacto
-- Pedidos apenas com separacao: `Em Producao` → `Expedicao Coleta` ou `Instalacoes` (pulando qualidade E embalagem)
-- Pedidos com solda/perfiladeira continuam passando por qualidade e embalagem normalmente
-- Pedidos com pintura continuam indo para aguardando_pintura → embalagem → coleta/instalacao
+- O pedido `601eb600` podera ser avancado manualmente imediatamente apos a correcao
+- Futuros pedidos com ordens de pintura marcadas como `concluido` tambem serao tratados corretamente
+- Nenhuma alteracao no fluxo normal de producao
