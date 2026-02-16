@@ -5274,8 +5274,12 @@ export type Database = {
           id: string
           item_nome: string
           linha_id: string
+          metragem_linear: number | null
+          metragem_quadrada_pintada: number | null
           ordem_id: string
+          pedido_separado: number | null
           pontos_total: number
+          porta_soldada: string | null
           quantidade: number
           tipo_ordem: string
           tipo_ranking: string | null
@@ -5287,8 +5291,12 @@ export type Database = {
           id?: string
           item_nome: string
           linha_id: string
+          metragem_linear?: number | null
+          metragem_quadrada_pintada?: number | null
           ordem_id: string
+          pedido_separado?: number | null
           pontos_total?: number
+          porta_soldada?: string | null
           quantidade?: number
           tipo_ordem: string
           tipo_ranking?: string | null
@@ -5300,8 +5308,12 @@ export type Database = {
           id?: string
           item_nome?: string
           linha_id?: string
+          metragem_linear?: number | null
+          metragem_quadrada_pintada?: number | null
           ordem_id?: string
+          pedido_separado?: number | null
           pontos_total?: number
+          porta_soldada?: string | null
           quantidade?: number
           tipo_ordem?: string
           tipo_ranking?: string | null
