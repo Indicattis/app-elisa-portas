@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, Search, Filter, MapPin, Truck, Package, Hammer, Wrench, CheckCircle2 } from "lucide-react";
+import { RefreshCw, Search, Filter, MapPin, Truck, Package, Hammer, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,12 +21,11 @@ import {
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 
 import { useOrdensInstalacao, OrdemInstalacao } from "@/hooks/useOrdensInstalacao";
-import { useNeoInstalacoesListagem, useNeoInstalacoesFinalizadas } from "@/hooks/useNeoInstalacoes";
-import { useNeoCorrecoesListagem, useNeoCorrecoesFinalizadas } from "@/hooks/useNeoCorrecoes";
+import { useNeoInstalacoesListagem } from "@/hooks/useNeoInstalacoes";
+import { useNeoCorrecoesListagem } from "@/hooks/useNeoCorrecoes";
 import { OrdemInstalacaoRow } from "@/components/instalacoes/OrdemInstalacaoRow";
 import { NeoInstalacaoRow } from "@/components/instalacoes/NeoInstalacaoRow";
 import { NeoCorrecaoRow } from "@/components/instalacoes/NeoCorrecaoRow";
-import { NeoFinalizadoRow } from "@/components/instalacoes/NeoFinalizadoRow";
 import { PedidoDetalhesSheet } from "@/components/pedidos/PedidoDetalhesSheet";
 import { NeoInstalacao } from "@/types/neoInstalacao";
 import { NeoCorrecao } from "@/types/neoCorrecao";
@@ -73,28 +72,8 @@ export default function OrdensInstalacoesLogistica() {
   
   const isConcluindoNeoCorrecao = concluirNeoCorrecao.isPending;
 
-  // Hooks para finalizados
-  const { 
-    neoInstalacoesFinalizadas, 
-    isLoading: isLoadingFinalizadasInstalacoes 
-  } = useNeoInstalacoesFinalizadas();
 
-  const { 
-    neoCorrecoesFinalizadas, 
-    isLoading: isLoadingFinalizadasCorrecoes 
-  } = useNeoCorrecoesFinalizadas();
 
-  // Combinar finalizados ordenados por data de conclusão
-  const finalizados = useMemo(() => {
-    const todos = [...neoInstalacoesFinalizadas, ...neoCorrecoesFinalizadas];
-    return todos.sort((a, b) => {
-      const dateA = a.concluida_em ? new Date(a.concluida_em).getTime() : 0;
-      const dateB = b.concluida_em ? new Date(b.concluida_em).getTime() : 0;
-      return dateB - dateA;
-    });
-  }, [neoInstalacoesFinalizadas, neoCorrecoesFinalizadas]);
-
-  const isLoadingFinalizados = isLoadingFinalizadasInstalacoes || isLoadingFinalizadasCorrecoes;
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
@@ -217,7 +196,7 @@ export default function OrdensInstalacoesLogistica() {
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Ordens de Instalação</h1>
                 <p className="text-muted-foreground text-sm">
-                  {ordensNaoCarregadas.length} aguardando • {ordensCarregadas.length} prontas
+                  {ordensNaoCarregadas.length} aguardando • {ordensCarregadas.length} carregadas
                   {neoInstalacoes.length > 0 && ` • ${neoInstalacoes.length} avulsas`}
                   {neoCorrecoes.length > 0 && ` • ${neoCorrecoes.length} correções`}
                 </p>
@@ -282,38 +261,7 @@ export default function OrdensInstalacoesLogistica() {
             "space-y-3 transition-all duration-500 delay-200",
             mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           )}>
-            {/* SEÇÃO 1: Finalizados */}
-            <AccordionItem value="finalizados" className="border rounded-lg px-3">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                  <span className="text-lg font-semibold">Finalizados</span>
-                  <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-600">
-                    {finalizados.length}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground ml-2">últimos 30 dias</span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                {isLoadingFinalizados ? (
-                  <div className="text-center py-8 text-muted-foreground text-sm">
-                    Carregando finalizados...
-                  </div>
-                ) : finalizados.length === 0 ? (
-                  <div className="py-8 text-center text-muted-foreground text-sm">
-                    Nenhum serviço avulso finalizado recentemente.
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {finalizados.map((item) => (
-                      <NeoFinalizadoRow key={item.id} item={item} />
-                    ))}
-                  </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* SEÇÃO 2: Aguardando Carregamento */}
+            {/* SEÇÃO 1: Aguardando Carregamento */}
             <AccordionItem value="aguardando" className="border rounded-lg px-3">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
@@ -349,12 +297,12 @@ export default function OrdensInstalacoesLogistica() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* SEÇÃO 3: Prontas para Instalação */}
-            <AccordionItem value="prontas" className="border rounded-lg px-3">
+            {/* SEÇÃO 2: Carregadas */}
+            <AccordionItem value="carregadas" className="border rounded-lg px-3">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Package className="h-5 w-5 text-green-500" />
-                  <span className="text-lg font-semibold">Prontas para Instalação</span>
+                  <span className="text-lg font-semibold">Carregadas</span>
                   <Badge variant="secondary" className="bg-green-500/20 text-green-600">
                     {ordensCarregadas.length}
                   </Badge>
@@ -363,7 +311,7 @@ export default function OrdensInstalacoesLogistica() {
               <AccordionContent>
                 {ordensCarregadas.length === 0 ? (
                   <div className="py-8 text-center text-muted-foreground text-sm">
-                    Nenhuma instalação pronta (carregada).
+                    Nenhuma instalação carregada.
                   </div>
                 ) : (
                   <div className="space-y-1">
