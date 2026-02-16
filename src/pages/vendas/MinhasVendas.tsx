@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, ShoppingCart, DollarSign, FileCheck, Search, CalendarIcon, Truck, Hammer, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, ShoppingCart, DollarSign, FileCheck, Search, CalendarIcon, Truck, Hammer, ArrowUpDown, ArrowUp, ArrowDown, Download, FileText, FileSpreadsheet } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { generateVendasRelatorioPDF } from '@/utils/vendasPDFGenerator';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
@@ -12,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ColumnManager } from '@/components/ColumnManager';
 import { useColumnConfig, ColumnConfig } from '@/hooks/useColumnConfig';
 import { cn } from '@/lib/utils';
@@ -265,6 +269,80 @@ export default function MinhasVendas() {
       : <ArrowDown className="w-3 h-3 ml-1" />;
   };
 
+  const handleExportarPDF = () => {
+    try {
+      const vendasParaRelatorio = vendasFiltradas.map(venda => ({
+        data_venda: venda.data_venda,
+        cliente_nome: venda.cliente_nome || '',
+        cliente_telefone: venda.cliente_telefone || '',
+        cidade: venda.cidade || '',
+        estado: venda.estado || '',
+        previsao_entrega: venda.data_prevista_entrega || '',
+        quantidade_produtos: venda.produtos_vendas?.length || 0,
+        valor_venda: venda.valor_venda || 0,
+        atendente_nome: 'Eu'
+      }));
+
+      const totalPortasEnrolar = vendasFiltradas.reduce((acc, v) => {
+        return acc + (v.produtos_vendas?.filter(p => p.tipo_produto === 'porta_enrolar').length || 0);
+      }, 0);
+
+      generateVendasRelatorioPDF({
+        vendas: vendasParaRelatorio,
+        stats: {
+          totalVendas,
+          totalValor: valorTotal,
+          totalPortasEnrolar
+        },
+        filtros: {
+          minhasVendas: true,
+          vendasMesAtual: false,
+          busca: searchTerm
+        }
+      });
+
+      toast.success('Relatório PDF gerado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
+      toast.error('Erro ao gerar relatório PDF.');
+    }
+  };
+
+  const handleExportarExcel = () => {
+    try {
+      const dadosExcel = vendasFiltradas.map(venda => ({
+        'Data Venda': format(new Date(venda.data_venda), 'dd/MM/yyyy', { locale: ptBR }),
+        'Cliente': venda.cliente_nome || '-',
+        'Telefone': venda.cliente_telefone || '-',
+        'Cidade': venda.cidade || '-',
+        'Estado': venda.estado || '-',
+        'Previsão Entrega': venda.data_prevista_entrega 
+          ? format(new Date(venda.data_prevista_entrega), 'dd/MM/yyyy', { locale: ptBR })
+          : '-',
+        'Qtd Produtos': venda.produtos_vendas?.length || 0,
+        'Valor (sem frete)': (venda.valor_venda || 0) - (venda.valor_frete || 0) + (venda.valor_credito || 0),
+        'Valor Total': (venda.valor_venda || 0) + (venda.valor_credito || 0),
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(dadosExcel);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Minhas Vendas');
+      
+      worksheet['!cols'] = [
+        { wch: 12 }, { wch: 30 }, { wch: 15 }, { wch: 15 },
+        { wch: 8 }, { wch: 15 }, { wch: 12 }, { wch: 15 }, { wch: 15 }
+      ];
+      
+      const fileName = `minhas-vendas_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+
+      toast.success(`Arquivo ${fileName} exportado com sucesso!`);
+    } catch (error) {
+      console.error('Erro ao gerar Excel:', error);
+      toast.error('Erro ao gerar arquivo Excel.');
+    }
+  };
+
   const renderCell = (venda: Venda, columnId: string) => {
     switch (columnId) {
       case 'data':
@@ -426,6 +504,25 @@ export default function MinhasVendas() {
           onReorder={setColumnOrder}
           onReset={resetColumns}
         />
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="h-10 px-4 rounded-lg border border-blue-500/20 bg-blue-500/5 text-blue-200 hover:bg-blue-500/10 hover:border-blue-400/30 transition-all flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              <span className="text-sm">Exportar</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-popover">
+            <DropdownMenuItem onClick={handleExportarPDF}>
+              <FileText className="h-4 w-4 mr-2" />
+              Exportar PDF
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportarExcel}>
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Exportar Excel
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Tabela */}
