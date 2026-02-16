@@ -291,34 +291,15 @@ export default function ExpedicaoMinimalista() {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-white/80 hover:text-white hover:bg-primary/10 text-xs"
-                  >
-                    <Plus className="h-4 w-4 sm:mr-1" />
-                    <span className="hidden sm:inline">Novo Neo</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem 
-                    onClick={() => setNeoModalOpen(true)}
-                    className="text-orange-600 focus:text-orange-600"
-                  >
-                    <Hammer className="h-4 w-4 mr-2" />
-                    Neo Instalação
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setNeoCorrecaoModalOpen(true)}
-                    className="text-purple-600 focus:text-purple-600"
-                  >
-                    <Wrench className="h-4 w-4 mr-2" />
-                    Neo Correção
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white/80 hover:text-white hover:bg-primary/10 text-xs"
+                onClick={() => navigate('/logistica/neos')}
+              >
+                <Plus className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Novo Neo</span>
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
