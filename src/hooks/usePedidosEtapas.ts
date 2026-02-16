@@ -658,9 +658,20 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               etapaDestino = 'aguardando_pintura';
               console.log('[moverParaProximaEtapa] → Destino: aguardando_pintura (tem pintura)');
             } else {
-              // Não tem pintura → vai para embalagem
-              etapaDestino = 'embalagem';
-              console.log('[moverParaProximaEtapa] → Destino: embalagem (sem pintura, só separação)');
+              // Sem pintura e só separação → pular embalagem também
+              const { data: vendaEntrega } = await supabase
+                .from('vendas')
+                .select('tipo_entrega')
+                .eq('id', pedidoData.venda_id)
+                .single();
+
+              if (vendaEntrega?.tipo_entrega === 'entrega') {
+                etapaDestino = 'aguardando_coleta';
+                console.log('[moverParaProximaEtapa] → Destino: aguardando_coleta (só separação, entrega)');
+              } else {
+                etapaDestino = 'instalacoes';
+                console.log('[moverParaProximaEtapa] → Destino: instalacoes (só separação, instalação)');
+              }
             }
           }
         }
