@@ -15,7 +15,7 @@ interface CronometroEtapaResult {
 
 // Limite de tempo em segundos (10 dias úteis de trabalho = 10h/dia * 10 dias = 100h = 360000 segundos)
 // Mas para simplificar, vamos manter o limite em segundos de expediente
-const LIMITE_VERDE = 10 * 10 * 60 * 60; // 10 dias úteis * 10h/dia = 100h = 360000 segundos
+const LIMITE_VERDE = 5 * 10 * 60 * 60; // 5 dias úteis * 10h/dia = 50h = 180000 segundos
 
 export function useCronometroEtapa(params: UseCronometroEtapaParams | string | null | undefined): CronometroEtapaResult {
   const [segundos, setSegundos] = useState<number>(0);

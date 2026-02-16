@@ -9,7 +9,8 @@ import { ptBR } from "date-fns/locale";
 import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench } from "lucide-react";
 import { CriarPedidoCorrecaoModal } from "./CriarPedidoCorrecaoModal";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { calcularTempoExpediente } from "@/utils/calcularTempoExpediente";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
 import { AcaoEtapaModal } from "./AcaoEtapaModal";
@@ -97,6 +98,14 @@ export function PedidoCard({
   const isProducao = location.pathname.startsWith('/producao');
   const isAdministrativo = location.pathname.startsWith('/administrativo');
   const isDirecao = location.pathname.startsWith('/direcao');
+
+  // Calcular se o pedido está atrasado (>10 dias úteis desde criação)
+  const LIMITE_TOTAL_VERMELHO = 10 * 10 * 60 * 60; // 10 dias úteis * 10h/dia = 360000 segundos
+  const isAtrasadoTotal = useMemo(() => {
+    if (!pedido.created_at) return false;
+    const segundos = calcularTempoExpediente(new Date(pedido.created_at), new Date());
+    return segundos >= LIMITE_TOTAL_VERMELHO;
+  }, [pedido.created_at]);
 
   // Mutation para remover responsável
   const removerResponsavelMutation = useMutation({
@@ -1425,7 +1434,12 @@ export function PedidoCard({
                 {pedido.created_at && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 font-mono bg-muted/50 text-muted-foreground border-muted-foreground/30 cursor-default">
+                      <Badge variant="outline" className={cn(
+                        "text-[10px] px-1.5 py-0.5 font-mono cursor-default",
+                        isAtrasadoTotal
+                          ? "bg-red-500/10 text-red-500 border-red-500/30"
+                          : "bg-muted/50 text-muted-foreground border-muted-foreground/30"
+                      )}>
                         <Clock className="h-2.5 w-2.5 mr-0.5" />
                         {formatDistanceToNow(new Date(pedido.created_at), { locale: ptBR })}
                       </Badge>
@@ -1717,7 +1731,12 @@ className="flex h-[20px] w-full rounded-[3px]"
               {pedido.created_at && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Badge variant="outline" className="text-[10px] px-1 py-0 font-mono bg-muted/50 text-muted-foreground border-muted-foreground/30 cursor-default">
+                    <Badge variant="outline" className={cn(
+                      "text-[10px] px-1 py-0 font-mono cursor-default",
+                      isAtrasadoTotal
+                        ? "bg-red-500/10 text-red-500 border-red-500/30"
+                        : "bg-muted/50 text-muted-foreground border-muted-foreground/30"
+                    )}>
                       <Clock className="h-2.5 w-2.5 mr-0.5" />
                       {formatDistanceToNow(new Date(pedido.created_at), { locale: ptBR })}
                     </Badge>
