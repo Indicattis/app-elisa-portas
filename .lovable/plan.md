@@ -1,42 +1,58 @@
 
-# Armazenar tempo do pedido em cada etapa
+# Melhorar exibicao das Ordens de Instalacao
 
 ## Resumo
-Adicionar uma coluna `tempo_permanencia_segundos` na tabela `pedidos_etapas` para registrar automaticamente quanto tempo (em horas uteis) o pedido permaneceu em cada etapa ao sair dela. Exibir esse historico em /direcao/gestao-fabrica.
-
-## Como funciona hoje
-- A tabela `pedidos_etapas` ja tem `data_entrada` e `data_saida`
-- Ao avancar etapa, o codigo em `usePedidosEtapas.ts` (linha 615) ja faz `update({ data_saida: new Date().toISOString() })`
-- O sistema ja possui a utilidade `calcularTempoExpediente` que calcula tempo apenas em horario comercial (7h-17h, seg-sex)
-- Porem nenhum tempo calculado e salvo -- ele so e exibido em tempo real via cronometro
+Reorganizar a pagina de Ordens de Instalacao usando Accordion (pastas colapsaveis) onde abrir uma fecha a outra, remover botao de retroceder, mostrar botao de concluir apenas em instalacoes carregadas, e mover finalizados para o topo.
 
 ## Mudancas
 
-### 1. Migracao SQL
-Adicionar coluna `tempo_permanencia_segundos` (tipo `numeric`, nullable) na tabela `pedidos_etapas`:
+### 1. Arquivo: `src/pages/logistica/OrdensInstalacoesLogistica.tsx`
 
-```sql
-ALTER TABLE pedidos_etapas 
-ADD COLUMN tempo_permanencia_segundos numeric;
+**Accordion colapsavel (abrir uma fecha outra)**
+- Substituir as 5 secoes fixas por um componente `Accordion` (tipo "single") do Radix, ja disponivel no projeto
+- Cada secao vira um `AccordionItem` com trigger mostrando icone + titulo + badge de contagem
+- Comportamento "single" garante que ao abrir uma, a outra fecha automaticamente
+
+**Reordenar secoes**
+- Mover "Finalizados" para ser o primeiro AccordionItem
+- Ordem final: Finalizados, Aguardando Carregamento, Prontas para Instalacao, Instalacoes Avulsas, Correcoes Avulsas
+
+**Remover botao de retroceder**
+- Remover o state `retrocederDialog` e a funcao `handleRetroceder`
+- Remover o import de `RetrocederPedidoUnificadoModal`
+- Remover a prop `onRetroceder` ao renderizar `OrdemInstalacaoRow`
+- Remover o componente `RetrocederPedidoUnificadoModal` do JSX
+
+**Botao concluir apenas em carregadas**
+- Na secao "Aguardando Carregamento" (`ordensNaoCarregadas`): nao passar `onConcluir` para o `OrdemInstalacaoRow`, fazendo o botao nao aparecer
+- Na secao "Prontas para Instalacao" (`ordensCarregadas`): manter `onConcluir` normalmente
+
+### 2. Arquivo: `src/components/instalacoes/OrdemInstalacaoRow.tsx`
+
+- Tornar `onConcluir` opcional (tipo `(ordem: OrdemInstalacao) => void` para `((ordem: OrdemInstalacao) => void) | undefined`)
+- Renderizar o botao de concluir condicionalmente apenas quando `onConcluir` for passado
+- Remover a prop `onRetroceder` da interface (limpeza)
+
+### Detalhes tecnicos
+
+A estrutura do Accordion ficara assim:
+
+```tsx
+<Accordion type="single" collapsible className="space-y-3">
+  <AccordionItem value="finalizados">
+    <AccordionTrigger>Finalizados (badge)</AccordionTrigger>
+    <AccordionContent>...lista...</AccordionContent>
+  </AccordionItem>
+  <AccordionItem value="aguardando">
+    <AccordionTrigger>Aguardando Carregamento (badge)</AccordionTrigger>
+    <AccordionContent>...lista...</AccordionContent>
+  </AccordionItem>
+  <!-- ... demais secoes -->
+</Accordion>
 ```
 
-Tambem preencher retroativamente os registros que ja tem `data_entrada` e `data_saida` usando uma funcao SQL que calcula horas uteis (7h-17h, seg-sex, fuso America/Sao_Paulo).
-
-### 2. Calcular ao fechar etapa (usePedidosEtapas.ts)
-No momento de fechar a etapa atual (linha ~612-617), antes de fazer o update de `data_saida`:
-- Calcular `calcularTempoExpediente(new Date(etapaAtual.data_entrada), new Date())`
-- Incluir `tempo_permanencia_segundos` no update junto com `data_saida`
-
-Tambem aplicar a mesma logica na funcao RPC `retroceder_pedido_para_etapa` (backlog), para que retrocessos tambem registrem o tempo.
-
-### 3. Exibir historico de tempos em gestao-fabrica
-No componente `PedidoDetalhesSheet` (sidebar de detalhes do pedido), adicionar uma secao "Tempo por Etapa" que:
-- Busca todos os registros de `pedidos_etapas` do pedido
-- Exibe uma lista com etapa, tempo formatado (ex: "2d 4h 30min") e datas de entrada/saida
-- Etapa atual mostra o cronometro em tempo real (ja existente)
+O tipo "single" com `collapsible` permite que apenas uma secao fique aberta por vez, e clicar na mesma fecha-a.
 
 ### Arquivos envolvidos
-- Migracao SQL (nova coluna + preenchimento retroativo)
-- `src/hooks/usePedidosEtapas.ts` (salvar tempo ao fechar etapa)
-- `src/components/pedidos/PedidoDetalhesSheet.tsx` (exibir historico de tempos)
-- Funcao RPC `retroceder_pedido_para_etapa` (salvar tempo ao retroceder)
+- `src/pages/logistica/OrdensInstalacoesLogistica.tsx` (reestruturar secoes em Accordion, remover retroceder, reordenar)
+- `src/components/instalacoes/OrdemInstalacaoRow.tsx` (tornar onConcluir opcional, remover onRetroceder)
