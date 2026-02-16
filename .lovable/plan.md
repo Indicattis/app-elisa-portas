@@ -1,41 +1,43 @@
 
+# Corrigir inconsistencia entre ordens concluidas e linhas pendentes
 
-# Adicionar data de criacao e tempo corrido nos cards Neo
+## Problema
+Quando uma ordem de producao e marcada como "concluido", as linhas individuais na tabela `linhas_ordens` nem sempre sao atualizadas para `concluida = true`. Isso causa bloqueio no avanco do pedido porque a validacao verifica as linhas, nao as ordens principais.
 
-## Resumo
-Exibir a data de criacao (`created_at`) e o tempo decorrido desde a criacao nos cards de NeoInstalacao e NeoCorrecao na visualizacao em lista da gestao de fabrica.
+## Causa raiz
+O pedido foi retrocedido (backlog) e reprocessado. As novas ordens foram concluidas, mas as linhas individuais ficaram com `concluida = false`.
 
-## Mudancas
+## Plano de correcao
 
-### Arquivo: `src/components/pedidos/NeoInstalacaoCardGestao.tsx`
+### 1. Correcao imediata dos dados (SQL manual)
+Atualizar as 13 linhas pendentes deste pedido para refletir o status real das ordens:
 
-**Col 18 (atualmente mostra apenas a hora)**
-- Substituir o conteudo da Col 18 para exibir a data de criacao formatada (dd/MM/yy) e o tempo decorrido relativo (ex: "ha 2d", "ha 5h", "ha 30min")
-- Usar `created_at` do objeto `neoInstalacao`
-- Manter a hora como informacao secundaria no tooltip, se existir
-- Formato visual: data em texto pequeno + tempo relativo abaixo ou ao lado
-
-### Arquivo: `src/components/pedidos/NeoCorrecaoCardGestao.tsx`
-
-**Col 18 (mesmo tratamento)**
-- Mesma logica: exibir data de criacao e tempo decorrido
-- Usar `created_at` do objeto `neoCorrecao`
-
-### Logica do tempo decorrido
-Calcular a diferenca entre `new Date()` e `new Date(created_at)`:
-- Menos de 60 min: "ha Xmin"
-- Menos de 24h: "ha Xh"
-- Menos de 30 dias: "ha Xd"
-- 30+ dias: "ha Xsem" ou data formatada
-
-### Visual na Col 18
+```text
+UPDATE linhas_ordens 
+SET concluida = true, concluida_em = NOW()
+WHERE pedido_id = '9a381362-65f2-41cc-99bd-b5be2b724e61'
+  AND tipo_ordem IN ('soldagem', 'separacao')
+  AND concluida = false;
 ```
-  dd/MM/yy
-  ha Xd
-```
-Texto pequeno (9-10px), cor muted, com tooltip mostrando data/hora completa de criacao e a hora agendada (se houver).
+
+### 2. Correcao no codigo - validacao resiliente
+**Arquivo:** `src/hooks/usePedidosEtapas.ts` (linhas 559-583)
+
+Alterar a validacao de avanco da etapa `em_producao` para considerar tambem o status da ordem principal. Se a ordem na tabela principal esta como `concluido`, as linhas devem ser tratadas como concluidas mesmo que o campo `concluida` esteja desatualizado.
+
+Logica proposta:
+1. Buscar as ordens principais (ordens_soldagem, ordens_separacao, ordens_perfiladeira) e seus status
+2. Se a ordem principal esta "concluido"/"pronta", ignorar linhas pendentes dessa ordem
+3. Somente bloquear se a ordem principal tambem nao estiver concluida
+
+### 3. Correcao preventiva - sincronizar linhas ao concluir ordem
+Garantir que ao marcar uma ordem como concluida, todas as suas `linhas_ordens` vinculadas (via `ordem_id`) sejam automaticamente atualizadas para `concluida = true`. Verificar os fluxos de conclusao em:
+- Hook de conclusao de ordens de soldagem
+- Hook de conclusao de ordens de separacao  
+- Hook de conclusao de ordens de perfiladeira
+
+Adicionar em cada fluxo de conclusao um UPDATE nas linhas correspondentes.
 
 ## Arquivos envolvidos
-- `src/components/pedidos/NeoInstalacaoCardGestao.tsx`
-- `src/components/pedidos/NeoCorrecaoCardGestao.tsx`
-
+- `src/hooks/usePedidosEtapas.ts` - validacao de avanco
+- Hooks de conclusao de ordens (soldagem, separacao, perfiladeira) - sincronizacao preventiva
