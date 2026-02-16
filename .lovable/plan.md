@@ -1,25 +1,35 @@
 
+# Adicionar campos de Valor Total e Valor a Receber nos modais e sidebars da Expedicao
 
-# Corrigir erro "invalid input syntax for type integer" na quantidade de produtos
+## Resumo
+Adicionar dois campos monetarios (Valor Total e Valor a Receber) nos modais de criacao/edicao e nas sidebars de detalhes das Neo Instalacoes e Neo Correcoes em /logistica/expedicao. Os campos ja existem no banco de dados e nos tipos TypeScript -- so falta a UI.
 
-## Problema
-A coluna `quantidade` na tabela `produtos_vendas` e do tipo `integer`, mas produtos do catalogo medidos em metros enviam valores decimais (ex: `4.08`). Isso causa o erro ao tentar inserir a venda.
+## Mudancas
 
-## Solucao
+### 1. NeoInstalacaoModal.tsx (modal de criacao/edicao)
+- Adicionar dois estados: `valorTotal` e `valorAReceber` (inicializados com 0)
+- No useEffect de preenchimento ao editar, carregar `neoInstalacao.valor_total` e `neoInstalacao.valor_a_receber`
+- Adicionar uma linha com dois inputs tipo number (lado a lado) antes do campo Descricao:
+  - "Valor Total (R$)" 
+  - "Valor a Receber (R$)"
+- No `handleConfirm`, incluir `valor_total` e `valor_a_receber` no objeto `dados`
 
-### 1. Migracao SQL
-Alterar o tipo da coluna `quantidade` de `integer` para `numeric` na tabela `produtos_vendas`:
+### 2. NeoCorrecaoModal.tsx (modal de criacao/edicao)
+- Mesma logica do NeoInstalacaoModal: dois estados, preenchimento ao editar, dois inputs e inclusao no submit
+- O NeoCorrecao ja tem `valor_total` e `valor_a_receber` no tipo `CriarNeoCorrecaoData`
 
-```sql
-ALTER TABLE produtos_vendas ALTER COLUMN quantidade TYPE numeric USING quantidade::numeric;
-```
+### 3. NeoInstalacaoDetails.tsx (sidebar de detalhes)
+- Adicionar secao de valores financeiros (entre Responsavel e Descricao) com icone DollarSign
+- Exibir "Valor Total" e "Valor a Receber" formatados em moeda brasileira
+- So exibir a secao se algum dos valores for maior que 0
 
-Isso preserva todos os dados existentes (inteiros sao validos como numeric) e passa a aceitar decimais.
+### 4. NeoCorrecaoDetails.tsx (sidebar de detalhes)
+- Mesma secao de valores financeiros, seguindo o layout ja existente com Separator
 
-### 2. Atualizar tipos TypeScript
-O arquivo `src/integrations/supabase/types.ts` sera atualizado automaticamente apos a migracao. Nenhuma mudanca manual no codigo e necessaria, pois a linha 331 de `useVendas.ts` ja passa `produto.quantidade` diretamente -- o valor decimal simplesmente sera aceito pelo banco.
+### Nao ha necessidade de migracao SQL -- as colunas ja existem no banco.
 
 ### Arquivos envolvidos
-- Migracao SQL (alterar tipo da coluna)
-- Nenhuma alteracao de codigo frontend necessaria
-
+- `src/components/expedicao/NeoInstalacaoModal.tsx`
+- `src/components/expedicao/NeoCorrecaoModal.tsx`
+- `src/components/expedicao/NeoInstalacaoDetails.tsx`
+- `src/components/expedicao/NeoCorrecaoDetails.tsx`
