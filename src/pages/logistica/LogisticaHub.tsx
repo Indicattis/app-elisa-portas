@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
-import { Truck, Car, CalendarDays, ArrowLeft, ClipboardList, Package, Users } from "lucide-react";
+import { Truck, Car, CalendarDays, ArrowLeft, ClipboardList, Package, Users, Wrench } from "lucide-react";
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
@@ -13,6 +13,7 @@ const menuItems = [
   { label: "Instalações", icon: CalendarDays, path: "/logistica/instalacoes" },
   { label: "Frete", icon: Package, path: "/logistica/frete" },
   { label: "Autorizados", icon: Users, path: "/logistica/autorizados" },
+  { label: "Serviços Neo", icon: Wrench, path: "/logistica/neos" },
 ];
 
 export default function LogisticaHub() {

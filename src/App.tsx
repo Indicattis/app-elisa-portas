@@ -239,6 +239,7 @@ import AprovacoesVendas from "./pages/direcao/aprovacoes/AprovacoesVendas";
 import LogisticaHub from "./pages/logistica/LogisticaHub";
 import ControleLogistica from "./pages/logistica/ControleLogistica";
 import ExpedicaoMinimalista from "./pages/logistica/ExpedicaoMinimalista";
+import NeosCadastro from "./pages/logistica/NeosCadastro";
 
 // Hub de Compras Minimalista
 import ComprasHub from "./pages/administrativo/ComprasHub";
@@ -496,6 +497,7 @@ const App = () => (
                 <Route path="/logistica/instalacoes/equipes" element={<ProtectedRoute routeKey="logistica_hub"><EquipesMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/cronograma" element={<ProtectedRoute routeKey="logistica_hub"><CronogramaMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/ranking" element={<ProtectedRoute routeKey="logistica_hub"><RankingEquipesInstalacao /></ProtectedRoute>} />
+                <Route path="/logistica/neos" element={<ProtectedRoute routeKey="logistica_hub"><NeosCadastro /></ProtectedRoute>} />
 
                 {/* Hub de Estoque */}
                 <Route path="/estoque" element={<ProtectedRoute routeKey="estoque_hub"><EstoqueHub /></ProtectedRoute>} />
