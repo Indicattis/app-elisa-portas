@@ -136,7 +136,7 @@ export function usePedidoAutoAvanco() {
       if (!ordemPintura) return true;
       
       // Verificar se o status da ordem é 'pronta'
-      if (ordemPintura.status === 'pronta') return true;
+      if (ordemPintura.status === 'pronta' || ordemPintura.status === 'concluido') return true;
       
       // Verificar linhas
       const { data: linhas, error } = await supabase
