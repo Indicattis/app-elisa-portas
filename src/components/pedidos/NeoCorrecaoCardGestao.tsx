@@ -227,10 +227,23 @@ export function NeoCorrecaoCardGestao({
                 <span className="text-[9px] text-muted-foreground/50">—</span>
               </div>
 
-              {/* Col 18: Cronômetro desde criação */}
-              <div className="flex items-center justify-center">
-                <CronometroEtapaBadge dataEntrada={neoCorrecao.created_at} compact />
-              </div>
+              {/* Col 18: Data criação + Cronômetro */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex flex-col items-center justify-center gap-0.5 cursor-help">
+                    <span className="text-[9px] text-muted-foreground leading-none">
+                      {format(new Date(neoCorrecao.created_at), "dd/MM/yy")}
+                    </span>
+                    <CronometroEtapaBadge dataEntrada={neoCorrecao.created_at} compact />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Criado em: {format(new Date(neoCorrecao.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                  {neoCorrecao.hora && (
+                    <p className="text-[10px] text-muted-foreground">Hora agendada: {neoCorrecao.hora.slice(0, 5)}</p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
 
               {/* Col 19: Botões de ação ou status concluído */}
               <div className="flex items-center justify-end gap-1">
