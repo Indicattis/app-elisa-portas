@@ -1,43 +1,58 @@
 
-# Corrigir inconsistencia entre ordens concluidas e linhas pendentes
 
-## Problema
-Quando uma ordem de producao e marcada como "concluido", as linhas individuais na tabela `linhas_ordens` nem sempre sao atualizadas para `concluida = true`. Isso causa bloqueio no avanco do pedido porque a validacao verifica as linhas, nao as ordens principais.
+# Adicionar campo "Etapa Causadora" nos servicos Neo
 
-## Causa raiz
-O pedido foi retrocedido (backlog) e reprocessado. As novas ordens foram concluidas, mas as linhas individuais ficaram com `concluida = false`.
+## Resumo
+Adicionar um campo selectbox nos modais de criacao e edicao de Neo Correcoes e Neo Instalacoes para que o usuario informe qual etapa do processo de producao causou a necessidade do servico.
 
-## Plano de correcao
+## Alteracoes
 
-### 1. Correcao imediata dos dados (SQL manual)
-Atualizar as 13 linhas pendentes deste pedido para refletir o status real das ordens:
+### 1. Banco de dados - nova coluna
+Criar migration adicionando a coluna `etapa_causadora` (tipo `text`, nullable) em ambas as tabelas:
+- `neo_correcoes`
+- `neo_instalacoes`
 
-```text
-UPDATE linhas_ordens 
-SET concluida = true, concluida_em = NOW()
-WHERE pedido_id = '9a381362-65f2-41cc-99bd-b5be2b724e61'
-  AND tipo_ordem IN ('soldagem', 'separacao')
-  AND concluida = false;
-```
+### 2. Tipos TypeScript
+Atualizar `src/types/neoCorrecao.ts` e `src/types/neoInstalacao.ts` para incluir `etapa_causadora: string | null` no tipo principal e `etapa_causadora?: string | null` no tipo de criacao.
 
-### 2. Correcao no codigo - validacao resiliente
-**Arquivo:** `src/hooks/usePedidosEtapas.ts` (linhas 559-583)
+### 3. Modal de Neo Correcao
+**Arquivo:** `src/components/expedicao/NeoCorrecaoModal.tsx`
+- Adicionar state `etapaCausadora`
+- Preencher ao editar / resetar ao criar
+- Adicionar um Select entre o campo de descricao e os valores, com as opcoes:
+  - Producao (Soldagem)
+  - Producao (Perfiladeira)
+  - Producao (Separacao)
+  - Inspecao de Qualidade
+  - Pintura
+  - Expedicao
+  - Instalacao
+- Incluir o campo no objeto `dados` enviado ao `onConfirm`
 
-Alterar a validacao de avanco da etapa `em_producao` para considerar tambem o status da ordem principal. Se a ordem na tabela principal esta como `concluido`, as linhas devem ser tratadas como concluidas mesmo que o campo `concluida` esteja desatualizado.
+### 4. Modal de Neo Instalacao
+**Arquivo:** `src/components/expedicao/NeoInstalacaoModal.tsx`
+- Mesma logica do modal de correcao: state, preenchimento, Select e inclusao no objeto de dados.
 
-Logica proposta:
-1. Buscar as ordens principais (ordens_soldagem, ordens_separacao, ordens_perfiladeira) e seus status
-2. Se a ordem principal esta "concluido"/"pronta", ignorar linhas pendentes dessa ordem
-3. Somente bloquear se a ordem principal tambem nao estiver concluida
+### 5. Opcoes da selectbox
+Valores armazenados no banco e seus labels:
 
-### 3. Correcao preventiva - sincronizar linhas ao concluir ordem
-Garantir que ao marcar uma ordem como concluida, todas as suas `linhas_ordens` vinculadas (via `ordem_id`) sejam automaticamente atualizadas para `concluida = true`. Verificar os fluxos de conclusao em:
-- Hook de conclusao de ordens de soldagem
-- Hook de conclusao de ordens de separacao  
-- Hook de conclusao de ordens de perfiladeira
+| Valor | Label |
+|-------|-------|
+| soldagem | Producao (Soldagem) |
+| perfiladeira | Producao (Perfiladeira) |
+| separacao | Producao (Separacao) |
+| inspecao_qualidade | Inspecao de Qualidade |
+| pintura | Pintura |
+| expedicao | Expedicao |
+| instalacao | Instalacao |
 
-Adicionar em cada fluxo de conclusao um UPDATE nas linhas correspondentes.
+O campo sera opcional (sem validacao obrigatoria).
 
 ## Arquivos envolvidos
-- `src/hooks/usePedidosEtapas.ts` - validacao de avanco
-- Hooks de conclusao de ordens (soldagem, separacao, perfiladeira) - sincronizacao preventiva
+- Migration SQL (nova)
+- `src/types/neoCorrecao.ts`
+- `src/types/neoInstalacao.ts`
+- `src/components/expedicao/NeoCorrecaoModal.tsx`
+- `src/components/expedicao/NeoInstalacaoModal.tsx`
+- `src/integrations/supabase/types.ts` (regenerado automaticamente)
+
