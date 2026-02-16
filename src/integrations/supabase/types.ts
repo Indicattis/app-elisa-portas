@@ -4952,6 +4952,7 @@ export type Database = {
           etapa: string
           id: string
           pedido_id: string
+          tempo_permanencia_segundos: number | null
           updated_at: string | null
         }
         Insert: {
@@ -4962,6 +4963,7 @@ export type Database = {
           etapa: string
           id?: string
           pedido_id: string
+          tempo_permanencia_segundos?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -4972,6 +4974,7 @@ export type Database = {
           etapa?: string
           id?: string
           pedido_id?: string
+          tempo_permanencia_segundos?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -6964,6 +6967,10 @@ export type Database = {
           }
       calcular_classe_orcamento: {
         Args: { valor_total: number }
+        Returns: number
+      }
+      calcular_segundos_uteis: {
+        Args: { p_fim: string; p_inicio: string }
         Returns: number
       }
       calcular_valor_produto_orcamento: {

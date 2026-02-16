@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { EtapaPedido, PedidoEtapa, PedidoCheckbox } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa } from "@/types/pedidoEtapa";
+import { calcularTempoExpediente } from "@/utils/calcularTempoExpediente";
 
 // Função auxiliar para criar ordens de produção usando SECURITY DEFINER
 async function criarOrdensProducao(pedidoId: string) {
@@ -610,9 +611,17 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       // Fechar etapa atual
         if (onProgress) onProgress('fechar_etapa_atual', 'in_progress');
         await executarComDelay(async () => {
+          // Calcular tempo de permanência em horas úteis
+          const tempoPermanencia = calcularTempoExpediente(
+            new Date(etapaAtual.data_entrada),
+            new Date()
+          );
           await supabase
             .from('pedidos_etapas')
-            .update({ data_saida: new Date().toISOString() })
+            .update({ 
+              data_saida: new Date().toISOString(),
+              tempo_permanencia_segundos: tempoPermanencia
+            } as any)
             .eq('id', etapaAtual.id);
         });
         if (onProgress) onProgress('fechar_etapa_atual', 'completed');
