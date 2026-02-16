@@ -1,48 +1,42 @@
 
+# Armazenar tempo do pedido em cada etapa
 
-# Corrigir acrescimo nao incluido nas parcelas de pagamento
+## Resumo
+Adicionar uma coluna `tempo_permanencia_segundos` na tabela `pedidos_etapas` para registrar automaticamente quanto tempo (em horas uteis) o pedido permaneceu em cada etapa ao sair dela. Exibir esse historico em /direcao/gestao-fabrica.
 
-## Problema
-O `valorTotalMemo` calculado na pagina de nova venda (linha 261-268 de `VendaNovaMinimalista.tsx`) soma apenas os creditos por produto (`p.valor_credito`) mas NAO inclui o credito a nivel de venda (`valorCredito` state). Isso faz com que o `PagamentoSection` receba um valor total sem o acrescimo, gerando parcelas com valores incorretos.
+## Como funciona hoje
+- A tabela `pedidos_etapas` ja tem `data_entrada` e `data_saida`
+- Ao avancar etapa, o codigo em `usePedidosEtapas.ts` (linha 615) ja faz `update({ data_saida: new Date().toISOString() })`
+- O sistema ja possui a utilidade `calcularTempoExpediente` que calcula tempo apenas em horario comercial (7h-17h, seg-sex)
+- Porem nenhum tempo calculado e salvo -- ele so e exibido em tempo real via cronometro
 
-Enquanto isso, o backend em `useVendas.ts` (linha 198) calcula corretamente: `valor_total_venda = totais.valor_total + valorCreditoVenda + valor_frete`. Ha uma inconsistencia entre frontend e backend.
+## Mudancas
 
-## Solucao
-Incluir `valorCredito` (credito a nivel de venda) no calculo de `valorTotalMemo`.
+### 1. Migracao SQL
+Adicionar coluna `tempo_permanencia_segundos` (tipo `numeric`, nullable) na tabela `pedidos_etapas`:
 
-## Mudanca
-
-**Arquivo: `src/pages/vendas/VendaNovaMinimalista.tsx`**
-
-Alterar o `useMemo` do `valorTotalMemo` (linhas 261-268) de:
-
-```typescript
-const valorTotalMemo = useMemo(() => {
-  return portas.reduce((acc, p) => {
-    const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
-    const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
-    const credito = (p.valor_credito || 0) * (p.quantidade || 1);
-    return acc + valorBase - desconto + credito;
-  }, 0) + (formData.valor_frete || 0);
-}, [portas, formData.valor_frete]);
+```sql
+ALTER TABLE pedidos_etapas 
+ADD COLUMN tempo_permanencia_segundos numeric;
 ```
 
-Para:
+Tambem preencher retroativamente os registros que ja tem `data_entrada` e `data_saida` usando uma funcao SQL que calcula horas uteis (7h-17h, seg-sex, fuso America/Sao_Paulo).
 
-```typescript
-const valorTotalMemo = useMemo(() => {
-  return portas.reduce((acc, p) => {
-    const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
-    const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
-    const credito = (p.valor_credito || 0) * (p.quantidade || 1);
-    return acc + valorBase - desconto + credito;
-  }, 0) + (formData.valor_frete || 0) + valorCredito;
-}, [portas, formData.valor_frete, valorCredito]);
-```
+### 2. Calcular ao fechar etapa (usePedidosEtapas.ts)
+No momento de fechar a etapa atual (linha ~612-617), antes de fazer o update de `data_saida`:
+- Calcular `calcularTempoExpediente(new Date(etapaAtual.data_entrada), new Date())`
+- Incluir `tempo_permanencia_segundos` no update junto com `data_saida`
 
-A unica diferenca e adicionar `+ valorCredito` ao final da soma e incluir `valorCredito` nas dependencias do `useMemo`.
+Tambem aplicar a mesma logica na funcao RPC `retroceder_pedido_para_etapa` (backlog), para que retrocessos tambem registrem o tempo.
 
-Isso garante que o `PagamentoSection` receba o valor total correto (incluindo o acrescimo) e as parcelas sejam calculadas com o valor correto.
+### 3. Exibir historico de tempos em gestao-fabrica
+No componente `PedidoDetalhesSheet` (sidebar de detalhes do pedido), adicionar uma secao "Tempo por Etapa" que:
+- Busca todos os registros de `pedidos_etapas` do pedido
+- Exibe uma lista com etapa, tempo formatado (ex: "2d 4h 30min") e datas de entrada/saida
+- Etapa atual mostra o cronometro em tempo real (ja existente)
 
-### Arquivo envolvido
-- `src/pages/vendas/VendaNovaMinimalista.tsx` (1 linha alterada)
+### Arquivos envolvidos
+- Migracao SQL (nova coluna + preenchimento retroativo)
+- `src/hooks/usePedidosEtapas.ts` (salvar tempo ao fechar etapa)
+- `src/components/pedidos/PedidoDetalhesSheet.tsx` (exibir historico de tempos)
+- Funcao RPC `retroceder_pedido_para_etapa` (salvar tempo ao retroceder)
