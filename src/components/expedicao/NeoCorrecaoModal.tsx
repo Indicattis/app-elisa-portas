@@ -62,6 +62,8 @@ export function NeoCorrecaoModal({
   const [equipeId, setEquipeId] = useState("");
   const [autorizadoId, setAutorizadoId] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [valorTotal, setValorTotal] = useState("");
+  const [valorAReceber, setValorAReceber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const [equipes, setEquipes] = useState<Equipe[]>([]);
@@ -87,6 +89,8 @@ export function NeoCorrecaoModal({
       setEquipeId(neoCorrecao.equipe_id || "");
       setAutorizadoId(neoCorrecao.autorizado_id || "");
       setDescricao(neoCorrecao.descricao || "");
+      setValorTotal(neoCorrecao.valor_total ? String(neoCorrecao.valor_total) : "");
+      setValorAReceber(neoCorrecao.valor_a_receber ? String(neoCorrecao.valor_a_receber) : "");
     } else if (open && !neoCorrecao) {
       // Reset para criação
       setNomeCliente("");
@@ -98,6 +102,8 @@ export function NeoCorrecaoModal({
       setEquipeId("");
       setAutorizadoId("");
       setDescricao("");
+      setValorTotal("");
+      setValorAReceber("");
     }
   }, [open, neoCorrecao]);
 
@@ -166,6 +172,8 @@ export function NeoCorrecaoModal({
         autorizado_id: tipoResponsavel === 'autorizado' ? autorizadoId : null,
         autorizado_nome: tipoResponsavel === 'autorizado' ? selectedAutorizado?.nome : null,
         descricao: descricao.trim() || undefined,
+        valor_total: valorTotal ? Number(valorTotal) : 0,
+        valor_a_receber: valorAReceber ? Number(valorAReceber) : 0,
       };
 
       await onConfirm(dados);
@@ -331,6 +339,33 @@ export function NeoCorrecaoModal({
               </Select>
             </div>
           )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="valorTotal">Valor Total (R$)</Label>
+              <Input
+                id="valorTotal"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0,00"
+                value={valorTotal}
+                onChange={(e) => setValorTotal(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="valorAReceber">Valor a Receber (R$)</Label>
+              <Input
+                id="valorAReceber"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0,00"
+                value={valorAReceber}
+                onChange={(e) => setValorAReceber(e.target.value)}
+              />
+            </div>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="descricao">Descrição / Observações</Label>

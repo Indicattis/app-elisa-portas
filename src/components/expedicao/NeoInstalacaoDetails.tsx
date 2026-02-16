@@ -14,8 +14,10 @@ import {
   CheckCircle,
   Users,
   Building2,
-  Pencil
+  Pencil,
+  DollarSign
 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -120,6 +122,28 @@ export function NeoInstalacaoDetails({
               {nomeResponsavel}
             </Badge>
           </div>
+
+          {/* Valores financeiros */}
+          {(neoInstalacao.valor_total > 0 || neoInstalacao.valor_a_receber > 0) && (
+            <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <DollarSign className="h-4 w-4 text-green-400" />
+                <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">
+                  Financeiro
+                </h3>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] text-white/40 uppercase">Valor Total</p>
+                  <p className="text-sm text-white font-medium">{formatCurrency(neoInstalacao.valor_total)}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-white/40 uppercase">Valor a Receber</p>
+                  <p className="text-sm text-green-400 font-medium">{formatCurrency(neoInstalacao.valor_a_receber)}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Descrição se existir */}
           {neoInstalacao.descricao && (
