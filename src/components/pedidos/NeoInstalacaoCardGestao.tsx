@@ -87,11 +87,18 @@ export function NeoInstalacaoCardGestao({
               {/* Col 3: Nome do cliente */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <h3 className="font-semibold text-sm truncate">
-                    {neoInstalacao.nome_cliente && neoInstalacao.nome_cliente.length > 20 
-                      ? `${neoInstalacao.nome_cliente.substring(0, 20)}...` 
-                      : neoInstalacao.nome_cliente}
-                  </h3>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-sm truncate">
+                      {neoInstalacao.nome_cliente && neoInstalacao.nome_cliente.length > 20 
+                        ? `${neoInstalacao.nome_cliente.substring(0, 20)}...` 
+                        : neoInstalacao.nome_cliente}
+                    </h3>
+                    {neoInstalacao.descricao && (
+                      <p className="text-[9px] text-muted-foreground truncate leading-tight -mt-0.5">
+                        {neoInstalacao.descricao}
+                      </p>
+                    )}
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{neoInstalacao.nome_cliente}</p>
