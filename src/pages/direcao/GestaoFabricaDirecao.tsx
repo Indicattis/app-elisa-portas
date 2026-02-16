@@ -467,7 +467,8 @@ export default function GestaoFabricaDirecao() {
                                 key={neo.id}
                                 neoInstalacao={neo}
                                 viewMode="list"
-                                showConcluido={true}
+                                onConcluir={handleConcluirNeoInstalacao}
+                                isConcluindo={isConcluindo}
                               />
                             ))}
                           {neoCorrecoesFinalizadas
@@ -481,7 +482,7 @@ export default function GestaoFabricaDirecao() {
                                 key={neo.id}
                                 neoCorrecao={neo}
                                 viewMode="list"
-                                showConcluido={true}
+                                onConcluir={handleConcluirNeoCorrecao}
                               />
                             ))}
                         </div>
