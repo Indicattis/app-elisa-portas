@@ -1,28 +1,27 @@
 
-# Corrigir CHECK constraint da tabela pedidos_producao
+
+# Corrigir CHECK constraint da tabela linhas_ordens
 
 ## Problema
-A tabela `pedidos_producao` possui a constraint `pedidos_producao_etapa_atual_check` na coluna `etapa_atual` que nao inclui `'embalagem'` na lista de valores permitidos. Isso impede que pedidos avancem para a etapa Embalagem.
+A tabela `linhas_ordens` possui a constraint `linhas_ordens_tipo_ordem_check` na coluna `tipo_ordem` que nao inclui `'embalagem'`. Isso impede a criacao de linhas de ordem quando o pedido avanca para a etapa Embalagem.
 
-## Valores atuais
-aberto, aprovacao_ceo, em_producao, inspecao_qualidade, aguardando_pintura, aguardando_coleta, aguardando_instalacao, instalacoes, correcoes, finalizado
+## Valores atuais permitidos
+soldagem, perfiladeira, separacao, qualidade, pintura, instalacao
 
 ## Solucao
-Uma migracao SQL que:
-1. Remove a constraint antiga
-2. Recria incluindo `'embalagem'`
+Uma migracao SQL que remove e recria a constraint incluindo `'embalagem'`:
 
 ```sql
-ALTER TABLE pedidos_producao DROP CONSTRAINT pedidos_producao_etapa_atual_check;
+ALTER TABLE linhas_ordens DROP CONSTRAINT linhas_ordens_tipo_ordem_check;
 
-ALTER TABLE pedidos_producao ADD CONSTRAINT pedidos_producao_etapa_atual_check
-  CHECK (etapa_atual = ANY (ARRAY[
-    'aberto', 'aprovacao_ceo', 'em_producao', 'inspecao_qualidade',
-    'aguardando_pintura', 'embalagem', 'aguardando_coleta',
-    'aguardando_instalacao', 'instalacoes', 'correcoes', 'finalizado'
+ALTER TABLE linhas_ordens ADD CONSTRAINT linhas_ordens_tipo_ordem_check
+  CHECK (tipo_ordem = ANY (ARRAY[
+    'soldagem', 'perfiladeira', 'separacao', 'qualidade',
+    'pintura', 'instalacao', 'embalagem'
   ]));
 ```
 
 ## Impacto
 - Apenas migracao no banco, sem alteracao de codigo
-- Apos aplicada, pedidos poderao avançar para Embalagem normalmente
+- Apos aplicada, as linhas de ordem de embalagem serao criadas normalmente
+
