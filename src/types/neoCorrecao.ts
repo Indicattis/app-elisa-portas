@@ -11,6 +11,8 @@ export interface NeoCorrecao {
   tipo_responsavel: 'equipe_interna' | 'autorizado' | null;
   autorizado_id: string | null;
   autorizado_nome: string | null;
+  valor_total: number;
+  valor_a_receber: number;
   status: string;
   concluida: boolean;
   concluida_em: string | null;
@@ -53,4 +55,6 @@ export interface CriarNeoCorrecaoData {
   autorizado_id?: string | null;
   autorizado_nome?: string | null;
   descricao?: string;
+  valor_total?: number;
+  valor_a_receber?: number;
 }

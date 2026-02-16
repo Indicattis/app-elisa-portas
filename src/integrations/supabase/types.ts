@@ -3145,6 +3145,8 @@ export type Database = {
           status: string
           tipo_responsavel: string | null
           updated_at: string
+          valor_a_receber: number | null
+          valor_total: number | null
         }
         Insert: {
           autorizado_id?: string | null
@@ -3166,6 +3168,8 @@ export type Database = {
           status?: string
           tipo_responsavel?: string | null
           updated_at?: string
+          valor_a_receber?: number | null
+          valor_total?: number | null
         }
         Update: {
           autorizado_id?: string | null
@@ -3187,6 +3191,8 @@ export type Database = {
           status?: string
           tipo_responsavel?: string | null
           updated_at?: string
+          valor_a_receber?: number | null
+          valor_total?: number | null
         }
         Relationships: [
           {
@@ -3226,6 +3232,8 @@ export type Database = {
           status: string
           tipo_responsavel: string | null
           updated_at: string
+          valor_a_receber: number | null
+          valor_total: number | null
         }
         Insert: {
           autorizado_id?: string | null
@@ -3247,6 +3255,8 @@ export type Database = {
           status?: string
           tipo_responsavel?: string | null
           updated_at?: string
+          valor_a_receber?: number | null
+          valor_total?: number | null
         }
         Update: {
           autorizado_id?: string | null
@@ -3268,6 +3278,8 @@ export type Database = {
           status?: string
           tipo_responsavel?: string | null
           updated_at?: string
+          valor_a_receber?: number | null
+          valor_total?: number | null
         }
         Relationships: [
           {
