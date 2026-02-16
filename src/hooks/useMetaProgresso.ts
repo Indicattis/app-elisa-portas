@@ -62,84 +62,6 @@ async function buscarMetaAtiva(userId: string, tipoMeta: MetaColaborador["tipo_m
   return data as MetaColaborador;
 }
 
-async function calcularProgressoSoldagem(userId: string, dataInicio: string, dataTermino: string): Promise<number> {
-  const { data } = await supabase
-    .from("ordens_soldagem")
-    .select("qtd_portas_p, qtd_portas_g")
-    .eq("responsavel_id", userId)
-    .eq("status", "concluido")
-    .gte("data_conclusao", dataInicio)
-    .lte("data_conclusao", dataTermino + "T23:59:59");
-  
-  return (data || []).reduce((acc, item) => 
-    acc + (Number(item.qtd_portas_p) || 0) + (Number(item.qtd_portas_g) || 0), 0);
-}
-
-async function calcularProgressoPerfiladeira(userId: string, dataInicio: string, dataTermino: string): Promise<number> {
-  const { data } = await supabase
-    .from("ordens_perfiladeira")
-    .select("metragem_linear")
-    .eq("responsavel_id", userId)
-    .eq("status", "concluido")
-    .gte("data_conclusao", dataInicio)
-    .lte("data_conclusao", dataTermino + "T23:59:59");
-  
-  return (data || []).reduce((acc, item) => acc + (Number(item.metragem_linear) || 0), 0);
-}
-
-async function calcularProgressoSeparacao(userId: string, dataInicio: string, dataTermino: string): Promise<number> {
-  const { data } = await supabase
-    .from("ordens_separacao")
-    .select("quantidade_itens")
-    .eq("responsavel_id", userId)
-    .eq("status", "concluido")
-    .gte("data_conclusao", dataInicio)
-    .lte("data_conclusao", dataTermino + "T23:59:59");
-  
-  return (data || []).reduce((acc, item) => acc + (Number(item.quantidade_itens) || 0), 0);
-}
-
-async function calcularProgressoQualidade(userId: string, dataInicio: string, dataTermino: string): Promise<number> {
-  const { data } = await supabase
-    .from("ordens_qualidade")
-    .select("id")
-    .eq("responsavel_id", userId)
-    .eq("status", "concluido")
-    .gte("data_conclusao", dataInicio)
-    .lte("data_conclusao", dataTermino + "T23:59:59");
-  
-  return data?.length || 0;
-}
-
-async function calcularProgressoPintura(userId: string, dataInicio: string, dataTermino: string): Promise<number> {
-  const { data } = await supabase
-    .from("ordens_pintura")
-    .select("metragem_quadrada")
-    .eq("responsavel_id", userId)
-    .eq("status", "concluido")
-    .gte("data_conclusao", dataInicio)
-    .lte("data_conclusao", dataTermino + "T23:59:59");
-  
-  return (data || []).reduce((acc, item) => acc + (Number(item.metragem_quadrada) || 0), 0);
-}
-
-async function calcularProgressoCarregamento(userId: string, dataInicio: string, dataTermino: string): Promise<number> {
-  // Use instalacoes table for carregamento tracking
-  try {
-    const { data } = await supabase
-      .from("instalacoes")
-      .select("id")
-      .eq("responsavel_carregamento_id", userId)
-      .eq("carregamento_concluido", true)
-      .gte("data_carregamento", dataInicio)
-      .lte("data_carregamento", dataTermino + "T23:59:59");
-    
-    return data?.length || 0;
-  } catch {
-    return 0;
-  }
-}
-
 async function calcularProgresso(
   userId: string, 
   tipoOrdem: TipoOrdemMeta, 
@@ -148,18 +70,72 @@ async function calcularProgresso(
   const { data_inicio, data_termino } = meta;
 
   switch (tipoOrdem) {
-    case 'soldagem':
-      return calcularProgressoSoldagem(userId, data_inicio, data_termino);
-    case 'perfiladeira':
-      return calcularProgressoPerfiladeira(userId, data_inicio, data_termino);
-    case 'separacao':
-      return calcularProgressoSeparacao(userId, data_inicio, data_termino);
-    case 'qualidade':
-      return calcularProgressoQualidade(userId, data_inicio, data_termino);
-    case 'pintura':
-      return calcularProgressoPintura(userId, data_inicio, data_termino);
-    case 'carregamento':
-      return calcularProgressoCarregamento(userId, data_inicio, data_termino);
+    case 'perfiladeira': {
+      const { data } = await supabase
+        .from("pontuacao_colaboradores")
+        .select("metragem_linear")
+        .eq("user_id", userId)
+        .eq("tipo_ranking", "perfiladeira")
+        .gte("created_at", data_inicio)
+        .lte("created_at", data_termino + "T23:59:59");
+      return (data || []).reduce((acc, item) => acc + (Number((item as any).metragem_linear) || 0), 0);
+    }
+    case 'soldagem': {
+      const { data } = await supabase
+        .from("pontuacao_colaboradores")
+        .select("porta_soldada")
+        .eq("user_id", userId)
+        .eq("tipo_ranking", "solda")
+        .not("porta_soldada", "is", null)
+        .gte("created_at", data_inicio)
+        .lte("created_at", data_termino + "T23:59:59");
+      return (data || []).length;
+    }
+    case 'separacao': {
+      const { data } = await supabase
+        .from("pontuacao_colaboradores")
+        .select("pedido_separado")
+        .eq("user_id", userId)
+        .eq("tipo_ranking", "separacao")
+        .not("pedido_separado", "is", null)
+        .gte("created_at", data_inicio)
+        .lte("created_at", data_termino + "T23:59:59");
+      return (data || []).reduce((acc, item) => acc + (Number((item as any).pedido_separado) || 0), 0);
+    }
+    case 'pintura': {
+      const { data } = await supabase
+        .from("pontuacao_colaboradores")
+        .select("metragem_quadrada_pintada")
+        .eq("user_id", userId)
+        .eq("tipo_ranking", "pintura")
+        .gte("created_at", data_inicio)
+        .lte("created_at", data_termino + "T23:59:59");
+      return (data || []).reduce((acc, item) => acc + (Number((item as any).metragem_quadrada_pintada) || 0), 0);
+    }
+    case 'qualidade': {
+      const { data } = await supabase
+        .from("ordens_qualidade")
+        .select("id")
+        .eq("responsavel_id", userId)
+        .eq("status", "concluido")
+        .gte("data_conclusao", data_inicio)
+        .lte("data_conclusao", data_termino + "T23:59:59");
+      return data?.length || 0;
+    }
+    case 'carregamento': {
+      try {
+        const { data } = await supabase
+          .from("instalacoes")
+          .select("id")
+          .eq("responsavel_carregamento_id", userId)
+          .eq("carregamento_concluido", true)
+          .gte("data_carregamento", data_inicio)
+          .lte("data_carregamento", data_termino + "T23:59:59");
+        return data?.length || 0;
+      } catch {
+        return 0;
+      }
+    }
     default:
       return 0;
   }
@@ -182,7 +158,6 @@ export function useMetaProgresso() {
       setMetaInfo({ meta, progressoAtual, porcentagem });
       setVisible(true);
 
-      // Auto-fechar após 5 segundos
       setTimeout(() => setVisible(false), 5000);
     } catch (error) {
       console.error("Erro ao buscar progresso da meta:", error);

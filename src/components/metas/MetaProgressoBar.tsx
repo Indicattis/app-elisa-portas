@@ -41,44 +41,45 @@ export function MetaProgressoBar({ userId, tipoMeta }: MetaProgressoBarProps) {
 
       if (!meta) return null;
 
-      // Calcular progresso respeitando datas da meta
+      // Calcular progresso via pontuacao_colaboradores
       let progresso = 0;
       
       switch (tipoMeta) {
         case 'perfiladeira': {
           const { data } = await supabase
-            .from("ordens_perfiladeira")
+            .from("pontuacao_colaboradores")
             .select("metragem_linear")
-            .eq("responsavel_id", userId)
-            .eq("status", "concluido")
-            .gte("data_conclusao", meta.data_inicio)
-            .lte("data_conclusao", meta.data_termino + "T23:59:59");
+            .eq("user_id", userId)
+            .eq("tipo_ranking", "perfiladeira")
+            .gte("created_at", meta.data_inicio)
+            .lte("created_at", meta.data_termino + "T23:59:59");
           progresso = (data || []).reduce((acc: number, item: any) => 
             acc + (Number(item.metragem_linear) || 0), 0);
           break;
         }
         case 'solda': {
           const { data } = await supabase
-            .from("ordens_soldagem")
-            .select("qtd_portas_p, qtd_portas_g")
-            .eq("responsavel_id", userId)
-            .eq("status", "concluido")
-            .gte("data_conclusao", meta.data_inicio)
-            .lte("data_conclusao", meta.data_termino + "T23:59:59");
-          progresso = (data || []).reduce((acc: number, item: any) => 
-            acc + (Number(item.qtd_portas_p) || 0) + (Number(item.qtd_portas_g) || 0), 0);
+            .from("pontuacao_colaboradores")
+            .select("porta_soldada")
+            .eq("user_id", userId)
+            .eq("tipo_ranking", "solda")
+            .not("porta_soldada", "is", null)
+            .gte("created_at", meta.data_inicio)
+            .lte("created_at", meta.data_termino + "T23:59:59");
+          progresso = (data || []).length;
           break;
         }
         case 'separacao': {
           const { data } = await supabase
-            .from("ordens_separacao")
-            .select("quantidade_itens")
-            .eq("responsavel_id", userId)
-            .eq("status", "concluido")
-            .gte("data_conclusao", meta.data_inicio)
-            .lte("data_conclusao", meta.data_termino + "T23:59:59");
+            .from("pontuacao_colaboradores")
+            .select("pedido_separado")
+            .eq("user_id", userId)
+            .eq("tipo_ranking", "separacao")
+            .not("pedido_separado", "is", null)
+            .gte("created_at", meta.data_inicio)
+            .lte("created_at", meta.data_termino + "T23:59:59");
           progresso = (data || []).reduce((acc: number, item: any) => 
-            acc + (Number(item.quantidade_itens) || 0), 0);
+            acc + (Number(item.pedido_separado) || 0), 0);
           break;
         }
         case 'qualidade': {
@@ -94,14 +95,14 @@ export function MetaProgressoBar({ userId, tipoMeta }: MetaProgressoBarProps) {
         }
         case 'pintura': {
           const { data } = await supabase
-            .from("ordens_pintura")
-            .select("metragem_quadrada")
-            .eq("responsavel_id", userId)
-            .eq("status", "concluido")
-            .gte("data_conclusao", meta.data_inicio)
-            .lte("data_conclusao", meta.data_termino + "T23:59:59");
+            .from("pontuacao_colaboradores")
+            .select("metragem_quadrada_pintada")
+            .eq("user_id", userId)
+            .eq("tipo_ranking", "pintura")
+            .gte("created_at", meta.data_inicio)
+            .lte("created_at", meta.data_termino + "T23:59:59");
           progresso = (data || []).reduce((acc: number, item: any) => 
-            acc + (Number(item.metragem_quadrada) || 0), 0);
+            acc + (Number(item.metragem_quadrada_pintada) || 0), 0);
           break;
         }
         case 'carregamento': {
