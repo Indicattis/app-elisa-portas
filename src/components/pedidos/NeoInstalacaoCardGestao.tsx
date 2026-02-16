@@ -242,19 +242,35 @@ export function NeoInstalacaoCardGestao({
                 <span className="text-[9px] text-muted-foreground/50">—</span>
               </div>
 
-              {/* Col 18: Tempo na Etapa - Hora */}
-              <div className="text-center">
-                {neoInstalacao.hora ? (
-                  <div className="flex items-center justify-center gap-1 text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    <span className="text-[10px] font-medium">
-                      {neoInstalacao.hora.substring(0, 5)}
+              {/* Col 18: Data de criação + tempo decorrido */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex flex-col items-center leading-tight cursor-help">
+                    <span className="text-[9px] text-muted-foreground">
+                      {format(new Date(neoInstalacao.created_at), "dd/MM/yy")}
+                    </span>
+                    <span className="text-[9px] font-medium text-primary">
+                      {(() => {
+                        const diffMs = Date.now() - new Date(neoInstalacao.created_at).getTime();
+                        const diffMins = Math.floor(diffMs / 60000);
+                        const diffHours = Math.floor(diffMs / 3600000);
+                        const diffDays = Math.floor(diffMs / 86400000);
+                        const diffWeeks = Math.floor(diffDays / 7);
+                        if (diffMins < 60) return `há ${diffMins}min`;
+                        if (diffHours < 24) return `há ${diffHours}h`;
+                        if (diffDays < 30) return `há ${diffDays}d`;
+                        return `há ${diffWeeks}sem`;
+                      })()}
                     </span>
                   </div>
-                ) : (
-                  <span className="text-[9px] text-muted-foreground/50">—</span>
-                )}
-              </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Criado em: {format(new Date(neoInstalacao.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                  {neoInstalacao.hora && (
+                    <p className="text-[10px] text-muted-foreground">Hora agendada: {neoInstalacao.hora.substring(0, 5)}</p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
 
               {/* Col 19: Botões de ação ou status concluído */}
               <div className="flex items-center justify-end gap-1">
