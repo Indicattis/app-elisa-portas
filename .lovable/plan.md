@@ -1,24 +1,41 @@
 
-# Habilitar botão de concluir nos Finalizados da gestão de fábrica
+
+# Adicionar data de criacao e tempo corrido nos cards Neo
 
 ## Resumo
-Na etapa "Finalizado" de `/direcao/gestao-fabrica`, as neo instalações e neo correções finalizadas são exibidas apenas com status visual (ícone verde + tempo relativo), sem opção de ação. O objetivo é adicionar o botão de concluir nesses cards para permitir removê-los da exibição.
+Exibir a data de criacao (`created_at`) e o tempo decorrido desde a criacao nos cards de NeoInstalacao e NeoCorrecao na visualizacao em lista da gestao de fabrica.
 
-## Esclarecimento
-Atualmente os cards na seção "Serviços Avulsos Finalizados" já estão concluídos (`concluida = true`). Para "remover da exibição", a abordagem será: trocar o `showConcluido` pelo `onConcluir`, exibindo o botão de concluir ao invés do ícone de check estático. Quando clicado, a ação de concluir será chamada novamente (o que na prática já está feito, mas permitirá a interação).
+## Mudancas
 
-**Correção de abordagem**: Como esses itens já estão concluídos, o botão não faz sentido para "concluir de novo". A intenção do usuário parece ser ter um botão para **remover/ocultar** da listagem. A forma mais simples é passar o `onConcluir` handler nos cards da etapa finalizado, que já marca como concluído e remove da query ativa.
+### Arquivo: `src/components/pedidos/NeoInstalacaoCardGestao.tsx`
 
-## Mudanças
+**Col 18 (atualmente mostra apenas a hora)**
+- Substituir o conteudo da Col 18 para exibir a data de criacao formatada (dd/MM/yy) e o tempo decorrido relativo (ex: "ha 2d", "ha 5h", "ha 30min")
+- Usar `created_at` do objeto `neoInstalacao`
+- Manter a hora como informacao secundaria no tooltip, se existir
+- Formato visual: data em texto pequeno + tempo relativo abaixo ou ao lado
 
-### Arquivo: `src/pages/direcao/GestaoFabricaDirecao.tsx`
+### Arquivo: `src/components/pedidos/NeoCorrecaoCardGestao.tsx`
 
-**Neo Instalações Finalizadas (linhas 466-471)**
-- Adicionar `onConcluir={handleConcluirNeoInstalacao}` e `isConcluindo={isConcluindo}` aos cards de `NeoInstalacaoCardGestao`
-- Remover `showConcluido={true}` para que o botão de concluir apareça no lugar do ícone estático
+**Col 18 (mesmo tratamento)**
+- Mesma logica: exibir data de criacao e tempo decorrido
+- Usar `created_at` do objeto `neoCorrecao`
 
-**Neo Correções Finalizadas (linhas 480-485)**
-- Adicionar `onConcluir={handleConcluirNeoCorrecao}` aos cards de `NeoCorrecaoCardGestao`
-- Remover `showConcluido={true}`
+### Logica do tempo decorrido
+Calcular a diferenca entre `new Date()` e `new Date(created_at)`:
+- Menos de 60 min: "ha Xmin"
+- Menos de 24h: "ha Xh"
+- Menos de 30 dias: "ha Xd"
+- 30+ dias: "ha Xsem" ou data formatada
 
-Isso fará com que os cards exibam o botão verde de concluir. Ao clicar, a mutação será disparada e o item será removido da listagem (pois o hook de finalizadas recarrega os dados).
+### Visual na Col 18
+```
+  dd/MM/yy
+  ha Xd
+```
+Texto pequeno (9-10px), cor muted, com tooltip mostrando data/hora completa de criacao e a hora agendada (se houver).
+
+## Arquivos envolvidos
+- `src/components/pedidos/NeoInstalacaoCardGestao.tsx`
+- `src/components/pedidos/NeoCorrecaoCardGestao.tsx`
+
