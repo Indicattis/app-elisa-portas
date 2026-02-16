@@ -6,7 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2, Clock } from "lucide-react";
+import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench } from "lucide-react";
+import { CriarPedidoCorrecaoModal } from "./CriarPedidoCorrecaoModal";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -83,6 +84,7 @@ export function PedidoCard({
   const [showAvisoEspera, setShowAvisoEspera] = useState(false);
   const [ordemParaRemover, setOrdemParaRemover] = useState<{ ordem: any; nomeSetor: string } | null>(null);
   const [processos, setProcessos] = useState<Processo[]>([]);
+  const [showCriarCorrecao, setShowCriarCorrecao] = useState(false);
   const {
     isAdmin
   } = useAuth();
@@ -992,7 +994,8 @@ export function PedidoCard({
           className={cn(
             "hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", 
             isDragging && "opacity-50 cursor-grabbing",
-            pedido.aviso_espera && "border-amber-500/50 bg-amber-500/5"
+            pedido.aviso_espera && "border-amber-500/50 bg-amber-500/5",
+            (pedido as any).is_correcao && "border-l-4 border-l-purple-600"
           )}
           onClick={() => setShowDetalhes(true)}
         >
@@ -1066,6 +1069,11 @@ export function PedidoCard({
                 {posicao && (
                   <Badge variant="outline" className={cn("h-5 min-w-5 px-1.5 text-[10px] font-bold", getBadgeColor())}>
                     {posicao}º
+                  </Badge>
+                )}
+                {(pedido as any).is_correcao && (
+                  <Badge variant="outline" className="h-5 px-1 text-[8px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
+                    CORREÇÃO
                   </Badge>
                 )}
               </div>
@@ -1465,6 +1473,29 @@ export function PedidoCard({
                     }
 
 
+                    // Botão de gerar correção (etapas pós-produção)
+                    const etapasCorrecao = ['inspecao_qualidade', 'embalagem', 'aguardando_coleta', 'instalacoes', 'correcoes', 'finalizado'];
+                    if (etapasCorrecao.includes(etapaAtual) && !readOnly) {
+                      middleButtons.push(
+                        <Tooltip key="gerar-correcao">
+                          <TooltipTrigger asChild>
+                            <Button 
+                              size="icon" 
+                              variant="outline" 
+                              onClick={(e) => { e.stopPropagation(); setShowCriarCorrecao(true); }} 
+                              title="Gerar pedido de correção" 
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/50"
+                            >
+                              <Wrench className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="text-xs">Gerar Correção</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
                     // Botões de avançar (vão para a direita)
                     if (isAberto && onMoverEtapa) {
                       const validacao = getValidacaoAvancoEtapa('aberto');
@@ -1552,6 +1583,8 @@ className="flex h-[20px] w-full rounded-[3px]"
           </CardContent>
         </Card>
 
+        <CriarPedidoCorrecaoModal pedido={pedido} open={showCriarCorrecao} onOpenChange={setShowCriarCorrecao} />
+
         <PedidoDetalhesSheet pedido={pedido} open={showDetalhes} onOpenChange={setShowDetalhes} />
 
         <AcaoEtapaModal pedido={pedido} open={showAcaoEtapa} onOpenChange={setShowAcaoEtapa} onAvancar={onMoverEtapa || (() => {})} />
@@ -1614,7 +1647,7 @@ className="flex h-[20px] w-full rounded-[3px]"
   // Layout em grid (padrão)
   return <>
       <Card 
-        className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", (emBacklog || temHistoricoBacklog) && "border-2 border-red-500 shadow-lg shadow-red-500/20")} 
+        className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", (emBacklog || temHistoricoBacklog) && "border-2 border-red-500 shadow-lg shadow-red-500/20", (pedido as any).is_correcao && "border-l-4 border-l-purple-600")} 
         onClick={() => setShowDetalhes(true)}
       >
         {/* Header com número do pedido e tempo */}
@@ -1656,6 +1689,11 @@ className="flex h-[20px] w-full rounded-[3px]"
               <span className="text-[10px] font-semibold text-muted-foreground">
                 {formatarNumeroPedidoMensal(pedido.numero_mes, pedido.mes_vigencia, pedido.numero_pedido)}
               </span>
+              {(pedido as any).is_correcao && (
+                <Badge variant="outline" className="text-[8px] px-1 py-0 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
+                  CORREÇÃO
+                </Badge>
+              )}
             </div>
             
             <div className="flex items-center gap-1.5">
@@ -1903,6 +1941,8 @@ className="flex h-[20px] w-full rounded-[3px]"
           </TooltipProvider>
         </CardFooter>
       </Card>
+
+      <CriarPedidoCorrecaoModal pedido={pedido} open={showCriarCorrecao} onOpenChange={setShowCriarCorrecao} />
 
       <PedidoDetalhesSheet pedido={pedido} open={showDetalhes} onOpenChange={setShowDetalhes} />
 
