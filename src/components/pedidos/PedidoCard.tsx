@@ -1517,7 +1517,7 @@ export function PedidoCard({
                     const avancarButtons: React.ReactNode[] = [];
 
                     // Botão de retroceder (vai para a esquerda)
-                    const podeRetroceder = etapaAtual !== 'aberto' && etapaAtual !== 'finalizado' && etapaAnterior && onRetrocederEtapa;
+                    const podeRetroceder = etapaAtual !== 'aberto' && etapaAtual !== 'finalizado' && etapaAtual !== 'instalacoes' && etapaAnterior && onRetrocederEtapa;
                     if (podeRetroceder) {
                       retrocederButtons.push(
                         <Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="flex h-[20px] w-[20px] rounded-[3px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
@@ -1571,9 +1571,28 @@ export function PedidoCard({
                       );
                     }
 
-                    // Botão de gerar correção (etapas pós-produção)
-                    const etapasCorrecao = ['inspecao_qualidade', 'embalagem', 'aguardando_coleta', 'instalacoes', 'correcoes'];
-                    if (etapasCorrecao.includes(etapaAtual) && !readOnly && !hideCorrecaoButton) {
+                    // Botão de gerar correção (etapas pós-produção) ou enviar para correções (instalacoes)
+                    const etapasCorrecao = ['inspecao_qualidade', 'embalagem', 'aguardando_coleta', 'correcoes'];
+                    if (etapaAtual === 'instalacoes' && !readOnly && !hideCorrecaoButton) {
+                      middleButtons.push(
+                        <Tooltip key="enviar-correcao-instalacoes">
+                          <TooltipTrigger asChild>
+                            <Button 
+                              size="icon" 
+                              variant="outline" 
+                              onClick={(e) => { e.stopPropagation(); setShowEnviarCorrecao(true); }} 
+                              title="Enviar para Correções" 
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/50"
+                            >
+                              <Wrench className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="text-xs">Enviar para Correções</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    } else if (etapasCorrecao.includes(etapaAtual) && !readOnly && !hideCorrecaoButton) {
                       middleButtons.push(
                         <Tooltip key="gerar-correcao">
                           <TooltipTrigger asChild>
@@ -1743,6 +1762,7 @@ className="flex h-[20px] w-full rounded-[3px]"
               estado: venda?.estado || '',
               cep: venda?.cep || null,
               telefoneCliente: venda?.cliente_telefone || null,
+              etapaOrigem: etapaAtual,
             });
             setShowEnviarCorrecao(false);
           }}
@@ -2168,6 +2188,7 @@ className="flex h-[20px] w-full rounded-[3px]"
             estado: venda?.estado || '',
             cep: venda?.cep || null,
             telefoneCliente: venda?.cliente_telefone || null,
+            etapaOrigem: etapaAtual,
           });
           setShowEnviarCorrecao(false);
         }}
