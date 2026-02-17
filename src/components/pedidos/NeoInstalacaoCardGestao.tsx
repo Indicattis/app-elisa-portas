@@ -304,7 +304,7 @@ export function NeoInstalacaoCardGestao({
                           e.stopPropagation();
                           onRetornar(neoInstalacao.id);
                         }}
-                        title="Retornar para instalações"
+                        title="Enviar para correções"
                       >
                         <Undo2 className="h-3 w-3" />
                       </Button>

@@ -435,28 +435,59 @@ export const useNeoInstalacoesFinalizadas = () => {
 
   const retornarMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      // 1. Buscar dados da neo instalação
+      const { data: instalacao, error: fetchError } = await supabase
+        .from("neo_instalacoes")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (fetchError || !instalacao) throw fetchError || new Error("Instalação não encontrada");
+
+      // 2. Criar nova neo correção com os dados copiados
+      const { error: insertError } = await supabase
+        .from("neo_correcoes")
+        .insert({
+          nome_cliente: instalacao.nome_cliente,
+          cidade: instalacao.cidade,
+          estado: instalacao.estado,
+          descricao: instalacao.descricao,
+          equipe_id: instalacao.equipe_id,
+          equipe_nome: instalacao.equipe_nome,
+          tipo_responsavel: instalacao.tipo_responsavel,
+          autorizado_id: instalacao.autorizado_id,
+          autorizado_nome: instalacao.autorizado_nome,
+          valor_total: instalacao.valor_total,
+          valor_a_receber: instalacao.valor_a_receber,
+          etapa_causadora: instalacao.etapa_causadora,
+          status: 'pendente',
+          created_by: instalacao.created_by,
+        });
+
+      if (insertError) throw insertError;
+
+      // 3. Arquivar a neo instalação original
+      const { error: archiveError } = await supabase
         .from("neo_instalacoes")
         .update({
+          status: 'arquivada',
           concluida: false,
-          concluida_em: null,
-          concluida_por: null,
-          status: 'pendente',
           updated_at: new Date().toISOString()
         })
         .eq("id", id);
 
-      if (error) throw error;
+      if (archiveError) throw archiveError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_finalizadas"] });
       queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_listagem"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_listagem"] });
       queryClient.invalidateQueries({ queryKey: ["pedidos_contadores"] });
-      toast.success("Neo instalação retornada com sucesso!");
+      toast.success("Enviado para correções com sucesso!");
     },
     onError: (error) => {
-      console.error("Erro ao retornar neo instalação:", error);
-      toast.error("Erro ao retornar neo instalação");
+      console.error("Erro ao enviar para correções:", error);
+      toast.error("Erro ao enviar para correções");
     },
   });
 
