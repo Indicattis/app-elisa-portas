@@ -3,6 +3,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 interface PedidosTotalRowProps {
   pedidos: any[];
+  etapa?: string;
 }
 
 function getProdutosFromPedido(pedido: any): any[] {
@@ -116,8 +117,9 @@ function isAcoGalvanizado(nome: string): boolean {
          nomeNormalizado.includes('natural');
 }
 
-export function PedidosTotalRow({ pedidos }: PedidosTotalRowProps) {
+export function PedidosTotalRow({ pedidos, etapa }: PedidosTotalRowProps) {
   if (pedidos.length === 0) return null;
+  const ocultarMetragem = etapa === 'instalacoes' || etapa === 'aguardando_coleta';
 
   const { totalP, totalG } = calcularTotaisPortas(pedidos);
   const ordensStats = calcularTotaisOrdens(pedidos);
@@ -153,32 +155,40 @@ export function PedidosTotalRow({ pedidos }: PedidosTotalRowProps) {
         <div />
 
         {/* Metragem Linear Total */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="text-center cursor-help">
-              <span className="text-[10px] font-bold text-blue-600">
-                {totalMetragemLinear > 0 ? `${totalMetragemLinear.toFixed(0)}m` : '—'}
-              </span>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-xs">Total metragem linear (perfiladeira)</p>
-          </TooltipContent>
-        </Tooltip>
+        {ocultarMetragem ? (
+          <div />
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="text-center cursor-help">
+                <span className="text-[10px] font-bold text-blue-600">
+                  {totalMetragemLinear > 0 ? `${totalMetragemLinear.toFixed(0)}m` : '—'}
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Total metragem linear (perfiladeira)</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
 
         {/* Metragem Quadrada Total */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="text-center cursor-help">
-              <span className="text-[10px] font-bold text-green-600">
-                {totalMetragemQuadrada > 0 ? `${totalMetragemQuadrada.toFixed(1)}m²` : '—'}
-              </span>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-xs">Total área das portas</p>
-          </TooltipContent>
-        </Tooltip>
+        {ocultarMetragem ? (
+          <div />
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="text-center cursor-help">
+                <span className="text-[10px] font-bold text-green-600">
+                  {totalMetragemQuadrada > 0 ? `${totalMetragemQuadrada.toFixed(1)}m²` : '—'}
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Total área das portas</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
         
         {/* Data Carregamento placeholder */}
         <div />

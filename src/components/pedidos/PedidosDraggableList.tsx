@@ -200,7 +200,7 @@ export function PedidosDraggableList({
             />
           ))}
         </div>
-        {viewMode === 'list' && <PedidosTotalRow pedidos={pedidosParaTotais || pedidos} />}
+        {viewMode === 'list' && <PedidosTotalRow pedidos={pedidosParaTotais || pedidos} etapa={etapa} />}
       </>
     );
   }
@@ -242,7 +242,7 @@ export function PedidosDraggableList({
         </div>
         
         {/* Linha de totais - usa todos os pedidos filtrados se disponível */}
-        {viewMode === 'list' && <PedidosTotalRow pedidos={pedidosParaTotais || pedidos} />}
+        {viewMode === 'list' && <PedidosTotalRow pedidos={pedidosParaTotais || pedidos} etapa={etapa} />}
       </SortableContext>
 
       {createPortal(
