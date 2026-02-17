@@ -9,7 +9,7 @@ import { DelayedParticles } from '@/components/DelayedParticles';
 const menuItems = [
   { label: "Vendas", icon: ShoppingCart, path: "/direcao/metas/vendas", ativo: false },
   { label: "Marketing", icon: Megaphone, path: "/direcao/metas/marketing", ativo: false },
-  { label: "Instalações", icon: Truck, path: "/direcao/metas/instalacoes", ativo: false },
+  { label: "Instalações", icon: Truck, path: "/direcao/metas/fabrica/instalacoes", ativo: true },
   { label: "Fábrica", icon: Factory, path: "/direcao/metas/fabrica", ativo: true },
   { label: "Administrativo", icon: Building2, path: "/direcao/metas/administrativo", ativo: false },
 ];
