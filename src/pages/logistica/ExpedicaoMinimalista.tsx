@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, CalendarDays, ArrowLeft, LogOut, Plus, Hammer, Wrench, Package, HardHat, AlertTriangle, UserPlus, RefreshCw } from "lucide-react";
+import { Calendar, CalendarDays, ArrowLeft, LogOut, Plus, Hammer, Wrench, Package, HardHat, AlertTriangle, UserPlus, RefreshCw, CheckCircle } from "lucide-react";
 
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
@@ -124,11 +124,12 @@ export default function ExpedicaoMinimalista() {
   } = usePedidosEtapas(etapaAtiva);
 
   // Etapas da logística
-  const ETAPAS_LOGISTICA: EtapaPedido[] = ['aguardando_coleta', 'instalacoes', 'correcoes'];
-  const ETAPA_ICONS = {
+  const ETAPAS_LOGISTICA: EtapaPedido[] = ['aguardando_coleta', 'instalacoes', 'correcoes', 'finalizado'];
+  const ETAPA_ICONS: Record<string, any> = {
     aguardando_coleta: Package,
     instalacoes: HardHat,
     correcoes: AlertTriangle,
+    finalizado: CheckCircle,
   };
 
   // Handlers para pedidos
