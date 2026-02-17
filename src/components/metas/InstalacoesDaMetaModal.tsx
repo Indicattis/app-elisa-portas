@@ -26,8 +26,8 @@ interface InstalacaoUnificada {
   tamanho?: 'P' | 'G' | 'GG' | null;
 }
 
-function classificarTamanho(metragem: number | null): 'P' | 'G' | 'GG' | null {
-  if (metragem == null) return null;
+function classificarTamanho(metragem: number | null | undefined): 'P' | 'G' | 'GG' | null {
+  if (metragem == null || metragem === 0) return null;
   if (metragem < 25) return 'P';
   if (metragem <= 50) return 'G';
   return 'GG';
@@ -54,7 +54,7 @@ export function InstalacoesDaMetaModal({ meta, open, onOpenChange }: Instalacoes
       // 2. Buscar instalacoes (pedidos)
       let pedidoQuery = supabase
         .from("instalacoes" as any)
-        .select("id, nome_cliente, cidade, estado, instalacao_concluida_em, responsavel_instalacao_nome, metragem_quadrada")
+        .select("id, nome_cliente, cidade, estado, instalacao_concluida_em, responsavel_instalacao_nome, pedido_id")
         .eq("instalacao_concluida", true)
         .not("pedido_id", "is", null)
         .gte("instalacao_concluida_em", meta.data_inicio)
@@ -70,6 +70,30 @@ export function InstalacoesDaMetaModal({ meta, open, onOpenChange }: Instalacoes
       if (neoRes.error) throw neoRes.error;
       if (pedidoRes.error) throw pedidoRes.error;
 
+      const pedidoData = (pedidoRes.data || []) as any[];
+
+      // 3. Buscar metragem das ordens de pintura para os pedidos
+      const pedidoIds = pedidoData
+        .map((p: any) => p.pedido_id)
+        .filter(Boolean) as string[];
+
+      let metragensMap: Record<string, number> = {};
+
+      if (pedidoIds.length > 0) {
+        const { data: ordens } = await supabase
+          .from("ordens_pintura" as any)
+          .select("pedido_id, metragem_quadrada")
+          .in("pedido_id", pedidoIds);
+
+        if (ordens) {
+          for (const o of ordens as any[]) {
+            if (o.metragem_quadrada) {
+              metragensMap[o.pedido_id] = (metragensMap[o.pedido_id] || 0) + o.metragem_quadrada;
+            }
+          }
+        }
+      }
+
       const neoItems: InstalacaoUnificada[] = ((neoRes.data || []) as any[]).map((inst) => ({
         id: inst.id,
         nome_cliente: inst.nome_cliente,
@@ -83,7 +107,7 @@ export function InstalacoesDaMetaModal({ meta, open, onOpenChange }: Instalacoes
         tamanho: null,
       }));
 
-      const pedidoItems: InstalacaoUnificada[] = ((pedidoRes.data || []) as any[]).map((inst) => ({
+      const pedidoItems: InstalacaoUnificada[] = pedidoData.map((inst: any) => ({
         id: inst.id,
         nome_cliente: inst.nome_cliente,
         cidade: inst.cidade,
@@ -93,7 +117,7 @@ export function InstalacoesDaMetaModal({ meta, open, onOpenChange }: Instalacoes
         autorizado_nome: null,
         tipo_responsavel: null,
         origem: 'pedido' as const,
-        tamanho: classificarTamanho(inst.metragem_quadrada),
+        tamanho: classificarTamanho(metragensMap[inst.pedido_id]),
       }));
 
       const combined = [...neoItems, ...pedidoItems].sort((a, b) => {
