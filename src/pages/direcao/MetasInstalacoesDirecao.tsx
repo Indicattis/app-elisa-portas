@@ -17,7 +17,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { useSetoresLideres } from "@/hooks/useSetoresLideres";
-import { useMetasInstalacao, useCriarMetaInstalacao, useProgressoMetaInstalacao, type MetaInstalacao } from "@/hooks/useMetasInstalacao";
+import { useMetasInstalacao, useCriarMetaInstalacao, useProgressoMetaInstalacao, useTamanhosMetaInstalacao, type MetaInstalacao } from "@/hooks/useMetasInstalacao";
 import { Progress } from "@/components/ui/progress";
 import { InstalacoesDaMetaModal } from "@/components/metas/InstalacoesDaMetaModal";
 
@@ -138,6 +138,7 @@ function DatePickerField({ date, onSelect }: { date: Date | undefined; onSelect:
 function MetaCard({ meta }: { meta: MetaInstalacao }) {
   const [modalAberto, setModalAberto] = useState(false);
   const { data: progresso = 0 } = useProgressoMetaInstalacao(meta);
+  const { data: tamanhos } = useTamanhosMetaInstalacao(meta);
   const porcentagem = Math.min((progresso / meta.quantidade_portas) * 100, 100);
   const atingida = progresso >= meta.quantidade_portas;
 
@@ -175,6 +176,26 @@ function MetaCard({ meta }: { meta: MetaInstalacao }) {
             className={`h-2 ${atingida ? "[&>div]:bg-green-500" : ""}`}
           />
         </div>
+
+        {tamanhos && (tamanhos.P > 0 || tamanhos.G > 0 || tamanhos.GG > 0) && (
+          <div className="flex items-center gap-1.5 mt-2">
+            {tamanhos.P > 0 && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5">
+                P <span className="font-bold">{tamanhos.P}</span>
+              </Badge>
+            )}
+            {tamanhos.G > 0 && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5">
+                G <span className="font-bold">{tamanhos.G}</span>
+              </Badge>
+            )}
+            {tamanhos.GG > 0 && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5">
+                GG <span className="font-bold">{tamanhos.GG}</span>
+              </Badge>
+            )}
+          </div>
+        )}
 
         <p className="text-xs text-muted-foreground mt-2">
           {format(new Date(meta.data_inicio + "T00:00:00"), "dd/MM/yyyy")} — {format(new Date(meta.data_termino + "T00:00:00"), "dd/MM/yyyy")}

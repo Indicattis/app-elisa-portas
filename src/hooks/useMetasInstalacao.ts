@@ -108,6 +108,72 @@ export function useProgressoMetaInstalacao(meta: MetaInstalacao | null) {
   });
 }
 
+function classificarTamanho(metragem: number | null | undefined): 'P' | 'G' | 'GG' | null {
+  if (metragem == null || metragem === 0) return null;
+  if (metragem < 25) return 'P';
+  if (metragem <= 50) return 'G';
+  return 'GG';
+}
+
+export interface TamanhoContagem {
+  P: number;
+  G: number;
+  GG: number;
+}
+
+export function useTamanhosMetaInstalacao(meta: MetaInstalacao | null) {
+  return useQuery({
+    queryKey: ["tamanhos-meta-instalacao", meta?.id],
+    enabled: !!meta,
+    queryFn: async () => {
+      // Buscar instalações de pedido concluídas no período
+      let pedidoQuery = supabase
+        .from("instalacoes" as any)
+        .select("id, pedido_id")
+        .eq("instalacao_concluida", true)
+        .not("pedido_id", "is", null)
+        .gte("instalacao_concluida_em", meta!.data_inicio)
+        .lte("instalacao_concluida_em", meta!.data_termino + "T23:59:59");
+
+      if (meta!.tipo === "equipe") {
+        pedidoQuery = pedidoQuery.eq("responsavel_instalacao_id", meta!.referencia_id);
+      }
+
+      const { data: pedidoData, error: pedidoError } = await pedidoQuery;
+      if (pedidoError) throw pedidoError;
+
+      const pedidos = (pedidoData || []) as any[];
+      const pedidoIds = pedidos.map((p: any) => p.pedido_id).filter(Boolean) as string[];
+
+      const contagem: TamanhoContagem = { P: 0, G: 0, GG: 0 };
+
+      if (pedidoIds.length > 0) {
+        const { data: ordens } = await supabase
+          .from("ordens_pintura" as any)
+          .select("pedido_id, metragem_quadrada")
+          .in("pedido_id", pedidoIds);
+
+        // Agrupar metragem por pedido_id
+        const metragensMap: Record<string, number> = {};
+        if (ordens) {
+          for (const o of ordens as any[]) {
+            if (o.metragem_quadrada) {
+              metragensMap[o.pedido_id] = (metragensMap[o.pedido_id] || 0) + o.metragem_quadrada;
+            }
+          }
+        }
+
+        for (const p of pedidos) {
+          const tam = classificarTamanho(metragensMap[p.pedido_id]);
+          if (tam) contagem[tam]++;
+        }
+      }
+
+      return contagem;
+    },
+  });
+}
+
 export function useAtualizarMetaInstalacao() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
