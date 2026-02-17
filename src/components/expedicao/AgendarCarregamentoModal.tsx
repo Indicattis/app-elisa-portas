@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { OrdemCarregamento, AgendarCarregamentoData } from "@/types/ordemCarregamento";
 import { supabase } from "@/integrations/supabase/client";
-import { useVeiculos } from "@/hooks/useVeiculos";
+
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,7 +35,6 @@ export function AgendarCarregamentoModal({
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const { veiculos, isLoading: loadingVeiculos } = useVeiculos();
   const isEntrega = ordem?.venda?.tipo_entrega === 'entrega';
 
   useEffect(() => {
@@ -101,7 +100,7 @@ export function AgendarCarregamentoModal({
 
     if (isEntrega) {
       if (responsavelTipo === 'elisa' && !responsavelId) {
-        toast.error("Selecione um veículo");
+        toast.error("Selecione uma equipe");
         return;
       }
       if (responsavelTipo === 'terceiro' && !responsavelNomeTerceiro.trim()) {
@@ -122,8 +121,8 @@ export function AgendarCarregamentoModal({
       
       if (isEntrega) {
         if (responsavelTipo === 'elisa') {
-          const veiculo = veiculos.find(v => v.id === responsavelId);
-          responsavelNome = veiculo?.nome || '';
+          const equipe = equipes.find(e => e.id === responsavelId);
+          responsavelNome = equipe?.nome || '';
         } else {
           responsavelNome = responsavelNomeTerceiro.trim();
           finalResponsavelId = null; // Para terceiros, ID é null
@@ -239,30 +238,24 @@ export function AgendarCarregamentoModal({
             <div className="space-y-2">
               <Label>
                 {isEntrega 
-                  ? 'Veículo *'
+                  ? 'Equipe *'
                   : (responsavelTipo === 'elisa' ? 'Equipe *' : 'Autorizado *')
                 }
               </Label>
               <Select
                 value={responsavelId}
                 onValueChange={setResponsavelId}
-                disabled={loading || (isEntrega && loadingVeiculos)}
+                disabled={loading}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={
-                    loading || (isEntrega && loadingVeiculos)
+                    loading
                       ? "Carregando..."
                       : "Selecione..."
                   } />
                 </SelectTrigger>
                 <SelectContent>
-                  {isEntrega && responsavelTipo === 'elisa' ? (
-                    veiculos.filter(v => v.ativo).map((veiculo) => (
-                      <SelectItem key={veiculo.id} value={veiculo.id}>
-                        {veiculo.nome}
-                      </SelectItem>
-                    ))
-                  ) : responsavelTipo === "elisa" ? (
+                  {responsavelTipo === "elisa" ? (
                     equipes.map((equipe) => (
                       <SelectItem key={equipe.id} value={equipe.id}>
                         <div className="flex items-center gap-2">

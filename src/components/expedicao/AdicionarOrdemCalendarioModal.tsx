@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { OrdemCarregamentoUnificada } from "@/types/ordemCarregamentoUnificada";
 import { useOrdensCarregamentoUnificadas } from "@/hooks/useOrdensCarregamentoUnificadas";
-import { useVeiculos } from "@/hooks/useVeiculos";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Search, Package, MapPin, Check, Ruler, Truck, Wrench } from "lucide-react";
 import { toast } from "sonner";
@@ -59,7 +59,7 @@ export function AdicionarOrdemCalendarioModal({
   const [submitting, setSubmitting] = useState(false);
 
   const { ordens: todasOrdens, isLoading: loadingOrdens } = useOrdensCarregamentoUnificadas();
-  const { veiculos, isLoading: loadingVeiculos } = useVeiculos();
+  
   
   const ordens = todasOrdens.filter(o => !o.data_carregamento);
   const isEntrega = ordemSelecionada?.tipo_entrega === 'entrega';
@@ -160,7 +160,7 @@ export function AdicionarOrdemCalendarioModal({
 
     if (isEntrega) {
       if (responsavelTipo === 'elisa' && !responsavelId) {
-        toast.error("Selecione um veículo");
+        toast.error("Selecione uma equipe");
         return;
       }
       if (responsavelTipo === 'terceiro' && !responsavelNomeTerceiro.trim()) {
@@ -185,8 +185,8 @@ export function AdicionarOrdemCalendarioModal({
 
       if (isEntrega) {
         if (responsavelTipo === 'elisa') {
-          const veiculo = veiculos.find(v => v.id === responsavelId);
-          responsavelNome = veiculo?.nome || '';
+          const equipe = equipes.find(e => e.id === responsavelId);
+          responsavelNome = equipe?.nome || '';
         } else {
           responsavelNome = responsavelNomeTerceiro.trim();
           finalResponsavelId = null;
@@ -409,7 +409,7 @@ export function AdicionarOrdemCalendarioModal({
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium">
                   {isEntrega 
-                    ? (responsavelTipo === 'elisa' ? 'Veículo' : 'Nome do Terceiro')
+                    ? (responsavelTipo === 'elisa' ? 'Equipe' : 'Nome do Terceiro')
                     : (responsavelTipo === 'elisa' ? 'Equipe' : 'Autorizado')
                   }
                 </Label>
@@ -425,11 +425,11 @@ export function AdicionarOrdemCalendarioModal({
                   <Select
                     value={responsavelId}
                     onValueChange={setResponsavelId}
-                    disabled={loadingResponsaveis || (isEntrega && loadingVeiculos)}
+                    disabled={loadingResponsaveis}
                   >
                     <SelectTrigger className="h-9 text-sm">
                       <SelectValue placeholder={
-                        loadingResponsaveis || (isEntrega && loadingVeiculos)
+                        loadingResponsaveis
                           ? "Carregando..."
                           : "Selecione..."
                       } />
@@ -439,13 +439,7 @@ export function AdicionarOrdemCalendarioModal({
                       sideOffset={4} 
                       className="z-[200] max-h-[200px]"
                     >
-                      {isEntrega && responsavelTipo === 'elisa' ? (
-                        veiculos.filter(v => v.ativo).map((veiculo) => (
-                          <SelectItem key={veiculo.id} value={veiculo.id}>
-                            {veiculo.nome}
-                          </SelectItem>
-                        ))
-                      ) : responsavelTipo === "elisa" ? (
+                      {responsavelTipo === "elisa" ? (
                         equipes.map((equipe) => (
                           <SelectItem key={equipe.id} value={equipe.id}>
                             <div className="flex items-center gap-2">

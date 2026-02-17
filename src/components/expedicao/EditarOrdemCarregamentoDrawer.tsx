@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { cn } from "@/lib/utils";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { supabase } from "@/integrations/supabase/client";
-import { useVeiculos } from "@/hooks/useVeiculos";
+
 import { toast } from "sonner";
 
 interface EditarOrdemCarregamentoDrawerProps {
@@ -42,7 +42,6 @@ export const EditarOrdemCarregamentoDrawer = ({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const { veiculos, isLoading: loadingVeiculos } = useVeiculos();
   const isEntrega = ordem?.venda?.tipo_entrega === 'entrega';
 
   // Reset form quando o drawer abre/fecha ou ordem muda
@@ -136,7 +135,7 @@ export const EditarOrdemCarregamentoDrawer = ({
     if (responsavelTipo !== 'sem-responsavel') {
       if (isEntrega) {
         if (responsavelTipo === 'elisa' && !responsavelId) {
-          toast.error("Selecione um veículo");
+          toast.error("Selecione uma equipe");
           return;
         }
         if (responsavelTipo === 'terceiro' && !responsavelNomeTerceiro.trim()) {
@@ -162,8 +161,8 @@ export const EditarOrdemCarregamentoDrawer = ({
         
         if (isEntrega) {
           if (responsavelTipo === 'elisa') {
-            const veiculo = veiculos.find(v => v.id === responsavelId);
-            responsavelNome = veiculo?.nome || '';
+            const equipe = responsaveis.find(r => r.id === responsavelId);
+            responsavelNome = equipe?.nome || '';
             finalResponsavelId = responsavelId;
           } else {
             responsavelNome = responsavelNomeTerceiro.trim();
@@ -321,34 +320,20 @@ export const EditarOrdemCarregamentoDrawer = ({
             ) : (
               <div className="space-y-2">
                 <Label>
-                  {isEntrega 
-                    ? 'Veículo'
-                    : (responsavelTipo === 'elisa' ? 'Equipe' : 'Autorizado')
-                  }
+                  {responsavelTipo === 'elisa' ? 'Equipe' : 'Autorizado'}
                 </Label>
                 <Select
                   value={responsavelId}
                   onValueChange={setResponsavelId}
-                  disabled={loading || (isEntrega && loadingVeiculos) || responsaveis.length === 0}
+                  disabled={loading || responsaveis.length === 0}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={loading || (isEntrega && loadingVeiculos) ? "Carregando..." : "Selecione"}>
-                      {responsavelId && (
-                        isEntrega && responsavelTipo === 'elisa'
-                          ? veiculos.find(v => v.id === responsavelId)?.nome
-                          : responsaveis.find(r => r.id === responsavelId)?.nome
-                      )}
+                    <SelectValue placeholder={loading ? "Carregando..." : "Selecione"}>
+                      {responsavelId && responsaveis.find(r => r.id === responsavelId)?.nome}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent modal={false}>
-                    {isEntrega && responsavelTipo === 'elisa' ? (
-                      veiculos.filter(v => v.ativo).map((veiculo) => (
-                        <SelectItem key={veiculo.id} value={veiculo.id}>
-                          {veiculo.nome}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      responsaveis.map((resp) => (
+                    {responsaveis.map((resp) => (
                         <SelectItem key={resp.id} value={resp.id}>
                           {resp.nome}
                           {responsavelTipo === "autorizados" && resp.cidade && (
@@ -357,9 +342,8 @@ export const EditarOrdemCarregamentoDrawer = ({
                             </span>
                           )}
                         </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
+                    ))}
+                   </SelectContent>
                 </Select>
               </div>
             )
