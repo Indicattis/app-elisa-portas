@@ -1,19 +1,24 @@
 import { useNavigate } from "react-router-dom";
-import { User, Trophy, Users, Crown } from "lucide-react";
+import { useState } from "react";
+import { User, Trophy, Users, Crown, Target, Plus, CalendarDays, DoorOpen } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { useSetoresLideres } from "@/hooks/useSetoresLideres";
+import { useMetasInstalacao, useCriarMetaInstalacao, type MetaInstalacao } from "@/hooks/useMetasInstalacao";
 
-const roleLabels: Record<string, string> = {
-  gerente_instalacoes: "Gerente",
-  instalador: "Instalador",
-  aux_instalador: "Auxiliar",
-};
-
+// --- Types ---
 interface Colaborador {
   id: string;
   user_id: string;
@@ -31,10 +36,126 @@ interface Equipe {
   membros: Colaborador[];
 }
 
+const roleLabels: Record<string, string> = {
+  gerente_instalacoes: "Gerente",
+  instalador: "Instalador",
+  aux_instalador: "Auxiliar",
+};
+
+// --- Sub-components ---
+function MetaFormDialog({
+  tipo,
+  referenciaId,
+  label,
+  metaAtiva,
+}: {
+  tipo: "equipe" | "gerente";
+  referenciaId: string;
+  label: string;
+  metaAtiva: MetaInstalacao | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const [dataInicio, setDataInicio] = useState<Date>();
+  const [dataTermino, setDataTermino] = useState<Date>();
+  const [portas, setPortas] = useState("");
+  const criarMeta = useCriarMetaInstalacao();
+
+  const handleSubmit = () => {
+    if (!dataInicio || !dataTermino || !portas) return;
+    criarMeta.mutate(
+      {
+        tipo,
+        referencia_id: referenciaId,
+        quantidade_portas: parseInt(portas),
+        data_inicio: format(dataInicio, "yyyy-MM-dd"),
+        data_termino: format(dataTermino, "yyyy-MM-dd"),
+      },
+      { onSuccess: () => { setOpen(false); setPortas(""); setDataInicio(undefined); setDataTermino(undefined); } }
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant={metaAtiva ? "outline" : "default"} className="gap-1.5">
+          <Plus className="h-4 w-4" />
+          {metaAtiva ? "Nova Meta" : "Criar Meta"}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Nova Meta — {label}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-2">
+          <div>
+            <Label>Quantidade de Portas</Label>
+            <Input
+              type="number"
+              min={1}
+              value={portas}
+              onChange={(e) => setPortas(e.target.value)}
+              placeholder="Ex: 50"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Data Início</Label>
+              <DatePickerField date={dataInicio} onSelect={setDataInicio} />
+            </div>
+            <div>
+              <Label>Data Término</Label>
+              <DatePickerField date={dataTermino} onSelect={setDataTermino} />
+            </div>
+          </div>
+          <Button onClick={handleSubmit} disabled={!dataInicio || !dataTermino || !portas || criarMeta.isPending} className="w-full">
+            {criarMeta.isPending ? "Salvando..." : "Salvar Meta"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DatePickerField({ date, onSelect }: { date: Date | undefined; onSelect: (d: Date | undefined) => void }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}>
+          <CalendarDays className="mr-2 h-4 w-4" />
+          {date ? format(date, "dd/MM/yyyy") : "Selecionar"}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar mode="single" selected={date} onSelect={onSelect} locale={ptBR} className={cn("p-3 pointer-events-auto")} />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function MetaCard({ meta }: { meta: MetaInstalacao }) {
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/50 border border-border">
+      <DoorOpen className="h-5 w-5 text-primary shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium">{meta.quantidade_portas} portas</p>
+        <p className="text-xs text-muted-foreground">
+          {format(new Date(meta.data_inicio + "T00:00:00"), "dd/MM/yyyy")} — {format(new Date(meta.data_termino + "T00:00:00"), "dd/MM/yyyy")}
+        </p>
+      </div>
+      <Badge variant="outline" className="text-xs">Ativa</Badge>
+    </div>
+  );
+}
+
+// --- Main component ---
 export default function MetasInstalacoesDirecao() {
   const navigate = useNavigate();
 
-  // Buscar colaboradores do setor de instalação
+  const { lideres } = useSetoresLideres();
+  const gerenteSetor = lideres.find((l) => l.setor === "instalacoes");
+
+  const { data: metas } = useMetasInstalacao();
+
   const { data: colaboradores, isLoading: loadingColabs } = useQuery({
     queryKey: ["colaboradores-instalacao-metas"],
     queryFn: async () => {
@@ -44,13 +165,11 @@ export default function MetasInstalacoesDirecao() {
         .in("role", ["gerente_instalacoes", "instalador", "aux_instalador"])
         .eq("ativo", true)
         .order("nome");
-
       if (error) throw error;
       return (data || []) as Colaborador[];
     },
   });
 
-  // Buscar equipes ativas com membros
   const { data: equipes, isLoading: loadingEquipes } = useQuery({
     queryKey: ["equipes-instalacao-metas"],
     queryFn: async () => {
@@ -59,7 +178,6 @@ export default function MetasInstalacoesDirecao() {
         .select(`*, responsavel:responsavel_id (nome, foto_perfil_url)`)
         .eq("ativa", true)
         .order("nome");
-
       if (error) throw error;
 
       const result: Equipe[] = await Promise.all(
@@ -68,9 +186,7 @@ export default function MetasInstalacoesDirecao() {
             .from("equipes_instalacao_membros")
             .select("user_id")
             .eq("equipe_id", eq.id);
-
           const userIds = (membrosData || []).map((m: any) => m.user_id);
-
           let membros: Colaborador[] = [];
           if (userIds.length > 0) {
             const { data: usersData } = await supabase
@@ -80,23 +196,13 @@ export default function MetasInstalacoesDirecao() {
               .eq("ativo", true);
             membros = (usersData || []) as Colaborador[];
           }
-
-          return {
-            id: eq.id,
-            nome: eq.nome,
-            cor: eq.cor,
-            responsavel_id: eq.responsavel_id,
-            responsavel: eq.responsavel,
-            membros,
-          };
+          return { id: eq.id, nome: eq.nome, cor: eq.cor, responsavel_id: eq.responsavel_id, responsavel: eq.responsavel, membros };
         })
       );
-
       return result;
     },
   });
 
-  // Buscar user_ids com metas individuais ativas
   const { data: usersComMetas } = useQuery({
     queryKey: ["users-com-metas-individuais-instalacoes"],
     queryFn: async () => {
@@ -106,7 +212,6 @@ export default function MetasInstalacoesDirecao() {
         .select("user_id")
         .gte("data_termino", hoje)
         .eq("concluida", false);
-
       if (error) return new Set<string>();
       return new Set(data?.map((m) => m.user_id) || []);
     },
@@ -121,7 +226,12 @@ export default function MetasInstalacoesDirecao() {
     return nome.substring(0, 2).toUpperCase();
   };
 
-  // Identificar colaboradores sem equipe
+  const hoje = new Date().toISOString().split("T")[0];
+  const getMetaAtiva = (tipo: "equipe" | "gerente", refId: string): MetaInstalacao | null => {
+    return metas?.find((m) => m.tipo === tipo && m.referencia_id === refId && m.data_termino >= hoje && !m.concluida) || null;
+  };
+
+  // Colaboradores sem equipe
   const membrosEmEquipes = new Set<string>();
   equipes?.forEach((eq) => {
     if (eq.responsavel_id) membrosEmEquipes.add(eq.responsavel_id);
@@ -133,23 +243,19 @@ export default function MetasInstalacoesDirecao() {
     <div
       key={colab.user_id}
       className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer"
-      onClick={() => navigate(`/direcao/metas/fabrica/instalacoes/${colab.user_id}`)}
+      onClick={() => navigate(`/direcao/metas/instalacoes/${colab.user_id}`)}
     >
       <Avatar className="h-10 w-10">
         <AvatarImage src={colab.foto_perfil_url || undefined} />
-        <AvatarFallback className="bg-blue-500/20 text-blue-400 text-sm">
-          {getInitials(colab.nome)}
-        </AvatarFallback>
+        <AvatarFallback className="bg-primary/20 text-primary text-sm">{getInitials(colab.nome)}</AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-white truncate">{colab.nome}</span>
-          {usersComMetas?.has(colab.user_id) && (
-            <Trophy className="h-4 w-4 text-amber-500 shrink-0" />
-          )}
+          <span className="font-medium text-foreground truncate">{colab.nome}</span>
+          {usersComMetas?.has(colab.user_id) && <Trophy className="h-4 w-4 text-amber-500 shrink-0" />}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-white/50">{roleLabels[colab.role] || colab.role}</span>
+          <span className="text-xs text-muted-foreground">{roleLabels[colab.role] || colab.role}</span>
           {isResponsavel && (
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/50 text-amber-400">
               <Crown className="h-3 w-3 mr-0.5" /> Responsável
@@ -163,7 +269,7 @@ export default function MetasInstalacoesDirecao() {
   return (
     <MinimalistLayout
       title="Metas Instalações"
-      subtitle="Colaboradores do setor de instalação"
+      subtitle="Metas do setor de instalação"
       backPath="/direcao/metas"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
@@ -172,76 +278,139 @@ export default function MetasInstalacoesDirecao() {
         { label: "Instalações" },
       ]}
     >
-      {/* Period Info */}
       <div className="mb-6">
-        <h2 className="text-xl font-semibold capitalize text-white">{mesAtual}</h2>
-        <p className="text-sm text-white/60">Equipes e colaboradores de instalação</p>
+        <h2 className="text-xl font-semibold capitalize text-foreground">{mesAtual}</h2>
       </div>
 
-      {/* Loading */}
       {isLoading && (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
       )}
 
-      {/* Empty */}
-      {!isLoading && (!colaboradores || colaboradores.length === 0) && (
-        <div className="text-center py-12">
-          <User className="h-12 w-12 text-white/40 mx-auto mb-3" />
-          <p className="text-white/60">Nenhum colaborador encontrado</p>
-        </div>
-      )}
-
-      {!isLoading && colaboradores && colaboradores.length > 0 && (
+      {!isLoading && (
         <div className="space-y-6">
-          {/* Equipes */}
-          {equipes?.map((equipe) => {
-            const responsavelColab = colaboradores.find((c) => c.user_id === equipe.responsavel_id);
-            const membrosExcluindoResp = equipe.membros.filter(
-              (m) => m.user_id !== equipe.responsavel_id
-            );
-
-            return (
-              <div
-                key={equipe.id}
-                className="rounded-xl border border-primary/10 overflow-hidden"
-              >
-                {/* Header da equipe com faixa colorida */}
-                <div
-                  className="flex items-center gap-3 px-4 py-3"
-                  style={{ borderLeft: `4px solid ${equipe.cor}` }}
-                >
-                  <Users className="h-5 w-5 text-white/70" />
-                  <h3 className="font-semibold text-white">{equipe.nome}</h3>
-                  <span className="text-xs text-white/40 ml-auto">
-                    {(responsavelColab ? 1 : 0) + membrosExcluindoResp.length} membro(s)
-                  </span>
+          {/* Seção: Meta do Gerente */}
+          {gerenteSetor?.lider && (
+            <div className="rounded-xl border border-border overflow-hidden">
+              <div className="flex items-center justify-between gap-3 px-4 py-3 bg-accent/30">
+                <div className="flex items-center gap-3">
+                  <Target className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold text-foreground">Meta do Gerente do Setor</h3>
                 </div>
-
-                {/* Membros */}
-                <div className="p-3 space-y-2 bg-primary/5">
-                  {responsavelColab && renderColaborador(responsavelColab, true)}
-                  {membrosExcluindoResp.map((m) => renderColaborador(m))}
-                  {!responsavelColab && membrosExcluindoResp.length === 0 && (
-                    <p className="text-sm text-white/40 text-center py-2">Nenhum membro</p>
-                  )}
+                <MetaFormDialog
+                  tipo="gerente"
+                  referenciaId={gerenteSetor.lider_id}
+                  label={gerenteSetor.lider.nome}
+                  metaAtiva={getMetaAtiva("gerente", gerenteSetor.lider_id)}
+                />
+              </div>
+              <div className="p-3 space-y-2">
+                <div className="flex items-center gap-3 p-2">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={gerenteSetor.lider.foto_perfil_url || undefined} />
+                    <AvatarFallback className="bg-primary/20 text-primary text-sm">
+                      {getInitials(gerenteSetor.lider.nome)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium text-foreground">{gerenteSetor.lider.nome}</p>
+                    <p className="text-xs text-muted-foreground">Gerente de Instalações</p>
+                  </div>
                 </div>
+                {getMetaAtiva("gerente", gerenteSetor.lider_id) ? (
+                  <MetaCard meta={getMetaAtiva("gerente", gerenteSetor.lider_id)!} />
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-2">Nenhuma meta ativa</p>
+                )}
               </div>
-            );
-          })}
+            </div>
+          )}
 
-          {/* Sem equipe */}
-          {semEquipe.length > 0 && (
-            <div className="rounded-xl border border-primary/10 overflow-hidden">
-              <div className="flex items-center gap-3 px-4 py-3 border-l-4 border-white/20">
-                <User className="h-5 w-5 text-white/70" />
-                <h3 className="font-semibold text-white">Sem equipe</h3>
-                <span className="text-xs text-white/40 ml-auto">{semEquipe.length} membro(s)</span>
-              </div>
-              <div className="p-3 space-y-2 bg-primary/5">
-                {semEquipe.map((c) => renderColaborador(c))}
-              </div>
+          {/* Seção: Metas por Equipe */}
+          {equipes && equipes.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Users className="h-5 w-5" /> Metas por Equipe
+              </h3>
+              {equipes.map((equipe) => {
+                const metaAtiva = getMetaAtiva("equipe", equipe.id);
+                return (
+                  <div key={equipe.id} className="rounded-xl border border-border overflow-hidden">
+                    <div
+                      className="flex items-center justify-between gap-3 px-4 py-3"
+                      style={{ borderLeft: `4px solid ${equipe.cor}` }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Users className="h-5 w-5 text-muted-foreground" />
+                        <h4 className="font-semibold text-foreground">{equipe.nome}</h4>
+                        <span className="text-xs text-muted-foreground">{equipe.membros.length} membro(s)</span>
+                      </div>
+                      <MetaFormDialog tipo="equipe" referenciaId={equipe.id} label={equipe.nome} metaAtiva={metaAtiva} />
+                    </div>
+                    <div className="p-3">
+                      {metaAtiva ? (
+                        <MetaCard meta={metaAtiva} />
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-2">Nenhuma meta ativa</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Seção: Colaboradores Individuais */}
+          {colaboradores && colaboradores.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <User className="h-5 w-5" /> Metas Individuais
+              </h3>
+
+              {equipes?.map((equipe) => {
+                const responsavelColab = colaboradores.find((c) => c.user_id === equipe.responsavel_id);
+                const membrosExcluindoResp = equipe.membros.filter((m) => m.user_id !== equipe.responsavel_id);
+
+                return (
+                  <div key={equipe.id} className="rounded-xl border border-border overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-3" style={{ borderLeft: `4px solid ${equipe.cor}` }}>
+                      <Users className="h-5 w-5 text-muted-foreground" />
+                      <h4 className="font-semibold text-foreground">{equipe.nome}</h4>
+                      <span className="text-xs text-muted-foreground ml-auto">
+                        {(responsavelColab ? 1 : 0) + membrosExcluindoResp.length} membro(s)
+                      </span>
+                    </div>
+                    <div className="p-3 space-y-2 bg-primary/5">
+                      {responsavelColab && renderColaborador(responsavelColab, true)}
+                      {membrosExcluindoResp.map((m) => renderColaborador(m))}
+                      {!responsavelColab && membrosExcluindoResp.length === 0 && (
+                        <p className="text-sm text-muted-foreground text-center py-2">Nenhum membro</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {semEquipe.length > 0 && (
+                <div className="rounded-xl border border-border overflow-hidden">
+                  <div className="flex items-center gap-3 px-4 py-3 border-l-4 border-muted-foreground/20">
+                    <User className="h-5 w-5 text-muted-foreground" />
+                    <h4 className="font-semibold text-foreground">Sem equipe</h4>
+                    <span className="text-xs text-muted-foreground ml-auto">{semEquipe.length} membro(s)</span>
+                  </div>
+                  <div className="p-3 space-y-2 bg-primary/5">
+                    {semEquipe.map((c) => renderColaborador(c))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!isLoading && (!colaboradores || colaboradores.length === 0) && (
+            <div className="text-center py-12">
+              <User className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">Nenhum colaborador encontrado</p>
             </div>
           )}
         </div>

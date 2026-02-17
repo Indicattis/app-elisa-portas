@@ -3224,6 +3224,45 @@ export type Database = {
         }
         Relationships: []
       }
+      metas_instalacao: {
+        Row: {
+          concluida: boolean | null
+          created_at: string | null
+          created_by: string | null
+          data_inicio: string
+          data_termino: string
+          id: string
+          quantidade_portas: number
+          referencia_id: string
+          tipo: string
+          updated_at: string | null
+        }
+        Insert: {
+          concluida?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          data_inicio: string
+          data_termino: string
+          id?: string
+          quantidade_portas: number
+          referencia_id: string
+          tipo: string
+          updated_at?: string | null
+        }
+        Update: {
+          concluida?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          data_inicio?: string
+          data_termino?: string
+          id?: string
+          quantidade_portas?: number
+          referencia_id?: string
+          tipo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       naturezas_operacao: {
         Row: {
           ativo: boolean
