@@ -412,9 +412,38 @@ export const useNeoInstalacoesFinalizadas = () => {
     };
   }, [queryClient]);
 
+  const retornarMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("neo_instalacoes")
+        .update({
+          concluida: false,
+          concluida_em: null,
+          concluida_por: null,
+          status: 'pendente',
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_finalizadas"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_listagem"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos_contadores"] });
+      toast.success("Neo instalação retornada com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Erro ao retornar neo instalação:", error);
+      toast.error("Erro ao retornar neo instalação");
+    },
+  });
+
   return {
     neoInstalacoesFinalizadas,
     isLoading,
+    retornarNeoInstalacao: retornarMutation.mutateAsync,
+    isRetornando: retornarMutation.isPending,
   };
 };
 

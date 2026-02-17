@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
-import { MapPin, Calendar, Clock, AlertTriangle, Check, DollarSign } from "lucide-react";
+import { MapPin, Calendar, Clock, AlertTriangle, Check, DollarSign, Undo2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -16,6 +16,7 @@ interface NeoCorrecaoCardGestaoProps {
   onConcluir?: (id: string) => void;
   isConcluindo?: boolean;
   showConcluido?: boolean;
+  onRetornar?: (id: string) => void;
 }
 
 export function NeoCorrecaoCardGestao({
@@ -24,6 +25,7 @@ export function NeoCorrecaoCardGestao({
   onConcluir,
   isConcluindo,
   showConcluido = false,
+  onRetornar,
 }: NeoCorrecaoCardGestaoProps) {
   const corEquipe = neoCorrecao.equipe?.cor || "#9333ea";
 
@@ -265,6 +267,20 @@ export function NeoCorrecaoCardGestao({
                       </span>
                     )}
                     <Check className="h-4 w-4 text-emerald-500" />
+                    {onRetornar && (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="flex h-[20px] w-[20px] rounded-[3px] bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border-amber-500/50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRetornar(neoCorrecao.id);
+                        }}
+                        title="Retornar para correções"
+                      >
+                        <Undo2 className="h-3 w-3" />
+                      </Button>
+                    )}
                   </>
                 ) : onConcluir && (
                   <Button
