@@ -101,7 +101,8 @@ export const useEstadosCidades = () => {
       const { data: cidadesCadastradas, error: errorCidades } = await supabase
         .from('cidades_autorizados')
         .select('id, estado_id, nome')
-        .eq('estado_id', estado.id)
+      .eq('estado_id', estado.id)
+        .order('ordem')
         .order('nome');
       
       if (errorCidades) throw errorCidades;
@@ -413,6 +414,25 @@ export const useEstadosCidades = () => {
     }
   };
 
+  const reordenarCidades = async (cidadesReordenadas: Cidade[]) => {
+    try {
+      const updates = cidadesReordenadas.map((cidade, index) =>
+        supabase
+          .from('cidades_autorizados')
+          .update({ ordem: index })
+          .eq('id', cidade.id)
+      );
+      await Promise.all(updates);
+      setCidades(cidadesReordenadas);
+    } catch (error) {
+      console.error('Erro ao reordenar cidades:', error);
+      toast.error('Erro ao reordenar cidades');
+      if (estadoSelecionado) {
+        await fetchCidadesDoEstado(estadoSelecionado);
+      }
+    }
+  };
+
   useEffect(() => {
     fetchEstados();
   }, [fetchEstados]);
@@ -435,6 +455,7 @@ export const useEstadosCidades = () => {
     removerPremium,
     excluirAutorizado,
     reordenarEstados,
+    reordenarCidades,
     refetch: fetchEstados
   };
 };

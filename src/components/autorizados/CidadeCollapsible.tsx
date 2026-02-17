@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Building2, ChevronDown, Edit, Star, Trash2, Pencil } from 'lucide-react';
+import { Building2, ChevronDown, Edit, Star, Trash2, Pencil, GripVertical } from 'lucide-react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +35,7 @@ interface CidadeCollapsibleProps {
   onTogglePremium: (id: string, isPremium: boolean) => void;
   onEditCidade?: (cidade: Cidade) => void;
   onDeleteCidade?: (id: string) => void;
+  dragHandleProps?: Record<string, any>;
 }
 
 export function CidadeCollapsible({
@@ -41,7 +44,8 @@ export function CidadeCollapsible({
   onDeleteAutorizado,
   onTogglePremium,
   onEditCidade,
-  onDeleteCidade
+  onDeleteCidade,
+  dragHandleProps,
 }: CidadeCollapsibleProps) {
   const [open, setOpen] = useState(false);
 
@@ -62,6 +66,15 @@ export function CidadeCollapsible({
               : "bg-white/5 hover:bg-white/10 border-transparent"
         )}>
           <div className="flex items-center gap-2">
+            {dragHandleProps && (
+              <button
+                {...dragHandleProps}
+                className="cursor-grab active:cursor-grabbing p-0.5 -ml-1 touch-none"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <GripVertical className="h-4 w-4 text-white/40" />
+              </button>
+            )}
             <Building2 className={cn("h-4 w-4", isGreen ? "text-emerald-400" : isRed ? "text-red-400" : "text-white/60")} />
             <span className="font-medium text-white">{cidade.nome}</span>
             <Badge variant="secondary" className={cn(
@@ -159,6 +172,21 @@ export function CidadeCollapsible({
         )}
       </CollapsibleContent>
     </Collapsible>
+  );
+}
+
+export function SortableCidadeCollapsible(props: Omit<CidadeCollapsibleProps, 'dragHandleProps'>) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: props.cidade.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <CidadeCollapsible {...props} dragHandleProps={{ ...attributes, ...listeners }} />
+    </div>
   );
 }
 

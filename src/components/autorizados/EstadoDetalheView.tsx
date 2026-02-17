@@ -1,18 +1,22 @@
-import { ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { CidadeCollapsible, OrfaosCollapsible } from './CidadeCollapsible';
+import { SortableCidadeCollapsible, OrfaosCollapsible } from './CidadeCollapsible';
 import type { Estado, Cidade, AutorizadoResumo } from '@/hooks/useEstadosCidades';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 interface EstadoDetalheViewProps {
   estado: Estado;
@@ -28,6 +32,7 @@ interface EstadoDetalheViewProps {
   onEditAutorizado: (id: string) => void;
   onDeleteAutorizado: (id: string) => void;
   onTogglePremium: (id: string, isPremium: boolean) => void;
+  onReordenarCidades?: (cidades: Cidade[]) => void;
 }
 
 export function EstadoDetalheView({
@@ -43,11 +48,28 @@ export function EstadoDetalheView({
   onDeleteCidade,
   onEditAutorizado,
   onDeleteAutorizado,
-  onTogglePremium
+  onTogglePremium,
+  onReordenarCidades,
 }: EstadoDetalheViewProps) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor)
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !onReordenarCidades) return;
+
+    const oldIndex = cidades.findIndex(c => c.id === active.id);
+    const newIndex = cidades.findIndex(c => c.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(cidades, oldIndex, newIndex);
+    onReordenarCidades(reordered);
+  };
+
   return (
     <div className="space-y-4">
-      {/* Lista de Cidades */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
@@ -64,19 +86,30 @@ export function EstadoDetalheView({
             </div>
           ) : (
             <>
-              {cidades.map(cidade => (
-                <CidadeCollapsible
-                  key={cidade.id}
-                  cidade={cidade}
-                  onEditAutorizado={onEditAutorizado}
-                  onDeleteAutorizado={onDeleteAutorizado}
-                  onTogglePremium={onTogglePremium}
-                  onEditCidade={onEditCidade}
-                  onDeleteCidade={onDeleteCidade}
-                />
-              ))}
-              
-              {/* Órfãos */}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                modifiers={[restrictToVerticalAxis]}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={cidades.map(c => c.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {cidades.map(cidade => (
+                    <SortableCidadeCollapsible
+                      key={cidade.id}
+                      cidade={cidade}
+                      onEditAutorizado={onEditAutorizado}
+                      onDeleteAutorizado={onDeleteAutorizado}
+                      onTogglePremium={onTogglePremium}
+                      onEditCidade={onEditCidade}
+                      onDeleteCidade={onDeleteCidade}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+
               <OrfaosCollapsible
                 autorizados={autorizadosOrfaos}
                 onEditAutorizado={onEditAutorizado}
