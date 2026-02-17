@@ -345,7 +345,7 @@ export function NeoInstalacaoCardGestao({
                       </Button>
                     )}
                   </>
-                ) : onConcluir && (
+                ) : onConcluir && neoInstalacao.data_instalacao && (
                   <Button
                     size="icon"
                     variant="outline"
@@ -436,7 +436,7 @@ export function NeoInstalacaoCardGestao({
         )}
       </div>
 
-      {onConcluir && (
+      {onConcluir && neoInstalacao.data_instalacao && (
         <div className="mt-3 pt-3 border-t">
           <Button
             size="sm"
