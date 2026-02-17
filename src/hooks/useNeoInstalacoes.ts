@@ -208,6 +208,7 @@ export const useNeoInstalacoesListagem = () => {
         .from("neo_instalacoes")
         .select("*")
         .eq("concluida", false)
+        .order("prioridade_gestao", { ascending: false })
         .order("data_instalacao", { ascending: true });
 
       if (error) throw error;
@@ -323,11 +324,31 @@ export const useNeoInstalacoesListagem = () => {
     };
   }, [queryClient]);
 
+  const reorganizarMutation = useMutation({
+    mutationFn: async (updates: { id: string; prioridade_gestao: number }[]) => {
+      for (const update of updates) {
+        const { error } = await supabase
+          .from("neo_instalacoes")
+          .update({ prioridade_gestao: update.prioridade_gestao })
+          .eq("id", update.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_listagem"] });
+    },
+    onError: (error) => {
+      console.error("Erro ao reorganizar neo instalações:", error);
+      toast.error("Erro ao reorganizar");
+    },
+  });
+
   return {
     neoInstalacoes,
     isLoading,
     concluirNeoInstalacao: concluirMutation.mutateAsync,
     isConcluindo: concluirMutation.isPending,
+    reorganizarNeoInstalacoes: reorganizarMutation.mutate,
   };
 };
 

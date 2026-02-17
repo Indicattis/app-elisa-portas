@@ -17,6 +17,7 @@ import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList"
 import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMinimalista";
 import { NeoInstalacaoCardGestao } from "@/components/pedidos/NeoInstalacaoCardGestao";
 import { NeoCorrecaoCardGestao } from "@/components/pedidos/NeoCorrecaoCardGestao";
+import { NeoInstalacoesDraggableList, NeoCorrecoesDraggableList } from "@/components/pedidos/NeoDraggableList";
 import { PortasPorEtapa } from "@/components/producao/dashboard/PortasPorEtapa";
 import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
@@ -58,8 +59,8 @@ export default function GestaoFabricaDirecao() {
   const [etapaParaAtribuir, setEtapaParaAtribuir] = useState<EtapaPedido | null>(null);
   
   const contadores = usePedidosContadores();
-  const { neoInstalacoes, concluirNeoInstalacao, isConcluindo } = useNeoInstalacoesListagem();
-  const { neoCorrecoes, concluirNeoCorrecao } = useNeoCorrecoesListagem();
+  const { neoInstalacoes, concluirNeoInstalacao, isConcluindo, reorganizarNeoInstalacoes } = useNeoInstalacoesListagem();
+  const { neoCorrecoes, concluirNeoCorrecao, reorganizarNeoCorrecoes } = useNeoCorrecoesListagem();
   const { neoInstalacoesFinalizadas, retornarNeoInstalacao, isRetornando: isRetornandoInstalacao } = useNeoInstalacoesFinalizadas();
   const { neoCorrecoesFinalizadas, retornarNeoCorrecao, isRetornando: isRetornandoCorrecao } = useNeoCorrecoesFinalizadas();
   const { 
@@ -524,17 +525,13 @@ export default function GestaoFabricaDirecao() {
                     {etapaAtiva === 'instalacoes' && neoInstalacoes.length > 0 && (
                       <div className="mt-4 space-y-2">
                         <h3 className="text-sm font-medium text-white/70 mb-2">Instalações Avulsas ({neoInstalacoes.length})</h3>
-                        <div className="space-y-1">
-                          {neoInstalacoes.map((neo) => (
-                            <NeoInstalacaoCardGestao
-                              key={neo.id}
-                              neoInstalacao={neo}
-                              viewMode={viewMode}
-                              onConcluir={handleConcluirNeoInstalacao}
-                              isConcluindo={isConcluindo}
-                            />
-                          ))}
-                        </div>
+                        <NeoInstalacoesDraggableList
+                          neos={neoInstalacoes}
+                          viewMode={viewMode}
+                          onConcluir={handleConcluirNeoInstalacao}
+                          isConcluindo={isConcluindo}
+                          onReorganizar={reorganizarNeoInstalacoes}
+                        />
                       </div>
                     )}
 
@@ -542,16 +539,12 @@ export default function GestaoFabricaDirecao() {
                     {etapaAtiva === 'correcoes' && neoCorrecoes.length > 0 && (
                       <div className="mt-4 space-y-2">
                         <h3 className="text-sm font-medium text-white/70 mb-2">Correções Avulsas ({neoCorrecoes.length})</h3>
-                        <div className="space-y-1">
-                          {neoCorrecoes.map((neo) => (
-                            <NeoCorrecaoCardGestao
-                              key={neo.id}
-                              neoCorrecao={neo}
-                              viewMode={viewMode}
-                              onConcluir={handleConcluirNeoCorrecao}
-                            />
-                          ))}
-                        </div>
+                        <NeoCorrecoesDraggableList
+                          neos={neoCorrecoes}
+                          viewMode={viewMode}
+                          onConcluir={handleConcluirNeoCorrecao}
+                          onReorganizar={reorganizarNeoCorrecoes}
+                        />
                       </div>
                     )}
                     
