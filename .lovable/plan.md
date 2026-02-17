@@ -1,36 +1,28 @@
 
+# Ocultar botao de agendamento em neos ja agendadas
 
-# Corrigir botao de concluir neos na etapa finalizados
+## Resumo
 
-## Problema identificado
+Nos cards de Instalacoes Avulsas e Correcoes Avulsas em `/logistica/expedicao`, o botao de agendar (CalendarPlus) sera ocultado quando a neo ja tiver data agendada.
 
-Na pagina `/direcao/gestao-fabrica`, quando a aba "Finalizado" esta ativa e nao existem pedidos finalizados (apenas neos finalizados), a secao de neos finalizados nao e renderizada.
+## Alteracoes
 
-Isso acontece porque a condicao de estado vazio (linha 475) nao leva em consideracao os neos finalizados:
+### 1. `src/components/pedidos/NeoInstalacaoCardGestao.tsx`
 
-```
-pedidosFiltrados.length === 0 
-  && !(etapaAtiva === 'instalacoes' && neoInstalacoes.length > 0) 
-  && !(etapaAtiva === 'correcoes' && neoCorrecoes.length > 0)
-```
+Na condicao de renderizacao do botao de agendar (linha 283), adicionar verificacao de `data_instalacao`:
 
-Quando `pedidosFiltrados` esta vazio e a etapa e `finalizado`, o sistema mostra "Nenhum pedido nesta etapa" e pula todo o bloco que renderiza os neos finalizados, impedindo qualquer interacao com eles.
+De: `{onAgendar && !showConcluido && (`
+Para: `{onAgendar && !showConcluido && !neoInstalacao.data_instalacao && (`
 
-## Solucao
+### 2. `src/components/pedidos/NeoCorrecaoCardGestao.tsx`
 
-Adicionar a verificacao de neos finalizados na condicao de estado vazio, seguindo o mesmo padrao ja usado para `instalacoes` e `correcoes`.
+Na condicao de renderizacao do botao de agendar (linha 264), adicionar verificacao de `data_correcao`:
 
-### Arquivo: `src/pages/direcao/GestaoFabricaDirecao.tsx`
-
-Alterar a condicao na linha 475 para incluir:
-
-```
-&& !(etapaAtiva === 'finalizado' && (neoInstalacoesFinalizadas.length > 0 || neoCorrecoesFinalizadas.length > 0))
-```
-
-Isso garante que, quando houver neos finalizados, o bloco inteiro sera renderizado corretamente, incluindo os cards com os botoes de retornar (undo).
+De: `{onAgendar && !showConcluido && (`
+Para: `{onAgendar && !showConcluido && !neoCorrecao.data_correcao && (`
 
 ## Resultado esperado
 
-- Na aba "Finalizado", mesmo que nao haja pedidos, os neos finalizados serao exibidos
-- Os botoes de retornar (undo) nos cards de neos finalizados funcionarao normalmente
+- Neos que ja possuem data agendada nao mostram o botao de agendar
+- Quando uma neo e removida do calendario (data limpa), o botao de agendar reaparece automaticamente
+- Nenhuma outra pagina e afetada, pois a logica esta no componente do card
