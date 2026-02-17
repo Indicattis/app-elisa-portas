@@ -1650,6 +1650,28 @@ className="flex h-[20px] w-full rounded-[3px]"
                       );
                     }
 
+                    // Botão de arquivar (apenas etapa finalizado)
+                    if (etapaAtual === 'finalizado' && onArquivar) {
+                      middleButtons.push(
+                        <Tooltip key="arquivar">
+                          <TooltipTrigger asChild>
+                            <Button 
+                              size="icon" 
+                              variant="outline" 
+                              onClick={(e) => { e.stopPropagation(); setShowArquivar(true); }} 
+                              title="Arquivar Pedido" 
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-orange-500/10 text-orange-700 hover:bg-orange-500/20 border-orange-500/50"
+                            >
+                              <Archive className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="text-xs">Arquivar Pedido</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
                     // Retorna na ordem: retroceder (esquerda) + outros (meio) + avançar (direita)
                     return [...retrocederButtons, ...middleButtons, ...avancarButtons];
                   })()}
