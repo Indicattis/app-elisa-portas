@@ -54,6 +54,7 @@ interface PedidoCardProps {
   disableClienteClick?: boolean;
   showEtapaBadge?: boolean;
   hideOrdensStatus?: boolean;
+  hideCorrecaoButton?: boolean;
 }
 export function PedidoCard({
   pedido,
@@ -73,7 +74,8 @@ export function PedidoCard({
   readOnly = false,
   disableClienteClick = false,
   showEtapaBadge = false,
-  hideOrdensStatus = false
+  hideOrdensStatus = false,
+  hideCorrecaoButton = false
 }: PedidoCardProps) {
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showAcaoEtapa, setShowAcaoEtapa] = useState(false);
@@ -1545,7 +1547,7 @@ export function PedidoCard({
 
 
                     // Botão de agendar no calendário
-                    if (onAgendar && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes')) {
+                    if (onAgendar && !temDataCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes')) {
                       middleButtons.push(
                         <Tooltip key="agendar">
                           <TooltipTrigger asChild>
@@ -1568,7 +1570,7 @@ export function PedidoCard({
 
                     // Botão de gerar correção (etapas pós-produção)
                     const etapasCorrecao = ['inspecao_qualidade', 'embalagem', 'aguardando_coleta', 'instalacoes', 'correcoes'];
-                    if (etapasCorrecao.includes(etapaAtual) && !readOnly) {
+                    if (etapasCorrecao.includes(etapaAtual) && !readOnly && !hideCorrecaoButton) {
                       middleButtons.push(
                         <Tooltip key="gerar-correcao">
                           <TooltipTrigger asChild>
