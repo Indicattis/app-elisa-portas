@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench } from "lucide-react";
+import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench, CalendarPlus } from "lucide-react";
 import { CriarPedidoCorrecaoModal } from "./CriarPedidoCorrecaoModal";
 import { EnviarCorrecaoModal } from "./EnviarCorrecaoModal";
 import { useEnviarParaCorrecao } from "@/hooks/useEnviarParaCorrecao";
@@ -40,6 +40,7 @@ interface PedidoCardProps {
   onRetrocederEtapa?: (pedidoId: string, etapaDestino: EtapaPedido, motivo: string) => void;
   onMoverPrioridade?: (pedidoId: string, direcao: 'frente' | 'tras') => void;
   onAvisoEspera?: (pedidoId: string, justificativa: string | null) => Promise<void>;
+  onAgendar?: (pedidoId: string) => void;
   isAberto?: boolean;
   isDragging?: boolean;
   dragHandleProps?: any;
@@ -59,6 +60,7 @@ export function PedidoCard({
   onRetrocederEtapa,
   onMoverPrioridade,
   onAvisoEspera,
+  onAgendar,
   isAberto = false,
   isDragging = false,
   dragHandleProps,
@@ -1535,6 +1537,28 @@ export function PedidoCard({
                       );
                     }
 
+
+                    // Botão de agendar no calendário
+                    if (onAgendar && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes')) {
+                      middleButtons.push(
+                        <Tooltip key="agendar">
+                          <TooltipTrigger asChild>
+                            <Button 
+                              size="icon" 
+                              variant="outline" 
+                              onClick={(e) => { e.stopPropagation(); onAgendar(pedido.id); }} 
+                              title="Agendar no calendário" 
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-blue-500/50"
+                            >
+                              <CalendarPlus className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="text-xs">Agendar no Calendário</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
 
                     // Botão de gerar correção (etapas pós-produção)
                     const etapasCorrecao = ['inspecao_qualidade', 'embalagem', 'aguardando_coleta', 'instalacoes', 'correcoes'];
