@@ -1,46 +1,24 @@
 
-# Pedidos sem pintura devem pular embalagem
+# Adicionar botao Editar nos servicos avulsos pendentes
 
 ## Resumo
-Alterar a logica de avanço para que pedidos sem pintura pulem a etapa de embalagem, indo direto para `aguardando_coleta` ou `instalacoes` conforme o tipo de entrega. Alem disso, mover os 4 pedidos atualmente presos na embalagem para suas respectivas proximas etapas.
+Adicionar um botao de edicao (icone de lapis) ao lado do botao "Agendar" na tabela de servicos avulsos pendentes em `/logistica/expedicao`, permitindo editar cada Neo diretamente da listagem.
 
 ## O que muda para o usuario
-- Pedidos sem pintura nao aparecerão mais na etapa de embalagem
-- Apos a inspeção de qualidade, esses pedidos irao direto para expedição (coleta) ou instalações
-- Os 4 pedidos atuais na embalagem serao movidos automaticamente
+- Cada linha da tabela de servicos avulsos tera um botao com icone de lapis ao lado do botao "Agendar"
+- Ao clicar, o usuario sera redirecionado para a pagina de edicao do Neo (`/logistica/expedicao/editar-neo/:id`)
 
-## Pedidos a mover
-| Pedido | Tipo Entrega | Destino |
-|--------|-------------|---------|
-| 0189   | entrega     | aguardando_coleta |
-| 0194   | instalacao  | instalacoes |
-| 0216   | instalacao  | instalacoes |
-| 0217   | entrega     | aguardando_coleta |
+## Alteracoes tecnicas
 
-## Alteracoes
+### 1. `src/components/expedicao/NeoServicosDisponiveis.tsx`
+- Adicionar props `onEditarInstalacao` e `onEditarCorrecao` na interface
+- Importar icone `Pencil` do lucide-react
+- Na coluna "Acao" da tabela (linha 307-316), adicionar um botao com icone `Pencil` antes do botao "Agendar"
+- O botao chamara a prop correspondente ao tipo do servico, passando o objeto original
 
-### 1. Migração SQL - Mover os 4 pedidos
-Executar migracao para:
-- Fechar a etapa `embalagem` (setar `data_saida`) dos 4 pedidos
-- Criar/upsert a etapa destino correta para cada pedido (`aguardando_coleta` ou `instalacoes`)
-
-### 2. `src/utils/pedidoFluxograma.ts` - Atualizar fluxograma visual
-Na funcao `determinarFluxograma`, a embalagem so deve ser adicionada ao fluxo quando o pedido tem pintura (linha 114-115):
-
-```
-// Antes: embalagem é obrigatória para todos
-baseFlow.push(FLUXOGRAMA_ETAPAS.embalagem);
-
-// Depois: embalagem apenas quando tem pintura
-if (temPintura) {
-  baseFlow.push(FLUXOGRAMA_ETAPAS.embalagem);
-}
-```
-
-### 3. `src/hooks/usePedidosEtapas.ts` - Logica de avanço
-Na secao que determina o destino ao sair de `inspecao_qualidade` (linhas 715-740), alterar o else (sem pintura) para verificar `tipo_entrega` e ir para `aguardando_coleta` ou `instalacoes` em vez de `embalagem`.
+### 2. `src/pages/logistica/ExpedicaoMinimalista.tsx`
+- Passar as props `onEditarInstalacao={handleEditarNeoInstalacao}` e `onEditarCorrecao={handleEditarNeoCorrecao}` ao componente `NeoServicosDisponiveis` (ja existem os handlers na pagina)
 
 ### Arquivos envolvidos
-- Migracao SQL (mover pedidos existentes)
-- `src/utils/pedidoFluxograma.ts` (fluxograma visual)
-- `src/hooks/usePedidosEtapas.ts` (logica de avanço)
+- `src/components/expedicao/NeoServicosDisponiveis.tsx`
+- `src/pages/logistica/ExpedicaoMinimalista.tsx`
