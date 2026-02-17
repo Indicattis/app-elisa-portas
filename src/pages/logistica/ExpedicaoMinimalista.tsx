@@ -867,7 +867,7 @@ export default function ExpedicaoMinimalista() {
                               enableDragAndDrop={true}
                               showPosicao={true}
                               hideOrdensStatus={true}
-                              hideCorrecaoButton={true}
+                              hideCorrecaoButton={false}
                             />
                             
                             {totalPaginas > 1 && (
