@@ -472,7 +472,7 @@ export default function GestaoFabricaDirecao() {
                   <div className="text-center py-8 text-white/60">
                     Carregando...
                   </div>
-                ) : pedidosFiltrados.length === 0 && !(etapaAtiva === 'instalacoes' && neoInstalacoes.length > 0) && !(etapaAtiva === 'correcoes' && neoCorrecoes.length > 0) ? (
+                ) : pedidosFiltrados.length === 0 && !(etapaAtiva === 'instalacoes' && neoInstalacoes.length > 0) && !(etapaAtiva === 'correcoes' && neoCorrecoes.length > 0) && !(etapaAtiva === 'finalizado' && (neoInstalacoesFinalizadas.length > 0 || neoCorrecoesFinalizadas.length > 0)) ? (
                   <div className="text-center py-8 text-white/60">
                     {searchTerm ? 'Nenhum pedido encontrado' : 'Nenhum pedido nesta etapa'}
                   </div>
