@@ -48,7 +48,7 @@ const PortaSVG = ({ largura, altura }: { largura: number; altura: number }) => {
       <text x={15} y={doorY + doorH / 2} textAnchor="middle"
         className="text-emerald-400 text-[9px] font-medium" fill="currentColor"
         transform={`rotate(-90, 15, ${doorY + doorH / 2})`}>
-        {altura > 0 ? `${altura}m` : '?'}
+        {altura > 0 ? `${altura.toFixed(2)}m` : '?'}
       </text>
 
       {/* Width arrow (bottom) */}
@@ -60,7 +60,7 @@ const PortaSVG = ({ largura, altura }: { largura: number; altura: number }) => {
         fill="currentColor" className="text-amber-400/70" />
       <text x={doorX + doorW / 2} y={doorY + doorH + 32} textAnchor="middle"
         className="text-amber-400 text-[9px] font-medium" fill="currentColor">
-        {largura > 0 ? `${largura}m` : '?'}
+        {largura > 0 ? `${largura.toFixed(2)}m` : '?'}
       </text>
     </svg>
   );

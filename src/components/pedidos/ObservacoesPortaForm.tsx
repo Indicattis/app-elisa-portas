@@ -107,11 +107,11 @@ export function ObservacoesPortaForm({
   // Extrair medidas do campo tamanho se largura/altura estiverem vazios
   const getMedidas = () => {
     if (porta.largura && porta.altura) {
-      return `${porta.largura}m × ${porta.altura}m`;
+      return `${Number(porta.largura).toFixed(2)}m × ${Number(porta.altura).toFixed(2)}m`;
     }
     if (porta.tamanho && porta.tamanho.includes('x')) {
       const [largura, altura] = porta.tamanho.split('x');
-      return `${largura}m × ${altura}m`;
+      return `${Number(largura).toFixed(2)}m × ${Number(altura).toFixed(2)}m`;
     }
     return porta.tamanho || 'Medidas não informadas';
   };

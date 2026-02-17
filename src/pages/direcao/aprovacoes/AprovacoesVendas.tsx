@@ -170,7 +170,7 @@ export default function AprovacoesVendas() {
                         <span className="truncate flex-1">
                           {p.quantidade > 1 && <span className="font-medium">{p.quantidade}x </span>}
                           {p.descricao || p.tipo_produto}
-                          {p.largura && p.altura ? ` ${p.largura}x${p.altura}` : ''}
+                          {p.largura && p.altura ? ` ${Number(p.largura).toFixed(2)}m x ${Number(p.altura).toFixed(2)}m` : ''}
                         </span>
                         <span className="text-muted-foreground ml-2 flex-shrink-0">
                           R$ {((p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}

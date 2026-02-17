@@ -75,7 +75,7 @@ export function ProdutosOrcamentoTable({
           
           // Priorizar largura x altura sobre medidas (para novos registros)
           const detalhes = (produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social')
-            ? (produto.largura && produto.altura ? `${produto.largura}x${produto.altura}` : produto.medidas)
+            ? (produto.largura && produto.altura ? `${Number(produto.largura).toFixed(2)}m x ${Number(produto.altura).toFixed(2)}m` : produto.medidas)
             : produto.descricao || '-';
           
           return (

@@ -73,7 +73,7 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
           
           // Priorizar largura x altura sobre tamanho (para novos registros)
           const detalhes = (produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social' || produto.tipo_produto === 'porta')
-            ? (produto.largura && produto.altura ? `${produto.largura}x${produto.altura}` : produto.tamanho)
+            ? (produto.largura && produto.altura ? `${Number(produto.largura).toFixed(2)}m x ${Number(produto.altura).toFixed(2)}m` : produto.tamanho)
             : produto.descricao || '-';
           
           return (

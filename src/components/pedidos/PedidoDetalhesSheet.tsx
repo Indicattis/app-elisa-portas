@@ -687,7 +687,7 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                         {obs.produto && (
                           <span className="text-amber-300/70 ml-2">
                             - {obs.produto.largura && obs.produto.altura 
-                                ? `${obs.produto.largura}m × ${obs.produto.altura}m`
+                                ? `${Number(obs.produto.largura).toFixed(2)}m × ${Number(obs.produto.altura).toFixed(2)}m`
                                 : obs.produto.tamanho || ''}
                           </span>
                         )}

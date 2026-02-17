@@ -411,7 +411,7 @@ export default function PedidoPreparacao() {
                     const meiaCanas = calcularMeiaCanas(produto);
                     const tamanhoDisplay = produto.tamanho || 
                       (produto.largura && produto.altura 
-                        ? `${produto.largura} x ${produto.altura}` 
+                        ? `${Number(produto.largura).toFixed(2)}m x ${Number(produto.altura).toFixed(2)}m` 
                         : '—');
 
                     return (

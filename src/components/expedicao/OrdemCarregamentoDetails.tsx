@@ -39,7 +39,7 @@ export const OrdemCarregamentoDetails = ({
 
   const formatTamanho = (produto: any) => {
     if (produto.tamanho) return produto.tamanho;
-    if (produto.largura && produto.altura) return `${produto.largura}m × ${produto.altura}m`;
+    if (produto.largura && produto.altura) return `${Number(produto.largura).toFixed(2)}m × ${Number(produto.altura).toFixed(2)}m`;
     return null;
   };
 
