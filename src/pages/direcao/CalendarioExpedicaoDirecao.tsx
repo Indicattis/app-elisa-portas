@@ -42,8 +42,8 @@ export default function CalendarioExpedicaoDirecao() {
   const { neoCorrecoes } = useNeoCorrecoes(currentDate, viewType);
   
   // Neo serviços sem data (pendentes de agendamento)
-  const { neoInstalacoesSemData, updateNeoInstalacao, isLoading: isLoadingNeoInstalacoes } = useNeoInstalacoesSemData();
-  const { neoCorrecoesSemData, updateNeoCorrecao, isLoading: isLoadingNeoCorrecoes } = useNeoCorrecoesSemData();
+  const { neoInstalacoesSemData, updateNeoInstalacao, isLoading: isLoadingNeoInstalacoes, reorganizarNeoInstalacoes } = useNeoInstalacoesSemData();
+  const { neoCorrecoesSemData, updateNeoCorrecao, isLoading: isLoadingNeoCorrecoes, reorganizarNeoCorrecoes } = useNeoCorrecoesSemData();
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -299,6 +299,8 @@ export default function CalendarioExpedicaoDirecao() {
                       onAgendarCorrecao={handleAgendarCorrecao}
                       isLoadingInstalacoes={isLoadingNeoInstalacoes}
                       isLoadingCorrecoes={isLoadingNeoCorrecoes}
+                      onReorganizarInstalacoes={reorganizarNeoInstalacoes}
+                      onReorganizarCorrecoes={reorganizarNeoCorrecoes}
                     />
                   </CardContent>
                 </Card>

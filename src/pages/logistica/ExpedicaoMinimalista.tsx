@@ -70,8 +70,8 @@ export default function ExpedicaoMinimalista() {
   const { neoCorrecoes, createNeoCorrecao, updateNeoCorrecao, deleteNeoCorrecao, concluirNeoCorrecao, isConcluindo: isConcluindoCorrecao } = useNeoCorrecoes(currentDate, viewType);
   
   // Hooks para serviços sem data (pendentes de agendamento)
-  const { neoInstalacoesSemData, updateNeoInstalacao: updateNeoInstalacaoSemData, isLoading: isLoadingInstalacoesSemData } = useNeoInstalacoesSemData();
-  const { neoCorrecoesSemData, updateNeoCorrecao: updateNeoCorrecaoSemData, isLoading: isLoadingCorrecoesSemData } = useNeoCorrecoesSemData();
+  const { neoInstalacoesSemData, updateNeoInstalacao: updateNeoInstalacaoSemData, isLoading: isLoadingInstalacoesSemData, reorganizarNeoInstalacoes } = useNeoInstalacoesSemData();
+  const { neoCorrecoesSemData, updateNeoCorrecao: updateNeoCorrecaoSemData, isLoading: isLoadingCorrecoesSemData, reorganizarNeoCorrecoes } = useNeoCorrecoesSemData();
 
   // Hooks para correções de pedidos
   const { correcoes: correcoesPedido, updateCorrecao, concluirCorrecao, isConcluindo: isConcluindoCorrecaoPedido } = useCorrecoes(currentDate, viewType);
@@ -549,6 +549,8 @@ export default function ExpedicaoMinimalista() {
                       onEditarCorrecao={handleEditarNeoCorrecao}
                       isLoadingInstalacoes={isLoadingInstalacoesSemData}
                       isLoadingCorrecoes={isLoadingCorrecoesSemData || isLoadingCorrecoesSemDataPedido}
+                      onReorganizarInstalacoes={reorganizarNeoInstalacoes}
+                      onReorganizarCorrecoes={reorganizarNeoCorrecoes}
                     />
                   )}
                 </CardContent>

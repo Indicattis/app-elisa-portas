@@ -481,6 +481,7 @@ export const useNeoCorrecoesSemData = () => {
         .select("*")
         .is("data_correcao", null)
         .eq("concluida", false)
+        .order("prioridade_gestao", { ascending: false })
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -572,10 +573,30 @@ export const useNeoCorrecoesSemData = () => {
     };
   }, [queryClient]);
 
+  const reorganizarMutation = useMutation({
+    mutationFn: async (updates: { id: string; prioridade_gestao: number }[]) => {
+      for (const update of updates) {
+        const { error } = await supabase
+          .from("neo_correcoes")
+          .update({ prioridade_gestao: update.prioridade_gestao, updated_at: new Date().toISOString() })
+          .eq("id", update.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_sem_data"] });
+    },
+    onError: (error) => {
+      console.error("Erro ao reorganizar neo correções:", error);
+      toast.error("Erro ao reorganizar");
+    },
+  });
+
   return {
     neoCorrecoesSemData,
     isLoading,
     updateNeoCorrecao: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
+    reorganizarNeoCorrecoes: reorganizarMutation.mutate,
   };
 };

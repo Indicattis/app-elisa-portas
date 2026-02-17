@@ -511,6 +511,7 @@ export const useNeoInstalacoesSemData = () => {
         .select("*")
         .is("data_instalacao", null)
         .eq("concluida", false)
+        .order("prioridade_gestao", { ascending: false })
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -602,10 +603,30 @@ export const useNeoInstalacoesSemData = () => {
     };
   }, [queryClient]);
 
+  const reorganizarMutation = useMutation({
+    mutationFn: async (updates: { id: string; prioridade_gestao: number }[]) => {
+      for (const update of updates) {
+        const { error } = await supabase
+          .from("neo_instalacoes")
+          .update({ prioridade_gestao: update.prioridade_gestao, updated_at: new Date().toISOString() })
+          .eq("id", update.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_sem_data"] });
+    },
+    onError: (error) => {
+      console.error("Erro ao reorganizar neo instalações:", error);
+      toast.error("Erro ao reorganizar");
+    },
+  });
+
   return {
     neoInstalacoesSemData,
     isLoading,
     updateNeoInstalacao: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
+    reorganizarNeoInstalacoes: reorganizarMutation.mutate,
   };
 };
