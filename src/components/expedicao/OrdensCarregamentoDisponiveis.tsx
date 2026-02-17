@@ -156,21 +156,67 @@ export const OrdensCarregamentoDisponiveis = ({
     // Status para ordens_carregamento: 'agendada'
     const statusValue = params.fonte === 'instalacoes' ? 'pronta_fabrica' : 'agendada';
 
-    const { error } = await supabase
-      .from(tabela)
-      .update({
-        data_carregamento: params.data_carregamento,
-        hora_carregamento: params.hora,
-        hora: horaValue,
-        tipo_carregamento: params.tipo_carregamento,
-        responsavel_carregamento_id: params.responsavel_carregamento_id,
-        responsavel_carregamento_nome: params.responsavel_carregamento_nome,
-        status: statusValue,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", params.ordemId);
+    if (params.fonte === 'instalacoes') {
+      // Verificar se o registro existe na tabela instalacoes
+      const { data: existing } = await supabase
+        .from("instalacoes").select("id").eq("id", params.ordemId).maybeSingle();
 
-    if (error) throw error;
+      if (!existing) {
+        // Pedido órfão: buscar dados e criar registro
+        const { data: pedido } = await supabase
+          .from("pedidos_producao")
+          .select("id, venda_id, vendas(cliente_nome)")
+          .eq("id", params.ordemId).maybeSingle();
+
+        const nomeCliente = (pedido as any)?.vendas?.cliente_nome || 'Cliente';
+
+        const { error } = await supabase.from("instalacoes").insert({
+          pedido_id: params.ordemId,
+          venda_id: pedido?.venda_id || null,
+          nome_cliente: nomeCliente,
+          hora: horaValue,
+          status: statusValue,
+          instalacao_concluida: false,
+          carregamento_concluido: false,
+          data_carregamento: params.data_carregamento,
+          hora_carregamento: params.hora,
+          tipo_carregamento: params.tipo_carregamento,
+          responsavel_carregamento_id: params.responsavel_carregamento_id,
+          responsavel_carregamento_nome: params.responsavel_carregamento_nome,
+        } as any);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("instalacoes")
+          .update({
+            data_carregamento: params.data_carregamento,
+            hora_carregamento: params.hora,
+            hora: horaValue,
+            tipo_carregamento: params.tipo_carregamento,
+            responsavel_carregamento_id: params.responsavel_carregamento_id,
+            responsavel_carregamento_nome: params.responsavel_carregamento_nome,
+            status: statusValue,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", params.ordemId);
+        if (error) throw error;
+      }
+    } else {
+      const { error } = await supabase
+        .from("ordens_carregamento")
+        .update({
+          data_carregamento: params.data_carregamento,
+          hora_carregamento: params.hora,
+          hora: params.hora,
+          tipo_carregamento: params.tipo_carregamento,
+          responsavel_carregamento_id: params.responsavel_carregamento_id,
+          responsavel_carregamento_nome: params.responsavel_carregamento_nome,
+          status: 'agendada',
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", params.ordemId);
+      if (error) throw error;
+    }
 
     toast.success("Carregamento agendado com sucesso!");
     
