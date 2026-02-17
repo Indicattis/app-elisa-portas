@@ -1,46 +1,76 @@
 
-# Adicionar tags Neo/Pedido e tamanho de porta no modal de instalacoes da meta
+# Padronizar exibicao de medidas em metros com 2 casas decimais
 
 ## Resumo
 
-Atualizar o modal `InstalacoesDaMetaModal` para:
-1. Buscar instalacoes de AMBAS as tabelas (`neo_instalacoes` e `instalacoes`)
-2. Exibir badge de origem: "Neo" (verde) ou "Pedido" (azul)
-3. Exibir badge de tamanho da porta (P, G, GG) baseado na `metragem_quadrada` da tabela `instalacoes`
+Atualizar todos os componentes do projeto que exibem medidas em metros (largura, altura, tamanho) para sempre mostrar 2 casas decimais. A funcao `formatarTamanho` e `formatarDimensoes` ja existem em `src/utils/formatters.ts` — o trabalho e substituir exibicoes "cruas" por essas funcoes.
 
-## Logica
+## Arquivos a alterar
 
-### Fontes de dados
+### 1. `src/components/pedidos/MedidasPortasSection.tsx`
+- SVG: `${altura}m` e `${largura}m` -> usar `.toFixed(2)` (linhas 51, 63)
 
-- **neo_instalacoes**: ja busca hoje. Adicionar campo `_origem: 'neo'`. Nao tem metragem, entao tamanho sera null.
-- **instalacoes**: nova busca. Filtrar por `instalacao_concluida = true`, `instalacao_concluida_em` dentro do periodo da meta. Para meta de equipe, filtrar `responsavel_instalacao_id = meta.referencia_id`. Para gerente, todas. Buscar `metragem_quadrada` para classificar tamanho.
+### 2. `src/components/pedidos/LinhasAgrupadasPorPorta.tsx`
+- `${porta.largura}m x ${porta.altura}m` -> `formatarDimensoes(porta.largura, porta.altura)` (linha 186)
+- `${linha.largura}x${linha.altura}` -> formatar com `.toFixed(2)` (linha 108)
 
-### Classificacao de tamanho (mesma logica do ranking)
+### 3. `src/components/pedidos/PedidoDetalhesSheet.tsx`
+- `${obs.produto.largura}m x ${obs.produto.altura}m` -> `formatarDimensoes(...)` (linha 690)
 
-- P (Pequena): metragem < 25 m2
-- G (Grande): 25 - 50 m2
-- GG (Extra Grande): > 50 m2
+### 4. `src/components/pedidos/ObservacoesPortaForm.tsx`
+- `${porta.largura}m x ${porta.altura}m` -> `formatarDimensoes(...)` (linha 110)
+- Tambem formatar o fallback do `tamanho.split('x')` (linhas 113-114)
 
-### Meta de gerente
+### 5. `src/components/pedidos/ObservacoesPortaSocialForm.tsx`
+- Mesma correcao que o anterior (linhas 98, 101-102)
 
-Contabiliza TODAS as instalacoes concluidas no periodo, tanto de `neo_instalacoes` quanto de `instalacoes`.
+### 6. `src/components/pedidos/AcaoEtapaModal.tsx`
+- `{largura}m x {altura}m` -> formatar com `.toFixed(2)` (linha 114)
 
-### Meta de equipe
+### 7. `src/components/vendas/ProdutosVendaTable.tsx`
+- `${produto.largura}x${produto.altura}` -> `formatarDimensoes(...)` ou `.toFixed(2)` (linha 76)
 
-- `neo_instalacoes`: filtra por `equipe_id`
-- `instalacoes`: filtra por `responsavel_instalacao_id = equipe_id` (mesmo padrao do ranking)
+### 8. `src/components/vendas/DescontoVendaModal.tsx`
+- `${produto.largura}x${produto.altura}` -> formatar (linha 205)
 
-## Alteracoes
+### 9. `src/components/orcamentos/ProdutosOrcamentoTable.tsx`
+- `${produto.largura}x${produto.altura}` -> formatar (linha 78)
 
-### Arquivo: `src/components/metas/InstalacoesDaMetaModal.tsx`
+### 10. `src/components/instalacoes/OrdemInstalacaoDetails.tsx`
+- `formatTamanho` local: `${produto.largura}m x ${produto.altura}m` -> usar `formatarDimensoes` (linha 49)
 
-- Refatorar a query para buscar de ambas as tabelas em paralelo (Promise.all)
-- Da tabela `instalacoes`: buscar `id, nome_cliente, metragem_quadrada, instalacao_concluida_em` com filtros de periodo e `instalacao_concluida = true`, `pedido_id IS NOT NULL`
-- Combinar resultados com campo `origem` ('neo' ou 'pedido') e `metragem`
-- Ordenar por data decrescente
-- Exibir badges:
-  - Origem: Badge azul "Pedido" ou verde "Neo"
-  - Tamanho: Badge outline "P", "G" ou "GG" (quando metragem disponivel)
-- Atualizar contagem de progresso para refletir total combinado
+### 11. `src/components/expedicao/OrdemCarregamentoDetails.tsx`
+- `formatTamanho` local: mesma correcao (linha 42)
 
-### Nenhum arquivo novo necessario
+### 12. `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx`
+- `${p.largura}m x ${p.altura}m` -> `formatarDimensoes(...)` (linha 128)
+
+### 13. `src/components/fabrica/LinhasAgrupadasPorPortaSheet.tsx`
+- `${linha.largura}x${linha.altura}` -> formatar (linha 108)
+
+### 14. `src/components/fabrica/OrdemLinhasSheet.tsx`
+- `Number(linha.largura).toFixed(2)m x Number(linha.altura).toFixed(2)m` -> ja esta OK com `.toFixed(2)`, manter
+
+### 15. `src/pages/PedidoView.tsx`
+- `${porta.largura}m x ${porta.altura}m` -> `formatarDimensoes(...)` (linha 580)
+
+### 16. `src/pages/PedidoPreparacao.tsx`
+- `${produto.largura} x ${produto.altura}` -> formatar (linha 414)
+
+### 17. `src/pages/administrativo/PedidoViewMinimalista.tsx`
+- `${porta.largura}m x ${porta.altura}m` -> `formatarDimensoes(...)` (linha 403)
+
+### 18. `src/pages/direcao/AprovacoesVendas.tsx`
+- `${p.largura}x${p.altura}` -> formatar (linha 173)
+
+### 19. `src/pages/direcao/VendaDetalhesDirecao.tsx`
+- `produto.largura.toFixed(2) x produto.altura.toFixed(2)m` -> ja esta OK, manter
+
+### 20. `src/components/expedicao/OrdensCarregamentoDisponiveis.tsx`
+- `porta.largura.toFixed(2)m x porta.altura.toFixed(2)m` -> ja esta OK, manter
+
+## Estrategia
+
+Usar a funcao `formatarDimensoes` de `src/utils/formatters.ts` onde se exibe "largura x altura" em metros, e `formatarTamanho` onde se exibe um valor unico. Onde necessario, usar `Number(valor).toFixed(2)` inline. Todos os displays passarao a mostrar sempre 2 casas decimais (ex: `2.80m x 3.00m` em vez de `2.8m x 3m`).
+
+Sao aproximadamente 18 arquivos com alteracoes pontuais (1-3 linhas cada).
