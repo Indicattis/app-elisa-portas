@@ -200,8 +200,52 @@ export const useOrdensCarregamentoUnificadas = () => {
         (inst) => inst.pedido?.etapa_atual === 'instalacoes' || inst.pedido?.etapa_atual === 'aguardando_coleta' || inst.status === 'pronta_fabrica'
       );
 
+      // ===== 2b. Query leve: buscar TODOS os pedido_ids de instalacoes (sem filtros) para deduplicação =====
+      const { data: todosInstalacoesPedidoIds } = await supabase
+        .from("instalacoes")
+        .select("pedido_id")
+        .not("pedido_id", "is", null);
+
+      const todosIdsInstalacoes = new Set(
+        (todosInstalacoesPedidoIds || []).map(i => i.pedido_id)
+      );
+
+      // ===== 2c. Buscar pedidos "órfãos" nas etapas corretas sem registro em nenhuma tabela =====
+      const { data: pedidosOrfaos } = await supabase
+        .from("pedidos_producao")
+        .select(`
+          id,
+          numero_pedido,
+          etapa_atual,
+          observacoes,
+          updated_at,
+          vendas:vendas!inner(
+            id, cliente_nome, cliente_telefone, cliente_email,
+            cidade, estado, bairro, cep, tipo_entrega, atendente_id,
+            produtos:produtos_vendas(
+              tipo_produto, tamanho, largura, altura, quantidade,
+              cor:catalogo_cores(nome, codigo_hex)
+            )
+          )
+        `)
+        .in("etapa_atual", ["instalacoes", "aguardando_coleta"]);
+
+      // IDs de pedidos já presentes em ordens_carregamento
+      const pedidoIdsOrdens = new Set(ordensUnicasPorPedido.map(o => o.pedido_id).filter(Boolean));
+
+      // Filtrar órfãos: não tem registro em instalacoes NEM em ordens_carregamento
+      const orfaosReais = (pedidosOrfaos || []).filter(p => 
+        !todosIdsInstalacoes.has(p.id) && !pedidoIdsOrdens.has(p.id)
+      );
+
       // Buscar dados dos vendedores para instalações também
-      const instAtendenteIds = [...new Set(instalacoesParaCarregar.map(i => i.venda?.atendente_id).filter(Boolean))] as string[];
+      const instAtendenteIds = [...new Set([
+        ...instalacoesParaCarregar.map(i => i.venda?.atendente_id),
+        ...orfaosReais.map(p => {
+          const venda = Array.isArray(p.vendas) ? p.vendas[0] : p.vendas;
+          return venda?.atendente_id;
+        })
+      ].filter(Boolean))] as string[];
       const { data: instVendedores } = instAtendenteIds.length > 0
         ? await supabase
             .from("admin_users")
@@ -212,9 +256,6 @@ export const useOrdensCarregamentoUnificadas = () => {
       (instVendedores || []).forEach(v => vendedoresMap.set(v.user_id, v));
 
       // ===== 3. Deduplicar e normalizar =====
-      // Remover ordens_carregamento cujo pedido_id já existe em QUALQUER instalação (não apenas as filtradas)
-      // Isso garante que pedidos com instalação (mesmo já agendada/concluída) sejam gerenciados exclusivamente pela tabela instalacoes
-      const todosIdsInstalacoes = new Set((instalacoes || []).map(i => i.pedido_id).filter(Boolean));
       const ordensDeduplicadas = ordensUnicasPorPedido.filter(o => !o.pedido_id || !todosIdsInstalacoes.has(o.pedido_id));
 
       const ordensNormalizadas: OrdemCarregamentoUnificada[] = [
@@ -274,6 +315,53 @@ export const useOrdensCarregamentoUnificadas = () => {
             venda: inst.venda ? {
               ...inst.venda,
               tipo_entrega: inst.venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null,
+            } : null,
+            vendedor: vendedorData ? {
+              id: vendedorData.user_id,
+              nome: vendedorData.nome,
+              foto_perfil_url: vendedorData.foto_perfil_url,
+            } : null,
+          };
+        }),
+        // Pedidos "órfãos" (nas etapas corretas mas sem registro em instalacoes nem ordens_carregamento)
+        ...orfaosReais.map((pedido): OrdemCarregamentoUnificada => {
+          const venda = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
+          const vendedorData = venda?.atendente_id ? vendedoresMap.get(venda.atendente_id) : null;
+          return {
+            id: pedido.id, // usando pedido_id como id temporário
+            fonte: 'instalacoes',
+            pedido_id: pedido.id,
+            venda_id: venda?.id || null,
+            nome_cliente: venda?.cliente_nome || 'Cliente não identificado',
+            data_carregamento: null,
+            hora_carregamento: null,
+            hora: null,
+            tipo_carregamento: null,
+            responsavel_carregamento_id: null,
+            responsavel_carregamento_nome: null,
+            carregamento_concluido: false,
+            status: 'pendente_producao',
+            tipo_entrega: (venda?.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null) || 'instalacao',
+            observacoes: pedido.observacoes,
+            created_at: pedido.updated_at,
+            pedido: {
+              id: pedido.id,
+              numero_pedido: pedido.numero_pedido,
+              etapa_atual: pedido.etapa_atual || undefined,
+              observacoes: pedido.observacoes || undefined,
+              updated_at: pedido.updated_at || undefined,
+            },
+            venda: venda ? {
+              id: venda.id,
+              cliente_nome: venda.cliente_nome,
+              cliente_telefone: venda.cliente_telefone,
+              cliente_email: venda.cliente_email,
+              cidade: venda.cidade,
+              estado: venda.estado,
+              bairro: venda.bairro,
+              cep: venda.cep,
+              tipo_entrega: venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null,
+              produtos: venda.produtos,
             } : null,
             vendedor: vendedorData ? {
               id: vendedorData.user_id,
