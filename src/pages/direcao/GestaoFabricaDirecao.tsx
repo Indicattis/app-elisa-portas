@@ -635,6 +635,7 @@ export default function GestaoFabricaDirecao() {
         <p className="mt-2 text-[10px] text-muted-foreground/60">* Horário comercial: 07:00 às 17:00, seg-sex. Tempo total usa dias corridos.</p>
       </div>
 
+      <CriarPedidoTesteModal
         open={modalPedidoTesteAberto}
         onOpenChange={setModalPedidoTesteAberto}
         onSuccess={() => {
