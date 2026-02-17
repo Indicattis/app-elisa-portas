@@ -1,67 +1,35 @@
 
-# Corrigir lista de ordens disponiveis para agendamento
 
-## Problema
+# Ordenar Servicos Avulsos por prioridade e habilitar drag-and-drop no Controle
 
-Dois problemas distintos causam a discrepancia:
+## Resumo
 
-### Problema 1: Ordens aparecendo indevidamente (0119 Silmar, 0136 Mariza, 0146 Odir)
-Esses pedidos possuem registros em `instalacoes` com `carregamento_concluido = true`. A query atual filtra por `carregamento_concluido = false`, entao esses registros nao entram na variavel `instalacoes`. Como resultado, o Set `todosIdsInstalacoes` nao inclui esses pedido_ids, e os registros "orfaos" em `ordens_carregamento` (com `carregamento_concluido = false`) passam pela deduplicacao e aparecem na lista.
+Duas alteracoes solicitadas:
 
-### Problema 2: Ordens que deveriam aparecer mas nao aparecem (0189, 0194, 0216, 0217)
-Esses pedidos estao nas etapas corretas (`instalacoes` ou `aguardando_coleta`) mas NAO possuem registros em nenhuma das duas tabelas (`instalacoes` nem `ordens_carregamento`). Como o hook so busca dados dessas duas tabelas, esses pedidos simplesmente nao existem na lista.
+1. **Expedicao - Servicos Avulsos Pendentes**: A lista em `/logistica/expedicao` deve respeitar a mesma ordenacao por `prioridade_gestao` definida em `/direcao/gestao-fabrica`, em vez de ordenar por `created_at`.
 
-## Solucao
+2. **Controle de Logistica - Drag and Drop**: Em `/logistica/controle`, o usuario deve poder reordenar pedidos via drag-and-drop (atualmente `enableDragAndDrop={false}`).
 
-### Arquivo: `src/hooks/useOrdensCarregamentoUnificadas.ts`
+---
 
-#### Correcao 1: Buscar TODOS os pedido_ids de instalacoes para deduplicacao
+## Detalhes tecnicos
 
-Adicionar uma query separada e leve para obter todos os `pedido_id` da tabela `instalacoes` (sem filtros), usada exclusivamente para deduplicacao:
+### 1. Ordenacao dos Servicos Avulsos na Expedicao
 
-```typescript
-// Query leve: buscar TODOS os pedido_ids de instalacoes (sem filtros)
-const { data: todosInstalacoesPedidoIds } = await supabase
-  .from("instalacoes")
-  .select("pedido_id")
-  .not("pedido_id", "is", null);
+**Arquivos:** `src/hooks/useNeoInstalacoes.ts`, `src/hooks/useNeoCorrecoes.ts`
 
-const todosIdsInstalacoes = new Set(
-  (todosInstalacoesPedidoIds || []).map(i => i.pedido_id)
-);
-```
+Os hooks `useNeoInstalacoesSemData` e `useNeoCorrecoesSemData` atualmente ordenam por `created_at desc`. Alterar para ordenar por `prioridade_gestao desc` (igual ao hook de listagem da gestao de fabrica):
 
-Usar esse Set na deduplicacao cruzada em vez do Set construido a partir da query filtrada.
+- `useNeoInstalacoesSemData`: trocar `.order("created_at", { ascending: false })` por `.order("prioridade_gestao", { ascending: false }).order("created_at", { ascending: false })`
+- `useNeoCorrecoesSemData`: mesma alteracao
 
-#### Correcao 2: Buscar pedidos "orfaos" diretamente da tabela pedidos_producao
+O componente `NeoServicosDisponiveis` ja recebe os dados ordenados, entao nenhuma alteracao e necessaria nele.
 
-Adicionar uma query para pedidos nas etapas relevantes que nao possuem registros em nenhuma das duas tabelas, e criar entradas sinteticas para eles:
+### 2. Habilitar drag-and-drop no Controle de Logistica
 
-```typescript
-// Buscar pedidos nas etapas de instalacao/coleta que nao tem registros
-const { data: pedidosOrfaos } = await supabase
-  .from("pedidos_producao")
-  .select(`
-    id,
-    numero_pedido,
-    etapa_atual,
-    observacoes,
-    updated_at,
-    vendas!inner(
-      id, cliente_nome, cliente_telefone, cliente_email,
-      cidade, estado, bairro, cep, tipo_entrega, atendente_id,
-      produtos:produtos_vendas(
-        tipo_produto, tamanho, largura, altura, quantidade,
-        cor:catalogo_cores(nome, codigo_hex)
-      )
-    )
-  `)
-  .in("etapa_atual", ["instalacoes", "aguardando_coleta"]);
-```
+**Arquivo:** `src/pages/logistica/ControleLogistica.tsx`
 
-Filtrar apenas os que nao tem registro em `instalacoes` nem em `ordens_carregamento`, e adiciona-los como entradas sinteticas do tipo `instalacoes` na lista final.
+Alterar a prop `enableDragAndDrop={false}` para `enableDragAndDrop={true}` no componente `PedidosDraggableList` (linha 465). Tambem alterar `showPosicao={false}` para `showPosicao={true}` (linha 466) para que o usuario veja a posicao dos pedidos.
 
-### Impacto
-- Pedidos com carregamento ja concluido na tabela instalacoes nao vazam mais via ordens_carregamento
-- Pedidos nas etapas corretas sem registro em nenhuma tabela passam a aparecer
-- A contagem de ordens disponiveis vai coincidir com os pedidos nao agendados em /logistica/controle
+A infraestrutura de drag-and-drop ja existe no componente `PedidosDraggableList` e os handlers `handleReorganizar` e `handleMoverPrioridade` ja estao implementados na pagina.
+
