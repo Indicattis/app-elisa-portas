@@ -1,57 +1,52 @@
 
-# Corrigir agendamento de ordens orfaos via painel lateral
 
-## Problema
+# Adicionar drag-and-drop para reordenar Servicos Avulsos Pendentes
 
-O fix anterior foi aplicado apenas no hook `useOrdensCarregamentoCalendario.ts` (usado pelos cards do calendario). Porem, o agendamento via painel lateral "Ordens Disponiveis para Agendamento" usa codigo diferente -- a funcao `handleConfirmAgendar` em dois arquivos faz chamadas diretas ao Supabase sem tratar pedidos orfaos. Para orfaos, o `id` da ordem e na verdade o `pedido_id`, entao o `.update().eq("id", ordemId)` na tabela `instalacoes` nao encontra nenhum registro e silenciosamente falha.
+## Resumo
 
-## Solucao
+A listagem de "Servicos Avulsos Pendentes" em `/logistica/expedicao` atualmente e uma tabela estatica sem possibilidade de reordenacao. Vamos adicionar drag-and-drop para permitir reorganizar a prioridade dos servicos, seguindo o mesmo padrao ja utilizado em `NeoDraggableList.tsx` na gestao de fabrica.
 
-Aplicar a mesma logica de "verificar se existe, senao INSERT" nos dois arquivos que fazem agendamento direto:
+## Alteracoes necessarias
 
-### 1. Arquivo: `src/components/expedicao/OrdensCarregamentoDisponiveis.tsx`
+### 1. Hooks: adicionar ordenacao por prioridade e mutation de reorganizacao
 
-Na funcao `handleConfirmAgendar` (linhas 140-184), quando `fonte === 'instalacoes'`:
+**Arquivo: `src/hooks/useNeoInstalacoesSemData`** (dentro de `useNeoInstalacoes.ts`)
+- Alterar `.order("created_at", { ascending: false })` para `.order("prioridade_gestao", { ascending: false })` seguido de `.order("created_at", { ascending: false })` como fallback
+- Adicionar uma `reorganizarMutation` que atualiza `prioridade_gestao` para cada item (identica a que ja existe no hook principal `useNeoInstalacoes`)
+- Exportar `reorganizarNeoInstalacoes` no retorno do hook
 
-1. Antes do UPDATE, verificar se existe registro na tabela `instalacoes` com aquele `id`
-2. Se nao existir (orfao): buscar dados do pedido em `pedidos_producao` + `vendas`, e fazer INSERT com os dados de agendamento
-3. Se existir: fazer UPDATE normalmente como ja funciona
+**Arquivo: `src/hooks/useNeoCorrecoesSemData`** (dentro de `useNeoCorrecoes.ts`)
+- Mesma alteracao: ordenar por `prioridade_gestao` desc, depois `created_at` desc
+- Adicionar `reorganizarMutation` identica
+- Exportar `reorganizarNeoCorrecoes`
 
-### 2. Arquivo: `src/components/expedicao/OrdensCarregamentoDisponiveisMobile.tsx`
+### 2. Componente: adicionar DnD na tabela
 
-Mesma alteracao na funcao `handleConfirmAgendar` (linhas 132-177).
+**Arquivo: `src/components/expedicao/NeoServicosDisponiveis.tsx`**
+- Envolver a tabela com `DndContext` + `SortableContext` do `@dnd-kit`
+- Criar um componente `SortableTableRow` que usa `useSortable` para tornar cada linha arrastavel
+- Adicionar uma coluna de "grip handle" (icone de arrastar) como primeira coluna da tabela
+- Adicionar `DragOverlay` com portal para mostrar a linha sendo arrastada
+- Na funcao `handleDragEnd`, calcular a nova ordem e chamar `onReorganizar`
+- Adicionar props `onReorganizarInstalacoes` e `onReorganizarCorrecoes` na interface
 
-### Logica do INSERT (identica ao hook)
+### 3. Pagina: passar as funcoes de reorganizacao
 
-```
-// Verificar existencia
-const { data: existing } = await supabase
-  .from("instalacoes").select("id").eq("id", ordemId).maybeSingle();
+**Arquivo: `src/pages/logistica/ExpedicaoMinimalista.tsx`**
+- Importar `reorganizarNeoInstalacoes` e `reorganizarNeoCorrecoes` dos hooks sem data
+- Passar como props para `NeoServicosDisponiveis`
 
-if (!existing && fonte === 'instalacoes') {
-  // Buscar dados do pedido
-  const { data: pedido } = await supabase
-    .from("pedidos_producao")
-    .select("id, venda_id, vendas(cliente_nome)")
-    .eq("id", ordemId).maybeSingle();
+**Arquivo: `src/pages/direcao/CalendarioExpedicaoDirecao.tsx`**
+- Mesma alteracao para a pagina da direcao
 
-  // INSERT novo registro
-  await supabase.from("instalacoes").insert({
-    pedido_id: ordemId,
-    venda_id: pedido?.venda_id,
-    nome_cliente: pedido?.vendas?.cliente_nome,
-    hora: '08:00',
-    status: 'pronta_fabrica',
-    instalacao_concluida: false,
-    carregamento_concluido: false,
-    data_carregamento, hora_carregamento, tipo_carregamento,
-    responsavel_carregamento_id, responsavel_carregamento_nome
-  });
-} else {
-  // UPDATE normal
-}
-```
+### 4. Mobile: manter sem drag (conforme padrao do sistema)
 
-### Nenhuma outra alteracao necessaria
+O componente `NeoServicosDisponiveisMobile` NAO recebera drag-and-drop, seguindo o padrao existente onde DnD e desabilitado em mobile.
 
-A contagem de "Ordens Disponiveis para Agendamento" ja esta correta (o hook `useOrdensCarregamentoUnificadas` ja identifica e lista os pedidos orfaos). O problema e apenas que o agendamento falha silenciosamente ao tentar atualizar um registro inexistente.
+## Detalhes tecnicos
+
+- Usar `PointerSensor` com `activationConstraint: { distance: 8 }` para evitar conflito com cliques
+- A lista combinada (instalacoes + correcoes) sera ordenada por `prioridade_gestao` decrescente
+- Ao reorganizar, os IDs de instalacao e correcao serao separados e cada mutation chamada independentemente
+- O `DragOverlay` renderiza uma copia da linha com `createPortal` para o `document.body`
+
