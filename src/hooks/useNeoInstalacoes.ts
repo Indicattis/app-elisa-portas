@@ -491,11 +491,37 @@ export const useNeoInstalacoesFinalizadas = () => {
     },
   });
 
+  const arquivarMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("neo_instalacoes")
+        .update({
+          status: 'arquivada',
+          concluida: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_finalizadas"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_listagem"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos_contadores"] });
+      toast.success("Neo instalação arquivada com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Erro ao arquivar neo instalação:", error);
+      toast.error("Erro ao arquivar neo instalação");
+    },
+  });
+
   return {
     neoInstalacoesFinalizadas,
     isLoading,
     retornarNeoInstalacao: retornarMutation.mutateAsync,
     isRetornando: retornarMutation.isPending,
+    arquivarNeoInstalacao: arquivarMutation.mutateAsync,
+    isArquivando: arquivarMutation.isPending,
   };
 };
 

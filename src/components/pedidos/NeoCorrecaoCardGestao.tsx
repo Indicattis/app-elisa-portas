@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
-import { MapPin, Calendar, CalendarPlus, Clock, AlertTriangle, Check, DollarSign, Undo2, GripVertical } from "lucide-react";
+import { MapPin, Calendar, CalendarPlus, Clock, AlertTriangle, Check, DollarSign, Undo2, GripVertical, Archive } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -18,6 +18,7 @@ interface NeoCorrecaoCardGestaoProps {
   showConcluido?: boolean;
   onRetornar?: (id: string) => void;
   onAgendar?: (id: string) => void;
+  onArquivar?: (id: string) => void;
   dragHandleProps?: Record<string, any>;
   isDragging?: boolean;
 }
@@ -30,6 +31,7 @@ export function NeoCorrecaoCardGestao({
   showConcluido = false,
   onRetornar,
   onAgendar,
+  onArquivar,
   dragHandleProps,
   isDragging,
 }: NeoCorrecaoCardGestaoProps) {
@@ -305,6 +307,20 @@ export function NeoCorrecaoCardGestao({
                         title="Retornar para correções"
                       >
                         <Undo2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                    {onArquivar && (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="flex h-[20px] w-[20px] rounded-[3px] bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border-orange-500/50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onArquivar(neoCorrecao.id);
+                        }}
+                        title="Arquivar"
+                      >
+                        <Archive className="h-3 w-3" />
                       </Button>
                     )}
                   </>

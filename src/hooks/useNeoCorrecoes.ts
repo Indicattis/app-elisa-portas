@@ -461,11 +461,37 @@ export const useNeoCorrecoesFinalizadas = () => {
     },
   });
 
+  const arquivarMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("neo_correcoes")
+        .update({
+          status: 'arquivada',
+          concluida: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_finalizadas"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_listagem"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos_contadores"] });
+      toast.success("Neo correção arquivada com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Erro ao arquivar neo correção:", error);
+      toast.error("Erro ao arquivar neo correção");
+    },
+  });
+
   return {
     neoCorrecoesFinalizadas,
     isLoading,
     retornarNeoCorrecao: retornarMutation.mutateAsync,
     isRetornando: retornarMutation.isPending,
+    arquivarNeoCorrecao: arquivarMutation.mutateAsync,
+    isArquivando: arquivarMutation.isPending,
   };
 };
 

@@ -63,8 +63,8 @@ export default function GestaoFabricaDirecao() {
   const contadores = usePedidosContadores();
   const { neoInstalacoes, concluirNeoInstalacao, isConcluindo, reorganizarNeoInstalacoes } = useNeoInstalacoesListagem();
   const { neoCorrecoes, concluirNeoCorrecao, reorganizarNeoCorrecoes } = useNeoCorrecoesListagem();
-  const { neoInstalacoesFinalizadas, retornarNeoInstalacao, isRetornando: isRetornandoInstalacao } = useNeoInstalacoesFinalizadas();
-  const { neoCorrecoesFinalizadas, retornarNeoCorrecao, isRetornando: isRetornandoCorrecao } = useNeoCorrecoesFinalizadas();
+  const { neoInstalacoesFinalizadas, retornarNeoInstalacao, isRetornando: isRetornandoInstalacao, arquivarNeoInstalacao } = useNeoInstalacoesFinalizadas();
+  const { neoCorrecoesFinalizadas, retornarNeoCorrecao, isRetornando: isRetornandoCorrecao, arquivarNeoCorrecao } = useNeoCorrecoesFinalizadas();
   const { 
     getResponsavel, 
     atribuirResponsavel, 
@@ -220,6 +220,14 @@ export default function GestaoFabricaDirecao() {
 
   const handleRetornarNeoCorrecao = async (id: string) => {
     await retornarNeoCorrecao(id);
+  };
+
+  const handleArquivarNeoInstalacao = async (id: string) => {
+    await arquivarNeoInstalacao(id);
+  };
+
+  const handleArquivarNeoCorrecao = async (id: string) => {
+    await arquivarNeoCorrecao(id);
   };
 
   const handleArquivar = async (pedidoId: string) => {
@@ -502,6 +510,7 @@ export default function GestaoFabricaDirecao() {
                                 isConcluindo={isConcluindo}
                                 showConcluido
                                 onRetornar={handleRetornarNeoInstalacao}
+                                onArquivar={handleArquivarNeoInstalacao}
                               />
                             ))}
                           {neoCorrecoesFinalizadas
@@ -518,6 +527,7 @@ export default function GestaoFabricaDirecao() {
                                 onConcluir={handleConcluirNeoCorrecao}
                                 showConcluido
                                 onRetornar={handleRetornarNeoCorrecao}
+                                onArquivar={handleArquivarNeoCorrecao}
                               />
                             ))}
                         </div>
