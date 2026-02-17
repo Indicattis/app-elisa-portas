@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Save, RefreshCw, Ruler } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { expandirPortasPorQuantidade, getLabelPortaExpandida } from "@/utils/expandirPortas";
 
 interface MedidasPortasSectionProps {
@@ -66,6 +67,7 @@ const PortaSVG = ({ largura, altura }: { largura: number; altura: number }) => {
 };
 
 export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSectionProps) {
+  const queryClient = useQueryClient();
   const portasRaw = produtos.filter((p: any) => p.tipo_produto === 'porta_enrolar');
   const portas = expandirPortasPorQuantidade(portasRaw);
 
@@ -103,6 +105,7 @@ export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSecti
 
       if (error) throw error;
       toast.success("Medidas salvas com sucesso");
+      queryClient.invalidateQueries({ queryKey: ['produtos-venda'] });
     } catch (error) {
       console.error('Erro ao salvar medidas:', error);
       toast.error("Erro ao salvar medidas");
