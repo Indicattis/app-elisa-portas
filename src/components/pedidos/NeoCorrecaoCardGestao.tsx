@@ -324,7 +324,7 @@ export function NeoCorrecaoCardGestao({
                       </Button>
                     )}
                   </>
-                ) : onConcluir && (
+                ) : onConcluir && neoCorrecao.data_correcao && (
                   <Button
                     size="icon"
                     variant="outline"
@@ -408,7 +408,7 @@ export function NeoCorrecaoCardGestao({
         )}
       </div>
 
-      {onConcluir && (
+      {onConcluir && neoCorrecao.data_correcao && (
         <Button
           variant="outline"
           size="sm"
