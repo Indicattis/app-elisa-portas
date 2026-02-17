@@ -825,6 +825,7 @@ export default function ExpedicaoMinimalista() {
                                     setAgendarData(new Date());
                                     setAgendarModalOpen(true);
                                   }}
+                                  onEditar={handleEditarNeoInstalacao}
                                   onReorganizar={reorganizarNeoInstalacoesListagem}
                                 />
                                 {pedidosFiltrados.length > 0 && (
@@ -845,6 +846,7 @@ export default function ExpedicaoMinimalista() {
                                     setAgendarData(new Date());
                                     setAgendarModalOpen(true);
                                   }}
+                                  onEditar={handleEditarNeoCorrecao}
                                   onReorganizar={reorganizarNeoCorrecoesListagem}
                                 />
                                 {pedidosFiltrados.length > 0 && (

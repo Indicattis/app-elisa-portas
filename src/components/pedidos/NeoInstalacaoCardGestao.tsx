@@ -16,7 +16,8 @@ import {
   DollarSign,
   Undo2,
   GripVertical,
-  Archive
+  Archive,
+  Pencil
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -32,6 +33,7 @@ interface NeoInstalacaoCardGestaoProps {
   onRetornar?: (id: string) => void;
   onAgendar?: (id: string) => void;
   onArquivar?: (id: string) => void;
+  onEditar?: (neo: NeoInstalacao) => void;
   dragHandleProps?: Record<string, any>;
   isDragging?: boolean;
 }
@@ -45,6 +47,7 @@ export function NeoInstalacaoCardGestao({
   onRetornar,
   onAgendar,
   onArquivar,
+  onEditar,
   dragHandleProps,
   isDragging,
 }: NeoInstalacaoCardGestaoProps) {
@@ -283,6 +286,20 @@ export function NeoInstalacaoCardGestao({
 
               {/* Col 19: Botões de ação ou status concluído */}
               <div className="flex items-center justify-end gap-1" style={{ gridColumn: '19 / -1' }}>
+                {onEditar && !showConcluido && (
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="flex h-[20px] w-[20px] rounded-[3px] bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 border-yellow-500/50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditar(neoInstalacao);
+                    }}
+                    title="Editar Neo Instalação"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                )}
                 {onAgendar && !showConcluido && !neoInstalacao.data_instalacao && (
                   <Button
                     size="icon"
