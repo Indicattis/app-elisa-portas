@@ -26,7 +26,6 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ROLE_LABELS } from "@/types/permissions";
 import { EditColaboradorModal } from "@/components/colaboradores/EditColaboradorModal";
-import { AddColaboradorDialog } from "@/components/colaboradores/AddColaboradorDialog";
 import { gerarColaboradoresPDF } from "@/utils/colaboradoresPDFGenerator";
 
 interface Colaborador {
@@ -167,9 +166,12 @@ export default function ColaboradoresMinimalista() {
 
   const headerActions = (
     <div className="flex items-center gap-2">
-      <AddColaboradorDialog 
-        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["colaboradores-minimalista"] })} 
-      />
+      <Button
+        onClick={() => navigate("/administrativo/rh-dp/colaboradores/novo")}
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Adicionar Colaborador
+      </Button>
       <Button
         variant="outline"
         size="sm"
