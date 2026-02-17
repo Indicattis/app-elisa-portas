@@ -2,7 +2,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus, ShieldCheck } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays } from "lucide-react";
+import { CalendarioExpedicaoModal } from "@/components/pedidos/CalendarioExpedicaoModal";
 import { CriarPedidoTesteModal } from "@/components/pedidos/CriarPedidoTesteModal";
 import { SelecionarResponsavelEtapaModal } from "@/components/pedidos/SelecionarResponsavelEtapaModal";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ export default function GestaoFabricaDirecao() {
   const [modalPedidoTesteAberto, setModalPedidoTesteAberto] = useState(false);
   const [modalResponsavelAberto, setModalResponsavelAberto] = useState(false);
   const [etapaParaAtribuir, setEtapaParaAtribuir] = useState<EtapaPedido | null>(null);
+  const [showCalendarioModal, setShowCalendarioModal] = useState(false);
   
   const contadores = usePedidosContadores();
   const { neoInstalacoes, concluirNeoInstalacao, isConcluindo, reorganizarNeoInstalacoes } = useNeoInstalacoesListagem();
@@ -431,6 +433,25 @@ export default function GestaoFabricaDirecao() {
                           </TooltipProvider>
                         );
                       })()}
+                      {(etapaAtiva === 'instalacoes' || etapaAtiva === 'aguardando_coleta') && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowCalendarioModal(true)}
+                                className="h-7 px-2 text-white/70 hover:text-white hover:bg-primary/10"
+                              >
+                                <CalendarDays className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">Ver calendário de expedição</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </div>
                   </CardTitle>
                   
@@ -578,6 +599,11 @@ export default function GestaoFabricaDirecao() {
           isLoading={isAtribuindo}
         />
       )}
+
+      <CalendarioExpedicaoModal
+        open={showCalendarioModal}
+        onOpenChange={setShowCalendarioModal}
+      />
     </MinimalistLayout>
   );
 }
