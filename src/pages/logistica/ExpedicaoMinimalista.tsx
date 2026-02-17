@@ -191,13 +191,11 @@ export default function ExpedicaoMinimalista() {
 
   // Handlers para edição
   const handleEditarNeoInstalacao = (neo: NeoInstalacao) => {
-    setEditingNeoInstalacao(neo);
-    setNeoModalOpen(true);
+    navigate(`/logistica/expedicao/editar-neo/${neo.id}?tipo=instalacao`);
   };
 
   const handleEditarNeoCorrecao = (neo: NeoCorrecao) => {
-    setEditingNeoCorrecao(neo);
-    setNeoCorrecaoModalOpen(true);
+    navigate(`/logistica/expedicao/editar-neo/${neo.id}?tipo=correcao`);
   };
 
   const handleSaveNeoInstalacao = async (dados: CriarNeoInstalacaoData) => {

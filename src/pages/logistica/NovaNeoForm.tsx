@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -37,20 +37,34 @@ interface Autorizado {
   estado: string | null;
 }
 
-type EditData =
-  | (NeoInstalacao & { _tipo: "neo_instalacao" })
-  | (NeoCorrecao & { _tipo: "neo_correcao" });
-
-export default function NeosCadastroForm() {
+export default function NovaNeoForm() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const tipoParam = searchParams.get("tipo") as "instalacao" | "correcao" | null;
   const queryClient = useQueryClient();
 
-  const editData = (location.state as { editData?: EditData } | null)?.editData;
-  const isEditing = !!editData;
+  const isEditing = !!id;
+
+  // Fetch existing data when editing
+  const { data: fetchedData, isLoading: isLoadingData } = useQuery({
+    queryKey: ["neo-edit", id, tipoParam],
+    queryFn: async () => {
+      if (!id || !tipoParam) return null;
+      const table = tipoParam === "instalacao" ? "neo_instalacoes" : "neo_correcoes";
+      const { data, error } = await supabase
+        .from(table)
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id && !!tipoParam,
+  });
 
   const [tipo, setTipo] = useState<"instalacao" | "correcao">(
-    editData?._tipo === "neo_correcao" ? "correcao" : "instalacao"
+    tipoParam === "correcao" ? "correcao" : "instalacao"
   );
   const [nomeCliente, setNomeCliente] = useState("");
   const [cidade, setCidade] = useState("");
@@ -81,27 +95,30 @@ export default function NeosCadastroForm() {
     loadData();
   }, []);
 
-  // Fill form when editing
+  // Fill form when fetched data arrives
   useEffect(() => {
-    if (!editData) return;
-    setNomeCliente(editData.nome_cliente || "");
-    setCidade(editData.cidade || "");
-    setEstado(editData.estado || "");
-    setTipoResponsavel(editData.tipo_responsavel || "equipe_interna");
-    setEquipeId(editData.equipe_id || "");
-    setAutorizadoId(editData.autorizado_id || "");
-    setDescricao(editData.descricao || "");
-    setValorTotal(editData.valor_total ? String(editData.valor_total) : "");
-    setValorAReceber(editData.valor_a_receber ? String(editData.valor_a_receber) : "");
-    setEtapaCausadora(editData.etapa_causadora || "");
+    if (!fetchedData) return;
+    const d = fetchedData as any;
+    setNomeCliente(d.nome_cliente || "");
+    setCidade(d.cidade || "");
+    setEstado(d.estado || "");
+    setTipoResponsavel(d.tipo_responsavel === "autorizado" ? "autorizado" : "equipe_interna");
+    setEquipeId(d.equipe_id || "");
+    setAutorizadoId(d.autorizado_id || "");
+    setDescricao(d.descricao || "");
+    setValorTotal(d.valor_total ? String(d.valor_total) : "");
+    setValorAReceber(d.valor_a_receber ? String(d.valor_a_receber) : "");
+    setEtapaCausadora(d.etapa_causadora || "");
 
-    if (editData._tipo === "neo_instalacao") {
-      setData((editData as NeoInstalacao).data_instalacao || "");
+    if (tipoParam === "instalacao") {
+      setTipo("instalacao");
+      setData(d.data_instalacao || "");
     } else {
-      setData((editData as NeoCorrecao).data_correcao || "");
-      setHora((editData as NeoCorrecao).hora?.substring(0, 5) || "");
+      setTipo("correcao");
+      setData(d.data_correcao || "");
+      setHora(d.hora?.substring(0, 5) || "");
     }
-  }, [editData]);
+  }, [fetchedData, tipoParam]);
 
   const createInstalacao = useMutation({
     mutationFn: async (dados: CriarNeoInstalacaoData) => {
@@ -190,15 +207,15 @@ export default function NeosCadastroForm() {
     try {
       if (tipo === "instalacao") {
         const dados: CriarNeoInstalacaoData = { ...baseData, data_instalacao: data || null, hora: null };
-        if (isEditing && editData?._tipo === "neo_instalacao") {
-          await updateInstalacao.mutateAsync({ id: editData.id, dados });
+        if (isEditing && id) {
+          await updateInstalacao.mutateAsync({ id, dados });
         } else {
           await createInstalacao.mutateAsync(dados);
         }
       } else {
         const dados: CriarNeoCorrecaoData = { ...baseData, data_correcao: data || null, hora: hora || null };
-        if (isEditing && editData?._tipo === "neo_correcao") {
-          await updateCorrecao.mutateAsync({ id: editData.id, dados });
+        if (isEditing && id) {
+          await updateCorrecao.mutateAsync({ id, dados });
         } else {
           await createCorrecao.mutateAsync(dados);
         }
@@ -208,6 +225,26 @@ export default function NeosCadastroForm() {
       // errors handled in mutation callbacks
     }
   };
+
+  if (isEditing && isLoadingData) {
+    return (
+      <MinimalistLayout
+        title="Carregando..."
+        subtitle="Buscando dados do serviço"
+        backPath="/logistica/expedicao"
+        breadcrumbItems={[
+          { label: "Home", path: "/home" },
+          { label: "Logística", path: "/logistica" },
+          { label: "Expedição", path: "/logistica/expedicao" },
+          { label: "Editar Neo" },
+        ]}
+      >
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </MinimalistLayout>
+    );
+  }
 
   return (
     <MinimalistLayout
