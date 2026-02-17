@@ -1,54 +1,52 @@
 
-# Criar pagina /direcao/metas/fabrica/instalacoes
+# Filtrar itens de separacao das ordens de embalagem
 
-## Resumo
+## Problema
 
-Criar uma pagina para listar os colaboradores do setor de instalacao, agrupados por equipe, seguindo o mesmo padrao visual da pagina de metas da fabrica (`MetasFabricaDirecao.tsx`). A pagina usara o `MinimalistLayout` e mostrara as equipes de instalacao com seus membros.
+A funcao `criar_ordem_embalagem` no banco de dados copia TODAS as linhas de `pedido_linhas` para a ordem de embalagem, incluindo itens de separacao (como "Cuica + Parafusos", "Central WI-FI"). A embalagem deve conter apenas itens dos setores de solda e perfiladeira.
 
-## Dados existentes
+## Solucao
 
-Colaboradores do setor de instalacao (roles: `gerente_instalacoes`, `instalador`, `aux_instalador`):
-- William Rodrigues Ramos (gerente)
-- Maicon Luan (instalador)
-- Paulo Roberto (instalador)
-- William Hoffmann (instalador)
-- Gabriel Nunes (aux)
-- Matheus das Neves (aux)
-- Wellington Kelvin (aux)
+### 1. Atualizar a funcao SQL `criar_ordem_embalagem`
 
-Equipes:
-- Equipe 1 (azul) - William Hoffmann + membro: William Hoffmann (?)
-- Equipe 2 (vermelho) - Paulo Roberto + membros: Gabriel Nunes
-- Equipe 3 (roxo) - Maicon Luan + membros: Matheus das Neves
+Adicionar filtro no loop que copia linhas de `pedido_linhas`, excluindo itens com `tipo_ordem = 'separacao'`:
 
-## Detalhes tecnicos
+```sql
+CREATE OR REPLACE FUNCTION public.criar_ordem_embalagem(p_pedido_id UUID)
+RETURNS void
+LANGUAGE plpgsql
+...
+  FOR v_linha IN
+    SELECT pl.nome_produto, pl.quantidade, pl.tamanho, pl.estoque_id, pl.produto_venda_id
+    FROM pedido_linhas pl
+    WHERE pl.pedido_id = p_pedido_id
+      AND (pl.tipo_ordem IS DISTINCT FROM 'separacao')
+  LOOP
+    ...
+  END LOOP;
+...
+```
 
-### 1. Novo arquivo: `src/pages/direcao/MetasInstalacoesDirecao.tsx`
+A condicao `IS DISTINCT FROM 'separacao'` inclui linhas com `tipo_ordem` igual a `perfiladeira`, `soldagem` ou `NULL`, excluindo apenas `separacao`.
 
-Pagina seguindo o padrao de `MetasFabricaDirecao.tsx`:
-- Usa `MinimalistLayout` com breadcrumbs (Home > Direcao > Metas > Instalacoes)
-- Busca colaboradores do setor de instalacao via `admin_users` (roles: `gerente_instalacoes`, `instalador`, `aux_instalador`)
-- Busca equipes via `equipes_instalacao` com membros
-- Agrupa por equipe: mostra cada equipe como um card com cor, responsavel e membros listados abaixo
-- Colaboradores sem equipe aparecem em secao separada "Sem equipe"
-- Cada colaborador mostra avatar, nome e role (traduzido)
-- Busca metas individuais ativas para mostrar icone Trophy
+### 2. Limpar dados existentes
 
-### 2. Arquivo: `src/App.tsx`
+Remover linhas de embalagem que vieram de itens de separacao nas ordens ativas:
 
-- Importar `MetasInstalacoesDirecao`
-- Adicionar rota: `/direcao/metas/fabrica/instalacoes` com `ProtectedRoute routeKey="direcao_hub"`
+```sql
+DELETE FROM linhas_ordens lo
+USING pedido_linhas pl
+WHERE lo.tipo_ordem = 'embalagem'
+  AND lo.produto_venda_id = pl.produto_venda_id
+  AND lo.pedido_id = pl.pedido_id
+  AND pl.tipo_ordem = 'separacao'
+  AND EXISTS (
+    SELECT 1 FROM ordens_embalagem oe
+    WHERE oe.id = lo.ordem_id AND oe.historico = false
+  );
+```
 
-### 3. Arquivo: `src/pages/direcao/MetasHubDirecao.tsx`
+### Resumo das alteracoes
 
-- Alterar o item "Instalacoes" de `ativo: false` para `ativo: true`
-- Atualizar o path para `/direcao/metas/fabrica/instalacoes`
-
-### Layout da pagina
-
-Cada equipe sera exibida como um card com:
-- Faixa lateral colorida com a cor da equipe
-- Nome da equipe como titulo
-- Responsavel destacado com badge "Responsavel"
-- Lista de membros com avatar e nome
-- Icone Trophy ao lado de quem tem meta ativa
+- **Migration SQL**: recria a funcao `criar_ordem_embalagem` com filtro e executa limpeza dos dados existentes
+- **Nenhuma alteracao de frontend** -- o hook `useOrdemEmbalagem` ja busca as linhas da tabela `linhas_ordens` normalmente; com menos linhas inseridas, a listagem reflete automaticamente
