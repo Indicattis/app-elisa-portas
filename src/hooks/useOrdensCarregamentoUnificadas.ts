@@ -108,13 +108,11 @@ export const useOrdensCarregamentoUnificadas = () => {
         throw ocError;
       }
 
-      // Filtrar apenas entregas (instalações vêm da tabela instalacoes)
-      const ordensEntrega = (ordensCarregamento || []).filter(
-        (ordem) => ordem.venda?.tipo_entrega === 'entrega'
-      );
+      // Usar todos os registros (deduplicação com instalações será feita depois)
+      const todasOrdens = ordensCarregamento || [];
 
       // Buscar dados dos vendedores (atendentes)
-      const atendenteIds = [...new Set(ordensEntrega.map(o => o.venda?.atendente_id).filter(Boolean))] as string[];
+      const atendenteIds = [...new Set(todasOrdens.map(o => o.venda?.atendente_id).filter(Boolean))] as string[];
       const { data: vendedores } = atendenteIds.length > 0
         ? await supabase
             .from("admin_users")
@@ -169,9 +167,9 @@ export const useOrdensCarregamentoUnificadas = () => {
         throw instError;
       }
 
-      // Filtrar instalações que estão prontas para carregamento (etapa = instalacoes e status = pronta_fabrica)
+      // Filtrar instalações prontas para carregamento (incluindo aguardando_coleta)
       const instalacoesParaCarregar = (instalacoes || []).filter(
-        (inst) => inst.pedido?.etapa_atual === 'instalacoes' || inst.status === 'pronta_fabrica'
+        (inst) => inst.pedido?.etapa_atual === 'instalacoes' || inst.pedido?.etapa_atual === 'aguardando_coleta' || inst.status === 'pronta_fabrica'
       );
 
       // Buscar dados dos vendedores para instalações também
@@ -185,10 +183,14 @@ export const useOrdensCarregamentoUnificadas = () => {
       
       (instVendedores || []).forEach(v => vendedoresMap.set(v.user_id, v));
 
-      // ===== 3. Normalizar e combinar =====
+      // ===== 3. Deduplicar e normalizar =====
+      // Remover ordens_carregamento cujo pedido_id já existe nas instalações filtradas
+      const pedidoIdsInstalacoes = new Set(instalacoesParaCarregar.map(i => i.pedido_id).filter(Boolean));
+      const ordensDeduplicadas = todasOrdens.filter(o => !o.pedido_id || !pedidoIdsInstalacoes.has(o.pedido_id));
+
       const ordensNormalizadas: OrdemCarregamentoUnificada[] = [
-        // Ordens de carregamento (entregas)
-        ...ordensEntrega.map((ordem): OrdemCarregamentoUnificada => {
+        // Ordens de carregamento (deduplicadas)
+        ...ordensDeduplicadas.map((ordem): OrdemCarregamentoUnificada => {
           const vendedorData = ordem.venda?.atendente_id ? vendedoresMap.get(ordem.venda.atendente_id) : null;
           return {
             id: ordem.id,
@@ -204,7 +206,7 @@ export const useOrdensCarregamentoUnificadas = () => {
             responsavel_carregamento_nome: ordem.responsavel_carregamento_nome,
             carregamento_concluido: ordem.carregamento_concluido || false,
             status: ordem.status,
-            tipo_entrega: 'entrega',
+            tipo_entrega: (ordem.venda?.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null) || 'entrega',
             observacoes: ordem.observacoes,
             created_at: ordem.created_at,
             pedido: ordem.pedido,
