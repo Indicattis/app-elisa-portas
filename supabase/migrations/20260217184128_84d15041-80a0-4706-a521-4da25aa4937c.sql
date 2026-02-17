@@ -1,0 +1,1 @@
+ALTER TABLE cidades_autorizados ADD COLUMN ordem integer DEFAULT 0;

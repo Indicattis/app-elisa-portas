@@ -46,6 +46,7 @@ export default function EstadoAutorizadosDirecao() {
     excluirAutorizado,
     selecionarEstado,
     estadoSelecionado,
+    reordenarCidades,
   } = useEstadosCidades();
 
   const [novoEstadoOpen, setNovoEstadoOpen] = useState(false);
@@ -211,6 +212,7 @@ export default function EstadoAutorizadosDirecao() {
             onEditAutorizado={handleEditAutorizado}
             onDeleteAutorizado={excluirAutorizado}
             onTogglePremium={handleTogglePremium}
+            onReordenarCidades={reordenarCidades}
           />
         </div>
       </div>
