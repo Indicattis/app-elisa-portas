@@ -1,28 +1,23 @@
 
-# Ocultar botao de agendamento em neos ja agendadas
+# Ocultar botoes de correcao e arquivar na aba Finalizado em /logistica/expedicao
 
-## Resumo
+## Problema
 
-Nos cards de Instalacoes Avulsas e Correcoes Avulsas em `/logistica/expedicao`, o botao de agendar (CalendarPlus) sera ocultado quando a neo ja tiver data agendada.
+Na pagina `/logistica/expedicao`, a aba "Finalizado" mostra botoes de "Enviar para Correcao" e "Arquivar" nos cards de pedidos. Esses botoes nao devem aparecer nesta pagina.
 
-## Alteracoes
+## Solucao
 
-### 1. `src/components/pedidos/NeoInstalacaoCardGestao.tsx`
+No arquivo `src/pages/logistica/ExpedicaoMinimalista.tsx`, o componente `PedidosDraggableList` recebe `onArquivar={handleArquivar}` para todas as abas. Para a aba `finalizado`, basta nao passar `onArquivar`, o que remove o botao de arquivar. O botao de correcao ja esta oculto via `hideCorrecaoButton={true}`.
 
-Na condicao de renderizacao do botao de agendar (linha 283), adicionar verificacao de `data_instalacao`:
+### Alteracao em `src/pages/logistica/ExpedicaoMinimalista.tsx` (linha 864)
 
-De: `{onAgendar && !showConcluido && (`
-Para: `{onAgendar && !showConcluido && !neoInstalacao.data_instalacao && (`
+Condicionar o `onArquivar` para nao ser passado na aba finalizado:
 
-### 2. `src/components/pedidos/NeoCorrecaoCardGestao.tsx`
-
-Na condicao de renderizacao do botao de agendar (linha 264), adicionar verificacao de `data_correcao`:
-
-De: `{onAgendar && !showConcluido && (`
-Para: `{onAgendar && !showConcluido && !neoCorrecao.data_correcao && (`
+```
+onArquivar={etapa === 'finalizado' ? undefined : handleArquivar}
+```
 
 ## Resultado esperado
 
-- Neos que ja possuem data agendada nao mostram o botao de agendar
-- Quando uma neo e removida do calendario (data limpa), o botao de agendar reaparece automaticamente
-- Nenhuma outra pagina e afetada, pois a logica esta no componente do card
+- Na aba "Finalizado" de `/logistica/expedicao`, os cards de pedidos nao mostram botao de arquivar nem de enviar para correcao
+- Nas demais abas, o comportamento permanece inalterado
