@@ -1,30 +1,21 @@
 
-# Botao para abrir calendario de expedicao nas etapas Instalacoes e Expedicao Coleta
 
-## Resumo
-Adicionar um botao com icone de calendario nas etapas "Instalacoes" e "Expedicao Coleta" da pagina `/direcao/gestao-fabrica`. Ao clicar, abre um modal grande (Dialog) com o calendario mensal de expedicao em modo somente leitura (sem drag-and-drop).
+# Corrigir erro "useDndMonitor must be used within DndContext"
 
-## Alteracoes
+## Problema
+O componente `VerMaisCardsPopover` usa o hook `useDndMonitor` que exige estar dentro de um `<DndContext>`. Quando o `CalendarioExpedicaoModal` renderiza o calendario em modo `readOnly`, o calendario mensal nao envolve o conteudo com `DndContext`, causando o crash.
 
-### 1. Novo componente: `src/components/pedidos/CalendarioExpedicaoModal.tsx`
-Criar um modal (usando Dialog do Radix) que:
-- Recebe `open` e `onOpenChange` como props
-- Internamente gerencia estado de data, tipo de visualizacao (semana/mes) e legendas
-- Usa os hooks `useOrdensCarregamentoCalendario`, `useNeoInstalacoes`, `useNeoCorrecoes`, `useCorrecoes` e `useCorrecoesSemData` para buscar dados
-- Renderiza `CalendarioMensalExpedicaoDesktop` ou `CalendarioSemanalExpedicaoDesktop` com `readOnly={true}`
-- Usa `DialogContent` com classe `max-w-[95vw] max-h-[90vh] overflow-y-auto` para ocupar quase toda a tela
-- Inclui botoes de alternancia semana/mes no header do modal
+## Causa raiz
+O `VerMaisCardsPopover` sempre chama `useDndMonitor` (hooks nao podem ser condicionais em React), mas o `CalendarioMensalExpedicaoDesktop` em modo `readOnly` nao renderiza um `DndContext` ao redor do conteudo.
 
-### 2. Editar: `src/pages/direcao/GestaoFabricaDirecao.tsx`
-- Importar `CalendarioExpedicaoModal` e icone `Calendar` do lucide-react
-- Adicionar estado `showCalendarioModal` (boolean)
-- Na area do `CardTitle` (linha ~435), adicionar condicionalmente um botao de calendario quando `etapa === 'instalacoes' || etapa === 'aguardando_coleta'`
-- Renderizar o `CalendarioExpedicaoModal` controlado pelo estado
+## Solucao
+Envolver o conteudo do `CalendarioExpedicaoModal` com um `<DndContext>` simples (sem sensores nem handlers), garantindo que os hooks de DnD dos componentes filhos tenham o contexto necessario, mesmo sem funcionalidade de drag-and-drop.
 
-### Detalhes tecnicos
+## Alteracao
 
-O modal reutiliza os mesmos componentes de calendario ja existentes (`CalendarioMensalExpedicaoDesktop` e `CalendarioSemanalExpedicaoDesktop`) passando `readOnly={true}`, o que desabilita drag-and-drop e acoes de edicao. Os dados sao buscados pelos mesmos hooks usados na pagina `/logistica/expedicao`.
+### `src/components/pedidos/CalendarioExpedicaoModal.tsx`
+- Importar `DndContext` de `@dnd-kit/core`
+- Envolver o conteudo do calendario (tanto mensal quanto semanal) com `<DndContext>` sem nenhum handler
 
-### Arquivos afetados
-- **Novo:** `src/components/pedidos/CalendarioExpedicaoModal.tsx`
-- **Editado:** `src/pages/direcao/GestaoFabricaDirecao.tsx`
+Essa abordagem e minima e nao afeta nenhum outro componente. O `DndContext` vazio simplesmente fornece o contexto que os hooks precisam, sem habilitar nenhuma funcionalidade de drag.
+
