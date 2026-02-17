@@ -1,33 +1,46 @@
 
-
-# Modal de instalacoes ao clicar na meta
+# Adicionar tags Neo/Pedido e tamanho de porta no modal de instalacoes da meta
 
 ## Resumo
 
-Ao clicar em um MetaCard, abrir um modal listando as instalacoes concluidas que contam para aquela meta (filtradas pelo periodo e, no caso de equipe, pelo equipe_id).
+Atualizar o modal `InstalacoesDaMetaModal` para:
+1. Buscar instalacoes de AMBAS as tabelas (`neo_instalacoes` e `instalacoes`)
+2. Exibir badge de origem: "Neo" (verde) ou "Pedido" (azul)
+3. Exibir badge de tamanho da porta (P, G, GG) baseado na `metragem_quadrada` da tabela `instalacoes`
+
+## Logica
+
+### Fontes de dados
+
+- **neo_instalacoes**: ja busca hoje. Adicionar campo `_origem: 'neo'`. Nao tem metragem, entao tamanho sera null.
+- **instalacoes**: nova busca. Filtrar por `instalacao_concluida = true`, `instalacao_concluida_em` dentro do periodo da meta. Para meta de equipe, filtrar `responsavel_instalacao_id = meta.referencia_id`. Para gerente, todas. Buscar `metragem_quadrada` para classificar tamanho.
+
+### Classificacao de tamanho (mesma logica do ranking)
+
+- P (Pequena): metragem < 25 m2
+- G (Grande): 25 - 50 m2
+- GG (Extra Grande): > 50 m2
+
+### Meta de gerente
+
+Contabiliza TODAS as instalacoes concluidas no periodo, tanto de `neo_instalacoes` quanto de `instalacoes`.
+
+### Meta de equipe
+
+- `neo_instalacoes`: filtra por `equipe_id`
+- `instalacoes`: filtra por `responsavel_instalacao_id = equipe_id` (mesmo padrao do ranking)
 
 ## Alteracoes
 
-### 1. Novo componente: `InstalacoesDaMetaModal`
+### Arquivo: `src/components/metas/InstalacoesDaMetaModal.tsx`
 
-Arquivo: `src/components/metas/InstalacoesDaMetaModal.tsx`
+- Refatorar a query para buscar de ambas as tabelas em paralelo (Promise.all)
+- Da tabela `instalacoes`: buscar `id, nome_cliente, metragem_quadrada, instalacao_concluida_em` com filtros de periodo e `instalacao_concluida = true`, `pedido_id IS NOT NULL`
+- Combinar resultados com campo `origem` ('neo' ou 'pedido') e `metragem`
+- Ordenar por data decrescente
+- Exibir badges:
+  - Origem: Badge azul "Pedido" ou verde "Neo"
+  - Tamanho: Badge outline "P", "G" ou "GG" (quando metragem disponivel)
+- Atualizar contagem de progresso para refletir total combinado
 
-- Recebe a `MetaInstalacao` como prop, alem de `open` e `onOpenChange`
-- Busca instalacoes de `neo_instalacoes` onde `concluida = true` e `concluida_em` dentro do periodo da meta
-- Se `meta.tipo === "equipe"`: filtra por `equipe_id = meta.referencia_id`
-- Se `meta.tipo === "gerente"`: sem filtro de equipe (todas as instalacoes)
-- Exibe lista com: nome do cliente, cidade/estado, data de conclusao, equipe responsavel
-- Mostra resumo no topo: total de instalacoes e a meta de portas
-- Usa Dialog do Radix com ScrollArea para a lista
-
-### 2. Alterar `MetaCard` em `MetasInstalacoesDirecao.tsx`
-
-- Adicionar estado `modalAberto` no MetaCard
-- Tornar o card clicavel com `cursor-pointer` e `onClick` para abrir o modal
-- Renderizar `InstalacoesDaMetaModal` dentro do MetaCard
-
-### Arquivos
-
-- `src/components/metas/InstalacoesDaMetaModal.tsx` (novo)
-- `src/pages/direcao/MetasInstalacoesDirecao.tsx` (MetaCard atualizado para abrir modal)
-
+### Nenhum arquivo novo necessario
