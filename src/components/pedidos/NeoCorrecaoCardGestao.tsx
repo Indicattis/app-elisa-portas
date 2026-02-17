@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
-import { MapPin, Calendar, Clock, AlertTriangle, Check, DollarSign, Undo2 } from "lucide-react";
+import { MapPin, Calendar, Clock, AlertTriangle, Check, DollarSign, Undo2, GripVertical } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -17,6 +17,8 @@ interface NeoCorrecaoCardGestaoProps {
   isConcluindo?: boolean;
   showConcluido?: boolean;
   onRetornar?: (id: string) => void;
+  dragHandleProps?: Record<string, any>;
+  isDragging?: boolean;
 }
 
 export function NeoCorrecaoCardGestao({
@@ -26,6 +28,8 @@ export function NeoCorrecaoCardGestao({
   isConcluindo,
   showConcluido = false,
   onRetornar,
+  dragHandleProps,
+  isDragging,
 }: NeoCorrecaoCardGestaoProps) {
   const corEquipe = neoCorrecao.equipe?.cor || "#9333ea";
 
@@ -59,8 +63,14 @@ export function NeoCorrecaoCardGestao({
               className="grid items-center gap-1.5 h-full px-2 w-full" 
               style={{ gridTemplateColumns: '20px 20px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 24px 24px 24px 24px 24px 24px 1fr 55px' }}
             >
-              {/* Col 1: Espaço do drag handle (vazio para manter alinhamento) */}
-              <div />
+              {/* Col 1: Drag handle */}
+              <div className="flex items-center justify-center">
+                {dragHandleProps ? (
+                  <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing touch-none">
+                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                  </div>
+                ) : null}
+              </div>
               
               {/* Col 2: Avatar do criador */}
               <Tooltip>

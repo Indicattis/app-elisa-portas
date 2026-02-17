@@ -13,7 +13,8 @@ import {
   Users,
   FileText,
   DollarSign,
-  Undo2
+  Undo2,
+  GripVertical
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -27,6 +28,8 @@ interface NeoInstalacaoCardGestaoProps {
   isConcluindo?: boolean;
   showConcluido?: boolean;
   onRetornar?: (id: string) => void;
+  dragHandleProps?: Record<string, any>;
+  isDragging?: boolean;
 }
 
 export function NeoInstalacaoCardGestao({
@@ -36,6 +39,8 @@ export function NeoInstalacaoCardGestao({
   isConcluindo,
   showConcluido = false,
   onRetornar,
+  dragHandleProps,
+  isDragging,
 }: NeoInstalacaoCardGestaoProps) {
   const corEquipe = neoInstalacao.equipe?.cor || "#6366f1";
 
@@ -69,8 +74,14 @@ export function NeoInstalacaoCardGestao({
               className="grid items-center gap-1.5 h-full px-2 w-full" 
               style={{ gridTemplateColumns: '20px 20px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 24px 24px 24px 24px 24px 24px 1fr 55px' }}
             >
-              {/* Col 1: Espaço do drag handle (vazio para manter alinhamento) */}
-              <div />
+              {/* Col 1: Drag handle */}
+              <div className="flex items-center justify-center">
+                {dragHandleProps ? (
+                  <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing touch-none">
+                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                  </div>
+                ) : null}
+              </div>
               
               {/* Col 2: Avatar do criador */}
               <Tooltip>

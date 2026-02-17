@@ -102,6 +102,7 @@ export default function ExpedicaoMinimalista() {
     updated_at: c.updated_at,
     vezes_agendado: c.vezes_agendado,
     etapa_causadora: null,
+    prioridade_gestao: 0,
     _tipo: 'neo_correcao' as const,
   }));
 
@@ -129,6 +130,7 @@ export default function ExpedicaoMinimalista() {
     updated_at: c.updated_at,
     vezes_agendado: c.vezes_agendado,
     etapa_causadora: null,
+    prioridade_gestao: 0,
     _tipo: 'neo_correcao' as const,
   }));
 

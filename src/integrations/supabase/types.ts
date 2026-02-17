@@ -3267,6 +3267,7 @@ export type Database = {
           hora: string | null
           id: string
           nome_cliente: string
+          prioridade_gestao: number
           status: string
           tipo_responsavel: string | null
           updated_at: string
@@ -3292,6 +3293,7 @@ export type Database = {
           hora?: string | null
           id?: string
           nome_cliente: string
+          prioridade_gestao?: number
           status?: string
           tipo_responsavel?: string | null
           updated_at?: string
@@ -3317,6 +3319,7 @@ export type Database = {
           hora?: string | null
           id?: string
           nome_cliente?: string
+          prioridade_gestao?: number
           status?: string
           tipo_responsavel?: string | null
           updated_at?: string
@@ -3360,6 +3363,7 @@ export type Database = {
           hora: string | null
           id: string
           nome_cliente: string
+          prioridade_gestao: number
           status: string
           tipo_responsavel: string | null
           updated_at: string
@@ -3385,6 +3389,7 @@ export type Database = {
           hora?: string | null
           id?: string
           nome_cliente: string
+          prioridade_gestao?: number
           status?: string
           tipo_responsavel?: string | null
           updated_at?: string
@@ -3410,6 +3415,7 @@ export type Database = {
           hora?: string | null
           id?: string
           nome_cliente?: string
+          prioridade_gestao?: number
           status?: string
           tipo_responsavel?: string | null
           updated_at?: string
