@@ -1,40 +1,54 @@
 
-# Agrupar linhas por porta na sidebar OrdemLinhasSheet
+# Adicionar botao "Retornar" nas Neo finalizadas
 
 ## Resumo
-Atualizar o componente `OrdemLinhasSheet` em `/fabrica/ordens-pedidos` para agrupar as linhas de producao por porta (usando `produto_venda_id` + `indice_porta`), seguindo o mesmo padrao visual usado nas downbars de producao (`OrdemDetalhesSheet`).
+Adicionar um botao nos cards de Neo (Instalacao e Correcao) na etapa "finalizado" de `/direcao/gestao-fabrica` que permite retornar o servico para a etapa ativa (instalacoes/correcoes), desfazendo a conclusao.
 
 ## O que muda para o usuario
-- Em vez de uma lista "plana" de linhas, as linhas serao agrupadas em blocos visuais por porta
-- Cada bloco tera um cabecalho mostrando "Porta #01", "Porta #02", etc., com dimensoes quando disponiveis
-- Linhas sem porta associada aparecerao em um grupo "Itens gerais" no final
-- O check de conclusao por linha e a impressao de etiqueta continuam funcionando normalmente dentro de cada grupo
+- Ao lado do icone de conclusao (check verde) nos cards de Neo finalizados, aparecera um botao com icone de "retornar" (seta para tras)
+- Ao clicar, o Neo voltara a aparecer na etapa de instalacoes ou correcoes, conforme o tipo
+- O card sumira da lista de finalizados
 
 ## Alteracoes tecnicas
 
-### `src/components/fabrica/OrdemLinhasSheet.tsx`
-Na secao de renderizacao das linhas (linhas 620-694 do arquivo atual), substituir a lista plana por logica de agrupamento:
+### 1. Hooks - criar mutations de retorno
 
-1. **Agrupar linhas** usando `produto_venda_id` + `indice_porta` como chave (mesmo algoritmo da downbar de producao):
-   ```
-   const linhasPorPorta = linhas.reduce((grupos, linha) => {
-     const key = linha.produto_venda_id 
-       ? `${linha.produto_venda_id}_${linha.indice_porta ?? 0}` 
-       : 'sem_porta';
-     grupos[key] = grupos[key] || [];
-     grupos[key].push(linha);
-     return grupos;
-   }, {});
-   ```
+**`src/hooks/useNeoInstalacoes.ts`** (hook `useNeoInstalacoesFinalizadas`)
+- Adicionar mutation `retornarNeoInstalacao` que faz UPDATE em `neo_instalacoes`:
+  - `concluida: false`
+  - `concluida_em: null`
+  - `concluida_por: null`
+  - `status: 'pendente'`
+  - `updated_at: new Date().toISOString()`
+- No `onSuccess`, invalidar queries `neo_instalacoes_finalizadas`, `neo_instalacoes_listagem` e `pedidos_contadores`
+- Exportar `retornarNeoInstalacao` e `isRetornando`
 
-2. **Criar mapa de numeracao** para exibir "Porta #01", "#02", etc., na ordem de aparicao
+**`src/hooks/useNeoCorrecoes.ts`** (hook `useNeoCorrecoesFinalizadas`)
+- Mesmo padrao: mutation `retornarNeoCorrecao` com os mesmos campos
+- Invalidar `neo_correcoes_finalizadas`, `neo_correcoes_listagem` e `pedidos_contadores`
+- Exportar `retornarNeoCorrecao` e `isRetornando`
 
-3. **Renderizar cada grupo** com:
-   - Cabecalho contendo icone, numeracao ("Porta #01") e dimensoes (largura x altura da primeira linha do grupo)
-   - Badge de "concluido" quando todas as linhas do grupo estiverem marcadas
-   - As linhas individuais com checkbox, nome, quantidade, tamanho, dimensoes e botao de etiqueta (mesmo layout atual)
+### 2. Cards - adicionar prop e botao de retorno
 
-4. **Grupo "Itens gerais"** para linhas sem `produto_venda_id` (chave `sem_porta`)
+**`src/components/pedidos/NeoInstalacaoCardGestao.tsx`**
+- Adicionar prop `onRetornar?: (id: string) => void`
+- Na secao `showConcluido` (col 19, linhas 266-284), adicionar um botao com icone `Undo2` antes do check verde
+- Botao com estilo amarelo/laranja para diferenciar do concluir
+
+**`src/components/pedidos/NeoCorrecaoCardGestao.tsx`**
+- Mesmo padrao: prop `onRetornar` e botao na area de concluido
+
+### 3. Pagina - conectar handlers
+
+**`src/pages/direcao/GestaoFabricaDirecao.tsx`**
+- Extrair `retornarNeoInstalacao` do hook `useNeoInstalacoesFinalizadas`
+- Extrair `retornarNeoCorrecao` do hook `useNeoCorrecoesFinalizadas`
+- Criar handlers `handleRetornarNeoInstalacao` e `handleRetornarNeoCorrecao`
+- Passar `onRetornar` para os cards de Neo na secao de finalizados (linhas 466-487)
 
 ### Arquivos envolvidos
-- `src/components/fabrica/OrdemLinhasSheet.tsx` (unico arquivo modificado)
+- `src/hooks/useNeoInstalacoes.ts` (adicionar mutation de retorno no hook de finalizadas)
+- `src/hooks/useNeoCorrecoes.ts` (adicionar mutation de retorno no hook de finalizadas)
+- `src/components/pedidos/NeoInstalacaoCardGestao.tsx` (adicionar prop e botao)
+- `src/components/pedidos/NeoCorrecaoCardGestao.tsx` (adicionar prop e botao)
+- `src/pages/direcao/GestaoFabricaDirecao.tsx` (conectar handlers)
