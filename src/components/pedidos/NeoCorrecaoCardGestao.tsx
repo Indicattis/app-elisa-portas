@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
-import { MapPin, Calendar, CalendarPlus, Clock, AlertTriangle, Check, DollarSign, Undo2, GripVertical, Archive } from "lucide-react";
+import { MapPin, Calendar, CalendarPlus, Clock, AlertTriangle, Check, DollarSign, Undo2, GripVertical, Archive, Pencil } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -19,6 +19,7 @@ interface NeoCorrecaoCardGestaoProps {
   onRetornar?: (id: string) => void;
   onAgendar?: (id: string) => void;
   onArquivar?: (id: string) => void;
+  onEditar?: (neo: NeoCorrecao) => void;
   dragHandleProps?: Record<string, any>;
   isDragging?: boolean;
 }
@@ -32,6 +33,7 @@ export function NeoCorrecaoCardGestao({
   onRetornar,
   onAgendar,
   onArquivar,
+  onEditar,
   dragHandleProps,
   isDragging,
 }: NeoCorrecaoCardGestaoProps) {
@@ -263,6 +265,20 @@ export function NeoCorrecaoCardGestao({
 
               {/* Col 19: Botões de ação ou status concluído */}
               <div className="flex items-center justify-end gap-1" style={{ gridColumn: '19 / -1' }}>
+                {onEditar && !showConcluido && (
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="flex h-[20px] w-[20px] rounded-[3px] bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 border-yellow-500/50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditar(neoCorrecao);
+                    }}
+                    title="Editar Neo Correção"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                )}
                 {onAgendar && !showConcluido && !neoCorrecao.data_correcao && (
                   <Button
                     size="icon"
