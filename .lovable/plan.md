@@ -1,31 +1,57 @@
 
-# Adicionar drag-and-drop nas listagens de Neos em /logistica/expedicao
+
+# Adicionar drag-and-drop para ordenar cidades dentro de um estado
 
 ## Resumo
 
-As listagens de "Instalacoes Avulsas" e "Correcoes Avulsas" nas tabs de `/logistica/expedicao` atualmente renderizam cards estaticos sem reordenacao. O componente `NeoDraggableList.tsx` ja existe com `NeoInstalacoesDraggableList` e `NeoCorrecoesDraggableList`, e os hooks ja exportam `reorganizarNeoInstalacoes` / `reorganizarNeoCorrecoes`. Basta conectar tudo.
+Adicionar funcionalidade de arrastar e soltar (drag-and-drop) para reordenar as cidades na pagina de detalhe do estado em `/direcao/autorizados/estado/:id`. Seguindo o mesmo padrao ja usado para reordenar estados.
 
-## Alteracoes
+## Alteracoes necessarias
 
-### 1. `src/pages/logistica/ExpedicaoMinimalista.tsx`
+### 1. Banco de dados: adicionar coluna `ordem` na tabela `cidades_autorizados`
 
-- Importar `NeoInstalacoesDraggableList` e `NeoCorrecoesDraggableList` de `@/components/pedidos/NeoDraggableList`
-- Extrair `reorganizarNeoInstalacoes` do hook `useNeoInstalacoesListagem()` (ja existe no retorno do hook)
-- Extrair `reorganizarNeoCorrecoes` do hook `useNeoCorrecoesListagem()` (ja existe no retorno do hook)
-- Substituir o bloco de `neoInstalacoesListagem.map(neo => <NeoInstalacaoCardGestao .../>)` por `<NeoInstalacoesDraggableList neos={neoInstalacoesListagem} viewMode="list" onConcluir={handleConcluirNeoInstalacaoListagem} isConcluindo={isConcluindoInstalacaoListagem} onReorganizar={reorganizarNeoInstalacoes} />`
-- Substituir o bloco de `neoCorrecoesListagem.map(neo => <NeoCorrecaoCardGestao .../>)` por `<NeoCorrecoesDraggableList neos={neoCorrecoesListagem} viewMode="list" onConcluir={handleConcluirNeoCorrecaoListagem} onReorganizar={reorganizarNeoCorrecoes} />`
+A tabela `cidades_autorizados` nao possui coluna `ordem`. Sera necessario adicionar via migration SQL:
 
-### 2. Adicionar prop `onAgendar` ao `NeoDraggableList`
+```sql
+ALTER TABLE cidades_autorizados ADD COLUMN ordem integer DEFAULT 0;
+```
 
-Os componentes `NeoInstalacoesDraggableList` e `NeoCorrecoesDraggableList` em `src/components/pedidos/NeoDraggableList.tsx` atualmente nao suportam a prop `onAgendar`. Sera necessario:
+### 2. `src/hooks/useEstadosCidades.ts`
 
-- Adicionar `onAgendar?: (id: string) => void` nas interfaces `NeoInstalacoesDraggableListProps` e `NeoCorrecoesDraggableListProps`
-- Repassar `onAgendar` para `NeoInstalacaoCardGestao` e `NeoCorrecaoCardGestao` dentro dos maps
+- Na funcao `fetchCidadesDoEstado`, alterar o `.order('nome')` para `.order('ordem').order('nome')` na query de `cidades_autorizados`
+- Adicionar funcao `reordenarCidades` seguindo o padrao de `reordenarEstados`:
+  - Recebe array de `Cidade[]` na nova ordem
+  - Faz update do campo `ordem` para cada cidade via `supabase.update({ ordem: index })`
+  - Atualiza o estado local `setCidades` otimisticamente
+  - Em caso de erro, refaz o fetch
 
-Isso garante que o botao de agendar continue funcionando dentro da lista com drag-and-drop.
+### 3. `src/components/autorizados/EstadoDetalheView.tsx`
 
-## Impacto
+- Importar `DndContext`, `closestCenter`, `KeyboardSensor`, `PointerSensor`, `useSensor`, `useSensors` de `@dnd-kit/core`
+- Importar `SortableContext`, `verticalListSortingStrategy` de `@dnd-kit/sortable`
+- Importar `restrictToVerticalAxis` de `@dnd-kit/modifiers`
+- Adicionar prop `onReordenarCidades: (cidades: Cidade[]) => void`
+- Envolver a lista de `CidadeCollapsible` com `DndContext` + `SortableContext`
+- Implementar handler `handleDragEnd` que calcula a nova ordem e chama `onReordenarCidades`
 
-- Nenhum componente novo sera criado
-- Reutiliza componentes e hooks ja existentes
-- O comportamento de drag-and-drop sera identico ao ja usado na gestao de fabrica
+### 4. `src/components/autorizados/CidadeCollapsible.tsx`
+
+- Criar novo componente `SortableCidadeCollapsible` que envolve `CidadeCollapsible` com `useSortable`
+- Adicionar icone `GripVertical` como handle de arrasto (ao lado do icone Building2)
+- Aplicar `transform` e `transition` do sortable no wrapper
+
+### 5. `src/pages/direcao/EstadoAutorizadosDirecao.tsx`
+
+- Extrair `reordenarCidades` do hook `useEstadosCidades`
+- Passar `onReordenarCidades={reordenarCidades}` para `EstadoDetalheView`
+
+## Arquivos alterados
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| cidades_autorizados (SQL) | Adicionar coluna `ordem` |
+| useEstadosCidades.ts | Adicionar `reordenarCidades`, ordenar por `ordem` |
+| EstadoDetalheView.tsx | Adicionar DnD context e prop `onReordenarCidades` |
+| CidadeCollapsible.tsx | Criar `SortableCidadeCollapsible` com handle de arrasto |
+| EstadoAutorizadosDirecao.tsx | Passar `reordenarCidades` para a view |
+
