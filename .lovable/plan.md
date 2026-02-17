@@ -1,76 +1,35 @@
 
-# Padronizar exibicao de medidas em metros com 2 casas decimais
+
+# Reprovar pedido na etapa Aprovacao CEO
 
 ## Resumo
 
-Atualizar todos os componentes do projeto que exibem medidas em metros (largura, altura, tamanho) para sempre mostrar 2 casas decimais. A funcao `formatarTamanho` e `formatarDimensoes` ja existem em `src/utils/formatters.ts` — o trabalho e substituir exibicoes "cruas" por essas funcoes.
+Adicionar funcionalidade de reprovacao na tela de Aprovacoes Fabrica. Pedidos reprovados voltam para "aberto" com estilizacao vermelha. Ao avancar novamente, a estilizacao vermelha some.
 
-## Arquivos a alterar
+## Alteracoes
 
-### 1. `src/components/pedidos/MedidasPortasSection.tsx`
-- SVG: `${altura}m` e `${largura}m` -> usar `.toFixed(2)` (linhas 51, 63)
+### 1. Banco de dados: nova coluna `reprovado_ceo`
 
-### 2. `src/components/pedidos/LinhasAgrupadasPorPorta.tsx`
-- `${porta.largura}m x ${porta.altura}m` -> `formatarDimensoes(porta.largura, porta.altura)` (linha 186)
-- `${linha.largura}x${linha.altura}` -> formatar com `.toFixed(2)` (linha 108)
+Adicionar coluna `reprovado_ceo` (boolean, default false) na tabela `pedidos_producao`. Essa flag indica que o pedido foi reprovado e deve ser exibido com destaque vermelho.
 
-### 3. `src/components/pedidos/PedidoDetalhesSheet.tsx`
-- `${obs.produto.largura}m x ${obs.produto.altura}m` -> `formatarDimensoes(...)` (linha 690)
+### 2. `src/hooks/usePedidosAprovacaoCEO.ts`
 
-### 4. `src/components/pedidos/ObservacoesPortaForm.tsx`
-- `${porta.largura}m x ${porta.altura}m` -> `formatarDimensoes(...)` (linha 110)
-- Tambem formatar o fallback do `tamanho.split('x')` (linhas 113-114)
+Adicionar mutation `reprovarPedido` que:
+- Fecha a etapa atual (`aprovacao_ceo`) em `pedidos_etapas` com `data_saida = now()`
+- Cria nova entrada em `pedidos_etapas` para etapa `aberto`
+- Atualiza `pedidos_producao` com `etapa_atual = 'aberto'` e `reprovado_ceo = true`
+- Registra movimentacao em `pedidos_movimentacoes` com teor de reprovacao
+- Invalida queries relevantes
 
-### 5. `src/components/pedidos/ObservacoesPortaSocialForm.tsx`
-- Mesma correcao que o anterior (linhas 98, 101-102)
+### 3. `src/pages/direcao/aprovacoes/AprovacoesProducao.tsx`
 
-### 6. `src/components/pedidos/AcaoEtapaModal.tsx`
-- `{largura}m x {altura}m` -> formatar com `.toFixed(2)` (linha 114)
+Adicionar botao "Reprovar" vermelho ao lado do botao "Aprovar" na area expandida do card. Incluir confirmacao antes de reprovar (AlertDialog).
 
-### 7. `src/components/vendas/ProdutosVendaTable.tsx`
-- `${produto.largura}x${produto.altura}` -> `formatarDimensoes(...)` ou `.toFixed(2)` (linha 76)
+### 4. `src/hooks/usePedidosEtapas.ts`
 
-### 8. `src/components/vendas/DescontoVendaModal.tsx`
-- `${produto.largura}x${produto.altura}` -> formatar (linha 205)
+Na mutation `moverParaProximaEtapa`, quando a etapa atual for `aberto`, resetar `reprovado_ceo = false` no update do pedido para que a estilizacao vermelha desapareca ao avancar.
 
-### 9. `src/components/orcamentos/ProdutosOrcamentoTable.tsx`
-- `${produto.largura}x${produto.altura}` -> formatar (linha 78)
+### 5. `src/components/pedidos/PedidoCard.tsx`
 
-### 10. `src/components/instalacoes/OrdemInstalacaoDetails.tsx`
-- `formatTamanho` local: `${produto.largura}m x ${produto.altura}m` -> usar `formatarDimensoes` (linha 49)
+Adicionar condicional de estilizacao: quando `reprovado_ceo = true`, aplicar borda vermelha e badge "Reprovado CEO" similar ao estilo de backlog (borda vermelha, sombra vermelha).
 
-### 11. `src/components/expedicao/OrdemCarregamentoDetails.tsx`
-- `formatTamanho` local: mesma correcao (linha 42)
-
-### 12. `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx`
-- `${p.largura}m x ${p.altura}m` -> `formatarDimensoes(...)` (linha 128)
-
-### 13. `src/components/fabrica/LinhasAgrupadasPorPortaSheet.tsx`
-- `${linha.largura}x${linha.altura}` -> formatar (linha 108)
-
-### 14. `src/components/fabrica/OrdemLinhasSheet.tsx`
-- `Number(linha.largura).toFixed(2)m x Number(linha.altura).toFixed(2)m` -> ja esta OK com `.toFixed(2)`, manter
-
-### 15. `src/pages/PedidoView.tsx`
-- `${porta.largura}m x ${porta.altura}m` -> `formatarDimensoes(...)` (linha 580)
-
-### 16. `src/pages/PedidoPreparacao.tsx`
-- `${produto.largura} x ${produto.altura}` -> formatar (linha 414)
-
-### 17. `src/pages/administrativo/PedidoViewMinimalista.tsx`
-- `${porta.largura}m x ${porta.altura}m` -> `formatarDimensoes(...)` (linha 403)
-
-### 18. `src/pages/direcao/AprovacoesVendas.tsx`
-- `${p.largura}x${p.altura}` -> formatar (linha 173)
-
-### 19. `src/pages/direcao/VendaDetalhesDirecao.tsx`
-- `produto.largura.toFixed(2) x produto.altura.toFixed(2)m` -> ja esta OK, manter
-
-### 20. `src/components/expedicao/OrdensCarregamentoDisponiveis.tsx`
-- `porta.largura.toFixed(2)m x porta.altura.toFixed(2)m` -> ja esta OK, manter
-
-## Estrategia
-
-Usar a funcao `formatarDimensoes` de `src/utils/formatters.ts` onde se exibe "largura x altura" em metros, e `formatarTamanho` onde se exibe um valor unico. Onde necessario, usar `Number(valor).toFixed(2)` inline. Todos os displays passarao a mostrar sempre 2 casas decimais (ex: `2.80m x 3.00m` em vez de `2.8m x 3m`).
-
-Sao aproximadamente 18 arquivos com alteracoes pontuais (1-3 linhas cada).
