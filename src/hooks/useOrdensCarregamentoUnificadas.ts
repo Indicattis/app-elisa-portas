@@ -212,9 +212,10 @@ export const useOrdensCarregamentoUnificadas = () => {
       (instVendedores || []).forEach(v => vendedoresMap.set(v.user_id, v));
 
       // ===== 3. Deduplicar e normalizar =====
-      // Remover ordens_carregamento cujo pedido_id já existe nas instalações filtradas
-      const pedidoIdsInstalacoes = new Set(instalacoesParaCarregar.map(i => i.pedido_id).filter(Boolean));
-      const ordensDeduplicadas = ordensUnicasPorPedido.filter(o => !o.pedido_id || !pedidoIdsInstalacoes.has(o.pedido_id));
+      // Remover ordens_carregamento cujo pedido_id já existe em QUALQUER instalação (não apenas as filtradas)
+      // Isso garante que pedidos com instalação (mesmo já agendada/concluída) sejam gerenciados exclusivamente pela tabela instalacoes
+      const todosIdsInstalacoes = new Set((instalacoes || []).map(i => i.pedido_id).filter(Boolean));
+      const ordensDeduplicadas = ordensUnicasPorPedido.filter(o => !o.pedido_id || !todosIdsInstalacoes.has(o.pedido_id));
 
       const ordensNormalizadas: OrdemCarregamentoUnificada[] = [
         // Ordens de carregamento (deduplicadas)
