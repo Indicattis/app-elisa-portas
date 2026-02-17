@@ -53,6 +53,7 @@ interface PedidoCardProps {
   readOnly?: boolean;
   disableClienteClick?: boolean;
   showEtapaBadge?: boolean;
+  hideOrdensStatus?: boolean;
 }
 export function PedidoCard({
   pedido,
@@ -71,7 +72,8 @@ export function PedidoCard({
   onDeletar,
   readOnly = false,
   disableClienteClick = false,
-  showEtapaBadge = false
+  showEtapaBadge = false,
+  hideOrdensStatus = false
 }: PedidoCardProps) {
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showAcaoEtapa, setShowAcaoEtapa] = useState(false);
@@ -1018,7 +1020,7 @@ export function PedidoCard({
           onClick={() => setShowDetalhes(true)}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid items-center gap-1.5 h-full px-2 w-full" style={{ gridTemplateColumns: showEtapaBadge ? '20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 24px 24px 24px 24px 24px 24px 1fr 55px' : '20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 24px 24px 24px 24px 24px 24px 1fr 55px' }}>
+            <div className="grid items-center gap-1.5 h-full px-2 w-full" style={{ gridTemplateColumns: hideOrdensStatus ? (showEtapaBadge ? '20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 1fr 55px' : '20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 1fr 55px') : (showEtapaBadge ? '20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 24px 24px 24px 24px 24px 24px 1fr 55px' : '20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 24px 24px 24px 24px 24px 24px 1fr 55px') }}>
               {/* Col 1: Drag Handle ou Aviso de Espera */}
               <div>
                 {dragHandleProps ? (
@@ -1444,24 +1446,28 @@ export function PedidoCard({
               </div>
 
               {/* Col 8-12: Status das Ordens */}
-              <div className="flex items-center justify-center" title="Soldagem">
-                {renderOrdemStatus(ordens.soldagem, 'Soldagem')}
-              </div>
-              <div className="flex items-center justify-center" title="Perfiladeira">
-                {renderOrdemStatus(ordens.perfiladeira, 'Perfiladeira')}
-              </div>
-              <div className="flex items-center justify-center" title="Separação">
-                {renderOrdemStatus(ordens.separacao, 'Separação')}
-              </div>
-              <div className="flex items-center justify-center" title="Qualidade">
-                {renderOrdemStatus(ordens.qualidade, 'Qualidade')}
-              </div>
-              <div className="flex items-center justify-center" title="Pintura">
-                {renderOrdemStatus(ordens.pintura, 'Pintura')}
-              </div>
-              <div className="flex items-center justify-center" title="Embalagem">
-                {renderOrdemStatus(ordens.embalagem, 'Embalagem')}
-              </div>
+              {!hideOrdensStatus && (
+                <>
+                  <div className="flex items-center justify-center" title="Soldagem">
+                    {renderOrdemStatus(ordens.soldagem, 'Soldagem')}
+                  </div>
+                  <div className="flex items-center justify-center" title="Perfiladeira">
+                    {renderOrdemStatus(ordens.perfiladeira, 'Perfiladeira')}
+                  </div>
+                  <div className="flex items-center justify-center" title="Separação">
+                    {renderOrdemStatus(ordens.separacao, 'Separação')}
+                  </div>
+                  <div className="flex items-center justify-center" title="Qualidade">
+                    {renderOrdemStatus(ordens.qualidade, 'Qualidade')}
+                  </div>
+                  <div className="flex items-center justify-center" title="Pintura">
+                    {renderOrdemStatus(ordens.pintura, 'Pintura')}
+                  </div>
+                  <div className="flex items-center justify-center" title="Embalagem">
+                    {renderOrdemStatus(ordens.embalagem, 'Embalagem')}
+                  </div>
+                </>
+              )}
               
               {/* Col 13: Tempo na Etapa + Total */}
               <div className="text-center flex items-center justify-center gap-1">

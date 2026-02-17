@@ -38,6 +38,7 @@ interface PedidosDraggableListProps {
   enableDragAndDrop?: boolean;
   showPosicao?: boolean;
   disableClienteClick?: boolean;
+  hideOrdensStatus?: boolean;
 }
 
 interface SortableItemProps {
@@ -55,6 +56,7 @@ interface SortableItemProps {
   onAvisoEspera?: (pedidoId: string, justificativa: string | null) => Promise<void>;
   onAgendar?: (pedidoId: string) => void;
   disableClienteClick?: boolean;
+  hideOrdensStatus?: boolean;
 }
 
 function SortableItem({
@@ -72,6 +74,7 @@ function SortableItem({
   onAvisoEspera,
   onAgendar,
   disableClienteClick,
+  hideOrdensStatus,
 }: SortableItemProps) {
   const {
     attributes,
@@ -107,6 +110,7 @@ function SortableItem({
         posicao={posicao}
         total={total}
         disableClienteClick={disableClienteClick}
+        hideOrdensStatus={hideOrdensStatus}
       />
     </div>
   );
@@ -129,6 +133,7 @@ export function PedidosDraggableList({
   enableDragAndDrop = true,
   showPosicao = true,
   disableClienteClick = false,
+  hideOrdensStatus = false,
 }: PedidosDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   
@@ -201,6 +206,7 @@ export function PedidosDraggableList({
               posicao={showPosicao ? index + 1 : undefined}
               total={showPosicao ? pedidos.length : undefined}
               disableClienteClick={disableClienteClick}
+              hideOrdensStatus={hideOrdensStatus}
               // Sem dragHandleProps - não há arrastar
               // Sem onMoverPrioridade - não há botões de prioridade
             />
@@ -244,6 +250,7 @@ export function PedidosDraggableList({
               onAvisoEspera={onAvisoEspera}
               onAgendar={onAgendar}
               disableClienteClick={disableClienteClick}
+              hideOrdensStatus={hideOrdensStatus}
             />
           ))}
         </div>

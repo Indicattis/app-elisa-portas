@@ -874,6 +874,7 @@ export default function ExpedicaoMinimalista() {
                               onAgendar={handleAgendarPedido}
                               enableDragAndDrop={true}
                               showPosicao={true}
+                              hideOrdensStatus={true}
                             />
                             
                             {totalPaginas > 1 && (
