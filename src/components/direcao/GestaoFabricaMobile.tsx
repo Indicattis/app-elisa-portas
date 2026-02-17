@@ -214,7 +214,7 @@ function PedidoCardMobile({ pedido, onClick }: { pedido: any; onClick: () => voi
           <p className="text-[10px] text-muted-foreground truncate">{cidade}{estado ? ` - ${estado}` : ''}</p>
         )}
       </div>
-      <CronometroEtapaBadge dataEntrada={etapaAtual?.data_entrada} compact />
+      <CronometroEtapaBadge dataEntrada={etapaAtual?.data_entrada} compact etapa={pedido.etapa_atual} />
     </button>
   );
 }

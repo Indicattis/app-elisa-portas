@@ -12,7 +12,7 @@ import { EnviarCorrecaoModal } from "./EnviarCorrecaoModal";
 import { useEnviarParaCorrecao } from "@/hooks/useEnviarParaCorrecao";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
 import React, { useState, useMemo } from "react";
-import { calcularTempoExpediente } from "@/utils/calcularTempoExpediente";
+
 import { useNavigate, useLocation } from "react-router-dom";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
 import { AcaoEtapaModal } from "./AcaoEtapaModal";
@@ -109,13 +109,6 @@ export function PedidoCard({
   const isAdministrativo = location.pathname.startsWith('/administrativo');
   const isDirecao = location.pathname.startsWith('/direcao');
 
-  // Calcular se o pedido está atrasado (>10 dias úteis desde criação)
-  const LIMITE_TOTAL_VERMELHO = 10 * 10 * 60 * 60; // 10 dias úteis * 10h/dia = 360000 segundos
-  const isAtrasadoTotal = useMemo(() => {
-    if (!pedido.created_at) return false;
-    const segundos = calcularTempoExpediente(new Date(pedido.created_at), new Date());
-    return segundos >= LIMITE_TOTAL_VERMELHO;
-  }, [pedido.created_at]);
 
   // Mutation para remover responsável
   const removerResponsavelMutation = useMutation({
@@ -500,7 +493,16 @@ export function PedidoCard({
   const portasPequenas = listaPortasInfo.filter(p => p.tamanho === 'P').length;
   const portasGrandes = listaPortasInfo.filter(p => p.tamanho === 'G').length;
 
-  // Calcular metragem linear (soma dos tamanhos das linhas de perfiladeira)
+  // Calcular se o pedido está atrasado (dias corridos desde criação)
+  const temPortaEnrolar = portasEnrolar.length > 0;
+  const LIMITE_DIAS_CORRIDOS = temPortaEnrolar ? 30 : 25;
+  const isAtrasadoTotal = useMemo(() => {
+    if (!pedido.created_at) return false;
+    const diffMs = Date.now() - new Date(pedido.created_at).getTime();
+    const diffDias = diffMs / (1000 * 60 * 60 * 24);
+    return diffDias >= LIMITE_DIAS_CORRIDOS;
+  }, [pedido.created_at, LIMITE_DIAS_CORRIDOS]);
+
   const calcularMetragemLinear = (): number => {
     const linhas = pedido.linhas_perfiladeira || [];
     let total = 0;
@@ -1473,7 +1475,7 @@ export function PedidoCard({
               
               {/* Col 13: Tempo na Etapa + Total */}
               <div className="text-center flex items-center justify-center gap-1">
-                <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact />
+                <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact etapa={etapaAtual} />
                 {pedido.created_at && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -1857,7 +1859,7 @@ className="flex h-[20px] w-full rounded-[3px]"
             </div>
             
             <div className="flex items-center gap-1.5">
-              <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact />
+              <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact etapa={etapaAtual} />
               {pedido.created_at && (
                 <Tooltip>
                   <TooltipTrigger asChild>
