@@ -1,38 +1,56 @@
 
-# Corrigir pedidos "Nao agendado" que nao aparecem na expedicao
 
-## Diagnostico
+# Corrigir duplicatas de ordens do mesmo pedido na expedicao
 
-O problema esta no hook `useOrdensCarregamentoUnificadas` que alimenta a lista de ordens disponiveis em `/logistica/expedicao`.
+## Problema
+Apos remover o filtro restritivo de `tipo_entrega === 'entrega'`, pedidos que possuem multiplos registros na tabela `ordens_carregamento` (mesmo `pedido_id`) passaram a aparecer duplicados na lista de expedicao. Exemplo: pedido 0162 tem 6 registros em `ordens_carregamento`.
 
-Quando um pedido avanca para a etapa `aguardando_coleta`, o sistema cria um registro na tabela `ordens_carregamento` (independente do tipo de entrega). Porem, o hook aplica dois filtros que excluem certos pedidos:
-
-1. **Entregas**: so mostra registros de `ordens_carregamento` onde `venda.tipo_entrega === 'entrega'`. Pedidos com `tipo_entrega = 'instalacao'` sao excluidos.
-2. **Instalacoes**: so mostra registros de `instalacoes` onde `pedido.etapa_atual === 'instalacoes'` ou `status === 'pronta_fabrica'`. Pedidos ainda em `aguardando_coleta` nao atendem nenhuma das condicoes.
-
-Resultado: pedidos com `tipo_entrega = 'instalacao'` na etapa `aguardando_coleta` ficam invisiveis na expedicao, mesmo tendo um registro em `ordens_carregamento`.
+A deduplicacao atual so remove duplicatas **entre tabelas** (ordens_carregamento vs instalacoes), mas nao **dentro** da propria tabela `ordens_carregamento`.
 
 ## Solucao
 
 ### Arquivo: `src/hooks/useOrdensCarregamentoUnificadas.ts`
 
-Remover o filtro restritivo de `tipo_entrega === 'entrega'` na secao de `ordens_carregamento` (linha 112-114). Em vez disso, incluir todos os registros de `ordens_carregamento` que nao estejam duplicados com registros da tabela `instalacoes`.
+Adicionar uma etapa de deduplicacao por `pedido_id` dentro de `todasOrdens` **antes** da deduplicacao cruzada com instalacoes.
 
-Logica ajustada:
-- Buscar todas as `ordens_carregamento` com `carregamento_concluido = false` (sem filtrar por tipo_entrega)
-- Buscar instalacoes com `carregamento_concluido = false` e `instalacao_concluida = false` (mantendo o filtro atual de etapa)
-- Tambem incluir instalacoes cujo pedido esteja em `aguardando_coleta` (adicionando essa condicao ao filtro existente)
-- Ao combinar, excluir registros de `ordens_carregamento` que ja tenham um registro correspondente na lista de `instalacoes` (comparando por `pedido_id`) para evitar duplicatas
-- Definir o `tipo_entrega` baseado no `venda.tipo_entrega` real em vez de forcar `'entrega'`
+Logica:
+1. Apos obter `todasOrdens`, agrupar por `pedido_id` e manter apenas um registro por pedido (o mais recente por `created_at`, ou o que ja tem data de carregamento agendada)
+2. Registros sem `pedido_id` (null) sao mantidos sem deduplicacao
+3. A deduplicacao cruzada com instalacoes continua funcionando normalmente apos essa etapa
 
 ### Detalhes tecnicos
 
-Alteracoes no `useOrdensCarregamentoUnificadas`:
+Inserir entre as linhas que definem `todasOrdens` e `atendenteIds`:
 
-1. **Remover filtro linha 112-114**: `ordensEntrega` passa a incluir todos os registros (nao apenas `tipo_entrega === 'entrega'`)
-2. **Ajustar filtro de instalacoes linha 173-174**: adicionar condicao `pedido.etapa_atual === 'aguardando_coleta'` ao filtro existente
-3. **Adicionar deduplicacao**: antes de combinar, remover de `ordensCarregamento` os registros cujo `pedido_id` ja esteja presente na lista de instalacoes filtradas
-4. **Corrigir tipo_entrega na normalizacao linha 207**: usar `venda.tipo_entrega` real em vez de forcar `'entrega'`
+```typescript
+// Deduplicar por pedido_id dentro de ordens_carregamento
+// Manter o registro mais relevante (com data agendada, ou o mais recente)
+const ordensUnicasPorPedido = (() => {
+  const semPedido = todasOrdens.filter(o => !o.pedido_id);
+  const comPedido = todasOrdens.filter(o => o.pedido_id);
+  const porPedido = new Map<string, typeof comPedido[0]>();
+  for (const ordem of comPedido) {
+    const existing = porPedido.get(ordem.pedido_id!);
+    if (!existing) {
+      porPedido.set(ordem.pedido_id!, ordem);
+    } else {
+      // Preferir o que tem data_carregamento, senao o mais recente
+      const ordemTemData = !!ordem.data_carregamento;
+      const existingTemData = !!existing.data_carregamento;
+      if (ordemTemData && !existingTemData) {
+        porPedido.set(ordem.pedido_id!, ordem);
+      } else if (!ordemTemData && existingTemData) {
+        // manter existing
+      } else if (new Date(ordem.created_at || 0) > new Date(existing.created_at || 0)) {
+        porPedido.set(ordem.pedido_id!, ordem);
+      }
+    }
+  }
+  return [...semPedido, ...porPedido.values()];
+})();
+```
+
+Depois, substituir `todasOrdens` por `ordensUnicasPorPedido` nas referencias subsequentes (atendenteIds e deduplicacao cruzada).
 
 ### Arquivo afetado
 - `src/hooks/useOrdensCarregamentoUnificadas.ts`
