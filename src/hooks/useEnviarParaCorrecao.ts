@@ -11,6 +11,7 @@ interface EnviarParaCorrecaoParams {
   estado?: string | null;
   cep?: string | null;
   telefoneCliente?: string | null;
+  etapaOrigem?: string;
 }
 
 export const useEnviarParaCorrecao = () => {
@@ -21,12 +22,14 @@ export const useEnviarParaCorrecao = () => {
       const { data: user } = await supabase.auth.getUser();
       const userId = user.user?.id;
 
-      // 1. Close 'finalizado' stage
+      const etapaOrigem = params.etapaOrigem || 'finalizado';
+
+      // 1. Close origin stage
       await supabase
         .from("pedidos_etapas")
         .update({ data_saida: new Date().toISOString() })
         .eq("pedido_id", params.pedidoId)
-        .eq("etapa", "finalizado")
+        .eq("etapa", etapaOrigem)
         .is("data_saida", null);
 
       // 2. Create/upsert 'correcoes' stage
@@ -73,7 +76,7 @@ export const useEnviarParaCorrecao = () => {
         .from("pedidos_movimentacoes")
         .insert({
           pedido_id: params.pedidoId,
-          etapa_origem: 'finalizado',
+          etapa_origem: etapaOrigem,
           etapa_destino: 'correcoes',
           user_id: userId || '',
           teor: 'avanco',
