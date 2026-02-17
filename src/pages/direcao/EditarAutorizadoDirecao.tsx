@@ -71,6 +71,7 @@ export default function EditarAutorizadoDirecao() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [contratoUrl, setContratoUrl] = useState<string | null>(null);
   const [contratoNome, setContratoNome] = useState<string | null>(null);
+  const [precos, setPrecos] = useState<{ P: number; G: number; GG: number }>({ P: 0, G: 0, GG: 0 });
   const [estadoInfo, setEstadoInfo] = useState<{ id: string; nome: string } | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -121,6 +122,22 @@ export default function EditarAutorizadoDirecao() {
 
         if (data.estado) {
           setCidadesDisponiveis(getCidadesPorEstado(data.estado));
+        }
+
+        // Fetch preços de instalação
+        const { data: precosData } = await supabase
+          .from('autorizado_precos_portas')
+          .select('tamanho, valor')
+          .eq('autorizado_id', id!);
+
+        if (precosData) {
+          const p = { P: 0, G: 0, GG: 0 };
+          precosData.forEach((r) => {
+            if (r.tamanho === 'P' || r.tamanho === 'G' || r.tamanho === 'GG') {
+              p[r.tamanho] = Number(r.valor);
+            }
+          });
+          setPrecos(p);
         }
       }
     } catch (error) {
@@ -255,6 +272,21 @@ export default function EditarAutorizadoDirecao() {
             estado: c.estado,
           })));
         if (secError) console.error('Erro ao salvar cidades secundárias:', secError);
+      }
+
+      // Salvar preços de instalação
+      const { data: { user } } = await supabase.auth.getUser();
+      const tamanhos: ('P' | 'G' | 'GG')[] = ['P', 'G', 'GG'];
+      for (const tamanho of tamanhos) {
+        await supabase
+          .from('autorizado_precos_portas')
+          .upsert({
+            autorizado_id: id!,
+            tamanho,
+            valor: precos[tamanho],
+            created_by: user?.id,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'autorizado_id,tamanho' });
       }
 
       // Geocodificar
@@ -613,6 +645,35 @@ export default function EditarAutorizadoDirecao() {
                       disabled={!novaCidadeSec.estado || !novaCidadeSec.cidade}>
                       <Plus className="h-4 w-4" />
                     </Button>
+                  </div>
+                </div>
+
+                {/* Preços de Instalação */}
+                <div className="space-y-3 pt-4 border-t border-white/10">
+                  <Label className="text-white/80 text-base font-medium">Preços de Instalação</Label>
+                  <p className="text-xs text-white/50">Valores cobrados por tamanho de porta.</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    {([
+                      { key: 'P' as const, label: 'P', desc: '< 25m²' },
+                      { key: 'G' as const, label: 'G', desc: '25 - 50m²' },
+                      { key: 'GG' as const, label: 'GG', desc: '> 50m²' },
+                    ]).map(({ key, label, desc }) => (
+                      <div key={key} className="space-y-1">
+                        <Label className="text-white/60 text-xs">{label} <span className="text-white/40">({desc})</span></Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">R$</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={precos[key] || ''}
+                            onChange={(e) => setPrecos({ ...precos, [key]: parseFloat(e.target.value) || 0 })}
+                            className="pl-10 bg-white/5 border-white/10 text-white"
+                            placeholder="0,00"
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
