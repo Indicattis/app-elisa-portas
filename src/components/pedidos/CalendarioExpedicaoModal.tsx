@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DndContext } from "@dnd-kit/core";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar, CalendarDays } from "lucide-react";
@@ -86,31 +87,33 @@ export const CalendarioExpedicaoModal = ({ open, onOpenChange }: CalendarioExped
           </div>
         </DialogHeader>
 
-        {viewType === 'month' ? (
-          <CalendarioMensalExpedicaoDesktop
-            currentMonth={currentDate}
-            ordens={ordens}
-            neoInstalacoes={neoInstalacoes}
-            neoCorrecoes={todasCorrecoes}
-            onMonthChange={setCurrentDate}
-            activeLegend={legendaFiltro}
-            onLegendToggle={(legend) => setLegendaFiltro(legendaFiltro === legend ? null : legend)}
-            readOnly
-          />
-        ) : (
-          <CalendarioSemanalExpedicaoDesktop
-            startDate={weekStart}
-            ordens={ordens}
-            neoInstalacoes={neoInstalacoes}
-            neoCorrecoes={todasCorrecoes}
-            onPreviousWeek={() => setCurrentDate(prev => new Date(prev.getTime() - 7 * 24 * 60 * 60 * 1000))}
-            onNextWeek={() => setCurrentDate(prev => new Date(prev.getTime() + 7 * 24 * 60 * 60 * 1000))}
-            onToday={() => setCurrentDate(new Date())}
-            activeLegend={legendaFiltro}
-            onLegendToggle={(legend) => setLegendaFiltro(legendaFiltro === legend ? null : legend)}
-            readOnly
-          />
-        )}
+        <DndContext>
+          {viewType === 'month' ? (
+            <CalendarioMensalExpedicaoDesktop
+              currentMonth={currentDate}
+              ordens={ordens}
+              neoInstalacoes={neoInstalacoes}
+              neoCorrecoes={todasCorrecoes}
+              onMonthChange={setCurrentDate}
+              activeLegend={legendaFiltro}
+              onLegendToggle={(legend) => setLegendaFiltro(legendaFiltro === legend ? null : legend)}
+              readOnly
+            />
+          ) : (
+            <CalendarioSemanalExpedicaoDesktop
+              startDate={weekStart}
+              ordens={ordens}
+              neoInstalacoes={neoInstalacoes}
+              neoCorrecoes={todasCorrecoes}
+              onPreviousWeek={() => setCurrentDate(prev => new Date(prev.getTime() - 7 * 24 * 60 * 60 * 1000))}
+              onNextWeek={() => setCurrentDate(prev => new Date(prev.getTime() + 7 * 24 * 60 * 60 * 1000))}
+              onToday={() => setCurrentDate(new Date())}
+              activeLegend={legendaFiltro}
+              onLegendToggle={(legend) => setLegendaFiltro(legendaFiltro === legend ? null : legend)}
+              readOnly
+            />
+          )}
+        </DndContext>
       </DialogContent>
     </Dialog>
   );
