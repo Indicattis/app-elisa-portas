@@ -56,6 +56,7 @@ interface NeoInstalacoesDraggableListProps {
   viewMode?: 'grid' | 'list';
   onConcluir?: (id: string) => void;
   isConcluindo?: boolean;
+  onAgendar?: (id: string) => void;
   onReorganizar: (updates: { id: string; prioridade_gestao: number }[]) => void;
 }
 
@@ -64,6 +65,7 @@ export function NeoInstalacoesDraggableList({
   viewMode = 'list',
   onConcluir,
   isConcluindo,
+  onAgendar,
   onReorganizar,
 }: NeoInstalacoesDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -108,6 +110,7 @@ export function NeoInstalacoesDraggableList({
                   viewMode={viewMode}
                   onConcluir={onConcluir}
                   isConcluindo={isConcluindo}
+                  onAgendar={onAgendar}
                   dragHandleProps={dragHandleProps}
                   isDragging={isDragging}
                 />
@@ -135,6 +138,7 @@ interface NeoCorrecoesDraggableListProps {
   viewMode?: 'grid' | 'list';
   onConcluir?: (id: string) => void;
   isConcluindo?: boolean;
+  onAgendar?: (id: string) => void;
   onReorganizar: (updates: { id: string; prioridade_gestao: number }[]) => void;
 }
 
@@ -143,6 +147,7 @@ export function NeoCorrecoesDraggableList({
   viewMode = 'list',
   onConcluir,
   isConcluindo,
+  onAgendar,
   onReorganizar,
 }: NeoCorrecoesDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -187,6 +192,7 @@ export function NeoCorrecoesDraggableList({
                   viewMode={viewMode}
                   onConcluir={onConcluir}
                   isConcluindo={isConcluindo}
+                  onAgendar={onAgendar}
                   dragHandleProps={dragHandleProps}
                   isDragging={isDragging}
                 />
