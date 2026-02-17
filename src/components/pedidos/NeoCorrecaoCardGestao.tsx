@@ -261,7 +261,7 @@ export function NeoCorrecaoCardGestao({
 
               {/* Col 19: Botões de ação ou status concluído */}
               <div className="flex items-center justify-end gap-1" style={{ gridColumn: '19 / -1' }}>
-                {onAgendar && !showConcluido && (
+                {onAgendar && !showConcluido && !neoCorrecao.data_correcao && (
                   <Button
                     size="icon"
                     variant="outline"
