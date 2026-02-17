@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, CalendarDays, ArrowLeft, LogOut, Plus, Hammer, Wrench } from "lucide-react";
+import { Calendar, CalendarDays, ArrowLeft, LogOut, Plus, Hammer, Wrench, Package, HardHat, AlertTriangle, UserPlus, RefreshCw } from "lucide-react";
 
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
@@ -10,21 +10,35 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 import { useOrdensCarregamentoCalendario } from "@/hooks/useOrdensCarregamentoCalendario";
 import { useNeoInstalacoes, useNeoInstalacoesSemData } from "@/hooks/useNeoInstalacoes";
 import { useNeoCorrecoes, useNeoCorrecoesSemData } from "@/hooks/useNeoCorrecoes";
 import { useCorrecoes, useCorrecoesSemData } from "@/hooks/useCorrecoes";
-import { OrdensCarregamentoDisponiveis } from "@/components/expedicao/OrdensCarregamentoDisponiveis";
-import { OrdensCarregamentoDisponiveisMobile } from "@/components/expedicao/OrdensCarregamentoDisponiveisMobile";
+import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
+import { useNeoInstalacoesListagem } from "@/hooks/useNeoInstalacoes";
+import { useNeoCorrecoesListagem } from "@/hooks/useNeoCorrecoes";
+import { useEtapaResponsaveis } from "@/hooks/useEtapaResponsaveis";
+import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
+import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMinimalista";
+import { NeoInstalacaoCardGestao } from "@/components/pedidos/NeoInstalacaoCardGestao";
+import { NeoCorrecaoCardGestao } from "@/components/pedidos/NeoCorrecaoCardGestao";
+import { SelecionarResponsavelEtapaModal } from "@/components/pedidos/SelecionarResponsavelEtapaModal";
+import { ETAPAS_CONFIG } from "@/types/pedidoEtapa";
+import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
 import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrdemCarregamentoDrawer";
 import { NeoInstalacaoModal } from "@/components/expedicao/NeoInstalacaoModal";
 import { NeoCorrecaoModal } from "@/components/expedicao/NeoCorrecaoModal";
 import { NeoInstalacaoDetails } from "@/components/expedicao/NeoInstalacaoDetails";
 import { NeoCorrecaoDetails } from "@/components/expedicao/NeoCorrecaoDetails";
-import { NeoServicosDisponiveis } from "@/components/expedicao/NeoServicosDisponiveis";
-import { NeoServicosDisponiveisMobile } from "@/components/expedicao/NeoServicosDisponiveisMobile";
+import { AdicionarOrdemCalendarioModal } from "@/components/expedicao/AdicionarOrdemCalendarioModal";
 import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
 import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
@@ -37,6 +51,7 @@ import { NeoCorrecao, CriarNeoCorrecaoData } from "@/types/neoCorrecao";
 import { Correcao } from "@/types/correcao";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function ExpedicaoMinimalista() {
@@ -65,6 +80,20 @@ export default function ExpedicaoMinimalista() {
   const [neoCorrecaoDetailsOpen, setNeoCorrecaoDetailsOpen] = useState(false);
   const [legendaFiltro, setLegendaFiltro] = useState<string | null>(null);
 
+  // States para a listagem de pedidos por etapa (tabs)
+  const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('aguardando_coleta');
+  const [searchTermPedidos, setSearchTermPedidos] = useState('');
+  const [tipoEntrega, setTipoEntrega] = useState('todos');
+  const [corPintura, setCorPintura] = useState('todas');
+  const [mostrarProntos, setMostrarProntos] = useState(false);
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [modalResponsavelAberto, setModalResponsavelAberto] = useState(false);
+  const [etapaParaAtribuir, setEtapaParaAtribuir] = useState<EtapaPedido | null>(null);
+  const [agendarModalOpen, setAgendarModalOpen] = useState(false);
+  const [agendarData, setAgendarData] = useState(new Date());
+  const ITENS_POR_PAGINA = 25;
+  const { toast: toastShadcn } = useToast();
+
   const { ordens, isLoading, updateOrdem } = useOrdensCarregamentoCalendario(currentDate, viewType);
   const { neoInstalacoes, createNeoInstalacao, updateNeoInstalacao, deleteNeoInstalacao, concluirNeoInstalacao, isConcluindo: isConcluindoInstalacao } = useNeoInstalacoes(currentDate, viewType);
   const { neoCorrecoes, createNeoCorrecao, updateNeoCorrecao, deleteNeoCorrecao, concluirNeoCorrecao, isConcluindo: isConcluindoCorrecao } = useNeoCorrecoes(currentDate, viewType);
@@ -76,6 +105,120 @@ export default function ExpedicaoMinimalista() {
   // Hooks para correções de pedidos
   const { correcoes: correcoesPedido, updateCorrecao, concluirCorrecao, isConcluindo: isConcluindoCorrecaoPedido } = useCorrecoes(currentDate, viewType);
   const { correcoesSemData, updateCorrecao: updateCorrecaoSemData, isLoading: isLoadingCorrecoesSemDataPedido } = useCorrecoesSemData();
+
+  // Hooks para listagem de pedidos por etapa
+  const contadores = usePedidosContadores();
+  const { neoInstalacoes: neoInstalacoesListagem, concluirNeoInstalacao: concluirNeoInstalacaoListagem, isConcluindo: isConcluindoInstalacaoListagem } = useNeoInstalacoesListagem();
+  const { neoCorrecoes: neoCorrecoesListagem, concluirNeoCorrecao: concluirNeoCorrecaoListagem } = useNeoCorrecoesListagem();
+  const { getResponsavel, atribuirResponsavel, removerResponsavel, isAtribuindo } = useEtapaResponsaveis();
+  const {
+    pedidos: pedidosEtapa,
+    isLoading: isLoadingPedidos,
+    moverParaProximaEtapa,
+    retrocederEtapa,
+    atualizarPrioridade,
+    reorganizarPedidos,
+    arquivarPedido,
+    deletarPedido
+  } = usePedidosEtapas(etapaAtiva);
+
+  // Etapas da logística
+  const ETAPAS_LOGISTICA: EtapaPedido[] = ['aguardando_coleta', 'instalacoes', 'correcoes'];
+  const ETAPA_ICONS = {
+    aguardando_coleta: Package,
+    instalacoes: HardHat,
+    correcoes: AlertTriangle,
+  };
+
+  // Handlers para pedidos
+  const handleMoverEtapa = async (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => {
+    await moverParaProximaEtapa.mutateAsync({ pedidoId, skipCheckboxValidation: skipCheckboxValidation || false, onProgress });
+  };
+  const handleRetrocederEtapa = (pedidoId: string, etapaDestino: EtapaPedido, motivo: string) => {
+    retrocederEtapa.mutate({ pedidoId, etapaDestino, motivo });
+  };
+  const handleReorganizar = async (atualizacoes: { id: string; prioridade: number; }[]) => {
+    await reorganizarPedidos.mutateAsync(atualizacoes);
+  };
+  const handleMoverPrioridade = async (pedidoId: string, direcao: DirecaoPrioridade) => {
+    const index = pedidosEtapa.findIndex(p => p.id === pedidoId);
+    if (index === -1) return;
+    let novaPrioridade: number;
+    if (direcao === 'frente' && index > 0) {
+      novaPrioridade = ((pedidosEtapa[index - 1] as any).prioridade_etapa || 0) + 1;
+    } else if (direcao === 'tras' && index < pedidosEtapa.length - 1) {
+      novaPrioridade = ((pedidosEtapa[index + 1] as any).prioridade_etapa || 0) - 1;
+    } else { return; }
+    await atualizarPrioridade.mutateAsync({ pedidoId, novaPrioridade });
+  };
+  const handleArquivar = async (pedidoId: string) => { await arquivarPedido.mutateAsync(pedidoId); };
+  const handleDeletarPedido = async (pedidoId: string) => { await deletarPedido.mutateAsync(pedidoId); };
+  const handleConcluirNeoInstalacaoListagem = async (id: string) => { await concluirNeoInstalacaoListagem(id); };
+  const handleConcluirNeoCorrecaoListagem = async (id: string) => { await concluirNeoCorrecaoListagem.mutateAsync(id); };
+  const handleAbrirModalResponsavel = (etapa: EtapaPedido) => {
+    setEtapaParaAtribuir(etapa);
+    setModalResponsavelAberto(true);
+  };
+  const handleAtribuirResponsavel = (userId: string) => {
+    if (etapaParaAtribuir) { atribuirResponsavel({ etapa: etapaParaAtribuir, responsavelId: userId }); setModalResponsavelAberto(false); setEtapaParaAtribuir(null); }
+  };
+  const handleRemoverResponsavel = () => {
+    if (etapaParaAtribuir) { removerResponsavel(etapaParaAtribuir); setModalResponsavelAberto(false); setEtapaParaAtribuir(null); }
+  };
+  const handleAgendarPedido = (pedidoId: string) => {
+    setAgendarData(new Date());
+    setAgendarModalOpen(true);
+  };
+
+  // Filtros para pedidos
+  const pedidosFiltrados = useMemo(() => {
+    let filtered = pedidosEtapa;
+    if (searchTermPedidos.trim()) {
+      const termo = searchTermPedidos.toLowerCase().trim();
+      filtered = filtered.filter((pedido: any) => {
+        const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
+        const clienteNome = vendaData?.cliente_nome?.toLowerCase() || '';
+        const numeroPedido = pedido.numero_pedido?.toString() || '';
+        return clienteNome.includes(termo) || numeroPedido.includes(termo);
+      });
+    }
+    if (tipoEntrega !== 'todos') {
+      filtered = filtered.filter((pedido: any) => {
+        const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
+        return vendaData?.tipo_entrega === tipoEntrega;
+      });
+    }
+    if (corPintura !== 'todas') {
+      filtered = filtered.filter((pedido: any) => {
+        const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
+        const produtos = vendaData?.produtos_vendas || [];
+        return produtos.some((p: any) => (p.cor?.nome || '').toLowerCase().includes(corPintura.toLowerCase()));
+      });
+    }
+    if (mostrarProntos) {
+      filtered = filtered.filter((pedido: any) => {
+        const etapaAtualPedido = pedido.pedidos_etapas?.find((e: any) => e.etapa === etapaAtiva);
+        if (!etapaAtualPedido || !etapaAtualPedido.checkboxes) return false;
+        const checkboxes = etapaAtualPedido.checkboxes as any[];
+        return checkboxes.filter((cb: any) => cb.required).every((cb: any) => cb.checked === true);
+      });
+    }
+    return filtered;
+  }, [pedidosEtapa, searchTermPedidos, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
+
+  const totalPortasEtapa = useMemo(() => {
+    return pedidosFiltrados.reduce((total, pedido: any) => {
+      const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
+      const produtos = vendaData?.produtos_vendas || [];
+      const portasEnrolar = produtos.filter((p: any) => p.tipo_produto === 'porta_enrolar');
+      return total + portasEnrolar.reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
+    }, 0);
+  }, [pedidosFiltrados]);
+
+  useEffect(() => { setPaginaAtual(1); }, [searchTermPedidos, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
+
+  const totalPaginas = Math.ceil(pedidosFiltrados.length / ITENS_POR_PAGINA);
+  const pedidosPaginados = pedidosFiltrados.slice((paginaAtual - 1) * ITENS_POR_PAGINA, paginaAtual * ITENS_POR_PAGINA);
 
   // Mapear correções de pedido para formato NeoCorrecao para reutilizar componentes do calendário
   const correcoesPedidoAsNeoCorrecao: NeoCorrecao[] = (correcoesPedido || []).map(c => ({
@@ -516,44 +659,261 @@ export default function ExpedicaoMinimalista() {
                 </CardContent>
               </Card>
 
-              {/* Ordens Disponíveis */}
+              {/* Listagem de Pedidos por Etapa com DnD */}
               <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-                <CardContent className="p-4">
-                  {isMobile ? (
-                    <OrdensCarregamentoDisponiveisMobile onRefresh={handleRefresh} />
-                  ) : (
-                    <OrdensCarregamentoDisponiveis onRefresh={handleRefresh} />
-                  )}
-                </CardContent>
-              </Card>
+                <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido)}>
+                  {/* Seletor mobile */}
+                  <div className="md:hidden px-4 pt-4">
+                    <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido)}>
+                      <SelectTrigger className="w-full h-12 bg-primary/5 border-primary/10 text-white">
+                        <SelectValue>
+                          {(() => {
+                            const config = ETAPAS_CONFIG[etapaAtiva];
+                            const count = contadores[etapaAtiva] || 0;
+                            const IconComponent = ETAPA_ICONS[etapaAtiva as keyof typeof ETAPA_ICONS];
+                            return (
+                              <div className="flex items-center gap-2">
+                                {IconComponent && <IconComponent className="h-5 w-5" />}
+                                <span className="font-medium">{config.label}</span>
+                                <Badge variant="secondary" className="ml-auto bg-primary/10">{count}</Badge>
+                              </div>
+                            );
+                          })()}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-primary/10">
+                        {ETAPAS_LOGISTICA.map(etapa => {
+                          const config = ETAPAS_CONFIG[etapa];
+                          const count = contadores[etapa] || 0;
+                          const IconComponent = ETAPA_ICONS[etapa as keyof typeof ETAPA_ICONS];
+                          return (
+                            <SelectItem key={etapa} value={etapa} className="text-white cursor-pointer">
+                              <div className="flex items-center gap-2 w-full">
+                                {IconComponent && <IconComponent className="h-4 w-4 flex-shrink-0" />}
+                                <span className="flex-1">{config.label}</span>
+                                <Badge variant="secondary" className="text-xs bg-primary/10">{count}</Badge>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {/* Serviços Avulsos Pendentes de Agendamento */}
-              <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-                <CardContent className="p-4">
-                  {isMobile ? (
-                    <NeoServicosDisponiveisMobile
-                      neoInstalacoes={neoInstalacoesSemData}
-                      neoCorrecoes={todasNeoCorrecoesSemData}
-                      onAgendarInstalacao={handleAgendarInstalacao}
-                      onAgendarCorrecao={handleAgendarCorrecao}
-                      isLoadingInstalacoes={isLoadingInstalacoesSemData}
-                      isLoadingCorrecoes={isLoadingCorrecoesSemData || isLoadingCorrecoesSemDataPedido}
-                    />
-                  ) : (
-                    <NeoServicosDisponiveis
-                      neoInstalacoes={neoInstalacoesSemData}
-                      neoCorrecoes={todasNeoCorrecoesSemData}
-                      onAgendarInstalacao={handleAgendarInstalacao}
-                      onAgendarCorrecao={handleAgendarCorrecao}
-                      onEditarInstalacao={handleEditarNeoInstalacao}
-                      onEditarCorrecao={handleEditarNeoCorrecao}
-                      isLoadingInstalacoes={isLoadingInstalacoesSemData}
-                      isLoadingCorrecoes={isLoadingCorrecoesSemData || isLoadingCorrecoesSemDataPedido}
-                      onReorganizarInstalacoes={reorganizarNeoInstalacoes}
-                      onReorganizarCorrecoes={reorganizarNeoCorrecoes}
-                    />
-                  )}
-                </CardContent>
+                  {/* Tabs - Desktop */}
+                  <div className="hidden md:block px-4 pt-4">
+                    <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-1 bg-primary/5 border border-primary/10">
+                      <TooltipProvider>
+                        {ETAPAS_LOGISTICA.map(etapa => {
+                          const config = ETAPAS_CONFIG[etapa];
+                          const count = contadores[etapa] || 0;
+                          const IconComponent = ETAPA_ICONS[etapa as keyof typeof ETAPA_ICONS];
+                          const responsavel = getResponsavel(etapa);
+                          return (
+                            <TabsTrigger 
+                              key={etapa} 
+                              value={etapa} 
+                              className="flex-shrink-0 px-3 py-2 gap-2 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white"
+                            >
+                              {responsavel ? (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Avatar className="h-5 w-5 border border-primary/30">
+                                      <AvatarImage src={responsavel.foto_perfil_url || undefined} />
+                                      <AvatarFallback className="text-[10px] bg-primary/20">{responsavel.nome.charAt(0).toUpperCase()}</AvatarFallback>
+                                    </Avatar>
+                                  </TooltipTrigger>
+                                  <TooltipContent><p className="text-xs">Responsável: {responsavel.nome}</p></TooltipContent>
+                                </Tooltip>
+                              ) : (
+                                IconComponent && <IconComponent className="h-4 w-4 flex-shrink-0" />
+                              )}
+                              <span className="text-xs">{config.label}</span>
+                              <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">{count}</span>
+                            </TabsTrigger>
+                          );
+                        })}
+                      </TooltipProvider>
+                    </TabsList>
+                  </div>
+
+                  {ETAPAS_LOGISTICA.map(etapa => (
+                    <TabsContent key={etapa} value={etapa} className="mt-0">
+                      <CardHeader className="pb-3 px-4 py-4">
+                        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                          <CardTitle className="text-lg flex items-center gap-2 text-white">
+                            <span>{ETAPAS_CONFIG[etapa].label}</span>
+                            <span className="text-sm font-normal text-white/60">
+                              {pedidosFiltrados.length} {pedidosFiltrados.length === 1 ? 'pedido' : 'pedidos'}
+                              {totalPaginas > 1 && ` (Página ${paginaAtual} de ${totalPaginas})`}
+                            </span>
+                            {totalPortasEtapa > 0 && (
+                              <Badge variant="secondary" className="text-xs ml-2 bg-primary/10 text-white">
+                                🚪 {totalPortasEtapa} {totalPortasEtapa === 1 ? 'porta' : 'portas'}
+                              </Badge>
+                            )}
+                            {/* Responsável da Etapa */}
+                            <div className="flex items-center gap-2 ml-4">
+                              {(() => {
+                                const responsavel = getResponsavel(etapa);
+                                return responsavel ? (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button 
+                                          onClick={() => handleAbrirModalResponsavel(etapa)}
+                                          className="flex items-center gap-2 px-2 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
+                                        >
+                                          <Avatar className="h-6 w-6 border border-primary/30">
+                                            <AvatarImage src={responsavel.foto_perfil_url || undefined} />
+                                            <AvatarFallback className="text-[10px] bg-primary/20">{responsavel.nome.charAt(0).toUpperCase()}</AvatarFallback>
+                                          </Avatar>
+                                          <span className="text-xs text-white/80">{responsavel.nome.split(' ')[0]}</span>
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p className="text-xs">Clique para alterar o responsável</p></TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                ) : (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="sm" onClick={() => handleAbrirModalResponsavel(etapa)} className="h-7 px-2 text-white/50 hover:text-white hover:bg-primary/10">
+                                          <UserPlus className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p className="text-xs">Atribuir responsável</p></TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                );
+                              })()}
+                            </div>
+                          </CardTitle>
+                          <PedidosFiltrosMinimalista 
+                            searchTerm={searchTermPedidos} 
+                            onSearchChange={setSearchTermPedidos} 
+                            tipoEntrega={tipoEntrega} 
+                            onTipoEntregaChange={setTipoEntrega} 
+                            corPintura={corPintura} 
+                            onCorPinturaChange={setCorPintura} 
+                            mostrarProntos={mostrarProntos} 
+                            onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)} 
+                          />
+                        </div>
+                      </CardHeader>
+                      <CardContent className="px-4 py-4">
+                        {isLoadingPedidos ? (
+                          <div className="text-center py-8 text-white/60">Carregando...</div>
+                        ) : pedidosFiltrados.length === 0 && !(etapaAtiva === 'instalacoes' && neoInstalacoesListagem.length > 0) && !(etapaAtiva === 'correcoes' && neoCorrecoesListagem.length > 0) ? (
+                          <div className="text-center py-8 text-white/60">
+                            {searchTermPedidos ? 'Nenhum pedido encontrado' : 'Nenhum pedido nesta etapa'}
+                          </div>
+                        ) : (
+                          <>
+                            {/* Neo Instalações - apenas na etapa instalacoes */}
+                            {etapaAtiva === 'instalacoes' && neoInstalacoesListagem.length > 0 && (
+                              <div className="mb-4 space-y-2">
+                                <h3 className="text-sm font-medium text-white/70 mb-2">Instalações Avulsas ({neoInstalacoesListagem.length})</h3>
+                                <div className="space-y-1">
+                                  {neoInstalacoesListagem.map((neo) => (
+                                    <NeoInstalacaoCardGestao
+                                      key={neo.id}
+                                      neoInstalacao={neo}
+                                      viewMode="list"
+                                      onConcluir={handleConcluirNeoInstalacaoListagem}
+                                      isConcluindo={isConcluindoInstalacaoListagem}
+                                      onAgendar={(id) => {
+                                        setAgendarData(new Date());
+                                        setAgendarModalOpen(true);
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+                                {pedidosFiltrados.length > 0 && (
+                                  <h3 className="text-sm font-medium text-white/70 mt-4 mb-2">Pedidos ({pedidosFiltrados.length})</h3>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Neo Correções - apenas na etapa correcoes */}
+                            {etapaAtiva === 'correcoes' && neoCorrecoesListagem.length > 0 && (
+                              <div className="mb-4 space-y-2">
+                                <h3 className="text-sm font-medium text-white/70 mb-2">Correções Avulsas ({neoCorrecoesListagem.length})</h3>
+                                <div className="space-y-1">
+                                  {neoCorrecoesListagem.map((neo) => (
+                                    <NeoCorrecaoCardGestao
+                                      key={neo.id}
+                                      neoCorrecao={neo}
+                                      viewMode="list"
+                                      onConcluir={handleConcluirNeoCorrecaoListagem}
+                                      onAgendar={(id) => {
+                                        setAgendarData(new Date());
+                                        setAgendarModalOpen(true);
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+                                {pedidosFiltrados.length > 0 && (
+                                  <h3 className="text-sm font-medium text-white/70 mt-4 mb-2">Pedidos ({pedidosFiltrados.length})</h3>
+                                )}
+                              </div>
+                            )}
+                            
+                            <PedidosDraggableList 
+                              pedidos={pedidosPaginados}
+                              pedidosParaTotais={pedidosFiltrados}
+                              etapa={etapa} 
+                              isAberto={false} 
+                              viewMode="list" 
+                              onMoverEtapa={handleMoverEtapa} 
+                              onRetrocederEtapa={handleRetrocederEtapa} 
+                              onReorganizar={handleReorganizar} 
+                              onMoverPrioridade={handleMoverPrioridade}
+                              onArquivar={handleArquivar}
+                              onDeletar={handleDeletarPedido}
+                              onAgendar={handleAgendarPedido}
+                              enableDragAndDrop={true}
+                              showPosicao={true}
+                            />
+                            
+                            {totalPaginas > 1 && (
+                              <div className="mt-6 flex justify-center">
+                                <Pagination>
+                                  <PaginationContent>
+                                    <PaginationItem>
+                                      <PaginationPrevious 
+                                        onClick={() => setPaginaAtual(prev => Math.max(1, prev - 1))}
+                                        className={`${paginaAtual === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'} text-white`}
+                                      />
+                                    </PaginationItem>
+                                    {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((pagina) => {
+                                      const mostrarPagina = pagina === 1 || pagina === totalPaginas || (pagina >= paginaAtual - 1 && pagina <= paginaAtual + 1);
+                                      const mostrarEllipsisAntes = pagina === paginaAtual - 2 && paginaAtual > 3;
+                                      const mostrarEllipsisDepois = pagina === paginaAtual + 2 && paginaAtual < totalPaginas - 2;
+                                      if (mostrarEllipsisAntes || mostrarEllipsisDepois) return <PaginationItem key={pagina}><PaginationEllipsis className="text-white" /></PaginationItem>;
+                                      if (!mostrarPagina) return null;
+                                      return (
+                                        <PaginationItem key={pagina}>
+                                          <PaginationLink onClick={() => setPaginaAtual(pagina)} isActive={paginaAtual === pagina} className="cursor-pointer text-white">{pagina}</PaginationLink>
+                                        </PaginationItem>
+                                      );
+                                    })}
+                                    <PaginationItem>
+                                      <PaginationNext 
+                                        onClick={() => setPaginaAtual(prev => Math.min(totalPaginas, prev + 1))}
+                                        className={`${paginaAtual === totalPaginas ? 'pointer-events-none opacity-50' : 'cursor-pointer'} text-white`}
+                                      />
+                                    </PaginationItem>
+                                  </PaginationContent>
+                                </Pagination>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </CardContent>
+                    </TabsContent>
+                  ))}
+                </Tabs>
               </Card>
             </div>
           )}
@@ -610,6 +970,41 @@ export default function ExpedicaoMinimalista() {
         onEditar={handleEditarNeoCorrecao}
         isConcluindo={isConcluindoCorrecao}
       />
+
+      {/* Modal para agendar no calendário */}
+      <AdicionarOrdemCalendarioModal
+        open={agendarModalOpen}
+        onOpenChange={setAgendarModalOpen}
+        dataSelecionada={agendarData}
+        onConfirm={async (params) => {
+          await handleUpdateOrdem({
+            id: params.ordemId,
+            data: {
+              data_carregamento: params.data_carregamento,
+              hora_carregamento: params.hora,
+              tipo_carregamento: params.tipo_carregamento,
+              responsavel_carregamento_id: params.responsavel_carregamento_id,
+              responsavel_carregamento_nome: params.responsavel_carregamento_nome,
+              status: params.fonte === 'instalacoes' ? 'pronta_fabrica' : 'agendada',
+            } as any,
+            fonte: params.fonte,
+          });
+          handleOrdemCriada();
+        }}
+      />
+
+      {/* Modal para atribuir responsável de etapa */}
+      {etapaParaAtribuir && (
+        <SelecionarResponsavelEtapaModal
+          open={modalResponsavelAberto}
+          onOpenChange={setModalResponsavelAberto}
+          etapa={etapaParaAtribuir}
+          responsavelAtualId={getResponsavel(etapaParaAtribuir)?.user_id}
+          onConfirm={handleAtribuirResponsavel}
+          onRemover={handleRemoverResponsavel}
+          isLoading={isAtribuindo}
+        />
+      )}
     </div>
   );
 }

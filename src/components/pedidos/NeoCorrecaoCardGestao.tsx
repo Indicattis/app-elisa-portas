@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
-import { MapPin, Calendar, Clock, AlertTriangle, Check, DollarSign, Undo2, GripVertical } from "lucide-react";
+import { MapPin, Calendar, CalendarPlus, Clock, AlertTriangle, Check, DollarSign, Undo2, GripVertical } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -17,6 +17,7 @@ interface NeoCorrecaoCardGestaoProps {
   isConcluindo?: boolean;
   showConcluido?: boolean;
   onRetornar?: (id: string) => void;
+  onAgendar?: (id: string) => void;
   dragHandleProps?: Record<string, any>;
   isDragging?: boolean;
 }
@@ -28,6 +29,7 @@ export function NeoCorrecaoCardGestao({
   isConcluindo,
   showConcluido = false,
   onRetornar,
+  onAgendar,
   dragHandleProps,
   isDragging,
 }: NeoCorrecaoCardGestaoProps) {
@@ -259,6 +261,20 @@ export function NeoCorrecaoCardGestao({
 
               {/* Col 19: Botões de ação ou status concluído */}
               <div className="flex items-center justify-end gap-1">
+                {onAgendar && !showConcluido && (
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="flex h-[20px] w-[20px] rounded-[3px] bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border-blue-500/50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAgendar(neoCorrecao.id);
+                    }}
+                    title="Agendar no calendário"
+                  >
+                    <CalendarPlus className="h-3 w-3" />
+                  </Button>
+                )}
                 {showConcluido ? (
                   <>
                     {neoCorrecao.concluida_em && (

@@ -34,6 +34,7 @@ interface PedidosDraggableListProps {
   onArquivar?: (pedidoId: string) => Promise<void>;
   onDeletar?: (pedidoId: string) => Promise<void>;
   onAvisoEspera?: (pedidoId: string, justificativa: string | null) => Promise<void>;
+  onAgendar?: (pedidoId: string) => void;
   enableDragAndDrop?: boolean;
   showPosicao?: boolean;
   disableClienteClick?: boolean;
@@ -52,6 +53,7 @@ interface SortableItemProps {
   onArquivar?: (pedidoId: string) => Promise<void>;
   onDeletar?: (pedidoId: string) => Promise<void>;
   onAvisoEspera?: (pedidoId: string, justificativa: string | null) => Promise<void>;
+  onAgendar?: (pedidoId: string) => void;
   disableClienteClick?: boolean;
 }
 
@@ -68,6 +70,7 @@ function SortableItem({
   onArquivar,
   onDeletar,
   onAvisoEspera,
+  onAgendar,
   disableClienteClick,
 }: SortableItemProps) {
   const {
@@ -98,6 +101,7 @@ function SortableItem({
         onArquivar={onArquivar}
         onDeletar={onDeletar}
         onAvisoEspera={onAvisoEspera}
+        onAgendar={onAgendar}
         isDragging={isDragging}
         dragHandleProps={{ ...attributes, ...listeners }}
         posicao={posicao}
@@ -121,6 +125,7 @@ export function PedidosDraggableList({
   onArquivar,
   onDeletar,
   onAvisoEspera,
+  onAgendar,
   enableDragAndDrop = true,
   showPosicao = true,
   disableClienteClick = false,
@@ -192,6 +197,7 @@ export function PedidosDraggableList({
               onArquivar={onArquivar}
               onDeletar={onDeletar}
               onAvisoEspera={onAvisoEspera}
+              onAgendar={onAgendar}
               posicao={showPosicao ? index + 1 : undefined}
               total={showPosicao ? pedidos.length : undefined}
               disableClienteClick={disableClienteClick}
@@ -236,6 +242,7 @@ export function PedidosDraggableList({
               onArquivar={onArquivar}
               onDeletar={onDeletar}
               onAvisoEspera={onAvisoEspera}
+              onAgendar={onAgendar}
               disableClienteClick={disableClienteClick}
             />
           ))}

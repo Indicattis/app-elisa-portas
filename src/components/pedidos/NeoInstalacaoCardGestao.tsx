@@ -7,6 +7,7 @@ import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
 import { 
   MapPin, 
   Calendar, 
+  CalendarPlus,
   Clock, 
   CheckCircle, 
   Hammer,
@@ -28,6 +29,7 @@ interface NeoInstalacaoCardGestaoProps {
   isConcluindo?: boolean;
   showConcluido?: boolean;
   onRetornar?: (id: string) => void;
+  onAgendar?: (id: string) => void;
   dragHandleProps?: Record<string, any>;
   isDragging?: boolean;
 }
@@ -39,6 +41,7 @@ export function NeoInstalacaoCardGestao({
   isConcluindo,
   showConcluido = false,
   onRetornar,
+  onAgendar,
   dragHandleProps,
   isDragging,
 }: NeoInstalacaoCardGestaoProps) {
@@ -277,6 +280,20 @@ export function NeoInstalacaoCardGestao({
 
               {/* Col 19: Botões de ação ou status concluído */}
               <div className="flex items-center justify-end gap-1">
+                {onAgendar && !showConcluido && (
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="flex h-[20px] w-[20px] rounded-[3px] bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border-blue-500/50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAgendar(neoInstalacao.id);
+                    }}
+                    title="Agendar no calendário"
+                  >
+                    <CalendarPlus className="h-3 w-3" />
+                  </Button>
+                )}
                 {showConcluido ? (
                   <>
                     {neoInstalacao.concluida_em && (
