@@ -183,7 +183,7 @@ export function LinhasAgrupadasPorPorta({
                       <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=open]]:rotate-180" />
                       <Badge variant="outline">{portaLabel}</Badge>
                       <span className="text-sm font-medium">
-                        {porta.largura}m × {porta.altura}m
+                        {Number(porta.largura).toFixed(2)}m × {Number(porta.altura).toFixed(2)}m
                       </span>
                       {porta.peso_total && (
                         <Badge variant="secondary" className="text-xs">

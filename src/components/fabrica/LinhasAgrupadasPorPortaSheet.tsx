@@ -105,7 +105,7 @@ function LinhaRow({
       <div className="flex items-center justify-center h-full">
         <span className="text-xs text-zinc-400">
           {linha.largura && linha.altura
-            ? `${linha.largura}x${linha.altura}`
+            ? `${Number(linha.largura).toFixed(2)}m x ${Number(linha.altura).toFixed(2)}m`
             : '-'}
         </span>
       </div>

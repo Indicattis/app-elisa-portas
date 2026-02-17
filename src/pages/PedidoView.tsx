@@ -577,7 +577,7 @@ export default function PedidoView() {
       }
       
       return {
-        porta_descricao: getLabelPortaExpandida(idx, porta._totalNoGrupo, porta._indicePorta) + ` - ${porta.largura}m × ${porta.altura}m`,
+        porta_descricao: getLabelPortaExpandida(idx, porta._totalNoGrupo, porta._indicePorta) + ` - ${Number(porta.largura).toFixed(2)}m × ${Number(porta.altura).toFixed(2)}m`,
         local_instalacao: obs?.interna_externa === 'porta_interna' ? 'Interna' : obs?.interna_externa === 'porta_externa' ? 'Externa' : '',
         observacoes: detalhes.join(' | '),
         responsavel_nome: responsavel?.nome || '',

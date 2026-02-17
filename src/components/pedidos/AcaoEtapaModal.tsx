@@ -111,7 +111,7 @@ export function AcaoEtapaModal({ pedido, open, onOpenChange, onAvancar }: AcaoEt
                             <div className="font-medium">{produto.descricao || 'Produto'}</div>
                             {(largura && altura) && (
                               <div className="text-muted-foreground text-xs">
-                                Medidas: {largura}m x {altura}m
+                                Medidas: {Number(largura).toFixed(2)}m x {Number(altura).toFixed(2)}m
                               </div>
                             )}
                             {produto.quantidade > 1 && (

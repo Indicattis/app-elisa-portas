@@ -202,7 +202,7 @@ export function DescontoVendaModal({
                 ) * produto.quantidade;
 
                 const detalhes = (produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social')
-                  ? (produto.largura && produto.altura ? `${produto.largura}x${produto.altura}` : produto.tamanho)
+                  ? (produto.largura && produto.altura ? `${Number(produto.largura).toFixed(2)}m x ${Number(produto.altura).toFixed(2)}m` : produto.tamanho)
                   : produto.descricao || '-';
 
                 return (

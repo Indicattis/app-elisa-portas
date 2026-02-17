@@ -125,7 +125,7 @@ export function AdicionarOrdemCalendarioModal({
 
     return portasEnrolar.map(p => {
       if (p.tamanho) return p.tamanho;
-      if (p.largura && p.altura) return `${p.largura}m × ${p.altura}m`;
+      if (p.largura && p.altura) return `${Number(p.largura).toFixed(2)}m × ${Number(p.altura).toFixed(2)}m`;
       return null;
     }).filter(Boolean).join(', ');
   };
