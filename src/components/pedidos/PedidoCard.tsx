@@ -1517,7 +1517,7 @@ export function PedidoCard({
                     const avancarButtons: React.ReactNode[] = [];
 
                     // Botão de retroceder (vai para a esquerda)
-                    const podeRetroceder = etapaAtual !== 'aberto' && etapaAtual !== 'finalizado' && etapaAtual !== 'instalacoes' && etapaAnterior && onRetrocederEtapa;
+                    const podeRetroceder = etapaAtual !== 'aberto' && etapaAtual !== 'finalizado' && etapaAtual !== 'instalacoes' && etapaAtual !== 'aguardando_coleta' && etapaAnterior && onRetrocederEtapa;
                     if (podeRetroceder) {
                       retrocederButtons.push(
                         <Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="flex h-[20px] w-[20px] rounded-[3px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
@@ -1572,8 +1572,8 @@ export function PedidoCard({
                     }
 
                     // Botão de gerar correção (etapas pós-produção) ou enviar para correções (instalacoes)
-                    const etapasCorrecao = ['inspecao_qualidade', 'embalagem', 'aguardando_coleta', 'correcoes'];
-                    if (etapaAtual === 'instalacoes' && !readOnly && !hideCorrecaoButton) {
+                    const etapasCorrecao = ['inspecao_qualidade', 'embalagem', 'correcoes'];
+                    if ((etapaAtual === 'instalacoes' || etapaAtual === 'aguardando_coleta') && !readOnly && !hideCorrecaoButton) {
                       middleButtons.push(
                         <Tooltip key="enviar-correcao-instalacoes">
                           <TooltipTrigger asChild>
