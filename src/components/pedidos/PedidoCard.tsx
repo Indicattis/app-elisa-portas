@@ -1194,32 +1194,40 @@ export function PedidoCard({
               )}
 
               {/* Col 4: Metragem Linear (m) */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="text-center">
-                    <span className="text-[10px] font-medium text-blue-600">
-                      {metragemLinear > 0 ? `${metragemLinear.toFixed(0)}m` : '—'}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Metragem linear (perfiladeira)</p>
-                </TooltipContent>
-              </Tooltip>
+              {etapaAtual === 'instalacoes' || etapaAtual === 'aguardando_coleta' ? (
+                <div />
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="text-center">
+                      <span className="text-[10px] font-medium text-blue-600">
+                        {metragemLinear > 0 ? `${metragemLinear.toFixed(0)}m` : '—'}
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Metragem linear (perfiladeira)</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
 
               {/* Col 5: Metragem Quadrada (m²) */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="text-center">
-                    <span className="text-[10px] font-medium text-green-600">
-                      {metragemQuadrada > 0 ? `${metragemQuadrada.toFixed(1)}m²` : '—'}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Área total das portas</p>
-                </TooltipContent>
-              </Tooltip>
+              {etapaAtual === 'instalacoes' || etapaAtual === 'aguardando_coleta' ? (
+                <div />
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="text-center">
+                      <span className="text-[10px] font-medium text-green-600">
+                        {metragemQuadrada > 0 ? `${metragemQuadrada.toFixed(1)}m²` : '—'}
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Área total das portas</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
               
               {/* Col 6: Data de Carregamento */}
               <div className="text-center">
