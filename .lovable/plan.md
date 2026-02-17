@@ -1,25 +1,54 @@
 
-# Adicionar gestao de precos de instalacao na pagina de edicao do autorizado
+# Criar pagina /direcao/metas/fabrica/instalacoes
 
 ## Resumo
 
-Adicionar uma secao de precos de instalacao por tamanho de porta (P, G, GG) na pagina de edicao do autorizado (`EditarAutorizadoDirecao.tsx`), reutilizando a logica de upsert ja existente no hook `useAutorizadosPrecos`.
+Criar uma pagina para listar os colaboradores do setor de instalacao, agrupados por equipe, seguindo o mesmo padrao visual da pagina de metas da fabrica (`MetasFabricaDirecao.tsx`). A pagina usara o `MinimalistLayout` e mostrara as equipes de instalacao com seus membros.
+
+## Dados existentes
+
+Colaboradores do setor de instalacao (roles: `gerente_instalacoes`, `instalador`, `aux_instalador`):
+- William Rodrigues Ramos (gerente)
+- Maicon Luan (instalador)
+- Paulo Roberto (instalador)
+- William Hoffmann (instalador)
+- Gabriel Nunes (aux)
+- Matheus das Neves (aux)
+- Wellington Kelvin (aux)
+
+Equipes:
+- Equipe 1 (azul) - William Hoffmann + membro: William Hoffmann (?)
+- Equipe 2 (vermelho) - Paulo Roberto + membros: Gabriel Nunes
+- Equipe 3 (roxo) - Maicon Luan + membros: Matheus das Neves
 
 ## Detalhes tecnicos
 
-### Arquivo: `src/pages/direcao/EditarAutorizadoDirecao.tsx`
+### 1. Novo arquivo: `src/pages/direcao/MetasInstalacoesDirecao.tsx`
 
-1. **Importar** o cliente supabase ja existente para buscar/salvar precos da tabela `autorizado_precos_portas`
+Pagina seguindo o padrao de `MetasFabricaDirecao.tsx`:
+- Usa `MinimalistLayout` com breadcrumbs (Home > Direcao > Metas > Instalacoes)
+- Busca colaboradores do setor de instalacao via `admin_users` (roles: `gerente_instalacoes`, `instalador`, `aux_instalador`)
+- Busca equipes via `equipes_instalacao` com membros
+- Agrupa por equipe: mostra cada equipe como um card com cor, responsavel e membros listados abaixo
+- Colaboradores sem equipe aparecem em secao separada "Sem equipe"
+- Cada colaborador mostra avatar, nome e role (traduzido)
+- Busca metas individuais ativas para mostrar icone Trophy
 
-2. **Adicionar estado** para os precos:
-   - `precos: { P: number, G: number, GG: number }` inicializado com `{ P: 0, G: 0, GG: 0 }`
-   - `savingPrecos: boolean`
+### 2. Arquivo: `src/App.tsx`
 
-3. **Fetch dos precos** no `fetchParceiro` (ou em useEffect separado): query a `autorizado_precos_portas` filtrando por `autorizado_id = id`, montando o objeto `{ P, G, GG }`
+- Importar `MetasInstalacoesDirecao`
+- Adicionar rota: `/direcao/metas/fabrica/instalacoes` com `ProtectedRoute routeKey="direcao_hub"`
 
-4. **Salvar precos** no `handleSubmit`: apos salvar o autorizado, fazer upsert dos 3 tamanhos na tabela `autorizado_precos_portas` (mesma logica do `upsertPrecos` do hook existente)
+### 3. Arquivo: `src/pages/direcao/MetasHubDirecao.tsx`
 
-5. **Nova secao no formulario**: entre "Cidades Secundarias" e os botoes de acao, adicionar um bloco com titulo "Precos de Instalacao" contendo 3 campos de input numerico (R$ P, R$ G, R$ GG) com os labels indicando a faixa de metragem (< 25m2, 25-50m2, > 50m2), seguindo o mesmo estilo visual dark da pagina (bg-white/5, border-white/10, text-white)
+- Alterar o item "Instalacoes" de `ativo: false` para `ativo: true`
+- Atualizar o path para `/direcao/metas/fabrica/instalacoes`
 
-### Nenhuma alteracao no banco de dados
-A tabela `autorizado_precos_portas` ja existe com as colunas necessarias (`autorizado_id`, `tamanho`, `valor`, `created_by`, `updated_at`) e constraint unica em `(autorizado_id, tamanho)`.
+### Layout da pagina
+
+Cada equipe sera exibida como um card com:
+- Faixa lateral colorida com a cor da equipe
+- Nome da equipe como titulo
+- Responsavel destacado com badge "Responsavel"
+- Lista de membros com avatar e nome
+- Icone Trophy ao lado de quem tem meta ativa
