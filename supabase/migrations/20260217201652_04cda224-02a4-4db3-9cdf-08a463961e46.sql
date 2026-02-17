@@ -1,0 +1,1 @@
+ALTER TABLE public.pedidos_producao ADD COLUMN reprovado_ceo boolean NOT NULL DEFAULT false;
