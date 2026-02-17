@@ -234,23 +234,64 @@ export const useOrdensCarregamentoCalendario = (
     }) => {
       // Rotear para a tabela correta baseado na fonte
       if (fonte === 'instalacoes') {
-        const updateData: Record<string, any> = {
-          updated_at: new Date().toISOString()
-        };
-        if (data.data_carregamento !== undefined) updateData.data_carregamento = data.data_carregamento;
-        if (data.hora !== undefined) updateData.hora_carregamento = data.hora;
-        if (data.hora_carregamento !== undefined) updateData.hora_carregamento = data.hora_carregamento;
-        if (data.tipo_carregamento !== undefined) updateData.tipo_carregamento = data.tipo_carregamento;
-        if (data.responsavel_carregamento_id !== undefined) updateData.responsavel_carregamento_id = data.responsavel_carregamento_id;
-        if (data.responsavel_carregamento_nome !== undefined) updateData.responsavel_carregamento_nome = data.responsavel_carregamento_nome;
-        if (data.status !== undefined) updateData.status = data.status;
-
-        const { error } = await supabase
+        // Verificar se o registro existe na tabela instalacoes
+        const { data: existing } = await supabase
           .from("instalacoes")
-          .update(updateData)
-          .eq("id", id);
+          .select("id")
+          .eq("id", id)
+          .maybeSingle();
 
-        if (error) throw error;
+        if (!existing) {
+          // Pedido órfão: buscar dados do pedido e criar registro
+          const { data: pedido } = await supabase
+            .from("pedidos_producao")
+            .select("id, venda_id, vendas(cliente_nome)")
+            .eq("id", id)
+            .maybeSingle();
+
+          const nomeCliente = (pedido as any)?.vendas?.cliente_nome || 'Cliente';
+
+          const insertData: Record<string, any> = {
+            pedido_id: id,
+            venda_id: pedido?.venda_id || null,
+            nome_cliente: nomeCliente,
+            hora: '08:00',
+            status: 'pronta_fabrica',
+            instalacao_concluida: false,
+            carregamento_concluido: false,
+          };
+          if (data.data_carregamento !== undefined) insertData.data_carregamento = data.data_carregamento;
+          if (data.hora !== undefined) insertData.hora_carregamento = data.hora;
+          if (data.hora_carregamento !== undefined) insertData.hora_carregamento = data.hora_carregamento;
+          if (data.tipo_carregamento !== undefined) insertData.tipo_carregamento = data.tipo_carregamento;
+          if (data.responsavel_carregamento_id !== undefined) insertData.responsavel_carregamento_id = data.responsavel_carregamento_id;
+          if (data.responsavel_carregamento_nome !== undefined) insertData.responsavel_carregamento_nome = data.responsavel_carregamento_nome;
+
+          const { error } = await supabase
+            .from("instalacoes")
+            .insert(insertData as any);
+
+          if (error) throw error;
+        } else {
+          // Registro existe: fazer UPDATE normalmente
+          const updateData: Record<string, any> = {
+            updated_at: new Date().toISOString()
+          };
+          if (data.data_carregamento !== undefined) updateData.data_carregamento = data.data_carregamento;
+          if (data.hora !== undefined) updateData.hora_carregamento = data.hora;
+          if (data.hora_carregamento !== undefined) updateData.hora_carregamento = data.hora_carregamento;
+          if (data.tipo_carregamento !== undefined) updateData.tipo_carregamento = data.tipo_carregamento;
+          if (data.responsavel_carregamento_id !== undefined) updateData.responsavel_carregamento_id = data.responsavel_carregamento_id;
+          if (data.responsavel_carregamento_nome !== undefined) updateData.responsavel_carregamento_nome = data.responsavel_carregamento_nome;
+          if (data.status !== undefined) updateData.status = data.status;
+
+          const { error } = await supabase
+            .from("instalacoes")
+            .update(updateData)
+            .eq("id", id);
+
+          if (error) throw error;
+        }
       } else {
         const { error } = await supabase
           .from("ordens_carregamento")
