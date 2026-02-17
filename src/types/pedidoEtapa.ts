@@ -158,3 +158,17 @@ export interface PrioridadeUpdate {
 }
 
 export type DirecaoPrioridade = 'frente' | 'tras';
+
+// Limites de tempo por etapa em segundos comerciais (1 dia comercial = 10h = 36000s)
+export const LIMITES_ETAPA_SEGUNDOS: Record<EtapaPedido, number> = {
+  aberto: 6 * 3600,                // 6h comerciais
+  aprovacao_ceo: 6 * 3600,         // 6h comerciais
+  em_producao: 4 * 10 * 3600,      // 4 dias comerciais (40h)
+  inspecao_qualidade: 3 * 3600,    // 3h comerciais
+  aguardando_pintura: 4 * 10 * 3600, // 4 dias comerciais (40h)
+  embalagem: 3 * 3600,             // 3h comerciais
+  aguardando_coleta: 48 * 10 * 3600, // 48 dias comerciais (480h)
+  instalacoes: 3 * 10 * 3600,      // 3 dias comerciais (30h)
+  correcoes: 3 * 10 * 3600,        // 3 dias comerciais (30h)
+  finalizado: Infinity,
+};

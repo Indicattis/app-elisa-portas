@@ -4,6 +4,7 @@ import { calcularTempoExpediente, estaNoExpediente } from '@/utils/calcularTempo
 
 interface UseCronometroEtapaParams {
   dataEntrada?: string | null;
+  limiteSegundos?: number;
 }
 
 interface CronometroEtapaResult {
@@ -13,9 +14,8 @@ interface CronometroEtapaResult {
   cor: 'green' | 'yellow' | 'red';
 }
 
-// Limite de tempo em segundos (10 dias úteis de trabalho = 10h/dia * 10 dias = 100h = 360000 segundos)
-// Mas para simplificar, vamos manter o limite em segundos de expediente
-const LIMITE_VERDE = 5 * 10 * 60 * 60; // 5 dias úteis * 10h/dia = 50h = 180000 segundos
+// Default: 5 dias úteis (retrocompatibilidade)
+const LIMITE_DEFAULT = 5 * 10 * 60 * 60;
 
 export function useCronometroEtapa(params: UseCronometroEtapaParams | string | null | undefined): CronometroEtapaResult {
   const [segundos, setSegundos] = useState<number>(0);
@@ -24,6 +24,10 @@ export function useCronometroEtapa(params: UseCronometroEtapaParams | string | n
   const dataEntrada = typeof params === 'string' || params === null || params === undefined 
     ? params 
     : params.dataEntrada;
+
+  const limite = (typeof params === 'object' && params !== null && 'limiteSegundos' in params && params.limiteSegundos)
+    ? params.limiteSegundos
+    : LIMITE_DEFAULT;
 
   useEffect(() => {
     if (!dataEntrada) {
@@ -34,43 +38,29 @@ export function useCronometroEtapa(params: UseCronometroEtapaParams | string | n
     const calcularTempo = () => {
       const agora = new Date();
       const inicio = new Date(dataEntrada as string);
-
-      // Calcular tempo apenas dentro do expediente (7h-17h, seg-sex)
       const segundosExpediente = calcularTempoExpediente(inicio, agora);
       setSegundos(segundosExpediente);
     };
 
-    // Calcular imediatamente
     calcularTempo();
-
-    // Atualizar a cada segundo
     const interval = setInterval(calcularTempo, 1000);
-
     return () => clearInterval(interval);
   }, [dataEntrada]);
 
-  // Determinar cor baseado no tempo (verde < 10 dias úteis, vermelho >= 10 dias)
   const cor = useMemo((): 'green' | 'yellow' | 'red' => {
-    if (segundos < LIMITE_VERDE) return 'green';
+    if (segundos < limite) return 'green';
     return 'red';
-  }, [segundos]);
+  }, [segundos, limite]);
 
-  // Formatar tempo
   const tempoDecorrido = useMemo(() => {
     if (!dataEntrada) return '--:--:--';
     return formatCronometroExtended(segundos);
   }, [dataEntrada, segundos]);
 
-  // Animação baseada em estar no expediente
   const deveAnimar = useMemo(() => {
     if (!dataEntrada) return false;
     return estaNoExpediente();
   }, [dataEntrada]);
 
-  return {
-    tempoDecorrido,
-    segundos,
-    deveAnimar,
-    cor
-  };
+  return { tempoDecorrido, segundos, deveAnimar, cor };
 }

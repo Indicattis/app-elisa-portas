@@ -5,14 +5,18 @@ import { useCronometroEtapa } from "@/hooks/useCronometroEtapa";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import type { EtapaPedido } from "@/types/pedidoEtapa";
+import { LIMITES_ETAPA_SEGUNDOS } from "@/types/pedidoEtapa";
 
 interface CronometroEtapaBadgeProps {
   dataEntrada?: string | null;
   compact?: boolean;
+  etapa?: EtapaPedido;
 }
 
-export function CronometroEtapaBadge({ dataEntrada, compact = false }: CronometroEtapaBadgeProps) {
-  const { tempoDecorrido, cor, deveAnimar } = useCronometroEtapa({ dataEntrada });
+export function CronometroEtapaBadge({ dataEntrada, compact = false, etapa }: CronometroEtapaBadgeProps) {
+  const limiteSegundos = etapa ? LIMITES_ETAPA_SEGUNDOS[etapa] : undefined;
+  const { tempoDecorrido, cor, deveAnimar } = useCronometroEtapa({ dataEntrada, limiteSegundos });
 
   if (!dataEntrada) return null;
 
