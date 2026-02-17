@@ -1,35 +1,28 @@
 
 
-# Reprovar pedido na etapa Aprovacao CEO
+# Adicionar tamanhos das portas no agrupamento de Itens do Pedido
 
 ## Resumo
 
-Adicionar funcionalidade de reprovacao na tela de Aprovacoes Fabrica. Pedidos reprovados voltam para "aberto" com estilizacao vermelha. Ao avancar novamente, a estilizacao vermelha some.
+Na pagina `/direcao/pedidos/:id`, na secao "Itens do Pedido", os cards de pasta (folders) que representam cada porta ja possuem logica para exibir dimensoes (`grupo.dimensoes`), mas ha cenarios onde as dimensoes podem nao aparecer. O objetivo e garantir que as dimensoes (largura x altura) aparecam sempre de forma clara no agrupamento.
 
 ## Alteracoes
 
-### 1. Banco de dados: nova coluna `reprovado_ceo`
+### `src/pages/direcao/PedidoViewDirecao.tsx`
 
-Adicionar coluna `reprovado_ceo` (boolean, default false) na tabela `pedidos_producao`. Essa flag indica que o pedido foi reprovado e deve ser exibido com destaque vermelho.
+1. **Garantir dimensoes nos grupos criados a partir de linhas**: Na logica de agrupamento (linhas 296-304), quando `portasInfo` tem os dados da porta, as dimensoes ja sao definidas. Porem, para os grupos criados a partir de `produtos_venda` (linhas 314-324), as dimensoes ja sao preenchidas tambem. O codigo parece correto.
 
-### 2. `src/hooks/usePedidosAprovacaoCEO.ts`
+2. **Tornar as dimensoes mais visiveis no card da pasta**: Atualmente as dimensoes aparecem em texto `text-xs text-white/50` (linha 688), que pode ser pouco visivel. A alteracao sera:
+   - Mover as dimensoes para ficar ao lado do label da porta (inline) ou aumentar destaque visual
+   - Adicionar as dimensoes como um Badge ou com fonte um pouco maior e cor mais visivel (`text-white/70` em vez de `text-white/50`)
 
-Adicionar mutation `reprovarPedido` que:
-- Fecha a etapa atual (`aprovacao_ceo`) em `pedidos_etapas` com `data_saida = now()`
-- Cria nova entrada em `pedidos_etapas` para etapa `aberto`
-- Atualiza `pedidos_producao` com `etapa_atual = 'aberto'` e `reprovado_ceo = true`
-- Registra movimentacao em `pedidos_movimentacoes` com teor de reprovacao
-- Invalida queries relevantes
+3. **Incluir dimensoes diretamente no label quando disponivel**: Alterar a construcao do `grupo.label` para incluir as dimensoes inline, exemplo: `"Porta de Enrolar #1"` com dimensoes `"2.80m x 3.00m"` exibidas como badge ou texto destacado logo abaixo.
 
-### 3. `src/pages/direcao/aprovacoes/AprovacoesProducao.tsx`
+4. **Buscar largura e altura diretamente do `produtos_vendas`**: Para os grupos que vem de `produtos_venda` sem linhas, as dimensoes ja sao buscadas. Para os que vem de linhas, a busca em `portasInfo` ja acontece. Nenhuma alteracao de query necessaria.
 
-Adicionar botao "Reprovar" vermelho ao lado do botao "Aprovar" na area expandida do card. Incluir confirmacao antes de reprovar (AlertDialog).
+## Detalhes tecnicos
 
-### 4. `src/hooks/usePedidosEtapas.ts`
-
-Na mutation `moverParaProximaEtapa`, quando a etapa atual for `aberto`, resetar `reprovado_ceo = false` no update do pedido para que a estilizacao vermelha desapareca ao avancar.
-
-### 5. `src/components/pedidos/PedidoCard.tsx`
-
-Adicionar condicional de estilizacao: quando `reprovado_ceo = true`, aplicar borda vermelha e badge "Reprovado CEO" similar ao estilo de backlog (borda vermelha, sombra vermelha).
+- Arquivo: `src/pages/direcao/PedidoViewDirecao.tsx`
+- Linhas afetadas: ~686-692 (card da pasta no grid de agrupamento)
+- Alteracao: melhorar visibilidade do `grupo.dimensoes` existente, possivelmente usando um `Badge` com estilo mais destacado ou aumentando o tamanho/cor do texto das dimensoes
 
