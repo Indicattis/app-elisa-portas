@@ -453,6 +453,8 @@ export default function ExpedicaoMinimalista() {
                       neoCorrecoes={neoCorrecoesSemData}
                       onAgendarInstalacao={handleAgendarInstalacao}
                       onAgendarCorrecao={handleAgendarCorrecao}
+                      onEditarInstalacao={handleEditarNeoInstalacao}
+                      onEditarCorrecao={handleEditarNeoCorrecao}
                       isLoadingInstalacoes={isLoadingInstalacoesSemData}
                       isLoadingCorrecoes={isLoadingCorrecoesSemData}
                     />

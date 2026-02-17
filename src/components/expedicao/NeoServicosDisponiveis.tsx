@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
-import { Search, Wrench, Hammer, MapPin, Users, Loader2 } from "lucide-react";
+import { Search, Wrench, Hammer, MapPin, Users, Loader2, Pencil } from "lucide-react";
 import { NeoInstalacao } from "@/types/neoInstalacao";
 import { NeoCorrecao } from "@/types/neoCorrecao";
 import { NeoInstalacaoDetails } from "./NeoInstalacaoDetails";
@@ -37,6 +37,8 @@ interface NeoServicosDisponiveisProps {
   neoCorrecoes: NeoCorrecao[];
   onAgendarInstalacao: (id: string, data: string) => Promise<void>;
   onAgendarCorrecao: (id: string, data: string) => Promise<void>;
+  onEditarInstalacao?: (neo: NeoInstalacao) => void;
+  onEditarCorrecao?: (neo: NeoCorrecao) => void;
   isLoadingInstalacoes?: boolean;
   isLoadingCorrecoes?: boolean;
 }
@@ -72,6 +74,8 @@ export function NeoServicosDisponiveis({
   neoCorrecoes,
   onAgendarInstalacao,
   onAgendarCorrecao,
+  onEditarInstalacao,
+  onEditarCorrecao,
   isLoadingInstalacoes,
   isLoadingCorrecoes,
 }: NeoServicosDisponiveisProps) {
@@ -305,14 +309,31 @@ export function NeoServicosDisponiveis({
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => handleAbrirAgendar(e, servico.id, servico.tipo)}
-                            className="h-7 text-xs"
-                          >
-                            Agendar
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (servico.tipo === 'instalacao' && servico.originalInstalacao) {
+                                  onEditarInstalacao?.(servico.originalInstalacao);
+                                } else if (servico.tipo === 'correcao' && servico.originalCorrecao) {
+                                  onEditarCorrecao?.(servico.originalCorrecao);
+                                }
+                              }}
+                              className="h-7 w-7"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => handleAbrirAgendar(e, servico.id, servico.tipo)}
+                              className="h-7 text-xs"
+                            >
+                              Agendar
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
