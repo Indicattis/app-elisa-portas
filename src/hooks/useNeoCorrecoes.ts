@@ -256,18 +256,37 @@ export const useNeoCorrecoesListagem = () => {
     mutationFn: async (id: string) => {
       const { data: userData } = await supabase.auth.getUser();
 
-      const { error } = await supabase
+      // Check if already concluded - if so, archive it
+      const { data: existing } = await supabase
         .from("neo_correcoes")
-        .update({
-          concluida: true,
-          concluida_em: new Date().toISOString(),
-          concluida_por: userData.user?.id || null,
-          status: 'concluida',
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", id);
+        .select("concluida")
+        .eq("id", id)
+        .single();
 
-      if (error) throw error;
+      if (existing?.concluida) {
+        // Already concluded - archive to remove from finalizadas list
+        const { error } = await supabase
+          .from("neo_correcoes")
+          .update({
+            status: 'arquivada',
+            concluida: false,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("neo_correcoes")
+          .update({
+            concluida: true,
+            concluida_em: new Date().toISOString(),
+            concluida_por: userData.user?.id || null,
+            status: 'concluida',
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", id);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Correção concluída com sucesso!");
