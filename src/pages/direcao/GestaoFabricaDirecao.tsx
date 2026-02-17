@@ -60,8 +60,8 @@ export default function GestaoFabricaDirecao() {
   const contadores = usePedidosContadores();
   const { neoInstalacoes, concluirNeoInstalacao, isConcluindo } = useNeoInstalacoesListagem();
   const { neoCorrecoes, concluirNeoCorrecao } = useNeoCorrecoesListagem();
-  const { neoInstalacoesFinalizadas } = useNeoInstalacoesFinalizadas();
-  const { neoCorrecoesFinalizadas } = useNeoCorrecoesFinalizadas();
+  const { neoInstalacoesFinalizadas, retornarNeoInstalacao, isRetornando: isRetornandoInstalacao } = useNeoInstalacoesFinalizadas();
+  const { neoCorrecoesFinalizadas, retornarNeoCorrecao, isRetornando: isRetornandoCorrecao } = useNeoCorrecoesFinalizadas();
   const { 
     getResponsavel, 
     atribuirResponsavel, 
@@ -208,6 +208,14 @@ export default function GestaoFabricaDirecao() {
 
   const handleConcluirNeoInstalacao = async (id: string) => {
     await concluirNeoInstalacao(id);
+  };
+
+  const handleRetornarNeoInstalacao = async (id: string) => {
+    await retornarNeoInstalacao(id);
+  };
+
+  const handleRetornarNeoCorrecao = async (id: string) => {
+    await retornarNeoCorrecao(id);
   };
 
   const handleArquivar = async (pedidoId: string) => {
@@ -469,6 +477,8 @@ export default function GestaoFabricaDirecao() {
                                 viewMode="list"
                                 onConcluir={handleConcluirNeoInstalacao}
                                 isConcluindo={isConcluindo}
+                                showConcluido
+                                onRetornar={handleRetornarNeoInstalacao}
                               />
                             ))}
                           {neoCorrecoesFinalizadas
@@ -483,6 +493,8 @@ export default function GestaoFabricaDirecao() {
                                 neoCorrecao={neo}
                                 viewMode="list"
                                 onConcluir={handleConcluirNeoCorrecao}
+                                showConcluido
+                                onRetornar={handleRetornarNeoCorrecao}
                               />
                             ))}
                         </div>

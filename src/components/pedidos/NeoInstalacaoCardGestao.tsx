@@ -12,7 +12,8 @@ import {
   Hammer,
   Users,
   FileText,
-  DollarSign
+  DollarSign,
+  Undo2
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -25,6 +26,7 @@ interface NeoInstalacaoCardGestaoProps {
   onConcluir?: (id: string) => void;
   isConcluindo?: boolean;
   showConcluido?: boolean;
+  onRetornar?: (id: string) => void;
 }
 
 export function NeoInstalacaoCardGestao({
@@ -33,6 +35,7 @@ export function NeoInstalacaoCardGestao({
   onConcluir,
   isConcluindo,
   showConcluido = false,
+  onRetornar,
 }: NeoInstalacaoCardGestaoProps) {
   const corEquipe = neoInstalacao.equipe?.cor || "#6366f1";
 
@@ -281,6 +284,20 @@ export function NeoInstalacaoCardGestao({
                       </span>
                     )}
                     <CheckCircle className="h-4 w-4 text-emerald-500" />
+                    {onRetornar && (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="flex h-[20px] w-[20px] rounded-[3px] bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border-amber-500/50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRetornar(neoInstalacao.id);
+                        }}
+                        title="Retornar para instalações"
+                      >
+                        <Undo2 className="h-3 w-3" />
+                      </Button>
+                    )}
                   </>
                 ) : onConcluir && (
                   <Button

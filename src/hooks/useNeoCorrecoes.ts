@@ -413,9 +413,38 @@ export const useNeoCorrecoesFinalizadas = () => {
     };
   }, [queryClient]);
 
+  const retornarMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("neo_correcoes")
+        .update({
+          concluida: false,
+          concluida_em: null,
+          concluida_por: null,
+          status: 'pendente',
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_finalizadas"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_listagem"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos_contadores"] });
+      toast.success("Neo correção retornada com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Erro ao retornar neo correção:", error);
+      toast.error("Erro ao retornar neo correção");
+    },
+  });
+
   return {
     neoCorrecoesFinalizadas,
     isLoading,
+    retornarNeoCorrecao: retornarMutation.mutateAsync,
+    isRetornando: retornarMutation.isPending,
   };
 };
 
