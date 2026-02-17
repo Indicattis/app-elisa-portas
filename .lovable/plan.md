@@ -1,36 +1,33 @@
 
 
-# Adicionar botao de arquivar Neos finalizadas na Gestao de Fabrica
+# Alterar botoes de pedidos na etapa Instalacoes
 
 ## Resumo
 
-Adicionar um botao de "Arquivo Morto" nos cards de Neo Instalacoes e Neo Correcoes finalizadas na etapa "Finalizado" da gestao de fabrica. Ao clicar, a neo sera arquivada (status = 'arquivada') e desaparecera da listagem.
+Para pedidos na etapa `instalacoes` na gestao de fabrica:
+1. Remover o botao vermelho de retroceder pedido
+2. Alterar o botao roxo para mover o pedido diretamente para a etapa `correcoes` (em vez de gerar um pedido de correcao separado)
 
 ## Alteracoes
 
-### 1. `src/hooks/useNeoInstalacoes.ts` - Adicionar mutation de arquivar no hook `useNeoInstalacoesFinalizadas`
+### `src/components/pedidos/PedidoCard.tsx`
 
-Adicionar uma `arquivarMutation` que atualiza o status para `'arquivada'` e `concluida: false`, invalidando as queries relevantes. Expor `arquivarNeoInstalacao` no retorno do hook.
+1. **Remover botao retroceder para instalacoes**: Na condicao do botao de retroceder (linha 1520), adicionar `&& etapaAtual !== 'instalacoes'` para que o botao nao apareca nessa etapa.
 
-### 2. `src/hooks/useNeoCorrecoes.ts` - Adicionar mutation de arquivar no hook `useNeoCorrecoesFinalizadas`
-
-Mesma logica: mutation que arquiva a neo correcao. Expor `arquivarNeoCorrecao` no retorno do hook.
-
-### 3. `src/components/pedidos/NeoInstalacaoCardGestao.tsx` - Adicionar prop `onArquivar`
-
-- Adicionar prop `onArquivar?: (id: string) => void` na interface
-- Adicionar botao com icone Archive (laranja, mesmo padrao dos pedidos) quando `showConcluido` estiver ativo e `onArquivar` estiver definido
-
-### 4. `src/components/pedidos/NeoCorrecaoCardGestao.tsx` - Adicionar prop `onArquivar`
-
-Mesma alteracao: prop + botao Archive.
-
-### 5. `src/pages/direcao/GestaoFabricaDirecao.tsx` - Conectar tudo
-
-- Extrair `arquivarNeoInstalacao` e `arquivarNeoCorrecao` dos hooks finalizadas
-- Criar handlers `handleArquivarNeoInstalacao` e `handleArquivarNeoCorrecao`
-- Passar `onArquivar` nos cards de neo finalizadas (linhas 497-505 e 514-521)
+2. **Alterar comportamento do botao roxo para instalacoes**: Na secao do botao de correcao (linhas 1574-1595), quando `etapaAtual === 'instalacoes'`:
+   - Em vez de abrir o modal `CriarPedidoCorrecaoModal`, o botao usara o hook `useEnviarParaCorrecao` (ja importado no componente) para mover o pedido para a etapa `correcoes`
+   - O tooltip mudara de "Gerar Correcao" para "Enviar para Correcoes"
+   - Sera exibido um modal de confirmacao (o `EnviarCorrecaoModal` ja existente) antes de executar a acao
 
 ## Detalhes tecnicos
 
-A logica de arquivamento ja existe no projeto (mesmo update `status: 'arquivada', concluida: false`). O padrao visual do botao segue o mesmo icone Archive laranja usado nos pedidos finalizados.
+- Arquivo editado: `src/components/pedidos/PedidoCard.tsx`
+- O hook `useEnviarParaCorrecao` ja esta importado e disponivel no componente
+- O modal `EnviarCorrecaoModal` ja existe e sera reutilizado para confirmar a acao
+- A logica de `enviarParaCorrecao` cria o registro na tabela `correcoes`, atualiza a `etapa_atual` para `correcoes` e registra a movimentacao -- porem ele assume origem `finalizado`. Sera necessario ajustar para aceitar a etapa de origem `instalacoes` ou criar um fluxo similar dedicado
+- Alternativa: usar diretamente o `onMoverEtapa` com destino fixo `correcoes`, mas o hook `useEnviarParaCorrecao` ja lida com toda a logica necessaria (criar registro correcao, mover etapa, registrar movimentacao)
+
+### Ajuste no `useEnviarParaCorrecao.ts`
+
+- Adicionar parametro opcional `etapaOrigem` (default: `'finalizado'`) para que o hook funcione corretamente quando chamado a partir da etapa `instalacoes`
+- Atualizar a query de fechamento de etapa e a movimentacao para usar essa etapa de origem dinamica
