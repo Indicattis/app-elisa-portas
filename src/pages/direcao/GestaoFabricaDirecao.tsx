@@ -213,6 +213,7 @@ export default function GestaoFabricaDirecao() {
 
   const handleRetornarNeoInstalacao = async (id: string) => {
     await retornarNeoInstalacao(id);
+    queryClient.invalidateQueries({ queryKey: ["neo_correcoes_listagem"] });
   };
 
   const handleRetornarNeoCorrecao = async (id: string) => {
