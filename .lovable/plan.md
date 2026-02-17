@@ -1,38 +1,40 @@
 
 
-# Criar pagina dedicada de cadastro de colaborador
+# Substituir veiculos de frota por equipes de instalacao no responsavel "Elisa" para entregas
 
 ## Resumo
-Substituir o modal `AddColaboradorDialog` por uma pagina dedicada em `/administrativo/rh-dp/colaboradores/novo`. O botao "Adicionar Colaborador" passara a navegar para essa nova pagina em vez de abrir um modal.
+Alterar os 3 componentes de agendamento/edicao de expedicao para que, quando o tipo de responsavel for "Elisa" em entregas, o select mostre equipes de instalacao em vez de veiculos de frota. Isso unifica o comportamento: tanto entregas quanto instalacoes usarao equipes internas quando "Elisa" for selecionado.
 
 ## Alteracoes
 
-### 1. Nova pagina: `src/pages/administrativo/rh-dp/NovoColaborador.tsx`
-- Usar `MinimalistLayout` com breadcrumbs (RH/DP > Colaboradores > Novo Colaborador) e `backPath` apontando para `/administrativo/rh-dp/colaboradores`
-- Reutilizar toda a logica de formulario do `AddColaboradorDialog` (validacao Zod, formatacao de CPF/moeda, chamada a edge function `create-user`)
-- Layout em card centralizado com campos organizados em grid
-- Apos sucesso, redirecionar automaticamente para `/administrativo/rh-dp/colaboradores` com toast de confirmacao
+### 1. `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx`
+- Remover import e uso de `useVeiculos`
+- No `handleConfirm`, quando `isEntrega && responsavelTipo === 'elisa'`, buscar o nome na lista `equipes` em vez de `veiculos`
+- No render do Select, quando `isEntrega && responsavelTipo === 'elisa'`, listar `equipes` em vez de `veiculos`
+- Alterar label de "Veiculo" para "Equipe" quando `isEntrega && responsavelTipo === 'elisa'`
+- Remover referencia a `loadingVeiculos` nos disabled/placeholders
 
-### 2. Editar: `src/pages/administrativo/ColaboradoresMinimalista.tsx`
-- Remover import do `AddColaboradorDialog`
-- Substituir o componente `<AddColaboradorDialog>` por um `<Button>` com `onClick={() => navigate('/administrativo/rh-dp/colaboradores/novo')}`
-- Manter o icone `UserPlus` e texto "Adicionar Colaborador"
+### 2. `src/components/expedicao/AgendarCarregamentoModal.tsx`
+- Remover import e uso de `useVeiculos`
+- No `handleConfirm`, quando `isEntrega && responsavelTipo === 'elisa'`, buscar nome na lista `equipes`
+- No render do Select, listar `equipes` em vez de `veiculos` para entregas com tipo "elisa"
+- Alterar label de "Veiculo" para "Equipe"
+- Remover referencia a `loadingVeiculos`
 
-### 3. Editar: `src/App.tsx`
-- Adicionar import do `NovoColaborador`
-- Registrar a rota `/administrativo/rh-dp/colaboradores/novo` com `ProtectedRoute` usando a mesma `routeKey` ("administrativo_hub")
+### 3. `src/components/expedicao/EditarOrdemCarregamentoDrawer.tsx`
+- Remover import e uso de `useVeiculos`
+- No `handleSave`, quando `isEntrega && responsavelTipo === 'elisa'`, buscar responsavel na lista `responsaveis` (que ja contem equipes) em vez de `veiculos`
+- No render do Select, listar `responsaveis` (equipes) em vez de `veiculos` para entregas com tipo "elisa"
+- Alterar label de "Veiculo" para "Equipe"
+- Remover referencia a `loadingVeiculos`
 
-## Detalhes tecnicos
-
-A nova pagina tera os mesmos campos do modal atual:
-- Nome, Email, Senha (padrao "mudar123"), CPF
-- Funcao (select dinamico da tabela `system_roles`), Setor
-- Salario, Modalidade de pagamento, Em folha de pagamento (switch)
-
-A validacao Zod e as funcoes de formatacao (`formatCPF`, `formatCurrency`, `parseCurrency`) serao mantidas identicas. O submit continuara chamando a edge function `create-user` com `eh_colaborador: true`.
+## Impacto
+- As equipes de instalacao (tabela `equipes_instalacao`) passam a ser usadas para todos os agendamentos do tipo "Elisa", independente de ser entrega ou instalacao
+- Os veiculos de frota deixam de ser usados na expedicao
+- A logica de "Terceiro" para entregas permanece inalterada (input de texto livre)
+- Nenhuma alteracao em banco de dados e necessaria
 
 ### Arquivos afetados
-- **Novo:** `src/pages/administrativo/rh-dp/NovoColaborador.tsx`
-- **Editado:** `src/pages/administrativo/ColaboradoresMinimalista.tsx`
-- **Editado:** `src/App.tsx`
-
+- `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx`
+- `src/components/expedicao/AgendarCarregamentoModal.tsx`
+- `src/components/expedicao/EditarOrdemCarregamentoDrawer.tsx`
