@@ -8,6 +8,8 @@ import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench } from "lucide-react";
 import { CriarPedidoCorrecaoModal } from "./CriarPedidoCorrecaoModal";
+import { EnviarCorrecaoModal } from "./EnviarCorrecaoModal";
+import { useEnviarParaCorrecao } from "@/hooks/useEnviarParaCorrecao";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
 import React, { useState, useMemo } from "react";
 import { calcularTempoExpediente } from "@/utils/calcularTempoExpediente";
@@ -86,6 +88,8 @@ export function PedidoCard({
   const [ordemParaRemover, setOrdemParaRemover] = useState<{ ordem: any; nomeSetor: string } | null>(null);
   const [processos, setProcessos] = useState<Processo[]>([]);
   const [showCriarCorrecao, setShowCriarCorrecao] = useState(false);
+  const [showEnviarCorrecao, setShowEnviarCorrecao] = useState(false);
+  const { enviarParaCorrecao, isEnviando: isEnviandoCorrecao } = useEnviarParaCorrecao();
   const {
     isAdmin
   } = useAuth();
@@ -1492,7 +1496,7 @@ export function PedidoCard({
                     const avancarButtons: React.ReactNode[] = [];
 
                     // Botão de retroceder (vai para a esquerda)
-                    const podeRetroceder = etapaAtual !== 'aberto' && etapaAnterior && onRetrocederEtapa;
+                    const podeRetroceder = etapaAtual !== 'aberto' && etapaAtual !== 'finalizado' && etapaAnterior && onRetrocederEtapa;
                     if (podeRetroceder) {
                       retrocederButtons.push(
                         <Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="flex h-[20px] w-[20px] rounded-[3px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
@@ -1525,7 +1529,7 @@ export function PedidoCard({
 
 
                     // Botão de gerar correção (etapas pós-produção)
-                    const etapasCorrecao = ['inspecao_qualidade', 'embalagem', 'aguardando_coleta', 'instalacoes', 'correcoes', 'finalizado'];
+                    const etapasCorrecao = ['inspecao_qualidade', 'embalagem', 'aguardando_coleta', 'instalacoes', 'correcoes'];
                     if (etapasCorrecao.includes(etapaAtual) && !readOnly) {
                       middleButtons.push(
                         <Tooltip key="gerar-correcao">
@@ -1624,6 +1628,28 @@ className="flex h-[20px] w-full rounded-[3px]"
                       );
                     }
 
+                    // Botão de enviar para correção (apenas etapa finalizado)
+                    if (etapaAtual === 'finalizado' && !readOnly) {
+                      middleButtons.push(
+                        <Tooltip key="enviar-correcao">
+                          <TooltipTrigger asChild>
+                            <Button 
+                              size="icon" 
+                              variant="outline" 
+                              onClick={(e) => { e.stopPropagation(); setShowEnviarCorrecao(true); }} 
+                              title="Enviar para Correção" 
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/50"
+                            >
+                              <Wrench className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="text-xs">Enviar para Correção</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
                     // Retorna na ordem: retroceder (esquerda) + outros (meio) + avançar (direita)
                     return [...retrocederButtons, ...middleButtons, ...avancarButtons];
                   })()}
@@ -1635,6 +1661,27 @@ className="flex h-[20px] w-full rounded-[3px]"
         </Card>
 
         <CriarPedidoCorrecaoModal pedido={pedido} open={showCriarCorrecao} onOpenChange={setShowCriarCorrecao} />
+
+        <EnviarCorrecaoModal
+          open={showEnviarCorrecao}
+          onOpenChange={setShowEnviarCorrecao}
+          pedidoNumero={pedido.numero_pedido ? formatarNumeroPedidoMensal(pedido.numero_pedido) : pedido.id?.slice(0, 8)}
+          isLoading={isEnviandoCorrecao}
+          onConfirmar={async () => {
+            const venda = pedido.venda || pedido.vendas;
+            await enviarParaCorrecao({
+              pedidoId: pedido.id,
+              vendaId: venda?.id || pedido.venda_id,
+              nomeCliente: venda?.cliente_nome || pedido.cliente_nome || 'Cliente',
+              endereco: venda?.endereco_completo || null,
+              cidade: venda?.cidade || '',
+              estado: venda?.estado || '',
+              cep: venda?.cep || null,
+              telefoneCliente: venda?.cliente_telefone || null,
+            });
+            setShowEnviarCorrecao(false);
+          }}
+        />
 
         <PedidoDetalhesSheet pedido={pedido} open={showDetalhes} onOpenChange={setShowDetalhes} />
 
@@ -1991,10 +2038,29 @@ className="flex h-[20px] w-full rounded-[3px]"
                 );
               }
 
+              // Botão enviar para correção (mobile, etapa finalizado)
+              if (etapaAtual === 'finalizado' && !readOnly) {
+                actionButtons.push(
+                  <Button 
+                    key="enviar-correcao" 
+                    size="icon" 
+                    variant="outline"
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      setShowEnviarCorrecao(true); 
+                    }} 
+                    title="Enviar para Correção" 
+                    className="flex w-full h-[35px] bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/50"
+                  >
+                    <Wrench className="h-3.5 w-3.5" />
+                  </Button>
+                );
+              }
+
               // Backlog button removed - users should view order details page
 
               // Add retroceder button (para todos a partir de em_producao)
-              const podeRetroceder = etapaAtual !== 'aberto' && etapaAnterior && onRetrocederEtapa;
+              const podeRetroceder = etapaAtual !== 'aberto' && etapaAtual !== 'finalizado' && etapaAnterior && onRetrocederEtapa;
               if (podeRetroceder) {
                 actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="flex w-full h-[35px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
                       <ArrowLeft className="h-3.5 w-3.5" />
@@ -2015,6 +2081,27 @@ className="flex h-[20px] w-full rounded-[3px]"
       </Card>
 
       <CriarPedidoCorrecaoModal pedido={pedido} open={showCriarCorrecao} onOpenChange={setShowCriarCorrecao} />
+
+      <EnviarCorrecaoModal
+        open={showEnviarCorrecao}
+        onOpenChange={setShowEnviarCorrecao}
+        pedidoNumero={pedido.numero_pedido ? formatarNumeroPedidoMensal(pedido.numero_pedido) : pedido.id?.slice(0, 8)}
+        isLoading={isEnviandoCorrecao}
+        onConfirmar={async () => {
+          const venda = pedido.venda || pedido.vendas;
+          await enviarParaCorrecao({
+            pedidoId: pedido.id,
+            vendaId: venda?.id || pedido.venda_id,
+            nomeCliente: venda?.cliente_nome || pedido.cliente_nome || 'Cliente',
+            endereco: venda?.endereco_completo || null,
+            cidade: venda?.cidade || '',
+            estado: venda?.estado || '',
+            cep: venda?.cep || null,
+            telefoneCliente: venda?.cliente_telefone || null,
+          });
+          setShowEnviarCorrecao(false);
+        }}
+      />
 
       <PedidoDetalhesSheet pedido={pedido} open={showDetalhes} onOpenChange={setShowDetalhes} />
 

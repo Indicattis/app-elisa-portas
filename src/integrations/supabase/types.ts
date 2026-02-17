@@ -1347,6 +1347,127 @@ export type Database = {
           },
         ]
       }
+      correcoes: {
+        Row: {
+          carregamento_concluido: boolean
+          cep: string | null
+          cidade: string
+          concluida: boolean
+          concluida_em: string | null
+          concluida_por: string | null
+          created_at: string
+          created_by: string | null
+          data_carregamento: string | null
+          data_correcao: string | null
+          endereco: string | null
+          estado: string
+          hora: string | null
+          hora_carregamento: string | null
+          id: string
+          nome_cliente: string
+          observacoes: string | null
+          pedido_id: string | null
+          responsavel_carregamento_id: string | null
+          responsavel_carregamento_nome: string | null
+          responsavel_correcao_id: string | null
+          responsavel_correcao_nome: string | null
+          status: string
+          telefone_cliente: string | null
+          tipo_carregamento:
+            | Database["public"]["Enums"]["tipo_carregamento"]
+            | null
+          updated_at: string
+          venda_id: string | null
+          vezes_agendado: number
+        }
+        Insert: {
+          carregamento_concluido?: boolean
+          cep?: string | null
+          cidade?: string
+          concluida?: boolean
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_carregamento?: string | null
+          data_correcao?: string | null
+          endereco?: string | null
+          estado?: string
+          hora?: string | null
+          hora_carregamento?: string | null
+          id?: string
+          nome_cliente: string
+          observacoes?: string | null
+          pedido_id?: string | null
+          responsavel_carregamento_id?: string | null
+          responsavel_carregamento_nome?: string | null
+          responsavel_correcao_id?: string | null
+          responsavel_correcao_nome?: string | null
+          status?: string
+          telefone_cliente?: string | null
+          tipo_carregamento?:
+            | Database["public"]["Enums"]["tipo_carregamento"]
+            | null
+          updated_at?: string
+          venda_id?: string | null
+          vezes_agendado?: number
+        }
+        Update: {
+          carregamento_concluido?: boolean
+          cep?: string | null
+          cidade?: string
+          concluida?: boolean
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_carregamento?: string | null
+          data_correcao?: string | null
+          endereco?: string | null
+          estado?: string
+          hora?: string | null
+          hora_carregamento?: string | null
+          id?: string
+          nome_cliente?: string
+          observacoes?: string | null
+          pedido_id?: string | null
+          responsavel_carregamento_id?: string | null
+          responsavel_carregamento_nome?: string | null
+          responsavel_correcao_id?: string | null
+          responsavel_correcao_nome?: string | null
+          status?: string
+          telefone_cliente?: string | null
+          tipo_carregamento?:
+            | Database["public"]["Enums"]["tipo_carregamento"]
+            | null
+          updated_at?: string
+          venda_id?: string | null
+          vezes_agendado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "correcoes_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "correcoes_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "correcoes_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       criterios_negociacao_autorizados: {
         Row: {
           autorizado_id: string
