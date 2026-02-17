@@ -27,7 +27,7 @@ interface PedidosDraggableListProps {
   etapa: EtapaPedido;
   isAberto: boolean;
   viewMode?: 'grid' | 'list';
-  onMoverEtapa: (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
+  onMoverEtapa?: (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
   onRetrocederEtapa?: (pedidoId: string, etapaDestino: EtapaPedido, motivo: string) => void;
   onReorganizar: (pedidos: PrioridadeUpdate[]) => void;
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
@@ -39,6 +39,7 @@ interface PedidosDraggableListProps {
   showPosicao?: boolean;
   disableClienteClick?: boolean;
   hideOrdensStatus?: boolean;
+  hideCorrecaoButton?: boolean;
 }
 
 interface SortableItemProps {
@@ -48,7 +49,7 @@ interface SortableItemProps {
   total: number;
   isAberto: boolean;
   viewMode?: 'grid' | 'list';
-  onMoverEtapa: (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
+  onMoverEtapa?: (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => void;
   onRetrocederEtapa?: (pedidoId: string, etapaDestino: EtapaPedido, motivo: string) => void;
   onMoverPrioridade: (pedidoId: string, direcao: DirecaoPrioridade) => void;
   onArquivar?: (pedidoId: string) => Promise<void>;
@@ -57,6 +58,7 @@ interface SortableItemProps {
   onAgendar?: (pedidoId: string) => void;
   disableClienteClick?: boolean;
   hideOrdensStatus?: boolean;
+  hideCorrecaoButton?: boolean;
 }
 
 function SortableItem({
@@ -75,6 +77,7 @@ function SortableItem({
   onAgendar,
   disableClienteClick,
   hideOrdensStatus,
+  hideCorrecaoButton,
 }: SortableItemProps) {
   const {
     attributes,
@@ -111,6 +114,7 @@ function SortableItem({
         total={total}
         disableClienteClick={disableClienteClick}
         hideOrdensStatus={hideOrdensStatus}
+        hideCorrecaoButton={hideCorrecaoButton}
       />
     </div>
   );
@@ -134,6 +138,7 @@ export function PedidosDraggableList({
   showPosicao = true,
   disableClienteClick = false,
   hideOrdensStatus = false,
+  hideCorrecaoButton = false,
 }: PedidosDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   
@@ -207,6 +212,7 @@ export function PedidosDraggableList({
               total={showPosicao ? pedidos.length : undefined}
               disableClienteClick={disableClienteClick}
               hideOrdensStatus={hideOrdensStatus}
+              hideCorrecaoButton={hideCorrecaoButton}
               // Sem dragHandleProps - não há arrastar
               // Sem onMoverPrioridade - não há botões de prioridade
             />
@@ -251,6 +257,7 @@ export function PedidosDraggableList({
               onAgendar={onAgendar}
               disableClienteClick={disableClienteClick}
               hideOrdensStatus={hideOrdensStatus}
+              hideCorrecaoButton={hideCorrecaoButton}
             />
           ))}
         </div>

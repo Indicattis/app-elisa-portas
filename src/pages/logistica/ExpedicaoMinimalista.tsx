@@ -858,8 +858,6 @@ export default function ExpedicaoMinimalista() {
                               etapa={etapa} 
                               isAberto={false} 
                               viewMode="list" 
-                              onMoverEtapa={handleMoverEtapa} 
-                              onRetrocederEtapa={handleRetrocederEtapa} 
                               onReorganizar={handleReorganizar} 
                               onMoverPrioridade={handleMoverPrioridade}
                               onArquivar={handleArquivar}
@@ -868,6 +866,7 @@ export default function ExpedicaoMinimalista() {
                               enableDragAndDrop={true}
                               showPosicao={true}
                               hideOrdensStatus={true}
+                              hideCorrecaoButton={true}
                             />
                             
                             {totalPaginas > 1 && (
