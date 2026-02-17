@@ -1,54 +1,46 @@
 
-# Adicionar botao "Retornar" nas Neo finalizadas
+# Pedidos sem pintura devem pular embalagem
 
 ## Resumo
-Adicionar um botao nos cards de Neo (Instalacao e Correcao) na etapa "finalizado" de `/direcao/gestao-fabrica` que permite retornar o servico para a etapa ativa (instalacoes/correcoes), desfazendo a conclusao.
+Alterar a logica de avanço para que pedidos sem pintura pulem a etapa de embalagem, indo direto para `aguardando_coleta` ou `instalacoes` conforme o tipo de entrega. Alem disso, mover os 4 pedidos atualmente presos na embalagem para suas respectivas proximas etapas.
 
 ## O que muda para o usuario
-- Ao lado do icone de conclusao (check verde) nos cards de Neo finalizados, aparecera um botao com icone de "retornar" (seta para tras)
-- Ao clicar, o Neo voltara a aparecer na etapa de instalacoes ou correcoes, conforme o tipo
-- O card sumira da lista de finalizados
+- Pedidos sem pintura nao aparecerão mais na etapa de embalagem
+- Apos a inspeção de qualidade, esses pedidos irao direto para expedição (coleta) ou instalações
+- Os 4 pedidos atuais na embalagem serao movidos automaticamente
 
-## Alteracoes tecnicas
+## Pedidos a mover
+| Pedido | Tipo Entrega | Destino |
+|--------|-------------|---------|
+| 0189   | entrega     | aguardando_coleta |
+| 0194   | instalacao  | instalacoes |
+| 0216   | instalacao  | instalacoes |
+| 0217   | entrega     | aguardando_coleta |
 
-### 1. Hooks - criar mutations de retorno
+## Alteracoes
 
-**`src/hooks/useNeoInstalacoes.ts`** (hook `useNeoInstalacoesFinalizadas`)
-- Adicionar mutation `retornarNeoInstalacao` que faz UPDATE em `neo_instalacoes`:
-  - `concluida: false`
-  - `concluida_em: null`
-  - `concluida_por: null`
-  - `status: 'pendente'`
-  - `updated_at: new Date().toISOString()`
-- No `onSuccess`, invalidar queries `neo_instalacoes_finalizadas`, `neo_instalacoes_listagem` e `pedidos_contadores`
-- Exportar `retornarNeoInstalacao` e `isRetornando`
+### 1. Migração SQL - Mover os 4 pedidos
+Executar migracao para:
+- Fechar a etapa `embalagem` (setar `data_saida`) dos 4 pedidos
+- Criar/upsert a etapa destino correta para cada pedido (`aguardando_coleta` ou `instalacoes`)
 
-**`src/hooks/useNeoCorrecoes.ts`** (hook `useNeoCorrecoesFinalizadas`)
-- Mesmo padrao: mutation `retornarNeoCorrecao` com os mesmos campos
-- Invalidar `neo_correcoes_finalizadas`, `neo_correcoes_listagem` e `pedidos_contadores`
-- Exportar `retornarNeoCorrecao` e `isRetornando`
+### 2. `src/utils/pedidoFluxograma.ts` - Atualizar fluxograma visual
+Na funcao `determinarFluxograma`, a embalagem so deve ser adicionada ao fluxo quando o pedido tem pintura (linha 114-115):
 
-### 2. Cards - adicionar prop e botao de retorno
+```
+// Antes: embalagem é obrigatória para todos
+baseFlow.push(FLUXOGRAMA_ETAPAS.embalagem);
 
-**`src/components/pedidos/NeoInstalacaoCardGestao.tsx`**
-- Adicionar prop `onRetornar?: (id: string) => void`
-- Na secao `showConcluido` (col 19, linhas 266-284), adicionar um botao com icone `Undo2` antes do check verde
-- Botao com estilo amarelo/laranja para diferenciar do concluir
+// Depois: embalagem apenas quando tem pintura
+if (temPintura) {
+  baseFlow.push(FLUXOGRAMA_ETAPAS.embalagem);
+}
+```
 
-**`src/components/pedidos/NeoCorrecaoCardGestao.tsx`**
-- Mesmo padrao: prop `onRetornar` e botao na area de concluido
-
-### 3. Pagina - conectar handlers
-
-**`src/pages/direcao/GestaoFabricaDirecao.tsx`**
-- Extrair `retornarNeoInstalacao` do hook `useNeoInstalacoesFinalizadas`
-- Extrair `retornarNeoCorrecao` do hook `useNeoCorrecoesFinalizadas`
-- Criar handlers `handleRetornarNeoInstalacao` e `handleRetornarNeoCorrecao`
-- Passar `onRetornar` para os cards de Neo na secao de finalizados (linhas 466-487)
+### 3. `src/hooks/usePedidosEtapas.ts` - Logica de avanço
+Na secao que determina o destino ao sair de `inspecao_qualidade` (linhas 715-740), alterar o else (sem pintura) para verificar `tipo_entrega` e ir para `aguardando_coleta` ou `instalacoes` em vez de `embalagem`.
 
 ### Arquivos envolvidos
-- `src/hooks/useNeoInstalacoes.ts` (adicionar mutation de retorno no hook de finalizadas)
-- `src/hooks/useNeoCorrecoes.ts` (adicionar mutation de retorno no hook de finalizadas)
-- `src/components/pedidos/NeoInstalacaoCardGestao.tsx` (adicionar prop e botao)
-- `src/components/pedidos/NeoCorrecaoCardGestao.tsx` (adicionar prop e botao)
-- `src/pages/direcao/GestaoFabricaDirecao.tsx` (conectar handlers)
+- Migracao SQL (mover pedidos existentes)
+- `src/utils/pedidoFluxograma.ts` (fluxograma visual)
+- `src/hooks/usePedidosEtapas.ts` (logica de avanço)
