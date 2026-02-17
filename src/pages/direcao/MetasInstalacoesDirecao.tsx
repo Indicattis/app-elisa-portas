@@ -19,6 +19,7 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { useSetoresLideres } from "@/hooks/useSetoresLideres";
 import { useMetasInstalacao, useCriarMetaInstalacao, useProgressoMetaInstalacao, type MetaInstalacao } from "@/hooks/useMetasInstalacao";
 import { Progress } from "@/components/ui/progress";
+import { InstalacoesDaMetaModal } from "@/components/metas/InstalacoesDaMetaModal";
 
 // --- Types ---
 interface Colaborador {
@@ -135,45 +136,52 @@ function DatePickerField({ date, onSelect }: { date: Date | undefined; onSelect:
 }
 
 function MetaCard({ meta }: { meta: MetaInstalacao }) {
+  const [modalAberto, setModalAberto] = useState(false);
   const { data: progresso = 0 } = useProgressoMetaInstalacao(meta);
   const porcentagem = Math.min((progresso / meta.quantidade_portas) * 100, 100);
   const atingida = progresso >= meta.quantidade_portas;
 
   return (
-    <div className={`p-3 rounded-lg border ${atingida ? "border-green-500/50 bg-green-500/5" : "border-border bg-accent/50"}`}>
-      <div className="flex items-center justify-between gap-3 mb-2">
-        <div className="flex items-center gap-2">
-          <DoorOpen className={`h-5 w-5 shrink-0 ${atingida ? "text-green-500" : "text-primary"}`} />
-          <p className="text-sm font-medium">{meta.quantidade_portas} portas</p>
+    <>
+      <div
+        className={`p-3 rounded-lg border cursor-pointer transition-colors hover:bg-accent/80 ${atingida ? "border-green-500/50 bg-green-500/5" : "border-border bg-accent/50"}`}
+        onClick={() => setModalAberto(true)}
+      >
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <div className="flex items-center gap-2">
+            <DoorOpen className={`h-5 w-5 shrink-0 ${atingida ? "text-green-500" : "text-primary"}`} />
+            <p className="text-sm font-medium">{meta.quantidade_portas} portas</p>
+          </div>
+          {atingida ? (
+            <Badge className="text-xs bg-green-500/20 text-green-500 border-green-500/30">
+              <Trophy className="h-3 w-3 mr-1" /> Atingida!
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-xs">Ativa</Badge>
+          )}
         </div>
-        {atingida ? (
-          <Badge className="text-xs bg-green-500/20 text-green-500 border-green-500/30">
-            <Trophy className="h-3 w-3 mr-1" /> Atingida!
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="text-xs">Ativa</Badge>
-        )}
-      </div>
 
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">
-            {progresso} / {meta.quantidade_portas} portas
-          </span>
-          <span className={`font-medium ${atingida ? "text-green-500" : "text-foreground"}`}>
-            {porcentagem.toFixed(0)}%
-          </span>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">
+              {progresso} / {meta.quantidade_portas} portas
+            </span>
+            <span className={`font-medium ${atingida ? "text-green-500" : "text-foreground"}`}>
+              {porcentagem.toFixed(0)}%
+            </span>
+          </div>
+          <Progress
+            value={porcentagem}
+            className={`h-2 ${atingida ? "[&>div]:bg-green-500" : ""}`}
+          />
         </div>
-        <Progress
-          value={porcentagem}
-          className={`h-2 ${atingida ? "[&>div]:bg-green-500" : ""}`}
-        />
-      </div>
 
-      <p className="text-xs text-muted-foreground mt-2">
-        {format(new Date(meta.data_inicio + "T00:00:00"), "dd/MM/yyyy")} — {format(new Date(meta.data_termino + "T00:00:00"), "dd/MM/yyyy")}
-      </p>
-    </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          {format(new Date(meta.data_inicio + "T00:00:00"), "dd/MM/yyyy")} — {format(new Date(meta.data_termino + "T00:00:00"), "dd/MM/yyyy")}
+        </p>
+      </div>
+      <InstalacoesDaMetaModal meta={meta} open={modalAberto} onOpenChange={setModalAberto} />
+    </>
   );
 }
 
