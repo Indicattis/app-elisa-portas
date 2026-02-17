@@ -111,8 +111,10 @@ export function determinarFluxograma(pedido: any): FluxogramaEtapa[] {
     baseFlow.push(FLUXOGRAMA_ETAPAS.aguardando_pintura);
   }
   
-  // Embalagem é obrigatória para todos (exceto manutenção)
-  baseFlow.push(FLUXOGRAMA_ETAPAS.embalagem);
+  // Embalagem apenas quando tem pintura
+  if (temPintura) {
+    baseFlow.push(FLUXOGRAMA_ETAPAS.embalagem);
+  }
   
   // Define etapa final baseada no tipo de entrega
   if (tipoEntrega === 'entrega') {
