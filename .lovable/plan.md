@@ -1,37 +1,27 @@
 
-# Mover formulario Neo para /logistica/expedicao/nova-neo
+# Rota de edicao de Neo em /logistica/expedicao/editar-neo/:id
 
 ## Resumo
-Excluir a pagina de listagem `/logistica/neos` e mover o formulario de cadastro para `/logistica/expedicao/nova-neo`. Todas as referencias serao atualizadas.
+Criar a rota `/logistica/expedicao/editar-neo/:id` que reutiliza o mesmo componente `NovaNeoForm`, mas carrega os dados da Neo pelo ID da URL (em vez de receber via `location.state`). Atualizar os handlers de edicao na Expedicao para navegar para essa rota.
 
 ## Alteracoes
 
-### 1. Excluir arquivo
-- `src/pages/logistica/NeosCadastro.tsx` — remover completamente
+### 1. Atualizar `src/pages/logistica/NovaNeoForm.tsx`
+- Aceitar parametros de rota: usar `useParams` para extrair `id`
+- Aceitar query param `tipo` (instalacao ou correcao) para saber qual tabela consultar
+- Quando `id` estiver presente na URL, buscar os dados da neo no banco (query por ID em `neo_instalacoes` ou `neo_correcoes`)
+- Remover dependencia de `location.state` para edicao (manter retrocompativel ou substituir)
+- Rota: `/logistica/expedicao/editar-neo/:id?tipo=instalacao` ou `?tipo=correcao`
 
-### 2. Mover e renomear formulario
-- Renomear `src/pages/logistica/NeosCadastroForm.tsx` para `src/pages/logistica/NovaNeoForm.tsx`
-- Atualizar navegacao interna:
-  - `backPath` de `/logistica/neos` para `/logistica/expedicao`
-  - Breadcrumb: Home > Logistica > Expedicao > Nova Neo
-  - Botao "Cancelar" redireciona para `/logistica/expedicao`
-  - Apos salvar, redireciona para `/logistica/expedicao`
+### 2. Atualizar `src/App.tsx`
+- Adicionar rota `/logistica/expedicao/editar-neo/:id` apontando para `NovaNeoForm`
 
-### 3. Rotas no App.tsx
-- Remover rota `/logistica/neos`
-- Remover rota `/logistica/neos/novo`
-- Remover imports de `NeosCadastro` e `NeosCadastroForm`
-- Adicionar rota `/logistica/expedicao/nova-neo` apontando para `NovaNeoForm`
-
-### 4. Hub de Logistica (LogisticaHub.tsx)
-- Remover item "Servicos Neo" do menu (ou apontar para a nova rota, dependendo da preferencia)
-
-### 5. Botao "Novo Neo" na Expedicao (ExpedicaoMinimalista.tsx)
-- Alterar navegacao de `/logistica/neos` para `/logistica/expedicao/nova-neo`
+### 3. Atualizar `src/pages/logistica/ExpedicaoMinimalista.tsx`
+- Alterar `handleEditarNeoInstalacao` para fazer `navigate('/logistica/expedicao/editar-neo/' + neo.id + '?tipo=instalacao')`
+- Alterar `handleEditarNeoCorrecao` para fazer `navigate('/logistica/expedicao/editar-neo/' + neo.id + '?tipo=correcao')`
+- Os modais `NeoInstalacaoModal` e `NeoCorrecaoModal` podem ser mantidos para criacao ou removidos se nao forem mais usados para edicao
 
 ### Arquivos envolvidos
-- `src/pages/logistica/NeosCadastro.tsx` (excluir)
-- `src/pages/logistica/NeosCadastroForm.tsx` (excluir e recriar como `NovaNeoForm.tsx`)
-- `src/App.tsx` (atualizar rotas e imports)
-- `src/pages/logistica/LogisticaHub.tsx` (remover item do menu)
-- `src/pages/logistica/ExpedicaoMinimalista.tsx` (atualizar navegacao)
+- `src/pages/logistica/NovaNeoForm.tsx` (adicionar busca por ID via useParams + useQuery)
+- `src/App.tsx` (nova rota)
+- `src/pages/logistica/ExpedicaoMinimalista.tsx` (alterar handlers de edicao para navigate)
