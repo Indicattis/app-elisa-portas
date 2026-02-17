@@ -246,6 +246,7 @@ import ComprasHub from "./pages/administrativo/ComprasHub";
 // Hub RH/DP Minimalista
 import RhDpHub from "./pages/administrativo/RhDpHub";
 import ColaboradoresMinimalista from "./pages/administrativo/ColaboradoresMinimalista";
+import NovoColaborador from "./pages/administrativo/rh-dp/NovoColaborador";
 import VagasPage from "./pages/administrativo/VagasPage";
 import ResponsabilidadesPage from "./pages/administrativo/ResponsabilidadesPage";
 import FuncoesPage from "./pages/administrativo/FuncoesPage";
@@ -534,6 +535,7 @@ const App = () => (
                 {/* Hub RH/DP Minimalista */}
                 <Route path="/administrativo/rh-dp" element={<ProtectedRoute routeKey="administrativo_hub"><RhDpHub /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/colaboradores" element={<ProtectedRoute routeKey="administrativo_hub"><ColaboradoresMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/rh-dp/colaboradores/novo" element={<ProtectedRoute routeKey="administrativo_hub"><NovoColaborador /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/vagas" element={<ProtectedRoute routeKey="administrativo_hub"><VagasPage /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/responsabilidades" element={<ProtectedRoute routeKey="administrativo_hub"><ResponsabilidadesPage /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/funcoes" element={<ProtectedRoute routeKey="administrativo_hub"><FuncoesPage /></ProtectedRoute>} />
