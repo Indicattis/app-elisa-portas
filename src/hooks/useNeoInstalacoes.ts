@@ -271,6 +271,7 @@ export const useNeoInstalacoesListagem = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_calendario"] });
       queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_listagem"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_finalizadas"] });
       queryClient.invalidateQueries({ queryKey: ["pedidos_contadores"] });
       toast.success("Neo instalação concluída com sucesso!");
     },
