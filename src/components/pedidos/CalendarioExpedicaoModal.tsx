@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { DndContext } from "@dnd-kit/core";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Calendar, CalendarDays } from "lucide-react";
+import { Calendar, CalendarDays, ExternalLink } from "lucide-react";
 import { startOfWeek, startOfMonth } from "date-fns";
 import { useOrdensCarregamentoCalendario } from "@/hooks/useOrdensCarregamentoCalendario";
 import { useNeoInstalacoes } from "@/hooks/useNeoInstalacoes";
@@ -18,6 +19,7 @@ interface CalendarioExpedicaoModalProps {
 }
 
 export const CalendarioExpedicaoModal = ({ open, onOpenChange }: CalendarioExpedicaoModalProps) => {
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<'week' | 'month'>('month');
   const [legendaFiltro, setLegendaFiltro] = useState<string | null>(null);
@@ -67,6 +69,17 @@ export const CalendarioExpedicaoModal = ({ open, onOpenChange }: CalendarioExped
           <div className="flex items-center justify-between">
             <DialogTitle>Calendário de Expedição</DialogTitle>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onOpenChange(false);
+                  navigate('/logistica/expedicao');
+                }}
+              >
+                <ExternalLink className="h-4 w-4 mr-1" />
+                Ver calendário completo
+              </Button>
               <Button
                 variant={viewType === 'week' ? 'default' : 'outline'}
                 size="sm"
