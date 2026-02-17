@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { InstalacoesPorColaboradorModal } from "@/components/metas/InstalacoesPorColaboradorModal";
 import { User, Trophy, Users, Crown, Target, Plus, CalendarDays, DoorOpen } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -150,6 +151,7 @@ function MetaCard({ meta }: { meta: MetaInstalacao }) {
 // --- Main component ---
 export default function MetasInstalacoesDirecao() {
   const navigate = useNavigate();
+  const [selectedColaboradorId, setSelectedColaboradorId] = useState<string | null>(null);
 
   const { lideres } = useSetoresLideres();
   const gerenteSetor = lideres.find((l) => l.setor === "instalacoes");
@@ -243,7 +245,7 @@ export default function MetasInstalacoesDirecao() {
     <div
       key={colab.user_id}
       className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer"
-      onClick={() => navigate(`/direcao/metas/instalacoes/${colab.user_id}`)}
+      onClick={() => setSelectedColaboradorId(colab.user_id)}
     >
       <Avatar className="h-10 w-10">
         <AvatarImage src={colab.foto_perfil_url || undefined} />
@@ -365,7 +367,7 @@ export default function MetasInstalacoesDirecao() {
           {colaboradores && colaboradores.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <User className="h-5 w-5" /> Metas Individuais
+                <User className="h-5 w-5" /> Desempenho Individual
               </h3>
 
               {equipes?.map((equipe) => {
@@ -415,6 +417,13 @@ export default function MetasInstalacoesDirecao() {
           )}
         </div>
       )}
+
+      {/* Modal de instalações do colaborador */}
+      <InstalacoesPorColaboradorModal
+        userId={selectedColaboradorId || ""}
+        open={!!selectedColaboradorId}
+        onOpenChange={(open) => { if (!open) setSelectedColaboradorId(null); }}
+      />
     </MinimalistLayout>
   );
 }
