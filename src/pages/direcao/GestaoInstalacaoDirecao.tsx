@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Truck, HardHat, ArrowLeft } from "lucide-react";
+import { Truck, HardHat, ArrowLeft, Users } from "lucide-react";
 
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 
@@ -16,6 +16,12 @@ const menuItems = [
     description: "Gestão de instalações",
     icon: HardHat,
     path: "/direcao/gestao-instalacao/instalacoes",
+  },
+  {
+    title: "Equipes",
+    description: "Gestão de equipes de instalação",
+    icon: Users,
+    path: "/direcao/gestao-instalacao/equipes",
   },
 ];
 
