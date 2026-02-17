@@ -1,28 +1,35 @@
 
-# Corrigir retorno de Neo Instalação finalizada para etapa Correções
+# Adicionar botao de Excluir Pedido na pagina PedidoViewDirecao
 
 ## Problema
-Ao clicar "Retornar" numa Neo Instalação finalizada na etapa "Finalizado", o sistema reseta o status para `pendente` na mesma tabela `neo_instalacoes`, fazendo o item reaparecer na aba "Instalações". O correto seria enviar para a aba "Correções".
+A pagina de detalhes do pedido em `/direcao/pedidos/:id` nao possui opcao para excluir o pedido. A funcionalidade de exclusao ja existe no hook `usePedidosEtapas` (funcao `deletarPedido` que chama a RPC `deletar_pedido_completo`), mas nao esta acessivel nesta pagina.
 
 ## Solucao
-Alterar a logica de retorno para criar uma nova Neo Correcao a partir dos dados da Neo Instalacao finalizada, em vez de simplesmente reverter o status.
+Adicionar um botao "Excluir Pedido" na secao "Acoes Rapidas" da pagina, com modal de confirmacao usando o componente `ExcluirPedidoModal` ja existente.
 
 ## Alteracoes
 
-### 1. `src/hooks/useNeoInstalacoes.ts` - Mutation `retornarMutation`
-Alterar a logica da mutation para:
-1. Buscar os dados da Neo Instalacao pelo ID
-2. Criar um novo registro em `neo_correcoes` com os dados copiados (nome_cliente, cidade, estado, descricao, equipe_id, equipe_nome, tipo_responsavel, autorizado_id, autorizado_nome, valor_total, valor_a_receber)
-3. Marcar a Neo Instalacao original como arquivada (`status: 'arquivada'`) para que nao reapareça em nenhuma lista
-4. Invalidar queries de `neo_correcoes_listagem` alem das existentes
+### `src/pages/direcao/PedidoViewDirecao.tsx`
 
-### 2. `src/components/pedidos/NeoInstalacaoCardGestao.tsx` - Tooltip do botao
-Alterar o title do botao de "Retornar para instalações" para "Enviar para correções" e trocar o icone de `Undo2` para algo mais adequado (ex: `ArrowRight` ou manter `Undo2` com label atualizado).
+1. Importar dependencias necessarias:
+   - `Trash2` do lucide-react
+   - `ExcluirPedidoModal` de `@/components/pedidos/ExcluirPedidoModal`
+   - `supabase` para chamar a RPC de exclusao
+   - `useNavigate` de react-router-dom
+   - `toast` de sonner
 
-### 3. `src/pages/direcao/GestaoFabricaDirecao.tsx`
-Adicionar invalidacao de `neo_correcoes_listagem` no handler `handleRetornarNeoInstalacao` para que a nova correcao apareca imediatamente na aba "Correções".
+2. Adicionar estados:
+   - `showExcluir` (boolean) para controlar o modal
+   - `isExcluindo` (boolean) para loading
 
-### Arquivos afetados
-- `src/hooks/useNeoInstalacoes.ts` (logica da mutation)
-- `src/components/pedidos/NeoInstalacaoCardGestao.tsx` (label do botao)
-- `src/pages/direcao/GestaoFabricaDirecao.tsx` (invalidacao de queries)
+3. Criar funcao `handleExcluirPedido`:
+   - Verificar se usuario e admin (via `admin_users`)
+   - Chamar `supabase.rpc('deletar_pedido_completo', { p_pedido_id: id })`
+   - Em caso de sucesso, exibir toast e navegar de volta para `/direcao/gestao-fabrica`
+
+4. Adicionar botao vermelho "Excluir Pedido" na secao "Acoes Rapidas" (apos o botao "Imprimir PDF", por volta da linha 527)
+
+5. Renderizar `ExcluirPedidoModal` passando os dados do pedido formatados para compatibilidade com o componente (que espera `vendas.cliente_nome` e `numero_pedido`)
+
+### Arquivo afetado
+- `src/pages/direcao/PedidoViewDirecao.tsx` (unico arquivo, ~30 linhas adicionadas)
