@@ -85,6 +85,29 @@ export function useCriarMetaInstalacao() {
   });
 }
 
+export function useProgressoMetaInstalacao(meta: MetaInstalacao | null) {
+  return useQuery({
+    queryKey: ["progresso-meta-instalacao", meta?.id],
+    enabled: !!meta,
+    queryFn: async () => {
+      let query = supabase
+        .from("neo_instalacoes" as any)
+        .select("id", { count: "exact", head: true })
+        .eq("concluida", true)
+        .gte("concluida_em", meta!.data_inicio)
+        .lte("concluida_em", meta!.data_termino + "T23:59:59");
+
+      if (meta!.tipo === "equipe") {
+        query = query.eq("equipe_id", meta!.referencia_id);
+      }
+
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+}
+
 export function useAtualizarMetaInstalacao() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
