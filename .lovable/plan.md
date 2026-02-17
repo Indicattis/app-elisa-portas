@@ -1,99 +1,33 @@
 
 
-# Adicionar barras de progresso nas metas de instalacao
+# Modal de instalacoes ao clicar na meta
 
 ## Resumo
 
-Contabilizar as instalacoes concluidas (da tabela `neo_instalacoes`) dentro do periodo de vigencia de cada meta e exibir uma barra de progresso.
-
-## Logica de contagem
-
-### Meta de Equipe
-- Busca em `neo_instalacoes` onde `equipe_id = equipe.id`, `concluida = true` e `concluida_em` dentro do periodo da meta (data_inicio ate data_termino)
-- Conta o numero de registros = portas instaladas
-
-### Meta do Gerente
-- Busca em `neo_instalacoes` onde `concluida = true` e `concluida_em` dentro do periodo da meta
-- Inclui TODAS as instalacoes: equipes internas + autorizados (sem filtro de equipe/autorizado)
-- Conta o total de registros
+Ao clicar em um MetaCard, abrir um modal listando as instalacoes concluidas que contam para aquela meta (filtradas pelo periodo e, no caso de equipe, pelo equipe_id).
 
 ## Alteracoes
 
-### 1. Criar hook `useProgressoMetaInstalacao` (em `useMetasInstalacao.ts`)
+### 1. Novo componente: `InstalacoesDaMetaModal`
 
-Novo hook que recebe uma meta e retorna a contagem de instalacoes concluidas:
+Arquivo: `src/components/metas/InstalacoesDaMetaModal.tsx`
 
-```typescript
-export function useProgressoMetaInstalacao(meta: MetaInstalacao | null) {
-  return useQuery({
-    queryKey: ["progresso-meta-instalacao", meta?.id],
-    enabled: !!meta,
-    queryFn: async () => {
-      // Para gerente: todas as instalacoes concluidas no periodo
-      // Para equipe: instalacoes concluidas pela equipe no periodo
-      let query = supabase
-        .from("neo_instalacoes")
-        .select("id", { count: "exact", head: true })
-        .eq("concluida", true)
-        .gte("concluida_em", meta.data_inicio)
-        .lte("concluida_em", meta.data_termino + "T23:59:59");
-      
-      if (meta.tipo === "equipe") {
-        query = query.eq("equipe_id", meta.referencia_id);
-      }
-      // gerente: sem filtro adicional (todas)
-      
-      return count;
-    },
-  });
-}
-```
+- Recebe a `MetaInstalacao` como prop, alem de `open` e `onOpenChange`
+- Busca instalacoes de `neo_instalacoes` onde `concluida = true` e `concluida_em` dentro do periodo da meta
+- Se `meta.tipo === "equipe"`: filtra por `equipe_id = meta.referencia_id`
+- Se `meta.tipo === "gerente"`: sem filtro de equipe (todas as instalacoes)
+- Exibe lista com: nome do cliente, cidade/estado, data de conclusao, equipe responsavel
+- Mostra resumo no topo: total de instalacoes e a meta de portas
+- Usa Dialog do Radix com ScrollArea para a lista
 
-### 2. Atualizar `MetaCard` para exibir barra de progresso
+### 2. Alterar `MetaCard` em `MetasInstalacoesDirecao.tsx`
 
-O componente `MetaCard` passara a:
-- Receber a contagem de progresso como prop (ou buscar internamente)
-- Exibir barra de progresso usando o componente `Progress`
-- Mostrar "X / Y portas" e porcentagem
-- Quando atingir 100%, exibir estilo verde com icone de trofeu
+- Adicionar estado `modalAberto` no MetaCard
+- Tornar o card clicavel com `cursor-pointer` e `onClick` para abrir o modal
+- Renderizar `InstalacoesDaMetaModal` dentro do MetaCard
 
-### 3. Arquivo `MetasInstalacoesDirecao.tsx`
+### Arquivos
 
-- Importar o novo hook
-- Passar os dados de progresso para cada `MetaCard`
-- O `MetaCard` se torna auto-suficiente: recebe a meta e busca o progresso
-
-## Detalhes tecnicos
-
-### Arquivos modificados
-
-- `src/hooks/useMetasInstalacao.ts` - adicionar hook `useProgressoMetaInstalacao`
-- `src/pages/direcao/MetasInstalacoesDirecao.tsx` - atualizar `MetaCard` para incluir barra de progresso com dados reais
-
-### Consulta SQL para equipe
-
-```sql
-SELECT count(*) FROM neo_instalacoes
-WHERE equipe_id = '{equipe_id}'
-  AND concluida = true
-  AND concluida_em >= '{data_inicio}'
-  AND concluida_em <= '{data_termino}T23:59:59'
-```
-
-### Consulta SQL para gerente
-
-```sql
-SELECT count(*) FROM neo_instalacoes
-WHERE concluida = true
-  AND concluida_em >= '{data_inicio}'
-  AND concluida_em <= '{data_termino}T23:59:59'
-```
-
-### Visual do MetaCard atualizado
-
-- Barra de progresso com cor primaria (verde quando >= 100%)
-- Texto "12 / 50 portas" acima da barra
-- Porcentagem no canto direito
-- Icone de trofeu quando meta atingida
-- Periodo de vigencia abaixo
+- `src/components/metas/InstalacoesDaMetaModal.tsx` (novo)
+- `src/pages/direcao/MetasInstalacoesDirecao.tsx` (MetaCard atualizado para abrir modal)
 
