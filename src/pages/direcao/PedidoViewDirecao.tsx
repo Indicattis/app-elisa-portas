@@ -685,7 +685,7 @@ export default function PedidoViewDirecao() {
                         <div className="min-w-0 flex-1 space-y-1">
                           <p className="text-sm font-semibold text-white leading-tight truncate">{grupo.label}</p>
                           {grupo.dimensoes && (
-                            <p className="text-xs text-white/50">{grupo.dimensoes}</p>
+                            <p className="text-xs font-medium text-white/80">{grupo.dimensoes}</p>
                           )}
                           <Badge variant="outline" className="text-[10px] h-5 bg-white/5 text-white/70 border-white/20">
                             {grupo.linhas.length} {grupo.linhas.length === 1 ? 'item' : 'itens'}
