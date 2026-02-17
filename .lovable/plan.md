@@ -1,26 +1,14 @@
 
-
-# Aplicar mesmas alteracoes para etapa Expedicao Coleta (aguardando_coleta)
+# Adicionar botao de enviar para correcoes na listagem de pedidos em /logistica/expedicao
 
 ## Resumo
 
-Replicar as alteracoes feitas para `instalacoes` na etapa `aguardando_coleta`:
-1. Remover o botao vermelho de retroceder pedido
-2. Alterar o botao roxo para mover o pedido diretamente para `correcoes` (em vez de gerar ordem de correcao)
+Na pagina `/logistica/expedicao`, a listagem de pedidos nas abas (Aguardando Coleta, Instalacoes, etc.) esta com `hideCorrecaoButton={true}`, o que oculta o botao roxo de "Enviar para Correcoes" que foi implementado recentemente. A correcao consiste em remover essa restricao para que o botao apareca nas etapas relevantes.
 
-## Alteracoes
+## Alteracao
 
-### `src/components/pedidos/PedidoCard.tsx`
+### `src/pages/logistica/ExpedicaoMinimalista.tsx`
 
-1. **Linha 1520** - Adicionar `&& etapaAtual !== 'aguardando_coleta'` na condicao `podeRetroceder` para ocultar o botao de retroceder nessa etapa.
+- **Linha 870**: Remover a prop `hideCorrecaoButton={true}` do componente `PedidosDraggableList` (ou alterar para `hideCorrecaoButton={false}`).
 
-2. **Linha 1575-1576** - Mover `aguardando_coleta` da lista `etapasCorrecao` (que abre modal de gerar correcao) para a condicao que usa `setShowEnviarCorrecao` (que move o pedido diretamente para correcoes):
-   - Alterar a condicao da linha 1576 de `etapaAtual === 'instalacoes'` para `(etapaAtual === 'instalacoes' || etapaAtual === 'aguardando_coleta')`
-   - Remover `'aguardando_coleta'` da lista `etapasCorrecao` na linha 1575
-
-## Detalhes tecnicos
-
-- Apenas o arquivo `PedidoCard.tsx` sera editado
-- O hook `useEnviarParaCorrecao` ja aceita `etapaOrigem` dinamico (alterado na implementacao anterior), entao funcionara automaticamente para `aguardando_coleta`
-- O `EnviarCorrecaoModal` de confirmacao ja esta conectado e passa `etapaOrigem: etapaAtual`
-
+Isso fara com que o botao roxo "Enviar para Correcoes" apareca nos cards de pedidos nas etapas `aguardando_coleta` e `instalacoes`, permitindo encaminhar pedidos para a etapa de correcoes diretamente pela listagem da expedicao.
