@@ -15,7 +15,8 @@ import {
   FileText,
   DollarSign,
   Undo2,
-  GripVertical
+  GripVertical,
+  Archive
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -30,6 +31,7 @@ interface NeoInstalacaoCardGestaoProps {
   showConcluido?: boolean;
   onRetornar?: (id: string) => void;
   onAgendar?: (id: string) => void;
+  onArquivar?: (id: string) => void;
   dragHandleProps?: Record<string, any>;
   isDragging?: boolean;
 }
@@ -42,6 +44,7 @@ export function NeoInstalacaoCardGestao({
   showConcluido = false,
   onRetornar,
   onAgendar,
+  onArquivar,
   dragHandleProps,
   isDragging,
 }: NeoInstalacaoCardGestaoProps) {
@@ -324,6 +327,20 @@ export function NeoInstalacaoCardGestao({
                         title="Enviar para correções"
                       >
                         <Undo2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                    {onArquivar && (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="flex h-[20px] w-[20px] rounded-[3px] bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border-orange-500/50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onArquivar(neoInstalacao.id);
+                        }}
+                        title="Arquivar"
+                      >
+                        <Archive className="h-3 w-3" />
                       </Button>
                     )}
                   </>
