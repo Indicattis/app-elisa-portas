@@ -20,6 +20,7 @@ import {
 import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
 import { gerarPDFEtiquetaProducao } from "@/utils/etiquetasPDFGenerator";
 import { calcularTempoExpediente } from "@/utils/calcularTempoExpediente";
+import { LinhasAgrupadasPorPortaSheet } from "./LinhasAgrupadasPorPortaSheet";
 import type { OrdemStatus, TipoOrdem } from "@/hooks/useOrdensPorPedido";
 
 interface OrdemLinhasSheetProps {
@@ -617,81 +618,11 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
                 Nenhuma linha encontrada para esta ordem.
               </div>
             ) : (
-              <div className="space-y-1">
-                {/* Header */}
-                <div 
-                  className="grid gap-2 px-2 py-1.5 text-[10px] text-zinc-500 uppercase tracking-wide border-b border-zinc-700/50"
-                  style={{ gridTemplateColumns: '24px 1fr 45px 55px 85px 36px' }}
-                >
-                  <span></span>
-                  <span>Item</span>
-                  <span className="text-center">Qtd</span>
-                  <span className="text-center">Tam</span>
-                  <span className="text-center">Dims</span>
-                  <span></span>
-                </div>
-
-                {/* Rows */}
-                {linhas.map((linha) => (
-                  <div
-                    key={linha.id}
-                    className={cn(
-                      "grid gap-2 px-2 py-2 rounded-md transition-all duration-200 border",
-                      linha.concluida
-                        ? "bg-green-500/10 border-green-500/30"
-                        : "bg-zinc-800/30 border-zinc-700/30 hover:bg-zinc-800/50"
-                    )}
-                    style={{ gridTemplateColumns: '24px 1fr 45px 55px 85px 36px', alignItems: 'center' }}
-                  >
-                    <div className="flex items-center justify-center h-full">
-                      <Checkbox
-                        checked={linha.concluida}
-                        onCheckedChange={(checked) => {
-                          marcarLinha.mutate({ linhaId: linha.id, concluida: checked as boolean });
-                        }}
-                        className="border-zinc-600 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                      />
-                    </div>
-                    
-                    <div className="flex items-center h-full">
-                      <span className={cn(
-                        "text-sm truncate",
-                        linha.concluida ? "text-green-300 line-through" : "text-white"
-                      )}>
-                        {linha.estoque?.nome_produto || linha.item}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-center h-full">
-                      <span className="text-xs text-zinc-400">{linha.quantidade}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-center h-full">
-                      <span className="text-xs text-zinc-400">{linha.tamanho || '-'}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-center h-full">
-                      <span className="text-xs text-zinc-400">
-                        {linha.largura && linha.altura 
-                          ? `${linha.largura}x${linha.altura}` 
-                          : '-'}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-center h-full">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 hover:bg-zinc-700/50"
-                        onClick={() => handleImprimirEtiqueta(linha)}
-                        title="Imprimir etiqueta"
-                      >
-                        <Printer className="h-4 w-4 text-zinc-400 hover:text-white" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <LinhasAgrupadasPorPortaSheet
+                linhas={linhas}
+                marcarLinha={marcarLinha}
+                handleImprimirEtiqueta={handleImprimirEtiqueta}
+              />
             )}
           </div>
 
