@@ -111,8 +111,33 @@ export const useOrdensCarregamentoUnificadas = () => {
       // Usar todos os registros (deduplicação com instalações será feita depois)
       const todasOrdens = ordensCarregamento || [];
 
+      // Deduplicar por pedido_id dentro de ordens_carregamento
+      // Manter o registro mais relevante (com data agendada, ou o mais recente)
+      const ordensUnicasPorPedido = (() => {
+        const semPedido = todasOrdens.filter(o => !o.pedido_id);
+        const comPedido = todasOrdens.filter(o => o.pedido_id);
+        const porPedido = new Map<string, typeof comPedido[0]>();
+        for (const ordem of comPedido) {
+          const existing = porPedido.get(ordem.pedido_id!);
+          if (!existing) {
+            porPedido.set(ordem.pedido_id!, ordem);
+          } else {
+            const ordemTemData = !!ordem.data_carregamento;
+            const existingTemData = !!existing.data_carregamento;
+            if (ordemTemData && !existingTemData) {
+              porPedido.set(ordem.pedido_id!, ordem);
+            } else if (!ordemTemData && existingTemData) {
+              // manter existing
+            } else if (new Date(ordem.created_at || 0) > new Date(existing.created_at || 0)) {
+              porPedido.set(ordem.pedido_id!, ordem);
+            }
+          }
+        }
+        return [...semPedido, ...porPedido.values()];
+      })();
+
       // Buscar dados dos vendedores (atendentes)
-      const atendenteIds = [...new Set(todasOrdens.map(o => o.venda?.atendente_id).filter(Boolean))] as string[];
+      const atendenteIds = [...new Set(ordensUnicasPorPedido.map(o => o.venda?.atendente_id).filter(Boolean))] as string[];
       const { data: vendedores } = atendenteIds.length > 0
         ? await supabase
             .from("admin_users")
@@ -186,7 +211,7 @@ export const useOrdensCarregamentoUnificadas = () => {
       // ===== 3. Deduplicar e normalizar =====
       // Remover ordens_carregamento cujo pedido_id já existe nas instalações filtradas
       const pedidoIdsInstalacoes = new Set(instalacoesParaCarregar.map(i => i.pedido_id).filter(Boolean));
-      const ordensDeduplicadas = todasOrdens.filter(o => !o.pedido_id || !pedidoIdsInstalacoes.has(o.pedido_id));
+      const ordensDeduplicadas = ordensUnicasPorPedido.filter(o => !o.pedido_id || !pedidoIdsInstalacoes.has(o.pedido_id));
 
       const ordensNormalizadas: OrdemCarregamentoUnificada[] = [
         // Ordens de carregamento (deduplicadas)
