@@ -29,6 +29,7 @@ import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList"
 import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMinimalista";
 import { NeoInstalacaoCardGestao } from "@/components/pedidos/NeoInstalacaoCardGestao";
 import { NeoCorrecaoCardGestao } from "@/components/pedidos/NeoCorrecaoCardGestao";
+import { NeoInstalacoesDraggableList, NeoCorrecoesDraggableList } from "@/components/pedidos/NeoDraggableList";
 import { SelecionarResponsavelEtapaModal } from "@/components/pedidos/SelecionarResponsavelEtapaModal";
 import { ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
@@ -108,8 +109,8 @@ export default function ExpedicaoMinimalista() {
 
   // Hooks para listagem de pedidos por etapa
   const contadores = usePedidosContadores();
-  const { neoInstalacoes: neoInstalacoesListagem, concluirNeoInstalacao: concluirNeoInstalacaoListagem, isConcluindo: isConcluindoInstalacaoListagem } = useNeoInstalacoesListagem();
-  const { neoCorrecoes: neoCorrecoesListagem, concluirNeoCorrecao: concluirNeoCorrecaoListagem } = useNeoCorrecoesListagem();
+  const { neoInstalacoes: neoInstalacoesListagem, concluirNeoInstalacao: concluirNeoInstalacaoListagem, isConcluindo: isConcluindoInstalacaoListagem, reorganizarNeoInstalacoes: reorganizarNeoInstalacoesListagem } = useNeoInstalacoesListagem();
+  const { neoCorrecoes: neoCorrecoesListagem, concluirNeoCorrecao: concluirNeoCorrecaoListagem, reorganizarNeoCorrecoes: reorganizarNeoCorrecoesListagem } = useNeoCorrecoesListagem();
   const { getResponsavel, atribuirResponsavel, removerResponsavel, isAtribuindo } = useEtapaResponsaveis();
   const {
     pedidos: pedidosEtapa,
@@ -814,21 +815,17 @@ export default function ExpedicaoMinimalista() {
                             {etapaAtiva === 'instalacoes' && neoInstalacoesListagem.length > 0 && (
                               <div className="mb-4 space-y-2">
                                 <h3 className="text-sm font-medium text-white/70 mb-2">Instalações Avulsas ({neoInstalacoesListagem.length})</h3>
-                                <div className="space-y-1">
-                                  {neoInstalacoesListagem.map((neo) => (
-                                    <NeoInstalacaoCardGestao
-                                      key={neo.id}
-                                      neoInstalacao={neo}
-                                      viewMode="list"
-                                      onConcluir={handleConcluirNeoInstalacaoListagem}
-                                      isConcluindo={isConcluindoInstalacaoListagem}
-                                      onAgendar={(id) => {
-                                        setAgendarData(new Date());
-                                        setAgendarModalOpen(true);
-                                      }}
-                                    />
-                                  ))}
-                                </div>
+                                <NeoInstalacoesDraggableList
+                                  neos={neoInstalacoesListagem}
+                                  viewMode="list"
+                                  onConcluir={handleConcluirNeoInstalacaoListagem}
+                                  isConcluindo={isConcluindoInstalacaoListagem}
+                                  onAgendar={(id) => {
+                                    setAgendarData(new Date());
+                                    setAgendarModalOpen(true);
+                                  }}
+                                  onReorganizar={reorganizarNeoInstalacoesListagem}
+                                />
                                 {pedidosFiltrados.length > 0 && (
                                   <h3 className="text-sm font-medium text-white/70 mt-4 mb-2">Pedidos ({pedidosFiltrados.length})</h3>
                                 )}
@@ -839,20 +836,16 @@ export default function ExpedicaoMinimalista() {
                             {etapaAtiva === 'correcoes' && neoCorrecoesListagem.length > 0 && (
                               <div className="mb-4 space-y-2">
                                 <h3 className="text-sm font-medium text-white/70 mb-2">Correções Avulsas ({neoCorrecoesListagem.length})</h3>
-                                <div className="space-y-1">
-                                  {neoCorrecoesListagem.map((neo) => (
-                                    <NeoCorrecaoCardGestao
-                                      key={neo.id}
-                                      neoCorrecao={neo}
-                                      viewMode="list"
-                                      onConcluir={handleConcluirNeoCorrecaoListagem}
-                                      onAgendar={(id) => {
-                                        setAgendarData(new Date());
-                                        setAgendarModalOpen(true);
-                                      }}
-                                    />
-                                  ))}
-                                </div>
+                                <NeoCorrecoesDraggableList
+                                  neos={neoCorrecoesListagem}
+                                  viewMode="list"
+                                  onConcluir={handleConcluirNeoCorrecaoListagem}
+                                  onAgendar={(id) => {
+                                    setAgendarData(new Date());
+                                    setAgendarModalOpen(true);
+                                  }}
+                                  onReorganizar={reorganizarNeoCorrecoesListagem}
+                                />
                                 {pedidosFiltrados.length > 0 && (
                                   <h3 className="text-sm font-medium text-white/70 mt-4 mb-2">Pedidos ({pedidosFiltrados.length})</h3>
                                 )}
