@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useOrdensCarregamentoCalendario } from "@/hooks/useOrdensCarregamentoCalendario";
 import { useNeoInstalacoes, useNeoInstalacoesSemData } from "@/hooks/useNeoInstalacoes";
 import { useNeoCorrecoes, useNeoCorrecoesSemData } from "@/hooks/useNeoCorrecoes";
+import { useCorrecoes, useCorrecoesSemData } from "@/hooks/useCorrecoes";
 import { OrdensCarregamentoDisponiveis } from "@/components/expedicao/OrdensCarregamentoDisponiveis";
 import { OrdensCarregamentoDisponiveisMobile } from "@/components/expedicao/OrdensCarregamentoDisponiveisMobile";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
@@ -33,6 +34,7 @@ import { ptBR } from "date-fns/locale";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { NeoInstalacao, CriarNeoInstalacaoData } from "@/types/neoInstalacao";
 import { NeoCorrecao, CriarNeoCorrecaoData } from "@/types/neoCorrecao";
+import { Correcao } from "@/types/correcao";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -70,6 +72,69 @@ export default function ExpedicaoMinimalista() {
   // Hooks para serviços sem data (pendentes de agendamento)
   const { neoInstalacoesSemData, updateNeoInstalacao: updateNeoInstalacaoSemData, isLoading: isLoadingInstalacoesSemData } = useNeoInstalacoesSemData();
   const { neoCorrecoesSemData, updateNeoCorrecao: updateNeoCorrecaoSemData, isLoading: isLoadingCorrecoesSemData } = useNeoCorrecoesSemData();
+
+  // Hooks para correções de pedidos
+  const { correcoes: correcoesPedido, updateCorrecao, concluirCorrecao, isConcluindo: isConcluindoCorrecaoPedido } = useCorrecoes(currentDate, viewType);
+  const { correcoesSemData, updateCorrecao: updateCorrecaoSemData, isLoading: isLoadingCorrecoesSemDataPedido } = useCorrecoesSemData();
+
+  // Mapear correções de pedido para formato NeoCorrecao para reutilizar componentes do calendário
+  const correcoesPedidoAsNeoCorrecao: NeoCorrecao[] = (correcoesPedido || []).map(c => ({
+    id: c.id,
+    nome_cliente: c.nome_cliente,
+    cidade: c.cidade,
+    estado: c.estado,
+    data_correcao: c.data_correcao,
+    hora: c.hora,
+    descricao: c.observacoes || `Correção de pedido${c.pedido?.numero_pedido ? ` #${c.pedido.numero_pedido}` : ''}`,
+    equipe_id: null,
+    equipe_nome: c.responsavel_correcao_nome,
+    tipo_responsavel: null,
+    autorizado_id: null,
+    autorizado_nome: null,
+    valor_total: 0,
+    valor_a_receber: 0,
+    status: c.status,
+    concluida: c.concluida,
+    concluida_em: c.concluida_em,
+    concluida_por: c.concluida_por,
+    created_by: c.created_by,
+    created_at: c.created_at,
+    updated_at: c.updated_at,
+    vezes_agendado: c.vezes_agendado,
+    etapa_causadora: null,
+    _tipo: 'neo_correcao' as const,
+  }));
+
+  const correcoesSemDataAsNeoCorrecao: NeoCorrecao[] = (correcoesSemData || []).map(c => ({
+    id: c.id,
+    nome_cliente: c.nome_cliente,
+    cidade: c.cidade,
+    estado: c.estado,
+    data_correcao: c.data_correcao,
+    hora: c.hora,
+    descricao: c.observacoes || `Correção de pedido${c.pedido?.numero_pedido ? ` #${c.pedido.numero_pedido}` : ''}`,
+    equipe_id: null,
+    equipe_nome: c.responsavel_correcao_nome,
+    tipo_responsavel: null,
+    autorizado_id: null,
+    autorizado_nome: null,
+    valor_total: 0,
+    valor_a_receber: 0,
+    status: c.status,
+    concluida: c.concluida,
+    concluida_em: c.concluida_em,
+    concluida_por: c.concluida_por,
+    created_by: c.created_by,
+    created_at: c.created_at,
+    updated_at: c.updated_at,
+    vezes_agendado: c.vezes_agendado,
+    etapa_causadora: null,
+    _tipo: 'neo_correcao' as const,
+  }));
+
+  // Combinar neo correções com correções de pedido
+  const todasNeoCorrecoes = [...(neoCorrecoes || []), ...correcoesPedidoAsNeoCorrecao];
+  const todasNeoCorrecoesSemData = [...(neoCorrecoesSemData || []), ...correcoesSemDataAsNeoCorrecao];
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -145,13 +210,16 @@ export default function ExpedicaoMinimalista() {
   };
 
   const handleRemoverNeoCorrecaoDoCalendario = async (id: string) => {
-    await updateNeoCorrecao({
-      id,
-      data: {
-        data_correcao: null,
-        hora: null,
-      }
-    });
+    // Check if it's a correcao de pedido
+    const isCorrecaoPedido = correcoesPedido.some(c => c.id === id);
+    if (isCorrecaoPedido) {
+      await updateCorrecao({ id, data: { data_correcao: null, hora: null } as any });
+    } else {
+      await updateNeoCorrecao({
+        id,
+        data: { data_correcao: null, hora: null }
+      });
+    }
     toast.success("Correção removida do calendário");
   };
 
@@ -185,7 +253,13 @@ export default function ExpedicaoMinimalista() {
   };
 
   const handleConcluirNeoCorrecao = async (id: string) => {
-    await concluirNeoCorrecao(id);
+    // Check if it's a correcao de pedido
+    const isCorrecaoPedido = correcoesPedido.some(c => c.id === id);
+    if (isCorrecaoPedido) {
+      await concluirCorrecao(id);
+    } else {
+      await concluirNeoCorrecao(id);
+    }
     setNeoCorrecaoDetailsOpen(false);
   };
 
@@ -234,7 +308,13 @@ export default function ExpedicaoMinimalista() {
   };
 
   const handleAgendarCorrecao = async (id: string, data: string) => {
-    await updateNeoCorrecaoSemData({ id, data: { data_correcao: data, hora: null } });
+    // Check if it's a correcao de pedido or neo correcao
+    const isCorrecaoPedido = correcoesSemData.some(c => c.id === id);
+    if (isCorrecaoPedido) {
+      await updateCorrecaoSemData({ id, data: { data_correcao: data, hora: null } as any });
+    } else {
+      await updateNeoCorrecaoSemData({ id, data: { data_correcao: data, hora: null } });
+    }
   };
 
   const handleLegendToggle = (legend: string) => {
@@ -249,7 +329,7 @@ export default function ExpedicaoMinimalista() {
     : [];
 
   const neoInstalacoesFiltradas = !legendaFiltro || legendaFiltro === 'neo_instalacao' ? (neoInstalacoes || []) : [];
-  const neoCorrecoesFiltradas = !legendaFiltro || legendaFiltro === 'neo_correcao' ? (neoCorrecoes || []) : [];
+  const neoCorrecoesFiltradas = !legendaFiltro || legendaFiltro === 'neo_correcao' ? todasNeoCorrecoes : [];
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
@@ -374,7 +454,12 @@ export default function ExpedicaoMinimalista() {
                         await updateNeoInstalacao(params);
                       }}
                       onUpdateNeoCorrecao={async (params) => {
-                        await updateNeoCorrecao(params);
+                        const isCorrecaoPedido = correcoesPedido.some(c => c.id === params.id);
+                        if (isCorrecaoPedido) {
+                          await updateCorrecao({ id: params.id, data: params.data as any });
+                        } else {
+                          await updateNeoCorrecao(params);
+                        }
                       }}
                       onEdit={handleEdit}
                       onRemoverDoCalendario={handleRemoverDoCalendario}
@@ -404,7 +489,12 @@ export default function ExpedicaoMinimalista() {
                         await updateNeoInstalacao(params);
                       }}
                       onUpdateNeoCorrecao={async (params) => {
-                        await updateNeoCorrecao(params);
+                        const isCorrecaoPedido = correcoesPedido.some(c => c.id === params.id);
+                        if (isCorrecaoPedido) {
+                          await updateCorrecao({ id: params.id, data: params.data as any });
+                        } else {
+                          await updateNeoCorrecao(params);
+                        }
                       }}
                       onEdit={handleEdit}
                       onRemoverDoCalendario={handleRemoverDoCalendario}
@@ -441,22 +531,22 @@ export default function ExpedicaoMinimalista() {
                   {isMobile ? (
                     <NeoServicosDisponiveisMobile
                       neoInstalacoes={neoInstalacoesSemData}
-                      neoCorrecoes={neoCorrecoesSemData}
+                      neoCorrecoes={todasNeoCorrecoesSemData}
                       onAgendarInstalacao={handleAgendarInstalacao}
                       onAgendarCorrecao={handleAgendarCorrecao}
                       isLoadingInstalacoes={isLoadingInstalacoesSemData}
-                      isLoadingCorrecoes={isLoadingCorrecoesSemData}
+                      isLoadingCorrecoes={isLoadingCorrecoesSemData || isLoadingCorrecoesSemDataPedido}
                     />
                   ) : (
                     <NeoServicosDisponiveis
                       neoInstalacoes={neoInstalacoesSemData}
-                      neoCorrecoes={neoCorrecoesSemData}
+                      neoCorrecoes={todasNeoCorrecoesSemData}
                       onAgendarInstalacao={handleAgendarInstalacao}
                       onAgendarCorrecao={handleAgendarCorrecao}
                       onEditarInstalacao={handleEditarNeoInstalacao}
                       onEditarCorrecao={handleEditarNeoCorrecao}
                       isLoadingInstalacoes={isLoadingInstalacoesSemData}
-                      isLoadingCorrecoes={isLoadingCorrecoesSemData}
+                      isLoadingCorrecoes={isLoadingCorrecoesSemData || isLoadingCorrecoesSemDataPedido}
                     />
                   )}
                 </CardContent>
