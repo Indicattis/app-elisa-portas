@@ -1,14 +1,26 @@
 
-# Adicionar botao de enviar para correcoes na listagem de pedidos em /logistica/expedicao
+
+# Botao Concluir so aparece se Neo estiver agendada
 
 ## Resumo
 
-Na pagina `/logistica/expedicao`, a listagem de pedidos nas abas (Aguardando Coleta, Instalacoes, etc.) esta com `hideCorrecaoButton={true}`, o que oculta o botao roxo de "Enviar para Correcoes" que foi implementado recentemente. A correcao consiste em remover essa restricao para que o botao apareca nas etapas relevantes.
+Condicionar a exibicao do botao "Concluir" nos cards de Neo Instalacao e Neo Correcao para que so apareca quando o servico tiver uma data agendada (`data_instalacao` ou `data_correcao` preenchida).
 
-## Alteracao
+## Alteracoes
 
-### `src/pages/logistica/ExpedicaoMinimalista.tsx`
+### `src/components/pedidos/NeoInstalacaoCardGestao.tsx`
 
-- **Linha 870**: Remover a prop `hideCorrecaoButton={true}` do componente `PedidosDraggableList` (ou alterar para `hideCorrecaoButton={false}`).
+1. **Linha 348 (view list)**: Alterar a condicao de `onConcluir &&` para `onConcluir && neoInstalacao.data_instalacao &&` - so mostra o botao concluir se tiver data agendada.
 
-Isso fara com que o botao roxo "Enviar para Correcoes" apareca nos cards de pedidos nas etapas `aguardando_coleta` e `instalacoes`, permitindo encaminhar pedidos para a etapa de correcoes diretamente pela listagem da expedicao.
+2. **Linha 439 (view grid)**: Alterar a condicao de `onConcluir &&` para `onConcluir && neoInstalacao.data_instalacao &&` - mesma logica para o modo grid.
+
+### `src/components/pedidos/NeoCorrecaoCardGestao.tsx`
+
+1. **Linha 327 (view list)**: Alterar a condicao de `onConcluir &&` para `onConcluir && neoCorrecao.data_correcao &&` - so mostra o botao concluir se tiver data agendada.
+
+2. **Linha 411 (view grid)**: Alterar a condicao de `onConcluir &&` para `onConcluir && neoCorrecao.data_correcao &&` - mesma logica para o modo grid.
+
+## Resultado
+
+O botao verde de concluir so aparecera nos cards de Neo quando o servico tiver uma data de agendamento definida. Servicos pendentes (sem data) mostrarao apenas os botoes de agendar e editar.
+
