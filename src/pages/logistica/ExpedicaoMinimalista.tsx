@@ -295,7 +295,7 @@ export default function ExpedicaoMinimalista() {
                 variant="ghost"
                 size="sm"
                 className="text-white/80 hover:text-white hover:bg-primary/10 text-xs"
-                onClick={() => navigate('/logistica/neos')}
+                onClick={() => navigate('/logistica/expedicao/nova-neo')}
               >
                 <Plus className="h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">Novo Neo</span>

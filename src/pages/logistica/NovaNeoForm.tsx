@@ -203,7 +203,7 @@ export default function NeosCadastroForm() {
           await createCorrecao.mutateAsync(dados);
         }
       }
-      navigate("/logistica/neos");
+      navigate("/logistica/expedicao");
     } catch {
       // errors handled in mutation callbacks
     }
@@ -213,12 +213,12 @@ export default function NeosCadastroForm() {
     <MinimalistLayout
       title={isEditing ? "Editar Serviço Neo" : "Novo Serviço Neo"}
       subtitle={isEditing ? "Altere os dados do serviço" : "Preencha os dados para criar um novo serviço"}
-      backPath="/logistica/neos"
+      backPath="/logistica/expedicao"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Logística", path: "/logistica" },
-        { label: "Serviços Neo", path: "/logistica/neos" },
-        { label: isEditing ? "Editar" : "Novo" },
+        { label: "Expedição", path: "/logistica/expedicao" },
+        { label: isEditing ? "Editar Neo" : "Nova Neo" },
       ]}
     >
       <div className="max-w-2xl mx-auto space-y-6">
@@ -406,7 +406,7 @@ export default function NeosCadastroForm() {
 
         {/* Ações */}
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-          <Button variant="outline" onClick={() => navigate("/logistica/neos")}>
+          <Button variant="outline" onClick={() => navigate("/logistica/expedicao")}>
             Cancelar
           </Button>
           <Button onClick={handleSave} disabled={isSaving}>
