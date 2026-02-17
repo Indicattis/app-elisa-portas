@@ -1,33 +1,36 @@
 
-# Simplificar botoes de acao dos pedidos em /logistica/expedicao
 
-## Resumo
+# Corrigir botao de concluir neos na etapa finalizados
 
-Remover os botoes de avancar, retroceder e gerar correcao dos cards de pedidos na pagina de expedicao. Manter apenas o botao de agendamento, exibido somente quando a ordem (instalacao, correcao ou carregamento) ainda nao estiver agendada.
+## Problema identificado
 
-## Alteracoes
+Na pagina `/direcao/gestao-fabrica`, quando a aba "Finalizado" esta ativa e nao existem pedidos finalizados (apenas neos finalizados), a secao de neos finalizados nao e renderizada.
 
-### 1. `src/pages/logistica/ExpedicaoMinimalista.tsx`
+Isso acontece porque a condicao de estado vazio (linha 475) nao leva em consideracao os neos finalizados:
 
-- Remover `onMoverEtapa={handleMoverEtapa}` do componente `PedidosDraggableList` (isso elimina o botao de avancar)
-- Remover `onRetrocederEtapa={handleRetrocederEtapa}` do componente `PedidosDraggableList` (isso elimina o botao de retroceder)
-- Adicionar `hideCorrecaoButton={true}` ao componente `PedidosDraggableList`
+```
+pedidosFiltrados.length === 0 
+  && !(etapaAtiva === 'instalacoes' && neoInstalacoes.length > 0) 
+  && !(etapaAtiva === 'correcoes' && neoCorrecoes.length > 0)
+```
 
-### 2. `src/components/pedidos/PedidosDraggableList.tsx`
+Quando `pedidosFiltrados` esta vazio e a etapa e `finalizado`, o sistema mostra "Nenhum pedido nesta etapa" e pula todo o bloco que renderiza os neos finalizados, impedindo qualquer interacao com eles.
 
-- Adicionar prop `hideCorrecaoButton?: boolean` na interface
-- Repassar para cada `PedidoCard`
+## Solucao
 
-### 3. `src/components/pedidos/PedidoCard.tsx`
+Adicionar a verificacao de neos finalizados na condicao de estado vazio, seguindo o mesmo padrao ja usado para `instalacoes` e `correcoes`.
 
-- Adicionar prop `hideCorrecaoButton?: boolean` na interface `PedidoCardProps`
-- No layout lista (viewMode === 'list'), na secao de `middleButtons`:
-  - Condicionar o botao "Gerar Correcao" (Wrench) a `!hideCorrecaoButton`
-  - Condicionar o botao "Agendar no Calendario" (CalendarPlus) a `!temDataCarregamento` para que so apareca quando a ordem ainda nao tiver data de carregamento agendada
-- No layout grid (CardFooter), aplicar a mesma logica de `hideCorrecaoButton` (caso o card seja renderizado em grid)
+### Arquivo: `src/pages/direcao/GestaoFabricaDirecao.tsx`
+
+Alterar a condicao na linha 475 para incluir:
+
+```
+&& !(etapaAtiva === 'finalizado' && (neoInstalacoesFinalizadas.length > 0 || neoCorrecoesFinalizadas.length > 0))
+```
+
+Isso garante que, quando houver neos finalizados, o bloco inteiro sera renderizado corretamente, incluindo os cards com os botoes de retornar (undo).
 
 ## Resultado esperado
 
-- Na listagem de pedidos em `/logistica/expedicao`, cada card mostra apenas o botao de agendar (CalendarPlus) quando a ordem nao esta agendada
-- Quando o usuario remove uma ordem do calendario, a ordem volta a nao ter data de carregamento, e o botao de agendar reaparece no card do pedido
-- Botoes de avancar etapa, retroceder etapa e gerar correcao ficam ocultos neste contexto
+- Na aba "Finalizado", mesmo que nao haja pedidos, os neos finalizados serao exibidos
+- Os botoes de retornar (undo) nos cards de neos finalizados funcionarao normalmente
