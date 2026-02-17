@@ -900,13 +900,18 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       // Atualizar pedido e definir prioridade
       if (onProgress) onProgress('atualizar_pedido', 'in_progress');
       await executarComDelay(async () => {
-        const { error: updateError } = await supabase
-          .from('pedidos_producao')
-          .update({ 
+        const updatePayload: any = { 
             etapa_atual: etapaDestino,
             status: etapaDestino === 'finalizado' ? 'concluido' : 'em_andamento',
             prioridade_etapa: novaPrioridade
-          })
+          };
+        // Resetar flag de reprovação CEO ao avançar de "aberto"
+        if (etapaAtualNome === 'aberto') {
+          updatePayload.reprovado_ceo = false;
+        }
+        const { error: updateError } = await supabase
+          .from('pedidos_producao')
+          .update(updatePayload)
           .eq('id', pedidoId);
 
         if (updateError) throw updateError;

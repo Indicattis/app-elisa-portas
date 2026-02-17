@@ -193,7 +193,6 @@ export function usePedidosAprovacaoCEO() {
   // Aprovar pedido e avançar para produção
   const aprovarPedido = useMutation({
     mutationFn: async (pedidoId: string) => {
-      // Avançar diretamente para próxima etapa
       await moverParaProximaEtapa.mutateAsync({ pedidoId, skipCheckboxValidation: true });
     },
     onSuccess: () => {
@@ -206,10 +205,73 @@ export function usePedidosAprovacaoCEO() {
     }
   });
 
+  // Reprovar pedido - volta para "aberto" com flag vermelha
+  const reprovarPedido = useMutation({
+    mutationFn: async (pedidoId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // 1. Fechar etapa atual (aprovacao_ceo)
+      const { error: fecharError } = await supabase
+        .from('pedidos_etapas')
+        .update({ data_saida: new Date().toISOString() } as any)
+        .eq('pedido_id', pedidoId)
+        .eq('etapa', 'aprovacao_ceo')
+        .is('data_saida', null);
+
+      if (fecharError) throw fecharError;
+
+      // 2. Criar/reabrir etapa "aberto" via upsert
+      const { error: etapaError } = await supabase
+        .from('pedidos_etapas')
+        .upsert({
+          pedido_id: pedidoId,
+          etapa: 'aberto',
+          data_entrada: new Date().toISOString(),
+          data_saida: null,
+          checkboxes: [] as any
+        }, { onConflict: 'pedido_id,etapa' });
+
+      if (etapaError) throw etapaError;
+
+      // 3. Atualizar pedido: voltar para aberto + flag reprovado
+      const { error: updateError } = await supabase
+        .from('pedidos_producao')
+        .update({ 
+          etapa_atual: 'aberto',
+          reprovado_ceo: true,
+          prioridade_etapa: 0
+        } as any)
+        .eq('id', pedidoId);
+
+      if (updateError) throw updateError;
+
+      // 4. Registrar movimentação
+      await supabase.from('pedidos_movimentacoes').insert({
+        pedido_id: pedidoId,
+        user_id: user.id,
+        etapa_origem: 'aprovacao_ceo',
+        etapa_destino: 'aberto',
+        teor: 'reprovacao',
+        descricao: 'Pedido reprovado pela direção e devolvido para revisão'
+      });
+    },
+    onSuccess: () => {
+      toast.success('Pedido reprovado e devolvido para revisão');
+      queryClient.invalidateQueries({ queryKey: ['pedidos-aprovacao-ceo'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+    },
+    onError: (error) => {
+      toast.error('Erro ao reprovar: ' + error.message);
+    }
+  });
+
   return {
     pedidos,
     isLoading,
     refetch,
-    aprovarPedido
+    aprovarPedido,
+    reprovarPedido
   };
 }

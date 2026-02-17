@@ -1,12 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, RefreshCw, ChevronRight, CheckCircle2, Factory, ShieldCheck, Truck, Hammer, Wrench, Paintbrush, DoorOpen, Package, Cog } from 'lucide-react';
+import { ArrowLeft, RefreshCw, ChevronRight, CheckCircle2, Factory, ShieldCheck, Truck, Hammer, Wrench, Paintbrush, DoorOpen, Package, Cog, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { usePedidosAprovacaoCEO, PedidoAprovacao } from '@/hooks/usePedidosAprovacaoCEO';
 import { PedidoDetalhesSheet } from '@/components/pedidos/PedidoDetalhesSheet';
 import { CronometroEtapaBadge } from '@/components/pedidos/CronometroEtapaBadge';
@@ -14,13 +24,20 @@ import { cn } from '@/lib/utils';
 
 export default function AprovacoesProducao() {
   const navigate = useNavigate();
-  const { pedidos, isLoading, refetch, aprovarPedido } = usePedidosAprovacaoCEO();
+  const { pedidos, isLoading, refetch, aprovarPedido, reprovarPedido } = usePedidosAprovacaoCEO();
   const [expandedPedido, setExpandedPedido] = useState<string | null>(null);
   const [selectedPedido, setSelectedPedido] = useState<any>(null);
   const [showDetalhes, setShowDetalhes] = useState(false);
+  const [pedidoParaReprovar, setPedidoParaReprovar] = useState<string | null>(null);
 
   const handleAprovar = async (pedidoId: string) => {
     await aprovarPedido.mutateAsync(pedidoId);
+  };
+
+  const handleReprovar = async () => {
+    if (!pedidoParaReprovar) return;
+    await reprovarPedido.mutateAsync(pedidoParaReprovar);
+    setPedidoParaReprovar(null);
   };
 
   const handleOpenDetalhes = (pedido: PedidoAprovacao) => {
@@ -82,20 +99,17 @@ export default function AprovacoesProducao() {
                 key={pedido.id}
                 className="bg-card rounded-xl border shadow-sm overflow-hidden"
               >
-                {/* Header do card - Novo Layout */}
+                {/* Header do card */}
                 <button
                   onClick={() => setExpandedPedido(expandedPedido === pedido.id ? null : pedido.id)}
                   className="w-full p-4 flex items-center justify-between text-left"
                 >
                   <div className="flex-1 min-w-0">
-                    {/* Linha 1: Nome do cliente */}
                     <p className="font-semibold text-base truncate">{pedido.cliente_nome}</p>
                     
-                    {/* Linha 2: Número + Badges P/G + Ícone tipo + Cores */}
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                       <span className="text-xs text-orange-500 font-mono">{pedido.numero_pedido}</span>
                       
-                      {/* Badges P e G */}
                       {pedido.portasInfo.length > 0 && (
                         <div className="flex gap-0.5">
                           {pedido.portasInfo.map((p, idx) => (
@@ -114,18 +128,10 @@ export default function AprovacoesProducao() {
                         </div>
                       )}
                       
-                      {/* Ícone tipo entrega */}
-                      {pedido.tipo_entrega === 'instalacao' && (
-                        <Hammer className="w-4 h-4 text-blue-500" />
-                      )}
-                      {pedido.tipo_entrega === 'entrega' && (
-                        <Truck className="w-4 h-4 text-green-500" />
-                      )}
-                      {pedido.tipo_entrega === 'manutencao' && (
-                        <Wrench className="w-4 h-4 text-purple-500" />
-                      )}
+                      {pedido.tipo_entrega === 'instalacao' && <Hammer className="w-4 h-4 text-blue-500" />}
+                      {pedido.tipo_entrega === 'entrega' && <Truck className="w-4 h-4 text-green-500" />}
+                      {pedido.tipo_entrega === 'manutencao' && <Wrench className="w-4 h-4 text-purple-500" />}
                       
-                      {/* Cores */}
                       {pedido.cores.length > 0 && (
                         <div className="flex gap-1">
                           {pedido.cores.slice(0, 3).map((cor, idx) => (
@@ -143,7 +149,6 @@ export default function AprovacoesProducao() {
                       )}
                     </div>
                     
-                    {/* Linha 3: Cronômetro + Data */}
                     <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
                       <CronometroEtapaBadge dataEntrada={pedido.data_entrada_etapa} />
                       <span>{format(new Date(pedido.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
@@ -159,7 +164,6 @@ export default function AprovacoesProducao() {
                 {/* Detalhes expandidos */}
                 {expandedPedido === pedido.id && (
                   <div className="px-4 pb-4 space-y-3 border-t pt-4">
-                    {/* Resumo de produtos */}
                     {pedido.produtosResumo.length > 0 && (
                       <div className="space-y-1.5">
                         {pedido.produtosResumo.map((item, idx) => (
@@ -204,6 +208,16 @@ export default function AprovacoesProducao() {
                         )}
                         Aprovar e Enviar para Produção
                       </Button>
+
+                      <Button
+                        variant="destructive"
+                        onClick={() => setPedidoParaReprovar(pedido.id)}
+                        disabled={reprovarPedido.isPending}
+                        className="w-full h-12 text-base font-semibold"
+                      >
+                        <XCircle className="w-5 h-5 mr-2" />
+                        Reprovar Pedido
+                      </Button>
                       
                       <Button
                         variant="outline"
@@ -220,7 +234,29 @@ export default function AprovacoesProducao() {
           )}
         </div>
 
-        {/* Downbar de detalhes */}
+        {/* AlertDialog de confirmação de reprovação */}
+        <AlertDialog open={!!pedidoParaReprovar} onOpenChange={(open) => !open && setPedidoParaReprovar(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Reprovar pedido?</AlertDialogTitle>
+              <AlertDialogDescription>
+                O pedido será devolvido para a etapa "Em Aberto" com destaque vermelho para revisão. 
+                Essa ação pode ser revertida ao avançar o pedido novamente.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleReprovar}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Confirmar Reprovação
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Sheet de detalhes */}
         {selectedPedido && (
           <PedidoDetalhesSheet 
             pedido={selectedPedido} 

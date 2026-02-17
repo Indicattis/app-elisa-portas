@@ -1019,7 +1019,8 @@ export function PedidoCard({
             "hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", 
             isDragging && "opacity-50 cursor-grabbing",
             pedido.aviso_espera && "border-amber-500/50 bg-amber-500/5",
-            (pedido as any).is_correcao && "border-l-4 border-l-purple-600"
+            (pedido as any).is_correcao && "border-l-4 border-l-purple-600",
+            pedido.reprovado_ceo && "border-2 border-red-500 shadow-sm shadow-red-500/20"
           )}
           onClick={() => setShowDetalhes(true)}
         >
@@ -1809,7 +1810,7 @@ className="flex h-[20px] w-full rounded-[3px]"
   // Layout em grid (padrão)
   return <>
       <Card 
-        className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", (emBacklog || temHistoricoBacklog) && "border-2 border-red-500 shadow-lg shadow-red-500/20", (pedido as any).is_correcao && "border-l-4 border-l-purple-600")} 
+        className={cn("hover:shadow-md transition-all cursor-pointer", isDragging && "opacity-50 cursor-grabbing", (emBacklog || temHistoricoBacklog) && "border-2 border-red-500 shadow-lg shadow-red-500/20", (pedido as any).is_correcao && "border-l-4 border-l-purple-600", pedido.reprovado_ceo && "border-2 border-red-500 shadow-lg shadow-red-500/20")} 
         onClick={() => setShowDetalhes(true)}
       >
         {/* Header com número do pedido e tempo */}
@@ -1854,6 +1855,11 @@ className="flex h-[20px] w-full rounded-[3px]"
               {(pedido as any).is_correcao && (
                 <Badge variant="outline" className="text-[8px] px-1 py-0 bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
                   CORREÇÃO
+                </Badge>
+              )}
+              {pedido.reprovado_ceo && (
+                <Badge variant="destructive" className="text-[8px] px-1 py-0">
+                  REPROVADO CEO
                 </Badge>
               )}
             </div>

@@ -5279,6 +5279,7 @@ export type Database = {
           pedido_origem_id: string | null
           prioridade_etapa: number | null
           produtos: Json | null
+          reprovado_ceo: boolean
           status: string
           status_ordens: Json | null
           status_preenchimento: string | null
@@ -5335,6 +5336,7 @@ export type Database = {
           pedido_origem_id?: string | null
           prioridade_etapa?: number | null
           produtos?: Json | null
+          reprovado_ceo?: boolean
           status?: string
           status_ordens?: Json | null
           status_preenchimento?: string | null
@@ -5391,6 +5393,7 @@ export type Database = {
           pedido_origem_id?: string | null
           prioridade_etapa?: number | null
           produtos?: Json | null
+          reprovado_ceo?: boolean
           status?: string
           status_ordens?: Json | null
           status_preenchimento?: string | null
