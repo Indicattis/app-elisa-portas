@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, User, Package, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCw, Hammer, Paintbrush, Truck, FileDown, Printer, ExternalLink, FileText, FolderOpen, Folder, ClipboardList } from "lucide-react";
+import { MapPin, User, Package, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCw, Hammer, Paintbrush, Truck, FileDown, Printer, ExternalLink, FileText, FolderOpen, Folder, ClipboardList, Trash2 } from "lucide-react";
+import { ExcluirPedidoModal } from "@/components/pedidos/ExcluirPedidoModal";
+import { toast as sonnerToast } from "sonner";
 import { baixarPedidoProducaoPDF, imprimirPedidoProducaoPDF, type PedidoProducaoPDFData } from "@/utils/pedidoProducaoPDFGenerator";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -111,12 +113,32 @@ interface Pedido {
 
 export default function PedidoViewDirecao() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [loading, setLoading] = useState(true);
   const [portasInfo, setPortasInfo] = useState<Map<string, PortaInfo>>(new Map());
   const [pastaAberta, setPastaAberta] = useState<string | null>(null);
+  const [showExcluir, setShowExcluir] = useState(false);
+  const [isExcluindo, setIsExcluindo] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+
+  const handleExcluirPedido = async () => {
+    if (!id) return;
+    setIsExcluindo(true);
+    try {
+      const { error } = await supabase.rpc('deletar_pedido_completo', { p_pedido_id: id });
+      if (error) throw error;
+      sonnerToast.success("Pedido excluído com sucesso");
+      navigate('/direcao/gestao-fabrica');
+    } catch (error: any) {
+      console.error('Erro ao excluir pedido:', error);
+      sonnerToast.error("Erro ao excluir pedido", { description: error.message });
+    } finally {
+      setIsExcluindo(false);
+      setShowExcluir(false);
+    }
+  };
 
   const fetchPedidoDetails = async () => {
     if (!id) return;
@@ -525,6 +547,14 @@ export default function PedidoViewDirecao() {
                 <Printer className="w-4 h-4 mr-2" />
                 Imprimir PDF
               </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start text-sm h-9 bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive/20" 
+                onClick={() => setShowExcluir(true)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Excluir Pedido
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -773,6 +803,19 @@ export default function PedidoViewDirecao() {
         {/* Histórico de Movimentações */}
         <PedidoHistoricoMovimentacoes pedidoId={pedido.id} />
       </div>
+
+      {/* Modal de Exclusão */}
+      <ExcluirPedidoModal
+        open={showExcluir}
+        onOpenChange={setShowExcluir}
+        onConfirmar={handleExcluirPedido}
+        pedido={{
+          numero_pedido: pedido.numero_pedido,
+          created_at: pedido.created_at,
+          vendas: { cliente_nome: pedido.cliente_nome },
+        }}
+        isLoading={isExcluindo}
+      />
     </MinimalistLayout>
   );
 }
