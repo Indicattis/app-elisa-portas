@@ -1,48 +1,28 @@
 
-# Excluir ordens de embalagem de pedidos sem pintura
+# Corrigir retorno de Neo Instalação finalizada para etapa Correções
 
-## Situacao
-Existem 4 ordens de embalagem criadas incorretamente para pedidos que nao possuem pintura. Todas estao com status "pendente" e os pedidos ja avancaram para etapas posteriores (instalacoes/aguardando_coleta), portanto sao orfas.
+## Problema
+Ao clicar "Retornar" numa Neo Instalação finalizada na etapa "Finalizado", o sistema reseta o status para `pendente` na mesma tabela `neo_instalacoes`, fazendo o item reaparecer na aba "Instalações". O correto seria enviar para a aba "Correções".
 
-| Pedido | Ordem ID | Linhas | Etapa Atual |
-|--------|----------|--------|-------------|
-| 0194   | 5d810ff8... | 4 | instalacoes |
-| 0217   | 4c1a6784... | 1 | aguardando_coleta |
-| 0216   | 1c7f8a65... | 1 | instalacoes |
-| 0189   | 60379f47... | 3 | aguardando_coleta |
+## Solucao
+Alterar a logica de retorno para criar uma nova Neo Correcao a partir dos dados da Neo Instalacao finalizada, em vez de simplesmente reverter o status.
 
-## Alteracao
+## Alteracoes
 
-### Migracao SQL
+### 1. `src/hooks/useNeoInstalacoes.ts` - Mutation `retornarMutation`
+Alterar a logica da mutation para:
+1. Buscar os dados da Neo Instalacao pelo ID
+2. Criar um novo registro em `neo_correcoes` com os dados copiados (nome_cliente, cidade, estado, descricao, equipe_id, equipe_nome, tipo_responsavel, autorizado_id, autorizado_nome, valor_total, valor_a_receber)
+3. Marcar a Neo Instalacao original como arquivada (`status: 'arquivada'`) para que nao reapareça em nenhuma lista
+4. Invalidar queries de `neo_correcoes_listagem` alem das existentes
 
-1. Deletar as linhas associadas em `linhas_ordens` (tipo_ordem = 'embalagem') para essas 4 ordens
-2. Deletar as 4 ordens de `ordens_embalagem`
+### 2. `src/components/pedidos/NeoInstalacaoCardGestao.tsx` - Tooltip do botao
+Alterar o title do botao de "Retornar para instalações" para "Enviar para correções" e trocar o icone de `Undo2` para algo mais adequado (ex: `ArrowRight` ou manter `Undo2` com label atualizado).
 
-A query identifica ordens de embalagem nao-historicas cujos pedidos nao possuem nenhum produto com `valor_pintura > 0`.
+### 3. `src/pages/direcao/GestaoFabricaDirecao.tsx`
+Adicionar invalidacao de `neo_correcoes_listagem` no handler `handleRetornarNeoInstalacao` para que a nova correcao apareca imediatamente na aba "Correções".
 
-```sql
--- Deletar linhas das ordens
-DELETE FROM linhas_ordens
-WHERE tipo_ordem = 'embalagem'
-AND ordem_id IN (
-  SELECT oe.id FROM ordens_embalagem oe
-  JOIN pedidos_producao pp ON pp.id = oe.pedido_id
-  LEFT JOIN vendas v ON v.id = pp.venda_id
-  LEFT JOIN produtos_vendas pv ON pv.venda_id = v.id AND pv.valor_pintura > 0
-  WHERE pv.id IS NULL AND oe.historico = false
-);
-
--- Deletar ordens
-DELETE FROM ordens_embalagem
-WHERE historico = false
-AND id IN (
-  SELECT oe.id FROM ordens_embalagem oe
-  JOIN pedidos_producao pp ON pp.id = oe.pedido_id
-  LEFT JOIN vendas v ON v.id = pp.venda_id
-  LEFT JOIN produtos_vendas pv ON pv.venda_id = v.id AND pv.valor_pintura > 0
-  WHERE pv.id IS NULL
-);
-```
-
-### Arquivo afetado
-- **Novo:** Migracao SQL para limpeza dos dados
+### Arquivos afetados
+- `src/hooks/useNeoInstalacoes.ts` (logica da mutation)
+- `src/components/pedidos/NeoInstalacaoCardGestao.tsx` (label do botao)
+- `src/pages/direcao/GestaoFabricaDirecao.tsx` (invalidacao de queries)
