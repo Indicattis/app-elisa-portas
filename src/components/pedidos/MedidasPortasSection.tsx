@@ -103,7 +103,6 @@ export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSecti
 
       if (error) throw error;
       toast.success("Medidas salvas com sucesso");
-      onRefresh();
     } catch (error) {
       console.error('Erro ao salvar medidas:', error);
       toast.error("Erro ao salvar medidas");
