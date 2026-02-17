@@ -733,8 +733,20 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             // Tem pintura → avançar para aguardando_pintura
             etapaDestino = 'aguardando_pintura';
           } else {
-            // Não tem pintura → vai para embalagem
-            etapaDestino = 'embalagem';
+            // Não tem pintura → pular embalagem, ir direto para coleta ou instalação
+            const { data: vendaEntrega } = await supabase
+              .from('vendas')
+              .select('tipo_entrega')
+              .eq('id', pedidoData.venda_id)
+              .single();
+            
+            if (vendaEntrega?.tipo_entrega === 'entrega') {
+              etapaDestino = 'aguardando_coleta';
+              console.log('[moverParaProximaEtapa] Sem pintura → aguardando_coleta');
+            } else {
+              etapaDestino = 'instalacoes';
+              console.log('[moverParaProximaEtapa] Sem pintura → instalacoes');
+            }
           }
         }
       }
