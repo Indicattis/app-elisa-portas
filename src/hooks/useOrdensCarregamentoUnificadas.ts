@@ -108,8 +108,11 @@ export const useOrdensCarregamentoUnificadas = () => {
         throw ocError;
       }
 
-      // Usar todos os registros (deduplicação com instalações será feita depois)
-      const todasOrdens = ordensCarregamento || [];
+      // Excluir ordens cujo pedido já está finalizado
+      const todasOrdens = (ordensCarregamento || []).filter(o => {
+        const etapa = o.pedido?.etapa_atual;
+        return etapa !== 'finalizado';
+      });
 
       // Deduplicar por pedido_id dentro de ordens_carregamento
       // Manter o registro mais relevante (com data agendada, ou o mais recente)
