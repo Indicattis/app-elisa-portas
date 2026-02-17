@@ -262,7 +262,8 @@ export const useNeoCorrecoesListagem = () => {
           concluida: true,
           concluida_em: new Date().toISOString(),
           concluida_por: userData.user?.id || null,
-          status: 'concluida'
+          status: 'concluida',
+          updated_at: new Date().toISOString()
         })
         .eq("id", id);
 
@@ -271,6 +272,7 @@ export const useNeoCorrecoesListagem = () => {
     onSuccess: () => {
       toast.success("Correção concluída com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["neo_correcoes_listagem"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_finalizadas"] });
       queryClient.invalidateQueries({ queryKey: ["pedidos_contadores"] });
     },
     onError: (error) => {
