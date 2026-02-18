@@ -19,6 +19,7 @@ interface ImprimirEtiquetasModalProps {
   clienteNome: string;
   tipoOrdem: string;
   responsavelNome?: string;
+  ordemId?: string;
 }
 
 interface LinhaItem {
@@ -38,14 +39,35 @@ export function ImprimirEtiquetasModal({
   numeroPedido,
   clienteNome,
   tipoOrdem,
-  responsavelNome
+  responsavelNome,
+  ordemId
 }: ImprimirEtiquetasModalProps) {
   const [imprimindo, setImprimindo] = useState<string | null>(null);
 
   // Buscar linhas do pedido
   const { data: linhas, isLoading } = useQuery({
-    queryKey: ['pedido-linhas-etiquetas', pedidoId],
+    queryKey: ['pedido-linhas-etiquetas', pedidoId, ordemId],
     queryFn: async () => {
+      if (ordemId) {
+        const { data, error } = await supabase
+          .from('linhas_ordens')
+          .select('id, item, quantidade, largura, altura, tamanho, estoque:estoque_id(nome_produto)')
+          .eq('ordem_id', ordemId)
+          .eq('tipo_ordem', tipoOrdem)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        return (data || []).map((l: any) => ({
+          id: l.id,
+          nome_produto: l.estoque?.nome_produto || l.item,
+          descricao_produto: l.item,
+          quantidade: l.quantidade,
+          largura: l.largura,
+          altura: l.altura,
+          tamanho: l.tamanho,
+        })) as LinhaItem[];
+      }
+
       const { data, error } = await supabase
         .from('pedido_linhas')
         .select('id, nome_produto, descricao_produto, quantidade, largura, altura, tamanho')
