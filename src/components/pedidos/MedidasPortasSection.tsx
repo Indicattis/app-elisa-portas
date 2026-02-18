@@ -7,7 +7,8 @@ import { Save, RefreshCw, Ruler } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { expandirPortasPorQuantidade, getLabelPortaExpandida } from "@/utils/expandirPortas";
+import { expandirPortasPorQuantidade } from "@/utils/expandirPortas";
+import { getLabelProdutoExpandido } from "@/utils/tipoProdutoLabels";
 
 interface MedidasPortasSectionProps {
   produtos: any[];
@@ -68,8 +69,13 @@ const PortaSVG = ({ largura, altura }: { largura: number; altura: number }) => {
 
 export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSectionProps) {
   const queryClient = useQueryClient();
-  const portasRaw = produtos.filter((p: any) => p.tipo_produto === 'porta_enrolar');
-  const portas = expandirPortasPorQuantidade(portasRaw);
+  const todasPortas = produtos.filter((p: any) => 
+    p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'porta_social'
+  );
+  const todasExpandidas = expandirPortasPorQuantidade(todasPortas);
+  const portas = todasExpandidas
+    .map((p, idx) => ({ ...p, _globalIndex: idx }))
+    .filter(p => p.tipo_produto === 'porta_enrolar');
 
   const [medidas, setMedidas] = useState<Record<string, { largura: number; altura: number }>>(() => {
     const initial: Record<string, { largura: number; altura: number }> = {};
@@ -138,7 +144,7 @@ export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSecti
             const m = medidas[porta._virtualKey] || { largura: 0, altura: 0 };
             const preenchida = m.largura > 0 && m.altura > 0;
             const isSaving = salvando === porta._virtualKey;
-            const label = getLabelPortaExpandida(idx, porta._totalNoGrupo, porta._indicePorta, 'porta_enrolar');
+            const label = getLabelProdutoExpandido(porta._globalIndex, porta.tipo_produto, m.largura, m.altura, porta._totalNoGrupo, porta._indicePorta);
 
             return (
               <div
