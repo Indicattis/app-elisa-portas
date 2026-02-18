@@ -1,30 +1,48 @@
 
 
-# Corrigir layout finalizado e botao de correcao
+# Corrigir numeracao inconsistente entre "Medidas das Portas" e "Itens do Pedido"
 
-## Problema 1: NEOs finalizados aparecem acima dos pedidos
-Na etapa `finalizado`, os "Servicos Avulsos Finalizados" sao renderizados antes da `PedidosDraggableList`. O usuario quer pedidos primeiro, NEOs depois.
+## Problema
 
-## Problema 2: Botao "Enviar para Correcao" nao aparece em pedidos finalizados
-A query de carregamento (linha 340-346) retorna `concluido: false` para a etapa `finalizado` porque ha um early-return generico. Isso faz com que `carregamentoConcluido` seja sempre `false`, e a condicao na linha 1702 (`&& carregamentoConcluido`) impede o botao de aparecer.
+A secao "Itens do Pedido" numera todas as portas sequencialmente (porta_enrolar + porta_social juntas), resultando em indices como:
+- Porta de Enrolar #1
+- Porta Social #2
+- Porta de Enrolar #3
 
-## Alteracoes
+Ja a secao "Medidas das Portas de Enrolar" filtra apenas porta_enrolar e renumera do zero:
+- Porta de Enrolar #1 (que na verdade e a #1 de cima)
+- Porta de Enrolar #2 (que na verdade e a #3 de cima)
 
-### 1. `src/components/pedidos/PedidoCard.tsx` - Remover guarda de carregamento para correcao em finalizado
+Isso gera confusao, pois o "#2" de uma secao nao corresponde ao "#2" da outra.
 
-**Linha 1702** - O botao de correcao em `finalizado` nao deve depender de `carregamentoConcluido`, pois o pedido ja passou pela etapa de carregamento:
+## Solucao
 
+Alterar `MedidasPortasSection` para usar a mesma numeracao global das portas, mantendo consistencia com "Itens do Pedido".
+
+### Alteracao em `src/components/pedidos/MedidasPortasSection.tsx`
+
+1. Em vez de filtrar apenas `porta_enrolar` antes de expandir, expandir TODAS as portas primeiro (igual ao PedidoLinhasEditor faz)
+2. Guardar o indice global de cada porta no array completo
+3. Filtrar para mostrar apenas `porta_enrolar`, mas usando o indice global para o label
+
+Concretamente:
+
+```typescript
+// Antes:
+const portasRaw = produtos.filter(p => p.tipo_produto === 'porta_enrolar');
+const portas = expandirPortasPorQuantidade(portasRaw);
+
+// Depois:
+const todasPortas = produtos.filter(p => 
+  p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'porta_social'
+);
+const todasExpandidas = expandirPortasPorQuantidade(todasPortas);
+const portas = todasExpandidas
+  .map((p, idx) => ({ ...p, _globalIndex: idx }))
+  .filter(p => p.tipo_produto === 'porta_enrolar');
 ```
-if (etapaAtual === 'finalizado' && !readOnly) {
-```
 
-### 2. `src/pages/direcao/GestaoFabricaDirecao.tsx` - Mover NEOs finalizados para depois dos pedidos
+4. Usar `_globalIndex` em vez de `idx` ao chamar `getLabelPortaExpandida`, e trocar para `getLabelProdutoExpandido` (mesma funcao que "Itens do Pedido" usa) para consistencia total no formato do label
 
-Mover o bloco de "Servicos Avulsos Finalizados" (linhas 524-573) para depois da `PedidosDraggableList` (depois da linha 596), invertendo a ordem para que pedidos aparecam primeiro.
-
-A estrutura ficara:
-1. `PedidosDraggableList` (pedidos normais)
-2. Bloco de "Servicos Avulsos Finalizados" (NEOs)
-
-O titulo "Pedidos (N)" que aparecia antes dos pedidos sera removido, ja que os pedidos serao naturalmente o primeiro conteudo.
+Resultado: "Porta de Enrolar #3" em "Medidas" correspondera exatamente a "Porta de Enrolar #3" em "Itens do Pedido".
 
