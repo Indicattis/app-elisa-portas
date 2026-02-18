@@ -1350,6 +1350,38 @@ export type Database = {
           },
         ]
       }
+      correcao_linhas: {
+        Row: {
+          correcao_id: string
+          created_at: string | null
+          descricao: string
+          id: string
+          quantidade: number | null
+        }
+        Insert: {
+          correcao_id: string
+          created_at?: string | null
+          descricao: string
+          id?: string
+          quantidade?: number | null
+        }
+        Update: {
+          correcao_id?: string
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          quantidade?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "correcao_linhas_correcao_id_fkey"
+            columns: ["correcao_id"]
+            isOneToOne: false
+            referencedRelation: "correcoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       correcoes: {
         Row: {
           carregamento_concluido: boolean
@@ -1360,13 +1392,16 @@ export type Database = {
           concluida_por: string | null
           created_at: string
           created_by: string | null
+          custo_correcao: number | null
           data_carregamento: string | null
           data_correcao: string | null
           endereco: string | null
           estado: string
+          etapa_causadora: string | null
           hora: string | null
           hora_carregamento: string | null
           id: string
+          justificativa: string | null
           nome_cliente: string
           observacoes: string | null
           pedido_id: string | null
@@ -1374,6 +1409,7 @@ export type Database = {
           responsavel_carregamento_nome: string | null
           responsavel_correcao_id: string | null
           responsavel_correcao_nome: string | null
+          setor_causador: string | null
           status: string
           telefone_cliente: string | null
           tipo_carregamento:
@@ -1392,13 +1428,16 @@ export type Database = {
           concluida_por?: string | null
           created_at?: string
           created_by?: string | null
+          custo_correcao?: number | null
           data_carregamento?: string | null
           data_correcao?: string | null
           endereco?: string | null
           estado?: string
+          etapa_causadora?: string | null
           hora?: string | null
           hora_carregamento?: string | null
           id?: string
+          justificativa?: string | null
           nome_cliente: string
           observacoes?: string | null
           pedido_id?: string | null
@@ -1406,6 +1445,7 @@ export type Database = {
           responsavel_carregamento_nome?: string | null
           responsavel_correcao_id?: string | null
           responsavel_correcao_nome?: string | null
+          setor_causador?: string | null
           status?: string
           telefone_cliente?: string | null
           tipo_carregamento?:
@@ -1424,13 +1464,16 @@ export type Database = {
           concluida_por?: string | null
           created_at?: string
           created_by?: string | null
+          custo_correcao?: number | null
           data_carregamento?: string | null
           data_correcao?: string | null
           endereco?: string | null
           estado?: string
+          etapa_causadora?: string | null
           hora?: string | null
           hora_carregamento?: string | null
           id?: string
+          justificativa?: string | null
           nome_cliente?: string
           observacoes?: string | null
           pedido_id?: string | null
@@ -1438,6 +1481,7 @@ export type Database = {
           responsavel_carregamento_nome?: string | null
           responsavel_correcao_id?: string | null
           responsavel_correcao_nome?: string | null
+          setor_causador?: string | null
           status?: string
           telefone_cliente?: string | null
           tipo_carregamento?:

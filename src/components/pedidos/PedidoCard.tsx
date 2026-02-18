@@ -49,6 +49,7 @@ interface PedidoCardProps {
   viewMode?: 'grid' | 'list';
   onArquivar?: (pedidoId: string) => Promise<void>;
   onDeletar?: (pedidoId: string) => Promise<void>;
+  onCorrecaoDetalhesClick?: (pedidoId: string) => void;
   basePath?: string;
   readOnly?: boolean;
   disableClienteClick?: boolean;
@@ -71,6 +72,7 @@ export function PedidoCard({
   viewMode = 'grid',
   onArquivar,
   onDeletar,
+  onCorrecaoDetalhesClick,
   readOnly = false,
   disableClienteClick = false,
   showEtapaBadge = false,
@@ -1022,7 +1024,13 @@ export function PedidoCard({
             (pedido as any).is_correcao && "border-l-4 border-l-purple-600",
             pedido.reprovado_ceo && "border-2 border-red-500 shadow-sm shadow-red-500/20"
           )}
-          onClick={() => setShowDetalhes(true)}
+          onClick={() => {
+            if (onCorrecaoDetalhesClick && pedido.etapa_atual === 'correcoes') {
+              onCorrecaoDetalhesClick(pedido.id);
+            } else {
+              setShowDetalhes(true);
+            }
+          }}
         >
           <CardContent className="p-0 h-full">
             <div className="grid items-center gap-1.5 h-full px-2 w-full" style={{ gridTemplateColumns: hideOrdensStatus ? (showEtapaBadge ? '20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 1fr 55px' : '20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 1fr 55px') : (showEtapaBadge ? '20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 24px 24px 24px 24px 24px 24px 1fr 55px' : '20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 24px 24px 24px 24px 24px 24px 1fr 55px') }}>
