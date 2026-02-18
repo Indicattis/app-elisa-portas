@@ -1163,6 +1163,7 @@ export function OrdemDetalhesSheet({
           clienteNome={ordem.pedido.cliente_nome}
           tipoOrdem={tipoOrdem}
           responsavelNome={undefined}
+          ordemId={ordem.id}
         />
       )}
       </SheetContent>
