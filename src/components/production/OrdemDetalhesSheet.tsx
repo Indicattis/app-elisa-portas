@@ -792,18 +792,6 @@ export function OrdemDetalhesSheet({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Itens de Produção</span>
-              {linhas.length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-xs gap-1"
-                    onClick={handleImprimirTodasEtiquetas}
-                    title="Imprimir todas as etiquetas"
-                  >
-                    <Tags className="h-3 w-3" />
-                    Imprimir Todas
-                  </Button>
-                )}
               </div>
               {todasConcluidas && (
                 <Badge variant="default" className="gap-1">
@@ -904,7 +892,9 @@ export function OrdemDetalhesSheet({
 
                         {/* Itens da porta */}
                         <div className="space-y-2">
-                          {linhasPorta.map((linha) => (
+                          {linhasPorta.map((linha, indexLinha) => {
+                            const linhaAnteriorConcluida = indexLinha === 0 || linhasPorta[indexLinha - 1].concluida;
+                            return (
                             <div
                               key={linha.id}
                               className={`flex items-start gap-3 p-3 rounded-md transition-colors ${
@@ -921,7 +911,7 @@ export function OrdemDetalhesSheet({
                                 id={`checkbox-${linha.id}`}
                                 checked={linha.concluida}
                                 onCheckedChange={(checked) => onMarcarLinha(linha.id, checked as boolean)}
-                                disabled={ordem.status === 'concluido' || ordem.status === 'pronta' || isUpdating || !podeMarcarLinhas || (tipoOrdem === 'qualidade' && linha.com_problema)}
+                                disabled={ordem.status === 'concluido' || ordem.status === 'pronta' || isUpdating || !podeMarcarLinhas || (tipoOrdem === 'qualidade' && linha.com_problema) || !linhaAnteriorConcluida}
                                 className="mt-1"
                               />
                               
@@ -1016,7 +1006,8 @@ export function OrdemDetalhesSheet({
                               </Button>
                             </div>
                             </div>
-                          ))}
+                          );
+                          })}
                         </div>
                       </div>
                     );
