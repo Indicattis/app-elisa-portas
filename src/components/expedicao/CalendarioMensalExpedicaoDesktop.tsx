@@ -162,6 +162,11 @@ export const CalendarioMensalExpedicaoDesktop = ({
       const ordem = ordens.find((o) => o.id === ordemId);
       if (!ordem) return;
 
+      if (ordem.carregamento_concluido) {
+        toast.error("Este pedido já foi carregado e não pode ser reagendado");
+        return;
+      }
+
       if (ordem.data_carregamento) {
         const dataAtual = new Date(ordem.data_carregamento);
         if (isSameDay(dataAtual, novaData)) return;
