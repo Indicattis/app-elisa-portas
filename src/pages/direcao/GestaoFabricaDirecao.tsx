@@ -6,6 +6,8 @@ import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench,
 import { CalendarioExpedicaoModal } from "@/components/pedidos/CalendarioExpedicaoModal";
 import { CriarPedidoTesteModal } from "@/components/pedidos/CriarPedidoTesteModal";
 import { SelecionarResponsavelEtapaModal } from "@/components/pedidos/SelecionarResponsavelEtapaModal";
+import { CorrecaoDetalhesSheet } from "@/components/pedidos/CorrecaoDetalhesSheet";
+import { AdicionarOrdemCalendarioModal } from "@/components/expedicao/AdicionarOrdemCalendarioModal";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -14,6 +16,7 @@ import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas
 import { useNeoInstalacoesListagem, useNeoInstalacoesFinalizadas } from "@/hooks/useNeoInstalacoes";
 import { useNeoCorrecoesListagem, useNeoCorrecoesFinalizadas } from "@/hooks/useNeoCorrecoes";
 import { useEtapaResponsaveis } from "@/hooks/useEtapaResponsaveis";
+import { useOrdensCarregamentoCalendario } from "@/hooks/useOrdensCarregamentoCalendario";
 import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
 import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMinimalista";
 import { NeoInstalacaoCardGestao } from "@/components/pedidos/NeoInstalacaoCardGestao";
@@ -22,7 +25,11 @@ import { NeoInstalacoesDraggableList, NeoCorrecoesDraggableList } from "@/compon
 import { PortasPorEtapa } from "@/components/producao/dashboard/PortasPorEtapa";
 import { ORDEM_ETAPAS, ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
+import type { NeoInstalacao } from "@/types/neoInstalacao";
+import type { NeoCorrecao } from "@/types/neoCorrecao";
+import type { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -46,6 +53,7 @@ const ETAPA_ICONS = {
 
 export default function GestaoFabricaDirecao() {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('aberto');
@@ -59,6 +67,10 @@ export default function GestaoFabricaDirecao() {
   const [modalResponsavelAberto, setModalResponsavelAberto] = useState(false);
   const [etapaParaAtribuir, setEtapaParaAtribuir] = useState<EtapaPedido | null>(null);
   const [showCalendarioModal, setShowCalendarioModal] = useState(false);
+  const [correcaoDetalhesPedidoId, setCorrecaoDetalhesPedidoId] = useState<string | null>(null);
+  const [correcaoDetalhesOpen, setCorrecaoDetalhesOpen] = useState(false);
+  const [agendarModalOpen, setAgendarModalOpen] = useState(false);
+  const [agendarData, setAgendarData] = useState(new Date());
   
   const contadores = usePedidosContadores();
   const { neoInstalacoes, concluirNeoInstalacao, isConcluindo, reorganizarNeoInstalacoes } = useNeoInstalacoesListagem();
@@ -81,6 +93,29 @@ export default function GestaoFabricaDirecao() {
     arquivarPedido,
     deletarPedido
   } = usePedidosEtapas(etapaAtiva);
+  const { updateOrdem } = useOrdensCarregamentoCalendario(new Date(), 'month');
+
+  const handleAgendarPedido = (pedidoId: string) => {
+    setAgendarData(new Date());
+    setAgendarModalOpen(true);
+  };
+
+  const handleEditarNeoInstalacao = (neo: NeoInstalacao) => {
+    navigate(`/logistica/expedicao/editar-neo/${neo.id}?tipo=instalacao`);
+  };
+
+  const handleEditarNeoCorrecao = (neo: NeoCorrecao) => {
+    navigate(`/logistica/expedicao/editar-neo/${neo.id}?tipo=correcao`);
+  };
+
+  const handleUpdateOrdem = async (params: { id: string; data: Partial<OrdemCarregamento>; fonte?: 'ordens_carregamento' | 'instalacoes' }) => {
+    await updateOrdem(params);
+  };
+
+  const handleOrdemCriada = () => {
+    queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+    queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+  };
 
   const handleMoverEtapa = async (pedidoId: string, skipCheckboxValidation?: boolean, onProgress?: (processoId: string, status: 'pending' | 'in_progress' | 'completed' | 'error') => void) => {
     await moverParaProximaEtapa.mutateAsync({
@@ -548,7 +583,14 @@ export default function GestaoFabricaDirecao() {
                       onReorganizar={handleReorganizar} 
                       onMoverPrioridade={handleMoverPrioridade}
                       onArquivar={handleArquivar}
-                      
+                      onDeletar={handleDeletarPedido}
+                      onAgendar={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleAgendarPedido : undefined}
+                      onCorrecaoDetalhesClick={etapa === 'correcoes' ? (pedidoId: string) => {
+                        setCorrecaoDetalhesPedidoId(pedidoId);
+                        setCorrecaoDetalhesOpen(true);
+                      } : undefined}
+                      hideOrdensStatus={['aguardando_coleta','instalacoes','correcoes','finalizado'].includes(etapa)}
+                      showPosicao={true}
                       onAvisoEspera={handleAvisoEspera}
                       enableDragAndDrop={true}
                     />
@@ -562,6 +604,11 @@ export default function GestaoFabricaDirecao() {
                           viewMode={viewMode}
                           onConcluir={handleConcluirNeoInstalacao}
                           isConcluindo={isConcluindo}
+                          onAgendar={(id) => {
+                            setAgendarData(new Date());
+                            setAgendarModalOpen(true);
+                          }}
+                          onEditar={handleEditarNeoInstalacao}
                           onReorganizar={reorganizarNeoInstalacoes}
                         />
                       </div>
@@ -575,6 +622,11 @@ export default function GestaoFabricaDirecao() {
                           neos={neoCorrecoes}
                           viewMode={viewMode}
                           onConcluir={handleConcluirNeoCorrecao}
+                          onAgendar={(id) => {
+                            setAgendarData(new Date());
+                            setAgendarModalOpen(true);
+                          }}
+                          onEditar={handleEditarNeoCorrecao}
                           onReorganizar={reorganizarNeoCorrecoes}
                         />
                       </div>
@@ -671,6 +723,46 @@ export default function GestaoFabricaDirecao() {
         open={showCalendarioModal}
         onOpenChange={setShowCalendarioModal}
       />
+
+      {/* Modal para agendar no calendário */}
+      <AdicionarOrdemCalendarioModal
+        open={agendarModalOpen}
+        onOpenChange={setAgendarModalOpen}
+        dataSelecionada={agendarData}
+        onConfirm={async (params) => {
+          await handleUpdateOrdem({
+            id: params.ordemId,
+            data: {
+              data_carregamento: params.data_carregamento,
+              hora_carregamento: params.hora,
+              tipo_carregamento: params.tipo_carregamento,
+              responsavel_carregamento_id: params.responsavel_carregamento_id,
+              responsavel_carregamento_nome: params.responsavel_carregamento_nome,
+              status: params.fonte === 'instalacoes' ? 'pronta_fabrica' : 'agendada',
+            } as any,
+            fonte: params.fonte,
+          });
+          handleOrdemCriada();
+        }}
+      />
+
+      {/* Sheet de Detalhes da Correção */}
+      {correcaoDetalhesPedidoId && (() => {
+        const pedidoCorrecao = pedidos.find((p: any) => p.id === correcaoDetalhesPedidoId);
+        const vendaData = pedidoCorrecao ? (Array.isArray((pedidoCorrecao as any).vendas) ? (pedidoCorrecao as any).vendas[0] : (pedidoCorrecao as any).vendas) : null;
+        return (
+          <CorrecaoDetalhesSheet
+            open={correcaoDetalhesOpen}
+            onOpenChange={(open) => {
+              setCorrecaoDetalhesOpen(open);
+              if (!open) setCorrecaoDetalhesPedidoId(null);
+            }}
+            pedidoId={correcaoDetalhesPedidoId}
+            numeroPedido={(pedidoCorrecao as any)?.numero_pedido?.toString() || ''}
+            nomeCliente={vendaData?.cliente_nome || ''}
+          />
+        );
+      })()}
     </MinimalistLayout>
   );
 }
