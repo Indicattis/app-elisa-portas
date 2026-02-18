@@ -448,6 +448,12 @@ export default function PedidoViewMinimalista() {
       title={`Pedido #${pedido.numero_pedido}`}
       subtitle={`Cadastrado em ${format(new Date(pedido.created_at), "dd/MM/yyyy", { locale: ptBR })}`}
       backPath="/administrativo/pedidos"
+      breadcrumbItems={[
+        { label: 'Home', path: '/home' },
+        { label: 'Administrativo', path: '/administrativo' },
+        { label: 'Pedidos', path: '/administrativo/pedidos' },
+        { label: `Pedido #${pedido.numero_pedido}` }
+      ]}
       headerActions={
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => fetchPedidoDetails()} className="text-white/70 hover:text-white hover:bg-white/10">
