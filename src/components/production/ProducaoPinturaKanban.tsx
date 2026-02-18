@@ -86,9 +86,6 @@ function OrdemCard({
             {ordem.em_backlog && (
               <AlertTriangle className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0 text-red-500 animate-pulse" />
             )}
-            <span className="font-bold">
-              {ordem.numero_ordem}
-            </span>
             <span className="text-muted-foreground truncate max-w-[120px] sm:max-w-none">
               {ordem.pedido?.cliente_nome}
             </span>
@@ -155,14 +152,6 @@ function OrdemCard({
               </div>
             )}
 
-            {ordemProgress && ordemProgress.total > 0 && (
-              <div>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Progresso Geral</p>
-                <Badge variant="outline" className="text-[10px] sm:text-xs mt-0.5 sm:mt-1 h-5">
-                  {ordemProgress.concluidas}/{ordemProgress.total} ordens
-                </Badge>
-              </div>
-            )}
 
             <div>
               <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Cores das Portas</p>
