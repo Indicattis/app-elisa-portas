@@ -1,48 +1,23 @@
 
+# Reordenar secoes da pagina de detalhes do pedido
 
-# Corrigir numeracao inconsistente entre "Medidas das Portas" e "Itens do Pedido"
+## Alteracao
 
-## Problema
+Reorganizar a ordem das secoes em `src/pages/administrativo/PedidoViewMinimalista.tsx` (linhas 462-920) para a seguinte sequencia:
 
-A secao "Itens do Pedido" numera todas as portas sequencialmente (porta_enrolar + porta_social juntas), resultando em indices como:
-- Porta de Enrolar #1
-- Porta Social #2
-- Porta de Enrolar #3
+1. **Informacoes do Cliente + Acoes Rapidas** (manter posicao atual)
+2. **Produtos da Venda** (mover de ~linha 637 para cima)
+3. **Medidas das Portas de Enrolar** (mover de ~linha 628 para depois de Produtos)
+4. **Itens do Pedido** (mover de ~linha 791 para depois de Medidas)
+5. **Observacoes da visita tecnica** (mover de ~linha 850 para depois de Itens)
+6. **Especificacoes Porta Social** (mover de ~linha 879 para depois de Obs visita)
+7. **Observacoes do Pedido** (mover de ~linha 588 para baixo)
+8. **Ficha de Visita Tecnica** (mover de ~linha 540 para baixo)
+9. **Historico de Movimentacoes** (manter posicao relativa)
+10. **Fluxograma** (manter posicao relativa)
 
-Ja a secao "Medidas das Portas de Enrolar" filtra apenas porta_enrolar e renumera do zero:
-- Porta de Enrolar #1 (que na verdade e a #1 de cima)
-- Porta de Enrolar #2 (que na verdade e a #3 de cima)
+As secoes "Observacoes da Venda" e "Ordens de Producao" permanecem nas suas posicoes relativas (Obs da Venda pode ficar junto com Obs do Pedido ou logo apos informacoes do cliente).
 
-Isso gera confusao, pois o "#2" de uma secao nao corresponde ao "#2" da outra.
+### Detalhes tecnicos
 
-## Solucao
-
-Alterar `MedidasPortasSection` para usar a mesma numeracao global das portas, mantendo consistencia com "Itens do Pedido".
-
-### Alteracao em `src/components/pedidos/MedidasPortasSection.tsx`
-
-1. Em vez de filtrar apenas `porta_enrolar` antes de expandir, expandir TODAS as portas primeiro (igual ao PedidoLinhasEditor faz)
-2. Guardar o indice global de cada porta no array completo
-3. Filtrar para mostrar apenas `porta_enrolar`, mas usando o indice global para o label
-
-Concretamente:
-
-```typescript
-// Antes:
-const portasRaw = produtos.filter(p => p.tipo_produto === 'porta_enrolar');
-const portas = expandirPortasPorQuantidade(portasRaw);
-
-// Depois:
-const todasPortas = produtos.filter(p => 
-  p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'porta_social'
-);
-const todasExpandidas = expandirPortasPorQuantidade(todasPortas);
-const portas = todasExpandidas
-  .map((p, idx) => ({ ...p, _globalIndex: idx }))
-  .filter(p => p.tipo_produto === 'porta_enrolar');
-```
-
-4. Usar `_globalIndex` em vez de `idx` ao chamar `getLabelPortaExpandida`, e trocar para `getLabelProdutoExpandido` (mesma funcao que "Itens do Pedido" usa) para consistencia total no formato do label
-
-Resultado: "Porta de Enrolar #3" em "Medidas" correspondera exatamente a "Porta de Enrolar #3" em "Itens do Pedido".
-
+Apenas reordenacao de blocos JSX no return do componente. Nenhuma logica sera alterada, apenas a ordem de renderizacao dos Cards.
