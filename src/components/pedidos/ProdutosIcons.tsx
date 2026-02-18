@@ -1,8 +1,17 @@
 import { DoorOpen, Package } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 interface ProdutosIconsProps {
   produtos: any[];
+}
+
+function classificarTamanhoPorta(largura?: number, altura?: number): string | null {
+  if (!largura || !altura) return null;
+  const area = largura * altura;
+  if (area > 50) return "GG";
+  if (area >= 25) return "G";
+  return "P";
 }
 
 export function ProdutosIcons({ produtos }: ProdutosIconsProps) {
@@ -17,6 +26,18 @@ export function ProdutosIcons({ produtos }: ProdutosIconsProps) {
     acc[tipo] = (acc[tipo] || 0) + quantidade;
     return acc;
   }, {} as Record<string, number>);
+
+  // Classificar tamanhos das portas de enrolar
+  const tamanhosPortas = produtos
+    .filter(p => p.tipo_produto?.toLowerCase().includes("enrolar"))
+    .reduce((acc, p) => {
+      const qty = p.quantidade || 1;
+      const tamanho = classificarTamanhoPorta(p.largura, p.altura);
+      if (tamanho) {
+        acc[tamanho] = (acc[tamanho] || 0) + qty;
+      }
+      return acc;
+    }, {} as Record<string, number>);
 
   // Extrair cores únicas
   const cores = [...new Set(produtos.map((p) => p.cor).filter(Boolean))] as string[];
@@ -58,6 +79,23 @@ export function ProdutosIcons({ produtos }: ProdutosIconsProps) {
             </Tooltip>
           );
         })}
+
+        {/* Badges de tamanho P, G, GG */}
+        {Object.entries(tamanhosPortas).map(([tamanho, count]: [string, number]) => (
+          <Tooltip key={tamanho}>
+            <TooltipTrigger asChild>
+              <Badge
+                variant="outline"
+                className="text-[10px] h-4 px-1.5 font-bold"
+              >
+                {count > 1 ? `${count}${tamanho}` : tamanho}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{count} porta{count > 1 ? 's' : ''} {tamanho === 'P' ? 'Pequena' : tamanho === 'G' ? 'Grande' : 'Extra Grande'} ({'<'}25m² / 25-50m² / {'>'}50m²)</p>
+            </TooltipContent>
+          </Tooltip>
+        ))}
 
         {cores.length > 0 && (
           <div className="flex items-center gap-1 ml-1">
