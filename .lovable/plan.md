@@ -1,32 +1,33 @@
 
 
-# Adicionar Porta Social na secao de Medidas
+# Corrigir Breadcrumb na pagina de detalhes do pedido
 
-## Alteracao
+## Problema
 
-Modificar `src/components/pedidos/MedidasPortasSection.tsx` para incluir portas sociais junto com as portas de enrolar:
+A pagina `PedidoViewMinimalista` nao passa a prop `breadcrumbItems` para o `MinimalistLayout`. Como o `backPath` e `/administrativo/pedidos` (nao corresponde a nenhum caso pre-definido no layout), o breadcrumb gerado automaticamente mostra apenas:
 
-1. **Remover filtro** na linha 78 - em vez de `.filter(p => p.tipo_produto === 'porta_enrolar')`, manter todas as portas (enrolar + social)
-2. **Atualizar titulo** de "Medidas das Portas de Enrolar" para "Medidas das Portas"
-3. **Inicializar medidas** para todas as portas (o estado inicial ja itera sobre `portas`, entao basta mudar o filtro)
-4. **Condicao de exibicao** na linha 92 - ja funcionara automaticamente pois `portas` incluira ambos os tipos
-5. **SVG diferenciado** (opcional) - usar cor diferente para porta social vs enrolar para diferenciar visualmente (ex: roxo para social, azul para enrolar)
+**Home > Pedido #XXX** (incorreto)
 
-### Detalhes tecnicos
+## Correcao
+
+Adicionar a prop `breadcrumbItems` ao `MinimalistLayout` em `src/pages/administrativo/PedidoViewMinimalista.tsx` (linha 447):
 
 ```typescript
-// Linha 76-78: remover filtro
-const portas = todasExpandidas
-  .map((p, idx) => ({ ...p, _globalIndex: idx }));
-// sem .filter - mostra todas
-
-// Linha 135: titulo generico
-"Medidas das Portas"
-
-// Cards: cor condicional baseada em tipo_produto
-const isPortaSocial = porta.tipo_produto === 'porta_social';
-// Usar cor diferente no SVG/borda para diferenciar
+<MinimalistLayout 
+  title={`Pedido #${pedido.numero_pedido}`}
+  subtitle={...}
+  backPath="/administrativo/pedidos"
+  breadcrumbItems={[
+    { label: 'Home', path: '/home' },
+    { label: 'Administrativo', path: '/administrativo' },
+    { label: 'Pedidos', path: '/administrativo/pedidos' },
+    { label: `Pedido #${pedido.numero_pedido}` }
+  ]}
+  headerActions={...}
+>
 ```
 
-O label ja vem correto via `getLabelProdutoExpandido` (mostra "Porta Social #2" ou "Porta de Enrolar #1"), entao a identificacao visual ja esta resolvida.
+Resultado esperado: **Home > Administrativo > Pedidos > Pedido #XXX**
+
+Apenas uma linha adicionada, sem alteracao de logica.
 
