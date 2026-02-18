@@ -1,33 +1,55 @@
 
 
-# Corrigir Breadcrumb na pagina de detalhes do pedido
+# Alteracoes na tela de detalhes da ordem (perfiladeira)
 
-## Problema
+## 1. Remover botao "Imprimir Todas"
 
-A pagina `PedidoViewMinimalista` nao passa a prop `breadcrumbItems` para o `MinimalistLayout`. Como o `backPath` e `/administrativo/pedidos` (nao corresponde a nenhum caso pre-definido no layout), o breadcrumb gerado automaticamente mostra apenas:
+Remover o botao "Imprimir Todas" que aparece ao lado do titulo "Itens de Producao" no sheet de detalhes da ordem.
 
-**Home > Pedido #XXX** (incorreto)
+**Arquivo:** `src/components/production/OrdemDetalhesSheet.tsx` (linhas 795-806)
 
-## Correcao
+## 2. Bloqueio sequencial das linhas (checklist progressivo)
 
-Adicionar a prop `breadcrumbItems` ao `MinimalistLayout` em `src/pages/administrativo/PedidoViewMinimalista.tsx` (linha 447):
+Implementar logica onde as linhas so podem ser marcadas em sequencia:
+- Apenas a primeira linha de cada grupo (porta) comeca desbloqueada
+- Ao marcar uma linha como concluida, a proxima linha e liberada
+- Desmarcar uma linha bloqueia todas as posteriores
+
+**Arquivo:** `src/components/production/OrdemDetalhesSheet.tsx` (linha 924)
+
+### Logica
+
+Dentro do loop `linhasPorta.map((linha, indexLinha))`, calcular se a linha anterior esta concluida:
 
 ```typescript
-<MinimalistLayout 
-  title={`Pedido #${pedido.numero_pedido}`}
-  subtitle={...}
-  backPath="/administrativo/pedidos"
-  breadcrumbItems={[
-    { label: 'Home', path: '/home' },
-    { label: 'Administrativo', path: '/administrativo' },
-    { label: 'Pedidos', path: '/administrativo/pedidos' },
-    { label: `Pedido #${pedido.numero_pedido}` }
-  ]}
-  headerActions={...}
->
+const linhaAnteriorConcluida = indexLinha === 0 || linhasPorta[indexLinha - 1].concluida;
 ```
 
-Resultado esperado: **Home > Administrativo > Pedidos > Pedido #XXX**
+Adicionar essa condicao ao `disabled` do Checkbox existente:
 
-Apenas uma linha adicionada, sem alteracao de logica.
+```typescript
+disabled={
+  ordem.status === 'concluido' || 
+  ordem.status === 'pronta' || 
+  isUpdating || 
+  !podeMarcarLinhas || 
+  (tipoOrdem === 'qualidade' && linha.com_problema) ||
+  !linhaAnteriorConcluida
+}
+```
+
+Isso garante que:
+- A primeira linha (index 0) esta sempre disponivel (desde que as outras condicoes permitam)
+- Cada linha subsequente so e habilitada quando a anterior estiver marcada como concluida
+- Desmarcar uma linha automaticamente impede marcar as seguintes (pois a condicao volta a ser falsa)
+
+### Visual
+
+Linhas bloqueadas ja ficam com `opacity-50` e `cursor-not-allowed` pelo estilo padrao do Checkbox desabilitado, entao nao e necessario adicionar estilos extras.
+
+## Resumo das alteracoes
+
+Um unico arquivo modificado: `src/components/production/OrdemDetalhesSheet.tsx`
+- Remover bloco do botao "Imprimir Todas" (linhas 795-806)
+- Adicionar `indexLinha` ao `.map()` e condicao de bloqueio sequencial ao Checkbox (linha 907 e 924)
 
