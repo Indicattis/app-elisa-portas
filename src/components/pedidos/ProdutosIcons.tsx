@@ -45,40 +45,6 @@ export function ProdutosIcons({ produtos }: ProdutosIconsProps) {
   return (
     <TooltipProvider>
       <div className="flex items-center gap-2 flex-wrap">
-        {Object.entries(tiposCounts).map(([tipo, count]: [string, number]) => {
-          const isPortaEnrolar = tipo.includes("enrolar");
-          const isPorta = tipo.includes("porta");
-          
-          if (isPorta || isPortaEnrolar) {
-            return (
-              <Tooltip key={tipo}>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1">
-                    <DoorOpen className="w-4 h-4 text-blue-600" />
-                    <span className="text-xs font-medium">{count}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{isPortaEnrolar ? "Portas de Enrolar" : "Portas"}: {count}</p>
-                </TooltipContent>
-              </Tooltip>
-            );
-          }
-          
-          return (
-            <Tooltip key={tipo}>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1">
-                  <Package className="w-4 h-4 text-gray-600" />
-                  <span className="text-xs font-medium">{count}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{tipo}: {count}</p>
-              </TooltipContent>
-            </Tooltip>
-          );
-        })}
 
         {/* Badges de tamanho P, G, GG */}
         {Object.entries(tamanhosPortas).map(([tamanho, count]: [string, number]) => (
