@@ -537,103 +537,7 @@ export default function PedidoViewMinimalista() {
           </Card>
         </div>
 
-        {/* Ficha de Visita Técnica */}
-        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 text-white">
-              <ClipboardList className="w-4 h-4" />
-              Ficha de Visita Técnica
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FichaVisitaUpload
-              fichaUrl={pedido.ficha_visita_url}
-              fichaNome={pedido.ficha_visita_nome}
-              onFichaChange={async (url, nome) => {
-                const { error } = await supabase.from('pedidos_producao').update({ ficha_visita_url: url, ficha_visita_nome: nome }).eq('id', pedido.id);
-                if (error) { sonnerToast.error('Erro ao salvar ficha de visita'); return; }
-                setPedido(prev => prev ? { ...prev, ficha_visita_url: url, ficha_visita_nome: nome } : null);
-                sonnerToast.success('Ficha de visita anexada com sucesso');
-              }}
-              onFichaRemove={async () => {
-                if (pedido.ficha_visita_url) {
-                  const urlParts = pedido.ficha_visita_url.split('/');
-                  const fileName = urlParts[urlParts.length - 1];
-                  await supabase.storage.from('fichas-visita-tecnica').remove([fileName]);
-                }
-                const { error } = await supabase.from('pedidos_producao').update({ ficha_visita_url: null, ficha_visita_nome: null }).eq('id', pedido.id);
-                if (error) { sonnerToast.error('Erro ao remover ficha de visita'); return; }
-                setPedido(prev => prev ? { ...prev, ficha_visita_url: null, ficha_visita_nome: null } : null);
-                sonnerToast.success('Ficha de visita removida');
-              }}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Observações da Venda */}
-        {pedido.venda?.observacoes_venda && (
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2 text-white">
-                <FileText className="w-4 h-4" />
-                Observações da Venda
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-white/80 whitespace-pre-wrap">{pedido.venda.observacoes_venda}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Observações do Pedido */}
-        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 text-white">
-              <MessageSquare className="w-4 h-4" />
-              Observações do Pedido
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <Textarea
-                placeholder="Adicione observações sobre este pedido..."
-                value={observacoesTexto}
-                onChange={(e) => setObservacoesTexto(e.target.value)}
-                className="min-h-[100px] bg-primary/5 border-primary/10 text-white placeholder:text-white/40 resize-none"
-              />
-              <div className="flex justify-end">
-                <Button
-                  onClick={handleSalvarObservacoes}
-                  disabled={salvandoObservacoes || observacoesTexto === (pedido.observacoes || "")}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  {salvandoObservacoes ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Salvando...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Salvar Observação
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Produtos da Venda */}
-        {/* Medidas das Portas de Enrolar */}
-        {pedido.venda?.produtos && pedido.venda.produtos.some((p: any) => p.tipo_produto === 'porta_enrolar') && (
-          <MedidasPortasSection
-            produtos={pedido.venda.produtos}
-            onRefresh={fetchPedidoDetails}
-          />
-        )}
-
         {pedido.venda?.produtos && pedido.venda.produtos.length > 0 && (
           <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
@@ -788,6 +692,14 @@ export default function PedidoViewMinimalista() {
           </Card>
         )}
 
+        {/* Medidas das Portas de Enrolar */}
+        {pedido.venda?.produtos && pedido.venda.produtos.some((p: any) => p.tipo_produto === 'porta_enrolar') && (
+          <MedidasPortasSection
+            produtos={pedido.venda.produtos}
+            onRefresh={fetchPedidoDetails}
+          />
+        )}
+
         {/* Itens do Pedido */}
         <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
           <CardHeader className="pb-3">
@@ -814,7 +726,6 @@ export default function PedidoViewMinimalista() {
                 </div>
               )}
             </div>
-            {/* Aviso de propagação quando em produção */}
             {isEmProducao && modoEdicao && (
               <div className="mt-3 p-2 rounded-md bg-orange-500/10 border border-orange-500/20 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0" />
@@ -902,6 +813,94 @@ export default function PedidoViewMinimalista() {
             </CardContent>
           </Card>
         )}
+
+        {/* Observações da Venda */}
+        {pedido.venda?.observacoes_venda && (
+          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2 text-white">
+                <FileText className="w-4 h-4" />
+                Observações da Venda
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-white/80 whitespace-pre-wrap">{pedido.venda.observacoes_venda}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Observações do Pedido */}
+        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 text-white">
+              <MessageSquare className="w-4 h-4" />
+              Observações do Pedido
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <Textarea
+                placeholder="Adicione observações sobre este pedido..."
+                value={observacoesTexto}
+                onChange={(e) => setObservacoesTexto(e.target.value)}
+                className="min-h-[100px] bg-primary/5 border-primary/10 text-white placeholder:text-white/40 resize-none"
+              />
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleSalvarObservacoes}
+                  disabled={salvandoObservacoes || observacoesTexto === (pedido.observacoes || "")}
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {salvandoObservacoes ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Salvar Observação
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Ficha de Visita Técnica */}
+        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 text-white">
+              <ClipboardList className="w-4 h-4" />
+              Ficha de Visita Técnica
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FichaVisitaUpload
+              fichaUrl={pedido.ficha_visita_url}
+              fichaNome={pedido.ficha_visita_nome}
+              onFichaChange={async (url, nome) => {
+                const { error } = await supabase.from('pedidos_producao').update({ ficha_visita_url: url, ficha_visita_nome: nome }).eq('id', pedido.id);
+                if (error) { sonnerToast.error('Erro ao salvar ficha de visita'); return; }
+                setPedido(prev => prev ? { ...prev, ficha_visita_url: url, ficha_visita_nome: nome } : null);
+                sonnerToast.success('Ficha de visita anexada com sucesso');
+              }}
+              onFichaRemove={async () => {
+                if (pedido.ficha_visita_url) {
+                  const urlParts = pedido.ficha_visita_url.split('/');
+                  const fileName = urlParts[urlParts.length - 1];
+                  await supabase.storage.from('fichas-visita-tecnica').remove([fileName]);
+                }
+                const { error } = await supabase.from('pedidos_producao').update({ ficha_visita_url: null, ficha_visita_nome: null }).eq('id', pedido.id);
+                if (error) { sonnerToast.error('Erro ao remover ficha de visita'); return; }
+                setPedido(prev => prev ? { ...prev, ficha_visita_url: null, ficha_visita_nome: null } : null);
+                sonnerToast.success('Ficha de visita removida');
+              }}
+            />
+          </CardContent>
+        </Card>
 
         {/* Histórico de Movimentações */}
         <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
