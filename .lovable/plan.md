@@ -1,52 +1,69 @@
 
-# Impedir Reagendamento de Pedidos com Carregamento Concluido
+# Copiar botoes de acao da Expedicao para Gestao de Fabrica
 
 ## Resumo
 
-Pedidos cujas ordens de carregamento (tabela `ordens_carregamento`) ou ordens de instalacao (tabela `instalacoes`) ja foram carregadas (`carregamento_concluido = true`) nao poderao ser reagendados. Atualmente ja existem filtros nos hooks que excluem ordens concluidas das listas do calendario e do modal de agendamento, mas faltam guardas explicitas nos componentes de UI.
+Adicionar ao `GestaoFabricaDirecao.tsx` os mesmos botoes de acao que existem na listagem de pedidos em `/logistica/expedicao`, especificamente nas etapas `aguardando_coleta`, `instalacoes`, `correcoes` e `finalizado`.
+
+## O que falta em Gestao de Fabrica
+
+Comparando as duas paginas, a `PedidosDraggableList` em Gestao de Fabrica nao recebe:
+- `onAgendar` - botao de agendar no calendario
+- `onDeletar` - botao de excluir pedido
+- `onCorrecaoDetalhesClick` - abrir detalhes de correcao (etapa correcoes)
+- `hideOrdensStatus` / `hideCorrecaoButton` / `showPosicao` - flags visuais
+
+As listas de Neo (Instalacoes e Correcoes) tambem nao recebem:
+- `onAgendar` - agendar Neo no calendario
+- `onEditar` - editar Neo
 
 ## Alteracoes
 
-### 1. `src/components/pedidos/PedidoCard.tsx`
+### 1. `src/pages/direcao/GestaoFabricaDirecao.tsx`
 
-**Linha 1561** - Adicionar `!carregamentoConcluido` na condicao do botao de agendar:
+**Novos imports:**
+- `CorrecaoDetalhesSheet` de `@/components/pedidos/CorrecaoDetalhesSheet`
+- `AdicionarOrdemCalendarioModal` de `@/components/expedicao/AdicionarOrdemCalendarioModal`
+- `useNavigate` de `react-router-dom` (se nao existir)
 
+**Novos states:**
+- `correcaoDetalhesPedidoId` e `correcaoDetalhesOpen` para o sheet de correcao
+- `agendarModalOpen` e `agendarData` para o modal de agendamento
+
+**Novos handlers:**
+- `handleAgendarPedido` - abre modal de agendamento
+- `handleEditarNeoInstalacao` - navega para editar Neo Instalacao
+- `handleEditarNeoCorrecao` - navega para editar Neo Correcao
+
+**Atualizar `PedidosDraggableList` (linha 540):**
+
+Adicionar props condicionais para as etapas de logistica:
 ```
-// De:
-if (onAgendar && !temDataCarregamento && (etapaAtual === 'aguardando_coleta' || ...))
-
-// Para:
-if (onAgendar && !temDataCarregamento && !carregamentoConcluido && (etapaAtual === 'aguardando_coleta' || ...))
+onAgendar={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleAgendarPedido : undefined}
+onDeletar={handleDeletarPedido}
+onCorrecaoDetalhesClick={etapa === 'correcoes' ? (pedidoId) => { setCorrecaoDetalhesPedidoId(pedidoId); setCorrecaoDetalhesOpen(true); } : undefined}
+hideOrdensStatus={['aguardando_coleta','instalacoes','correcoes','finalizado'].includes(etapa)}
+showPosicao={true}
 ```
 
-Isso garante que mesmo com inconsistencias de dados, o botao de agendar nunca apareca para pedidos com carregamento concluido.
-
-### 2. `src/components/expedicao/CalendarioMensalExpedicaoDesktop.tsx`
-
-**`handleDragEnd` (~linha 160-180)** - Antes de atualizar a data de uma ordem de carregamento, verificar se `carregamento_concluido` e `true`. Se for, exibir toast de erro e retornar sem fazer nada:
-
+**Atualizar `NeoInstalacoesDraggableList` (linha 560):**
+Adicionar:
 ```
-if (ordem.carregamento_concluido) {
-  toast.error("Este pedido ja foi carregado e nao pode ser reagendado");
-  return;
-}
+onAgendar={(id) => { setAgendarData(new Date()); setAgendarModalOpen(true); }}
+onEditar={handleEditarNeoInstalacao}
 ```
 
-### 3. `src/components/expedicao/CalendarioSemanalExpedicaoDesktop.tsx`
+**Atualizar `NeoCorrecoesDraggableList` (linha 574):**
+Adicionar:
+```
+onAgendar={(id) => { setAgendarData(new Date()); setAgendarModalOpen(true); }}
+onEditar={handleEditarNeoCorrecao}
+```
 
-Mesma guarda do item 2, no `handleDragEnd` do calendario semanal: bloquear drag-and-drop para ordens com `carregamento_concluido === true`.
+**Renderizar novos componentes no final do JSX:**
+- `CorrecaoDetalhesSheet` (com `correcaoDetalhesPedidoId` e `correcaoDetalhesOpen`)
+- `AdicionarOrdemCalendarioModal` (com `agendarModalOpen` e `agendarData`)
 
-## Secao Tecnica
+### 2. Nenhuma outra pagina ou componente precisa ser alterado
 
-### Protecoes ja existentes (nao precisam de alteracao)
-
-- `useOrdensCarregamentoCalendario.ts`: ja filtra `.eq("carregamento_concluido", false)` nas duas queries (ordens_carregamento e instalacoes)
-- `useOrdensCarregamentoUnificadas.ts`: ja filtra `.eq("carregamento_concluido", false)` e `.eq("instalacao_concluida", false)`
-- `AdicionarOrdemCalendarioModal.tsx`: ja filtra `!o.data_carregamento` e usa o hook acima que exclui concluidos
-
-### Novas protecoes (defesa em profundidade)
-
-- **PedidoCard**: guarda no botao de UI
-- **Calendarios**: guarda no handler de drag-and-drop
-
-Essas tres alteracoes garantem que nenhuma rota de UI permita reagendar um pedido com carregamento concluido.
+Os componentes `PedidosDraggableList`, `NeoInstalacoesDraggableList` e `NeoCorrecoesDraggableList` ja suportam todas essas props - so nao estavam sendo passadas em GestaoFabrica.
