@@ -34,6 +34,7 @@ import { SelecionarResponsavelEtapaModal } from "@/components/pedidos/Selecionar
 import { ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
+import { CorrecaoDetalhesSheet } from "@/components/pedidos/CorrecaoDetalhesSheet";
 import { EditarOrdemCarregamentoDrawer } from "@/components/expedicao/EditarOrdemCarregamentoDrawer";
 import { NeoInstalacaoModal } from "@/components/expedicao/NeoInstalacaoModal";
 import { NeoCorrecaoModal } from "@/components/expedicao/NeoCorrecaoModal";
@@ -80,6 +81,8 @@ export default function ExpedicaoMinimalista() {
   const [selectedNeoCorrecao, setSelectedNeoCorrecao] = useState<NeoCorrecao | null>(null);
   const [neoCorrecaoDetailsOpen, setNeoCorrecaoDetailsOpen] = useState(false);
   const [legendaFiltro, setLegendaFiltro] = useState<string | null>(null);
+  const [correcaoDetalhesPedidoId, setCorrecaoDetalhesPedidoId] = useState<string | null>(null);
+  const [correcaoDetalhesOpen, setCorrecaoDetalhesOpen] = useState(false);
 
   // States para a listagem de pedidos por etapa (tabs)
   const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('aguardando_coleta');
@@ -866,6 +869,10 @@ export default function ExpedicaoMinimalista() {
                               onArquivar={etapa === 'finalizado' ? undefined : handleArquivar}
                               onDeletar={handleDeletarPedido}
                               onAgendar={handleAgendarPedido}
+                              onCorrecaoDetalhesClick={etapa === 'correcoes' ? (pedidoId: string) => {
+                                setCorrecaoDetalhesPedidoId(pedidoId);
+                                setCorrecaoDetalhesOpen(true);
+                              } : undefined}
                               enableDragAndDrop={true}
                               showPosicao={true}
                               hideOrdensStatus={true}
@@ -1001,6 +1008,24 @@ export default function ExpedicaoMinimalista() {
           isLoading={isAtribuindo}
         />
       )}
+
+      {/* Sheet de Detalhes da Correção */}
+      {correcaoDetalhesPedidoId && (() => {
+        const pedidoCorrecao = pedidosEtapa.find((p: any) => p.id === correcaoDetalhesPedidoId);
+        const vendaData = pedidoCorrecao ? (Array.isArray(pedidoCorrecao.vendas) ? pedidoCorrecao.vendas[0] : pedidoCorrecao.vendas) : null;
+        return (
+          <CorrecaoDetalhesSheet
+            open={correcaoDetalhesOpen}
+            onOpenChange={(open) => {
+              setCorrecaoDetalhesOpen(open);
+              if (!open) setCorrecaoDetalhesPedidoId(null);
+            }}
+            pedidoId={correcaoDetalhesPedidoId}
+            numeroPedido={pedidoCorrecao?.numero_pedido?.toString() || ''}
+            nomeCliente={vendaData?.cliente_nome || ''}
+          />
+        );
+      })()}
     </div>
   );
 }
