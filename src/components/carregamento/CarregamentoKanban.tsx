@@ -30,7 +30,7 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
       <CardHeader className="min-h-[40px] py-2 px-3 sm:px-4 border-b bg-muted/30">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-1 sm:gap-4">
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-3 text-[10px] sm:text-xs">
-            <span className="font-bold truncate max-w-[120px] sm:max-w-none">
+            <span className="text-foreground font-bold text-xs sm:text-sm truncate max-w-[140px] sm:max-w-none">
               {ordem.nome_cliente}
             </span>
             {ordem.venda?.cidade && ordem.venda?.estado && (
