@@ -1,55 +1,27 @@
 
 
-# Alteracoes na tela de detalhes da ordem (perfiladeira)
+# Correcao do erro ao concluir ordem de separacao
 
-## 1. Remover botao "Imprimir Todas"
+## Problema
 
-Remover o botao "Imprimir Todas" que aparece ao lado do titulo "Itens de Producao" no sheet de detalhes da ordem.
+A tabela `pontuacao_colaboradores` possui uma CHECK constraint (`pontuacao_colaboradores_tipo_ranking_check`) que so aceita os valores `'pintura'`, `'perfiladeira'` e `'solda'` na coluna `tipo_ranking`. Porem, ao concluir uma ordem de separacao, o sistema tenta inserir uma linha com `tipo_ranking = 'separacao'`, o que viola essa restricao e gera o erro `23514`.
 
-**Arquivo:** `src/components/production/OrdemDetalhesSheet.tsx` (linhas 795-806)
+## Solucao
 
-## 2. Bloqueio sequencial das linhas (checklist progressivo)
+Executar uma migracao SQL para atualizar a CHECK constraint, adicionando `'separacao'` como valor permitido:
 
-Implementar logica onde as linhas so podem ser marcadas em sequencia:
-- Apenas a primeira linha de cada grupo (porta) comeca desbloqueada
-- Ao marcar uma linha como concluida, a proxima linha e liberada
-- Desmarcar uma linha bloqueia todas as posteriores
+```sql
+ALTER TABLE pontuacao_colaboradores
+  DROP CONSTRAINT pontuacao_colaboradores_tipo_ranking_check;
 
-**Arquivo:** `src/components/production/OrdemDetalhesSheet.tsx` (linha 924)
-
-### Logica
-
-Dentro do loop `linhasPorta.map((linha, indexLinha))`, calcular se a linha anterior esta concluida:
-
-```typescript
-const linhaAnteriorConcluida = indexLinha === 0 || linhasPorta[indexLinha - 1].concluida;
+ALTER TABLE pontuacao_colaboradores
+  ADD CONSTRAINT pontuacao_colaboradores_tipo_ranking_check
+  CHECK (tipo_ranking = ANY (ARRAY['pintura', 'perfiladeira', 'solda', 'separacao']));
 ```
 
-Adicionar essa condicao ao `disabled` do Checkbox existente:
+## Detalhes tecnicos
 
-```typescript
-disabled={
-  ordem.status === 'concluido' || 
-  ordem.status === 'pronta' || 
-  isUpdating || 
-  !podeMarcarLinhas || 
-  (tipoOrdem === 'qualidade' && linha.com_problema) ||
-  !linhaAnteriorConcluida
-}
-```
-
-Isso garante que:
-- A primeira linha (index 0) esta sempre disponivel (desde que as outras condicoes permitam)
-- Cada linha subsequente so e habilitada quando a anterior estiver marcada como concluida
-- Desmarcar uma linha automaticamente impede marcar as seguintes (pois a condicao volta a ser falsa)
-
-### Visual
-
-Linhas bloqueadas ja ficam com `opacity-50` e `cursor-not-allowed` pelo estilo padrao do Checkbox desabilitado, entao nao e necessario adicionar estilos extras.
-
-## Resumo das alteracoes
-
-Um unico arquivo modificado: `src/components/production/OrdemDetalhesSheet.tsx`
-- Remover bloco do botao "Imprimir Todas" (linhas 795-806)
-- Adicionar `indexLinha` ao `.map()` e condicao de bloqueio sequencial ao Checkbox (linha 907 e 924)
+- **Arquivo afetado**: Nenhum arquivo de codigo precisa ser alterado. O problema esta exclusivamente no banco de dados.
+- **Risco**: Nenhum. A constraint apenas sera expandida para aceitar um valor adicional que ja e utilizado pelo codigo.
+- **Impacto**: Ordens de separacao poderao ser concluidas normalmente, registrando a pontuacao do colaborador.
 
