@@ -1690,7 +1690,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                           </Button>
                         </ButtonWithTooltip>
                       );
-                    } else if (proximaEtapa && etapaAtual !== 'finalizado') {
+                    } else if (proximaEtapa && etapaAtual !== 'finalizado' && etapaAtual !== 'aguardando_coleta' && etapaAtual !== 'instalacoes') {
                       avancarButtons.push(
                         <Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title="Avançar" className="flex h-[20px] w-full rounded-[3px]">
                           <ArrowRight className="h-3 w-3" />
