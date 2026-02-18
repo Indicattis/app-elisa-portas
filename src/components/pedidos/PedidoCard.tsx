@@ -387,7 +387,7 @@ export function PedidoCard({
         vezesAgendado: ordemCarregamento?.vezes_agendado || 0
       };
     },
-    enabled: pedido.etapa_atual === 'aguardando_coleta' || pedido.etapa_atual === 'instalacoes'
+    enabled: pedido.etapa_atual === 'aguardando_coleta' || pedido.etapa_atual === 'instalacoes' || pedido.etapa_atual === 'finalizado'
   });
   const carregamentoConcluido = carregamentoCompleto?.concluido || false;
   const temDataCarregamento = carregamentoCompleto?.temData || false;
@@ -1581,7 +1581,7 @@ export function PedidoCard({
 
                     // Botão de gerar correção (etapas pós-produção) ou enviar para correções (instalacoes)
                     const etapasCorrecao = ['inspecao_qualidade', 'embalagem', 'correcoes'];
-                    if ((etapaAtual === 'instalacoes' || etapaAtual === 'aguardando_coleta') && !readOnly && !hideCorrecaoButton) {
+                    if ((etapaAtual === 'instalacoes' || etapaAtual === 'aguardando_coleta') && !readOnly && !hideCorrecaoButton && carregamentoConcluido) {
                       middleButtons.push(
                         <Tooltip key="enviar-correcao-instalacoes">
                           <TooltipTrigger asChild>
@@ -1673,7 +1673,7 @@ export function PedidoCard({
                           </Button>
                         </ButtonWithTooltip>
                       );
-                    } else if (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes') {
+                    } else if ((etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes') && carregamentoConcluido) {
                       const validacao = getValidacaoAvancoEtapa(etapaAtual);
                       avancarButtons.push(
                         <ButtonWithTooltip key="avançar-expedicao" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
@@ -1699,7 +1699,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                     }
 
                     // Botão de enviar para correção (apenas etapa finalizado)
-                    if (etapaAtual === 'finalizado' && !readOnly) {
+                    if (etapaAtual === 'finalizado' && !readOnly && carregamentoConcluido) {
                       middleButtons.push(
                         <Tooltip key="enviar-correcao">
                           <TooltipTrigger asChild>
@@ -2137,7 +2137,7 @@ className="flex h-[20px] w-full rounded-[3px]"
               }
 
               // Botão enviar para correção (mobile, etapa finalizado)
-              if (etapaAtual === 'finalizado' && !readOnly) {
+              if (etapaAtual === 'finalizado' && !readOnly && carregamentoConcluido) {
                 actionButtons.push(
                   <Button 
                     key="enviar-correcao" 
