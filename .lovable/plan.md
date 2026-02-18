@@ -1,16 +1,30 @@
 
-# Corrigir botao de avancar aparecendo sem carregamento concluido
 
-## Problema
+# Corrigir layout finalizado e botao de correcao
 
-Quando `carregamentoConcluido` e `false` nas etapas `aguardando_coleta` e `instalacoes`, a condicao na linha 1676 falha (corretamente), mas o codigo cai no bloco generico da linha 1693 que renderiza um botao de avancar sem nenhuma verificacao de carregamento.
+## Problema 1: NEOs finalizados aparecem acima dos pedidos
+Na etapa `finalizado`, os "Servicos Avulsos Finalizados" sao renderizados antes da `PedidosDraggableList`. O usuario quer pedidos primeiro, NEOs depois.
 
-## Correcao em `src/components/pedidos/PedidoCard.tsx`
+## Problema 2: Botao "Enviar para Correcao" nao aparece em pedidos finalizados
+A query de carregamento (linha 340-346) retorna `concluido: false` para a etapa `finalizado` porque ha um early-return generico. Isso faz com que `carregamentoConcluido` seja sempre `false`, e a condicao na linha 1702 (`&& carregamentoConcluido`) impede o botao de aparecer.
 
-**Linha 1693** - Excluir `aguardando_coleta` e `instalacoes` do bloco generico de avancar:
+## Alteracoes
+
+### 1. `src/components/pedidos/PedidoCard.tsx` - Remover guarda de carregamento para correcao em finalizado
+
+**Linha 1702** - O botao de correcao em `finalizado` nao deve depender de `carregamentoConcluido`, pois o pedido ja passou pela etapa de carregamento:
 
 ```
-} else if (proximaEtapa && etapaAtual !== 'finalizado' && etapaAtual !== 'aguardando_coleta' && etapaAtual !== 'instalacoes') {
+if (etapaAtual === 'finalizado' && !readOnly) {
 ```
 
-Isso garante que para essas duas etapas, o botao de avancar so aparece quando passa pela condicao da linha 1676 (que exige `carregamentoConcluido`). Para todas as outras etapas, o comportamento continua o mesmo.
+### 2. `src/pages/direcao/GestaoFabricaDirecao.tsx` - Mover NEOs finalizados para depois dos pedidos
+
+Mover o bloco de "Servicos Avulsos Finalizados" (linhas 524-573) para depois da `PedidosDraggableList` (depois da linha 596), invertendo a ordem para que pedidos aparecam primeiro.
+
+A estrutura ficara:
+1. `PedidosDraggableList` (pedidos normais)
+2. Bloco de "Servicos Avulsos Finalizados" (NEOs)
+
+O titulo "Pedidos (N)" que aparecia antes dos pedidos sera removido, ja que os pedidos serao naturalmente o primeiro conteudo.
+
