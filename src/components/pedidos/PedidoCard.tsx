@@ -1699,7 +1699,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                     }
 
                     // Botão de enviar para correção (apenas etapa finalizado)
-                    if (etapaAtual === 'finalizado' && !readOnly && carregamentoConcluido) {
+                    if (etapaAtual === 'finalizado' && !readOnly) {
                       middleButtons.push(
                         <Tooltip key="enviar-correcao">
                           <TooltipTrigger asChild>

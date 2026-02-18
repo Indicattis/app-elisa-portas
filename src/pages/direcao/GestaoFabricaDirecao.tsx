@@ -521,9 +521,33 @@ export default function GestaoFabricaDirecao() {
                   </div>
                 ) : (
                   <>
-                    {/* Neo Finalizados - apenas na etapa finalizado */}
+                    
+                    <PedidosDraggableList
+                      pedidos={pedidosFiltrados}
+                      pedidosParaTotais={pedidosFiltrados}
+                      etapa={etapa} 
+                      isAberto={etapa === 'aberto'} 
+                      viewMode={viewMode} 
+                      onMoverEtapa={handleMoverEtapa} 
+                      onRetrocederEtapa={handleRetrocederEtapa} 
+                      onReorganizar={handleReorganizar} 
+                      onMoverPrioridade={handleMoverPrioridade}
+                      onArquivar={handleArquivar}
+                      onDeletar={handleDeletarPedido}
+                      onAgendar={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleAgendarPedido : undefined}
+                      onCorrecaoDetalhesClick={etapa === 'correcoes' ? (pedidoId: string) => {
+                        setCorrecaoDetalhesPedidoId(pedidoId);
+                        setCorrecaoDetalhesOpen(true);
+                      } : undefined}
+                      hideOrdensStatus={['aguardando_coleta','instalacoes','correcoes','finalizado'].includes(etapa)}
+                      showPosicao={true}
+                      onAvisoEspera={handleAvisoEspera}
+                      enableDragAndDrop={true}
+                    />
+
+                    {/* Neo Finalizados - após os pedidos */}
                     {etapaAtiva === 'finalizado' && (neoInstalacoesFinalizadas.length > 0 || neoCorrecoesFinalizadas.length > 0) && (
-                      <div className="mb-4 space-y-2">
+                      <div className="mt-4 space-y-2">
                         <h3 className="text-sm font-medium text-white/70 mb-2 flex items-center gap-2">
                           <span>Serviços Avulsos Finalizados</span>
                           <span className="text-emerald-400">({neoInstalacoesFinalizadas.length + neoCorrecoesFinalizadas.length})</span>
@@ -566,36 +590,9 @@ export default function GestaoFabricaDirecao() {
                               />
                             ))}
                         </div>
-                        {pedidosFiltrados.length > 0 && (
-                          <h3 className="text-sm font-medium text-white/70 mt-4 mb-2">Pedidos ({pedidosFiltrados.length})</h3>
-                        )}
                       </div>
                     )}
-                    
-                    <PedidosDraggableList
-                      pedidos={pedidosFiltrados}
-                      pedidosParaTotais={pedidosFiltrados}
-                      etapa={etapa} 
-                      isAberto={etapa === 'aberto'} 
-                      viewMode={viewMode} 
-                      onMoverEtapa={handleMoverEtapa} 
-                      onRetrocederEtapa={handleRetrocederEtapa} 
-                      onReorganizar={handleReorganizar} 
-                      onMoverPrioridade={handleMoverPrioridade}
-                      onArquivar={handleArquivar}
-                      onDeletar={handleDeletarPedido}
-                      onAgendar={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleAgendarPedido : undefined}
-                      onCorrecaoDetalhesClick={etapa === 'correcoes' ? (pedidoId: string) => {
-                        setCorrecaoDetalhesPedidoId(pedidoId);
-                        setCorrecaoDetalhesOpen(true);
-                      } : undefined}
-                      hideOrdensStatus={['aguardando_coleta','instalacoes','correcoes','finalizado'].includes(etapa)}
-                      showPosicao={true}
-                      onAvisoEspera={handleAvisoEspera}
-                      enableDragAndDrop={true}
-                    />
 
-                    {/* Neo Instalações - abaixo dos pedidos normais */}
                     {etapaAtiva === 'instalacoes' && neoInstalacoes.length > 0 && (
                       <div className="mt-4 space-y-2">
                         <h3 className="text-sm font-medium text-white/70 mb-2">Instalações Avulsas ({neoInstalacoes.length})</h3>
