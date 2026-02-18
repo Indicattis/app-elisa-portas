@@ -1,27 +1,33 @@
 
 
-# Correcao do erro ao concluir ordem de separacao
+# Restaurar botao "Imprimir Todas as Etiquetas" (exceto perfiladeira)
 
 ## Problema
 
-A tabela `pontuacao_colaboradores` possui uma CHECK constraint (`pontuacao_colaboradores_tipo_ranking_check`) que so aceita os valores `'pintura'`, `'perfiladeira'` e `'solda'` na coluna `tipo_ranking`. Porem, ao concluir uma ordem de separacao, o sistema tenta inserir uma linha com `tipo_ranking = 'separacao'`, o que viola essa restricao e gera o erro `23514`.
+Na alteracao anterior, o botao "Imprimir Todas as Etiquetas" foi removido do `OrdemDetalhesSheet.tsx` para todas as ordens. Porem, ele so deveria ter sido removido para ordens de **perfiladeira**.
 
 ## Solucao
 
-Executar uma migracao SQL para atualizar a CHECK constraint, adicionando `'separacao'` como valor permitido:
+**Arquivo:** `src/components/production/OrdemDetalhesSheet.tsx` (linha 795)
 
-```sql
-ALTER TABLE pontuacao_colaboradores
-  DROP CONSTRAINT pontuacao_colaboradores_tipo_ranking_check;
+Restaurar o botao de imprimir etiquetas, condicionando sua exibicao a `tipoOrdem !== 'perfiladeira'`:
 
-ALTER TABLE pontuacao_colaboradores
-  ADD CONSTRAINT pontuacao_colaboradores_tipo_ranking_check
-  CHECK (tipo_ranking = ANY (ARRAY['pintura', 'perfiladeira', 'solda', 'separacao']));
+```tsx
+<div className="flex items-center gap-2">
+  <span className="text-sm font-medium">Itens de Produção</span>
+</div>
+{tipoOrdem !== 'perfiladeira' && ordem.pedido && (
+  <Button
+    size="sm"
+    variant="outline"
+    className="gap-1"
+    onClick={() => setImprimirEtiquetasOpen(true)}
+  >
+    <Printer className="h-3.5 w-3.5" />
+    <span className="hidden sm:inline">Imprimir Etiquetas</span>
+  </Button>
+)}
 ```
 
-## Detalhes tecnicos
-
-- **Arquivo afetado**: Nenhum arquivo de codigo precisa ser alterado. O problema esta exclusivamente no banco de dados.
-- **Risco**: Nenhum. A constraint apenas sera expandida para aceitar um valor adicional que ja e utilizado pelo codigo.
-- **Impacto**: Ordens de separacao poderao ser concluidas normalmente, registrando a pontuacao do colaborador.
+Isso restaura o botao para separacao, soldagem, pintura, qualidade e demais tipos, mantendo-o oculto apenas na perfiladeira.
 
