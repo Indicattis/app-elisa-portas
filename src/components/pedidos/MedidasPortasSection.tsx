@@ -74,8 +74,7 @@ export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSecti
   );
   const todasExpandidas = expandirPortasPorQuantidade(todasPortas);
   const portas = todasExpandidas
-    .map((p, idx) => ({ ...p, _globalIndex: idx }))
-    .filter(p => p.tipo_produto === 'porta_enrolar');
+    .map((p, idx) => ({ ...p, _globalIndex: idx }));
 
   const [medidas, setMedidas] = useState<Record<string, { largura: number; altura: number }>>(() => {
     const initial: Record<string, { largura: number; altura: number }> = {};
@@ -132,7 +131,7 @@ export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSecti
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2 text-white">
           <Ruler className="w-4 h-4 text-blue-400" />
-          Medidas das Portas de Enrolar
+          Medidas das Portas
           <Badge variant="outline" className="ml-auto text-xs border-blue-500/30 text-blue-400">
             {portas.length} {portas.length === 1 ? 'porta' : 'portas'}
           </Badge>
