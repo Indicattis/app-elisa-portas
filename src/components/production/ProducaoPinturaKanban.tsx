@@ -86,7 +86,7 @@ function OrdemCard({
             {ordem.em_backlog && (
               <AlertTriangle className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0 text-red-500 animate-pulse" />
             )}
-            <span className="text-muted-foreground truncate max-w-[120px] sm:max-w-none">
+            <span className="text-foreground font-bold text-xs sm:text-sm truncate max-w-[140px] sm:max-w-none">
               {ordem.pedido?.cliente_nome}
             </span>
             {ordem.capturada_em && tempoDecorrido !== '--:--:--' && (
