@@ -1,69 +1,55 @@
 
-# Copiar botoes de acao da Expedicao para Gestao de Fabrica
+# Ocultar botoes para pedidos nao carregados
 
 ## Resumo
 
-Adicionar ao `GestaoFabricaDirecao.tsx` os mesmos botoes de acao que existem na listagem de pedidos em `/logistica/expedicao`, especificamente nas etapas `aguardando_coleta`, `instalacoes`, `correcoes` e `finalizado`.
+Dois botoes devem ser ocultados quando o carregamento do pedido nao foi concluido:
+1. **Enviar para Correcao** (etapas `aguardando_coleta`, `instalacoes` e `finalizado`)
+2. **Avancar para Finalizado** (etapas `aguardando_coleta` e `instalacoes`)
 
-## O que falta em Gestao de Fabrica
+Atualmente o botao de avancar ja fica desabilitado (cinza) quando o carregamento nao foi concluido, mas ainda aparece. O botao de correcao nao tem nenhuma verificacao.
 
-Comparando as duas paginas, a `PedidosDraggableList` em Gestao de Fabrica nao recebe:
-- `onAgendar` - botao de agendar no calendario
-- `onDeletar` - botao de excluir pedido
-- `onCorrecaoDetalhesClick` - abrir detalhes de correcao (etapa correcoes)
-- `hideOrdensStatus` / `hideCorrecaoButton` / `showPosicao` - flags visuais
+## Alteracoes em `src/components/pedidos/PedidoCard.tsx`
 
-As listas de Neo (Instalacoes e Correcoes) tambem nao recebem:
-- `onAgendar` - agendar Neo no calendario
-- `onEditar` - editar Neo
+### 1. Expandir a query de carregamento para a etapa `finalizado`
 
-## Alteracoes
+A query que busca o status do carregamento (linha 390) so roda para `aguardando_coleta` e `instalacoes`. Precisa incluir `finalizado` para que o botao de correcao nessa etapa tambem tenha acesso ao dado.
 
-### 1. `src/pages/direcao/GestaoFabricaDirecao.tsx`
-
-**Novos imports:**
-- `CorrecaoDetalhesSheet` de `@/components/pedidos/CorrecaoDetalhesSheet`
-- `AdicionarOrdemCalendarioModal` de `@/components/expedicao/AdicionarOrdemCalendarioModal`
-- `useNavigate` de `react-router-dom` (se nao existir)
-
-**Novos states:**
-- `correcaoDetalhesPedidoId` e `correcaoDetalhesOpen` para o sheet de correcao
-- `agendarModalOpen` e `agendarData` para o modal de agendamento
-
-**Novos handlers:**
-- `handleAgendarPedido` - abre modal de agendamento
-- `handleEditarNeoInstalacao` - navega para editar Neo Instalacao
-- `handleEditarNeoCorrecao` - navega para editar Neo Correcao
-
-**Atualizar `PedidosDraggableList` (linha 540):**
-
-Adicionar props condicionais para as etapas de logistica:
+**Linha 390** - Alterar `enabled`:
 ```
-onAgendar={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleAgendarPedido : undefined}
-onDeletar={handleDeletarPedido}
-onCorrecaoDetalhesClick={etapa === 'correcoes' ? (pedidoId) => { setCorrecaoDetalhesPedidoId(pedidoId); setCorrecaoDetalhesOpen(true); } : undefined}
-hideOrdensStatus={['aguardando_coleta','instalacoes','correcoes','finalizado'].includes(etapa)}
-showPosicao={true}
+enabled: pedido.etapa_atual === 'aguardando_coleta' || pedido.etapa_atual === 'instalacoes' || pedido.etapa_atual === 'finalizado'
 ```
 
-**Atualizar `NeoInstalacoesDraggableList` (linha 560):**
-Adicionar:
-```
-onAgendar={(id) => { setAgendarData(new Date()); setAgendarModalOpen(true); }}
-onEditar={handleEditarNeoInstalacao}
-```
+### 2. Ocultar botao "Enviar para Correcao" em `aguardando_coleta`/`instalacoes` (desktop)
 
-**Atualizar `NeoCorrecoesDraggableList` (linha 574):**
-Adicionar:
+**Linha 1584** - Adicionar `&& carregamentoConcluido`:
 ```
-onAgendar={(id) => { setAgendarData(new Date()); setAgendarModalOpen(true); }}
-onEditar={handleEditarNeoCorrecao}
+if ((etapaAtual === 'instalacoes' || etapaAtual === 'aguardando_coleta') && !readOnly && !hideCorrecaoButton && carregamentoConcluido) {
 ```
 
-**Renderizar novos componentes no final do JSX:**
-- `CorrecaoDetalhesSheet` (com `correcaoDetalhesPedidoId` e `correcaoDetalhesOpen`)
-- `AdicionarOrdemCalendarioModal` (com `agendarModalOpen` e `agendarData`)
+### 3. Ocultar botao "Enviar para Correcao" em `finalizado` (desktop)
 
-### 2. Nenhuma outra pagina ou componente precisa ser alterado
+**Linha 1702** - Adicionar `&& carregamentoConcluido`:
+```
+if (etapaAtual === 'finalizado' && !readOnly && carregamentoConcluido) {
+```
 
-Os componentes `PedidosDraggableList`, `NeoInstalacoesDraggableList` e `NeoCorrecoesDraggableList` ja suportam todas essas props - so nao estavam sendo passadas em GestaoFabrica.
+### 4. Ocultar botao "Enviar para Correcao" em `finalizado` (mobile)
+
+**Linha 2140** - Adicionar `&& carregamentoConcluido`:
+```
+if (etapaAtual === 'finalizado' && !readOnly && carregamentoConcluido) {
+```
+
+### 5. Ocultar botao de avancar em `aguardando_coleta`/`instalacoes` (desktop)
+
+**Linha 1676** - Adicionar `&& carregamentoConcluido` para que o botao nao apareca (em vez de apenas ficar desabilitado):
+```
+} else if ((etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes') && carregamentoConcluido) {
+```
+
+Quando `carregamentoConcluido` for `false`, nenhum dos blocos de avancar sera atingido e o botao simplesmente nao renderiza.
+
+## Nenhuma outra pagina precisa de alteracao
+
+Todas as verificacoes ficam dentro do `PedidoCard.tsx`, que e o componente reutilizado em Expedicao e Gestao de Fabrica.
