@@ -1,86 +1,52 @@
 
-
-# Detalhes de Correcao para Pedidos na Etapa "Correcoes"
+# Impedir Reagendamento de Pedidos com Carregamento Concluido
 
 ## Resumo
 
-Quando um pedido estiver na etapa "Correcoes" em `/logistica/expedicao`, o usuario podera clicar nele e acessar um formulario para registrar os detalhes da correcao: linhas de itens para correcao, justificativa escrita, custo da correcao e setor responsavel pela causa.
+Pedidos cujas ordens de carregamento (tabela `ordens_carregamento`) ou ordens de instalacao (tabela `instalacoes`) ja foram carregadas (`carregamento_concluido = true`) nao poderao ser reagendados. Atualmente ja existem filtros nos hooks que excluem ordens concluidas das listas do calendario e do modal de agendamento, mas faltam guardas explicitas nos componentes de UI.
 
-## Alteracoes no Banco de Dados
+## Alteracoes
 
-### 1. Adicionar colunas na tabela `correcoes`
+### 1. `src/components/pedidos/PedidoCard.tsx`
 
-A tabela `correcoes` ja possui `observacoes`, mas precisa de novas colunas:
+**Linha 1561** - Adicionar `!carregamentoConcluido` na condicao do botao de agendar:
 
-- `custo_correcao` (numeric, default 0) - Valor do custo da correcao
-- `setor_causador` (text, nullable) - Setor responsavel pela causa (vendas, fabrica, instalacoes, etc.)
-- `justificativa` (text, nullable) - Descricao detalhada do problema/justificativa
-- `etapa_causadora` (text, nullable) - Etapa do fluxo que causou o problema (aberto, em_producao, etc.)
+```
+// De:
+if (onAgendar && !temDataCarregamento && (etapaAtual === 'aguardando_coleta' || ...))
 
-### 2. Criar tabela `correcao_linhas`
-
-Nova tabela para registrar os itens/linhas que precisam de correcao:
-
-```text
-correcao_linhas
-  id            uuid PK (gen_random_uuid)
-  correcao_id   uuid FK -> correcoes.id ON DELETE CASCADE
-  descricao     text NOT NULL (descricao do item/problema)
-  quantidade    integer DEFAULT 1
-  created_at    timestamptz DEFAULT now()
+// Para:
+if (onAgendar && !temDataCarregamento && !carregamentoConcluido && (etapaAtual === 'aguardando_coleta' || ...))
 ```
 
-RLS: mesma politica da tabela `correcoes` (authenticated users com full access).
+Isso garante que mesmo com inconsistencias de dados, o botao de agendar nunca apareca para pedidos com carregamento concluido.
 
-## Alteracoes no Frontend
+### 2. `src/components/expedicao/CalendarioMensalExpedicaoDesktop.tsx`
 
-### 3. Criar componente `CorrecaoDetalhesSheet`
+**`handleDragEnd` (~linha 160-180)** - Antes de atualizar a data de uma ordem de carregamento, verificar se `carregamento_concluido` e `true`. Se for, exibir toast de erro e retornar sem fazer nada:
 
-Novo componente Sheet (sidebar lateral) que abre ao clicar em um pedido na etapa "correcoes". Contera:
+```
+if (ordem.carregamento_concluido) {
+  toast.error("Este pedido ja foi carregado e nao pode ser reagendado");
+  return;
+}
+```
 
-- **Cabecalho**: numero do pedido, nome do cliente
-- **Secao "Linhas de Correcao"**: lista editavel de itens com botao para adicionar novas linhas (descricao + quantidade)
-- **Campo "Justificativa"**: textarea para descrever o problema
-- **Campo "Custo da Correcao"**: input numerico formatado como moeda
-- **Campo "Setor Responsavel"**: select com opcoes (Vendas, Fabrica, Instalacoes, Marketing, Administrativo)
-- **Campo "Etapa Causadora"**: select com as etapas do fluxo de producao
-- **Botao Salvar**: persiste tudo no banco
+### 3. `src/components/expedicao/CalendarioSemanalExpedicaoDesktop.tsx`
 
-Arquivo: `src/components/pedidos/CorrecaoDetalhesSheet.tsx`
-
-### 4. Integrar na `ExpedicaoMinimalista.tsx`
-
-- Adicionar estado para controlar abertura do sheet de detalhes de correcao
-- Quando `etapaAtiva === 'correcoes'` e o usuario clicar num pedido, abrir o `CorrecaoDetalhesSheet` em vez do (ou alem do) `PedidoDetalhesSheet` padrao
-- Passar os dados do pedido e da correcao vinculada (busca na tabela `correcoes` pelo `pedido_id`)
-
-### 5. Criar hook `useCorrecaoDetalhes`
-
-Hook para buscar e salvar os dados de correcao de um pedido:
-
-- Buscar a correcao vinculada ao `pedido_id`
-- Buscar as linhas de correcao vinculadas
-- Mutation para atualizar custo, setor, justificativa, etapa_causadora
-- Mutation para adicionar/remover linhas de correcao
-
-Arquivo: `src/hooks/useCorrecaoDetalhes.ts`
+Mesma guarda do item 2, no `handleDragEnd` do calendario semanal: bloquear drag-and-drop para ordens com `carregamento_concluido === true`.
 
 ## Secao Tecnica
 
-### Fluxo de Dados
+### Protecoes ja existentes (nao precisam de alteracao)
 
-1. Usuario clica no card do pedido na aba "Correcoes"
-2. Sistema busca o registro da tabela `correcoes` onde `pedido_id` = id do pedido
-3. Sistema busca `correcao_linhas` vinculadas
-4. Abre o Sheet lateral com formulario preenchido (ou vazio se primeira vez)
-5. Usuario preenche/edita e clica em Salvar
-6. Sistema faz upsert na tabela `correcoes` e insere/deleta linhas em `correcao_linhas`
+- `useOrdensCarregamentoCalendario.ts`: ja filtra `.eq("carregamento_concluido", false)` nas duas queries (ordens_carregamento e instalacoes)
+- `useOrdensCarregamentoUnificadas.ts`: ja filtra `.eq("carregamento_concluido", false)` e `.eq("instalacao_concluida", false)`
+- `AdicionarOrdemCalendarioModal.tsx`: ja filtra `!o.data_carregamento` e usa o hook acima que exclui concluidos
 
-### Componentes envolvidos
+### Novas protecoes (defesa em profundidade)
 
-- `src/components/pedidos/CorrecaoDetalhesSheet.tsx` (novo)
-- `src/hooks/useCorrecaoDetalhes.ts` (novo)
-- `src/pages/logistica/ExpedicaoMinimalista.tsx` (editado - integrar abertura do sheet)
-- `src/components/pedidos/PedidoCard.tsx` (possivelmente editado - abrir sheet de correcao quando etapa = correcoes)
-- Migration SQL para novas colunas e tabela
+- **PedidoCard**: guarda no botao de UI
+- **Calendarios**: guarda no handler de drag-and-drop
 
+Essas tres alteracoes garantem que nenhuma rota de UI permita reagendar um pedido com carregamento concluido.
