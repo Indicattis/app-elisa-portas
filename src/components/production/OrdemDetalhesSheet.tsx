@@ -30,6 +30,7 @@ import { RetornarProducaoModal } from "./RetornarProducaoModal";
 import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
 import { AvisoFaltaModal } from "./AvisoFaltaModal";
 import { InformarFaltaLinhaModal } from "./InformarFaltaLinhaModal";
+import { ImprimirEtiquetasModal } from "@/components/ordens/ImprimirEtiquetasModal";
 import { formatarTamanho, formatarDimensoes } from "@/utils/formatters";
 import { getLabelTipoProduto } from "@/utils/tipoProdutoLabels";
 
@@ -178,6 +179,7 @@ export function OrdemDetalhesSheet({
   const [retornarModalOpen, setRetornarModalOpen] = useState(false);
   const [avisoFaltaModalOpen, setAvisoFaltaModalOpen] = useState(false);
   const [linhaProblemaModalOpen, setLinhaProblemaModalOpen] = useState(false);
+  const [imprimirEtiquetasOpen, setImprimirEtiquetasOpen] = useState(false);
   const [isMarcandoCiente, setIsMarcandoCiente] = useState(false);
   const [linhaSelecionada, setLinhaSelecionada] = useState<LinhaOrdem | null>(null);
   const { buscarDadosOrdem } = useOrdemPDFData();
@@ -793,12 +795,25 @@ export function OrdemDetalhesSheet({
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Itens de Produção</span>
               </div>
+              <div className="flex items-center gap-2">
+                {tipoOrdem !== 'perfiladeira' && ordem.pedido && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                    onClick={() => setImprimirEtiquetasOpen(true)}
+                  >
+                    <Printer className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Imprimir Etiquetas</span>
+                  </Button>
+                )}
               {todasConcluidas && (
                 <Badge variant="default" className="gap-1">
                   <CheckCircle2 className="h-3 w-3" />
                   Todas concluídas
                 </Badge>
               )}
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -1135,6 +1150,19 @@ export function OrdemDetalhesSheet({
             onOpenChange(false);
           }}
           isSubmitting={isMarkingProblem}
+        />
+      )}
+
+      {/* Modal de Imprimir Etiquetas */}
+      {tipoOrdem !== 'perfiladeira' && ordem?.pedido && (
+        <ImprimirEtiquetasModal
+          open={imprimirEtiquetasOpen}
+          onOpenChange={setImprimirEtiquetasOpen}
+          pedidoId={ordem.pedido_id}
+          numeroPedido={ordem.pedido.numero_pedido}
+          clienteNome={ordem.pedido.cliente_nome}
+          tipoOrdem={tipoOrdem}
+          responsavelNome={undefined}
         />
       )}
       </SheetContent>
