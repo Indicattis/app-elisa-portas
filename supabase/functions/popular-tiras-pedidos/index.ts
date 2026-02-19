@@ -119,9 +119,6 @@ serve(async (req) => {
               quantidade: qtdMeiaCanas,
               categoria_linha: 'perfiladeira',
               ordem: ordemAtual++,
-              check_separacao: false,
-              check_qualidade: false,
-              check_coleta: false,
             },
             {
               pedido_id: pedido.id,
@@ -133,9 +130,6 @@ serve(async (req) => {
               quantidade: 6,
               categoria_linha: 'perfiladeira',
               ordem: ordemAtual++,
-              check_separacao: false,
-              check_qualidade: false,
-              check_coleta: false,
             },
             {
               pedido_id: pedido.id,
@@ -147,9 +141,6 @@ serve(async (req) => {
               quantidade: 4,
               categoria_linha: 'perfiladeira',
               ordem: ordemAtual++,
-              check_separacao: false,
-              check_qualidade: false,
-              check_coleta: false,
             }
           );
         });

@@ -34,9 +34,6 @@ interface PedidoProducaoPDFData {
     descricao_produto?: string;
     quantidade: number;
     tamanho?: string;
-    check_separacao?: boolean;
-    check_qualidade?: boolean;
-    check_coleta?: boolean;
   }>;
   observacoes: Array<{
     porta_descricao: string;
@@ -242,15 +239,12 @@ export const gerarPedidoProducaoPDF = (data: PedidoProducaoPDFData): jsPDF => {
       l.descricao_produto || '-',
       l.quantidade.toString(),
       l.tamanho || '-',
-      l.check_separacao ? '☑' : '☐',
-      l.check_qualidade ? '☑' : '☐',
-      l.check_coleta ? '☑' : '☐',
     ]);
     
     autoTable(doc, {
       startY: posY,
       margin: { left: margemX, right: margemX },
-      head: [['Produto', 'Descrição', 'Qtd', 'Tamanho', 'Sep.', 'Qual.', 'Col.']],
+      head: [['Produto', 'Descrição', 'Qtd', 'Tamanho']],
       body: linhasRows,
       headStyles: {
         fillColor: corPrimaria,
@@ -263,22 +257,10 @@ export const gerarPedidoProducaoPDF = (data: PedidoProducaoPDFData): jsPDF => {
         cellPadding: 2,
       },
       columnStyles: {
-        0: { cellWidth: 40 },
-        1: { cellWidth: 55 },
-        2: { cellWidth: 15, halign: 'center' },
+        0: { cellWidth: 50 },
+        1: { cellWidth: 75 },
+        2: { cellWidth: 25, halign: 'center' },
         3: { cellWidth: 30 },
-        4: { cellWidth: 15, halign: 'center' },
-        5: { cellWidth: 15, halign: 'center' },
-        6: { cellWidth: 15, halign: 'center' },
-      },
-      didParseCell: (cellData) => {
-        // Destacar linhas com checks concluídos
-        if (cellData.row.section === 'body') {
-          const rowData = data.linhas[cellData.row.index];
-          if (rowData?.check_separacao && rowData?.check_qualidade && rowData?.check_coleta) {
-            cellData.cell.styles.fillColor = [200, 230, 201];
-          }
-        }
       },
     });
     

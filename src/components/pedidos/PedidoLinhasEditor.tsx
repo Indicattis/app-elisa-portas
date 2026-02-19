@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, Plus, Package, Check, X, Search, Zap, AlertCircle, ChevronsUpDown, Edit, Copy, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { PortaFolderCard, SemProdutoFolderCard } from "./PortaFolderCard";
@@ -51,12 +50,10 @@ interface LinhaEditData {
 interface PedidoLinhasEditorProps {
   linhas: PedidoLinha[];
   isReadOnly: boolean;
-  todasOrdensConcluidas?: boolean;
   vendaId?: string;
   temPortasEnrolar?: boolean;
   onAdicionarLinha: (linha: PedidoLinhaNova) => Promise<any>;
   onRemoverLinha: (linhaId: string) => Promise<void>;
-  onAtualizarCheckbox?: (linhaId: string, campo: string, valor: boolean) => Promise<void>;
   onAtualizarLinha?: (linhaId: string, campo: 'quantidade' | 'tamanho', valor: number | string) => void;
   onAtualizarLinhaCompleta?: (linhaId: string, dados: LinhaEditData) => Promise<void>;
 }
@@ -125,12 +122,10 @@ const getCategoriaBadgeClasses = (categoria: string | null): string => {
 export const PedidoLinhasEditor = ({
   linhas,
   isReadOnly,
-  todasOrdensConcluidas = false,
   vendaId,
   temPortasEnrolar = false,
   onAdicionarLinha,
   onRemoverLinha,
-  onAtualizarCheckbox,
   onAtualizarLinha,
   onAtualizarLinhaCompleta,
 }: PedidoLinhasEditorProps) => {
@@ -437,12 +432,6 @@ export const PedidoLinhasEditor = ({
     setNovaLinha(false);
   };
 
-  const handleCheckboxChange = async (linhaId: string, campo: string, checked: boolean) => {
-    if (onAtualizarCheckbox) {
-      await onAtualizarCheckbox(linhaId, campo, checked);
-    }
-  };
-
   // Estado da pasta aberta
   const [pastaAberta, setPastaAberta] = useState<string | null>(null);
 
@@ -631,42 +620,6 @@ export const PedidoLinhasEditor = ({
             <span className="text-xs text-muted-foreground">{linha.tamanho || '-'}</span>
           )}
         </td>
-        {todasOrdensConcluidas && onAtualizarCheckbox && (
-          <td className="p-2">
-            <div className="flex gap-3 items-center justify-center">
-              <div className="flex items-center gap-1">
-                <Checkbox
-                  id={`sep-${linha.id}`}
-                  checked={linha.check_separacao}
-                  onCheckedChange={(checked) => 
-                    handleCheckboxChange(linha.id, "check_separacao", checked as boolean)
-                  }
-                />
-                <Label htmlFor={`sep-${linha.id}`} className="text-xs cursor-pointer">Sep</Label>
-              </div>
-              <div className="flex items-center gap-1">
-                <Checkbox
-                  id={`qua-${linha.id}`}
-                  checked={linha.check_qualidade}
-                  onCheckedChange={(checked) => 
-                    handleCheckboxChange(linha.id, "check_qualidade", checked as boolean)
-                  }
-                />
-                <Label htmlFor={`qua-${linha.id}`} className="text-xs cursor-pointer">Qual</Label>
-              </div>
-              <div className="flex items-center gap-1">
-                <Checkbox
-                  id={`col-${linha.id}`}
-                  checked={linha.check_coleta}
-                  onCheckedChange={(checked) => 
-                    handleCheckboxChange(linha.id, "check_coleta", checked as boolean)
-                  }
-                />
-                <Label htmlFor={`col-${linha.id}`} className="text-xs cursor-pointer">Col</Label>
-              </div>
-            </div>
-          </td>
-        )}
         {!isReadOnly && (
           <td className="p-2 text-center">
             <div className="flex gap-1 justify-center">
@@ -842,9 +795,6 @@ export const PedidoLinhasEditor = ({
             )}
           </div>
         </td>
-        {todasOrdensConcluidas && onAtualizarCheckbox && (
-          <td className="p-2"></td>
-        )}
         <td className="p-2">
           <div className="flex gap-1 justify-center">
             <Button
@@ -880,9 +830,6 @@ export const PedidoLinhasEditor = ({
               <th className="text-left p-2 font-medium text-muted-foreground">Categoria</th>
               <th className="text-center p-2 font-medium text-muted-foreground w-20">Qtd</th>
               <th className="text-center p-2 font-medium text-muted-foreground w-24">Tamanho</th>
-              {todasOrdensConcluidas && onAtualizarCheckbox && (
-                <th className="text-center p-2 font-medium text-muted-foreground">Checkboxes</th>
-              )}
               {!isReadOnly && (
                 <th className="text-center p-2 font-medium text-muted-foreground w-20">Ações</th>
               )}
