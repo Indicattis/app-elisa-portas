@@ -60,25 +60,25 @@ export default function TvDashboard() {
       const {
         data,
         error
-      } = await supabase
-        .from('vendas')
-        .select('data_venda, valor_venda, valor_frete')
-        .gte('data_venda', format(inicioJulho, 'yyyy-MM-dd'))
-        .lte('data_venda', format(fimSetembro, 'yyyy-MM-dd'));
-        
+      } = await supabase.
+      from('vendas').
+      select('data_venda, valor_venda, valor_frete').
+      gte('data_venda', format(inicioJulho, 'yyyy-MM-dd')).
+      lte('data_venda', format(fimSetembro, 'yyyy-MM-dd'));
+
       if (error) {
         console.error('Erro ao buscar vendas do trimestre:', error);
         throw error;
       }
-      
+
       // Agrupar por data e calcular valor sem frete
-      const vendasPorDia = (data || []).reduce((acc: { [key: string]: number }, venda: any) => {
+      const vendasPorDia = (data || []).reduce((acc: {[key: string]: number;}, venda: any) => {
         const dataKey = venda.data_venda.split('T')[0];
         const valorSemFrete = Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0);
         acc[dataKey] = (acc[dataKey] || 0) + valorSemFrete;
         return acc;
       }, {});
-      
+
       return Object.entries(vendasPorDia).map(([data, valor]) => ({
         data,
         valor
@@ -109,9 +109,9 @@ export default function TvDashboard() {
   // Setup progress bar effect
   useEffect(() => {
     if (!api || isHovering) return;
-    
+
     const progressInterval = setInterval(() => {
-      setProgress(prevProgress => {
+      setProgress((prevProgress) => {
         if (prevProgress >= 100) {
           return 0; // Reset when reaching 100%
         }
@@ -202,8 +202,8 @@ export default function TvDashboard() {
   const instalacoesStats = useMemo(() => {
     const totalInstalacoes = instalacoes.length;
     const totalCorrecoes = 0; // Coluna categoria removida
-    const entregasPendentes = instalacoes.filter(i => 
-      i.status !== 'finalizada'
+    const entregasPendentes = instalacoes.filter((i) =>
+    i.status !== 'finalizada'
     ).length;
 
     return {
@@ -312,11 +312,11 @@ export default function TvDashboard() {
                 {/* Linha horizontal */}
                 <div className="w-32 h-0.5 bg-muted-foreground mx-auto"></div>
                 
-                <div className="text-lg">
-                  {format(today, "dd/MM/yyyy - HH:mm", {
-                  locale: ptBR
-                })}
-                </div>
+                
+
+
+
+
               </div>
             </div>
           </CarouselItem>
@@ -328,13 +328,13 @@ export default function TvDashboard() {
               <div className="w-full max-w-4xl">
                 {/* Lista de ranking */}
                 <div className="space-y-4">
-                  {vendedores.slice(0, 10).map(vendedor => {
+                  {vendedores.slice(0, 10).map((vendedor) => {
                   const category = getVendedorCategory(vendedor.total_vendas);
                   return <div key={`${vendedor.nome}-${vendedor.posicao}`} className="h-full flex items-center justify-between p-6 rounded-lg bg-card border border-border shadow-lg">
                         <div className="flex items-center space-x-4">
                            {/* Foto do vendedor com borda colorida */}
                           <div className="relative">
-                            {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-32 h-32 rounded-full object-cover border-4 ${category.border} shadow-md`} onError={e => {
+                            {vendedor.foto_perfil_url ? <img src={vendedor.foto_perfil_url} alt={`Foto de ${vendedor.nome}`} className={`w-32 h-32 rounded-full object-cover border-4 ${category.border} shadow-md`} onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';
                           (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
                         }} /> : null}
@@ -363,7 +363,7 @@ export default function TvDashboard() {
                           </div>
                           <div className="text-lg text-muted-foreground mt-2 space-y-1">
                             <div>{vendedor.numero_vendas} vendas realizadas</div>
-                            <div>{whatsappStats.find(w => w.nome === vendedor.nome)?.total_clicks || 0} leads WhatsApp</div>
+                            <div>{whatsappStats.find((w) => w.nome === vendedor.nome)?.total_clicks || 0} leads WhatsApp</div>
                             <div>{autorizadosStats[vendedor.nome] || 0} autorizados</div>
                           </div>
                         </div>
@@ -387,15 +387,15 @@ export default function TvDashboard() {
       
       {/* Progress Bar */}
       <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 w-80">
-        <Progress 
-          value={progress} 
-          className="h-2 bg-white/20 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-primary/80 [&>div]:transition-all [&>div]:duration-100" 
-        />
+        <Progress
+        value={progress}
+        className="h-2 bg-white/20 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-primary/80 [&>div]:transition-all [&>div]:duration-100" />
+
       </div>
       
       {/* Slide Indicators */}
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        {[0, 1].map(index => <button key={index} onClick={() => handleDotClick(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
+        {[0, 1].map((index) => <button key={index} onClick={() => handleDotClick(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
       </div>
     </div>;
 }
