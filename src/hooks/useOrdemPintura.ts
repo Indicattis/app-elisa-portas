@@ -91,7 +91,7 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
           // Buscar linhas do pedido (origem) que têm produto_venda_id para fazer match
           const { data: linhasPedido } = await supabase
             .from('pedido_linhas')
-            .select('nome_produto, produto_venda_id, quantidade, tamanho')
+            .select('id, nome_produto, produto_venda_id, quantidade, tamanho')
             .eq('pedido_id', ordem.pedido_id);
           
           // Processar linhas - usar match sequencial para evitar associações duplicadas
@@ -144,8 +144,8 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
               item: linha.estoque?.nome_produto || linha.item,
               requer_pintura: linha.estoque?.requer_pintura ?? true,
               produto_venda_id: produtoVendaId,
-              largura: linha.largura || produtoVenda?.largura || null,
-              altura: linha.altura || produtoVenda?.altura || null,
+              largura: linha.largura || null,
+              altura: linha.altura || null,
               tamanho: linha.tamanho || linhaOriginal?.tamanho || null
             };
           }) || [];
