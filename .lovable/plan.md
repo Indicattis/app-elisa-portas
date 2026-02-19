@@ -1,49 +1,34 @@
 
+# Corrigir botao de agendar pedido na Gestao da Fabrica
 
-# Remover sistema de checkboxes Sep/Qual/Col dos pedidos
+## Problema
 
-## O que sera removido
+O botao de agendar (CalendarPlus) no PedidoCard abre o modal `AdicionarOrdemCalendarioModal`, que e um modal generico de busca e selecao de ordens no calendario. O correto seria abrir o `AgendarCarregamentoModal`, que permite definir data, hora e responsavel diretamente para a ordem de carregamento do pedido.
 
-O sistema de verificacao com 3 checkboxes (Separacao, Qualidade, Coleta) nas linhas dos pedidos sera completamente eliminado da interface. Os campos continuarao existindo no banco de dados para nao quebrar dados historicos.
+Alem disso, o `pedidoId` nem sequer e armazenado quando o botao e clicado -- ele e recebido no callback mas nunca salvo em estado.
 
-## Arquivos afetados
+## Solucao
 
-### 1. `src/components/pedidos/PedidoLinhasEditor.tsx`
-- Remover a prop `todasOrdensConcluidas` da interface e do componente
-- Remover a coluna de header "Checkboxes" da tabela (linha 883-885)
-- Remover os checkboxes Sep/Qual/Col das linhas (linhas 634-668)
-- Remover a celula vazia condicional (linhas 845-847)
-- Remover o import de `Checkbox` se nao for mais usado
+### Alteracao em `src/pages/direcao/GestaoFabricaDirecao.tsx`
 
-### 2. `src/components/pedidos/PedidoDetails.tsx`
-- Remover a variavel `todosChecksMarcados` e simplificar `podedarBaixa` para depender apenas de `todasOrdensConcluidas`
-- Remover o aviso amarelo que pede para marcar os checkboxes (linhas 149-154)
-- Remover a prop `onAtualizarCheckbox` passada ao `PedidoLinhasEditor`
-- Remover a prop `todasOrdensConcluidas` passada ao `PedidoLinhasEditor`
+1. **Adicionar estado** para armazenar a ordem de carregamento selecionada:
+   - `agendarOrdem: OrdemCarregamento | null`
 
-### 3. `src/pages/PedidoView.tsx`
-- Remover os campos `check_separacao`, `check_qualidade`, `check_coleta` dos dados passados ao PDF
+2. **Alterar `handleAgendarPedido`** para buscar a ordem de carregamento do pedido no banco (`ordens_carregamento` onde `pedido_id = pedidoId`) e abrir o modal correto com essa ordem.
 
-### 4. `src/pages/administrativo/PedidoViewMinimalista.tsx`
-- Remover os campos `check_separacao`, `check_qualidade`, `check_coleta` dos dados de linhas
+3. **Substituir** o componente `AdicionarOrdemCalendarioModal` pelo `AgendarCarregamentoModal`, passando a ordem encontrada e um callback `onConfirm` que atualiza a ordem no banco via `supabase.from('ordens_carregamento').update(...)`.
 
-### 5. `src/utils/pedidoProducaoPDFGenerator.ts`
-- Remover as colunas Sep/Qual/Col da tabela do PDF
-- Remover a interface dos campos de check
-- Remover a logica de cor verde para linhas com todos os checks marcados
+4. **Importar** `AgendarCarregamentoModal` e os tipos necessarios (`OrdemCarregamento`, `AgendarCarregamentoData`).
 
-### 6. `src/hooks/useVendasPedidos.ts`
-- Remover os campos `check_separacao`, `check_qualidade`, `check_coleta` da interface `PedidoLinha`
+### Fluxo corrigido
 
-### 7. `supabase/functions/popular-tiras-pedidos/index.ts`
-- Remover os campos `check_separacao`, `check_qualidade`, `check_coleta` dos inserts (o banco aceita valores default)
+1. Usuario clica no botao CalendarPlus no PedidoCard
+2. Sistema busca a ordem de carregamento do pedido no banco
+3. Abre o `AgendarCarregamentoModal` com os dados da ordem
+4. Usuario preenche data, hora e responsavel
+5. Sistema atualiza a ordem de carregamento no banco
+6. Queries sao invalidadas para refletir a mudanca
 
-### 8. `src/components/cadastro-instalacao/ConfirmarCarregamentoInstalacaoSheet.tsx`
-- Remover referencias ao `check_coleta` -- este componente precisara ser revisado para ver se ainda faz sentido sem o checkbox
+### Observacao
 
-## Resultado
-
-- A condicao para "Dar Baixa" no pedido passara a depender apenas de todas as ordens estarem concluidas
-- As colunas Sep/Qual/Col desaparecerao da tabela e do PDF
-- O fluxo de trabalho ficara mais simples
-
+O modal `AdicionarOrdemCalendarioModal` continuara sendo usado em outros contextos (calendario de expedicao, etc) -- apenas na pagina de Gestao da Fabrica sera substituido pelo modal correto.
