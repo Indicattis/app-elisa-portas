@@ -267,7 +267,7 @@ export default function TvDashboard() {
       align: "center",
       loop: true
     }} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
-        <CarouselContent className="h-screen w-full max-w-[95vw]">
+        <CarouselContent className="h-screen w-[100vw]">
           {/* Slide 1: Faturamento */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
             <div className="h-full flex flex-col items-center justify-center p-6 space-y-6 w-full">
