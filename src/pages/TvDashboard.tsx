@@ -323,7 +323,7 @@ export default function TvDashboard() {
 
           {/* Slide 2: Ranking */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
-            <div className="h-full flex flex-col items-center justify-center p-6 space-y-6 w-full">
+            <div className="h-full flex flex-col items-center justify-center p-6 space-y-6 w-[100vw]">
               {/* Container principal com ranking */}
               <div className="w-full max-w-4xl">
                 {/* Lista de ranking */}
