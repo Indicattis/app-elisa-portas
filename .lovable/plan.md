@@ -1,46 +1,49 @@
 
-# Corrigir exibicao de tamanho e etiquetas nas ordens de pintura
 
-## Problema
+# Remover sistema de checkboxes Sep/Qual/Col dos pedidos
 
-Duas falhas relacionadas na ordem PINT-00089:
+## O que sera removido
 
-1. **Tamanho nao aparece nas linhas**: O campo `tamanho` dos itens (ex: "Meia cana lisa" deveria mostrar 7,66m) nao aparece porque o sistema tenta buscar esse dado da tabela `pedido_linhas`, mas a query nao inclui o campo `id`, quebrando o mecanismo de deduplicacao -- apos o primeiro item encontrado, todos os demais falham.
+O sistema de verificacao com 3 checkboxes (Separacao, Qualidade, Coleta) nas linhas dos pedidos sera completamente eliminado da interface. Os campos continuarao existindo no banco de dados para nao quebrar dados historicos.
 
-2. **Etiqueta mostra tamanho da porta**: Ao imprimir, os campos `largura` e `altura` usam como fallback as dimensoes da **porta** (ex: 7,50m x 4,82m), quando deveriam usar o `tamanho` do material (ex: 7,66m).
+## Arquivos afetados
 
-## Solucao
+### 1. `src/components/pedidos/PedidoLinhasEditor.tsx`
+- Remover a prop `todasOrdensConcluidas` da interface e do componente
+- Remover a coluna de header "Checkboxes" da tabela (linha 883-885)
+- Remover os checkboxes Sep/Qual/Col das linhas (linhas 634-668)
+- Remover a celula vazia condicional (linhas 845-847)
+- Remover o import de `Checkbox` se nao for mais usado
 
-### Alteracao 1: `src/hooks/useOrdemPintura.ts`
+### 2. `src/components/pedidos/PedidoDetails.tsx`
+- Remover a variavel `todosChecksMarcados` e simplificar `podedarBaixa` para depender apenas de `todasOrdensConcluidas`
+- Remover o aviso amarelo que pede para marcar os checkboxes (linhas 149-154)
+- Remover a prop `onAtualizarCheckbox` passada ao `PedidoLinhasEditor`
+- Remover a prop `todasOrdensConcluidas` passada ao `PedidoLinhasEditor`
 
-**Adicionar `id` na query de `pedido_linhas`** (linha 94):
+### 3. `src/pages/PedidoView.tsx`
+- Remover os campos `check_separacao`, `check_qualidade`, `check_coleta` dos dados passados ao PDF
 
-```
-.select('id, nome_produto, produto_venda_id, quantidade, tamanho')
-```
+### 4. `src/pages/administrativo/PedidoViewMinimalista.tsx`
+- Remover os campos `check_separacao`, `check_qualidade`, `check_coleta` dos dados de linhas
 
-Isso corrige o mecanismo de deduplicacao que usa `lp.id` para evitar reutilizar linhas ja associadas.
+### 5. `src/utils/pedidoProducaoPDFGenerator.ts`
+- Remover as colunas Sep/Qual/Col da tabela do PDF
+- Remover a interface dos campos de check
+- Remover a logica de cor verde para linhas com todos os checks marcados
 
-### Alteracao 2: `src/hooks/useOrdemPintura.ts`
+### 6. `src/hooks/useVendasPedidos.ts`
+- Remover os campos `check_separacao`, `check_qualidade`, `check_coleta` da interface `PedidoLinha`
 
-**Remover fallback de largura/altura para dimensoes da porta** (linhas 147-148):
+### 7. `supabase/functions/popular-tiras-pedidos/index.ts`
+- Remover os campos `check_separacao`, `check_qualidade`, `check_coleta` dos inserts (o banco aceita valores default)
 
-Manter `largura` e `altura` somente quando vierem da propria `linhas_ordens`, sem usar `produtoVenda?.largura/altura` como fallback. As dimensoes da porta devem ficar apenas no cabecalho do grupo, nao nos itens individuais.
+### 8. `src/components/cadastro-instalacao/ConfirmarCarregamentoInstalacaoSheet.tsx`
+- Remover referencias ao `check_coleta` -- este componente precisara ser revisado para ver se ainda faz sentido sem o checkbox
 
-De:
-```typescript
-largura: linha.largura || produtoVenda?.largura || null,
-altura: linha.altura || produtoVenda?.altura || null,
-```
+## Resultado
 
-Para:
-```typescript
-largura: linha.largura || null,
-altura: linha.altura || null,
-```
+- A condicao para "Dar Baixa" no pedido passara a depender apenas de todas as ordens estarem concluidas
+- As colunas Sep/Qual/Col desaparecerao da tabela e do PDF
+- O fluxo de trabalho ficara mais simples
 
-### Resultado esperado
-
-- O tamanho "7,66m" aparecera ao lado da quantidade nas linhas da ordem de pintura
-- As etiquetas impressas mostrarao o tamanho do material (7,66m) em vez das dimensoes da porta
-- O cabecalho do grupo continua mostrando as dimensoes da porta normalmente
