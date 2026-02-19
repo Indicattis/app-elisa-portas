@@ -411,7 +411,7 @@ export default function PedidoViewMinimalista() {
       pedido: { id: pedido.id, numero_pedido: pedido.numero_pedido, etapa_atual: pedido.etapa_atual, status: pedido.status, created_at: pedido.created_at },
       cliente: pedido.venda ? { nome: pedido.venda.cliente_nome, cidade: pedido.venda.cidade, estado: pedido.venda.estado, valor_venda: pedido.venda.valor_venda, forma_pagamento: pedido.venda.forma_pagamento, tipo_entrega: pedido.venda.tipo_entrega, data_prevista_entrega: pedido.venda.data_prevista_entrega } : undefined,
       produtos: (pedido.venda?.produtos || []).map((p: any) => ({ tipo_produto: p.tipo_produto, descricao: p.descricao, tamanho: p.tamanho, cor: p.cor?.nome, quantidade: p.quantidade || 1, peso: calcularPeso(p), meiaCanas: calcularMeiaCanas(p) })),
-      linhas: pedido.linhas.map((l: any) => ({ nome_produto: l.nome_produto, descricao_produto: l.descricao_produto, quantidade: l.quantidade, tamanho: l.tamanho, check_separacao: l.check_separacao, check_qualidade: l.check_qualidade, check_coleta: l.check_coleta })),
+      linhas: pedido.linhas.map((l: any) => ({ nome_produto: l.nome_produto, descricao_produto: l.descricao_produto, quantidade: l.quantidade, tamanho: l.tamanho })),
       observacoes: observacoesData,
       ordens: pedido.ordens.map((o: any) => ({ tipo: o.tipo, numero_ordem: o.numero_ordem, status: o.status })),
     };
@@ -745,12 +745,10 @@ export default function PedidoViewMinimalista() {
             <PedidoLinhasEditor
               linhas={pedido.linhas}
               isReadOnly={!podeEditarLinhas || !modoEdicao}
-              todasOrdensConcluidas={todasOrdensConcluidas}
               vendaId={pedido.venda_id}
               temPortasEnrolar={portasEnrolar.length > 0}
               onAdicionarLinha={adicionarLinha}
               onRemoverLinha={removerLinha}
-              onAtualizarCheckbox={async (linhaId: string, campo: string, valor: boolean) => { await atualizarCheckbox({ linhaId, campo, valor }); }}
               onAtualizarLinha={(linhaId: string, campo: 'quantidade' | 'tamanho', valor: number | string) => {
                 setLinhasEditadas(prev => {
                   const novoMapa = new Map(prev);

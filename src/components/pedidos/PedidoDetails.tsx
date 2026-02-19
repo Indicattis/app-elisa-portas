@@ -13,7 +13,6 @@ interface PedidoDetailsProps {
   ordens: any[];
   onAdicionarLinha: (linha: any) => Promise<any>;
   onRemoverLinha: (linhaId: string) => Promise<void>;
-  onAtualizarCheckbox: (linhaId: string, campo: string, valor: boolean) => Promise<void>;
   onConfirmarPreenchimento: () => Promise<void>;
   onGerarOrdens: (tipos: string[]) => Promise<void>;
   onConcluirOrdem: (ordemId: string, tipo: string) => Promise<void>;
@@ -26,7 +25,6 @@ export const PedidoDetails = ({
   ordens,
   onAdicionarLinha,
   onRemoverLinha,
-  onAtualizarCheckbox,
   onConfirmarPreenchimento,
   onGerarOrdens,
   onConcluirOrdem,
@@ -37,10 +35,7 @@ export const PedidoDetails = ({
   const isPreenchido = pedido.status_preenchimento === "preenchido";
   const temLinhas = pedido.pedido_linhas && pedido.pedido_linhas.length > 0;
   const todasOrdensConcluidas = ordens.length > 0 && ordens.every((o) => o.status === "concluido");
-  const todosChecksMarcados = pedido.pedido_linhas?.every(
-    (l) => l.check_separacao && l.check_qualidade && l.check_coleta
-  ) || false;
-  const podedarBaixa = todasOrdensConcluidas && todosChecksMarcados && pedido.status !== "concluido";
+  const podedarBaixa = todasOrdensConcluidas && pedido.status !== "concluido";
 
   return (
     <div className="space-y-4">
@@ -94,13 +89,11 @@ export const PedidoDetails = ({
               Produtos do Pedido
             </h3>
             
-            <PedidoLinhasEditor
+             <PedidoLinhasEditor
               linhas={pedido.pedido_linhas as unknown as PedidoLinhaCompleta[] || []}
               isReadOnly={isPreenchido}
-              todasOrdensConcluidas={todasOrdensConcluidas}
               onAdicionarLinha={onAdicionarLinha}
               onRemoverLinha={onRemoverLinha}
-              onAtualizarCheckbox={onAtualizarCheckbox}
             />
 
             {isPendente && temLinhas && (
@@ -144,14 +137,6 @@ export const PedidoDetails = ({
                   <CheckCircle2 className="h-5 w-5 mr-2" />
                   Dar Baixa no Pedido
                 </Button>
-              )}
-
-              {!podedarBaixa && todasOrdensConcluidas && (
-                <Card className="p-4 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
-                  <p className="text-sm text-amber-800 dark:text-amber-200">
-                    ⚠️ Para dar baixa no pedido, marque todos os checkboxes de Separação, Qualidade e Coleta nas linhas do pedido acima.
-                  </p>
-                </Card>
               )}
 
               {!todasOrdensConcluidas && (

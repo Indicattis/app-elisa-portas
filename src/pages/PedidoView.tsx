@@ -615,9 +615,6 @@ export default function PedidoView() {
         descricao_produto: l.descricao_produto,
         quantidade: l.quantidade,
         tamanho: l.tamanho,
-        check_separacao: l.check_separacao,
-        check_qualidade: l.check_qualidade,
-        check_coleta: l.check_coleta,
       })),
       observacoes: observacoesData,
       ordens: pedido.ordens.map((o: any) => ({
@@ -1084,14 +1081,10 @@ export default function PedidoView() {
           <PedidoLinhasEditor
             linhas={pedido.linhas}
             isReadOnly={!isAberto || !modoEdicao}
-            todasOrdensConcluidas={todasOrdensConcluidas}
             vendaId={pedido.venda_id}
             temPortasEnrolar={portasEnrolar.length > 0}
             onAdicionarLinha={adicionarLinha}
             onRemoverLinha={removerLinha}
-            onAtualizarCheckbox={async (linhaId: string, campo: string, valor: boolean) => {
-              await atualizarCheckbox({ linhaId, campo, valor });
-            }}
             onAtualizarLinha={(linhaId: string, campo: 'quantidade' | 'tamanho', valor: number | string) => {
               setLinhasEditadas(prev => {
                 const novoMapa = new Map(prev);

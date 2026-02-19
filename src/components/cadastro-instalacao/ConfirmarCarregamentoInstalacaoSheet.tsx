@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { PackageCheck, Loader2, Calendar } from "lucide-react";
@@ -26,33 +25,18 @@ export function ConfirmarCarregamentoInstalacaoSheet({
   onOpenChange,
   onSuccess,
 }: ConfirmarCarregamentoInstalacaoSheetProps) {
-  const { linhas, isLoading, atualizarCheckbox } = usePedidoLinhas(instalacao?.pedido_id || "");
+  const { linhas, isLoading } = usePedidoLinhas(instalacao?.pedido_id || "");
   const { concluirInstalacao } = useInstalacoesCadastradas();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dataCarregamento, setDataCarregamento] = useState<string>(format(new Date(), "yyyy-MM-dd"));
 
-  const todasMarcadas = linhas?.every((linha) => linha.check_coleta) || false;
   const totalLinhas = linhas?.length || 0;
-  const linhasMarcadas = linhas?.filter((linha) => linha.check_coleta).length || 0;
-
-  const handleCheckboxChange = async (linhaId: string, checked: boolean) => {
-    try {
-      await atualizarCheckbox({
-        linhaId,
-        campo: "check_coleta",
-        valor: checked,
-      });
-    } catch (error) {
-      console.error("Erro ao atualizar checkbox:", error);
-      toast.error("Erro ao marcar item");
-    }
-  };
 
   const handleConcluir = async () => {
     console.log('[Carregamento Instalação] Iniciando conclusão...');
     
-    if (!todasMarcadas) {
-      toast.error("Todos os itens devem ser marcados antes de concluir");
+    if (totalLinhas === 0) {
+      toast.error("Nenhum item encontrado no pedido");
       return;
     }
 
@@ -129,10 +113,8 @@ export function ConfirmarCarregamentoInstalacaoSheet({
               <span className="font-medium">{instalacao.pedido?.numero_pedido || "N/A"}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Progresso:</span>
-              <span className="font-medium">
-                {linhasMarcadas} de {totalLinhas} itens
-              </span>
+              <span className="text-muted-foreground">Total de itens:</span>
+              <span className="font-medium">{totalLinhas}</span>
             </div>
           </div>
 
@@ -156,7 +138,7 @@ export function ConfirmarCarregamentoInstalacaoSheet({
 
           <div className="space-y-2">
             <h3 className="text-sm font-medium">
-              Marque os itens conforme forem carregados:
+              Itens do pedido:
             </h3>
 
             {isLoading ? (
@@ -169,22 +151,12 @@ export function ConfirmarCarregamentoInstalacaoSheet({
                   {linhas.map((linha, index) => (
                     <div
                       key={linha.id}
-                      className="flex items-start gap-3 rounded-lg border p-3 hover:bg-accent/50 transition-colors"
+                      className="flex items-start gap-3 rounded-lg border p-3"
                     >
-                      <Checkbox
-                        checked={linha.check_coleta || false}
-                        onCheckedChange={(checked) =>
-                          handleCheckboxChange(linha.id, checked as boolean)
-                        }
-                        id={`linha-${linha.id}`}
-                      />
                       <div className="flex-1 space-y-1">
-                        <label
-                          htmlFor={`linha-${linha.id}`}
-                          className="text-sm font-medium leading-none cursor-pointer"
-                        >
+                        <p className="text-sm font-medium leading-none">
                           {index + 1}. {linha.nome_produto || linha.descricao_produto || "Item"}
-                        </label>
+                        </p>
                         <div className="flex gap-4 text-xs text-muted-foreground">
                           <span>Qtd: {linha.quantidade || 1}</span>
                           {linha.tamanho && <span>Tamanho: {linha.tamanho}</span>}
@@ -201,15 +173,6 @@ export function ConfirmarCarregamentoInstalacaoSheet({
             )}
           </div>
 
-          {!todasMarcadas && totalLinhas > 0 && (
-            <div className="flex items-start gap-2 rounded-md bg-warning/10 border border-warning p-3">
-              <span className="text-warning">⚠</span>
-              <p className="text-sm text-warning">
-                Marque todos os itens antes de concluir o carregamento
-              </p>
-            </div>
-          )}
-
           <div className="flex gap-2 pt-4">
             <Button
               variant="outline"
@@ -222,7 +185,7 @@ export function ConfirmarCarregamentoInstalacaoSheet({
             <Button
               className="flex-1"
               onClick={handleConcluir}
-              disabled={!todasMarcadas || !dataCarregamento || isSubmitting || totalLinhas === 0}
+              disabled={!dataCarregamento || isSubmitting || totalLinhas === 0}
             >
               {isSubmitting ? (
                 <>

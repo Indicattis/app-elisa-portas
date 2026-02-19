@@ -12,9 +12,6 @@ export interface PedidoLinha {
   quantidade: number;
   ordem: number;
   tamanho: string | null;
-  check_separacao: boolean;
-  check_qualidade: boolean;
-  check_coleta: boolean;
 }
 
 export interface PedidoLinhaNova {
