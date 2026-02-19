@@ -1,53 +1,46 @@
 
-# Corrigir contagem de etiquetas no modal "Imprimir Todas"
+# Corrigir exibicao de tamanho e etiquetas nas ordens de pintura
 
 ## Problema
 
-O modal de "Imprimir Etiquetas" busca dados da tabela `pedido_linhas` (todas as 30 linhas do pedido), mas a ordem de separacao OSE-2026-0052 tem apenas 20 linhas na tabela `linhas_ordens`. O modal deveria mostrar apenas as linhas da ordem especifica, nao todas as linhas do pedido.
+Duas falhas relacionadas na ordem PINT-00089:
+
+1. **Tamanho nao aparece nas linhas**: O campo `tamanho` dos itens (ex: "Meia cana lisa" deveria mostrar 7,66m) nao aparece porque o sistema tenta buscar esse dado da tabela `pedido_linhas`, mas a query nao inclui o campo `id`, quebrando o mecanismo de deduplicacao -- apos o primeiro item encontrado, todos os demais falham.
+
+2. **Etiqueta mostra tamanho da porta**: Ao imprimir, os campos `largura` e `altura` usam como fallback as dimensoes da **porta** (ex: 7,50m x 4,82m), quando deveriam usar o `tamanho` do material (ex: 7,66m).
 
 ## Solucao
 
-Modificar o `ImprimirEtiquetasModal` para aceitar opcionalmente um `ordemId` e, quando fornecido, buscar as linhas de `linhas_ordens` em vez de `pedido_linhas`.
+### Alteracao 1: `src/hooks/useOrdemPintura.ts`
 
-### Alteracoes
+**Adicionar `id` na query de `pedido_linhas`** (linha 94):
 
-**Arquivo 1: `src/components/ordens/ImprimirEtiquetasModal.tsx`**
-
-1. Adicionar props opcionais `ordemId` na interface
-2. Quando `ordemId` estiver presente, buscar de `linhas_ordens` filtrando por `ordem_id` e `tipo_ordem`, mapeando os campos (`item` -> `nome_produto`, etc.)
-3. Quando `ordemId` nao estiver presente, manter o comportamento atual (buscar de `pedido_linhas`) -- para uso em outros contextos como `OrdensAccordion`
-
-**Arquivo 2: `src/components/production/OrdemDetalhesSheet.tsx`**
-
-1. Passar `ordemId={ordem.id}` ao `ImprimirEtiquetasModal`
-
-### Detalhes tecnicos
-
-Na query condicional dentro do modal:
-
-```typescript
-// Se ordemId fornecido, buscar linhas da ordem especifica
-if (ordemId) {
-  const { data, error } = await supabase
-    .from('linhas_ordens')
-    .select('id, item, quantidade, largura, altura, tamanho, estoque:estoque_id(nome_produto)')
-    .eq('ordem_id', ordemId)
-    .eq('tipo_ordem', tipoOrdem)
-    .order('created_at', { ascending: true });
-
-  // Mapear para LinhaItem
-  return data.map(l => ({
-    id: l.id,
-    nome_produto: l.estoque?.nome_produto || l.item,
-    descricao_produto: l.item,
-    quantidade: l.quantidade,
-    largura: l.largura,
-    altura: l.altura,
-    tamanho: l.tamanho,
-  }));
-}
-
-// Senao, buscar todas as linhas do pedido (comportamento atual)
+```
+.select('id, nome_produto, produto_venda_id, quantidade, tamanho')
 ```
 
-Isso garante que o botao "Imprimir Todas" mostre exatamente as 20 etiquetas da ordem de separacao, e nao as 30 do pedido inteiro.
+Isso corrige o mecanismo de deduplicacao que usa `lp.id` para evitar reutilizar linhas ja associadas.
+
+### Alteracao 2: `src/hooks/useOrdemPintura.ts`
+
+**Remover fallback de largura/altura para dimensoes da porta** (linhas 147-148):
+
+Manter `largura` e `altura` somente quando vierem da propria `linhas_ordens`, sem usar `produtoVenda?.largura/altura` como fallback. As dimensoes da porta devem ficar apenas no cabecalho do grupo, nao nos itens individuais.
+
+De:
+```typescript
+largura: linha.largura || produtoVenda?.largura || null,
+altura: linha.altura || produtoVenda?.altura || null,
+```
+
+Para:
+```typescript
+largura: linha.largura || null,
+altura: linha.altura || null,
+```
+
+### Resultado esperado
+
+- O tamanho "7,66m" aparecera ao lado da quantidade nas linhas da ordem de pintura
+- As etiquetas impressas mostrarao o tamanho do material (7,66m) em vez das dimensoes da porta
+- O cabecalho do grupo continua mostrando as dimensoes da porta normalmente
