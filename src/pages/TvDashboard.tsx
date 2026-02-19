@@ -267,7 +267,7 @@ export default function TvDashboard() {
       align: "center",
       loop: true
     }} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
-        <CarouselContent className="h-[80vh] w-full max-w-[95vw]">
+        <CarouselContent className="h-screen w-full max-w-[95vw]">
           {/* Slide 1: Faturamento */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
             <div className="h-full flex flex-col items-center justify-center p-6 space-y-6 w-full">
@@ -298,44 +298,6 @@ export default function TvDashboard() {
                     }).format(totalVendasMes)}
                     </div>}
                 </div>
-                </div>
-              </div>
-
-              {/* Meta do Trimestre e Barra de Progresso */}
-              <div className="w-full max-w-4xl space-y-4">
-                <div className="text-center space-y-2">
-                  <h2 className="text-2xl font-bold">META GÊNESIS</h2>
-                  <div className="text-lg text-muted-foreground">
-                    Faturamento Acumulado: {' '}
-                    <span className="text-[#f0e0aa] font-bold">
-                      {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0
-                    }).format(totalVendasTrimestre)}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="bg-transparent ">
-                  <div className="space-y-3">
-                    <Progress value={progressoMeta} className="h-6 bg-black/30 [&>div]:bg-gradient-to-r [&>div]:from-[#6d5e32] [&>div]:to-[#f0e0aa]" />
-                    <div className="flex justify-between text-white font-semibold">
-                      <span>{progressoMeta.toFixed(1)}% da meta</span>
-                      <span className="text-red-400 text-2xl font-bold">
-                        Faltam: {new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                      }).format(faltaParaMeta)}
-                      </span>
-                    </div>
-                    <div className="text-center text-white/90 text-sm">
-                      Meta: R$ 3.000.000
-                    </div>
-                  </div>
                 </div>
               </div>
 
