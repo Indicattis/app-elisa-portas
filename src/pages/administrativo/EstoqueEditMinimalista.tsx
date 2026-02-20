@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,7 @@ export default function EstoqueEditMinimalista() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { editarProduto, excluirProduto, buscarMovimentacoes } = useEstoque();
   const { categorias } = useCategorias();
   const { subcategorias } = useSubcategorias();
@@ -85,7 +86,7 @@ export default function EstoqueEditMinimalista() {
   });
 
   useEffect(() => {
-    if (produto) {
+    if (produto && !dadosCarregados) {
       const newFormData = {
         nome_produto: produto.nome_produto || "",
         descricao_produto: produto.descricao_produto || "",
@@ -100,7 +101,7 @@ export default function EstoqueEditMinimalista() {
       setFormData(newFormData);
       setDadosCarregados(true);
     }
-  }, [produto]);
+  }, [produto, dadosCarregados]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,12 +114,13 @@ export default function EstoqueEditMinimalista() {
         setor_responsavel_producao: (formData.setor_responsavel_producao || null) as 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null,
         requer_pintura: formData.requer_pintura,
         modulo_calculo: (formData.modulo_calculo || null) as 'acrescimo' | 'desconto' | null,
-        valor_calculo: formData.valor_calculo || null,
+        valor_calculo: formData.valor_calculo != null ? formData.valor_calculo : null,
         eixo_calculo: (formData.eixo_calculo || null) as 'largura' | 'altura' | null,
         item_padrao_porta_enrolar: formData.item_padrao_porta_enrolar,
       };
       
       await editarProduto(dadosParaSalvar);
+      queryClient.invalidateQueries({ queryKey: ["produto", id] });
 
       toast({
         title: "Produto atualizado",
