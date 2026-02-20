@@ -2137,6 +2137,9 @@ export type Database = {
           ordem: number
           peso_porta: number | null
           pontuacao_producao: number | null
+          qtd_eixo_calculo: string | null
+          qtd_operador: string | null
+          qtd_valor_calculo: number | null
           quantidade: number
           quantidade_ideal: number | null
           quantidade_maxima: number | null
@@ -2168,6 +2171,9 @@ export type Database = {
           ordem?: number
           peso_porta?: number | null
           pontuacao_producao?: number | null
+          qtd_eixo_calculo?: string | null
+          qtd_operador?: string | null
+          qtd_valor_calculo?: number | null
           quantidade?: number
           quantidade_ideal?: number | null
           quantidade_maxima?: number | null
@@ -2199,6 +2205,9 @@ export type Database = {
           ordem?: number
           peso_porta?: number | null
           pontuacao_producao?: number | null
+          qtd_eixo_calculo?: string | null
+          qtd_operador?: string | null
+          qtd_valor_calculo?: number | null
           quantidade?: number
           quantidade_ideal?: number | null
           quantidade_maxima?: number | null

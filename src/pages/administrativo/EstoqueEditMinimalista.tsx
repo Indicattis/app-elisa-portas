@@ -51,6 +51,9 @@ export default function EstoqueEditMinimalista() {
     eixo_calculo: string;
     item_padrao_porta_enrolar: boolean;
     quantidade_padrao: number;
+    qtd_eixo_calculo: string;
+    qtd_operador: string;
+    qtd_valor_calculo: number;
   }>({
     nome_produto: "",
     descricao_produto: "",
@@ -61,6 +64,9 @@ export default function EstoqueEditMinimalista() {
     eixo_calculo: "",
     item_padrao_porta_enrolar: false,
     quantidade_padrao: 1,
+    qtd_eixo_calculo: "",
+    qtd_operador: "",
+    qtd_valor_calculo: 0,
   });
 
   const [dadosCarregados, setDadosCarregados] = useState(false);
@@ -99,6 +105,9 @@ export default function EstoqueEditMinimalista() {
         eixo_calculo: produto.eixo_calculo || "",
         item_padrao_porta_enrolar: produto.item_padrao_porta_enrolar === true,
         quantidade_padrao: (produto as any).quantidade_padrao ?? 1,
+        qtd_eixo_calculo: (produto as any).qtd_eixo_calculo || "",
+        qtd_operador: (produto as any).qtd_operador || "",
+        qtd_valor_calculo: Number((produto as any).qtd_valor_calculo) || 0,
       };
       
       setFormData(newFormData);
@@ -121,6 +130,9 @@ export default function EstoqueEditMinimalista() {
         eixo_calculo: (formData.eixo_calculo || null) as 'largura' | 'altura' | null,
         item_padrao_porta_enrolar: formData.item_padrao_porta_enrolar,
         quantidade_padrao: formData.quantidade_padrao,
+        qtd_eixo_calculo: (formData.qtd_eixo_calculo || null) as 'largura' | 'altura' | null,
+        qtd_operador: (formData.qtd_operador || null) as 'multiplicar' | 'dividir' | 'somar' | 'subtrair' | null,
+        qtd_valor_calculo: formData.qtd_valor_calculo || null,
       };
       
       await editarProduto(dadosParaSalvar);
@@ -315,6 +327,84 @@ export default function EstoqueEditMinimalista() {
                   className="bg-white/5 border-white/10 text-white w-32"
                 />
                 <p className="text-xs text-white/40">Quantidade inserida automaticamente ao adicionar este item a um pedido</p>
+              </div>
+
+              {/* Cálculo automático de quantidade */}
+              <div className="space-y-4 pt-3 border-t border-white/10">
+                <div>
+                  <h5 className="font-medium text-white text-sm">Cálculo automático de quantidade</h5>
+                  <p className="text-xs text-white/40 mt-1">
+                    Quando configurado, a quantidade será calculada com base nas dimensões da porta ao inserir o item no pedido. Se não configurado, será usada a quantidade padrão acima.
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="qtd_eixo_calculo" className="text-white/80">Eixo</Label>
+                    <Select
+                      value={formData.qtd_eixo_calculo || undefined}
+                      onValueChange={(value) => setFormData({ ...formData, qtd_eixo_calculo: value })}
+                    >
+                      <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                        <SelectValue placeholder="Selecione o eixo" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-white/10">
+                        <SelectItem value="largura">Largura</SelectItem>
+                        <SelectItem value="altura">Altura</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="qtd_operador" className="text-white/80">Operador</Label>
+                    <Select
+                      value={formData.qtd_operador || undefined}
+                      onValueChange={(value) => setFormData({ ...formData, qtd_operador: value })}
+                    >
+                      <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-white/10">
+                        <SelectItem value="multiplicar">Multiplicar</SelectItem>
+                        <SelectItem value="dividir">Dividir</SelectItem>
+                        <SelectItem value="somar">Somar</SelectItem>
+                        <SelectItem value="subtrair">Subtrair</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="qtd_valor_calculo" className="text-white/80">Valor</Label>
+                    <Input
+                      id="qtd_valor_calculo"
+                      type="number"
+                      step="0.01"
+                      value={formData.qtd_valor_calculo}
+                      onChange={(e) => setFormData({ ...formData, qtd_valor_calculo: parseFloat(e.target.value) || 0 })}
+                      placeholder="Ex: 0.10"
+                      className="bg-white/5 border-white/10 text-white"
+                    />
+                  </div>
+                </div>
+
+                {formData.qtd_eixo_calculo && formData.qtd_operador && formData.qtd_valor_calculo ? (
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <p className="text-xs text-blue-300">
+                      Fórmula: {formData.qtd_eixo_calculo === 'largura' ? 'Largura' : 'Altura'} da porta{' '}
+                      {formData.qtd_operador === 'multiplicar' ? '×' : formData.qtd_operador === 'dividir' ? '÷' : formData.qtd_operador === 'somar' ? '+' : '−'}{' '}
+                      {formData.qtd_valor_calculo} → arredondado para cima
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-7 text-xs"
+                      onClick={() => setFormData({ ...formData, qtd_eixo_calculo: "", qtd_operador: "", qtd_valor_calculo: 0 })}
+                    >
+                      Limpar
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             </div>
 
