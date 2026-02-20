@@ -14,7 +14,7 @@ import type { CategoriaLinha, PedidoLinhaNova } from "@/hooks/usePedidoLinhas";
 interface AdicionarLinhaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  categoria: CategoriaLinha;
+  categoria?: CategoriaLinha;
   portaId: string;
   indicePorta?: number;
   onAdicionar: (linha: PedidoLinhaNova) => Promise<any>;
@@ -27,6 +27,14 @@ const CATEGORIA_TO_SETOR: Record<CategoriaLinha, 'perfiladeira' | 'soldagem' | '
   separacao: 'separacao',
   solda: 'soldagem',
   perfiladeira: 'perfiladeira',
+};
+
+// Mapeamento inverso: setor para categoria
+const SETOR_TO_CATEGORIA: Record<string, CategoriaLinha> = {
+  perfiladeira: 'perfiladeira',
+  soldagem: 'solda',
+  separacao: 'separacao',
+  pintura: 'separacao',
 };
 
 const CATEGORIA_LABELS = {
@@ -111,11 +119,11 @@ export function AdicionarLinhaModal({
     descricao_produto: "",
     quantidade: 1,
     tamanho: "",
-    categoria_linha: categoria,
+    categoria_linha: categoria || 'separacao',
   });
 
-  // Filtrar produtos pelo setor responsável pela categoria
-  const setorFiltro = CATEGORIA_TO_SETOR[categoria];
+  // Filtrar produtos pelo setor responsável pela categoria (ou todos se categoria não fornecida)
+  const setorFiltro = categoria ? CATEGORIA_TO_SETOR[categoria] : null;
   const { produtos, buscarProdutos } = useEstoque(busca, setorFiltro);
 
   const handleBuscar = (termo: string) => {
@@ -127,6 +135,9 @@ export function AdicionarLinhaModal({
     const tamanhoAuto = calcularTamanhoAutomatico(produto, portaLargura, portaAltura);
     const qtdAuto = calcularQuantidadeAutomatica(produto, portaLargura, portaAltura);
     
+    // Determinar categoria: usar a fornecida ou derivar do setor do produto
+    const categoriaLinha = categoria || SETOR_TO_CATEGORIA[produto.setor_responsavel_producao || ''] || 'separacao';
+    
     const linha: PedidoLinhaNova = {
       produto_venda_id: portaId,
       indice_porta: indicePorta,
@@ -135,7 +146,7 @@ export function AdicionarLinhaModal({
       quantidade: qtdAuto ?? produto.quantidade_padrao ?? 1,
       tamanho: tamanhoAuto || "",
       estoque_id: produto.id,
-      categoria_linha: categoria,
+      categoria_linha: categoriaLinha,
     };
 
     setAdicionando(true);
@@ -184,7 +195,7 @@ export function AdicionarLinhaModal({
         descricao_produto: "",
         quantidade: 1,
         tamanho: "",
-        categoria_linha: categoria,
+        categoria_linha: categoria || 'separacao',
       });
     }
   }, [open, portaId, indicePorta, categoria]);
@@ -193,7 +204,7 @@ export function AdicionarLinhaModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle className="text-base">Adicionar Item - {CATEGORIA_LABELS[categoria]}</DialogTitle>
+          <DialogTitle className="text-base">Adicionar Item{categoria ? ` - ${CATEGORIA_LABELS[categoria]}` : ''}</DialogTitle>
         </DialogHeader>
 
         {!modoManual ? (
