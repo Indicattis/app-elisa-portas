@@ -2140,6 +2140,7 @@ export type Database = {
           quantidade: number
           quantidade_ideal: number | null
           quantidade_maxima: number | null
+          quantidade_padrao: number | null
           requer_pintura: boolean | null
           setor_responsavel_producao:
             | Database["public"]["Enums"]["setor_producao"]
@@ -2170,6 +2171,7 @@ export type Database = {
           quantidade?: number
           quantidade_ideal?: number | null
           quantidade_maxima?: number | null
+          quantidade_padrao?: number | null
           requer_pintura?: boolean | null
           setor_responsavel_producao?:
             | Database["public"]["Enums"]["setor_producao"]
@@ -2200,6 +2202,7 @@ export type Database = {
           quantidade?: number
           quantidade_ideal?: number | null
           quantidade_maxima?: number | null
+          quantidade_padrao?: number | null
           requer_pintura?: boolean | null
           setor_responsavel_producao?:
             | Database["public"]["Enums"]["setor_producao"]

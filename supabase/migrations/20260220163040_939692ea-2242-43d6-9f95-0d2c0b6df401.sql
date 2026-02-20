@@ -1,0 +1,1 @@
+ALTER TABLE public.estoque ADD COLUMN quantidade_padrao integer DEFAULT 1;
