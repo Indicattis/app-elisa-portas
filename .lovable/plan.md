@@ -1,41 +1,55 @@
 
-# Detalhes da Ordem no Historico de Producao
+
+# Adicionar Tags de Fidelizado e Parceiro nos Clientes
 
 ## O que muda
 
-Ao clicar em uma ordem na pagina `/producao/meu-historico`, abrira um painel lateral (Sheet) mostrando:
-- Informacoes do pedido (numero, cliente, observacoes, data de entrega, endereco)
-- Lista de itens/linhas da ordem com detalhes (produto, quantidade, tamanho, dimensoes, status)
+Dois novos marcadores visuais nos clientes:
+- Estrela preenchida = Cliente Fidelizado
+- Triangulo preenchido = Parceiro
+
+Esses marcadores aparecerao na coluna "Tag" da tabela em `/direcao/vendas/clientes` e poderao ser configurados na criacao e edicao de clientes.
 
 ## Alteracoes
 
-### 1. Novo componente: `src/components/production/HistoricoOrdemDetalhesSheet.tsx`
+### 1. Migracao de banco de dados
 
-Um Sheet simplificado e somente-leitura com:
-- Header: numero da ordem, setor (badge colorido), tempo de conclusao
-- Secao "Pedido": numero do pedido, cliente, data de entrega, endereco, observacoes (buscado de `pedidos_producao` via query)
-- Secao "Itens": lista de linhas da ordem usando o hook `useLinhasOrdem` ja existente, mostrando nome do produto, quantidade, tamanho, dimensoes (largura x altura) e status (concluida/com problema)
+Adicionar duas colunas booleanas na tabela `clientes`:
 
-Dados buscados:
-- Linhas: reutiliza `useLinhasOrdem(ordemId, setor)` que ja existe
-- Pedido: query simples ao `pedidos_producao` pelo `pedido_id` da ordem, trazendo `numero_pedido`, `cliente_nome`, `cliente_telefone`, `data_entrega`, `endereco_rua`, `endereco_numero`, `endereco_bairro`, `endereco_cidade`, `observacoes`
-
-### 2. Alteracao em `src/pages/ProducaoMeuHistorico.tsx`
-
-- Adicionar estado `ordemSelecionada` (armazena a ordem clicada ou `null`)
-- Tornar cada item da lista clicavel (cursor pointer, onClick para setar a ordem selecionada)
-- Renderizar o `HistoricoOrdemDetalhesSheet` passando a ordem selecionada
-
-```
-Fluxo:
-  Usuario clica na ordem
-    -> setOrdemSelecionada(ordem)
-    -> Sheet abre
-    -> useLinhasOrdem busca as linhas
-    -> useQuery busca dados do pedido
-    -> Exibe tudo no Sheet
+```text
+ALTER TABLE clientes ADD COLUMN fidelizado boolean DEFAULT false;
+ALTER TABLE clientes ADD COLUMN parceiro boolean DEFAULT false;
 ```
 
-### 3. Nenhuma alteracao nos hooks existentes
+### 2. Hook `src/hooks/useClientes.ts`
 
-O `useLinhasOrdem` ja aceita `ordemId` e `tipoOrdem` (que corresponde ao setor). O `useMeuHistoricoProducao` ja retorna `pedido_id` e `setor` necessarios.
+- Adicionar `fidelizado` e `parceiro` na interface `Cliente`
+- Adicionar `fidelizado` e `parceiro` na interface `ClienteFormData`
+
+### 3. Formulario `src/components/clientes/ClienteForm.tsx`
+
+- Adicionar `fidelizado` e `parceiro` ao schema zod (booleanos opcionais)
+- Adicionar dois checkboxes no formulario (ao lado do campo "Tipo de Cliente"), usando o componente Checkbox ja disponivel:
+  - "Cliente Fidelizado" (com icone de estrela)
+  - "Parceiro" (com icone de triangulo)
+
+### 4. Pagina `src/pages/direcao/ClientesDirecao.tsx`
+
+- Na coluna `tag` do `renderCell`, alem do badge CE/CR existente, renderizar:
+  - Icone `Star` preenchido (fill="currentColor") em dourado quando `cliente.fidelizado === true`
+  - Icone `Triangle` preenchido (fill="currentColor") em roxo quando `cliente.parceiro === true`
+- Os icones aparecerao ao lado do badge de tipo existente
+
+### 5. Pagina `src/pages/vendas/MeusClientes.tsx`
+
+- Exibir os mesmos icones nos cards de clientes, para consistencia visual
+
+## Secao tecnica
+
+Arquivos modificados:
+- `src/hooks/useClientes.ts` - tipos e form data
+- `src/components/clientes/ClienteForm.tsx` - campos de formulario
+- `src/pages/direcao/ClientesDirecao.tsx` - exibicao na tabela
+- `src/pages/vendas/MeusClientes.tsx` - exibicao nos cards
+- Nova migracao SQL para as colunas
+
