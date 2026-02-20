@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck, FileDown, Printer, ClipboardList, MessageSquare, AlertTriangle, Pencil, Check, X } from "lucide-react";
+import { MapPin, Calendar, User, Package, FileText, CheckCircle2, Clock, AlertCircle, XCircle, Edit, RefreshCw, Save, Hammer, Paintbrush, Truck, FileDown, Printer, ClipboardList, MessageSquare, AlertTriangle, Pencil, Check, X, ArrowLeft } from "lucide-react";
 import { FichaVisitaUpload } from "@/components/pedidos/FichaVisitaUpload";
 import { toast as sonnerToast } from "sonner";
 import { useCatalogoCores } from "@/hooks/useCatalogoCores";
@@ -29,6 +29,8 @@ import { useQuery } from "@tanstack/react-query";
 import { expandirPortasPorQuantidade, getLabelPortaExpandida } from "@/utils/expandirPortas";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { MedidasPortasSection } from "@/components/pedidos/MedidasPortasSection";
+import { PortaFolderCard } from "@/components/pedidos/PortaFolderCard";
+import { getLabelProdutoExpandido } from "@/utils/tipoProdutoLabels";
 
 interface Ordem {
   id: string;
@@ -112,6 +114,8 @@ export default function PedidoViewMinimalista() {
   const [editAltura, setEditAltura] = useState<number>(0);
   const [editCorId, setEditCorId] = useState<string>("");
   const [salvandoProduto, setSalvandoProduto] = useState(false);
+  const [pastaObsAberta, setPastaObsAberta] = useState<string | null>(null);
+  const [pastaSocialAberta, setPastaSocialAberta] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { coresAtivas } = useCatalogoCores();
@@ -762,21 +766,56 @@ export default function PedidoViewMinimalista() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {portasEnrolar.map((porta: any, idx: number) => (
-                  <ObservacoesPortaForm
-                    key={porta._virtualKey}
-                    porta={porta}
-                    portaIndex={idx}
-                    usuarios={usuarios}
-                    autorizados={autorizados}
-                    valoresIniciais={getObservacoesPorPorta(porta._originalId, porta._indicePorta)}
-                    onSalvar={salvarObservacao}
-                    pedidoId={id || ''}
-                    isReadOnly={!podeEditarObservacoes}
-                  />
-                ))}
-              </div>
+              {!pastaObsAberta ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {portasEnrolar.map((porta: any, idx: number) => {
+                    const obs = getObservacoesPorPorta(porta._originalId, porta._indicePorta);
+                    const preenchido = !!obs?.responsavel_medidas_id;
+                    const dimensoes = porta.largura && porta.altura
+                      ? `${porta.largura.toFixed(2)}m × ${porta.altura.toFixed(2)}m`
+                      : porta.tamanho || undefined;
+                    return (
+                      <PortaFolderCard
+                        key={porta._virtualKey}
+                        label={getLabelProdutoExpandido(idx, porta.tipo_produto, null, null, porta._totalNoGrupo, porta._indicePorta)}
+                        dimensoes={dimensoes}
+                        statusBadge={preenchido ? 'Preenchido' : 'Pendente'}
+                        statusVariant={preenchido ? 'default' : 'outline'}
+                        isOpen={false}
+                        onClick={() => setPastaObsAberta(porta._virtualKey)}
+                      />
+                    );
+                  })}
+                </div>
+              ) : (
+                <div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mb-3 text-muted-foreground"
+                    onClick={() => setPastaObsAberta(null)}
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-1" />
+                    Voltar às pastas
+                  </Button>
+                  {portasEnrolar.map((porta: any, idx: number) =>
+                    porta._virtualKey === pastaObsAberta ? (
+                      <ObservacoesPortaForm
+                        key={porta._virtualKey}
+                        porta={porta}
+                        portaIndex={idx}
+                        usuarios={usuarios}
+                        autorizados={autorizados}
+                        valoresIniciais={getObservacoesPorPorta(porta._originalId, porta._indicePorta)}
+                        onSalvar={salvarObservacao}
+                        pedidoId={id || ''}
+                        defaultOpen={true}
+                        isReadOnly={!podeEditarObservacoes}
+                      />
+                    ) : null
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -791,19 +830,54 @@ export default function PedidoViewMinimalista() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {portasSocial.map((porta: any, idx: number) => (
-                  <ObservacoesPortaSocialForm
-                    key={porta._virtualKey}
-                    porta={porta}
-                    portaIndex={idx}
-                    valoresIniciais={getObservacoesSocialPorPorta(porta._originalId, porta._indicePorta)}
-                    onSalvar={salvarObservacaoSocial}
-                    pedidoId={id || ''}
-                    isReadOnly={!podeEditarObservacoes}
-                  />
-                ))}
-              </div>
+              {!pastaSocialAberta ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {portasSocial.map((porta: any, idx: number) => {
+                    const obs = getObservacoesSocialPorPorta(porta._originalId, porta._indicePorta);
+                    const preenchido = !!(obs?.lado_fechadura || obs?.lado_abertura || obs?.acabamento);
+                    const dimensoes = porta.largura && porta.altura
+                      ? `${porta.largura.toFixed(2)}m × ${porta.altura.toFixed(2)}m`
+                      : porta.tamanho || undefined;
+                    return (
+                      <PortaFolderCard
+                        key={porta._virtualKey}
+                        label={getLabelProdutoExpandido(idx, porta.tipo_produto, null, null, porta._totalNoGrupo, porta._indicePorta)}
+                        dimensoes={dimensoes}
+                        statusBadge={preenchido ? 'Preenchido' : 'Pendente'}
+                        statusVariant={preenchido ? 'default' : 'outline'}
+                        isOpen={false}
+                        onClick={() => setPastaSocialAberta(porta._virtualKey)}
+                      />
+                    );
+                  })}
+                </div>
+              ) : (
+                <div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mb-3 text-muted-foreground"
+                    onClick={() => setPastaSocialAberta(null)}
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-1" />
+                    Voltar às pastas
+                  </Button>
+                  {portasSocial.map((porta: any, idx: number) =>
+                    porta._virtualKey === pastaSocialAberta ? (
+                      <ObservacoesPortaSocialForm
+                        key={porta._virtualKey}
+                        porta={porta}
+                        portaIndex={idx}
+                        valoresIniciais={getObservacoesSocialPorPorta(porta._originalId, porta._indicePorta)}
+                        onSalvar={salvarObservacaoSocial}
+                        pedidoId={id || ''}
+                        defaultOpen={true}
+                        isReadOnly={!podeEditarObservacoes}
+                      />
+                    ) : null
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
