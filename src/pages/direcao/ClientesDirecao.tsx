@@ -44,6 +44,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Search, User, Pencil, Trash2, X, Phone, Mail, ArrowUpDown, ArrowUp, ArrowDown, Star, Triangle } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -65,6 +66,8 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'cidade', label: 'Cidade/UF', defaultVisible: true },
   { id: 'canal', label: 'Canal', defaultVisible: true },
   { id: 'vendedor', label: 'Vendedor', defaultVisible: true },
+  { id: 'fidelizado', label: 'Fidelizado', defaultVisible: true },
+  { id: 'parceiro', label: 'Parceiro', defaultVisible: true },
   { id: 'vendas', label: 'Vendas', defaultVisible: true },
   { id: 'total', label: 'Total', defaultVisible: true },
   { id: 'ultima', label: 'Última Compra', defaultVisible: true },
@@ -220,6 +223,8 @@ export default function ClientesDirecao() {
 
   const getColumnAlignment = (columnId: string) => {
     switch (columnId) {
+      case 'fidelizado': return 'text-center';
+      case 'parceiro': return 'text-center';
       case 'vendas': return 'text-center';
       case 'total': return 'text-right';
       case 'ultima': return 'text-center';
@@ -301,6 +306,28 @@ export default function ClientesDirecao() {
         );
       case 'ultima':
         return <span className="text-white/60 text-xs">{formatarTempoDesdeUltimaCompra(cliente.ultima_compra)}</span>;
+      case 'fidelizado':
+        return (
+          <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+              checked={!!cliente.fidelizado}
+              onCheckedChange={(checked) => {
+                updateCliente({ id: cliente.id, data: { nome: cliente.nome, fidelizado: !!checked } });
+              }}
+            />
+          </div>
+        );
+      case 'parceiro':
+        return (
+          <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+              checked={!!cliente.parceiro}
+              onCheckedChange={(checked) => {
+                updateCliente({ id: cliente.id, data: { nome: cliente.nome, parceiro: !!checked } });
+              }}
+            />
+          </div>
+        );
       case 'acoes':
         return (
           <div className="flex items-center justify-end gap-1">
@@ -332,7 +359,7 @@ export default function ClientesDirecao() {
       default:
         return null;
     }
-  }, []);
+  }, [updateCliente]);
 
   const handleNovoCliente = () => {
     setClienteEditando(null);
