@@ -7,8 +7,10 @@ import type { CategoriaLinha } from "@/hooks/usePedidoLinhas";
 interface PortaFolderCardProps {
   label: string;
   dimensoes?: string;
-  linhasCount: number;
-  categorias: CategoriaLinha[];
+  linhasCount?: number;
+  categorias?: CategoriaLinha[];
+  statusBadge?: string;
+  statusVariant?: 'default' | 'secondary' | 'outline' | 'destructive';
   isOpen: boolean;
   onClick: () => void;
 }
@@ -29,7 +31,9 @@ export function PortaFolderCard({
   label,
   dimensoes,
   linhasCount,
-  categorias,
+  categorias = [],
+  statusBadge,
+  statusVariant = 'secondary',
   isOpen,
   onClick,
 }: PortaFolderCardProps) {
@@ -57,9 +61,15 @@ export function PortaFolderCard({
             <p className="text-xs text-muted-foreground">{dimensoes}</p>
           )}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <Badge variant="secondary" className="text-[10px] h-5">
-              {linhasCount} {linhasCount === 1 ? 'item' : 'itens'}
-            </Badge>
+            {statusBadge ? (
+              <Badge variant={statusVariant} className="text-[10px] h-5">
+                {statusBadge}
+              </Badge>
+            ) : linhasCount !== undefined ? (
+              <Badge variant="secondary" className="text-[10px] h-5">
+                {linhasCount} {linhasCount === 1 ? 'item' : 'itens'}
+              </Badge>
+            ) : null}
             {uniqueCategorias.map((cat) => (
               <Badge
                 key={cat}
