@@ -1,40 +1,41 @@
 
+# Detalhes da Ordem no Historico de Producao
 
-# Corrigir botao de Arquivar na visualizacao em lista
+## O que muda
 
-## Problema real
+Ao clicar em uma ordem na pagina `/producao/meu-historico`, abrira um painel lateral (Sheet) mostrando:
+- Informacoes do pedido (numero, cliente, observacoes, data de entrega, endereco)
+- Lista de itens/linhas da ordem com detalhes (produto, quantidade, tamanho, dimensoes, status)
 
-O `ArquivarPedidoModal` nao esta sendo renderizado no bloco de retorno da visualizacao em lista (list view). O componente `PedidoCard` tem dois blocos de retorno separados:
+## Alteracoes
 
-- **Lista** (linhas 1017-1841): Contem o botao de arquivar (linha 1737) que faz `setShowArquivar(true)`, mas NAO renderiza o `ArquivarPedidoModal`
-- **Grid** (linhas 1845-2287): Contem tanto o botao quanto o `ArquivarPedidoModal` (linha 2231) e o `ArquivamentoLoadingModal` (linha 2238)
+### 1. Novo componente: `src/components/production/HistoricoOrdemDetalhesSheet.tsx`
 
-Quando o usuario clica no botao de arquivar na lista, o estado `showArquivar` muda para `true`, mas nao existe nenhum componente modal para responder a esse estado. O modal simplesmente nao existe nesse caminho de renderizacao.
+Um Sheet simplificado e somente-leitura com:
+- Header: numero da ordem, setor (badge colorido), tempo de conclusao
+- Secao "Pedido": numero do pedido, cliente, data de entrega, endereco, observacoes (buscado de `pedidos_producao` via query)
+- Secao "Itens": lista de linhas da ordem usando o hook `useLinhasOrdem` ja existente, mostrando nome do produto, quantidade, tamanho, dimensoes (largura x altura) e status (concluida/com problema)
 
-## Solucao
+Dados buscados:
+- Linhas: reutiliza `useLinhasOrdem(ordemId, setor)` que ja existe
+- Pedido: query simples ao `pedidos_producao` pelo `pedido_id` da ordem, trazendo `numero_pedido`, `cliente_nome`, `cliente_telefone`, `data_entrega`, `endereco_rua`, `endereco_numero`, `endereco_bairro`, `endereco_cidade`, `observacoes`
 
-### Alteracao em `src/components/pedidos/PedidoCard.tsx`
+### 2. Alteracao em `src/pages/ProducaoMeuHistorico.tsx`
 
-Adicionar o `ArquivarPedidoModal` e o `ArquivamentoLoadingModal` no bloco de retorno da visualizacao em lista, antes do fechamento do fragmento (antes da linha 1841).
+- Adicionar estado `ordemSelecionada` (armazena a ordem clicada ou `null`)
+- Tornar cada item da lista clicavel (cursor pointer, onClick para setar a ordem selecionada)
+- Renderizar o `HistoricoOrdemDetalhesSheet` passando a ordem selecionada
 
-Inserir apos a linha 1840 (depois do `ExcluirPedidoModal`):
-
-```typescript
-        <ArquivarPedidoModal
-          open={showArquivar}
-          onOpenChange={setShowArquivar}
-          onConfirmar={handleConfirmarArquivamento}
-          pedido={pedido}
-        />
-
-        <ArquivamentoLoadingModal open={showArquivamentoLoading} />
+```
+Fluxo:
+  Usuario clica na ordem
+    -> setOrdemSelecionada(ordem)
+    -> Sheet abre
+    -> useLinhasOrdem busca as linhas
+    -> useQuery busca dados do pedido
+    -> Exibe tudo no Sheet
 ```
 
-Nenhuma outra alteracao e necessaria. O `stopPropagation` ja adicionado anteriormente continua correto e necessario.
+### 3. Nenhuma alteracao nos hooks existentes
 
-## Resultado
-
-- O modal de confirmacao de arquivamento aparecera corretamente ao clicar no botao na visualizacao em lista
-- O modal de loading durante o arquivamento tambem funcionara
-- Nenhum impacto na visualizacao em grid, que ja funciona corretamente
-
+O `useLinhasOrdem` ja aceita `ordemId` e `tipoOrdem` (que corresponde ao setor). O `useMeuHistoricoProducao` ja retorna `pedido_id` e `setor` necessarios.
