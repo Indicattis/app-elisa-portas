@@ -101,7 +101,7 @@ export default function PedidoViewMinimalista() {
   const { id } = useParams<{ id: string }>();
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [loading, setLoading] = useState(true);
-  const [modoEdicao, setModoEdicao] = useState(false);
+  
   const [linhasEditadas, setLinhasEditadas] = useState<Map<string, PedidoLinhaUpdate>>(new Map());
   const [salvando, setSalvando] = useState(false);
   const [mostrarModalAvancar, setMostrarModalAvancar] = useState(false);
@@ -246,7 +246,6 @@ export default function PedidoViewMinimalista() {
       if (pedido?.etapa_atual === 'em_producao') {
         await atualizarLinhasComPropagacao(updates);
         setLinhasEditadas(new Map());
-        setModoEdicao(false);
         fetchPedidoDetails();
       } else {
         // Se está aberto, usar atualização normal
@@ -714,25 +713,16 @@ export default function PedidoViewMinimalista() {
                 <Package className="w-4 h-4" />
                 Itens do Pedido {pedido.linhas.length > 0 && `(${pedido.linhas.length})`}
               </CardTitle>
-              {podeEditarLinhas && (
+              {podeEditarLinhas && temPendentesSalvamento && (
                 <div className="flex items-center gap-2">
-                  {!modoEdicao ? (
-                    <Button variant="outline" size="sm" onClick={() => setModoEdicao(true)} className="bg-white/5 border-white/10 text-white hover:bg-white/10">
-                      <Edit className="w-3 h-3 mr-2" />
-                      Editar
-                    </Button>
-                  ) : (
-                    <>
-                      <Button variant="ghost" size="sm" onClick={() => { setModoEdicao(false); setLinhasEditadas(new Map()); }} className="text-white/70 hover:text-white hover:bg-white/10">Cancelar</Button>
-                      <Button variant="default" size="sm" onClick={handleSalvarAlteracoes} disabled={!temPendentesSalvamento || salvando}>
-                        {salvando ? <><RefreshCw className="w-3 h-3 mr-2 animate-spin" />Salvando...</> : <><Save className="w-3 h-3 mr-2" />Salvar</>}
-                      </Button>
-                    </>
-                  )}
+                  <Button variant="ghost" size="sm" onClick={() => setLinhasEditadas(new Map())} className="text-white/70 hover:text-white hover:bg-white/10">Cancelar</Button>
+                  <Button variant="default" size="sm" onClick={handleSalvarAlteracoes} disabled={salvando}>
+                    {salvando ? <><RefreshCw className="w-3 h-3 mr-2 animate-spin" />Salvando...</> : <><Save className="w-3 h-3 mr-2" />Salvar</>}
+                  </Button>
                 </div>
               )}
             </div>
-            {isEmProducao && modoEdicao && (
+            {isEmProducao && podeEditarLinhas && (
               <div className="mt-3 p-2 rounded-md bg-orange-500/10 border border-orange-500/20 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0" />
                 <p className="text-xs text-orange-300">
@@ -744,7 +734,7 @@ export default function PedidoViewMinimalista() {
           <CardContent>
             <PedidoLinhasEditor
               linhas={pedido.linhas}
-              isReadOnly={!podeEditarLinhas || !modoEdicao}
+              isReadOnly={!podeEditarLinhas}
               vendaId={pedido.venda_id}
               temPortasEnrolar={portasEnrolar.length > 0}
               onAdicionarLinha={adicionarLinha}
@@ -1048,7 +1038,7 @@ export default function PedidoViewMinimalista() {
               <DialogDescription>As alterações foram salvas com sucesso. Deseja avançar o pedido para a etapa de produção?</DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={() => { setMostrarModalAvancar(false); setModoEdicao(false); }}>Não, continuar editando</Button>
+              <Button variant="outline" onClick={() => { setMostrarModalAvancar(false); }}>Não, continuar editando</Button>
               <Button onClick={handleAvancarEtapa}>Sim, avançar para produção</Button>
             </DialogFooter>
           </DialogContent>
