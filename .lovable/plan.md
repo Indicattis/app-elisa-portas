@@ -1,39 +1,28 @@
 
-# Adicionar Quantidade Padrao ao Item Padrao de Porta de Enrolar
+
+# Quantidade Padrao Sempre Visivel e Usada ao Adicionar Linhas
 
 ## O que muda
 
-Na pagina de edicao de item de estoque (`/administrativo/compras/estoque/editar-item/:id`), quando o checkbox "Item padrao para porta de enrolar" estiver marcado, aparecera um campo numerico para definir a quantidade inserida por padrao. Se nao for informada, sera 1.
-
-Quando um item padrao for adicionado automaticamente a um pedido, usara essa quantidade ao inves do valor fixo 1.
+O campo "Quantidade padrao" deixa de ser exclusivo de itens padrao de porta de enrolar e passa a ser um campo geral de qualquer item de estoque. Quando um produto for selecionado no modal de adicionar linha ao pedido, a quantidade preenchida automaticamente sera o valor de `quantidade_padrao` do produto (ou 1 se nao definido).
 
 ## Alteracoes
 
-### 1. Banco de dados - Nova coluna
+### 1. `src/pages/administrativo/EstoqueEditMinimalista.tsx`
 
-Adicionar coluna `quantidade_padrao` na tabela `estoque`:
-- Tipo: `integer`
-- Default: `1`
-- Nullable: sim
+- Remover a condicao `{formData.item_padrao_porta_enrolar && (...)}` do input de quantidade padrao (linhas 307-320)
+- Mover o input para fora do bloco condicional, exibindo-o sempre na secao de configuracoes de calculo
+- Remover o `pl-6` (indentacao) ja que nao e mais sub-item do checkbox
+- No `handleSubmit`, remover a condicao que reseta `quantidade_padrao` para 1 quando `item_padrao_porta_enrolar` e falso (linha 123)
+- Manter o valor salvo sempre como `formData.quantidade_padrao`
 
-### 2. `src/pages/administrativo/EstoqueEditMinimalista.tsx`
+### 2. `src/components/pedidos/AdicionarLinhaModal.tsx`
 
-- Adicionar `quantidade_padrao` ao state do formulario (default 1)
-- Carregar o valor do banco no `useEffect` de inicializacao
-- Incluir no `dadosParaSalvar` do `handleSubmit`
-- Renderizar um campo `Input` numerico logo abaixo do checkbox `item_padrao_porta_enrolar`, visivel apenas quando o checkbox estiver marcado
-- Estilo consistente com a pagina: `bg-white/5 border-white/10 text-white`
+- No `handleSelecionarProduto`, substituir `quantidade: 1` por `quantidade: produto.quantidade_padrao || 1` (linha 99)
+- O campo `quantidade_padrao` ja esta na interface `ProdutoEstoque`, entao nenhuma mudanca de tipo e necessaria
 
-### 3. `src/hooks/useEstoque.ts`
+### Arquivos modificados
 
-- Adicionar `quantidade_padrao` a interface `ProdutoEstoque` (tipo `number`)
-- Adicionar `quantidade_padrao` a interface `ProdutoEstoqueInput` (opcional)
+- `src/pages/administrativo/EstoqueEditMinimalista.tsx` - input sempre visivel, sem reset condicional
+- `src/components/pedidos/AdicionarLinhaModal.tsx` - usar quantidade_padrao ao selecionar produto
 
-### 4. `src/components/pedidos/LinhasAgrupadasPorPorta.tsx`
-
-- Incluir `quantidade_padrao` no select da query de itens padrao (linha 95)
-- No `handleAdicionarItemPadrao`, substituir `quantidade: 1` por `quantidade: item.quantidade_padrao || 1`
-
-### 5. Tipos Supabase
-
-Os tipos serao atualizados automaticamente apos a migracao do banco.
