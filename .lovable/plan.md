@@ -1,75 +1,30 @@
 
-
-# Substituir Numeracao de Posicao por Simbolos do Cliente
+# Transformar /producao/meu-historico no Estilo Minimalista
 
 ## O que muda
 
-Na pagina de gestao de fabrica (`/direcao/gestao-fabrica`), o badge numerico de posicao (1o, 2o, 3o...) sera substituido pelos icones de fidelizado (estrela) e parceiro (triangulo) do cliente vinculado ao pedido. Isso permite identificar visualmente a prioridade por tipo de cliente.
-
-## Como funciona
-
-- Se o cliente for fidelizado: exibe estrela preenchida dourada
-- Se o cliente for parceiro: exibe triangulo preenchido roxo
-- Se for ambos: exibe os dois icones
-- Se nao for nenhum: nao exibe nada (espaco vazio)
+A pagina `/producao/meu-historico` sera convertida do estilo padrao (Cards brancos com ProducaoLayout) para o estilo minimalista escuro com glassmorphism, identico ao usado em `/logistica/instalacoes/ranking`.
 
 ## Alteracoes
 
-### 1. `src/hooks/usePedidosEtapas.ts` - Adicionar dados do cliente na query
+### 1. `src/App.tsx` (~linha 700-709)
 
-Na query principal de `usePedidosEtapas`, adicionar o join com `clientes` via `cliente_id` na sub-query de vendas:
+Remover o wrapper `ProducaoLayout` da rota `/meu-historico` dentro do producao, pois o `MinimalistLayout` ja fornece seu proprio layout completo (fundo preto, header, breadcrumb, botao voltar).
 
-```text
-vendas:venda_id (
-  ...campos existentes...,
-  cliente_id,
-  cliente:clientes!vendas_cliente_id_fkey (
-    fidelizado,
-    parceiro
-  )
-)
-```
+### 2. `src/pages/ProducaoMeuHistorico.tsx`
 
-### 2. `src/components/pedidos/PedidoCard.tsx` - Substituir badge de posicao
+Reescrever a pagina para usar o estilo minimalista:
 
-Nos dois locais onde o badge de posicao e renderizado (grid view ~linha 1100 e mobile view ~linha 1878):
+- Importar `MinimalistLayout` no lugar dos componentes `Card`, `Button`, `ArrowLeft`
+- Envolver todo o conteudo com `MinimalistLayout` (title, subtitle, backPath para `/producao`, breadcrumbItems)
+- Substituir os Cards de estatisticas por containers glassmorphism: `bg-white/5 border border-white/10 rounded-xl backdrop-blur-xl`
+- Icones de estatisticas com fundo `bg-blue-500/20` e cor `text-blue-400` (mesmo padrao do ranking)
+- Filtros dentro de container glassmorphism com selects estilizados (`bg-white/5 border-white/10 text-white`)
+- Lista de ordens com container glassmorphism, dividers `divide-white/5`, hover `hover:bg-white/5`
+- Textos: titulos em `text-white`, secundarios em `text-white/60`, terciarios em `text-white/40`
+- Badge de tempo em `text-blue-400` ao inves de `text-primary`
+- Badge de setor mantendo as cores existentes com `text-white`
 
-**Antes:**
-```text
-{posicao && (
-  <Badge variant="outline" className={...}>
-    {posicao}o
-  </Badge>
-)}
-```
+### Resultado visual
 
-**Depois:**
-```text
-{(() => {
-  const cliente = venda?.cliente;
-  const isFidelizado = cliente?.fidelizado;
-  const isParceiro = cliente?.parceiro;
-  if (!isFidelizado && !isParceiro) return null;
-  return (
-    <div className="flex items-center gap-0.5">
-      {isFidelizado && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
-      {isParceiro && <Triangle className="h-4 w-4 text-purple-500 fill-purple-500" />}
-    </div>
-  );
-})()}
-```
-
-- Importar `Star` e `Triangle` do lucide-react (Star ja esta importado, adicionar Triangle)
-- Manter o badge de "CORRECAO" inalterado
-
-### 3. Arquivos modificados
-
-- `src/hooks/usePedidosEtapas.ts` - query com join ao clientes
-- `src/components/pedidos/PedidoCard.tsx` - renderizacao dos icones no lugar da posicao
-
-### Notas
-
-- A prop `posicao` continua existindo no componente (usada para drag-and-drop e botoes de mover prioridade), apenas a **exibicao visual** muda
-- Os botoes de mover prioridade (setas cima/baixo) continuam funcionando normalmente pois usam a prop `posicao` e `total`
-- A pagina de expedicao (`ExpedicaoMinimalista`) tambem usa `showPosicao` mas nao sera afetada pois mantera a renderizacao condicional
-
+A pagina tera o mesmo visual escuro e elegante do ranking de equipes, com fundo preto, cards com efeito glassmorphism, e a navegacao integrada do MinimalistLayout (breadcrumb animado + botao voltar).
