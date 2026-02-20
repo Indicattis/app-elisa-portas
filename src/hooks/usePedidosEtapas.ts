@@ -125,6 +125,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             id,
             cliente_nome,
             cliente_telefone,
+            cliente_id,
             valor_venda,
             created_at,
             tipo_entrega,
@@ -134,6 +135,10 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             atendente:admin_users!fk_vendas_atendente (
               nome,
               foto_perfil_url
+            ),
+            cliente:clientes!vendas_cliente_id_fkey (
+              fidelizado,
+              parceiro
             ),
             produtos_vendas (
               id,
