@@ -87,6 +87,7 @@ export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSecti
     return initial;
   });
   const [salvando, setSalvando] = useState<string | null>(null);
+  const [editandoPorta, setEditandoPorta] = useState<string | null>(null);
 
   if (portas.length === 0) return null;
 
@@ -110,6 +111,7 @@ export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSecti
 
       if (error) throw error;
       toast.success("Medidas salvas com sucesso");
+      setEditandoPorta(null);
       queryClient.invalidateQueries({ queryKey: ['produtos-venda'] });
     } catch (error) {
       console.error('Erro ao salvar medidas:', error);
@@ -117,6 +119,17 @@ export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSecti
     } finally {
       setSalvando(null);
     }
+  };
+
+  const handleCancelar = (porta: typeof portas[0]) => {
+    setMedidas(prev => ({
+      ...prev,
+      [porta._virtualKey]: {
+        largura: porta.largura || 0,
+        altura: porta.altura || 0,
+      },
+    }));
+    setEditandoPorta(null);
   };
 
   const updateMedida = (key: string, field: 'largura' | 'altura', value: number) => {
@@ -143,6 +156,7 @@ export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSecti
             const m = medidas[porta._virtualKey] || { largura: 0, altura: 0 };
             const preenchida = m.largura > 0 && m.altura > 0;
             const isSaving = salvando === porta._virtualKey;
+            const isEditando = editandoPorta === porta._virtualKey;
             const label = getLabelProdutoExpandido(porta._globalIndex, porta.tipo_produto, m.largura, m.altura, porta._totalNoGrupo, porta._indicePorta);
 
             return (
@@ -180,9 +194,10 @@ export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSecti
                       type="number"
                       step="0.01"
                       min="0"
+                      disabled={!isEditando}
                       value={m.largura || ''}
                       onChange={e => updateMedida(porta._virtualKey, 'largura', parseFloat(e.target.value) || 0)}
-                      className="h-8 text-xs bg-white/5 border-white/10 text-white"
+                      className={`h-8 text-xs border-white/10 text-white ${isEditando ? 'bg-white/5' : 'bg-white/[0.02] opacity-70 cursor-not-allowed'}`}
                       placeholder="metros"
                     />
                   </div>
@@ -192,28 +207,55 @@ export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSecti
                       type="number"
                       step="0.01"
                       min="0"
+                      disabled={!isEditando}
                       value={m.altura || ''}
                       onChange={e => updateMedida(porta._virtualKey, 'altura', parseFloat(e.target.value) || 0)}
-                      className="h-8 text-xs bg-white/5 border-white/10 text-white"
+                      className={`h-8 text-xs border-white/10 text-white ${isEditando ? 'bg-white/5' : 'bg-white/[0.02] opacity-70 cursor-not-allowed'}`}
                       placeholder="metros"
                     />
                   </div>
                 </div>
 
-                {/* Save button */}
-                <Button
-                  size="sm"
-                  onClick={() => handleSalvar(porta)}
-                  disabled={isSaving}
-                  className="w-full mt-3 h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  {isSaving ? (
-                    <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
-                  ) : (
-                    <Save className="w-3 h-3 mr-1" />
-                  )}
-                  Salvar Medidas
-                </Button>
+                {/* Action buttons */}
+                {isEditando ? (
+                  <div className="flex gap-2 mt-3">
+                    <Button
+                      size="sm"
+                      onClick={() => handleSalvar(porta)}
+                      disabled={isSaving}
+                      className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {isSaving ? (
+                        <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                      ) : (
+                        <Save className="w-3 h-3 mr-1" />
+                      )}
+                      Salvar Medidas
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleCancelar(porta)}
+                      disabled={isSaving}
+                      className="h-8 text-xs border-white/20 text-white/70 hover:text-white"
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant={preenchida ? 'outline' : 'default'}
+                    onClick={() => setEditandoPorta(porta._virtualKey)}
+                    className={`w-full mt-3 h-8 text-xs ${
+                      preenchida
+                        ? 'border-white/20 text-white/70 hover:text-white'
+                        : 'bg-amber-600 hover:bg-amber-700 text-white'
+                    }`}
+                  >
+                    {preenchida ? 'Editar medidas' : 'Informar medidas corretas'}
+                  </Button>
+                )}
               </div>
             );
           })}
