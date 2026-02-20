@@ -421,12 +421,13 @@ export default function EstoqueMinimalista() {
                   <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>
                   <TableHead className="text-xs font-medium text-white/60">Setor</TableHead>
                   <TableHead className="text-center text-xs font-medium text-white/60">Pintura</TableHead>
+                  <TableHead className="text-center text-xs font-medium text-white/60">Cálculo</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow className="border-white/10">
-                    <TableCell colSpan={5} className="text-center py-8 text-sm text-white/40">
+                    <TableCell colSpan={6} className="text-center py-8 text-sm text-white/40">
                       Carregando...
                     </TableCell>
                   </TableRow>
@@ -437,7 +438,7 @@ export default function EstoqueMinimalista() {
                     p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
                   ).length === 0 ? (
                   <TableRow className="border-white/10">
-                    <TableCell colSpan={5} className="text-center py-8 text-sm text-white/40">
+                    <TableCell colSpan={6} className="text-center py-8 text-sm text-white/40">
                       Nenhum produto encontrado
                     </TableCell>
                   </TableRow>
@@ -502,6 +503,15 @@ export default function EstoqueMinimalista() {
                           </Badge>
                         ) : (
                           <span className="text-xs text-white/40">Não</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center px-3 py-2">
+                        {produto.modulo_calculo ? (
+                          <Badge className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
+                            {String(produto.modulo_calculo)}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-white/40">—</span>
                         )}
                       </TableCell>
                     </TableRow>
