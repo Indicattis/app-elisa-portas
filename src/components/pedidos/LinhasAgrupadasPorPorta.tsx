@@ -262,28 +262,27 @@ export function LinhasAgrupadasPorPorta({
               <CollapsibleContent>
                 {/* Sugestões de itens padrão para porta de enrolar */}
                 {!isReadOnly && temPortaEnrolar && itensPadraoDisponiveis.length > 0 && (
-                  <div className="mb-3 p-2 bg-primary/5 border border-primary/20 rounded-md">
+                  <div className="mb-3 p-2.5 rounded-xl backdrop-blur-xl bg-white/5 border border-white/10">
                     <div className="flex items-center gap-2 mb-2">
-                      <Zap className="h-4 w-4 text-primary" />
-                      <span className="text-xs font-medium text-primary">Itens sugeridos (porta de enrolar)</span>
+                      <Zap className="h-4 w-4 text-blue-400" />
+                      <span className="text-xs font-medium text-blue-300">Itens sugeridos (porta de enrolar)</span>
                     </div>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                       {itensPadraoDisponiveis.map((item) => {
                         const tamanhoPreview = calcularTamanhoAutomatico(item, porta.largura, porta.altura);
                         return (
-                          <Button
+                          <button
                             key={item.id}
-                            size="sm"
-                            variant="outline"
-                            className="h-6 text-xs"
+                            type="button"
+                            className="inline-flex items-center h-7 px-2.5 text-xs rounded-lg bg-gradient-to-r from-blue-500/80 to-blue-700/80 border border-blue-400/30 text-white hover:from-blue-400/80 hover:to-blue-600/80 transition-all duration-200"
                             onClick={() => handleAdicionarItemPadrao(porta, item)}
                           >
                             <Plus className="h-3 w-3 mr-1" />
                             {item.nome_produto}
                             {tamanhoPreview && (
-                              <span className="ml-1 text-muted-foreground">({tamanhoPreview}m)</span>
+                              <span className="ml-1 text-blue-200/70">({tamanhoPreview}m)</span>
                             )}
-                          </Button>
+                          </button>
                         );
                       })}
                     </div>
