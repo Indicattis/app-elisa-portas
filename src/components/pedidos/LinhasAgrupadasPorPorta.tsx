@@ -30,6 +30,7 @@ interface ItemPadraoPortaEnrolar {
   valor_calculo: number | null;
   eixo_calculo: string | null;
   setor_responsavel_producao: string | null;
+  quantidade_padrao: number | null;
 }
 
 // Função para calcular o tamanho automático
@@ -92,7 +93,7 @@ export function LinhasAgrupadasPorPorta({
         const setorAtual = CATEGORIA_TO_SETOR[categoria];
         const { data, error } = await supabase
           .from('estoque')
-          .select('id, nome_produto, descricao_produto, modulo_calculo, valor_calculo, eixo_calculo, setor_responsavel_producao')
+          .select('id, nome_produto, descricao_produto, modulo_calculo, valor_calculo, eixo_calculo, setor_responsavel_producao, quantidade_padrao')
           .eq('item_padrao_porta_enrolar', true)
           .eq('ativo', true)
           .eq('setor_responsavel_producao', setorAtual as 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura');
@@ -126,7 +127,7 @@ export function LinhasAgrupadasPorPorta({
         indice_porta: indicePorta,
         nome_produto: item.nome_produto,
         descricao_produto: item.descricao_produto || "",
-        quantidade: 1,
+        quantidade: item.quantidade_padrao || 1,
         tamanho: tamanhoAuto || "",
         estoque_id: item.id,
         categoria_linha: categoria,

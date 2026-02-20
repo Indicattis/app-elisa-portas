@@ -50,6 +50,7 @@ export default function EstoqueEditMinimalista() {
     valor_calculo: number;
     eixo_calculo: string;
     item_padrao_porta_enrolar: boolean;
+    quantidade_padrao: number;
   }>({
     nome_produto: "",
     descricao_produto: "",
@@ -59,6 +60,7 @@ export default function EstoqueEditMinimalista() {
     valor_calculo: 0,
     eixo_calculo: "",
     item_padrao_porta_enrolar: false,
+    quantidade_padrao: 1,
   });
 
   const [dadosCarregados, setDadosCarregados] = useState(false);
@@ -96,6 +98,7 @@ export default function EstoqueEditMinimalista() {
         valor_calculo: Number(produto.valor_calculo) || 0,
         eixo_calculo: produto.eixo_calculo || "",
         item_padrao_porta_enrolar: produto.item_padrao_porta_enrolar === true,
+        quantidade_padrao: (produto as any).quantidade_padrao ?? 1,
       };
       
       setFormData(newFormData);
@@ -117,6 +120,7 @@ export default function EstoqueEditMinimalista() {
         valor_calculo: formData.valor_calculo != null ? formData.valor_calculo : null,
         eixo_calculo: (formData.eixo_calculo || null) as 'largura' | 'altura' | null,
         item_padrao_porta_enrolar: formData.item_padrao_porta_enrolar,
+        quantidade_padrao: formData.item_padrao_porta_enrolar ? formData.quantidade_padrao : 1,
       };
       
       await editarProduto(dadosParaSalvar);
@@ -299,6 +303,21 @@ export default function EstoqueEditMinimalista() {
                   Item padrão para porta de enrolar (será sugerido automaticamente nos pedidos)
                 </Label>
               </div>
+
+              {formData.item_padrao_porta_enrolar && (
+                <div className="space-y-2 pt-3 pl-6">
+                  <Label htmlFor="quantidade_padrao" className="text-white/80">Quantidade padrão por porta</Label>
+                  <Input
+                    id="quantidade_padrao"
+                    type="number"
+                    min={1}
+                    value={formData.quantidade_padrao}
+                    onChange={(e) => setFormData({ ...formData, quantidade_padrao: parseInt(e.target.value) || 1 })}
+                    className="bg-white/5 border-white/10 text-white w-32"
+                  />
+                  <p className="text-xs text-white/40">Quantidade inserida automaticamente ao adicionar este item a um pedido</p>
+                </div>
+              )}
             </div>
 
             {/* Regras de Etiquetas */}
