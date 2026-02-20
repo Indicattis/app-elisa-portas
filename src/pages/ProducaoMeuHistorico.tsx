@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMeuHistoricoProducao } from "@/hooks/useMeuHistoricoProducao";
+import { useMeuHistoricoProducao, OrdemHistorico } from "@/hooks/useMeuHistoricoProducao";
+import { HistoricoOrdemDetalhesSheet } from "@/components/production/HistoricoOrdemDetalhesSheet";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -44,6 +45,7 @@ export default function ProducaoMeuHistorico() {
   const navigate = useNavigate();
   const [periodo, setPeriodo] = useState<PeriodoType>('mes');
   const [setor, setSetor] = useState<SetorType>('todos');
+  const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemHistorico | null>(null);
 
   const { data: ordens = [], isLoading } = useMeuHistoricoProducao({ periodo, setor });
 
@@ -53,7 +55,6 @@ export default function ProducaoMeuHistorico() {
     ? Math.round(ordens.reduce((acc, o) => acc + (o.tempo_conclusao_segundos || 0), 0) / totalOrdens)
     : 0;
 
-  // Contar por setor
   const ordensPorSetor = ordens.reduce((acc, o) => {
     acc[o.setor] = (acc[o.setor] || 0) + 1;
     return acc;
@@ -77,7 +78,6 @@ export default function ProducaoMeuHistorico() {
         </div>
       </div>
 
-      {/* Estatísticas */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
@@ -118,7 +118,6 @@ export default function ProducaoMeuHistorico() {
         </Card>
       </div>
 
-      {/* Filtros */}
       <Card>
         <CardContent className="p-3">
           <div className="flex items-center gap-2 flex-wrap">
@@ -151,7 +150,6 @@ export default function ProducaoMeuHistorico() {
         </CardContent>
       </Card>
 
-      {/* Lista de Ordens */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Ordens Concluídas</CardTitle>
@@ -168,7 +166,11 @@ export default function ProducaoMeuHistorico() {
           ) : (
             <div className="divide-y">
               {ordens.map((ordem) => (
-                <div key={`${ordem.setor}-${ordem.id}`} className="p-3 hover:bg-muted/50">
+                <div
+                  key={`${ordem.setor}-${ordem.id}`}
+                  className="p-3 hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => setOrdemSelecionada(ordem)}
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -203,6 +205,12 @@ export default function ProducaoMeuHistorico() {
           )}
         </CardContent>
       </Card>
+
+      <HistoricoOrdemDetalhesSheet
+        ordem={ordemSelecionada}
+        open={!!ordemSelecionada}
+        onOpenChange={(open) => { if (!open) setOrdemSelecionada(null); }}
+      />
     </div>
   );
 }
