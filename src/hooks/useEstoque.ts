@@ -42,7 +42,7 @@ export interface ProdutoEstoque {
   item_padrao_porta_enrolar: boolean;
   conferir_estoque: boolean;
   quantidade_padrao: number;
-  qtd_eixo_calculo: 'largura' | 'altura' | null;
+  qtd_eixo_calculo: 'largura' | 'altura' | 'qtd_meia_cana' | null;
   qtd_operador: 'multiplicar' | 'dividir' | 'somar' | 'subtrair' | null;
   qtd_valor_calculo: number | null;
   subcategoria?: {
@@ -77,7 +77,7 @@ export interface ProdutoEstoqueInput {
   item_padrao_porta_enrolar?: boolean;
   conferir_estoque?: boolean;
   quantidade_padrao?: number;
-  qtd_eixo_calculo?: 'largura' | 'altura' | null;
+  qtd_eixo_calculo?: 'largura' | 'altura' | 'qtd_meia_cana' | null;
   qtd_operador?: 'multiplicar' | 'dividir' | 'somar' | 'subtrair' | null;
   qtd_valor_calculo?: number | null;
 }

@@ -130,7 +130,7 @@ export default function EstoqueEditMinimalista() {
         eixo_calculo: (formData.eixo_calculo || null) as 'largura' | 'altura' | null,
         item_padrao_porta_enrolar: formData.item_padrao_porta_enrolar,
         quantidade_padrao: formData.quantidade_padrao,
-        qtd_eixo_calculo: (formData.qtd_eixo_calculo || null) as 'largura' | 'altura' | null,
+        qtd_eixo_calculo: (formData.qtd_eixo_calculo || null) as 'largura' | 'altura' | 'qtd_meia_cana' | null,
         qtd_operador: (formData.qtd_operador || null) as 'multiplicar' | 'dividir' | 'somar' | 'subtrair' | null,
         qtd_valor_calculo: formData.qtd_valor_calculo || null,
       };
@@ -351,6 +351,7 @@ export default function EstoqueEditMinimalista() {
                       <SelectContent className="bg-zinc-900 border-white/10">
                         <SelectItem value="largura">Largura</SelectItem>
                         <SelectItem value="altura">Altura</SelectItem>
+                        <SelectItem value="qtd_meia_cana">Qtd Meia Cana (⌈Altura÷0.076⌉)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -390,7 +391,7 @@ export default function EstoqueEditMinimalista() {
                 {formData.qtd_eixo_calculo && formData.qtd_operador && formData.qtd_valor_calculo ? (
                   <div className="flex items-center justify-between p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
                     <p className="text-xs text-blue-300">
-                      Fórmula: {formData.qtd_eixo_calculo === 'largura' ? 'Largura' : 'Altura'} da porta{' '}
+                      Fórmula: {formData.qtd_eixo_calculo === 'largura' ? 'Largura' : formData.qtd_eixo_calculo === 'qtd_meia_cana' ? 'Qtd Meia Cana (⌈Altura÷0.076⌉)' : 'Altura'} da porta{' '}
                       {formData.qtd_operador === 'multiplicar' ? '×' : formData.qtd_operador === 'dividir' ? '÷' : formData.qtd_operador === 'somar' ? '+' : '−'}{' '}
                       {formData.qtd_valor_calculo} → arredondado para cima
                     </p>
