@@ -1,43 +1,44 @@
 
-
-# Adicionar "Qtd Meia Cana" como Eixo de Calculo
+# Adição Direta de Itens com Cálculo Automático
 
 ## Resumo
 
-Adicionar uma terceira opcao ao seletor de "Eixo" no calculo automatico de quantidade: **"Qtd Meia Cana"**. Quando selecionada, o valor base usado no calculo sera `Math.ceil(altura / 0.076)` em vez de usar diretamente a largura ou altura da porta.
+Alterar o fluxo do modal de adição de linhas para que, ao selecionar um produto do estoque, o item seja adicionado **imediatamente** com tamanho e quantidade já calculados, sem passar pelo formulário intermediário de edição manual.
 
-Isso permite criar calculos compostos, por exemplo: `Math.ceil(altura / 0.076) * 2` para obter o dobro da quantidade de meia canas.
-
-## Alteracoes
-
-### 1. Formulario de edicao (`src/pages/administrativo/EstoqueEditMinimalista.tsx`)
-
-- Adicionar `<SelectItem value="qtd_meia_cana">Qtd Meia Cana</SelectItem>` no seletor de Eixo
-- Atualizar o texto da formula para exibir "Qtd Meia Cana (⌈Altura÷0.076⌉)" quando esse eixo for selecionado
-- Atualizar o type cast na linha 133 para incluir `'qtd_meia_cana'`
-
-### 2. Logica de calculo no modal (`src/components/pedidos/AdicionarLinhaModal.tsx`)
-
-Na funcao `calcularQuantidadeAutomatica`, alterar a resolucao do eixo:
+## Fluxo Atual vs Novo
 
 ```text
-Se qtd_eixo_calculo === 'largura'  -> eixoValor = portaLargura
-Se qtd_eixo_calculo === 'altura'   -> eixoValor = portaAltura
-Se qtd_eixo_calculo === 'qtd_meia_cana' -> eixoValor = Math.ceil(portaAltura / 0.076)
+ATUAL:
+  Clica "Adicionar" na porta
+  -> Abre modal -> Busca produto -> Seleciona
+  -> Formulário manual (nome, qtd, tamanho pré-preenchidos)
+  -> Clica "Adicionar" novamente
+
+NOVO:
+  Clica "Adicionar" na porta
+  -> Abre modal -> Busca produto -> Seleciona
+  -> Item adicionado direto com valores calculados (toast de confirmação)
+  -> Modal permanece aberto para adicionar mais itens
+  -> Opção "Adicionar Manualmente" continua disponível para casos especiais
 ```
 
-### 3. Logica de calculo nos itens padrao (`src/components/pedidos/LinhasAgrupadasPorPorta.tsx`)
+## Alterações
 
-Mesma alteracao na funcao `calcularQuantidadeAutomaticaItem`.
+### 1. AdicionarLinhaModal.tsx - Adição direta ao selecionar
 
-### 4. Tipos (`src/hooks/useEstoque.ts`)
+- Na função `handleSelecionarProduto`, em vez de chamar `setModoManual(true)` e preencher o formulário, chamar diretamente `onAdicionar()` com os valores calculados (tamanho e quantidade).
+- Exibir `toast.success` com o nome do produto e valores calculados.
+- Manter o modal aberto após adicionar (para permitir adicionar múltiplos itens em sequência).
+- Manter a opção "Adicionar Produto Manualmente" como fallback, preservando o formulário manual atual.
+- Remover o estado `modoManual` do fluxo principal de seleção de estoque (só ativar para adição manual).
+- Passar `indice_porta` como nova prop para incluir na linha adicionada.
 
-Atualizar o tipo de `qtd_eixo_calculo` para incluir `'qtd_meia_cana'`.
+### 2. LinhasAgrupadasPorPorta.tsx - Passar indice_porta ao modal
+
+- Guardar o `indicePorta` da porta selecionada além do `portaId`.
+- Passar `indicePorta` como nova prop ao `AdicionarLinhaModal`.
 
 ### Arquivos modificados
 
-1. `src/pages/administrativo/EstoqueEditMinimalista.tsx` - nova opcao no select + formula
-2. `src/components/pedidos/AdicionarLinhaModal.tsx` - logica de calculo
-3. `src/components/pedidos/LinhasAgrupadasPorPorta.tsx` - logica de calculo
-4. `src/hooks/useEstoque.ts` - tipo
-
+1. `src/components/pedidos/AdicionarLinhaModal.tsx` - lógica de adição direta
+2. `src/components/pedidos/LinhasAgrupadasPorPorta.tsx` - passar indice_porta ao modal
