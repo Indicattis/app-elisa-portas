@@ -1517,7 +1517,7 @@ export function PedidoCard({
               {/* Col 14: Botões de ação */}
               {!readOnly && (
               <TooltipProvider>
-                <div className="flex items-center justify-end gap-0.5">
+                <div className="flex items-center justify-end gap-0.5" onClick={(e) => e.stopPropagation()}>
                   {(() => {
                     // Arrays separados para ordenação: retroceder à esquerda, outros no meio, avançar à direita
                     const retrocederButtons: React.ReactNode[] = [];
