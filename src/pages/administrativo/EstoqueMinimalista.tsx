@@ -24,7 +24,12 @@ export default function EstoqueMinimalista() {
   const { fornecedores } = useFornecedores();
   
   const [novoModal, setNovoModal] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(() => sessionStorage.getItem("estoque_searchTerm") || "");
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    sessionStorage.setItem("estoque_searchTerm", value);
+  };
   const [formData, setFormData] = useState({
     nome_produto: "",
     descricao_produto: "",
@@ -396,7 +401,7 @@ export default function EstoqueMinimalista() {
             <Input
               placeholder="Buscar produtos..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="max-w-sm bg-white/5 border-white/10 text-white placeholder:text-white/40"
             />
             <p className="text-xs text-white/40 mt-2">
