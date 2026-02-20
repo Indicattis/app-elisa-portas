@@ -1,42 +1,75 @@
 
 
-# Adicionar Colunas com Checkbox para Fidelizado e Parceiro
+# Substituir Numeracao de Posicao por Simbolos do Cliente
 
 ## O que muda
 
-Na tabela de clientes em `/direcao/vendas/clientes`, serao adicionadas duas novas colunas configuraveis com checkboxes interativos:
+Na pagina de gestao de fabrica (`/direcao/gestao-fabrica`), o badge numerico de posicao (1o, 2o, 3o...) sera substituido pelos icones de fidelizado (estrela) e parceiro (triangulo) do cliente vinculado ao pedido. Isso permite identificar visualmente a prioridade por tipo de cliente.
 
-- Coluna com icone de estrela (Fidelizado): checkbox que marca/desmarca diretamente na tabela
-- Coluna com icone de triangulo (Parceiro): checkbox que marca/desmarca diretamente na tabela
+## Como funciona
 
-O usuario podera alterar o status clicando no checkbox sem precisar abrir o formulario de edicao.
+- Se o cliente for fidelizado: exibe estrela preenchida dourada
+- Se o cliente for parceiro: exibe triangulo preenchido roxo
+- Se for ambos: exibe os dois icones
+- Se nao for nenhum: nao exibe nada (espaco vazio)
 
 ## Alteracoes
 
-### 1. `src/pages/direcao/ClientesDirecao.tsx`
+### 1. `src/hooks/usePedidosEtapas.ts` - Adicionar dados do cliente na query
 
-- Importar o componente `Checkbox`
-- Adicionar duas novas colunas no array `COLUNAS_DISPONIVEIS`:
-  - `{ id: 'fidelizado', label: 'Fidelizado', defaultVisible: true }`
-  - `{ id: 'parceiro', label: 'Parceiro', defaultVisible: true }`
-- No `renderCell`, adicionar dois novos cases:
-  - `fidelizado`: renderiza um `Checkbox` com icone de estrela, checked conforme `cliente.fidelizado`, ao clicar chama `updateCliente` com o valor invertido (com `e.stopPropagation()` para nao abrir o dialog de edicao)
-  - `parceiro`: renderiza um `Checkbox` com icone de triangulo, checked conforme `cliente.parceiro`, ao clicar chama `updateCliente` com o valor invertido
-- Atualizar `getColumnAlignment` para centralizar ambas colunas
-- O `renderCell` precisa ter acesso a `updateCliente` (remover do `useCallback` com deps vazias ou adicionar a dependencia)
-
-### 2. Logica do checkbox inline
-
-Cada checkbox chamara `updateCliente` diretamente:
+Na query principal de `usePedidosEtapas`, adicionar o join com `clientes` via `cliente_id` na sub-query de vendas:
 
 ```text
-onClick -> stopPropagation (evita abrir modal de edicao)
-onCheckedChange -> updateCliente({ id: cliente.id, data: { fidelizado: !cliente.fidelizado } })
+vendas:venda_id (
+  ...campos existentes...,
+  cliente_id,
+  cliente:clientes!vendas_cliente_id_fkey (
+    fidelizado,
+    parceiro
+  )
+)
 ```
 
-Os icones de estrela e triangulo que ja aparecem na coluna "Tag" continuarao la como indicadores visuais. As novas colunas permitem a edicao rapida.
+### 2. `src/components/pedidos/PedidoCard.tsx` - Substituir badge de posicao
 
-### Nenhuma alteracao no backend
+Nos dois locais onde o badge de posicao e renderizado (grid view ~linha 1100 e mobile view ~linha 1878):
 
-As colunas `fidelizado` e `parceiro` ja existem na tabela. O hook `useUpdateCliente` ja suporta atualizar esses campos.
+**Antes:**
+```text
+{posicao && (
+  <Badge variant="outline" className={...}>
+    {posicao}o
+  </Badge>
+)}
+```
+
+**Depois:**
+```text
+{(() => {
+  const cliente = venda?.cliente;
+  const isFidelizado = cliente?.fidelizado;
+  const isParceiro = cliente?.parceiro;
+  if (!isFidelizado && !isParceiro) return null;
+  return (
+    <div className="flex items-center gap-0.5">
+      {isFidelizado && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
+      {isParceiro && <Triangle className="h-4 w-4 text-purple-500 fill-purple-500" />}
+    </div>
+  );
+})()}
+```
+
+- Importar `Star` e `Triangle` do lucide-react (Star ja esta importado, adicionar Triangle)
+- Manter o badge de "CORRECAO" inalterado
+
+### 3. Arquivos modificados
+
+- `src/hooks/usePedidosEtapas.ts` - query com join ao clientes
+- `src/components/pedidos/PedidoCard.tsx` - renderizacao dos icones no lugar da posicao
+
+### Notas
+
+- A prop `posicao` continua existindo no componente (usada para drag-and-drop e botoes de mover prioridade), apenas a **exibicao visual** muda
+- Os botoes de mover prioridade (setas cima/baixo) continuam funcionando normalmente pois usam a prop `posicao` e `total`
+- A pagina de expedicao (`ExpedicaoMinimalista`) tambem usa `showPosicao` mas nao sera afetada pois mantera a renderizacao condicional
 
