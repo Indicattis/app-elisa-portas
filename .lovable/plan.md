@@ -1,51 +1,49 @@
 
-
-# Redesign dos Botoes de Itens Sugeridos - Estilo Minimalista
+# Cadastrar Valor a Receber na Gestao de Fabrica
 
 ## Resumo
 
-Redesenhar os cards de produtos no `AdicionarLinhaModal` para seguir o estilo minimalista dark/glassmorphism usado na pagina `/home`, com fundo escuro, backdrop blur, bordas sutis e gradientes nos botoes.
+Permitir que o usuario cadastre o `valor_a_receber` diretamente no card do pedido em `/direcao/gestao-fabrica` quando esse valor nao estiver preenchido. Ao clicar no "---" ou no valor vazio, abre um popover/inline input para digitar o valor e salvar no banco.
 
-## Estilo de Referencia (/home)
+## Comportamento
 
 ```text
-Wrapper externo:  bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl
-Botao interno:    bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30 text-white
-Hover:            hover:from-blue-400 hover:to-blue-600
+ATUAL:
+  - pagamento_na_entrega = true  -> mostra badge ambar com valor
+  - pagamento_na_entrega = false -> mostra "---" (nao clicavel)
+
+NOVO:
+  - pagamento_na_entrega = true  -> mostra badge ambar com valor (clicavel para editar)
+  - valor_a_receber > 0          -> mostra valor em emerald (clicavel para editar)
+  - valor_a_receber = 0 ou null  -> mostra botao "+" ou "R$" clicavel
+  - Ao clicar, abre Popover com input de valor + botao Salvar
+  - Salva diretamente na tabela `vendas` (campo valor_a_receber)
+  - Invalida queries para atualizar a listagem
 ```
 
 ## Alteracoes
 
-### AdicionarLinhaModal.tsx
+### PedidoCard.tsx - Coluna "Valor a Receber" (modo lista, ~linha 1475)
 
-**Dialog/Container**:
-- Fundo do DialogContent escuro: `bg-zinc-950 border-white/10`
-- Textos em branco/cinza claro
+**Substituir** o bloco atual (que mostra badge ambar ou "---") por:
 
-**Cards de produto** (substituir o `<Card>` atual):
-- Wrapper: `p-1.5 rounded-xl backdrop-blur-xl border bg-white/5 border-white/10`
-- Botao interno: `bg-gradient-to-r from-blue-500 to-blue-700 border border-blue-400/30 text-white rounded-lg px-4 py-3 hover:from-blue-400 hover:to-blue-600`
-- Nome do produto em branco, descricao em `text-white/60`
-- Badges com fundo `bg-white/10 text-white/80` em vez dos variants padrao
-- Valores calculados (tamanho, qtd) em `text-blue-300`
+1. Se `valor_a_receber > 0`: mostrar o valor formatado (clicavel para editar via Popover)
+2. Se `valor_a_receber` e 0/null: mostrar um botao discreto "+" que abre o Popover
+3. O **Popover** contera:
+   - Input type="number" com placeholder "0,00" e label "Valor a Receber (R$)"
+   - Botao "Salvar" que faz `supabase.from('vendas').update({ valor_a_receber }).eq('id', venda_id)`
+   - Botao "Cancelar"
+4. Apos salvar: `queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] })`
+5. Manter o badge ambar quando `pagamento_na_entrega = true`
+6. Tambem adicionar a mesma funcionalidade no layout mobile do card (~linha 2070)
 
-**Campo de busca**:
-- Input com fundo `bg-white/5 border-white/10 text-white placeholder:text-white/40`
-- Icone de busca em `text-white/40`
+### Imports necessarios
 
-**Botao "Adicionar Manualmente"**:
-- Estilo `bg-white/5 border-white/10 text-white/70 hover:bg-white/10`
-
-**ScrollArea**:
-- Remover borda do scroll area, integrar ao fundo escuro
-
-**Formulario manual** (modoManual):
-- Labels em `text-white/70`
-- Inputs com fundo escuro `bg-white/5 border-white/10 text-white`
-
-**Footer**:
-- Botoes com estilo consistente ao tema escuro
+- Adicionar `Popover, PopoverContent, PopoverTrigger` de `@/components/ui/popover`
+- Adicionar `Input` de `@/components/ui/input`
+- Adicionar `useQueryClient` de `@tanstack/react-query`
+- Adicionar `useState` (ja importado)
 
 ### Arquivo modificado
 
-1. `src/components/pedidos/AdicionarLinhaModal.tsx` - Redesign visual completo dos cards e container
+1. `src/components/pedidos/PedidoCard.tsx` - Adicionar popover de edicao do valor a receber
