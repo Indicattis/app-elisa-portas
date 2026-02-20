@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench, CalendarPlus } from "lucide-react";
+import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench, CalendarPlus, Star, Triangle } from "lucide-react";
 import { CriarPedidoCorrecaoModal } from "./CriarPedidoCorrecaoModal";
 import { EnviarCorrecaoModal } from "./EnviarCorrecaoModal";
 import { useEnviarParaCorrecao } from "@/hooks/useEnviarParaCorrecao";
@@ -1097,13 +1097,20 @@ export function PedidoCard({
                 </div>
               )}
               
-              {/* Col 2: Índice de prioridade */}
+              {/* Col 2: Símbolos do cliente */}
               <div className="flex items-center justify-center">
-                {posicao && (
-                  <Badge variant="outline" className={cn("h-5 min-w-5 px-1.5 text-[10px] font-bold", getBadgeColor())}>
-                    {posicao}º
-                  </Badge>
-                )}
+                {(() => {
+                  const cliente = venda?.cliente;
+                  const isFidelizado = cliente?.fidelizado;
+                  const isParceiro = cliente?.parceiro;
+                  if (!isFidelizado && !isParceiro) return null;
+                  return (
+                    <div className="flex items-center gap-0.5">
+                      {isFidelizado && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
+                      {isParceiro && <Triangle className="h-4 w-4 text-purple-500 fill-purple-500" />}
+                    </div>
+                  );
+                })()}
                 {(pedido as any).is_correcao && (
                   <Badge variant="outline" className="h-5 px-1 text-[8px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
                     CORREÇÃO
@@ -1874,12 +1881,19 @@ className="flex h-[20px] w-full rounded-[3px]"
                   <GripVertical className="h-3 w-3 text-muted-foreground" />
                 </div>}
               
-              {/* Índice de prioridade */}
-              {posicao && (
-                <Badge variant="outline" className={cn("h-4 min-w-4 px-1 text-[9px] font-bold", getBadgeColor())}>
-                  {posicao}º
-                </Badge>
-              )}
+              {/* Símbolos do cliente */}
+              {(() => {
+                const cliente = venda?.cliente;
+                const isFidelizado = cliente?.fidelizado;
+                const isParceiro = cliente?.parceiro;
+                if (!isFidelizado && !isParceiro) return null;
+                return (
+                  <div className="flex items-center gap-0.5">
+                    {isFidelizado && <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />}
+                    {isParceiro && <Triangle className="h-3.5 w-3.5 text-purple-500 fill-purple-500" />}
+                  </div>
+                );
+              })()}
               
               {(emBacklog || temHistoricoBacklog) && (
                 <Tooltip>
