@@ -1838,6 +1838,15 @@ className="flex h-[20px] w-full rounded-[3px]"
           pedido={pedido}
           isLoading={isExcluindo}
         />
+
+        <ArquivarPedidoModal
+          open={showArquivar}
+          onOpenChange={setShowArquivar}
+          onConfirmar={handleConfirmarArquivamento}
+          pedido={pedido}
+        />
+
+        <ArquivamentoLoadingModal open={showArquivamentoLoading} />
       </>;
   }
 
