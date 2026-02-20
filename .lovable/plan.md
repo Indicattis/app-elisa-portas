@@ -1,30 +1,39 @@
 
-# Transformar /producao/meu-historico no Estilo Minimalista
+# Adicionar Quantidade Padrao ao Item Padrao de Porta de Enrolar
 
 ## O que muda
 
-A pagina `/producao/meu-historico` sera convertida do estilo padrao (Cards brancos com ProducaoLayout) para o estilo minimalista escuro com glassmorphism, identico ao usado em `/logistica/instalacoes/ranking`.
+Na pagina de edicao de item de estoque (`/administrativo/compras/estoque/editar-item/:id`), quando o checkbox "Item padrao para porta de enrolar" estiver marcado, aparecera um campo numerico para definir a quantidade inserida por padrao. Se nao for informada, sera 1.
+
+Quando um item padrao for adicionado automaticamente a um pedido, usara essa quantidade ao inves do valor fixo 1.
 
 ## Alteracoes
 
-### 1. `src/App.tsx` (~linha 700-709)
+### 1. Banco de dados - Nova coluna
 
-Remover o wrapper `ProducaoLayout` da rota `/meu-historico` dentro do producao, pois o `MinimalistLayout` ja fornece seu proprio layout completo (fundo preto, header, breadcrumb, botao voltar).
+Adicionar coluna `quantidade_padrao` na tabela `estoque`:
+- Tipo: `integer`
+- Default: `1`
+- Nullable: sim
 
-### 2. `src/pages/ProducaoMeuHistorico.tsx`
+### 2. `src/pages/administrativo/EstoqueEditMinimalista.tsx`
 
-Reescrever a pagina para usar o estilo minimalista:
+- Adicionar `quantidade_padrao` ao state do formulario (default 1)
+- Carregar o valor do banco no `useEffect` de inicializacao
+- Incluir no `dadosParaSalvar` do `handleSubmit`
+- Renderizar um campo `Input` numerico logo abaixo do checkbox `item_padrao_porta_enrolar`, visivel apenas quando o checkbox estiver marcado
+- Estilo consistente com a pagina: `bg-white/5 border-white/10 text-white`
 
-- Importar `MinimalistLayout` no lugar dos componentes `Card`, `Button`, `ArrowLeft`
-- Envolver todo o conteudo com `MinimalistLayout` (title, subtitle, backPath para `/producao`, breadcrumbItems)
-- Substituir os Cards de estatisticas por containers glassmorphism: `bg-white/5 border border-white/10 rounded-xl backdrop-blur-xl`
-- Icones de estatisticas com fundo `bg-blue-500/20` e cor `text-blue-400` (mesmo padrao do ranking)
-- Filtros dentro de container glassmorphism com selects estilizados (`bg-white/5 border-white/10 text-white`)
-- Lista de ordens com container glassmorphism, dividers `divide-white/5`, hover `hover:bg-white/5`
-- Textos: titulos em `text-white`, secundarios em `text-white/60`, terciarios em `text-white/40`
-- Badge de tempo em `text-blue-400` ao inves de `text-primary`
-- Badge de setor mantendo as cores existentes com `text-white`
+### 3. `src/hooks/useEstoque.ts`
 
-### Resultado visual
+- Adicionar `quantidade_padrao` a interface `ProdutoEstoque` (tipo `number`)
+- Adicionar `quantidade_padrao` a interface `ProdutoEstoqueInput` (opcional)
 
-A pagina tera o mesmo visual escuro e elegante do ranking de equipes, com fundo preto, cards com efeito glassmorphism, e a navegacao integrada do MinimalistLayout (breadcrumb animado + botao voltar).
+### 4. `src/components/pedidos/LinhasAgrupadasPorPorta.tsx`
+
+- Incluir `quantidade_padrao` no select da query de itens padrao (linha 95)
+- No `handleAdicionarItemPadrao`, substituir `quantidade: 1` por `quantidade: item.quantidade_padrao || 1`
+
+### 5. Tipos Supabase
+
+Os tipos serao atualizados automaticamente apos a migracao do banco.
