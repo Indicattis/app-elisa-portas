@@ -818,9 +818,11 @@ export type Database = {
           email: string | null
           endereco: string | null
           estado: string | null
+          fidelizado: boolean | null
           id: string
           nome: string
           observacoes: string | null
+          parceiro: boolean | null
           telefone: string | null
           tipo_cliente: string | null
           updated_at: string
@@ -837,9 +839,11 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           estado?: string | null
+          fidelizado?: boolean | null
           id?: string
           nome: string
           observacoes?: string | null
+          parceiro?: boolean | null
           telefone?: string | null
           tipo_cliente?: string | null
           updated_at?: string
@@ -856,9 +860,11 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           estado?: string | null
+          fidelizado?: boolean | null
           id?: string
           nome?: string
           observacoes?: string | null
+          parceiro?: boolean | null
           telefone?: string | null
           tipo_cliente?: string | null
           updated_at?: string
