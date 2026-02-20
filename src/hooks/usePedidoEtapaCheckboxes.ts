@@ -24,10 +24,10 @@ export function usePedidoEtapaCheckboxes(pedidoId: string, etapa: EtapaPedido) {
     enabled: !!pedidoId && !!etapa
   });
 
-  const checkboxes: PedidoCheckbox[] = (etapaData?.checkboxes ? 
-    JSON.parse(JSON.stringify(etapaData.checkboxes)) : 
-    ETAPAS_CONFIG[etapa].checkboxes.map(cb => ({ ...cb, checked: false }))
-  ) as PedidoCheckbox[];
+  const rawCheckboxes = etapaData?.checkboxes 
+    ? JSON.parse(JSON.stringify(etapaData.checkboxes)) 
+    : ETAPAS_CONFIG[etapa]?.checkboxes?.map(cb => ({ ...cb, checked: false })) ?? [];
+  const checkboxes: PedidoCheckbox[] = Array.isArray(rawCheckboxes) ? rawCheckboxes : [];
 
   // Mutation para atualizar checkbox
   const { mutate: atualizarCheckbox } = useMutation({
