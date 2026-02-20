@@ -112,6 +112,7 @@ export function LinhasAgrupadasPorPorta({
 }: LinhasAgrupadasPorPortaProps) {
   const [modalAberto, setModalAberto] = useState(false);
   const [portaSelecionada, setPortaSelecionada] = useState<string | null>(null);
+  const [indicePortaSelecionada, setIndicePortaSelecionada] = useState<number>(0);
   const [itensPadrao, setItensPadrao] = useState<ItemPadraoPortaEnrolar[]>([]);
   const [loadingItensPadrao, setLoadingItensPadrao] = useState(false);
 
@@ -145,8 +146,9 @@ export function LinhasAgrupadasPorPorta({
     fetchItensPadrao();
   }, [temPortaEnrolar, categoria]);
 
-  const handleAbrirModal = (portaId: string) => {
+  const handleAbrirModal = (portaId: string, indicePorta: number) => {
     setPortaSelecionada(portaId);
+    setIndicePortaSelecionada(indicePorta);
     setModalAberto(true);
   };
 
@@ -245,7 +247,7 @@ export function LinhasAgrupadasPorPorta({
                         variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleAbrirModal(originalId);
+                          handleAbrirModal(originalId, indicePorta);
                         }}
                         className="h-7 text-xs"
                       >
@@ -313,6 +315,7 @@ export function LinhasAgrupadasPorPorta({
           onOpenChange={setModalAberto}
           categoria={categoria}
           portaId={portaSelecionada}
+          indicePorta={indicePortaSelecionada}
           onAdicionar={onAdicionarLinha}
           portaLargura={portaParaModal?.largura}
           portaAltura={portaParaModal?.altura}

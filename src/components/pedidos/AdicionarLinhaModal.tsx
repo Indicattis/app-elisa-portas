@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useEstoque, ProdutoEstoque } from "@/hooks/useEstoque";
 import { Search, Package, Calculator, Zap } from "lucide-react";
+import { toast } from "sonner";
 import type { CategoriaLinha, PedidoLinhaNova } from "@/hooks/usePedidoLinhas";
 
 interface AdicionarLinhaModalProps {
@@ -15,6 +16,7 @@ interface AdicionarLinhaModalProps {
   onOpenChange: (open: boolean) => void;
   categoria: CategoriaLinha;
   portaId: string;
+  indicePorta?: number;
   onAdicionar: (linha: PedidoLinhaNova) => Promise<any>;
   portaLargura?: number;
   portaAltura?: number;
@@ -93,17 +95,18 @@ export function AdicionarLinhaModal({
   open, 
   onOpenChange, 
   categoria, 
-  portaId, 
+  portaId,
+  indicePorta = 0,
   onAdicionar,
   portaLargura,
   portaAltura 
 }: AdicionarLinhaModalProps) {
   const [busca, setBusca] = useState("");
   const [modoManual, setModoManual] = useState(false);
-  const [tamanhoCalculado, setTamanhoCalculado] = useState<string | null>(null);
-  const [quantidadeCalculada, setQuantidadeCalculada] = useState<number | null>(null);
+  const [adicionando, setAdicionando] = useState(false);
   const [formData, setFormData] = useState<PedidoLinhaNova>({
     produto_venda_id: portaId,
+    indice_porta: indicePorta,
     nome_produto: "",
     descricao_produto: "",
     quantidade: 1,
@@ -120,36 +123,44 @@ export function AdicionarLinhaModal({
     buscarProdutos(termo);
   };
 
-  const handleSelecionarProduto = (produto: ProdutoEstoque) => {
-    // Calcular tamanho automático se o produto tiver configuração
+  const handleSelecionarProduto = async (produto: ProdutoEstoque) => {
     const tamanhoAuto = calcularTamanhoAutomatico(produto, portaLargura, portaAltura);
-    setTamanhoCalculado(tamanhoAuto);
-    
-    // Calcular quantidade automática
     const qtdAuto = calcularQuantidadeAutomatica(produto, portaLargura, portaAltura);
-    setQuantidadeCalculada(qtdAuto);
     
-    setFormData({
+    const linha: PedidoLinhaNova = {
       produto_venda_id: portaId,
+      indice_porta: indicePorta,
       nome_produto: produto.nome_produto,
       descricao_produto: produto.descricao_produto || "",
       quantidade: qtdAuto ?? produto.quantidade_padrao ?? 1,
       tamanho: tamanhoAuto || "",
       estoque_id: produto.id,
       categoria_linha: categoria,
-    });
-    setModoManual(true);
+    };
+
+    setAdicionando(true);
+    try {
+      await onAdicionar(linha);
+      const detalhes = [
+        tamanhoAuto ? `${tamanhoAuto}m` : null,
+        `Qtd: ${linha.quantidade}`,
+      ].filter(Boolean).join(' · ');
+      toast.success(`${produto.nome_produto} adicionado`, { description: detalhes });
+    } catch {
+      toast.error("Erro ao adicionar item");
+    } finally {
+      setAdicionando(false);
+    }
   };
 
-  const handleSubmit = async () => {
-    if (!formData.nome_produto || formData.quantidade <= 0) {
-      return;
-    }
+  const handleSubmitManual = async () => {
+    if (!formData.nome_produto || formData.quantidade <= 0) return;
 
     await onAdicionar(formData);
     
     setFormData({
       produto_venda_id: portaId,
+      indice_porta: indicePorta,
       nome_produto: "",
       descricao_produto: "",
       quantidade: 1,
@@ -158,8 +169,6 @@ export function AdicionarLinhaModal({
     });
     setModoManual(false);
     setBusca("");
-    setTamanhoCalculado(null);
-    setQuantidadeCalculada(null);
     onOpenChange(false);
   };
 
@@ -168,10 +177,9 @@ export function AdicionarLinhaModal({
     if (!open) {
       setModoManual(false);
       setBusca("");
-      setTamanhoCalculado(null);
-      setQuantidadeCalculada(null);
       setFormData({
         produto_venda_id: portaId,
+        indice_porta: indicePorta,
         nome_produto: "",
         descricao_produto: "",
         quantidade: 1,
@@ -179,7 +187,7 @@ export function AdicionarLinhaModal({
         categoria_linha: categoria,
       });
     }
-  }, [open, portaId, categoria]);
+  }, [open, portaId, indicePorta, categoria]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -197,6 +205,7 @@ export function AdicionarLinhaModal({
                 value={busca}
                 onChange={(e) => handleBuscar(e.target.value)}
                 className="pl-8 h-9 text-sm"
+                disabled={adicionando}
               />
             </div>
 
@@ -207,12 +216,13 @@ export function AdicionarLinhaModal({
                   const tamanhoPreview = temCalculoAuto 
                     ? calcularTamanhoAutomatico(produto, portaLargura, portaAltura)
                     : null;
+                  const qtdPreview = calcularQuantidadeAutomatica(produto, portaLargura, portaAltura);
                     
                   return (
                     <Card
                       key={produto.id}
                       className="p-2 cursor-pointer hover:bg-accent transition-colors"
-                      onClick={() => handleSelecionarProduto(produto)}
+                      onClick={() => !adicionando && handleSelecionarProduto(produto)}
                     >
                       <div className="flex items-start gap-2">
                         <Package className="h-4 w-4 text-muted-foreground mt-0.5" />
@@ -241,7 +251,17 @@ export function AdicionarLinhaModal({
                             </p>
                             {tamanhoPreview && (
                               <p className="text-xs text-primary font-medium">
-                                → Tamanho: {tamanhoPreview}m
+                                → {tamanhoPreview}m
+                              </p>
+                            )}
+                            {qtdPreview && (
+                              <p className="text-xs text-primary font-medium">
+                                → Qtd: {qtdPreview}
+                              </p>
+                            )}
+                            {!tamanhoPreview && !qtdPreview && produto.quantidade_padrao && (
+                              <p className="text-xs text-muted-foreground">
+                                Qtd padrão: {produto.quantidade_padrao}
                               </p>
                             )}
                           </div>
@@ -256,6 +276,7 @@ export function AdicionarLinhaModal({
             <Button
               variant="outline"
               className="w-full h-8 text-xs"
+              disabled={adicionando}
               onClick={() => {
                 setModoManual(true);
                 setFormData(prev => ({ ...prev, nome_produto: busca }));
@@ -288,15 +309,7 @@ export function AdicionarLinhaModal({
 
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
-              <div className="flex items-center gap-1">
-                  <Label htmlFor="quantidade" className="text-xs">Quantidade</Label>
-                  {quantidadeCalculada && (
-                    <Badge variant="secondary" className="text-xs">
-                      <Calculator className="h-3 w-3 mr-1" />
-                      Calculada
-                    </Badge>
-                  )}
-                </div>
+                <Label htmlFor="quantidade" className="text-xs">Quantidade</Label>
                 <Input
                   id="quantidade"
                   type="number"
@@ -308,21 +321,12 @@ export function AdicionarLinhaModal({
               </div>
 
               <div className="space-y-1.5">
-                <div className="flex items-center gap-1">
-                  <Label htmlFor="tamanho" className="text-xs">Tamanho (opcional)</Label>
-                  {tamanhoCalculado && (
-                    <Badge variant="secondary" className="text-xs">
-                      <Calculator className="h-3 w-3 mr-1" />
-                      Calculado
-                    </Badge>
-                  )}
-                </div>
+                <Label htmlFor="tamanho" className="text-xs">Tamanho (opcional)</Label>
                 <Input
                   id="tamanho"
                   value={formData.tamanho}
                   onChange={(e) => setFormData({ ...formData, tamanho: e.target.value })}
                   className="h-8 text-sm"
-                  placeholder={tamanhoCalculado ? `Sugerido: ${tamanhoCalculado}m` : ""}
                 />
               </div>
             </div>
@@ -336,10 +340,10 @@ export function AdicionarLinhaModal({
             </Button>
           )}
           <Button variant="outline" onClick={() => onOpenChange(false)} className="h-8 text-xs">
-            Cancelar
+            {modoManual ? 'Cancelar' : 'Fechar'}
           </Button>
           {modoManual && (
-            <Button onClick={handleSubmit} className="h-8 text-xs">
+            <Button onClick={handleSubmitManual} className="h-8 text-xs">
               Adicionar
             </Button>
           )}
