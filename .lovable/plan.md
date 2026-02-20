@@ -1,27 +1,40 @@
 
 
-# Corrigir botao de Arquivar no PedidoCard
+# Corrigir botao de Arquivar na visualizacao em lista
 
-## Problema
+## Problema real
 
-O botao de arquivar abre corretamente o `ArquivarPedidoModal` (AlertDialog), porem o clique tambem propaga para o `Card` pai (linha 1027), que abre o `PedidoDetalhesSheet`. Como o Sheet e um overlay de tela cheia, ele cobre o AlertDialog de confirmacao, dando a impressao de que o botao nao funciona.
+O `ArquivarPedidoModal` nao esta sendo renderizado no bloco de retorno da visualizacao em lista (list view). O componente `PedidoCard` tem dois blocos de retorno separados:
 
-Apesar do `e.stopPropagation()` no onClick do botao, a cadeia `Tooltip > TooltipTrigger asChild > Button` pode nao estar propagando o stop corretamente em todos os casos.
+- **Lista** (linhas 1017-1841): Contem o botao de arquivar (linha 1737) que faz `setShowArquivar(true)`, mas NAO renderiza o `ArquivarPedidoModal`
+- **Grid** (linhas 1845-2287): Contem tanto o botao quanto o `ArquivarPedidoModal` (linha 2231) e o `ArquivamentoLoadingModal` (linha 2238)
+
+Quando o usuario clica no botao de arquivar na lista, o estado `showArquivar` muda para `true`, mas nao existe nenhum componente modal para responder a esse estado. O modal simplesmente nao existe nesse caminho de renderizacao.
 
 ## Solucao
 
 ### Alteracao em `src/components/pedidos/PedidoCard.tsx`
 
-No `onClick` do Card (linha 1027), adicionar uma verificacao para nao abrir o Sheet de detalhes quando um modal ja estiver sendo aberto. Isso pode ser feito de duas formas -- a mais robusta e:
+Adicionar o `ArquivarPedidoModal` e o `ArquivamentoLoadingModal` no bloco de retorno da visualizacao em lista, antes do fechamento do fragmento (antes da linha 1841).
 
-1. **No onClick do Card (linhas 1027-1033)**: Verificar se `showArquivar` (ou outros modais) esta ativo antes de abrir detalhes. Porem, como o state muda assincronamente, a melhor abordagem e:
+Inserir apos a linha 1840 (depois do `ExcluirPedidoModal`):
 
-2. **Envolver a area dos botoes de acao em um div com `onClick={e => e.stopPropagation()}`**: Adicionar um wrapper ao redor da coluna dos botoes de acao (que inclui o botao de arquivar) para garantir que qualquer clique nessa area nao propague para o Card. Isso ja e feito no drag handle (linha 1040) mas nao na area dos botoes.
+```typescript
+        <ArquivarPedidoModal
+          open={showArquivar}
+          onOpenChange={setShowArquivar}
+          onConfirmar={handleConfirmarArquivamento}
+          pedido={pedido}
+        />
 
-Especificamente, no container `div` que envolve os botoes de acao (proximo da linha 1520-1525), adicionar `onClick={(e) => e.stopPropagation()}` para bloquear a propagacao de qualquer botao daquela area.
+        <ArquivamentoLoadingModal open={showArquivamentoLoading} />
+```
+
+Nenhuma outra alteracao e necessaria. O `stopPropagation` ja adicionado anteriormente continua correto e necessario.
 
 ## Resultado
 
-- Clicar no botao de arquivar abrira apenas o modal de confirmacao de arquivamento
-- O Sheet de detalhes nao abrira simultaneamente
-- O comportamento de clicar em outras areas do Card para abrir detalhes continuara funcionando normalmente
+- O modal de confirmacao de arquivamento aparecera corretamente ao clicar no botao na visualizacao em lista
+- O modal de loading durante o arquivamento tambem funcionara
+- Nenhum impacto na visualizacao em grid, que ja funciona corretamente
+
