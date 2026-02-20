@@ -197,6 +197,7 @@ export const PedidoLinhasEditor = ({
     const categoria = mapearSetorParaCategoria(produtoEstoque.setor_responsavel_producao);
     
     try {
+      const editados = valoresEditados[linhaId];
       await onAtualizarLinhaCompleta(linhaId, {
         produto_venda_id: portaSelecionada?._originalId || null,
         indice_porta: portaSelecionada?._indicePorta ?? 0,
@@ -204,6 +205,8 @@ export const PedidoLinhasEditor = ({
         nome_produto: produtoEstoque.nome_produto,
         descricao_produto: produtoEstoque.descricao_produto || '',
         categoria_linha: categoria,
+        quantidade: editados?.quantidade,
+        tamanho: editados?.tamanho,
       });
       toast.success("Linha atualizada com sucesso");
       handleCancelarEdicao();
