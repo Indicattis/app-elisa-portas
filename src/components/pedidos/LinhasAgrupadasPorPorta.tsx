@@ -70,7 +70,14 @@ function calcularQuantidadeAutomaticaItem(
     return null;
   }
 
-  const eixoValor = item.qtd_eixo_calculo === 'largura' ? portaLargura : portaAltura;
+  let eixoValor: number | undefined;
+  if (item.qtd_eixo_calculo === 'largura') {
+    eixoValor = portaLargura;
+  } else if (item.qtd_eixo_calculo === 'altura') {
+    eixoValor = portaAltura;
+  } else if (item.qtd_eixo_calculo === 'qtd_meia_cana') {
+    eixoValor = portaAltura ? Math.ceil(portaAltura / 0.076) : undefined;
+  }
   if (!eixoValor) return null;
 
   let resultado: number;
