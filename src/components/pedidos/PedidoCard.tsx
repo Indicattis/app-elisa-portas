@@ -2,6 +2,8 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
@@ -97,6 +99,37 @@ export function PedidoCard({
   const [processos, setProcessos] = useState<Processo[]>([]);
   const [showCriarCorrecao, setShowCriarCorrecao] = useState(false);
   const [showEnviarCorrecao, setShowEnviarCorrecao] = useState(false);
+  const [valorAReceberTemp, setValorAReceberTemp] = useState('');
+  const [popoverValorAberto, setPopoverValorAberto] = useState(false);
+  const [salvandoValor, setSalvandoValor] = useState(false);
+
+  const handleAbrirPopoverValor = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const valorAtual = venda?.valor_a_receber;
+    setValorAReceberTemp(valorAtual ? String(valorAtual) : '');
+  };
+
+  const handleSalvarValorAReceber = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!venda?.id) return;
+    const valor = parseFloat(valorAReceberTemp);
+    if (isNaN(valor) || valor < 0) return;
+    setSalvandoValor(true);
+    try {
+      const { error } = await supabase
+        .from('vendas')
+        .update({ valor_a_receber: valor })
+        .eq('id', venda.id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      setPopoverValorAberto(false);
+      toast({ title: "Valor salvo", description: `Valor a receber atualizado para ${formatCurrency(valor)}` });
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message || "Não foi possível salvar", variant: "destructive" });
+    } finally {
+      setSalvandoValor(false);
+    }
+  };
   const { enviarParaCorrecao, isEnviando: isEnviandoCorrecao } = useEnviarParaCorrecao();
   const {
     isAdmin
@@ -1473,21 +1506,49 @@ export function PedidoCard({
               </div>
 
               {/* Col: Valor a Receber */}
-              <div className="text-center">
-                {venda?.pagamento_na_entrega ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="text-[10px] font-medium text-amber-600 bg-amber-500/10 rounded px-1 py-0.5">
-                        {venda?.valor_a_receber ? formatCurrency(venda.valor_a_receber) : '—'}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs">Pagamento na entrega</p>
-                    </TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <span className="text-[10px] text-muted-foreground/50">---</span>
-                )}
+              <div className="text-center" onClick={(e) => e.stopPropagation()}>
+                <Popover open={popoverValorAberto} onOpenChange={setPopoverValorAberto}>
+                  <PopoverTrigger asChild>
+                    <button
+                      onClick={handleAbrirPopoverValor}
+                      className={cn(
+                        "text-[10px] rounded px-1 py-0.5 cursor-pointer hover:opacity-80 transition-opacity",
+                        venda?.pagamento_na_entrega
+                          ? "font-medium text-amber-600 bg-amber-500/10"
+                          : venda?.valor_a_receber && venda.valor_a_receber > 0
+                            ? "font-medium text-emerald-600 bg-emerald-500/10"
+                            : "text-muted-foreground/50 hover:text-muted-foreground"
+                      )}
+                    >
+                      {venda?.valor_a_receber && venda.valor_a_receber > 0
+                        ? formatCurrency(venda.valor_a_receber)
+                        : venda?.pagamento_na_entrega ? '—' : '+ R$'}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-3" align="center" onClick={(e) => e.stopPropagation()}>
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-muted-foreground">Valor a Receber (R$)</label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0,00"
+                        value={valorAReceberTemp}
+                        onChange={(e) => setValorAReceberTemp(e.target.value)}
+                        className="h-8 text-sm"
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" className="flex-1 h-7 text-xs" onClick={handleSalvarValorAReceber} disabled={salvandoValor}>
+                          {salvandoValor ? '...' : 'Salvar'}
+                        </Button>
+                        <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={(e) => { e.stopPropagation(); setPopoverValorAberto(false); }}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               {/* Col 8-12: Status das Ordens */}
@@ -2074,9 +2135,52 @@ className="flex h-[20px] w-full rounded-[3px]"
 
           {/* Valor e Datas */}
           <div className="flex justify-between items-center text-xs">
-            <span className="font-semibold text-primary">
-              {formatCurrency(venda?.valor_venda || 0)}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-primary">
+                {formatCurrency(venda?.valor_venda || 0)}
+              </span>
+              <div onClick={(e) => e.stopPropagation()}>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      onClick={handleAbrirPopoverValor}
+                      className={cn(
+                        "text-[10px] rounded px-1 py-0.5 cursor-pointer",
+                        venda?.pagamento_na_entrega
+                          ? "font-medium text-amber-600 bg-amber-500/10"
+                          : venda?.valor_a_receber && venda.valor_a_receber > 0
+                            ? "font-medium text-emerald-600 bg-emerald-500/10"
+                            : "text-muted-foreground/50"
+                      )}
+                    >
+                      {venda?.valor_a_receber && venda.valor_a_receber > 0
+                        ? `Rec: ${formatCurrency(venda.valor_a_receber)}`
+                        : '+ Receber'}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-3" align="start" onClick={(e) => e.stopPropagation()}>
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-muted-foreground">Valor a Receber (R$)</label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0,00"
+                        value={valorAReceberTemp}
+                        onChange={(e) => setValorAReceberTemp(e.target.value)}
+                        className="h-8 text-sm"
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" className="flex-1 h-7 text-xs" onClick={handleSalvarValorAReceber} disabled={salvandoValor}>
+                          {salvandoValor ? '...' : 'Salvar'}
+                        </Button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
             <div className="flex flex-col items-end gap-0.5">
               <span className="text-muted-foreground" title="Data prevista de entrega">
                 {venda?.data_prevista_entrega ? format(new Date(venda.data_prevista_entrega), "dd/MM/yyyy") : format(new Date(venda?.created_at || Date.now()), "dd/MM/yyyy")}
