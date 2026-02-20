@@ -96,7 +96,7 @@ export function AdicionarLinhaModal({
       produto_venda_id: portaId,
       nome_produto: produto.nome_produto,
       descricao_produto: produto.descricao_produto || "",
-      quantidade: 1,
+      quantidade: produto.quantidade_padrao || 1,
       tamanho: tamanhoAuto || "",
       estoque_id: produto.id,
       categoria_linha: categoria,
