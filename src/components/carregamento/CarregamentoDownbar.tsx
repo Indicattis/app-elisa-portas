@@ -1,12 +1,13 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { PackageCheck, Loader2, Truck, Tags, Wrench, FileText, Camera, X, ImageIcon } from "lucide-react";
+import { PackageCheck, Loader2, Truck, Tags, Wrench, FileText, CheckSquare } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 import { OrdemCarregamentoUnificada } from "@/hooks/useOrdensCarregamentoUnificadas";
 import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
 import { gerarPDFEtiquetasProducaoMultiplas, gerarPDFEtiquetaProducao } from "@/utils/etiquetasPDFGenerator";
@@ -32,26 +33,24 @@ export function CarregamentoDownbar({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [loadingSuccess, setLoadingSuccess] = useState(false);
-  const [fotoFile, setFotoFile] = useState<File | null>(null);
-  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [itensMarcados, setItensMarcados] = useState<Set<string>>(new Set());
   const { calcularEtiquetasLinha } = useEtiquetasProducao();
 
-  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFotoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setFotoPreview(reader.result as string);
-      reader.readAsDataURL(file);
-    }
+  const toggleItem = (id: string) => {
+    setItensMarcados(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
-  const handleRemoverFoto = () => {
-    setFotoFile(null);
-    setFotoPreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const marcarTodos = () => {
+    if (!linhas) return;
+    setItensMarcados(new Set(linhas.map(l => l.id)));
   };
+
+  const todosMarcados = linhas && linhas.length > 0 && itensMarcados.size === linhas.length;
 
   const handleImprimirEtiquetas = () => {
     try {
@@ -125,8 +124,8 @@ export function CarregamentoDownbar({
   };
 
   const handleConcluir = async () => {
-    if (!fotoFile) {
-      toast.error("Tire uma foto do carregamento antes de concluir");
+    if (!todosMarcados) {
+      toast.error("Marque todos os itens antes de concluir");
       return;
     }
     if (!ordem?.id) return;
@@ -138,13 +137,11 @@ export function CarregamentoDownbar({
     try {
       await onConcluir({
         observacoes: "Carregamento concluído via interface de produção",
-        fotoFile,
       });
       setLoadingSuccess(true);
       await new Promise(resolve => setTimeout(resolve, 1500));
       setShowLoadingModal(false);
-      setFotoFile(null);
-      setFotoPreview(null);
+      setItensMarcados(new Set());
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
@@ -165,7 +162,7 @@ export function CarregamentoDownbar({
 
   return (
     <Sheet open={open} onOpenChange={(o) => {
-      if (!o) { setFotoFile(null); setFotoPreview(null); setIsSubmitting(false); }
+      if (!o) { setItensMarcados(new Set()); setIsSubmitting(false); }
       onOpenChange(o);
     }}>
       <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl max-w-[700px] mx-auto bg-zinc-900 border-t border-white/10 p-0">
@@ -228,21 +225,41 @@ export function CarregamentoDownbar({
               </div>
             )}
 
-            {/* Itens do Carregamento - somente leitura */}
+            {/* Itens do Carregamento - checklist interativo */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-white/70">Itens do Carregamento</h3>
-                {linhas && linhas.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 text-xs gap-1 text-white/50 hover:text-white hover:bg-white/10"
-                    onClick={handleImprimirEtiquetas}
-                  >
-                    <Tags className="h-3 w-3" />
-                    Etiquetas
-                  </Button>
-                )}
+                <h3 className="text-sm font-medium text-white/70">
+                  Itens do Carregamento
+                  {linhas && linhas.length > 0 && (
+                    <span className="ml-2 text-xs text-white/40">
+                      ({itensMarcados.size}/{linhas.length})
+                    </span>
+                  )}
+                </h3>
+                <div className="flex items-center gap-1">
+                  {linhas && linhas.length > 0 && !todosMarcados && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs gap-1 text-blue-400/70 hover:text-blue-300 hover:bg-blue-500/10"
+                      onClick={marcarTodos}
+                    >
+                      <CheckSquare className="h-3 w-3" />
+                      Marcar Todos
+                    </Button>
+                  )}
+                  {linhas && linhas.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs gap-1 text-white/50 hover:text-white hover:bg-white/10"
+                      onClick={handleImprimirEtiquetas}
+                    >
+                      <Tags className="h-3 w-3" />
+                      Etiquetas
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {isLoading ? (
@@ -251,66 +268,42 @@ export function CarregamentoDownbar({
                 </div>
               ) : linhas && linhas.length > 0 ? (
                 <div className="space-y-1.5">
-                  {linhas.map((linha, index) => (
-                    <div key={linha.id} className="bg-white/5 rounded-lg border border-white/5 px-3 py-2 flex items-center justify-between">
-                      <span className="text-sm text-white/80">
-                        {index + 1}. {linha.nome_produto || linha.descricao_produto || "Item"}
-                      </span>
-                      <div className="flex gap-3 text-xs text-white/40">
-                        <span>{linha.quantidade || 1}x</span>
-                        {linha.tamanho && <span>{linha.tamanho}</span>}
-                        {(linha.largura || linha.altura) && (
-                          <span>{linha.largura}x{linha.altura}</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                  {linhas.map((linha, index) => {
+                    const marcado = itensMarcados.has(linha.id);
+                    return (
+                      <button
+                        key={linha.id}
+                        type="button"
+                        onClick={() => toggleItem(linha.id)}
+                        className={`w-full rounded-lg border px-3 py-2 flex items-center gap-3 transition-all ${
+                          marcado
+                            ? 'bg-emerald-500/10 border-emerald-500/30'
+                            : 'bg-white/5 border-white/5 hover:border-white/15'
+                        }`}
+                      >
+                        <Checkbox
+                          checked={marcado}
+                          onCheckedChange={() => toggleItem(linha.id)}
+                          className="border-white/30 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                        />
+                        <span className={`text-sm flex-1 text-left ${marcado ? 'text-emerald-300 line-through' : 'text-white/80'}`}>
+                          {index + 1}. {linha.nome_produto || linha.descricao_produto || "Item"}
+                        </span>
+                        <div className="flex gap-3 text-xs text-white/40">
+                          <span>{linha.quantidade || 1}x</span>
+                          {linha.tamanho && <span>{linha.tamanho}</span>}
+                          {(linha.largura || linha.altura) && (
+                            <span>{linha.largura}x{linha.altura}</span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-sm text-white/30 text-center py-6">
                   Nenhum item encontrado
                 </p>
-              )}
-            </div>
-
-            {/* Foto do Carregamento */}
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium text-white/70">Foto do Carregamento</h3>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleFotoChange}
-                className="hidden"
-              />
-
-              {fotoPreview ? (
-                <div className="relative rounded-xl overflow-hidden border border-white/10">
-                  <img src={fotoPreview} alt="Foto do carregamento" className="w-full h-48 object-cover" />
-                  <button
-                    onClick={handleRemoverFoto}
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 hover:bg-black/80 text-white/80 hover:text-white transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                  <div className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full px-2.5 py-1">
-                    <ImageIcon className="h-3 w-3 text-emerald-400" />
-                    <span className="text-xs text-emerald-300">Foto capturada</span>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full h-36 rounded-xl border-2 border-dashed border-white/10 hover:border-blue-500/30 bg-white/5 hover:bg-blue-500/5 transition-all flex flex-col items-center justify-center gap-2 group"
-                >
-                  <div className="p-3 rounded-full bg-white/5 group-hover:bg-blue-500/10 transition-colors">
-                    <Camera className="h-6 w-6 text-white/30 group-hover:text-blue-400 transition-colors" />
-                  </div>
-                  <span className="text-sm text-white/30 group-hover:text-white/50 transition-colors">
-                    Tirar foto do carregamento
-                  </span>
-                </button>
               )}
             </div>
 
@@ -327,7 +320,7 @@ export function CarregamentoDownbar({
               <Button
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-30"
                 onClick={handleConcluir}
-                disabled={!fotoFile || isSubmitting}
+                disabled={!todosMarcados || isSubmitting}
               >
                 {isSubmitting ? (
                   <>
