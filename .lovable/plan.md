@@ -1,38 +1,27 @@
 
 
-# Remover foto e adicionar checklist de itens no Carregamento
+# Corrigir botao de Arquivar no PedidoCard
 
-## O que muda
+## Problema
 
-Na tela de carregamento (`/producao/carregamento`), o sistema atual exige uma foto para concluir. Sera substituido por um sistema de checkboxes onde o operador marca cada item que foi carregado no caminhao. So podera concluir quando todos os itens estiverem marcados.
+O botao de arquivar abre corretamente o `ArquivarPedidoModal` (AlertDialog), porem o clique tambem propaga para o `Card` pai (linha 1027), que abre o `PedidoDetalhesSheet`. Como o Sheet e um overlay de tela cheia, ele cobre o AlertDialog de confirmacao, dando a impressao de que o botao nao funciona.
 
-## Alteracoes
+Apesar do `e.stopPropagation()` no onClick do botao, a cadeia `Tooltip > TooltipTrigger asChild > Button` pode nao estar propagando o stop corretamente em todos os casos.
 
-### 1. `src/components/carregamento/CarregamentoDownbar.tsx`
+## Solucao
 
-- **Remover** toda a logica de foto: estado `fotoFile`, `fotoPreview`, `fileInputRef`, `handleFotoChange`, `handleRemoverFoto`, e a secao "Foto do Carregamento" no JSX
-- **Remover** imports de `Camera`, `X`, `ImageIcon` e `useRef`
-- **Adicionar** estado `itensMarcados` (um `Set<string>` com os IDs das linhas marcadas)
-- **Transformar** a lista de itens de somente-leitura para interativa: cada item tera um checkbox ao lado
-- **Alterar** `handleConcluir`:
-  - Remover validacao de foto (`if (!fotoFile)`)
-  - Adicionar validacao de que todos os itens estao marcados
-  - Passar `fotoFile: undefined` no `onConcluir`
-- **Alterar** o botao "Concluir Carregamento": desabilitar quando nem todos os itens estiverem marcados (em vez de `!fotoFile`)
-- Adicionar um botao "Marcar Todos" para facilitar
+### Alteracao em `src/components/pedidos/PedidoCard.tsx`
 
-### 2. `src/components/carregamento/CarregamentoDownbar.tsx` - Interface `onConcluir`
+No `onClick` do Card (linha 1027), adicionar uma verificacao para nao abrir o Sheet de detalhes quando um modal ja estiver sendo aberto. Isso pode ser feito de duas formas -- a mais robusta e:
 
-- O parametro `fotoFile` ja e opcional na interface (`fotoFile?: File`), entao nao precisa mudar a interface
+1. **No onClick do Card (linhas 1027-1033)**: Verificar se `showArquivar` (ou outros modais) esta ativo antes de abrir detalhes. Porem, como o state muda assincronamente, a melhor abordagem e:
 
-### 3. Nenhuma alteracao necessaria nos hooks
+2. **Envolver a area dos botoes de acao em um div com `onClick={e => e.stopPropagation()}`**: Adicionar um wrapper ao redor da coluna dos botoes de acao (que inclui o botao de arquivar) para garantir que qualquer clique nessa area nao propague para o Card. Isso ja e feito no drag handle (linha 1040) mas nao na area dos botoes.
 
-O hook `useOrdensCarregamentoUnificadas` ja trata `fotoFile` como opcional no upload -- se nao houver foto, simplesmente nao faz upload. Nao precisa alterar.
+Especificamente, no container `div` que envolve os botoes de acao (proximo da linha 1520-1525), adicionar `onClick={(e) => e.stopPropagation()}` para bloquear a propagacao de qualquer botao daquela area.
 
 ## Resultado
 
-- O operador vera a lista de itens com checkboxes
-- Precisara marcar cada item individualmente (ou usar "Marcar Todos")
-- O botao "Concluir Carregamento" so ficara ativo quando todos os itens estiverem marcados
-- A foto deixa de ser exigida
-
+- Clicar no botao de arquivar abrira apenas o modal de confirmacao de arquivamento
+- O Sheet de detalhes nao abrira simultaneamente
+- O comportamento de clicar em outras areas do Card para abrir detalhes continuara funcionando normalmente
