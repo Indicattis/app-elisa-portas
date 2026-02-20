@@ -1033,7 +1033,7 @@ export function PedidoCard({
           }}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid items-center gap-1.5 h-full px-2 w-full" style={{ gridTemplateColumns: hideOrdensStatus ? (showEtapaBadge ? '20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 1fr 55px' : '20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 1fr 55px') : (showEtapaBadge ? '20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 24px 24px 24px 24px 24px 24px 1fr 55px' : '20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 24px 24px 24px 24px 24px 24px 1fr 55px') }}>
+            <div className="grid items-center gap-1.5 h-full px-2 w-full" style={{ gridTemplateColumns: hideOrdensStatus ? (showEtapaBadge ? '20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px 65px 1fr 55px' : '20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px 65px 1fr 55px') : (showEtapaBadge ? '20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px 65px 24px 24px 24px 24px 24px 24px 1fr 55px' : '20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px 65px 24px 24px 24px 24px 24px 24px 1fr 55px') }}>
               {/* Col 1: Drag Handle ou Aviso de Espera */}
               <div>
                 {dragHandleProps ? (
@@ -1462,6 +1462,31 @@ export function PedidoCard({
                   <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-gray-200/20 text-gray-500 border-gray-400/30">
                     Galvanizada
                   </Badge>
+                )}
+              </div>
+
+              {/* Col: Valor da Venda */}
+              <div className="text-center">
+                <span className="text-[10px] text-muted-foreground">
+                  {venda?.valor_venda ? formatCurrency(venda.valor_venda) : '—'}
+                </span>
+              </div>
+
+              {/* Col: Valor a Receber */}
+              <div className="text-center">
+                {venda?.pagamento_na_entrega ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-[10px] font-medium text-amber-600 bg-amber-500/10 rounded px-1 py-0.5">
+                        {venda?.valor_a_receber ? formatCurrency(venda.valor_a_receber) : '—'}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Pagamento na entrega</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground/50">---</span>
                 )}
               </div>
 

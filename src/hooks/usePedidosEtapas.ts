@@ -127,6 +127,8 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             cliente_telefone,
             cliente_id,
             valor_venda,
+            pagamento_na_entrega,
+            valor_a_receber,
             created_at,
             tipo_entrega,
             atendente_id,
