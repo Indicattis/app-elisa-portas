@@ -1,83 +1,43 @@
 
-# Adicionar Modulo de Calculo para Quantidade Padrao
+
+# Adicionar "Qtd Meia Cana" como Eixo de Calculo
 
 ## Resumo
 
-Atualmente a `quantidade_padrao` e um numero fixo. O objetivo e permitir que a quantidade seja calculada automaticamente com base nas dimensoes da porta (largura ou altura), usando um operador matematico (multiplicar, dividir, somar, subtrair) e um valor.
+Adicionar uma terceira opcao ao seletor de "Eixo" no calculo automatico de quantidade: **"Qtd Meia Cana"**. Quando selecionada, o valor base usado no calculo sera `Math.ceil(altura / 0.076)` em vez de usar diretamente a largura ou altura da porta.
 
-Exemplo: Se o eixo for "largura" (2.50m), o operador for "dividir" e o valor for 0.10, a quantidade resultante sera 25.
+Isso permite criar calculos compostos, por exemplo: `Math.ceil(altura / 0.076) * 2` para obter o dobro da quantidade de meia canas.
 
-## Alteracoes no Banco de Dados
+## Alteracoes
 
-Criar 3 novas colunas na tabela `estoque`:
+### 1. Formulario de edicao (`src/pages/administrativo/EstoqueEditMinimalista.tsx`)
 
-```text
-qtd_eixo_calculo    -> 'largura' | 'altura' | null
-qtd_operador        -> 'multiplicar' | 'dividir' | 'somar' | 'subtrair' | null
-qtd_valor_calculo   -> numeric | null
-```
+- Adicionar `<SelectItem value="qtd_meia_cana">Qtd Meia Cana</SelectItem>` no seletor de Eixo
+- Atualizar o texto da formula para exibir "Qtd Meia Cana (⌈Altura÷0.076⌉)" quando esse eixo for selecionado
+- Atualizar o type cast na linha 133 para incluir `'qtd_meia_cana'`
 
-Migracao SQL:
-- ALTER TABLE estoque ADD COLUMN qtd_eixo_calculo text
-- ALTER TABLE estoque ADD COLUMN qtd_operador text
-- ALTER TABLE estoque ADD COLUMN qtd_valor_calculo numeric
+### 2. Logica de calculo no modal (`src/components/pedidos/AdicionarLinhaModal.tsx`)
 
-## Alteracoes no Formulario de Edicao
-
-**Arquivo: `src/pages/administrativo/EstoqueEditMinimalista.tsx`**
-
-Dentro da secao "Configuracoes de Calculo Automatico", abaixo do campo `quantidade_padrao`, adicionar uma subsecao:
-
-- Titulo: "Calculo automatico de quantidade"
-- Descricao explicativa: "Quando configurado, a quantidade sera calculada com base nas dimensoes da porta ao inserir o item no pedido. Se nao configurado, sera usada a quantidade padrao acima."
-- 3 campos em grid:
-  1. **Eixo** (Select): Largura / Altura
-  2. **Operador** (Select): Multiplicar / Dividir / Somar / Subtrair
-  3. **Valor** (Input numerico)
-- Botao para limpar o calculo (resetar os 3 campos para null)
-
-Adicionar os 3 novos campos ao state `formData`, ao `useEffect` de carregamento e ao `handleSubmit`.
-
-## Alteracoes no Hook de Estoque
-
-**Arquivo: `src/hooks/useEstoque.ts`**
-
-Adicionar os 3 novos campos nas interfaces `ProdutoEstoque` e `ProdutoEstoqueInput`:
-- qtd_eixo_calculo: 'largura' | 'altura' | null
-- qtd_operador: 'multiplicar' | 'dividir' | 'somar' | 'subtrair' | null
-- qtd_valor_calculo: number | null
-
-## Alteracoes na Logica de Insercao de Linhas
-
-**Arquivo: `src/components/pedidos/AdicionarLinhaModal.tsx`**
-
-Na funcao `handleSelecionarProduto`, adicionar logica:
+Na funcao `calcularQuantidadeAutomatica`, alterar a resolucao do eixo:
 
 ```text
-Se produto tem qtd_eixo_calculo + qtd_operador + qtd_valor_calculo:
-  eixoValor = (qtd_eixo_calculo === 'largura') ? portaLargura : portaAltura
-  
-  resultado = aplicar operador:
-    multiplicar -> eixoValor * qtd_valor_calculo
-    dividir     -> eixoValor / qtd_valor_calculo
-    somar       -> eixoValor + qtd_valor_calculo
-    subtrair    -> eixoValor - qtd_valor_calculo
-  
-  quantidade = Math.ceil(resultado)  // arredonda para cima
-Senao:
-  quantidade = produto.quantidade_padrao || 1
+Se qtd_eixo_calculo === 'largura'  -> eixoValor = portaLargura
+Se qtd_eixo_calculo === 'altura'   -> eixoValor = portaAltura
+Se qtd_eixo_calculo === 'qtd_meia_cana' -> eixoValor = Math.ceil(portaAltura / 0.076)
 ```
 
-Exibir badge "Qtd Calculada" ao lado da quantidade quando for auto-calculada.
+### 3. Logica de calculo nos itens padrao (`src/components/pedidos/LinhasAgrupadasPorPorta.tsx`)
 
-**Arquivo: `src/components/pedidos/LinhasAgrupadasPorPorta.tsx`**
+Mesma alteracao na funcao `calcularQuantidadeAutomaticaItem`.
 
-Aplicar a mesma logica ao inserir itens padrao de porta de enrolar automaticamente. Atualizar a interface `ItemPadraoPortaEnrolar` com os novos campos e a query de select.
+### 4. Tipos (`src/hooks/useEstoque.ts`)
 
-## Arquivos modificados
+Atualizar o tipo de `qtd_eixo_calculo` para incluir `'qtd_meia_cana'`.
 
-1. Nova migracao SQL (3 colunas)
-2. `src/hooks/useEstoque.ts` - interfaces
-3. `src/pages/administrativo/EstoqueEditMinimalista.tsx` - formulario
-4. `src/components/pedidos/AdicionarLinhaModal.tsx` - logica de calculo de quantidade
-5. `src/components/pedidos/LinhasAgrupadasPorPorta.tsx` - logica para itens padrao
+### Arquivos modificados
+
+1. `src/pages/administrativo/EstoqueEditMinimalista.tsx` - nova opcao no select + formula
+2. `src/components/pedidos/AdicionarLinhaModal.tsx` - logica de calculo
+3. `src/components/pedidos/LinhasAgrupadasPorPorta.tsx` - logica de calculo
+4. `src/hooks/useEstoque.ts` - tipo
+
