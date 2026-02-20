@@ -31,6 +31,9 @@ interface ItemPadraoPortaEnrolar {
   eixo_calculo: string | null;
   setor_responsavel_producao: string | null;
   quantidade_padrao: number | null;
+  qtd_eixo_calculo: string | null;
+  qtd_operador: string | null;
+  qtd_valor_calculo: number | null;
 }
 
 // Função para calcular o tamanho automático
@@ -55,6 +58,31 @@ function calcularTamanhoAutomatico(
   }
 
   return tamanhoCalculado.toFixed(2);
+}
+
+// Função para calcular quantidade automática
+function calcularQuantidadeAutomaticaItem(
+  item: ItemPadraoPortaEnrolar,
+  portaLargura?: number,
+  portaAltura?: number
+): number | null {
+  if (!item.qtd_eixo_calculo || !item.qtd_operador || !item.qtd_valor_calculo) {
+    return null;
+  }
+
+  const eixoValor = item.qtd_eixo_calculo === 'largura' ? portaLargura : portaAltura;
+  if (!eixoValor) return null;
+
+  let resultado: number;
+  switch (item.qtd_operador) {
+    case 'multiplicar': resultado = eixoValor * item.qtd_valor_calculo; break;
+    case 'dividir': resultado = eixoValor / item.qtd_valor_calculo; break;
+    case 'somar': resultado = eixoValor + item.qtd_valor_calculo; break;
+    case 'subtrair': resultado = eixoValor - item.qtd_valor_calculo; break;
+    default: return null;
+  }
+
+  return Math.ceil(resultado);
 }
 
 // Mapeia categoria para setor
@@ -93,7 +121,7 @@ export function LinhasAgrupadasPorPorta({
         const setorAtual = CATEGORIA_TO_SETOR[categoria];
         const { data, error } = await supabase
           .from('estoque')
-          .select('id, nome_produto, descricao_produto, modulo_calculo, valor_calculo, eixo_calculo, setor_responsavel_producao, quantidade_padrao')
+          .select('id, nome_produto, descricao_produto, modulo_calculo, valor_calculo, eixo_calculo, setor_responsavel_producao, quantidade_padrao, qtd_eixo_calculo, qtd_operador, qtd_valor_calculo')
           .eq('item_padrao_porta_enrolar', true)
           .eq('ativo', true)
           .eq('setor_responsavel_producao', setorAtual as 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura');
@@ -118,6 +146,7 @@ export function LinhasAgrupadasPorPorta({
   // Função para adicionar item padrão rapidamente
   const handleAdicionarItemPadrao = async (porta: any, item: ItemPadraoPortaEnrolar) => {
     const tamanhoAuto = calcularTamanhoAutomatico(item, porta.largura, porta.altura);
+    const qtdAuto = calcularQuantidadeAutomaticaItem(item, porta.largura, porta.altura);
     const originalId = porta._originalId || porta.id;
     const indicePorta = porta._indicePorta ?? 0;
     
@@ -127,7 +156,7 @@ export function LinhasAgrupadasPorPorta({
         indice_porta: indicePorta,
         nome_produto: item.nome_produto,
         descricao_produto: item.descricao_produto || "",
-        quantidade: item.quantidade_padrao || 1,
+        quantidade: qtdAuto ?? item.quantidade_padrao ?? 1,
         tamanho: tamanhoAuto || "",
         estoque_id: item.id,
         categoria_linha: categoria,

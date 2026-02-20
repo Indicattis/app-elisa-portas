@@ -57,6 +57,31 @@ function calcularTamanhoAutomatico(
   return tamanhoCalculado.toFixed(2);
 }
 
+// Função para calcular a quantidade automática
+function calcularQuantidadeAutomatica(
+  produto: ProdutoEstoque,
+  portaLargura?: number,
+  portaAltura?: number
+): number | null {
+  if (!produto.qtd_eixo_calculo || !produto.qtd_operador || !produto.qtd_valor_calculo) {
+    return null;
+  }
+
+  const eixoValor = produto.qtd_eixo_calculo === 'largura' ? portaLargura : portaAltura;
+  if (!eixoValor) return null;
+
+  let resultado: number;
+  switch (produto.qtd_operador) {
+    case 'multiplicar': resultado = eixoValor * produto.qtd_valor_calculo; break;
+    case 'dividir': resultado = eixoValor / produto.qtd_valor_calculo; break;
+    case 'somar': resultado = eixoValor + produto.qtd_valor_calculo; break;
+    case 'subtrair': resultado = eixoValor - produto.qtd_valor_calculo; break;
+    default: return null;
+  }
+
+  return Math.ceil(resultado);
+}
+
 export function AdicionarLinhaModal({ 
   open, 
   onOpenChange, 
@@ -69,6 +94,7 @@ export function AdicionarLinhaModal({
   const [busca, setBusca] = useState("");
   const [modoManual, setModoManual] = useState(false);
   const [tamanhoCalculado, setTamanhoCalculado] = useState<string | null>(null);
+  const [quantidadeCalculada, setQuantidadeCalculada] = useState<number | null>(null);
   const [formData, setFormData] = useState<PedidoLinhaNova>({
     produto_venda_id: portaId,
     nome_produto: "",
@@ -92,11 +118,15 @@ export function AdicionarLinhaModal({
     const tamanhoAuto = calcularTamanhoAutomatico(produto, portaLargura, portaAltura);
     setTamanhoCalculado(tamanhoAuto);
     
+    // Calcular quantidade automática
+    const qtdAuto = calcularQuantidadeAutomatica(produto, portaLargura, portaAltura);
+    setQuantidadeCalculada(qtdAuto);
+    
     setFormData({
       produto_venda_id: portaId,
       nome_produto: produto.nome_produto,
       descricao_produto: produto.descricao_produto || "",
-      quantidade: produto.quantidade_padrao || 1,
+      quantidade: qtdAuto ?? produto.quantidade_padrao ?? 1,
       tamanho: tamanhoAuto || "",
       estoque_id: produto.id,
       categoria_linha: categoria,
@@ -122,6 +152,7 @@ export function AdicionarLinhaModal({
     setModoManual(false);
     setBusca("");
     setTamanhoCalculado(null);
+    setQuantidadeCalculada(null);
     onOpenChange(false);
   };
 
@@ -131,6 +162,7 @@ export function AdicionarLinhaModal({
       setModoManual(false);
       setBusca("");
       setTamanhoCalculado(null);
+      setQuantidadeCalculada(null);
       setFormData({
         produto_venda_id: portaId,
         nome_produto: "",
@@ -249,7 +281,15 @@ export function AdicionarLinhaModal({
 
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
-                <Label htmlFor="quantidade" className="text-xs">Quantidade</Label>
+              <div className="flex items-center gap-1">
+                  <Label htmlFor="quantidade" className="text-xs">Quantidade</Label>
+                  {quantidadeCalculada && (
+                    <Badge variant="secondary" className="text-xs">
+                      <Calculator className="h-3 w-3 mr-1" />
+                      Calculada
+                    </Badge>
+                  )}
+                </div>
                 <Input
                   id="quantidade"
                   type="number"
