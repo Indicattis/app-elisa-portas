@@ -19,6 +19,8 @@ export interface Cliente {
   canal_aquisicao?: { id: string; nome: string } | null;
   observacoes?: string | null;
   tipo_cliente?: TipoCliente | null;
+  fidelizado?: boolean | null;
+  parceiro?: boolean | null;
   ativo: boolean;
   created_at: string;
   updated_at: string;
@@ -42,6 +44,8 @@ export interface ClienteFormData {
   canal_aquisicao_id?: string;
   observacoes?: string;
   tipo_cliente?: TipoCliente;
+  fidelizado?: boolean;
+  parceiro?: boolean;
 }
 
 export function useClientes() {

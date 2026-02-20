@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, Users, Phone, Mail, Target } from 'lucide-react';
+import { Plus, Search, Users, Phone, Mail, Target, Star, Triangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
@@ -35,7 +35,9 @@ export default function MeusClientes() {
           estado,
           created_at,
           cpf_cnpj,
-          tipo_cliente
+          tipo_cliente,
+          fidelizado,
+          parceiro
         `)
         .eq('created_by', user.id)
         .eq('ativo', true)
@@ -144,7 +146,11 @@ export default function MeusClientes() {
                   <Users className="w-5 h-5 text-blue-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-medium truncate">{cliente.nome}</h3>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="text-white font-medium truncate">{cliente.nome}</h3>
+                    {cliente.fidelizado && <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500 shrink-0" />}
+                    {cliente.parceiro && <Triangle className="h-3.5 w-3.5 text-purple-500 fill-purple-500 shrink-0" />}
+                  </div>
                   {cliente.cpf_cnpj && (
                     <p className="text-xs text-white/50 font-mono">{cliente.cpf_cnpj}</p>
                   )}

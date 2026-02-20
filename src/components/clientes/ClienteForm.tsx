@@ -23,7 +23,8 @@ import {
 } from "@/components/ui/select";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 import { Cliente, ClienteFormData, useCheckClienteDuplicado } from "@/hooks/useClientes";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, AlertTriangle, Star, Triangle } from "lucide-react";
 
 const ESTADOS_BR = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
@@ -49,6 +50,8 @@ const formSchema = z.object({
   canal_aquisicao_id: z.string().optional(),
   observacoes: z.string().optional(),
   tipo_cliente: z.enum(['CE', 'CR']).optional(),
+  fidelizado: z.boolean().optional(),
+  parceiro: z.boolean().optional(),
 });
 
 interface ClienteFormProps {
@@ -76,6 +79,8 @@ export function ClienteForm({ cliente, onSubmit, isLoading }: ClienteFormProps) 
       canal_aquisicao_id: cliente?.canal_aquisicao_id || "",
       observacoes: cliente?.observacoes || "",
       tipo_cliente: cliente?.tipo_cliente || undefined,
+      fidelizado: cliente?.fidelizado || false,
+      parceiro: cliente?.parceiro || false,
     },
   });
 
@@ -332,6 +337,46 @@ export function ClienteForm({ cliente, onSubmit, isLoading }: ClienteFormProps) 
                   </SelectContent>
                 </Select>
                 <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="flex items-center gap-6">
+          <FormField
+            control={form.control}
+            name="fidelizado"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormLabel className="flex items-center gap-1.5 cursor-pointer font-normal">
+                  <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                  Fidelizado
+                </FormLabel>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="parceiro"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormLabel className="flex items-center gap-1.5 cursor-pointer font-normal">
+                  <Triangle className="h-4 w-4 text-purple-500 fill-purple-500" />
+                  Parceiro
+                </FormLabel>
               </FormItem>
             )}
           />

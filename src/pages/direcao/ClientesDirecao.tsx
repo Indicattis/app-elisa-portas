@@ -43,7 +43,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, User, Pencil, Trash2, X, Phone, Mail, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, User, Pencil, Trash2, X, Phone, Mail, ArrowUpDown, ArrowUp, ArrowDown, Star, Triangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -232,15 +232,21 @@ export default function ClientesDirecao() {
   const renderCell = useCallback((cliente: Cliente, columnId: string) => {
     switch (columnId) {
       case 'tag':
-        return cliente.tipo_cliente ? (
-          <Badge 
-            variant="outline" 
-            className={`text-[10px] px-1.5 py-0.5 ${TIPOS_CLIENTE_CONFIG[cliente.tipo_cliente as TipoCliente]?.color || ''}`}
-          >
-            {cliente.tipo_cliente}
-          </Badge>
-        ) : (
-          <span className="text-white/30">-</span>
+        return (
+          <div className="flex items-center gap-1.5">
+            {cliente.tipo_cliente ? (
+              <Badge 
+                variant="outline" 
+                className={`text-[10px] px-1.5 py-0.5 ${TIPOS_CLIENTE_CONFIG[cliente.tipo_cliente as TipoCliente]?.color || ''}`}
+              >
+                {cliente.tipo_cliente}
+              </Badge>
+            ) : (
+              <span className="text-white/30">-</span>
+            )}
+            {cliente.fidelizado && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
+            {cliente.parceiro && <Triangle className="h-4 w-4 text-purple-500 fill-purple-500" />}
+          </div>
         );
       case 'nome':
         return <span className="text-white font-medium">{cliente.nome}</span>;
