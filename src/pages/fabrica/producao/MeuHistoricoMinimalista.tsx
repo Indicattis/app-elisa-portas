@@ -3,6 +3,7 @@ import { History, Clock, Trophy, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMeuHistoricoMinimalista } from "@/hooks/useMeuHistoricoMinimalista";
+import { HistoricoOrdemDetalhesSheet } from "@/components/production/HistoricoOrdemDetalhesSheet";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -41,6 +42,7 @@ function formatTempo(segundos: number | null): string {
 export default function MeuHistoricoMinimalista() {
   const [periodo, setPeriodo] = useState<PeriodoType>('mes');
   const [setor, setSetor] = useState<SetorType>('todos');
+  const [ordemSelecionada, setOrdemSelecionada] = useState<any | null>(null);
 
   const { data: ordens = [], isLoading } = useMeuHistoricoMinimalista({ periodo, setor });
 
@@ -50,7 +52,6 @@ export default function MeuHistoricoMinimalista() {
     ? Math.round(ordens.reduce((acc, o) => acc + (o.tempo_conclusao_segundos || 0), 0) / totalOrdens)
     : 0;
 
-  // Contar por setor
   const ordensPorSetor = ordens.reduce((acc, o) => {
     acc[o.setor] = (acc[o.setor] || 0) + 1;
     return acc;
@@ -101,7 +102,6 @@ export default function MeuHistoricoMinimalista() {
         </div>
       </div>
 
-      {/* Filtros */}
       <div className="bg-white/5 border border-white/10 rounded-xl p-3 backdrop-blur-xl mb-4">
         <div className="flex items-center gap-2 flex-wrap">
           <Filter className="h-4 w-4 text-white/40" />
@@ -152,7 +152,11 @@ export default function MeuHistoricoMinimalista() {
         ) : (
           <div className="divide-y divide-white/5">
             {ordens.map((ordem) => (
-              <div key={`${ordem.setor}-${ordem.id}`} className="p-3 hover:bg-white/5 transition-colors">
+              <div
+                key={`${ordem.setor}-${ordem.id}`}
+                className="p-3 hover:bg-white/5 cursor-pointer transition-colors"
+                onClick={() => setOrdemSelecionada(ordem)}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -186,6 +190,12 @@ export default function MeuHistoricoMinimalista() {
           </div>
         )}
       </div>
+
+      <HistoricoOrdemDetalhesSheet
+        ordem={ordemSelecionada}
+        open={!!ordemSelecionada}
+        onOpenChange={(open) => { if (!open) setOrdemSelecionada(null); }}
+      />
     </MinimalistLayout>
   );
 }
