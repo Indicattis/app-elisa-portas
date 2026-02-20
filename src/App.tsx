@@ -701,9 +701,7 @@ const App = () => (
                           path="/meu-historico"
                           element={
                             <ProtectedProducaoRoute>
-                              <ProducaoLayout>
-                                <ProducaoMeuHistorico />
-                              </ProducaoLayout>
+                              <MeuHistoricoMinimalista />
                             </ProtectedProducaoRoute>
                           }
                         />
