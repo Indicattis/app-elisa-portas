@@ -1,55 +1,42 @@
 
 
-# Adicionar Tags de Fidelizado e Parceiro nos Clientes
+# Adicionar Colunas com Checkbox para Fidelizado e Parceiro
 
 ## O que muda
 
-Dois novos marcadores visuais nos clientes:
-- Estrela preenchida = Cliente Fidelizado
-- Triangulo preenchido = Parceiro
+Na tabela de clientes em `/direcao/vendas/clientes`, serao adicionadas duas novas colunas configuraveis com checkboxes interativos:
 
-Esses marcadores aparecerao na coluna "Tag" da tabela em `/direcao/vendas/clientes` e poderao ser configurados na criacao e edicao de clientes.
+- Coluna com icone de estrela (Fidelizado): checkbox que marca/desmarca diretamente na tabela
+- Coluna com icone de triangulo (Parceiro): checkbox que marca/desmarca diretamente na tabela
+
+O usuario podera alterar o status clicando no checkbox sem precisar abrir o formulario de edicao.
 
 ## Alteracoes
 
-### 1. Migracao de banco de dados
+### 1. `src/pages/direcao/ClientesDirecao.tsx`
 
-Adicionar duas colunas booleanas na tabela `clientes`:
+- Importar o componente `Checkbox`
+- Adicionar duas novas colunas no array `COLUNAS_DISPONIVEIS`:
+  - `{ id: 'fidelizado', label: 'Fidelizado', defaultVisible: true }`
+  - `{ id: 'parceiro', label: 'Parceiro', defaultVisible: true }`
+- No `renderCell`, adicionar dois novos cases:
+  - `fidelizado`: renderiza um `Checkbox` com icone de estrela, checked conforme `cliente.fidelizado`, ao clicar chama `updateCliente` com o valor invertido (com `e.stopPropagation()` para nao abrir o dialog de edicao)
+  - `parceiro`: renderiza um `Checkbox` com icone de triangulo, checked conforme `cliente.parceiro`, ao clicar chama `updateCliente` com o valor invertido
+- Atualizar `getColumnAlignment` para centralizar ambas colunas
+- O `renderCell` precisa ter acesso a `updateCliente` (remover do `useCallback` com deps vazias ou adicionar a dependencia)
+
+### 2. Logica do checkbox inline
+
+Cada checkbox chamara `updateCliente` diretamente:
 
 ```text
-ALTER TABLE clientes ADD COLUMN fidelizado boolean DEFAULT false;
-ALTER TABLE clientes ADD COLUMN parceiro boolean DEFAULT false;
+onClick -> stopPropagation (evita abrir modal de edicao)
+onCheckedChange -> updateCliente({ id: cliente.id, data: { fidelizado: !cliente.fidelizado } })
 ```
 
-### 2. Hook `src/hooks/useClientes.ts`
+Os icones de estrela e triangulo que ja aparecem na coluna "Tag" continuarao la como indicadores visuais. As novas colunas permitem a edicao rapida.
 
-- Adicionar `fidelizado` e `parceiro` na interface `Cliente`
-- Adicionar `fidelizado` e `parceiro` na interface `ClienteFormData`
+### Nenhuma alteracao no backend
 
-### 3. Formulario `src/components/clientes/ClienteForm.tsx`
-
-- Adicionar `fidelizado` e `parceiro` ao schema zod (booleanos opcionais)
-- Adicionar dois checkboxes no formulario (ao lado do campo "Tipo de Cliente"), usando o componente Checkbox ja disponivel:
-  - "Cliente Fidelizado" (com icone de estrela)
-  - "Parceiro" (com icone de triangulo)
-
-### 4. Pagina `src/pages/direcao/ClientesDirecao.tsx`
-
-- Na coluna `tag` do `renderCell`, alem do badge CE/CR existente, renderizar:
-  - Icone `Star` preenchido (fill="currentColor") em dourado quando `cliente.fidelizado === true`
-  - Icone `Triangle` preenchido (fill="currentColor") em roxo quando `cliente.parceiro === true`
-- Os icones aparecerao ao lado do badge de tipo existente
-
-### 5. Pagina `src/pages/vendas/MeusClientes.tsx`
-
-- Exibir os mesmos icones nos cards de clientes, para consistencia visual
-
-## Secao tecnica
-
-Arquivos modificados:
-- `src/hooks/useClientes.ts` - tipos e form data
-- `src/components/clientes/ClienteForm.tsx` - campos de formulario
-- `src/pages/direcao/ClientesDirecao.tsx` - exibicao na tabela
-- `src/pages/vendas/MeusClientes.tsx` - exibicao nos cards
-- Nova migracao SQL para as colunas
+As colunas `fidelizado` e `parceiro` ja existem na tabela. O hook `useUpdateCliente` ja suporta atualizar esses campos.
 
