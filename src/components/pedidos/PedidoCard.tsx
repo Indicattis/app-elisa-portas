@@ -371,11 +371,32 @@ export function PedidoCard({
   } = useQuery({
     queryKey: ['pedido-carregamento', pedido.id],
     queryFn: async () => {
-      if (pedido.etapa_atual !== 'aguardando_coleta' && pedido.etapa_atual !== 'instalacoes') {
+      if (pedido.etapa_atual !== 'aguardando_coleta' && pedido.etapa_atual !== 'instalacoes' && pedido.etapa_atual !== 'correcoes') {
         return {
           concluido: false,
           temData: true,
           dataCarregamento: null
+        };
+      }
+
+      // Para correções, buscar da tabela correcoes
+      if (pedido.etapa_atual === 'correcoes') {
+        const { data: correcao } = await supabase
+          .from('correcoes')
+          .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento, vezes_agendado')
+          .eq('pedido_id', pedido.id)
+          .maybeSingle();
+
+        const temData = !!correcao?.data_carregamento;
+        const concluido = correcao?.carregamento_concluido || false;
+
+        return {
+          concluido,
+          temData,
+          dataCarregamento: correcao?.data_carregamento || null,
+          responsavelNome: correcao?.responsavel_carregamento_nome || null,
+          tipoCarregamento: correcao?.tipo_carregamento || null,
+          vezesAgendado: correcao?.vezes_agendado || 0
         };
       }
 
