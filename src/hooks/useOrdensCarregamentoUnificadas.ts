@@ -375,7 +375,7 @@ export const useOrdensCarregamentoUnificadas = () => {
       // Ordenar por data de carregamento (null por último), depois por created_at
       ordensNormalizadas.sort((a, b) => {
         if (a.data_carregamento && b.data_carregamento) {
-          return new Date(a.data_carregamento).getTime() - new Date(b.data_carregamento).getTime();
+          return new Date(a.data_carregamento + 'T12:00:00').getTime() - new Date(b.data_carregamento + 'T12:00:00').getTime();
         }
         if (a.data_carregamento) return -1;
         if (b.data_carregamento) return 1;

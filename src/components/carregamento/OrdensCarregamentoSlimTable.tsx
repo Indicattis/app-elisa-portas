@@ -116,7 +116,7 @@ export const OrdensCarregamentoSlimTable = ({ ordens, onConcluirOrdem }: OrdensC
             <div className="text-xs">
               {ordem.data_carregamento ? (
                 <div className="flex flex-col">
-                  <span>{format(new Date(ordem.data_carregamento), "dd/MM/yyyy", { locale: ptBR })}</span>
+                  <span>{format(new Date(ordem.data_carregamento + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })}</span>
                   {ordem.hora && <span className="text-muted-foreground">{ordem.hora}</span>}
                 </div>
               ) : (

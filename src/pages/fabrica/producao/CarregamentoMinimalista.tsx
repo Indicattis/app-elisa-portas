@@ -37,8 +37,8 @@ export default function CarregamentoMinimalista() {
 
   // Ordenar por data de carregamento
   const ordensOrdenadas = ordensFiltradas.sort((a, b) => {
-    const dateA = a.data_carregamento ? new Date(a.data_carregamento).getTime() : 0;
-    const dateB = b.data_carregamento ? new Date(b.data_carregamento).getTime() : 0;
+    const dateA = a.data_carregamento ? new Date(a.data_carregamento + 'T12:00:00').getTime() : 0;
+    const dateB = b.data_carregamento ? new Date(b.data_carregamento + 'T12:00:00').getTime() : 0;
     return dateA - dateB;
   });
 

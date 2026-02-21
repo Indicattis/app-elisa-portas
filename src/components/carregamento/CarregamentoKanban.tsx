@@ -105,7 +105,7 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
                   Data Agendada
                 </p>
                 <p className="text-xs sm:text-sm font-semibold">
-                  {format(new Date(ordem.data_carregamento), "dd/MM/yyyy", { locale: ptBR })}
+                  {format(new Date(ordem.data_carregamento + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })}
                   {ordem.hora && ` às ${ordem.hora}`}
                 </p>
               </div>
