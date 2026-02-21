@@ -85,6 +85,7 @@ export const useNeoInstalacoesMinhaEquipe = (
         .from("neo_instalacoes")
         .select(verTodas ? "*, equipe:equipes_instalacao(id, nome, cor)" : "*")
         .eq("concluida", false)
+        .neq("status", "arquivada")
         .gte("data_instalacao", inicio)
         .lte("data_instalacao", fim)
         .order("data_instalacao", { ascending: true });

@@ -29,6 +29,7 @@ export const useNeoCorrecoes = (currentDate: Date, periodo: 'week' | 'month' = '
         .from("neo_correcoes")
         .select("*")
         .eq("concluida", false)
+        .neq("status", "arquivada")
         .gte("data_correcao", inicioStr)
         .lte("data_correcao", fimStr)
         .order("data_correcao", { ascending: true });
@@ -209,6 +210,7 @@ export const useNeoCorrecoesListagem = () => {
         .from("neo_correcoes")
         .select("*")
         .eq("concluida", false)
+        .neq("status", "arquivada")
         .order("prioridade_gestao", { ascending: false })
         .order("data_correcao", { ascending: true });
 
@@ -507,6 +509,7 @@ export const useNeoCorrecoesSemData = () => {
         .select("*")
         .is("data_correcao", null)
         .eq("concluida", false)
+        .neq("status", "arquivada")
         .order("prioridade_gestao", { ascending: false })
         .order("created_at", { ascending: false });
 

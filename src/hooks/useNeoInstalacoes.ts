@@ -37,6 +37,7 @@ export const useNeoInstalacoes = (
         .gte("data_instalacao", inicio)
         .lte("data_instalacao", fim)
         .eq("concluida", false)
+        .neq("status", "arquivada")
         .order("data_instalacao", { ascending: true });
 
       if (error) throw error;
@@ -208,6 +209,7 @@ export const useNeoInstalacoesListagem = () => {
         .from("neo_instalacoes")
         .select("*")
         .eq("concluida", false)
+        .neq("status", "arquivada")
         .order("prioridade_gestao", { ascending: false })
         .order("data_instalacao", { ascending: true });
 
@@ -537,6 +539,7 @@ export const useNeoInstalacoesSemData = () => {
         .select("*")
         .is("data_instalacao", null)
         .eq("concluida", false)
+        .neq("status", "arquivada")
         .order("prioridade_gestao", { ascending: false })
         .order("created_at", { ascending: false });
 
