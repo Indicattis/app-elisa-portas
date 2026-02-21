@@ -1,56 +1,84 @@
 
 
-# Correcao: Botao de agendamento nao aparece para pedidos em Correcoes
+# Nova Funcionalidade: Multas
 
-## Problema
+## Resumo
 
-O pedido 0183 (aa1ecc83...) esta na etapa "correcoes" e possui um registro na tabela `correcoes` com `data_carregamento: null` e `carregamento_concluido: false`. O botao de agendar deveria aparecer, mas nao aparece.
+Criar um novo botao "Multas" no hub Administrativo e uma pagina completa para cadastro e listagem de multas. Cada multa sera vinculada a um usuario (colaborador), com valor e data de vencimento.
 
-## Causa raiz
+## 1. Criar tabela no banco de dados
 
-No `PedidoCard.tsx`, a query `pedido-carregamento` (linha 374) tem um early return que so permite buscar dados para `aguardando_coleta` e `instalacoes`. Para qualquer outra etapa (incluindo `correcoes`), retorna `{ temData: true, concluido: false }`.
+Nova tabela `multas`:
 
-Como o botao de agendar (linha 1655) exige `!temDataCarregamento`, e `temData` esta sendo retornado como `true` artificialmente, o botao nunca aparece.
+```sql
+CREATE TABLE public.multas (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  usuario_id UUID NOT NULL REFERENCES public.admin_users(id) ON DELETE CASCADE,
+  valor NUMERIC NOT NULL,
+  data_vencimento DATE NOT NULL,
+  descricao TEXT,
+  status TEXT NOT NULL DEFAULT 'pendente',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-## Correcao (arquivo unico: `src/components/pedidos/PedidoCard.tsx`)
+ALTER TABLE public.multas ENABLE ROW LEVEL SECURITY;
 
-### Alterar a queryFn de carregamento (linhas 374-380)
-
-Adicionar `correcoes` a condicao de passagem e incluir uma branch que busca dados da tabela `correcoes`:
-
-```typescript
-// Linha 374 - incluir correcoes na condicao
-if (pedido.etapa_atual !== 'aguardando_coleta' 
-    && pedido.etapa_atual !== 'instalacoes' 
-    && pedido.etapa_atual !== 'correcoes') {
-  return { concluido: false, temData: true, dataCarregamento: null };
-}
-
-// Nova branch para correcoes (antes da branch de instalacoes)
-if (pedido.etapa_atual === 'correcoes') {
-  const { data: correcao } = await supabase
-    .from('correcoes')
-    .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento, vezes_agendado')
-    .eq('pedido_id', pedido.id)
-    .maybeSingle();
-
-  const temData = !!correcao?.data_carregamento;
-  const concluido = correcao?.carregamento_concluido || false;
-
-  return {
-    concluido,
-    temData,
-    dataCarregamento: correcao?.data_carregamento || null,
-    responsavelNome: correcao?.responsavel_carregamento_nome || null,
-    tipoCarregamento: correcao?.tipo_carregamento || null,
-    vezesAgendado: correcao?.vezes_agendado || 0
-  };
-}
+CREATE POLICY "Authenticated users can manage multas"
+  ON public.multas FOR ALL TO authenticated
+  USING (true) WITH CHECK (true);
 ```
 
-## Resultado esperado
+## 2. Adicionar botao no AdministrativoHub
 
-- Pedido em "Correcoes" sem data de carregamento: `temData = false` -> botao de agendar aparece
-- Pedido em "Correcoes" com carregamento agendado mas nao concluido: `temData = true, concluido = false` -> botao de agendar some, aguarda conclusao
-- Pedido em "Correcoes" com carregamento concluido: `concluido = true` -> botao de avancar aparece
+Arquivo: `src/pages/administrativo/AdministrativoHub.tsx`
+
+- Importar icone `AlertTriangle` do lucide-react
+- Adicionar item ao array `menuItems`:
+  ```
+  { label: "Multas", icon: AlertTriangle, path: "/administrativo/multas", ativo: true }
+  ```
+
+## 3. Criar pagina MultasMinimalista
+
+Arquivo: `src/pages/administrativo/MultasMinimalista.tsx`
+
+Seguindo o padrao existente (ex: CobrancasMinimalista), a pagina tera:
+
+- **Layout**: Usar `MinimalistLayout` com breadcrumb (Home > Administrativo > Multas)
+- **Listagem**: Cards mostrando nome do usuario, valor formatado em BRL, data de vencimento, status (pendente/paga/vencida), descricao
+- **Busca**: Campo de pesquisa por nome do usuario
+- **Cadastro**: Dialog/modal com formulario contendo:
+  - Select de usuario (busca da tabela `admin_users`)
+  - Campo de valor (numerico)
+  - Datepicker para data de vencimento
+  - Campo de descricao (opcional)
+- **Acoes**: Botao para marcar como paga, editar e excluir
+- **Indicadores visuais**: Badges de cor para status (vermelho = vencida, amarelo = vence hoje, azul = pendente, verde = paga)
+
+## 4. Criar hook useMultas
+
+Arquivo: `src/hooks/useMultas.ts`
+
+- Query para listar multas com join no `admin_users` para pegar o nome
+- Mutations para criar, atualizar status e excluir multas
+- Invalidacao automatica do cache apos mutations
+
+## 5. Adicionar rota no App.tsx
+
+```
+<Route path="/administrativo/multas" element={
+  <ProtectedRoute routeKey="administrativo_hub">
+    <MultasMinimalista />
+  </ProtectedRoute>
+} />
+```
+
+## Detalhes tecnicos
+
+- Datas salvas com concatenacao de `T12:00:00.000Z` (padrao do projeto)
+- Formatacao de moeda com `Intl.NumberFormat` em BRL
+- Componentes: Dialog, Input, Button, Badge, Calendar (shadcn)
+- Hook `useAllUsers` ja existente sera reutilizado para o select de usuarios
+- Status possíveis: `pendente`, `paga`, `vencida` (vencida calculada no frontend pela data)
 
