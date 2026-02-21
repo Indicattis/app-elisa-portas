@@ -75,6 +75,7 @@ export const useNeoCorrecoesMinhaEquipe = (
         .from("neo_correcoes")
         .select(verTodas ? "*, equipe:equipes_instalacao(id, nome, cor)" : "*")
         .eq("concluida", false)
+        .neq("status", "arquivada")
         .gte("data_correcao", inicio)
         .lte("data_correcao", fim)
         .order("data_correcao", { ascending: true });
