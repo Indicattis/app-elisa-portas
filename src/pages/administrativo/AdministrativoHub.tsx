@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { DollarSign, Users, ShoppingCart, FileText, Package, Lock, ArrowLeft, FolderOpen } from "lucide-react";
+import { DollarSign, Users, ShoppingCart, FileText, Package, Lock, ArrowLeft, FolderOpen, AlertTriangle } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -14,6 +14,7 @@ const menuItems = [
   { label: "Fiscal & Contábil", icon: FileText, path: "/administrativo/fiscal", ativo: true },
   { label: "Pedidos", icon: Package, path: "/administrativo/pedidos", ativo: true },
   { label: "Documentos", icon: FolderOpen, path: "/administrativo/documentos", ativo: true },
+  { label: "Multas", icon: AlertTriangle, path: "/administrativo/multas", ativo: true },
 ];
 
 export default function AdministrativoHub() {

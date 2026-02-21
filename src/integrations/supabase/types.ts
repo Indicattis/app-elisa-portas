@@ -3325,6 +3325,47 @@ export type Database = {
         }
         Relationships: []
       }
+      multas: {
+        Row: {
+          created_at: string
+          data_vencimento: string
+          descricao: string | null
+          id: string
+          status: string
+          updated_at: string
+          usuario_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          data_vencimento: string
+          descricao?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+          usuario_id: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          data_vencimento?: string
+          descricao?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+          usuario_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "multas_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       naturezas_operacao: {
         Row: {
           ativo: boolean
