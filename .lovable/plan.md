@@ -1,50 +1,60 @@
 
 
-# Layout de Pastas para Observacoes da Visita Tecnica
+# Correcao do bug de timezone nas datas de carregamento
 
-## Resumo
+## Problema
 
-Substituir a listagem sequencial de formularios de observacoes (tanto para portas de enrolar quanto portas sociais) pelo mesmo layout de pastas (folder cards) usado na secao "Itens do Pedido". O usuario clicara em uma pasta para expandir o formulario de observacoes daquela porta especifica.
+A data de carregamento `2026-02-21` (formato date-only) e interpretada pelo JavaScript como UTC midnight (`2026-02-21T00:00:00Z`). No fuso horario do Brasil (UTC-3), isso resulta em `2026-02-20T21:00:00`, fazendo com que a data seja exibida como **20/02** em vez de **21/02**.
 
-## Comportamento
-
-```text
-ESTADO ATUAL:
-  - Cada porta exibe um Collapsible com badge + formulario empilhado
-
-NOVO ESTADO:
-  - Grid de PortaFolderCard (2-3 colunas) mostrando cada porta
-  - Ao clicar em uma pasta, expande abaixo o formulario correspondente (ObservacoesPortaForm / ObservacoesPortaSocialForm)
-  - Apenas uma pasta aberta por vez (por secao)
-  - Badge indicando status (Pendente / Preenchido) no folder card
-```
+A correcao ja existe no `CarregamentoDownbar.tsx` (linha 194) onde `'T12:00:00'` e concatenado, mas falta nos demais componentes.
 
 ## Alteracoes
 
-### `src/components/pedidos/PortaFolderCard.tsx`
+### 1. `src/components/carregamento/CarregamentoKanban.tsx` (linha 108)
 
-1. Tornar as props `linhasCount` e `categorias` opcionais (com defaults) para poder reutilizar o card em contextos sem linhas
-2. Adicionar prop opcional `statusBadge` (string) para exibir um badge customizado (ex: "Pendente", "Preenchido") no lugar do badge de contagem de itens
+Corrigir a formatacao da data adicionando `T12:00:00` para forcar interpretacao ao meio-dia:
 
-### `src/pages/administrativo/PedidoViewMinimalista.tsx`
+```
+// DE:
+format(new Date(ordem.data_carregamento), "dd/MM/yyyy", ...)
+// PARA:
+format(new Date(ordem.data_carregamento + 'T12:00:00'), "dd/MM/yyyy", ...)
+```
 
-**Secao "Observacoes da visita tecnica" (portas de enrolar, linhas ~755-782):**
+### 2. `src/components/carregamento/OrdensCarregamentoSlimTable.tsx` (linha 119)
 
-1. Adicionar state `pastaObsAberta` (tipo `string | null`) para rastrear qual pasta de observacoes esta expandida
-2. Substituir o `div > map > ObservacoesPortaForm` por:
-   - Grid de `PortaFolderCard` (um por porta de enrolar) com label, dimensoes e badge de status (pendente/preenchido baseado em `responsavel_medidas_id`)
-   - Abaixo do grid, renderizar condicionalmente o `ObservacoesPortaForm` da porta selecionada com `defaultOpen={true}`
-3. Ao clicar em um folder card, setar `pastaObsAberta` para o `_virtualKey` da porta; clicar novamente fecha
+Mesma correcao:
 
-**Secao "Especificacoes Porta Social" (linhas ~785-809):**
+```
+// DE:
+format(new Date(ordem.data_carregamento), "dd/MM/yyyy", ...)
+// PARA:
+format(new Date(ordem.data_carregamento + 'T12:00:00'), "dd/MM/yyyy", ...)
+```
 
-1. Adicionar state `pastaSocialAberta` (tipo `string | null`)
-2. Aplicar o mesmo padrao de grid de folder cards + formulario expandido condicionalmente
-3. Badge de status baseado no preenchimento das observacoes sociais
+### 3. `src/pages/ProducaoCarregamento.tsx` e `src/pages/fabrica/producao/CarregamentoMinimalista.tsx` (ordenacao)
 
-### Detalhes visuais
+Corrigir o sort que tambem usa `new Date(a.data_carregamento)`:
 
-- Grid: `grid grid-cols-2 md:grid-cols-3 gap-3` (mesmo da secao de itens)
-- Pasta expandida: container com borda, header com botao voltar e label, corpo com o formulario
-- O `ObservacoesPortaForm` e `ObservacoesPortaSocialForm` serao renderizados sem o Collapsible wrapper externo (sempre abertos quando a pasta esta selecionada) -- passar `defaultOpen={true}` ou remover o collapsible interno quando usado neste contexto
+```
+// DE:
+new Date(a.data_carregamento).getTime()
+// PARA:
+new Date(a.data_carregamento + 'T12:00:00').getTime()
+```
+
+### 4. `src/hooks/useOrdensCarregamentoUnificadas.ts` (linhas 376-378)
+
+Corrigir a ordenacao no hook:
+
+```
+// DE:
+new Date(a.data_carregamento).getTime()
+// PARA:
+new Date(a.data_carregamento + 'T12:00:00').getTime()
+```
+
+## Resumo
+
+Sao 5 arquivos com a mesma correcao: concatenar `'T12:00:00'` ao interpretar `data_carregamento` como Date, evitando que o fuso UTC-3 desloque a data para o dia anterior. Padrao ja adotado no `CarregamentoDownbar.tsx`.
 
