@@ -1,60 +1,32 @@
 
-
-# Correcao do bug de timezone nas datas de carregamento
+# Correção: Neo arquivada retorna para correções
 
 ## Problema
 
-A data de carregamento `2026-02-21` (formato date-only) e interpretada pelo JavaScript como UTC midnight (`2026-02-21T00:00:00Z`). No fuso horario do Brasil (UTC-3), isso resulta em `2026-02-20T21:00:00`, fazendo com que a data seja exibida como **20/02** em vez de **21/02**.
+Ao arquivar uma Neo Correção (ou Neo Instalação), o sistema define `concluida: false` e `status: 'arquivada'`. Porém, a query da listagem ativa filtra apenas por `concluida = false`, sem excluir registros com `status = 'arquivada'`. Isso faz com que o item arquivado reapareça na lista de correções ativas.
 
-A correcao ja existe no `CarregamentoDownbar.tsx` (linha 194) onde `'T12:00:00'` e concatenado, mas falta nos demais componentes.
+## Causa raiz
 
-## Alteracoes
+- **Arquivamento** (useNeoCorrecoes.ts, linha 468-470): seta `status: 'arquivada'` e `concluida: false`
+- **Listagem ativa** (useNeoCorrecoes.ts, linha 211): filtra apenas `.eq("concluida", false)`, sem excluir arquivadas
 
-### 1. `src/components/carregamento/CarregamentoKanban.tsx` (linha 108)
+O mesmo problema existe para Neo Instalações.
 
-Corrigir a formatacao da data adicionando `T12:00:00` para forcar interpretacao ao meio-dia:
+## Correção
 
-```
-// DE:
-format(new Date(ordem.data_carregamento), "dd/MM/yyyy", ...)
-// PARA:
-format(new Date(ordem.data_carregamento + 'T12:00:00'), "dd/MM/yyyy", ...)
-```
+### `src/hooks/useNeoCorrecoes.ts`
 
-### 2. `src/components/carregamento/OrdensCarregamentoSlimTable.tsx` (linha 119)
-
-Mesma correcao:
+Na query `neo_correcoes_listagem` (~linha 211), adicionar filtro para excluir arquivadas:
 
 ```
-// DE:
-format(new Date(ordem.data_carregamento), "dd/MM/yyyy", ...)
-// PARA:
-format(new Date(ordem.data_carregamento + 'T12:00:00'), "dd/MM/yyyy", ...)
+.eq("concluida", false)
+.neq("status", "arquivada")   // <-- adicionar
 ```
 
-### 3. `src/pages/ProducaoCarregamento.tsx` e `src/pages/fabrica/producao/CarregamentoMinimalista.tsx` (ordenacao)
+### `src/hooks/useNeoInstalacoes.ts`
 
-Corrigir o sort que tambem usa `new Date(a.data_carregamento)`:
+Aplicar a mesma correção na query `neo_instalacoes_listagem`, adicionando `.neq("status", "arquivada")` ao filtro existente de `concluida = false`.
 
-```
-// DE:
-new Date(a.data_carregamento).getTime()
-// PARA:
-new Date(a.data_carregamento + 'T12:00:00').getTime()
-```
+## Impacto
 
-### 4. `src/hooks/useOrdensCarregamentoUnificadas.ts` (linhas 376-378)
-
-Corrigir a ordenacao no hook:
-
-```
-// DE:
-new Date(a.data_carregamento).getTime()
-// PARA:
-new Date(a.data_carregamento + 'T12:00:00').getTime()
-```
-
-## Resumo
-
-Sao 5 arquivos com a mesma correcao: concatenar `'T12:00:00'` ao interpretar `data_carregamento` como Date, evitando que o fuso UTC-3 desloque a data para o dia anterior. Padrao ja adotado no `CarregamentoDownbar.tsx`.
-
+Correção mínima (1 linha por arquivo). Itens arquivados não aparecerão mais nas listas ativas de correções e instalações.
