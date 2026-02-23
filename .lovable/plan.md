@@ -1,36 +1,17 @@
 
 
-# Adicionar Busca e Intervalo de Datas acima da Tabela
+# Tratar Contas a Receber sem Cliente
 
-## Resumo
+## Problema
 
-Adicionar uma barra acima da tabela com um input de busca (por nome do cliente) e um botao de intervalo de datas (com Popover + dois Calendarios para data inicial e final).
+Algumas contas a receber referenciam vendas que foram removidas do banco de dados. Como o nome do cliente vem da tabela `vendas`, essas contas aparecem com "—" na coluna Cliente.
 
-## Mudancas
+## Solucao
 
-**Arquivo:** `src/pages/administrativo/ContasReceberMinimalista.tsx`
+1. **Melhorar o fallback na coluna Cliente**: Em vez de mostrar "—", exibir "Venda removida" com estilo visual diferenciado (texto em cor mais apagada e italico) para indicar claramente que se trata de um registro orfao.
 
-### Novos states
-- `searchText: string` - texto de busca
-- `dateRange: { from: Date | undefined; to: Date | undefined }` - intervalo de datas selecionado
+2. **Incluir busca por "venda removida"**: Garantir que o filtro de busca por texto tambem funcione para encontrar esses registros ao digitar "venda removida".
 
-### Barra acima da tabela
-Inserir entre o `<main>` e o container da tabela um `div` com:
-- Input com icone de lupa, placeholder "Buscar por cliente...", filtrando pelo campo `venda.cliente_nome`
-- Botao com icone de calendario que abre Popover com dois calendarios (Data Inicial e Data Final), com botao para limpar as datas
-
-### Filtro adicional na logica de filtragem
-- Filtrar `contasFiltradas` pelo `searchText` comparando com `cliente_nome` (case-insensitive)
-- Filtrar pelo intervalo de datas comparando `data_vencimento` com `dateRange.from` e `dateRange.to`
-
-### Layout
-```text
-+---------------------------------------+
-| [🔍 Buscar por cliente...] [📅 Datas] |
-+---------------------------------------+
-| Tabela ...                            |
-+---------------------------------------+
-```
-
-O input ocupa a maior parte da largura e o botao de datas fica ao lado, ambos com altura consistente.
+### Arquivo editado
+- `src/pages/administrativo/ContasReceberMinimalista.tsx` — alterar a celula da coluna Cliente para exibir "Venda removida" com estilo diferenciado quando `conta.venda?.cliente_nome` nao existir. Ajustar a logica de busca para considerar esse fallback.
 
