@@ -1,50 +1,80 @@
 
-
-# Adicionar coluna de selecao na tabela de faturamento
+# Downbar mobile para detalhes da venda no Faturamento
 
 ## Objetivo
 
-Adicionar uma coluna visual de selecao na tabela para que o usuario identifique qual venda esta selecionada e cujos dados estao sendo exibidos na sidebar direita.
+Quando em modo mobile (tela < 1024px), ao clicar numa venda na tabela, abrir automaticamente uma downbar (Sheet side="bottom") no estilo minimalista com todas as informacoes da venda selecionada -- os mesmos dados que aparecem na sidebar direita no desktop.
 
 ## Mudancas no arquivo `src/pages/direcao/FaturamentoDirecao.tsx`
 
-### 1. Adicionar destaque visual na linha selecionada
+### 1. Importar useIsMobile e Drawer
 
-Alterar o `TableRow` (linha ~1116) para aplicar uma classe de fundo diferenciada quando `venda.id === selectedVenda?.id`:
-
-```typescript
-<TableRow 
-  key={venda.id} 
-  className={cn(
-    "border-white/10 hover:bg-white/5 cursor-pointer",
-    selectedVenda?.id === venda.id && "bg-blue-500/10 border-l-2 border-l-blue-500"
-  )}
-  onClick={() => setSelectedVenda(venda)}
->
-```
-
-### 2. Adicionar coluna de selecao com indicador visual
-
-Adicionar um `TableHead` fixo antes das colunas dinamicas no header (linha ~1092):
+Adicionar imports do hook `useIsMobile` e dos componentes do Drawer (vaul):
 
 ```typescript
-<TableHead className="w-8 text-center text-white/60" />
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
 ```
 
-E um `TableCell` correspondente no body com um radio/dot indicator:
+### 2. Usar o hook no componente
 
 ```typescript
-<TableCell className="w-8 text-center">
-  <div className={cn(
-    "h-3 w-3 rounded-full border-2 mx-auto transition-colors",
-    selectedVenda?.id === venda.id 
-      ? "bg-blue-500 border-blue-500" 
-      : "border-white/20"
-  )} />
-</TableCell>
+const isMobile = useIsMobile();
 ```
 
-### 3. Ajustar o colSpan da mensagem "Nenhuma venda encontrada"
+### 3. Estado para controlar a downbar mobile
 
-Alterar o colSpan (linha ~1110) de `visibleColumns.length` para `visibleColumns.length + 1` para acomodar a nova coluna.
+Adicionar estado `mobileDownbarOpen`:
 
+```typescript
+const [mobileDownbarOpen, setMobileDownbarOpen] = useState(false);
+```
+
+### 4. Alterar o onClick da TableRow
+
+Quando em mobile, ao selecionar uma venda, abrir automaticamente a downbar:
+
+```typescript
+onClick={() => {
+  setSelectedVenda(venda);
+  if (isMobile) {
+    setMobileDownbarOpen(true);
+  }
+}}
+```
+
+### 5. Adicionar a Downbar (Drawer bottom) no JSX
+
+Apos o fechamento do layout de 3 paineis, adicionar um `Drawer` que usa `DrawerContent` com o conteudo da venda selecionada (`selectedVendaContent`). A downbar tera:
+
+- Altura de ~80vh com scroll
+- Header gradiente com nome do cliente e botao fechar
+- Grid 2 colunas com valores (Portas, Pintura, Instalacao, Frete, Acessorios, Adicionais)
+- Secao de datas (Previsao, Pgto 1, Pgto 2)
+- Card de Valor a Receber (condicional)
+- Botao "Abrir Faturamento"
+- Estilo minimalista dark consistente com as outras downbars do sistema
+
+```typescript
+{isMobile && (
+  <Drawer open={mobileDownbarOpen} onOpenChange={(open) => {
+    setMobileDownbarOpen(open);
+    if (!open) setSelectedVenda(null);
+  }}>
+    <DrawerContent className="max-h-[85vh] bg-zinc-900 border-t border-white/10">
+      <ScrollArea className="h-[75vh] px-4 py-4">
+        {selectedVenda && selectedVendaContent}
+      </ScrollArea>
+    </DrawerContent>
+  </Drawer>
+)}
+```
+
+### 6. Ao fechar a downbar, limpar selecao
+
+Quando `onOpenChange` recebe `false`, setar `selectedVenda` para `null` e `mobileDownbarOpen` para `false`.
+
+## Resultado
+
+- **Desktop (>= 1024px)**: Comportamento inalterado -- sidebar direita mostra os detalhes
+- **Mobile (< 1024px)**: Ao tocar numa venda, abre a downbar de baixo com todos os detalhes e o botao de acesso ao faturamento individual, no estilo minimalista escuro consistente com o resto do sistema
