@@ -94,7 +94,7 @@ export default function DREMesDirecao() {
         fat.instalacoes = totalFatInstalacao;
         luc.instalacoes = totalLucroInstalacao;
 
-        fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.acessorios + fat.adicionais + totalCredito;
+        fat.total = fat.portas + fat.pintura + fat.acessorios + fat.adicionais + totalCredito;
         luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.acessorios + luc.adicionais;
 
         setFaturamento(fat);
