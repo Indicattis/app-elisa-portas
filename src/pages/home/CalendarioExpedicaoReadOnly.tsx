@@ -154,6 +154,7 @@ export default function CalendarioExpedicaoReadOnly() {
                       ordens={ordensFiltradas}
                       neoInstalacoes={neoInstalacoesFiltradas}
                       neoCorrecoes={neoCorrecoesFiltradas}
+                      readOnly
                       activeLegend={legendaFiltro}
                       onLegendToggle={handleLegendToggle}
                       onPreviousWeek={handlePreviousWeek}
@@ -175,6 +176,7 @@ export default function CalendarioExpedicaoReadOnly() {
                       ordens={ordensFiltradas}
                       neoInstalacoes={neoInstalacoesFiltradas}
                       neoCorrecoes={neoCorrecoesFiltradas}
+                      readOnly
                       activeLegend={legendaFiltro}
                       onLegendToggle={handleLegendToggle}
                       onPreviousWeek={handlePreviousWeek}
@@ -203,6 +205,7 @@ export default function CalendarioExpedicaoReadOnly() {
                       ordens={ordensFiltradas}
                       neoInstalacoes={neoInstalacoesFiltradas}
                       neoCorrecoes={neoCorrecoesFiltradas}
+                      readOnly
                       activeLegend={legendaFiltro}
                       onLegendToggle={handleLegendToggle}
                       onMonthChange={handleMonthChange}
