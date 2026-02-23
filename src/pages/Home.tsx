@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
-import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3 } from "lucide-react";
+import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -258,6 +258,36 @@ export default function Home() {
               </div>
             );
           })}
+        </div>
+
+        {/* Acesso Rápido */}
+        <div 
+          className="w-full mt-6"
+          style={{
+            opacity: mounted ? 1 : 0,
+            transform: mounted ? 'translateY(0)' : 'translateY(20px)',
+            transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 800ms'
+          }}
+        >
+          <p className="text-white/40 text-xs uppercase tracking-wider mb-3 text-center">Acesso Rápido</p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => navigate('/home/pedidos-producao')}
+              className="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl
+                         flex flex-col items-center gap-2 text-white/70 hover:text-white hover:bg-white/10 transition-all"
+            >
+              <Factory className="w-5 h-5" strokeWidth={1.5} />
+              <span className="text-xs font-medium">Pedidos Produção</span>
+            </button>
+            <button
+              onClick={() => navigate('/home/calendario-expedicao')}
+              className="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl
+                         flex flex-col items-center gap-2 text-white/70 hover:text-white hover:bg-white/10 transition-all"
+            >
+              <Calendar className="w-5 h-5" strokeWidth={1.5} />
+              <span className="text-xs font-medium">Calendário Expedição</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
