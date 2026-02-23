@@ -307,11 +307,35 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           // Buscar linhas de perfiladeira para cálculo de metragem linear
           const linhasPerfiladeira = await fetchLinhasPerfiladeira(perfiladeira.data?.id || null);
 
+          // Buscar dados de carregamento para ordenação
+          let _carregamento_data: string | null = null;
+          let _carregamento_concluido = false;
+
+          if (etapa === 'aguardando_coleta') {
+            const { data: oc } = await supabase
+              .from('ordens_carregamento')
+              .select('data_carregamento, carregamento_concluido')
+              .eq('pedido_id', pedido.id)
+              .maybeSingle();
+            _carregamento_data = oc?.data_carregamento || null;
+            _carregamento_concluido = oc?.carregamento_concluido || false;
+          } else if (etapa === 'instalacoes') {
+            const { data: inst } = await supabase
+              .from('instalacoes')
+              .select('data_carregamento, carregamento_concluido')
+              .eq('pedido_id', pedido.id)
+              .maybeSingle();
+            _carregamento_data = inst?.data_carregamento || null;
+            _carregamento_concluido = inst?.carregamento_concluido || false;
+          }
+
           return {
             ...pedido,
             backlog: backlogData ? [backlogData] : [],
             tem_historico_backlog: !!historicoBacklog,
             linhas_perfiladeira: linhasPerfiladeira,
+            _carregamento_data,
+            _carregamento_concluido,
             ordens: {
               soldagem: ordemSoldagem,
               perfiladeira: ordemPerfiladeira,
@@ -375,6 +399,25 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           if (!corB) return -1;
           
           return corA.localeCompare(corB, 'pt-BR');
+        });
+      }
+
+      // Ordenar por status de carregamento nas etapas aguardando_coleta e instalacoes
+      if (etapa === 'aguardando_coleta' || etapa === 'instalacoes') {
+        return pedidosComBacklog.sort((a, b) => {
+          const getGrupo = (p: any) => {
+            if (!p._carregamento_data) return 0; // Não agendado
+            if (p._carregamento_concluido) return 3; // Carregado
+            const hoje = new Date().toISOString().split('T')[0];
+            if (p._carregamento_data < hoje) return 1; // Atrasado
+            return 2; // Agendado
+          };
+          const grupoA = getGrupo(a);
+          const grupoB = getGrupo(b);
+          if (grupoA !== grupoB) return grupoA - grupoB;
+          const dataA = a._carregamento_data || '9999-12-31';
+          const dataB = b._carregamento_data || '9999-12-31';
+          return dataA.localeCompare(dataB);
         });
       }
 

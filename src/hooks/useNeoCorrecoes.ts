@@ -251,7 +251,21 @@ export const useNeoCorrecoesListagem = () => {
           : null
       }));
 
-      return correcoesEnriquecidas;
+      // Ordenar por status de agendamento
+      return correcoesEnriquecidas.sort((a, b) => {
+        const getGrupo = (p: NeoCorrecao) => {
+          if (!p.data_correcao) return 0; // Não agendado
+          const hoje = new Date().toISOString().split('T')[0];
+          if (p.data_correcao < hoje) return 1; // Atrasado
+          return 2; // Agendado
+        };
+        const grupoA = getGrupo(a);
+        const grupoB = getGrupo(b);
+        if (grupoA !== grupoB) return grupoA - grupoB;
+        const dataA = a.data_correcao || '9999-12-31';
+        const dataB = b.data_correcao || '9999-12-31';
+        return dataA.localeCompare(dataB);
+      });
     },
   });
 
