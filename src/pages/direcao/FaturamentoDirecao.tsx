@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { IndicadorExpandivel, IndicadorTable } from "@/components/direcao/IndicadorExpandivel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -120,6 +121,7 @@ export default function FaturamentoDirecao() {
     direction: 'asc' | 'desc' | null;
   }>({ column: null, direction: null });
   const navigate = useNavigate();
+  const [expandedIndicador, setExpandedIndicador] = useState<string | null>(null);
 
   const {
     columns,
@@ -485,6 +487,22 @@ export default function FaturamentoDirecao() {
     };
   }, [filteredVendas]);
 
+  // Vendas filtradas por tipo de indicador
+  const vendasPorIndicador = useMemo(() => {
+    const porTipo = (tipos: string[]) => filteredVendas.filter(v =>
+      (v.portas || []).some((p: any) => tipos.includes(p.tipo_produto))
+    );
+    return {
+      portas: porTipo(['porta', 'porta_enrolar', 'porta_social']),
+      pintura: porTipo(['pintura_epoxi']),
+      instalacoes: filteredVendas.filter(v => (v.valor_instalacao || 0) > 0),
+      acessorios: porTipo(['acessorio']),
+      adicionais: porTipo(['adicional', 'manutencao']),
+      fretes: filteredVendas.filter(v => (v.valor_frete || 0) > 0),
+      lucro: filteredVendas.filter(isFaturada),
+    };
+  }, [filteredVendas]);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -748,88 +766,37 @@ export default function FaturamentoDirecao() {
           <CardTitle className="text-base text-white/80 flex items-center gap-2">
             <Calculator className="h-4 w-4 text-blue-400" />
             Indicadores do Período
+            <span className="text-xs text-white/40 font-normal ml-1">(clique para expandir)</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-            <div className="text-center p-4 rounded-lg bg-white/5">
-              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
-                <DollarSign className="h-3 w-3 text-blue-400" />
-                Portas
-              </div>
-              <p className="text-blue-400 font-bold text-lg">
-                {formatCurrency(indicadores.valorBrutoPortas)}
-              </p>
-              <p className="text-emerald-400 text-sm mt-1">
-                Lucro: {formatCurrency(indicadores.lucroPortas)}
-              </p>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-white/5">
-              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
-                <Paintbrush className="h-3 w-3 text-orange-400" />
-                Pintura
-              </div>
-              <p className="text-orange-400 font-bold text-lg">
-                {formatCurrency(indicadores.valorBrutoPintura)}
-              </p>
-              <p className="text-emerald-400 text-sm mt-1">
-                Lucro: {formatCurrency(indicadores.lucroPintura)}
-              </p>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-white/5">
-              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
-                <Wrench className="h-3 w-3 text-cyan-400" />
-                Instalações
-              </div>
-              <p className="text-cyan-400 font-bold text-lg">
-                {formatCurrency(indicadores.valorBrutoInstalacoes)}
-              </p>
-              <p className="text-emerald-400 text-sm mt-1">
-                Lucro: {formatCurrency(indicadores.lucroInstalacoes)}
-              </p>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-white/5">
-              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
-                <Package className="h-3 w-3 text-pink-400" />
-                Acessórios
-              </div>
-              <p className="text-pink-400 font-bold text-lg">
-                {formatCurrency(indicadores.valorBrutoAcessorios)}
-              </p>
-              <p className="text-emerald-400 text-sm mt-1">
-                Lucro: {formatCurrency(indicadores.lucroAcessorios)}
-              </p>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-white/5">
-              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
-                <PlusCircle className="h-3 w-3 text-indigo-400" />
-                Adicionais
-              </div>
-              <p className="text-indigo-400 font-bold text-lg">
-                {formatCurrency(indicadores.valorBrutoAdicionais)}
-              </p>
-              <p className="text-emerald-400 text-sm mt-1">
-                Lucro: {formatCurrency(indicadores.lucroAdicionais)}
-              </p>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-white/5">
-              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
-                <Truck className="h-3 w-3 text-amber-400" />
-                Fretes
-              </div>
-              <p className="text-amber-400 font-bold text-lg">
-                {formatCurrency(indicadores.fretesTotais)}
-              </p>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-white/5">
-              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
-                <TrendingUp className="h-3 w-3 text-green-400" />
-                Lucro Líquido
-              </div>
-              <p className="text-green-400 font-bold text-lg">
-                {formatCurrency(indicadores.lucroLiquidoTotal)}
-              </p>
-            </div>
+            {([
+              { key: 'portas', icon: <DollarSign className="h-3 w-3 text-blue-400" />, label: 'Portas', valor: formatCurrency(indicadores.valorBrutoPortas), lucro: formatCurrency(indicadores.lucroPortas), colorClass: 'text-blue-400' },
+              { key: 'pintura', icon: <Paintbrush className="h-3 w-3 text-orange-400" />, label: 'Pintura', valor: formatCurrency(indicadores.valorBrutoPintura), lucro: formatCurrency(indicadores.lucroPintura), colorClass: 'text-orange-400' },
+              { key: 'instalacoes', icon: <Wrench className="h-3 w-3 text-cyan-400" />, label: 'Instalações', valor: formatCurrency(indicadores.valorBrutoInstalacoes), lucro: formatCurrency(indicadores.lucroInstalacoes), colorClass: 'text-cyan-400' },
+              { key: 'acessorios', icon: <Package className="h-3 w-3 text-pink-400" />, label: 'Acessórios', valor: formatCurrency(indicadores.valorBrutoAcessorios), lucro: formatCurrency(indicadores.lucroAcessorios), colorClass: 'text-pink-400' },
+              { key: 'adicionais', icon: <PlusCircle className="h-3 w-3 text-indigo-400" />, label: 'Adicionais', valor: formatCurrency(indicadores.valorBrutoAdicionais), lucro: formatCurrency(indicadores.lucroAdicionais), colorClass: 'text-indigo-400' },
+              { key: 'fretes', icon: <Truck className="h-3 w-3 text-amber-400" />, label: 'Fretes', valor: formatCurrency(indicadores.fretesTotais), colorClass: 'text-amber-400' },
+              { key: 'lucro', icon: <TrendingUp className="h-3 w-3 text-green-400" />, label: 'Lucro Líquido', valor: formatCurrency(indicadores.lucroLiquidoTotal), colorClass: 'text-green-400' },
+            ] as const).map((ind) => (
+              <IndicadorExpandivel
+                key={ind.key}
+                icon={ind.icon}
+                label={ind.label}
+                valor={ind.valor}
+                lucro={'lucro' in ind ? ind.lucro : undefined}
+                colorClass={ind.colorClass}
+                vendas={vendasPorIndicador[ind.key as keyof typeof vendasPorIndicador]}
+                visibleColumns={visibleColumns}
+                renderCell={renderCell}
+                getColumnAlignment={getColumnAlignment}
+                getColumnResponsiveClass={getColumnResponsiveClass}
+                onVendaClick={(id) => navigate(`/direcao/faturamento/venda/${id}`)}
+                expanded={expandedIndicador === ind.key}
+                onToggle={() => setExpandedIndicador(prev => prev === ind.key ? null : ind.key)}
+              />
+            ))}
             <div className="text-center p-4 rounded-lg bg-white/5">
               <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
                 <Target className="h-3 w-3 text-purple-400" />
@@ -840,6 +807,24 @@ export default function FaturamentoDirecao() {
               </p>
             </div>
           </div>
+
+          {/* Tabela expandida do indicador selecionado */}
+          {expandedIndicador && vendasPorIndicador[expandedIndicador as keyof typeof vendasPorIndicador] && (
+            <IndicadorTable
+              label={
+                { portas: 'Portas', pintura: 'Pintura', instalacoes: 'Instalações', acessorios: 'Acessórios', adicionais: 'Adicionais', fretes: 'Fretes', lucro: 'Lucro Líquido' }[expandedIndicador] || ''
+              }
+              colorClass={
+                { portas: 'text-blue-400', pintura: 'text-orange-400', instalacoes: 'text-cyan-400', acessorios: 'text-pink-400', adicionais: 'text-indigo-400', fretes: 'text-amber-400', lucro: 'text-green-400' }[expandedIndicador] || ''
+              }
+              vendas={vendasPorIndicador[expandedIndicador as keyof typeof vendasPorIndicador]}
+              visibleColumns={visibleColumns}
+              renderCell={renderCell}
+              getColumnAlignment={getColumnAlignment}
+              getColumnResponsiveClass={getColumnResponsiveClass}
+              onVendaClick={(id) => navigate(`/direcao/faturamento/venda/${id}`)}
+            />
+          )}
         </CardContent>
       </Card>
 
