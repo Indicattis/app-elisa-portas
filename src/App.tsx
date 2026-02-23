@@ -543,7 +543,6 @@ const App = () => (
                 <Route path="/administrativo/financeiro/faturamento/vendas" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoVendasMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/faturamento/produtos" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoProdutosMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/faturamento/:id" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoVendaMinimalista /></ProtectedRoute>} />
-                <Route path="/administrativo/financeiro/custos/configurar" element={<ProtectedRoute routeKey="administrativo_hub"><CustosMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/custos/:mes" element={<ProtectedRoute routeKey="administrativo_hub"><CustosMesMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/custos" element={<ProtectedRoute routeKey="administrativo_hub"><CustosGridMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/cobrancas" element={<ProtectedRoute routeKey="administrativo_hub"><CobrancasMinimalista /></ProtectedRoute>} />
