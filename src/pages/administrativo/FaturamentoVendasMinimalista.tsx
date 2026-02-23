@@ -86,7 +86,6 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'lucro', label: 'Lucro', defaultVisible: true },
   { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
   { id: 'justificativa', label: 'Justificativa', defaultVisible: true },
-  { id: 'faturada', label: 'Faturada', defaultVisible: true },
 ];
 
 const formatCurrency = (value: number) => {
