@@ -293,15 +293,54 @@ export const useOrdensCarregamentoCalendario = (
           if (error) throw error;
         }
       } else {
-        const { error } = await supabase
+        // Verificar se o registro existe na tabela ordens_carregamento
+        const { data: existing } = await supabase
           .from("ordens_carregamento")
-          .update({
-            ...data,
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", id);
+          .select("id")
+          .eq("id", id)
+          .maybeSingle();
 
-        if (error) throw error;
+        if (!existing) {
+          // Pedido órfão: buscar dados do pedido e criar registro
+          const { data: pedido } = await supabase
+            .from("pedidos_producao")
+            .select("id, venda_id, vendas(cliente_nome)")
+            .eq("id", id)
+            .maybeSingle();
+
+          const nomeCliente = (pedido as any)?.vendas?.cliente_nome || 'Cliente';
+
+          const insertData: Record<string, any> = {
+            pedido_id: id,
+            venda_id: pedido?.venda_id || null,
+            nome_cliente: nomeCliente,
+            hora: '08:00',
+            status: 'agendada',
+            carregamento_concluido: false,
+          };
+          if (data.data_carregamento !== undefined) insertData.data_carregamento = data.data_carregamento;
+          if (data.hora !== undefined) insertData.hora = data.hora;
+          if (data.hora_carregamento !== undefined) insertData.hora = data.hora_carregamento;
+          if (data.tipo_carregamento !== undefined) insertData.tipo_carregamento = data.tipo_carregamento;
+          if (data.responsavel_carregamento_id !== undefined) insertData.responsavel_carregamento_id = data.responsavel_carregamento_id;
+          if (data.responsavel_carregamento_nome !== undefined) insertData.responsavel_carregamento_nome = data.responsavel_carregamento_nome;
+
+          const { error } = await supabase
+            .from("ordens_carregamento")
+            .insert(insertData as any);
+
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from("ordens_carregamento")
+            .update({
+              ...data,
+              updated_at: new Date().toISOString()
+            })
+            .eq("id", id);
+
+          if (error) throw error;
+        }
       }
     },
     onSuccess: () => {
