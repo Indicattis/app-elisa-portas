@@ -18,6 +18,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 import { useOrdensCarregamentoCalendario } from "@/hooks/useOrdensCarregamentoCalendario";
+import { useOrdensCarregamentoUnificadas } from "@/hooks/useOrdensCarregamentoUnificadas";
+import { OrdemCarregamentoUnificada } from "@/types/ordemCarregamentoUnificada";
 import { useNeoInstalacoes, useNeoInstalacoesSemData } from "@/hooks/useNeoInstalacoes";
 import { useNeoCorrecoes, useNeoCorrecoesSemData } from "@/hooks/useNeoCorrecoes";
 import { useCorrecoes, useCorrecoesSemData } from "@/hooks/useCorrecoes";
@@ -95,10 +97,12 @@ export default function ExpedicaoMinimalista() {
   const [etapaParaAtribuir, setEtapaParaAtribuir] = useState<EtapaPedido | null>(null);
   const [agendarModalOpen, setAgendarModalOpen] = useState(false);
   const [agendarData, setAgendarData] = useState(new Date());
+  const [ordemPreSelecionadaAgendar, setOrdemPreSelecionadaAgendar] = useState<OrdemCarregamentoUnificada | null>(null);
   const ITENS_POR_PAGINA = 25;
   const { toast: toastShadcn } = useToast();
 
   const { ordens, isLoading, updateOrdem } = useOrdensCarregamentoCalendario(currentDate, viewType);
+  const { ordens: ordensUnificadas } = useOrdensCarregamentoUnificadas();
   const { neoInstalacoes, createNeoInstalacao, updateNeoInstalacao, deleteNeoInstalacao, concluirNeoInstalacao, isConcluindo: isConcluindoInstalacao } = useNeoInstalacoes(currentDate, viewType);
   const { neoCorrecoes, createNeoCorrecao, updateNeoCorrecao, deleteNeoCorrecao, concluirNeoCorrecao, isConcluindo: isConcluindoCorrecao } = useNeoCorrecoes(currentDate, viewType);
   
@@ -171,6 +175,8 @@ export default function ExpedicaoMinimalista() {
     if (etapaParaAtribuir) { removerResponsavel(etapaParaAtribuir); setModalResponsavelAberto(false); setEtapaParaAtribuir(null); }
   };
   const handleAgendarPedido = (pedidoId: string) => {
+    const ordemEncontrada = ordensUnificadas?.find(o => o.pedido_id === pedidoId) || null;
+    setOrdemPreSelecionadaAgendar(ordemEncontrada);
     setAgendarData(new Date());
     setAgendarModalOpen(true);
   };
@@ -825,6 +831,8 @@ export default function ExpedicaoMinimalista() {
                                   onConcluir={handleConcluirNeoInstalacaoListagem}
                                   isConcluindo={isConcluindoInstalacaoListagem}
                                   onAgendar={(id) => {
+                                    const ordemEncontrada = ordensUnificadas?.find(o => o.id === id || o.pedido_id === id) || null;
+                                    setOrdemPreSelecionadaAgendar(ordemEncontrada);
                                     setAgendarData(new Date());
                                     setAgendarModalOpen(true);
                                   }}
@@ -846,6 +854,8 @@ export default function ExpedicaoMinimalista() {
                                   viewMode="list"
                                   onConcluir={handleConcluirNeoCorrecaoListagem}
                                   onAgendar={(id) => {
+                                    const ordemEncontrada = ordensUnificadas?.find(o => o.id === id || o.pedido_id === id) || null;
+                                    setOrdemPreSelecionadaAgendar(ordemEncontrada);
                                     setAgendarData(new Date());
                                     setAgendarModalOpen(true);
                                   }}
@@ -977,7 +987,11 @@ export default function ExpedicaoMinimalista() {
       {/* Modal para agendar no calendário */}
       <AdicionarOrdemCalendarioModal
         open={agendarModalOpen}
-        onOpenChange={setAgendarModalOpen}
+        onOpenChange={(open) => {
+          setAgendarModalOpen(open);
+          if (!open) setOrdemPreSelecionadaAgendar(null);
+        }}
+        ordemPreSelecionada={ordemPreSelecionadaAgendar}
         dataSelecionada={agendarData}
         onConfirm={async (params) => {
           await handleUpdateOrdem({
