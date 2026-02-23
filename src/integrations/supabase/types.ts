@@ -6756,6 +6756,7 @@ export type Database = {
           tipo_entrega: string | null
           updated_at: string
           valor_a_receber: number | null
+          valor_a_receber_faturamento: boolean
           valor_credito: number | null
           valor_entrada: number | null
           valor_entrada_dinheiro: number | null
@@ -6806,6 +6807,7 @@ export type Database = {
           tipo_entrega?: string | null
           updated_at?: string
           valor_a_receber?: number | null
+          valor_a_receber_faturamento?: boolean
           valor_credito?: number | null
           valor_entrada?: number | null
           valor_entrada_dinheiro?: number | null
@@ -6856,6 +6858,7 @@ export type Database = {
           tipo_entrega?: string | null
           updated_at?: string
           valor_a_receber?: number | null
+          valor_a_receber_faturamento?: boolean
           valor_credito?: number | null
           valor_entrada?: number | null
           valor_entrada_dinheiro?: number | null

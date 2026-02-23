@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, TrendingUp, Percent, Package, Undo2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { useFaturamento } from "@/hooks/useFaturamento";
@@ -32,6 +33,7 @@ export default function FaturamentoEdit() {
   const [selectedProduto, setSelectedProduto] = useState<any | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showRemoverFaturamentoDialog, setShowRemoverFaturamentoDialog] = useState(false);
+  const [valorAReceber, setValorAReceber] = useState('');
   const { removerFaturamento, isRemovendo, verificarFaturamento } = useFaturamento();
 
   const {
@@ -121,6 +123,7 @@ export default function FaturamentoEdit() {
         custoTotal,
         lucroTotal,
         produtosIds,
+        valorAReceber: parseFloat(valorAReceber) || 0,
       });
       
       // Recarregar dados da venda para atualizar o estado
@@ -294,7 +297,21 @@ export default function FaturamentoEdit() {
       </div>
 
       {/* Botões de Ação */}
-      <div className="flex justify-end gap-4">
+      <div className="flex items-end justify-end gap-4">
+        {!vendaFaturada && (
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-muted-foreground">Valor a Receber (R$)</label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0,00"
+              value={valorAReceber}
+              onChange={(e) => setValorAReceber(e.target.value)}
+              className="w-48"
+            />
+          </div>
+        )}
         <Button
           variant="outline"
           size="lg"
