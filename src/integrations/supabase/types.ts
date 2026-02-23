@@ -1595,6 +1595,47 @@ export type Database = {
         }
         Relationships: []
       }
+      custos_mensais: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          mes: string
+          observacoes: string | null
+          tipo_custo_id: string
+          updated_at: string | null
+          valor_real: number
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          mes: string
+          observacoes?: string | null
+          tipo_custo_id: string
+          updated_at?: string | null
+          valor_real?: number
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          mes?: string
+          observacoes?: string | null
+          tipo_custo_id?: string
+          updated_at?: string | null
+          valor_real?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custos_mensais_tipo_custo_id_fkey"
+            columns: ["tipo_custo_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_custos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custos_subcategorias: {
         Row: {
           ativo: boolean
