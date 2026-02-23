@@ -1,62 +1,49 @@
 
-# Copiar layout de /direcao/faturamento para /administrativo/financeiro/faturamento/vendas
+
+# Igualar colunas do faturamento administrativo com o da direcao
 
 ## Resumo
 
-A pagina `/administrativo/financeiro/faturamento/vendas` (`FaturamentoVendasMinimalista.tsx`) usa um layout antigo com breadcrumb manual, botao voltar flutuante e layout de coluna unica. Sera refatorada para usar o mesmo design de tres paineis da `/direcao/faturamento` (`FaturamentoDirecao.tsx`).
+Substituir as colunas da tabela em `/administrativo/financeiro/faturamento/vendas` para usar exatamente as mesmas 11 colunas da pagina `/direcao/faturamento`.
 
-## Mudancas principais no `FaturamentoVendasMinimalista.tsx`
+## Colunas atuais (admin) vs. desejadas (direcao)
 
-### 1. Usar MinimalistLayout com fullWidth
-- Remover `AnimatedBreadcrumb` manual, `FloatingProfileMenu` e botao voltar flutuante
-- Usar `MinimalistLayout` com `fullWidth`, `backPath`, e `breadcrumbItems`
+Atuais (15 colunas): vendedor, cliente, data, cidade, pagamento, data_pgto_1, data_pgto_2, valor_frete, valor_instalacao, desconto_acrescimo, tempo_sem_faturar, justificativa, lucro_total, valor_total, faturada
 
-### 2. Layout de 3 paineis
-- **Sidebar esquerda (desktop)**: Filtros (Status com checkboxes, Vendedor select, Periodo calendario) -- substitui os filtros inline atuais
-- **Area central**: Barra de busca + tabela com dot indicator de selecao e linha ativa azul
-- **Sidebar direita (desktop)**: Resumo (faturamento, faturadas, pendentes, lucro liquido) + colunas manager; ao selecionar uma venda, mostra detalhes (valores por categoria, datas, botao abrir faturamento)
+Desejadas (11 colunas): vendedor (-), cliente, data, cidade, expedicao, desconto_acrescimo, valor, lucro, tempo_sem_faturar, justificativa, faturada
 
-### 3. Mobile responsivo
-- Sheets laterais para filtros e resumo (botoes Filter e PanelRight no header dos indicadores)
-- Drawer (downbar) para detalhes da venda selecionada em mobile
+## Mudancas no `FaturamentoVendasMinimalista.tsx`
 
-### 4. Tabela com selecao visual
-- Adicionar coluna dot indicator (circulo que fica azul ao selecionar)
-- Linha selecionada com `bg-blue-500/10 border-l-2 border-l-blue-500`
-- Clicar na linha seleciona a venda (mostra detalhes na sidebar direita), nao navega diretamente
-- Botao "Abrir Faturamento" na sidebar direita para navegar ao faturamento
+### 1. Atualizar `COLUNAS_DISPONIVEIS`
+Substituir o array por:
+- `vendedor` (label: "-")
+- `cliente` (label: "Cliente")
+- `data` (label: "Data")
+- `cidade` (label: "Cidade")
+- `expedicao` (label: "Expedicao") -- novo, substitui pagamento
+- `desconto_acrescimo` (label: "Desc./Acres.")
+- `valor` (label: "Valor") -- substitui valor_total
+- `lucro` (label: "Lucro") -- substitui lucro_total
+- `tempo_sem_faturar` (label: "Tempo s/ Faturar")
+- `justificativa` (label: "Justificativa")
+- `faturada` (label: "Faturada")
 
-### 5. Indicadores com IndicadorExpandivel
-- Substituir os cards estaticos de indicadores pelo componente `IndicadorExpandivel` (mesmo da direcao)
-- Grid de 8 colunas: Portas, Pintura, Instalacoes, Acessorios, Adicionais, Fretes, Lucro Liquido, Qtd Portas
-- Clicar em Portas/Pintura/Instalacoes/Acessorios/Adicionais abre drawer de ranking
+Remover: pagamento, data_pgto_1, data_pgto_2, valor_frete, valor_instalacao
 
-### 6. Ordenacao de colunas
-- Adicionar sort por clique no header (asc/desc/none) com icones ArrowUp/ArrowDown/ArrowUpDown
-- Manter sortedVendas com useMemo
+### 2. Atualizar `renderCell`
+- Remover cases: `pagamento`, `data_pgto_1`, `data_pgto_2`, `valor_frete`, `valor_instalacao`, `lucro_total`, `valor_total`
+- Adicionar case `expedicao`: icone Hammer (instalacao) ou Truck (entrega)
+- Renomear `valor_total` para `valor`: exibir `formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))`
+- Renomear `lucro_total` para `lucro`: manter calculo de lucro existente, mostrar apenas se faturada
 
-### 7. Manter funcionalidades existentes
-- Dialog de justificativa permanece
-- VendasNaoFaturadasHistorico permanece abaixo do layout principal
-- Exportar PDF permanece (botao no header ou sidebar)
+### 3. Atualizar `getColumnAlignment` e `getColumnResponsiveClass`
+- Remover referencias as colunas removidas
+- Adicionar `expedicao` com alinhamento centralizado
+- Ajustar `valor` e `lucro` com alinhamento a direita
 
-## Novos estados necessarios
-- `selectedVenda` -- venda selecionada para detalhes
-- `mobileDownbarOpen` -- drawer mobile de detalhes
-- `indicadorDrawerOpen` / `indicadorAtivo` -- drawer de ranking dos indicadores
-- `leftSheetOpen` / `rightSheetOpen` -- sheets mobile para filtros/resumo
-- `sortConfig` -- configuracao de ordenacao
-- `filtroStatus` (checkbox array) -- substituir `activeTab`
-- `auxCores`, `auxAcessorios`, `auxAdicionais` -- dados auxiliares para ranking
-
-## Componentes e imports adicionais
-- `IndicadorExpandivel` de `@/components/direcao/IndicadorExpandivel`
-- `Sheet`, `SheetContent`, `SheetTrigger`, `SheetTitle`
-- `Drawer`, `DrawerContent`
-- `ScrollArea`
-- `Checkbox`
-- `useIsMobile`
-- `TooltipProvider`
+### 4. Atualizar `handleSort`
+- Remover ordenacao para colunas removidas
+- Adicionar ordenacao para `expedicao` (por tipo_entrega)
 
 ## Arquivo modificado
-1. `src/pages/administrativo/FaturamentoVendasMinimalista.tsx` -- reescrita completa do layout mantendo a logica de dados e adaptando rotas para `/administrativo/financeiro/faturamento/`
+1. `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
