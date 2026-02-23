@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
 import { 
   MapPin, 
@@ -34,6 +37,7 @@ interface NeoInstalacaoCardGestaoProps {
   onAgendar?: (id: string) => void;
   onArquivar?: (id: string) => void;
   onEditar?: (neo: NeoInstalacao) => void;
+  onUpdateValor?: (id: string, data: { valor_a_receber: number | null; valor_a_receber_texto: string }) => Promise<void>;
   dragHandleProps?: Record<string, any>;
   isDragging?: boolean;
 }
@@ -48,9 +52,12 @@ export function NeoInstalacaoCardGestao({
   onAgendar,
   onArquivar,
   onEditar,
+  onUpdateValor,
   dragHandleProps,
   isDragging,
 }: NeoInstalacaoCardGestaoProps) {
+  const [popoverValorOpen, setPopoverValorOpen] = useState(false);
+  const [valorTexto, setValorTexto] = useState('');
   const corEquipe = neoInstalacao.equipe?.cor || "#6366f1";
 
   // Dados do criador
@@ -167,14 +174,78 @@ export function NeoInstalacaoCardGestao({
 
               {/* Col 7: Valor a Receber */}
               <div className="text-center">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className={`text-[9px] font-medium cursor-help ${neoInstalacao.valor_a_receber ? 'text-emerald-400' : 'text-muted-foreground/50'}`}>
-                      {neoInstalacao.valor_a_receber ? formatCurrency(neoInstalacao.valor_a_receber).replace('R$\u00a0', '') : '—'}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent><p className="text-xs">A Receber: {formatCurrency(neoInstalacao.valor_a_receber || 0)}</p></TooltipContent>
-                </Tooltip>
+                {onUpdateValor ? (
+                  <Popover open={popoverValorOpen} onOpenChange={(open) => {
+                    setPopoverValorOpen(open);
+                    if (open) {
+                      setValorTexto(neoInstalacao.valor_a_receber_texto || (neoInstalacao.valor_a_receber ? formatCurrency(neoInstalacao.valor_a_receber).replace('R$\u00a0', '') : ''));
+                    }
+                  }}>
+                    <PopoverTrigger asChild>
+                      <button
+                        className={`text-[9px] font-medium cursor-pointer hover:underline ${
+                          (neoInstalacao.valor_a_receber_texto || neoInstalacao.valor_a_receber) ? 'text-emerald-400' : 'text-muted-foreground/50'
+                        }`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {neoInstalacao.valor_a_receber_texto || (neoInstalacao.valor_a_receber ? formatCurrency(neoInstalacao.valor_a_receber).replace('R$\u00a0', '') : '—')}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-56 p-3" onClick={(e) => e.stopPropagation()}>
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium">Valor a Receber</p>
+                        <Input
+                          value={valorTexto}
+                          onChange={(e) => setValorTexto(e.target.value)}
+                          placeholder="Ex: 1.500,00 ou texto"
+                          className="h-8 text-xs"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const textoOriginal = valorTexto.trim();
+                              if (!textoOriginal) return;
+                              const textoNormalizado = textoOriginal.replace(/\./g, '').replace(',', '.');
+                              const valorNumerico = parseFloat(textoNormalizado);
+                              const ehNumero = !isNaN(valorNumerico) && valorNumerico >= 0 && /^[0-9.,\s]+$/.test(textoOriginal);
+                              onUpdateValor(neoInstalacao.id, {
+                                valor_a_receber: ehNumero ? valorNumerico : null,
+                                valor_a_receber_texto: textoOriginal,
+                              });
+                              setPopoverValorOpen(false);
+                            }
+                          }}
+                        />
+                        <Button
+                          size="sm"
+                          className="w-full h-7 text-xs"
+                          onClick={() => {
+                            const textoOriginal = valorTexto.trim();
+                            if (!textoOriginal) return;
+                            const textoNormalizado = textoOriginal.replace(/\./g, '').replace(',', '.');
+                            const valorNumerico = parseFloat(textoNormalizado);
+                            const ehNumero = !isNaN(valorNumerico) && valorNumerico >= 0 && /^[0-9.,\s]+$/.test(textoOriginal);
+                            onUpdateValor(neoInstalacao.id, {
+                              valor_a_receber: ehNumero ? valorNumerico : null,
+                              valor_a_receber_texto: textoOriginal,
+                            });
+                            setPopoverValorOpen(false);
+                          }}
+                        >
+                          Salvar
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className={`text-[9px] font-medium cursor-help ${(neoInstalacao.valor_a_receber_texto || neoInstalacao.valor_a_receber) ? 'text-emerald-400' : 'text-muted-foreground/50'}`}>
+                        {neoInstalacao.valor_a_receber_texto || (neoInstalacao.valor_a_receber ? formatCurrency(neoInstalacao.valor_a_receber).replace('R$\u00a0', '') : '—')}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent><p className="text-xs">A Receber: {neoInstalacao.valor_a_receber_texto || formatCurrency(neoInstalacao.valor_a_receber || 0)}</p></TooltipContent>
+                  </Tooltip>
+                )}
               </div>
 
               {/* Col 8: Data de Agendamento */}
@@ -417,14 +488,14 @@ export function NeoInstalacaoCardGestao({
           )}
         </div>
 
-        {(neoInstalacao.valor_total > 0 || neoInstalacao.valor_a_receber > 0) && (
+        {(neoInstalacao.valor_total > 0 || neoInstalacao.valor_a_receber > 0 || neoInstalacao.valor_a_receber_texto) && (
           <div className="flex items-center gap-3 text-sm">
             <DollarSign className="h-4 w-4 text-muted-foreground" />
             {neoInstalacao.valor_total > 0 && (
               <span className="text-muted-foreground">Total: {formatCurrency(neoInstalacao.valor_total)}</span>
             )}
-            {neoInstalacao.valor_a_receber > 0 && (
-              <span className="text-emerald-500">A receber: {formatCurrency(neoInstalacao.valor_a_receber)}</span>
+            {(neoInstalacao.valor_a_receber_texto || neoInstalacao.valor_a_receber > 0) && (
+              <span className="text-emerald-500">A receber: {neoInstalacao.valor_a_receber_texto || formatCurrency(neoInstalacao.valor_a_receber)}</span>
             )}
           </div>
         )}

@@ -3417,6 +3417,7 @@ export type Database = {
           tipo_responsavel: string | null
           updated_at: string
           valor_a_receber: number | null
+          valor_a_receber_texto: string | null
           valor_total: number | null
           vezes_agendado: number
         }
@@ -3443,6 +3444,7 @@ export type Database = {
           tipo_responsavel?: string | null
           updated_at?: string
           valor_a_receber?: number | null
+          valor_a_receber_texto?: string | null
           valor_total?: number | null
           vezes_agendado?: number
         }
@@ -3469,6 +3471,7 @@ export type Database = {
           tipo_responsavel?: string | null
           updated_at?: string
           valor_a_receber?: number | null
+          valor_a_receber_texto?: string | null
           valor_total?: number | null
           vezes_agendado?: number
         }
@@ -3513,6 +3516,7 @@ export type Database = {
           tipo_responsavel: string | null
           updated_at: string
           valor_a_receber: number | null
+          valor_a_receber_texto: string | null
           valor_total: number | null
           vezes_agendado: number
         }
@@ -3539,6 +3543,7 @@ export type Database = {
           tipo_responsavel?: string | null
           updated_at?: string
           valor_a_receber?: number | null
+          valor_a_receber_texto?: string | null
           valor_total?: number | null
           vezes_agendado?: number
         }
@@ -3565,6 +3570,7 @@ export type Database = {
           tipo_responsavel?: string | null
           updated_at?: string
           valor_a_receber?: number | null
+          valor_a_receber_texto?: string | null
           valor_total?: number | null
           vezes_agendado?: number
         }

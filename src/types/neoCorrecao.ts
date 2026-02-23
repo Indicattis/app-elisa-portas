@@ -13,6 +13,7 @@ export interface NeoCorrecao {
   autorizado_nome: string | null;
   valor_total: number;
   valor_a_receber: number;
+  valor_a_receber_texto?: string | null;
   status: string;
   concluida: boolean;
   concluida_em: string | null;
