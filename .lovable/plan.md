@@ -1,30 +1,52 @@
 
-# Corrigir botao de calendário nas acoes dos pedidos
+
+# Corrigir pre-selecao do modal de agendamento
 
 ## Problema
 
-Ao clicar no botao CalendarPlus nas acoes de um pedido (ou servico Neo), o modal `AdicionarOrdemCalendarioModal` abre mostrando a lista completa de ordens para selecao manual. O comportamento correto seria ja pre-selecionar a ordem correspondente ao pedido clicado, pulando a etapa de selecao e indo direto para a configuracao de data e responsavel.
+O `handleAgendarPedido` busca a ordem em `ordensUnificadas` por `pedido_id`, mas em varios casos a ordem nao e encontrada:
+- Os dados de `ordensUnificadas` ainda nao carregaram (array vazio)
+- Pedidos na etapa `correcoes` nao sao incluidos pelo hook `useOrdensCarregamentoUnificadas`
+- Quando nao encontra, `ordemPreSelecionadaAgendar` fica `null` e o modal exibe a lista completa
 
-O modal ja suporta a prop `ordemPreSelecionada` que faz exatamente isso -- o problema e que o `handleAgendarPedido` recebe o `pedidoId` mas nao o utiliza para buscar a ordem correspondente.
+## Solucao
+
+Quando a ordem nao for encontrada em `ordensUnificadas`, construir um objeto sintetico `OrdemCarregamentoUnificada` a partir dos dados do pedido que ja estao disponiveis na listagem (via `pedidosFiltrados`).
 
 ## Mudancas
 
 **Arquivo:** `src/pages/logistica/ExpedicaoMinimalista.tsx`
 
-1. Adicionar um state `ordemPreSelecionadaAgendar` do tipo `OrdemCarregamentoUnificada | null`
+1. Alterar `handleAgendarPedido` para, caso `ordensUnificadas.find()` retorne `undefined`:
+   - Buscar o pedido em `pedidosFiltrados` (que ja esta disponivel no componente)
+   - Construir um objeto `OrdemCarregamentoUnificada` sintetico com os dados do pedido (id, pedido_id, nome_cliente, tipo_entrega, etc.)
+   - Usar esse objeto como `ordemPreSelecionadaAgendar`
 
-2. Importar o hook `useOrdensCarregamentoUnificadas` (se ainda nao importado) para ter acesso a lista de ordens unificadas
+2. Aplicar a mesma logica de fallback nos handlers `onAgendar` das Neo Instalacoes e Neo Correcoes (linhas ~831 e ~854), construindo o objeto sintetico a partir dos dados do servico Neo quando a ordem nao for encontrada
 
-3. Alterar `handleAgendarPedido` para:
-   - Receber o `pedidoId`
-   - Buscar na lista de ordens unificadas a ordem cujo `pedido_id` corresponde ao pedido clicado
-   - Setar `ordemPreSelecionadaAgendar` com a ordem encontrada
-   - Abrir o modal normalmente
+Assim, mesmo que `ordensUnificadas` esteja vazio ou nao contenha o pedido, o modal sempre abrira com a ordem pre-selecionada.
 
-4. Alterar os handlers de `onAgendar` das Neo Instalacoes e Neo Correcoes de forma similar (buscar a ordem pelo id do servico)
+### Detalhes tecnicos do objeto sintetico
 
-5. Passar `ordemPreSelecionada={ordemPreSelecionadaAgendar}` para o `AdicionarOrdemCalendarioModal`
+```typescript
+const ordemSintetica: OrdemCarregamentoUnificada = {
+  id: pedido.id,
+  fonte: 'ordens_carregamento',
+  pedido_id: pedido.id,
+  venda_id: pedido.venda_id || null,
+  nome_cliente: pedido.venda?.cliente_nome || pedido.cliente_nome || '',
+  data_carregamento: null,
+  hora_carregamento: null,
+  hora: null,
+  tipo_carregamento: null,
+  responsavel_carregamento_id: null,
+  responsavel_carregamento_nome: null,
+  carregamento_concluido: false,
+  status: null,
+  tipo_entrega: pedido.venda?.tipo_entrega || 'entrega',
+  pedido: { id: pedido.id, numero_pedido: pedido.numero_pedido },
+  venda: pedido.venda || null,
+};
+```
 
-6. Limpar `ordemPreSelecionadaAgendar` quando o modal fecha (`onOpenChange`)
-
-Assim, ao clicar no CalendarPlus de um pedido especifico, o modal abrira ja com a ordem pre-selecionada, exibindo apenas os campos de data e responsavel para configuracao rapida.
+O campo `fonte` sera determinado pelo `tipo_entrega`: se for `instalacao` ou `manutencao` usa `'instalacoes'`, caso contrario `'ordens_carregamento'`.
