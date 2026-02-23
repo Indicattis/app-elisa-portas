@@ -26,6 +26,9 @@ import { ColumnManager } from "@/components/ColumnManager";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -113,6 +116,8 @@ export default function FaturamentoDirecao() {
   const [leftSheetOpen, setLeftSheetOpen] = useState(false);
   const [rightSheetOpen, setRightSheetOpen] = useState(false);
   const [selectedVenda, setSelectedVenda] = useState<Venda | null>(null);
+  const [mobileDownbarOpen, setMobileDownbarOpen] = useState(false);
+  const isMobile = useIsMobile();
   const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
   const [atendentes, setAtendentes] = useState<any[]>([]);
   const [sortConfig, setSortConfig] = useState<{
@@ -1120,7 +1125,10 @@ export default function FaturamentoDirecao() {
                           "border-white/10 hover:bg-white/5 cursor-pointer",
                           selectedVenda?.id === venda.id && "bg-blue-500/10 border-l-2 border-l-blue-500"
                         )}
-                        onClick={() => setSelectedVenda(venda)}
+                        onClick={() => {
+                          setSelectedVenda(venda);
+                          if (isMobile) setMobileDownbarOpen(true);
+                        }}
                       >
                         <TableCell className="w-8 text-center">
                           <div className={cn(
@@ -1154,6 +1162,20 @@ export default function FaturamentoDirecao() {
           </div>
         </aside>
       </div>
+
+      {/* Mobile Downbar */}
+      {isMobile && (
+        <Drawer open={mobileDownbarOpen} onOpenChange={(open) => {
+          setMobileDownbarOpen(open);
+          if (!open) setSelectedVenda(null);
+        }}>
+          <DrawerContent className="max-h-[85vh] bg-zinc-900 border-t border-white/10">
+            <ScrollArea className="h-[75vh] px-4 py-4">
+              {selectedVenda && selectedVendaContent}
+            </ScrollArea>
+          </DrawerContent>
+        </Drawer>
+      )}
     </MinimalistLayout>
   );
 }
