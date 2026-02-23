@@ -69,6 +69,8 @@ interface Venda {
   autorizacao_desconto?: AutorizacaoDesconto[];
   data_pagamento_1?: string | null;
   data_pagamento_2?: string | null;
+  valor_a_receber?: number | null;
+  valor_a_receber_faturamento?: boolean;
 }
 
 // Definição das colunas disponíveis
@@ -77,15 +79,10 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'cliente', label: 'Cliente', defaultVisible: true },
   { id: 'data', label: 'Data', defaultVisible: true },
   { id: 'cidade', label: 'Cidade', defaultVisible: true },
-  { id: 'previsao', label: 'Previsão Entrega', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
   { id: 'desconto_acrescimo', label: 'Desc./Acrés.', defaultVisible: true },
   { id: 'data_pgto_1', label: 'Data Pgto 1', defaultVisible: true },
   { id: 'data_pgto_2', label: 'Data Pgto 2', defaultVisible: true },
-  { id: 'instalacao', label: 'Instalação', defaultVisible: true },
-  { id: 'frete', label: 'Frete', defaultVisible: true },
-  { id: 'valor_porta', label: 'Vl. Portas', defaultVisible: true },
-  { id: 'valor_pintura', label: 'Vl. Pintura', defaultVisible: true },
   { id: 'valor', label: 'Valor', defaultVisible: true },
   { id: 'lucro', label: 'Lucro', defaultVisible: true },
   { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
@@ -117,6 +114,7 @@ export default function FaturamentoDirecao() {
   const [filtroStatus, setFiltroStatus] = useState<string[]>([]);
   const [leftSheetOpen, setLeftSheetOpen] = useState(false);
   const [rightSheetOpen, setRightSheetOpen] = useState(false);
+  const [selectedVenda, setSelectedVenda] = useState<Venda | null>(null);
   const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
   const [atendentes, setAtendentes] = useState<any[]>([]);
   const [sortConfig, setSortConfig] = useState<{
@@ -177,6 +175,8 @@ export default function FaturamentoDirecao() {
           tipo_entrega,
           frete_aprovado,
           justificativa_nao_faturada,
+          valor_a_receber,
+          valor_a_receber_faturamento,
           produtos_vendas (
             id,
             tipo_produto,
@@ -790,11 +790,23 @@ export default function FaturamentoDirecao() {
     </div>
   );
 
+  // Helper to compute detail values for a venda
+  const getVendaDetailValues = (venda: Venda) => {
+    const portas = venda.portas || [];
+    const valorPortas = portas
+      .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
+      .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+    const valorPintura = portas
+      .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
+      .reduce((sum: number, p: any) => sum + (p.valor_pintura || 0), 0);
+    return { valorPortas, valorPintura };
+  };
+
   // Right sidebar content
   const lucroLiquido = indicadores.lucroLiquidoTotal;
-  const rightContent = (
+
+  const defaultRightContent = (
     <div className="space-y-6">
-      {/* Summary */}
       <div>
         <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Resumo</p>
         <div className="space-y-3">
@@ -816,8 +828,6 @@ export default function FaturamentoDirecao() {
           </div>
         </div>
       </div>
-
-      {/* Column Manager */}
       <div>
         <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Colunas</p>
         <ColumnManager
@@ -830,6 +840,76 @@ export default function FaturamentoDirecao() {
       </div>
     </div>
   );
+
+  const selectedVendaContent = selectedVenda ? (() => {
+    const { valorPortas, valorPintura } = getVendaDetailValues(selectedVenda);
+    return (
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white truncate">{selectedVenda.cliente_nome}</p>
+            <p className="text-xs text-white/50 mt-0.5">Venda #{selectedVenda.id.substring(0, 8)}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0 text-white/50 hover:text-white hover:bg-white/10"
+            onClick={() => setSelectedVenda(null)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Detalhes financeiros */}
+        <div>
+          <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Detalhes Financeiros</p>
+          <div className="space-y-2">
+            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+              <p className="text-xs text-white/50">Vl. Portas</p>
+              <p className="text-sm font-semibold text-white">{valorPortas > 0 ? formatCurrency(valorPortas) : '-'}</p>
+            </div>
+            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+              <p className="text-xs text-white/50">Vl. Pintura</p>
+              <p className="text-sm font-semibold text-white">{valorPintura > 0 ? formatCurrency(valorPintura) : '-'}</p>
+            </div>
+            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+              <p className="text-xs text-white/50">Instalação</p>
+              <p className="text-sm font-semibold text-white">{(selectedVenda.valor_instalacao || 0) > 0 ? formatCurrency(selectedVenda.valor_instalacao!) : '-'}</p>
+            </div>
+            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+              <p className="text-xs text-white/50">Frete</p>
+              <p className="text-sm font-semibold text-white">{(selectedVenda.valor_frete || 0) > 0 ? formatCurrency(selectedVenda.valor_frete) : '-'}</p>
+            </div>
+            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+              <p className="text-xs text-white/50">Previsão de Entrega</p>
+              <p className="text-sm font-semibold text-white">
+                {selectedVenda.data_prevista_entrega 
+                  ? format(new Date(selectedVenda.data_prevista_entrega), 'dd/MM/yyyy', { locale: ptBR })
+                  : '-'}
+              </p>
+            </div>
+            {selectedVenda.valor_a_receber_faturamento && selectedVenda.valor_a_receber != null && (
+              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <p className="text-xs text-blue-400">Valor a Receber</p>
+                <p className="text-sm font-bold text-blue-300">{formatCurrency(selectedVenda.valor_a_receber)}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Botão Abrir Faturamento */}
+        <Button
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={() => navigate(`/direcao/faturamento/venda/${selectedVenda.id}`)}
+        >
+          Abrir Faturamento
+        </Button>
+      </div>
+    );
+  })() : null;
+
+  const rightContent = selectedVenda ? selectedVendaContent : defaultRightContent;
 
   if (loading) {
     return (
@@ -992,7 +1072,7 @@ export default function FaturamentoDirecao() {
                       <TableRow 
                         key={venda.id} 
                         className="border-white/10 hover:bg-white/5 cursor-pointer"
-                        onClick={() => navigate(`/direcao/faturamento/venda/${venda.id}`)}
+                        onClick={() => setSelectedVenda(venda)}
                       >
                         {visibleColumns.map((column) => (
                           <TableCell 
