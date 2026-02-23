@@ -1,49 +1,25 @@
 
+# Editar Data de Vencimento com Clique
 
-# Excluir Contas a Receber Orfas e Prevenir Futuras
+## Resumo
 
-## Problema
+Tornar a coluna "Vencimento" clicavel, abrindo um Popover com um Calendar para alterar a data de vencimento diretamente na tabela.
 
-Ha 15 registros em `contas_receber` que referenciam `venda_id`s inexistentes na tabela `vendas`. Esses registros aparecem como "Venda removida" na interface.
+## Mudancas
 
-## Solucao
+**Arquivo:** `src/pages/administrativo/ContasReceberMinimalista.tsx`
 
-### 1. Limpar dados orfaos existentes
+### Nova mutation
+Criar `updateVencimentoMutation` para atualizar `data_vencimento` no banco:
+- Faz `supabase.from('contas_receber').update({ data_vencimento }).eq('id', id)`
+- Invalida query e exibe toast de sucesso
 
-Executar um DELETE para remover os 15 registros orfaos:
+### Alterar celula de Vencimento (linha ~699)
+Substituir o `TableCell` simples por um `Popover` com `Calendar`, seguindo o mesmo padrao ja usado no campo "Historico":
+- O texto da data funciona como botao/trigger (com hover visual para indicar que e clicavel)
+- Ao clicar, abre um Popover com Calendar no modo `single`
+- Ao selecionar uma data, chama a mutation e fecha o popover
+- O calendario usa `locale={ptBR}` e `pointer-events-auto`
 
-```sql
-DELETE FROM contas_receber
-WHERE venda_id NOT IN (SELECT id FROM vendas);
-```
-
-Isso sera feito usando a ferramenta de dados (insert tool), nao migration.
-
-### 2. Criar trigger para exclusao automatica futura
-
-Criar um trigger na tabela `vendas` que, ao excluir uma venda, automaticamente exclua todas as contas a receber associadas. Isso sera feito via migration:
-
-```sql
-CREATE OR REPLACE FUNCTION delete_contas_receber_on_venda_delete()
-RETURNS TRIGGER AS $$
-BEGIN
-  DELETE FROM contas_receber WHERE venda_id = OLD.id;
-  RETURN OLD;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_delete_contas_on_venda_delete
-BEFORE DELETE ON vendas
-FOR EACH ROW
-EXECUTE FUNCTION delete_contas_receber_on_venda_delete();
-```
-
-### 3. Remover fallback "Venda removida" do codigo
-
-Com os dados orfaos eliminados e o trigger prevenindo novos casos, o fallback "Venda removida" pode ser revertido para o simples "---" ou mantido como seguranca extra. Recomendo manter como esta por precaucao.
-
-## Resumo das acoes
-
-1. DELETE dos 15 registros orfaos (insert tool)
-2. Migration com trigger BEFORE DELETE na tabela `vendas`
-3. Nenhuma alteracao de codigo necessaria (o fallback existente continua como seguranca)
+### Layout visual
+A data aparece com estilo de hover (`hover:text-purple-300 cursor-pointer`) para indicar que e editavel, similar ao campo Historico.
