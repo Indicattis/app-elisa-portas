@@ -175,7 +175,34 @@ export default function ExpedicaoMinimalista() {
     if (etapaParaAtribuir) { removerResponsavel(etapaParaAtribuir); setModalResponsavelAberto(false); setEtapaParaAtribuir(null); }
   };
   const handleAgendarPedido = (pedidoId: string) => {
-    const ordemEncontrada = ordensUnificadas?.find(o => o.pedido_id === pedidoId) || null;
+    let ordemEncontrada = ordensUnificadas?.find(o => o.pedido_id === pedidoId) || null;
+    
+    if (!ordemEncontrada) {
+      const pedido = pedidosFiltrados?.find((p: any) => p.id === pedidoId);
+      if (pedido) {
+        const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas?.[0] : pedido.vendas;
+        const tipoEntregaVal = vendaData?.tipo_entrega || 'entrega';
+        ordemEncontrada = {
+          id: pedido.id,
+          fonte: (tipoEntregaVal === 'instalacao' || tipoEntregaVal === 'manutencao') ? 'instalacoes' : 'ordens_carregamento',
+          pedido_id: pedido.id,
+          venda_id: pedido.venda_id || null,
+          nome_cliente: vendaData?.cliente_nome || '',
+          data_carregamento: null,
+          hora_carregamento: null,
+          hora: null,
+          tipo_carregamento: null,
+          responsavel_carregamento_id: null,
+          responsavel_carregamento_nome: null,
+          carregamento_concluido: false,
+          status: null,
+          tipo_entrega: tipoEntregaVal,
+          pedido: { id: pedido.id, numero_pedido: pedido.numero_pedido },
+          venda: vendaData || null,
+        } as OrdemCarregamentoUnificada;
+      }
+    }
+    
     setOrdemPreSelecionadaAgendar(ordemEncontrada);
     setAgendarData(new Date());
     setAgendarModalOpen(true);
@@ -831,7 +858,19 @@ export default function ExpedicaoMinimalista() {
                                   onConcluir={handleConcluirNeoInstalacaoListagem}
                                   isConcluindo={isConcluindoInstalacaoListagem}
                                   onAgendar={(id) => {
-                                    const ordemEncontrada = ordensUnificadas?.find(o => o.id === id || o.pedido_id === id) || null;
+                                    let ordemEncontrada = ordensUnificadas?.find(o => o.id === id || o.pedido_id === id) || null;
+                                    if (!ordemEncontrada) {
+                                      const neo = neoInstalacoesListagem.find(n => n.id === id);
+                                      if (neo) {
+                                        ordemEncontrada = {
+                                          id: neo.id, fonte: 'instalacoes', pedido_id: null, venda_id: null,
+                                          nome_cliente: neo.nome_cliente, data_carregamento: null, hora_carregamento: null,
+                                          hora: null, tipo_carregamento: null, responsavel_carregamento_id: null,
+                                          responsavel_carregamento_nome: null, carregamento_concluido: false, status: null,
+                                          tipo_entrega: 'instalacao', pedido: null, venda: null,
+                                        } as OrdemCarregamentoUnificada;
+                                      }
+                                    }
                                     setOrdemPreSelecionadaAgendar(ordemEncontrada);
                                     setAgendarData(new Date());
                                     setAgendarModalOpen(true);
@@ -854,7 +893,19 @@ export default function ExpedicaoMinimalista() {
                                   viewMode="list"
                                   onConcluir={handleConcluirNeoCorrecaoListagem}
                                   onAgendar={(id) => {
-                                    const ordemEncontrada = ordensUnificadas?.find(o => o.id === id || o.pedido_id === id) || null;
+                                    let ordemEncontrada = ordensUnificadas?.find(o => o.id === id || o.pedido_id === id) || null;
+                                    if (!ordemEncontrada) {
+                                      const neo = neoCorrecoesListagem.find(n => n.id === id);
+                                      if (neo) {
+                                        ordemEncontrada = {
+                                          id: neo.id, fonte: 'instalacoes', pedido_id: null, venda_id: null,
+                                          nome_cliente: neo.nome_cliente, data_carregamento: null, hora_carregamento: null,
+                                          hora: null, tipo_carregamento: null, responsavel_carregamento_id: null,
+                                          responsavel_carregamento_nome: null, carregamento_concluido: false, status: null,
+                                          tipo_entrega: 'manutencao', pedido: null, venda: null,
+                                        } as OrdemCarregamentoUnificada;
+                                      }
+                                    }
                                     setOrdemPreSelecionadaAgendar(ordemEncontrada);
                                     setAgendarData(new Date());
                                     setAgendarModalOpen(true);
