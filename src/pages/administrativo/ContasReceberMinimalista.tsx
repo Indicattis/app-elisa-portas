@@ -275,6 +275,20 @@ export default function ContasReceberMinimalista() {
     }
   });
 
+  const updateVencimentoMutation = useMutation({
+    mutationFn: async ({ id, data_vencimento }: { id: string; data_vencimento: string }) => {
+      const { error } = await supabase
+        .from('contas_receber')
+        .update({ data_vencimento })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contas-receber-min'] });
+      toast({ title: "Vencimento atualizado" });
+    }
+  });
+
   const updateObservacoesMutation = useMutation({
     mutationFn: async ({ id, observacoes }: { id: string; observacoes: string }) => {
       const { error } = await supabase
@@ -696,7 +710,30 @@ export default function ContasReceberMinimalista() {
                           </Popover>
                         </TableCell>
                         <TableCell className="text-white/70 text-sm">{conta.metodo_pagamento || '—'}</TableCell>
-                        <TableCell className="text-white text-sm">{format(parseISO(conta.data_vencimento), 'dd/MM/yyyy')}</TableCell>
+                        <TableCell className="text-sm">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <span className="text-white hover:text-purple-300 cursor-pointer transition-colors">
+                                {format(parseISO(conta.data_vencimento), 'dd/MM/yyyy')}
+                              </span>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={parseISO(conta.data_vencimento + 'T12:00:00')}
+                                onSelect={(date) => {
+                                  if (date) {
+                                    const formatted = format(date, 'yyyy-MM-dd') + 'T12:00:00.000Z';
+                                    updateVencimentoMutation.mutate({ id: conta.id, data_vencimento: formatted });
+                                  }
+                                }}
+                                locale={ptBR}
+                                initialFocus
+                                className="pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </TableCell>
                         <TableCell className="text-white font-medium text-sm">{formatCurrency(conta.valor_parcela)}</TableCell>
                         <TableCell>{getStatusBadge(conta)}</TableCell>
                         <TableCell>
