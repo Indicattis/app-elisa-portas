@@ -33,7 +33,7 @@ import { ColumnManager } from "@/components/ColumnManager";
 import { useColumnConfig, ColumnConfig } from "@/hooks/useColumnConfig";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
 import { VendasNaoFaturadasHistorico } from "@/components/faturamento/VendasNaoFaturadasHistorico";
-import { getFormaPagamentoLabel } from '@/utils/formatters';
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -80,16 +80,12 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'cliente', label: 'Cliente', defaultVisible: true },
   { id: 'data', label: 'Data', defaultVisible: true },
   { id: 'cidade', label: 'Cidade', defaultVisible: true },
-  { id: 'pagamento', label: 'Pagamento', defaultVisible: true },
-  { id: 'data_pgto_1', label: 'Pgto 1', defaultVisible: true },
-  { id: 'data_pgto_2', label: 'Pgto 2', defaultVisible: true },
-  { id: 'valor_frete', label: 'Frete', defaultVisible: true },
-  { id: 'valor_instalacao', label: 'Instalação', defaultVisible: true },
+  { id: 'expedicao', label: 'Expedição', defaultVisible: true },
   { id: 'desconto_acrescimo', label: 'Desc./Acrés.', defaultVisible: true },
-  { id: 'tempo_sem_faturar', label: 'Tempo', defaultVisible: true },
+  { id: 'valor', label: 'Valor', defaultVisible: true },
+  { id: 'lucro', label: 'Lucro', defaultVisible: true },
+  { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
   { id: 'justificativa', label: 'Justificativa', defaultVisible: true },
-  { id: 'lucro_total', label: 'Lucro', defaultVisible: true },
-  { id: 'valor_total', label: 'Valor Total', defaultVisible: true },
   { id: 'faturada', label: 'Faturada', defaultVisible: true },
 ];
 
@@ -346,14 +342,13 @@ export default function FaturamentoMinimalista() {
           case 'cliente': return venda.cliente_nome?.toLowerCase() || '';
           case 'vendedor': return venda.atendente_nome.toLowerCase();
           case 'cidade': return venda.cidade?.toLowerCase() || '';
-          case 'valor_total': return (venda.valor_venda || 0) + (venda.valor_credito || 0);
-          case 'lucro_total': return calcularLucroVenda(venda);
+          case 'valor': return (venda.valor_venda || 0) + (venda.valor_credito || 0);
+          case 'lucro': return calcularLucroVenda(venda);
+          case 'expedicao': return venda.tipo_entrega || '';
           case 'tempo_sem_faturar':
             if (isFaturada(venda)) return -1;
             return differenceInDays(new Date(), new Date(venda.data_venda));
           case 'faturada': return isFaturada(venda) ? 1 : 0;
-          case 'valor_frete': return venda.valor_frete || 0;
-          case 'valor_instalacao': return venda.valor_instalacao || 0;
           case 'desconto_acrescimo':
             const desc = (venda.portas || []).reduce((sum: number, p: any) => sum + (p.desconto_valor || 0), 0);
             return (venda.valor_credito || 0) - desc;
@@ -597,14 +592,14 @@ export default function FaturamentoMinimalista() {
   };
 
   const getColumnResponsiveClass = (columnId: string) => {
-    const hiddenOnMobile = ['cidade', 'pagamento', 'data_pgto_1', 'data_pgto_2', 'valor_frete', 'valor_instalacao', 'desconto_acrescimo', 'tempo_sem_faturar', 'justificativa', 'lucro_total'];
+    const hiddenOnMobile = ['cidade', 'expedicao', 'desconto_acrescimo', 'tempo_sem_faturar', 'justificativa', 'lucro'];
     if (hiddenOnMobile.includes(columnId)) return 'hidden md:table-cell';
     return '';
   };
 
   const getColumnAlignment = (columnId: string) => {
-    const rightAligned = ['valor_total', 'valor_frete', 'valor_instalacao', 'lucro_total', 'desconto_acrescimo'];
-    const centerAligned = ['faturada', 'tempo_sem_faturar'];
+    const rightAligned = ['valor', 'lucro', 'desconto_acrescimo'];
+    const centerAligned = ['faturada', 'tempo_sem_faturar', 'expedicao'];
     if (rightAligned.includes(columnId)) return 'text-right';
     if (centerAligned.includes(columnId)) return 'text-center';
     return 'text-left';
@@ -627,24 +622,9 @@ export default function FaturamentoMinimalista() {
         return <span className="text-white/80">{format(new Date(venda.data_venda), "dd/MM/yy", { locale: ptBR })}</span>;
       case 'cidade':
         return <span className="text-white/60">{venda.cidade}{venda.estado ? `/${venda.estado}` : ''}</span>;
-      case 'pagamento':
-        return <span className="text-white/80 text-sm">{getFormaPagamentoLabel(venda.metodo_pagamento)}</span>;
-      case 'data_pgto_1':
-        return venda.data_pagamento_1 
-          ? <span className="text-white/80">{format(new Date(venda.data_pagamento_1), 'dd/MM/yy')}</span>
-          : <span className="text-white/30">-</span>;
-      case 'data_pgto_2':
-        return venda.data_pagamento_2 
-          ? <span className="text-white/80">{format(new Date(venda.data_pagamento_2), 'dd/MM/yy')}</span>
-          : <span className="text-white/30">-</span>;
-      case 'valor_frete':
-        return (venda.valor_frete || 0) > 0
-          ? <span className="text-white/80">{formatCurrency(venda.valor_frete)}</span>
-          : <span className="text-white/30">-</span>;
-      case 'valor_instalacao':
-        return (venda.valor_instalacao || 0) > 0
-          ? <span className="text-white/80">{formatCurrency(venda.valor_instalacao)}</span>
-          : <span className="text-white/30">-</span>;
+      case 'expedicao':
+        if (venda.tipo_entrega === 'instalacao') return <Hammer className="h-4 w-4 text-cyan-400 mx-auto" />;
+        return <Truck className="h-4 w-4 text-orange-400 mx-auto" />;
       case 'desconto_acrescimo':
         const totalDesconto = (venda.portas || []).reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
         const acrescimo = venda.valor_credito || 0;
@@ -678,11 +658,11 @@ export default function FaturamentoMinimalista() {
             Informar
           </Button>
         );
-      case 'lucro_total':
+      case 'lucro':
         return isFaturada(venda) 
           ? <span className="text-emerald-400 font-medium">{formatCurrency(calcularLucroVenda(venda))}</span>
           : <span className="text-white/30">-</span>;
-      case 'valor_total':
+      case 'valor':
         return <span className="text-white font-medium">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</span>;
       case 'faturada':
         return isFaturada(venda) 
