@@ -79,7 +79,7 @@ export default function ContasReceberMinimalista() {
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
 
   // Filters
-  const [filtroStatus, setFiltroStatus] = useState<string[]>([]);
+  const [filtroStatus, setFiltroStatus] = useState<string[]>(["pendente", "vencido"]);
   const [filtroMetodo, setFiltroMetodo] = useState<string[]>([]);
   const [filtroValorMin, setFiltroValorMin] = useState("");
   const [filtroValorMax, setFiltroValorMax] = useState("");
