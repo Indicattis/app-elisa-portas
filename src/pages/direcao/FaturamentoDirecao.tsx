@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { IndicadorExpandivel } from "@/components/direcao/IndicadorExpandivel";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -9,22 +9,23 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, DollarSign, CalendarIcon, CheckCircle2, Clock, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, TrendingUp, Target, Paintbrush, Wrench, AlertCircle, Calculator, Info, Package, PlusCircle } from "lucide-react";
+import { Search, DollarSign, CalendarIcon, CheckCircle2, Clock, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, TrendingUp, Target, Paintbrush, Wrench, AlertCircle, Calculator, Info, Package, PlusCircle, Filter, PanelRight, Download } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DateRange } from "react-day-picker";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { useColumnConfig, ColumnConfig } from "@/hooks/useColumnConfig";
 import { ColumnManager } from "@/components/ColumnManager";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -113,7 +114,9 @@ export default function FaturamentoDirecao() {
   });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<'todas' | 'faturadas' | 'nao_faturadas'>('todas');
+  const [filtroStatus, setFiltroStatus] = useState<string[]>([]);
+  const [leftSheetOpen, setLeftSheetOpen] = useState(false);
+  const [rightSheetOpen, setRightSheetOpen] = useState(false);
   const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
   const [atendentes, setAtendentes] = useState<any[]>([]);
   const [sortConfig, setSortConfig] = useState<{
@@ -275,8 +278,16 @@ export default function FaturamentoDirecao() {
 
   const filteredVendas = useMemo(() => {
     return vendas.filter(venda => {
-      if (activeTab === 'faturadas' && !isFaturada(venda)) return false;
-      if (activeTab === 'nao_faturadas' && isFaturada(venda)) return false;
+      // Status filter
+      if (filtroStatus.length > 0) {
+        const faturada = isFaturada(venda);
+        const matchStatus = filtroStatus.some(s => {
+          if (s === 'faturadas') return faturada;
+          if (s === 'nao_faturadas') return !faturada;
+          return false;
+        });
+        if (!matchStatus) return false;
+      }
 
       if (selectedAtendente !== "todos" && venda.atendente_id !== selectedAtendente) {
         return false;
@@ -289,7 +300,7 @@ export default function FaturamentoDirecao() {
 
       return matchesSearch;
     });
-  }, [vendas, activeTab, selectedAtendente, searchTerm]);
+  }, [vendas, filtroStatus, selectedAtendente, searchTerm]);
 
   // Ordenação das vendas
   const sortedVendas = useMemo(() => {
@@ -685,6 +696,141 @@ export default function FaturamentoDirecao() {
     }
   };
 
+  const toggleFilterStatus = (val: string) => {
+    setFiltroStatus(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]);
+  };
+
+  const clearFilters = () => {
+    setFiltroStatus([]);
+    setSelectedAtendente("todos");
+    setDateRange({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
+  };
+
+  const hasFilters = filtroStatus.length > 0 || selectedAtendente !== "todos";
+
+  const STATUS_OPTIONS = [
+    { value: "faturadas", label: "Faturadas" },
+    { value: "nao_faturadas", label: "Não Faturadas" },
+  ];
+
+  // Filter sidebar content
+  const filterContent = (
+    <div className="space-y-6">
+      {/* Status */}
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Status</p>
+        <div className="space-y-2">
+          {STATUS_OPTIONS.map(opt => (
+            <label key={opt.value} className="flex items-center gap-2 cursor-pointer text-sm text-white/80 hover:text-white transition-colors">
+              <Checkbox
+                checked={filtroStatus.includes(opt.value)}
+                onCheckedChange={() => toggleFilterStatus(opt.value)}
+                className="border-white/20 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+              />
+              {opt.label}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Vendedor */}
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Vendedor</p>
+        <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
+          <SelectTrigger className="bg-white/5 border-white/10 text-white h-9">
+            <SelectValue placeholder="Todos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos</SelectItem>
+            {atendentes.map((atendente: any) => (
+              <SelectItem key={atendente.user_id} value={atendente.user_id}>{atendente.nome}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Período */}
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Período</p>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-full h-9 bg-white/5 border-white/10 text-white hover:bg-white/10 justify-start",
+                dateRange?.from && "border-blue-500/50 text-blue-300"
+              )}
+            >
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              {dateRange?.from && dateRange?.to
+                ? `${format(dateRange.from, 'dd/MM', { locale: ptBR })} - ${format(dateRange.to, 'dd/MM', { locale: ptBR })}`
+                : "Selecionar período"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={setDateRange}
+              numberOfMonths={2}
+              locale={ptBR}
+              className="pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {hasFilters && (
+        <Button variant="ghost" size="sm" className="w-full text-white/50 hover:text-white hover:bg-white/5" onClick={clearFilters}>
+          Limpar Filtros
+        </Button>
+      )}
+    </div>
+  );
+
+  // Right sidebar content
+  const lucroLiquido = indicadores.lucroLiquidoTotal;
+  const rightContent = (
+    <div className="space-y-6">
+      {/* Summary */}
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Resumo</p>
+        <div className="space-y-3">
+          <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+            <p className="text-xs text-white/50">Faturamento</p>
+            <p className="text-lg font-bold text-white">{formatCurrency(stats.faturamento)}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+            <p className="text-xs text-white/50">Faturadas</p>
+            <p className="text-lg font-bold text-green-400">{stats.faturadas}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+            <p className="text-xs text-white/50">Pendentes</p>
+            <p className="text-lg font-bold text-amber-400">{stats.naoFaturadas}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+            <p className="text-xs text-white/50">Lucro Líquido</p>
+            <p className="text-lg font-bold text-emerald-400">{formatCurrency(lucroLiquido)}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Column Manager */}
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Colunas</p>
+        <ColumnManager
+          columns={columns}
+          visibleIds={visibleIds}
+          onToggle={toggleColumn}
+          onReorder={setColumnOrder}
+          onReset={resetColumns}
+        />
+      </div>
+    </div>
+  );
+
   if (loading) {
     return (
       <MinimalistLayout 
@@ -715,44 +861,40 @@ export default function FaturamentoDirecao() {
         { label: "Faturamento" }
       ]}
     >
-      {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-          <CardContent className="p-3 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] sm:text-xs text-white/60">Faturamento</p>
-              <p className="text-base sm:text-xl font-bold text-white">{formatCurrency(stats.faturamento)}</p>
-            </div>
-            <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-white/40" />
-          </CardContent>
-        </Card>
-        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-          <CardContent className="p-3 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] sm:text-xs text-white/60">Faturadas</p>
-              <p className="text-xl sm:text-2xl font-bold text-green-400">{stats.faturadas}</p>
-            </div>
-            <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-400/60" />
-          </CardContent>
-        </Card>
-        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-          <CardContent className="p-3 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] sm:text-xs text-white/60">Pendentes</p>
-              <p className="text-xl sm:text-2xl font-bold text-amber-400">{stats.naoFaturadas}</p>
-            </div>
-            <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-amber-400/60" />
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Indicadores do Período */}
-      <Card className="bg-primary/5 border-primary/10 mb-6">
+      <Card className="rounded-xl bg-white/5 border border-white/10 mb-6">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base text-white/80 flex items-center gap-2">
-            <Calculator className="h-4 w-4 text-blue-400" />
-            Indicadores do Período
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base text-white/80 flex items-center gap-2">
+              <Calculator className="h-4 w-4 text-blue-400" />
+              Indicadores do Período
+            </CardTitle>
+            {/* Mobile buttons for sheets */}
+            <div className="flex gap-2 lg:hidden">
+              <Sheet open={leftSheetOpen} onOpenChange={setLeftSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+                    <Filter className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="bg-zinc-950 border-white/10 w-[280px]">
+                  <SheetTitle className="text-white mb-4">Filtros</SheetTitle>
+                  {filterContent}
+                </SheetContent>
+              </Sheet>
+              <Sheet open={rightSheetOpen} onOpenChange={setRightSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+                    <PanelRight className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="bg-zinc-950 border-white/10 w-[280px]">
+                  <SheetTitle className="text-white mb-4">Resumo</SheetTitle>
+                  {rightContent}
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
@@ -794,135 +936,87 @@ export default function FaturamentoDirecao() {
         </CardContent>
       </Card>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="mb-6">
-        <TabsList className="bg-primary/5 border border-primary/10">
-          <TabsTrigger value="todas" className="data-[state=active]:bg-primary/10 text-white">
-            Todas
-          </TabsTrigger>
-          <TabsTrigger value="faturadas" className="data-[state=active]:bg-primary/10 text-white">
-            Faturadas
-          </TabsTrigger>
-          <TabsTrigger value="nao_faturadas" className="data-[state=active]:bg-primary/10 text-white">
-            Não Faturadas
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* 3-panel layout */}
+      <div className="flex gap-4">
+        {/* Left sidebar - desktop only */}
+        <aside className="hidden lg:block w-[250px] shrink-0">
+          <div className="sticky top-24 p-4 rounded-xl bg-white/5 border border-white/10">
+            <p className="text-sm font-semibold text-white mb-4">Filtros</p>
+            {filterContent}
+          </div>
+        </aside>
 
-      {/* Filtros */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/40" />
-          <Input
-            placeholder="Buscar cliente, vendedor, cidade..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 bg-primary/5 border-primary/10 text-white placeholder:text-white/40"
-          />
-        </div>
+        {/* Main table */}
+        <main className="flex-1 min-w-0">
+          {/* Search bar */}
+          <div className="flex items-center gap-2 mb-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+              <Input
+                placeholder="Buscar cliente, vendedor, cidade..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 h-9"
+              />
+            </div>
+          </div>
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="bg-primary/5 border-primary/10 text-white hover:bg-primary/10">
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateRange?.from ? (
-                dateRange.to ? (
-                  <>
-                    {format(dateRange.from, "dd/MM", { locale: ptBR })} - {format(dateRange.to, "dd/MM", { locale: ptBR })}
-                  </>
-                ) : (
-                  format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
-                )
-              ) : (
-                <span>Período</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 bg-zinc-900 border-primary/10" align="end">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={dateRange?.from}
-              selected={dateRange}
-              onSelect={setDateRange}
-              numberOfMonths={2}
-              locale={ptBR}
-              className="text-white"
-            />
-          </PopoverContent>
-        </Popover>
-
-        <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
-          <SelectTrigger className="w-[180px] bg-primary/5 border-primary/10 text-white">
-            <SelectValue placeholder="Vendedor" />
-          </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-primary/10">
-            <SelectItem value="todos" className="text-white">Todos</SelectItem>
-            {atendentes.map(atendente => (
-              <SelectItem key={atendente.user_id} value={atendente.user_id} className="text-white">
-                {atendente.nome}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <ColumnManager
-          columns={columns}
-          visibleIds={visibleIds}
-          onToggle={toggleColumn}
-          onReorder={setColumnOrder}
-          onReset={resetColumns}
-        />
-      </div>
-
-      {/* Tabela */}
-      <div className="bg-primary/5 border border-primary/10 rounded-xl overflow-x-auto backdrop-blur-xl">
-        <TooltipProvider delayDuration={200}>
-          <Table>
-            <TableHeader>
-              <TableRow className="border-primary/10 hover:bg-transparent">
-                {visibleColumns.map((column) => (
-                  <TableHead 
-                    key={column.id}
-                    className={`text-white/60 cursor-pointer hover:text-white/80 transition-colors ${getColumnResponsiveClass(column.id)} ${getColumnAlignment(column.id)}`}
-                    onClick={() => handleSort(column.id)}
-                  >
-                    <div className={`flex items-center ${getColumnAlignment(column.id) === 'text-right' ? 'justify-end' : getColumnAlignment(column.id) === 'text-center' ? 'justify-center' : ''}`}>
-                      {column.label}
-                      {getSortIcon(column.id)}
-                    </div>
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedVendas.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-white/40">
-                    Nenhuma venda encontrada
-                  </TableCell>
-                </TableRow>
-              ) : (
-                sortedVendas.map((venda) => (
-                  <TableRow 
-                    key={venda.id} 
-                    className="border-primary/10 hover:bg-primary/5 cursor-pointer"
-                    onClick={() => navigate(`/direcao/faturamento/venda/${venda.id}`)}
-                  >
+          <div className="rounded-xl bg-white/5 border border-white/10 overflow-x-auto">
+            <TooltipProvider delayDuration={200}>
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/10 hover:bg-transparent">
                     {visibleColumns.map((column) => (
-                      <TableCell 
+                      <TableHead 
                         key={column.id}
-                        className={`${getColumnResponsiveClass(column.id)} ${getColumnAlignment(column.id)}`}
+                        className={`text-white/60 cursor-pointer hover:text-white/80 transition-colors ${getColumnResponsiveClass(column.id)} ${getColumnAlignment(column.id)}`}
+                        onClick={() => handleSort(column.id)}
                       >
-                        {renderCell(venda, column.id)}
-                      </TableCell>
+                        <div className={`flex items-center ${getColumnAlignment(column.id) === 'text-right' ? 'justify-end' : getColumnAlignment(column.id) === 'text-center' ? 'justify-center' : ''}`}>
+                          {column.label}
+                          {getSortIcon(column.id)}
+                        </div>
+                      </TableHead>
                     ))}
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TooltipProvider>
+                </TableHeader>
+                <TableBody>
+                  {sortedVendas.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-white/40">
+                        Nenhuma venda encontrada
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    sortedVendas.map((venda) => (
+                      <TableRow 
+                        key={venda.id} 
+                        className="border-white/10 hover:bg-white/5 cursor-pointer"
+                        onClick={() => navigate(`/direcao/faturamento/venda/${venda.id}`)}
+                      >
+                        {visibleColumns.map((column) => (
+                          <TableCell 
+                            key={column.id}
+                            className={`${getColumnResponsiveClass(column.id)} ${getColumnAlignment(column.id)}`}
+                          >
+                            {renderCell(venda, column.id)}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TooltipProvider>
+          </div>
+        </main>
+
+        {/* Right sidebar - desktop only */}
+        <aside className="hidden lg:block w-[250px] shrink-0">
+          <div className="sticky top-24 p-4 rounded-xl bg-white/5 border border-white/10">
+            {rightContent}
+          </div>
+        </aside>
       </div>
     </MinimalistLayout>
   );
