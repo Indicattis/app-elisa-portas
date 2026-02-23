@@ -64,7 +64,8 @@ export function usePedidosContadores() {
       const { count: neoCount, error: neoError } = await supabase
         .from('neo_instalacoes')
         .select('*', { count: 'exact', head: true })
-        .eq('concluida', false);
+        .eq('concluida', false)
+        .neq('status', 'arquivada');
 
       if (!neoError && neoCount) {
         counts.instalacoes += neoCount;
@@ -74,7 +75,8 @@ export function usePedidosContadores() {
       const { count: neoCorrecaoCount, error: neoCorrecaoError } = await supabase
         .from('neo_correcoes')
         .select('*', { count: 'exact', head: true })
-        .eq('concluida', false);
+        .eq('concluida', false)
+        .neq('status', 'arquivada');
 
       if (!neoCorrecaoError && neoCorrecaoCount) {
         counts.correcoes += neoCorrecaoCount;
