@@ -168,6 +168,7 @@ export const useProdutosVenda = (vendaId?: string) => {
       produtosIds,
       lucroInstalacao = 0,
       custoInstalacao = 0,
+      valorAReceber,
     }: { 
       vendaId: string; 
       custoTotal: number; 
@@ -175,20 +176,28 @@ export const useProdutosVenda = (vendaId?: string) => {
       produtosIds: string[];
       lucroInstalacao?: number;
       custoInstalacao?: number;
+      valorAReceber?: number;
     }) => {
       // Atualizar venda com lucro total (produtos + instalação)
       const lucroTotalFinal = lucroTotal + lucroInstalacao;
       
+      const updateData: any = { 
+        custo_total: custoTotal + custoInstalacao,
+        lucro_total: lucroTotalFinal,
+        frete_aprovado: true,
+        lucro_instalacao: lucroInstalacao > 0 ? lucroInstalacao : null,
+        custo_instalacao: custoInstalacao > 0 ? custoInstalacao : null,
+        instalacao_faturada: lucroInstalacao > 0,
+      };
+
+      if (valorAReceber !== undefined && valorAReceber > 0) {
+        updateData.valor_a_receber = valorAReceber;
+        updateData.valor_a_receber_faturamento = true;
+      }
+
       const { error: vendaError } = await supabase
         .from('vendas')
-        .update({ 
-          custo_total: custoTotal + custoInstalacao,
-          lucro_total: lucroTotalFinal,
-          frete_aprovado: true,
-          lucro_instalacao: lucroInstalacao > 0 ? lucroInstalacao : null,
-          custo_instalacao: custoInstalacao > 0 ? custoInstalacao : null,
-          instalacao_faturada: lucroInstalacao > 0,
-        })
+        .update(updateData)
         .eq('id', vendaId);
 
       if (vendaError) throw vendaError;

@@ -29,7 +29,9 @@ export const useFaturamento = () => {
         .update({
           custo_total: null,
           lucro_total: null,
-          frete_aprovado: false
+          frete_aprovado: false,
+          valor_a_receber: null,
+          valor_a_receber_faturamento: false
         })
         .eq('id', vendaId);
 

@@ -1529,6 +1529,20 @@ export function PedidoCard({
 
               {/* Col: Valor a Receber */}
               <div className="text-center" onClick={(e) => e.stopPropagation()}>
+                {venda?.valor_a_receber_faturamento ? (
+                  <span
+                    className={cn(
+                      "text-[10px] rounded px-1 py-0.5",
+                      venda?.valor_a_receber && venda.valor_a_receber > 0
+                        ? "font-medium text-emerald-600 bg-emerald-500/10"
+                        : "text-muted-foreground/50"
+                    )}
+                  >
+                    {venda?.valor_a_receber && venda.valor_a_receber > 0
+                      ? formatCurrency(venda.valor_a_receber)
+                      : '—'}
+                  </span>
+                ) : (
                 <Popover open={popoverValorAberto} onOpenChange={setPopoverValorAberto}>
                   <PopoverTrigger asChild>
                     <button
@@ -1571,6 +1585,7 @@ export function PedidoCard({
                     </div>
                   </PopoverContent>
                 </Popover>
+                )}
               </div>
 
               {/* Col 8-12: Status das Ordens */}
@@ -2162,6 +2177,20 @@ className="flex h-[20px] w-full rounded-[3px]"
                 {formatCurrency(venda?.valor_venda || 0)}
               </span>
               <div onClick={(e) => e.stopPropagation()}>
+                {venda?.valor_a_receber_faturamento ? (
+                  <span
+                    className={cn(
+                      "text-[10px] rounded px-1 py-0.5",
+                      venda?.valor_a_receber && venda.valor_a_receber > 0
+                        ? "font-medium text-emerald-600 bg-emerald-500/10"
+                        : "text-muted-foreground/50"
+                    )}
+                  >
+                    {venda?.valor_a_receber && venda.valor_a_receber > 0
+                      ? `Rec: ${formatCurrency(venda.valor_a_receber)}`
+                      : '—'}
+                  </span>
+                ) : (
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
@@ -2201,6 +2230,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                     </div>
                   </PopoverContent>
                 </Popover>
+                )}
               </div>
             </div>
             <div className="flex flex-col items-end gap-0.5">
