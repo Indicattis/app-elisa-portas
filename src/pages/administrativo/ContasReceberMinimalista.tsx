@@ -543,6 +543,7 @@ export default function ContasReceberMinimalista() {
                           className="border-white/20 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                         />
                       </TableHead>
+                      <TableHead className="text-white/60">Cliente</TableHead>
                       <TableHead className="text-white/60">Histórico</TableHead>
                       <TableHead className="text-white/60">Forma Pgto</TableHead>
                       <TableHead className="text-white/60">Vencimento</TableHead>
@@ -562,6 +563,7 @@ export default function ContasReceberMinimalista() {
                             className="border-white/20 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                           />
                         </TableCell>
+                        <TableCell className="text-white font-medium text-sm">{conta.venda?.cliente_nome || '—'}</TableCell>
                         <TableCell>
                           <Popover
                             open={editingHistoricoId === conta.id}
