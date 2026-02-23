@@ -8,6 +8,7 @@ interface IndicadorExpandivelProps {
   margemLucro?: string;
   colorClass: string;
   quantidadeVendas: number;
+  onClick?: () => void;
 }
 
 export function IndicadorExpandivel({
@@ -18,10 +19,15 @@ export function IndicadorExpandivel({
   margemLucro,
   colorClass,
   quantidadeVendas,
+  onClick,
 }: IndicadorExpandivelProps) {
   return (
     <div
-      className="w-full text-center p-4 rounded-lg bg-white/5"
+      className={cn(
+        "w-full text-center p-4 rounded-lg bg-white/5 transition-colors",
+        onClick && "cursor-pointer hover:bg-white/10"
+      )}
+      onClick={onClick}
     >
       <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
         {icon}

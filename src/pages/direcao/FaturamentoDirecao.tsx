@@ -117,6 +117,11 @@ export default function FaturamentoDirecao() {
   const [rightSheetOpen, setRightSheetOpen] = useState(false);
   const [selectedVenda, setSelectedVenda] = useState<Venda | null>(null);
   const [mobileDownbarOpen, setMobileDownbarOpen] = useState(false);
+  const [indicadorDrawerOpen, setIndicadorDrawerOpen] = useState(false);
+  const [indicadorAtivo, setIndicadorAtivo] = useState<string | null>(null);
+  const [auxCores, setAuxCores] = useState<Map<string, { nome: string; hex: string }>>(new Map());
+  const [auxAcessorios, setAuxAcessorios] = useState<Map<string, string>>(new Map());
+  const [auxAdicionais, setAuxAdicionais] = useState<Map<string, string>>(new Map());
   const isMobile = useIsMobile();
   const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
   const [atendentes, setAtendentes] = useState<any[]>([]);
@@ -147,7 +152,19 @@ export default function FaturamentoDirecao() {
   useEffect(() => {
     fetchVendas();
     fetchAtendentes();
+    fetchAuxData();
   }, [dateRange]);
+
+  const fetchAuxData = async () => {
+    const [{ data: cores }, { data: acessorios }, { data: adicionais }] = await Promise.all([
+      supabase.from('catalogo_cores').select('id, nome, codigo_hex'),
+      supabase.from('acessorios').select('id, nome'),
+      supabase.from('adicionais').select('id, nome'),
+    ]);
+    if (cores) setAuxCores(new Map(cores.map(c => [c.id, { nome: c.nome, hex: c.codigo_hex }])));
+    if (acessorios) setAuxAcessorios(new Map(acessorios.map(a => [a.id, a.nome])));
+    if (adicionais) setAuxAdicionais(new Map(adicionais.map(a => [a.id, a.nome])));
+  };
 
   const fetchAtendentes = async () => {
     const { data } = await supabase
@@ -191,7 +208,11 @@ export default function FaturamentoDirecao() {
             desconto_valor,
             custo_produto,
             custo_pintura,
-            lucro_item
+            lucro_item,
+            tamanho,
+            cor_id,
+            acessorio_id,
+            adicional_id
           ),
           autorizacao_desconto:vendas_autorizacoes_desconto(
             id,
@@ -500,6 +521,84 @@ export default function FaturamentoDirecao() {
       }, 0),
     };
   }, [filteredVendas]);
+
+  // Ranking data for indicator drawer
+  const rankingData = useMemo(() => {
+    if (!indicadorAtivo) return [];
+    const map = new Map<string, { nome: string; quantidade: number; valor_total: number; cor_hex?: string }>();
+
+    if (indicadorAtivo === 'portas') {
+      filteredVendas.forEach(v => {
+        (v.portas || []).filter((p: any) => ['porta', 'porta_enrolar', 'porta_social'].includes(p.tipo_produto)).forEach((p: any) => {
+          const key = p.tamanho || 'Sem tamanho';
+          const cur = map.get(key) || { nome: key, quantidade: 0, valor_total: 0 };
+          cur.quantidade += p.quantidade || 1;
+          cur.valor_total += p.valor_produto || 0;
+          map.set(key, cur);
+        });
+      });
+    } else if (indicadorAtivo === 'pintura') {
+      filteredVendas.forEach(v => {
+        (v.portas || []).filter((p: any) => p.tipo_produto === 'pintura_epoxi').forEach((p: any) => {
+          const corInfo = p.cor_id ? auxCores.get(p.cor_id) : null;
+          const key = p.cor_id || 'sem_cor';
+          const nome = corInfo?.nome || 'Cor não especificada';
+          const cur = map.get(key) || { nome, quantidade: 0, valor_total: 0, cor_hex: corInfo?.hex };
+          cur.quantidade += p.quantidade || 1;
+          cur.valor_total += p.valor_pintura || 0;
+          map.set(key, cur);
+        });
+      });
+    } else if (indicadorAtivo === 'instalacoes') {
+      filteredVendas.filter(v => (v.valor_instalacao || 0) > 0).forEach(v => {
+        const key = v.cidade || 'Sem cidade';
+        const cur = map.get(key) || { nome: key, quantidade: 0, valor_total: 0 };
+        cur.quantidade += 1;
+        cur.valor_total += v.valor_instalacao || 0;
+        map.set(key, cur);
+      });
+    } else if (indicadorAtivo === 'acessorios') {
+      filteredVendas.forEach(v => {
+        (v.portas || []).filter((p: any) => p.tipo_produto === 'acessorio').forEach((p: any) => {
+          const key = p.acessorio_id || p.descricao || 'sem_id';
+          const nome = p.acessorio_id ? (auxAcessorios.get(p.acessorio_id) || p.descricao || 'Acessório') : (p.descricao || 'Acessório');
+          const cur = map.get(key) || { nome, quantidade: 0, valor_total: 0 };
+          cur.quantidade += p.quantidade || 1;
+          cur.valor_total += p.valor_produto || 0;
+          map.set(key, cur);
+        });
+      });
+    } else if (indicadorAtivo === 'adicionais') {
+      filteredVendas.forEach(v => {
+        (v.portas || []).filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto)).forEach((p: any) => {
+          const key = p.adicional_id || p.descricao || 'sem_id';
+          const nome = p.adicional_id ? (auxAdicionais.get(p.adicional_id) || p.descricao || 'Adicional') : (p.descricao || 'Adicional');
+          const cur = map.get(key) || { nome, quantidade: 0, valor_total: 0 };
+          cur.quantidade += p.quantidade || 1;
+          cur.valor_total += p.valor_produto || 0;
+          map.set(key, cur);
+        });
+      });
+    }
+
+    return Array.from(map.values()).sort((a, b) => b.quantidade - a.quantidade);
+  }, [filteredVendas, indicadorAtivo, auxCores, auxAcessorios, auxAdicionais]);
+
+  const indicadorTitulos: Record<string, string> = {
+    portas: 'Portas',
+    pintura: 'Pintura',
+    instalacoes: 'Instalações',
+    acessorios: 'Acessórios',
+    adicionais: 'Adicionais',
+  };
+
+  const indicadorIcons: Record<string, React.ReactNode> = {
+    portas: <DollarSign className="h-4 w-4 text-blue-400" />,
+    pintura: <Paintbrush className="h-4 w-4 text-orange-400" />,
+    instalacoes: <Wrench className="h-4 w-4 text-cyan-400" />,
+    acessorios: <Package className="h-4 w-4 text-pink-400" />,
+    adicionais: <PlusCircle className="h-4 w-4 text-indigo-400" />,
+  };
 
 
   const formatCurrency = (value: number) => {
@@ -1039,18 +1138,25 @@ export default function FaturamentoDirecao() {
                 { key: 'adicionais', icon: <PlusCircle className="h-3 w-3 text-indigo-400" />, label: 'Adicionais', valor: formatCurrency(indicadores.valorBrutoAdicionais), lucro: formatCurrency(indicadores.lucroAdicionais), margemLucro: calcMargem(indicadores.lucroAdicionais, indicadores.valorBrutoAdicionais), colorClass: 'text-indigo-400', qtd: filteredVendas.filter(v => (v.portas || []).some((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))).length },
                 { key: 'fretes', icon: <Truck className="h-3 w-3 text-amber-400" />, label: 'Fretes', valor: formatCurrency(indicadores.fretesTotais), colorClass: 'text-amber-400', qtd: filteredVendas.filter(v => (v.valor_frete || 0) > 0).length },
                 { key: 'lucro', icon: <TrendingUp className="h-3 w-3 text-green-400" />, label: 'Lucro Líquido', valor: formatCurrency(indicadores.lucroLiquidoTotal), margemLucro: calcMargem(indicadores.lucroLiquidoTotal, faturamentoTotal), colorClass: 'text-green-400', qtd: filteredVendas.filter(isFaturada).length },
-              ].map((ind) => (
-                <IndicadorExpandivel
-                  key={ind.key}
-                  icon={ind.icon}
-                  label={ind.label}
-                  valor={ind.valor}
-                  lucro={'lucro' in ind ? (ind as any).lucro : undefined}
-                  margemLucro={ind.margemLucro}
-                  colorClass={ind.colorClass}
-                  quantidadeVendas={ind.qtd}
-                />
-              ));
+              ].map((ind) => {
+                const clickableKeys = ['portas', 'pintura', 'instalacoes', 'acessorios', 'adicionais'];
+                return (
+                  <IndicadorExpandivel
+                    key={ind.key}
+                    icon={ind.icon}
+                    label={ind.label}
+                    valor={ind.valor}
+                    lucro={'lucro' in ind ? (ind as any).lucro : undefined}
+                    margemLucro={ind.margemLucro}
+                    colorClass={ind.colorClass}
+                    quantidadeVendas={ind.qtd}
+                    onClick={clickableKeys.includes(ind.key) ? () => {
+                      setIndicadorAtivo(ind.key);
+                      setIndicadorDrawerOpen(true);
+                    } : undefined}
+                  />
+                );
+              });
             })()}
             <div className="text-center p-4 rounded-lg bg-white/5">
               <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
@@ -1176,6 +1282,39 @@ export default function FaturamentoDirecao() {
           </DrawerContent>
         </Drawer>
       )}
+
+      {/* Indicator Ranking Drawer */}
+      <Drawer open={indicadorDrawerOpen} onOpenChange={setIndicadorDrawerOpen}>
+        <DrawerContent className="max-h-[85vh] bg-zinc-900 border-t border-white/10">
+          <div className="mx-auto w-full max-w-lg">
+            <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+              {indicadorAtivo && indicadorIcons[indicadorAtivo]}
+              <h3 className="text-white font-semibold">Ranking - {indicadorAtivo ? indicadorTitulos[indicadorAtivo] : ''}</h3>
+            </div>
+            <ScrollArea className="h-[65vh] px-4 pb-4">
+              {rankingData.length === 0 ? (
+                <p className="text-white/40 text-sm text-center py-8">Nenhum dado encontrado</p>
+              ) : (
+                rankingData.map((item, index) => (
+                  <div key={item.nome} className="flex items-center justify-between py-3 border-b border-white/5">
+                    <div className="flex items-center gap-3">
+                      <span className="text-white/30 text-sm w-6">{index + 1}.</span>
+                      {item.cor_hex && (
+                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.cor_hex }} />
+                      )}
+                      <span className="text-white text-sm">{item.nome}</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white text-sm font-medium">{item.quantidade}x</p>
+                      <p className="text-white/50 text-xs">{formatCurrency(item.valor_total)}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </ScrollArea>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </MinimalistLayout>
   );
 }
