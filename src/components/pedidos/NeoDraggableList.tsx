@@ -58,6 +58,7 @@ interface NeoInstalacoesDraggableListProps {
   isConcluindo?: boolean;
   onAgendar?: (id: string) => void;
   onEditar?: (neo: NeoInstalacao) => void;
+  onUpdateValor?: (id: string, data: { valor_a_receber: number | null; valor_a_receber_texto: string }) => Promise<void>;
   onReorganizar: (updates: { id: string; prioridade_gestao: number }[]) => void;
 }
 
@@ -68,6 +69,7 @@ export function NeoInstalacoesDraggableList({
   isConcluindo,
   onAgendar,
   onEditar,
+  onUpdateValor,
   onReorganizar,
 }: NeoInstalacoesDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -114,6 +116,7 @@ export function NeoInstalacoesDraggableList({
                   isConcluindo={isConcluindo}
                   onAgendar={onAgendar}
                   onEditar={onEditar}
+                  onUpdateValor={onUpdateValor}
                   dragHandleProps={dragHandleProps}
                   isDragging={isDragging}
                 />
@@ -143,6 +146,7 @@ interface NeoCorrecoesDraggableListProps {
   isConcluindo?: boolean;
   onAgendar?: (id: string) => void;
   onEditar?: (neo: NeoCorrecao) => void;
+  onUpdateValor?: (id: string, data: { valor_a_receber: number | null; valor_a_receber_texto: string }) => Promise<void>;
   onReorganizar: (updates: { id: string; prioridade_gestao: number }[]) => void;
 }
 
@@ -153,6 +157,7 @@ export function NeoCorrecoesDraggableList({
   isConcluindo,
   onAgendar,
   onEditar,
+  onUpdateValor,
   onReorganizar,
 }: NeoCorrecoesDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -199,6 +204,7 @@ export function NeoCorrecoesDraggableList({
                   isConcluindo={isConcluindo}
                   onAgendar={onAgendar}
                   onEditar={onEditar}
+                  onUpdateValor={onUpdateValor}
                   dragHandleProps={dragHandleProps}
                   isDragging={isDragging}
                 />
