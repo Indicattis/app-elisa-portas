@@ -16,7 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { 
   ArrowLeft, HandCoins, Search, ChevronDown, ChevronRight, 
   Check, X, CalendarIcon, AlertTriangle, Clock, CheckCircle,
-  Ban, Folder
+  Ban, Folder, List
 } from "lucide-react";
 import { format, parseISO, isBefore, isToday, isAfter, addDays, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 interface ContaReceber {
   id: string;
   venda_id: string;
+  created_at: string;
   numero_parcela: number;
   valor_parcela: number;
   valor_pago: number | null;
@@ -69,6 +70,7 @@ export default function ContasReceberMinimalista() {
   const [busca, setBusca] = useState("");
   const [dataInicio, setDataInicio] = useState<Date | undefined>();
   const [dataFim, setDataFim] = useState<Date | undefined>();
+  const [visualizacao, setVisualizacao] = useState<'agrupado' | 'tabela'>('agrupado');
   
   const [dialogPagarOpen, setDialogPagarOpen] = useState(false);
   const [dialogAlterarDataOpen, setDialogAlterarDataOpen] = useState(false);
@@ -413,7 +415,38 @@ export default function ContasReceberMinimalista() {
           </CardContent>
         </Card>
 
-        {/* Lista agrupada */}
+        {/* Toggle de visualização */}
+        <div 
+          className="flex gap-1"
+          style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 450ms' }}
+        >
+          <Button
+            size="sm"
+            variant={visualizacao === 'agrupado' ? 'default' : 'outline'}
+            className={cn(
+              visualizacao === 'agrupado' 
+                ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+            )}
+            onClick={() => setVisualizacao('agrupado')}
+          >
+            <Folder className="h-4 w-4 mr-1.5" /> Agrupado
+          </Button>
+          <Button
+            size="sm"
+            variant={visualizacao === 'tabela' ? 'default' : 'outline'}
+            className={cn(
+              visualizacao === 'tabela' 
+                ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+            )}
+            onClick={() => setVisualizacao('tabela')}
+          >
+            <List className="h-4 w-4 mr-1.5" /> Tabela
+          </Button>
+        </div>
+
+        {/* Conteúdo */}
         <Card 
           className="bg-white/5 border-white/10"
           style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 500ms' }}
@@ -423,83 +456,129 @@ export default function ContasReceberMinimalista() {
               <div className="flex justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
               </div>
-            ) : gruposPorPedido.length === 0 ? (
-              <div className="text-center py-12 text-white/50">Nenhuma conta encontrada</div>
+            ) : visualizacao === 'tabela' ? (
+              /* Visualização em tabela plana */
+              contasFiltradas.length === 0 ? (
+                <div className="text-center py-12 text-white/50">Nenhuma conta encontrada</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10">
+                      <TableHead className="text-white/60">Data Criação</TableHead>
+                      <TableHead className="text-white/60">Cliente</TableHead>
+                      <TableHead className="text-white/60">Método</TableHead>
+                      <TableHead className="text-white/60">Valor</TableHead>
+                      <TableHead className="text-white/60">Status</TableHead>
+                      <TableHead className="text-white/60 text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {[...contasFiltradas]
+                      .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())
+                      .map((conta) => (
+                        <TableRow key={conta.id} className="border-white/10">
+                          <TableCell className="text-white">{format(parseISO(conta.created_at), 'dd/MM/yyyy')}</TableCell>
+                          <TableCell className="text-white font-medium">{conta.venda?.cliente_nome || '—'}</TableCell>
+                          <TableCell className="text-white/70">{conta.metodo_pagamento || '—'}</TableCell>
+                          <TableCell className="text-white font-medium">{formatCurrency(conta.valor_parcela)}</TableCell>
+                          <TableCell>{getStatusBadge(conta)}</TableCell>
+                          <TableCell className="text-right">
+                            {conta.status === 'pendente' && (
+                              <div className="flex justify-end gap-1">
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-400 hover:bg-emerald-500/20" onClick={() => handleMarcarPago(conta)}>
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-400 hover:bg-rose-500/20" onClick={() => cancelarMutation.mutate(conta.id)}>
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              )
             ) : (
-              <div className="space-y-2">
-                {gruposPorPedido.map((grupo) => (
-                  <Collapsible key={grupo.venda_id} open={gruposAbertos[grupo.venda_id]} onOpenChange={() => toggleGrupo(grupo.venda_id)}>
-                    <CollapsibleTrigger asChild>
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
-                        <div className="flex items-center gap-3">
-                          {gruposAbertos[grupo.venda_id] ? <ChevronDown className="h-4 w-4 text-white/60" /> : <ChevronRight className="h-4 w-4 text-white/60" />}
-                          <Folder className="h-4 w-4 text-purple-400" />
-                          <div>
-                            <p className="font-medium text-white">{grupo.cliente_nome}</p>
-                            <p className="text-xs text-white/50">{grupo.parcelas_pagas}/{grupo.total_parcelas} parcelas pagas</p>
+              /* Visualização agrupada (existente) */
+              gruposPorPedido.length === 0 ? (
+                <div className="text-center py-12 text-white/50">Nenhuma conta encontrada</div>
+              ) : (
+                <div className="space-y-2">
+                  {gruposPorPedido.map((grupo) => (
+                    <Collapsible key={grupo.venda_id} open={gruposAbertos[grupo.venda_id]} onOpenChange={() => toggleGrupo(grupo.venda_id)}>
+                      <CollapsibleTrigger asChild>
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
+                          <div className="flex items-center gap-3">
+                            {gruposAbertos[grupo.venda_id] ? <ChevronDown className="h-4 w-4 text-white/60" /> : <ChevronRight className="h-4 w-4 text-white/60" />}
+                            <Folder className="h-4 w-4 text-purple-400" />
+                            <div>
+                              <p className="font-medium text-white">{grupo.cliente_nome}</p>
+                              <p className="text-xs text-white/50">{grupo.parcelas_pagas}/{grupo.total_parcelas} parcelas pagas</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            {grupo.tem_vencido && <AlertTriangle className="h-4 w-4 text-rose-400" />}
+                            <div className="text-right">
+                              <p className="text-sm font-semibold text-emerald-400">{formatCurrency(grupo.total_a_receber)}</p>
+                              <p className="text-xs text-white/50">a receber</p>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          {grupo.tem_vencido && <AlertTriangle className="h-4 w-4 text-rose-400" />}
-                          <div className="text-right">
-                            <p className="text-sm font-semibold text-emerald-400">{formatCurrency(grupo.total_a_receber)}</p>
-                            <p className="text-xs text-white/50">a receber</p>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="mt-2 ml-6 space-y-2">
+                          <div className="flex justify-end mb-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+                              onClick={() => handleAlterarDatas(grupo)}
+                            >
+                              <CalendarIcon className="h-3 w-3 mr-1" /> Alterar Datas
+                            </Button>
                           </div>
-                        </div>
-                      </div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <div className="mt-2 ml-6 space-y-2">
-                        <div className="flex justify-end mb-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="bg-white/5 border-white/10 text-white hover:bg-white/10"
-                            onClick={() => handleAlterarDatas(grupo)}
-                          >
-                            <CalendarIcon className="h-3 w-3 mr-1" /> Alterar Datas
-                          </Button>
-                        </div>
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="border-white/10">
-                              <TableHead className="text-white/60">Parcela</TableHead>
-                              <TableHead className="text-white/60">Vencimento</TableHead>
-                              <TableHead className="text-white/60">Valor</TableHead>
-                              <TableHead className="text-white/60">Método</TableHead>
-                              <TableHead className="text-white/60">Status</TableHead>
-                              <TableHead className="text-white/60 text-right">Ações</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {grupo.contas.sort((a, b) => a.numero_parcela - b.numero_parcela).map((conta) => (
-                              <TableRow key={conta.id} className="border-white/10">
-                                <TableCell className="text-white">{conta.numero_parcela}ª</TableCell>
-                                <TableCell className="text-white">{format(parseISO(conta.data_vencimento), 'dd/MM/yyyy')}</TableCell>
-                                <TableCell className="text-white font-medium">{formatCurrency(conta.valor_parcela)}</TableCell>
-                                <TableCell className="text-white/70">{conta.metodo_pagamento || '-'}</TableCell>
-                                <TableCell>{getStatusBadge(conta)}</TableCell>
-                                <TableCell className="text-right">
-                                  {conta.status === 'pendente' && (
-                                    <div className="flex justify-end gap-1">
-                                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-400 hover:bg-emerald-500/20" onClick={() => handleMarcarPago(conta)}>
-                                        <Check className="h-4 w-4" />
-                                      </Button>
-                                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-400 hover:bg-rose-500/20" onClick={() => cancelarMutation.mutate(conta.id)}>
-                                        <X className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  )}
-                                </TableCell>
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="border-white/10">
+                                <TableHead className="text-white/60">Parcela</TableHead>
+                                <TableHead className="text-white/60">Vencimento</TableHead>
+                                <TableHead className="text-white/60">Valor</TableHead>
+                                <TableHead className="text-white/60">Método</TableHead>
+                                <TableHead className="text-white/60">Status</TableHead>
+                                <TableHead className="text-white/60 text-right">Ações</TableHead>
                               </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                ))}
-              </div>
+                            </TableHeader>
+                            <TableBody>
+                              {grupo.contas.sort((a, b) => a.numero_parcela - b.numero_parcela).map((conta) => (
+                                <TableRow key={conta.id} className="border-white/10">
+                                  <TableCell className="text-white">{conta.numero_parcela}ª</TableCell>
+                                  <TableCell className="text-white">{format(parseISO(conta.data_vencimento), 'dd/MM/yyyy')}</TableCell>
+                                  <TableCell className="text-white font-medium">{formatCurrency(conta.valor_parcela)}</TableCell>
+                                  <TableCell className="text-white/70">{conta.metodo_pagamento || '-'}</TableCell>
+                                  <TableCell>{getStatusBadge(conta)}</TableCell>
+                                  <TableCell className="text-right">
+                                    {conta.status === 'pendente' && (
+                                      <div className="flex justify-end gap-1">
+                                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-400 hover:bg-emerald-500/20" onClick={() => handleMarcarPago(conta)}>
+                                          <Check className="h-4 w-4" />
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-400 hover:bg-rose-500/20" onClick={() => cancelarMutation.mutate(conta.id)}>
+                                          <X className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ))}
+                </div>
+              )
             )}
           </CardContent>
         </Card>
