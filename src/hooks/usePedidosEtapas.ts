@@ -129,6 +129,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             valor_venda,
             pagamento_na_entrega,
             valor_a_receber,
+            valor_a_receber_texto,
             valor_a_receber_faturamento,
             created_at,
             tipo_entrega,

@@ -105,31 +105,48 @@ export function PedidoCard({
 
   const handleAbrirPopoverValor = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Priorizar texto se existir, senão usar valor numérico
+    const textoAtual = venda?.valor_a_receber_texto;
     const valorAtual = venda?.valor_a_receber;
-    setValorAReceberTemp(valorAtual ? String(valorAtual) : '');
+    setValorAReceberTemp(textoAtual || (valorAtual ? String(valorAtual) : ''));
   };
 
   const handleSalvarValorAReceber = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!venda?.id) return;
-    const valor = parseFloat(valorAReceberTemp);
-    if (isNaN(valor) || valor < 0) return;
+    const textoOriginal = valorAReceberTemp.trim();
+    if (!textoOriginal) return;
     setSalvandoValor(true);
     try {
+      // Tentar parsear como número (remover pontos de milhar, trocar vírgula por ponto)
+      const textoNormalizado = textoOriginal.replace(/\./g, '').replace(',', '.');
+      const valorNumerico = parseFloat(textoNormalizado);
+      const ehNumero = !isNaN(valorNumerico) && valorNumerico >= 0 && /^[\d.,\s]+$/.test(textoOriginal);
+
+      const updateData: any = {
+        valor_a_receber_texto: textoOriginal,
+      };
+      if (ehNumero) {
+        updateData.valor_a_receber = valorNumerico;
+      } else {
+        updateData.valor_a_receber = null;
+      }
+
       const { error } = await supabase
         .from('vendas')
-        .update({ valor_a_receber: valor })
+        .update(updateData)
         .eq('id', venda.id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
       setPopoverValorAberto(false);
-      toast({ title: "Valor salvo", description: `Valor a receber atualizado para ${formatCurrency(valor)}` });
+      toast({ title: "Valor salvo", description: ehNumero ? `Valor a receber: ${formatCurrency(valorNumerico)}` : `Valor a receber: ${textoOriginal}` });
     } catch (err: any) {
       toast({ title: "Erro", description: err.message || "Não foi possível salvar", variant: "destructive" });
     } finally {
       setSalvandoValor(false);
     }
   };
+
   const { enviarParaCorrecao, isEnviando: isEnviandoCorrecao } = useEnviarParaCorrecao();
   const {
     isAdmin
@@ -458,6 +475,19 @@ export function PedidoCard({
   // Tratar venda como array ou objeto único
   const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
   const venda = vendaData;
+
+  // Helper para exibir valor a receber (prioriza texto)
+  const exibirValorAReceber = (prefixo?: string) => {
+    if (venda?.valor_a_receber_texto) {
+      return prefixo ? `${prefixo}${venda.valor_a_receber_texto}` : venda.valor_a_receber_texto;
+    }
+    if (venda?.valor_a_receber && venda.valor_a_receber > 0) {
+      return prefixo ? `${prefixo}${formatCurrency(venda.valor_a_receber)}` : formatCurrency(venda.valor_a_receber);
+    }
+    return null;
+  };
+  const temValorAReceber = !!(venda?.valor_a_receber_texto || (venda?.valor_a_receber && venda.valor_a_receber > 0));
+
   const etapaAtual = pedido.etapa_atual as EtapaPedido;
   const config = etapaAtual ? ETAPAS_CONFIG[etapaAtual] : null;
   const proximaEtapa = etapaAtual ? getProximaEtapa(etapaAtual) : null;
@@ -1533,14 +1563,12 @@ export function PedidoCard({
                   <span
                     className={cn(
                       "text-[10px] rounded px-1 py-0.5",
-                      venda?.valor_a_receber && venda.valor_a_receber > 0
+                      temValorAReceber
                         ? "font-medium text-emerald-600 bg-emerald-500/10"
                         : "text-muted-foreground/50"
                     )}
                   >
-                    {venda?.valor_a_receber && venda.valor_a_receber > 0
-                      ? formatCurrency(venda.valor_a_receber)
-                      : '—'}
+                    {exibirValorAReceber() || '—'}
                   </span>
                 ) : (
                 <Popover open={popoverValorAberto} onOpenChange={setPopoverValorAberto}>
@@ -1551,24 +1579,20 @@ export function PedidoCard({
                         "text-[10px] rounded px-1 py-0.5 cursor-pointer hover:opacity-80 transition-opacity",
                         venda?.pagamento_na_entrega
                           ? "font-medium text-amber-600 bg-amber-500/10"
-                          : venda?.valor_a_receber && venda.valor_a_receber > 0
+                          : temValorAReceber
                             ? "font-medium text-emerald-600 bg-emerald-500/10"
                             : "text-muted-foreground/50 hover:text-muted-foreground"
                       )}
                     >
-                      {venda?.valor_a_receber && venda.valor_a_receber > 0
-                        ? formatCurrency(venda.valor_a_receber)
-                        : venda?.pagamento_na_entrega ? '—' : '+ R$'}
+                      {exibirValorAReceber() || (venda?.pagamento_na_entrega ? '—' : '+ R$')}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-56 p-3" align="center" onClick={(e) => e.stopPropagation()}>
                     <div className="space-y-2">
-                      <label className="text-xs font-medium text-muted-foreground">Valor a Receber (R$)</label>
+                      <label className="text-xs font-medium text-muted-foreground">Valor a Receber</label>
                       <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0,00"
+                        type="text"
+                        placeholder="Ex: 1.500,00 ou texto"
                         value={valorAReceberTemp}
                         onChange={(e) => setValorAReceberTemp(e.target.value)}
                         className="h-8 text-sm"
@@ -2181,14 +2205,12 @@ className="flex h-[20px] w-full rounded-[3px]"
                   <span
                     className={cn(
                       "text-[10px] rounded px-1 py-0.5",
-                      venda?.valor_a_receber && venda.valor_a_receber > 0
+                      temValorAReceber
                         ? "font-medium text-emerald-600 bg-emerald-500/10"
                         : "text-muted-foreground/50"
                     )}
                   >
-                    {venda?.valor_a_receber && venda.valor_a_receber > 0
-                      ? `Rec: ${formatCurrency(venda.valor_a_receber)}`
-                      : '—'}
+                    {exibirValorAReceber('Rec: ') || '—'}
                   </span>
                 ) : (
                 <Popover>
@@ -2199,24 +2221,20 @@ className="flex h-[20px] w-full rounded-[3px]"
                         "text-[10px] rounded px-1 py-0.5 cursor-pointer",
                         venda?.pagamento_na_entrega
                           ? "font-medium text-amber-600 bg-amber-500/10"
-                          : venda?.valor_a_receber && venda.valor_a_receber > 0
+                          : temValorAReceber
                             ? "font-medium text-emerald-600 bg-emerald-500/10"
                             : "text-muted-foreground/50"
                       )}
                     >
-                      {venda?.valor_a_receber && venda.valor_a_receber > 0
-                        ? `Rec: ${formatCurrency(venda.valor_a_receber)}`
-                        : '+ Receber'}
+                      {exibirValorAReceber('Rec: ') || '+ Receber'}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-56 p-3" align="start" onClick={(e) => e.stopPropagation()}>
                     <div className="space-y-2">
-                      <label className="text-xs font-medium text-muted-foreground">Valor a Receber (R$)</label>
+                      <label className="text-xs font-medium text-muted-foreground">Valor a Receber</label>
                       <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0,00"
+                        type="text"
+                        placeholder="Ex: 1.500,00 ou texto"
                         value={valorAReceberTemp}
                         onChange={(e) => setValorAReceberTemp(e.target.value)}
                         className="h-8 text-sm"

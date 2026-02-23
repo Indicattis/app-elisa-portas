@@ -1,0 +1,1 @@
+ALTER TABLE public.vendas ADD COLUMN valor_a_receber_texto TEXT DEFAULT NULL;
