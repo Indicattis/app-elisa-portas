@@ -1,69 +1,59 @@
 
 
-# Atalhos Rapidos na Home + Paginas Read-Only
+# Permitir Texto no Campo "Valor a Receber" na Gestao de Fabrica
 
 ## Resumo
 
-Adicionar uma secao de "Acesso Rapido" na pagina /home com 2 botoes:
-1. **Pedidos em Producao** - abre pagina read-only clone de /fabrica/pedidos-producao (somente pedidos, sem ranking PortasPorEtapa)
-2. **Calendario Expedicao** - abre pagina read-only clone de /logistica/expedicao (somente calendario, sem listagem de pedidos por etapa)
+Atualmente o campo "Valor a Receber" aceita apenas numeros. A alteracao permitira que o usuario digite texto livre (ex: "2x R$500", "Entrada + parcela", notas) alem de valores numericos.
 
-Ambas as paginas serao somente leitura, sem possibilidade de alterar dados.
+## Abordagem
 
-## 1. Criar pagina PedidosProducaoReadOnly
+Adicionar uma nova coluna `valor_a_receber_texto` (text) na tabela `vendas` para armazenar o texto livre. O campo numerico `valor_a_receber` sera mantido para compatibilidade com calculos financeiros existentes (contas a receber, cobrancas, etc). A exibicao priorizara o texto quando existir.
 
-**Arquivo:** `src/pages/home/PedidosProducaoReadOnly.tsx`
+## 1. Migration - Nova coluna na tabela vendas
 
-Clone simplificado de `PedidosProducaoMinimalista.tsx`:
-- Manter: Tabs de etapas, filtros, listagem paginada de pedidos, Neo Instalacoes e Correcoes
-- Remover: componente `PortasPorEtapa` (ranking de desempenho por etapa)
-- Remover: botao de atribuir responsavel, modal de responsavel
-- Read-only: passar callbacks vazios (noop) para `onMoverEtapa`, `onRetrocederEtapa`, `onReorganizar`, `onArquivar`, `onDeletar`
-- Desabilitar drag-and-drop (`enableDragAndDrop={false}`)
-- Ocultar botoes de acao nos cards (usar props `disableActions` / `hideStatusColumns` ja existentes no PedidoCard)
-- Breadcrumb: Home > Pedidos em Producao
-- BackPath: `/home`
-
-## 2. Criar pagina CalendarioExpedicaoReadOnly
-
-**Arquivo:** `src/pages/home/CalendarioExpedicaoReadOnly.tsx`
-
-Clone simplificado de `ExpedicaoMinimalista.tsx`:
-- Manter: Calendario (mensal e semanal), navegacao de datas, filtro por legenda, visualizacao de ordens/instalacoes/correcoes
-- Remover: toda a secao de listagem de pedidos por etapa (Tabs com aguardando coleta, instalacoes, correcoes, finalizado)
-- Remover: botao "Novo Neo", botao de logout
-- Remover: modais de edicao, criacao, agendamento
-- Read-only: nao passar handlers de update/edit/remover/excluir (ou passar noop)
-- Detalhes (sheets/sidebars): manter apenas visualizacao, sem botoes de acao
-- Breadcrumb: Home > Calendario Expedicao
-- BackPath: `/home`
-
-## 3. Adicionar secao de Acesso Rapido na Home
-
-**Arquivo:** `src/pages/Home.tsx`
-
-Abaixo da lista de botoes de modulos (apos o map de `menuItems`), adicionar:
-- Titulo "Acesso Rapido" com estilo consistente
-- 2 botoes horizontais (grid 2 colunas):
-  - Icone `Factory` + "Pedidos Producao" -> navega para `/home/pedidos-producao`
-  - Icone `Calendar` + "Calendario Expedicao" -> navega para `/home/calendario-expedicao`
-- Estilo: cards com fundo glassmorphism (bg-white/5, border-white/10), similar aos botoes existentes mas menores
-- Sem verificacao de permissao (acessivel a todos usuarios logados)
-
-## 4. Adicionar rotas no App.tsx
-
-**Arquivo:** `src/App.tsx`
-
-Adicionar 2 novas rotas protegidas (sem routeKey especifico, acessiveis a qualquer usuario autenticado):
-```
-<Route path="/home/pedidos-producao" element={<ProtectedRoute><PedidosProducaoReadOnly /></ProtectedRoute>} />
-<Route path="/home/calendario-expedicao" element={<ProtectedRoute><CalendarioExpedicaoReadOnly /></ProtectedRoute>} />
+```sql
+ALTER TABLE public.vendas 
+ADD COLUMN valor_a_receber_texto TEXT DEFAULT NULL;
 ```
 
-## Detalhes tecnicos
+## 2. Alterar o Popover de edicao no PedidoCard
 
-- As novas paginas usarao os mesmos hooks de dados (`usePedidosEtapas`, `usePedidosContadores`, `useOrdensCarregamentoCalendario`, etc.) pois sao apenas leitura
-- Os componentes de calendario (`CalendarioSemanalExpedicaoMobile`, `CalendarioSemanalExpedicaoDesktop`, `CalendarioMensalExpedicaoDesktop`) serao reutilizados com handlers noop para callbacks de edicao
-- O `MinimalistLayout` sera usado na pagina de pedidos; a pagina do calendario usara o layout proprio do tema preto com `AnimatedBreadcrumb`
-- Nenhuma alteracao no banco de dados necessaria
+**Arquivo:** `src/components/pedidos/PedidoCard.tsx`
 
+- Mudar o input de `type="number"` para `type="text"` com placeholder "Ex: 1.500,00 ou texto"
+- No `handleAbrirPopoverValor`: carregar `valor_a_receber_texto` se existir, senao o valor numerico
+- No `handleSalvarValorAReceber`:
+  - Tentar parsear como numero (removendo pontos de milhar, trocando virgula por ponto)
+  - Se for numero valido: salvar em `valor_a_receber` (number) e em `valor_a_receber_texto` (o texto original)
+  - Se nao for numero: salvar em `valor_a_receber_texto` (text) e setar `valor_a_receber` como `null`
+
+## 3. Alterar a exibicao do valor no PedidoCard
+
+**Arquivo:** `src/components/pedidos/PedidoCard.tsx`
+
+- No grid view (linha ~1559) e mobile view (linha ~2207):
+  - Se `valor_a_receber_texto` existir, exibir o texto diretamente (sem formatCurrency)
+  - Se nao, manter comportamento atual com `formatCurrency(valor_a_receber)`
+- Na exibicao read-only (faturamento, linhas ~1536 e ~2189): mesma logica - priorizar texto
+
+## 4. Incluir campo na query de pedidos
+
+**Arquivo:** `src/hooks/usePedidosEtapas.ts`
+
+- Adicionar `valor_a_receber_texto` no select de vendas
+
+## 5. Incluir campo no faturamento
+
+**Arquivo:** `src/pages/FaturamentoEdit.tsx`
+
+- O campo de valor a receber no faturamento continuara aceitando apenas numeros (manter `type="number"`), pois e usado para calculo financeiro
+
+## Resultado esperado
+
+- O usuario pode digitar tanto numeros quanto texto livre no campo "Valor a Receber"
+- Se digitar um numero, ele e salvo tanto como numero (para calculos) quanto como texto (para exibicao)
+- Se digitar texto puro, o valor numerico fica null e o texto e exibido
+- Exibicao prioriza o texto quando disponivel
+- Calculos financeiros (cobrancas, contas a receber) continuam usando o campo numerico
+- Campo bloqueado por faturamento continua funcionando normalmente
