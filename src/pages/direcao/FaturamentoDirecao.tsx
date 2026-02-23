@@ -770,7 +770,7 @@ export default function FaturamentoDirecao() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {([
               { key: 'portas', icon: <DollarSign className="h-3 w-3 text-blue-400" />, label: 'Portas', valor: formatCurrency(indicadores.valorBrutoPortas), lucro: formatCurrency(indicadores.lucroPortas), colorClass: 'text-blue-400' },
               { key: 'pintura', icon: <Paintbrush className="h-3 w-3 text-orange-400" />, label: 'Pintura', valor: formatCurrency(indicadores.valorBrutoPintura), lucro: formatCurrency(indicadores.lucroPintura), colorClass: 'text-orange-400' },
