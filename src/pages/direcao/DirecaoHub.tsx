@@ -8,6 +8,7 @@ import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
   { label: 'Vendas', icon: ShoppingCart, path: '/direcao/vendas' },
+  { label: 'DRE', icon: Calculator, path: '/direcao/dre' },
   { label: 'Faturamento', icon: DollarSign, path: '/direcao/faturamento' },
   { label: 'Gestão de Fábrica', icon: Factory, path: '/direcao/gestao-fabrica' },
   { label: 'Gestão de Instalações', icon: Truck, path: '/direcao/gestao-instalacao' },
@@ -15,7 +16,6 @@ const menuItems = [
   { label: 'Metas', icon: Target, path: '/direcao/metas' },
   { label: 'Autorizados', icon: Users, path: '/direcao/autorizados' },
   { label: 'Aprovações', icon: ShieldCheck, path: '/direcao/aprovacoes' },
-  { label: 'DRE', icon: Calculator, path: '/direcao/dre' },
 ];
 
 export default function DirecaoHub() {
