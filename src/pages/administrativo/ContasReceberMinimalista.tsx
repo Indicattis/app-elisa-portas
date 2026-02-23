@@ -15,9 +15,10 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import {
   ArrowLeft, HandCoins, Check, CalendarIcon, Paperclip,
-  MoreHorizontal, Download, Filter, PanelRight, X
+  MoreHorizontal, Download, Filter, PanelRight, X, Search
 } from "lucide-react";
-import { format, parseISO, isBefore, isToday } from "date-fns";
+import { format, parseISO, isBefore, isToday, startOfDay, endOfDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
@@ -72,6 +73,10 @@ export default function ContasReceberMinimalista() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [mounted, setMounted] = useState(false);
+
+  // Search & date range
+  const [searchText, setSearchText] = useState("");
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
 
   // Filters
   const [filtroStatus, setFiltroStatus] = useState<string[]>([]);
@@ -164,6 +169,22 @@ export default function ContasReceberMinimalista() {
 
   const contasFiltradas = useMemo(() => {
     return contas.filter(conta => {
+      // Search text
+      if (searchText) {
+        const nome = conta.venda?.cliente_nome?.toLowerCase() || '';
+        if (!nome.includes(searchText.toLowerCase())) return false;
+      }
+
+      // Date range
+      if (dateRange.from) {
+        const venc = parseISO(conta.data_vencimento);
+        if (venc < startOfDay(dateRange.from)) return false;
+      }
+      if (dateRange.to) {
+        const venc = parseISO(conta.data_vencimento);
+        if (venc > endOfDay(dateRange.to)) return false;
+      }
+
       // Status filter
       if (filtroStatus.length > 0) {
         const computed = getComputedStatus(conta);
@@ -192,7 +213,7 @@ export default function ContasReceberMinimalista() {
 
       return true;
     });
-  }, [contas, filtroStatus, filtroMetodo, filtroValorMin, filtroValorMax, filtroVendedor, getComputedStatus]);
+  }, [contas, searchText, dateRange, filtroStatus, filtroMetodo, filtroValorMin, filtroValorMax, filtroVendedor, getComputedStatus]);
 
   const sortedContas = useMemo(() => {
     return [...contasFiltradas].sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime());
@@ -525,6 +546,71 @@ export default function ContasReceberMinimalista() {
 
           {/* Main table */}
           <main className="flex-1 min-w-0">
+            {/* Search + Date Range bar */}
+            <div className="flex items-center gap-2 mb-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                <Input
+                  placeholder="Buscar por cliente..."
+                  value={searchText}
+                  onChange={e => setSearchText(e.target.value)}
+                  className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 h-9"
+                />
+              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-9 shrink-0 bg-white/5 border-white/10 text-white hover:bg-white/10",
+                      (dateRange.from || dateRange.to) && "border-purple-500/50 text-purple-300"
+                    )}
+                  >
+                    <CalendarIcon className="h-4 w-4 mr-2" />
+                    {dateRange.from && dateRange.to
+                      ? `${format(dateRange.from, 'dd/MM/yy')} - ${format(dateRange.to, 'dd/MM/yy')}`
+                      : dateRange.from
+                        ? `${format(dateRange.from, 'dd/MM/yy')} - ...`
+                        : "Datas"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-4" align="end">
+                  <div className="flex gap-4">
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">Data Inicial</p>
+                      <Calendar
+                        mode="single"
+                        selected={dateRange.from}
+                        onSelect={(d) => setDateRange(prev => ({ ...prev, from: d }))}
+                        locale={ptBR}
+                        className="p-3 pointer-events-auto"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">Data Final</p>
+                      <Calendar
+                        mode="single"
+                        selected={dateRange.to}
+                        onSelect={(d) => setDateRange(prev => ({ ...prev, to: d }))}
+                        locale={ptBR}
+                        className="p-3 pointer-events-auto"
+                      />
+                    </div>
+                  </div>
+                  {(dateRange.from || dateRange.to) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full mt-2 text-muted-foreground"
+                      onClick={() => setDateRange({ from: undefined, to: undefined })}
+                    >
+                      <X className="h-3 w-3 mr-1" /> Limpar datas
+                    </Button>
+                  )}
+                </PopoverContent>
+              </Popover>
+            </div>
+
             <div className="rounded-xl bg-white/5 border border-white/10 overflow-hidden">
               {isLoading ? (
                 <div className="flex justify-center py-12">
