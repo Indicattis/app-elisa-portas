@@ -171,7 +171,7 @@ export default function ContasReceberMinimalista() {
     return contas.filter(conta => {
       // Search text
       if (searchText) {
-        const nome = conta.venda?.cliente_nome?.toLowerCase() || '';
+        const nome = (conta.venda?.cliente_nome || 'venda removida').toLowerCase();
         if (!nome.includes(searchText.toLowerCase())) return false;
       }
 
@@ -336,7 +336,7 @@ export default function ContasReceberMinimalista() {
       ? sortedContas.filter(c => selectedIds.has(c.id))
       : sortedContas;
     const rows = source.map(c => ({
-      Cliente: c.venda?.cliente_nome || '—',
+      Cliente: c.venda?.cliente_nome || 'Venda removida',
       "Forma Pagamento": c.metodo_pagamento || '—',
       Vencimento: format(parseISO(c.data_vencimento), 'dd/MM/yyyy'),
       Valor: c.valor_parcela,
@@ -649,7 +649,9 @@ export default function ContasReceberMinimalista() {
                             className="border-white/20 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                           />
                         </TableCell>
-                        <TableCell className="text-white font-medium text-sm">{conta.venda?.cliente_nome || '—'}</TableCell>
+                        <TableCell className={cn("text-sm", conta.venda?.cliente_nome ? "text-white font-medium" : "text-white/40 italic")}>
+                          {conta.venda?.cliente_nome || 'Venda removida'}
+                        </TableCell>
                         <TableCell>
                           <Popover
                             open={editingHistoricoId === conta.id}
