@@ -234,7 +234,7 @@ export const useNeoInstalacoesListagem = () => {
 
       const usuariosMap = new Map((usuarios || []).map(u => [u.user_id, u]));
       
-      return (data || []).map(item => ({
+      const mapped = (data || []).map(item => ({
         ...item,
         _tipo: 'neo_instalacao' as const,
         tipo_responsavel: (item.tipo_responsavel as 'equipe_interna' | 'autorizado' | null) || 'equipe_interna',
@@ -251,6 +251,22 @@ export const useNeoInstalacoesListagem = () => {
             : null
           : null
       })) as NeoInstalacao[];
+
+      // Ordenar por status de agendamento
+      return mapped.sort((a, b) => {
+        const getGrupo = (p: NeoInstalacao) => {
+          if (!p.data_instalacao) return 0; // Não agendado
+          const hoje = new Date().toISOString().split('T')[0];
+          if (p.data_instalacao < hoje) return 1; // Atrasado
+          return 2; // Agendado
+        };
+        const grupoA = getGrupo(a);
+        const grupoB = getGrupo(b);
+        if (grupoA !== grupoB) return grupoA - grupoB;
+        const dataA = a.data_instalacao || '9999-12-31';
+        const dataB = b.data_instalacao || '9999-12-31';
+        return dataA.localeCompare(dataB);
+      });
     },
   });
 
