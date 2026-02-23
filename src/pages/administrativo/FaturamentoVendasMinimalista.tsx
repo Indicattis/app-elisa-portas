@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { IndicadorExpandivel } from "@/components/direcao/IndicadorExpandivel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -11,42 +11,37 @@ import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Search, 
-  DollarSign, 
-  TrendingUp, 
-  CalendarIcon, 
-  ArrowLeft, 
-  Download, 
-  CheckCircle2, 
-  Clock,
-  Truck,
-  Wrench,
-  Paintbrush,
-  Target,
-  Calculator,
-  Timer,
-  AlertCircle,
-  TrendingDown,
-  Plus,
-  Minus,
-  Pencil,
-  MessageSquare
+import {
+  Search, DollarSign, TrendingUp, CalendarIcon, Download,
+  CheckCircle2, Clock, Truck, Wrench, Paintbrush, Target,
+  Calculator, AlertCircle, Plus, Minus, Pencil, MessageSquare,
+  ArrowUpDown, ArrowUp, ArrowDown, Check, X, Hammer,
+  Package, PlusCircle, Filter, PanelRight, Info
 } from "lucide-react";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { format, startOfMonth, endOfMonth } from "date-fns";
-import { calcularTempoExpediente } from "@/utils/calcularTempoExpediente";
+import { format, startOfMonth, endOfMonth, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
-import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
+import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { ColumnManager } from "@/components/ColumnManager";
 import { useColumnConfig, ColumnConfig } from "@/hooks/useColumnConfig";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
 import { VendasNaoFaturadasHistorico } from "@/components/faturamento/VendasNaoFaturadasHistorico";
+import { getFormaPagamentoLabel } from '@/utils/formatters';
+import { Checkbox } from "@/components/ui/checkbox";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 
 interface Venda {
   id: string;
@@ -75,26 +70,27 @@ interface Venda {
   justificativa_nao_faturada?: string | null;
   data_pagamento_1?: string | null;
   data_pagamento_2?: string | null;
+  data_prevista_entrega?: string | null;
+  tipo_entrega?: string | null;
+  lucro_instalacao?: number;
 }
 
-import { getFormaPagamentoLabel } from '@/utils/formatters';
-
 const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
-  { id: 'data', label: 'Data', defaultVisible: true },
+  { id: 'vendedor', label: '-', defaultVisible: true },
   { id: 'cliente', label: 'Cliente', defaultVisible: true },
-  { id: 'atendente', label: 'Atendente', defaultVisible: true },
-  { id: 'tipo_entrega', label: 'Tipo Entrega', defaultVisible: true },
+  { id: 'data', label: 'Data', defaultVisible: true },
+  { id: 'cidade', label: 'Cidade', defaultVisible: true },
   { id: 'pagamento', label: 'Pagamento', defaultVisible: true },
-  { id: 'data_pgto_1', label: 'Data Pgto 1', defaultVisible: true },
-  { id: 'data_pgto_2', label: 'Data Pgto 2', defaultVisible: true },
+  { id: 'data_pgto_1', label: 'Pgto 1', defaultVisible: true },
+  { id: 'data_pgto_2', label: 'Pgto 2', defaultVisible: true },
   { id: 'valor_frete', label: 'Frete', defaultVisible: true },
   { id: 'valor_instalacao', label: 'Instalação', defaultVisible: true },
   { id: 'desconto_acrescimo', label: 'Desc./Acrés.', defaultVisible: true },
-  { id: 'tempo_faturamento', label: 'Tempo', defaultVisible: true },
+  { id: 'tempo_sem_faturar', label: 'Tempo', defaultVisible: true },
   { id: 'justificativa', label: 'Justificativa', defaultVisible: true },
   { id: 'lucro_total', label: 'Lucro', defaultVisible: true },
   { id: 'valor_total', label: 'Valor Total', defaultVisible: true },
-  { id: 'status', label: 'Status', defaultVisible: true },
+  { id: 'faturada', label: 'Faturada', defaultVisible: true },
 ];
 
 const formatCurrency = (value: number) => {
@@ -104,10 +100,22 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+const formatarTempoSemFaturar = (dias: number): string => {
+  if (dias === 0) return 'Hoje';
+  if (dias === 1) return '1 dia';
+  if (dias < 7) return `${dias} dias`;
+  if (dias < 30) {
+    const semanas = Math.floor(dias / 7);
+    return semanas === 1 ? '1 sem.' : `${semanas} sem.`;
+  }
+  const meses = Math.floor(dias / 30);
+  return meses === 1 ? '1 mês' : `${meses} meses`;
+};
+
 export default function FaturamentoMinimalista() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [mounted, setMounted] = useState(false);
+  const isMobile = useIsMobile();
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -115,35 +123,45 @@ export default function FaturamentoMinimalista() {
     to: endOfMonth(new Date())
   });
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<'todas' | 'faturadas' | 'nao_faturadas'>('todas');
+  const [filtroStatus, setFiltroStatus] = useState<string[]>([]);
   const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
   const [atendentes, setAtendentes] = useState<any[]>([]);
+  const [selectedVenda, setSelectedVenda] = useState<Venda | null>(null);
+  const [mobileDownbarOpen, setMobileDownbarOpen] = useState(false);
+  const [leftSheetOpen, setLeftSheetOpen] = useState(false);
+  const [rightSheetOpen, setRightSheetOpen] = useState(false);
+  const [indicadorDrawerOpen, setIndicadorDrawerOpen] = useState(false);
+  const [indicadorAtivo, setIndicadorAtivo] = useState<string | null>(null);
+  const [auxCores, setAuxCores] = useState<Map<string, { nome: string; hex: string }>>(new Map());
+  const [auxAcessorios, setAuxAcessorios] = useState<Map<string, string>>(new Map());
+  const [auxAdicionais, setAuxAdicionais] = useState<Map<string, string>>(new Map());
+  const [sortConfig, setSortConfig] = useState<{ column: string | null; direction: 'asc' | 'desc' | null }>({ column: null, direction: null });
   const [justificativaDialog, setJustificativaDialog] = useState<{ open: boolean; vendaId: string; vendaCliente: string; justificativa: string }>({ 
-    open: false, 
-    vendaId: '', 
-    vendaCliente: '',
-    justificativa: '' 
+    open: false, vendaId: '', vendaCliente: '', justificativa: '' 
   });
   const [savingJustificativa, setSavingJustificativa] = useState(false);
 
   const {
-    columns,
-    visibleColumns,
-    visibleIds,
-    toggleColumn,
-    setColumnOrder,
-    resetColumns
+    columns, visibleColumns, visibleIds,
+    toggleColumn, setColumnOrder, resetColumns
   } = useColumnConfig('faturamento_minimalista_columns', COLUNAS_DISPONIVEIS);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     fetchVendas();
     fetchAtendentes();
+    fetchAuxData();
   }, [dateRange]);
+
+  const fetchAuxData = async () => {
+    const [{ data: cores }, { data: acessorios }, { data: adicionais }] = await Promise.all([
+      supabase.from('catalogo_cores').select('id, nome, codigo_hex'),
+      supabase.from('acessorios').select('id, nome'),
+      supabase.from('adicionais').select('id, nome'),
+    ]);
+    if (cores) setAuxCores(new Map(cores.map(c => [c.id, { nome: c.nome, hex: c.codigo_hex }])));
+    if (acessorios) setAuxAcessorios(new Map(acessorios.map(a => [a.id, a.nome])));
+    if (adicionais) setAuxAdicionais(new Map(adicionais.map(a => [a.id, a.nome])));
+  };
 
   const fetchAtendentes = async () => {
     const { data } = await supabase
@@ -174,9 +192,13 @@ export default function FaturamentoMinimalista() {
           frete_aprovado,
           justificativa_nao_faturada,
           metodo_pagamento,
+          data_prevista_entrega,
+          tipo_entrega,
+          lucro_instalacao,
           produtos_vendas (
             id,
             tipo_produto,
+            descricao,
             valor_produto,
             valor_pintura,
             quantidade,
@@ -184,7 +206,11 @@ export default function FaturamentoMinimalista() {
             custo_produto,
             custo_pintura,
             faturamento,
-            desconto_valor
+            desconto_valor,
+            tamanho,
+            cor_id,
+            acessorio_id,
+            adicional_id
           )
         `)
         .order("data_venda", { ascending: false });
@@ -216,7 +242,6 @@ export default function FaturamentoMinimalista() {
         });
       }
 
-      // Buscar datas de pagamento das contas_receber
       const vendaIds = vendasData.map((v: any) => v.id);
       const { data: contasData } = await supabase
         .from('contas_receber')
@@ -224,7 +249,6 @@ export default function FaturamentoMinimalista() {
         .in('venda_id', vendaIds)
         .order('data_vencimento', { ascending: true });
 
-      // Processar datas de pagamento por venda
       const pagamentosPorVenda = new Map<string, { data1?: string; data2?: string }>();
       if (contasData) {
         contasData.forEach((conta: any) => {
@@ -286,122 +310,238 @@ export default function FaturamentoMinimalista() {
     return portas.every((p: any) => p.faturamento === true);
   };
 
-  const calcularLucroTotal = (venda: Venda) => {
+  const calcularLucroVenda = (venda: Venda) => {
     const portas = venda.portas || [];
-    return portas.reduce((acc: number, p: any) => acc + (p.lucro_item || 0), 0);
+    const lucroProdutos = portas.reduce((acc: number, p: any) => acc + (p.lucro_item || 0), 0);
+    const lucroInstalacao = venda.lucro_instalacao || 0;
+    return lucroProdutos + lucroInstalacao;
   };
 
-  const filteredVendas = vendas.filter(venda => {
-    if (activeTab === 'faturadas' && !isFaturada(venda)) return false;
-    if (activeTab === 'nao_faturadas' && isFaturada(venda)) return false;
-    if (selectedAtendente !== "todos" && venda.atendente_id !== selectedAtendente) return false;
-    
-    const matchesSearch = 
-      (venda.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (venda.atendente_nome.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (venda.cidade?.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredVendas = useMemo(() => {
+    return vendas.filter(venda => {
+      if (filtroStatus.length > 0) {
+        const faturada = isFaturada(venda);
+        const matchStatus = filtroStatus.some(s => {
+          if (s === 'faturadas') return faturada;
+          if (s === 'nao_faturadas') return !faturada;
+          return false;
+        });
+        if (!matchStatus) return false;
+      }
+      if (selectedAtendente !== "todos" && venda.atendente_id !== selectedAtendente) return false;
+      const matchesSearch = 
+        (venda.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (venda.atendente_nome.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (venda.cidade?.toLowerCase().includes(searchTerm.toLowerCase()));
+      return matchesSearch;
+    });
+  }, [vendas, filtroStatus, selectedAtendente, searchTerm]);
 
-    return matchesSearch;
-  });
+  const sortedVendas = useMemo(() => {
+    if (!sortConfig.column || !sortConfig.direction) return filteredVendas;
+    return [...filteredVendas].sort((a, b) => {
+      const getValue = (venda: Venda) => {
+        switch (sortConfig.column) {
+          case 'data': return new Date(venda.data_venda).getTime();
+          case 'cliente': return venda.cliente_nome?.toLowerCase() || '';
+          case 'vendedor': return venda.atendente_nome.toLowerCase();
+          case 'cidade': return venda.cidade?.toLowerCase() || '';
+          case 'valor_total': return (venda.valor_venda || 0) + (venda.valor_credito || 0);
+          case 'lucro_total': return calcularLucroVenda(venda);
+          case 'tempo_sem_faturar':
+            if (isFaturada(venda)) return -1;
+            return differenceInDays(new Date(), new Date(venda.data_venda));
+          case 'faturada': return isFaturada(venda) ? 1 : 0;
+          case 'valor_frete': return venda.valor_frete || 0;
+          case 'valor_instalacao': return venda.valor_instalacao || 0;
+          case 'desconto_acrescimo':
+            const desc = (venda.portas || []).reduce((sum: number, p: any) => sum + (p.desconto_valor || 0), 0);
+            return (venda.valor_credito || 0) - desc;
+          default: return 0;
+        }
+      };
+      const aValue = getValue(a);
+      const bValue = getValue(b);
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortConfig.direction === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+      }
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+      return 0;
+    });
+  }, [filteredVendas, sortConfig]);
 
-  const vendasFaturadas = vendas.filter(isFaturada);
-  const vendasPendentes = vendas.filter(v => !isFaturada(v));
-  
-  const faturamentoTotal = filteredVendas.reduce((acc, v) => 
-    acc + ((v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0)), 0);
-  
-  const vendasParaLucros = filteredVendas.filter(isFaturada);
-  
-  const lucroBrutoTotal = vendasParaLucros.reduce((acc, v) => {
-    const portas = v.portas || [];
-    const lucroItens = portas.reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
-    return acc + lucroItens + (v.valor_instalacao || 0);
-  }, 0);
+  const handleSort = useCallback((columnId: string) => {
+    setSortConfig(prev => {
+      if (prev.column !== columnId) return { column: columnId, direction: 'asc' };
+      if (prev.direction === 'asc') return { column: columnId, direction: 'desc' };
+      return { column: null, direction: null };
+    });
+  }, []);
 
-  // Indicadores do período (mesmo formato da Direção)
-  const indicadores = {
-    faturamentoTotal: filteredVendas.reduce((acc, v) => 
-      acc + (v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0), 0),
-    
-    quantidadePortas: filteredVendas.reduce((acc, v) => {
+  const stats = useMemo(() => {
+    const faturadas = filteredVendas.filter(isFaturada);
+    const naoFaturadas = filteredVendas.filter(v => !isFaturada(v));
+    return {
+      faturamento: filteredVendas.reduce((acc, v) => acc + ((v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0)), 0),
+      faturadas: faturadas.length,
+      naoFaturadas: naoFaturadas.length,
+    };
+  }, [filteredVendas]);
+
+  const indicadores = useMemo(() => {
+    const vendasFaturadas = filteredVendas.filter(isFaturada);
+    const valorBrutoPortas = filteredVendas.reduce((acc, v) => {
       const portas = v.portas || [];
-      return acc + portas.filter((p: any) => 
-        ['porta', 'porta_enrolar'].includes(p.tipo_produto)
-      ).reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
-    }, 0),
-    
-    // Valores brutos (vendas)
-    valorBrutoPortas: filteredVendas.reduce((acc, v) => {
-      const portas = v.portas || [];
-      return acc + portas
-        .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
+      return acc + portas.filter((p: any) => ['porta', 'porta_enrolar', 'porta_social'].includes(p.tipo_produto))
         .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
-    }, 0),
-    
-    valorBrutoPintura: filteredVendas.reduce((acc, v) => {
+    }, 0);
+    const valorBrutoPintura = filteredVendas.reduce((acc, v) => {
       const portas = v.portas || [];
-      return acc + portas
-        .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
+      return acc + portas.filter((p: any) => p.tipo_produto === 'pintura_epoxi')
         .reduce((sum: number, p: any) => sum + (p.valor_pintura || 0), 0);
-    }, 0),
-    
-    valorBrutoInstalacoes: filteredVendas.reduce((acc, v) => 
-      acc + (v.valor_instalacao || 0), 0),
-    
-    // Lucros
-    lucroPortas: vendasParaLucros.reduce((acc, v) => {
+    }, 0);
+    const valorBrutoInstalacoes = filteredVendas.reduce((acc, v) => acc + (v.valor_instalacao || 0), 0);
+    const valorBrutoAcessorios = filteredVendas.reduce((acc, v) => {
       const portas = v.portas || [];
-      return acc + portas
-        .filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
-        .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
-    }, 0),
-    
-    lucroPintura: vendasParaLucros.reduce((acc, v) => {
+      return acc + portas.filter((p: any) => p.tipo_produto === 'acessorio')
+        .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+    }, 0);
+    const valorBrutoAdicionais = filteredVendas.reduce((acc, v) => {
       const portas = v.portas || [];
-      return acc + portas
-        .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
-        .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
-    }, 0),
-    
-    lucroInstalacoes: vendasParaLucros.reduce((acc, v) => 
-      acc + (v.valor_instalacao || 0), 0),
-    
-    fretesTotais: filteredVendas.reduce((acc, v) => 
-      acc + (v.valor_frete || 0), 0),
-    
-    lucroLiquidoTotal: vendasParaLucros.reduce((acc, v) => {
-      const portas = v.portas || [];
-      const lucroItens = portas.reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
-      return acc + lucroItens + (v.valor_instalacao || 0);
-    }, 0),
-    
-    lucroBrutoTotal,
+      return acc + portas.filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))
+        .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+    }, 0);
+
+    return {
+      faturamentoTotal: filteredVendas.reduce((acc, v) => acc + (v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0), 0),
+      quantidadePortas: filteredVendas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        return acc + portas.filter((p: any) => ['porta', 'porta_enrolar', 'porta_social'].includes(p.tipo_produto))
+          .reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
+      }, 0),
+      valorBrutoPortas,
+      lucroPortas: vendasFaturadas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        return acc + portas.filter((p: any) => ['porta', 'porta_enrolar', 'porta_social'].includes(p.tipo_produto))
+          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+      }, 0),
+      valorBrutoPintura,
+      lucroPintura: vendasFaturadas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        return acc + portas.filter((p: any) => p.tipo_produto === 'pintura_epoxi')
+          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+      }, 0),
+      valorBrutoInstalacoes,
+      lucroInstalacoes: vendasFaturadas.reduce((acc, v) => acc + (v.lucro_instalacao || 0), 0),
+      valorBrutoAcessorios,
+      lucroAcessorios: vendasFaturadas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        return acc + portas.filter((p: any) => p.tipo_produto === 'acessorio')
+          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+      }, 0),
+      valorBrutoAdicionais,
+      lucroAdicionais: vendasFaturadas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        return acc + portas.filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))
+          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+      }, 0),
+      fretesTotais: filteredVendas.reduce((acc, v) => acc + (v.valor_frete || 0), 0),
+      lucroLiquidoTotal: vendasFaturadas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        const lucroItens = portas.reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+        const lucroInstalacao = v.lucro_instalacao || 0;
+        return acc + lucroItens + lucroInstalacao;
+      }, 0),
+    };
+  }, [filteredVendas]);
+
+  // Ranking data for indicator drawer
+  const rankingData = useMemo(() => {
+    if (!indicadorAtivo) return [];
+    const map = new Map<string, { nome: string; quantidade: number; valor_total: number; cor_hex?: string }>();
+    if (indicadorAtivo === 'portas') {
+      filteredVendas.forEach(v => {
+        (v.portas || []).filter((p: any) => ['porta', 'porta_enrolar', 'porta_social'].includes(p.tipo_produto)).forEach((p: any) => {
+          const key = p.tamanho || 'Sem tamanho';
+          const cur = map.get(key) || { nome: key, quantidade: 0, valor_total: 0 };
+          cur.quantidade += p.quantidade || 1;
+          cur.valor_total += p.valor_produto || 0;
+          map.set(key, cur);
+        });
+      });
+    } else if (indicadorAtivo === 'pintura') {
+      filteredVendas.forEach(v => {
+        (v.portas || []).filter((p: any) => p.tipo_produto === 'pintura_epoxi').forEach((p: any) => {
+          const corInfo = p.cor_id ? auxCores.get(p.cor_id) : null;
+          const key = p.cor_id || 'sem_cor';
+          const nome = corInfo?.nome || 'Cor não especificada';
+          const cur = map.get(key) || { nome, quantidade: 0, valor_total: 0, cor_hex: corInfo?.hex };
+          cur.quantidade += p.quantidade || 1;
+          cur.valor_total += p.valor_pintura || 0;
+          map.set(key, cur);
+        });
+      });
+    } else if (indicadorAtivo === 'instalacoes') {
+      filteredVendas.filter(v => (v.valor_instalacao || 0) > 0).forEach(v => {
+        const key = v.cidade || 'Sem cidade';
+        const cur = map.get(key) || { nome: key, quantidade: 0, valor_total: 0 };
+        cur.quantidade += 1;
+        cur.valor_total += v.valor_instalacao || 0;
+        map.set(key, cur);
+      });
+    } else if (indicadorAtivo === 'acessorios') {
+      filteredVendas.forEach(v => {
+        (v.portas || []).filter((p: any) => p.tipo_produto === 'acessorio').forEach((p: any) => {
+          const key = p.acessorio_id || p.descricao || 'sem_id';
+          const nome = p.acessorio_id ? (auxAcessorios.get(p.acessorio_id) || p.descricao || 'Acessório') : (p.descricao || 'Acessório');
+          const cur = map.get(key) || { nome, quantidade: 0, valor_total: 0 };
+          cur.quantidade += p.quantidade || 1;
+          cur.valor_total += p.valor_produto || 0;
+          map.set(key, cur);
+        });
+      });
+    } else if (indicadorAtivo === 'adicionais') {
+      filteredVendas.forEach(v => {
+        (v.portas || []).filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto)).forEach((p: any) => {
+          const key = p.adicional_id || p.descricao || 'sem_id';
+          const nome = p.adicional_id ? (auxAdicionais.get(p.adicional_id) || p.descricao || 'Adicional') : (p.descricao || 'Adicional');
+          const cur = map.get(key) || { nome, quantidade: 0, valor_total: 0 };
+          cur.quantidade += p.quantidade || 1;
+          cur.valor_total += p.valor_produto || 0;
+          map.set(key, cur);
+        });
+      });
+    }
+    return Array.from(map.values()).sort((a, b) => b.quantidade - a.quantidade);
+  }, [filteredVendas, indicadorAtivo, auxCores, auxAcessorios, auxAdicionais]);
+
+  const indicadorTitulos: Record<string, string> = {
+    portas: 'Portas', pintura: 'Pintura', instalacoes: 'Instalações',
+    acessorios: 'Acessórios', adicionais: 'Adicionais',
   };
-
-  // Função para calcular tempo de faturamento (apenas horário comercial 7h-17h, seg-sex)
-  const calcularTempoFaturamento = (venda: Venda) => {
-    const dataVenda = new Date(venda.data_venda);
-    const segundosExpediente = calcularTempoExpediente(dataVenda, new Date());
-    const horasTotais = Math.floor(segundosExpediente / 3600);
-    const dias = Math.floor(horasTotais / 10);
-    const horas = horasTotais % 10;
-
-    if (dias === 0) return `${horas}h`;
-    if (dias === 1) return horas > 0 ? `1d ${horas}h` : `1 dia`;
-    return horas > 0 ? `${dias}d ${horas}h` : `${dias} dias`;
+  const indicadorIcons: Record<string, React.ReactNode> = {
+    portas: <DollarSign className="h-4 w-4 text-blue-400" />,
+    pintura: <Paintbrush className="h-4 w-4 text-orange-400" />,
+    instalacoes: <Wrench className="h-4 w-4 text-cyan-400" />,
+    acessorios: <Package className="h-4 w-4 text-pink-400" />,
+    adicionais: <PlusCircle className="h-4 w-4 text-indigo-400" />,
   };
 
   const handleGeneratePDF = () => {
     if (filteredVendas.length > 1000) {
-      toast({
-        variant: "destructive",
-        title: "Muitos registros",
-        description: "O PDF suporta no máximo 1000 registros.",
-      });
+      toast({ variant: "destructive", title: "Muitos registros", description: "O PDF suporta no máximo 1000 registros." });
       return;
     }
-
-    const stats = {
+    const vendasParaLucros = filteredVendas.filter(isFaturada);
+    const faturamentoTotal = filteredVendas.reduce((acc, v) => acc + ((v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0)), 0);
+    const lucroBrutoTotal = vendasParaLucros.reduce((acc, v) => {
+      const portas = v.portas || [];
+      const lucroItens = portas.reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+      return acc + lucroItens + (v.valor_instalacao || 0);
+    }, 0);
+    const pdfStats = {
       faturamentoTotal,
       custosProducao: vendasParaLucros.reduce((acc, v) => acc + (v.custo_produto || 0), 0),
       custosPintura: vendasParaLucros.reduce((acc, v) => acc + (v.custo_pintura || 0), 0),
@@ -412,28 +552,17 @@ export default function FaturamentoMinimalista() {
       lucroPortas: indicadores.lucroPortas,
       lucroBrutoTotal,
     };
-
     const periodo = dateRange?.from && dateRange?.to 
-      ? `${format(dateRange.from, "dd/MM/yyyy")} - ${format(dateRange.to, "dd/MM/yyyy")}`
-      : undefined;
-
-    generateFaturamentoPDF({
-      vendas: filteredVendas,
-      stats,
-      filtros: { tab: activeTab, periodo }
-    });
-    
-    toast({
-      title: "PDF gerado com sucesso!",
-      description: "O arquivo foi baixado automaticamente.",
-    });
+      ? `${format(dateRange.from, "dd/MM/yyyy")} - ${format(dateRange.to, "dd/MM/yyyy")}` : undefined;
+    const activeTab = filtroStatus.length === 1 ? (filtroStatus[0] === 'faturadas' ? 'faturadas' : 'nao_faturadas') : 'todas';
+    generateFaturamentoPDF({ vendas: filteredVendas, stats: pdfStats, filtros: { tab: activeTab, periodo } });
+    toast({ title: "PDF gerado com sucesso!", description: "O arquivo foi baixado automaticamente." });
   };
 
   const handleOpenJustificativaDialog = (venda: Venda, e: React.MouseEvent) => {
     e.stopPropagation();
     setJustificativaDialog({
-      open: true,
-      vendaId: venda.id,
+      open: true, vendaId: venda.id,
       vendaCliente: venda.cliente_nome || 'Cliente não informado',
       justificativa: venda.justificativa_nao_faturada || ''
     });
@@ -446,76 +575,60 @@ export default function FaturamentoMinimalista() {
         .from('vendas')
         .update({ justificativa_nao_faturada: justificativaDialog.justificativa.trim() || null })
         .eq('id', justificativaDialog.vendaId);
-
       if (error) throw error;
-
       setVendas(prev => prev.map(v => 
         v.id === justificativaDialog.vendaId 
-          ? { ...v, justificativa_nao_faturada: justificativaDialog.justificativa.trim() || null }
-          : v
+          ? { ...v, justificativa_nao_faturada: justificativaDialog.justificativa.trim() || null } : v
       ));
-
-      toast({
-        title: "Justificativa salva",
-        description: "A justificativa foi atualizada com sucesso.",
-      });
+      toast({ title: "Justificativa salva", description: "A justificativa foi atualizada com sucesso." });
       setJustificativaDialog({ open: false, vendaId: '', vendaCliente: '', justificativa: '' });
     } catch (error) {
       console.error('Erro ao salvar justificativa:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao salvar",
-        description: "Não foi possível salvar a justificativa.",
-      });
+      toast({ variant: "destructive", title: "Erro ao salvar", description: "Não foi possível salvar a justificativa." });
     } finally {
       setSavingJustificativa(false);
     }
   };
 
+  const getSortIcon = (columnId: string) => {
+    if (sortConfig.column !== columnId) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-50" />;
+    if (sortConfig.direction === 'asc') return <ArrowUp className="h-3 w-3 ml-1 text-blue-400" />;
+    return <ArrowDown className="h-3 w-3 ml-1 text-blue-400" />;
+  };
+
+  const getColumnResponsiveClass = (columnId: string) => {
+    const hiddenOnMobile = ['cidade', 'pagamento', 'data_pgto_1', 'data_pgto_2', 'valor_frete', 'valor_instalacao', 'desconto_acrescimo', 'tempo_sem_faturar', 'justificativa', 'lucro_total'];
+    if (hiddenOnMobile.includes(columnId)) return 'hidden md:table-cell';
+    return '';
+  };
+
+  const getColumnAlignment = (columnId: string) => {
+    const rightAligned = ['valor_total', 'valor_frete', 'valor_instalacao', 'lucro_total', 'desconto_acrescimo'];
+    const centerAligned = ['faturada', 'tempo_sem_faturar'];
+    if (rightAligned.includes(columnId)) return 'text-right';
+    if (centerAligned.includes(columnId)) return 'text-center';
+    return 'text-left';
+  };
+
   const renderCell = (venda: Venda, columnId: string) => {
-    switch(columnId) {
-      case 'data':
+    switch (columnId) {
+      case 'vendedor':
         return (
-          <span className="text-white/80">
-            {format(new Date(venda.data_venda), "dd/MM/yyyy", { locale: ptBR })}
-          </span>
+          <Avatar className="h-6 w-6">
+            <AvatarImage src={venda.atendente_foto || undefined} />
+            <AvatarFallback className="text-[10px] bg-blue-500/20 text-blue-400">
+              {venda.atendente_nome?.substring(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
         );
       case 'cliente':
-        return (
-          <span className="text-white font-medium">
-            {venda.cliente_nome || "Não informado"}
-          </span>
-        );
-      case 'atendente':
-        return (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={venda.atendente_foto || undefined} />
-              <AvatarFallback className="text-xs bg-white/20 text-white">
-                {venda.atendente_nome.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-white/80 text-sm">{venda.atendente_nome}</span>
-          </div>
-        );
-      case 'tipo_entrega':
-        return (venda.valor_instalacao || 0) > 0 ? (
-          <div className="flex items-center gap-1.5 text-emerald-400">
-            <Wrench className="h-4 w-4" />
-            <span className="text-xs">Instalação</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-1.5 text-blue-400">
-            <Truck className="h-4 w-4" />
-            <span className="text-xs">Entrega</span>
-          </div>
-        );
+        return <span className="text-white font-medium">{venda.cliente_nome || "Não informado"}</span>;
+      case 'data':
+        return <span className="text-white/80">{format(new Date(venda.data_venda), "dd/MM/yy", { locale: ptBR })}</span>;
+      case 'cidade':
+        return <span className="text-white/60">{venda.cidade}{venda.estado ? `/${venda.estado}` : ''}</span>;
       case 'pagamento':
-        return (
-          <span className="text-white/80 text-sm">
-            {getFormaPagamentoLabel(venda.metodo_pagamento)}
-          </span>
-        );
+        return <span className="text-white/80 text-sm">{getFormaPagamentoLabel(venda.metodo_pagamento)}</span>;
       case 'data_pgto_1':
         return venda.data_pagamento_1 
           ? <span className="text-white/80">{format(new Date(venda.data_pagamento_1), 'dd/MM/yy')}</span>
@@ -525,464 +638,485 @@ export default function FaturamentoMinimalista() {
           ? <span className="text-white/80">{format(new Date(venda.data_pagamento_2), 'dd/MM/yy')}</span>
           : <span className="text-white/30">-</span>;
       case 'valor_frete':
-        return (
-          <span className="text-white/80">
-            {formatCurrency(venda.valor_frete || 0)}
-          </span>
-        );
+        return (venda.valor_frete || 0) > 0
+          ? <span className="text-white/80">{formatCurrency(venda.valor_frete)}</span>
+          : <span className="text-white/30">-</span>;
       case 'valor_instalacao':
-        return (
-          <span className="text-white/80">
-            {formatCurrency(venda.valor_instalacao || 0)}
-          </span>
-        );
+        return (venda.valor_instalacao || 0) > 0
+          ? <span className="text-white/80">{formatCurrency(venda.valor_instalacao)}</span>
+          : <span className="text-white/30">-</span>;
       case 'desconto_acrescimo':
-        const totalDesconto = (venda.portas || []).reduce((acc: number, p: any) => 
-          acc + (p.desconto_valor || 0), 0);
+        const totalDesconto = (venda.portas || []).reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
         const acrescimo = venda.valor_credito || 0;
-        
-        if (totalDesconto > 0 && acrescimo > 0) {
-          return (
-            <div className="flex flex-col gap-0.5 text-xs">
-              <div className="flex items-center gap-1 text-red-400">
-                <Minus className="h-3 w-3" />
-                {formatCurrency(totalDesconto)}
-              </div>
-              <div className="flex items-center gap-1 text-emerald-400">
-                <Plus className="h-3 w-3" />
-                {formatCurrency(acrescimo)}
-              </div>
-            </div>
-          );
-        } else if (totalDesconto > 0) {
-          return (
-            <div className="flex items-center gap-1 text-red-400 text-sm">
-              <Minus className="h-3.5 w-3.5" />
-              {formatCurrency(totalDesconto)}
-            </div>
-          );
-        } else if (acrescimo > 0) {
-          return (
-            <div className="flex items-center gap-1 text-emerald-400 text-sm">
-              <Plus className="h-3.5 w-3.5" />
-              {formatCurrency(acrescimo)}
-            </div>
-          );
-        } else {
-          return <span className="text-white/30">-</span>;
-        }
-      case 'tempo_faturamento':
-        const tempo = calcularTempoFaturamento(venda);
-        const faturada = isFaturada(venda);
-        return (
-          <div className={cn(
-            "flex items-center gap-1.5 text-sm",
-            faturada ? "text-emerald-400" : "text-amber-400"
-          )}>
-            <Timer className="h-3.5 w-3.5" />
-            <span>{tempo}</span>
-            {!faturada && <span className="animate-pulse">•</span>}
-          </div>
-        );
-      case 'lucro_total':
-        return isFaturada(venda) ? (
-          <span className="text-emerald-400 font-medium">
-            {formatCurrency(calcularLucroTotal(venda))}
-          </span>
-        ) : (
-          <span className="text-white/30">-</span>
-        );
-      case 'valor_total':
-        return (
-          <span className="text-white font-semibold">
-            {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
-          </span>
-        );
+        const saldo = acrescimo - totalDesconto;
+        if (saldo === 0) return <span className="text-white/30">-</span>;
+        return <span className={saldo > 0 ? 'text-green-400' : 'text-red-400'}>{saldo > 0 ? `+${formatCurrency(saldo)}` : formatCurrency(saldo)}</span>;
+      case 'tempo_sem_faturar':
+        if (isFaturada(venda)) return <span className="text-green-400/60 text-xs">Faturada</span>;
+        const dias = differenceInDays(new Date(), new Date(venda.data_venda));
+        let colorClass = 'text-white/60';
+        if (dias >= 30) colorClass = 'text-red-400';
+        else if (dias >= 14) colorClass = 'text-amber-400';
+        return <span className={`${colorClass} text-xs`}>{formatarTempoSemFaturar(dias)}</span>;
       case 'justificativa':
-        if (isFaturada(venda)) {
-          return <span className="text-white/30">-</span>;
-        }
+        if (isFaturada(venda)) return <span className="text-white/30">-</span>;
         return venda.justificativa_nao_faturada ? (
           <div className="flex items-center gap-1.5 max-w-[180px]">
-            <span 
-              className="text-white/70 text-xs truncate" 
-              title={venda.justificativa_nao_faturada}
-            >
+            <span className="text-white/70 text-xs truncate" title={venda.justificativa_nao_faturada}>
               {venda.justificativa_nao_faturada}
             </span>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-5 w-5 shrink-0 hover:bg-white/10"
-              onClick={(e) => handleOpenJustificativaDialog(venda, e)}
-            >
+            <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0 hover:bg-white/10"
+              onClick={(e) => handleOpenJustificativaDialog(venda, e)}>
               <Pencil className="h-3 w-3 text-white/40" />
             </Button>
           </div>
         ) : (
-          <Button 
-            variant="ghost" 
-            size="sm"
+          <Button variant="ghost" size="sm"
             className="h-6 px-2 text-xs text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
-            onClick={(e) => handleOpenJustificativaDialog(venda, e)}
-          >
+            onClick={(e) => handleOpenJustificativaDialog(venda, e)}>
             <MessageSquare className="h-3 w-3 mr-1" />
             Informar
           </Button>
         );
-      case 'status':
-        return isFaturada(venda) ? (
-          <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-            <CheckCircle2 className="h-3 w-3 mr-1" />
-            Faturada
-          </Badge>
-        ) : (
-          <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
-            <Clock className="h-3 w-3 mr-1" />
-            Pendente
-          </Badge>
-        );
+      case 'lucro_total':
+        return isFaturada(venda) 
+          ? <span className="text-emerald-400 font-medium">{formatCurrency(calcularLucroVenda(venda))}</span>
+          : <span className="text-white/30">-</span>;
+      case 'valor_total':
+        return <span className="text-white font-medium">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</span>;
+      case 'faturada':
+        return isFaturada(venda) 
+          ? <Check className="h-4 w-4 text-green-400 mx-auto" />
+          : <X className="h-4 w-4 text-white/30 mx-auto" />;
       default:
         return null;
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black p-6 space-y-6">
-        <Skeleton className="h-12 w-64 bg-white/10" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Skeleton className="h-24 bg-white/10" />
-          <Skeleton className="h-24 bg-white/10" />
-          <Skeleton className="h-24 bg-white/10" />
+  const toggleFilterStatus = (val: string) => {
+    setFiltroStatus(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]);
+  };
+
+  const clearFilters = () => {
+    setFiltroStatus([]);
+    setSelectedAtendente("todos");
+    setDateRange({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
+  };
+
+  const hasFilters = filtroStatus.length > 0 || selectedAtendente !== "todos";
+
+  const STATUS_OPTIONS = [
+    { value: "faturadas", label: "Faturadas" },
+    { value: "nao_faturadas", label: "Não Faturadas" },
+  ];
+
+  // Filter sidebar content
+  const filterContent = (
+    <div className="space-y-6">
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Status</p>
+        <div className="space-y-2">
+          {STATUS_OPTIONS.map(opt => (
+            <label key={opt.value} className="flex items-center gap-2 cursor-pointer text-sm text-white/80 hover:text-white transition-colors">
+              <Checkbox
+                checked={filtroStatus.includes(opt.value)}
+                onCheckedChange={() => toggleFilterStatus(opt.value)}
+                className="border-white/20 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+              />
+              {opt.label}
+            </label>
+          ))}
         </div>
-        <Skeleton className="h-96 bg-white/10" />
+      </div>
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Vendedor</p>
+        <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
+          <SelectTrigger className="bg-white/5 border-white/10 text-white h-9">
+            <SelectValue placeholder="Todos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos</SelectItem>
+            {atendentes.map((atendente: any) => (
+              <SelectItem key={atendente.user_id} value={atendente.user_id}>{atendente.nome}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Período</p>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-full h-9 bg-white/5 border-white/10 text-white hover:bg-white/10 justify-start",
+                dateRange?.from && "border-blue-500/50 text-blue-300"
+              )}
+            >
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              {dateRange?.from && dateRange?.to
+                ? `${format(dateRange.from, 'dd/MM', { locale: ptBR })} - ${format(dateRange.to, 'dd/MM', { locale: ptBR })}`
+                : "Selecionar período"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={setDateRange}
+              numberOfMonths={2}
+              locale={ptBR}
+              className="pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+      {hasFilters && (
+        <Button variant="ghost" size="sm" className="w-full text-white/50 hover:text-white hover:bg-white/5" onClick={clearFilters}>
+          Limpar Filtros
+        </Button>
+      )}
+    </div>
+  );
+
+  // Venda detail helper
+  const getVendaDetailValues = (venda: Venda) => {
+    const portas = venda.portas || [];
+    const valorPortas = portas.filter((p: any) => ['porta', 'porta_enrolar'].includes(p.tipo_produto))
+      .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+    const valorPintura = portas.filter((p: any) => p.tipo_produto === 'pintura_epoxi')
+      .reduce((sum: number, p: any) => sum + (p.valor_pintura || 0), 0);
+    const valorAcessorios = portas.filter((p: any) => p.tipo_produto === 'acessorio')
+      .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+    const valorAdicionais = portas.filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))
+      .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+    return { valorPortas, valorPintura, valorAcessorios, valorAdicionais };
+  };
+
+  // Right sidebar content
+  const defaultRightContent = (
+    <div className="space-y-6">
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Resumo</p>
+        <div className="space-y-3">
+          <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+            <p className="text-xs text-white/50">Faturamento</p>
+            <p className="text-lg font-bold text-white">{formatCurrency(stats.faturamento)}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+            <p className="text-xs text-white/50">Faturadas</p>
+            <p className="text-lg font-bold text-green-400">{stats.faturadas}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+            <p className="text-xs text-white/50">Pendentes</p>
+            <p className="text-lg font-bold text-amber-400">{stats.naoFaturadas}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+            <p className="text-xs text-white/50">Lucro Líquido</p>
+            <p className="text-lg font-bold text-emerald-400">{formatCurrency(indicadores.lucroLiquidoTotal)}</p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Colunas</p>
+        <ColumnManager
+          columns={columns}
+          visibleIds={visibleIds}
+          onToggle={toggleColumn}
+          onReorder={setColumnOrder}
+          onReset={resetColumns}
+        />
+      </div>
+    </div>
+  );
+
+  const selectedVendaContent = selectedVenda ? (() => {
+    const { valorPortas, valorPintura, valorAcessorios, valorAdicionais } = getVendaDetailValues(selectedVenda);
+    const detailItems = [
+      { label: 'Vl. Portas', value: valorPortas, icon: <DollarSign className="h-3.5 w-3.5" />, color: 'text-blue-400' },
+      { label: 'Vl. Pintura', value: valorPintura, icon: <Paintbrush className="h-3.5 w-3.5" />, color: 'text-orange-400' },
+      { label: 'Instalação', value: selectedVenda.valor_instalacao || 0, icon: <Wrench className="h-3.5 w-3.5" />, color: 'text-cyan-400' },
+      { label: 'Frete', value: selectedVenda.valor_frete || 0, icon: <Truck className="h-3.5 w-3.5" />, color: 'text-amber-400' },
+      { label: 'Acessórios', value: valorAcessorios, icon: <Package className="h-3.5 w-3.5" />, color: 'text-pink-400' },
+      { label: 'Adicionais', value: valorAdicionais, icon: <PlusCircle className="h-3.5 w-3.5" />, color: 'text-indigo-400' },
+    ];
+    return (
+      <div className="space-y-5">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white truncate">{selectedVenda.cliente_nome}</p>
+            <p className="text-xs text-white/50 mt-0.5">Venda #{selectedVenda.id.substring(0, 8)}</p>
+          </div>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-white/50 hover:text-white hover:bg-white/10"
+            onClick={() => setSelectedVenda(null)}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <div>
+          <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Valores</p>
+          <div className="grid grid-cols-2 gap-2">
+            {detailItems.map((item) => (
+              <div key={item.label} className="p-2.5 rounded-lg bg-white/5 border border-white/10">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className={item.color}>{item.icon}</span>
+                  <p className="text-[10px] text-white/40 uppercase tracking-wide">{item.label}</p>
+                </div>
+                <p className={cn("text-sm font-semibold", item.value > 0 ? 'text-white' : 'text-white/20')}>
+                  {item.value > 0 ? formatCurrency(item.value) : '-'}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Datas</p>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-3.5 w-3.5 text-white/40" />
+                <p className="text-xs text-white/50">Previsão Entrega</p>
+              </div>
+              <p className="text-xs font-semibold text-white">
+                {selectedVenda.data_prevista_entrega 
+                  ? format(new Date(selectedVenda.data_prevista_entrega + 'T12:00:00'), 'dd/MM/yy', { locale: ptBR })
+                  : '-'}
+              </p>
+            </div>
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-3.5 w-3.5 text-white/40" />
+                <p className="text-xs text-white/50">Pgto 1</p>
+              </div>
+              <p className="text-xs font-semibold text-white">
+                {selectedVenda.data_pagamento_1 
+                  ? format(new Date(selectedVenda.data_pagamento_1 + 'T12:00:00'), 'dd/MM/yy', { locale: ptBR })
+                  : '-'}
+              </p>
+            </div>
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-3.5 w-3.5 text-white/40" />
+                <p className="text-xs text-white/50">Pgto 2</p>
+              </div>
+              <p className="text-xs font-semibold text-white">
+                {selectedVenda.data_pagamento_2 
+                  ? format(new Date(selectedVenda.data_pagamento_2 + 'T12:00:00'), 'dd/MM/yy', { locale: ptBR })
+                  : '-'}
+              </p>
+            </div>
+          </div>
+        </div>
+        <Button
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={() => navigate(`/administrativo/financeiro/faturamento/${selectedVenda.id}?from=vendas`)}
+        >
+          Abrir Faturamento
+        </Button>
       </div>
     );
-  }
+  })() : null;
 
-  return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Breadcrumb */}
-      <AnimatedBreadcrumb 
-        items={[
+  const rightContent = selectedVenda ? selectedVendaContent : defaultRightContent;
+
+  if (loading) {
+    return (
+      <MinimalistLayout 
+        title="Faturamento por Venda" 
+        backPath="/administrativo/financeiro/faturamento"
+        breadcrumbItems={[
           { label: "Home", path: "/home" },
           { label: "Administrativo", path: "/administrativo" },
           { label: "Financeiro", path: "/administrativo/financeiro" },
           { label: "Faturamento", path: "/administrativo/financeiro/faturamento" },
           { label: "Por Venda" }
-        ]} 
-        mounted={mounted} 
-      />
-
-      {/* Menu de Perfil Flutuante */}
-      <FloatingProfileMenu mounted={mounted} />
-
-      {/* Botão Voltar */}
-      <button
-        onClick={() => navigate('/administrativo/financeiro/faturamento')}
-        className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
-                   hover:bg-white/10 transition-all duration-300"
-        style={{
-          opacity: mounted ? 1 : 0,
-          transform: mounted ? 'translateX(0)' : 'translateX(-20px)',
-          transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 100ms'
-        }}
+        ]}
       >
-        <div className="p-2 rounded-lg bg-gradient-to-br from-green-500 to-green-700 text-white shadow-lg shadow-green-500/20">
-          <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
         </div>
-      </button>
+      </MinimalistLayout>
+    );
+  }
 
-      <div className="container mx-auto p-6 pt-20 space-y-6 max-w-[1600px]">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Faturamento por Venda</h1>
-            <p className="text-white/60">Controle de faturamento individual por venda</p>
-          </div>
-          <div className="flex gap-2">
-            <ColumnManager
-              columns={columns}
-              visibleIds={visibleIds}
-              onToggle={toggleColumn}
-              onReorder={setColumnOrder}
-              onReset={resetColumns}
-            />
-            <Button 
-              onClick={handleGeneratePDF}
-              className="bg-white/10 hover:bg-white/20 border border-white/20"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Exportar PDF
-            </Button>
-          </div>
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">Faturamento Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-green-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{formatCurrency(faturamentoTotal)}</div>
-              <p className="text-xs text-white/50">{filteredVendas.length} vendas no período</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">Lucro Líquido</CardTitle>
-              <TrendingUp className="h-4 w-4 text-blue-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{formatCurrency(lucroBrutoTotal)}</div>
-              <p className="text-xs text-white/50">{vendasFaturadas.length} vendas faturadas</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">Taxa de Conversão</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {vendas.length > 0 
-                  ? `${((vendasFaturadas.length / vendas.length) * 100).toFixed(1)}%`
-                  : '0%'}
-              </div>
-              <p className="text-xs text-white/50">vendas faturadas</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Indicadores do Período */}
-        <Card className="bg-white/5 border-white/10">
-          <CardHeader className="pb-3">
+  return (
+    <MinimalistLayout 
+      title="Faturamento por Venda" 
+      subtitle="Controle de faturamento individual por venda"
+      backPath="/administrativo/financeiro/faturamento"
+      fullWidth
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Administrativo", path: "/administrativo" },
+        { label: "Financeiro", path: "/administrativo/financeiro" },
+        { label: "Faturamento", path: "/administrativo/financeiro/faturamento" },
+        { label: "Por Venda" }
+      ]}
+      headerActions={
+        <Button onClick={handleGeneratePDF} size="sm" className="bg-white/10 hover:bg-white/20 border border-white/20">
+          <Download className="h-4 w-4 mr-2" />
+          PDF
+        </Button>
+      }
+    >
+      {/* Indicadores do Período */}
+      <Card className="rounded-xl bg-white/5 border border-white/10 mb-6">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
             <CardTitle className="text-base text-white/80 flex items-center gap-2">
               <Calculator className="h-4 w-4 text-blue-400" />
               Indicadores do Período
             </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <div className="text-center p-4 rounded-lg bg-white/5">
-                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
-                  <DollarSign className="h-3 w-3 text-blue-400" />
-                  Portas
-                </div>
-                <p className="text-blue-400 font-bold text-lg">
-                  {formatCurrency(indicadores.valorBrutoPortas)}
-                </p>
-                <p className="text-emerald-400 text-sm mt-1">
-                  Lucro: {formatCurrency(indicadores.lucroPortas)}
-                </p>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-white/5">
-                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
-                  <Paintbrush className="h-3 w-3 text-orange-400" />
-                  Pintura
-                </div>
-                <p className="text-orange-400 font-bold text-lg">
-                  {formatCurrency(indicadores.valorBrutoPintura)}
-                </p>
-                <p className="text-emerald-400 text-sm mt-1">
-                  Lucro: {formatCurrency(indicadores.lucroPintura)}
-                </p>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-white/5">
-                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
-                  <Wrench className="h-3 w-3 text-cyan-400" />
-                  Instalações
-                </div>
-                <p className="text-cyan-400 font-bold text-lg">
-                  {formatCurrency(indicadores.valorBrutoInstalacoes)}
-                </p>
-                <p className="text-emerald-400 text-sm mt-1">
-                  Lucro: {formatCurrency(indicadores.lucroInstalacoes)}
-                </p>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-white/5">
-                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
-                  <Truck className="h-3 w-3 text-amber-400" />
-                  Fretes
-                </div>
-                <p className="text-amber-400 font-bold text-lg">
-                  {formatCurrency(indicadores.fretesTotais)}
-                </p>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-white/5">
-                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
-                  <TrendingUp className="h-3 w-3 text-green-400" />
-                  Lucro Líquido
-                </div>
-                <p className="text-green-400 font-bold text-lg">
-                  {formatCurrency(indicadores.lucroLiquidoTotal)}
-                </p>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-white/5">
-                <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
-                  <Target className="h-3 w-3 text-purple-400" />
-                  Qtd Portas
-                </div>
-                <p className="text-purple-400 font-bold text-lg">
-                  {indicadores.quantidadePortas}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Filters */}
-        <Card className="bg-white/5 border-white/10">
-          <CardContent className="pt-6">
-            <div className="flex flex-col lg:flex-row gap-4 mb-6">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/50" />
-                <Input
-                  placeholder="Buscar por cliente, atendente ou cidade..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/40"
-                />
-              </div>
-              
-              <Select value={selectedAtendente} onValueChange={setSelectedAtendente}>
-                <SelectTrigger className="w-[200px] bg-white/5 border-white/20 text-white">
-                  <SelectValue placeholder="Atendente" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-white/10">
-                  <SelectItem value="todos" className="text-white">Todos atendentes</SelectItem>
-                  {atendentes.map((at) => (
-                    <SelectItem key={at.user_id} value={at.user_id} className="text-white">{at.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className={cn(
-                      "w-[280px] justify-start text-left font-normal bg-white/5 border-white/20 text-white hover:bg-white/10",
-                      !dateRange && "text-white/50"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateRange?.from ? (
-                      dateRange.to ? (
-                        <>
-                          {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                          {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
-                        </>
-                      ) : (
-                        format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
-                      )
-                    ) : (
-                      <span>Selecione o período</span>
-                    )}
+            <div className="flex gap-2 lg:hidden">
+              <Sheet open={leftSheetOpen} onOpenChange={setLeftSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+                    <Filter className="h-4 w-4" />
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-zinc-900 border-white/10" align="start">
-                  <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={dateRange?.from}
-                    selected={dateRange}
-                    onSelect={setDateRange}
-                    numberOfMonths={2}
-                    locale={ptBR}
+                </SheetTrigger>
+                <SheetContent side="left" className="bg-zinc-950 border-white/10 w-[280px]">
+                  <SheetTitle className="text-white mb-4">Filtros</SheetTitle>
+                  {filterContent}
+                </SheetContent>
+              </Sheet>
+              <Sheet open={rightSheetOpen} onOpenChange={setRightSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+                    <PanelRight className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="bg-zinc-950 border-white/10 w-[280px]">
+                  <SheetTitle className="text-white mb-4">Resumo</SheetTitle>
+                  {rightContent}
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+            {(() => {
+              const calcMargem = (lucro: number, bruto: number) =>
+                bruto > 0 ? ((lucro / bruto) * 100).toFixed(1) + '%' : '0%';
+              const faturamentoTotal = indicadores.valorBrutoPortas + indicadores.valorBrutoPintura + indicadores.valorBrutoInstalacoes + indicadores.valorBrutoAcessorios + indicadores.valorBrutoAdicionais + indicadores.fretesTotais;
+              return [
+                { key: 'portas', icon: <DollarSign className="h-3 w-3 text-blue-400" />, label: 'Portas', valor: formatCurrency(indicadores.valorBrutoPortas), lucro: formatCurrency(indicadores.lucroPortas), margemLucro: calcMargem(indicadores.lucroPortas, indicadores.valorBrutoPortas), colorClass: 'text-blue-400', qtd: filteredVendas.filter(v => (v.portas || []).some((p: any) => ['porta', 'porta_enrolar', 'porta_social'].includes(p.tipo_produto))).length },
+                { key: 'pintura', icon: <Paintbrush className="h-3 w-3 text-orange-400" />, label: 'Pintura', valor: formatCurrency(indicadores.valorBrutoPintura), lucro: formatCurrency(indicadores.lucroPintura), margemLucro: calcMargem(indicadores.lucroPintura, indicadores.valorBrutoPintura), colorClass: 'text-orange-400', qtd: filteredVendas.filter(v => (v.portas || []).some((p: any) => p.tipo_produto === 'pintura_epoxi')).length },
+                { key: 'instalacoes', icon: <Wrench className="h-3 w-3 text-cyan-400" />, label: 'Instalações', valor: formatCurrency(indicadores.valorBrutoInstalacoes), lucro: formatCurrency(indicadores.lucroInstalacoes), margemLucro: calcMargem(indicadores.lucroInstalacoes, indicadores.valorBrutoInstalacoes), colorClass: 'text-cyan-400', qtd: filteredVendas.filter(v => (v.valor_instalacao || 0) > 0).length },
+                { key: 'acessorios', icon: <Package className="h-3 w-3 text-pink-400" />, label: 'Acessórios', valor: formatCurrency(indicadores.valorBrutoAcessorios), lucro: formatCurrency(indicadores.lucroAcessorios), margemLucro: calcMargem(indicadores.lucroAcessorios, indicadores.valorBrutoAcessorios), colorClass: 'text-pink-400', qtd: filteredVendas.filter(v => (v.portas || []).some((p: any) => p.tipo_produto === 'acessorio')).length },
+                { key: 'adicionais', icon: <PlusCircle className="h-3 w-3 text-indigo-400" />, label: 'Adicionais', valor: formatCurrency(indicadores.valorBrutoAdicionais), lucro: formatCurrency(indicadores.lucroAdicionais), margemLucro: calcMargem(indicadores.lucroAdicionais, indicadores.valorBrutoAdicionais), colorClass: 'text-indigo-400', qtd: filteredVendas.filter(v => (v.portas || []).some((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))).length },
+                { key: 'fretes', icon: <Truck className="h-3 w-3 text-amber-400" />, label: 'Fretes', valor: formatCurrency(indicadores.fretesTotais), colorClass: 'text-amber-400', qtd: filteredVendas.filter(v => (v.valor_frete || 0) > 0).length },
+                { key: 'lucro', icon: <TrendingUp className="h-3 w-3 text-green-400" />, label: 'Lucro Líquido', valor: formatCurrency(indicadores.lucroLiquidoTotal), margemLucro: calcMargem(indicadores.lucroLiquidoTotal, faturamentoTotal), colorClass: 'text-green-400', qtd: filteredVendas.filter(isFaturada).length },
+              ].map((ind) => {
+                const clickableKeys = ['portas', 'pintura', 'instalacoes', 'acessorios', 'adicionais'];
+                return (
+                  <IndicadorExpandivel
+                    key={ind.key}
+                    icon={ind.icon}
+                    label={ind.label}
+                    valor={ind.valor}
+                    lucro={'lucro' in ind ? (ind as any).lucro : undefined}
+                    margemLucro={ind.margemLucro}
+                    colorClass={ind.colorClass}
+                    quantidadeVendas={ind.qtd}
+                    onClick={clickableKeys.includes(ind.key) ? () => {
+                      setIndicadorAtivo(ind.key);
+                      setIndicadorDrawerOpen(true);
+                    } : undefined}
                   />
-                </PopoverContent>
-              </Popover>
+                );
+              });
+            })()}
+            <div className="text-center p-4 rounded-lg bg-white/5">
+              <div className="flex items-center justify-center gap-1 text-white/50 text-xs mb-2">
+                <Target className="h-3 w-3 text-purple-400" />
+                Qtd Portas
+              </div>
+              <p className="text-purple-400 font-bold text-lg">
+                {indicadores.quantidadePortas}
+              </p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
 
-            {/* Botões de Filtro Centralizados */}
-            <div className="flex justify-center gap-2 mb-6">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setActiveTab('todas')}
-                className={cn(
-                  "rounded-full px-5 py-2 transition-all",
-                  activeTab === 'todas' 
-                    ? "bg-white/20 text-white" 
-                    : "text-white/50 hover:text-white hover:bg-white/10"
-                )}
-              >
-                Todas ({vendas.length})
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setActiveTab('faturadas')}
-                className={cn(
-                  "rounded-full px-5 py-2 transition-all",
-                  activeTab === 'faturadas' 
-                    ? "bg-emerald-500/20 text-emerald-400" 
-                    : "text-white/50 hover:text-emerald-400 hover:bg-emerald-500/10"
-                )}
-              >
-                <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                Faturadas ({vendasFaturadas.length})
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setActiveTab('nao_faturadas')}
-                className={cn(
-                  "rounded-full px-5 py-2 transition-all",
-                  activeTab === 'nao_faturadas' 
-                    ? "bg-amber-500/20 text-amber-400" 
-                    : "text-white/50 hover:text-amber-400 hover:bg-amber-500/10"
-                )}
-              >
-                <Clock className="h-4 w-4 mr-1.5" />
-                Pendentes ({vendasPendentes.length})
-              </Button>
+      {/* 3-panel layout */}
+      <div className="flex gap-4">
+        {/* Left sidebar - desktop only */}
+        <aside className="hidden lg:block w-[250px] shrink-0">
+          <div className="sticky top-24 p-4 rounded-xl bg-white/5 border border-white/10">
+            <p className="text-sm font-semibold text-white mb-4">Filtros</p>
+            {filterContent}
+          </div>
+        </aside>
+
+        {/* Main table */}
+        <main className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+              <Input
+                placeholder="Buscar cliente, vendedor, cidade..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 h-9"
+              />
             </div>
+          </div>
 
-            {/* Table */}
-            <div className="rounded-md border border-white/10 overflow-x-auto">
+          <div className="rounded-xl bg-white/5 border border-white/10 overflow-x-auto">
+            <TooltipProvider delayDuration={200}>
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/10 hover:bg-white/5">
-                    {visibleColumns.map(column => (
+                  <TableRow className="border-white/10 hover:bg-transparent">
+                    <TableHead className="w-8 text-center text-white/60" />
+                    {visibleColumns.map((column) => (
                       <TableHead 
-                        key={column.id} 
-                        className={cn(
-                          "text-white/70",
-                          ['valor_frete', 'valor_instalacao', 'lucro_total', 'valor_total'].includes(column.id) && "text-right",
-                          column.id === 'status' && "text-center"
-                        )}
+                        key={column.id}
+                        className={`text-white/60 cursor-pointer hover:text-white/80 transition-colors ${getColumnResponsiveClass(column.id)} ${getColumnAlignment(column.id)}`}
+                        onClick={() => handleSort(column.id)}
                       >
-                        {column.label}
+                        <div className={`flex items-center ${getColumnAlignment(column.id) === 'text-right' ? 'justify-end' : getColumnAlignment(column.id) === 'text-center' ? 'justify-center' : ''}`}>
+                          {column.label}
+                          {getSortIcon(column.id)}
+                        </div>
                       </TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredVendas.length === 0 ? (
+                  {sortedVendas.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={visibleColumns.length} className="text-center text-white/50 py-8">
+                      <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8 text-white/40">
                         Nenhuma venda encontrada no período
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredVendas.map((venda) => (
+                    sortedVendas.map((venda) => (
                       <TableRow 
                         key={venda.id} 
-                        className="border-white/10 hover:bg-white/5 cursor-pointer"
-                        onClick={() => navigate(`/administrativo/financeiro/faturamento/${venda.id}?from=vendas`)}
+                        className={cn(
+                          "border-white/10 hover:bg-white/5 cursor-pointer",
+                          selectedVenda?.id === venda.id && "bg-blue-500/10 border-l-2 border-l-blue-500"
+                        )}
+                        onClick={() => {
+                          setSelectedVenda(venda);
+                          if (isMobile) setMobileDownbarOpen(true);
+                        }}
                       >
-                        {visibleColumns.map(column => (
+                        <TableCell className="w-8 text-center">
+                          <div className={cn(
+                            "h-3 w-3 rounded-full border-2 mx-auto transition-colors",
+                            selectedVenda?.id === venda.id 
+                              ? "bg-blue-500 border-blue-500" 
+                              : "border-white/20"
+                          )} />
+                        </TableCell>
+                        {visibleColumns.map((column) => (
                           <TableCell 
                             key={column.id}
-                            className={cn(
-                              ['valor_frete', 'valor_instalacao', 'lucro_total', 'valor_total'].includes(column.id) && "text-right",
-                              column.id === 'status' && "text-center"
-                            )}
+                            className={`${getColumnResponsiveClass(column.id)} ${getColumnAlignment(column.id)}`}
                           >
                             {renderCell(venda, column.id)}
                           </TableCell>
@@ -992,22 +1126,75 @@ export default function FaturamentoMinimalista() {
                   )}
                 </TableBody>
               </Table>
-            </div>
-          </CardContent>
-        </Card>
+            </TooltipProvider>
+          </div>
+        </main>
 
-        {/* Vendas Não Faturadas - Histórico 3 meses */}
+        {/* Right sidebar - desktop only */}
+        <aside className="hidden lg:block w-[250px] shrink-0">
+          <div className="sticky top-24 p-4 rounded-xl bg-white/5 border border-white/10">
+            {rightContent}
+          </div>
+        </aside>
+      </div>
+
+      {/* Vendas Não Faturadas - Histórico 3 meses */}
+      <div className="mt-6">
         <VendasNaoFaturadasHistorico 
           onOpenJustificativa={(vendaId, clienteNome, justificativa) => {
             setJustificativaDialog({
-              open: true,
-              vendaId,
-              vendaCliente: clienteNome,
-              justificativa
+              open: true, vendaId, vendaCliente: clienteNome, justificativa
             });
           }}
         />
       </div>
+
+      {/* Mobile Downbar */}
+      {isMobile && (
+        <Drawer open={mobileDownbarOpen} onOpenChange={(open) => {
+          setMobileDownbarOpen(open);
+          if (!open) setSelectedVenda(null);
+        }}>
+          <DrawerContent className="max-h-[85vh] bg-zinc-900 border-t border-white/10">
+            <ScrollArea className="h-[75vh] px-4 py-4">
+              {selectedVenda && selectedVendaContent}
+            </ScrollArea>
+          </DrawerContent>
+        </Drawer>
+      )}
+
+      {/* Indicator Ranking Drawer */}
+      <Drawer open={indicadorDrawerOpen} onOpenChange={setIndicadorDrawerOpen}>
+        <DrawerContent className="max-h-[85vh] bg-zinc-900 border-t border-white/10">
+          <div className="mx-auto w-full max-w-lg">
+            <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+              {indicadorAtivo && indicadorIcons[indicadorAtivo]}
+              <h3 className="text-white font-semibold">Ranking - {indicadorAtivo ? indicadorTitulos[indicadorAtivo] : ''}</h3>
+            </div>
+            <ScrollArea className="h-[65vh] px-4 pb-4">
+              {rankingData.length === 0 ? (
+                <p className="text-white/40 text-sm text-center py-8">Nenhum dado encontrado</p>
+              ) : (
+                rankingData.map((item, index) => (
+                  <div key={item.nome} className="flex items-center justify-between py-3 border-b border-white/5">
+                    <div className="flex items-center gap-3">
+                      <span className="text-white/30 text-sm w-6">{index + 1}.</span>
+                      {item.cor_hex && (
+                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.cor_hex }} />
+                      )}
+                      <span className="text-white text-sm">{item.nome}</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white text-sm font-medium">{item.quantidade}x</p>
+                      <p className="text-white/50 text-xs">{formatCurrency(item.valor_total)}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </ScrollArea>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       {/* Dialog de Justificativa */}
       <Dialog 
@@ -1016,12 +1203,8 @@ export default function FaturamentoMinimalista() {
       >
         <DialogContent className="bg-zinc-900 border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle className="text-lg">
-              Justificativa de Não Faturamento
-            </DialogTitle>
-            <p className="text-sm text-white/60">
-              Cliente: {justificativaDialog.vendaCliente}
-            </p>
+            <DialogTitle className="text-lg">Justificativa de Não Faturamento</DialogTitle>
+            <p className="text-sm text-white/60">Cliente: {justificativaDialog.vendaCliente}</p>
           </DialogHeader>
           <div className="py-4">
             <Textarea
@@ -1032,24 +1215,17 @@ export default function FaturamentoMinimalista() {
             />
           </div>
           <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setJustificativaDialog({ open: false, vendaId: '', vendaCliente: '', justificativa: '' })}
-              disabled={savingJustificativa}
-              className="text-white/70 hover:text-white hover:bg-white/10"
-            >
+            <Button variant="ghost" onClick={() => setJustificativaDialog({ open: false, vendaId: '', vendaCliente: '', justificativa: '' })}
+              disabled={savingJustificativa} className="text-white/70 hover:text-white hover:bg-white/10">
               Cancelar
             </Button>
-            <Button
-              onClick={handleSaveJustificativa}
-              disabled={savingJustificativa}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
+            <Button onClick={handleSaveJustificativa} disabled={savingJustificativa}
+              className="bg-blue-600 hover:bg-blue-700 text-white">
               {savingJustificativa ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </MinimalistLayout>
   );
 }
