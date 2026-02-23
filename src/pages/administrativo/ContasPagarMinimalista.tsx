@@ -1,28 +1,29 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { 
-  ArrowLeft, BadgeDollarSign, Search, ChevronDown, ChevronRight, 
-  Check, X, CalendarIcon, AlertTriangle, Clock, Plus, Folder,
-  FileText, Upload
+import {
+  ArrowLeft, BadgeDollarSign, Check, CalendarIcon, Paperclip,
+  MoreHorizontal, Download, Filter, PanelRight, X, Search
 } from "lucide-react";
-import { format, parseISO, isBefore, isToday, isAfter, addDays, startOfWeek, endOfWeek } from "date-fns";
+import { format, parseISO, isBefore, isToday, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
+import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import * as XLSX from "xlsx";
 
 interface ContaPagar {
   id: string;
@@ -40,23 +41,13 @@ interface ContaPagar {
   metodo_pagamento: string | null;
   status: string;
   nota_fiscal_url: string | null;
+  nota_fiscal_nome: string | null;
   comprovante_url: string | null;
+  comprovante_nome: string | null;
+  observacoes: string | null;
   grupo_id: string;
   fornecedor?: { nome: string };
   empresa?: { nome: string };
-}
-
-interface GrupoConta {
-  grupo_id: string;
-  descricao: string;
-  fornecedor_nome: string;
-  categoria: string;
-  contas: ContaPagar[];
-  total_parcelas: number;
-  parcelas_pagas: number;
-  total_a_pagar: number;
-  total_pago: number;
-  tem_vencido: boolean;
 }
 
 const CATEGORIAS: Record<string, string> = {
@@ -77,26 +68,57 @@ const CATEGORIA_COLORS: Record<string, string> = {
   outros: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30'
 };
 
+const STATUS_OPTIONS = [
+  { value: "pendente", label: "Pendente" },
+  { value: "vencido", label: "Vencido" },
+  { value: "pago", label: "Pago" },
+  { value: "cancelado", label: "Cancelado" },
+];
+
+const CATEGORIA_OPTIONS = Object.entries(CATEGORIAS).map(([value, label]) => ({ value, label }));
+
+const METODO_OPTIONS = [
+  { value: "pix", label: "PIX" },
+  { value: "boleto", label: "Boleto" },
+  { value: "cartao_credito", label: "Cartão Crédito" },
+  { value: "cartao_debito", label: "Cartão Débito" },
+  { value: "dinheiro", label: "Dinheiro" },
+  { value: "transferencia", label: "Transferência" },
+];
+
 export default function ContasPagarMinimalista() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [mounted, setMounted] = useState(false);
 
-  const [filtroStatus, setFiltroStatus] = useState("todos");
-  const [filtroCategoria, setFiltroCategoria] = useState("todos");
-  const [busca, setBusca] = useState("");
-  const [dataInicio, setDataInicio] = useState<Date | undefined>();
-  const [dataFim, setDataFim] = useState<Date | undefined>();
-  
+  // Search & date range
+  const [searchText, setSearchText] = useState("");
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
+
+  // Filters
+  const [filtroStatus, setFiltroStatus] = useState<string[]>(["pendente", "vencido"]);
+  const [filtroCategoria, setFiltroCategoria] = useState<string[]>([]);
+  const [filtroMetodo, setFiltroMetodo] = useState<string[]>([]);
+  const [filtroValorMin, setFiltroValorMin] = useState("");
+  const [filtroValorMax, setFiltroValorMax] = useState("");
+
+  // Selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Dialogs
   const [dialogPagarOpen, setDialogPagarOpen] = useState(false);
-  const [dialogAlterarDataOpen, setDialogAlterarDataOpen] = useState(false);
   const [contaSelecionada, setContaSelecionada] = useState<ContaPagar | null>(null);
-  const [grupoParaAlterar, setGrupoParaAlterar] = useState<GrupoConta | null>(null);
   const [valorPago, setValorPago] = useState("");
   const [dataPagamento, setDataPagamento] = useState<Date | undefined>(new Date());
-  const [novaDataInicio, setNovaDataInicio] = useState<Date | undefined>();
-  const [gruposAbertos, setGruposAbertos] = useState<Record<string, boolean>>({});
+
+  // Historico edit
+  const [editingHistoricoId, setEditingHistoricoId] = useState<string | null>(null);
+  const [historicoValue, setHistoricoValue] = useState("");
+
+  // Mobile sheets
+  const [leftSheetOpen, setLeftSheetOpen] = useState(false);
+  const [rightSheetOpen, setRightSheetOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 100);
@@ -110,7 +132,7 @@ export default function ContasPagarMinimalista() {
         .from('contas_pagar')
         .select('*')
         .order('data_vencimento', { ascending: true });
-      
+
       if (error) throw error;
 
       const fornecedorIds = [...new Set((data || []).map(c => c.fornecedor_id).filter(Boolean))];
@@ -142,6 +164,86 @@ export default function ContasPagarMinimalista() {
     }
   });
 
+  const hoje = new Date();
+
+  const getComputedStatus = useCallback((conta: ContaPagar) => {
+    if (conta.status === 'pago') return 'pago';
+    if (conta.status === 'cancelado') return 'cancelado';
+    const dataVenc = parseISO(conta.data_vencimento);
+    if (isBefore(dataVenc, hoje) && !isToday(dataVenc)) return 'vencido';
+    return 'pendente';
+  }, [hoje]);
+
+  const contasFiltradas = useMemo(() => {
+    return contas.filter(conta => {
+      if (searchText) {
+        const desc = (conta.descricao || '').toLowerCase();
+        const forn = (conta.fornecedor?.nome || conta.fornecedor_nome || '').toLowerCase();
+        const term = searchText.toLowerCase();
+        if (!desc.includes(term) && !forn.includes(term)) return false;
+      }
+
+      if (dateRange.from) {
+        const venc = parseISO(conta.data_vencimento);
+        if (venc < startOfDay(dateRange.from)) return false;
+      }
+      if (dateRange.to) {
+        const venc = parseISO(conta.data_vencimento);
+        if (venc > endOfDay(dateRange.to)) return false;
+      }
+
+      if (filtroStatus.length > 0) {
+        const computed = getComputedStatus(conta);
+        if (!filtroStatus.includes(computed)) return false;
+      }
+
+      if (filtroCategoria.length > 0) {
+        if (!filtroCategoria.includes(conta.categoria)) return false;
+      }
+
+      if (filtroMetodo.length > 0) {
+        if (!conta.metodo_pagamento || !filtroMetodo.includes(conta.metodo_pagamento)) return false;
+      }
+
+      if (filtroValorMin) {
+        const min = parseFloat(filtroValorMin.replace(',', '.'));
+        if (!isNaN(min) && conta.valor_parcela < min) return false;
+      }
+      if (filtroValorMax) {
+        const max = parseFloat(filtroValorMax.replace(',', '.'));
+        if (!isNaN(max) && conta.valor_parcela > max) return false;
+      }
+
+      return true;
+    });
+  }, [contas, searchText, dateRange, filtroStatus, filtroCategoria, filtroMetodo, filtroValorMin, filtroValorMax, getComputedStatus]);
+
+  const sortedContas = useMemo(() => {
+    return [...contasFiltradas].sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime());
+  }, [contasFiltradas]);
+
+  const summaryData = useMemo(() => {
+    const source = selectedIds.size > 0
+      ? contasFiltradas.filter(c => selectedIds.has(c.id))
+      : contasFiltradas;
+    return {
+      count: source.length,
+      total: source.reduce((s, c) => s + c.valor_parcela, 0),
+      isSelection: selectedIds.size > 0,
+    };
+  }, [contasFiltradas, selectedIds]);
+
+  const formatCurrency = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+
+  const getStatusBadge = (conta: ContaPagar) => {
+    const status = getComputedStatus(conta);
+    if (status === 'pago') return <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Pago</Badge>;
+    if (status === 'cancelado') return <Badge className="bg-zinc-500/20 text-zinc-400 border-zinc-500/30">Cancelado</Badge>;
+    if (status === 'vencido') return <Badge className="bg-rose-500/20 text-rose-400 border-rose-500/30">Vencido</Badge>;
+    return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Pendente</Badge>;
+  };
+
+  // Mutations
   const marcarPagoMutation = useMutation({
     mutationFn: async ({ id, valorPago, dataPagamento }: { id: string; valorPago: number; dataPagamento: string }) => {
       const { error } = await supabase
@@ -175,116 +277,34 @@ export default function ContasPagarMinimalista() {
     }
   });
 
-  const alterarDatasMutation = useMutation({
-    mutationFn: async ({ contas, novaDataInicio }: { contas: ContaPagar[]; novaDataInicio: Date }) => {
-      const parcelasOrdenadas = [...contas].sort((a, b) => a.numero_parcela - b.numero_parcela);
-      for (let i = 0; i < parcelasOrdenadas.length; i++) {
-        const novaData = addDays(novaDataInicio, i * 30);
-        const { error } = await supabase
-          .from('contas_pagar')
-          .update({ data_vencimento: format(novaData, 'yyyy-MM-dd') })
-          .eq('id', parcelasOrdenadas[i].id);
-        if (error) throw error;
-      }
+  const updateVencimentoMutation = useMutation({
+    mutationFn: async ({ id, data_vencimento }: { id: string; data_vencimento: string }) => {
+      const { error } = await supabase
+        .from('contas_pagar')
+        .update({ data_vencimento })
+        .eq('id', id);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contas-pagar-min'] });
-      toast({ title: "Datas atualizadas!" });
-      setDialogAlterarDataOpen(false);
-      setGrupoParaAlterar(null);
+      toast({ title: "Vencimento atualizado" });
     }
   });
 
-  const hoje = new Date();
-
-  const contasFiltradas = useMemo(() => {
-    return contas.filter(conta => {
-      const matchStatus = filtroStatus === "todos" || 
-        (filtroStatus === "pendente" && conta.status === "pendente") ||
-        (filtroStatus === "pago" && conta.status === "pago") ||
-        (filtroStatus === "vencido" && conta.status === "pendente" && isBefore(parseISO(conta.data_vencimento), hoje) && !isToday(parseISO(conta.data_vencimento))) ||
-        (filtroStatus === "cancelado" && conta.status === "cancelado");
-      
-      const matchCategoria = filtroCategoria === "todos" || conta.categoria === filtroCategoria;
-      const matchBusca = !busca || 
-        conta.descricao?.toLowerCase().includes(busca.toLowerCase()) ||
-        conta.fornecedor_nome?.toLowerCase().includes(busca.toLowerCase()) ||
-        conta.fornecedor?.nome?.toLowerCase().includes(busca.toLowerCase());
-      
-      const dataVencimento = parseISO(conta.data_vencimento);
-      const matchDataInicio = !dataInicio || !isBefore(dataVencimento, dataInicio);
-      const matchDataFim = !dataFim || !isAfter(dataVencimento, dataFim);
-      
-      return matchStatus && matchCategoria && matchBusca && matchDataInicio && matchDataFim;
-    });
-  }, [contas, filtroStatus, filtroCategoria, busca, dataInicio, dataFim, hoje]);
-
-  const gruposPorId = useMemo((): GrupoConta[] => {
-    return Object.values(
-      contasFiltradas.reduce((acc, conta) => {
-        const key = conta.grupo_id;
-        if (!acc[key]) {
-          acc[key] = {
-            grupo_id: key,
-            descricao: conta.descricao,
-            fornecedor_nome: conta.fornecedor?.nome || conta.fornecedor_nome || 'Sem fornecedor',
-            categoria: conta.categoria,
-            contas: [],
-            total_parcelas: 0,
-            parcelas_pagas: 0,
-            total_a_pagar: 0,
-            total_pago: 0,
-            tem_vencido: false
-          };
-        }
-        acc[key].contas.push(conta);
-        acc[key].total_parcelas++;
-        if (conta.status === 'pago') {
-          acc[key].parcelas_pagas++;
-          acc[key].total_pago += conta.valor_pago || conta.valor_parcela;
-        } else if (conta.status === 'pendente') {
-          acc[key].total_a_pagar += conta.valor_parcela;
-          if (isBefore(parseISO(conta.data_vencimento), hoje) && !isToday(parseISO(conta.data_vencimento))) {
-            acc[key].tem_vencido = true;
-          }
-        }
-        return acc;
-      }, {} as Record<string, GrupoConta>)
-    );
-  }, [contasFiltradas, hoje]);
-
-  const resumo = useMemo(() => {
-    const inicioSemana = startOfWeek(hoje, { weekStartsOn: 1 });
-    const fimSemana = endOfWeek(hoje, { weekStartsOn: 1 });
-    
-    return contas.reduce((acc, c) => {
-      if (c.status === 'pendente') {
-        acc.total += c.valor_parcela;
-        const dataVenc = parseISO(c.data_vencimento);
-        if (isBefore(dataVenc, hoje) && !isToday(dataVenc)) acc.vencido += c.valor_parcela;
-        if (isToday(dataVenc)) acc.hoje += c.valor_parcela;
-        if (!isBefore(dataVenc, inicioSemana) && !isAfter(dataVenc, fimSemana)) {
-          acc.semana += c.valor_parcela;
-        }
-      }
-      return acc;
-    }, { total: 0, vencido: 0, hoje: 0, semana: 0 });
-  }, [contas, hoje]);
-
-  const formatCurrency = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
-
-  const getStatusBadge = (conta: ContaPagar) => {
-    const dataVenc = parseISO(conta.data_vencimento);
-    if (conta.status === 'pago') return <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Pago</Badge>;
-    if (conta.status === 'cancelado') return <Badge className="bg-zinc-500/20 text-zinc-400 border-zinc-500/30">Cancelado</Badge>;
-    if (isBefore(dataVenc, hoje) && !isToday(dataVenc)) return <Badge className="bg-rose-500/20 text-rose-400 border-rose-500/30">Vencido</Badge>;
-    if (isToday(dataVenc)) return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Vence Hoje</Badge>;
-    return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Pendente</Badge>;
-  };
-
-  const toggleGrupo = (id: string) => {
-    setGruposAbertos(prev => ({ ...prev, [id]: !prev[id] }));
-  };
+  const updateObservacoesMutation = useMutation({
+    mutationFn: async ({ id, observacoes }: { id: string; observacoes: string }) => {
+      const { error } = await supabase
+        .from('contas_pagar')
+        .update({ observacoes })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contas-pagar-min'] });
+      toast({ title: "Histórico atualizado" });
+      setEditingHistoricoId(null);
+    }
+  });
 
   const handleMarcarPago = (conta: ContaPagar) => {
     setContaSelecionada(conta);
@@ -293,30 +313,189 @@ export default function ContasPagarMinimalista() {
     setDialogPagarOpen(true);
   };
 
-  const handleAlterarDatas = (grupo: GrupoConta) => {
-    setGrupoParaAlterar(grupo);
-    setNovaDataInicio(undefined);
-    setDialogAlterarDataOpen(true);
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   };
 
-  const cards = [
-    { label: "Total a Pagar", value: formatCurrency(resumo.total), icon: BadgeDollarSign, color: "from-purple-500 to-purple-700" },
-    { label: "Vencido", value: formatCurrency(resumo.vencido), icon: AlertTriangle, color: "from-rose-500 to-rose-700" },
-    { label: "Vence Hoje", value: formatCurrency(resumo.hoje), icon: Clock, color: "from-amber-500 to-amber-700" },
-    { label: "Esta Semana", value: formatCurrency(resumo.semana), icon: CalendarIcon, color: "from-blue-500 to-blue-700" },
-  ];
+  const toggleSelectAll = () => {
+    if (selectedIds.size === sortedContas.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sortedContas.map(c => c.id)));
+    }
+  };
+
+  const toggleFilterStatus = (val: string) => {
+    setFiltroStatus(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]);
+  };
+
+  const toggleFilterCategoria = (val: string) => {
+    setFiltroCategoria(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]);
+  };
+
+  const toggleFilterMetodo = (val: string) => {
+    setFiltroMetodo(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]);
+  };
+
+  const clearFilters = () => {
+    setFiltroStatus([]);
+    setFiltroCategoria([]);
+    setFiltroMetodo([]);
+    setFiltroValorMin("");
+    setFiltroValorMax("");
+  };
+
+  const hasFilters = filtroStatus.length > 0 || filtroCategoria.length > 0 || filtroMetodo.length > 0 || filtroValorMin || filtroValorMax;
+
+  const handleExport = () => {
+    const source = selectedIds.size > 0
+      ? sortedContas.filter(c => selectedIds.has(c.id))
+      : sortedContas;
+    const rows = source.map(c => ({
+      Descrição: c.descricao,
+      Fornecedor: c.fornecedor?.nome || c.fornecedor_nome || '—',
+      Categoria: CATEGORIAS[c.categoria] || c.categoria,
+      "Forma Pagamento": c.metodo_pagamento || '—',
+      Vencimento: format(parseISO(c.data_vencimento), 'dd/MM/yyyy'),
+      Valor: c.valor_parcela,
+      Status: getComputedStatus(c),
+      Histórico: c.observacoes || '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Contas a Pagar");
+    XLSX.writeFile(wb, "contas-a-pagar.xlsx");
+  };
+
+  // Filter sidebar content
+  const filterContent = (
+    <div className="space-y-6">
+      {/* Status */}
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Status</p>
+        <div className="space-y-2">
+          {STATUS_OPTIONS.map(opt => (
+            <label key={opt.value} className="flex items-center gap-2 cursor-pointer text-sm text-white/80 hover:text-white transition-colors">
+              <Checkbox
+                checked={filtroStatus.includes(opt.value)}
+                onCheckedChange={() => toggleFilterStatus(opt.value)}
+                className="border-white/20 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+              />
+              {opt.label}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Categoria */}
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Categoria</p>
+        <div className="space-y-2">
+          {CATEGORIA_OPTIONS.map(opt => (
+            <label key={opt.value} className="flex items-center gap-2 cursor-pointer text-sm text-white/80 hover:text-white transition-colors">
+              <Checkbox
+                checked={filtroCategoria.includes(opt.value)}
+                onCheckedChange={() => toggleFilterCategoria(opt.value)}
+                className="border-white/20 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+              />
+              {opt.label}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Forma de pagamento */}
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Forma de Pagamento</p>
+        <div className="space-y-2">
+          {METODO_OPTIONS.map(opt => (
+            <label key={opt.value} className="flex items-center gap-2 cursor-pointer text-sm text-white/80 hover:text-white transition-colors">
+              <Checkbox
+                checked={filtroMetodo.includes(opt.value)}
+                onCheckedChange={() => toggleFilterMetodo(opt.value)}
+                className="border-white/20 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+              />
+              {opt.label}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Intervalo de valor */}
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Intervalo de Valor</p>
+        <div className="space-y-2">
+          <Input
+            placeholder="Mínimo"
+            value={filtroValorMin}
+            onChange={e => setFiltroValorMin(e.target.value)}
+            className="bg-white/5 border-white/10 text-white placeholder:text-white/30 h-9"
+          />
+          <Input
+            placeholder="Máximo"
+            value={filtroValorMax}
+            onChange={e => setFiltroValorMax(e.target.value)}
+            className="bg-white/5 border-white/10 text-white placeholder:text-white/30 h-9"
+          />
+        </div>
+      </div>
+
+      {hasFilters && (
+        <Button variant="ghost" size="sm" className="w-full text-white/50 hover:text-white hover:bg-white/5" onClick={clearFilters}>
+          Limpar Filtros
+        </Button>
+      )}
+    </div>
+  );
+
+  // Right sidebar content
+  const rightContent = (
+    <div className="space-y-6">
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Ações</p>
+        <Button
+          size="sm"
+          className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+          onClick={handleExport}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          {selectedIds.size > 0 ? "Baixar Selecionados" : "Baixar Todos"}
+        </Button>
+      </div>
+
+      <div>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">
+          {summaryData.isSelection ? "Selecionados" : "Total Filtrado"}
+        </p>
+        <div className="space-y-3">
+          <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+            <p className="text-xs text-white/50">Quantidade</p>
+            <p className="text-lg font-bold text-white">{summaryData.count}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+            <p className="text-xs text-white/50">Valor Total</p>
+            <p className="text-lg font-bold text-rose-400">{formatCurrency(summaryData.total)}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <AnimatedBreadcrumb 
+      <AnimatedBreadcrumb
         items={[
           { label: "Home", path: "/home" },
           { label: "Administrativo", path: "/administrativo" },
           { label: "Financeiro", path: "/administrativo/financeiro" },
           { label: "Caixa", path: "/administrativo/financeiro/caixa" },
           { label: "Contas a Pagar" }
-        ]} 
-        mounted={mounted} 
+        ]}
+        mounted={mounted}
       />
       <FloatingProfileMenu mounted={mounted} />
 
@@ -330,10 +509,10 @@ export default function ContasPagarMinimalista() {
         </div>
       </button>
 
-      <div className="container mx-auto px-4 py-20 space-y-6">
+      <div className="container mx-auto px-4 py-20">
         {/* Header */}
-        <div 
-          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+        <div
+          className="flex items-center justify-between gap-3 mb-6"
           style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 200ms' }}
         >
           <div className="flex items-center gap-3">
@@ -345,204 +524,285 @@ export default function ContasPagarMinimalista() {
               <p className="text-white/60 text-sm">Gestão de pagamentos e despesas</p>
             </div>
           </div>
-          <Button 
-            onClick={() => navigate('/dashboard/administrativo/financeiro/contas-a-pagar/nova')}
-            className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-400 hover:to-purple-600"
-          >
-            <Plus className="h-4 w-4 mr-2" /> Nova Conta
-          </Button>
+
+          {/* Mobile buttons for sheets */}
+          <div className="flex gap-2 lg:hidden">
+            <Sheet open={leftSheetOpen} onOpenChange={setLeftSheetOpen}>
+              <SheetTrigger asChild>
+                <Button size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+                  <Filter className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="bg-zinc-950 border-white/10 w-[280px]">
+                <SheetTitle className="text-white mb-4">Filtros</SheetTitle>
+                {filterContent}
+              </SheetContent>
+            </Sheet>
+            <Sheet open={rightSheetOpen} onOpenChange={setRightSheetOpen}>
+              <SheetTrigger asChild>
+                <Button size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+                  <PanelRight className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="bg-zinc-950 border-white/10 w-[280px]">
+                <SheetTitle className="text-white mb-4">Resumo</SheetTitle>
+                {rightContent}
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
 
-        {/* Cards resumo */}
-        <div 
-          className="grid grid-cols-2 md:grid-cols-4 gap-3"
+        {/* 3-panel layout */}
+        <div
+          className="flex gap-4"
           style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 300ms' }}
         >
-          {cards.map((c) => {
-            const Icon = c.icon;
-            return (
-              <Card key={c.label} className="bg-white/5 border-white/10">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg bg-gradient-to-br ${c.color}`}>
-                      <Icon className="h-4 w-4 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-white/50 uppercase tracking-wider">{c.label}</p>
-                      <p className="text-sm font-semibold text-white">{c.value}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+          {/* Left sidebar - desktop only */}
+          <aside className="hidden lg:block w-[250px] shrink-0">
+            <div className="sticky top-24 p-4 rounded-xl bg-white/5 border border-white/10">
+              <p className="text-sm font-semibold text-white mb-4">Filtros</p>
+              {filterContent}
+            </div>
+          </aside>
 
-        {/* Filtros */}
-        <Card 
-          className="bg-white/5 border-white/10"
-          style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 400ms' }}
-        >
-          <CardContent className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+          {/* Main table */}
+          <main className="flex-1 min-w-0">
+            {/* Search + Date Range bar */}
+            <div className="flex items-center gap-2 mb-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                 <Input
-                  placeholder="Buscar descrição ou fornecedor..."
-                  className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
+                  placeholder="Buscar por descrição ou fornecedor..."
+                  value={searchText}
+                  onChange={e => setSearchText(e.target.value)}
+                  className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 h-9"
                 />
               </div>
-              <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="pendente">Pendente</SelectItem>
-                  <SelectItem value="vencido">Vencido</SelectItem>
-                  <SelectItem value="pago">Pago</SelectItem>
-                  <SelectItem value="cancelado">Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filtroCategoria} onValueChange={setFiltroCategoria}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todas</SelectItem>
-                  {Object.entries(CATEGORIAS).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="flex-1 bg-white/5 border-white/10 text-white hover:bg-white/10">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dataInicio ? format(dataInicio, 'dd/MM') : 'Início'}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-9 shrink-0 bg-white/5 border-white/10 text-white hover:bg-white/10",
+                      (dateRange.from || dateRange.to) && "border-purple-500/50 text-purple-300"
+                    )}
+                  >
+                    <CalendarIcon className="h-4 w-4 mr-2" />
+                    {dateRange.from && dateRange.to
+                      ? `${format(dateRange.from, 'dd/MM/yy')} - ${format(dateRange.to, 'dd/MM/yy')}`
+                      : dateRange.from
+                        ? `${format(dateRange.from, 'dd/MM/yy')} - ...`
+                        : "Datas"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-4" align="end">
+                  <div className="flex gap-4">
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">Data Inicial</p>
+                      <Calendar
+                        mode="single"
+                        selected={dateRange.from}
+                        onSelect={(d) => setDateRange(prev => ({ ...prev, from: d }))}
+                        locale={ptBR}
+                        className="p-3 pointer-events-auto"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">Data Final</p>
+                      <Calendar
+                        mode="single"
+                        selected={dateRange.to}
+                        onSelect={(d) => setDateRange(prev => ({ ...prev, to: d }))}
+                        locale={ptBR}
+                        className="p-3 pointer-events-auto"
+                      />
+                    </div>
+                  </div>
+                  {(dateRange.from || dateRange.to) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full mt-2 text-muted-foreground"
+                      onClick={() => setDateRange({ from: undefined, to: undefined })}
+                    >
+                      <X className="h-3 w-3 mr-1" /> Limpar datas
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={dataInicio} onSelect={setDataInicio} /></PopoverContent>
-                </Popover>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="flex-1 bg-white/5 border-white/10 text-white hover:bg-white/10">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dataFim ? format(dataFim, 'dd/MM') : 'Fim'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={dataFim} onSelect={setDataFim} /></PopoverContent>
-                </Popover>
-              </div>
+                  )}
+                </PopoverContent>
+              </Popover>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Lista agrupada */}
-        <Card 
-          className="bg-white/5 border-white/10"
-          style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 500ms' }}
-        >
-          <CardContent className="p-4">
-            {isLoading ? (
-              <div className="flex justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
-              </div>
-            ) : gruposPorId.length === 0 ? (
-              <div className="text-center py-12 text-white/50">Nenhuma conta encontrada</div>
-            ) : (
-              <div className="space-y-2">
-                {gruposPorId.map((grupo) => (
-                  <Collapsible key={grupo.grupo_id} open={gruposAbertos[grupo.grupo_id]} onOpenChange={() => toggleGrupo(grupo.grupo_id)}>
-                    <CollapsibleTrigger asChild>
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
-                        <div className="flex items-center gap-3">
-                          {gruposAbertos[grupo.grupo_id] ? <ChevronDown className="h-4 w-4 text-white/60" /> : <ChevronRight className="h-4 w-4 text-white/60" />}
-                          <Folder className="h-4 w-4 text-purple-400" />
-                          <div>
-                            <p className="font-medium text-white">{grupo.descricao}</p>
-                            <div className="flex items-center gap-2">
-                              <p className="text-xs text-white/50">{grupo.fornecedor_nome}</p>
-                              <Badge className={CATEGORIA_COLORS[grupo.categoria] || CATEGORIA_COLORS.outros}>
-                                {CATEGORIAS[grupo.categoria] || grupo.categoria}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          {grupo.tem_vencido && <AlertTriangle className="h-4 w-4 text-rose-400" />}
-                          <div className="text-right">
-                            <p className="text-sm font-semibold text-rose-400">{formatCurrency(grupo.total_a_pagar)}</p>
-                            <p className="text-xs text-white/50">{grupo.parcelas_pagas}/{grupo.total_parcelas} pagas</p>
-                          </div>
-                        </div>
-                      </div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <div className="mt-2 ml-6 space-y-2">
-                        <div className="flex justify-end mb-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="bg-white/5 border-white/10 text-white hover:bg-white/10"
-                            onClick={() => handleAlterarDatas(grupo)}
-                          >
-                            <CalendarIcon className="h-3 w-3 mr-1" /> Alterar Datas
-                          </Button>
-                        </div>
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="border-white/10">
-                              <TableHead className="text-white/60">Parcela</TableHead>
-                              <TableHead className="text-white/60">Vencimento</TableHead>
-                              <TableHead className="text-white/60">Valor</TableHead>
-                              <TableHead className="text-white/60">Método</TableHead>
-                              <TableHead className="text-white/60">Status</TableHead>
-                              <TableHead className="text-white/60 text-right">Ações</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {grupo.contas.sort((a, b) => a.numero_parcela - b.numero_parcela).map((conta) => (
-                              <TableRow key={conta.id} className="border-white/10">
-                                <TableCell className="text-white">{conta.numero_parcela}/{conta.total_parcelas}</TableCell>
-                                <TableCell className="text-white">{format(parseISO(conta.data_vencimento), 'dd/MM/yyyy')}</TableCell>
-                                <TableCell className="text-white font-medium">{formatCurrency(conta.valor_parcela)}</TableCell>
-                                <TableCell className="text-white/70">{conta.metodo_pagamento || '-'}</TableCell>
-                                <TableCell>{getStatusBadge(conta)}</TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex justify-end gap-1">
-                                    {conta.nota_fiscal_url && (
-                                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-400 hover:bg-blue-500/20" asChild>
-                                        <a href={conta.nota_fiscal_url} target="_blank" rel="noopener noreferrer"><FileText className="h-4 w-4" /></a>
-                                      </Button>
-                                    )}
-                                    {conta.status === 'pendente' && (
-                                      <>
-                                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-400 hover:bg-emerald-500/20" onClick={() => handleMarcarPago(conta)}>
-                                          <Check className="h-4 w-4" />
-                                        </Button>
-                                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-400 hover:bg-rose-500/20" onClick={() => cancelarMutation.mutate(conta.id)}>
-                                          <X className="h-4 w-4" />
-                                        </Button>
-                                      </>
-                                    )}
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            <div className="rounded-xl bg-white/5 border border-white/10 overflow-hidden">
+              {isLoading ? (
+                <div className="flex justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
+                </div>
+              ) : sortedContas.length === 0 ? (
+                <div className="text-center py-12 text-white/50">Nenhuma conta encontrada</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10">
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={selectedIds.size === sortedContas.length && sortedContas.length > 0}
+                          onCheckedChange={toggleSelectAll}
+                          className="border-white/20 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                        />
+                      </TableHead>
+                      <TableHead className="text-white/60">Descrição</TableHead>
+                      <TableHead className="text-white/60">Fornecedor</TableHead>
+                      <TableHead className="text-white/60">Histórico</TableHead>
+                      <TableHead className="text-white/60">Categoria</TableHead>
+                      <TableHead className="text-white/60">Vencimento</TableHead>
+                      <TableHead className="text-white/60">Valor</TableHead>
+                      <TableHead className="text-white/60">Status</TableHead>
+                      <TableHead className="text-white/60 w-10"></TableHead>
+                      <TableHead className="text-white/60 w-10"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedContas.map((conta) => {
+                      const attachmentUrl = conta.nota_fiscal_url || conta.comprovante_url;
+                      return (
+                        <TableRow key={conta.id} className={cn("border-white/10", selectedIds.has(conta.id) && "bg-purple-500/10")}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedIds.has(conta.id)}
+                              onCheckedChange={() => toggleSelect(conta.id)}
+                              className="border-white/20 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                            />
+                          </TableCell>
+                          <TableCell className="text-sm text-white font-medium">
+                            {conta.descricao}
+                            {conta.total_parcelas > 1 && (
+                              <span className="text-white/40 ml-1 text-xs">({conta.numero_parcela}/{conta.total_parcelas})</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm text-white/70">
+                            {conta.fornecedor?.nome || conta.fornecedor_nome || '—'}
+                          </TableCell>
+                          <TableCell>
+                            <Popover
+                              open={editingHistoricoId === conta.id}
+                              onOpenChange={(open) => {
+                                if (open) {
+                                  setEditingHistoricoId(conta.id);
+                                  setHistoricoValue(conta.observacoes || "");
+                                } else {
+                                  setEditingHistoricoId(null);
+                                }
+                              }}
+                            >
+                              <PopoverTrigger asChild>
+                                <button className="text-left text-sm text-white/70 hover:text-white truncate max-w-[180px] block transition-colors">
+                                  {conta.observacoes || <span className="text-white/30 italic">Adicionar...</span>}
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-64 p-3" align="start">
+                                <div className="space-y-2">
+                                  <Label className="text-xs">Histórico</Label>
+                                  <Input
+                                    value={historicoValue}
+                                    onChange={e => setHistoricoValue(e.target.value)}
+                                    placeholder="Digite aqui..."
+                                    className="h-8 text-sm"
+                                    autoFocus
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter') {
+                                        updateObservacoesMutation.mutate({ id: conta.id, observacoes: historicoValue });
+                                      }
+                                    }}
+                                  />
+                                  <Button
+                                    size="sm"
+                                    className="w-full h-7 text-xs"
+                                    onClick={() => updateObservacoesMutation.mutate({ id: conta.id, observacoes: historicoValue })}
+                                  >
+                                    Salvar
+                                  </Button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={CATEGORIA_COLORS[conta.categoria] || CATEGORIA_COLORS.outros}>
+                              {CATEGORIAS[conta.categoria] || conta.categoria}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <span className="text-white hover:text-purple-300 cursor-pointer transition-colors">
+                                  {format(parseISO(conta.data_vencimento), 'dd/MM/yyyy')}
+                                </span>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={parseISO(conta.data_vencimento + 'T12:00:00')}
+                                  onSelect={(date) => {
+                                    if (date) {
+                                      const formatted = format(date, 'yyyy-MM-dd') + 'T12:00:00.000Z';
+                                      updateVencimentoMutation.mutate({ id: conta.id, data_vencimento: formatted });
+                                    }
+                                  }}
+                                  locale={ptBR}
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </TableCell>
+                          <TableCell className="text-white font-medium text-sm">{formatCurrency(conta.valor_parcela)}</TableCell>
+                          <TableCell>{getStatusBadge(conta)}</TableCell>
+                          <TableCell>
+                            {attachmentUrl ? (
+                              <a href={attachmentUrl} target="_blank" rel="noopener noreferrer">
+                                <Paperclip className="h-4 w-4 text-purple-400 hover:text-purple-300 transition-colors" />
+                              </a>
+                            ) : (
+                              <Paperclip className="h-4 w-4 text-white/15" />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white/50 hover:text-white hover:bg-white/10">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {(conta.status === 'pendente') && (
+                                  <DropdownMenuItem onClick={() => handleMarcarPago(conta)}>
+                                    <Check className="h-4 w-4 mr-2 text-emerald-500" /> Marcar como Pago
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem
+                                  className="text-rose-500 focus:text-rose-500"
+                                  onClick={() => cancelarMutation.mutate(conta.id)}
+                                >
+                                  <X className="h-4 w-4 mr-2" /> Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          </main>
+
+          {/* Right sidebar - desktop only */}
+          <aside className="hidden lg:block w-[250px] shrink-0">
+            <div className="sticky top-24 p-4 rounded-xl bg-white/5 border border-white/10">
+              {rightContent}
+            </div>
+          </aside>
+        </div>
       </div>
 
       {/* Dialog Marcar Pago */}
@@ -563,7 +823,7 @@ export default function ContasPagarMinimalista() {
                     {dataPagamento ? format(dataPagamento, 'dd/MM/yyyy') : 'Selecione'}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={dataPagamento} onSelect={setDataPagamento} /></PopoverContent>
+                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={dataPagamento} onSelect={setDataPagamento} className="pointer-events-auto" /></PopoverContent>
               </Popover>
             </div>
           </div>
@@ -576,33 +836,6 @@ export default function ContasPagarMinimalista() {
                   valorPago: parseFloat(valorPago),
                   dataPagamento: format(dataPagamento, 'yyyy-MM-dd')
                 });
-              }
-            }}>Confirmar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog Alterar Datas */}
-      <Dialog open={dialogAlterarDataOpen} onOpenChange={setDialogAlterarDataOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Alterar Datas das Parcelas</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Selecione a nova data para a primeira parcela. As demais serão ajustadas automaticamente (intervalo de 30 dias).</p>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {novaDataInicio ? format(novaDataInicio, 'dd/MM/yyyy') : 'Selecione a nova data'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={novaDataInicio} onSelect={setNovaDataInicio} /></PopoverContent>
-            </Popover>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogAlterarDataOpen(false)}>Cancelar</Button>
-            <Button disabled={!novaDataInicio || !grupoParaAlterar} onClick={() => {
-              if (novaDataInicio && grupoParaAlterar) {
-                alterarDatasMutation.mutate({ contas: grupoParaAlterar.contas.filter(c => c.status === 'pendente'), novaDataInicio });
               }
             }}>Confirmar</Button>
           </DialogFooter>
