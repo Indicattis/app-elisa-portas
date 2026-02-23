@@ -1,0 +1,1 @@
+DELETE FROM contas_receber WHERE venda_id NOT IN (SELECT id FROM vendas);
