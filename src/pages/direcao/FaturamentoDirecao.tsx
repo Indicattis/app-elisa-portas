@@ -81,8 +81,6 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'cidade', label: 'Cidade', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
   { id: 'desconto_acrescimo', label: 'Desc./Acrés.', defaultVisible: true },
-  { id: 'data_pgto_1', label: 'Data Pgto 1', defaultVisible: true },
-  { id: 'data_pgto_2', label: 'Data Pgto 2', defaultVisible: true },
   { id: 'valor', label: 'Valor', defaultVisible: true },
   { id: 'lucro', label: 'Lucro', defaultVisible: true },
   { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
@@ -886,6 +884,22 @@ export default function FaturamentoDirecao() {
               <p className="text-sm font-semibold text-white">
                 {selectedVenda.data_prevista_entrega 
                   ? format(new Date(selectedVenda.data_prevista_entrega), 'dd/MM/yyyy', { locale: ptBR })
+                  : '-'}
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+              <p className="text-xs text-white/50">Data Pgto 1</p>
+              <p className="text-sm font-semibold text-white">
+                {selectedVenda.data_pagamento_1 
+                  ? format(new Date(selectedVenda.data_pagamento_1 + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })
+                  : '-'}
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+              <p className="text-xs text-white/50">Data Pgto 2</p>
+              <p className="text-sm font-semibold text-white">
+                {selectedVenda.data_pagamento_2 
+                  ? format(new Date(selectedVenda.data_pagamento_2 + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })
                   : '-'}
               </p>
             </div>
