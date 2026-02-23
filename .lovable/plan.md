@@ -1,59 +1,57 @@
 
 
-# Permitir Texto no Campo "Valor a Receber" na Gestao de Fabrica
+# Texto no Campo "Valor a Receber" para Neo Instalacoes e Correcoes
 
 ## Resumo
 
-Atualmente o campo "Valor a Receber" aceita apenas numeros. A alteracao permitira que o usuario digite texto livre (ex: "2x R$500", "Entrada + parcela", notas) alem de valores numericos.
+Permitir que o campo "Valor a Receber" nos cards de Neo Instalacoes e Neo Correcoes na gestao de fabrica aceite texto livre (igual ao que foi feito para pedidos), com Popover de edicao inline.
 
-## Abordagem
-
-Adicionar uma nova coluna `valor_a_receber_texto` (text) na tabela `vendas` para armazenar o texto livre. O campo numerico `valor_a_receber` sera mantido para compatibilidade com calculos financeiros existentes (contas a receber, cobrancas, etc). A exibicao priorizara o texto quando existir.
-
-## 1. Migration - Nova coluna na tabela vendas
+## 1. Migration - Nova coluna nas tabelas neo
 
 ```sql
-ALTER TABLE public.vendas 
-ADD COLUMN valor_a_receber_texto TEXT DEFAULT NULL;
+ALTER TABLE public.neo_instalacoes ADD COLUMN valor_a_receber_texto TEXT DEFAULT NULL;
+ALTER TABLE public.neo_correcoes ADD COLUMN valor_a_receber_texto TEXT DEFAULT NULL;
 ```
 
-## 2. Alterar o Popover de edicao no PedidoCard
+## 2. Atualizar tipos TypeScript
 
-**Arquivo:** `src/components/pedidos/PedidoCard.tsx`
+**Arquivos:** `src/types/neoInstalacao.ts` e `src/types/neoCorrecao.ts`
 
-- Mudar o input de `type="number"` para `type="text"` com placeholder "Ex: 1.500,00 ou texto"
-- No `handleAbrirPopoverValor`: carregar `valor_a_receber_texto` se existir, senao o valor numerico
-- No `handleSalvarValorAReceber`:
-  - Tentar parsear como numero (removendo pontos de milhar, trocando virgula por ponto)
-  - Se for numero valido: salvar em `valor_a_receber` (number) e em `valor_a_receber_texto` (o texto original)
-  - Se nao for numero: salvar em `valor_a_receber_texto` (text) e setar `valor_a_receber` como `null`
+Adicionar `valor_a_receber_texto: string | null` em ambas as interfaces `NeoInstalacao` e `NeoCorrecao`.
 
-## 3. Alterar a exibicao do valor no PedidoCard
+## 3. Adicionar Popover de edicao no NeoInstalacaoCardGestao
 
-**Arquivo:** `src/components/pedidos/PedidoCard.tsx`
+**Arquivo:** `src/components/pedidos/NeoInstalacaoCardGestao.tsx`
 
-- No grid view (linha ~1559) e mobile view (linha ~2207):
-  - Se `valor_a_receber_texto` existir, exibir o texto diretamente (sem formatCurrency)
-  - Se nao, manter comportamento atual com `formatCurrency(valor_a_receber)`
-- Na exibicao read-only (faturamento, linhas ~1536 e ~2189): mesma logica - priorizar texto
+- Adicionar prop `onUpdateValor?: (id: string, data: { valor_a_receber: number | null; valor_a_receber_texto: string }) => Promise<void>`
+- Na coluna 7 (Valor a Receber), envolver o conteudo em um Popover com input de texto
+- Logica de parse identica ao PedidoCard: tenta parsear como numero; se for numero salva em ambos os campos; se for texto salva so no texto e seta numerico como null
+- Exibicao: priorizar `valor_a_receber_texto` quando existir
 
-## 4. Incluir campo na query de pedidos
+## 4. Adicionar Popover de edicao no NeoCorrecaoCardGestao
 
-**Arquivo:** `src/hooks/usePedidosEtapas.ts`
+**Arquivo:** `src/components/pedidos/NeoCorrecaoCardGestao.tsx`
 
-- Adicionar `valor_a_receber_texto` no select de vendas
+Mesma abordagem do item 3, com prop `onUpdateValor` e Popover inline.
 
-## 5. Incluir campo no faturamento
+## 5. Passar handler de update na GestaoFabricaDirecao
 
-**Arquivo:** `src/pages/FaturamentoEdit.tsx`
+**Arquivo:** `src/pages/direcao/GestaoFabricaDirecao.tsx`
 
-- O campo de valor a receber no faturamento continuara aceitando apenas numeros (manter `type="number"`), pois e usado para calculo financeiro
+- Importar `supabase` para fazer update direto nos campos `valor_a_receber` e `valor_a_receber_texto` das tabelas `neo_instalacoes` e `neo_correcoes`
+- Criar funcoes `handleUpdateValorNeoInstalacao` e `handleUpdateValorNeoCorrecao`
+- Passar como prop `onUpdateValor` para os componentes `NeoInstalacaoCardGestao`, `NeoCorrecaoCardGestao`, e tambem para os `NeoInstalacoesDraggableList` / `NeoCorrecoesDraggableList`
+
+## 6. Propagar prop nos DraggableLists
+
+**Arquivo:** `src/components/pedidos/NeoDraggableList.tsx`
+
+Adicionar prop `onUpdateValor` nas interfaces de `NeoInstalacoesDraggableList` e `NeoCorrecoesDraggableList` e repassar para os cards internos.
 
 ## Resultado esperado
 
-- O usuario pode digitar tanto numeros quanto texto livre no campo "Valor a Receber"
-- Se digitar um numero, ele e salvo tanto como numero (para calculos) quanto como texto (para exibicao)
-- Se digitar texto puro, o valor numerico fica null e o texto e exibido
+- Clicar no valor a receber de uma Neo abre um Popover com input de texto
+- Digitar numero: salva em ambos os campos (numerico + texto)
+- Digitar texto: salva apenas no campo texto, numerico fica null
 - Exibicao prioriza o texto quando disponivel
-- Calculos financeiros (cobrancas, contas a receber) continuam usando o campo numerico
-- Campo bloqueado por faturamento continua funcionando normalmente
+- Invalidar queries para atualizar a listagem apos salvar
