@@ -348,6 +348,7 @@ export const useOrdensCarregamentoCalendario = (
       queryClient.invalidateQueries({ queryKey: ["ordens_carregamento"] });
       queryClient.invalidateQueries({ queryKey: ["instalacoes"] });
       queryClient.invalidateQueries({ queryKey: ["ordens-carregamento-disponiveis"] });
+      queryClient.invalidateQueries({ queryKey: ["pedido-carregamento"] });
     },
     onError: (error) => {
       console.error("Erro ao atualizar ordem:", error);
