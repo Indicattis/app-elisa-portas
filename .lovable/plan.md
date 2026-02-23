@@ -1,117 +1,47 @@
 
 
-# Downbar de detalhamento por indicador no Faturamento
+# Corrigir total de faturamento no DRE mensal
 
-## Objetivo
+## Problema
 
-Ao clicar em qualquer um dos 5 indicadores (Portas, Pintura, Instalacoes, Acessorios, Adicionais), abrir uma downbar (Drawer bottom) com uma listagem ranking do que mais saiu naquela categoria. Funciona tanto em desktop quanto em mobile.
+A pagina `/direcao/dre/:mes` (DREMesDirecao.tsx) calcula o total de faturamento somando todas as categorias incluindo instalacoes:
 
-## Dados de cada indicador (calculados a partir de `filteredVendas` ja em memoria)
-
-- **Portas**: Agrupar por `tamanho` (campo do `produtos_vendas`), contar quantidade e somar valor. Ranking por quantidade.
-- **Pintura**: Agrupar por `cor_id` -- buscar nome da cor da tabela `catalogo_cores`. Ranking por quantidade.
-- **Instalacoes**: Agrupar por `cidade` da tabela `vendas` (filtrar vendas com `valor_instalacao > 0`). Ranking por quantidade.
-- **Acessorios**: Agrupar por `acessorio_id` -- buscar nome da tabela `acessorios`. Ranking por quantidade.
-- **Adicionais**: Agrupar por `adicional_id` ou `descricao` -- buscar nome da tabela `adicionais`. Ranking por quantidade.
-
-## Mudancas
-
-### 1. `src/components/direcao/IndicadorExpandivel.tsx`
-
-Adicionar prop `onClick` opcional e tornar o card clicavel quando fornecido:
-
-```typescript
-interface IndicadorExpandivelProps {
-  // ... props existentes
-  onClick?: () => void;
-}
+```
+fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.acessorios + fat.adicionais + totalCredito
 ```
 
-Aplicar `cursor-pointer hover:bg-white/10 transition-colors` quando `onClick` estiver presente.
+Isso resulta em R$ 1.308.829,91, mas o valor correto (pela regra padronizada `valor_venda - valor_frete + valor_credito`) deveria ser ~R$ 1.135.229,91.
 
-### 2. `src/pages/direcao/FaturamentoDirecao.tsx`
+A diferenca de R$ 173.600 e exatamente o valor das instalacoes (`valor_instalacao`), que esta sendo somado ao total mas nao faz parte da formula padronizada de receita bruta.
 
-#### 2a. Novo estado para a downbar de indicadores
+## Causa raiz
 
+Na linha 97 do arquivo, `fat.instalacoes` e somado ao total, mas o `valor_instalacao` nao e parte do `valor_venda` (que ja contem a soma dos produtos + frete). Adiciona-lo causa dupla contagem ou inflacao do faturamento.
+
+## Correcao no arquivo `src/pages/direcao/DREMesDirecao.tsx`
+
+### Linha 97 - Remover `fat.instalacoes` do total de faturamento
+
+De:
 ```typescript
-const [indicadorDrawerOpen, setIndicadorDrawerOpen] = useState(false);
-const [indicadorAtivo, setIndicadorAtivo] = useState<string | null>(null);
+fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.acessorios + fat.adicionais + totalCredito;
 ```
 
-#### 2b. Buscar dados auxiliares (cores, acessorios, adicionais)
-
-Adicionar um `useEffect` para buscar as tabelas auxiliares necessarias para os nomes:
-- `catalogo_cores` (id, nome, codigo_hex)
-- `acessorios` (id, nome)
-- `adicionais` (id, nome)
-
-Armazenar em estados `Map` para lookup rapido.
-
-#### 2c. Funcao `useMemo` para calcular rankings
-
-Criar um `useMemo` que, para cada tipo de indicador, percorre `filteredVendas` e agrupa os dados:
-
-- **Portas**: percorre `produtos_vendas` com tipo `porta_enrolar`/`porta_social`, agrupa por `tamanho` (ou `largura x altura`), soma quantidade e valor.
-- **Pintura**: percorre `produtos_vendas` com tipo `pintura_epoxi`, agrupa por `cor_id`, busca nome no map de cores.
-- **Instalacoes**: percorre vendas com `valor_instalacao > 0`, agrupa por `cidade`.
-- **Acessorios**: percorre `produtos_vendas` com tipo `acessorio`, agrupa por `acessorio_id`, busca nome no map.
-- **Adicionais**: percorre `produtos_vendas` com tipo `adicional`/`manutencao`, agrupa por `adicional_id` ou `descricao`.
-
-Cada item do ranking tera: `nome`, `quantidade`, `valor_total`.
-
-#### 2d. Adicionar `onClick` nos indicadores
-
-Nos 5 indicadores (portas, pintura, instalacoes, acessorios, adicionais), adicionar:
-
+Para:
 ```typescript
-onClick={() => {
-  setIndicadorAtivo('portas'); // ou 'pintura', etc.
-  setIndicadorDrawerOpen(true);
-}}
+fat.total = fat.portas + fat.pintura + fat.acessorios + fat.adicionais + totalCredito;
 ```
 
-Os indicadores "Fretes", "Lucro Liquido" e "Qtd Portas" nao terao onClick.
+A coluna "Instalacoes" continuara sendo exibida na tabela com seu valor individual (R$ 173.600), mas nao sera mais somada ao total de faturamento.
 
-#### 2e. Adicionar Drawer no JSX
+O lucro total (linha 98) permanece inalterado, pois `luc.instalacoes` (lucro de instalacao) e um dado valido que deve compor o lucro.
 
-Adicionar um novo `Drawer` (apos o mobile downbar existente) que renderiza o ranking:
+## Tambem corrigir o DRE overview (`src/pages/direcao/DREDirecao.tsx`)
 
-```typescript
-<Drawer open={indicadorDrawerOpen} onOpenChange={setIndicadorDrawerOpen}>
-  <DrawerContent className="max-h-[85vh] bg-zinc-900 border-t border-white/10">
-    <div className="mx-auto w-full max-w-lg">
-      {/* Header com icone e titulo */}
-      <div className="flex items-center gap-2 px-4 pt-4 pb-2">
-        {icone do indicador ativo}
-        <h3 className="text-white font-semibold">Ranking - {titulo}</h3>
-      </div>
-      <ScrollArea className="h-[65vh] px-4 pb-4">
-        {/* Lista de itens do ranking */}
-        {rankingData.map((item, index) => (
-          <div key={item.nome} className="flex items-center justify-between py-3 border-b border-white/5">
-            <div className="flex items-center gap-3">
-              <span className="text-white/30 text-sm w-6">{index + 1}.</span>
-              <span className="text-white text-sm">{item.nome}</span>
-            </div>
-            <div className="text-right">
-              <p className="text-white text-sm font-medium">{item.quantidade}x</p>
-              <p className="text-white/50 text-xs">{formatCurrency(item.valor_total)}</p>
-            </div>
-          </div>
-        ))}
-      </ScrollArea>
-    </div>
-  </DrawerContent>
-</Drawer>
-```
+Nenhuma mudanca necessaria na overview -- ela ja usa a formula correta (`valor_venda + valor_credito - valor_frete`).
 
-Este Drawer aparece em todas as resolucoes (sem condicional `isMobile`).
+## Resultado esperado
 
-## Arquivos modificados
-
-1. `src/components/direcao/IndicadorExpandivel.tsx` -- adicionar prop `onClick`
-2. `src/pages/direcao/FaturamentoDirecao.tsx` -- estados, busca auxiliar, rankings, onClick nos indicadores, Drawer
-
-## Resultado
-
-Ao clicar em qualquer indicador (Portas, Pintura, Instalacoes, Acessorios, Adicionais), abre uma downbar de baixo com o ranking dos itens mais vendidos naquela categoria, mostrando posicao, nome, quantidade e valor total. Estilo minimalista dark consistente com o restante do sistema.
+- Total faturamento janeiro/2026: ~R$ 1.135.229,91 (consistente com o overview e a regra padronizada)
+- Coluna "Instalacoes" continua visivel com seu valor individual
+- Lucro total permanece incluindo lucro de instalacao
