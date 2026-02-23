@@ -1,68 +1,48 @@
 
 
-# Valor a Receber no Faturamento e Gestao de Fabrica
+# Nova Visualizacao em Tabela para Contas a Receber
 
 ## Resumo
 
-Ao faturar uma venda, o usuario passara a informar o "valor a receber" pendente. Na gestao de fabrica, esse valor aparecera normalmente, mas se foi preenchido durante o faturamento, nao podera ser editado.
+Adicionar um botao de alternancia de visualizacao na pagina de Contas a Receber. A visualizacao atual (agrupada por cliente) sera mantida, e uma nova visualizacao em tabela plana sera adicionada, listando todas as contas individualmente em ordem de data.
 
-## 1. Adicionar coluna de controle na tabela `vendas`
+## Alteracoes (arquivo unico)
 
-Nova coluna booleana `valor_a_receber_faturamento` (default false) para rastrear se o valor foi definido durante o faturamento:
+**Arquivo:** `src/pages/administrativo/ContasReceberMinimalista.tsx`
 
-```sql
-ALTER TABLE public.vendas 
-ADD COLUMN valor_a_receber_faturamento BOOLEAN NOT NULL DEFAULT false;
-```
+### 1. Novo estado para controle de visualizacao
 
-## 2. Adicionar campo de valor a receber na pagina de faturamento
+Adicionar estado `visualizacao` com valores `'agrupado'` e `'tabela'`, default `'agrupado'`.
 
-Arquivo: `src/pages/FaturamentoEdit.tsx`
+### 2. Botoes de alternancia
 
-- Adicionar estado `valorAReceber` (string, inicializado com o valor existente da venda)
-- Renderizar um campo de input numerico "Valor a Receber (R$)" na area de resumo/botoes, antes do botao "Faturar"
-- O campo so aparece quando a venda nao esta faturada
+Acima da area de listagem (entre filtros e a Card de conteudo), renderizar dois botoes (toggle) para alternar entre "Agrupado" e "Tabela". Usar icones `Folder` e `List` do lucide-react.
 
-## 3. Salvar valor a receber ao faturar
+### 3. Nova visualizacao em tabela
 
-Arquivo: `src/hooks/useProdutosVenda.ts`
+Quando `visualizacao === 'tabela'`, exibir uma tabela com as `contasFiltradas` ordenadas por `data_vencimento`, com as colunas:
 
-- Adicionar parametro `valorAReceber` (opcional, number) na mutation `finalizarFaturamento`
-- No update da venda, incluir `valor_a_receber` e `valor_a_receber_faturamento: true` quando o valor for informado
+| Data Criacao | Cliente | Metodo Pagamento | Valor | Status | Acoes |
+|---|---|---|---|---|---|
 
-```typescript
-finalizarFaturamentoMutation.mutateAsync({
-  vendaId: venda.id,
-  custoTotal,
-  lucroTotal,
-  produtosIds,
-  valorAReceber: parseFloat(valorAReceber) || 0,
-});
-```
+- **Data Criacao**: `created_at` da conta (precisa ser incluido na query - ja existe na tabela `contas_receber`)
+- **Cliente**: nome do cliente via join com vendas
+- **Metodo Pagamento**: formatado (boleto, PIX, etc.)
+- **Valor**: valor da parcela formatado em BRL
+- **Status**: badge colorido (mesmo `getStatusBadge` ja existente)
+- **Acoes**: mesmos botoes de marcar pago/cancelar
 
-## 4. Incluir campo de controle na query de pedidos
+### 4. Ajuste na query
 
-Arquivo: `src/hooks/usePedidosEtapas.ts`
+Adicionar o campo `created_at` no select da query de `contas_receber` (atualmente usa `select('*')` entao ja vem, so precisa tipar na interface `ContaReceber`).
 
-- Adicionar `valor_a_receber_faturamento` na query de vendas (linha 131, junto com `valor_a_receber`)
+### 5. Interface ContaReceber
 
-## 5. Bloquear edicao no PedidoCard quando definido no faturamento
-
-Arquivo: `src/components/pedidos/PedidoCard.tsx`
-
-- No grid view (linha 1531): se `venda?.valor_a_receber_faturamento === true`, exibir o valor como texto estatico (sem Popover), apenas mostrando o valor formatado
-- No mobile/lista view (linha 2164): mesma logica - exibir como texto sem interacao
-- Manter a exibicao visual (cor verde esmeralda quando tem valor)
-
-## 6. Resetar flag ao remover faturamento
-
-Arquivo: `src/hooks/useFaturamento.ts`
-
-- Na mutation `removerFaturamento`, adicionar `valor_a_receber_faturamento: false` e `valor_a_receber: null` ao update da venda
+Adicionar `created_at: string` a interface.
 
 ## Resultado esperado
 
-- Ao faturar: campo opcional "Valor a Receber" disponivel; valor salvo junto com o faturamento
-- Na gestao de fabrica: valor aparece normalmente; se preenchido no faturamento, nao pode ser editado (exibido como texto)
-- Se preenchido manualmente na gestao (sem faturamento), continua editavel
-- Ao remover faturamento: valor e flag sao resetados
+- Botao de alternancia visivel entre filtros e listagem
+- Visualizacao "Agrupado": comportamento atual mantido intacto
+- Visualizacao "Tabela": lista plana ordenada por data de vencimento, com todas as colunas solicitadas e acoes funcionais
+
