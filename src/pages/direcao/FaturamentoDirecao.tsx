@@ -797,7 +797,13 @@ export default function FaturamentoDirecao() {
     const valorPintura = portas
       .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
       .reduce((sum: number, p: any) => sum + (p.valor_pintura || 0), 0);
-    return { valorPortas, valorPintura };
+    const valorAcessorios = portas
+      .filter((p: any) => p.tipo_produto === 'acessorio')
+      .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+    const valorAdicionais = portas
+      .filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))
+      .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
+    return { valorPortas, valorPintura, valorAcessorios, valorAdicionais };
   };
 
   // Right sidebar content
@@ -840,9 +846,17 @@ export default function FaturamentoDirecao() {
   );
 
   const selectedVendaContent = selectedVenda ? (() => {
-    const { valorPortas, valorPintura } = getVendaDetailValues(selectedVenda);
+    const { valorPortas, valorPintura, valorAcessorios, valorAdicionais } = getVendaDetailValues(selectedVenda);
+    const detailItems = [
+      { label: 'Vl. Portas', value: valorPortas, icon: <DollarSign className="h-3.5 w-3.5" />, color: 'text-blue-400' },
+      { label: 'Vl. Pintura', value: valorPintura, icon: <Paintbrush className="h-3.5 w-3.5" />, color: 'text-orange-400' },
+      { label: 'Instalação', value: selectedVenda.valor_instalacao || 0, icon: <Wrench className="h-3.5 w-3.5" />, color: 'text-cyan-400' },
+      { label: 'Frete', value: selectedVenda.valor_frete || 0, icon: <Truck className="h-3.5 w-3.5" />, color: 'text-amber-400' },
+      { label: 'Acessórios', value: valorAcessorios, icon: <Package className="h-3.5 w-3.5" />, color: 'text-pink-400' },
+      { label: 'Adicionais', value: valorAdicionais, icon: <PlusCircle className="h-3.5 w-3.5" />, color: 'text-indigo-400' },
+    ];
     return (
-      <div className="space-y-4">
+      <div className="space-y-5">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
@@ -859,58 +873,74 @@ export default function FaturamentoDirecao() {
           </Button>
         </div>
 
-        {/* Detalhes financeiros */}
+        {/* Valores */}
         <div>
-          <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Detalhes Financeiros</p>
-          <div className="space-y-2">
-            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-              <p className="text-xs text-white/50">Vl. Portas</p>
-              <p className="text-sm font-semibold text-white">{valorPortas > 0 ? formatCurrency(valorPortas) : '-'}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-              <p className="text-xs text-white/50">Vl. Pintura</p>
-              <p className="text-sm font-semibold text-white">{valorPintura > 0 ? formatCurrency(valorPintura) : '-'}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-              <p className="text-xs text-white/50">Instalação</p>
-              <p className="text-sm font-semibold text-white">{(selectedVenda.valor_instalacao || 0) > 0 ? formatCurrency(selectedVenda.valor_instalacao!) : '-'}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-              <p className="text-xs text-white/50">Frete</p>
-              <p className="text-sm font-semibold text-white">{(selectedVenda.valor_frete || 0) > 0 ? formatCurrency(selectedVenda.valor_frete) : '-'}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-              <p className="text-xs text-white/50">Previsão de Entrega</p>
-              <p className="text-sm font-semibold text-white">
-                {selectedVenda.data_prevista_entrega 
-                  ? format(new Date(selectedVenda.data_prevista_entrega), 'dd/MM/yyyy', { locale: ptBR })
-                  : '-'}
-              </p>
-            </div>
-            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-              <p className="text-xs text-white/50">Data Pgto 1</p>
-              <p className="text-sm font-semibold text-white">
-                {selectedVenda.data_pagamento_1 
-                  ? format(new Date(selectedVenda.data_pagamento_1 + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })
-                  : '-'}
-              </p>
-            </div>
-            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-              <p className="text-xs text-white/50">Data Pgto 2</p>
-              <p className="text-sm font-semibold text-white">
-                {selectedVenda.data_pagamento_2 
-                  ? format(new Date(selectedVenda.data_pagamento_2 + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })
-                  : '-'}
-              </p>
-            </div>
-            {selectedVenda.valor_a_receber_faturamento && selectedVenda.valor_a_receber != null && (
-              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                <p className="text-xs text-blue-400">Valor a Receber</p>
-                <p className="text-sm font-bold text-blue-300">{formatCurrency(selectedVenda.valor_a_receber)}</p>
+          <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Valores</p>
+          <div className="grid grid-cols-2 gap-2">
+            {detailItems.map((item) => (
+              <div key={item.label} className="p-2.5 rounded-lg bg-white/5 border border-white/10">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className={item.color}>{item.icon}</span>
+                  <p className="text-[10px] text-white/40 uppercase tracking-wide">{item.label}</p>
+                </div>
+                <p className={cn("text-sm font-semibold", item.value > 0 ? 'text-white' : 'text-white/20')}>
+                  {item.value > 0 ? formatCurrency(item.value) : '-'}
+                </p>
               </div>
-            )}
+            ))}
           </div>
         </div>
+
+        {/* Datas */}
+        <div>
+          <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Datas</p>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-3.5 w-3.5 text-white/40" />
+                <p className="text-xs text-white/50">Previsão Entrega</p>
+              </div>
+              <p className="text-xs font-semibold text-white">
+                {selectedVenda.data_prevista_entrega 
+                  ? format(new Date(selectedVenda.data_prevista_entrega + 'T12:00:00'), 'dd/MM/yy', { locale: ptBR })
+                  : '-'}
+              </p>
+            </div>
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-3.5 w-3.5 text-white/40" />
+                <p className="text-xs text-white/50">Pgto 1</p>
+              </div>
+              <p className="text-xs font-semibold text-white">
+                {selectedVenda.data_pagamento_1 
+                  ? format(new Date(selectedVenda.data_pagamento_1 + 'T12:00:00'), 'dd/MM/yy', { locale: ptBR })
+                  : '-'}
+              </p>
+            </div>
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-3.5 w-3.5 text-white/40" />
+                <p className="text-xs text-white/50">Pgto 2</p>
+              </div>
+              <p className="text-xs font-semibold text-white">
+                {selectedVenda.data_pagamento_2 
+                  ? format(new Date(selectedVenda.data_pagamento_2 + 'T12:00:00'), 'dd/MM/yy', { locale: ptBR })
+                  : '-'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Valor a Receber */}
+        {selectedVenda.valor_a_receber_faturamento && selectedVenda.valor_a_receber != null && (
+          <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+            <div className="flex items-center gap-1.5 mb-1">
+              <DollarSign className="h-3.5 w-3.5 text-blue-400" />
+              <p className="text-xs text-blue-400 font-medium">Valor a Receber</p>
+            </div>
+            <p className="text-lg font-bold text-blue-300">{formatCurrency(selectedVenda.valor_a_receber)}</p>
+          </div>
+        )}
 
         {/* Botão Abrir Faturamento */}
         <Button
