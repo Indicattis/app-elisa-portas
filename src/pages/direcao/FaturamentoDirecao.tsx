@@ -1090,6 +1090,7 @@ export default function FaturamentoDirecao() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/10 hover:bg-transparent">
+                    <TableHead className="w-8 text-center text-white/60" />
                     {visibleColumns.map((column) => (
                       <TableHead 
                         key={column.id}
@@ -1107,7 +1108,7 @@ export default function FaturamentoDirecao() {
                 <TableBody>
                   {sortedVendas.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-white/40">
+                      <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8 text-white/40">
                         Nenhuma venda encontrada
                       </TableCell>
                     </TableRow>
@@ -1115,9 +1116,20 @@ export default function FaturamentoDirecao() {
                     sortedVendas.map((venda) => (
                       <TableRow 
                         key={venda.id} 
-                        className="border-white/10 hover:bg-white/5 cursor-pointer"
+                        className={cn(
+                          "border-white/10 hover:bg-white/5 cursor-pointer",
+                          selectedVenda?.id === venda.id && "bg-blue-500/10 border-l-2 border-l-blue-500"
+                        )}
                         onClick={() => setSelectedVenda(venda)}
                       >
+                        <TableCell className="w-8 text-center">
+                          <div className={cn(
+                            "h-3 w-3 rounded-full border-2 mx-auto transition-colors",
+                            selectedVenda?.id === venda.id 
+                              ? "bg-blue-500 border-blue-500" 
+                              : "border-white/20"
+                          )} />
+                        </TableCell>
                         {visibleColumns.map((column) => (
                           <TableCell 
                             key={column.id}
