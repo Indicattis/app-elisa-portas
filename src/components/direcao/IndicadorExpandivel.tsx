@@ -36,8 +36,8 @@ export function IndicadorExpandivel({
         </p>
       )}
       {margemLucro && (
-        <p className="text-white/40 text-[10px] mt-0.5">
-          Margem: {margemLucro}
+        <p className="text-emerald-300 font-semibold text-sm mt-1">
+          {margemLucro}
         </p>
       )}
       <p className="text-white/30 text-[10px] mt-1">{quantidadeVendas} vendas</p>
