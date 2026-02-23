@@ -70,7 +70,7 @@ export default function ContasReceberMinimalista() {
   const [busca, setBusca] = useState("");
   const [dataInicio, setDataInicio] = useState<Date | undefined>();
   const [dataFim, setDataFim] = useState<Date | undefined>();
-  const [visualizacao, setVisualizacao] = useState<'agrupado' | 'tabela'>('agrupado');
+  const [visualizacao, setVisualizacao] = useState<'agrupado' | 'tabela'>('tabela');
   
   const [dialogPagarOpen, setDialogPagarOpen] = useState(false);
   const [dialogAlterarDataOpen, setDialogAlterarDataOpen] = useState(false);
