@@ -1,110 +1,98 @@
 
-# Criar paginas de DRE em /direcao/dre
 
-## Resumo
+# Corrigir calculo do faturamento total na pagina DRE mensal
 
-Criar duas novas paginas:
-1. **`/direcao/dre`** - Grid de 3 colunas com os 12 meses do ano, cada card mostrando o mes e o faturamento total. Botao "DRE" adicionado ao hub da direcao.
-2. **`/direcao/dre/:mes`** - Pagina de detalhe do DRE do mes selecionado com:
-   - Grid de faturamento por tipo de produto (Portas, Pintura, Instalacoes, Acessorios, Adicionais, Total)
-   - Linha de lucro por tipo de produto
-   - Duas secoes lado a lado: despesas fixas e despesas variaveis
+## Problemas identificados
 
-## Mudancas
+### 1. Descontos nao estao sendo considerados
+O codigo atual soma os valores brutos (`valor_produto`, `valor_pintura`, `valor_instalacao`) que sao os valores de tabela. Porem, muitas vendas tem descontos aplicados (`desconto_valor`). O campo `valor_total_sem_frete` ja contem o valor correto apos descontos.
 
-### 1. Adicionar botao "DRE" ao hub da Direcao
+- Soma dos valores brutos: R$ 966.938
+- Soma de `valor_total_sem_frete`: R$ 1.118.842,91
 
-**Arquivo:** `src/pages/direcao/DirecaoHub.tsx`
+### 2. Creditos de vendas nao estao incluidos
+O campo `valor_credito` da tabela `vendas` (R$ 16.387,00) nao e considerado no calculo. Essa e a mesma regra usada na pagina de overview: `valor_venda + valor_credito - valor_frete`.
 
-Adicionar item ao array `menuItems`:
-```text
-{ label: 'DRE', icon: Calculator, path: '/direcao/dre' }
+- 1.118.842,91 + 16.387,00 = **1.135.229,91** (valor esperado)
+
+### 3. Query de despesas falha (erro de formato de data)
+A coluna `mes` na tabela `despesas_mensais` e do tipo `date`, mas o codigo filtra com `'2026-01'` (formato yyyy-MM). Precisa ser `'2026-01-01'` (formato yyyy-MM-dd).
+
+## Solucao proposta
+
+### Mudanca na logica de faturamento
+
+Usar `valor_total_sem_frete` agrupado por `tipo_produto` para o breakdown:
+- **Portas** = soma de `valor_total_sem_frete` onde tipo IN ('porta_enrolar', 'porta_social') -- ja inclui instalacao embutida apos desconto
+- **Pintura** = soma de `valor_total_sem_frete` onde tipo = 'pintura_epoxi'
+- **Acessorios** = soma de `valor_total_sem_frete` onde tipo = 'acessorio'
+- **Adicionais** = soma de `valor_total_sem_frete` onde tipo IN ('adicional', 'manutencao')
+
+Remover a coluna **Instalacoes** separada, pois apos desconto o valor de instalacao ja esta incorporado no `valor_total_sem_frete` da porta e nao pode ser separado com precisao.
+
+Para o **Total**, somar todos os `valor_total_sem_frete` + `valor_credito` de cada venda do mes (buscado separadamente da tabela `vendas`).
+
+### Mudanca na query de despesas
+
+Alterar o filtro de:
 ```
-
-### 2. Criar pagina de grid dos meses (`DREDirecao.tsx`)
-
-**Arquivo novo:** `src/pages/direcao/DREDirecao.tsx`
-
-- Layout com `MinimalistLayout`
-- Breadcrumb: Home > Direcao > DRE
-- Grid de 3 colunas (`grid grid-cols-1 md:grid-cols-3 gap-4`)
-- Cada card exibe: nome do mes (ex: "Janeiro"), faturamento total do mes
-- Ao clicar num mes, navega para `/direcao/dre/2026-01` (formato yyyy-MM)
-- Dados buscados com query ao Supabase: vendas agrupadas por mes do ano atual, somando `valor_venda - valor_frete` por mes
-- Estilo minimalista: `bg-white/5 border border-white/10 rounded-xl`
-
-### 3. Criar pagina de detalhe do DRE mensal (`DREMesDirecao.tsx`)
-
-**Arquivo novo:** `src/pages/direcao/DREMesDirecao.tsx`
-
-- Recebe parametro `:mes` da URL (formato `yyyy-MM`)
-- Breadcrumb: Home > Direcao > DRE > [Nome do Mes]
-
-**Secao 1 - Grid de Faturamento por Produto:**
-
-Tabela/grid com 6 colunas: Portas | Pintura | Instalacoes | Acessorios | Adicionais | Total
-
-- **Linha 1 (Faturamento):** soma de `valor_produto` dos `produtos_vendas` agrupados por `tipo_produto` para vendas do mes
-  - Portas = tipo_produto in ('porta_enrolar', 'porta_social')
-  - Pintura = soma de `valor_pintura`
-  - Instalacoes = soma de `valor_instalacao`
-  - Acessorios = tipo_produto = 'acessorio'
-  - Adicionais = tipo_produto in ('adicional', 'manutencao')
-  - Total = soma de todos
-
-- **Linha 2 (Lucro):** soma de `lucro_produto` + `lucro_pintura` etc. agrupados da mesma forma
-  - Portas = `lucro_produto` onde tipo e porta
-  - Pintura = `lucro_pintura`
-  - Acessorios/Adicionais = `lucro_item`
-  - Total = soma
-
-**Secao 2 - Despesas (lado a lado):**
-
-Duas colunas (`grid grid-cols-1 md:grid-cols-2 gap-4`):
-
-- **Coluna esquerda: Despesas Fixas**
-  - Busca `despesas_mensais` onde `mes = yyyy-MM` e `modalidade = 'fixa'`
-  - Lista cada despesa com nome e valor_real
-  - Total no rodape
-
-- **Coluna direita: Despesas Variaveis**
-  - Busca `despesas_mensais` onde `mes = yyyy-MM` e `modalidade = 'variavel'`
-  - Lista cada despesa com nome e valor_real
-  - Total no rodape
-
-### 4. Registrar rotas no App.tsx
-
-**Arquivo:** `src/App.tsx`
-
-Adicionar duas rotas:
-```text
-/direcao/dre -> DREDirecao
-/direcao/dre/:mes -> DREMesDirecao
+.eq('mes', mes)        // mes = '2026-01' -> ERRO
+```
+Para:
+```
+.eq('mes', mes + '-01')  // mes = '2026-01-01' -> OK
 ```
 
 ## Detalhes tecnicos
 
-**Queries Supabase para a pagina de grid (DREDirecao):**
-- Buscar vendas do ano atual com `data_venda`, `valor_venda`, `valor_frete`
-- Agrupar no frontend por mes e somar faturamento (valor_venda - valor_frete)
+**Arquivo:** `src/pages/direcao/DREMesDirecao.tsx`
 
-**Queries Supabase para a pagina de detalhe (DREMesDirecao):**
-- Buscar `produtos_vendas` com join em `vendas` filtrado pelo mes:
-  ```
-  produtos_vendas(tipo_produto, valor_produto, valor_pintura, valor_instalacao, lucro_produto, lucro_pintura, lucro_item, vendas!inner(data_venda))
-  ```
-- Buscar `despesas_mensais` filtrado por `mes` e separar por `modalidade`
+**1. Adicionar `valor_total_sem_frete` ao select da query de produtos:**
+```
+valor_total_sem_frete,
+```
 
-**Estilizacao:**
-- Cards: `rounded-xl bg-white/5 border border-white/10`
-- Grid de faturamento: tabela com headers em `text-white/50` e valores em `text-white font-semibold`
-- Despesas: cards com lista de items e total destacado no rodape
-- Cores: valores positivos em verde, negativos em vermelho para o lucro
+**2. Remover coluna Instalacoes do interface e do array columns:**
+- Interface `FaturamentoProduto`: remover campo `instalacoes`
+- Array `columns`: remover entrada `{ key: 'instalacoes', label: 'Instalacoes' }`
 
-**Arquivos criados:**
-- `src/pages/direcao/DREDirecao.tsx`
-- `src/pages/direcao/DREMesDirecao.tsx`
+**3. Alterar calculo do faturamento:**
+```typescript
+produtos?.forEach((p: any) => {
+  const tipo = p.tipo_produto;
+  const valorTotal = p.valor_total_sem_frete || 0;
 
-**Arquivos editados:**
-- `src/pages/direcao/DirecaoHub.tsx` (adicionar botao DRE)
-- `src/App.tsx` (adicionar rotas + imports)
+  if (['porta_enrolar', 'porta_social'].includes(tipo)) {
+    fat.portas += valorTotal;
+    luc.portas += p.lucro_produto || 0;
+  } else if (tipo === 'pintura_epoxi') {
+    fat.pintura += valorTotal;
+    luc.pintura += p.lucro_pintura || 0;
+  } else if (tipo === 'acessorio') {
+    fat.acessorios += valorTotal;
+    luc.acessorios += p.lucro_item || 0;
+  } else if (['adicional', 'manutencao'].includes(tipo)) {
+    fat.adicionais += valorTotal;
+    luc.adicionais += p.lucro_item || 0;
+  }
+});
+```
+
+**4. Buscar e somar valor_credito das vendas:**
+```typescript
+const { data: vendas } = await supabase
+  .from('vendas')
+  .select('valor_credito')
+  .gte('data_venda', start + ' 00:00:00')
+  .lte('data_venda', end + ' 23:59:59');
+
+const totalCredito = vendas?.reduce((sum, v) => sum + (v.valor_credito || 0), 0) || 0;
+
+fat.total = fat.portas + fat.pintura + fat.acessorios + fat.adicionais + totalCredito;
+```
+
+**5. Corrigir filtro de despesas:**
+```typescript
+.eq('mes', mes + '-01')
+```
+
