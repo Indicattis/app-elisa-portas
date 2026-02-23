@@ -73,7 +73,7 @@ interface Venda {
 
 // Definição das colunas disponíveis
 const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
-  { id: 'vendedor', label: 'Vendedor', defaultVisible: true },
+  { id: 'vendedor', label: '-', defaultVisible: true },
   { id: 'cliente', label: 'Cliente', defaultVisible: true },
   { id: 'data', label: 'Data', defaultVisible: true },
   { id: 'cidade', label: 'Cidade', defaultVisible: true },
