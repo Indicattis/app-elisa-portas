@@ -1,80 +1,117 @@
 
-# Downbar mobile para detalhes da venda no Faturamento
+
+# Downbar de detalhamento por indicador no Faturamento
 
 ## Objetivo
 
-Quando em modo mobile (tela < 1024px), ao clicar numa venda na tabela, abrir automaticamente uma downbar (Sheet side="bottom") no estilo minimalista com todas as informacoes da venda selecionada -- os mesmos dados que aparecem na sidebar direita no desktop.
+Ao clicar em qualquer um dos 5 indicadores (Portas, Pintura, Instalacoes, Acessorios, Adicionais), abrir uma downbar (Drawer bottom) com uma listagem ranking do que mais saiu naquela categoria. Funciona tanto em desktop quanto em mobile.
 
-## Mudancas no arquivo `src/pages/direcao/FaturamentoDirecao.tsx`
+## Dados de cada indicador (calculados a partir de `filteredVendas` ja em memoria)
 
-### 1. Importar useIsMobile e Drawer
+- **Portas**: Agrupar por `tamanho` (campo do `produtos_vendas`), contar quantidade e somar valor. Ranking por quantidade.
+- **Pintura**: Agrupar por `cor_id` -- buscar nome da cor da tabela `catalogo_cores`. Ranking por quantidade.
+- **Instalacoes**: Agrupar por `cidade` da tabela `vendas` (filtrar vendas com `valor_instalacao > 0`). Ranking por quantidade.
+- **Acessorios**: Agrupar por `acessorio_id` -- buscar nome da tabela `acessorios`. Ranking por quantidade.
+- **Adicionais**: Agrupar por `adicional_id` ou `descricao` -- buscar nome da tabela `adicionais`. Ranking por quantidade.
 
-Adicionar imports do hook `useIsMobile` e dos componentes do Drawer (vaul):
+## Mudancas
 
-```typescript
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Drawer, DrawerContent } from "@/components/ui/drawer";
-```
+### 1. `src/components/direcao/IndicadorExpandivel.tsx`
 
-### 2. Usar o hook no componente
-
-```typescript
-const isMobile = useIsMobile();
-```
-
-### 3. Estado para controlar a downbar mobile
-
-Adicionar estado `mobileDownbarOpen`:
+Adicionar prop `onClick` opcional e tornar o card clicavel quando fornecido:
 
 ```typescript
-const [mobileDownbarOpen, setMobileDownbarOpen] = useState(false);
+interface IndicadorExpandivelProps {
+  // ... props existentes
+  onClick?: () => void;
+}
 ```
 
-### 4. Alterar o onClick da TableRow
+Aplicar `cursor-pointer hover:bg-white/10 transition-colors` quando `onClick` estiver presente.
 
-Quando em mobile, ao selecionar uma venda, abrir automaticamente a downbar:
+### 2. `src/pages/direcao/FaturamentoDirecao.tsx`
+
+#### 2a. Novo estado para a downbar de indicadores
+
+```typescript
+const [indicadorDrawerOpen, setIndicadorDrawerOpen] = useState(false);
+const [indicadorAtivo, setIndicadorAtivo] = useState<string | null>(null);
+```
+
+#### 2b. Buscar dados auxiliares (cores, acessorios, adicionais)
+
+Adicionar um `useEffect` para buscar as tabelas auxiliares necessarias para os nomes:
+- `catalogo_cores` (id, nome, codigo_hex)
+- `acessorios` (id, nome)
+- `adicionais` (id, nome)
+
+Armazenar em estados `Map` para lookup rapido.
+
+#### 2c. Funcao `useMemo` para calcular rankings
+
+Criar um `useMemo` que, para cada tipo de indicador, percorre `filteredVendas` e agrupa os dados:
+
+- **Portas**: percorre `produtos_vendas` com tipo `porta_enrolar`/`porta_social`, agrupa por `tamanho` (ou `largura x altura`), soma quantidade e valor.
+- **Pintura**: percorre `produtos_vendas` com tipo `pintura_epoxi`, agrupa por `cor_id`, busca nome no map de cores.
+- **Instalacoes**: percorre vendas com `valor_instalacao > 0`, agrupa por `cidade`.
+- **Acessorios**: percorre `produtos_vendas` com tipo `acessorio`, agrupa por `acessorio_id`, busca nome no map.
+- **Adicionais**: percorre `produtos_vendas` com tipo `adicional`/`manutencao`, agrupa por `adicional_id` ou `descricao`.
+
+Cada item do ranking tera: `nome`, `quantidade`, `valor_total`.
+
+#### 2d. Adicionar `onClick` nos indicadores
+
+Nos 5 indicadores (portas, pintura, instalacoes, acessorios, adicionais), adicionar:
 
 ```typescript
 onClick={() => {
-  setSelectedVenda(venda);
-  if (isMobile) {
-    setMobileDownbarOpen(true);
-  }
+  setIndicadorAtivo('portas'); // ou 'pintura', etc.
+  setIndicadorDrawerOpen(true);
 }}
 ```
 
-### 5. Adicionar a Downbar (Drawer bottom) no JSX
+Os indicadores "Fretes", "Lucro Liquido" e "Qtd Portas" nao terao onClick.
 
-Apos o fechamento do layout de 3 paineis, adicionar um `Drawer` que usa `DrawerContent` com o conteudo da venda selecionada (`selectedVendaContent`). A downbar tera:
+#### 2e. Adicionar Drawer no JSX
 
-- Altura de ~80vh com scroll
-- Header gradiente com nome do cliente e botao fechar
-- Grid 2 colunas com valores (Portas, Pintura, Instalacao, Frete, Acessorios, Adicionais)
-- Secao de datas (Previsao, Pgto 1, Pgto 2)
-- Card de Valor a Receber (condicional)
-- Botao "Abrir Faturamento"
-- Estilo minimalista dark consistente com as outras downbars do sistema
+Adicionar um novo `Drawer` (apos o mobile downbar existente) que renderiza o ranking:
 
 ```typescript
-{isMobile && (
-  <Drawer open={mobileDownbarOpen} onOpenChange={(open) => {
-    setMobileDownbarOpen(open);
-    if (!open) setSelectedVenda(null);
-  }}>
-    <DrawerContent className="max-h-[85vh] bg-zinc-900 border-t border-white/10">
-      <ScrollArea className="h-[75vh] px-4 py-4">
-        {selectedVenda && selectedVendaContent}
+<Drawer open={indicadorDrawerOpen} onOpenChange={setIndicadorDrawerOpen}>
+  <DrawerContent className="max-h-[85vh] bg-zinc-900 border-t border-white/10">
+    <div className="mx-auto w-full max-w-lg">
+      {/* Header com icone e titulo */}
+      <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+        {icone do indicador ativo}
+        <h3 className="text-white font-semibold">Ranking - {titulo}</h3>
+      </div>
+      <ScrollArea className="h-[65vh] px-4 pb-4">
+        {/* Lista de itens do ranking */}
+        {rankingData.map((item, index) => (
+          <div key={item.nome} className="flex items-center justify-between py-3 border-b border-white/5">
+            <div className="flex items-center gap-3">
+              <span className="text-white/30 text-sm w-6">{index + 1}.</span>
+              <span className="text-white text-sm">{item.nome}</span>
+            </div>
+            <div className="text-right">
+              <p className="text-white text-sm font-medium">{item.quantidade}x</p>
+              <p className="text-white/50 text-xs">{formatCurrency(item.valor_total)}</p>
+            </div>
+          </div>
+        ))}
       </ScrollArea>
-    </DrawerContent>
-  </Drawer>
-)}
+    </div>
+  </DrawerContent>
+</Drawer>
 ```
 
-### 6. Ao fechar a downbar, limpar selecao
+Este Drawer aparece em todas as resolucoes (sem condicional `isMobile`).
 
-Quando `onOpenChange` recebe `false`, setar `selectedVenda` para `null` e `mobileDownbarOpen` para `false`.
+## Arquivos modificados
+
+1. `src/components/direcao/IndicadorExpandivel.tsx` -- adicionar prop `onClick`
+2. `src/pages/direcao/FaturamentoDirecao.tsx` -- estados, busca auxiliar, rankings, onClick nos indicadores, Drawer
 
 ## Resultado
 
-- **Desktop (>= 1024px)**: Comportamento inalterado -- sidebar direita mostra os detalhes
-- **Mobile (< 1024px)**: Ao tocar numa venda, abre a downbar de baixo com todos os detalhes e o botao de acesso ao faturamento individual, no estilo minimalista escuro consistente com o resto do sistema
+Ao clicar em qualquer indicador (Portas, Pintura, Instalacoes, Acessorios, Adicionais), abre uma downbar de baixo com o ranking dos itens mais vendidos naquela categoria, mostrando posicao, nome, quantidade e valor total. Estilo minimalista dark consistente com o restante do sistema.
