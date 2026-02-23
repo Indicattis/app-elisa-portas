@@ -1,57 +1,100 @@
 
-
-# Texto no Campo "Valor a Receber" para Neo Instalacoes e Correcoes
+# Redesign da Pagina Contas a Receber
 
 ## Resumo
 
-Permitir que o campo "Valor a Receber" nos cards de Neo Instalacoes e Neo Correcoes na gestao de fabrica aceite texto livre (igual ao que foi feito para pedidos), com Popover de edicao inline.
+Reestruturar o layout da pagina `/administrativo/financeiro/caixa/contas-a-receber` com tres paineis: sidebar de filtros a esquerda, tabela principal no centro e sidebar de acoes/resumo a direita.
 
-## 1. Migration - Nova coluna nas tabelas neo
+## Layout Geral
 
-```sql
-ALTER TABLE public.neo_instalacoes ADD COLUMN valor_a_receber_texto TEXT DEFAULT NULL;
-ALTER TABLE public.neo_correcoes ADD COLUMN valor_a_receber_texto TEXT DEFAULT NULL;
+```text
++------------------+--------------------------------------------+------------------+
+|                  |                                            |                  |
+|  SIDEBAR LEFT    |           TABELA PRINCIPAL                 |  SIDEBAR RIGHT   |
+|  (Filtros)       |                                            |  (Acoes/Resumo)  |
+|                  |  [ ] | Hist | Pgto | Venc | Valor | St |A| |                  |
+|  Status          |  ----+------+------+------+-------+----+-+ |  [Baixar Sel.]   |
+|  Forma Pgto      |  [ ] | ...  | ...  | ...  | ...   |...|.| |                  |
+|  Intervalo Valor |  [ ] | ...  | ...  | ...  | ...   |...|.| |  Contas: 15      |
+|  Vendedor        |                                            |  Total: R$5.000  |
+|                  |                                            |                  |
++------------------+--------------------------------------------+------------------+
 ```
 
-## 2. Atualizar tipos TypeScript
+Em mobile, as sidebars serao colapsaveis (Sheet ou Collapsible).
 
-**Arquivos:** `src/types/neoInstalacao.ts` e `src/types/neoCorrecao.ts`
+## 1. Sidebar Esquerda - Filtros
 
-Adicionar `valor_a_receber_texto: string | null` em ambas as interfaces `NeoInstalacao` e `NeoCorrecao`.
+Painel fixo lateral esquerdo (largura ~250px) com os seguintes filtros empilhados verticalmente:
 
-## 3. Adicionar Popover de edicao no NeoInstalacaoCardGestao
+- **Status**: Checkboxes (Pendente, Vencido, Pago, Cancelado) - multi-selecao
+- **Forma de Pagamento**: Checkboxes (PIX, Boleto, Cartao Credito, Dinheiro, etc.)
+- **Intervalo de Valor**: Dois inputs (Valor minimo, Valor maximo) em reais
+- **Vendedor**: Select com lista de vendedores (usando `atendente_id` da tabela `vendas` cruzado com `admin_users`)
+- Botao "Limpar Filtros" no final
 
-**Arquivo:** `src/components/pedidos/NeoInstalacaoCardGestao.tsx`
+Os filtros atuais (busca por texto, datas, status, metodo) que estao em um Card horizontal serao removidos e migrados para essa sidebar.
 
-- Adicionar prop `onUpdateValor?: (id: string, data: { valor_a_receber: number | null; valor_a_receber_texto: string }) => Promise<void>`
-- Na coluna 7 (Valor a Receber), envolver o conteudo em um Popover com input de texto
-- Logica de parse identica ao PedidoCard: tenta parsear como numero; se for numero salva em ambos os campos; se for texto salva so no texto e seta numerico como null
-- Exibicao: priorizar `valor_a_receber_texto` quando existir
+## 2. Tabela Principal - Novas Colunas
 
-## 4. Adicionar Popover de edicao no NeoCorrecaoCardGestao
+Substituir a tabela atual por uma com as seguintes colunas:
 
-**Arquivo:** `src/components/pedidos/NeoCorrecaoCardGestao.tsx`
+| Coluna | Descricao |
+|--------|-----------|
+| Checkbox de selecao | Checkbox para selecionar a linha (com "selecionar todos" no header) |
+| Historico | Campo editavel inline - clicar abre um input/popover para o usuario inserir uma mensagem. Salva no campo `observacoes` da tabela `contas_receber` |
+| Forma de pagamento | Exibe o `metodo_pagamento` |
+| Vencimento | Data de vencimento formatada dd/MM/yyyy |
+| Valor | Valor da parcela formatado em BRL |
+| Status | Badge colorido (Pendente, Vencido, Pago, Cancelado) |
+| Anexo | Icone de clipe/paperclip. Se `comprovante_url` existir, icone preenchido/colorido; se nao, icone apagado |
+| 3 pontos | DropdownMenu com opcoes: "Marcar como Pago" e "Excluir" |
 
-Mesma abordagem do item 3, com prop `onUpdateValor` e Popover inline.
+## 3. Sidebar Direita - Acoes e Resumo
 
-## 5. Passar handler de update na GestaoFabricaDirecao
+Painel fixo lateral direito (~250px) dividido em duas secoes:
 
-**Arquivo:** `src/pages/direcao/GestaoFabricaDirecao.tsx`
+**Secao 1 - Acoes da Selecao:**
+- Botao "Baixar Selecionados" - gera e baixa um relatorio (PDF ou planilha) das contas selecionadas
+- Botao fica desabilitado se nenhuma conta estiver selecionada
 
-- Importar `supabase` para fazer update direto nos campos `valor_a_receber` e `valor_a_receber_texto` das tabelas `neo_instalacoes` e `neo_correcoes`
-- Criar funcoes `handleUpdateValorNeoInstalacao` e `handleUpdateValorNeoCorrecao`
-- Passar como prop `onUpdateValor` para os componentes `NeoInstalacaoCardGestao`, `NeoCorrecaoCardGestao`, e tambem para os `NeoInstalacoesDraggableList` / `NeoCorrecoesDraggableList`
+**Secao 2 - Informacoes:**
+- Se ha contas selecionadas: mostra quantidade e valor total dos selecionados
+- Se nenhuma selecionada: mostra quantidade total de contas filtradas e valor total
 
-## 6. Propagar prop nos DraggableLists
+## Detalhes Tecnicos
 
-**Arquivo:** `src/components/pedidos/NeoDraggableList.tsx`
+### Arquivo principal: `src/pages/administrativo/ContasReceberMinimalista.tsx`
 
-Adicionar prop `onUpdateValor` nas interfaces de `NeoInstalacoesDraggableList` e `NeoCorrecoesDraggableList` e repassar para os cards internos.
+**Novos states:**
+- `selectedIds: Set<string>` - IDs das contas selecionadas
+- `filtroValorMin / filtroValorMax: string` - intervalo de valor
+- `filtroVendedor: string` - ID do vendedor selecionado
+- Converter `filtroStatus` e `filtroMetodo` de string unico para `string[]` (multi-selecao com checkboxes)
 
-## Resultado esperado
+**Query de vendedores:**
+- Buscar vendedores distintos das vendas relacionadas: fazer join com `admin_users` via `atendente_id` para obter nomes
 
-- Clicar no valor a receber de uma Neo abre um Popover com input de texto
-- Digitar numero: salva em ambos os campos (numerico + texto)
-- Digitar texto: salva apenas no campo texto, numerico fica null
-- Exibicao prioriza o texto quando disponivel
-- Invalidar queries para atualizar a listagem apos salvar
+**Campo Historico (observacoes):**
+- Usar Popover inline na celula. Clicar abre input de texto.
+- Salvar via mutation no campo `observacoes` da tabela `contas_receber`
+
+**Coluna Anexo:**
+- Exibir icone `Paperclip` com cor diferente se `comprovante_url` estiver preenchido
+- Clicar abre o link do comprovante em nova aba
+
+**Menu 3 pontos:**
+- Usar `DropdownMenu` com itens "Marcar como Pago" (abre dialog existente) e "Excluir" (mutation de delete ou update status cancelado)
+
+**Baixar Selecionados:**
+- Usar `xlsx` (ja instalado) para gerar planilha com as contas selecionadas
+- Colunas do export: Cliente, Forma Pagamento, Vencimento, Valor, Status
+
+**Layout responsivo:**
+- Desktop: flex com 3 colunas (sidebar left 250px + tabela flex-1 + sidebar right 250px)
+- Mobile: sidebars viram Sheet (left sheet para filtros, right sheet para acoes), ativadas por botoes flutuantes ou no header
+
+### Remocoes:
+- Card de filtros horizontais atual (sera substituido pela sidebar)
+- Toggle agrupado/tabela (manter apenas tabela)
+- Cards de resumo do topo (Total a Receber, Vencido, etc.) serao simplificados ou movidos para a sidebar direita
