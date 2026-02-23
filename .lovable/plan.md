@@ -1,98 +1,57 @@
 
+# Adicionar tolerancia de 15cm na busca de precos da tabela
 
-# Corrigir calculo do faturamento total na pagina DRE mensal
+## Resumo
 
-## Problemas identificados
+Atualmente, `buscarPrecosPorMedidas` sempre arredonda para cima: busca a menor largura >= informada e menor altura >= informada. A mudanca adiciona uma tolerancia de 15cm (0.15m) -- se a medida exceder o tamanho da tabela em ate 15cm, usa o tamanho inferior; a partir de 16cm, arredonda para cima como hoje.
 
-### 1. Descontos nao estao sendo considerados
-O codigo atual soma os valores brutos (`valor_produto`, `valor_pintura`, `valor_instalacao`) que sao os valores de tabela. Porem, muitas vendas tem descontos aplicados (`desconto_valor`). O campo `valor_total_sem_frete` ja contem o valor correto apos descontos.
+**Exemplo:** tabela tem alturas 3.0 e 3.5
+- Porta de 3.15m -> usa linha de 3.0 (excedeu apenas 15cm, dentro da tolerancia)
+- Porta de 3.16m -> usa linha de 3.5 (excedeu 16cm, arredonda para cima)
 
-- Soma dos valores brutos: R$ 966.938
-- Soma de `valor_total_sem_frete`: R$ 1.118.842,91
+## Mudanca
 
-### 2. Creditos de vendas nao estao incluidos
-O campo `valor_credito` da tabela `vendas` (R$ 16.387,00) nao e considerado no calculo. Essa e a mesma regra usada na pagina de overview: `valor_venda + valor_credito - valor_frete`.
+**Arquivo:** `src/utils/tabelaPrecosHelper.ts`
 
-- 1.118.842,91 + 16.387,00 = **1.135.229,91** (valor esperado)
+Alterar a logica da funcao `buscarPrecosPorMedidas`:
 
-### 3. Query de despesas falha (erro de formato de data)
-A coluna `mes` na tabela `despesas_mensais` e do tipo `date`, mas o codigo filtra com `'2026-01'` (formato yyyy-MM). Precisa ser `'2026-01-01'` (formato yyyy-MM-dd).
+1. Buscar **todos** os itens ativos da tabela (sem filtro de gte), ordenados por largura e altura
+2. Encontrar o item correto aplicando a tolerancia:
+   - Para cada dimensao (largura e altura), verificar se a medida informada esta dentro de 0.15m acima de um tamanho da tabela
+   - Se `medida - tamanho_tabela <= 0.15`, esse tamanho e aceito (arredonda para baixo)
+   - Se `medida - tamanho_tabela > 0.15`, precisa do proximo tamanho (arredonda para cima)
+3. Retornar o item que atende ambas as dimensoes com os menores valores
 
-## Solucao proposta
+### Logica detalhada
 
-### Mudanca na logica de faturamento
+```text
+TOLERANCIA = 0.15
 
-Usar `valor_total_sem_frete` agrupado por `tipo_produto` para o breakdown:
-- **Portas** = soma de `valor_total_sem_frete` onde tipo IN ('porta_enrolar', 'porta_social') -- ja inclui instalacao embutida apos desconto
-- **Pintura** = soma de `valor_total_sem_frete` onde tipo = 'pintura_epoxi'
-- **Acessorios** = soma de `valor_total_sem_frete` onde tipo = 'acessorio'
-- **Adicionais** = soma de `valor_total_sem_frete` onde tipo IN ('adicional', 'manutencao')
-
-Remover a coluna **Instalacoes** separada, pois apos desconto o valor de instalacao ja esta incorporado no `valor_total_sem_frete` da porta e nao pode ser separado com precisao.
-
-Para o **Total**, somar todos os `valor_total_sem_frete` + `valor_credito` de cada venda do mes (buscado separadamente da tabela `vendas`).
-
-### Mudanca na query de despesas
-
-Alterar o filtro de:
+Para cada item da tabela (ordenado por largura, altura):
+  - larguraOk = item.largura >= medidaLargura 
+                OU (medidaLargura - item.largura <= TOLERANCIA)
+  - alturaOk  = item.altura >= medidaAltura 
+                OU (medidaAltura - item.altura <= TOLERANCIA)
+  
+  Se larguraOk E alturaOk -> retorna esse item (primeiro match)
 ```
-.eq('mes', mes)        // mes = '2026-01' -> ERRO
-```
-Para:
-```
-.eq('mes', mes + '-01')  // mes = '2026-01-01' -> OK
-```
+
+Como a query ja ordena por largura e altura ascendente, o primeiro item que satisfaz ambas as condicoes e o correto.
 
 ## Detalhes tecnicos
 
-**Arquivo:** `src/pages/direcao/DREMesDirecao.tsx`
+A mudanca e centralizada em um unico arquivo (`tabelaPrecosHelper.ts`), afetando automaticamente todos os pontos que usam a funcao:
+- `ProdutoVendaForm.tsx` (adicionar porta de enrolar/social)
+- `PinturaRapidaModal.tsx` (buscar preco de pintura)
 
-**1. Adicionar `valor_total_sem_frete` ao select da query de produtos:**
-```
-valor_total_sem_frete,
-```
-
-**2. Remover coluna Instalacoes do interface e do array columns:**
-- Interface `FaturamentoProduto`: remover campo `instalacoes`
-- Array `columns`: remover entrada `{ key: 'instalacoes', label: 'Instalacoes' }`
-
-**3. Alterar calculo do faturamento:**
+Alterar o filtro da query de:
 ```typescript
-produtos?.forEach((p: any) => {
-  const tipo = p.tipo_produto;
-  const valorTotal = p.valor_total_sem_frete || 0;
-
-  if (['porta_enrolar', 'porta_social'].includes(tipo)) {
-    fat.portas += valorTotal;
-    luc.portas += p.lucro_produto || 0;
-  } else if (tipo === 'pintura_epoxi') {
-    fat.pintura += valorTotal;
-    luc.pintura += p.lucro_pintura || 0;
-  } else if (tipo === 'acessorio') {
-    fat.acessorios += valorTotal;
-    luc.acessorios += p.lucro_item || 0;
-  } else if (['adicional', 'manutencao'].includes(tipo)) {
-    fat.adicionais += valorTotal;
-    luc.adicionais += p.lucro_item || 0;
-  }
-});
+.gte('largura', largura)
+.gte('altura', altura)
 ```
-
-**4. Buscar e somar valor_credito das vendas:**
+Para buscar todos e filtrar no frontend com tolerancia:
 ```typescript
-const { data: vendas } = await supabase
-  .from('vendas')
-  .select('valor_credito')
-  .gte('data_venda', start + ' 00:00:00')
-  .lte('data_venda', end + ' 23:59:59');
-
-const totalCredito = vendas?.reduce((sum, v) => sum + (v.valor_credito || 0), 0) || 0;
-
-fat.total = fat.portas + fat.pintura + fat.acessorios + fat.adicionais + totalCredito;
+// Sem filtros gte - busca tudo ordenado
+// Depois filtra: item.largura >= largura - 0.15 AND item.altura >= altura - 0.15
+// E seleciona o primeiro que satisfaz a condicao de tolerancia
 ```
-
-**5. Corrigir filtro de despesas:**
-```typescript
-.eq('mes', mes + '-01')
-```
-
