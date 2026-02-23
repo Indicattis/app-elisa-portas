@@ -1,80 +1,82 @@
 
+# Reestruturar tabela e sidebar de detalhes em /direcao/faturamento
 
-# Refazer sessao de vendas faturadas com design minimalista
+## Resumo
 
-## Objetivo
-
-Redesenhar a secao de listagem de vendas em `/direcao/faturamento` para seguir o mesmo design minimalista usado em `/administrativo/financeiro/caixa/contas-a-receber`, com layout de 3 paineis (filtros a esquerda, tabela central, resumo a direita).
+Remover 5 colunas da tabela (Vl. Portas, Vl. Pintura, Instalacao, Frete, Previsao Entrega) e ao clicar em uma venda, exibir os detalhes dela na sidebar direita ao inves de navegar para outra pagina. A sidebar mostrara os valores removidos + valor a receber.
 
 ## Mudancas
 
-### 1. Layout de 3 paineis
+### 1. Remover colunas da tabela
 
-Substituir o layout atual (filtros em linha + tabela) por um layout `flex gap-4` com:
+Remover de `COLUNAS_DISPONIVEIS`:
+- `valor_porta` (Vl. Portas)
+- `valor_pintura` (Vl. Pintura)
+- `instalacao` (Instalacao)
+- `frete` (Frete)
+- `previsao` (Previsao Entrega)
 
-- **Sidebar esquerda (250px)**: Filtros de Status (Todas/Faturadas/Nao Faturadas), Vendedor, e periodo de datas. Estilo: `rounded-xl bg-white/5 border border-white/10` com checkboxes e selects minimalistas
-- **Area central (flex-1)**: Barra de busca com campo de texto + tabela de vendas
-- **Sidebar direita (250px)**: Resumo com Faturamento total, quantidade faturadas/pendentes, lucro liquido. Botao de exportar XLSX e gerenciador de colunas
+### 2. Adicionar estado de venda selecionada
 
-### 2. Estilizacao da tabela
+Novo state: `selectedVenda: Venda | null`
 
-Trocar o wrapper da tabela de `bg-primary/5 border border-primary/10` para `bg-white/5 border border-white/10 rounded-xl overflow-hidden`, igual ao Contas a Receber. Bordas das rows: `border-white/10`.
+### 3. Alterar comportamento do clique na linha
 
-### 3. Cards de estatisticas
+Ao clicar numa linha da tabela, em vez de `navigate(...)`, setar `selectedVenda` com a venda clicada. Manter um botao na sidebar para navegar ao faturamento se necessario.
 
-Remover os 3 cards de estatisticas no topo (Faturamento, Faturadas, Pendentes) pois essas informacoes estarao na sidebar direita de resumo.
+### 4. Alterar sidebar direita
 
-### 4. Tabs e filtros inline
+Quando uma venda estiver selecionada, a sidebar direita mostrara:
 
-Remover as Tabs (Todas/Faturadas/Nao Faturadas) e o filtro inline (busca + calendario + vendedor + column manager). Tudo isso sera movido para as sidebars:
-- Filtros de status, vendedor -> sidebar esquerda com checkboxes
-- Busca por texto -> barra acima da tabela
-- Seletor de datas -> sidebar esquerda
-- Column Manager -> sidebar direita
+- **Cabecalho**: Nome do cliente + numero da venda + botao fechar (X)
+- **Detalhes financeiros** (os valores removidos da tabela):
+  - Vl. Portas
+  - Vl. Pintura
+  - Instalacao
+  - Frete
+  - Previsao de Entrega
+  - Valor a Receber (campo `valor_a_receber` da venda, se `valor_a_receber_faturamento === true`)
+- **Botao "Abrir Faturamento"**: navega para `/direcao/faturamento/venda/{id}`
 
-### 5. Responsividade mobile
+Quando nenhuma venda estiver selecionada, manter o conteudo atual (Resumo + Colunas).
 
-Adicionar Sheet (drawer) para as sidebars em telas < lg, com botoes Filter e PanelRight no header, igual ao Contas a Receber.
+### 5. Buscar campo valor_a_receber
 
-### 6. Indicadores do periodo
-
-Manter a secao de indicadores como esta (acima da area de 3 paineis), apenas trocando o Card wrapper para `rounded-xl bg-white/5 border border-white/10` para consistencia visual.
+Adicionar `valor_a_receber` e `valor_a_receber_faturamento` no select da query de vendas e na interface `Venda`.
 
 ## Detalhes tecnicos
 
 **Arquivo editado:** `src/pages/direcao/FaturamentoDirecao.tsx`
 
-**Imports a adicionar:**
-- `Sheet, SheetContent, SheetTrigger, SheetTitle` de `@/components/ui/sheet`
-- `Checkbox` de `@/components/ui/checkbox`
-- `Filter, PanelRight` de `lucide-react`
-
-**Imports a remover:**
-- `Tabs, TabsList, TabsTrigger`
-- `CardHeader, CardTitle` (se nao usados nos indicadores)
-
-**Estrutura do JSX:**
-```text
-MinimalistLayout (fullWidth)
-  +-- Indicadores do Periodo (bg-white/5)
-  +-- flex gap-4
-      +-- aside.left (filtros: status checkboxes, vendedor select, date range)
-      +-- main (search input + tabela)
-      +-- aside.right (resumo stats + export + column manager)
+**Interface Venda - adicionar campos:**
+```
+valor_a_receber?: number | null;
+valor_a_receber_faturamento?: boolean;
 ```
 
-**Estado a alterar:**
-- Remover `activeTab` -- substituir por `filtroStatus: string[]` com checkboxes (["faturadas", "nao_faturadas"])
-- Adaptar `filteredVendas` para usar o novo array de filtro de status
+**Query select - adicionar:**
+```
+valor_a_receber,
+valor_a_receber_faturamento,
+```
 
-**Sidebar esquerda (filterContent):**
-- Secao "Status" com 3 checkboxes: Todas, Faturadas, Nao Faturadas
-- Secao "Vendedor" com Select
-- Secao "Periodo" com seletor de datas (mover o Popover de calendario para ca)
-- Botao "Limpar Filtros"
+**Colunas removidas de COLUNAS_DISPONIVEIS:**
+- `valor_porta`, `valor_pintura`, `instalacao`, `frete`, `previsao`
 
-**Sidebar direita (rightContent):**
-- Resumo: Faturamento total, Faturadas (count), Pendentes (count), Lucro Liquido
-- ColumnManager
-- Botao exportar (futuro, se necessario)
+**Estado novo:**
+```
+const [selectedVenda, setSelectedVenda] = useState<Venda | null>(null);
+```
 
+**Clique na linha:**
+```
+onClick={() => setSelectedVenda(venda)}
+// Em vez de: navigate(`/direcao/faturamento/venda/${venda.id}`)
+```
+
+**Sidebar direita condicional:**
+- Se `selectedVenda` existir: mostrar detalhes da venda com os valores removidos
+- Senao: mostrar resumo + column manager (conteudo atual)
+
+**Layout dos detalhes na sidebar:**
+Cards compactos com label + valor para cada item, estilizados com `bg-white/5 border border-white/10 rounded-lg p-3`.
