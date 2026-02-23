@@ -9,14 +9,14 @@ export async function buscarPrecosPorMedidas(
   largura: number, 
   altura: number
 ): Promise<ItemTabelaPreco | null> {
+  const TOLERANCIA = 0.15;
+
   try {
-    // Buscar todos os itens ativos que atendem aos critérios
+    // Buscar todos os itens ativos ordenados por largura e altura
     const { data: itens, error } = await supabase
       .from('tabela_precos_portas')
       .select('*')
       .eq('ativo', true)
-      .gte('largura', largura)
-      .gte('altura', altura)
       .order('largura', { ascending: true })
       .order('altura', { ascending: true });
 
@@ -25,8 +25,16 @@ export async function buscarPrecosPorMedidas(
       return null;
     }
 
-    // Retornar o primeiro item (menor largura e altura que atende aos critérios)
-    return itens && itens.length > 0 ? itens[0] : null;
+    if (!itens || itens.length === 0) return null;
+
+    // Encontrar o primeiro item que atende ambas as dimensões com tolerância de 15cm
+    const match = itens.find((item) => {
+      const larguraOk = item.largura >= largura || (largura - item.largura <= TOLERANCIA);
+      const alturaOk = item.altura >= altura || (altura - item.altura <= TOLERANCIA);
+      return larguraOk && alturaOk;
+    });
+
+    return match || null;
   } catch (error) {
     console.error('Erro ao buscar preços:', error);
     return null;
