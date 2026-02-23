@@ -629,6 +629,16 @@ export default function VendaNovaMinimalista() {
                 }}
               />
               <ProductButton 
+                label="Serviços"
+                onClick={() => {
+                  setProdutoEditando(undefined);
+                  setIndexEditando(undefined);
+                  setTipoInicial('manutencao');
+                  setPermitirTrocaTipo(false);
+                  setDialogOpen(true);
+                }}
+              />
+              <ProductButton 
                 label="Catálogo"
                 onClick={() => setAcessoriosModalOpen(true)}
               />
