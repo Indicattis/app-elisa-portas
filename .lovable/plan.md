@@ -1,36 +1,62 @@
 
-
-# Integrar configuracao de custos abaixo do grid de meses
+# Copiar layout de /direcao/faturamento para /administrativo/financeiro/faturamento/vendas
 
 ## Resumo
 
-Mover todo o conteudo de configuracao de tipos de custos (categorias, subcategorias, tipos) que estava em `CustosMinimalista.tsx` para dentro da pagina `CustosGridMinimalista.tsx`, exibindo-o logo abaixo do grid de 12 meses. Isso elimina a necessidade de navegar para uma pagina separada (`/configurar`).
+A pagina `/administrativo/financeiro/faturamento/vendas` (`FaturamentoVendasMinimalista.tsx`) usa um layout antigo com breadcrumb manual, botao voltar flutuante e layout de coluna unica. Sera refatorada para usar o mesmo design de tres paineis da `/direcao/faturamento` (`FaturamentoDirecao.tsx`).
 
-## Mudancas
+## Mudancas principais no `FaturamentoVendasMinimalista.tsx`
 
-### 1. `src/pages/administrativo/CustosGridMinimalista.tsx`
+### 1. Usar MinimalistLayout com fullWidth
+- Remover `AnimatedBreadcrumb` manual, `FloatingProfileMenu` e botao voltar flutuante
+- Usar `MinimalistLayout` com `fullWidth`, `backPath`, e `breadcrumbItems`
 
-- Importar o hook `useTiposCustos` e todos os componentes necessarios (Dialog, Table, Badge, Switch, Tabs, etc.)
-- Adicionar todos os estados de formularios, dialogs e filtros que existem em `CustosMinimalista.tsx`
-- Adicionar todas as funcoes handler (save, edit, delete, toggle) de categorias, subcategorias e tipos de custos
-- Abaixo do grid de meses, renderizar a secao completa de configuracao:
-  - Cards resumo (categorias ativas, tipos cadastrados, limite total mensal)
-  - Filtros e tabela de tipos de custos
-  - Botoes "Gerenciar Categorias" e "Novo Tipo de Custo"
-  - Todos os dialogs (tipo custo, categoria, subcategoria, gerenciador de categorias, confirmacao de exclusao)
-- Remover o botao "Configurar Tipos" do header que navegava para `/configurar`
+### 2. Layout de 3 paineis
+- **Sidebar esquerda (desktop)**: Filtros (Status com checkboxes, Vendedor select, Periodo calendario) -- substitui os filtros inline atuais
+- **Area central**: Barra de busca + tabela com dot indicator de selecao e linha ativa azul
+- **Sidebar direita (desktop)**: Resumo (faturamento, faturadas, pendentes, lucro liquido) + colunas manager; ao selecionar uma venda, mostra detalhes (valores por categoria, datas, botao abrir faturamento)
 
-### 2. `src/App.tsx`
+### 3. Mobile responsivo
+- Sheets laterais para filtros e resumo (botoes Filter e PanelRight no header dos indicadores)
+- Drawer (downbar) para detalhes da venda selecionada em mobile
 
-- Remover a rota `/administrativo/financeiro/custos/configurar` pois a configuracao agora fica na mesma pagina
+### 4. Tabela com selecao visual
+- Adicionar coluna dot indicator (circulo que fica azul ao selecionar)
+- Linha selecionada com `bg-blue-500/10 border-l-2 border-l-blue-500`
+- Clicar na linha seleciona a venda (mostra detalhes na sidebar direita), nao navega diretamente
+- Botao "Abrir Faturamento" na sidebar direita para navegar ao faturamento
 
-### 3. `src/pages/administrativo/CustosMinimalista.tsx`
+### 5. Indicadores com IndicadorExpandivel
+- Substituir os cards estaticos de indicadores pelo componente `IndicadorExpandivel` (mesmo da direcao)
+- Grid de 8 colunas: Portas, Pintura, Instalacoes, Acessorios, Adicionais, Fretes, Lucro Liquido, Qtd Portas
+- Clicar em Portas/Pintura/Instalacoes/Acessorios/Adicionais abre drawer de ranking
 
-- Pode ser mantido como arquivo mas nao sera mais referenciado por nenhuma rota (ou pode ser removido)
+### 6. Ordenacao de colunas
+- Adicionar sort por clique no header (asc/desc/none) com icones ArrowUp/ArrowDown/ArrowUpDown
+- Manter sortedVendas com useMemo
 
-## Resultado
+### 7. Manter funcionalidades existentes
+- Dialog de justificativa permanece
+- VendasNaoFaturadasHistorico permanece abaixo do layout principal
+- Exportar PDF permanece (botao no header ou sidebar)
 
-O usuario vera na pagina `/administrativo/financeiro/custos`:
-1. Grid 3x4 com os meses do ano (topo)
-2. Secao de configuracao de tipos de custos (abaixo do grid), com tabela, filtros, e botoes para gerenciar categorias/subcategorias/tipos
+## Novos estados necessarios
+- `selectedVenda` -- venda selecionada para detalhes
+- `mobileDownbarOpen` -- drawer mobile de detalhes
+- `indicadorDrawerOpen` / `indicadorAtivo` -- drawer de ranking dos indicadores
+- `leftSheetOpen` / `rightSheetOpen` -- sheets mobile para filtros/resumo
+- `sortConfig` -- configuracao de ordenacao
+- `filtroStatus` (checkbox array) -- substituir `activeTab`
+- `auxCores`, `auxAcessorios`, `auxAdicionais` -- dados auxiliares para ranking
 
+## Componentes e imports adicionais
+- `IndicadorExpandivel` de `@/components/direcao/IndicadorExpandivel`
+- `Sheet`, `SheetContent`, `SheetTrigger`, `SheetTitle`
+- `Drawer`, `DrawerContent`
+- `ScrollArea`
+- `Checkbox`
+- `useIsMobile`
+- `TooltipProvider`
+
+## Arquivo modificado
+1. `src/pages/administrativo/FaturamentoVendasMinimalista.tsx` -- reescrita completa do layout mantendo a logica de dados e adaptando rotas para `/administrativo/financeiro/faturamento/`
