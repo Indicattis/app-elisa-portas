@@ -9,6 +9,7 @@ import { MinimalistLayout } from '@/components/MinimalistLayout';
 interface FaturamentoProduto {
   portas: number;
   pintura: number;
+  instalacoes: number;
   acessorios: number;
   adicionais: number;
   total: number;
@@ -23,8 +24,8 @@ interface Despesa {
 export default function DREMesDirecao() {
   const { mes } = useParams<{ mes: string }>();
   const [loading, setLoading] = useState(true);
-  const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, acessorios: 0, adicionais: 0, total: 0 });
-  const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, acessorios: 0, adicionais: 0, total: 0 });
+  const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 });
+  const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 });
   const [despesasFixas, setDespesasFixas] = useState<Despesa[]>([]);
   const [despesasVariaveis, setDespesasVariaveis] = useState<Despesa[]>([]);
 
@@ -57,8 +58,8 @@ export default function DREMesDirecao() {
         if (prodError) throw prodError;
 
         // Calcular faturamento e lucro por tipo
-        const fat: FaturamentoProduto = { portas: 0, pintura: 0, acessorios: 0, adicionais: 0, total: 0 };
-        const luc: FaturamentoProduto = { portas: 0, pintura: 0, acessorios: 0, adicionais: 0, total: 0 };
+        const fat: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 };
+        const luc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 };
 
         produtos?.forEach((p: any) => {
           const tipo = p.tipo_produto;
@@ -66,10 +67,10 @@ export default function DREMesDirecao() {
 
           if (['porta_enrolar', 'porta_social'].includes(tipo)) {
             fat.portas += valorTotal;
-            luc.portas += p.lucro_produto || 0;
+            luc.portas += p.lucro_item || 0;
           } else if (tipo === 'pintura_epoxi') {
             fat.pintura += valorTotal;
-            luc.pintura += p.lucro_pintura || 0;
+            luc.pintura += p.lucro_item || 0;
           } else if (tipo === 'acessorio') {
             fat.acessorios += valorTotal;
             luc.acessorios += p.lucro_item || 0;
@@ -82,14 +83,19 @@ export default function DREMesDirecao() {
         // Buscar valor_credito das vendas do mês
         const { data: vendas } = await supabase
           .from('vendas')
-          .select('valor_credito')
+          .select('valor_credito, valor_instalacao, lucro_instalacao')
           .gte('data_venda', start + ' 00:00:00')
           .lte('data_venda', end + ' 23:59:59');
 
         const totalCredito = vendas?.reduce((sum, v) => sum + ((v as any).valor_credito || 0), 0) || 0;
+        const totalFatInstalacao = vendas?.reduce((sum, v) => sum + ((v as any).valor_instalacao || 0), 0) || 0;
+        const totalLucroInstalacao = vendas?.reduce((sum, v) => sum + ((v as any).lucro_instalacao || 0), 0) || 0;
 
-        fat.total = fat.portas + fat.pintura + fat.acessorios + fat.adicionais + totalCredito;
-        luc.total = luc.portas + luc.pintura + luc.acessorios + luc.adicionais;
+        fat.instalacoes = totalFatInstalacao;
+        luc.instalacoes = totalLucroInstalacao;
+
+        fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.acessorios + fat.adicionais + totalCredito;
+        luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.acessorios + luc.adicionais;
 
         setFaturamento(fat);
         setLucro(luc);
@@ -121,6 +127,7 @@ export default function DREMesDirecao() {
   const columns = [
     { key: 'portas', label: 'Portas' },
     { key: 'pintura', label: 'Pintura' },
+    { key: 'instalacoes', label: 'Instalações' },
     { key: 'acessorios', label: 'Acessórios' },
     { key: 'adicionais', label: 'Adicionais' },
     { key: 'total', label: 'Total' },
