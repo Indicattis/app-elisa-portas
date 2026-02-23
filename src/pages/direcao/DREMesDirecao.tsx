@@ -9,7 +9,6 @@ import { MinimalistLayout } from '@/components/MinimalistLayout';
 interface FaturamentoProduto {
   portas: number;
   pintura: number;
-  instalacoes: number;
   acessorios: number;
   adicionais: number;
   total: number;
@@ -24,8 +23,8 @@ interface Despesa {
 export default function DREMesDirecao() {
   const { mes } = useParams<{ mes: string }>();
   const [loading, setLoading] = useState(true);
-  const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 });
-  const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 });
+  const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, acessorios: 0, adicionais: 0, total: 0 });
+  const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, acessorios: 0, adicionais: 0, total: 0 });
   const [despesasFixas, setDespesasFixas] = useState<Despesa[]>([]);
   const [despesasVariaveis, setDespesasVariaveis] = useState<Despesa[]>([]);
 
@@ -46,9 +45,7 @@ export default function DREMesDirecao() {
           .from('produtos_vendas')
           .select(`
             tipo_produto,
-            valor_produto,
-            valor_pintura,
-            valor_instalacao,
+            valor_total_sem_frete,
             lucro_produto,
             lucro_pintura,
             lucro_item,
@@ -60,31 +57,39 @@ export default function DREMesDirecao() {
         if (prodError) throw prodError;
 
         // Calcular faturamento e lucro por tipo
-        const fat: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 };
-        const luc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 };
+        const fat: FaturamentoProduto = { portas: 0, pintura: 0, acessorios: 0, adicionais: 0, total: 0 };
+        const luc: FaturamentoProduto = { portas: 0, pintura: 0, acessorios: 0, adicionais: 0, total: 0 };
 
         produtos?.forEach((p: any) => {
           const tipo = p.tipo_produto;
+          const valorTotal = p.valor_total_sem_frete || 0;
 
           if (['porta_enrolar', 'porta_social'].includes(tipo)) {
-            fat.portas += p.valor_produto || 0;
+            fat.portas += valorTotal;
             luc.portas += p.lucro_produto || 0;
+          } else if (tipo === 'pintura_epoxi') {
+            fat.pintura += valorTotal;
+            luc.pintura += p.lucro_pintura || 0;
           } else if (tipo === 'acessorio') {
-            fat.acessorios += p.valor_produto || 0;
+            fat.acessorios += valorTotal;
             luc.acessorios += p.lucro_item || 0;
           } else if (['adicional', 'manutencao'].includes(tipo)) {
-            fat.adicionais += p.valor_produto || 0;
+            fat.adicionais += valorTotal;
             luc.adicionais += p.lucro_item || 0;
           }
-
-          // Pintura e instalação vêm de todos os produtos
-          fat.pintura += p.valor_pintura || 0;
-          fat.instalacoes += p.valor_instalacao || 0;
-          luc.pintura += p.lucro_pintura || 0;
         });
 
-        fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.acessorios + fat.adicionais;
-        luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.acessorios + luc.adicionais;
+        // Buscar valor_credito das vendas do mês
+        const { data: vendas } = await supabase
+          .from('vendas')
+          .select('valor_credito')
+          .gte('data_venda', start + ' 00:00:00')
+          .lte('data_venda', end + ' 23:59:59');
+
+        const totalCredito = vendas?.reduce((sum, v) => sum + ((v as any).valor_credito || 0), 0) || 0;
+
+        fat.total = fat.portas + fat.pintura + fat.acessorios + fat.adicionais + totalCredito;
+        luc.total = luc.portas + luc.pintura + luc.acessorios + luc.adicionais;
 
         setFaturamento(fat);
         setLucro(luc);
@@ -93,7 +98,7 @@ export default function DREMesDirecao() {
         const { data: despesas, error: despError } = await supabase
           .from('despesas_mensais')
           .select('id, nome, valor_real, modalidade')
-          .eq('mes', mes)
+          .eq('mes', mes + '-01')
           .order('nome');
 
         if (despError) throw despError;
@@ -116,7 +121,6 @@ export default function DREMesDirecao() {
   const columns = [
     { key: 'portas', label: 'Portas' },
     { key: 'pintura', label: 'Pintura' },
-    { key: 'instalacoes', label: 'Instalações' },
     { key: 'acessorios', label: 'Acessórios' },
     { key: 'adicionais', label: 'Adicionais' },
     { key: 'total', label: 'Total' },
