@@ -782,7 +782,17 @@ export default function ExpedicaoMinimalista() {
                           <CardTitle className="text-lg flex items-center gap-2 text-white">
                             <span>{ETAPAS_CONFIG[etapa].label}</span>
                             <span className="text-sm font-normal text-white/60">
-                              {pedidosFiltrados.length} {pedidosFiltrados.length === 1 ? 'pedido' : 'pedidos'}
+                              {(() => {
+                                const totalItensEtapa = etapaAtiva === 'instalacoes'
+                                  ? pedidosFiltrados.length + neoInstalacoesListagem.length
+                                  : etapaAtiva === 'correcoes'
+                                  ? pedidosFiltrados.length + neoCorrecoesListagem.length
+                                  : pedidosFiltrados.length;
+                                const label = (etapaAtiva === 'instalacoes' || etapaAtiva === 'correcoes')
+                                  ? (totalItensEtapa === 1 ? 'item' : 'itens')
+                                  : (totalItensEtapa === 1 ? 'pedido' : 'pedidos');
+                                return `${totalItensEtapa} ${label}`;
+                              })()}
                               {totalPaginas > 1 && ` (Página ${paginaAtual} de ${totalPaginas})`}
                             </span>
                             {totalPortasEtapa > 0 && (
