@@ -31,7 +31,7 @@ export default function ProducaoCarregamento() {
     if (filtroTipo === "instalacao") {
       return ordem.tipo_entrega === 'instalacao' || ordem.tipo_entrega === 'manutencao';
     }
-    return ordem.tipo_entrega === filtroTipo;
+    return ordem.tipo_entrega === filtroTipo && ordem.fonte !== 'correcoes';
   });
 
   // Ordenar por data de carregamento
@@ -70,7 +70,7 @@ export default function ProducaoCarregamento() {
           </TabsTrigger>
           <TabsTrigger value="entrega">
             <Truck className="h-4 w-4 mr-2" />
-            Entrega ({ordensDisponiveis.filter(o => o.tipo_entrega === 'entrega').length})
+            Entrega ({ordensDisponiveis.filter(o => o.tipo_entrega === 'entrega' && o.fonte !== 'correcoes').length})
           </TabsTrigger>
           <TabsTrigger value="instalacao">
             <PackageCheck className="h-4 w-4 mr-2" />

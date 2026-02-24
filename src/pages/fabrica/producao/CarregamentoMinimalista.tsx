@@ -33,7 +33,7 @@ export default function CarregamentoMinimalista() {
     if (filtroTipo === "instalacao") {
       return ordem.tipo_entrega === 'instalacao' || ordem.tipo_entrega === 'manutencao';
     }
-    return ordem.tipo_entrega === filtroTipo;
+    return ordem.tipo_entrega === filtroTipo && ordem.fonte !== 'correcoes';
   });
 
   // Ordenar por data de carregamento
@@ -81,7 +81,7 @@ export default function CarregamentoMinimalista() {
             Todos ({ordensDisponiveis.length})
           </TabsTrigger>
           <TabsTrigger value="entrega" className="data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-300">
-            Entrega ({ordensDisponiveis.filter(o => o.tipo_entrega === 'entrega').length})
+            Entrega ({ordensDisponiveis.filter(o => o.tipo_entrega === 'entrega' && o.fonte !== 'correcoes').length})
           </TabsTrigger>
           <TabsTrigger value="instalacao" className="data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-300">
             Instalação ({ordensDisponiveis.filter(o => o.tipo_entrega === 'instalacao' || o.tipo_entrega === 'manutencao').length})
