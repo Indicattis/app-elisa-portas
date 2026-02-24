@@ -18,7 +18,7 @@ export default function Entregas() {
   const ordensEntrega = ordens.filter(ordem => {
     const semInstalacao = ordem.venda?.valor_instalacao == null || ordem.venda.valor_instalacao === 0;
     const filtroStatus = mostrarConcluidos || ordem.status !== 'concluida';
-    const naoECorrecao = ordem.fonte !== 'correcoes';
+    const naoECorrecao = ordem.pedido?.etapa_atual !== 'correcoes';
     return semInstalacao && filtroStatus && naoECorrecao;
   });
 

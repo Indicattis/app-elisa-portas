@@ -257,7 +257,8 @@ export const useOrdensCarregamentoUnificadas = () => {
       const { data: todosInstalacoesPedidoIds } = await supabase
         .from("instalacoes")
         .select("pedido_id")
-        .not("pedido_id", "is", null);
+        .not("pedido_id", "is", null)
+        .eq("carregamento_concluido", false);
 
       const todosIdsInstalacoes = new Set(
         (todosInstalacoesPedidoIds || []).map(i => i.pedido_id)
