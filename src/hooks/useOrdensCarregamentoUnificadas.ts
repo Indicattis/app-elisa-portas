@@ -17,7 +17,7 @@ export interface ProdutoUnificado {
 
 export interface OrdemCarregamentoUnificada {
   id: string;
-  fonte: 'ordens_carregamento' | 'instalacoes';
+  fonte: 'ordens_carregamento' | 'instalacoes' | 'correcoes';
   pedido_id: string | null;
   venda_id: string | null;
   nome_cliente: string;
@@ -200,7 +200,60 @@ export const useOrdensCarregamentoUnificadas = () => {
         (inst) => inst.pedido?.etapa_atual === 'instalacoes' || inst.pedido?.etapa_atual === 'aguardando_coleta' || inst.status === 'pronta_fabrica'
       );
 
-      // ===== 2b. Query leve: buscar TODOS os pedido_ids de instalacoes (sem filtros) para deduplicação =====
+      // ===== 3. Buscar correções com carregamento pendente =====
+      const { data: correcoes, error: corrError } = await supabase
+        .from("correcoes")
+        .select(`
+          *,
+          pedido:pedidos_producao!correcoes_pedido_id_fkey(
+            id,
+            numero_pedido,
+            etapa_atual,
+            observacoes,
+            updated_at
+          )
+        `)
+        .eq("carregamento_concluido", false)
+        .eq("concluida", false)
+        .order("created_at", { ascending: false });
+
+      if (corrError) {
+        console.error("[useOrdensCarregamentoUnificadas] Erro ao buscar correcoes:", corrError);
+        throw corrError;
+      }
+
+      // Filtrar correções cujo pedido está na etapa correcoes
+      const correcoesParaCarregar = (correcoes || []).filter(
+        (c) => c.pedido?.etapa_atual === 'correcoes'
+      );
+
+      // Deduplicar correções por pedido_id
+      const correcoesUnicas = (() => {
+        const porPedido = new Map<string, typeof correcoesParaCarregar[0]>();
+        for (const corr of correcoesParaCarregar) {
+          if (!corr.pedido_id) continue;
+          const existing = porPedido.get(corr.pedido_id);
+          if (!existing) {
+            porPedido.set(corr.pedido_id, corr);
+          } else {
+            const corrTemData = !!corr.data_carregamento;
+            const existingTemData = !!existing.data_carregamento;
+            if (corrTemData && !existingTemData) {
+              porPedido.set(corr.pedido_id, corr);
+            } else if (!corrTemData && existingTemData) {
+              // keep existing
+            } else if (new Date(corr.created_at || 0) > new Date(existing.created_at || 0)) {
+              porPedido.set(corr.pedido_id, corr);
+            }
+          }
+        }
+        return [...porPedido.values()];
+      })();
+
+      // Set de pedido_ids em correções para deduplicação
+      const todosIdsCorrecoes = new Set(correcoesUnicas.map(c => c.pedido_id).filter(Boolean));
+
+      // ===== 3b. Query leve: buscar TODOS os pedido_ids de instalacoes (sem filtros) para deduplicação =====
       const { data: todosInstalacoesPedidoIds } = await supabase
         .from("instalacoes")
         .select("pedido_id")
@@ -210,7 +263,7 @@ export const useOrdensCarregamentoUnificadas = () => {
         (todosInstalacoesPedidoIds || []).map(i => i.pedido_id)
       );
 
-      // ===== 2c. Buscar pedidos "órfãos" nas etapas corretas sem registro em nenhuma tabela =====
+      // ===== 3c. Buscar pedidos "órfãos" nas etapas corretas sem registro em nenhuma tabela =====
       const { data: pedidosOrfaos } = await supabase
         .from("pedidos_producao")
         .select(`
@@ -233,9 +286,9 @@ export const useOrdensCarregamentoUnificadas = () => {
       // IDs de pedidos já presentes em ordens_carregamento
       const pedidoIdsOrdens = new Set(ordensUnicasPorPedido.map(o => o.pedido_id).filter(Boolean));
 
-      // Filtrar órfãos: não tem registro em instalacoes NEM em ordens_carregamento
+      // Filtrar órfãos: não tem registro em instalacoes NEM em ordens_carregamento NEM em correcoes
       const orfaosReais = (pedidosOrfaos || []).filter(p => 
-        !todosIdsInstalacoes.has(p.id) && !pedidoIdsOrdens.has(p.id)
+        !todosIdsInstalacoes.has(p.id) && !pedidoIdsOrdens.has(p.id) && !todosIdsCorrecoes.has(p.id)
       );
 
       // Buscar dados dos vendedores para instalações também
@@ -255,8 +308,8 @@ export const useOrdensCarregamentoUnificadas = () => {
       
       (instVendedores || []).forEach(v => vendedoresMap.set(v.user_id, v));
 
-      // ===== 3. Deduplicar e normalizar =====
-      const ordensDeduplicadas = ordensUnicasPorPedido.filter(o => !o.pedido_id || !todosIdsInstalacoes.has(o.pedido_id));
+      // ===== 4. Deduplicar e normalizar =====
+      const ordensDeduplicadas = ordensUnicasPorPedido.filter(o => !o.pedido_id || (!todosIdsInstalacoes.has(o.pedido_id) && !todosIdsCorrecoes.has(o.pedido_id)));
 
       const ordensNormalizadas: OrdemCarregamentoUnificada[] = [
         // Ordens de carregamento (deduplicadas)
@@ -370,6 +423,36 @@ export const useOrdensCarregamentoUnificadas = () => {
             } : null,
           };
         }),
+        // Correções com carregamento pendente
+        ...correcoesUnicas.map((corr): OrdemCarregamentoUnificada => {
+          return {
+            id: corr.id,
+            fonte: 'correcoes',
+            pedido_id: corr.pedido_id,
+            venda_id: corr.venda_id,
+            nome_cliente: corr.nome_cliente,
+            data_carregamento: corr.data_carregamento,
+            hora_carregamento: corr.hora_carregamento || corr.hora,
+            hora: corr.hora,
+            tipo_carregamento: corr.tipo_carregamento as 'elisa' | 'autorizados' | 'terceiro' | null,
+            responsavel_carregamento_id: corr.responsavel_carregamento_id,
+            responsavel_carregamento_nome: corr.responsavel_carregamento_nome,
+            carregamento_concluido: corr.carregamento_concluido || false,
+            status: corr.status,
+            tipo_entrega: 'entrega',
+            observacoes: corr.observacoes,
+            created_at: corr.created_at,
+            pedido: corr.pedido,
+            venda: {
+              id: corr.venda_id || '',
+              cliente_nome: corr.nome_cliente,
+              cliente_telefone: corr.telefone_cliente,
+              cidade: corr.cidade,
+              estado: corr.estado,
+              cep: corr.cep,
+            },
+          };
+        }),
       ];
 
       // Ordenar por data de carregamento (null por último), depois por created_at
@@ -421,6 +504,39 @@ export const useOrdensCarregamentoUnificadas = () => {
           p_ordem_carregamento_id: ordem.id
         });
         if (error) throw error;
+      } else if (ordem.fonte === 'correcoes') {
+        // Correções: atualizar observações/foto e marcar carregamento concluído
+        const updateData: Record<string, any> = {
+          carregamento_concluido: true,
+        };
+        if (observacoes) updateData.observacoes = observacoes;
+        if (fotoUrl) updateData.foto_carregamento_url = fotoUrl;
+
+        const { error: updateError } = await supabase
+          .from("correcoes")
+          .update(updateData)
+          .eq("id", ordem.id);
+        if (updateError) throw updateError;
+
+        // Avançar pedido para finalizado
+        if (ordem.pedido_id) {
+          const { error: pedidoError } = await supabase
+            .from("pedidos_producao")
+            .update({ etapa_atual: 'finalizado', updated_at: new Date().toISOString() })
+            .eq("id", ordem.pedido_id);
+          if (pedidoError) throw pedidoError;
+
+          // Registrar movimentação via RPC se disponível
+          try {
+            await supabase.rpc('registrar_movimentacao_pedido' as any, {
+              p_pedido_id: ordem.pedido_id,
+              p_etapa_anterior: 'correcoes',
+              p_etapa_nova: 'finalizado',
+            });
+          } catch (e) {
+            console.warn('[correcoes] Não foi possível registrar movimentação:', e);
+          }
+        }
       } else {
         const updateData: Record<string, any> = {};
         if (observacoes) updateData.observacoes = observacoes;
@@ -447,6 +563,8 @@ export const useOrdensCarregamentoUnificadas = () => {
       
       if (variables.ordem.fonte === 'ordens_carregamento') {
         toast.success("Carregamento concluído! Pedido finalizado.");
+      } else if (variables.ordem.fonte === 'correcoes') {
+        toast.success("Carregamento da correção concluído! Pedido finalizado.");
       } else {
         toast.success("Carregamento concluído! Aguardando finalização da instalação.");
       }
@@ -489,9 +607,25 @@ export const useOrdensCarregamentoUnificadas = () => {
       )
       .subscribe();
 
+    const channelCorr = supabase
+      .channel('ordens-carregamento-unificadas-corr')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'correcoes'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_unificadas"] });
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channelOC);
       supabase.removeChannel(channelInst);
+      supabase.removeChannel(channelCorr);
     };
   }, [queryClient]);
 

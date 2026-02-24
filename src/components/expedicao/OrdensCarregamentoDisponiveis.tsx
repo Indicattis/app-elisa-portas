@@ -139,7 +139,7 @@ export const OrdensCarregamentoDisponiveis = ({
 
   const handleConfirmAgendar = async (params: {
     ordemId: string;
-    fonte: 'ordens_carregamento' | 'instalacoes';
+    fonte: 'ordens_carregamento' | 'instalacoes' | 'correcoes';
     data_carregamento: string;
     hora: string;
     tipo_carregamento: 'elisa' | 'autorizados' | 'terceiro';

@@ -13,7 +13,7 @@ export interface ProdutoUnificado {
 
 export interface OrdemCarregamentoUnificada {
   id: string;
-  fonte: 'ordens_carregamento' | 'instalacoes';
+  fonte: 'ordens_carregamento' | 'instalacoes' | 'correcoes';
   pedido_id: string | null;
   venda_id: string | null;
   nome_cliente: string;

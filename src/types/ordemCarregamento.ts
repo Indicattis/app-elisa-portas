@@ -21,7 +21,7 @@ export interface OrdemCarregamento {
   created_at: string | null;
   updated_at: string | null;
   created_by: string | null;
-  fonte?: 'ordens_carregamento' | 'instalacoes';
+  fonte?: 'ordens_carregamento' | 'instalacoes' | 'correcoes';
   pedido?: {
     id: string;
     numero_pedido: string;

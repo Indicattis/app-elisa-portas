@@ -22,7 +22,7 @@ interface CalendarioSemanalExpedicaoDesktopProps {
   onPreviousWeek: () => void;
   onNextWeek: () => void;
   onToday: () => void;
-  onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento>; fonte?: 'ordens_carregamento' | 'instalacoes' }) => Promise<void>;
+  onUpdateOrdem?: (params: { id: string; data: Partial<OrdemCarregamento>; fonte?: 'ordens_carregamento' | 'instalacoes' | 'correcoes' }) => Promise<void>;
   onUpdateNeoInstalacao?: (params: { id: string; data: Partial<NeoInstalacao> }) => Promise<void>;
   onUpdateNeoCorrecao?: (params: { id: string; data: Partial<NeoCorrecao> }) => Promise<void>;
   onEdit?: (ordem: OrdemCarregamento) => void;
