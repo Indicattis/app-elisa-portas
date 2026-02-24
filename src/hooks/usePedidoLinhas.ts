@@ -98,7 +98,7 @@ export function usePedidoLinhas(pedidoId: string) {
         .from('pedido_linhas')
         .insert({
           pedido_id: pedidoId,
-          produto_venda_id: linha.produto_venda_id ?? null,
+          produto_venda_id: linha.produto_venda_id || null,
           indice_porta: linha.indice_porta ?? 0,
           nome_produto: linha.nome_produto,
           descricao_produto: linha.descricao_produto,
@@ -106,7 +106,7 @@ export function usePedidoLinhas(pedidoId: string) {
           tamanho: linha.tamanho ?? null,
           largura: linha.largura ?? null,
           altura: linha.altura ?? null,
-          estoque_id: linha.estoque_id ?? null,
+          estoque_id: linha.estoque_id || null,
           categoria_linha: linha.categoria_linha,
           tipo_ordem: tipoOrdem,
           ordem: proximaOrdem,
