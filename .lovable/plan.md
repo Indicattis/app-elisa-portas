@@ -1,73 +1,92 @@
 
-# Corrigir pedido avancando sem aprovacao CEO
 
-## Problema
+# Adicionar informacoes de pagamento na sidebar e refletir em /direcao/faturamento
 
-O pedido `fb954ee7` avancou de "Em Aberto" diretamente para "Em Producao", pulando a validacao da etapa "Aprovacao CEO". Os checkboxes obrigatorios ("Pedido revisado pela diretoria" e "Aprovado para producao") permaneceram desmarcados, mas o pedido avancou mesmo assim.
+## Contexto
 
-## Causa raiz
+Atualmente, a sidebar direita em `/administrativo/financeiro/faturamento/vendas` exibe apenas as datas de pagamento (Pgto 1 e Pgto 2), que vem da tabela `contas_receber`. O usuario quer que cada data de pagamento tambem mostre:
+- A **forma de pagamento** (ja existe no campo `metodo_pagamento` da `contas_receber`)
+- Um campo de **observacao** editavel (ja existe o campo `observacoes` na `contas_receber`)
+- Um botao para **marcar como pago** (ja existe o campo `status` e `data_pagamento` na `contas_receber`)
 
-No arquivo `src/hooks/usePedidosEtapas.ts`, a validacao de checkboxes (linha 600-611) e completamente ignorada quando `skipCheckboxValidation = true`. O unico estagio protegido de forma especial e `em_producao` (que valida ordens de producao em vez de checkboxes).
+Os dados definidos aqui devem ser refletidos nas colunas de `/direcao/faturamento`.
 
-Quando o usuario clica "Avancar" na pagina de administracao, o `PedidoCard` chama `onMoverEtapa(pedido.id, true, ...)` — passando `skipCheckboxValidation: true`. Isso faz o pedido avancar de `aberto` para `aprovacao_ceo` sem checar checkboxes (o que e aceitavel, pois os checkboxes de "aberto" sao apenas informativos nesse contexto).
+## Nenhuma alteracao no banco de dados necessaria
 
-Porem, se o botao e clicado duas vezes rapidamente, ou se ha algum re-trigger, a segunda chamada encontra o pedido ja em `aprovacao_ceo` e avanca para `em_producao` — tambem com `skipCheckboxValidation: true`, pulando os checkboxes obrigatorios da aprovacao CEO.
+A tabela `contas_receber` ja possui todos os campos necessarios: `metodo_pagamento`, `observacoes`, `status`, `data_pagamento`. Apenas o codigo frontend precisa ser ajustado.
 
-## Solucao
+## Mudancas
 
-Adicionar uma protecao especifica para a etapa `aprovacao_ceo` na funcao `moverParaProximaEtapa` em `src/hooks/usePedidosEtapas.ts`. A etapa de aprovacao CEO **nunca** deve ter seus checkboxes ignorados, independente do valor de `skipCheckboxValidation`. Somente o hook `usePedidosAprovacaoCEO` (usado na pagina de aprovacoes da direcao) deve poder avancar dessa etapa, e ele ja passa `skipCheckboxValidation: true` apos a aprovacao explicita do CEO.
+### 1. Buscar dados completos de `contas_receber` (ambos os arquivos)
 
-## Mudanca
+Nos dois arquivos de faturamento, o `select` atual busca apenas `venda_id, metodo_pagamento, data_vencimento`. Sera expandido para incluir `id, status, observacoes, data_pagamento, valor_parcela, numero_parcela`.
 
-### Arquivo: `src/hooks/usePedidosEtapas.ts` (linhas 600-611)
+O mapa `pagamentosPorVenda` passara a armazenar objetos mais completos com todas essas informacoes, em vez de apenas `{ data1, data2 }`.
 
-Alterar a condicao de validacao de checkboxes para sempre validar na etapa `aprovacao_ceo`:
+**Arquivos:**
+- `src/pages/administrativo/FaturamentoVendasMinimalista.tsx` (linhas 241-258)
+- `src/pages/direcao/FaturamentoDirecao.tsx` (linhas 260-279)
 
-```text
-// Antes:
-if (!skipCheckboxValidation && etapaAtualNome !== 'em_producao') {
+### 2. Atualizar a interface `Venda` para incluir dados de pagamento
 
-// Depois:
-if (etapaAtualNome === 'aprovacao_ceo' || (!skipCheckboxValidation && etapaAtualNome !== 'em_producao')) {
-```
-
-Isso garante que:
-- A etapa `aprovacao_ceo` sempre valida checkboxes, bloqueando avancos indevidos
-- O CEO aprova pela pagina de aprovacoes, que primeiro marca os checkboxes via mutation e so depois chama o avanco
-- As demais etapas continuam funcionando normalmente com `skipCheckboxValidation`
-
-### Ajuste no hook de aprovacao CEO: `src/hooks/usePedidosAprovacaoCEO.ts`
-
-Atualizar a funcao `aprovarPedido` para primeiro marcar os checkboxes como concluidos antes de chamar `moverParaProximaEtapa`:
+Adicionar campos para armazenar os dados completos de cada pagamento:
 
 ```text
-// Antes de chamar moverParaProximaEtapa, marcar todos os checkboxes como checked
-const { data: etapaData } = await supabase
-  .from('pedidos_etapas')
-  .select('checkboxes')
-  .eq('pedido_id', pedidoId)
-  .eq('etapa', 'aprovacao_ceo')
-  .maybeSingle();
-
-if (etapaData?.checkboxes) {
-  const checkboxesMarcados = etapaData.checkboxes.map(cb => ({
-    ...cb,
-    checked: true,
-    checked_at: new Date().toISOString()
-  }));
-  await supabase
-    .from('pedidos_etapas')
-    .update({ checkboxes: checkboxesMarcados })
-    .eq('pedido_id', pedidoId)
-    .eq('etapa', 'aprovacao_ceo');
+interface PagamentoInfo {
+  id: string;
+  data_vencimento: string;
+  metodo_pagamento: string | null;
+  status: string;
+  observacoes: string | null;
+  data_pagamento: string | null;
+  valor_parcela: number;
 }
-
-// Depois sim chama o avanco
-await moverParaProximaEtapa.mutateAsync({ pedidoId, skipCheckboxValidation: true });
 ```
 
-## Resultado
+E na interface `Venda`:
+```text
+pagamento_1?: PagamentoInfo | null;
+pagamento_2?: PagamentoInfo | null;
+```
 
-- Pedidos nao poderao mais pular a aprovacao CEO
-- A pagina de aprovacoes da direcao continuara funcionando normalmente
-- O avanco de outras etapas nao sera afetado
+**Arquivos:**
+- `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
+- `src/pages/direcao/FaturamentoDirecao.tsx`
+
+### 3. Redesenhar a secao "Datas" da sidebar administrativa
+
+Cada item de pagamento (Pgto 1 e Pgto 2) sera expandido de uma linha simples com data para um card com:
+- Data de vencimento e forma de pagamento (ex: "15/02/25 - Boleto")
+- Status visual (badge verde "Pago" ou amarelo "Pendente")
+- Campo de observacao editavel (textarea inline com salvamento ao sair do foco)
+- Botao "Marcar como Pago" que atualiza `status` para `pago` e `data_pagamento` para a data atual na `contas_receber`
+
+Ao marcar como pago ou salvar observacao, uma chamada `supabase.from('contas_receber').update(...)` sera feita usando o `id` do registro.
+
+**Arquivo:** `src/pages/administrativo/FaturamentoVendasMinimalista.tsx` (linhas 852-888)
+
+### 4. Refletir dados nas colunas de /direcao/faturamento
+
+Na pagina da direcao, as colunas `data_pgto_1` e `data_pgto_2` passarao a exibir:
+- A data formatada
+- Um indicador visual do status (icone ou cor: verde se pago, amarelo se pendente)
+- A forma de pagamento abreviada ao lado da data
+
+Na sidebar da direcao (somente leitura), os cards de pagamento mostrarao os mesmos dados (data, forma, status, observacao) mas sem os botoes de edicao.
+
+**Arquivo:** `src/pages/direcao/FaturamentoDirecao.tsx` (linhas 732-739 para colunas, 1001-1035 para sidebar)
+
+### 5. Funcao de atualizacao de pagamento
+
+Criar uma funcao `handleUpdatePagamento` no componente administrativo que:
+1. Recebe `contaId`, campo a atualizar (`status`, `observacoes`) e novo valor
+2. Faz `supabase.from('contas_receber').update({...}).eq('id', contaId)`
+3. Atualiza o estado local para refletir a mudanca sem recarregar tudo
+
+**Arquivo:** `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
+
+## Resumo de arquivos modificados
+
+1. `src/pages/administrativo/FaturamentoVendasMinimalista.tsx` - Buscar dados completos, redesenhar sidebar, adicionar funcoes de update
+2. `src/pages/direcao/FaturamentoDirecao.tsx` - Buscar dados completos, exibir status/forma nas colunas e sidebar (somente leitura)
+
