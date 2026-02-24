@@ -230,10 +230,29 @@ export const useOrdensCarregamentoCalendario = (
     }: { 
       id: string; 
       data: Partial<OrdemCarregamento>;
-      fonte?: 'ordens_carregamento' | 'instalacoes';
+      fonte?: 'ordens_carregamento' | 'instalacoes' | 'correcoes';
     }) => {
       // Rotear para a tabela correta baseado na fonte
-      if (fonte === 'instalacoes') {
+      if (fonte === 'correcoes') {
+        // Correções: atualizar na tabela correcoes
+        const updateData: Record<string, any> = {
+          updated_at: new Date().toISOString()
+        };
+        if (data.data_carregamento !== undefined) updateData.data_carregamento = data.data_carregamento;
+        if (data.hora !== undefined) updateData.hora_carregamento = data.hora;
+        if (data.hora_carregamento !== undefined) updateData.hora_carregamento = data.hora_carregamento;
+        if (data.tipo_carregamento !== undefined) updateData.tipo_carregamento = data.tipo_carregamento;
+        if (data.responsavel_carregamento_id !== undefined) updateData.responsavel_carregamento_id = data.responsavel_carregamento_id;
+        if (data.responsavel_carregamento_nome !== undefined) updateData.responsavel_carregamento_nome = data.responsavel_carregamento_nome;
+        if (data.status !== undefined) updateData.status = data.status;
+
+        const { error } = await supabase
+          .from("correcoes")
+          .update(updateData)
+          .eq("id", id);
+
+        if (error) throw error;
+      } else if (fonte === 'instalacoes') {
         // Verificar se o registro existe na tabela instalacoes
         const { data: existing } = await supabase
           .from("instalacoes")

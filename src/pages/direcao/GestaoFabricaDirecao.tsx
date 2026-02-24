@@ -108,7 +108,7 @@ export default function GestaoFabricaDirecao() {
     navigate(`/logistica/expedicao/editar-neo/${neo.id}?tipo=correcao`);
   };
 
-  const handleUpdateOrdem = async (params: { id: string; data: Partial<OrdemCarregamento>; fonte?: 'ordens_carregamento' | 'instalacoes' }) => {
+  const handleUpdateOrdem = async (params: { id: string; data: Partial<OrdemCarregamento>; fonte?: 'ordens_carregamento' | 'instalacoes' | 'correcoes' }) => {
     await updateOrdem(params);
   };
 

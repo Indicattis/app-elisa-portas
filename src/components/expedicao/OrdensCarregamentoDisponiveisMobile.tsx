@@ -83,7 +83,7 @@ const toOrdemCarregamento = (ordem: OrdemCarregamentoUnificada): OrdemCarregamen
   created_at: ordem.created_at || null,
   updated_at: null,
   created_by: null,
-  fonte: ordem.fonte,
+  fonte: ordem.fonte as 'ordens_carregamento' | 'instalacoes' | 'correcoes',
   pedido: ordem.pedido,
   venda: ordem.venda ? {
     id: ordem.venda.id,

@@ -17,7 +17,8 @@ interface OrdemCardProps {
 
 function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
   const isInstalacao = ordem.fonte === 'instalacoes';
-  const Icon = isInstalacao ? Wrench : ordem.tipo_carregamento === 'elisa' ? Truck : PackageCheck;
+  const isCorrecao = ordem.fonte === 'correcoes';
+  const Icon = isCorrecao ? Wrench : isInstalacao ? Wrench : ordem.tipo_carregamento === 'elisa' ? Truck : PackageCheck;
 
   return (
     <Card 
@@ -49,7 +50,12 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
             )}
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 mt-1 sm:mt-0">
-            {isInstalacao && (
+            {isCorrecao && (
+              <Badge variant="outline" className="flex items-center gap-1 text-[10px] sm:text-xs h-4 sm:h-5 px-1.5 sm:px-2 bg-purple-500/10 text-purple-600 border-purple-300">
+                Correção
+              </Badge>
+            )}
+            {isInstalacao && !isCorrecao && (
               <Badge variant="outline" className="flex items-center gap-1 text-[10px] sm:text-xs h-4 sm:h-5 px-1.5 sm:px-2 bg-orange-500/10 text-orange-600 border-orange-300">
                 {ordem.tipo_entrega === 'manutencao' ? 'Manutenção' : 'Instalação'}
               </Badge>

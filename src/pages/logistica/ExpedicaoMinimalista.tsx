@@ -332,7 +332,7 @@ export default function ExpedicaoMinimalista() {
     }
   };
 
-  const handleUpdateOrdem = async (params: { id: string; data: Partial<OrdemCarregamento>; fonte?: 'ordens_carregamento' | 'instalacoes' }) => {
+  const handleUpdateOrdem = async (params: { id: string; data: Partial<OrdemCarregamento>; fonte?: 'ordens_carregamento' | 'instalacoes' | 'correcoes' }) => {
     await updateOrdem(params);
   };
 
