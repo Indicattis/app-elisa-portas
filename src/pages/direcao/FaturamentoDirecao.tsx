@@ -49,6 +49,17 @@ interface AutorizacaoDesconto {
   } | null;
 }
 
+interface PagamentoInfo {
+  id: string;
+  data_vencimento: string;
+  metodo_pagamento: string | null;
+  status: string;
+  observacoes: string | null;
+  data_pagamento: string | null;
+  valor_parcela: number;
+  numero_parcela: number;
+}
+
 interface Venda {
   id: string;
   data_venda: string;
@@ -72,6 +83,8 @@ interface Venda {
   autorizacao_desconto?: AutorizacaoDesconto[];
   data_pagamento_1?: string | null;
   data_pagamento_2?: string | null;
+  pagamento_1?: PagamentoInfo | null;
+  pagamento_2?: PagamentoInfo | null;
   valor_a_receber?: number | null;
   valor_a_receber_faturamento?: boolean;
 }
@@ -259,19 +272,29 @@ export default function FaturamentoDirecao() {
       const vendaIds = vendasData.map((v: any) => v.id);
       const { data: contasData } = await supabase
         .from('contas_receber')
-        .select('venda_id, metodo_pagamento, data_vencimento')
+        .select('id, venda_id, metodo_pagamento, data_vencimento, status, observacoes, data_pagamento, valor_parcela, numero_parcela')
         .in('venda_id', vendaIds)
-        .order('data_vencimento', { ascending: true });
+        .order('numero_parcela', { ascending: true });
 
-      // Processar datas de pagamento por venda
-      const pagamentosPorVenda = new Map<string, { data1?: string; data2?: string }>();
+      const pagamentosPorVenda = new Map<string, { pgto1?: PagamentoInfo; pgto2?: PagamentoInfo; data1?: string; data2?: string }>();
       if (contasData) {
         contasData.forEach((conta: any) => {
           const existing = pagamentosPorVenda.get(conta.venda_id) || {};
-          if (!existing.data1) {
+          const info: PagamentoInfo = {
+            id: conta.id,
+            data_vencimento: conta.data_vencimento,
+            metodo_pagamento: conta.metodo_pagamento,
+            status: conta.status || 'pendente',
+            observacoes: conta.observacoes,
+            data_pagamento: conta.data_pagamento,
+            valor_parcela: conta.valor_parcela || 0,
+            numero_parcela: conta.numero_parcela || 1,
+          };
+          if (!existing.pgto1) {
+            existing.pgto1 = info;
             existing.data1 = conta.data_vencimento;
-            (existing as any).metodo1 = conta.metodo_pagamento;
-          } else if (!existing.data2 && conta.metodo_pagamento !== (existing as any).metodo1) {
+          } else if (!existing.pgto2) {
+            existing.pgto2 = info;
             existing.data2 = conta.data_vencimento;
           }
           pagamentosPorVenda.set(conta.venda_id, existing);
@@ -289,6 +312,8 @@ export default function FaturamentoDirecao() {
           autorizacao_desconto: venda.autorizacao_desconto || [],
           data_pagamento_1: pagamentos?.data1 || null,
           data_pagamento_2: pagamentos?.data2 || null,
+          pagamento_1: pagamentos?.pgto1 || null,
+          pagamento_2: pagamentos?.pgto2 || null,
         };
       });
 
@@ -730,13 +755,21 @@ export default function FaturamentoDirecao() {
         // Só tem acréscimo
         return <span className="text-green-400">+{formatCurrency(saldo)}</span>;
       case 'data_pgto_1':
-        return venda.data_pagamento_1 
-          ? <span className="text-white/80">{format(new Date(venda.data_pagamento_1), 'dd/MM/yy')}</span>
-          : <span className="text-white/30">-</span>;
+        if (!venda.pagamento_1) return <span className="text-white/30">-</span>;
+        return (
+          <div className="flex items-center gap-1.5">
+            <span className={cn("h-1.5 w-1.5 rounded-full", venda.pagamento_1.status === 'pago' ? "bg-emerald-400" : "bg-amber-400")} />
+            <span className="text-white/80">{format(new Date(venda.pagamento_1.data_vencimento + 'T12:00:00'), 'dd/MM/yy')}</span>
+          </div>
+        );
       case 'data_pgto_2':
-        return venda.data_pagamento_2 
-          ? <span className="text-white/80">{format(new Date(venda.data_pagamento_2), 'dd/MM/yy')}</span>
-          : <span className="text-white/30">-</span>;
+        if (!venda.pagamento_2) return <span className="text-white/30">-</span>;
+        return (
+          <div className="flex items-center gap-1.5">
+            <span className={cn("h-1.5 w-1.5 rounded-full", venda.pagamento_2.status === 'pago' ? "bg-emerald-400" : "bg-amber-400")} />
+            <span className="text-white/80">{format(new Date(venda.pagamento_2.data_vencimento + 'T12:00:00'), 'dd/MM/yy')}</span>
+          </div>
+        );
       case 'instalacao':
         return venda.valor_instalacao && venda.valor_instalacao > 0
           ? <span className="text-white/80">{formatCurrency(venda.valor_instalacao)}</span>
@@ -1010,28 +1043,48 @@ export default function FaturamentoDirecao() {
                   : '-'}
               </p>
             </div>
-            <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/10">
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="h-3.5 w-3.5 text-white/40" />
-                <p className="text-xs text-white/50">Pgto 1</p>
-              </div>
-              <p className="text-xs font-semibold text-white">
-                {selectedVenda.data_pagamento_1 
-                  ? format(new Date(selectedVenda.data_pagamento_1 + 'T12:00:00'), 'dd/MM/yy', { locale: ptBR })
-                  : '-'}
-              </p>
-            </div>
-            <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/10">
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="h-3.5 w-3.5 text-white/40" />
-                <p className="text-xs text-white/50">Pgto 2</p>
-              </div>
-              <p className="text-xs font-semibold text-white">
-                {selectedVenda.data_pagamento_2 
-                  ? format(new Date(selectedVenda.data_pagamento_2 + 'T12:00:00'), 'dd/MM/yy', { locale: ptBR })
-                  : '-'}
-              </p>
-            </div>
+            {[selectedVenda.pagamento_1, selectedVenda.pagamento_2].map((pgto, idx) => {
+              if (!pgto) return (
+                <div key={idx} className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/10">
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="h-3.5 w-3.5 text-white/40" />
+                    <p className="text-xs text-white/50">Pgto {idx + 1}</p>
+                  </div>
+                  <p className="text-xs text-white/30">-</p>
+                </div>
+              );
+              const isPago = pgto.status === 'pago';
+              return (
+                <div key={pgto.id} className="p-2.5 rounded-lg bg-white/5 border border-white/10 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CalendarIcon className="h-3.5 w-3.5 text-white/40" />
+                      <p className="text-xs text-white/50">Pgto {idx + 1}</p>
+                    </div>
+                    <span className={cn(
+                      "text-[10px] px-1.5 py-0.5 rounded-full font-medium",
+                      isPago ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
+                    )}>
+                      {isPago ? 'Pago' : 'Pendente'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-white font-semibold">
+                      {format(new Date(pgto.data_vencimento + 'T12:00:00'), 'dd/MM/yy', { locale: ptBR })}
+                    </span>
+                    <span className="text-white/50">
+                      {pgto.metodo_pagamento ? (() => {
+                        const labels: Record<string, string> = { boleto: 'Boleto', a_vista: 'À Vista', cartao_credito: 'Cartão', dinheiro: 'Dinheiro' };
+                        return labels[pgto.metodo_pagamento] || pgto.metodo_pagamento;
+                      })() : '-'}
+                    </span>
+                  </div>
+                  {pgto.observacoes && (
+                    <p className="text-[11px] text-white/40 italic">{pgto.observacoes}</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
