@@ -1,101 +1,53 @@
 
 
-# Correção: Pedidos com ordens duplicadas mostram "Não agendado" e carregamento incompleto
+# Incluir correções no hook de ordens de carregamento unificadas
 
-## Problema identificado
+## Problema
 
-Existem registros duplicados nas tabelas `ordens_carregamento` e `instalacoes` para o mesmo `pedido_id`:
+O hook `useOrdensCarregamentoUnificadas` busca dados de `ordens_carregamento` e `instalacoes`, mas ignora completamente a tabela `correcoes`. Pedidos na etapa "correcoes" que possuem carregamento pendente nessa tabela nao aparecem em `/producao/carregamento`.
 
-- **Pedido 0217** (aguardando_coleta): 3 registros em `ordens_carregamento` -- 2 com data 2026-02-28 e 1 sem data
-- **Pedido 0093** (instalacoes): 4 registros em `ordens_carregamento` + 4 registros em `instalacoes`, todos sem data
+Atualmente existem 4 registros em `correcoes` com `carregamento_concluido = false` que estao invisiveis.
 
-Isso causa dois problemas:
+## Mudancas
 
-1. **PedidoCard mostra "Nao agendado"**: O componente usa `.maybeSingle()` para buscar a ordem. Quando existem multiplos registros para o mesmo pedido, `.maybeSingle()` retorna `null` (por design do PostgREST -- espera 0 ou 1 resultado). Resultado: `temData = false` e aparece "Nao agendado" mesmo com ordens no calendario.
+### 1. `src/hooks/useOrdensCarregamentoUnificadas.ts`
 
-2. **`/producao/carregamento` mostra poucas ordens**: O hook `useOrdensCarregamentoUnificadas` deduplica por `pedido_id`, mantendo apenas 1 registro por pedido. Os duplicatas sao descartados.
+**Adicionar query de correcoes** (entre a query de instalacoes e a deduplicacao):
+- Buscar da tabela `correcoes` com `carregamento_concluido = false` e `concluida = false`
+- Join com `vendas` e `pedidos_producao` (mesmo padrao das outras queries)
+- Filtrar por `pedido.etapa_atual === 'correcoes'`
+- Deduplicar por `pedido_id` (mesmo padrao das instalacoes)
 
-## Solucao
+**Incluir correcoes na deduplicacao geral:**
+- Criar set `todosIdsCorrecoes` para evitar que `ordens_carregamento` ou orfaos dupliquem pedidos que ja estao em correcoes
+- Filtrar `ordensDeduplicadas` para excluir pedidos que existem em correcoes
 
-### 1. Limpar dados duplicados (SQL via Supabase)
+**Normalizar correcoes para `OrdemCarregamentoUnificada`:**
+- Nova fonte: `'correcoes'` (adicionar ao tipo `fonte`)
+- Mapear campos: `data_carregamento`, `hora_carregamento`, `tipo_carregamento`, `responsavel_carregamento_id/nome`, etc.
+- `tipo_entrega` sera determinado pela venda (como nas outras)
 
-Remover os registros duplicados mantendo o mais relevante (com data agendada, ou o mais recente):
+**Atualizar `concluirCarregamentoMutation`:**
+- Adicionar branch `else if (ordem.fonte === 'correcoes')`:
+  - Atualizar `observacoes` e `foto_carregamento_url` se fornecidos
+  - Marcar `carregamento_concluido = true`, `carregamento_concluido_em = now()`
+  - Avancar o pedido para `finalizado` (fechar etapa, atualizar `pedidos_producao`, registrar movimentacao)
+  - Usar queries diretas no Supabase (nao existe RPC dedicada para correcoes)
 
-```text
--- Para ordens_carregamento: manter apenas 1 por pedido_id (a que tem data ou a mais recente)
--- Para instalacoes: manter apenas 1 por pedido_id
-```
+**Adicionar subscription da tabela `correcoes`:**
+- Novo canal realtime para invalidar cache quando `correcoes` mudar
 
-### 2. Corrigir PedidoCard.tsx -- substituir `.maybeSingle()` por logica robusta
+### 2. Interface `OrdemCarregamentoUnificada`
 
-Na query de carregamento do `PedidoCard`, trocar `.maybeSingle()` por `.order('data_carregamento', { ascending: false, nullsFirst: false }).limit(1).maybeSingle()` nas 3 consultas (correcoes, instalacoes, ordens_carregamento). Isso garante que, se houver duplicatas no futuro, o registro com data sera priorizado.
+- Atualizar o tipo `fonte` de `'ordens_carregamento' | 'instalacoes'` para `'ordens_carregamento' | 'instalacoes' | 'correcoes'`
+- Atualizar tambem no `src/types/ordemCarregamentoUnificada.ts`
 
-Alternativa mais segura: usar `.select(...)` sem `.maybeSingle()`, receber array, e selecionar o melhor registro no codigo (priorizar o que tem `data_carregamento`).
+### 3. `src/components/carregamento/CarregamentoKanban.tsx`
 
-### 3. Invalidar cache apos limpeza
+- Atualizar a logica `isInstalacao` para tambem reconhecer `fonte === 'correcoes'` com icone `Wrench` e badge "Correcao"
 
-Apos limpar duplicatas, invalidar as queries para atualizar a interface.
+### Arquivos modificados
+1. `src/hooks/useOrdensCarregamentoUnificadas.ts` -- adicionar query, normalizacao, mutation e subscription de correcoes
+2. `src/types/ordemCarregamentoUnificada.ts` -- atualizar tipo `fonte`
+3. `src/components/carregamento/CarregamentoKanban.tsx` -- exibir badge de correcao
 
-## Detalhes tecnicos
-
-### Arquivo: `src/components/pedidos/PedidoCard.tsx`
-
-Linhas ~422-460: Substituir as 3 chamadas `.maybeSingle()` por uma logica que busca todos os registros do pedido e seleciona o mais relevante:
-
-```text
-// Antes (linha ~444-448):
-const { data: ordemCarregamento } = await supabase
-  .from('ordens_carregamento')
-  .select('data_carregamento, carregamento_concluido, ...')
-  .eq('pedido_id', pedido.id)
-  .maybeSingle();
-
-// Depois:
-const { data: ordensCarregamento } = await supabase
-  .from('ordens_carregamento')
-  .select('data_carregamento, carregamento_concluido, ...')
-  .eq('pedido_id', pedido.id)
-  .eq('carregamento_concluido', false)
-  .order('data_carregamento', { ascending: false, nullsFirst: false })
-  .limit(1);
-
-const ordemCarregamento = ordensCarregamento?.[0] || null;
-```
-
-Aplicar o mesmo padrao para as consultas de `instalacoes` (linha ~422-426) e `correcoes` (linha ~401-405).
-
-### Limpeza de dados SQL
-
-Executar queries para remover duplicatas:
-
-```text
--- Remover ordens_carregamento duplicadas por pedido_id (manter a com data ou mais recente)
-DELETE FROM ordens_carregamento
-WHERE id NOT IN (
-  SELECT DISTINCT ON (pedido_id) id
-  FROM ordens_carregamento
-  WHERE pedido_id IS NOT NULL
-  ORDER BY pedido_id, data_carregamento DESC NULLS LAST, created_at DESC
-)
-AND pedido_id IS NOT NULL
-AND carregamento_concluido = false;
-
--- Mesmo para instalacoes duplicadas
-DELETE FROM instalacoes
-WHERE id NOT IN (
-  SELECT DISTINCT ON (pedido_id) id
-  FROM instalacoes
-  WHERE pedido_id IS NOT NULL
-  ORDER BY pedido_id, data_carregamento DESC NULLS LAST, created_at DESC
-)
-AND pedido_id IS NOT NULL
-AND carregamento_concluido = false
-AND instalacao_concluida = false;
-```
-
-## Resultado esperado
-
-- PedidoCard mostrara corretamente "Agendado" para pedidos com ordens no calendario
-- `/producao/carregamento` mostrara o numero correto de ordens
-- Dados duplicados serao limpos
-- Codigo ficara resiliente a duplicatas futuras
