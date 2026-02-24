@@ -744,10 +744,11 @@ export const PedidoLinhasEditor = ({
       <AdicionarLinhaModal
         open={modalAdicionarAberto}
         onOpenChange={setModalAdicionarAberto}
-        portaId={portaParaModal?.portaId || ''}
-        indicePorta={portaParaModal?.indicePorta ?? 0}
+        portaId={portaParaModal?.portaId}
+        indicePorta={portaParaModal?.indicePorta}
         portaLargura={portaParaModal?.largura}
         portaAltura={portaParaModal?.altura}
+        portas={portas}
         onAdicionar={onAdicionarLinha}
       />
     </div>
