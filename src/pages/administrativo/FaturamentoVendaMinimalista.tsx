@@ -726,18 +726,13 @@ export default function FaturamentoVendaMinimalista() {
                           {formatCurrency(subtotal)}
                         </span>
                       </div>
-                      <div className="space-y-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                         {parcelas.map((parcela: any) => {
                           const isPago = parcela.status === 'pago';
                           return (
-                            <div key={parcela.id} className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                            <div key={parcela.id} className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2 flex flex-col">
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <span className="text-sm font-medium text-white">Parcela {parcela.numero_parcela}</span>
-                                  <span className="text-sm font-semibold text-white">
-                                    {formatCurrency(parcela.valor_parcela)}
-                                  </span>
-                                </div>
+                                <span className="text-sm font-medium text-white">Parcela {parcela.numero_parcela}</span>
                                 <span className={cn(
                                   "text-xs px-2 py-0.5 rounded-full font-medium",
                                   isPago ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
@@ -745,19 +740,20 @@ export default function FaturamentoVendaMinimalista() {
                                   {isPago ? 'Pago' : 'Pendente'}
                                 </span>
                               </div>
-                              <div className="flex items-center gap-4 text-xs text-white/60">
-                                <div className="flex items-center gap-1">
-                                  <CalendarIcon className="h-3 w-3" />
-                                  {format(new Date(parcela.data_vencimento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
-                                </div>
-                                {isPago && parcela.data_pagamento && (
-                                  <span className="text-emerald-400/70">
-                                    Pago em {format(new Date(parcela.data_pagamento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
-                                  </span>
-                                )}
+                              <span className="text-sm font-semibold text-white">
+                                {formatCurrency(parcela.valor_parcela)}
+                              </span>
+                              <div className="flex items-center gap-2 text-xs text-white/60">
+                                <CalendarIcon className="h-3 w-3" />
+                                {format(new Date(parcela.data_vencimento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
                               </div>
+                              {isPago && parcela.data_pagamento && (
+                                <span className="text-xs text-emerald-400/70">
+                                  Pago em {format(new Date(parcela.data_pagamento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+                                </span>
+                              )}
                               <textarea
-                                className="w-full text-xs bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white/80 placeholder:text-white/20 resize-none focus:outline-none focus:border-white/30"
+                                className="w-full text-xs bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white/80 placeholder:text-white/20 resize-none focus:outline-none focus:border-white/30 flex-1"
                                 placeholder="Observação..."
                                 rows={2}
                                 defaultValue={parcela.observacoes || ''}
@@ -771,7 +767,7 @@ export default function FaturamentoVendaMinimalista() {
                               {!isPago && (
                                 <Button
                                   size="sm"
-                                  className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white mt-auto"
                                   onClick={() => handleUpdatePagamento(parcela.id, 'status', 'pago')}
                                 >
                                   <CheckCircle2 className="h-3 w-3 mr-1" />
