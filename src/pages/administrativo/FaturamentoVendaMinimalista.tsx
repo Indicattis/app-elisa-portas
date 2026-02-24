@@ -20,8 +20,13 @@ import {
   Minus,
   Plus,
   Calculator,
-  Wrench
+  Wrench,
+  CalendarIcon,
+  CreditCard
 } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { useFaturamento } from "@/hooks/useFaturamento";
@@ -70,6 +75,7 @@ export default function FaturamentoVendaMinimalista() {
   const [pedidoExistenteId, setPedidoExistenteId] = useState<string | null>(null);
   const [checkingPedido, setCheckingPedido] = useState(false);
   const [hasPedido, setHasPedido] = useState<boolean | null>(null);
+  const [contasReceber, setContasReceber] = useState<any[]>([]);
   const { createPedidoFromVenda, checkExistingPedido } = usePedidoCreation();
   const { removerFaturamento, isRemovendo } = useFaturamento();
 
@@ -91,6 +97,7 @@ export default function FaturamentoVendaMinimalista() {
     if (id) {
       fetchVenda();
       checkPedidoExistente();
+      fetchContasReceber();
     }
   }, [id]);
 
@@ -100,6 +107,35 @@ export default function FaturamentoVendaMinimalista() {
     setHasPedido(!!pedidoId);
     if (pedidoId) {
       setPedidoExistenteId(pedidoId);
+    }
+  };
+
+  const fetchContasReceber = async () => {
+    if (!id) return;
+    const { data, error } = await supabase
+      .from('contas_receber')
+      .select('id, venda_id, metodo_pagamento, data_vencimento, status, observacoes, data_pagamento, valor_parcela, numero_parcela')
+      .eq('venda_id', id)
+      .order('numero_parcela');
+    if (!error && data) setContasReceber(data);
+  };
+
+  const handleUpdatePagamento = async (pagamentoId: string, field: string, value: string) => {
+    const updates: any = { [field]: value };
+    if (field === 'status' && value === 'pago') {
+      updates.data_pagamento = new Date().toISOString().split('T')[0];
+    }
+    const { error } = await supabase
+      .from('contas_receber')
+      .update(updates)
+      .eq('id', pagamentoId);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Erro ao atualizar parcela' });
+      return;
+    }
+    setContasReceber(prev => prev.map(p => p.id === pagamentoId ? { ...p, ...updates } : p));
+    if (field === 'status') {
+      toast({ title: 'Parcela atualizada com sucesso' });
     }
   };
 
@@ -651,7 +687,79 @@ export default function FaturamentoVendaMinimalista() {
           </CardContent>
         </Card>
 
-        {/* Botões de Ação */}
+        {/* Parcelas / Contas a Receber */}
+        {contasReceber.length > 0 && (
+          <Card className="bg-white/5 border-white/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base text-white">
+                <CreditCard className="h-4 w-4 text-blue-400" />
+                Parcelas / Contas a Receber
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {contasReceber.map((parcela) => {
+                const isPago = parcela.status === 'pago';
+                const metodoLabels: Record<string, string> = {
+                  boleto: 'Boleto', a_vista: 'À Vista', cartao_credito: 'Cartão', dinheiro: 'Dinheiro', pix: 'Pix'
+                };
+                return (
+                  <div key={parcela.id} className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-white">Parcela {parcela.numero_parcela}</span>
+                        <span className="text-sm font-semibold text-white">
+                          {formatCurrency(parcela.valor_parcela)}
+                        </span>
+                      </div>
+                      <span className={cn(
+                        "text-xs px-2 py-0.5 rounded-full font-medium",
+                        isPago ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
+                      )}>
+                        {isPago ? 'Pago' : 'Pendente'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-white/60">
+                      <div className="flex items-center gap-1">
+                        <CalendarIcon className="h-3 w-3" />
+                        {format(new Date(parcela.data_vencimento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+                      </div>
+                      <span>{metodoLabels[parcela.metodo_pagamento] || parcela.metodo_pagamento || '-'}</span>
+                      {isPago && parcela.data_pagamento && (
+                        <span className="text-emerald-400/70">
+                          Pago em {format(new Date(parcela.data_pagamento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+                        </span>
+                      )}
+                    </div>
+                    <textarea
+                      className="w-full text-xs bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white/80 placeholder:text-white/20 resize-none focus:outline-none focus:border-white/30"
+                      placeholder="Observação..."
+                      rows={2}
+                      defaultValue={parcela.observacoes || ''}
+                      onBlur={async (e) => {
+                        const newVal = e.target.value;
+                        if (newVal !== (parcela.observacoes || '')) {
+                          await handleUpdatePagamento(parcela.id, 'observacoes', newVal);
+                        }
+                      }}
+                    />
+                    {!isPago && (
+                      <Button
+                        size="sm"
+                        className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => handleUpdatePagamento(parcela.id, 'status', 'pago')}
+                      >
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Marcar como Pago
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
+
+
         <div className="flex justify-end gap-4">
           <Button
             variant="outline"

@@ -963,28 +963,6 @@ export default function FaturamentoMinimalista() {
                       })() : '-'}
                     </span>
                   </div>
-                  <textarea
-                    className="w-full text-[11px] bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white/80 placeholder:text-white/20 resize-none focus:outline-none focus:border-white/30"
-                    placeholder="Observação..."
-                    rows={2}
-                    defaultValue={pgto.observacoes || ''}
-                    onBlur={async (e) => {
-                      const newVal = e.target.value;
-                      if (newVal !== (pgto.observacoes || '')) {
-                        await handleUpdatePagamento(pgto.id, 'observacoes', newVal);
-                      }
-                    }}
-                  />
-                  {!isPago && (
-                    <Button
-                      size="sm"
-                      className="w-full h-7 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white"
-                      onClick={() => handleUpdatePagamento(pgto.id, 'status', 'pago')}
-                    >
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      Marcar como Pago
-                    </Button>
-                  )}
                 </div>
               );
             })}
