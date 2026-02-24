@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,14 +8,24 @@ import { useEstoque, ProdutoEstoque } from "@/hooks/useEstoque";
 import { Search, Package, Calculator, Zap } from "lucide-react";
 import { toast } from "sonner";
 import type { CategoriaLinha, PedidoLinhaNova } from "@/hooks/usePedidoLinhas";
+import type { PortaExpandida } from "@/utils/expandirPortas";
+import { getLabelProdutoExpandido } from "@/utils/tipoProdutoLabels";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AdicionarLinhaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   categoria?: CategoriaLinha;
-  portaId: string;
+  portaId?: string;
   indicePorta?: number;
   onAdicionar: (linha: PedidoLinhaNova) => Promise<any>;
+  portas?: PortaExpandida[];
   portaLargura?: number;
   portaAltura?: number;
 }
@@ -97,6 +107,8 @@ function calcularQuantidadeAutomatica(
   return Math.ceil(resultado);
 }
 
+const NONE_VALUE = '_none';
+
 export function AdicionarLinhaModal({ 
   open, 
   onOpenChange, 
@@ -104,14 +116,37 @@ export function AdicionarLinhaModal({
   portaId,
   indicePorta = 0,
   onAdicionar,
+  portas = [],
   portaLargura,
   portaAltura 
 }: AdicionarLinhaModalProps) {
   const [busca, setBusca] = useState("");
   const [modoManual, setModoManual] = useState(false);
   const [adicionando, setAdicionando] = useState(false);
+  const [portaSelecionadaKey, setPortaSelecionadaKey] = useState<string>(NONE_VALUE);
+
+  // Derivar porta inicial baseado nas props
+  const getPortaInicialKey = () => {
+    // Se portaId fornecido, encontrar a porta correspondente
+    if (portaId) {
+      const found = portas.find(p => p._originalId === portaId && p._indicePorta === indicePorta);
+      if (found) return found._virtualKey;
+    }
+    // Se tem portas, pré-selecionar a primeira (porta 01)
+    if (portas.length > 0) return portas[0]._virtualKey;
+    return NONE_VALUE;
+  };
+
+  // Porta atualmente selecionada e suas dimensões
+  const portaAtual = useMemo(() => {
+    return portas.find(p => p._virtualKey === portaSelecionadaKey) ?? null;
+  }, [portas, portaSelecionadaKey]);
+
+  const larguraAtual = portaAtual?.largura ?? portaLargura;
+  const alturaAtual = portaAtual?.altura ?? portaAltura;
+
   const [formData, setFormData] = useState<PedidoLinhaNova>({
-    produto_venda_id: portaId,
+    produto_venda_id: portaId || '',
     indice_porta: indicePorta,
     nome_produto: "",
     descricao_produto: "",
@@ -130,15 +165,15 @@ export function AdicionarLinhaModal({
   };
 
   const handleSelecionarProduto = async (produto: ProdutoEstoque) => {
-    const tamanhoAuto = calcularTamanhoAutomatico(produto, portaLargura, portaAltura);
-    const qtdAuto = calcularQuantidadeAutomatica(produto, portaLargura, portaAltura);
+    const tamanhoAuto = calcularTamanhoAutomatico(produto, larguraAtual, alturaAtual);
+    const qtdAuto = calcularQuantidadeAutomatica(produto, larguraAtual, alturaAtual);
     
     // Determinar categoria: usar a fornecida ou derivar do setor do produto
     const categoriaLinha = categoria || SETOR_TO_CATEGORIA[produto.setor_responsavel_producao || ''] || 'separacao';
     
     const linha: PedidoLinhaNova = {
-      produto_venda_id: portaId,
-      indice_porta: indicePorta,
+      produto_venda_id: portaAtual?._originalId || portaId || '',
+      indice_porta: portaAtual?._indicePorta ?? indicePorta,
       nome_produto: produto.nome_produto,
       descricao_produto: produto.descricao_produto || "",
       quantidade: qtdAuto ?? produto.quantidade_padrao ?? 1,
@@ -165,11 +200,17 @@ export function AdicionarLinhaModal({
   const handleSubmitManual = async () => {
     if (!formData.nome_produto || formData.quantidade <= 0) return;
 
-    await onAdicionar(formData);
+    const linhaManual: PedidoLinhaNova = {
+      ...formData,
+      produto_venda_id: portaAtual?._originalId || '',
+      indice_porta: portaAtual?._indicePorta ?? 0,
+    };
+
+    await onAdicionar(linhaManual);
     
     setFormData({
-      produto_venda_id: portaId,
-      indice_porta: indicePorta,
+      produto_venda_id: '',
+      indice_porta: 0,
       nome_produto: "",
       descricao_produto: "",
       quantidade: 1,
@@ -181,14 +222,16 @@ export function AdicionarLinhaModal({
     onOpenChange(false);
   };
 
-  // Resetar estado quando fechar o modal
+  // Resetar estado quando abrir/fechar o modal
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      setPortaSelecionadaKey(getPortaInicialKey());
+    } else {
       setModoManual(false);
       setBusca("");
       setFormData({
-        produto_venda_id: portaId,
-        indice_porta: indicePorta,
+        produto_venda_id: '',
+        indice_porta: 0,
         nome_produto: "",
         descricao_produto: "",
         quantidade: 1,
@@ -196,7 +239,7 @@ export function AdicionarLinhaModal({
         categoria_linha: categoria || 'separacao',
       });
     }
-  }, [open, portaId, indicePorta, categoria]);
+  }, [open, portaId, indicePorta, categoria, portas]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -209,6 +252,26 @@ export function AdicionarLinhaModal({
 
         {!modoManual ? (
           <div className="space-y-3">
+            {/* Seletor de porta/produto para agrupamento */}
+            {portas.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Agrupar em</Label>
+                <Select value={portaSelecionadaKey} onValueChange={setPortaSelecionadaKey}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE_VALUE}>Nenhum (grupo próprio)</SelectItem>
+                    {portas.map((porta, idx) => (
+                      <SelectItem key={porta._virtualKey} value={porta._virtualKey}>
+                        {getLabelProdutoExpandido(idx, porta.tipo_produto, porta.largura, porta.altura, porta._totalNoGrupo, porta._indicePorta)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Search input */}
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -227,9 +290,9 @@ export function AdicionarLinhaModal({
                 {produtos.map((produto) => {
                   const temCalculoAuto = produto.modulo_calculo && produto.valor_calculo && produto.eixo_calculo;
                   const tamanhoPreview = temCalculoAuto 
-                    ? calcularTamanhoAutomatico(produto, portaLargura, portaAltura)
+                    ? calcularTamanhoAutomatico(produto, larguraAtual, alturaAtual)
                     : null;
-                  const qtdPreview = calcularQuantidadeAutomatica(produto, portaLargura, portaAltura);
+                  const qtdPreview = calcularQuantidadeAutomatica(produto, larguraAtual, alturaAtual);
                     
                   return (
                     <button
@@ -304,6 +367,26 @@ export function AdicionarLinhaModal({
           </div>
         ) : (
           <div className="space-y-3">
+            {/* Seletor de porta também no modo manual */}
+            {portas.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Agrupar em</Label>
+                <Select value={portaSelecionadaKey} onValueChange={setPortaSelecionadaKey}>
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE_VALUE}>Nenhum (grupo próprio)</SelectItem>
+                    {portas.map((porta, idx) => (
+                      <SelectItem key={porta._virtualKey} value={porta._virtualKey}>
+                        {getLabelProdutoExpandido(idx, porta.tipo_produto, porta.largura, porta.altura, porta._totalNoGrupo, porta._indicePorta)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <Label htmlFor="nome" className="text-xs">Nome do Produto</Label>
               <Input
