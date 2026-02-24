@@ -1,23 +1,23 @@
 
-# Adicionar aba "Correções" em /producao/carregamento
+# Filtrar correções da aba Entregas
 
-## Resumo
+## Problema
 
-Adicionar uma quarta aba nas tabs de filtro das duas paginas de carregamento para listar exclusivamente as ordens vindas da tabela `correcoes`.
+A pagina `Entregas.tsx` filtra ordens de carregamento por `valor_instalacao == 0 ou null`, mas nao exclui pedidos cuja etapa atual e `correcoes`. Como correções tipicamente tem `valor_instalacao = 0`, elas passam no filtro e aparecem indevidamente.
 
-## Mudancas
+## Solucao
 
-### 1. `src/pages/ProducaoCarregamento.tsx`
+### Arquivo: `src/pages/Entregas.tsx`
 
-- Atualizar o tipo `FiltroTipo` para incluir `"correcoes"`
-- Adicionar uma 4a TabsTrigger com icone `Wrench`, label "Correções" e contagem `ordens.filter(o => o.fonte === 'correcoes').length`
-- Atualizar o grid de `grid-cols-3` para `grid-cols-4`
-- Atualizar a logica de filtro para: quando `filtroTipo === "correcoes"`, filtrar por `ordem.fonte === 'correcoes'`
+Adicionar uma condicao extra no filtro para excluir ordens cujo pedido esta na etapa `correcoes`:
 
-### 2. `src/pages/fabrica/producao/CarregamentoMinimalista.tsx`
+```text
+const ordensEntrega = ordens.filter(ordem => {
+  const semInstalacao = ordem.venda?.valor_instalacao == null || ordem.venda.valor_instalacao === 0;
+  const filtroStatus = mostrarConcluidos || ordem.status !== 'concluida';
+  const naoECorrecao = ordem.pedido?.etapa_atual !== 'correcoes';
+  return semInstalacao && filtroStatus && naoECorrecao;
+});
+```
 
-- Mesmas mudancas: tipo, tab adicional com `Wrench`, grid 4 colunas, logica de filtro por `fonte === 'correcoes'`
-
-### Arquivos modificados
-1. `src/pages/ProducaoCarregamento.tsx`
-2. `src/pages/fabrica/producao/CarregamentoMinimalista.tsx`
+Uma unica linha adicionada no filtro existente.
