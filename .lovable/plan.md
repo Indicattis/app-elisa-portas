@@ -1,32 +1,28 @@
 
 
-# Adicionar opcao "Ja foi pago" em cada metodo de pagamento
+# Adicionar botao de duplicar nas linhas do pedido
 
-## Problema
+## O que sera feito
 
-Atualmente, apenas o metodo "A Vista" gera contas a receber com status "pago". Os demais metodos (Boleto, Cartao, Dinheiro) sempre geram como "pendente". O vendedor precisa poder marcar que o pagamento ja foi recebido no momento da criacao da venda.
+Adicionar um botao "Duplicar" ao lado dos botoes de "Editar" e "Remover" em cada linha do editor de pedidos. Ao clicar, uma nova linha sera criada com os mesmos dados (produto, quantidade, tamanho, porta, categoria).
 
-## Mudancas
+## Detalhes tecnicos
 
-### 1. Adicionar campo `ja_pago` na interface `MetodoPagamento`
+### Arquivo: `src/components/pedidos/PedidoLinhasEditor.tsx`
 
-**Arquivo:** `src/components/vendas/MetodoPagamentoCard.tsx`
+1. **Importar icone** `Copy` do `lucide-react` (linha 5)
 
-- Adicionar `ja_pago: boolean` na interface `MetodoPagamento`
-- Adicionar `ja_pago: false` no `createEmptyMetodo()`
-- Renderizar um checkbox/switch "Ja foi pago?" abaixo dos campos comuns (valor, data, empresa), visivel para todos os tipos de pagamento
-- Usar o componente `Checkbox` com label estilizado no tema escuro
+2. **Criar funcao `handleDuplicarLinha`** que recebe uma `PedidoLinha` e chama `onAdicionarLinha` com os mesmos dados:
+   - `produto_venda_id`, `indice_porta`, `nome_produto`, `descricao_produto`, `quantidade`, `tamanho`, `estoque_id`, `categoria_linha`
 
-### 2. Passar o flag `ja_pago` na geracao de contas a receber
+3. **Adicionar botao na area de acoes** (linhas 524-536), entre o botao de editar e o de remover:
+   ```text
+   <Button variant="ghost" size="sm" className="h-7 w-7 p-0"
+     onClick={() => handleDuplicarLinha(linha)}
+     title="Duplicar">
+     <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+   </Button>
+   ```
 
-**Arquivo:** `src/hooks/useVendas.ts`
-
-- Alterar a funcao `gerarContasReceberPorMetodo` para usar `metodo.ja_pago`
-- Nos casos `boleto`, `cartao_credito` e `dinheiro`: se `metodo.ja_pago === true`, definir `status: 'pago'`, `data_pagamento` e `valor_pago` (igual ao valor da parcela) em cada parcela gerada
-- O caso `a_vista` ja gera como pago, entao nao precisa de alteracao
-
-### Resumo dos arquivos
-
-1. `src/components/vendas/MetodoPagamentoCard.tsx` - Adicionar campo `ja_pago` na interface e checkbox na UI
-2. `src/hooks/useVendas.ts` - Usar `ja_pago` ao gerar contas a receber
+Nenhum outro arquivo precisa ser alterado.
 
