@@ -752,18 +752,6 @@ export default function FaturamentoVendaMinimalista() {
                                   Pago em {format(new Date(parcela.data_pagamento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
                                 </span>
                               )}
-                              <textarea
-                                className="w-full text-xs bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white/80 placeholder:text-white/20 resize-none focus:outline-none focus:border-white/30 flex-1"
-                                placeholder="Observação..."
-                                rows={2}
-                                defaultValue={parcela.observacoes || ''}
-                                onBlur={async (e) => {
-                                  const newVal = e.target.value;
-                                  if (newVal !== (parcela.observacoes || '')) {
-                                    await handleUpdatePagamento(parcela.id, 'observacoes', newVal);
-                                  }
-                                }}
-                              />
                               {!isPago && (
                                 <Button
                                   size="sm"
@@ -778,6 +766,21 @@ export default function FaturamentoVendaMinimalista() {
                           );
                         })}
                       </div>
+                      <textarea
+                        className="w-full text-xs bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white/80 placeholder:text-white/20 resize-none focus:outline-none focus:border-white/30"
+                        placeholder="Observação do grupo..."
+                        rows={2}
+                        defaultValue={parcelas[0]?.observacoes || ''}
+                        onBlur={async (e) => {
+                          const newVal = e.target.value;
+                          // Salva a observação em todas as parcelas do grupo
+                          for (const parcela of parcelas) {
+                            if (newVal !== (parcela.observacoes || '')) {
+                              await handleUpdatePagamento(parcela.id, 'observacoes', newVal);
+                            }
+                          }
+                        }}
+                      />
                     </div>
                   );
                 });
