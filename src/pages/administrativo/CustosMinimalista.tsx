@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTiposCustos, CustoCategoria, CustoSubcategoria, TipoCusto } from "@/hooks/useTiposCustos";
@@ -47,7 +47,7 @@ export default function CustosMinimalista() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategoria, setFilterCategoria] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  
 
   // Dialog states
   const [tipoCustoDialog, setTipoCustoDialog] = useState(false);
@@ -89,19 +89,16 @@ export default function CustosMinimalista() {
   }, []);
 
   // Computed values
-  const totalCategorias = categorias.filter(c => c.ativo).length;
-  const totalTipos = tiposCustos.filter(t => t.ativo).length;
-  const totalLimiteMensal = tiposCustos.filter(t => t.ativo).reduce((acc, t) => acc + t.valor_maximo_mensal, 0);
+  const totalCategorias = categorias.length;
+  const totalTipos = tiposCustos.length;
+  const totalLimiteMensal = tiposCustos.reduce((acc, t) => acc + t.valor_maximo_mensal, 0);
 
   // Filtered data
   const filteredTiposCustos = tiposCustos.filter(t => {
     const matchesSearch = t.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategoria = filterCategoria === "all" || t.categoria_id === filterCategoria;
-    const matchesStatus = filterStatus === "all" ||
-      (filterStatus === "ativo" && t.ativo) ||
-      (filterStatus === "inativo" && !t.ativo);
-    return matchesSearch && matchesCategoria && matchesStatus;
+    return matchesSearch && matchesCategoria;
   });
 
   // Handlers
@@ -207,17 +204,6 @@ export default function CustosMinimalista() {
     setSubcategoriaDialog(true);
   };
 
-  const toggleTipoCustoStatus = async (tipo: TipoCusto) => {
-    await updateTipoCusto(tipo.id, { ativo: !tipo.ativo });
-  };
-
-  const toggleCategoriaStatus = async (categoria: CustoCategoria) => {
-    await updateCategoria(categoria.id, { ativo: !categoria.ativo });
-  };
-
-  const toggleSubcategoriaStatus = async (subcategoria: CustoSubcategoria) => {
-    await updateSubcategoria(subcategoria.id, { ativo: !subcategoria.ativo });
-  };
 
   // Reset forms
   const resetTipoCustoForm = () => {
@@ -382,16 +368,6 @@ export default function CustosMinimalista() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-[150px] bg-white/5 border-white/20 text-white">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="ativo">Ativos</SelectItem>
-                  <SelectItem value="inativo">Inativos</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Types Table */}
@@ -404,14 +380,14 @@ export default function CustosMinimalista() {
                     <TableHead className="text-white/70">Subcategoria</TableHead>
                     <TableHead className="text-white/70 text-right">Valor Máximo Mensal</TableHead>
                     <TableHead className="text-white/70 text-center">Tipo</TableHead>
-                    <TableHead className="text-white/70 text-center">Status</TableHead>
+                    
                     <TableHead className="text-white/70 text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredTiposCustos.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-white/50 py-8">
+                      <TableCell colSpan={6} className="text-center text-white/50 py-8">
                         Nenhum tipo de custo encontrado
                       </TableCell>
                     </TableRow>
@@ -437,12 +413,6 @@ export default function CustosMinimalista() {
                           <Badge variant={tipo.tipo === 'fixa' ? 'default' : 'secondary'}>
                             {tipo.tipo === 'fixa' ? 'Fixa' : 'Variável'}
                           </Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Switch
-                            checked={tipo.ativo}
-                            onCheckedChange={() => toggleTipoCustoStatus(tipo)}
-                          />
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
@@ -603,7 +573,6 @@ export default function CustosMinimalista() {
                     <TableHead>Cor</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>Descrição</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -615,14 +584,8 @@ export default function CustosMinimalista() {
                           className="w-6 h-6 rounded-full"
                           style={{ backgroundColor: categoria.cor }}
                         />
-                      </TableCell>
                       <TableCell className="font-medium">{categoria.nome}</TableCell>
                       <TableCell className="text-muted-foreground max-w-[200px] truncate">{categoria.descricao || "-"}</TableCell>
-                      <TableCell className="text-center">
-                        <Switch
-                          checked={categoria.ativo}
-                          onCheckedChange={() => toggleCategoriaStatus(categoria)}
-                        />
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
@@ -653,7 +616,7 @@ export default function CustosMinimalista() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Categoria</TableHead>
                     <TableHead>Descrição</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
+                    
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -671,12 +634,6 @@ export default function CustosMinimalista() {
                           )}
                         </TableCell>
                         <TableCell className="text-muted-foreground max-w-[200px] truncate">{subcategoria.descricao || "-"}</TableCell>
-                        <TableCell className="text-center">
-                          <Switch
-                            checked={subcategoria.ativo}
-                            onCheckedChange={() => toggleSubcategoriaStatus(subcategoria)}
-                          />
-                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button variant="ghost" size="sm" onClick={() => handleEditSubcategoria(subcategoria)}>
