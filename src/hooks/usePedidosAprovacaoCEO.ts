@@ -193,6 +193,29 @@ export function usePedidosAprovacaoCEO() {
   // Aprovar pedido e avançar para produção
   const aprovarPedido = useMutation({
     mutationFn: async (pedidoId: string) => {
+      // Marcar todos os checkboxes como concluídos antes de avançar
+      const { data: etapaData } = await supabase
+        .from('pedidos_etapas')
+        .select('checkboxes')
+        .eq('pedido_id', pedidoId)
+        .eq('etapa', 'aprovacao_ceo')
+        .is('data_saida', null)
+        .maybeSingle();
+
+      if (etapaData?.checkboxes) {
+        const checkboxesMarcados = (etapaData.checkboxes as any[]).map((cb: any) => ({
+          ...cb,
+          checked: true,
+          checked_at: new Date().toISOString()
+        }));
+        await supabase
+          .from('pedidos_etapas')
+          .update({ checkboxes: checkboxesMarcados } as any)
+          .eq('pedido_id', pedidoId)
+          .eq('etapa', 'aprovacao_ceo')
+          .is('data_saida', null);
+      }
+
       await moverParaProximaEtapa.mutateAsync({ pedidoId, skipCheckboxValidation: true });
     },
     onSuccess: () => {
