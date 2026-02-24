@@ -398,11 +398,14 @@ export function PedidoCard({
 
       // Para correções, buscar da tabela correcoes
       if (pedido.etapa_atual === 'correcoes') {
-        const { data: correcao } = await supabase
+        const { data: correcoes } = await supabase
           .from('correcoes')
           .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento, vezes_agendado')
           .eq('pedido_id', pedido.id)
-          .maybeSingle();
+          .eq('carregamento_concluido', false)
+          .order('data_carregamento', { ascending: false, nullsFirst: false })
+          .limit(1);
+        const correcao = correcoes?.[0] || null;
 
         const temData = !!correcao?.data_carregamento;
         const concluido = correcao?.carregamento_concluido || false;
@@ -419,11 +422,14 @@ export function PedidoCard({
 
       // Para instalações, buscar da tabela instalacoes (fonte única de verdade)
       if (pedido.etapa_atual === 'instalacoes') {
-        const { data: instalacao } = await supabase
+        const { data: instalacoes } = await supabase
           .from('instalacoes')
           .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento, vezes_agendado')
           .eq('pedido_id', pedido.id)
-          .maybeSingle();
+          .eq('carregamento_concluido', false)
+          .order('data_carregamento', { ascending: false, nullsFirst: false })
+          .limit(1);
+        const instalacao = instalacoes?.[0] || null;
 
         const temData = !!instalacao?.data_carregamento;
         const concluido = instalacao?.carregamento_concluido || false;
@@ -439,13 +445,14 @@ export function PedidoCard({
       }
 
       // Para entregas (aguardando_coleta), buscar de ordens_carregamento
-      const {
-        data: ordemCarregamento
-      } = await supabase
+      const { data: ordensCarregamento } = await supabase
         .from('ordens_carregamento')
         .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento, vezes_agendado')
         .eq('pedido_id', pedido.id)
-        .maybeSingle();
+        .eq('carregamento_concluido', false)
+        .order('data_carregamento', { ascending: false, nullsFirst: false })
+        .limit(1);
+      const ordemCarregamento = ordensCarregamento?.[0] || null;
 
       const temData = !!ordemCarregamento?.data_carregamento;
       const concluido = ordemCarregamento?.carregamento_concluido || false;
