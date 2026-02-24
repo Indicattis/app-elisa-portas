@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Trash2, Plus, Package, Check, X, Zap, Edit, ChevronLeft, ChevronsUpDown } from "lucide-react";
+import { Trash2, Plus, Package, Check, X, Zap, Edit, ChevronLeft, ChevronsUpDown, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { PortaFolderCard, SemProdutoFolderCard } from "./PortaFolderCard";
 import { Badge } from "@/components/ui/badge";
@@ -529,6 +529,21 @@ export const PedidoLinhasEditor = ({
                     <Edit className="h-3.5 w-3.5 text-muted-foreground" />
                   </Button>
                 )}
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => {
+                  onAdicionarLinha({
+                    produto_venda_id: linha.produto_venda_id,
+                    indice_porta: linha.indice_porta,
+                    nome_produto: linha.nome_produto,
+                    descricao_produto: linha.descricao_produto || undefined,
+                    quantidade: linha.quantidade,
+                    tamanho: linha.tamanho || undefined,
+                    estoque_id: linha.estoque_id || undefined,
+                    categoria_linha: linha.categoria_linha,
+                  });
+                }}
+                  title="Duplicar">
+                  <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => onRemoverLinha(linha.id)}
                   title="Remover">
                   <Trash2 className="h-3.5 w-3.5 text-destructive" />
