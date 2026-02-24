@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Wrench } from "lucide-react";
 import { useOrdensCarregamentoUnificadas, OrdemCarregamentoUnificada } from "@/hooks/useOrdensCarregamentoUnificadas";
 import { CarregamentoDownbar } from "@/components/carregamento/CarregamentoDownbar";
 import { CarregamentoKanban } from "@/components/carregamento/CarregamentoKanban";
@@ -11,7 +11,7 @@ import { useMetaProgresso } from "@/hooks/useMetaProgresso";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { useAuth } from "@/hooks/useAuth";
 
-type FiltroTipo = "todos" | "entrega" | "instalacao";
+type FiltroTipo = "todos" | "entrega" | "instalacao" | "correcoes";
 
 export default function CarregamentoMinimalista() {
   const { ordens, isLoading, concluirCarregamento } = useOrdensCarregamentoUnificadas();
@@ -29,6 +29,7 @@ export default function CarregamentoMinimalista() {
   // Aplicar filtro por tipo de serviço (entrega ou instalação)
   const ordensFiltradas = ordensDisponiveis.filter(ordem => {
     if (filtroTipo === "todos") return true;
+    if (filtroTipo === "correcoes") return ordem.fonte === 'correcoes';
     if (filtroTipo === "instalacao") {
       return ordem.tipo_entrega === 'instalacao' || ordem.tipo_entrega === 'manutencao';
     }
@@ -84,6 +85,10 @@ export default function CarregamentoMinimalista() {
           </TabsTrigger>
           <TabsTrigger value="instalacao" className="data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-300">
             Instalação ({ordensDisponiveis.filter(o => o.tipo_entrega === 'instalacao' || o.tipo_entrega === 'manutencao').length})
+          </TabsTrigger>
+          <TabsTrigger value="correcoes" className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
+            <Wrench className="h-4 w-4 mr-1" />
+            Correções ({ordensDisponiveis.filter(o => o.fonte === 'correcoes').length})
           </TabsTrigger>
         </TabsList>
       </Tabs>
