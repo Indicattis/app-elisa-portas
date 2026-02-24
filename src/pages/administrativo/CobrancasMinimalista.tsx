@@ -46,6 +46,7 @@ export default function CobrancasMinimalista() {
       title="Cobranças"
       subtitle="Pedidos finalizados"
       backPath="/administrativo/financeiro"
+      fullWidth
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
         { label: 'Administrativo', path: '/administrativo' },
