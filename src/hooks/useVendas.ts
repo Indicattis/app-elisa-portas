@@ -521,14 +521,16 @@ async function gerarContasReceberPorMetodo(
       const valorParcela = metodo.valor / metodo.parcelas_boleto;
       for (let i = 0; i < metodo.parcelas_boleto; i++) {
         const dataVencimento = addDays(dataBase, metodo.intervalo_boletos * i);
+        const dataVenc = dataVencimento.toISOString().split('T')[0];
         parcelas.push({
           venda_id: vendaId,
           numero_parcela: i + 1,
           valor_parcela: valorParcela,
-          data_vencimento: dataVencimento.toISOString().split('T')[0],
+          data_vencimento: dataVenc,
           metodo_pagamento: 'boleto',
           empresa_receptora_id: metodo.empresa_receptora_id || null,
-          status: 'pendente'
+          status: metodo.ja_pago ? 'pago' : 'pendente',
+          ...(metodo.ja_pago ? { data_pagamento: dataVenc, valor_pago: valorParcela } : {})
         });
       }
       break;
@@ -538,29 +540,32 @@ async function gerarContasReceberPorMetodo(
       const valorParcela = metodo.valor / metodo.parcelas_cartao;
       for (let i = 0; i < metodo.parcelas_cartao; i++) {
         const dataVencimento = addDays(dataBase, 30 * i);
+        const dataVenc = dataVencimento.toISOString().split('T')[0];
         parcelas.push({
           venda_id: vendaId,
           numero_parcela: i + 1,
           valor_parcela: valorParcela,
-          data_vencimento: dataVencimento.toISOString().split('T')[0],
+          data_vencimento: dataVenc,
           metodo_pagamento: 'cartao_credito',
           empresa_receptora_id: metodo.empresa_receptora_id || null,
-          status: 'pendente'
+          status: metodo.ja_pago ? 'pago' : 'pendente',
+          ...(metodo.ja_pago ? { data_pagamento: dataVenc, valor_pago: valorParcela } : {})
         });
       }
       break;
     }
     
     case 'dinheiro': {
-      // Dinheiro gera 1 conta a receber pendente
+      const dataVenc = dataBase.toISOString().split('T')[0];
       parcelas.push({
         venda_id: vendaId,
         numero_parcela: 1,
         valor_parcela: metodo.valor,
-        data_vencimento: dataBase.toISOString().split('T')[0],
+        data_vencimento: dataVenc,
         metodo_pagamento: 'dinheiro',
         empresa_receptora_id: metodo.empresa_receptora_id || null,
-        status: 'pendente'
+        status: metodo.ja_pago ? 'pago' : 'pendente',
+        ...(metodo.ja_pago ? { data_pagamento: dataVenc, valor_pago: metodo.valor } : {})
       });
       break;
     }

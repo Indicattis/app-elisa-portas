@@ -10,7 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Upload, X, CreditCard, Banknote, QrCode, Wallet, CalendarIcon } from "lucide-react";
+import { Upload, X, CreditCard, Banknote, QrCode, Wallet, CalendarIcon, CheckCircle2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ export interface MetodoPagamento {
   parcelas_boleto: number;
   intervalo_boletos: number;
   comprovante_file: File | null;
+  ja_pago: boolean;
 }
 
 export const createEmptyMetodo = (): MetodoPagamento => ({
@@ -34,7 +36,8 @@ export const createEmptyMetodo = (): MetodoPagamento => ({
   parcelas_cartao: 1,
   parcelas_boleto: 1,
   intervalo_boletos: 30,
-  comprovante_file: null
+  comprovante_file: null,
+  ja_pago: false
 });
 
 interface MetodoPagamentoCardProps {
@@ -186,6 +189,25 @@ export function MetodoPagamentoCard({
               </Select>
             </div>
           </div>
+
+          {/* Checkbox "Já foi pago?" */}
+          {metodo.tipo !== 'a_vista' && (
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id={`ja-pago-${titulo}`}
+                checked={metodo.ja_pago}
+                onCheckedChange={(checked) => onChange({ ...metodo, ja_pago: checked === true })}
+                className="border-white/30 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+              />
+              <label
+                htmlFor={`ja-pago-${titulo}`}
+                className="text-xs font-medium text-white/70 cursor-pointer flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Já foi pago?
+              </label>
+            </div>
+          )}
 
           {/* Campos específicos por tipo */}
           {metodo.tipo === 'cartao_credito' && (
