@@ -1,28 +1,25 @@
 
+# Corrigir calculo automatico de quantidade nos botoes de sugestao
 
-# Adicionar botao de duplicar nas linhas do pedido
+## Problema encontrado
 
-## O que sera feito
+O arquivo `PedidoLinhasEditor.tsx` nao possui a funcao `calcularQuantidadeAutomaticaItem` e sempre adiciona itens sugeridos com `quantidade: 1`. Ja o `LinhasAgrupadasPorPorta.tsx` possui essa funcao e aplica corretamente a quantidade calculada com base nas dimensoes da porta.
 
-Adicionar um botao "Duplicar" ao lado dos botoes de "Editar" e "Remover" em cada linha do editor de pedidos. Ao clicar, uma nova linha sera criada com os mesmos dados (produto, quantidade, tamanho, porta, categoria).
+## Comparacao
 
-## Detalhes tecnicos
+| Arquivo | Calcula tamanho? | Calcula quantidade? |
+|---|---|---|
+| `LinhasAgrupadasPorPorta.tsx` | Sim | Sim (`calcularQuantidadeAutomaticaItem`) |
+| `PedidoLinhasEditor.tsx` | Sim | **Nao** (hardcoded `1`) |
+
+## Mudancas
 
 ### Arquivo: `src/components/pedidos/PedidoLinhasEditor.tsx`
 
-1. **Importar icone** `Copy` do `lucide-react` (linha 5)
+1. **Adicionar a funcao `calcularQuantidadeAutomaticaItem`** (mesma logica que existe em `LinhasAgrupadasPorPorta.tsx`, linhas 64-93) logo apos a funcao `calcularTamanhoAutomatico` existente (apos linha 93).
 
-2. **Criar funcao `handleDuplicarLinha`** que recebe uma `PedidoLinha` e chama `onAdicionarLinha` com os mesmos dados:
-   - `produto_venda_id`, `indice_porta`, `nome_produto`, `descricao_produto`, `quantidade`, `tamanho`, `estoque_id`, `categoria_linha`
+2. **Atualizar `handleAdicionarItemPadrao`** (linha 282-301) para:
+   - Chamar `calcularQuantidadeAutomaticaItem(item, porta.largura, porta.altura)`
+   - Usar o resultado no campo `quantidade`: `qtdAuto ?? item.quantidade_padrao ?? 1` em vez do `1` fixo
 
-3. **Adicionar botao na area de acoes** (linhas 524-536), entre o botao de editar e o de remover:
-   ```text
-   <Button variant="ghost" size="sm" className="h-7 w-7 p-0"
-     onClick={() => handleDuplicarLinha(linha)}
-     title="Duplicar">
-     <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-   </Button>
-   ```
-
-Nenhum outro arquivo precisa ser alterado.
-
+3. **Exibir preview da quantidade nos botoes de sugestao** (linhas 577-591): alem do tamanho ja exibido, mostrar a quantidade calculada quando diferente de 1, para dar feedback visual ao vendedor.
