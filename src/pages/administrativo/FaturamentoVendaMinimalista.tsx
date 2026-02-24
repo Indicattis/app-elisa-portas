@@ -696,65 +696,96 @@ export default function FaturamentoVendaMinimalista() {
                 Parcelas / Contas a Receber
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {contasReceber.map((parcela) => {
-                const isPago = parcela.status === 'pago';
+            <CardContent className="space-y-4">
+              {(() => {
                 const metodoLabels: Record<string, string> = {
                   boleto: 'Boleto', a_vista: 'À Vista', cartao_credito: 'Cartão', dinheiro: 'Dinheiro', pix: 'Pix'
                 };
-                return (
-                  <div key={parcela.id} className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-white">Parcela {parcela.numero_parcela}</span>
-                        <span className="text-sm font-semibold text-white">
-                          {formatCurrency(parcela.valor_parcela)}
+                const grouped = contasReceber.reduce((acc, parcela) => {
+                  const key = parcela.metodo_pagamento || 'outros';
+                  if (!acc[key]) acc[key] = [];
+                  acc[key].push(parcela);
+                  return acc;
+                }, {} as Record<string, any[]>);
+
+                return Object.entries(grouped).map(([metodo, parcelas]: [string, any[]]) => {
+                  const subtotal = parcelas.reduce((sum: number, p: any) => sum + (p.valor_parcela || 0), 0);
+                  const pagasCount = parcelas.filter((p: any) => p.status === 'pago').length;
+                  return (
+                    <div key={metodo} className="space-y-2">
+                      <div className="flex items-center justify-between px-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-white">
+                            {metodoLabels[metodo] || metodo.replace(/_/g, ' ')}
+                          </span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60">
+                            {pagasCount}/{parcelas.length} pagas
+                          </span>
+                        </div>
+                        <span className="text-sm font-semibold text-white/80">
+                          {formatCurrency(subtotal)}
                         </span>
                       </div>
-                      <span className={cn(
-                        "text-xs px-2 py-0.5 rounded-full font-medium",
-                        isPago ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
-                      )}>
-                        {isPago ? 'Pago' : 'Pendente'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 text-xs text-white/60">
-                      <div className="flex items-center gap-1">
-                        <CalendarIcon className="h-3 w-3" />
-                        {format(new Date(parcela.data_vencimento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+                      <div className="space-y-2">
+                        {parcelas.map((parcela: any) => {
+                          const isPago = parcela.status === 'pago';
+                          return (
+                            <div key={parcela.id} className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <span className="text-sm font-medium text-white">Parcela {parcela.numero_parcela}</span>
+                                  <span className="text-sm font-semibold text-white">
+                                    {formatCurrency(parcela.valor_parcela)}
+                                  </span>
+                                </div>
+                                <span className={cn(
+                                  "text-xs px-2 py-0.5 rounded-full font-medium",
+                                  isPago ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
+                                )}>
+                                  {isPago ? 'Pago' : 'Pendente'}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-4 text-xs text-white/60">
+                                <div className="flex items-center gap-1">
+                                  <CalendarIcon className="h-3 w-3" />
+                                  {format(new Date(parcela.data_vencimento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+                                </div>
+                                {isPago && parcela.data_pagamento && (
+                                  <span className="text-emerald-400/70">
+                                    Pago em {format(new Date(parcela.data_pagamento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+                                  </span>
+                                )}
+                              </div>
+                              <textarea
+                                className="w-full text-xs bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white/80 placeholder:text-white/20 resize-none focus:outline-none focus:border-white/30"
+                                placeholder="Observação..."
+                                rows={2}
+                                defaultValue={parcela.observacoes || ''}
+                                onBlur={async (e) => {
+                                  const newVal = e.target.value;
+                                  if (newVal !== (parcela.observacoes || '')) {
+                                    await handleUpdatePagamento(parcela.id, 'observacoes', newVal);
+                                  }
+                                }}
+                              />
+                              {!isPago && (
+                                <Button
+                                  size="sm"
+                                  className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  onClick={() => handleUpdatePagamento(parcela.id, 'status', 'pago')}
+                                >
+                                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                                  Marcar como Pago
+                                </Button>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                      <span>{metodoLabels[parcela.metodo_pagamento] || parcela.metodo_pagamento || '-'}</span>
-                      {isPago && parcela.data_pagamento && (
-                        <span className="text-emerald-400/70">
-                          Pago em {format(new Date(parcela.data_pagamento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
-                        </span>
-                      )}
                     </div>
-                    <textarea
-                      className="w-full text-xs bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white/80 placeholder:text-white/20 resize-none focus:outline-none focus:border-white/30"
-                      placeholder="Observação..."
-                      rows={2}
-                      defaultValue={parcela.observacoes || ''}
-                      onBlur={async (e) => {
-                        const newVal = e.target.value;
-                        if (newVal !== (parcela.observacoes || '')) {
-                          await handleUpdatePagamento(parcela.id, 'observacoes', newVal);
-                        }
-                      }}
-                    />
-                    {!isPago && (
-                      <Button
-                        size="sm"
-                        className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => handleUpdatePagamento(parcela.id, 'status', 'pago')}
-                      >
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Marcar como Pago
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </CardContent>
           </Card>
         )}
