@@ -66,6 +66,10 @@ interface ItemPadraoPortaEnrolar {
   valor_calculo: number | null;
   eixo_calculo: string | null;
   setor_responsavel_producao: string | null;
+  quantidade_padrao: number | null;
+  qtd_eixo_calculo: string | null;
+  qtd_operador: string | null;
+  qtd_valor_calculo: number | null;
 }
 
 // Função para calcular o tamanho automático
@@ -90,6 +94,38 @@ function calcularTamanhoAutomatico(
   }
 
   return tamanhoCalculado.toFixed(2);
+}
+
+// Função para calcular quantidade automática
+function calcularQuantidadeAutomaticaItem(
+  item: ItemPadraoPortaEnrolar,
+  portaLargura?: number,
+  portaAltura?: number
+): number | null {
+  if (!item.qtd_eixo_calculo || !item.qtd_operador || !item.qtd_valor_calculo) {
+    return null;
+  }
+
+  let eixoValor: number | undefined;
+  if (item.qtd_eixo_calculo === 'largura') {
+    eixoValor = portaLargura;
+  } else if (item.qtd_eixo_calculo === 'altura') {
+    eixoValor = portaAltura;
+  } else if (item.qtd_eixo_calculo === 'qtd_meia_cana') {
+    eixoValor = portaAltura ? Math.ceil(portaAltura / 0.076) : undefined;
+  }
+  if (!eixoValor) return null;
+
+  let resultado: number;
+  switch (item.qtd_operador) {
+    case 'multiplicar': resultado = eixoValor * item.qtd_valor_calculo; break;
+    case 'dividir': resultado = eixoValor / item.qtd_valor_calculo; break;
+    case 'somar': resultado = eixoValor + item.qtd_valor_calculo; break;
+    case 'subtrair': resultado = eixoValor - item.qtd_valor_calculo; break;
+    default: return null;
+  }
+
+  return Math.ceil(resultado);
 }
 
 // Mapeamento de setor para categoria
@@ -255,7 +291,7 @@ export const PedidoLinhasEditor = ({
       try {
         const { data, error } = await supabase
           .from('estoque')
-          .select('id, nome_produto, descricao_produto, modulo_calculo, valor_calculo, eixo_calculo, setor_responsavel_producao')
+          .select('id, nome_produto, descricao_produto, modulo_calculo, valor_calculo, eixo_calculo, setor_responsavel_producao, quantidade_padrao, qtd_eixo_calculo, qtd_operador, qtd_valor_calculo')
           .eq('item_padrao_porta_enrolar', true)
           .eq('ativo', true);
 
@@ -281,6 +317,7 @@ export const PedidoLinhasEditor = ({
   // Função para adicionar item padrão rapidamente
   const handleAdicionarItemPadrao = async (porta: any, item: ItemPadraoPortaEnrolar) => {
     const tamanhoAuto = calcularTamanhoAutomatico(item, porta.largura, porta.altura);
+    const qtdAuto = calcularQuantidadeAutomaticaItem(item, porta.largura, porta.altura);
     const categoria = mapearSetorParaCategoria(item.setor_responsavel_producao);
     
     try {
@@ -289,7 +326,7 @@ export const PedidoLinhasEditor = ({
         indice_porta: porta._indicePorta,
         nome_produto: item.nome_produto,
         descricao_produto: item.descricao_produto || "",
-        quantidade: 1,
+        quantidade: qtdAuto ?? item.quantidade_padrao ?? 1,
         tamanho: tamanhoAuto || "",
         estoque_id: item.id,
         categoria_linha: categoria,
@@ -576,6 +613,7 @@ export const PedidoLinhasEditor = ({
         <div className="flex flex-wrap gap-1.5">
           {itensPadraoDisponiveis.map((item) => {
             const tamanhoPreview = calcularTamanhoAutomatico(item, porta.largura, porta.altura);
+            const qtdPreview = calcularQuantidadeAutomaticaItem(item, porta.largura, porta.altura) ?? item.quantidade_padrao;
             return (
               <button
                 key={item.id}
@@ -587,6 +625,9 @@ export const PedidoLinhasEditor = ({
                 {item.nome_produto}
                 {tamanhoPreview && (
                   <span className="ml-1 text-blue-200/70">({tamanhoPreview}m)</span>
+                )}
+                {qtdPreview && qtdPreview > 1 && (
+                  <span className="ml-1 text-blue-200/70">×{qtdPreview}</span>
                 )}
               </button>
             );
