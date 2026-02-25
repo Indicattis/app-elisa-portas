@@ -1,55 +1,48 @@
 
-
-# Adicionar despesas e status "em teste" na pagina DRE mensal
+# Adicionar Gestao de Pedidos na interface de Producao
 
 ## Resumo
 
-Adicionar na pagina `/direcao/dre/:mes` a possibilidade de criar novas despesas fixas e variaveis diretamente, e um campo de status para cada despesa indicando se ela esta "decretada" (bolinha verde) ou "em teste" (bolinha amarela).
+Criar um botao "Gestao de Pedidos" no hub `/producao`, uma nova pagina `/producao/gestao-pedidos` que e um clone de `PedidosProducaoMinimalista`, e registrar a rota no sistema de permissoes.
 
 ## Mudancas
 
-### 1. Migracao de banco de dados
+### 1. Arquivo: `src/pages/ProducaoHome.tsx`
 
-Adicionar coluna `tipo_status` na tabela `despesas_mensais` com valores `decretada` (default) ou `em_teste`:
+- Adicionar o icone `ClipboardList` aos imports
+- Adicionar novo item no array `BOTOES` com `{ label: "Gestão de Pedidos", icon: ClipboardList, path: "/producao/gestao-pedidos", routeKey: "producao_gestao_pedidos" }`
 
-```sql
-ALTER TABLE despesas_mensais
-ADD COLUMN tipo_status text NOT NULL DEFAULT 'decretada';
+### 2. Novo arquivo: `src/pages/producao/GestaPedidosProducao.tsx`
+
+- Criar um componente que importa e re-exporta `PedidosProducaoMinimalista` (clone por re-uso, nao duplicacao de codigo)
+- Ajustar o `backPath` do `MinimalistLayout` para apontar para `/producao` em vez de `/fabrica`
+- Para isso, criar um wrapper simples que renderiza o mesmo conteudo mas dentro do layout de producao (`ProducaoLayout`)
+
+**Alternativa mais simples**: Como `PedidosProducaoMinimalista` usa `MinimalistLayout` com backPath, criar uma nova pagina que importa os mesmos hooks e componentes, mas passando `backPath="/producao"`. Na pratica, o mais eficiente e criar um arquivo fino que simplesmente re-exporta o componente original, ja que o `MinimalistLayout` tem botao voltar generico.
+
+### 3. Arquivo: `src/App.tsx`
+
+- Importar o novo componente `GestaoPedidosProducao`
+- Adicionar rota dentro do bloco `producao/*`:
+```
+<Route path="/gestao-pedidos" element={
+  <ProtectedProducaoRoute routeKey="producao_gestao_pedidos">
+    <ProducaoLayout><GestaoPedidosProducao /></ProducaoLayout>
+  </ProtectedProducaoRoute>
+} />
 ```
 
-### 2. Arquivo: `src/pages/direcao/DREMesDirecao.tsx`
+### 4. Migracao de banco de dados
 
-**Adicionar funcionalidade de criar despesas:**
-- Novo estado para controlar o formulario inline de nova despesa (nome, valor, tipo_status)
-- Botao "+" no cabecalho de cada secao (Fixas e Variaveis) que abre um formulario inline
-- Ao salvar, insere na tabela `despesas_mensais` com o `mes`, `modalidade` (fixa/variavel) e `tipo_status` correspondentes
-- Recarrega os dados apos inserir
+Inserir a nova rota na tabela `app_routes` para que apareca em `/admin/permissions`:
 
-**Adicionar indicador visual de status:**
-- Ao lado de cada despesa, exibir uma bolinha (dot) colorida:
-  - Verde (`bg-emerald-400`) para `decretada`
-  - Amarela (`bg-amber-400`) para `em_teste`
-- Clicar na bolinha alterna o status entre decretada e em teste (toggle)
-
-**Adicionar opcao de excluir despesa:**
-- Icone de lixeira ao lado de cada despesa para permitir exclusao
-
-### Estrutura visual
-
-```text
-Despesas Fixas                          [+ Adicionar]
-  (verde) Aluguel ...................... R$ 5.000,00  [x]
-  (amarelo) Novo Software ............. R$ 800,00    [x]
-  Total ................................ R$ 5.800,00
-
-  [Form inline quando clica +]
-  Nome: [________]  Valor: [________]  Status: [Decretada v]  [Salvar]
+```sql
+INSERT INTO app_routes (key, path, label, icon, interface, parent_key, sort_order, active)
+VALUES ('producao_gestao_pedidos', '/producao/gestao-pedidos', 'Gestão de Pedidos', 'ClipboardList', 'producao', NULL, 0, true);
 ```
 
 ### Detalhes tecnicos
 
-- Interface `Despesa` atualizada para incluir `tipo_status: 'decretada' | 'em_teste'`
-- Funcoes `handleAddDespesa(modalidade)` e `handleToggleStatus(id, statusAtual)` e `handleDeleteDespesa(id)`
-- Formulario inline com campos nome, valor_real e select de tipo_status
-- Categoria sera preenchida como "geral" por padrao para simplificar
-- O `mes` sera formatado como `yyyy-MM-01` conforme padrao existente
+- O componente `GestaoPedidosProducao` sera essencialmente o `PedidosProducaoMinimalista` mas com `backPath="/producao"` no `MinimalistLayout`
+- A permissao sera gerenciada automaticamente em `/admin/permissions` pois o `UserRouteAccessManager` le da tabela `app_routes`
+- O botao no hub segue o mesmo padrao visual dos demais (glassmorphism, icone azul)
