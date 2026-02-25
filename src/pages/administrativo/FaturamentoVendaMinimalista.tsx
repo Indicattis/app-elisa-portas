@@ -124,6 +124,8 @@ export default function FaturamentoVendaMinimalista() {
     const updates: any = { [field]: value };
     if (field === 'status' && value === 'pago') {
       updates.data_pagamento = new Date().toISOString().split('T')[0];
+    } else if (field === 'status' && value === 'pendente') {
+      updates.data_pagamento = null;
     }
     const { error } = await supabase
       .from('contas_receber')
@@ -752,7 +754,17 @@ export default function FaturamentoVendaMinimalista() {
                                   Pago em {format(new Date(parcela.data_pagamento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
                                 </span>
                               )}
-                              {!isPago && (
+                              {isPago ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full h-8 text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10 mt-auto"
+                                  onClick={() => handleUpdatePagamento(parcela.id, 'status', 'pendente')}
+                                >
+                                  <Undo2 className="h-3 w-3 mr-1" />
+                                  Marcar como Não Pago
+                                </Button>
+                              ) : (
                                 <Button
                                   size="sm"
                                   className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white mt-auto"
