@@ -1,45 +1,55 @@
 
-# Agrupar contas a receber por metodo de pagamento
 
-## O que sera feito
+# Adicionar despesas e status "em teste" na pagina DRE mensal
 
-Na secao "Parcelas / Contas a Receber" da pagina de detalhe da venda, as parcelas serao agrupadas pelo campo `metodo_pagamento` em vez de exibidas em lista corrida. Cada grupo tera um cabecalho com o nome do metodo e o subtotal.
+## Resumo
+
+Adicionar na pagina `/direcao/dre/:mes` a possibilidade de criar novas despesas fixas e variaveis diretamente, e um campo de status para cada despesa indicando se ela esta "decretada" (bolinha verde) ou "em teste" (bolinha amarela).
 
 ## Mudancas
 
-### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
+### 1. Migracao de banco de dados
 
-**Substituir a renderizacao flat das parcelas (linhas 699-757) por uma renderizacao agrupada:**
+Adicionar coluna `tipo_status` na tabela `despesas_mensais` com valores `decretada` (default) ou `em_teste`:
 
-1. Agrupar `contasReceber` por `metodo_pagamento` usando `Object.groupBy` ou reduce
-2. Para cada grupo, exibir:
-   - Cabecalho com o label do metodo (Boleto, A Vista, Cartao, Dinheiro) e o subtotal do grupo
-   - Quantidade de parcelas pagas vs total
-   - As parcelas do grupo (mesmo layout atual: valor, vencimento, status, textarea de observacao, botao marcar como pago)
+```sql
+ALTER TABLE despesas_mensais
+ADD COLUMN tipo_status text NOT NULL DEFAULT 'decretada';
+```
+
+### 2. Arquivo: `src/pages/direcao/DREMesDirecao.tsx`
+
+**Adicionar funcionalidade de criar despesas:**
+- Novo estado para controlar o formulario inline de nova despesa (nome, valor, tipo_status)
+- Botao "+" no cabecalho de cada secao (Fixas e Variaveis) que abre um formulario inline
+- Ao salvar, insere na tabela `despesas_mensais` com o `mes`, `modalidade` (fixa/variavel) e `tipo_status` correspondentes
+- Recarrega os dados apos inserir
+
+**Adicionar indicador visual de status:**
+- Ao lado de cada despesa, exibir uma bolinha (dot) colorida:
+  - Verde (`bg-emerald-400`) para `decretada`
+  - Amarela (`bg-amber-400`) para `em_teste`
+- Clicar na bolinha alterna o status entre decretada e em teste (toggle)
+
+**Adicionar opcao de excluir despesa:**
+- Icone de lixeira ao lado de cada despesa para permitir exclusao
 
 ### Estrutura visual
 
 ```text
-Card "Parcelas / Contas a Receber"
-  |
-  +-- Grupo "Boleto" (5 parcelas - R$ 11.900,00)
-  |     Parcela 1 - R$ 2.380,00 - 23/03/2026 - Pendente
-  |     Parcela 2 - R$ 2.380,00 - 22/04/2026 - Pendente
-  |     ...
-  |
-  +-- Grupo "Cartao de Credito" (3 parcelas - R$ 5.000,00)
-        Parcela 1 - R$ 1.666,67 - ...
-        ...
+Despesas Fixas                          [+ Adicionar]
+  (verde) Aluguel ...................... R$ 5.000,00  [x]
+  (amarelo) Novo Software ............. R$ 800,00    [x]
+  Total ................................ R$ 5.800,00
+
+  [Form inline quando clica +]
+  Nome: [________]  Valor: [________]  Status: [Decretada v]  [Salvar]
 ```
 
 ### Detalhes tecnicos
 
-- Criar um objeto agrupado com reduce sobre `contasReceber`
-- Iterar sobre `Object.entries(grouped)` para renderizar cada grupo
-- Cada grupo tera um div com borda e cabecalho distinto (label do metodo + badge com contagem pago/total + subtotal)
-- As parcelas dentro de cada grupo mantem o layout atual (observacoes, botao pago)
-- Se houver apenas um metodo de pagamento, o visual sera praticamente igual ao atual, apenas com o cabecalho do grupo adicionado
-
-### Arquivo alterado
-
-1. `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` - Agrupar parcelas por metodo de pagamento na secao de contas a receber
+- Interface `Despesa` atualizada para incluir `tipo_status: 'decretada' | 'em_teste'`
+- Funcoes `handleAddDespesa(modalidade)` e `handleToggleStatus(id, statusAtual)` e `handleDeleteDespesa(id)`
+- Formulario inline com campos nome, valor_real e select de tipo_status
+- Categoria sera preenchida como "geral" por padrao para simplificar
+- O `mes` sera formatado como `yyyy-MM-01` conforme padrao existente
