@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Hammer, Package, CheckSquare, Truck, Boxes,
   ClipboardCheck, Paintbrush, PackageCheck, Wrench,
-  Building2, History, Rows3,
+  Building2, History, Rows3, ClipboardList,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -32,6 +32,7 @@ const BOTOES: Botao[] = [
   { label: "Terceirização", icon: Building2, path: "/producao/terceirizacao", routeKey: "producao_terceirizacao" },
   { label: "Estoque", icon: ClipboardCheck, path: "/producao/conferencia-estoque", routeKey: "producao_conferencia_estoque" },
   { label: "Almoxarifado", icon: Boxes, path: "/producao/conferencia-almox", routeKey: "producao_conferencia_almox" },
+  { label: "Gestão de Pedidos", icon: ClipboardList, path: "/producao/gestao-pedidos", routeKey: "producao_gestao_pedidos" },
 ];
 
 const ADMIN_ROLES = ['administrador', 'admin'];

@@ -1,0 +1,2 @@
+INSERT INTO app_routes (key, path, label, icon, interface, parent_key, sort_order, active)
+VALUES ('producao_gestao_pedidos', '/producao/gestao-pedidos', 'Gestão de Pedidos', 'ClipboardList', 'producao', NULL, 0, true);

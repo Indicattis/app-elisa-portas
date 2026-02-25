@@ -139,6 +139,7 @@ import { PaineisLayout } from "@/components/PaineisLayout";
 import { ProtectedProducaoRoute } from "@/components/ProtectedProducaoRoute";
 import ProducaoCarregamento from "./pages/ProducaoCarregamento";
 import ProducaoHome from "./pages/ProducaoHome";
+import GestaoPedidosProducao from "./pages/producao/GestaoPedidosProducao";
 
 import ProducaoMeuHistorico from "./pages/ProducaoMeuHistorico";
 import ProducaoControle from "./pages/ProducaoControle";
@@ -763,6 +764,14 @@ const App = () => (
                               </ProducaoLayout>
                             </ProtectedProducaoRoute>
                           } 
+                        />
+                        <Route
+                          path="/gestao-pedidos"
+                          element={
+                            <ProtectedProducaoRoute routeKey="producao_gestao_pedidos">
+                              <GestaoPedidosProducao />
+                            </ProtectedProducaoRoute>
+                          }
                         />
                       </Routes>
                     </ProducaoAuthProvider>
