@@ -38,7 +38,12 @@ const ETAPA_ICONS = {
   finalizado: CheckCircle2
 };
 
-export default function PedidosProducaoMinimalista() {
+interface PedidosProducaoMinimalistaProps {
+  backPath?: string;
+  breadcrumbLabel?: string;
+}
+
+export default function PedidosProducaoMinimalista({ backPath = "/fabrica", breadcrumbLabel = "Fábrica" }: PedidosProducaoMinimalistaProps = {}) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('aberto');
@@ -211,10 +216,10 @@ export default function PedidosProducaoMinimalista() {
     <MinimalistLayout 
       title="Gestão de Pedidos" 
       subtitle="Acompanhe o progresso dos pedidos"
-      backPath="/fabrica"
+      backPath={backPath}
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        { label: "Fábrica", path: "/fabrica" },
+        { label: breadcrumbLabel, path: backPath },
         { label: "Gestão de Pedidos" }
       ]}
       headerActions={headerActions}
