@@ -1720,6 +1720,7 @@ export type Database = {
           modalidade: string
           nome: string
           observacoes: string | null
+          tipo_status: string
           updated_at: string | null
           valor_esperado: number
           valor_real: number
@@ -1733,6 +1734,7 @@ export type Database = {
           modalidade: string
           nome: string
           observacoes?: string | null
+          tipo_status?: string
           updated_at?: string | null
           valor_esperado?: number
           valor_real?: number
@@ -1746,6 +1748,7 @@ export type Database = {
           modalidade?: string
           nome?: string
           observacoes?: string | null
+          tipo_status?: string
           updated_at?: string | null
           valor_esperado?: number
           valor_real?: number

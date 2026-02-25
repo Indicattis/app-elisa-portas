@@ -1,0 +1,1 @@
+ALTER TABLE despesas_mensais ADD COLUMN tipo_status text NOT NULL DEFAULT 'decretada';
