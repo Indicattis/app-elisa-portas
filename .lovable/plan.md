@@ -1,22 +1,23 @@
 
 
-# Adicionar "Excluir Selecionados" na pagina Contas a Receber
+# Corrigir exclusao de parcelas em Contas a Receber
 
-## O que sera feito
+## Problema
 
-Adicionar um botao "Excluir Selecionados" na secao de Acoes da sidebar direita da pagina `/administrativo/financeiro/caixa/contas-a-receber`. O botao so aparece quando ha itens selecionados e pede confirmacao antes de excluir.
+A tabela `contas_receber` tem RLS (Row Level Security) ativado, mas so possui policies para SELECT, INSERT e UPDATE. Nao existe policy para DELETE, entao o Supabase silenciosamente bloqueia a exclusao e retorna 204 (sucesso) sem deletar nada.
 
-## Mudancas
+## Solucao
 
-### Arquivo: `src/pages/administrativo/ContasReceberMinimalista.tsx`
+Criar uma migration SQL adicionando uma policy de DELETE para usuarios autenticados na tabela `contas_receber`.
 
-1. **Importar `Trash2`** do lucide-react e componentes de `AlertDialog` para confirmacao
-2. **Adicionar estado** `confirmDeleteOpen` para controlar o dialog de confirmacao
-3. **Criar mutation `deletarSelecionadosMutation`** que deleta da tabela `contas_receber` todos os registros cujos IDs estao em `selectedIds`, invalida a query e limpa a selecao
-4. **Adicionar botao na sidebar direita** (secao "Acoes", abaixo do botao de exportar):
-   - Visivel apenas quando `selectedIds.size > 0`
-   - Estilo destrutivo (vermelho)
-   - Texto: "Excluir Selecionados (N)"
-   - Ao clicar, abre AlertDialog de confirmacao
-5. **Renderizar AlertDialog** com mensagem "Tem certeza que deseja excluir N parcelas selecionadas? Esta acao nao pode ser desfeita." e botoes Cancelar/Excluir
+### SQL da migration
+
+```sql
+CREATE POLICY "Authenticated users can delete contas_receber"
+  ON public.contas_receber
+  FOR DELETE
+  USING (auth.uid() IS NOT NULL);
+```
+
+Nenhuma alteracao de codigo e necessaria -- apenas a policy faltante no banco de dados.
 
