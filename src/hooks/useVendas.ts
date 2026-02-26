@@ -131,6 +131,19 @@ export function useVendas() {
         throw new Error('Todos os campos de localização são obrigatórios (Estado, Cidade, CEP, Bairro e Endereço)');
       }
 
+      // Validar comprovante obrigatório quando marcado como "já pago"
+      if (pagamentoData) {
+        const metodosAtivos = pagamentoData.usar_dois_metodos 
+          ? pagamentoData.metodos.filter(m => m.tipo)
+          : [pagamentoData.metodos[0]].filter(m => m.tipo);
+        
+        for (const metodo of metodosAtivos) {
+          if (metodo.ja_pago && !metodo.comprovante_file) {
+            throw new Error('É obrigatório anexar o comprovante de pagamento quando o método está marcado como "Já pago".');
+          }
+        }
+      }
+
       // Validar tamanho mínimo de endereço e bairro (requisito SEFAZ)
       if (vendaData.endereco && vendaData.endereco.length < 2) {
         throw new Error('O endereço deve ter no mínimo 2 caracteres');
@@ -354,9 +367,9 @@ export function useVendas() {
           await gerarContasReceberPorMetodo(venda.id, metodo, dataBase);
         }
         
-        // Upload de comprovantes (para método à vista)
+        // Upload de comprovantes (para à vista ou qualquer método marcado como já pago)
         for (const metodo of metodosParaProcessar) {
-          if (metodo.tipo === 'a_vista' && metodo.comprovante_file) {
+          if ((metodo.tipo === 'a_vista' || metodo.ja_pago) && metodo.comprovante_file) {
             const fileName = `${venda.id}/${Date.now()}_${metodo.comprovante_file.name}`;
             
             const { error: uploadError } = await supabase.storage
