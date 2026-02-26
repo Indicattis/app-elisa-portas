@@ -1,40 +1,39 @@
 
 
-# Corrigir calendario da etapa Instalacoes na Gestao de Fabrica
+# Corrigir botão de calendário na etapa Instalações
 
 ## Problema
 
-Na pagina `/direcao/gestao-fabrica`, ao clicar no botao de calendario na etapa "Instalacoes", o sistema abre o `CalendarioExpedicaoModal` que mostra dados de **expedicao** (ordens de carregamento, neo instalacoes, neo correcoes). Isso esta errado para a etapa de instalacoes — deveria mostrar o calendario de **instalacoes** com os dados da tabela `instalacoes`.
+Na página `/direcao/gestao-fabrica`, o botão de calendário na etapa "Instalações" abre um calendário completo em modo leitura (`CalendarioInstalacoesModal`), mas o comportamento esperado é mostrar um **input de data** para agendar o carregamento de um pedido — similar ao fluxo do `SelecionarPedidoInstalacaoModal`.
 
-## Solucao
+## Solução
 
-Criar um modal de calendario de instalacoes dedicado e usa-lo quando a etapa ativa for `instalacoes`. Manter o `CalendarioExpedicaoModal` apenas para `aguardando_coleta`.
+Substituir a abertura do `CalendarioInstalacoesModal` pelo `SelecionarPedidoInstalacaoModal`, que já existe e faz exatamente o que o usuário precisa: mostra um date picker para selecionar a data e lista os pedidos disponíveis para agendar instalação naquela data.
 
-## Mudancas
+## Mudanças
 
-### 1. Novo componente: `CalendarioInstalacoesModal.tsx`
+### Arquivo: `src/pages/direcao/GestaoFabricaDirecao.tsx`
 
-Criar um modal em `src/components/pedidos/CalendarioInstalacoesModal.tsx` que:
-- Usa o hook `useOrdensInstalacaoCalendario` para buscar dados da tabela `instalacoes`
-- Renderiza o componente `CalendarioInstalacoesMensal` (ja existente) em modo somente leitura
-- Permite alternar entre visao semanal e mensal (usando `CalendarioInstalacoesSemanal` tambem existente)
-- Inclui botao para navegar ao calendario completo de instalacoes (`/logistica/instalacoes`)
-- Segue o mesmo padrao visual do `CalendarioExpedicaoModal`
+1. Remover o import e o estado `showCalendarioInstalacoesModal`
+2. Remover o componente `CalendarioInstalacoesModal` da renderização
+3. Importar `SelecionarPedidoInstalacaoModal` de `@/components/instalacoes/SelecionarPedidoInstalacaoModal`
+4. Adicionar estado `showSelecionarPedidoInstalacao` (boolean)
+5. No botão de calendário da etapa `instalacoes`, trocar para abrir `SelecionarPedidoInstalacaoModal` com `dataSelecionada` = hoje
+6. Renderizar o `SelecionarPedidoInstalacaoModal` com callback `onPedidoSelecionado` que invalida as queries para atualizar a lista
 
-### 2. Arquivo: `src/pages/direcao/GestaoFabricaDirecao.tsx`
+### Arquivo: `src/components/instalacoes/SelecionarPedidoInstalacaoModal.tsx`
 
-- Importar o novo `CalendarioInstalacoesModal`
-- Adicionar estado `showCalendarioInstalacoesModal`
-- No botao de calendario (linha ~512), condicionar qual modal abrir:
-  - Se `etapaAtiva === 'instalacoes'` -> abrir `CalendarioInstalacoesModal`
-  - Se `etapaAtiva === 'aguardando_coleta'` -> abrir `CalendarioExpedicaoModal` (comportamento atual)
-- Renderizar o novo modal no final do componente
+7. Adicionar um **date picker** (usando o componente Shadcn Calendar/Popover) dentro do modal para que o usuário possa alterar a data de agendamento antes de selecionar o pedido, em vez de depender apenas da `dataSelecionada` passada como prop
 
-### Detalhes tecnicos
+### Resultado esperado
 
-O `CalendarioInstalacoesMensal` requer props como `onUpdateInstalacao` e `onInstalacaoClick`. No modo modal somente leitura:
-- `onUpdateInstalacao` sera uma funcao vazia (sem drag-and-drop no modal)
-- `onInstalacaoClick` pode abrir detalhes ou ser no-op
-- `onRemoverDoCalendario` sera no-op
+Ao clicar no ícone de calendário na etapa "Instalações":
+- Abre um modal com um campo de data editável (date picker)
+- Lista os pedidos em `expedicao_instalacao` disponíveis para instalação
+- Ao selecionar um pedido, cria a instalação na data escolhida
 
-Os componentes de calendario de instalacoes ja existem e sao reutilizados diretamente, sem necessidade de criar novos componentes de calendario.
+### Detalhes técnicos
+
+O `SelecionarPedidoInstalacaoModal` já faz insert na tabela `instalacoes` e update no `pedidos_producao.data_producao`. O date picker será adicionado entre o título e a lista de pedidos, usando `Popover` + `Calendar` do Shadcn com `pointer-events-auto`.
+
+O `CalendarioInstalacoesModal` criado anteriormente pode ser mantido no código caso seja útil futuramente, mas não será mais usado nesta página.
