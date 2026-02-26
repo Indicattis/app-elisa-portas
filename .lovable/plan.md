@@ -1,83 +1,37 @@
 
 
-# Proteger pedidos arquivados contra alteracao de etapa
+# Editar valores e datas das parcelas no faturamento da venda
 
-## Diagnostico
+## Problema identificado
 
-Investiguei o banco de dados e o fluxo de arquivamento. Os dados atuais estao consistentes - todos os pedidos arquivados mantem `etapa_atual = 'finalizado'` e `arquivado = true`. Nenhum pedido atualmente em `instalacoes` foi previamente finalizado ou arquivado.
-
-Porem, existe uma vulnerabilidade real: o trigger `sync_pedido_etapa_atual` que sincroniza a etapa do pedido com base na tabela `pedidos_etapas` **nao verifica se o pedido esta arquivado**. Se qualquer operacao tocar em um registro de `pedidos_etapas` de um pedido arquivado, o trigger pode sobrescrever `etapa_atual` com um valor diferente de `finalizado`.
+A venda do cliente Euclesio (R$4.800) possui duas parcelas com valores incorretos: R$2.400 + R$2.800 = R$5.200 (excede o valor da venda). Alem disso, ambas estao numeradas como "Parcela 1". O sistema atual nao permite editar valores nem datas das parcelas nessa pagina.
 
 ## Mudancas
 
-### 1. Migracao SQL: Proteger trigger contra pedidos arquivados
+### 1. Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-Atualizar a funcao `sync_pedido_etapa_atual` para ignorar pedidos arquivados:
+Transformar os cards de parcelas para permitir edicao inline de **valor** e **data de vencimento**:
 
-```sql
-CREATE OR REPLACE FUNCTION sync_pedido_etapa_atual()
-RETURNS TRIGGER AS $$
-DECLARE
-  v_ultima_etapa TEXT;
-  v_arquivado BOOLEAN;
-BEGIN
-  -- Verificar se o pedido esta arquivado
-  SELECT arquivado INTO v_arquivado
-  FROM pedidos_producao
-  WHERE id = NEW.pedido_id;
+- Substituir a exibicao estatica do valor da parcela por um campo `<Input>` numerico editavel
+- Substituir a exibicao estatica da data de vencimento por um campo `<Input type="date">` editavel
+- Cada campo salva automaticamente no `onBlur` (mesmo padrao ja usado para observacoes)
+- Usar a funcao `handleUpdatePagamento` existente (que ja faz update generico por campo) para salvar `valor_parcela` e `data_vencimento`
+- Exibir o total do grupo dinamicamente conforme os valores sao editados
+- Adicionar um indicador visual (soma das parcelas vs valor da venda) para alertar sobre divergencias
 
-  -- Se esta arquivado, nao alterar nada
-  IF v_arquivado = true THEN
-    RETURN NEW;
-  END IF;
+### Detalhes tecnicos
 
-  -- Buscar a ultima etapa do pedido
-  SELECT etapa INTO v_ultima_etapa
-  FROM pedidos_etapas
-  WHERE pedido_id = NEW.pedido_id
-  ORDER BY 
-    CASE 
-      WHEN data_saida IS NULL THEN data_entrada
-      ELSE data_saida
-    END DESC
-  LIMIT 1;
-  
-  UPDATE pedidos_producao
-  SET 
-    etapa_atual = v_ultima_etapa,
-    updated_at = now()
-  WHERE id = NEW.pedido_id
-    AND (etapa_atual IS DISTINCT FROM v_ultima_etapa);
-  
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-```
+**Campos editaveis no card da parcela:**
+- `valor_parcela`: Input numerico, estado local por parcela, salva no blur via `handleUpdatePagamento(parcela.id, 'valor_parcela', valor)`
+- `data_vencimento`: Input date, salva no blur via `handleUpdatePagamento(parcela.id, 'data_vencimento', data)`
 
-### 2. Migracao SQL: Proteger o campo `arquivado` no UPDATE do pedido
+**Validacao visual:**
+- Exibir abaixo da secao de parcelas a comparacao: "Total parcelas: R$X / Valor venda: R$Y"
+- Destacar em vermelho se os valores divergem, em verde se batem
 
-Adicionar verificacao no hook `moverParaProximaEtapa` para bloquear avancos de pedidos arquivados. Atualmente o codigo nao verifica `arquivado` antes de tentar mover.
+**Fluxo de save:**
+- A funcao `handleUpdatePagamento` ja aceita qualquer campo e faz update no Supabase + atualiza o estado local. Sera estendida para aceitar valores numericos (atualmente so aceita string). Ajuste: converter o tipo do parametro `value` para `string | number | null`.
 
-### 3. Arquivo: `src/hooks/usePedidosEtapas.ts`
-
-Na funcao `moverParaProximaEtapa`, adicionar verificacao logo apos buscar o pedido (linha ~516):
-
-```typescript
-// Buscar pedido atual
-const { data: pedido } = await supabase
-  .from('pedidos_producao')
-  .select('etapa_atual, arquivado')
-  .eq('id', pedidoId)
-  .single();
-
-if (pedido.arquivado) {
-  throw new Error('Pedido arquivado nao pode ser movido');
-}
-```
-
-Mesma verificacao na funcao `retrocederEtapa`.
-
-## Resumo
-
-A correcao principal e no trigger SQL (`sync_pedido_etapa_atual`) que passa a ignorar pedidos arquivados, prevenindo que qualquer operacao indireta em `pedidos_etapas` mova um pedido ja arquivado de volta para uma etapa anterior. Adicionalmente, protecoes no frontend impedem tentativas de mover pedidos arquivados.
-
+**Componentes reutilizados:**
+- `Input` de `@/components/ui/input` para os campos editaveis
+- Estilizacao consistente com o tema escuro existente (bg-white/5, border-white/10, text-white)
