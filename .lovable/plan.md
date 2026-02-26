@@ -1,34 +1,54 @@
 
 
-# Adicionar secao de Informacoes de Pagamento acima das Parcelas
+# Adicionar preview de parcelas na secao Informacoes de Pagamento
 
 ## O que sera feito
 
-Inserir uma nova Card entre a tabela de produtos (linha ~734) e a secao "Parcelas / Contas a Receber" (linha ~736) exibindo os dados de pagamento da venda e o comprovante anexado.
+Expandir a secao "Informacoes de Pagamento" para incluir uma tabela/grid com o detalhamento das parcelas previstas (numero, data de vencimento, valor), calculadas a partir dos dados de pagamento da venda (metodo, numero de parcelas, intervalo, valor total, data da venda). Tambem adicionar campos extras como "Pagamento na Entrega", "Valor de Entrada" e "Data da Venda".
 
 ## Mudancas
 
 ### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-1. **Importar icones adicionais**: `FileText`, `Eye`, `Image` do lucide-react (para exibir o comprovante)
+1. **Ampliar o fetch da venda** para incluir campos adicionais: `pagamento_na_entrega`, `valor_entrada`, `valor_a_receber`, `quantidade_parcelas`
 
-2. **Adicionar nova Card "Informacoes de Pagamento"** entre a tabela de produtos e a secao de parcelas, contendo:
-   - **Metodo de pagamento**: exibe o metodo formatado (Boleto, Cartao, A Vista, Dinheiro) usando a mesma logica de labels ja existente na pagina
-   - **Numero de parcelas**: se aplicavel (boleto/cartao)
-   - **Intervalo entre boletos**: se metodo for boleto
-   - **Comprovante anexado**: se `comprovante_url` existir, exibe o nome do arquivo com botao para visualizar (abre em nova aba). Se for imagem (png/jpg/webp), mostra preview. Se nao houver comprovante, exibe "Nenhum comprovante anexado"
+2. **Atualizar a interface Venda** com os novos campos opcionais
 
-3. **Layout**: grid de 2-3 colunas para os dados de pagamento, com o comprovante ocupando linha separada se existir. Estilo consistente com o tema escuro da pagina (bg-white/5, border-white/10, text-white)
+3. **Adicionar informacoes extras no grid existente**:
+   - Data da Venda (formatada)
+   - Pagamento na Entrega (Sim/Nao com badge)
+   - Valor de Entrada (se houver)
+
+4. **Adicionar preview de parcelas calculadas** abaixo do grid de informacoes:
+   - Calcular parcelas com base em: `metodo_pagamento`, `numero_parcelas`/`quantidade_parcelas`, `intervalo_boletos`, `valor_venda`, `data_venda`
+   - Logica:
+     - Boleto: N parcelas com intervalo personalizado em dias
+     - Cartao: N parcelas com intervalo de 30 dias
+     - Dinheiro/A Vista: 1 parcela unica
+   - Exibir em grid responsivo (similar ao PagamentoSection): numero da parcela, data de vencimento (dd/MM/yy), valor formatado em BRL
+   - Titulo: "Parcelas Previstas"
 
 ## Secao visual esperada
 
 ```text
-+--------------------------------------------------+
-| Informacoes de Pagamento                         |
-|                                                  |
-| Metodo: Boleto    Parcelas: 3    Intervalo: 30d  |
-|                                                  |
-| Comprovante: [icone] arquivo.pdf  [Visualizar]   |
-+--------------------------------------------------+
++----------------------------------------------------------+
+| Informacoes de Pagamento                                 |
+|                                                          |
+| Metodo: Boleto   Parcelas: 3   Intervalo: 30d           |
+| Data Venda: 15/02/2026   Pgto na Entrega: Nao           |
+|                                                          |
+| Parcelas Previstas:                                      |
+| [1a: 15/02/26 - R$ 1.000,00] [2a: 17/03/26 - R$ 1.000] |
+| [3a: 16/04/26 - R$ 1.000,00]                            |
+|                                                          |
+| Comprovante: arquivo.pdf [Visualizar]                    |
++----------------------------------------------------------+
 ```
 
+## Detalhes tecnicos
+
+- A logica de calculo de parcelas segue o mesmo padrao de `calcularPreviewParcelas` em `PagamentoSection.tsx` e `gerarContasReceberPorMetodo` em `useVendas.ts`
+- Usa `addDays` do date-fns (ja importado) para calcular datas
+- O valor total usado e `venda.valor_venda`
+- A data base e `venda.data_venda`
+- Estilo consistente: `bg-white/5`, `border-white/10`, `text-white/60` para os cards de parcela
