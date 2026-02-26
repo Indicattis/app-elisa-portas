@@ -1,39 +1,52 @@
 
+## Diagnóstico do que ainda está errado
 
-# Corrigir botão de calendário na etapa Instalações
+Você está certo: o fluxo que eu tinha ajustado antes corrigiu o **botão de calendário do cabeçalho da etapa**, mas o clique que você está usando (tooltip **“Agendar no Calendário”**) é outro botão, dentro de cada card de pedido (`PedidoCard.tsx`, linha ~1726).
 
-## Problema
+Pelo replay, você clicou exatamente nesse botão de cada pedido.  
+Hoje esse botão chama `onAgendar(pedido.id)`, mas em `GestaoFabricaDirecao.tsx` o `handleAgendarPedido` ignora o `pedidoId` e apenas abre `AdicionarOrdemCalendarioModal` genérico. Resultado: não abre direto com o pedido certo + input de data imediato como você pediu.
 
-Na página `/direcao/gestao-fabrica`, o botão de calendário na etapa "Instalações" abre um calendário completo em modo leitura (`CalendarioInstalacoesModal`), mas o comportamento esperado é mostrar um **input de data** para agendar o carregamento de um pedido — similar ao fluxo do `SelecionarPedidoInstalacaoModal`.
+## Correção que vou implementar
 
-## Solução
+### 1) Pré-selecionar o pedido clicado no modal de agendamento
+**Arquivo:** `src/pages/direcao/GestaoFabricaDirecao.tsx`
 
-Substituir a abertura do `CalendarioInstalacoesModal` pelo `SelecionarPedidoInstalacaoModal`, que já existe e faz exatamente o que o usuário precisa: mostra um date picker para selecionar a data e lista os pedidos disponíveis para agendar instalação naquela data.
+- Adicionar estado para guardar o pedido clicado no ícone:
+  - `pedidoAgendamentoId: string | null`
+- No `handleAgendarPedido(pedidoId)`, salvar esse ID antes de abrir o modal.
+- Buscar a ordem correspondente ao pedido (fonte `instalacoes` quando for etapa instalações) e passar como `ordemPreSelecionada` para `AdicionarOrdemCalendarioModal`.
+- Ao fechar o modal, limpar `pedidoAgendamentoId`.
 
-## Mudanças
+### 2) Garantir que o input de data apareça direto ao clicar no calendário do card
+**Arquivo:** `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx`
 
-### Arquivo: `src/pages/direcao/GestaoFabricaDirecao.tsx`
+- Ajustar a lógica para, quando existir `ordemPreSelecionada`, já abrir com:
+  - ordem selecionada
+  - campo de data visível
+  - data inicial preenchida
+- Manter a lista de ordens apenas para casos sem pré-seleção.
+- Validar fallback: se não achar ordem correspondente, mostrar aviso claro e manter fluxo manual.
 
-1. Remover o import e o estado `showCalendarioInstalacoesModal`
-2. Remover o componente `CalendarioInstalacoesModal` da renderização
-3. Importar `SelecionarPedidoInstalacaoModal` de `@/components/instalacoes/SelecionarPedidoInstalacaoModal`
-4. Adicionar estado `showSelecionarPedidoInstalacao` (boolean)
-5. No botão de calendário da etapa `instalacoes`, trocar para abrir `SelecionarPedidoInstalacaoModal` com `dataSelecionada` = hoje
-6. Renderizar o `SelecionarPedidoInstalacaoModal` com callback `onPedidoSelecionado` que invalida as queries para atualizar a lista
+### 3) Ajustar escopo por etapa para evitar comportamento confuso
+**Arquivo:** `src/pages/direcao/GestaoFabricaDirecao.tsx`
 
-### Arquivo: `src/components/instalacoes/SelecionarPedidoInstalacaoModal.tsx`
+- Manter o comportamento especial da etapa `instalacoes` focado em “escolher data para o pedido clicado”.
+- Preservar comportamento atual de outras etapas (`aguardando_coleta` e `correcoes`) sem quebrar fluxo existente.
 
-7. Adicionar um **date picker** (usando o componente Shadcn Calendar/Popover) dentro do modal para que o usuário possa alterar a data de agendamento antes de selecionar o pedido, em vez de depender apenas da `dataSelecionada` passada como prop
+## Resultado esperado após a correção
 
-### Resultado esperado
+Ao clicar no ícone **Agendar no Calendário** de um pedido na etapa **Instalações**:
+1. abre o modal já no pedido correto,
+2. mostra imediatamente o **input de data** para agendar carregamento,
+3. confirma sem obrigar selecionar novamente o pedido na lista.
 
-Ao clicar no ícone de calendário na etapa "Instalações":
-- Abre um modal com um campo de data editável (date picker)
-- Lista os pedidos em `expedicao_instalacao` disponíveis para instalação
-- Ao selecionar um pedido, cria a instalação na data escolhida
+## Validação que vou fazer
 
-### Detalhes técnicos
+1. Etapa `instalacoes`: clicar no calendário de um card e confirmar que abre com input de data pronto.
+2. Alterar data e salvar; validar update e refresh de queries.
+3. Repetir para outro pedido para garantir que não reutiliza seleção antiga.
+4. Confirmar que `aguardando_coleta` e `correcoes` continuam funcionando.
 
-O `SelecionarPedidoInstalacaoModal` já faz insert na tabela `instalacoes` e update no `pedidos_producao.data_producao`. O date picker será adicionado entre o título e a lista de pedidos, usando `Popover` + `Calendar` do Shadcn com `pointer-events-auto`.
+## Observação técnica adicional
 
-O `CalendarioInstalacoesModal` criado anteriormente pode ser mantido no código caso seja útil futuramente, mas não será mais usado nesta página.
+No `SelecionarPedidoInstalacaoModal.tsx` existe uso de `<Calendar className="h-3 w-3" />` na linha de “Entrega prevista” onde o esperado era ícone (lucide), não o datepicker. Isso não é a causa principal do seu problema atual, mas vou alinhar esse ponto depois para evitar inconsistência visual/funcional.
