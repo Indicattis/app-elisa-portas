@@ -806,52 +806,6 @@ export default function FaturamentoVendaMinimalista() {
                 )}
               </div>
 
-              {/* Parcelas Previstas */}
-              {(() => {
-                const metodo = venda.metodo_pagamento;
-                const numParcelas = venda.numero_parcelas || venda.quantidade_parcelas || 1;
-                const intervalo = venda.intervalo_boletos || 30;
-                const valorBase = venda.valor_a_receber || venda.valor_venda || 0;
-                const dataBase = venda.data_venda ? new Date(venda.data_venda + 'T12:00:00') : null;
-
-                if (!dataBase || valorBase <= 0) return null;
-
-                const parcelas: { numero: number; data: Date; valor: number }[] = [];
-
-                if (metodo === 'boleto') {
-                  const valorParcela = valorBase / numParcelas;
-                  for (let i = 0; i < numParcelas; i++) {
-                    parcelas.push({ numero: i + 1, data: addDays(dataBase, intervalo * i), valor: valorParcela });
-                  }
-                } else if (metodo === 'cartao_credito') {
-                  const valorParcela = valorBase / numParcelas;
-                  for (let i = 0; i < numParcelas; i++) {
-                    parcelas.push({ numero: i + 1, data: addDays(dataBase, 30 * i), valor: valorParcela });
-                  }
-                } else {
-                  parcelas.push({ numero: 1, data: dataBase, valor: valorBase });
-                }
-
-                if (parcelas.length === 0) return null;
-
-                return (
-                  <div className="border rounded-lg p-3 border-white/10 bg-white/5">
-                    <p className="text-xs font-medium mb-2 text-white/70">
-                      Parcelas Previstas ({parcelas.length}x de {formatCurrency(parcelas[0].valor)}):
-                    </p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {parcelas.map((p) => (
-                        <div key={p.numero} className="text-xs p-2 bg-white/5 rounded border border-white/10 text-white/60">
-                          <span className="font-medium text-white">{p.numero}ª:</span>{' '}
-                          {format(p.data, "dd/MM/yy", { locale: ptBR })} –{' '}
-                          {formatCurrency(p.valor)}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
-
               {/* Comprovante */}
               <div className="space-y-2">
                 <p className="text-xs text-white/50">Comprovante</p>
