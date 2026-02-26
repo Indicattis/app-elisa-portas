@@ -995,15 +995,24 @@ export default function FaturamentoVendaMinimalista() {
                             <div key={parcela.id} className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2 flex flex-col">
                               <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium text-white">Parcela {parcela.numero_parcela}</span>
-                                <button
-                                  onClick={() => handleUpdatePagamento(parcela.id, 'status', isPago ? 'pendente' : 'pago')}
-                                  className={cn(
-                                    "text-xs px-2 py-0.5 rounded-full font-medium cursor-pointer transition-colors",
-                                    isPago ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30" : "bg-amber-500/20 text-amber-400 hover:bg-amber-500/30"
-                                  )}
-                                >
-                                  {isPago ? 'Pago' : 'Pendente'}
-                                </button>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => handleUpdatePagamento(parcela.id, 'status', isPago ? 'pendente' : 'pago')}
+                                    className={cn(
+                                      "text-xs px-2 py-0.5 rounded-full font-medium cursor-pointer transition-colors",
+                                      isPago ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30" : "bg-amber-500/20 text-amber-400 hover:bg-amber-500/30"
+                                    )}
+                                  >
+                                    {isPago ? 'Pago' : 'Pendente'}
+                                  </button>
+                                  <button
+                                    onClick={() => setConfirmRemoveId(parcela.id)}
+                                    className="text-red-400/50 hover:text-red-400 transition-colors p-0.5"
+                                    title="Excluir parcela"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
                               </div>
                               <input
                                 type="number"
@@ -1091,7 +1100,7 @@ export default function FaturamentoVendaMinimalista() {
             <AlertDialogHeader>
               <AlertDialogTitle className="text-white">Remover parcela?</AlertDialogTitle>
               <AlertDialogDescription className="text-white/60">
-                Esta ação não pode ser desfeita. A última parcela pendente será removida.
+                A parcela selecionada será removida permanentemente. Esta ação não pode ser desfeita.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
