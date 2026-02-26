@@ -515,11 +515,16 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       // Buscar pedido atual
       const { data: pedido, error: pedidoError } = await supabase
         .from('pedidos_producao')
-        .select('etapa_atual')
+        .select('etapa_atual, arquivado')
         .eq('id', pedidoId)
         .single();
 
       if (pedidoError) throw pedidoError;
+
+      // Bloquear pedidos arquivados
+      if (pedido.arquivado) {
+        throw new Error('Pedido arquivado não pode ser movido');
+      }
 
       const etapaAtualNome = pedido.etapa_atual as EtapaPedido;
       let proximaEtapa = getProximaEtapa(etapaAtualNome);
@@ -1428,6 +1433,17 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
       if (adminError || adminData?.role !== 'administrador') {
         throw new Error('Apenas administradores podem retroceder pedidos');
+      }
+
+      // Bloquear pedidos arquivados
+      const { data: pedidoCheck } = await supabase
+        .from('pedidos_producao')
+        .select('arquivado')
+        .eq('id', pedidoId)
+        .single();
+
+      if (pedidoCheck?.arquivado) {
+        throw new Error('Pedido arquivado não pode ser retrocedido');
       }
 
       // Chamar função RPC que faz o retrocesso
