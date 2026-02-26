@@ -22,7 +22,8 @@ import {
   Calculator,
   Wrench,
   CalendarIcon,
-  CreditCard
+  CreditCard,
+  Trash2
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -118,6 +119,42 @@ export default function FaturamentoVendaMinimalista() {
       .eq('venda_id', id)
       .order('numero_parcela');
     if (!error && data) setContasReceber(data);
+  };
+
+  const handleAddParcela = async () => {
+    const maxNumero = Math.max(0, ...contasReceber.map(p => p.numero_parcela || 0));
+    const metodo = contasReceber[0]?.metodo_pagamento || 'boleto';
+    const { data, error } = await supabase
+      .from('contas_receber')
+      .insert({
+        venda_id: id,
+        metodo_pagamento: metodo,
+        valor_parcela: 0,
+        data_vencimento: new Date().toISOString().split('T')[0],
+        status: 'pendente',
+        numero_parcela: maxNumero + 1,
+      })
+      .select()
+      .single();
+    if (error) {
+      toast({ variant: 'destructive', title: 'Erro ao adicionar parcela' });
+      return;
+    }
+    if (data) setContasReceber(prev => [...prev, data]);
+    toast({ title: 'Parcela adicionada' });
+  };
+
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
+
+  const handleRemoveParcela = async (parcelaId: string) => {
+    const { error } = await supabase.from('contas_receber').delete().eq('id', parcelaId);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Erro ao remover parcela' });
+      return;
+    }
+    setContasReceber(prev => prev.filter(p => p.id !== parcelaId));
+    setConfirmRemoveId(null);
+    toast({ title: 'Parcela removida' });
   };
 
   const handleUpdatePagamento = async (pagamentoId: string, field: string, value: string | number | null) => {
@@ -690,13 +727,29 @@ export default function FaturamentoVendaMinimalista() {
         </Card>
 
         {/* Parcelas / Contas a Receber */}
-        {contasReceber.length > 0 && (
+        {contasReceber.length >= 0 && venda && (
           <Card className="bg-white/5 border-white/10">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base text-white">
-                <CreditCard className="h-4 w-4 text-blue-400" />
-                Parcelas / Contas a Receber
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-base text-white">
+                  <CreditCard className="h-4 w-4 text-blue-400" />
+                  Parcelas / Contas a Receber
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" className="h-7 text-xs border-white/20 text-white hover:bg-white/10" onClick={handleAddParcela}>
+                    <Plus className="h-3 w-3 mr-1" /> Parcela
+                  </Button>
+                  {(() => {
+                    const pendentes = contasReceber.filter(p => p.status !== 'pago');
+                    const ultima = pendentes.length > 0 ? pendentes[pendentes.length - 1] : null;
+                    return ultima ? (
+                      <Button size="sm" variant="outline" className="h-7 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={() => setConfirmRemoveId(ultima.id)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    ) : null;
+                  })()}
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {(() => {
@@ -735,12 +788,15 @@ export default function FaturamentoVendaMinimalista() {
                             <div key={parcela.id} className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2 flex flex-col">
                               <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium text-white">Parcela {parcela.numero_parcela}</span>
-                                <span className={cn(
-                                  "text-xs px-2 py-0.5 rounded-full font-medium",
-                                  isPago ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
-                                )}>
+                                <button
+                                  onClick={() => handleUpdatePagamento(parcela.id, 'status', isPago ? 'pendente' : 'pago')}
+                                  className={cn(
+                                    "text-xs px-2 py-0.5 rounded-full font-medium cursor-pointer transition-colors",
+                                    isPago ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30" : "bg-amber-500/20 text-amber-400 hover:bg-amber-500/30"
+                                  )}
+                                >
                                   {isPago ? 'Pago' : 'Pendente'}
-                                </span>
+                                </button>
                               </div>
                               <input
                                 type="number"
@@ -772,26 +828,6 @@ export default function FaturamentoVendaMinimalista() {
                                 <span className="text-xs text-emerald-400/70">
                                   Pago em {format(new Date(parcela.data_pagamento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
                                 </span>
-                              )}
-                              {isPago ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="w-full h-8 text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10 mt-auto"
-                                  onClick={() => handleUpdatePagamento(parcela.id, 'status', 'pendente')}
-                                >
-                                  <Undo2 className="h-3 w-3 mr-1" />
-                                  Marcar como Não Pago
-                                </Button>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white mt-auto"
-                                  onClick={() => handleUpdatePagamento(parcela.id, 'status', 'pago')}
-                                >
-                                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                                  Marcar como Pago
-                                </Button>
                               )}
                             </div>
                           );
@@ -839,6 +875,22 @@ export default function FaturamentoVendaMinimalista() {
             </CardContent>
           </Card>
         )}
+
+        {/* Confirm remove parcela dialog */}
+        <AlertDialog open={!!confirmRemoveId} onOpenChange={(open) => !open && setConfirmRemoveId(null)}>
+          <AlertDialogContent className="bg-zinc-900 border-white/10">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white">Remover parcela?</AlertDialogTitle>
+              <AlertDialogDescription className="text-white/60">
+                Esta ação não pode ser desfeita. A última parcela pendente será removida.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="border-white/20 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+              <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => confirmRemoveId && handleRemoveParcela(confirmRemoveId)}>Remover</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
 
         <div className="flex justify-end gap-4">
