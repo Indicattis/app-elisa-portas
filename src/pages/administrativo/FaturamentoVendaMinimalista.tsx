@@ -23,7 +23,10 @@ import {
   Wrench,
   CalendarIcon,
   CreditCard,
-  Trash2
+  Trash2,
+  FileText,
+  Eye,
+  Image
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -52,6 +55,12 @@ interface Venda {
   lucro_instalacao?: number;
   custo_instalacao?: number;
   instalacao_faturada?: boolean;
+  metodo_pagamento?: string;
+  numero_parcelas?: number;
+  intervalo_boletos?: number;
+  empresa_receptora_id?: string;
+  data_venda?: string;
+  forma_pagamento?: string;
 }
 
 const formatCurrency = (value: number) => {
@@ -207,7 +216,7 @@ export default function FaturamentoVendaMinimalista() {
       setLoading(true);
       const { data, error } = await supabase
         .from("vendas")
-        .select("id, cliente_nome, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada")
+        .select("id, cliente_nome, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento")
         .eq("id", id)
         .single();
 
@@ -725,6 +734,83 @@ export default function FaturamentoVendaMinimalista() {
             </ScrollArea>
           </CardContent>
         </Card>
+
+        {/* Informações de Pagamento */}
+        {venda && (
+          <Card className="bg-white/5 border-white/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base text-white">
+                <Receipt className="h-4 w-4 text-blue-400" />
+                Informações de Pagamento
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-white/50">Método de Pagamento</p>
+                  <p className="text-sm font-medium text-white">
+                    {(() => {
+                      const labels: Record<string, string> = {
+                        boleto: 'Boleto', a_vista: 'À Vista', cartao_credito: 'Cartão', dinheiro: 'Dinheiro', pix: 'Pix'
+                      };
+                      return labels[venda.metodo_pagamento || ''] || venda.metodo_pagamento || '-';
+                    })()}
+                  </p>
+                </div>
+                {(venda.metodo_pagamento === 'boleto' || venda.metodo_pagamento === 'cartao_credito') && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-white/50">Número de Parcelas</p>
+                    <p className="text-sm font-medium text-white">{venda.numero_parcelas || '-'}</p>
+                  </div>
+                )}
+                {venda.metodo_pagamento === 'boleto' && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-white/50">Intervalo entre Boletos</p>
+                    <p className="text-sm font-medium text-white">{venda.intervalo_boletos ? `${venda.intervalo_boletos} dias` : '-'}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Comprovante */}
+              <div className="space-y-2">
+                <p className="text-xs text-white/50">Comprovante</p>
+                {venda.comprovante_url ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 rounded-lg border border-white/10 bg-white/5">
+                      {venda.comprovante_nome?.match(/\.(png|jpg|jpeg|webp)$/i) ? (
+                        <Image className="w-5 h-5 text-blue-400 shrink-0" />
+                      ) : (
+                        <FileText className="w-5 h-5 text-blue-400 shrink-0" />
+                      )}
+                      <span className="text-sm text-white/70 flex-1 truncate">{venda.comprovante_nome || 'Comprovante'}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs border-white/20 text-white hover:bg-white/10"
+                        asChild
+                      >
+                        <a href={venda.comprovante_url} target="_blank" rel="noopener noreferrer">
+                          <Eye className="h-3 w-3 mr-1" /> Visualizar
+                        </a>
+                      </Button>
+                    </div>
+                    {venda.comprovante_nome?.match(/\.(png|jpg|jpeg|webp)$/i) && (
+                      <a href={venda.comprovante_url} target="_blank" rel="noopener noreferrer" className="block max-w-xs">
+                        <img
+                          src={venda.comprovante_url}
+                          alt="Preview do comprovante"
+                          className="rounded-lg border border-white/10 w-full h-auto object-contain max-h-48"
+                        />
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-white/40">Nenhum comprovante anexado</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Parcelas / Contas a Receber */}
         {contasReceber.length >= 0 && venda && (
