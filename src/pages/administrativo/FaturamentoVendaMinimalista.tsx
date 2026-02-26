@@ -41,6 +41,13 @@ import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
 
+const safeParseDate = (dateStr: string | null | undefined): Date | null => {
+  if (!dateStr) return null;
+  const datePart = dateStr.substring(0, 10);
+  const date = new Date(`${datePart}T12:00:00`);
+  return isNaN(date.getTime()) ? null : date;
+};
+
 interface Venda {
   id: string;
   cliente_nome: string;
@@ -778,7 +785,7 @@ export default function FaturamentoVendaMinimalista() {
                   <div className="space-y-1">
                     <p className="text-xs text-white/50">Data da Venda</p>
                     <p className="text-sm font-medium text-white">
-                      {format(new Date(venda.data_venda + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })}
+                      {(() => { const d = safeParseDate(venda.data_venda); return d ? format(d, "dd/MM/yyyy", { locale: ptBR }) : "-"; })()}
                     </p>
                   </div>
                 )}
@@ -947,7 +954,7 @@ export default function FaturamentoVendaMinimalista() {
                               </div>
                               {isPago && parcela.data_pagamento && (
                                 <span className="text-xs text-emerald-400/70">
-                                  Pago em {format(new Date(parcela.data_pagamento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+                                  Pago em {(() => { const d = safeParseDate(parcela.data_pagamento); return d ? format(d, 'dd/MM/yyyy', { locale: ptBR }) : "-"; })()}
                                 </span>
                               )}
                             </div>
