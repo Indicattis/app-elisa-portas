@@ -1,23 +1,36 @@
 
 
-# Comprovante obrigatorio ao marcar "Ja Pago"
+# Permitir excluir parcelas individuais
 
-## Resumo
+## Problema
 
-Quando o usuario marca "Ja foi pago?" em qualquer metodo de pagamento, o campo de upload de comprovante sera exibido e sera obrigatorio para finalizar a venda.
+Atualmente, o botao de excluir (lixeira) no header da secao de parcelas so remove a ultima parcela pendente. Nao ha como excluir uma parcela especifica a partir do seu card individual.
 
-## Mudancas
+## Solucao
 
-### 1. MetodoPagamentoCard.tsx - Exibir upload de comprovante quando "Ja pago" estiver marcado
+### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-- Atualmente o upload de comprovante so aparece para o tipo `a_vista`
-- Mover/duplicar o bloco de upload de comprovante para que apareca sempre que `ja_pago === true`, independente do tipo de pagamento
-- Para `a_vista`, o comprovante continua aparecendo sempre (ja e o comportamento atual)
-- Para os demais tipos (`boleto`, `cartao_credito`, `dinheiro`), o upload aparece somente quando `ja_pago` estiver marcado
-- O label muda para "Comprovante de Pagamento *" (com asterisco) quando `ja_pago` e `true`
+1. **Adicionar botao de excluir em cada card de parcela**: Inserir um pequeno icone de lixeira (Trash2) no canto superior direito de cada card de parcela (ao lado do badge de status). Ao clicar, o `confirmRemoveId` sera definido com o ID daquela parcela, abrindo o AlertDialog de confirmacao ja existente.
 
-### 2. useVendas.ts - Validacao e upload para qualquer metodo pago
+2. **Atualizar a descricao do AlertDialog**: Trocar o texto "A ultima parcela pendente sera removida" por "A parcela selecionada sera removida permanentemente."
 
-- Adicionar validacao: se `ja_pago === true` e `comprovante_file === null`, bloquear a finalizacao com mensagem de erro
-- Expandir a logica de upload de comprovante (atualmente restrita a `a_vista`) para processar o arquivo de qualquer metodo que tenha `ja_pago === true`
+3. **Manter o botao de lixeira do header**: O botao no header continuara removendo a ultima parcela pendente como atalho rapido. Ambos os caminhos usam o mesmo `handleRemoveParcela` e o mesmo dialog de confirmacao.
+
+### Mudanca visual no card da parcela
+
+Cada card passara de:
+```text
+[Parcela 1]  [Pendente]
+R$ 1.000,00
+[Data vencimento]
+```
+
+Para:
+```text
+[Parcela 1]  [Pendente] [lixeira]
+R$ 1.000,00
+[Data vencimento]
+```
+
+O icone de lixeira sera discreto (text-red-400/50, hover:text-red-400) e tera tamanho h-3 w-3 para nao poluir o card.
 
