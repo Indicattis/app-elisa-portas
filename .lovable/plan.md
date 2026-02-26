@@ -1,29 +1,25 @@
 
 
-# Arquivar 6 pedidos presos em Instalações
+# Arquivar 4 pedidos presos em Instalações
 
 ## Situação atual
 
-Todos os 6 pedidos estão com `etapa_atual = 'instalacoes'` e `arquivado = false`:
-
-| Pedido | Número |
-|--------|--------|
-| d7bc3e76 | 0201 |
-| 5cb99bc7 | 0194 |
-| c6c70ea4 | 0163 |
-| 1fb77bf4 | 0226 |
-| 33a6111d | 0193 |
-| 46af161c | 0136 |
+| Pedido ID | Número | Etapa | Arquivado |
+|-----------|--------|-------|-----------|
+| 127b84fd | 0169 | instalacoes | false |
+| d470794a | 0208 | instalacoes | false |
+| b157f1fe | 0119 | instalacoes | false |
+| 4f8504ff | 0225 | instalacoes | false |
 
 ## Correção
 
-Executar uma migration SQL que:
+Mesmo procedimento aplicado anteriormente aos outros 6 pedidos:
 
-1. Move os 6 pedidos de `instalacoes` para `finalizado` e marca como `arquivado = true`
-2. Fecha a etapa `instalacoes` (define `data_saida`)
-3. Cria registro da etapa `finalizado` em `pedidos_etapas` (upsert)
-4. Registra movimentação `instalacoes -> finalizado` no histórico
-5. Registra movimentação de arquivamento no histórico
+1. **Atualizar `pedidos_producao`**: Setar `etapa_atual = 'finalizado'`, `arquivado = true`, `data_arquivamento = now()` para os 4 IDs
+2. **Fechar etapa `instalacoes`** em `pedidos_etapas`: Definir `data_saida = now()` onde ainda está aberta
+3. **Criar/atualizar etapa `finalizado`** em `pedidos_etapas` via upsert
+4. **Registrar movimentação** `instalacoes -> finalizado` (teor `avanco`) no histórico
+5. **Registrar arquivamento** `finalizado -> finalizado` (teor `reorganizacao`) no histórico
 
-Arquivo: nova migration SQL com todas as operações acima.
+Será criado um arquivo de migration SQL com todas as operações, seguindo o mesmo padrão da migration anterior (`067cc81d`).
 
