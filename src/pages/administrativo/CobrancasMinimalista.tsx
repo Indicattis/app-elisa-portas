@@ -17,9 +17,25 @@ export default function CobrancasMinimalista() {
   const [corPintura, setCorPintura] = useState('todas');
   const [mostrarProntos, setMostrarProntos] = useState(false);
 
-  const { pedidos, isLoading } = usePedidosEtapas('finalizado');
-  const { neoInstalacoesFinalizadas } = useNeoInstalacoesFinalizadas();
-  const { neoCorrecoesFinalizadas } = useNeoCorrecoesFinalizadas();
+  const { pedidos, isLoading, arquivarPedido, deletarPedido } = usePedidosEtapas('finalizado');
+  const { neoInstalacoesFinalizadas, arquivarNeoInstalacao } = useNeoInstalacoesFinalizadas();
+  const { neoCorrecoesFinalizadas, arquivarNeoCorrecao } = useNeoCorrecoesFinalizadas();
+
+  const handleArquivar = async (pedidoId: string) => {
+    await arquivarPedido.mutateAsync(pedidoId);
+  };
+
+  const handleDeletarPedido = async (pedidoId: string) => {
+    await deletarPedido.mutateAsync(pedidoId);
+  };
+
+  const handleArquivarNeoInstalacao = async (id: string) => {
+    await arquivarNeoInstalacao(id);
+  };
+
+  const handleArquivarNeoCorrecao = async (id: string) => {
+    await arquivarNeoCorrecao(id);
+  };
 
   // Filtros - mesma lógica da gestão de fábrica
   const pedidosFiltrados = pedidos.filter((pedido: any) => {
@@ -89,6 +105,8 @@ export default function CobrancasMinimalista() {
               viewMode="list"
               onReorganizar={() => {}}
               onMoverPrioridade={() => {}}
+              onArquivar={handleArquivar}
+              onDeletar={handleDeletarPedido}
               enableDragAndDrop={false}
               hideOrdensStatus={true}
               showPosicao={false}
@@ -114,6 +132,7 @@ export default function CobrancasMinimalista() {
                         neoInstalacao={neo}
                         viewMode="list"
                         showConcluido
+                        onArquivar={handleArquivarNeoInstalacao}
                       />
                     ))}
                   {neoCorrecoesFinalizadas
@@ -128,6 +147,7 @@ export default function CobrancasMinimalista() {
                         neoCorrecao={neo}
                         viewMode="list"
                         showConcluido
+                        onArquivar={handleArquivarNeoCorrecao}
                       />
                     ))}
                 </div>
