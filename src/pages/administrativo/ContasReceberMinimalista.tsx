@@ -15,8 +15,12 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import {
   ArrowLeft, HandCoins, Check, CalendarIcon, Paperclip,
-  MoreHorizontal, Download, Filter, PanelRight, X, Search
+  MoreHorizontal, Download, Filter, PanelRight, X, Search, Trash2
 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 import { format, parseISO, isBefore, isToday, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -101,6 +105,7 @@ export default function ContasReceberMinimalista() {
   // Mobile sheets
   const [leftSheetOpen, setLeftSheetOpen] = useState(false);
   const [rightSheetOpen, setRightSheetOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const { data: allUsers = [] } = useAllUsers();
 
@@ -304,6 +309,25 @@ export default function ContasReceberMinimalista() {
     }
   });
 
+  const deletarSelecionadosMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from('contas_receber')
+        .delete()
+        .in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contas-receber-min'] });
+      toast({ title: `${selectedIds.size} parcela(s) excluída(s)` });
+      setSelectedIds(new Set());
+      setConfirmDeleteOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({ variant: "destructive", title: "Erro ao excluir", description: error.message });
+    }
+  });
+
   const handleMarcarPago = (conta: ContaReceber) => {
     setContaSelecionada(conta);
     setValorPago(conta.valor_parcela.toString());
@@ -457,6 +481,17 @@ export default function ContasReceberMinimalista() {
           <Download className="h-4 w-4 mr-2" />
           {selectedIds.size > 0 ? "Baixar Selecionados" : "Baixar Todos"}
         </Button>
+        {selectedIds.size > 0 && (
+          <Button
+            size="sm"
+            variant="destructive"
+            className="w-full mt-2"
+            onClick={() => setConfirmDeleteOpen(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Excluir Selecionados ({selectedIds.size})
+          </Button>
+        )}
       </div>
 
       {/* Summary */}
@@ -820,6 +855,27 @@ export default function ContasReceberMinimalista() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* AlertDialog de confirmação de exclusão */}
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent className="bg-zinc-900 border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir parcelas selecionadas?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Tem certeza que deseja excluir {selectedIds.size} parcela(s) selecionada(s)? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deletarSelecionadosMutation.mutate([...selectedIds])}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
