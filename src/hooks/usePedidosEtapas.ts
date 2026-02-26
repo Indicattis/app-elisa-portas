@@ -1499,6 +1499,16 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         .eq('etapa_atual', 'finalizado');
       
       if (error) throw error;
+
+      // Registrar movimentação de arquivamento no histórico
+      await supabase.from('pedidos_movimentacoes').insert({
+        pedido_id: pedidoId,
+        user_id: user.id,
+        etapa_origem: 'finalizado',
+        etapa_destino: 'finalizado',
+        teor: 'avanco',
+        descricao: 'Pedido arquivado'
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
