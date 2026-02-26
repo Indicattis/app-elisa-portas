@@ -1,36 +1,47 @@
 
+# Investigacao e Correcoes nos Pedidos
 
-# Permitir excluir parcelas individuais
+## Diagnostico
 
-## Problema
+Os dois pedidos (`5ee4873b` e `f57b1e16`) **nunca foram arquivados com sucesso**:
+- `arquivado = false`, `data_arquivamento = null` em ambos
+- Ambos estao na etapa `instalacoes` com carregamento ja concluido
+- O botao de arquivar so funciona para pedidos na etapa `finalizado` (filtro `.eq('etapa_atual', 'finalizado')` no codigo)
+- O usuario provavelmente tentou arquivar, mas a operacao falhou silenciosamente ou nao estava disponivel
 
-Atualmente, o botao de excluir (lixeira) no header da secao de parcelas so remove a ultima parcela pendente. Nao ha como excluir uma parcela especifica a partir do seu card individual.
+## Correcoes Necessarias
 
-## Solucao
+### 1. Registrar movimentacao ao arquivar pedido
 
-### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
+**Arquivo:** `src/hooks/usePedidosEtapas.ts`
 
-1. **Adicionar botao de excluir em cada card de parcela**: Inserir um pequeno icone de lixeira (Trash2) no canto superior direito de cada card de parcela (ao lado do badge de status). Ao clicar, o `confirmRemoveId` sera definido com o ID daquela parcela, abrindo o AlertDialog de confirmacao ja existente.
+Na mutation `arquivarPedido` (linha ~1485), apos o update bem-sucedido, inserir um registro em `pedidos_movimentacoes`:
 
-2. **Atualizar a descricao do AlertDialog**: Trocar o texto "A ultima parcela pendente sera removida" por "A parcela selecionada sera removida permanentemente."
-
-3. **Manter o botao de lixeira do header**: O botao no header continuara removendo a ultima parcela pendente como atalho rapido. Ambos os caminhos usam o mesmo `handleRemoveParcela` e o mesmo dialog de confirmacao.
-
-### Mudanca visual no card da parcela
-
-Cada card passara de:
-```text
-[Parcela 1]  [Pendente]
-R$ 1.000,00
-[Data vencimento]
+```typescript
+await supabase.from('pedidos_movimentacoes').insert({
+  pedido_id: pedidoId,
+  user_id: user.id,
+  etapa_origem: 'finalizado',
+  etapa_destino: 'finalizado',
+  teor: 'avanco',
+  descricao: 'Pedido arquivado'
+});
 ```
 
-Para:
-```text
-[Parcela 1]  [Pendente] [lixeira]
-R$ 1.000,00
-[Data vencimento]
-```
+### 2. Corrigir dados dos dois pedidos via SQL
 
-O icone de lixeira sera discreto (text-red-400/50, hover:text-red-400) e tera tamanho h-3 w-3 para nao poluir o card.
+Usar o insert tool para atualizar os dois pedidos para a etapa correta (`finalizado`), ja que o carregamento foi concluido ha dias:
 
+- Atualizar `pedidos_producao.etapa_atual` para `finalizado`
+- Criar registro em `pedidos_etapas` para a etapa `finalizado`
+- Registrar movimentacao de avanco `instalacoes -> finalizado` em `pedidos_movimentacoes`
+
+### 3. Adicionar tipo 'arquivamento' nas movimentacoes (opcional melhor)
+
+Para que o historico fique mais claro, seria ideal adicionar o teor `'arquivamento'` ao constraint `teor_check` da tabela `pedidos_movimentacoes`, com icone e label proprios no componente `PedidoHistoricoMovimentacoes.tsx`. Porem, como o constraint atual permite apenas `avanco`, `backlog`, `reorganizacao`, `criacao`, usaremos `avanco` com descricao explicativa por ora.
+
+## Resultado Esperado
+
+- Pedidos `5ee4873b` e `f57b1e16` serao movidos para `finalizado` e poderao ser arquivados normalmente
+- Toda vez que um pedido for arquivado, uma movimentacao aparecera no historico com a descricao "Pedido arquivado"
+- O historico em `/direcao/pedidos/:id` mostrara todas as movimentacoes incluindo arquivamentos
