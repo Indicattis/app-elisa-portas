@@ -1,37 +1,70 @@
 
 
-# Editar valores e datas das parcelas no faturamento da venda
-
-## Problema identificado
-
-A venda do cliente Euclesio (R$4.800) possui duas parcelas com valores incorretos: R$2.400 + R$2.800 = R$5.200 (excede o valor da venda). Alem disso, ambas estao numeradas como "Parcela 1". O sistema atual nao permite editar valores nem datas das parcelas nessa pagina.
+# Editar parcelas: quantidade, status inline e melhorias
 
 ## Mudancas
 
-### 1. Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
+### 1. Botoes para adicionar/remover parcelas
 
-Transformar os cards de parcelas para permitir edicao inline de **valor** e **data de vencimento**:
+Na secao "Parcelas / Contas a Receber", adicionar botoes no header do card:
+- **"+ Parcela"**: insere uma nova parcela na tabela `contas_receber` com o `venda_id` atual, `metodo_pagamento` do primeiro grupo existente, `valor_parcela` = 0, `data_vencimento` = hoje, `status` = 'pendente', e `numero_parcela` = proximo numero sequencial
+- **"Remover ultima"** (icone lixeira): remove a ultima parcela pendente (nao permite remover parcelas pagas). Exibe confirmacao antes de deletar
 
-- Substituir a exibicao estatica do valor da parcela por um campo `<Input>` numerico editavel
-- Substituir a exibicao estatica da data de vencimento por um campo `<Input type="date">` editavel
-- Cada campo salva automaticamente no `onBlur` (mesmo padrao ja usado para observacoes)
-- Usar a funcao `handleUpdatePagamento` existente (que ja faz update generico por campo) para salvar `valor_parcela` e `data_vencimento`
-- Exibir o total do grupo dinamicamente conforme os valores sao editados
-- Adicionar um indicador visual (soma das parcelas vs valor da venda) para alertar sobre divergencias
+Ambas as operacoes fazem insert/delete no Supabase e atualizam o estado local `contasReceber`.
+
+### 2. Toggle de status direto na tag Pago/Pendente
+
+Substituir a tag estatica de status (canto superior direito de cada card de parcela) por um botao clicavel que alterna entre Pago e Pendente:
+- Ao clicar, chama `handleUpdatePagamento(parcela.id, 'status', novoStatus)`
+- Manter o mesmo estilo visual (badge verde para Pago, amarelo para Pendente) mas com `cursor-pointer` e hover
+- Remover os botoes grandes "Marcar como Pago" / "Marcar como Nao Pago" que existem no rodape de cada card, ja que a funcionalidade migra para a tag
 
 ### Detalhes tecnicos
 
-**Campos editaveis no card da parcela:**
-- `valor_parcela`: Input numerico, estado local por parcela, salva no blur via `handleUpdatePagamento(parcela.id, 'valor_parcela', valor)`
-- `data_vencimento`: Input date, salva no blur via `handleUpdatePagamento(parcela.id, 'data_vencimento', data)`
+**Adicionar parcela:**
+```typescript
+const handleAddParcela = async () => {
+  const maxNumero = Math.max(0, ...contasReceber.map(p => p.numero_parcela || 0));
+  const metodo = contasReceber[0]?.metodo_pagamento || 'boleto';
+  const { data, error } = await supabase
+    .from('contas_receber')
+    .insert({
+      venda_id: id,
+      metodo_pagamento: metodo,
+      valor_parcela: 0,
+      data_vencimento: new Date().toISOString().split('T')[0],
+      status: 'pendente',
+      numero_parcela: maxNumero + 1,
+    })
+    .select()
+    .single();
+  // atualiza estado local
+};
+```
 
-**Validacao visual:**
-- Exibir abaixo da secao de parcelas a comparacao: "Total parcelas: R$X / Valor venda: R$Y"
-- Destacar em vermelho se os valores divergem, em verde se batem
+**Remover parcela:**
+```typescript
+const handleRemoveParcela = async (parcelaId: string) => {
+  await supabase.from('contas_receber').delete().eq('id', parcelaId);
+  // atualiza estado local
+};
+```
 
-**Fluxo de save:**
-- A funcao `handleUpdatePagamento` ja aceita qualquer campo e faz update no Supabase + atualiza o estado local. Sera estendida para aceitar valores numericos (atualmente so aceita string). Ajuste: converter o tipo do parametro `value` para `string | number | null`.
+**Tag clicavel (substitui badge + botoes de rodape):**
+```tsx
+<button
+  onClick={() => handleUpdatePagamento(parcela.id, 'status', isPago ? 'pendente' : 'pago')}
+  className={cn(
+    "text-xs px-2 py-0.5 rounded-full font-medium cursor-pointer transition-colors",
+    isPago ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30" 
+           : "bg-amber-500/20 text-amber-400 hover:bg-amber-500/30"
+  )}
+>
+  {isPago ? 'Pago' : 'Pendente'}
+</button>
+```
 
-**Componentes reutilizados:**
-- `Input` de `@/components/ui/input` para os campos editaveis
-- Estilizacao consistente com o tema escuro existente (bg-white/5, border-white/10, text-white)
+**Imports adicionais:** `Trash2` do lucide-react
+
+**Arquivo editado:** `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
+
