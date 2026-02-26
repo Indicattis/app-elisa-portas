@@ -1,19 +1,21 @@
 
 
-# Remover "Parcelas Previstas" da secao de Informacoes de Pagamento
+# Corrigir erro "Invalid time value" na pagina de Faturamento
 
 ## Problema
 
-A secao "Informacoes de Pagamento" exibe "Parcelas Previstas" calculadas estaticamente a partir dos dados da venda (metodo, numero de parcelas, intervalo). Porem, essas parcelas nao estao vinculadas aos registros reais de "Contas a Receber" abaixo. Quando o usuario exclui todas as contas a receber, as parcelas previstas continuam aparecendo, causando confusao.
+A pagina esta quebrando com `RangeError: Invalid time value` ao tentar formatar datas. O campo `data_venda` pode vir do banco em formato timestamp completo (ex: `"2024-01-15T03:00:00.000Z"`) ou como string vazia. Ao concatenar `+ 'T12:00:00'`, o resultado fica invalido (ex: `"2024-01-15T03:00:00.000ZT12:00:00"`), causando o erro no `format()`.
 
 ## Solucao
 
-Remover o bloco "Parcelas Previstas" da secao de Informacoes de Pagamento, ja que as parcelas reais sao gerenciadas na secao "Parcelas / Contas a Receber" logo abaixo. Os dados de pagamento (metodo, numero de parcelas, intervalo, comprovante) continuam sendo exibidos normalmente.
-
-## Mudanca
-
 ### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-- Remover o bloco de codigo que calcula e renderiza as "Parcelas Previstas" (aproximadamente linhas 809-855) dentro da Card de Informacoes de Pagamento
-- Manter todo o restante da secao: metodo, parcelas, intervalo, data da venda, pagamento na entrega, valor de entrada e comprovante
+1. **Criar funcao auxiliar `safeParseDate`** que:
+   - Recebe uma string de data (pode ser `"2024-01-15"`, `"2024-01-15T03:00:00.000Z"`, `""`, `null`, etc.)
+   - Extrai apenas a parte `YYYY-MM-DD` (primeiros 10 caracteres)
+   - Concatena `T12:00:00` de forma segura
+   - Retorna `null` se a data for invalida
 
+2. **Substituir os dois pontos de `format(new Date(...))`** (linhas 781 e 950) para usar `safeParseDate`, com fallback para "-" caso retorne null
+
+Isso corrige o crash sem alterar a logica visual da pagina.
