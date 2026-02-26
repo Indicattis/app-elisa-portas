@@ -142,6 +142,65 @@ export default function FaturamentoVendaMinimalista() {
     if (!error && data) setContasReceber(data);
   };
 
+  const handleGerarParcelas = async () => {
+    if (!venda || !id) return;
+    const metodo = venda.metodo_pagamento || 'boleto';
+    const numParcelas = venda.numero_parcelas || venda.quantidade_parcelas || 1;
+    const intervalo = venda.intervalo_boletos || 30;
+    const valorTotal = venda.valor_venda || 0;
+    const dataBase = safeParseDate(venda.data_venda) || new Date();
+    const parcelas: any[] = [];
+
+    if (metodo === 'boleto') {
+      const valorParcela = valorTotal / numParcelas;
+      for (let i = 0; i < numParcelas; i++) {
+        parcelas.push({
+          venda_id: id,
+          numero_parcela: i + 1,
+          valor_parcela: valorParcela,
+          data_vencimento: addDays(dataBase, intervalo * i).toISOString().split('T')[0],
+          metodo_pagamento: 'boleto',
+          empresa_receptora_id: venda.empresa_receptora_id || null,
+          status: 'pendente',
+        });
+      }
+    } else if (metodo === 'cartao_credito') {
+      const valorParcela = valorTotal / numParcelas;
+      for (let i = 0; i < numParcelas; i++) {
+        parcelas.push({
+          venda_id: id,
+          numero_parcela: i + 1,
+          valor_parcela: valorParcela,
+          data_vencimento: addDays(dataBase, 30 * i).toISOString().split('T')[0],
+          metodo_pagamento: 'cartao_credito',
+          empresa_receptora_id: venda.empresa_receptora_id || null,
+          status: 'pendente',
+        });
+      }
+    } else {
+      // dinheiro, a_vista, pix - parcela única
+      parcelas.push({
+        venda_id: id,
+        numero_parcela: 1,
+        valor_parcela: valorTotal,
+        data_vencimento: dataBase.toISOString().split('T')[0],
+        metodo_pagamento: metodo,
+        empresa_receptora_id: venda.empresa_receptora_id || null,
+        status: 'pendente',
+      });
+    }
+
+    if (parcelas.length > 0) {
+      const { data, error } = await supabase.from('contas_receber').insert(parcelas).select();
+      if (error) {
+        toast({ variant: 'destructive', title: 'Erro ao gerar parcelas' });
+        return;
+      }
+      if (data) setContasReceber(data);
+      toast({ title: `${parcelas.length} parcela(s) gerada(s) com sucesso` });
+    }
+  };
+
   const handleAddParcela = async () => {
     const maxNumero = Math.max(0, ...contasReceber.map(p => p.numero_parcela || 0));
     const metodo = contasReceber[0]?.metodo_pagamento || 'boleto';
@@ -863,23 +922,43 @@ export default function FaturamentoVendaMinimalista() {
                   <CreditCard className="h-4 w-4 text-blue-400" />
                   Parcelas / Contas a Receber
                 </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Button size="sm" variant="outline" className="h-7 text-xs border-white/20 text-white hover:bg-white/10" onClick={handleAddParcela}>
-                    <Plus className="h-3 w-3 mr-1" /> Parcela
-                  </Button>
-                  {(() => {
-                    const pendentes = contasReceber.filter(p => p.status !== 'pago');
-                    const ultima = pendentes.length > 0 ? pendentes[pendentes.length - 1] : null;
-                    return ultima ? (
-                      <Button size="sm" variant="outline" className="h-7 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={() => setConfirmRemoveId(ultima.id)}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    ) : null;
-                  })()}
-                </div>
+                {contasReceber.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" className="h-7 text-xs border-white/20 text-white hover:bg-white/10" onClick={handleAddParcela}>
+                      <Plus className="h-3 w-3 mr-1" /> Parcela
+                    </Button>
+                    {(() => {
+                      const pendentes = contasReceber.filter(p => p.status !== 'pago');
+                      const ultima = pendentes.length > 0 ? pendentes[pendentes.length - 1] : null;
+                      return ultima ? (
+                        <Button size="sm" variant="outline" className="h-7 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={() => setConfirmRemoveId(ultima.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      ) : null;
+                    })()}
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
+              {contasReceber.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 space-y-4">
+                  <CreditCard className="h-10 w-10 text-white/20" />
+                  <div className="text-center space-y-1">
+                    <p className="text-sm font-medium text-white/60">Nenhuma parcela cadastrada</p>
+                    <p className="text-xs text-white/40">Gere as parcelas com base nos dados de pagamento da venda</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                    onClick={handleGerarParcelas}
+                  >
+                    <Calculator className="h-4 w-4 mr-2" />
+                    Gerar Parcelas
+                  </Button>
+                </div>
+              ) : (
+              <>
               {(() => {
                 const metodoLabels: Record<string, string> = {
                   boleto: 'Boleto', a_vista: 'À Vista', cartao_credito: 'Cartão', dinheiro: 'Dinheiro', pix: 'Pix'
@@ -1000,6 +1079,8 @@ export default function FaturamentoVendaMinimalista() {
                   </div>
                 );
               })()}
+              </>
+              )}
             </CardContent>
           </Card>
         )}
