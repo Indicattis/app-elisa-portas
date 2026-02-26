@@ -119,7 +119,7 @@ export const CalendarioSemanalExpedicaoMobile = ({
   );
 
   if (readOnly) {
-    return calendarContent;
+    return <DndContext>{calendarContent}</DndContext>;
   }
 
   return (

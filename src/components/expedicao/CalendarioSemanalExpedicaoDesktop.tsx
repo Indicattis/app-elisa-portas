@@ -269,9 +269,9 @@ export const CalendarioSemanalExpedicaoDesktop = ({
     </div>
   );
 
-  // Se readOnly, não usar DndContext (desabilita drag & drop)
+  // Se readOnly, usar DndContext vazio (necessário para useDndMonitor em subcomponentes)
   if (readOnly) {
-    return calendarContent;
+    return <DndContext>{calendarContent}</DndContext>;
   }
 
   return (
