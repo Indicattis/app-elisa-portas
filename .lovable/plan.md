@@ -1,47 +1,26 @@
 
-# Investigacao e Correcoes nos Pedidos
 
-## Diagnostico
+# Adicionar botoes de acao na pagina de Cobrancas
 
-Os dois pedidos (`5ee4873b` e `f57b1e16`) **nunca foram arquivados com sucesso**:
-- `arquivado = false`, `data_arquivamento = null` em ambos
-- Ambos estao na etapa `instalacoes` com carregamento ja concluido
-- O botao de arquivar so funciona para pedidos na etapa `finalizado` (filtro `.eq('etapa_atual', 'finalizado')` no codigo)
-- O usuario provavelmente tentou arquivar, mas a operacao falhou silenciosamente ou nao estava disponivel
+## Resumo
 
-## Correcoes Necessarias
+A pagina de Cobrancas (`/administrativo/financeiro/cobrancas`) usa o mesmo componente `PedidosDraggableList` com `etapa="finalizado"`, mas nao passa os callbacks de acao (`onArquivar`, `onDeletar`). O `PedidoCard` ja possui toda a logica dos botoes (arquivar, enviar para correcao, excluir) condicionada a `etapa === 'finalizado'` e a presenca dessas props. Basta conectar os hooks e passar as props.
 
-### 1. Registrar movimentacao ao arquivar pedido
+## Mudancas
 
-**Arquivo:** `src/hooks/usePedidosEtapas.ts`
+### Arquivo: `src/pages/administrativo/CobrancasMinimalista.tsx`
 
-Na mutation `arquivarPedido` (linha ~1485), apos o update bem-sucedido, inserir um registro em `pedidos_movimentacoes`:
+1. **Importar o hook `usePedidosEtapas`** (ja usado na gestao de fabrica) para obter `arquivarPedido` e `deletarPedido`
+2. **Criar handlers** `handleArquivar` e `handleDeletarPedido` identicos aos da gestao de fabrica
+3. **Passar as props** `onArquivar` e `onDeletar` ao componente `PedidosDraggableList`
+4. **Importar `useNeoInstalacoesFinalizadas` e `useNeoCorrecoesFinalizadas`** com as funcoes `arquivarNeoInstalacao` e `arquivarNeoCorrecao` (ja importados, so precisam usar as funcoes de arquivamento)
+5. **Passar `onArquivar`** aos componentes `NeoInstalacaoCardGestao` e `NeoCorrecaoCardGestao`
 
-```typescript
-await supabase.from('pedidos_movimentacoes').insert({
-  pedido_id: pedidoId,
-  user_id: user.id,
-  etapa_origem: 'finalizado',
-  etapa_destino: 'finalizado',
-  teor: 'avanco',
-  descricao: 'Pedido arquivado'
-});
-```
+### Resultado
 
-### 2. Corrigir dados dos dois pedidos via SQL
+Os cards de pedidos finalizados na pagina de cobrancas terao os mesmos botoes de acao da gestao de fabrica:
+- Botao de arquivar (icone laranja)
+- Botao de enviar para correcao (icone roxo)
+- Botao de excluir pedido
 
-Usar o insert tool para atualizar os dois pedidos para a etapa correta (`finalizado`), ja que o carregamento foi concluido ha dias:
-
-- Atualizar `pedidos_producao.etapa_atual` para `finalizado`
-- Criar registro em `pedidos_etapas` para a etapa `finalizado`
-- Registrar movimentacao de avanco `instalacoes -> finalizado` em `pedidos_movimentacoes`
-
-### 3. Adicionar tipo 'arquivamento' nas movimentacoes (opcional melhor)
-
-Para que o historico fique mais claro, seria ideal adicionar o teor `'arquivamento'` ao constraint `teor_check` da tabela `pedidos_movimentacoes`, com icone e label proprios no componente `PedidoHistoricoMovimentacoes.tsx`. Porem, como o constraint atual permite apenas `avanco`, `backlog`, `reorganizacao`, `criacao`, usaremos `avanco` com descricao explicativa por ora.
-
-## Resultado Esperado
-
-- Pedidos `5ee4873b` e `f57b1e16` serao movidos para `finalizado` e poderao ser arquivados normalmente
-- Toda vez que um pedido for arquivado, uma movimentacao aparecera no historico com a descricao "Pedido arquivado"
-- O historico em `/direcao/pedidos/:id` mostrara todas as movimentacoes incluindo arquivamentos
+Os cards de Neo Instalacoes e Correcoes tambem terao o botao de arquivar.
