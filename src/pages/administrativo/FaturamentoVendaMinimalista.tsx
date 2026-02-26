@@ -28,7 +28,7 @@ import {
   Eye,
   Image
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -61,6 +61,11 @@ interface Venda {
   empresa_receptora_id?: string;
   data_venda?: string;
   forma_pagamento?: string;
+  pagamento_na_entrega?: boolean;
+  valor_entrada?: number;
+  valor_a_receber?: number;
+  quantidade_parcelas?: number;
+  data_pagamento?: string;
 }
 
 const formatCurrency = (value: number) => {
@@ -216,7 +221,7 @@ export default function FaturamentoVendaMinimalista() {
       setLoading(true);
       const { data, error } = await supabase
         .from("vendas")
-        .select("id, cliente_nome, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento")
+        .select("id, cliente_nome, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas")
         .eq("id", id)
         .single();
 
@@ -745,7 +750,7 @@ export default function FaturamentoVendaMinimalista() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-1">
                   <p className="text-xs text-white/50">Método de Pagamento</p>
                   <p className="text-sm font-medium text-white">
@@ -760,7 +765,7 @@ export default function FaturamentoVendaMinimalista() {
                 {(venda.metodo_pagamento === 'boleto' || venda.metodo_pagamento === 'cartao_credito') && (
                   <div className="space-y-1">
                     <p className="text-xs text-white/50">Número de Parcelas</p>
-                    <p className="text-sm font-medium text-white">{venda.numero_parcelas || '-'}</p>
+                    <p className="text-sm font-medium text-white">{venda.numero_parcelas || venda.quantidade_parcelas || '-'}</p>
                   </div>
                 )}
                 {venda.metodo_pagamento === 'boleto' && (
@@ -769,7 +774,83 @@ export default function FaturamentoVendaMinimalista() {
                     <p className="text-sm font-medium text-white">{venda.intervalo_boletos ? `${venda.intervalo_boletos} dias` : '-'}</p>
                   </div>
                 )}
+                {venda.data_venda && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-white/50">Data da Venda</p>
+                    <p className="text-sm font-medium text-white">
+                      {format(new Date(venda.data_venda + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })}
+                    </p>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <p className="text-xs text-white/50">Pgto na Entrega</p>
+                  <p className="text-sm font-medium">
+                    {venda.pagamento_na_entrega ? (
+                      <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Sim</Badge>
+                    ) : (
+                      <span className="text-white/40">Não</span>
+                    )}
+                  </p>
+                </div>
+                {(venda.valor_entrada != null && venda.valor_entrada > 0) && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-white/50">Valor de Entrada</p>
+                    <p className="text-sm font-medium text-emerald-400">{formatCurrency(venda.valor_entrada)}</p>
+                  </div>
+                )}
+                {(venda.valor_a_receber != null && venda.valor_a_receber > 0) && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-white/50">Valor a Receber</p>
+                    <p className="text-sm font-medium text-blue-400">{formatCurrency(venda.valor_a_receber)}</p>
+                  </div>
+                )}
               </div>
+
+              {/* Parcelas Previstas */}
+              {(() => {
+                const metodo = venda.metodo_pagamento;
+                const numParcelas = venda.numero_parcelas || venda.quantidade_parcelas || 1;
+                const intervalo = venda.intervalo_boletos || 30;
+                const valorBase = venda.valor_a_receber || venda.valor_venda || 0;
+                const dataBase = venda.data_venda ? new Date(venda.data_venda + 'T12:00:00') : null;
+
+                if (!dataBase || valorBase <= 0) return null;
+
+                const parcelas: { numero: number; data: Date; valor: number }[] = [];
+
+                if (metodo === 'boleto') {
+                  const valorParcela = valorBase / numParcelas;
+                  for (let i = 0; i < numParcelas; i++) {
+                    parcelas.push({ numero: i + 1, data: addDays(dataBase, intervalo * i), valor: valorParcela });
+                  }
+                } else if (metodo === 'cartao_credito') {
+                  const valorParcela = valorBase / numParcelas;
+                  for (let i = 0; i < numParcelas; i++) {
+                    parcelas.push({ numero: i + 1, data: addDays(dataBase, 30 * i), valor: valorParcela });
+                  }
+                } else {
+                  parcelas.push({ numero: 1, data: dataBase, valor: valorBase });
+                }
+
+                if (parcelas.length === 0) return null;
+
+                return (
+                  <div className="border rounded-lg p-3 border-white/10 bg-white/5">
+                    <p className="text-xs font-medium mb-2 text-white/70">
+                      Parcelas Previstas ({parcelas.length}x de {formatCurrency(parcelas[0].valor)}):
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {parcelas.map((p) => (
+                        <div key={p.numero} className="text-xs p-2 bg-white/5 rounded border border-white/10 text-white/60">
+                          <span className="font-medium text-white">{p.numero}ª:</span>{' '}
+                          {format(p.data, "dd/MM/yy", { locale: ptBR })} –{' '}
+                          {formatCurrency(p.valor)}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Comprovante */}
               <div className="space-y-2">
