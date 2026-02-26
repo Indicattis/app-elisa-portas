@@ -120,7 +120,7 @@ export default function FaturamentoVendaMinimalista() {
     if (!error && data) setContasReceber(data);
   };
 
-  const handleUpdatePagamento = async (pagamentoId: string, field: string, value: string) => {
+  const handleUpdatePagamento = async (pagamentoId: string, field: string, value: string | number | null) => {
     const updates: any = { [field]: value };
     if (field === 'status' && value === 'pago') {
       updates.data_pagamento = new Date().toISOString().split('T')[0];
@@ -742,12 +742,31 @@ export default function FaturamentoVendaMinimalista() {
                                   {isPago ? 'Pago' : 'Pendente'}
                                 </span>
                               </div>
-                              <span className="text-sm font-semibold text-white">
-                                {formatCurrency(parcela.valor_parcela)}
-                              </span>
-                              <div className="flex items-center gap-2 text-xs text-white/60">
-                                <CalendarIcon className="h-3 w-3" />
-                                {format(new Date(parcela.data_vencimento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+                              <input
+                                type="number"
+                                step="0.01"
+                                className="w-full text-sm font-semibold text-white bg-white/5 border border-white/10 rounded px-2 py-1.5 focus:outline-none focus:border-white/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                defaultValue={parcela.valor_parcela}
+                                onBlur={(e) => {
+                                  const newVal = parseFloat(e.target.value);
+                                  if (!isNaN(newVal) && newVal !== parcela.valor_parcela) {
+                                    handleUpdatePagamento(parcela.id, 'valor_parcela', newVal);
+                                  }
+                                }}
+                              />
+                              <div className="flex items-center gap-2">
+                                <CalendarIcon className="h-3 w-3 text-white/60 shrink-0" />
+                                <input
+                                  type="date"
+                                  className="flex-1 text-xs text-white/80 bg-white/5 border border-white/10 rounded px-2 py-1 focus:outline-none focus:border-white/30 [color-scheme:dark]"
+                                  defaultValue={parcela.data_vencimento}
+                                  onBlur={(e) => {
+                                    const newVal = e.target.value;
+                                    if (newVal && newVal !== parcela.data_vencimento) {
+                                      handleUpdatePagamento(parcela.id, 'data_vencimento', newVal);
+                                    }
+                                  }}
+                                />
                               </div>
                               {isPago && parcela.data_pagamento && (
                                 <span className="text-xs text-emerald-400/70">
@@ -796,6 +815,26 @@ export default function FaturamentoVendaMinimalista() {
                     </div>
                   );
                 });
+              })()}
+              {/* Validação: total parcelas vs valor venda */}
+              {(() => {
+                const totalParcelas = contasReceber.reduce((sum, p) => sum + (p.valor_parcela || 0), 0);
+                const valorVenda = venda.valor_venda || 0;
+                const match = Math.abs(totalParcelas - valorVenda) < 0.01;
+                return (
+                  <div className={cn(
+                    "mt-4 px-3 py-2 rounded-lg border text-sm font-medium flex items-center justify-between",
+                    match 
+                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                      : "bg-red-500/10 border-red-500/30 text-red-400"
+                  )}>
+                    <span>Total parcelas: {formatCurrency(totalParcelas)}</span>
+                    <span>Valor venda: {formatCurrency(valorVenda)}</span>
+                    {!match && (
+                      <span className="text-xs">Diferença: {formatCurrency(totalParcelas - valorVenda)}</span>
+                    )}
+                  </div>
+                );
               })()}
             </CardContent>
           </Card>
