@@ -1,48 +1,83 @@
 
-# Adicionar Gestao de Pedidos na interface de Producao
 
-## Resumo
+# Proteger pedidos arquivados contra alteracao de etapa
 
-Criar um botao "Gestao de Pedidos" no hub `/producao`, uma nova pagina `/producao/gestao-pedidos` que e um clone de `PedidosProducaoMinimalista`, e registrar a rota no sistema de permissoes.
+## Diagnostico
+
+Investiguei o banco de dados e o fluxo de arquivamento. Os dados atuais estao consistentes - todos os pedidos arquivados mantem `etapa_atual = 'finalizado'` e `arquivado = true`. Nenhum pedido atualmente em `instalacoes` foi previamente finalizado ou arquivado.
+
+Porem, existe uma vulnerabilidade real: o trigger `sync_pedido_etapa_atual` que sincroniza a etapa do pedido com base na tabela `pedidos_etapas` **nao verifica se o pedido esta arquivado**. Se qualquer operacao tocar em um registro de `pedidos_etapas` de um pedido arquivado, o trigger pode sobrescrever `etapa_atual` com um valor diferente de `finalizado`.
 
 ## Mudancas
 
-### 1. Arquivo: `src/pages/ProducaoHome.tsx`
+### 1. Migracao SQL: Proteger trigger contra pedidos arquivados
 
-- Adicionar o icone `ClipboardList` aos imports
-- Adicionar novo item no array `BOTOES` com `{ label: "Gestão de Pedidos", icon: ClipboardList, path: "/producao/gestao-pedidos", routeKey: "producao_gestao_pedidos" }`
-
-### 2. Novo arquivo: `src/pages/producao/GestaPedidosProducao.tsx`
-
-- Criar um componente que importa e re-exporta `PedidosProducaoMinimalista` (clone por re-uso, nao duplicacao de codigo)
-- Ajustar o `backPath` do `MinimalistLayout` para apontar para `/producao` em vez de `/fabrica`
-- Para isso, criar um wrapper simples que renderiza o mesmo conteudo mas dentro do layout de producao (`ProducaoLayout`)
-
-**Alternativa mais simples**: Como `PedidosProducaoMinimalista` usa `MinimalistLayout` com backPath, criar uma nova pagina que importa os mesmos hooks e componentes, mas passando `backPath="/producao"`. Na pratica, o mais eficiente e criar um arquivo fino que simplesmente re-exporta o componente original, ja que o `MinimalistLayout` tem botao voltar generico.
-
-### 3. Arquivo: `src/App.tsx`
-
-- Importar o novo componente `GestaoPedidosProducao`
-- Adicionar rota dentro do bloco `producao/*`:
-```
-<Route path="/gestao-pedidos" element={
-  <ProtectedProducaoRoute routeKey="producao_gestao_pedidos">
-    <ProducaoLayout><GestaoPedidosProducao /></ProducaoLayout>
-  </ProtectedProducaoRoute>
-} />
-```
-
-### 4. Migracao de banco de dados
-
-Inserir a nova rota na tabela `app_routes` para que apareca em `/admin/permissions`:
+Atualizar a funcao `sync_pedido_etapa_atual` para ignorar pedidos arquivados:
 
 ```sql
-INSERT INTO app_routes (key, path, label, icon, interface, parent_key, sort_order, active)
-VALUES ('producao_gestao_pedidos', '/producao/gestao-pedidos', 'Gestão de Pedidos', 'ClipboardList', 'producao', NULL, 0, true);
+CREATE OR REPLACE FUNCTION sync_pedido_etapa_atual()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_ultima_etapa TEXT;
+  v_arquivado BOOLEAN;
+BEGIN
+  -- Verificar se o pedido esta arquivado
+  SELECT arquivado INTO v_arquivado
+  FROM pedidos_producao
+  WHERE id = NEW.pedido_id;
+
+  -- Se esta arquivado, nao alterar nada
+  IF v_arquivado = true THEN
+    RETURN NEW;
+  END IF;
+
+  -- Buscar a ultima etapa do pedido
+  SELECT etapa INTO v_ultima_etapa
+  FROM pedidos_etapas
+  WHERE pedido_id = NEW.pedido_id
+  ORDER BY 
+    CASE 
+      WHEN data_saida IS NULL THEN data_entrada
+      ELSE data_saida
+    END DESC
+  LIMIT 1;
+  
+  UPDATE pedidos_producao
+  SET 
+    etapa_atual = v_ultima_etapa,
+    updated_at = now()
+  WHERE id = NEW.pedido_id
+    AND (etapa_atual IS DISTINCT FROM v_ultima_etapa);
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
 
-### Detalhes tecnicos
+### 2. Migracao SQL: Proteger o campo `arquivado` no UPDATE do pedido
 
-- O componente `GestaoPedidosProducao` sera essencialmente o `PedidosProducaoMinimalista` mas com `backPath="/producao"` no `MinimalistLayout`
-- A permissao sera gerenciada automaticamente em `/admin/permissions` pois o `UserRouteAccessManager` le da tabela `app_routes`
-- O botao no hub segue o mesmo padrao visual dos demais (glassmorphism, icone azul)
+Adicionar verificacao no hook `moverParaProximaEtapa` para bloquear avancos de pedidos arquivados. Atualmente o codigo nao verifica `arquivado` antes de tentar mover.
+
+### 3. Arquivo: `src/hooks/usePedidosEtapas.ts`
+
+Na funcao `moverParaProximaEtapa`, adicionar verificacao logo apos buscar o pedido (linha ~516):
+
+```typescript
+// Buscar pedido atual
+const { data: pedido } = await supabase
+  .from('pedidos_producao')
+  .select('etapa_atual, arquivado')
+  .eq('id', pedidoId)
+  .single();
+
+if (pedido.arquivado) {
+  throw new Error('Pedido arquivado nao pode ser movido');
+}
+```
+
+Mesma verificacao na funcao `retrocederEtapa`.
+
+## Resumo
+
+A correcao principal e no trigger SQL (`sync_pedido_etapa_atual`) que passa a ignorar pedidos arquivados, prevenindo que qualquer operacao indireta em `pedidos_etapas` mova um pedido ja arquivado de volta para uma etapa anterior. Adicionalmente, protecoes no frontend impedem tentativas de mover pedidos arquivados.
+
