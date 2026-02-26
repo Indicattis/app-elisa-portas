@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays } from "lucide-react";
 import { CalendarioExpedicaoModal } from "@/components/pedidos/CalendarioExpedicaoModal";
-import { CalendarioInstalacoesModal } from "@/components/pedidos/CalendarioInstalacoesModal";
+import { SelecionarPedidoInstalacaoModal } from "@/components/instalacoes/SelecionarPedidoInstalacaoModal";
 import { CriarPedidoTesteModal } from "@/components/pedidos/CriarPedidoTesteModal";
 import { SelecionarResponsavelEtapaModal } from "@/components/pedidos/SelecionarResponsavelEtapaModal";
 import { CorrecaoDetalhesSheet } from "@/components/pedidos/CorrecaoDetalhesSheet";
@@ -759,9 +759,14 @@ export default function GestaoFabricaDirecao() {
         onOpenChange={setShowCalendarioModal}
       />
 
-      <CalendarioInstalacoesModal
+      <SelecionarPedidoInstalacaoModal
         open={showCalendarioInstalacoesModal}
         onOpenChange={setShowCalendarioInstalacoesModal}
+        dataSelecionada={new Date()}
+        onPedidoSelecionado={() => {
+          queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+          queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+        }}
       />
 
       {/* Modal para agendar no calendário */}

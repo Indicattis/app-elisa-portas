@@ -6,9 +6,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Package, MapPin, Calendar, Loader2, Search } from 'lucide-react';
+import { Package, MapPin, Calendar as CalendarIcon, Loader2, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 interface PedidoDisponivel {
   id: string;
@@ -41,11 +44,13 @@ export function SelecionarPedidoInstalacaoModal({
   const [loading, setLoading] = useState(true);
   const [criandoInstalacao, setCriandoInstalacao] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [dataEscolhida, setDataEscolhida] = useState<Date>(dataSelecionada);
 
   useEffect(() => {
     if (open) {
       fetchPedidosDisponiveis();
       setSearchTerm('');
+      setDataEscolhida(dataSelecionada);
     }
   }, [open]);
 
@@ -107,7 +112,7 @@ export function SelecionarPedidoInstalacaoModal({
       setCriandoInstalacao(true);
 
       // Formatar data no formato YYYY-MM-DD
-      const dataFormatada = format(dataSelecionada, 'yyyy-MM-dd');
+      const dataFormatada = format(dataEscolhida, 'yyyy-MM-dd');
 
       // Criar instalação vinculada ao pedido
       const { error: insertError } = await supabase
@@ -166,9 +171,37 @@ export function SelecionarPedidoInstalacaoModal({
         <DialogHeader>
           <DialogTitle>Selecionar Pedido para Instalação</DialogTitle>
           <DialogDescription>
-            Criar instalação para {format(dataSelecionada, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            Escolha a data e selecione o pedido para agendar
           </DialogDescription>
         </DialogHeader>
+
+        {/* Date picker */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Data:</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-[220px] justify-start text-left font-normal",
+                  !dataEscolhida && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {format(dataEscolhida, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={dataEscolhida}
+                onSelect={(date) => date && setDataEscolhida(date)}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
 
         {/* Barra de pesquisa */}
         {!loading && pedidos.length > 0 && (
@@ -204,8 +237,9 @@ export function SelecionarPedidoInstalacaoModal({
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-2">
-                          <Package className="h-4 w-4 text-muted-foreground" />
+                         <Package className="h-4 w-4 text-muted-foreground" />
                           <span className="font-semibold">{pedido.numero_pedido}</span>
+
                           <span className="text-xs text-muted-foreground">
                             (Expedição Instalação)
                           </span>
