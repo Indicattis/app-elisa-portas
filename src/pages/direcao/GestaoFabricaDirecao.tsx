@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays } from "lucide-react";
 import { CalendarioExpedicaoModal } from "@/components/pedidos/CalendarioExpedicaoModal";
+import { CalendarioInstalacoesModal } from "@/components/pedidos/CalendarioInstalacoesModal";
 import { CriarPedidoTesteModal } from "@/components/pedidos/CriarPedidoTesteModal";
 import { SelecionarResponsavelEtapaModal } from "@/components/pedidos/SelecionarResponsavelEtapaModal";
 import { CorrecaoDetalhesSheet } from "@/components/pedidos/CorrecaoDetalhesSheet";
@@ -67,6 +68,7 @@ export default function GestaoFabricaDirecao() {
   const [modalResponsavelAberto, setModalResponsavelAberto] = useState(false);
   const [etapaParaAtribuir, setEtapaParaAtribuir] = useState<EtapaPedido | null>(null);
   const [showCalendarioModal, setShowCalendarioModal] = useState(false);
+  const [showCalendarioInstalacoesModal, setShowCalendarioInstalacoesModal] = useState(false);
   const [correcaoDetalhesPedidoId, setCorrecaoDetalhesPedidoId] = useState<string | null>(null);
   const [correcaoDetalhesOpen, setCorrecaoDetalhesOpen] = useState(false);
   const [agendarModalOpen, setAgendarModalOpen] = useState(false);
@@ -509,14 +511,22 @@ export default function GestaoFabricaDirecao() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setShowCalendarioModal(true)}
+                                onClick={() => {
+                                  if (etapaAtiva === 'instalacoes') {
+                                    setShowCalendarioInstalacoesModal(true);
+                                  } else {
+                                    setShowCalendarioModal(true);
+                                  }
+                                }}
                                 className="h-7 px-2 text-white/70 hover:text-white hover:bg-primary/10"
                               >
                                 <CalendarDays className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p className="text-xs">Ver calendário de expedição</p>
+                              <p className="text-xs">
+                                {etapaAtiva === 'instalacoes' ? 'Ver calendário de instalações' : 'Ver calendário de expedição'}
+                              </p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -747,6 +757,11 @@ export default function GestaoFabricaDirecao() {
       <CalendarioExpedicaoModal
         open={showCalendarioModal}
         onOpenChange={setShowCalendarioModal}
+      />
+
+      <CalendarioInstalacoesModal
+        open={showCalendarioInstalacoesModal}
+        onOpenChange={setShowCalendarioInstalacoesModal}
       />
 
       {/* Modal para agendar no calendário */}
