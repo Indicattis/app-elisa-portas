@@ -18,6 +18,7 @@ import { useNeoInstalacoesListagem, useNeoInstalacoesFinalizadas } from "@/hooks
 import { useNeoCorrecoesListagem, useNeoCorrecoesFinalizadas } from "@/hooks/useNeoCorrecoes";
 import { useEtapaResponsaveis } from "@/hooks/useEtapaResponsaveis";
 import { useOrdensCarregamentoCalendario } from "@/hooks/useOrdensCarregamentoCalendario";
+import { useOrdensCarregamentoUnificadas } from "@/hooks/useOrdensCarregamentoUnificadas";
 import { PedidosDraggableList } from "@/components/pedidos/PedidosDraggableList";
 import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMinimalista";
 import { NeoInstalacaoCardGestao } from "@/components/pedidos/NeoInstalacaoCardGestao";
@@ -73,6 +74,7 @@ export default function GestaoFabricaDirecao() {
   const [correcaoDetalhesOpen, setCorrecaoDetalhesOpen] = useState(false);
   const [agendarModalOpen, setAgendarModalOpen] = useState(false);
   const [agendarData, setAgendarData] = useState(new Date());
+  const [agendarPedidoId, setAgendarPedidoId] = useState<string | null>(null);
   
   const contadores = usePedidosContadores();
   const { neoInstalacoes, concluirNeoInstalacao, isConcluindo, reorganizarNeoInstalacoes } = useNeoInstalacoesListagem();
@@ -96,11 +98,18 @@ export default function GestaoFabricaDirecao() {
     deletarPedido
   } = usePedidosEtapas(etapaAtiva);
   const { updateOrdem } = useOrdensCarregamentoCalendario(new Date(), 'month');
+  const { ordens: ordensUnificadas } = useOrdensCarregamentoUnificadas();
 
   const handleAgendarPedido = (pedidoId: string) => {
+    setAgendarPedidoId(pedidoId);
     setAgendarData(new Date());
     setAgendarModalOpen(true);
   };
+
+  const ordemPreSelecionada = useMemo(() => {
+    if (!agendarPedidoId) return null;
+    return ordensUnificadas.find(o => o.pedido_id === agendarPedidoId) || null;
+  }, [agendarPedidoId, ordensUnificadas]);
 
   const handleEditarNeoInstalacao = (neo: NeoInstalacao) => {
     navigate(`/logistica/expedicao/editar-neo/${neo.id}?tipo=instalacao`);
@@ -772,8 +781,12 @@ export default function GestaoFabricaDirecao() {
       {/* Modal para agendar no calendário */}
       <AdicionarOrdemCalendarioModal
         open={agendarModalOpen}
-        onOpenChange={setAgendarModalOpen}
+        onOpenChange={(open) => {
+          setAgendarModalOpen(open);
+          if (!open) setAgendarPedidoId(null);
+        }}
         dataSelecionada={agendarData}
+        ordemPreSelecionada={ordemPreSelecionada}
         onConfirm={async (params) => {
           await handleUpdateOrdem({
             id: params.ordemId,
