@@ -276,9 +276,12 @@ export function MetodoPagamentoCard({
             </div>
           )}
 
-          {metodo.tipo === 'a_vista' && (
+          {/* Upload de comprovante: sempre para a_vista, ou quando ja_pago em outros tipos */}
+          {(metodo.tipo === 'a_vista' || metodo.ja_pago) && (
             <div className="space-y-1">
-              <Label className={labelClass}>Comprovante de Pagamento</Label>
+              <Label className={labelClass}>
+                {metodo.ja_pago ? 'Comprovante de Pagamento *' : 'Comprovante de Pagamento'}
+              </Label>
               {!metodo.comprovante_file ? (
                 <div className="flex items-center gap-2">
                   <Input
@@ -314,8 +317,6 @@ export function MetodoPagamentoCard({
               )}
             </div>
           )}
-
-          {/* Dinheiro não precisa de campos específicos adicionais */}
         </div>
       )}
     </div>
