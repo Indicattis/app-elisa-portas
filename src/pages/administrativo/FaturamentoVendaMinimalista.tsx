@@ -907,7 +907,7 @@ export default function FaturamentoVendaMinimalista() {
                 {(venda.valor_a_receber != null && venda.valor_a_receber > 0) && (
                   <div className="space-y-1">
                     <p className="text-xs text-white/50">Valor a Receber</p>
-                    <p className="text-sm font-medium text-blue-400">{formatCurrency(venda.valor_a_receber)}</p>
+                    <p className="text-sm font-medium text-blue-400">{formatCurrency((venda.valor_a_receber || 0) + (valorInstalacao || 0))}</p>
                   </div>
                 )}
               </div>
