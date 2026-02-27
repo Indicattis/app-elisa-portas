@@ -402,7 +402,6 @@ export function PedidoCard({
           .from('correcoes')
           .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento, vezes_agendado')
           .eq('pedido_id', pedido.id)
-          .eq('carregamento_concluido', false)
           .order('data_carregamento', { ascending: false, nullsFirst: false })
           .limit(1);
         const correcao = correcoes?.[0] || null;
@@ -426,7 +425,6 @@ export function PedidoCard({
           .from('instalacoes')
           .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento, vezes_agendado')
           .eq('pedido_id', pedido.id)
-          .eq('carregamento_concluido', false)
           .order('data_carregamento', { ascending: false, nullsFirst: false })
           .limit(1);
         const instalacao = instalacoes?.[0] || null;
@@ -449,7 +447,6 @@ export function PedidoCard({
         .from('ordens_carregamento')
         .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento, vezes_agendado')
         .eq('pedido_id', pedido.id)
-        .eq('carregamento_concluido', false)
         .order('data_carregamento', { ascending: false, nullsFirst: false })
         .limit(1);
       const ordemCarregamento = ordensCarregamento?.[0] || null;
