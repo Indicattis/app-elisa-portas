@@ -1,48 +1,34 @@
 
-# Segregar usuarios em Colaboradores e Representantes
 
-## 1. Alteracao no banco de dados
+# Melhorar mensagens de erro no AddUserDialog
 
-Adicionar coluna `tipo_usuario` na tabela `admin_users` com tipo TEXT e default `'colaborador'` (para nao quebrar usuarios existentes).
+## Problema
 
-```sql
-ALTER TABLE admin_users ADD COLUMN tipo_usuario text NOT NULL DEFAULT 'colaborador';
-```
+Quando a Edge Function retorna um erro 400 (ex: email duplicado), o `supabase.functions.invoke` lanca um `FunctionsHttpError` generico. O `error.message` nao contem a mensagem real do JSON retornado pela funcao -- ele so diz "Edge Function returned a non-2xx status code". A mensagem util (como "A user with this email address has already been registered") se perde.
 
-Nao sera criado um enum para manter consistencia com o padrao do projeto (roles tambem sao TEXT com FK).
+## Solucao
 
-## 2. Interface /admin/users com abas
+Atualizar o `handleSubmit` no `AddUserDialog.tsx` para:
 
-Substituir a lista unica por duas abas (Tabs) usando o componente Radix Tabs ja instalado:
+1. **Extrair o corpo da resposta de erro**: O `FunctionsHttpError` tem um metodo `context` com o response. Precisamos ler o JSON do response para obter a mensagem real.
+2. **Mapear mensagens em ingles para portugues**: Traduzir mensagens comuns do Supabase Auth para mensagens amigaveis em portugues.
+3. **Exibir mensagens claras no toast**: Mostrar a mensagem traduzida ao usuario.
 
-- **Colaboradores**: Filtra `tipo_usuario = 'colaborador'` (comportamento atual)
-- **Representantes**: Filtra `tipo_usuario = 'representante'`
+## Detalhes tecnicos
 
-Cada aba mantera os mesmos filtros (busca, status, setor, funcao) e acoes (editar, reset senha, detalhes).
+### Arquivo: `src/components/AddUserDialog.tsx`
 
-## 3. Dialogo de criacao de usuario (AddUserDialog)
+Alterar o bloco try/catch (linhas 57-96) para:
 
-Adicionar campo `tipo_usuario` ao formulario com um Select entre "Colaborador" e "Representante". O valor sera enviado junto na chamada da Edge Function `create-user`.
+- Ao chamar `supabase.functions.invoke`, verificar se `error` existe e tentar extrair o JSON do response com `error.context?.json()` ou verificar se `data` contem o erro
+- Criar um mapa de traducao de erros comuns:
+  - `"A user with this email address has already been registered"` -> `"Este email ja esta cadastrado no sistema. Edite o usuario existente para alterar suas informacoes."`
+  - `"Missing required fields"` -> `"Preencha todos os campos obrigatorios (nome, email, senha e funcao)."`
+  - `"Insufficient permissions"` -> `"Voce nao tem permissao para criar usuarios."`
+  - `"Invalid or expired token"` -> `"Sua sessao expirou. Faca login novamente."`
+- Fallback para a mensagem original caso nao haja traducao
 
-## 4. Edge Function create-user
+### Arquivo: `supabase/functions/create-user/index.ts`
 
-Atualizar para aceitar e persistir o campo `tipo_usuario` ao criar o registro em `admin_users`.
+Nenhuma alteracao necessaria -- a Edge Function ja retorna mensagens claras no JSON. O problema e apenas no frontend que nao le essas mensagens.
 
-## 5. Edicao de usuario
-
-Permitir alterar `tipo_usuario` na edicao inline e no formulario de edicao, adicionando um Select ou Toggle ao lado dos campos existentes.
-
-## 6. Detalhes do usuario (UserDetailsModal)
-
-Exibir badge indicando se e "Colaborador" ou "Representante".
-
-## Arquivos afetados
-
-| Arquivo | Mudanca |
-|---------|---------|
-| Migration SQL | Adicionar coluna `tipo_usuario` |
-| `src/pages/admin/AdminUsersMinimalista.tsx` | Adicionar Tabs, filtro por tipo, campo de edicao |
-| `src/components/AddUserDialog.tsx` | Adicionar campo tipo_usuario ao form |
-| `supabase/functions/create-user/index.ts` | Aceitar e persistir tipo_usuario |
-| `src/components/admin/UserDetailsModal.tsx` | Exibir tipo_usuario |
-| `src/integrations/supabase/types.ts` | Atualizado automaticamente |
