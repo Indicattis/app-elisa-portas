@@ -39,7 +39,13 @@ export function useColumnConfig(storageKey: string, defaultColumns: ColumnConfig
         
         // Restore visibility
         if (config.visible) {
-          setVisibleIds(new Set(config.visible));
+          const restoredVisible = new Set(config.visible);
+          // Validate: at least one column must be visible among known columns
+          const validVisibleCount = defaultColumns.filter(c => restoredVisible.has(c.id)).length;
+          if (validVisibleCount > 0) {
+            setVisibleIds(restoredVisible);
+          }
+          // else: keep defaults
         }
       }
     } catch (error) {
@@ -65,6 +71,8 @@ export function useColumnConfig(storageKey: string, defaultColumns: ColumnConfig
     setVisibleIds(prev => {
       const newSet = new Set(prev);
       if (newSet.has(columnId)) {
+        // Prevent removing the last visible column
+        if (newSet.size <= 1) return prev;
         newSet.delete(columnId);
       } else {
         newSet.add(columnId);
