@@ -270,13 +270,13 @@ export default function FaturamentoVendaMinimalista() {
     
     if (produtosPinturaParaAutoFaturar.length === 0) return;
     
-    // Auto-preencher lucro de 30% para cada produto de pintura
+    // Auto-preencher lucro para cada produto de pintura: (altura x largura) x 25
     produtosPinturaParaAutoFaturar.forEach(async (produto) => {
-      const lucro30percent = produto.valor_total * 0.30;
-      const custoCalculado = produto.valor_total - lucro30percent;
+      const lucroPintura = ((produto.altura || 0) * (produto.largura || 0)) * 25;
+      const custoCalculado = produto.valor_total - lucroPintura;
       await updateLucroItem({ 
         produtoId: produto.id, 
-        lucroItem: lucro30percent,
+        lucroItem: lucroPintura,
         custoProducao: custoCalculado 
       });
     });
