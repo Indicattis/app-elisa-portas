@@ -314,19 +314,23 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           let _carregamento_concluido = false;
 
           if (etapa === 'aguardando_coleta') {
-            const { data: oc } = await supabase
+            const { data: ocArr } = await supabase
               .from('ordens_carregamento')
               .select('data_carregamento, carregamento_concluido')
               .eq('pedido_id', pedido.id)
-              .maybeSingle();
+              .order('data_carregamento', { ascending: false, nullsFirst: false })
+              .limit(1);
+            const oc = ocArr?.[0];
             _carregamento_data = oc?.data_carregamento || null;
             _carregamento_concluido = oc?.carregamento_concluido || false;
           } else if (etapa === 'instalacoes') {
-            const { data: inst } = await supabase
+            const { data: instArr } = await supabase
               .from('instalacoes')
               .select('data_carregamento, carregamento_concluido')
               .eq('pedido_id', pedido.id)
-              .maybeSingle();
+              .order('data_carregamento', { ascending: false, nullsFirst: false })
+              .limit(1);
+            const inst = instArr?.[0];
             _carregamento_data = inst?.data_carregamento || null;
             _carregamento_concluido = inst?.carregamento_concluido || false;
           } else if (etapa === 'correcoes') {
