@@ -1,22 +1,32 @@
 
-# Incluir valor da instalação na geração de parcelas
+
+# Corrigir duplicação do frete na geração de parcelas
 
 ## Problema
 
-Na função `handleGerarParcelas`, o valor total é calculado como `valor_venda + valor_frete`, mas não inclui `valor_instalacao`. Para esta venda: R$ 18.000 + R$ 600 = R$ 18.600, quando deveria ser R$ 18.000 + R$ 600 + R$ 3.800 = R$ 21.800.
+O campo `valor_venda` no banco de dados (R$ 18.000) já inclui o valor do frete (R$ 600). Ao somar `valor_venda + valor_frete + valor_instalacao`, o frete é contado duas vezes, gerando parcelas de R$ 22.400 em vez de R$ 21.800.
 
 ## Solução
 
 ### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-Alterar a linha 150 para incluir a instalação:
+Remover `valor_frete` do cálculo na linha 150:
 
 ```
 // De:
-const valorTotal = (venda.valor_venda || 0) + (venda.valor_frete || 0);
+const valorTotal = (venda.valor_venda || 0) + (venda.valor_frete || 0) + (venda.valor_instalacao || 0);
 
 // Para:
-const valorTotal = (venda.valor_venda || 0) + (venda.valor_frete || 0) + (venda.valor_instalacao || 0);
+const valorTotal = (venda.valor_venda || 0) + (venda.valor_instalacao || 0);
 ```
 
-Isso garante que as parcelas geradas reflitam o valor real da venda (R$ 21.800).
+Resultado: R$ 18.000 + R$ 3.800 = R$ 21.800 (valor correto).
+
+### Verificar outros locais com possível duplicação
+
+Revisar também as outras exibições de "Valor Total" e "Valor a Receber" no mesmo arquivo para garantir consistência:
+- Linha 554: card "Valor Total" soma `valor_venda + valor_credito + valor_frete` -- pode estar duplicando também
+- Linha 910: "Valor a Receber" soma `valor_a_receber + valor_frete` -- pode estar duplicando também
+
+Esses pontos serão verificados e corrigidos se necessário durante a implementação.
+
