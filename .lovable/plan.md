@@ -1,29 +1,20 @@
 
-# Adicionar tipo de usuario "Metamorfo"
 
-Adicionar a opcao "Metamorfo" em todos os pontos onde os tipos de usuario sao listados/filtrados.
+# Corrigir colunas não aparecendo em /administrativo/financeiro/faturamento/vendas
 
-## Alteracoes
+## Problema
 
-### 1. AdminUsersMinimalista.tsx
-- Adicionar contagem `metamorfosCount`
-- Adicionar terceira aba `TabsTrigger` com valor `"metamorfo"` e label "Metamorfos (X)"
-- Adicionar `SelectItem value="metamorfo"` no Select de edicao inline
-- Atualizar texto "Nenhum ... encontrado" para incluir metamorfo
+O hook `useColumnConfig` carrega a configuração de colunas visíveis do `localStorage`. Se a configuração salva tiver uma lista de colunas visíveis vazia (por exemplo, se o usuário desmarcou todas as colunas, ou se houve uma inconsistência nos dados salvos), a tabela fica sem nenhuma coluna.
 
-### 2. AddUserDialog.tsx
-- Adicionar `SelectItem value="metamorfo">Metamorfo</SelectItem>` no Select de tipo
+## Solução
 
-### 3. UserDetailsModal.tsx
-- Atualizar a logica do badge para incluir metamorfo (ternario para 3 opcoes)
+Duas alterações no hook `useColumnConfig.ts`:
 
-### 4. Edge Function create-user (sem alteracao necessaria)
-- Ja aceita qualquer string em `tipo_usuario`, nao precisa mudar
+1. **Validação ao carregar**: Após restaurar `config.visible` do localStorage, verificar se o resultado teria pelo menos uma coluna visível. Se não, usar os padrões.
+2. **Proteção ao desmarcar**: No `toggleColumn`, impedir que o usuário desmarque a última coluna visível (manter pelo menos 1 coluna sempre visível).
 
-## Arquivos afetados
+### Arquivo: `src/hooks/useColumnConfig.ts`
 
-| Arquivo | Mudanca |
-|---------|---------|
-| `src/pages/admin/AdminUsersMinimalista.tsx` | Nova aba, contagem, select inline |
-| `src/components/AddUserDialog.tsx` | Novo SelectItem |
-| `src/components/admin/UserDetailsModal.tsx` | Badge com 3 opcoes |
+- Na lógica do `useEffect` (linhas 21-48): Após `setVisibleIds(new Set(config.visible))`, adicionar validação — se `config.visible` resultar em 0 colunas válidas (interseção com `defaultColumns`), usar os defaults.
+- Na função `toggleColumn` (linhas 63-73): Antes de deletar um ID, verificar se `newSet.size > 1`. Se for a última coluna visível, não permitir a remoção.
+
