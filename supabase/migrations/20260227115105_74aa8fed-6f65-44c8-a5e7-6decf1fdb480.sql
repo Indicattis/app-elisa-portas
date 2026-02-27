@@ -1,0 +1,1 @@
+ALTER TABLE admin_users ADD COLUMN tipo_usuario text NOT NULL DEFAULT 'colaborador';
