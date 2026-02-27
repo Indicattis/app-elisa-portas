@@ -1,32 +1,28 @@
 
 
-# Corrigir calculo de lucro da pintura epoxi - dimensoes no campo `tamanho`
+# Aplicar ordenacao por status de carregamento na etapa Correcoes
 
 ## Problema
-
-Os produtos do tipo `pintura_epoxi` nao possuem os campos `altura` e `largura` preenchidos no banco de dados. As dimensoes estao armazenadas no campo `tamanho` como string no formato `"6.35x4.9"`. Por isso, a formula `((produto.altura || 0) * (produto.largura || 0)) * 25` sempre resulta em `0 * 0 * 25 = 0`.
+A ordenacao por status de carregamento (Nao agendado > Atrasado > Agendado > Carregado) ja funciona para as etapas `aguardando_coleta` e `instalacoes`, mas a etapa `correcoes` nao possui essa logica. Pedidos de correcao nao buscam dados de carregamento e nao sao ordenados.
 
 ## Solucao
 
-### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
+### Arquivo: `src/hooks/usePedidosEtapas.ts`
 
-Alterar o calculo no useEffect (linhas 276-279) para extrair as dimensoes do campo `tamanho` quando `altura` e `largura` forem nulos:
+**1. Buscar dados de carregamento para correcoes (linha 332)**
 
-```typescript
-// Extrair dimensoes do campo tamanho (formato "6.35x4.9")
-let altura = produto.altura || 0;
-let largura = produto.largura || 0;
+Adicionar um bloco `else if (etapa === 'correcoes')` que busca da tabela `correcoes` os campos `data_carregamento` e `carregamento_concluido`, da mesma forma que ja e feito para `instalacoes`.
 
-if ((!altura || !largura) && produto.tamanho) {
-  const partes = produto.tamanho.split('x');
-  if (partes.length === 2) {
-    largura = parseFloat(partes[0]) || 0;
-    altura = parseFloat(partes[1]) || 0;
-  }
-}
+**2. Incluir `correcoes` na ordenacao (linha 408)**
 
-const lucroPintura = (altura * largura) * 25;
-const custoCalculado = produto.valor_total - lucroPintura;
+Alterar a condicao de:
+```
+if (etapa === 'aguardando_coleta' || etapa === 'instalacoes')
+```
+Para:
+```
+if (etapa === 'aguardando_coleta' || etapa === 'instalacoes' || etapa === 'correcoes')
 ```
 
-Para a venda em questao, isso resultara em: `(6.35 * 4.9) * 25 = 777.875`, arredondando para R$ 777,88.
+Isso garante que pedidos na aba Correcoes sejam ordenados com a mesma prioridade: Nao agendado (0), Atrasado (1), Agendado (2), Carregado (3).
+
