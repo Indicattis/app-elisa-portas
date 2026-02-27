@@ -1,23 +1,24 @@
 
-# Alterar cálculo automático de lucro para pintura epóxi
+
+# Corrigir auto-faturamento de pintura epoxi que nao dispara
 
 ## Problema
-Atualmente, o lucro automático de produtos "pintura_epoxi" é calculado como 30% do valor total (`valor_total * 0.30`). O correto deve ser `(altura * largura) * 25`.
 
-## Solução
+O auto-faturamento de produtos "pintura_epoxi" nao esta funcionando porque o filtro na linha 267 verifica apenas `lucro_item === null || lucro_item === undefined`, mas os produtos vem do banco com `lucro_item: 0`. Como `0` nao e `null` nem `undefined`, o filtro nunca encontra produtos para auto-faturar.
+
+## Solucao
 
 ### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-Alterar as linhas 274-276 no useEffect de auto-faturamento:
+Alterar a linha 267 para incluir `lucro_item === 0` na condicao:
 
 ```
 // De:
-const lucro30percent = produto.valor_total * 0.30;
-const custoCalculado = produto.valor_total - lucro30percent;
+(p.lucro_item === null || p.lucro_item === undefined) &&
 
 // Para:
-const lucroPintura = ((produto.altura || 0) * (produto.largura || 0)) * 25;
-const custoCalculado = produto.valor_total - lucroPintura;
+(p.lucro_item === null || p.lucro_item === undefined || p.lucro_item === 0) &&
 ```
 
-O custo de produção continuará sendo calculado como `valor_total - lucro`, mantendo a lógica existente. A única mudança é a fórmula do lucro: de 30% do valor para (altura x largura) x 25.
+Isso fara com que produtos de pintura epoxi com lucro zero tambem sejam auto-faturados com a formula (altura x largura) x 25.
+
