@@ -467,7 +467,7 @@ export default function AdminUsersMinimalista() {
             </div>
 
             <div className="mt-3 text-sm text-white/60">
-              {filteredUsers.length} {activeTab === "colaborador" ? "colaborador(es)" : "representante(s)"}
+              {filteredUsers.length} {activeTab === "colaborador" ? "colaborador(es)" : activeTab === "representante" ? "representante(s)" : "metamorfo(s)"}
             </div>
           </div>
 
@@ -475,6 +475,9 @@ export default function AdminUsersMinimalista() {
             {renderUserList()}
           </TabsContent>
           <TabsContent value="representante" className="mt-4">
+            {renderUserList()}
+          </TabsContent>
+          <TabsContent value="metamorfo" className="mt-4">
             {renderUserList()}
           </TabsContent>
         </Tabs>
