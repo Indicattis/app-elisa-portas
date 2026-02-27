@@ -1,28 +1,29 @@
 
 
-# Aplicar ordenacao por status de carregamento na etapa Correcoes
+# Corrigir ordenacao de instalacoes - query com .maybeSingle() falhando
 
 ## Problema
-A ordenacao por status de carregamento (Nao agendado > Atrasado > Agendado > Carregado) ja funciona para as etapas `aguardando_coleta` e `instalacoes`, mas a etapa `correcoes` nao possui essa logica. Pedidos de correcao nao buscam dados de carregamento e nao sao ordenados.
+Na etapa `instalacoes`, a busca de dados de carregamento usa `.maybeSingle()` (linha 329). Quando existem registros duplicados na tabela `instalacoes` para o mesmo `pedido_id`, o `.maybeSingle()` retorna erro/null, fazendo com que `_carregamento_data` e `_carregamento_concluido` fiquem como valores padrao (null/false). Isso classifica esses pedidos incorretamente como "Nao agendado", quebrando a ordenacao.
 
 ## Solucao
 
 ### Arquivo: `src/hooks/usePedidosEtapas.ts`
 
-**1. Buscar dados de carregamento para correcoes (linha 332)**
+Substituir o `.maybeSingle()` na query de `instalacoes` (linhas 325-331) pelo padrao robusto ja utilizado em `correcoes` e documentado na arquitetura do projeto:
 
-Adicionar um bloco `else if (etapa === 'correcoes')` que busca da tabela `correcoes` os campos `data_carregamento` e `carregamento_concluido`, da mesma forma que ja e feito para `instalacoes`.
+```typescript
+} else if (etapa === 'instalacoes') {
+  const { data: instArr } = await supabase
+    .from('instalacoes')
+    .select('data_carregamento, carregamento_concluido')
+    .eq('pedido_id', pedido.id)
+    .order('data_carregamento', { ascending: false, nullsFirst: false })
+    .limit(1);
+  const inst = instArr?.[0];
+  _carregamento_data = inst?.data_carregamento || null;
+  _carregamento_concluido = inst?.carregamento_concluido || false;
+}
+```
 
-**2. Incluir `correcoes` na ordenacao (linha 408)**
-
-Alterar a condicao de:
-```
-if (etapa === 'aguardando_coleta' || etapa === 'instalacoes')
-```
-Para:
-```
-if (etapa === 'aguardando_coleta' || etapa === 'instalacoes' || etapa === 'correcoes')
-```
-
-Isso garante que pedidos na aba Correcoes sejam ordenados com a mesma prioridade: Nao agendado (0), Atrasado (1), Agendado (2), Carregado (3).
+Tambem aplicar a mesma correcao na etapa `aguardando_coleta` (linhas 317-323) que usa o mesmo padrao problematico com `.maybeSingle()`.
 
