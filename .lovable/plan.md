@@ -1,24 +1,23 @@
 
-
-# Incluir valor de instalação no "Valor" da tabela de vendas
+# Alterar cálculo automático de lucro para pintura epóxi
 
 ## Problema
-
-Na tabela de listagem de vendas (`FaturamentoVendasMinimalista.tsx`), a coluna "Valor" (linha 727) exibe apenas `valor_venda + valor_credito`, sem incluir `valor_instalacao`.
+Atualmente, o lucro automático de produtos "pintura_epoxi" é calculado como 30% do valor total (`valor_total * 0.30`). O correto deve ser `(altura * largura) * 25`.
 
 ## Solução
 
-### Arquivo: `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
+### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-Alterar a linha 727 para incluir `valor_instalacao`:
+Alterar as linhas 274-276 no useEffect de auto-faturamento:
 
 ```
 // De:
-(venda.valor_venda || 0) + (venda.valor_credito || 0)
+const lucro30percent = produto.valor_total * 0.30;
+const custoCalculado = produto.valor_total - lucro30percent;
 
 // Para:
-(venda.valor_venda || 0) + (venda.valor_credito || 0) + (venda.valor_instalacao || 0)
+const lucroPintura = ((produto.altura || 0) * (produto.largura || 0)) * 25;
+const custoCalculado = produto.valor_total - lucroPintura;
 ```
 
-Resultado: R$ 18.000 + R$ 0 + R$ 3.800 = R$ 21.800.
-
+O custo de produção continuará sendo calculado como `valor_total - lucro`, mantendo a lógica existente. A única mudança é a fórmula do lucro: de 30% do valor para (altura x largura) x 25.
