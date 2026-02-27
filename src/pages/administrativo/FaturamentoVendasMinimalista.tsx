@@ -403,7 +403,7 @@ export default function FaturamentoMinimalista() {
           case 'cliente': return venda.cliente_nome?.toLowerCase() || '';
           case 'vendedor': return venda.atendente_nome.toLowerCase();
           case 'cidade': return venda.cidade?.toLowerCase() || '';
-          case 'valor': return (venda.valor_venda || 0) + (venda.valor_credito || 0);
+          case 'valor': return (venda.valor_venda || 0) + (venda.valor_credito || 0) + (venda.valor_instalacao || 0);
           case 'lucro': return calcularLucroVenda(venda);
           case 'expedicao': return venda.tipo_entrega || '';
           case 'tempo_sem_faturar':
@@ -724,7 +724,7 @@ export default function FaturamentoMinimalista() {
           ? <span className="text-emerald-400 font-medium">{formatCurrency(calcularLucroVenda(venda))}</span>
           : <span className="text-white/30">-</span>;
       case 'valor':
-        return <span className="text-white font-medium">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</span>;
+        return <span className="text-white font-medium">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0) + (venda.valor_instalacao || 0))}</span>;
       case 'faturada':
         return isFaturada(venda) 
           ? <Check className="h-4 w-4 text-green-400 mx-auto" />
