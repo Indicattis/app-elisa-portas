@@ -1,24 +1,22 @@
 
-
-# Corrigir valor total na geração de parcelas (contas a receber)
+# Incluir valor da instalação na geração de parcelas
 
 ## Problema
 
-A função `handleGerarParcelas` calcula o valor total das parcelas usando apenas `venda.valor_venda`, mas o valor real da venda inclui também o frete (`valor_frete`). Isso faz com que as parcelas geradas não cubram o valor total exibido (R$ 21.800,00).
+Na função `handleGerarParcelas`, o valor total é calculado como `valor_venda + valor_frete`, mas não inclui `valor_instalacao`. Para esta venda: R$ 18.000 + R$ 600 = R$ 18.600, quando deveria ser R$ 18.000 + R$ 600 + R$ 3.800 = R$ 21.800.
 
 ## Solução
 
 ### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-Alterar a linha 150 para incluir o frete no cálculo:
+Alterar a linha 150 para incluir a instalação:
 
 ```
 // De:
-const valorTotal = venda.valor_venda || 0;
+const valorTotal = (venda.valor_venda || 0) + (venda.valor_frete || 0);
 
 // Para:
-const valorTotal = (venda.valor_venda || 0) + (venda.valor_frete || 0);
+const valorTotal = (venda.valor_venda || 0) + (venda.valor_frete || 0) + (venda.valor_instalacao || 0);
 ```
 
-Isso garante que as parcelas geradas (boleto, cartão, à vista, etc.) somem o valor completo da venda, incluindo o frete.
-
+Isso garante que as parcelas geradas reflitam o valor real da venda (R$ 21.800).
