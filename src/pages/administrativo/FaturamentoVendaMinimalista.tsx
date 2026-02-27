@@ -551,7 +551,7 @@ export default function FaturamentoVendaMinimalista() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">
-                {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0) + (venda.valor_frete || 0))}
+                {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0) + (venda.valor_instalacao || 0))}
               </div>
             </CardContent>
           </Card>
