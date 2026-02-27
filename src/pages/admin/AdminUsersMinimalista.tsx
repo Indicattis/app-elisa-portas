@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
@@ -30,6 +31,7 @@ interface AdminUser {
   salario: number | null;
   created_at: string;
   updated_at: string;
+  tipo_usuario: string;
 }
 
 export default function AdminUsersMinimalista() {
@@ -43,6 +45,7 @@ export default function AdminUsersMinimalista() {
   const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
   const [resetPasswordUser, setResetPasswordUser] = useState<AdminUser | null>(null);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [activeTab, setActiveTab] = useState("colaborador");
   const { toast } = useToast();
 
   const { data: systemRoles = [], isLoading: loadingRoles } = useQuery({
@@ -76,7 +79,7 @@ export default function AdminUsersMinimalista() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setUsers(data || []);
+      setUsers((data || []) as AdminUser[]);
     } catch (error) {
       console.error("Erro ao buscar usuários:", error);
       toast({
@@ -99,6 +102,7 @@ export default function AdminUsersMinimalista() {
       data_nascimento: user.data_nascimento,
       ativo: user.ativo,
       eh_colaborador: user.eh_colaborador,
+      tipo_usuario: user.tipo_usuario,
     });
   };
 
@@ -116,6 +120,7 @@ export default function AdminUsersMinimalista() {
           data_nascimento: editForm.data_nascimento,
           ativo: editForm.ativo,
           eh_colaborador: editForm.eh_colaborador,
+          tipo_usuario: editForm.tipo_usuario,
         })
         .eq("id", userId);
 
@@ -152,31 +157,24 @@ export default function AdminUsersMinimalista() {
     );
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((word) => word.charAt(0))
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  const filteredUsers = users
+    .filter((user) => user.tipo_usuario === activeTab)
+    .filter((user) => {
+      const matchesSearch =
+        user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.role.toLowerCase().includes(searchTerm.toLowerCase());
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus =
+        filterStatus === "todos" ||
+        (filterStatus === "ativo" && user.ativo) ||
+        (filterStatus === "inativo" && !user.ativo);
 
-    const matchesStatus =
-      filterStatus === "todos" ||
-      (filterStatus === "ativo" && user.ativo) ||
-      (filterStatus === "inativo" && !user.ativo);
+      const matchesSetor = filterSetor === "todos" || user.setor === filterSetor;
+      const matchesRole = filterRole === "todos" || user.role === filterRole;
 
-    const matchesSetor = filterSetor === "todos" || user.setor === filterSetor;
-    const matchesRole = filterRole === "todos" || user.role === filterRole;
-
-    return matchesSearch && matchesStatus && matchesSetor && matchesRole;
-  });
+      return matchesSearch && matchesStatus && matchesSetor && matchesRole;
+    });
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -187,6 +185,9 @@ export default function AdminUsersMinimalista() {
 
   const hasActiveFilters =
     searchTerm || filterStatus !== "todos" || filterSetor !== "todos" || filterRole !== "todos";
+
+  const colaboradoresCount = users.filter((u) => u.tipo_usuario === "colaborador").length;
+  const representantesCount = users.filter((u) => u.tipo_usuario === "representante").length;
 
   const handleDownloadPDF = () => {
     baixarUsuariosPDF({
@@ -215,6 +216,156 @@ export default function AdminUsersMinimalista() {
     );
   }
 
+  const renderUserList = () => (
+    <div className="bg-primary/5 border border-primary/10 backdrop-blur-xl rounded-lg overflow-hidden">
+      <div className="divide-y divide-primary/10">
+        {filteredUsers.length === 0 ? (
+          <div className="p-8 text-center text-white/40">
+            Nenhum {activeTab === "colaborador" ? "colaborador" : "representante"} encontrado
+          </div>
+        ) : (
+          filteredUsers.map((user) => (
+            <div
+              key={user.id}
+              className="p-4 hover:bg-white/5 transition-colors cursor-pointer"
+              onClick={() => setSelectedUser(user)}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 flex-shrink-0">
+                  <AvatarUpload
+                    userId={user.user_id}
+                    currentAvatarUrl={user.foto_perfil_url}
+                    userName={user.nome}
+                    onAvatarUpdate={(url) => handleAvatarUpdate(user.user_id, url)}
+                    compact
+                  />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    {editingUser === user.id ? (
+                      <Input
+                        value={editForm.nome || ""}
+                        onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
+                        className="h-8 bg-white/5 border-white/10 text-white max-w-[200px]"
+                      />
+                    ) : (
+                      <span className="font-medium text-white truncate">{user.nome}</span>
+                    )}
+                    <Badge
+                      variant={user.ativo ? "default" : "secondary"}
+                      className={
+                        user.ativo
+                          ? "bg-green-500/20 text-green-400"
+                          : "bg-white/10 text-white/40"
+                      }
+                    >
+                      {user.ativo ? "Ativo" : "Inativo"}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-white/60 truncate">{user.email}</p>
+                </div>
+
+                <div className="hidden md:flex items-center gap-4 text-sm">
+                  <div className="text-white/60">
+                    {editingUser === user.id ? (
+                      <Select
+                        value={editForm.role}
+                        onValueChange={(value) => setEditForm({ ...editForm, role: value })}
+                      >
+                        <SelectTrigger className="h-8 w-[150px] bg-white/5 border-white/10 text-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {systemRoles.map((role) => (
+                            <SelectItem key={role.key} value={role.key}>
+                              {role.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge variant="outline" className="text-white/60 border-white/20">
+                        {roleLabelsMap[user.role] || user.role}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {editingUser === user.id ? (
+                    <Select
+                      value={editForm.tipo_usuario}
+                      onValueChange={(value) => setEditForm({ ...editForm, tipo_usuario: value })}
+                    >
+                      <SelectTrigger className="h-8 w-[150px] bg-white/5 border-white/10 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="colaborador">Colaborador</SelectItem>
+                        <SelectItem value="representante">Representante</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : user.setor ? (
+                    <Badge variant="secondary" className="capitalize bg-white/10 text-white/60">
+                      {user.setor}
+                    </Badge>
+                  ) : null}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {editingUser === user.id ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); handleSave(user.id); }}
+                        className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                      >
+                        <Save className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); handleCancel(); }}
+                        className="text-white/60 hover:text-white hover:bg-white/10"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(user);
+                        }}
+                        className="text-white/60 hover:text-white hover:bg-white/10"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setResetPasswordUser(user);
+                        }}
+                        className="text-white/60 hover:text-white hover:bg-white/10"
+                      >
+                        <KeyRound className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <MinimalistLayout
       title="Usuários"
@@ -235,213 +386,93 @@ export default function AdminUsersMinimalista() {
       }
     >
       <div className="space-y-4">
-        {/* Filtros */}
-        <div className="bg-primary/5 border border-primary/10 backdrop-blur-xl rounded-lg p-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative flex-1 min-w-[200px] max-w-[300px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-              <Input
-                placeholder="Buscar por nome, email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
-              />
+        <Tabs value={activeTab} onValueChange={(val) => { setActiveTab(val); clearFilters(); }}>
+          <TabsList className="bg-white/5 border border-white/10">
+            <TabsTrigger value="colaborador" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60">
+              Colaboradores ({colaboradoresCount})
+            </TabsTrigger>
+            <TabsTrigger value="representante" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60">
+              Representantes ({representantesCount})
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Filtros */}
+          <div className="bg-primary/5 border border-primary/10 backdrop-blur-xl rounded-lg p-4 mt-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[200px] max-w-[300px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <Input
+                  placeholder="Buscar por nome, email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                />
+              </div>
+
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-[130px] bg-white/5 border-white/10 text-white">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="ativo">Ativos</SelectItem>
+                  <SelectItem value="inativo">Inativos</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={filterSetor} onValueChange={setFilterSetor}>
+                <SelectTrigger className="w-[150px] bg-white/5 border-white/10 text-white">
+                  <SelectValue placeholder="Setor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos setores</SelectItem>
+                  <SelectItem value="vendas">Vendas</SelectItem>
+                  <SelectItem value="marketing">Marketing</SelectItem>
+                  <SelectItem value="instalacoes">Instalações</SelectItem>
+                  <SelectItem value="fabrica">Fábrica</SelectItem>
+                  <SelectItem value="administrativo">Administrativo</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={filterRole} onValueChange={setFilterRole}>
+                <SelectTrigger className="w-[170px] bg-white/5 border-white/10 text-white">
+                  <SelectValue placeholder="Função" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todas funções</SelectItem>
+                  {systemRoles.map((role) => (
+                    <SelectItem key={role.key} value={role.key}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="text-white/60 hover:text-white hover:bg-white/10"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Limpar
+                </Button>
+              )}
             </div>
 
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[130px] bg-white/5 border-white/10 text-white">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="ativo">Ativos</SelectItem>
-                <SelectItem value="inativo">Inativos</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filterSetor} onValueChange={setFilterSetor}>
-              <SelectTrigger className="w-[150px] bg-white/5 border-white/10 text-white">
-                <SelectValue placeholder="Setor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos setores</SelectItem>
-                <SelectItem value="vendas">Vendas</SelectItem>
-                <SelectItem value="marketing">Marketing</SelectItem>
-                <SelectItem value="instalacoes">Instalações</SelectItem>
-                <SelectItem value="fabrica">Fábrica</SelectItem>
-                <SelectItem value="administrativo">Administrativo</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filterRole} onValueChange={setFilterRole}>
-              <SelectTrigger className="w-[170px] bg-white/5 border-white/10 text-white">
-                <SelectValue placeholder="Função" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todas funções</SelectItem>
-                {systemRoles.map((role) => (
-                  <SelectItem key={role.key} value={role.key}>
-                    {role.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="text-white/60 hover:text-white hover:bg-white/10"
-              >
-                <X className="w-4 h-4 mr-1" />
-                Limpar
-              </Button>
-            )}
+            <div className="mt-3 text-sm text-white/60">
+              {filteredUsers.length} {activeTab === "colaborador" ? "colaborador(es)" : "representante(s)"}
+            </div>
           </div>
 
-          <div className="mt-3 text-sm text-white/60">
-            {filteredUsers.length} de {users.length} usuários
-          </div>
-        </div>
-
-        {/* Lista de Usuários */}
-        <div className="bg-primary/5 border border-primary/10 backdrop-blur-xl rounded-lg overflow-hidden">
-          <div className="divide-y divide-primary/10">
-            {filteredUsers.map((user) => (
-              <div
-                key={user.id}
-                className="p-4 hover:bg-white/5 transition-colors cursor-pointer"
-                onClick={() => setSelectedUser(user)}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 flex-shrink-0">
-                    <AvatarUpload
-                      userId={user.user_id}
-                      currentAvatarUrl={user.foto_perfil_url}
-                      userName={user.nome}
-                      onAvatarUpdate={(url) => handleAvatarUpdate(user.user_id, url)}
-                      compact
-                    />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      {editingUser === user.id ? (
-                        <Input
-                          value={editForm.nome || ""}
-                          onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
-                          className="h-8 bg-white/5 border-white/10 text-white max-w-[200px]"
-                        />
-                      ) : (
-                        <span className="font-medium text-white truncate">{user.nome}</span>
-                      )}
-                      <Badge
-                        variant={user.ativo ? "default" : "secondary"}
-                        className={
-                          user.ativo
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-white/10 text-white/40"
-                        }
-                      >
-                        {user.ativo ? "Ativo" : "Inativo"}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-white/60 truncate">{user.email}</p>
-                  </div>
-
-                  <div className="hidden md:flex items-center gap-4 text-sm">
-                    <div className="text-white/60">
-                      {editingUser === user.id ? (
-                        <Select
-                          value={editForm.role}
-                          onValueChange={(value) => setEditForm({ ...editForm, role: value })}
-                        >
-                          <SelectTrigger className="h-8 w-[150px] bg-white/5 border-white/10 text-white">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {systemRoles.map((role) => (
-                              <SelectItem key={role.key} value={role.key}>
-                                {role.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Badge variant="outline" className="text-white/60 border-white/20">
-                          {roleLabelsMap[user.role] || user.role}
-                        </Badge>
-                      )}
-                    </div>
-
-                    {editingUser === user.id ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-white/60">Colaborador</span>
-                        <Switch
-                          checked={editForm.eh_colaborador || false}
-                          onCheckedChange={(checked) => setEditForm({ ...editForm, eh_colaborador: checked })}
-                        />
-                      </div>
-                    ) : user.setor ? (
-                      <Badge variant="secondary" className="capitalize bg-white/10 text-white/60">
-                        {user.setor}
-                      </Badge>
-                    ) : null}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {editingUser === user.id ? (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSave(user.id)}
-                          className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
-                        >
-                          <Save className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleCancel}
-                          className="text-white/60 hover:text-white hover:bg-white/10"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(user);
-                          }}
-                          className="text-white/60 hover:text-white hover:bg-white/10"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setResetPasswordUser(user);
-                          }}
-                          className="text-white/60 hover:text-white hover:bg-white/10"
-                        >
-                          <KeyRound className="w-4 h-4" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+          <TabsContent value="colaborador" className="mt-4">
+            {renderUserList()}
+          </TabsContent>
+          <TabsContent value="representante" className="mt-4">
+            {renderUserList()}
+          </TabsContent>
+        </Tabs>
       </div>
 
       <UserDetailsModal

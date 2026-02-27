@@ -177,6 +177,7 @@ export type Database = {
           salario: number | null
           setor: Database["public"]["Enums"]["setor_type"] | null
           telefone: string | null
+          tipo_usuario: string
           updated_at: string
           user_id: string
         }
@@ -197,6 +198,7 @@ export type Database = {
           salario?: number | null
           setor?: Database["public"]["Enums"]["setor_type"] | null
           telefone?: string | null
+          tipo_usuario?: string
           updated_at?: string
           user_id: string
         }
@@ -217,6 +219,7 @@ export type Database = {
           salario?: number | null
           setor?: Database["public"]["Enums"]["setor_type"] | null
           telefone?: string | null
+          tipo_usuario?: string
           updated_at?: string
           user_id?: string
         }

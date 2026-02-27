@@ -34,6 +34,7 @@ interface AdminUser {
   salario: number | null;
   created_at: string;
   updated_at: string;
+  tipo_usuario?: string;
 }
 
 interface UserDetailsModalProps {
@@ -117,11 +118,9 @@ export function UserDetailsModal({ open, onOpenChange, user, roleLabel, onAvatar
                 >
                   {user.ativo ? "Ativo" : "Inativo"}
                 </Badge>
-                {user.eh_colaborador && (
-                  <Badge variant="outline" className="border-primary/30 text-primary">
-                    Colaborador
-                  </Badge>
-                )}
+                <Badge variant="outline" className="border-primary/30 text-primary">
+                  {user.tipo_usuario === "representante" ? "Representante" : "Colaborador"}
+                </Badge>
               </div>
             </div>
           </div>

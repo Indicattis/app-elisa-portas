@@ -23,6 +23,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
     password: "",
     role: "",
     data_nascimento: "",
+    tipo_usuario: "colaborador",
   });
   const { toast } = useToast();
 
@@ -61,6 +62,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
           nome: formData.nome,
           role: formData.role,
           data_nascimento: formData.data_nascimento || null,
+          tipo_usuario: formData.tipo_usuario,
         },
       });
 
@@ -81,6 +83,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
         password: "",
         role: "",
         data_nascimento: "",
+        tipo_usuario: "colaborador",
       });
       setOpen(false);
       onUserAdded();
@@ -192,6 +195,23 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
                       </SelectItem>
                     ))
                   )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="tipo_usuario" className="text-right">
+                Tipo
+              </Label>
+              <Select
+                value={formData.tipo_usuario}
+                onValueChange={(value) => setFormData({ ...formData, tipo_usuario: value })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="colaborador">Colaborador</SelectItem>
+                  <SelectItem value="representante">Representante</SelectItem>
                 </SelectContent>
               </Select>
             </div>
