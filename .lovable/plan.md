@@ -1,20 +1,31 @@
 
 
-# Corrigir colunas não aparecendo em /administrativo/financeiro/faturamento/vendas
+# Adicionar linhas de totais na tabela de produtos
 
-## Problema
+## O que sera feito
 
-O hook `useColumnConfig` carrega a configuração de colunas visíveis do `localStorage`. Se a configuração salva tiver uma lista de colunas visíveis vazia (por exemplo, se o usuário desmarcou todas as colunas, ou se houve uma inconsistência nos dados salvos), a tabela fica sem nenhuma coluna.
+Adicionar duas linhas de totalizacao apos a linha do Frete na tabela de produtos em `FaturamentoVendaMinimalista.tsx`:
 
-## Solução
+1. **Linha "Total Produtos"** -- soma do `valor_total` de todos os produtos + valor de instalacao + frete
+2. **Linha "Total Lucro"** -- soma de todos os `lucro_item` dos produtos + lucro da instalacao
 
-Duas alterações no hook `useColumnConfig.ts`:
+## Detalhes tecnicos
 
-1. **Validação ao carregar**: Após restaurar `config.visible` do localStorage, verificar se o resultado teria pelo menos uma coluna visível. Se não, usar os padrões.
-2. **Proteção ao desmarcar**: No `toggleColumn`, impedir que o usuário desmarque a última coluna visível (manter pelo menos 1 coluna sempre visível).
+### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-### Arquivo: `src/hooks/useColumnConfig.ts`
+Apos a linha do Frete (linha 802), inserir duas `TableRow`:
 
-- Na lógica do `useEffect` (linhas 21-48): Após `setVisibleIds(new Set(config.visible))`, adicionar validação — se `config.visible` resultar em 0 colunas válidas (interseção com `defaultColumns`), usar os defaults.
-- Na função `toggleColumn` (linhas 63-73): Antes de deletar um ID, verificar se `newSet.size > 1`. Se for a última coluna visível, não permitir a remoção.
+**Linha Total Geral:**
+- `colSpan={6}` com texto "Total Geral" em negrito
+- Coluna Valor Total: soma de `produtos.valor_total` + `valorInstalacao` + `venda.valor_frete`
+- Coluna Lucro: soma de `produtos.lucro_item` (quando existente) + `lucroInstalacaoCalculado`
+- Estilo: fundo destacado (`bg-white/10`), texto branco, borda superior
+
+**Linha Total Lucro:**
+- `colSpan={6}` com texto "Total Lucro"
+- Coluna Valor Total: vazia
+- Coluna Lucro: soma total dos lucros com badge verde
+- Estilo: fundo verde sutil (`bg-emerald-500/5`)
+
+Os calculos usarao `reduce` sobre o array `produtos` para somar `valor_total` e `lucro_item`, somando tambem instalacao e frete conforme aplicavel.
 
