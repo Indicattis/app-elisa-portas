@@ -1,31 +1,24 @@
 
 
-# Adicionar linhas de totais na tabela de produtos
+# Corrigir valor total na geração de parcelas (contas a receber)
 
-## O que sera feito
+## Problema
 
-Adicionar duas linhas de totalizacao apos a linha do Frete na tabela de produtos em `FaturamentoVendaMinimalista.tsx`:
+A função `handleGerarParcelas` calcula o valor total das parcelas usando apenas `venda.valor_venda`, mas o valor real da venda inclui também o frete (`valor_frete`). Isso faz com que as parcelas geradas não cubram o valor total exibido (R$ 21.800,00).
 
-1. **Linha "Total Produtos"** -- soma do `valor_total` de todos os produtos + valor de instalacao + frete
-2. **Linha "Total Lucro"** -- soma de todos os `lucro_item` dos produtos + lucro da instalacao
-
-## Detalhes tecnicos
+## Solução
 
 ### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-Apos a linha do Frete (linha 802), inserir duas `TableRow`:
+Alterar a linha 150 para incluir o frete no cálculo:
 
-**Linha Total Geral:**
-- `colSpan={6}` com texto "Total Geral" em negrito
-- Coluna Valor Total: soma de `produtos.valor_total` + `valorInstalacao` + `venda.valor_frete`
-- Coluna Lucro: soma de `produtos.lucro_item` (quando existente) + `lucroInstalacaoCalculado`
-- Estilo: fundo destacado (`bg-white/10`), texto branco, borda superior
+```
+// De:
+const valorTotal = venda.valor_venda || 0;
 
-**Linha Total Lucro:**
-- `colSpan={6}` com texto "Total Lucro"
-- Coluna Valor Total: vazia
-- Coluna Lucro: soma total dos lucros com badge verde
-- Estilo: fundo verde sutil (`bg-emerald-500/5`)
+// Para:
+const valorTotal = (venda.valor_venda || 0) + (venda.valor_frete || 0);
+```
 
-Os calculos usarao `reduce` sobre o array `produtos` para somar `valor_total` e `lucro_item`, somando tambem instalacao e frete conforme aplicavel.
+Isso garante que as parcelas geradas (boleto, cartão, à vista, etc.) somem o valor completo da venda, incluindo o frete.
 
