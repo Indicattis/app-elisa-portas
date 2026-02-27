@@ -1,24 +1,36 @@
 
-
-# Corrigir auto-faturamento de pintura epoxi que nao dispara
+# Corrigir loop infinito no auto-faturamento de pintura epoxi
 
 ## Problema
-
-O auto-faturamento de produtos "pintura_epoxi" nao esta funcionando porque o filtro na linha 267 verifica apenas `lucro_item === null || lucro_item === undefined`, mas os produtos vem do banco com `lucro_item: 0`. Como `0` nao e `null` nem `undefined`, o filtro nunca encontra produtos para auto-faturar.
+Quando o lucro calculado resulta em 0 (por exemplo, se `altura` ou `largura` for 0/null), o `updateLucroItem` salva `lucro_item = 0`. Na proxima renderizacao, o filtro `p.lucro_item === 0` encontra o produto novamente, dispara outro update, e assim infinitamente.
 
 ## Solucao
-
 ### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-Alterar a linha 267 para incluir `lucro_item === 0` na condicao:
+1. Adicionar um `useRef` para rastrear quais produtos ja foram auto-faturados, evitando reprocessamento:
 
-```
-// De:
-(p.lucro_item === null || p.lucro_item === undefined) &&
-
-// Para:
-(p.lucro_item === null || p.lucro_item === undefined || p.lucro_item === 0) &&
+```typescript
+const autoFaturadosRef = useRef<Set<string>>(new Set());
 ```
 
-Isso fara com que produtos de pintura epoxi com lucro zero tambem sejam auto-faturados com a formula (altura x largura) x 25.
+2. No `useEffect` (linha 265), adicionar verificacao contra o ref:
 
+```typescript
+const produtosPinturaParaAutoFaturar = produtos.filter(p => 
+  p.tipo_produto === 'pintura_epoxi' && 
+  (p.lucro_item === null || p.lucro_item === undefined || p.lucro_item === 0) &&
+  !p.faturamento &&
+  !autoFaturadosRef.current.has(p.id)
+);
+```
+
+3. Marcar os produtos como processados antes de chamar o update:
+
+```typescript
+produtosPinturaParaAutoFaturar.forEach(async (produto) => {
+  autoFaturadosRef.current.add(produto.id);
+  // ... resto do calculo
+});
+```
+
+Isso garante que cada produto seja auto-faturado apenas uma vez por sessao, quebrando o loop infinito.
