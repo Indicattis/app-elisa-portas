@@ -264,7 +264,7 @@ export default function FaturamentoVendaMinimalista() {
     
     const produtosPinturaParaAutoFaturar = produtos.filter(p => 
       p.tipo_produto === 'pintura_epoxi' && 
-      (p.lucro_item === null || p.lucro_item === undefined) &&
+      (p.lucro_item === null || p.lucro_item === undefined || p.lucro_item === 0) &&
       !p.faturamento
     );
     
