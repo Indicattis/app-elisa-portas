@@ -1,36 +1,32 @@
 
-# Corrigir loop infinito no auto-faturamento de pintura epoxi
+
+# Corrigir calculo de lucro da pintura epoxi - dimensoes no campo `tamanho`
 
 ## Problema
-Quando o lucro calculado resulta em 0 (por exemplo, se `altura` ou `largura` for 0/null), o `updateLucroItem` salva `lucro_item = 0`. Na proxima renderizacao, o filtro `p.lucro_item === 0` encontra o produto novamente, dispara outro update, e assim infinitamente.
+
+Os produtos do tipo `pintura_epoxi` nao possuem os campos `altura` e `largura` preenchidos no banco de dados. As dimensoes estao armazenadas no campo `tamanho` como string no formato `"6.35x4.9"`. Por isso, a formula `((produto.altura || 0) * (produto.largura || 0)) * 25` sempre resulta em `0 * 0 * 25 = 0`.
 
 ## Solucao
+
 ### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-1. Adicionar um `useRef` para rastrear quais produtos ja foram auto-faturados, evitando reprocessamento:
+Alterar o calculo no useEffect (linhas 276-279) para extrair as dimensoes do campo `tamanho` quando `altura` e `largura` forem nulos:
 
 ```typescript
-const autoFaturadosRef = useRef<Set<string>>(new Set());
+// Extrair dimensoes do campo tamanho (formato "6.35x4.9")
+let altura = produto.altura || 0;
+let largura = produto.largura || 0;
+
+if ((!altura || !largura) && produto.tamanho) {
+  const partes = produto.tamanho.split('x');
+  if (partes.length === 2) {
+    largura = parseFloat(partes[0]) || 0;
+    altura = parseFloat(partes[1]) || 0;
+  }
+}
+
+const lucroPintura = (altura * largura) * 25;
+const custoCalculado = produto.valor_total - lucroPintura;
 ```
 
-2. No `useEffect` (linha 265), adicionar verificacao contra o ref:
-
-```typescript
-const produtosPinturaParaAutoFaturar = produtos.filter(p => 
-  p.tipo_produto === 'pintura_epoxi' && 
-  (p.lucro_item === null || p.lucro_item === undefined || p.lucro_item === 0) &&
-  !p.faturamento &&
-  !autoFaturadosRef.current.has(p.id)
-);
-```
-
-3. Marcar os produtos como processados antes de chamar o update:
-
-```typescript
-produtosPinturaParaAutoFaturar.forEach(async (produto) => {
-  autoFaturadosRef.current.add(produto.id);
-  // ... resto do calculo
-});
-```
-
-Isso garante que cada produto seja auto-faturado apenas uma vez por sessao, quebrando o loop infinito.
+Para a venda em questao, isso resultara em: `(6.35 * 4.9) * 25 = 777.875`, arredondando para R$ 777,88.
