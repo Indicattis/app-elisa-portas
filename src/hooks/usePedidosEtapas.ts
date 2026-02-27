@@ -329,6 +329,17 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               .maybeSingle();
             _carregamento_data = inst?.data_carregamento || null;
             _carregamento_concluido = inst?.carregamento_concluido || false;
+          } else if (etapa === 'correcoes') {
+            const { data: corr } = await supabase
+              .from('correcoes')
+              .select('data_carregamento, carregamento_concluido')
+              .eq('pedido_id', pedido.id)
+              .eq('concluida', false)
+              .order('created_at', { ascending: false })
+              .limit(1);
+            const corrData = corr?.[0];
+            _carregamento_data = corrData?.data_carregamento || null;
+            _carregamento_concluido = corrData?.carregamento_concluido || false;
           }
 
           return {
@@ -405,7 +416,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       }
 
       // Ordenar por status de carregamento nas etapas aguardando_coleta e instalacoes
-      if (etapa === 'aguardando_coleta' || etapa === 'instalacoes') {
+      if (etapa === 'aguardando_coleta' || etapa === 'instalacoes' || etapa === 'correcoes') {
         return pedidosComBacklog.sort((a, b) => {
           const getGrupo = (p: any) => {
             if (!p._carregamento_data) return 0; // Não agendado
