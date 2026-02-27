@@ -8,7 +8,31 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { Plus, Loader2 } from "lucide-react";
+
+const errorTranslations: Record<string, string> = {
+  "A user with this email address has already been registered":
+    "Este email já está cadastrado no sistema. Edite o usuário existente para alterar suas informações.",
+  "Missing required fields":
+    "Preencha todos os campos obrigatórios (nome, email, senha e função).",
+  "Insufficient permissions - admin role required":
+    "Você não tem permissão para criar usuários.",
+  "Invalid or expired token":
+    "Sua sessão expirou. Faça login novamente.",
+  "User account is inactive":
+    "Sua conta está inativa.",
+  "User not found":
+    "Usuário não encontrado.",
+  "No authorization header":
+    "Você precisa estar autenticado.",
+  "Failed to verify user permissions":
+    "Erro ao verificar permissões.",
+};
+
+function translateError(message: string): string {
+  return errorTranslations[message] || message;
+}
 
 interface AddUserDialogProps {
   onUserAdded: () => void;
@@ -66,10 +90,23 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        let errorMessage = "Erro ao criar usuário";
+        if (error instanceof FunctionsHttpError) {
+          try {
+            const errorData = await error.context.json();
+            errorMessage = translateError(errorData?.error || errorMessage);
+          } catch {
+            errorMessage = translateError(error.message);
+          }
+        } else {
+          errorMessage = translateError(error.message);
+        }
+        throw new Error(errorMessage);
+      }
       
       if (!data?.success) {
-        throw new Error(data?.error || "Erro ao criar usuário");
+        throw new Error(translateError(data?.error || "Erro ao criar usuário"));
       }
 
       toast({
