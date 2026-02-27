@@ -1,29 +1,23 @@
 
 
-# Corrigir ordenacao de instalacoes - query com .maybeSingle() falhando
+# Corrigir exibicao de status de carregamento no PedidoCard
 
 ## Problema
-Na etapa `instalacoes`, a busca de dados de carregamento usa `.maybeSingle()` (linha 329). Quando existem registros duplicados na tabela `instalacoes` para o mesmo `pedido_id`, o `.maybeSingle()` retorna erro/null, fazendo com que `_carregamento_data` e `_carregamento_concluido` fiquem como valores padrao (null/false). Isso classifica esses pedidos incorretamente como "Nao agendado", quebrando a ordenacao.
+No `PedidoCard.tsx`, as queries que buscam dados de carregamento para exibicao filtram com `.eq('carregamento_concluido', false)` (linhas 405, 429 e 452). Quando um pedido ja teve o carregamento concluido (`carregamento_concluido: true`), a query nao retorna resultados, fazendo o card exibir "Nao agendado" em vez de "Carregada".
+
+Enquanto isso, o hook `usePedidosEtapas.ts` (que controla a ordenacao) nao aplica esse filtro, entao classifica corretamente esses pedidos como "Carregado" (grupo 3, ultimo). O resultado e que pedidos carregados aparecem por ultimo com o label errado "Nao agendado".
 
 ## Solucao
 
-### Arquivo: `src/hooks/usePedidosEtapas.ts`
+### Arquivo: `src/components/pedidos/PedidoCard.tsx`
 
-Substituir o `.maybeSingle()` na query de `instalacoes` (linhas 325-331) pelo padrao robusto ja utilizado em `correcoes` e documentado na arquitetura do projeto:
+Remover o filtro `.eq('carregamento_concluido', false)` das tres queries de carregamento:
 
-```typescript
-} else if (etapa === 'instalacoes') {
-  const { data: instArr } = await supabase
-    .from('instalacoes')
-    .select('data_carregamento, carregamento_concluido')
-    .eq('pedido_id', pedido.id)
-    .order('data_carregamento', { ascending: false, nullsFirst: false })
-    .limit(1);
-  const inst = instArr?.[0];
-  _carregamento_data = inst?.data_carregamento || null;
-  _carregamento_concluido = inst?.carregamento_concluido || false;
-}
-```
+**1. Correcoes (linha 405):** Remover `.eq('carregamento_concluido', false)`
 
-Tambem aplicar a mesma correcao na etapa `aguardando_coleta` (linhas 317-323) que usa o mesmo padrao problematico com `.maybeSingle()`.
+**2. Instalacoes (linha 429):** Remover `.eq('carregamento_concluido', false)`
+
+**3. Aguardando coleta (linha 452):** Remover `.eq('carregamento_concluido', false)`
+
+Isso permite que a query retorne o registro mais recente independentemente do status de conclusao. O campo `concluido` ja e extraido do resultado e usado corretamente na logica de exibicao (linha 471: `carregamentoConcluido`), entao a remocao do filtro faz com que pedidos carregados exibam "Carregada" corretamente.
 
