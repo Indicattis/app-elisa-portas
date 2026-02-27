@@ -800,6 +800,46 @@ export default function FaturamentoVendaMinimalista() {
                       Apenas visualização
                     </TableCell>
                   </TableRow>
+
+                  {/* Linha Total Geral */}
+                  <TableRow className="bg-white/10 border-t border-white/20">
+                    <TableCell colSpan={6} className="font-bold text-white text-sm">
+                      Total Geral
+                    </TableCell>
+                    <TableCell className="text-right font-bold text-white">
+                      {formatCurrency(
+                        (produtos?.reduce((acc, p) => acc + (p.valor_total || 0), 0) || 0) +
+                        (valorInstalacao || 0) +
+                        (venda.valor_frete || 0)
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right" />
+                    <TableCell className="text-right font-bold text-white">
+                      {formatCurrency(
+                        (produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0) +
+                        (lucroInstalacaoCalculado || 0)
+                      )}
+                    </TableCell>
+                    <TableCell />
+                  </TableRow>
+
+                  {/* Linha Total Lucro */}
+                  <TableRow className="bg-emerald-500/5 border-white/10">
+                    <TableCell colSpan={6} className="font-semibold text-emerald-400 text-sm">
+                      Total Lucro
+                    </TableCell>
+                    <TableCell className="text-right" />
+                    <TableCell className="text-right" />
+                    <TableCell className="text-right">
+                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 font-bold">
+                        {formatCurrency(
+                          (produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0) +
+                          (lucroInstalacaoCalculado || 0)
+                        )}
+                      </Badge>
+                    </TableCell>
+                    <TableCell />
+                  </TableRow>
                 </TableBody>
               </Table>
             </ScrollArea>
