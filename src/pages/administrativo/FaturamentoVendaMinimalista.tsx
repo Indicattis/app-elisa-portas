@@ -275,7 +275,20 @@ export default function FaturamentoVendaMinimalista() {
     // Auto-preencher lucro para cada produto de pintura: (altura x largura) x 25
     produtosPinturaParaAutoFaturar.forEach(async (produto) => {
       autoFaturadosRef.current.add(produto.id);
-      const lucroPintura = ((produto.altura || 0) * (produto.largura || 0)) * 25;
+      
+      // Extrair dimensoes do campo tamanho (formato "6.35x4.9") quando altura/largura forem nulos
+      let altura = produto.altura || 0;
+      let largura = produto.largura || 0;
+      
+      if ((!altura || !largura) && produto.tamanho) {
+        const partes = produto.tamanho.split('x');
+        if (partes.length === 2) {
+          largura = parseFloat(partes[0]) || 0;
+          altura = parseFloat(partes[1]) || 0;
+        }
+      }
+      
+      const lucroPintura = (altura * largura) * 25;
       const custoCalculado = produto.valor_total - lucroPintura;
       await updateLucroItem({ 
         produtoId: produto.id, 
