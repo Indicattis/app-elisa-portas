@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -86,6 +86,7 @@ export default function FaturamentoVendaMinimalista() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const autoFaturadosRef = useRef<Set<string>>(new Set());
   const [mounted, setMounted] = useState(false);
   const [venda, setVenda] = useState<Venda | null>(null);
   const [loading, setLoading] = useState(true);
@@ -265,13 +266,15 @@ export default function FaturamentoVendaMinimalista() {
     const produtosPinturaParaAutoFaturar = produtos.filter(p => 
       p.tipo_produto === 'pintura_epoxi' && 
       (p.lucro_item === null || p.lucro_item === undefined || p.lucro_item === 0) &&
-      !p.faturamento
+      !p.faturamento &&
+      !autoFaturadosRef.current.has(p.id)
     );
     
     if (produtosPinturaParaAutoFaturar.length === 0) return;
     
     // Auto-preencher lucro para cada produto de pintura: (altura x largura) x 25
     produtosPinturaParaAutoFaturar.forEach(async (produto) => {
+      autoFaturadosRef.current.add(produto.id);
       const lucroPintura = ((produto.altura || 0) * (produto.largura || 0)) * 25;
       const custoCalculado = produto.valor_total - lucroPintura;
       await updateLucroItem({ 
