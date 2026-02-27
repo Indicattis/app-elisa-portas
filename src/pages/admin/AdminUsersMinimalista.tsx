@@ -188,6 +188,7 @@ export default function AdminUsersMinimalista() {
 
   const colaboradoresCount = users.filter((u) => u.tipo_usuario === "colaborador").length;
   const representantesCount = users.filter((u) => u.tipo_usuario === "representante").length;
+  const metamorfosCount = users.filter((u) => u.tipo_usuario === "metamorfo").length;
 
   const handleDownloadPDF = () => {
     baixarUsuariosPDF({
@@ -221,7 +222,7 @@ export default function AdminUsersMinimalista() {
       <div className="divide-y divide-primary/10">
         {filteredUsers.length === 0 ? (
           <div className="p-8 text-center text-white/40">
-            Nenhum {activeTab === "colaborador" ? "colaborador" : "representante"} encontrado
+            Nenhum {activeTab === "colaborador" ? "colaborador" : activeTab === "representante" ? "representante" : "metamorfo"} encontrado
           </div>
         ) : (
           filteredUsers.map((user) => (
@@ -302,6 +303,7 @@ export default function AdminUsersMinimalista() {
                       <SelectContent>
                         <SelectItem value="colaborador">Colaborador</SelectItem>
                         <SelectItem value="representante">Representante</SelectItem>
+                        <SelectItem value="metamorfo">Metamorfo</SelectItem>
                       </SelectContent>
                     </Select>
                   ) : user.setor ? (
@@ -393,6 +395,9 @@ export default function AdminUsersMinimalista() {
             </TabsTrigger>
             <TabsTrigger value="representante" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60">
               Representantes ({representantesCount})
+            </TabsTrigger>
+            <TabsTrigger value="metamorfo" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60">
+              Metamorfos ({metamorfosCount})
             </TabsTrigger>
           </TabsList>
 

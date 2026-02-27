@@ -119,7 +119,7 @@ export function UserDetailsModal({ open, onOpenChange, user, roleLabel, onAvatar
                   {user.ativo ? "Ativo" : "Inativo"}
                 </Badge>
                 <Badge variant="outline" className="border-primary/30 text-primary">
-                  {user.tipo_usuario === "representante" ? "Representante" : "Colaborador"}
+                  {user.tipo_usuario === "representante" ? "Representante" : user.tipo_usuario === "metamorfo" ? "Metamorfo" : "Colaborador"}
                 </Badge>
               </div>
             </div>
