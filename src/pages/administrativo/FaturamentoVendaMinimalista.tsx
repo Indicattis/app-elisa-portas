@@ -147,7 +147,7 @@ export default function FaturamentoVendaMinimalista() {
     const metodo = venda.metodo_pagamento || 'boleto';
     const numParcelas = venda.numero_parcelas || venda.quantidade_parcelas || 1;
     const intervalo = venda.intervalo_boletos || 30;
-    const valorTotal = (venda.valor_venda || 0) + (venda.valor_frete || 0) + (venda.valor_instalacao || 0);
+    const valorTotal = (venda.valor_venda || 0) + (venda.valor_instalacao || 0);
     const dataBase = safeParseDate(venda.data_venda) || new Date();
     const parcelas: any[] = [];
 
