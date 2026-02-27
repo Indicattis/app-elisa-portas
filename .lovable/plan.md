@@ -1,25 +1,48 @@
 
+# Segregar usuarios em Colaboradores e Representantes
 
-# Arquivar 4 pedidos presos em Instalações
+## 1. Alteracao no banco de dados
 
-## Situação atual
+Adicionar coluna `tipo_usuario` na tabela `admin_users` com tipo TEXT e default `'colaborador'` (para nao quebrar usuarios existentes).
 
-| Pedido ID | Número | Etapa | Arquivado |
-|-----------|--------|-------|-----------|
-| 127b84fd | 0169 | instalacoes | false |
-| d470794a | 0208 | instalacoes | false |
-| b157f1fe | 0119 | instalacoes | false |
-| 4f8504ff | 0225 | instalacoes | false |
+```sql
+ALTER TABLE admin_users ADD COLUMN tipo_usuario text NOT NULL DEFAULT 'colaborador';
+```
 
-## Correção
+Nao sera criado um enum para manter consistencia com o padrao do projeto (roles tambem sao TEXT com FK).
 
-Mesmo procedimento aplicado anteriormente aos outros 6 pedidos:
+## 2. Interface /admin/users com abas
 
-1. **Atualizar `pedidos_producao`**: Setar `etapa_atual = 'finalizado'`, `arquivado = true`, `data_arquivamento = now()` para os 4 IDs
-2. **Fechar etapa `instalacoes`** em `pedidos_etapas`: Definir `data_saida = now()` onde ainda está aberta
-3. **Criar/atualizar etapa `finalizado`** em `pedidos_etapas` via upsert
-4. **Registrar movimentação** `instalacoes -> finalizado` (teor `avanco`) no histórico
-5. **Registrar arquivamento** `finalizado -> finalizado` (teor `reorganizacao`) no histórico
+Substituir a lista unica por duas abas (Tabs) usando o componente Radix Tabs ja instalado:
 
-Será criado um arquivo de migration SQL com todas as operações, seguindo o mesmo padrão da migration anterior (`067cc81d`).
+- **Colaboradores**: Filtra `tipo_usuario = 'colaborador'` (comportamento atual)
+- **Representantes**: Filtra `tipo_usuario = 'representante'`
 
+Cada aba mantera os mesmos filtros (busca, status, setor, funcao) e acoes (editar, reset senha, detalhes).
+
+## 3. Dialogo de criacao de usuario (AddUserDialog)
+
+Adicionar campo `tipo_usuario` ao formulario com um Select entre "Colaborador" e "Representante". O valor sera enviado junto na chamada da Edge Function `create-user`.
+
+## 4. Edge Function create-user
+
+Atualizar para aceitar e persistir o campo `tipo_usuario` ao criar o registro em `admin_users`.
+
+## 5. Edicao de usuario
+
+Permitir alterar `tipo_usuario` na edicao inline e no formulario de edicao, adicionando um Select ou Toggle ao lado dos campos existentes.
+
+## 6. Detalhes do usuario (UserDetailsModal)
+
+Exibir badge indicando se e "Colaborador" ou "Representante".
+
+## Arquivos afetados
+
+| Arquivo | Mudanca |
+|---------|---------|
+| Migration SQL | Adicionar coluna `tipo_usuario` |
+| `src/pages/admin/AdminUsersMinimalista.tsx` | Adicionar Tabs, filtro por tipo, campo de edicao |
+| `src/components/AddUserDialog.tsx` | Adicionar campo tipo_usuario ao form |
+| `supabase/functions/create-user/index.ts` | Aceitar e persistir tipo_usuario |
+| `src/components/admin/UserDetailsModal.tsx` | Exibir tipo_usuario |
+| `src/integrations/supabase/types.ts` | Atualizado automaticamente |
