@@ -150,17 +150,37 @@ export default function MidiasMinimalista() {
     setUploadTotal(selectedFiles.length);
     setUploadProgress(0);
     let successCount = 0;
+    let failCount = 0;
+
     for (const file of selectedFiles) {
-      const { error } = await supabase.storage.from(uploadBucket).upload(file.name, file, { upsert: true });
-      if (error) {
-        toast({ title: 'Erro no upload', description: `${file.name}: ${error.message}`, variant: 'destructive' });
-      } else {
-        successCount++;
+      let uploaded = false;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const { error } = await supabase.storage.from(uploadBucket).upload(file.name, file, { upsert: true });
+          if (error) {
+            toast({ title: 'Erro no upload', description: `${file.name}: ${error.message}`, variant: 'destructive' });
+          } else {
+            uploaded = true;
+          }
+          break; // Supabase respondeu normalmente, não tentar de novo
+        } catch (e) {
+          console.warn(`Upload de ${file.name} falhou (tentativa ${attempt}/3):`, e);
+          if (attempt < 3) {
+            await new Promise(r => setTimeout(r, attempt * 1500));
+          } else {
+            toast({ title: 'Erro no upload', description: `${file.name}: servidor indisponível após 3 tentativas`, variant: 'destructive' });
+          }
+        }
       }
+      if (uploaded) successCount++;
+      else failCount++;
       setUploadProgress(prev => prev + 1);
+      // Delay entre arquivos para evitar rate limiting
+      await new Promise(r => setTimeout(r, 300));
     }
+
     if (successCount > 0) {
-      toast({ title: 'Upload concluído', description: `${successCount} arquivo(s) enviado(s)` });
+      toast({ title: 'Upload concluído', description: `${successCount} arquivo(s) enviado(s)${failCount > 0 ? `, ${failCount} com erro` : ''}` });
     }
     setUploading(false);
     setSelectedFiles([]);
