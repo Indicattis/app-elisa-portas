@@ -389,7 +389,7 @@ export default function FaturamentoDirecao() {
               .filter((p: any) => p.tipo_produto === 'pintura_epoxi')
               .reduce((sum: number, p: any) => sum + (p.valor_pintura || 0), 0);
           case 'valor':
-            return (venda.valor_venda || 0) + (venda.valor_credito || 0);
+            return (venda.valor_venda || 0) + (venda.valor_credito || 0) + (venda.valor_instalacao || 0);
           case 'tempo_sem_faturar':
             if (isFaturada(venda)) return -1;
             return differenceInDays(new Date(), new Date(venda.data_venda));
@@ -446,7 +446,7 @@ export default function FaturamentoDirecao() {
     
     return {
       faturamento: filteredVendas.reduce((acc, v) => 
-        acc + ((v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0)), 0),
+        acc + ((v.valor_venda || 0) + (v.valor_credito || 0) + (v.valor_instalacao || 0) - (v.valor_frete || 0)), 0),
       faturadas: faturadas.length,
       naoFaturadas: naoFaturadas.length,
     };
@@ -490,7 +490,7 @@ export default function FaturamentoDirecao() {
     
     return {
       faturamentoTotal: filteredVendas.reduce((acc, v) => 
-        acc + (v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0), 0),
+        acc + (v.valor_venda || 0) + (v.valor_credito || 0) + (v.valor_instalacao || 0) - (v.valor_frete || 0), 0),
       
       quantidadePortas: filteredVendas.reduce((acc, v) => {
         const portas = v.portas || [];
@@ -793,7 +793,7 @@ export default function FaturamentoDirecao() {
           ? <span className="text-white/80">{formatCurrency(valorPintura)}</span>
           : <span className="text-white/30">-</span>;
       case 'valor':
-        return <span className="text-white font-medium">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</span>;
+        return <span className="text-white font-medium">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0) + (venda.valor_instalacao || 0))}</span>;
       case 'lucro':
         const lucroVenda = calcularLucroVenda(venda);
         return isFaturada(venda) 
