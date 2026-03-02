@@ -64,3 +64,6 @@ verify_jwt = true
 
 [functions.processar-postagens-agendadas]
 verify_jwt = false
+
+[functions.create-storage-bucket]
+verify_jwt = false
