@@ -1,43 +1,45 @@
 
-# Corrigir erro 502 no upload em massa de midias
+# Corrigir erro 400 no upload de midias para buckets novos
 
 ## Problema
-Ao fazer upload em massa, arquivos grandes ou muitos arquivos em sequencia rapida causam erro 502 (Gateway Timeout) no Supabase Storage. A resposta retorna HTML em vez de JSON, gerando o erro "Unexpected token '<'".
+Quando um bucket e criado via edge function, ele nao possui politicas RLS (Row Level Security) no `storage.objects`. O Supabase Storage exige politicas RLS para permitir operacoes como INSERT (upload), SELECT (download) e DELETE. Sem essas politicas, qualquer upload retorna 400 Bad Request.
 
 ## Solucao
-Adicionar tratamento de erros robusto e um mecanismo de retry com delay entre uploads para evitar sobrecarregar a API.
+Atualizar a edge function `create-storage-bucket` para, apos criar o bucket, tambem criar as politicas RLS necessarias usando SQL via o admin client.
 
-## Alteracoes
+### Arquivo: `supabase/functions/create-storage-bucket/index.ts`
 
-### Arquivo: `src/pages/marketing/MidiasMinimalista.tsx`
+Apos criar o bucket com sucesso (ou se ja existir), executar queries SQL para criar 3 politicas RLS no `storage.objects`:
 
-1. **Adicionar funcao auxiliar de delay** entre uploads para evitar rate limiting:
-   - `await new Promise(r => setTimeout(r, 500))` entre cada upload
+1. **SELECT** - permitir que usuarios autenticados leiam arquivos do bucket
+2. **INSERT** - permitir que usuarios autenticados facam upload no bucket
+3. **DELETE** - permitir que usuarios autenticados excluam arquivos do bucket
 
-2. **Adicionar retry com backoff** para cada arquivo:
-   - Tentar ate 3 vezes com delay crescente (1s, 2s, 4s)
-   - Capturar erros de rede/502 e tentar novamente
-
-3. **Tratar respostas HTML (502/503)** no catch:
-   - Envolver o upload em try/catch para capturar o erro de parse JSON
-   - Exibir mensagem amigavel ao usuario quando ocorrer timeout
+As politicas usarao `bucket_id = '<nome_do_bucket>'` como filtro e serao criadas com `IF NOT EXISTS` (via nome unico por bucket) para evitar erros em buckets ja existentes.
 
 ### Detalhes tecnicos
 
-A funcao `handleUploadFiles` sera refatorada para:
+A edge function executara via `supabaseAdmin.rpc` ou diretamente via `supabaseAdmin.from('...')` as seguintes queries SQL apos a criacao do bucket:
 
 ```text
-para cada arquivo:
-  tentativas = 0
-  enquanto tentativas < 3:
-    try:
-      upload do arquivo
-      se sucesso: break
-      se erro do supabase: registrar erro, break
-    catch (erro de rede/parse):
-      tentativas++
-      aguardar (tentativas * 1500)ms
-  aguardar 300ms antes do proximo arquivo
+CREATE POLICY "Allow authenticated upload <bucket>" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = '<bucket>');
+
+CREATE POLICY "Allow authenticated select <bucket>" ON storage.objects
+  FOR SELECT TO authenticated
+  USING (bucket_id = '<bucket>');
+
+CREATE POLICY "Allow authenticated delete <bucket>" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (bucket_id = '<bucket>');
 ```
 
-Isso resolve tanto o problema de rate limiting quanto o crash causado pela resposta HTML inesperada.
+Como o admin client usa `service_role`, ele tem permissao para executar essas queries. Sera utilizado `supabaseAdmin.rpc('exec_sql', ...)` ou a REST API do Postgres diretamente via fetch para o endpoint `/rest/v1/rpc/`.
+
+Na pratica, a forma mais simples e usar o metodo `supabaseAdmin.rpc` com uma funcao SQL auxiliar ou executar as queries diretamente via a API SQL do Supabase (`/pg/query` endpoint nao disponivel). A alternativa viavel e criar uma funcao SQL `create_storage_policies(bucket_name text)` no banco via migracao, e chama-la da edge function.
+
+### Plano de execucao
+
+1. **Migracao SQL**: Criar uma funcao `public.create_storage_policies(bucket_name text)` com `SECURITY DEFINER` que cria as 3 politicas RLS para o bucket informado
+2. **Atualizar edge function**: Apos criar o bucket, chamar `supabaseAdmin.rpc('create_storage_policies', { bucket_name: name.trim() })`
