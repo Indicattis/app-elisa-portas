@@ -1,45 +1,32 @@
 
-# Corrigir erro 400 no upload de midias para buckets novos
+
+# Aplicar politicas RLS a todos os buckets existentes
 
 ## Problema
-Quando um bucket e criado via edge function, ele nao possui politicas RLS (Row Level Security) no `storage.objects`. O Supabase Storage exige politicas RLS para permitir operacoes como INSERT (upload), SELECT (download) e DELETE. Sem essas politicas, qualquer upload retorna 400 Bad Request.
+A funcao `create_storage_policies` foi criada recentemente, mas so e chamada ao criar novos buckets. Buckets criados anteriormente (como `fotos-portas`, `catalogo-produtos`, `contratos-vendas`, etc.) nao possuem politicas RLS, causando erro 400 em qualquer upload.
 
 ## Solucao
-Atualizar a edge function `create-storage-bucket` para, apos criar o bucket, tambem criar as politicas RLS necessarias usando SQL via o admin client.
+Criar uma migracao SQL que execute `create_storage_policies()` para todos os buckets existentes que ainda nao possuem politicas de INSERT/SELECT/DELETE/UPDATE.
 
-### Arquivo: `supabase/functions/create-storage-bucket/index.ts`
+### Migracao SQL
 
-Apos criar o bucket com sucesso (ou se ja existir), executar queries SQL para criar 3 politicas RLS no `storage.objects`:
-
-1. **SELECT** - permitir que usuarios autenticados leiam arquivos do bucket
-2. **INSERT** - permitir que usuarios autenticados facam upload no bucket
-3. **DELETE** - permitir que usuarios autenticados excluam arquivos do bucket
-
-As politicas usarao `bucket_id = '<nome_do_bucket>'` como filtro e serao criadas com `IF NOT EXISTS` (via nome unico por bucket) para evitar erros em buckets ja existentes.
-
-### Detalhes tecnicos
-
-A edge function executara via `supabaseAdmin.rpc` ou diretamente via `supabaseAdmin.from('...')` as seguintes queries SQL apos a criacao do bucket:
+Executar a funcao `create_storage_policies` para cada bucket que nao possui a politica de INSERT:
 
 ```text
-CREATE POLICY "Allow authenticated upload <bucket>" ON storage.objects
-  FOR INSERT TO authenticated
-  WITH CHECK (bucket_id = '<bucket>');
-
-CREATE POLICY "Allow authenticated select <bucket>" ON storage.objects
-  FOR SELECT TO authenticated
-  USING (bucket_id = '<bucket>');
-
-CREATE POLICY "Allow authenticated delete <bucket>" ON storage.objects
-  FOR DELETE TO authenticated
-  USING (bucket_id = '<bucket>');
+SELECT public.create_storage_policies(id)
+FROM storage.buckets
+WHERE id NOT IN (
+  SELECT replace(policyname, 'Allow authenticated upload ', '')
+  FROM pg_policies
+  WHERE schemaname = 'storage'
+    AND tablename = 'objects'
+    AND policyname LIKE 'Allow authenticated upload %'
+);
 ```
 
-Como o admin client usa `service_role`, ele tem permissao para executar essas queries. Sera utilizado `supabaseAdmin.rpc('exec_sql', ...)` ou a REST API do Postgres diretamente via fetch para o endpoint `/rest/v1/rpc/`.
+Isso cobrira todos os buckets existentes de uma vez: `fotos-portas`, `catalogo-produtos`, `chamados-suporte-anexos`, `comprovantes-pagamento`, `contas-pagar`, `contratos-autorizados`, `contratos-vendas`, `documentos-publicos`, `fotos-carregamento`, `lead-anexos`, `projetos-realizados`, `user-avatars`, `veiculos-fotos`.
 
-Na pratica, a forma mais simples e usar o metodo `supabaseAdmin.rpc` com uma funcao SQL auxiliar ou executar as queries diretamente via a API SQL do Supabase (`/pg/query` endpoint nao disponivel). A alternativa viavel e criar uma funcao SQL `create_storage_policies(bucket_name text)` no banco via migracao, e chama-la da edge function.
+Buckets que ja possuem politicas (como `projetos`) serao ignorados pela logica `IF NOT EXISTS` dentro da funcao.
 
-### Plano de execucao
-
-1. **Migracao SQL**: Criar uma funcao `public.create_storage_policies(bucket_name text)` com `SECURITY DEFINER` que cria as 3 politicas RLS para o bucket informado
-2. **Atualizar edge function**: Apos criar o bucket, chamar `supabaseAdmin.rpc('create_storage_policies', { bucket_name: name.trim() })`
+### Resultado esperado
+Apos a migracao, todos os buckets terao politicas RLS permitindo que usuarios autenticados facam upload, leitura, exclusao e atualizacao de arquivos.
