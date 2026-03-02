@@ -817,6 +817,21 @@ export default function FaturamentoVendaMinimalista() {
                     </TableCell>
                   </TableRow>
 
+                  {/* Linha do Crédito/Desconto */}
+                  {(venda.valor_credito != null && venda.valor_credito !== 0) && (
+                    <TableRow className="bg-white/5 border-white/10">
+                      <TableCell colSpan={6} className="font-semibold text-white">
+                        Crédito / Acréscimo
+                      </TableCell>
+                      <TableCell className="text-right font-semibold text-white">
+                        {formatCurrency(venda.valor_credito)}
+                      </TableCell>
+                      <TableCell colSpan={2} className="text-white/50 text-sm">
+                        Apenas visualização
+                      </TableCell>
+                    </TableRow>
+                  )}
+
                   {/* Linha Total Geral */}
                   <TableRow className="bg-white/10 border-t border-white/20">
                     <TableCell colSpan={6} className="font-bold text-white text-sm">
@@ -825,7 +840,8 @@ export default function FaturamentoVendaMinimalista() {
                     <TableCell className="text-right font-bold text-white">
                       {formatCurrency(
                         (produtos?.reduce((acc, p) => acc + (p.valor_total || 0), 0) || 0) +
-                        (venda.valor_frete || 0)
+                        (venda.valor_frete || 0) +
+                        (venda.valor_credito || 0)
                       )}
                     </TableCell>
                     <TableCell className="text-right" />
