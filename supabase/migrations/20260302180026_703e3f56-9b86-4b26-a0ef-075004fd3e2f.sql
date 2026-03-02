@@ -1,0 +1,1 @@
+SELECT public.create_storage_policies('projetos');
