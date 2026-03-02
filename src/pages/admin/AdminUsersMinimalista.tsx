@@ -12,7 +12,17 @@ import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
 import { ResetPasswordModal } from "@/components/ResetPasswordModal";
 import { UserDetailsModal } from "@/components/admin/UserDetailsModal";
-import { Search, Edit, Save, X, Loader2, KeyRound, FileDown } from "lucide-react";
+import { Search, Edit, Save, X, Loader2, KeyRound, FileDown, UserX, UserCheck } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { baixarUsuariosPDF } from "@/utils/usuariosPDFGenerator";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 
@@ -46,6 +56,7 @@ export default function AdminUsersMinimalista() {
   const [resetPasswordUser, setResetPasswordUser] = useState<AdminUser | null>(null);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [activeTab, setActiveTab] = useState("colaborador");
+  const [togglingUser, setTogglingUser] = useState<AdminUser | null>(null);
   const { toast } = useToast();
 
   const { data: systemRoles = [], isLoading: loadingRoles } = useQuery({
@@ -147,6 +158,37 @@ export default function AdminUsersMinimalista() {
   const handleCancel = () => {
     setEditingUser(null);
     setEditForm({});
+  };
+
+  const handleToggleAtivo = async (user: AdminUser) => {
+    const novoStatus = !user.ativo;
+    try {
+      const { error } = await supabase
+        .from("admin_users")
+        .update({ ativo: novoStatus })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Usuário ${novoStatus ? "ativado" : "desativado"} com sucesso`,
+      });
+      fetchUsers();
+      // Update selectedUser if it's the same
+      if (selectedUser?.id === user.id) {
+        setSelectedUser({ ...user, ativo: novoStatus });
+      }
+    } catch (error) {
+      console.error("Erro ao alterar status:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao alterar status do usuário",
+      });
+    } finally {
+      setTogglingUser(null);
+    }
   };
 
   const handleAvatarUpdate = (userId: string, newAvatarUrl: string | null) => {
@@ -357,6 +399,21 @@ export default function AdminUsersMinimalista() {
                       >
                         <KeyRound className="w-4 h-4" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTogglingUser(user);
+                        }}
+                        className={user.ativo
+                          ? "text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          : "text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                        }
+                        title={user.ativo ? "Desativar usuário" : "Ativar usuário"}
+                      >
+                        {user.ativo ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                      </Button>
                     </>
                   )}
                 </div>
@@ -494,6 +551,12 @@ export default function AdminUsersMinimalista() {
             setSelectedUser({ ...selectedUser, foto_perfil_url: url });
           }
         }}
+        onToggleAtivo={(userId, novoStatus) => {
+          const user = users.find(u => u.id === userId || u.user_id === userId);
+          if (user) {
+            setTogglingUser(user);
+          }
+        }}
       />
 
       {resetPasswordUser && (
@@ -505,6 +568,30 @@ export default function AdminUsersMinimalista() {
           userName={resetPasswordUser.nome}
         />
       )}
+
+      <AlertDialog open={!!togglingUser} onOpenChange={(open) => !open && setTogglingUser(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {togglingUser?.ativo ? "Desativar usuário" : "Ativar usuário"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {togglingUser?.ativo
+                ? `Tem certeza que deseja desativar "${togglingUser?.nome}"? O usuário não conseguirá mais fazer login no sistema.`
+                : `Tem certeza que deseja ativar "${togglingUser?.nome}"? O usuário poderá fazer login novamente.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => togglingUser && handleToggleAtivo(togglingUser)}
+              className={togglingUser?.ativo ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
+            >
+              {togglingUser?.ativo ? "Desativar" : "Ativar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MinimalistLayout>
   );
 }
