@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
 
     const { error } = await supabaseAdmin.storage.createBucket(name.trim(), { public: true });
 
-    if (error) {
+    if (error && !error.message.includes('already exists')) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
