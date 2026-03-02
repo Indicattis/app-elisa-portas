@@ -1,46 +1,46 @@
 
 
-# Adicionar pagina "Midias" ao Marketing
+# Filtro "Todas as categorias" e Modal de Upload multiplo em Midias
 
-## Objetivo
-Criar uma nova pagina `/marketing/midias` que permite ao usuario visualizar, fazer upload, e excluir arquivos armazenados nos buckets do Supabase Storage.
+## Resumo
+Adicionar uma opcao "Todas as categorias" ao filtro de buckets para exibir arquivos de todos os buckets ao mesmo tempo, e substituir o upload direto por um modal que permite selecionar o bucket de destino e fazer upload de multiplos arquivos de imagem.
 
 ## Alteracoes
 
-### 1. Adicionar item no menu do MarketingHub
-**Arquivo:** `src/pages/marketing/MarketingHub.tsx`
-- Adicionar `{ label: "Midias", icon: Image, path: "/marketing/midias", ativo: true }` ao array `menuItems`
-- Importar icone `Image` do lucide-react
+### 1. Filtro "Todas as categorias" (`MidiasMinimalista.tsx`)
+- Adicionar a opcao "Todas as categorias" como primeiro item do Select de buckets
+- Quando selecionado, buscar arquivos de todos os buckets em paralelo usando `Promise.all`
+- Exibir o nome do bucket de origem ao lado de cada arquivo na listagem
+- Ajustar as acoes (copiar URL, preview, excluir) para usar o bucket correto de cada arquivo
 
-### 2. Criar pagina MidiasMinimalista
-**Arquivo:** `src/pages/marketing/MidiasMinimalista.tsx`
-
-Funcionalidades:
-- Layout usando `MinimalistLayout` (mesmo padrao das outras paginas de marketing)
-- Select para escolher o bucket (lista dos 13 buckets existentes)
-- Listagem de arquivos do bucket selecionado com nome, tamanho e data
-- Botao de upload para adicionar novos arquivos ao bucket selecionado
-- Botao de excluir arquivo (com confirmacao via AlertDialog)
-- Preview de imagens (para arquivos de imagem)
-- Botao para copiar URL publica (para buckets publicos)
-- Indicador de loading durante operacoes
-
-Buckets disponiveis:
-- autorizados-logos, catalogo-produtos, chamados-suporte-anexos, comprovantes-pagamento, contas-pagar, contratos-autorizados, contratos-vendas, documentos-publicos, fichas-visita-tecnica, fotos-carregamento, lead-anexos, user-avatars, veiculos-fotos
-
-### 3. Adicionar rota no App.tsx
-**Arquivo:** `src/App.tsx`
-- Adicionar rota `<Route path="/marketing/midias" element={<ProtectedRoute routeKey="marketing_midias"><MidiasMinimalista /></ProtectedRoute>} />`
-- Importar `MidiasMinimalista`
+### 2. Modal de Upload (`MidiasMinimalista.tsx`)
+- Ao clicar em "Upload", abrir um Dialog (modal) em vez de abrir o file picker diretamente
+- O modal contera:
+  - Select para escolher o bucket de destino (obrigatorio)
+  - Area de selecao de arquivos com `accept="image/*"` e `multiple`
+  - Lista dos arquivos selecionados com preview em miniatura e opcao de remover individualmente
+  - Botao "Enviar" que faz upload de todos os arquivos selecionados em sequencia
+  - Barra de progresso mostrando quantos arquivos foram enviados
+- Apos concluir todos os uploads, fechar o modal e recarregar a listagem
 
 ### Detalhes tecnicos
 
-A pagina usara a API do Supabase Storage:
+**Estrutura de dados para "Todas as categorias":**
 ```text
-supabase.storage.from(bucket).list()      -- listar arquivos
-supabase.storage.from(bucket).upload()    -- upload
-supabase.storage.from(bucket).remove()    -- excluir
-supabase.storage.from(bucket).getPublicUrl() -- URL publica
+interface StorageFileWithBucket extends StorageFile {
+  bucket: string;  // nome do bucket de origem
+}
 ```
 
-A interface seguira o padrao visual das demais paginas do marketing (fundo escuro, cards com bordas sutis, icones lucide-react).
+**Logica de busca quando "todas" esta selecionado:**
+- Iterar sobre todos os BUCKETS com Promise.allSettled
+- Concatenar resultados, adicionando o campo `bucket` a cada arquivo
+- Ordenar por data de criacao (desc)
+
+**Modal de upload:**
+- Estado `uploadModalOpen` para controlar visibilidade
+- Estado `selectedFiles` (File[]) para arquivos escolhidos
+- Estado `uploadBucket` para bucket de destino selecionado no modal
+- Input file com `multiple` e `accept="image/*"`
+- Upload sequencial com contagem de progresso
+
