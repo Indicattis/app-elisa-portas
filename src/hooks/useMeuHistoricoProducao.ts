@@ -11,6 +11,7 @@ export interface OrdemHistorico {
   tempo_conclusao_segundos: number | null;
   pedido_id: string;
   cliente_nome?: string;
+  cores?: Array<{ nome: string; codigo_hex: string }>;
 }
 
 type SetorType = 'todos' | 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura';
@@ -69,7 +70,7 @@ export function useMeuHistoricoProducao(options: UseMeuHistoricoProducaoOptions 
             data_conclusao,
             tempo_conclusao_segundos,
             pedido_id,
-            pedido:pedidos_producao(cliente_nome)
+            pedido:pedidos_producao(cliente_nome, venda:vendas(produtos:produtos_vendas(tipo_produto, cor:catalogo_cores(nome, codigo_hex))))
           `)
           .eq('responsavel_id', user.user_id)
           .eq('status', 'concluido')
@@ -87,16 +88,27 @@ export function useMeuHistoricoProducao(options: UseMeuHistoricoProducaoOptions 
         }
 
         if (data) {
-          ordens.push(...data.map((ordem: any) => ({
-            id: ordem.id,
-            numero_ordem: ordem.numero_ordem,
-            setor: setorAtual,
-            status: ordem.status,
-            data_conclusao: ordem.data_conclusao,
-            tempo_conclusao_segundos: ordem.tempo_conclusao_segundos,
-            pedido_id: ordem.pedido_id,
-            cliente_nome: ordem.pedido?.cliente_nome
-          })));
+          ordens.push(...data.map((ordem: any) => {
+            const coresMap = new Map<string, { nome: string; codigo_hex: string }>();
+            const produtos = ordem.pedido?.venda?.produtos || [];
+            produtos.forEach((p: any) => {
+              if ((p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'porta' || p.tipo_produto === 'pintura_epoxi') && p.cor) {
+                coresMap.set(p.cor.nome, p.cor);
+              }
+            });
+
+            return {
+              id: ordem.id,
+              numero_ordem: ordem.numero_ordem,
+              setor: setorAtual,
+              status: ordem.status,
+              data_conclusao: ordem.data_conclusao,
+              tempo_conclusao_segundos: ordem.tempo_conclusao_segundos,
+              pedido_id: ordem.pedido_id,
+              cliente_nome: ordem.pedido?.cliente_nome,
+              cores: Array.from(coresMap.values()),
+            };
+          }));
         }
       }
 
