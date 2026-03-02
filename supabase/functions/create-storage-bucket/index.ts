@@ -31,6 +31,12 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Create RLS policies for the bucket
+    const { error: rpcError } = await supabaseAdmin.rpc('create_storage_policies', { bucket_name: name.trim() });
+    if (rpcError) {
+      console.error('Error creating storage policies:', rpcError.message);
+    }
+
     return new Response(JSON.stringify({ success: true }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

@@ -7385,6 +7385,10 @@ export type Database = {
           table_name: string
         }[]
       }
+      create_storage_policies: {
+        Args: { bucket_name: string }
+        Returns: undefined
+      }
       criar_ordem_embalagem: {
         Args: { p_pedido_id: string }
         Returns: undefined
