@@ -18,6 +18,7 @@ import {
   Clock,
   DollarSign
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 interface AdminUser {
   id: string;
@@ -43,9 +44,10 @@ interface UserDetailsModalProps {
   user: AdminUser | null;
   roleLabel: string;
   onAvatarUpdate?: (userId: string, newAvatarUrl: string | null) => void;
+  onToggleAtivo?: (userId: string, novoStatus: boolean) => void;
 }
 
-export function UserDetailsModal({ open, onOpenChange, user, roleLabel, onAvatarUpdate }: UserDetailsModalProps) {
+export function UserDetailsModal({ open, onOpenChange, user, roleLabel, onAvatarUpdate, onToggleAtivo }: UserDetailsModalProps) {
   if (!user) return null;
 
   const formatCPF = (cpf: string | null) => {
@@ -108,16 +110,16 @@ export function UserDetailsModal({ open, onOpenChange, user, roleLabel, onAvatar
               <h3 className="text-xl font-semibold text-foreground truncate">{user.nome}</h3>
               <p className="text-sm text-muted-foreground truncate">{user.email}</p>
               <div className="flex items-center gap-2 mt-2">
-                <Badge
-                  variant={user.ativo ? "default" : "secondary"}
-                  className={
-                    user.ativo
-                      ? "bg-green-500/20 text-green-600 dark:text-green-400"
-                      : "bg-muted text-muted-foreground"
-                  }
-                >
-                  {user.ativo ? "Ativo" : "Inativo"}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={user.ativo}
+                    onCheckedChange={(checked) => onToggleAtivo?.(user.id, checked)}
+                    className="data-[state=checked]:bg-green-500"
+                  />
+                  <span className={`text-xs font-medium ${user.ativo ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
+                    {user.ativo ? "Ativo" : "Inativo"}
+                  </span>
+                </div>
                 <Badge variant="outline" className="border-primary/30 text-primary">
                   {user.tipo_usuario === "representante" ? "Representante" : user.tipo_usuario === "metamorfo" ? "Metamorfo" : "Colaborador"}
                 </Badge>
