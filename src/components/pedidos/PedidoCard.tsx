@@ -1058,13 +1058,50 @@ export function PedidoCard({
         p.id === 'verificar_carregamento' ? { ...p, status: 'in_progress' as const } : p
       ));
       
-      const { data: ordemCarregamento } = await supabase
+      // Verificar carregamento em todas as fontes possíveis
+      let carregamentoConcluido = false;
+
+      // 1. Consultar ordens_carregamento
+      const { data: ordensCarreg } = await supabase
         .from('ordens_carregamento')
         .select('carregamento_concluido')
         .eq('pedido_id', pedido.id)
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .limit(1);
       
-      if (!ordemCarregamento?.carregamento_concluido) {
+      if (ordensCarreg?.[0]?.carregamento_concluido) {
+        carregamentoConcluido = true;
+      }
+
+      // 2. Se não encontrou, consultar instalacoes
+      if (!carregamentoConcluido) {
+        const { data: instData } = await supabase
+          .from('instalacoes')
+          .select('carregamento_concluido')
+          .eq('pedido_id', pedido.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        if (instData?.[0]?.carregamento_concluido) {
+          carregamentoConcluido = true;
+        }
+      }
+
+      // 3. Se não encontrou, consultar correcoes
+      if (!carregamentoConcluido) {
+        const { data: corrData } = await supabase
+          .from('correcoes')
+          .select('carregamento_concluido')
+          .eq('pedido_id', pedido.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        if (corrData?.[0]?.carregamento_concluido) {
+          carregamentoConcluido = true;
+        }
+      }
+
+      if (!carregamentoConcluido) {
         setProcessos(prev => prev.map(p => 
           p.id === 'verificar_carregamento' ? { ...p, status: 'error' as const } : p
         ));
