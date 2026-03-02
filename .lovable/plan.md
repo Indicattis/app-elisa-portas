@@ -1,36 +1,46 @@
 
 
-# Adicionar opcao de Ativar/Desativar usuarios em /admin/users
+# Adicionar pagina "Midias" ao Marketing
 
-## Contexto
-O campo `ativo` ja existe na tabela `admin_users` e a edge function `manage-producao-auth` ja filtra por `ativo = true`, impedindo login de usuarios inativos via CPF. Porem, nao ha um controle visivel na interface para alternar esse status.
+## Objetivo
+Criar uma nova pagina `/marketing/midias` que permite ao usuario visualizar, fazer upload, e excluir arquivos armazenados nos buckets do Supabase Storage.
 
 ## Alteracoes
 
-### 1. Botao de ativar/desativar na lista de usuarios (`AdminUsersMinimalista.tsx`)
-- Adicionar um botao com icone `UserX` (desativar) ou `UserCheck` (ativar) ao lado dos botoes de editar e resetar senha
-- Ao clicar, exibir um dialog de confirmacao (AlertDialog) perguntando se deseja desativar/ativar o usuario
-- Ao confirmar, atualizar `ativo` na tabela `admin_users` e recarregar a lista
-- Mostrar toast de sucesso/erro
+### 1. Adicionar item no menu do MarketingHub
+**Arquivo:** `src/pages/marketing/MarketingHub.tsx`
+- Adicionar `{ label: "Midias", icon: Image, path: "/marketing/midias", ativo: true }` ao array `menuItems`
+- Importar icone `Image` do lucide-react
 
-### 2. Switch no modal de detalhes (`UserDetailsModal.tsx`)
-- Adicionar um Switch ao lado do badge "Ativo/Inativo" no header do modal
-- Passar callback `onToggleAtivo` do componente pai para o modal
-- Ao alternar, executar a mesma logica de confirmacao e update
+### 2. Criar pagina MidiasMinimalista
+**Arquivo:** `src/pages/marketing/MidiasMinimalista.tsx`
+
+Funcionalidades:
+- Layout usando `MinimalistLayout` (mesmo padrao das outras paginas de marketing)
+- Select para escolher o bucket (lista dos 13 buckets existentes)
+- Listagem de arquivos do bucket selecionado com nome, tamanho e data
+- Botao de upload para adicionar novos arquivos ao bucket selecionado
+- Botao de excluir arquivo (com confirmacao via AlertDialog)
+- Preview de imagens (para arquivos de imagem)
+- Botao para copiar URL publica (para buckets publicos)
+- Indicador de loading durante operacoes
+
+Buckets disponiveis:
+- autorizados-logos, catalogo-produtos, chamados-suporte-anexos, comprovantes-pagamento, contas-pagar, contratos-autorizados, contratos-vendas, documentos-publicos, fichas-visita-tecnica, fotos-carregamento, lead-anexos, user-avatars, veiculos-fotos
+
+### 3. Adicionar rota no App.tsx
+**Arquivo:** `src/App.tsx`
+- Adicionar rota `<Route path="/marketing/midias" element={<ProtectedRoute routeKey="marketing_midias"><MidiasMinimalista /></ProtectedRoute>} />`
+- Importar `MidiasMinimalista`
 
 ### Detalhes tecnicos
 
-**`src/pages/admin/AdminUsersMinimalista.tsx`**:
-- Importar `AlertDialog` e icones `UserX`/`UserCheck`
-- Criar estado `togglingUser` para controlar o dialog de confirmacao
-- Criar funcao `handleToggleAtivo(user)` que faz `supabase.from('admin_users').update({ ativo: !user.ativo }).eq('id', user.id)` e chama `fetchUsers()`
-- Adicionar botao na area de acoes de cada usuario (ao lado de Editar e Resetar Senha)
-- Passar `onToggleAtivo` ao `UserDetailsModal`
+A pagina usara a API do Supabase Storage:
+```text
+supabase.storage.from(bucket).list()      -- listar arquivos
+supabase.storage.from(bucket).upload()    -- upload
+supabase.storage.from(bucket).remove()    -- excluir
+supabase.storage.from(bucket).getPublicUrl() -- URL publica
+```
 
-**`src/components/admin/UserDetailsModal.tsx`**:
-- Aceitar nova prop `onToggleAtivo?: (userId: string, novoStatus: boolean) => void`
-- Substituir o Badge estatico "Ativo/Inativo" por um Switch clicavel que chama `onToggleAtivo`
-
-### Seguranca
-O login via CPF ja e bloqueado para usuarios inativos (filtro `ativo = true` na edge function). Nenhuma alteracao no backend e necessaria.
-
+A interface seguira o padrao visual das demais paginas do marketing (fundo escuro, cards com bordas sutis, icones lucide-react).
