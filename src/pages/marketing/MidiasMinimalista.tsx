@@ -88,9 +88,9 @@ export default function MidiasMinimalista() {
     const name = newCategoryName.trim().toLowerCase().replace(/\s+/g, '-');
     if (!name) return;
     setCreatingCategory(true);
-    const { error } = await supabase.storage.createBucket(name, { public: true });
-    if (error) {
-      toast({ title: 'Erro ao criar categoria', description: error.message, variant: 'destructive' });
+    const { data, error } = await supabase.functions.invoke('create-storage-bucket', { body: { name } });
+    if (error || (data && data.error)) {
+      toast({ title: 'Erro ao criar categoria', description: data?.error || error?.message || 'Erro desconhecido', variant: 'destructive' });
     } else {
       setBuckets(prev => [...prev, name].sort());
       setUploadBucket(name);
