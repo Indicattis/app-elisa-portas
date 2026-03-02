@@ -595,24 +595,58 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
       // Se está em aguardando_coleta ou instalacoes, validar ordem de carregamento
       if (etapaAtualNome === 'aguardando_coleta' || etapaAtualNome === 'instalacoes') {
-        // Verificar se existe ordem de carregamento e se está concluída
-        const { data: ordemCarregamento, error: ordemError } = await supabase
+        // Buscar dados de carregamento nas 3 fontes possíveis
+        let ordemData: { data_carregamento: string | null; carregamento_concluido: boolean | null } | null = null;
+
+        // 1. ordens_carregamento
+        const { data: ordensCarreg } = await supabase
           .from('ordens_carregamento')
-          .select('id, carregamento_concluido, data_carregamento, status')
+          .select('data_carregamento, carregamento_concluido')
           .eq('pedido_id', pedidoId)
-          .maybeSingle();
+          .order('created_at', { ascending: false })
+          .limit(1);
         
-        if (ordemError) throw ordemError;
-        
-        if (!ordemCarregamento) {
+        if (ordensCarreg?.[0]) {
+          ordemData = ordensCarreg[0];
+        }
+
+        // 2. instalacoes
+        if (!ordemData) {
+          const { data: instData } = await supabase
+            .from('instalacoes')
+            .select('data_carregamento, carregamento_concluido')
+            .eq('pedido_id', pedidoId)
+            .order('created_at', { ascending: false })
+            .limit(1);
+          
+          if (instData?.[0]) {
+            ordemData = instData[0];
+          }
+        }
+
+        // 3. correcoes
+        if (!ordemData) {
+          const { data: corrData } = await supabase
+            .from('correcoes')
+            .select('data_carregamento, carregamento_concluido')
+            .eq('pedido_id', pedidoId)
+            .order('created_at', { ascending: false })
+            .limit(1);
+          
+          if (corrData?.[0]) {
+            ordemData = corrData[0];
+          }
+        }
+
+        if (!ordemData) {
           throw new Error('Ordem de carregamento não encontrada para este pedido');
         }
         
-        if (!ordemCarregamento.data_carregamento) {
+        if (!ordemData.data_carregamento) {
           throw new Error('Informe a data de carregamento antes de finalizar o pedido');
         }
         
-        if (!ordemCarregamento.carregamento_concluido) {
+        if (!ordemData.carregamento_concluido) {
           throw new Error('O carregamento deve ser concluído antes de finalizar o pedido');
         }
       }
