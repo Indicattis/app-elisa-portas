@@ -274,7 +274,7 @@ export default function VendaDetalhesDirecao() {
               <DollarSign className="w-4 h-4" />
               Valor Total
             </div>
-            <p className="text-xl font-bold text-green-400">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</p>
+            <p className="text-xl font-bold text-green-400">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0) + (venda.valor_instalacao || 0))}</p>
           </div>
           
           <div className={`${cardClass} border-l-4 border-l-blue-500`}>
