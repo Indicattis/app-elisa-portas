@@ -1,25 +1,29 @@
 
 
-# Adicionar linha de Credito/Desconto na tabela de produtos do faturamento
+# Corrigir calculo do "Valor a Receber" / Geracao de Parcelas
 
 ## Problema
-A tabela de produtos na pagina de faturamento administrativo exibe linhas de Instalacao e Frete, mas nao mostra o valor de credito/desconto (`valor_credito`) da venda, mesmo ele sendo parte do valor total.
 
-## Solucao
+Na funcao `handleGerarParcelas` (linha 151 de `FaturamentoVendaMinimalista.tsx`), o valor total usado para gerar as parcelas esta com dupla contagem:
+
+```typescript
+const valorTotal = (venda.valor_venda || 0) + (venda.valor_instalacao || 0);
+```
+
+Como `valor_venda` ja inclui instalacao, isso gera parcelas com valor inflado (ex: R$ 26.100 em vez de R$ 21.500).
+
+Alem disso, a validacao de totais (linha 1145) compara as parcelas apenas contra `valor_venda`, sem incluir `valor_credito`.
+
+## Alteracoes
 
 ### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-Adicionar uma nova linha na tabela de produtos, entre a linha do "Frete" e a linha do "Total Geral", exibindo o valor de credito/desconto da venda. A linha so sera renderizada quando `valor_credito > 0`.
+**Linha 151** - Corrigir formula do valor total para geracao de parcelas:
+- De: `(venda.valor_venda || 0) + (venda.valor_instalacao || 0)`
+- Para: `(venda.valor_venda || 0) + (venda.valor_credito || 0)`
 
-**Detalhes da implementacao:**
+**Linhas 1145-1146** - Corrigir validacao de total de parcelas para incluir credito:
+- De: `const valorVenda = venda.valor_venda || 0;`
+- Para: `const valorVenda = (venda.valor_venda || 0) + (venda.valor_credito || 0);`
 
-1. **Nova linha condicional (apos linha 818):** Inserir uma `TableRow` com estilo similar ao do Frete (`bg-white/5`), exibindo:
-   - Coluna label: "Credito / Acrescimo"
-   - Coluna valor: `formatCurrency(venda.valor_credito)`
-   - Informacao auxiliar: "Apenas visualizacao"
-
-2. **Atualizar o calculo do Total Geral (linha 827):** Incluir `valor_credito` na soma para que o total reflita corretamente:
-   - De: `SUM(valor_total) + valor_frete`
-   - Para: `SUM(valor_total) + valor_frete + valor_credito`
-
-Isso garante que o "Total Geral" da tabela bata com o "Valor Total" exibido nos cards superiores.
+Nota: As parcelas ja existentes no banco nao serao corrigidas automaticamente. Se necessario, o usuario pode remover e gerar novamente.
