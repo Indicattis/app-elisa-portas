@@ -1,27 +1,36 @@
 
-# Corrigir senha resetada a cada login via CPF
 
-## Problema
-A edge function `manage-producao-auth` reseta a senha de todo usuario para `Producao@2024` em cada login. Isso sobrescreve senhas personalizadas. O reset e necessario na arquitetura atual (o cliente precisa saber a senha para autenticar), mas pode usar um padrao previsivel baseado no nome.
+# Adicionar opcao de Ativar/Desativar usuarios em /admin/users
 
-## Solucao
-Gerar a senha automaticamente com o padrao **primeira letra do primeiro nome + sobrenome** (tudo em minusculo, sem acentos). Exemplo: "Joao Silva" gera senha `jsilva`. A edge function retorna a senha gerada para o cliente usar.
+## Contexto
+O campo `ativo` ja existe na tabela `admin_users` e a edge function `manage-producao-auth` ja filtra por `ativo = true`, impedindo login de usuarios inativos via CPF. Porem, nao ha um controle visivel na interface para alternar esse status.
 
 ## Alteracoes
 
-### 1. Edge Function: `supabase/functions/manage-producao-auth/index.ts`
-- Adicionar funcao auxiliar para gerar senha a partir do nome (remover acentos, pegar primeira letra + ultimo sobrenome, tudo minusculo)
-- Substituir a constante `'Producao@2024'` (linha 164) pela senha gerada
-- Incluir o campo `password` na resposta JSON (linha 236-247) para o cliente usar
+### 1. Botao de ativar/desativar na lista de usuarios (`AdminUsersMinimalista.tsx`)
+- Adicionar um botao com icone `UserX` (desativar) ou `UserCheck` (ativar) ao lado dos botoes de editar e resetar senha
+- Ao clicar, exibir um dialog de confirmacao (AlertDialog) perguntando se deseja desativar/ativar o usuario
+- Ao confirmar, atualizar `ativo` na tabela `admin_users` e recarregar a lista
+- Mostrar toast de sucesso/erro
 
-Funcao de geracao:
-```text
-"Joao Pedro Silva" -> "jsilva"
-"Maria Aparecida Santos" -> "msantos"
-```
+### 2. Switch no modal de detalhes (`UserDetailsModal.tsx`)
+- Adicionar um Switch ao lado do badge "Ativo/Inativo" no header do modal
+- Passar callback `onToggleAtivo` do componente pai para o modal
+- Ao alternar, executar a mesma logica de confirmacao e update
 
-### 2. Frontend: `src/pages/Auth.tsx`
-- Linha 80: Substituir `password: 'Producao@2024'` por `password: data.password`
+### Detalhes tecnicos
 
-### 3. Frontend: `src/pages/producao/ProducaoLogin.tsx`
-- Linha 72: Substituir `password: 'Producao@2024'` por `password: setupData.password`
+**`src/pages/admin/AdminUsersMinimalista.tsx`**:
+- Importar `AlertDialog` e icones `UserX`/`UserCheck`
+- Criar estado `togglingUser` para controlar o dialog de confirmacao
+- Criar funcao `handleToggleAtivo(user)` que faz `supabase.from('admin_users').update({ ativo: !user.ativo }).eq('id', user.id)` e chama `fetchUsers()`
+- Adicionar botao na area de acoes de cada usuario (ao lado de Editar e Resetar Senha)
+- Passar `onToggleAtivo` ao `UserDetailsModal`
+
+**`src/components/admin/UserDetailsModal.tsx`**:
+- Aceitar nova prop `onToggleAtivo?: (userId: string, novoStatus: boolean) => void`
+- Substituir o Badge estatico "Ativo/Inativo" por um Switch clicavel que chama `onToggleAtivo`
+
+### Seguranca
+O login via CPF ja e bloqueado para usuarios inativos (filtro `ativo = true` na edge function). Nenhuma alteracao no backend e necessaria.
+
