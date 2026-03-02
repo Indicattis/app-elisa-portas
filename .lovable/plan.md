@@ -1,32 +1,27 @@
 
-
-# Aplicar politicas RLS a todos os buckets existentes
+# Corrigir verificacao de carregamento para pedidos de instalacao
 
 ## Problema
-A funcao `create_storage_policies` foi criada recentemente, mas so e chamada ao criar novos buckets. Buckets criados anteriormente (como `fotos-portas`, `catalogo-produtos`, `contratos-vendas`, etc.) nao possuem politicas RLS, causando erro 400 em qualquer upload.
+Ao tentar avancar o pedido `08a91857` (que esta na etapa `instalacoes`), o sistema exibe "A ordem de carregamento ainda nao foi concluida em Expedicao". Isso acontece porque a funcao `handleConfirmarExpedicao` no PedidoCard.tsx (linha 1061-1065) so consulta a tabela `ordens_carregamento`, mas pedidos do tipo instalacao tem seus registros de carregamento na tabela `instalacoes`.
 
 ## Solucao
-Criar uma migracao SQL que execute `create_storage_policies()` para todos os buckets existentes que ainda nao possuem politicas de INSERT/SELECT/DELETE/UPDATE.
+Alterar a verificacao de carregamento em `handleConfirmarExpedicao` para consultar ambas as tabelas (`ordens_carregamento` e `instalacoes`) dependendo da etapa do pedido, ou consultar ambas e considerar qualquer uma como valida.
 
-### Migracao SQL
+## Alteracao
 
-Executar a funcao `create_storage_policies` para cada bucket que nao possui a politica de INSERT:
+### Arquivo: `src/components/pedidos/PedidoCard.tsx` (linhas 1056-1079)
+
+Substituir a consulta unica a `ordens_carregamento` por uma verificacao que tambem consulta a tabela `instalacoes`:
 
 ```text
-SELECT public.create_storage_policies(id)
-FROM storage.buckets
-WHERE id NOT IN (
-  SELECT replace(policyname, 'Allow authenticated upload ', '')
-  FROM pg_policies
-  WHERE schemaname = 'storage'
-    AND tablename = 'objects'
-    AND policyname LIKE 'Allow authenticated upload %'
-);
+1. Consultar ordens_carregamento pelo pedido_id
+2. Se nao encontrou ou carregamento_concluido = false:
+   - Consultar instalacoes pelo pedido_id
+   - Se encontrou com carregamento_concluido = true: considerar como concluido
+3. Se nenhuma das duas retornou carregamento concluido:
+   - Consultar correcoes pelo pedido_id  
+   - Se encontrou com carregamento_concluido = true: considerar como concluido
+4. Se nenhuma fonte confirmou: exibir erro
 ```
 
-Isso cobrira todos os buckets existentes de uma vez: `fotos-portas`, `catalogo-produtos`, `chamados-suporte-anexos`, `comprovantes-pagamento`, `contas-pagar`, `contratos-autorizados`, `contratos-vendas`, `documentos-publicos`, `fotos-carregamento`, `lead-anexos`, `projetos-realizados`, `user-avatars`, `veiculos-fotos`.
-
-Buckets que ja possuem politicas (como `projetos`) serao ignorados pela logica `IF NOT EXISTS` dentro da funcao.
-
-### Resultado esperado
-Apos a migracao, todos os buckets terao politicas RLS permitindo que usuarios autenticados facam upload, leitura, exclusao e atualizacao de arquivos.
+Seguindo o padrao ja usado no hook `useOrdensCarregamentoUnificadas`, a consulta usara `.order('created_at', { ascending: false }).limit(1)` em vez de `.maybeSingle()` para lidar com registros duplicados (conforme memoria de arquitetura).
