@@ -78,7 +78,7 @@ export default function Auth() {
       // Fazer login com o email retornado e senha padrão
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: data.email,
-        password: 'Producao@2024'
+        password: data.password
       });
 
       if (signInError) {
