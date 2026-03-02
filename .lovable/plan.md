@@ -1,22 +1,41 @@
 
 
-# Corrigir validacao de data de carregamento em usePedidosEtapas
+# Corrigir logica de verificacao de carregamento para considerar todas as fontes
 
 ## Problema
-O hook `usePedidosEtapas.ts` (linhas 597-617) valida a ordem de carregamento antes de finalizar pedidos nas etapas `aguardando_coleta` e `instalacoes`. Porem, ele so consulta a tabela `ordens_carregamento`. Para pedidos do tipo instalacao ou correcao, os dados estao nas tabelas `instalacoes` ou `correcoes`, gerando o erro "Informe a data de carregamento antes de finalizar o pedido".
+O pedido `08a91857` possui registros em duas tabelas:
+- `ordens_carregamento`: `carregamento_concluido = false` (registro antigo)
+- `instalacoes`: `carregamento_concluido = true` (carregamento efetivamente concluido)
 
-Este e o mesmo problema ja corrigido no `PedidoCard.tsx`, mas que tambem existe neste hook.
+A logica atual para de buscar ao encontrar o primeiro registro (mesmo com `false`), nunca chegando a verificar a tabela `instalacoes` onde o carregamento esta de fato concluido.
 
 ## Solucao
-Alterar a validacao nas linhas 597-617 de `usePedidosEtapas.ts` para consultar as 3 tabelas sequencialmente (mesmo padrao aplicado no PedidoCard):
+Alterar a logica em ambos os arquivos para consultar TODAS as 3 tabelas e considerar o carregamento como concluido se QUALQUER uma delas tiver `carregamento_concluido = true`.
 
-1. Consultar `ordens_carregamento` pelo `pedido_id`
-2. Se nao encontrou, consultar `instalacoes` pelo `pedido_id`
-3. Se nao encontrou, consultar `correcoes` pelo `pedido_id`
-4. Usar os dados encontrados em qualquer uma das fontes para validar `data_carregamento` e `carregamento_concluido`
-5. Substituir `.maybeSingle()` por `.order('created_at', { ascending: false }).limit(1)` para evitar erros com registros duplicados
+### Arquivo 1: `src/hooks/usePedidosEtapas.ts` (linhas 597-652)
 
-### Arquivo: `src/hooks/usePedidosEtapas.ts` (linhas 597-617)
+Remover a logica sequencial com `if (!ordemData)` e substituir por consultas paralelas as 3 tabelas:
 
-A logica sera substituida por uma busca sequencial nas 3 tabelas, usando o primeiro resultado encontrado para as validacoes de `data_carregamento` e `carregamento_concluido`.
+```text
+// Consultar todas as fontes
+const [ordensRes, instRes, corrRes] = await Promise.all([
+  supabase.from('ordens_carregamento').select('data_carregamento, carregamento_concluido').eq('pedido_id', pedidoId).order('created_at', { ascending: false }).limit(1),
+  supabase.from('instalacoes').select('data_carregamento, carregamento_concluido').eq('pedido_id', pedidoId).order('created_at', { ascending: false }).limit(1),
+  supabase.from('correcoes').select('data_carregamento, carregamento_concluido').eq('pedido_id', pedidoId).order('created_at', { ascending: false }).limit(1),
+]);
+
+// Verificar se QUALQUER fonte tem carregamento concluido
+const todasFontes = [ordensRes.data?.[0], instRes.data?.[0], corrRes.data?.[0]].filter(Boolean);
+if (todasFontes.length === 0) throw new Error('Ordem nao encontrada');
+
+const algumaConcluida = todasFontes.some(f => f.carregamento_concluido);
+const algumaComData = todasFontes.some(f => f.data_carregamento);
+
+if (!algumaComData) throw new Error('Informe a data...');
+if (!algumaConcluida) throw new Error('O carregamento deve ser concluido...');
+```
+
+### Arquivo 2: `src/components/pedidos/PedidoCard.tsx` (linhas 1061-1116)
+
+Mesma logica: consultar as 3 tabelas em paralelo e considerar concluido se qualquer fonte tiver `carregamento_concluido = true`.
 
