@@ -937,6 +937,8 @@ export default function ExpedicaoMinimalista() {
                               viewMode="list" 
                               onReorganizar={handleReorganizar} 
                               onMoverPrioridade={handleMoverPrioridade}
+                              onMoverEtapa={handleMoverEtapa}
+                              onRetrocederEtapa={handleRetrocederEtapa}
                               onArquivar={etapa === 'finalizado' ? undefined : handleArquivar}
                               onDeletar={handleDeletarPedido}
                               onAgendar={handleAgendarPedido}
