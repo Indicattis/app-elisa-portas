@@ -148,7 +148,7 @@ export default function FaturamentoVendaMinimalista() {
     const metodo = venda.metodo_pagamento || 'boleto';
     const numParcelas = venda.numero_parcelas || venda.quantidade_parcelas || 1;
     const intervalo = venda.intervalo_boletos || 30;
-    const valorTotal = (venda.valor_venda || 0) + (venda.valor_instalacao || 0);
+    const valorTotal = (venda.valor_venda || 0) + (venda.valor_credito || 0);
     const dataBase = safeParseDate(venda.data_venda) || new Date();
     const parcelas: any[] = [];
 
@@ -1142,7 +1142,7 @@ export default function FaturamentoVendaMinimalista() {
               {/* Validação: total parcelas vs valor venda */}
               {(() => {
                 const totalParcelas = contasReceber.reduce((sum, p) => sum + (p.valor_parcela || 0), 0);
-                const valorVenda = venda.valor_venda || 0;
+                const valorVenda = (venda.valor_venda || 0) + (venda.valor_credito || 0);
                 const match = Math.abs(totalParcelas - valorVenda) < 0.01;
                 return (
                   <div className={cn(
