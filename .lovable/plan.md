@@ -1,39 +1,43 @@
 
-# Exibir arquivos em grid com thumbnails
+# Corrigir erro 502 no upload em massa de midias
 
-## Objetivo
-Substituir a listagem de arquivos em formato de lista por um grid de cards 100x100px com thumbnails das imagens.
+## Problema
+Ao fazer upload em massa, arquivos grandes ou muitos arquivos em sequencia rapida causam erro 502 (Gateway Timeout) no Supabase Storage. A resposta retorna HTML em vez de JSON, gerando o erro "Unexpected token '<'".
+
+## Solucao
+Adicionar tratamento de erros robusto e um mecanismo de retry com delay entre uploads para evitar sobrecarregar a API.
 
 ## Alteracoes
 
 ### Arquivo: `src/pages/marketing/MidiasMinimalista.tsx`
 
-**Substituir a secao "File list" (linhas 381-420):**
+1. **Adicionar funcao auxiliar de delay** entre uploads para evitar rate limiting:
+   - `await new Promise(r => setTimeout(r, 500))` entre cada upload
 
-- Trocar o layout de lista (`grid gap-2`) por um grid responsivo com cards de 100x100px
-- Cada card tera:
-  - Thumbnail da imagem (usando `getPublicUrl` do Supabase) ou icone generico para nao-imagens
-  - Nome do arquivo truncado na parte inferior
-  - Ao passar o mouse (hover), exibir botoes de acao (preview, copiar URL, excluir) como overlay
-  - Se "Todas as categorias" estiver selecionado, mostrar o nome do bucket como badge pequeno
+2. **Adicionar retry com backoff** para cada arquivo:
+   - Tentar ate 3 vezes com delay crescente (1s, 2s, 4s)
+   - Capturar erros de rede/502 e tentar novamente
 
-**Layout do grid:**
+3. **Tratar respostas HTML (502/503)** no catch:
+   - Envolver o upload em try/catch para capturar o erro de parse JSON
+   - Exibir mensagem amigavel ao usuario quando ocorrer timeout
+
+### Detalhes tecnicos
+
+A funcao `handleUploadFiles` sera refatorada para:
+
 ```text
-grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3
+para cada arquivo:
+  tentativas = 0
+  enquanto tentativas < 3:
+    try:
+      upload do arquivo
+      se sucesso: break
+      se erro do supabase: registrar erro, break
+    catch (erro de rede/parse):
+      tentativas++
+      aguardar (tentativas * 1500)ms
+  aguardar 300ms antes do proximo arquivo
 ```
 
-**Estrutura de cada card (100x100px):**
-```text
-+-------------------+
-|                   |
-|   thumbnail/icon  |  <-- object-cover, rounded
-|                   |
-|   [hover overlay] |  <-- botoes de acao
-+-------------------+
-| nome-arquivo.jpg  |  <-- truncado, text-xs
-+-------------------+
-```
-
-- Para imagens: usar `supabase.storage.from(file.bucket).getPublicUrl(file.name)` como src da tag `<img>`
-- Para nao-imagens: exibir o icone `FileIcon` centralizado
-- Overlay no hover com fundo semi-transparente contendo os 3 botoes (Eye, Copy, Trash2)
+Isso resolve tanto o problema de rate limiting quanto o crash causado pela resposta HTML inesperada.
