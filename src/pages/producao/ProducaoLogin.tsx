@@ -62,7 +62,7 @@ export default function ProducaoLogin() {
 
       // Autenticar com o email real do usuário
       const email = setupData.email;
-      const password = 'Producao@2024';
+      const password = setupData.password;
       
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,

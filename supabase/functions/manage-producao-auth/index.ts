@@ -1,6 +1,13 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3'
 import { corsHeaders } from '../_shared/cors.ts'
 
+function gerarSenhaPorNome(nome: string): string {
+  const normalizado = nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+  const partes = normalizado.split(/\s+/).filter(Boolean)
+  if (partes.length < 2) return partes[0] || 'usuario'
+  return partes[0][0] + partes[partes.length - 1]
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -161,7 +168,7 @@ Deno.serve(async (req) => {
     }
 
     const email = adminUser.email.trim()
-    const password = 'Producao@2024'
+    const password = gerarSenhaPorNome(adminUser.nome)
 
     console.log('[AUDIT] Configurando autenticação para:', email, '- Setor:', adminUser.setor, '- Role:', adminUser.role)
 
@@ -237,6 +244,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true,
         email: email,
+        password: password,
         message: 'Autenticação configurada com sucesso',
         user: {
           id: adminUser.id,
