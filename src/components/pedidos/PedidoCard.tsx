@@ -1058,48 +1058,15 @@ export function PedidoCard({
         p.id === 'verificar_carregamento' ? { ...p, status: 'in_progress' as const } : p
       ));
       
-      // Verificar carregamento em todas as fontes possíveis
-      let carregamentoConcluido = false;
+      // Consultar TODAS as fontes em paralelo
+      const [ordensRes, instRes, corrRes] = await Promise.all([
+        supabase.from('ordens_carregamento').select('carregamento_concluido').eq('pedido_id', pedido.id).order('created_at', { ascending: false }).limit(1),
+        supabase.from('instalacoes').select('carregamento_concluido').eq('pedido_id', pedido.id).order('created_at', { ascending: false }).limit(1),
+        supabase.from('correcoes').select('carregamento_concluido').eq('pedido_id', pedido.id).order('created_at', { ascending: false }).limit(1),
+      ]);
 
-      // 1. Consultar ordens_carregamento
-      const { data: ordensCarreg } = await supabase
-        .from('ordens_carregamento')
-        .select('carregamento_concluido')
-        .eq('pedido_id', pedido.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      if (ordensCarreg?.[0]?.carregamento_concluido) {
-        carregamentoConcluido = true;
-      }
-
-      // 2. Se não encontrou, consultar instalacoes
-      if (!carregamentoConcluido) {
-        const { data: instData } = await supabase
-          .from('instalacoes')
-          .select('carregamento_concluido')
-          .eq('pedido_id', pedido.id)
-          .order('created_at', { ascending: false })
-          .limit(1);
-        
-        if (instData?.[0]?.carregamento_concluido) {
-          carregamentoConcluido = true;
-        }
-      }
-
-      // 3. Se não encontrou, consultar correcoes
-      if (!carregamentoConcluido) {
-        const { data: corrData } = await supabase
-          .from('correcoes')
-          .select('carregamento_concluido')
-          .eq('pedido_id', pedido.id)
-          .order('created_at', { ascending: false })
-          .limit(1);
-        
-        if (corrData?.[0]?.carregamento_concluido) {
-          carregamentoConcluido = true;
-        }
-      }
+      const todasFontes = [ordensRes.data?.[0], instRes.data?.[0], corrRes.data?.[0]].filter(Boolean);
+      const carregamentoConcluido = todasFontes.some(f => f.carregamento_concluido);
 
       if (!carregamentoConcluido) {
         setProcessos(prev => prev.map(p => 
