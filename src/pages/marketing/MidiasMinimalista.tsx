@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Upload, Trash2, Copy, Loader2, FileIcon, ImageIcon, Eye, X } from 'lucide-react';
+import { Upload, Trash2, Copy, Loader2, FileIcon, ImageIcon, Eye, X, Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -15,7 +16,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 
-const BUCKETS = [
+const DEFAULT_BUCKETS = [
   'autorizados-logos', 'catalogo-produtos', 'chamados-suporte-anexos',
   'comprovantes-pagamento', 'contas-pagar', 'contratos-autorizados',
   'contratos-vendas', 'documentos-publicos', 'fichas-visita-tecnica',
@@ -52,6 +53,7 @@ interface StorageFileWithBucket extends StorageFile {
 export default function MidiasMinimalista() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [buckets, setBuckets] = useState(DEFAULT_BUCKETS);
   const [bucket, setBucket] = useState(ALL_CATEGORIES);
   const [files, setFiles] = useState<StorageFileWithBucket[]>([]);
   const [loading, setLoading] = useState(false);
@@ -60,17 +62,50 @@ export default function MidiasMinimalista() {
 
   // Upload modal state
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [uploadBucket, setUploadBucket] = useState(BUCKETS[0]);
+  const [uploadBucket, setUploadBucket] = useState(DEFAULT_BUCKETS[0]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadTotal, setUploadTotal] = useState(0);
 
+  // New category state
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [creatingCategory, setCreatingCategory] = useState(false);
+
+  // Fetch available buckets
+  useEffect(() => {
+    const fetchBuckets = async () => {
+      const { data } = await supabase.storage.listBuckets();
+      if (data && data.length > 0) {
+        setBuckets(data.map(b => b.name).sort());
+      }
+    };
+    fetchBuckets();
+  }, []);
+
+  const handleCreateCategory = async () => {
+    const name = newCategoryName.trim().toLowerCase().replace(/\s+/g, '-');
+    if (!name) return;
+    setCreatingCategory(true);
+    const { error } = await supabase.storage.createBucket(name, { public: true });
+    if (error) {
+      toast({ title: 'Erro ao criar categoria', description: error.message, variant: 'destructive' });
+    } else {
+      setBuckets(prev => [...prev, name].sort());
+      setUploadBucket(name);
+      setNewCategoryName('');
+      setShowNewCategory(false);
+      toast({ title: 'Categoria criada', description: name });
+    }
+    setCreatingCategory(false);
+  };
+
   const fetchFiles = async () => {
     setLoading(true);
     if (bucket === ALL_CATEGORIES) {
       const results = await Promise.allSettled(
-        BUCKETS.map(async (b) => {
+        buckets.map(async (b) => {
           const { data } = await supabase.storage.from(b).list('', {
             limit: 200,
             sortBy: { column: 'created_at', order: 'desc' },
@@ -107,7 +142,7 @@ export default function MidiasMinimalista() {
   useEffect(() => {
     fetchFiles();
     setPreviewUrl(null);
-  }, [bucket]);
+  }, [bucket, buckets]);
 
   const handleUploadFiles = async () => {
     if (selectedFiles.length === 0) return;
@@ -186,7 +221,7 @@ export default function MidiasMinimalista() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL_CATEGORIES}>Todas as categorias</SelectItem>
-              {BUCKETS.map(b => (
+              {buckets.map(b => (
                 <SelectItem key={b} value={b}>{b}</SelectItem>
               ))}
             </SelectContent>
@@ -234,16 +269,47 @@ export default function MidiasMinimalista() {
           <div className="space-y-4">
             <div>
               <label className="text-xs text-white/60 mb-1 block">Categoria de destino</label>
-              <Select value={uploadBucket} onValueChange={setUploadBucket} disabled={uploading}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {BUCKETS.map(b => (
-                    <SelectItem key={b} value={b}>{b}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                <Select value={uploadBucket} onValueChange={setUploadBucket} disabled={uploading}>
+                  <SelectTrigger className="bg-white/5 border-white/10 text-white text-xs flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {buckets.map(b => (
+                      <SelectItem key={b} value={b}>{b}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={uploading}
+                  onClick={() => setShowNewCategory(!showNewCategory)}
+                  className="border-white/10 text-white/60 hover:text-white hover:bg-white/5 shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              {showNewCategory && (
+                <div className="flex items-center gap-2 mt-2">
+                  <Input
+                    placeholder="nome-da-categoria"
+                    value={newCategoryName}
+                    onChange={e => setNewCategoryName(e.target.value)}
+                    className="bg-white/5 border-white/10 text-white text-xs h-8"
+                    disabled={creatingCategory}
+                    onKeyDown={e => e.key === 'Enter' && handleCreateCategory()}
+                  />
+                  <Button
+                    size="sm"
+                    disabled={creatingCategory || !newCategoryName.trim()}
+                    onClick={handleCreateCategory}
+                    className="bg-blue-600 hover:bg-blue-500 text-white text-xs h-8 shrink-0"
+                  >
+                    {creatingCategory ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Criar'}
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div>
