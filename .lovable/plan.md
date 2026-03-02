@@ -1,48 +1,25 @@
 
 
-# Corrigir dupla contagem no "Total Geral" e "Valor a Receber"
+# Adicionar linha de Credito/Desconto na tabela de produtos do faturamento
 
 ## Problema
+A tabela de produtos na pagina de faturamento administrativo exibe linhas de Instalacao e Frete, mas nao mostra o valor de credito/desconto (`valor_credito`) da venda, mesmo ele sendo parte do valor total.
 
-Dois campos na pagina de faturamento administrativo (`FaturamentoVendaMinimalista.tsx`) estao com dupla contagem:
-
-### 1. Total Geral (linha 825-830)
-Formula atual:
-```
-SUM(produto.valor_total) + valorInstalacao + valor_frete
-```
-Como cada `produto.valor_total` ja inclui o valor de instalacao do produto, somar `valorInstalacao` novamente causa dupla contagem. O correto e:
-```
-SUM(produto.valor_total) + valor_frete
-```
-
-### 2. Valor a Receber (linha 926)
-Formula atual:
-```
-valor_a_receber + valor_frete
-```
-O `valor_a_receber` e informado pelo usuario com base no valor total da venda (que ja inclui frete). Somar o frete novamente causa dupla contagem. O correto e:
-```
-valor_a_receber
-```
-
-## Alteracoes
+## Solucao
 
 ### Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-**Linha 826-830** - Remover `valorInstalacao` do Total Geral:
-```typescript
-// De:
-(produtos?.reduce(...) || 0) + (valorInstalacao || 0) + (venda.valor_frete || 0)
-// Para:
-(produtos?.reduce(...) || 0) + (venda.valor_frete || 0)
-```
+Adicionar uma nova linha na tabela de produtos, entre a linha do "Frete" e a linha do "Total Geral", exibindo o valor de credito/desconto da venda. A linha so sera renderizada quando `valor_credito > 0`.
 
-**Linha 926** - Remover `valor_frete` do Valor a Receber:
-```typescript
-// De:
-formatCurrency((venda.valor_a_receber || 0) + (venda.valor_frete || 0))
-// Para:
-formatCurrency(venda.valor_a_receber || 0)
-```
+**Detalhes da implementacao:**
 
+1. **Nova linha condicional (apos linha 818):** Inserir uma `TableRow` com estilo similar ao do Frete (`bg-white/5`), exibindo:
+   - Coluna label: "Credito / Acrescimo"
+   - Coluna valor: `formatCurrency(venda.valor_credito)`
+   - Informacao auxiliar: "Apenas visualizacao"
+
+2. **Atualizar o calculo do Total Geral (linha 827):** Incluir `valor_credito` na soma para que o total reflita corretamente:
+   - De: `SUM(valor_total) + valor_frete`
+   - Para: `SUM(valor_total) + valor_frete + valor_credito`
+
+Isso garante que o "Total Geral" da tabela bata com o "Valor Total" exibido nos cards superiores.
