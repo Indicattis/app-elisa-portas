@@ -378,45 +378,61 @@ export default function MidiasMinimalista() {
       ) : files.length === 0 ? (
         <div className="text-center py-20 text-white/40 text-sm">Nenhum arquivo neste bucket</div>
       ) : (
-        <div className="grid gap-2">
-          {files.map((file, idx) => (
-            <div
-              key={`${file.bucket}-${file.id || file.name}-${idx}`}
-              className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10"
-            >
-              <div className="flex items-center gap-3 px-4 py-2 rounded-lg">
-                {isImage(file.name) ? (
-                  <ImageIcon className="w-5 h-5 text-blue-400 shrink-0" strokeWidth={1.5} />
-                ) : (
-                  <FileIcon className="w-5 h-5 text-white/40 shrink-0" strokeWidth={1.5} />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">{file.name}</p>
-                  <p className="text-xs text-white/40">
-                    {bucket === ALL_CATEGORIES && (
-                      <span className="text-blue-400/80 mr-1">{file.bucket}</span>
-                    )}
-                    {file.metadata?.size ? formatBytes(file.metadata.size) : '—'}
-                    {' · '}
-                    {file.created_at ? format(new Date(file.created_at), 'dd/MM/yyyy HH:mm') : '—'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  {isImage(file.name) && (
-                    <Button variant="ghost" size="icon" onClick={() => openPreview(file)} className="text-white/60 hover:text-white">
-                      <Eye className="w-4 h-4" />
-                    </Button>
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+          {files.map((file, idx) => {
+            const fileBucket = file.bucket || bucket;
+            const imageUrl = isImage(file.name)
+              ? supabase.storage.from(fileBucket).getPublicUrl(file.name).data.publicUrl
+              : null;
+
+            return (
+              <div
+                key={`${file.bucket}-${file.id || file.name}-${idx}`}
+                className="group relative flex flex-col items-center"
+              >
+                {/* Thumbnail card */}
+                <div className="relative w-[100px] h-[100px] rounded-lg bg-white/5 backdrop-blur-xl border border-white/10 overflow-hidden flex items-center justify-center">
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt={file.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <FileIcon className="w-8 h-8 text-white/30" strokeWidth={1.5} />
                   )}
-                  <Button variant="ghost" size="icon" onClick={() => copyPublicUrl(file)} className="text-white/60 hover:text-white">
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(file)} className="text-red-400/60 hover:text-red-400">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                    {isImage(file.name) && (
+                      <Button variant="ghost" size="icon" onClick={() => openPreview(file)} className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20">
+                        <Eye className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="icon" onClick={() => copyPublicUrl(file)} className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20">
+                      <Copy className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(file)} className="h-7 w-7 text-red-400/80 hover:text-red-400 hover:bg-white/20">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+
+                  {/* Bucket badge */}
+                  {bucket === ALL_CATEGORIES && (
+                    <span className="absolute top-1 left-1 text-[9px] bg-blue-500/70 text-white px-1 rounded truncate max-w-[90px]">
+                      {file.bucket}
+                    </span>
+                  )}
                 </div>
+
+                {/* File name */}
+                <p className="text-[10px] text-white/60 mt-1 w-[100px] text-center truncate" title={file.name}>
+                  {file.name}
+                </p>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </MinimalistLayout>
