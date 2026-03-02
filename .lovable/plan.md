@@ -1,35 +1,25 @@
 
-# Corrigir discrepancia de "Valor Total" entre paginas
+
+# Incluir valor_instalacao na coluna "Valor" da lista de vendas da direcao
 
 ## Problema
-A pagina `/direcao/vendas/:id` exibe "Valor Total" como `valor_venda + valor_credito` = R$ 21.750,00, enquanto a pagina `/administrativo/financeiro/faturamento/:id` exibe "Valor Total" como `valor_venda + valor_credito + valor_instalacao` = R$ 26.350,00.
-
-A diferenca de R$ 4.600,00 corresponde ao valor de instalacao, que so e somado no faturamento.
-
-## Causa raiz
-No arquivo `src/pages/direcao/VendaDetalhesDirecao.tsx` (linha 277), a formula do "Valor Total" nao inclui `valor_instalacao`:
-```
-valor_venda + valor_credito
-```
-
-No arquivo `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` (linha 570), a formula esta completa:
-```
-valor_venda + valor_credito + valor_instalacao
-```
+Na pagina `/direcao/vendas`, a coluna "Valor" exibe apenas `valor_venda + valor_credito`, sem incluir `valor_instalacao`. Isso causa inconsistencia com a pagina de detalhes (que acabamos de corrigir) e com o faturamento.
 
 ## Solucao
 
-### Arquivo: `src/pages/direcao/VendaDetalhesDirecao.tsx`
+### Arquivo: `src/pages/direcao/FaturamentoDirecao.tsx`
 
-**Linha 277:** Adicionar `valor_instalacao` ao calculo do "Valor Total" para manter consistencia com o faturamento:
+Tres pontos precisam ser atualizados para incluir `valor_instalacao`:
 
-De:
-```
-(venda.valor_venda || 0) + (venda.valor_credito || 0)
-```
-Para:
-```
-(venda.valor_venda || 0) + (venda.valor_credito || 0) + (venda.valor_instalacao || 0)
-```
+1. **Linha 392 (ordenacao por valor):** Adicionar `valor_instalacao` ao calculo de ordenacao
+   - De: `(venda.valor_venda || 0) + (venda.valor_credito || 0)`
+   - Para: `(venda.valor_venda || 0) + (venda.valor_credito || 0) + (venda.valor_instalacao || 0)`
 
-Isso alinha ambas as paginas com a regra de negocio documentada: `valor_venda + valor_instalacao + valor_credito`. A pagina da direcao ja exibe a instalacao separadamente em seu proprio card (linha 293), mas o totalizador precisa refletir o valor completo.
+2. **Linha 796 (exibicao da coluna "Valor"):** Adicionar `valor_instalacao` ao valor exibido
+   - De: `(venda.valor_venda || 0) + (venda.valor_credito || 0)`
+   - Para: `(venda.valor_venda || 0) + (venda.valor_credito || 0) + (venda.valor_instalacao || 0)`
+
+3. **Linhas 449 e 493 (indicadores/totalizadores):** Adicionar `valor_instalacao` aos calculos de faturamento total
+   - De: `(v.valor_venda || 0) + (v.valor_credito || 0) - (v.valor_frete || 0)`
+   - Para: `(v.valor_venda || 0) + (v.valor_credito || 0) + (v.valor_instalacao || 0) - (v.valor_frete || 0)`
+
