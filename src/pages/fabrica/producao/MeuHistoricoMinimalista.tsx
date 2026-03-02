@@ -165,10 +165,26 @@ export default function MeuHistoricoMinimalista() {
                         {SETOR_LABELS[ordem.setor]}
                       </Badge>
                     </div>
-                    {ordem.cliente_nome && (
-                      <p className="text-sm text-white/60 truncate mt-1">
-                        {ordem.cliente_nome}
-                      </p>
+                    {(ordem.cliente_nome || (ordem.cores && ordem.cores.length > 0)) && (
+                      <div className="flex items-center gap-2 mt-1">
+                        {ordem.cliente_nome && (
+                          <p className="text-sm text-white/60 truncate">
+                            {ordem.cliente_nome}
+                          </p>
+                        )}
+                        {ordem.cores && ordem.cores.length > 0 && (
+                          <div className="flex items-center gap-1">
+                            {ordem.cores.map((cor) => (
+                              <div
+                                key={cor.nome}
+                                className="h-4 w-4 rounded-full border border-white/20 shrink-0"
+                                style={{ backgroundColor: cor.codigo_hex }}
+                                title={cor.nome}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                   <div className="text-right text-sm shrink-0">
