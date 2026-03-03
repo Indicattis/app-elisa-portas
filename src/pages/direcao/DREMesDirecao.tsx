@@ -383,7 +383,7 @@ export default function DREMesDirecao() {
     { key: 'pintura', label: 'Pintura' },
     { key: 'instalacoes', label: 'Instalações' },
     { key: 'acessorios', label: 'Acessórios' },
-    { key: 'adicionais', label: 'Adicionais' },
+    { key: 'adicionais', label: 'Itens Avulso' },
     { key: 'total', label: 'Total' },
   ] as const;
 
