@@ -1,22 +1,29 @@
 
-# Adicionar seção de Valor de Estoque abaixo das Despesas Projetadas
+
+# Unificar Despesas Projetadas com Variáveis Não Esperadas
 
 ## O que será feito
 
-Adicionar uma pequena seção no painel lateral direito, logo abaixo de "Despesas Projetadas do Ano", mostrando o valor total do estoque (quantidade × custo_unitário) e o total de itens. Os dados serão buscados da tabela `estoque` com uma nova query no `useEffect`/`fetchData`.
+1. **Remover** a seção "Despesas Projetadas" da coluna esquerda (linhas 520-528)
+2. **Combinar** as despesas projetadas (`despesasProjetadas`) com as não esperadas (`despesasNaoEsperadas`) na seção que passará a se chamar **"Despesas Variáveis"**
+3. **Atualizar o resumo final** para unificar os dois totais numa única linha "Desp. Variáveis"
 
 ## Alterações em `DREMesDirecao.tsx`
 
-### 1. Novo estado
-```typescript
-const [estoqueResumo, setEstoqueResumo] = useState({ valorTotal: 0, totalItens: 0 });
-```
+### 1. Seção de despesas (linhas 520-537)
+- Remover o bloco `<DespesaSection title="Despesas Projetadas" ...>`
+- Renomear "Despesas Variáveis Não Esperadas" para **"Despesas Variáveis"**
+- Combinar as duas listas: `[...despesasProjetadas, ...despesasNaoEsperadas]`
+- O total passa a ser `totalDespProjetadas + totalDespNaoEsperadas`
+- Ao adicionar nova despesa, manter modalidade `variavel_nao_esperada`
 
-### 2. Buscar dados no `fetchData`
-Adicionar query à tabela `estoque` (ativo=true), selecionar `quantidade, custo_unitario`, calcular o valor total e total de itens.
+### 2. Resumo final (linhas 611-612)
+- Remover a linha separada de "Desp. Projetadas"
+- Renomear "Desp. Variável (Não esperadas)" para **"Desp. Variáveis"** com valor = `totalDespProjetadas + totalDespNaoEsperadas`
 
-### 3. Nova seção no painel lateral (após linha 566, antes do fechamento da div)
-Renderizar um bloco com título "Estoque" e duas linhas: Total de Itens e Valor Total, no mesmo estilo visual do painel existente (bg-white/5, border-white/10).
+### 3. Painel lateral (linhas 541-579)
+- Mantém inalterado — continua mostrando "Despesas Projetadas do Ano" com os valores mensais e anuais
 
-## Arquivo alterado
+### Arquivo alterado
 - `src/pages/direcao/DREMesDirecao.tsx`
+
