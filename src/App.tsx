@@ -229,6 +229,8 @@ import PedidoViewDirecao from "./pages/direcao/PedidoViewDirecao";
 // DRE da Direção
 import DREDirecao from "./pages/direcao/DREDirecao";
 import DREMesDirecao from "./pages/direcao/DREMesDirecao";
+import DREDespesasDirecao from "./pages/direcao/DREDespesasDirecao";
+import DRECustosDirecao from "./pages/direcao/DRECustosDirecao";
 
 // Hub de Estoque da Direção
 import DirecaoEstoqueHub from "./pages/direcao/estoque/DirecaoEstoqueHub";
@@ -500,6 +502,8 @@ const App = () => (
 
                 {/* DRE da Direção */}
                 <Route path="/direcao/dre" element={<ProtectedRoute routeKey="direcao_hub"><DREDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/dre/despesas" element={<ProtectedRoute routeKey="direcao_hub"><DREDespesasDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/dre/custos" element={<ProtectedRoute routeKey="direcao_hub"><DRECustosDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/dre/:mes" element={<ProtectedRoute routeKey="direcao_hub"><DREMesDirecao /></ProtectedRoute>} />
 
                 {/* Hub de Aprovações da Direção */}

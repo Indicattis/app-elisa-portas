@@ -78,27 +78,48 @@ export default function DREDirecao() {
           <Loader2 className="w-6 h-6 animate-spin text-white/40" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {faturamentos.map((item) => {
-            const mesDate = new Date(anoAtual, item.mes, 1);
-            const mesKey = format(mesDate, 'yyyy-MM');
-            const mesNome = format(mesDate, 'MMMM', { locale: ptBR });
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {faturamentos.map((item) => {
+              const mesDate = new Date(anoAtual, item.mes, 1);
+              const mesKey = format(mesDate, 'yyyy-MM');
+              const mesNome = format(mesDate, 'MMMM', { locale: ptBR });
 
-            return (
-              <button
-                key={item.mes}
-                onClick={() => navigate(`/direcao/dre/${mesKey}`)}
-                className="p-5 rounded-xl bg-white/5 border border-white/10 text-left
-                           hover:bg-white/10 transition-all duration-200 group"
-              >
-                <p className="text-sm text-white/50 capitalize mb-1">{mesNome}</p>
-                <p className={`text-lg font-semibold ${item.valor > 0 ? 'text-white' : 'text-white/30'}`}>
-                  {formatCurrency(item.valor)}
-                </p>
-              </button>
-            );
-          })}
-        </div>
+              return (
+                <button
+                  key={item.mes}
+                  onClick={() => navigate(`/direcao/dre/${mesKey}`)}
+                  className="p-5 rounded-xl bg-white/5 border border-white/10 text-left
+                             hover:bg-white/10 transition-all duration-200 group"
+                >
+                  <p className="text-sm text-white/50 capitalize mb-1">{mesNome}</p>
+                  <p className={`text-lg font-semibold ${item.valor > 0 ? 'text-white' : 'text-white/30'}`}>
+                    {formatCurrency(item.valor)}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex gap-4 mt-6">
+            <button
+              onClick={() => navigate('/direcao/dre/despesas')}
+              className="flex-1 p-4 rounded-xl bg-white/5 border border-white/10 text-left
+                         hover:bg-white/10 transition-all duration-200"
+            >
+              <p className="text-sm text-white/50 mb-1">Configuração</p>
+              <p className="text-lg font-semibold text-white">Despesas</p>
+            </button>
+            <button
+              onClick={() => navigate('/direcao/dre/custos')}
+              className="flex-1 p-4 rounded-xl bg-white/5 border border-white/10 text-left
+                         hover:bg-white/10 transition-all duration-200"
+            >
+              <p className="text-sm text-white/50 mb-1">Configuração</p>
+              <p className="text-lg font-semibold text-white">Custos</p>
+            </button>
+          </div>
+        </>
       )}
     </MinimalistLayout>
   );
