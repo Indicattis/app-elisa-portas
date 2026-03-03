@@ -532,17 +532,32 @@ export default function DREMesDirecao() {
                 <p className="text-white/30 text-sm">Nenhum tipo de custo variável cadastrado</p>
               ) : (
                 <div className="space-y-2">
-                  {tiposCustosVariaveis.map(t => (
-                    <div key={t.id} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
-                      <span className="text-sm text-white/60">{t.nome}</span>
-                      <span className="text-sm font-medium text-white">
-                        {formatCurrency(t.valor_maximo_mensal * 12)}
-                      </span>
-                    </div>
-                  ))}
+                  <div className="flex items-center justify-between pb-1 border-b border-white/10">
+                    <span className="text-xs text-white/40 uppercase flex-1">Nome</span>
+                    <span className="text-xs text-white/40 uppercase w-24 text-right">Mês</span>
+                    <span className="text-xs text-white/40 uppercase w-24 text-right">Anual</span>
+                  </div>
+                  {tiposCustosVariaveis.map(t => {
+                    const despMes = despesasProjetadas.find(d => d.nome === t.nome);
+                    const valorMes = despMes?.valor_real || 0;
+                    return (
+                      <div key={t.id} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
+                        <span className="text-sm text-white/60 flex-1">{t.nome}</span>
+                        <span className="text-sm font-medium text-white/70 w-24 text-right">
+                          {formatCurrency(valorMes)}
+                        </span>
+                        <span className="text-sm font-medium text-white w-24 text-right">
+                          {formatCurrency(t.valor_maximo_mensal * 12)}
+                        </span>
+                      </div>
+                    );
+                  })}
                   <div className="flex items-center justify-between pt-2 border-t border-white/10">
-                    <span className="text-sm font-semibold text-white/80">Total Anual</span>
-                    <span className="text-sm font-bold text-white">
+                    <span className="text-sm font-semibold text-white/80 flex-1">Total</span>
+                    <span className="text-sm font-bold text-white/70 w-24 text-right">
+                      {formatCurrency(totalDespProjetadas)}
+                    </span>
+                    <span className="text-sm font-bold text-white w-24 text-right">
                       {formatCurrency(totalProjetadoAnual)}
                     </span>
                   </div>
