@@ -1,28 +1,32 @@
 
 
-# Unificar Despesas Projetadas com Variáveis Não Esperadas
+# Corrigir margem de lucro de instalações no DRE
 
-## O que será feito
+## Problema
 
-1. **Remover** a seção "Despesas Projetadas" da coluna esquerda (linhas 520-528)
-2. **Combinar** as despesas projetadas (`despesasProjetadas`) com as não esperadas (`despesasNaoEsperadas`) na seção que passará a se chamar **"Despesas Variáveis"**
-3. **Atualizar o resumo final** para unificar os dois totais numa única linha "Desp. Variáveis"
+As vendas com instalação que ainda não foram faturadas têm `lucro_instalacao = null` no banco. O DRE lê esse valor diretamente, resultando em lucro 0 e margem 0% para instalações — quando deveria ser 30%.
 
-## Alterações em `DREMesDirecao.tsx`
+## Solução
 
-### 1. Seção de despesas (linhas 520-537)
-- Remover o bloco `<DespesaSection title="Despesas Projetadas" ...>`
-- Renomear "Despesas Variáveis Não Esperadas" para **"Despesas Variáveis"**
-- Combinar as duas listas: `[...despesasProjetadas, ...despesasNaoEsperadas]`
-- O total passa a ser `totalDespProjetadas + totalDespNaoEsperadas`
-- Ao adicionar nova despesa, manter modalidade `variavel_nao_esperada`
+No `DREMesDirecao.tsx`, ao calcular `totalLucroInstalacao`, aplicar a regra de negócio: se `lucro_instalacao` for null/0 mas `valor_instalacao > 0`, usar `valor_instalacao * 0.30` como lucro.
 
-### 2. Resumo final (linhas 611-612)
-- Remover a linha separada de "Desp. Projetadas"
-- Renomear "Desp. Variável (Não esperadas)" para **"Desp. Variáveis"** com valor = `totalDespProjetadas + totalDespNaoEsperadas`
+### Alteração (~linha 318)
 
-### 3. Painel lateral (linhas 541-579)
-- Mantém inalterado — continua mostrando "Despesas Projetadas do Ano" com os valores mensais e anuais
+**De:**
+```typescript
+const totalLucroInstalacao = vendas?.reduce((sum, v) => sum + ((v as any).lucro_instalacao || 0), 0) || 0;
+```
+
+**Para:**
+```typescript
+const totalLucroInstalacao = vendas?.reduce((sum, v) => {
+  const valorInst = (v as any).valor_instalacao || 0;
+  const lucroInst = (v as any).lucro_instalacao;
+  return sum + (lucroInst != null && lucroInst > 0 ? lucroInst : valorInst * 0.30);
+}, 0) || 0;
+```
+
+Isso garante que vendas já faturadas usem o valor real do banco, e vendas não faturadas apliquem a margem padrão de 30%.
 
 ### Arquivo alterado
 - `src/pages/direcao/DREMesDirecao.tsx`
