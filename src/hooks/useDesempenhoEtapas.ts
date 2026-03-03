@@ -14,23 +14,14 @@ export interface DesempenhoColaborador {
   carregamentos: number;
 }
 
-interface PontuacaoRow {
-  user_id: string;
-  tipo_ranking: string | null;
-  metragem_linear: number | null;
-  porta_soldada: string | null;
-  pedido_separado: number | null;
-  metragem_quadrada_pintada: number | null;
-  user: { nome: string; foto_perfil_url: string | null } | null;
-}
-
 export function useDesempenhoEtapas(dataInicio: string, dataFim: string) {
   return useQuery({
     queryKey: ["desempenho-etapas", dataInicio, dataFim],
     queryFn: async (): Promise<DesempenhoColaborador[]> => {
-      const { data, error } = await supabase
+      // Buscar pontuações no período
+      const { data: pontuacoes, error } = await supabase
         .from("pontuacao_colaboradores")
-        .select("user_id, tipo_ranking, metragem_linear, porta_soldada, pedido_separado, metragem_quadrada_pintada, user:admin_users!user_id(nome, foto_perfil_url)")
+        .select("user_id, tipo_ranking, metragem_linear, porta_soldada, pedido_separado, metragem_quadrada_pintada")
         .gte("created_at", `${dataInicio}T00:00:00`)
         .lte("created_at", `${dataFim}T23:59:59`);
 
@@ -39,21 +30,18 @@ export function useDesempenhoEtapas(dataInicio: string, dataFim: string) {
         return [];
       }
 
-      if (!data || data.length === 0) return [];
-
-      const rows = data as unknown as PontuacaoRow[];
+      if (!pontuacoes || pontuacoes.length === 0) return [];
 
       // Agrupar por user_id
       const map = new Map<string, DesempenhoColaborador>();
 
-      for (const row of rows) {
+      for (const row of pontuacoes) {
         let entry = map.get(row.user_id);
         if (!entry) {
-          const user = row.user;
           entry = {
             user_id: row.user_id,
-            nome: user?.nome || "",
-            foto_perfil_url: user?.foto_perfil_url || null,
+            nome: "",
+            foto_perfil_url: null,
             perfiladas_metros: 0,
             soldadas: 0,
             soldadas_p: 0,
@@ -80,6 +68,23 @@ export function useDesempenhoEtapas(dataInicio: string, dataFim: string) {
           case "pintura":
             entry.pintura_m2 += Number(row.metragem_quadrada_pintada) || 0;
             break;
+        }
+      }
+
+      // Buscar nomes e fotos dos colaboradores
+      const userIds = Array.from(map.keys());
+      const { data: usuarios } = await supabase
+        .from("admin_users")
+        .select("user_id, nome, foto_perfil_url")
+        .in("user_id", userIds);
+
+      if (usuarios) {
+        for (const u of usuarios) {
+          const entry = map.get(u.user_id);
+          if (entry) {
+            entry.nome = u.nome;
+            entry.foto_perfil_url = u.foto_perfil_url;
+          }
         }
       }
 
