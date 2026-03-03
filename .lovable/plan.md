@@ -1,29 +1,44 @@
 
-# Adicionar tag de % margem em cada coluna da tabela de Faturamento/Lucro
+
+# Tooltip com Top 5 mais vendidos em Acessórios e Adicionais
 
 ## O que será feito
 
-Na primeira seção (tabela com Faturamento e Lucro), adicionar uma terceira linha "Margem %" que mostra a porcentagem de margem de cada coluna: `(lucro / faturamento) * 100`.
+Nos headers "Acessórios" e "Adicionais" da tabela de Faturamento/Lucro, ao passar o mouse aparecerá um tooltip com os 5 itens mais vendidos (por quantidade) no mês, mostrando nome e quantidade.
 
-Alternativamente, adicionar a porcentagem como uma tag/badge inline na própria linha de Lucro, ao lado do valor.
+## Alterações em `DREMesDirecao.tsx`
 
-## Alteração em `DREMesDirecao.tsx`
+### 1. Buscar dados de ranking no `useEffect`
 
-Na tabela de faturamento/lucro (linhas 387-412), adicionar uma nova linha `<tr>` após a linha de Lucro:
+Dentro do `fetchData`, após processar os produtos, agrupar os itens de tipo `acessorio` e `adicional`/`manutencao` por `descricao` (ou buscar nome via `acessorio_id`/`adicional_id`), somar quantidades, ordenar e guardar os top 5 de cada em dois novos estados:
 
-```
-<tr>
-  <td>Margem %</td>
-  {columns.map(col => {
-    const perc = faturamento[col.key] > 0 
-      ? (lucro[col.key] / faturamento[col.key]) * 100 
-      : 0;
-    return <td>{perc.toFixed(1)}%</td>;
-  })}
-</tr>
+```typescript
+const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
+const [topAdicionais, setTopAdicionais] = useState<{nome: string, qtd: number}[]>([]);
 ```
 
-Cada célula exibirá a porcentagem com 1 casa decimal, cor condicional (verde para positivo, vermelho para negativo), e uma tag/badge estilizada com `rounded-full bg-white/10 px-2 py-0.5 text-xs`.
+A query de `produtos_vendas` precisa incluir `descricao, quantidade, acessorio_id, adicional_id` além dos campos já buscados. Com esses dados, agrupar por nome/descrição e pegar os 5 maiores.
 
-## Arquivo alterado
-- `src/pages/direcao/DREMesDirecao.tsx` (linhas ~399-412, adicionar `<tr>` após linha de Lucro)
+### 2. Tooltip nos headers da tabela
+
+Importar `Tooltip, TooltipTrigger, TooltipContent, TooltipProvider` de `@/components/ui/tooltip`. No `columns.map` do `<thead>`, para as colunas `acessorios` e `adicionais`, envolver o label com um `Tooltip` que mostra a listinha:
+
+```tsx
+<TooltipProvider>
+  <Tooltip>
+    <TooltipTrigger className="cursor-default">
+      {col.label}
+    </TooltipTrigger>
+    <TooltipContent>
+      <p className="font-semibold mb-1">Top 5 mais vendidos</p>
+      {topList.map((item, i) => (
+        <p key={i} className="text-xs">{i+1}. {item.nome} ({item.qtd})</p>
+      ))}
+    </TooltipContent>
+  </Tooltip>
+</TooltipProvider>
+```
+
+### 3. Arquivos alterados
+- `src/pages/direcao/DREMesDirecao.tsx` — adicionar estados, expandir query, adicionar tooltips nos headers
+
