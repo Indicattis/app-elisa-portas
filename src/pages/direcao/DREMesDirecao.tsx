@@ -6,6 +6,7 @@ import { Loader2, Plus, Trash2, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { toast } from 'sonner';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 
 interface FaturamentoProduto {
   portas: number;
@@ -168,6 +169,8 @@ export default function DREMesDirecao() {
   const [despesasProjetadas, setDespesasProjetadas] = useState<Despesa[]>([]);
   const [despesasNaoEsperadas, setDespesasNaoEsperadas] = useState<Despesa[]>([]);
   const [tiposCustosVariaveis, setTiposCustosVariaveis] = useState<TipoCustoVariavel[]>([]);
+  const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
+  const [topAdicionais, setTopAdicionais] = useState<{nome: string, qtd: number}[]>([]);
 
   const mesDate = mes ? new Date(mes + '-15') : new Date();
   const mesNome = format(mesDate, 'MMMM yyyy', { locale: ptBR });
@@ -272,6 +275,8 @@ export default function DREMesDirecao() {
             lucro_produto,
             lucro_pintura,
             lucro_item,
+            descricao,
+            quantidade,
             vendas!inner(data_venda)
           `)
           .gte('vendas.data_venda', start + ' 00:00:00')
@@ -319,6 +324,31 @@ export default function DREMesDirecao() {
 
         setFaturamento(fat);
         setLucro(luc);
+
+        // Top 5 acessórios e adicionais
+        const acessoriosMap: Record<string, number> = {};
+        const adicionaisMap: Record<string, number> = {};
+        produtos?.forEach((p: any) => {
+          const nome = p.descricao || 'Sem descrição';
+          const qtd = p.quantidade || 1;
+          if (p.tipo_produto === 'acessorio') {
+            acessoriosMap[nome] = (acessoriosMap[nome] || 0) + qtd;
+          } else if (['adicional', 'manutencao'].includes(p.tipo_produto)) {
+            adicionaisMap[nome] = (adicionaisMap[nome] || 0) + qtd;
+          }
+        });
+        setTopAcessorios(
+          Object.entries(acessoriosMap)
+            .map(([nome, qtd]) => ({ nome, qtd }))
+            .sort((a, b) => b.qtd - a.qtd)
+            .slice(0, 5)
+        );
+        setTopAdicionais(
+          Object.entries(adicionaisMap)
+            .map(([nome, qtd]) => ({ nome, qtd }))
+            .sort((a, b) => b.qtd - a.qtd)
+            .slice(0, 5)
+        );
 
         await Promise.all([fetchDespesas(), fetchTiposCustosVariaveis()]);
       } catch (err) {
@@ -374,14 +404,35 @@ export default function DREMesDirecao() {
                 <thead>
                   <tr className="border-b border-white/10">
                     <th className="text-left p-3 text-white/40 font-medium text-xs uppercase"></th>
-                    {columns.map(col => (
-                      <th
-                        key={col.key}
-                        className={`text-right p-3 text-white/40 font-medium text-xs uppercase ${col.key === 'total' ? 'bg-white/5' : ''}`}
-                      >
-                        {col.label}
-                      </th>
-                    ))}
+                    {columns.map(col => {
+                      const topList = col.key === 'acessorios' ? topAcessorios : col.key === 'adicionais' ? topAdicionais : null;
+                      return (
+                        <th
+                          key={col.key}
+                          className={`text-right p-3 text-white/40 font-medium text-xs uppercase ${col.key === 'total' ? 'bg-white/5' : ''}`}
+                        >
+                          {topList && topList.length > 0 ? (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger className="cursor-default underline decoration-dotted underline-offset-4">
+                                  {col.label}
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="max-w-[220px]">
+                                  <p className="font-semibold mb-1 text-xs">Top 5 mais vendidos</p>
+                                  {topList.map((item, i) => (
+                                    <p key={i} className="text-xs text-muted-foreground">
+                                      {i + 1}. {item.nome} ({item.qtd})
+                                    </p>
+                                  ))}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ) : (
+                            col.label
+                          )}
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
