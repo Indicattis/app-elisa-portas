@@ -315,7 +315,11 @@ export default function DREMesDirecao() {
 
         const totalCredito = vendas?.reduce((sum, v) => sum + ((v as any).valor_credito || 0), 0) || 0;
         const totalFatInstalacao = vendas?.reduce((sum, v) => sum + ((v as any).valor_instalacao || 0), 0) || 0;
-        const totalLucroInstalacao = vendas?.reduce((sum, v) => sum + ((v as any).lucro_instalacao || 0), 0) || 0;
+        const totalLucroInstalacao = vendas?.reduce((sum, v) => {
+          const valorInst = (v as any).valor_instalacao || 0;
+          const lucroInst = (v as any).lucro_instalacao;
+          return sum + (lucroInst != null && lucroInst > 0 ? lucroInst : valorInst * 0.30);
+        }, 0) || 0;
 
         fat.instalacoes = totalFatInstalacao;
         luc.instalacoes = totalLucroInstalacao;
