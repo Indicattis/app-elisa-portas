@@ -1,25 +1,27 @@
 
 
-# Implementar reestruturação de despesas em /direcao/dre/:mes
+# Adicionar seção final de resumo no DRE mensal
 
-O banco de dados já está pronto (constraint atualizada, dados migrados). O problema é que o arquivo `DREMesDirecao.tsx` nunca foi modificado — ainda tem apenas 2 seções (Fixas e Variáveis lado a lado).
+## O que será feito
 
-## Alterações em `src/pages/direcao/DREMesDirecao.tsx`
+Adicionar uma seção de resumo final abaixo das despesas (e fora do grid de 2 colunas) com uma linha horizontal contendo 9 colunas:
 
-1. **Adicionar estados** para as 4 categorias + painel lateral:
-   - `despesasFixas`, `despesasFolha`, `despesasProjetadas`, `despesasNaoEsperadas`
-   - `tiposCustosVariaveis` (para o painel lateral)
+| Faturamento Bruto | % Bruto | Faturamento Líquido (Lucro Bruto) | Despesas Fixas | Folha Salarial | Despesas Projetadas | Despesa Variável (Não esperadas) | Lucro Líquido | % Lucro Líquido |
+|---|---|---|---|---|---|---|---|---|
 
-2. **Atualizar `fetchDespesas`** para filtrar por 4 modalidades: `fixa`, `folha_salarial`, `projetada`, `variavel_nao_esperada`
+## Cálculos
 
-3. **Adicionar query** para buscar `tipos_custos` onde `tipo = 'variavel'` e `ativo = true` para o painel lateral
+- **Faturamento Bruto**: `faturamento.total` (já calculado)
+- **% Bruto**: `(lucro.total / faturamento.total) * 100`
+- **Faturamento Líquido (Lucro Bruto)**: `lucro.total`
+- **Despesas Fixas**: `totalDespFixas` (já calculado)
+- **Folha Salarial**: `totalDespFolha`
+- **Despesas Projetadas**: `totalDespProjetadas`
+- **Despesa Variável (Não esperadas)**: `totalDespNaoEsperadas`
+- **Lucro Líquido**: `lucro.total - totalDespFixas - totalDespFolha - totalDespProjetadas - totalDespNaoEsperadas`
+- **% Lucro Líquido**: `(lucroLiquido / faturamento.total) * 100`
 
-4. **Atualizar `handleAddDespesa`** para aceitar as 4 modalidades
+## Alteração em `DREMesDirecao.tsx`
 
-5. **Reestruturar o layout JSX**:
-   - Grid de 2 colunas (3fr + 1fr)
-   - Coluna esquerda: 4 seções empilhadas verticalmente (Fixas → Folha Salarial → Projetadas → Variáveis Não Esperadas)
-   - Coluna direita: painel "Despesas Projetadas do Ano" (read-only, lista de tipos_custos variáveis com `valor_maximo_mensal × 12` e total no rodapé)
-
-Nenhuma alteração de banco de dados necessária — tudo já está configurado.
+Inserir após o fechamento do grid de despesas (após linha 486) um novo bloco com uma tabela/card horizontal contendo as 9 colunas, usando o mesmo estilo visual (`rounded-xl bg-white/5 border border-white/10`). Valores negativos em vermelho, positivos em verde. Os percentuais formatados com 1 casa decimal + "%".
 
