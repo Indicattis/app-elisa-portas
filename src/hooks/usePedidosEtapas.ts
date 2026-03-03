@@ -703,7 +703,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             
             if (ordens && ordens.length > 0) {
               // Bloquear se houver qualquer ordem pausada (independente de histórico)
-              const ordemPausada = ordens.find(o => o.pausada === true);
+              const ordemPausada = ordens.find(o => o.pausada === true && o.status !== 'concluido');
               if (ordemPausada) {
                 throw new Error(`A ordem ${ordemPausada.numero_ordem} está pausada. Retome ou cancele antes de avançar.`);
               }
