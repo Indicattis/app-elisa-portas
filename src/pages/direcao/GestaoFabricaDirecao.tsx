@@ -2,7 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays, Archive, Search, Calendar, User } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays, Archive, Search, Calendar, User, Undo2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { usePedidosArquivados } from "@/hooks/usePedidosArquivados";
 import { format } from "date-fns";
@@ -66,6 +66,7 @@ export default function GestaoFabricaDirecao() {
   const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido | 'arquivo_morto'>('aberto');
   const [arquivoSearch, setArquivoSearch] = useState('');
   const [debouncedArquivoSearch, setDebouncedArquivoSearch] = useState('');
+  const [desarquivandoId, setDesarquivandoId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const viewMode = 'list';
   const [tipoEntrega, setTipoEntrega] = useState('todos');
@@ -114,6 +115,26 @@ export default function GestaoFabricaDirecao() {
   } = usePedidosEtapas(etapaParaQuery);
   const { updateOrdem } = useOrdensCarregamentoCalendario(new Date(), 'month');
   const { ordens: ordensUnificadas } = useOrdensCarregamentoUnificadas();
+
+  const handleDesarquivar = async (pedidoId: string) => {
+    try {
+      setDesarquivandoId(pedidoId);
+      const { error } = await supabase
+        .from('pedidos_producao')
+        .update({ arquivado: false, data_arquivamento: null, arquivado_por: null })
+        .eq('id', pedidoId);
+      if (error) throw error;
+      toast({ title: 'Pedido retornado para Finalizado' });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-arquivados'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+    } catch (err) {
+      console.error(err);
+      toast({ variant: 'destructive', title: 'Erro ao desarquivar pedido' });
+    } finally {
+      setDesarquivandoId(null);
+    }
+  };
 
   const handleAgendarPedido = (pedidoId: string) => {
     setAgendarPedidoId(pedidoId);
@@ -790,26 +811,46 @@ export default function GestaoFabricaDirecao() {
                           <p className="text-sm text-muted-foreground">{pedido.cliente_nome}</p>
                         </div>
                       </div>
-                      <div className="flex flex-col sm:items-end gap-1 text-sm">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Calendar className="w-3.5 h-3.5" />
-                          <span>
-                            {pedido.data_arquivamento
-                              ? (() => { try { return format(new Date(pedido.data_arquivamento), "dd/MM/yyyy", { locale: ptBR }); } catch { return "-"; } })()
-                              : "-"}
-                          </span>
-                        </div>
-                        {pedido.arquivado_por_nome && (
-                          <div className="flex items-center gap-2 text-muted-foreground/70">
-                            <User className="w-3.5 h-3.5" />
-                            <span className="text-xs">por {pedido.arquivado_por_nome}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:items-end gap-1 text-sm">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Calendar className="w-3.5 h-3.5" />
+                            <span>
+                              {pedido.data_arquivamento
+                                ? (() => { try { return format(new Date(pedido.data_arquivamento), "dd/MM/yyyy", { locale: ptBR }); } catch { return "-"; } })()
+                                : "-"}
+                            </span>
                           </div>
-                        )}
-                        {pedido.valor_venda && (
-                          <span className="text-emerald-400 font-medium">
-                            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.valor_venda)}
-                          </span>
-                        )}
+                          {pedido.arquivado_por_nome && (
+                            <div className="flex items-center gap-2 text-muted-foreground/70">
+                              <User className="w-3.5 h-3.5" />
+                              <span className="text-xs">por {pedido.arquivado_por_nome}</span>
+                            </div>
+                          )}
+                          {pedido.valor_venda && (
+                            <span className="text-emerald-400 font-medium">
+                              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.valor_venda)}
+                            </span>
+                          )}
+                        </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 flex-shrink-0"
+                              disabled={desarquivandoId === pedido.id}
+                              onClick={() => handleDesarquivar(pedido.id)}
+                            >
+                              {desarquivandoId === pedido.id ? (
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Undo2 className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Retornar para Finalizado</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   ))}
