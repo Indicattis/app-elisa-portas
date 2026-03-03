@@ -484,6 +484,53 @@ export default function DREMesDirecao() {
               )}
             </div>
           </div>
+
+          {/* Resumo Final */}
+          {(() => {
+            const lucroLiquido = lucro.total - totalDespFixas - totalDespFolha - totalDespProjetadas - totalDespNaoEsperadas;
+            const percBruto = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
+            const percLiquid = faturamento.total > 0 ? (lucroLiquido / faturamento.total) * 100 : 0;
+            const colorClass = (v: number) => v >= 0 ? 'text-emerald-400' : 'text-red-400';
+
+            const items = [
+              { label: 'Faturamento Bruto', value: formatCurrency(faturamento.total), color: 'text-white' },
+              { label: '% Bruto', value: `${percBruto.toFixed(1)}%`, color: colorClass(percBruto) },
+              { label: 'Fat. Líquido (Lucro Bruto)', value: formatCurrency(lucro.total), color: colorClass(lucro.total) },
+              { label: 'Despesas Fixas', value: formatCurrency(totalDespFixas), color: 'text-red-400' },
+              { label: 'Folha Salarial', value: formatCurrency(totalDespFolha), color: 'text-red-400' },
+              { label: 'Desp. Projetadas', value: formatCurrency(totalDespProjetadas), color: 'text-red-400' },
+              { label: 'Desp. Variável (Não esperadas)', value: formatCurrency(totalDespNaoEsperadas), color: 'text-red-400' },
+              { label: 'Lucro Líquido', value: formatCurrency(lucroLiquido), color: colorClass(lucroLiquido) },
+              { label: '% Lucro Líquido', value: `${percLiquid.toFixed(1)}%`, color: colorClass(percLiquid) },
+            ];
+
+            return (
+              <div className="rounded-xl bg-white/5 border border-white/10 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-white/10">
+                        {items.map((item, i) => (
+                          <th key={i} className="text-center p-3 text-white/40 font-medium text-xs uppercase whitespace-nowrap">
+                            {item.label}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        {items.map((item, i) => (
+                          <td key={i} className={`text-center p-3 font-semibold whitespace-nowrap ${item.color}`}>
+                            {item.value}
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
     </MinimalistLayout>
