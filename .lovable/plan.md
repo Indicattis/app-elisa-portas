@@ -1,27 +1,35 @@
 
 
-# Adicionar seção final de resumo no DRE mensal
+# Criar página de Folha de Pagamento minimalista + integração com DRE
 
-## O que será feito
+## Problema
+O botão "Gerar Folha" navega para `/dashboard/administrativo/rh/colaboradores/folha-pagamento` — rota que não existe no sistema novo. A página `FolhaPagamentoNova.tsx` existe mas usa o layout antigo e não está roteada.
 
-Adicionar uma seção de resumo final abaixo das despesas (e fora do grid de 2 colunas) com uma linha horizontal contendo 9 colunas:
+## Plano
 
-| Faturamento Bruto | % Bruto | Faturamento Líquido (Lucro Bruto) | Despesas Fixas | Folha Salarial | Despesas Projetadas | Despesa Variável (Não esperadas) | Lucro Líquido | % Lucro Líquido |
-|---|---|---|---|---|---|---|---|---|
+### 1. Criar nova página minimalista
+Criar `src/pages/administrativo/rh-dp/FolhaPagamentoMinimalista.tsx` baseada na lógica de `FolhaPagamentoNova.tsx`, mas:
+- Usar `MinimalistLayout` com breadcrumb (Home > Administrativo > RH/DP > Colaboradores > Folha de Pagamento)
+- Estilo dark/glass (bg-white/5, border-white/10, text-white)
+- Mesma funcionalidade: selecionar mês, data vencimento, tabela de colaboradores em folha com horas extras/acréscimos/descontos
+- Botão "Finalizar" que gera folha + contas a pagar
 
-## Cálculos
+### 2. Integração com DRE (folha_salarial)
+Ao finalizar a folha, além de criar registros em `folhas_pagamento`, `folha_pagamento_itens` e `contas_pagar`, **inserir uma despesa em `despesas_mensais`** com:
+- `modalidade = 'folha_salarial'`
+- `nome = 'Folha de Pagamento - [Mês/Ano]'`
+- `valor = totais.totalLiquido`
+- `mes_referencia = [mês selecionado no formato YYYY-MM]`
+- `status = 'decretada'`
 
-- **Faturamento Bruto**: `faturamento.total` (já calculado)
-- **% Bruto**: `(lucro.total / faturamento.total) * 100`
-- **Faturamento Líquido (Lucro Bruto)**: `lucro.total`
-- **Despesas Fixas**: `totalDespFixas` (já calculado)
-- **Folha Salarial**: `totalDespFolha`
-- **Despesas Projetadas**: `totalDespProjetadas`
-- **Despesa Variável (Não esperadas)**: `totalDespNaoEsperadas`
-- **Lucro Líquido**: `lucro.total - totalDespFixas - totalDespFolha - totalDespProjetadas - totalDespNaoEsperadas`
-- **% Lucro Líquido**: `(lucroLiquido / faturamento.total) * 100`
+Isso faz com que o valor apareça automaticamente na seção "Folha Salarial" do DRE mensal.
 
-## Alteração em `DREMesDirecao.tsx`
+### 3. Rota + navegação
+- Adicionar rota `/administrativo/rh-dp/colaboradores/folha-pagamento` no `App.tsx`
+- Atualizar o botão em `ColaboradoresMinimalista.tsx` para navegar para a nova rota
 
-Inserir após o fechamento do grid de despesas (após linha 486) um novo bloco com uma tabela/card horizontal contendo as 9 colunas, usando o mesmo estilo visual (`rounded-xl bg-white/5 border border-white/10`). Valores negativos em vermelho, positivos em verde. Os percentuais formatados com 1 casa decimal + "%".
+### 4. Arquivos alterados
+- **Novo**: `src/pages/administrativo/rh-dp/FolhaPagamentoMinimalista.tsx`
+- **Editar**: `src/App.tsx` (importar + rota)
+- **Editar**: `src/pages/administrativo/ColaboradoresMinimalista.tsx` (corrigir path do navigate)
 
