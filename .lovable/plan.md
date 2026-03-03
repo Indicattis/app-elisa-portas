@@ -1,39 +1,41 @@
 
 
-# Adicionar cores das portas ao historico de producao
+# Fix: Ordem concluida mas ainda marcada como pausada
 
-## Resumo
-Exibir a cor das portas de enrolar ao lado de cada ordem no historico em `/producao/meu-historico`, usando o componente `CoresPortasEnrolar` ja existente.
+## Problema
+A ordem `OSL-2026-0052` do pedido `44741b47` foi concluida pelo caminho administrativo (`useVendasPedidos.concluirOrdem`), que so atualiza `status` e `data_conclusao`, sem limpar os campos de pausa (`pausada`, `justificativa_pausa`, `linha_problema_id`). O pedido nao avanca porque a validacao em `usePedidosEtapas.ts` (linha 706) bloqueia qualquer ordem com `pausada === true`, independente do status.
 
-## Alteracoes
+## Solucao (2 partes)
 
-### 1. Hook `src/hooks/useMeuHistoricoMinimalista.ts`
+### 1. Corrigir dado inconsistente no banco
+Executar SQL para limpar os campos de pausa da ordem ja concluida:
 
-Expandir a query do Supabase para buscar as cores dos produtos atraves da cadeia de relacionamentos:
-
-```
-ordens_X → pedido:pedidos_producao → venda:vendas → produtos:produtos_vendas → cor:catalogo_cores
-```
-
-Alterar o select de:
-```
-pedido:pedidos_producao(cliente_nome)
-```
-Para:
-```
-pedido:pedidos_producao(cliente_nome, venda:vendas(produtos:produtos_vendas(tipo_produto, cor:catalogo_cores(nome, codigo_hex))))
+```sql
+UPDATE ordens_soldagem
+SET pausada = false, justificativa_pausa = null, pausada_em = null, linha_problema_id = null
+WHERE id = '29d6a062-edf4-417c-97ba-d2148837de62';
 ```
 
-Adicionar o campo `cores` (array de `{ nome, codigo_hex }`) ao tipo `OrdemHistoricoMinimalista` e ao mapeamento dos dados retornados. Extrair as cores unicas de portas de enrolar e pintura epoxi dos produtos.
+### 2. Corrigir `useVendasPedidos.ts` (linhas 362-368)
+Adicionar limpeza dos campos de pausa no `concluirOrdem` para evitar reincidencia:
 
-### 2. Componente `src/pages/fabrica/producao/MeuHistoricoMinimalista.tsx`
+```typescript
+.update({
+  status: "concluido",
+  data_conclusao: new Date().toISOString(),
+  pausada: false,
+  pausada_em: null,
+  justificativa_pausa: null,
+  ...(tipo !== "qualidade" ? { linha_problema_id: null } : {}),
+})
+```
 
-Na listagem de ordens (dentro do bloco que mostra `#numero_ordem`, badge do setor e `cliente_nome`), adicionar bolinhas coloridas representando as cores das portas, logo apos o nome do cliente. Usar o mesmo estilo visual do `CoresPortasEnrolar` (bolinha redonda com `backgroundColor` do `codigo_hex`), porem em tamanho menor para caber na lista.
+### 3. Tornar validacao mais resiliente em `usePedidosEtapas.ts` (linha 706)
+Alterar a verificacao para ignorar ordens ja concluidas:
 
-A exibicao sera simples: pequenos circulos coloridos (16x16px) com borda, sem texto do nome da cor para manter a lista compacta.
+```typescript
+const ordemPausada = ordens.find(o => o.pausada === true && o.status !== 'concluido');
+```
 
-## Detalhes tecnicos
+Isso garante que mesmo se houver inconsistencia nos dados, ordens concluidas nao bloqueiem o avanco.
 
-- A cadeia de joins usa os relacionamentos existentes no banco: `pedido_id` liga a `pedidos_producao`, que tem `venda_id` ligando a `vendas`, que tem `produtos_vendas` com `cor_id` ligando a `catalogo_cores`
-- As cores serao filtradas para mostrar apenas portas de enrolar e pintura epoxi (mesmo criterio do `CoresPortasEnrolar`)
-- Cores duplicadas serao removidas usando um Map por nome
