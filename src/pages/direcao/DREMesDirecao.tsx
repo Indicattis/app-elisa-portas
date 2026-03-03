@@ -414,7 +414,7 @@ export default function DREMesDirecao() {
                           {topList && topList.length > 0 ? (
                             <TooltipProvider>
                               <Tooltip>
-                                <TooltipTrigger className="cursor-default underline decoration-dotted underline-offset-4">
+                                <TooltipTrigger className="cursor-default underline decoration-dotted underline-offset-4 uppercase">
                                   {col.label}
                                 </TooltipTrigger>
                                 <TooltipContent side="bottom" className="max-w-[220px]">
