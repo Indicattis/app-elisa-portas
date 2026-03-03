@@ -156,13 +156,13 @@ export default function DREDespesasDirecao() {
                   <TableHead className="text-white/70">Subcategoria</TableHead>
                   <TableHead className="text-white/70 text-right">Limite Mensal</TableHead>
                   <TableHead className="text-white/70 text-center">Tipo</TableHead>
-                  <TableHead className="text-white/70 text-center">Status</TableHead>
+                  
                   <TableHead className="text-white/70 text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredTiposCustos.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center text-white/50 py-8">Nenhum tipo de custo encontrado</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center text-white/50 py-8">Nenhum tipo de custo encontrado</TableCell></TableRow>
                 ) : (
                   filteredTiposCustos.map((tipo) => (
                     <TableRow key={tipo.id} className="border-white/10 hover:bg-white/5">
@@ -171,7 +171,7 @@ export default function DREDespesasDirecao() {
                       <TableCell className="text-white/70">{tipo.subcategoria?.nome || "-"}</TableCell>
                       <TableCell className="text-right font-medium text-white">{formatCurrency(tipo.valor_maximo_mensal)}</TableCell>
                       <TableCell className="text-center"><Badge variant={tipo.tipo === 'fixa' ? 'default' : 'secondary'}>{tipo.tipo === 'fixa' ? 'Fixa' : 'Variável'}</Badge></TableCell>
-                      <TableCell className="text-center"><Switch checked={tipo.ativo} onCheckedChange={() => toggleTipoCustoStatus(tipo)} /></TableCell>
+                      
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           <Button variant="ghost" size="sm" onClick={() => handleEditTipoCusto(tipo)} className="text-white/70 hover:text-white hover:bg-white/10"><Pencil className="h-4 w-4" /></Button>
