@@ -1,32 +1,22 @@
 
-
-# Adicionar coluna "Gasto do Mês" na seção Despesas Projetadas do Ano
+# Adicionar seção de Valor de Estoque abaixo das Despesas Projetadas
 
 ## O que será feito
 
-Na seção lateral "Despesas Projetadas do Ano", adicionar uma segunda coluna mostrando o valor real gasto no mês atual para cada tipo de custo. Os dados já existem em `despesasProjetadas` (despesas com `modalidade = 'projetada'`). Basta cruzar pelo nome com `tiposCustosVariaveis`.
+Adicionar uma pequena seção no painel lateral direito, logo abaixo de "Despesas Projetadas do Ano", mostrando o valor total do estoque (quantidade × custo_unitário) e o total de itens. Os dados serão buscados da tabela `estoque` com uma nova query no `useEffect`/`fetchData`.
 
-## Alteração em `DREMesDirecao.tsx` (linhas ~527-551)
+## Alterações em `DREMesDirecao.tsx`
 
-### Layout atualizado
-
-Para cada item de `tiposCustosVariaveis`, buscar em `despesasProjetadas` a despesa correspondente pelo nome e exibir seu `valor_real`. A tabela terá 3 colunas: Nome | Gasto Mês | Projetado Anual.
-
-```
-Despesas Projetadas do Ano
-                              Mês Atual    Anual
-Bônus Colaboradores          R$ 0,00    R$ 48.000
-Comissão de Vendas           R$ 5.000   R$ 240.000
-...
-Total                        R$ X       R$ Y
+### 1. Novo estado
+```typescript
+const [estoqueResumo, setEstoqueResumo] = useState({ valorTotal: 0, totalItens: 0 });
 ```
 
-### Detalhes técnicos
-- Cruzar `tiposCustosVariaveis[].nome` com `despesasProjetadas[].nome` para encontrar o valor gasto no mês
-- Adicionar header com "Mês" e "Anual"
-- Adicionar total do mês (que já é `totalDespProjetadas`)
-- Estilo consistente com o painel existente
+### 2. Buscar dados no `fetchData`
+Adicionar query à tabela `estoque` (ativo=true), selecionar `quantidade, custo_unitario`, calcular o valor total e total de itens.
 
-### Arquivo alterado
-- `src/pages/direcao/DREMesDirecao.tsx` (seção ~527-551)
+### 3. Nova seção no painel lateral (após linha 566, antes do fechamento da div)
+Renderizar um bloco com título "Estoque" e duas linhas: Total de Itens e Valor Total, no mesmo estilo visual do painel existente (bg-white/5, border-white/10).
 
+## Arquivo alterado
+- `src/pages/direcao/DREMesDirecao.tsx`
