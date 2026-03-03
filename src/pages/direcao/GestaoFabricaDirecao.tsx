@@ -2,7 +2,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays, Archive, Search, Calendar, User } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { usePedidosArquivados } from "@/hooks/usePedidosArquivados";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { CalendarioExpedicaoModal } from "@/components/pedidos/CalendarioExpedicaoModal";
 import { SelecionarPedidoInstalacaoModal } from "@/components/instalacoes/SelecionarPedidoInstalacaoModal";
 import { CriarPedidoTesteModal } from "@/components/pedidos/CriarPedidoTesteModal";
@@ -50,7 +54,8 @@ const ETAPA_ICONS = {
   aguardando_instalacao: Wrench,
   instalacoes: HardHat,
   correcoes: AlertTriangle,
-  finalizado: CheckCircle2
+  finalizado: CheckCircle2,
+  arquivo_morto: Archive
 };
 
 export default function GestaoFabricaDirecao() {
@@ -58,7 +63,9 @@ export default function GestaoFabricaDirecao() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido>('aberto');
+  const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido | 'arquivo_morto'>('aberto');
+  const [arquivoSearch, setArquivoSearch] = useState('');
+  const [debouncedArquivoSearch, setDebouncedArquivoSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const viewMode = 'list';
   const [tipoEntrega, setTipoEntrega] = useState('todos');
@@ -76,7 +83,14 @@ export default function GestaoFabricaDirecao() {
   const [agendarData, setAgendarData] = useState(new Date());
   const [agendarPedidoId, setAgendarPedidoId] = useState<string | null>(null);
   
+  // Debounce para busca do arquivo morto
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedArquivoSearch(arquivoSearch), 300);
+    return () => clearTimeout(timer);
+  }, [arquivoSearch]);
+
   const contadores = usePedidosContadores();
+  const { data: pedidosArquivados = [], isLoading: isLoadingArquivados } = usePedidosArquivados(debouncedArquivoSearch);
   const { neoInstalacoes, concluirNeoInstalacao, isConcluindo, reorganizarNeoInstalacoes } = useNeoInstalacoesListagem();
   const { neoCorrecoes, concluirNeoCorrecao, reorganizarNeoCorrecoes } = useNeoCorrecoesListagem();
   const { neoInstalacoesFinalizadas, retornarNeoInstalacao, isRetornando: isRetornandoInstalacao, arquivarNeoInstalacao } = useNeoInstalacoesFinalizadas();
@@ -87,6 +101,7 @@ export default function GestaoFabricaDirecao() {
     removerResponsavel, 
     isAtribuindo 
   } = useEtapaResponsaveis();
+  const etapaParaQuery = etapaAtiva === 'arquivo_morto' ? 'aberto' : etapaAtiva;
   const {
     pedidos,
     isLoading,
@@ -96,7 +111,7 @@ export default function GestaoFabricaDirecao() {
     reorganizarPedidos,
     arquivarPedido,
     deletarPedido
-  } = usePedidosEtapas(etapaAtiva);
+  } = usePedidosEtapas(etapaParaQuery);
   const { updateOrdem } = useOrdensCarregamentoCalendario(new Date(), 'month');
   const { ordens: ordensUnificadas } = useOrdensCarregamentoUnificadas();
 
@@ -367,13 +382,24 @@ export default function GestaoFabricaDirecao() {
       </div>
 
       {/* Tabs de Etapas */}
-      <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido)}>
+      <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto')}>
         {/* Seletor mobile */}
         <div className="md:hidden mb-4">
-          <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido)}>
+          <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto')}>
             <SelectTrigger className="w-full h-12 bg-primary/5 border-primary/10 text-white">
               <SelectValue>
                 {(() => {
+                  if (etapaAtiva === 'arquivo_morto') {
+                    return (
+                      <div className="flex items-center gap-2">
+                        <Archive className="h-5 w-5" />
+                        <span className="font-medium">Arquivo Morto</span>
+                        <Badge variant="secondary" className="ml-auto bg-emerald-500/20 text-emerald-400">
+                          {pedidosArquivados.length}
+                        </Badge>
+                      </div>
+                    );
+                  }
                   const config = ETAPAS_CONFIG[etapaAtiva];
                   const count = contadores[etapaAtiva] || 0;
                   const IconComponent = ETAPA_ICONS[etapaAtiva];
@@ -406,6 +432,15 @@ export default function GestaoFabricaDirecao() {
                   </SelectItem>
                 );
               })}
+              <SelectItem value="arquivo_morto" className="text-white cursor-pointer">
+                <div className="flex items-center gap-2 w-full">
+                  <Archive className="h-4 w-4 flex-shrink-0 text-emerald-400" />
+                  <span className="flex-1 text-emerald-400">Arquivo Morto</span>
+                  <Badge variant="secondary" className="text-xs bg-emerald-500/20 text-emerald-400">
+                    {pedidosArquivados.length}
+                  </Badge>
+                </div>
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -448,6 +483,17 @@ export default function GestaoFabricaDirecao() {
                 </TabsTrigger>
               );
             })}
+            {/* Tab Arquivo Morto */}
+            <TabsTrigger 
+              value="arquivo_morto" 
+              className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-emerald-400/60 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-400"
+            >
+              <Archive className="h-4 w-4 flex-shrink-0" />
+              <span className="text-xs">Arquivo Morto</span>
+              <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">
+                {pedidosArquivados.length}
+              </span>
+            </TabsTrigger>
           </TooltipProvider>
         </TabsList>
 
@@ -682,6 +728,96 @@ export default function GestaoFabricaDirecao() {
             </Card>
           </TabsContent>
         ))}
+
+        {/* Tab Content - Arquivo Morto */}
+        <TabsContent value="arquivo_morto" className="mt-4">
+          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl w-full max-w-none">
+            <CardHeader className="pb-3 px-4 py-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <CardTitle className="text-lg flex items-center gap-2 text-white">
+                  <Archive className="h-5 w-5 text-emerald-400" />
+                  <span>Arquivo Morto</span>
+                  <span className="text-sm font-normal text-white/60">
+                    {pedidosArquivados.length} pedido{pedidosArquivados.length !== 1 ? 's' : ''}
+                  </span>
+                </CardTitle>
+                <div className="relative w-full sm:w-72">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nº ou cliente..."
+                    value={arquivoSearch}
+                    onChange={(e) => setArquivoSearch(e.target.value)}
+                    className="pl-10 bg-primary/5 border-primary/10 text-foreground placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="px-4 py-4">
+              {isLoadingArquivados ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+                </div>
+              ) : pedidosArquivados.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <Archive className="w-12 h-12 mb-3 opacity-50" />
+                  <p className="text-sm">
+                    {arquivoSearch ? 'Nenhum pedido encontrado' : 'Nenhum pedido arquivado'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {pedidosArquivados.map((pedido) => (
+                    <div
+                      key={pedido.id}
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-colors"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-lg bg-emerald-500/20">
+                          <Package className="w-4 h-4 text-emerald-400" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-foreground">
+                              {pedido.numero_pedido}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs"
+                            >
+                              Arquivado
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{pedido.cliente_nome}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col sm:items-end gap-1 text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>
+                            {pedido.data_arquivamento
+                              ? (() => { try { return format(new Date(pedido.data_arquivamento), "dd/MM/yyyy", { locale: ptBR }); } catch { return "-"; } })()
+                              : "-"}
+                          </span>
+                        </div>
+                        {pedido.arquivado_por_nome && (
+                          <div className="flex items-center gap-2 text-muted-foreground/70">
+                            <User className="w-3.5 h-3.5" />
+                            <span className="text-xs">por {pedido.arquivado_por_nome}</span>
+                          </div>
+                        )}
+                        {pedido.valor_venda && (
+                          <span className="text-emerald-400 font-medium">
+                            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.valor_venda)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Legenda dos limites de tempo por etapa */}
