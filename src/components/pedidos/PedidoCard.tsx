@@ -388,79 +388,58 @@ export function PedidoCard({
   } = useQuery({
     queryKey: ['pedido-carregamento', pedido.id],
     queryFn: async () => {
-      if (pedido.etapa_atual !== 'aguardando_coleta' && pedido.etapa_atual !== 'instalacoes' && pedido.etapa_atual !== 'correcoes') {
+      if (!['aguardando_coleta', 'instalacoes', 'correcoes', 'finalizado'].includes(pedido.etapa_atual)) {
         return {
           concluido: false,
           temData: true,
-          dataCarregamento: null
+          dataCarregamento: null,
+          responsavelNome: null,
+          tipoCarregamento: null,
+          vezesAgendado: 0
         };
       }
 
-      // Para correções, buscar da tabela correcoes
-      if (pedido.etapa_atual === 'correcoes') {
-        const { data: correcoes } = await supabase
-          .from('correcoes')
+      // Consultar as 3 fontes em paralelo
+      const [ordensRes, instRes, corrRes] = await Promise.all([
+        supabase
+          .from('ordens_carregamento')
           .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento, vezes_agendado')
           .eq('pedido_id', pedido.id)
-          .order('data_carregamento', { ascending: false, nullsFirst: false })
-          .limit(1);
-        const correcao = correcoes?.[0] || null;
-
-        const temData = !!correcao?.data_carregamento;
-        const concluido = correcao?.carregamento_concluido || false;
-
-        return {
-          concluido,
-          temData,
-          dataCarregamento: correcao?.data_carregamento || null,
-          responsavelNome: correcao?.responsavel_carregamento_nome || null,
-          tipoCarregamento: correcao?.tipo_carregamento || null,
-          vezesAgendado: correcao?.vezes_agendado || 0
-        };
-      }
-
-      // Para instalações, buscar da tabela instalacoes (fonte única de verdade)
-      if (pedido.etapa_atual === 'instalacoes') {
-        const { data: instalacoes } = await supabase
+          .order('created_at', { ascending: false })
+          .limit(1),
+        supabase
           .from('instalacoes')
           .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento, vezes_agendado')
           .eq('pedido_id', pedido.id)
-          .order('data_carregamento', { ascending: false, nullsFirst: false })
-          .limit(1);
-        const instalacao = instalacoes?.[0] || null;
+          .order('created_at', { ascending: false })
+          .limit(1),
+        supabase
+          .from('correcoes')
+          .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento, vezes_agendado')
+          .eq('pedido_id', pedido.id)
+          .order('created_at', { ascending: false })
+          .limit(1),
+      ]);
 
-        const temData = !!instalacao?.data_carregamento;
-        const concluido = instalacao?.carregamento_concluido || false;
+      const todasFontes = [ordensRes.data?.[0], instRes.data?.[0], corrRes.data?.[0]].filter(Boolean);
+      const concluido = todasFontes.some(f => f.carregamento_concluido);
 
-        return {
-          concluido,
-          temData,
-          dataCarregamento: instalacao?.data_carregamento || null,
-          responsavelNome: instalacao?.responsavel_carregamento_nome || null,
-          tipoCarregamento: instalacao?.tipo_carregamento || null,
-          vezesAgendado: instalacao?.vezes_agendado || 0
-        };
-      }
-
-      // Para entregas (aguardando_coleta), buscar de ordens_carregamento
-      const { data: ordensCarregamento } = await supabase
-        .from('ordens_carregamento')
-        .select('data_carregamento, carregamento_concluido, responsavel_carregamento_nome, tipo_carregamento, vezes_agendado')
-        .eq('pedido_id', pedido.id)
-        .order('data_carregamento', { ascending: false, nullsFirst: false })
-        .limit(1);
-      const ordemCarregamento = ordensCarregamento?.[0] || null;
-
-      const temData = !!ordemCarregamento?.data_carregamento;
-      const concluido = ordemCarregamento?.carregamento_concluido || false;
+      // Priorizar fonte da etapa atual, fallback para qualquer concluída, fallback para qualquer
+      const fontePorEtapa: Record<string, any> = {
+        aguardando_coleta: ordensRes.data?.[0],
+        instalacoes: instRes.data?.[0],
+        correcoes: corrRes.data?.[0],
+        finalizado: ordensRes.data?.[0],
+      };
+      const fontePrioritaria = fontePorEtapa[pedido.etapa_atual] || todasFontes.find(f => f.carregamento_concluido) || todasFontes[0];
 
       return {
         concluido,
-        temData,
-        dataCarregamento: ordemCarregamento?.data_carregamento || null,
-        responsavelNome: ordemCarregamento?.responsavel_carregamento_nome || null,
-        tipoCarregamento: ordemCarregamento?.tipo_carregamento || null,
-        vezesAgendado: ordemCarregamento?.vezes_agendado || 0
+        temData: !!fontePrioritaria?.data_carregamento,
+        dataCarregamento: fontePrioritaria?.data_carregamento || null,
+        responsavelNome: fontePrioritaria?.responsavel_carregamento_nome || null,
+        tipoCarregamento: fontePrioritaria?.tipo_carregamento || null,
+        vezesAgendado: fontePrioritaria?.vezes_agendado || 0
       };
     },
     enabled: pedido.etapa_atual === 'aguardando_coleta' || pedido.etapa_atual === 'instalacoes' || pedido.etapa_atual === 'correcoes' || pedido.etapa_atual === 'finalizado'
