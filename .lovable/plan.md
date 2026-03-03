@@ -1,22 +1,22 @@
 
 
-# Nova aba "Arquivo Morto" em /direcao/gestao-fabrica
+# Botão "Retornar para Finalizado" nos pedidos arquivados
 
 ## Resumo
-Adicionar uma aba extra nas tabs de etapas para exibir pedidos arquivados, reutilizando o hook `usePedidosArquivados` existente.
+Adicionar um botão em cada card de pedido arquivado na aba Arquivo Morto que desarquiva o pedido, retornando-o para a etapa "finalizado".
 
-## Alteracoes em `src/pages/direcao/GestaoFabricaDirecao.tsx`
+## Alterações em `src/pages/direcao/GestaoFabricaDirecao.tsx`
 
-1. **Importar** `Archive` do lucide-react e `usePedidosArquivados` do hook existente
-2. **Adicionar `arquivo_morto` ao `ETAPA_ICONS`** com icone `Archive`
-3. **Permitir `etapaAtiva` aceitar `'arquivo_morto'`** — alterar o tipo do state para `EtapaPedido | 'arquivo_morto'`
-4. **Adicionar tab trigger extra** após o loop de `ORDEM_ETAPAS` tanto no desktop quanto no mobile, com label "Arquivo Morto" e contador vindo do hook
-5. **Adicionar `TabsContent value="arquivo_morto"`** após o loop de tabs content, contendo:
-   - Campo de busca dedicado (input com icone de lupa)
-   - Lista de cards dos pedidos arquivados (reutilizando o layout de cards do ArquivoMorto.tsx — nome, numero, data arquivamento, quem arquivou, valor)
-   - Estado de loading e vazio
+1. **Adicionar estado e handler** para desarquivar:
+   - Criar função `handleDesarquivar(pedidoId)` que executa `UPDATE` em `pedidos_producao` setando `arquivado = false`, `data_arquivamento = null`, `arquivado_por = null`
+   - Mostrar toast de sucesso e invalidar queries `['pedidos-arquivados']` e `['pedidos-contadores']`
 
-6. **Condicionar** as queries de etapas normais (`usePedidosEtapas`, filtros, etc.) para não executar quando `etapaAtiva === 'arquivo_morto'`, evitando queries desnecessárias — usar `enabled` option ou simplesmente ignorar no render
+2. **Adicionar botão no card** de cada pedido arquivado (ao lado das informações de data/valor):
+   - Botão com ícone `Undo2` (ou `RotateCcw`) e tooltip "Retornar para Finalizado"
+   - Variante `outline`, tamanho `icon`, com estilo emerald
+   - Estado de loading durante a operação
 
-A aba aparecerá como a última tab, com cor diferenciada (emerald) para distinguir visualmente das etapas de produção.
+3. **Importar** `Undo2` do lucide-react e `useAuth` para registrar quem fez a ação
+
+A operação é simples: apenas desmarcar o campo `arquivado` — o pedido já está na etapa `finalizado` e voltará a aparecer na aba correspondente.
 
