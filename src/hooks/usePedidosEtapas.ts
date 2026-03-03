@@ -82,21 +82,26 @@ export function usePedidosContadores() {
         counts.correcoes += neoCorrecaoCount;
       }
 
-      // Buscar neo_instalações concluídas para adicionar ao contador de finalizados
+      // Buscar neo_instalações concluídas para adicionar ao contador de finalizados (últimos 30 dias)
+      const dataLimiteContador = new Date();
+      dataLimiteContador.setDate(dataLimiteContador.getDate() - 30);
+
       const { count: neoInstalacaoFinalizadaCount, error: neoInstalacaoFinalizadaError } = await supabase
         .from('neo_instalacoes')
         .select('*', { count: 'exact', head: true })
-        .eq('concluida', true);
+        .eq('concluida', true)
+        .gte('concluida_em', dataLimiteContador.toISOString());
 
       if (!neoInstalacaoFinalizadaError && neoInstalacaoFinalizadaCount) {
         counts.finalizado += neoInstalacaoFinalizadaCount;
       }
 
-      // Buscar neo_correções concluídas para adicionar ao contador de finalizados
+      // Buscar neo_correções concluídas para adicionar ao contador de finalizados (últimos 30 dias)
       const { count: neoCorrecaoFinalizadaCount, error: neoCorrecaoFinalizadaError } = await supabase
         .from('neo_correcoes')
         .select('*', { count: 'exact', head: true })
-        .eq('concluida', true);
+        .eq('concluida', true)
+        .gte('concluida_em', dataLimiteContador.toISOString());
 
       if (!neoCorrecaoFinalizadaError && neoCorrecaoFinalizadaCount) {
         counts.finalizado += neoCorrecaoFinalizadaCount;
