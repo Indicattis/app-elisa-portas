@@ -1,72 +1,25 @@
 
 
-# Reestruturação das seções de despesas em /direcao/dre/:mes
+# Implementar reestruturação de despesas em /direcao/dre/:mes
 
-## Layout final (de cima para baixo)
+O banco de dados já está pronto (constraint atualizada, dados migrados). O problema é que o arquivo `DREMesDirecao.tsx` nunca foi modificado — ainda tem apenas 2 seções (Fixas e Variáveis lado a lado).
 
-```text
-┌──────────────────────────────────────────────────────────────┐
-│  Faturamento / Lucro (tabela existente - sem alteração)      │
-└──────────────────────────────────────────────────────────────┘
+## Alterações em `src/pages/direcao/DREMesDirecao.tsx`
 
-┌─────────────────────────────────┐  ┌──────────────────────────┐
-│  1. Despesas Fixas              │  │  Despesas Projetadas     │
-│     (modalidade='fixa')         │  │  do Ano                  │
-│     [como já está]              │  │                          │
-├─────────────────────────────────┤  │  Lista de tipos_custos   │
-│  2. Folha Salarial              │  │  variáveis com           │
-│     (seção nova, read-only)     │  │  valor_maximo_mensal×12  │
-├─────────────────────────────────┤  │                          │
-│  3. Despesas Projetadas         │  │  Total anual no rodapé   │
-│     (nova modalidade            │  │                          │
-│      'projetada' ou reutiliza   │  │                          │
-│      'variavel' com CRUD)       │  │                          │
-├─────────────────────────────────┤  │                          │
-│  4. Despesas Variáveis          │  │                          │
-│     Não Esperadas               │  │                          │
-│     (nova modalidade            │  │                          │
-│      'variavel_nao_esperada')   │  │                          │
-└─────────────────────────────────┘  └──────────────────────────┘
-```
+1. **Adicionar estados** para as 4 categorias + painel lateral:
+   - `despesasFixas`, `despesasFolha`, `despesasProjetadas`, `despesasNaoEsperadas`
+   - `tiposCustosVariaveis` (para o painel lateral)
 
-## Detalhamento
+2. **Atualizar `fetchDespesas`** para filtrar por 4 modalidades: `fixa`, `folha_salarial`, `projetada`, `variavel_nao_esperada`
 
-### 1. Banco de dados
-- Adicionar duas novas modalidades à tabela `despesas_mensais`: `'projetada'` e `'variavel_nao_esperada'`
-- A modalidade `'variavel'` existente será migrada: os registros atuais passarão a ser `'projetada'` (pois são despesas variáveis esperadas)
-- Nenhuma tabela nova é necessária. A `folha_salarial` não existe ainda — buscaremos os dados de `tipos_custos` onde `tipo = 'fixa'` com nome relacionado a salários, ou criaremos uma seção estática alimentada por um campo específico
+3. **Adicionar query** para buscar `tipos_custos` onde `tipo = 'variavel'` e `ativo = true` para o painel lateral
 
-**Pergunta importante**: De onde vem o valor da folha salarial? Opções:
-- Uma despesa fixa específica já cadastrada em `despesas_mensais`
-- Um novo campo/registro dedicado
+4. **Atualizar `handleAddDespesa`** para aceitar as 4 modalidades
 
-Como não há tabela de folha salarial, a seção **Folha Salarial** será alimentada por despesas com `modalidade = 'folha_salarial'` na tabela `despesas_mensais` — permitindo cadastrar múltiplos itens (salários, encargos, benefícios, etc.) com o mesmo componente `DespesaSection`.
+5. **Reestruturar o layout JSX**:
+   - Grid de 2 colunas (3fr + 1fr)
+   - Coluna esquerda: 4 seções empilhadas verticalmente (Fixas → Folha Salarial → Projetadas → Variáveis Não Esperadas)
+   - Coluna direita: painel "Despesas Projetadas do Ano" (read-only, lista de tipos_custos variáveis com `valor_maximo_mensal × 12` e total no rodapé)
 
-### 2. Alterações em `DREMesDirecao.tsx`
-
-**Estados novos**:
-- `despesasProjetadas` (modalidade `'projetada'`)
-- `despesasFolha` (modalidade `'folha_salarial'`)
-- `despesasNaoEsperadas` (modalidade `'variavel_nao_esperada'`)
-- `tiposCustosVariaveis` (para o painel lateral)
-
-**fetchDespesas** — separar em 4 grupos ao filtrar por modalidade:
-- `fixa` → Despesas Fixas
-- `folha_salarial` → Folha Salarial
-- `projetada` → Despesas Projetadas
-- `variavel_nao_esperada` → Despesas Variáveis Não Esperadas
-
-**Nova query** para painel lateral — buscar `tipos_custos` onde `tipo = 'variavel'`:
-```sql
-SELECT nome, valor_maximo_mensal FROM tipos_custos WHERE tipo = 'variavel'
-```
-Exibir cada item com `valor_maximo_mensal * 12` e um total no rodapé.
-
-**Layout do JSX**:
-- Grid de 2 colunas: coluna esquerda com as 4 seções empilhadas, coluna direita com o painel "Despesas Projetadas do Ano"
-- Reutilizar o componente `DespesaSection` para todas as 4 seções, apenas alterando título e modalidade
-- O painel lateral será um componente estático (sem CRUD), apenas listagem
-
-### 3. Migração de dados existentes
-- Atualizar registros existentes com `modalidade = 'variavel'` para `modalidade = 'projetada'` via query SQL, pois as despesas variáveis atuais representam despesas esperadas/projetadas
+Nenhuma alteração de banco de dados necessária — tudo já está configurado.
 
