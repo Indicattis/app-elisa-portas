@@ -364,6 +364,10 @@ export const useVendasPedidos = () => {
         .update({
           status: "concluido",
           data_conclusao: new Date().toISOString(),
+          pausada: false,
+          pausada_em: null,
+          justificativa_pausa: null,
+          ...(tipo !== "qualidade" ? { linha_problema_id: null } : {}),
         })
         .eq("id", ordemId);
 
