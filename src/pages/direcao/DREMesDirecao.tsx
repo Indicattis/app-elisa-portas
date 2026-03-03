@@ -518,18 +518,9 @@ export default function DREMesDirecao() {
                 formatCurrency={formatCurrency}
               />
               <DespesaSection
-                title="Despesas Projetadas"
-                despesas={despesasProjetadas}
-                total={totalDespProjetadas}
-                onAdd={(data) => handleAddDespesa('projetada', data)}
-                onToggleStatus={handleToggleStatus}
-                onDelete={handleDeleteDespesa}
-                formatCurrency={formatCurrency}
-              />
-              <DespesaSection
-                title="Despesas Variáveis Não Esperadas"
-                despesas={despesasNaoEsperadas}
-                total={totalDespNaoEsperadas}
+                title="Despesas Variáveis"
+                despesas={[...despesasProjetadas, ...despesasNaoEsperadas]}
+                total={totalDespProjetadas + totalDespNaoEsperadas}
                 onAdd={(data) => handleAddDespesa('variavel_nao_esperada', data)}
                 onToggleStatus={handleToggleStatus}
                 onDelete={handleDeleteDespesa}
@@ -608,8 +599,7 @@ export default function DREMesDirecao() {
               { label: 'Fat. Líquido (Lucro Bruto)', value: formatCurrency(lucro.total), color: colorClass(lucro.total) },
               { label: 'Despesas Fixas', value: formatCurrency(totalDespFixas), color: 'text-red-400' },
               { label: 'Folha Salarial', value: formatCurrency(totalDespFolha), color: 'text-red-400' },
-              { label: 'Desp. Projetadas', value: formatCurrency(totalDespProjetadas), color: 'text-red-400' },
-              { label: 'Desp. Variável (Não esperadas)', value: formatCurrency(totalDespNaoEsperadas), color: 'text-red-400' },
+              { label: 'Desp. Variáveis', value: formatCurrency(totalDespProjetadas + totalDespNaoEsperadas), color: 'text-red-400' },
               { label: 'Lucro Líquido', value: formatCurrency(lucroLiquido), color: colorClass(lucroLiquido) },
               { label: '% Lucro Líquido', value: `${percLiquid.toFixed(1)}%`, color: colorClass(percLiquid) },
             ];
