@@ -171,6 +171,7 @@ export default function DREMesDirecao() {
   const [tiposCustosVariaveis, setTiposCustosVariaveis] = useState<TipoCustoVariavel[]>([]);
   const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
   const [topAdicionais, setTopAdicionais] = useState<{nome: string, qtd: number}[]>([]);
+  const [estoqueResumo, setEstoqueResumo] = useState({ valorTotal: 0, totalItens: 0 });
 
   const mesDate = mes ? new Date(mes + '-15') : new Date();
   const mesNome = format(mesDate, 'MMMM yyyy', { locale: ptBR });
@@ -350,7 +351,20 @@ export default function DREMesDirecao() {
             .slice(0, 5)
         );
 
-        await Promise.all([fetchDespesas(), fetchTiposCustosVariaveis()]);
+        // Buscar resumo do estoque
+        const fetchEstoque = async () => {
+          const { data: estoqueData } = await supabase
+            .from('estoque')
+            .select('quantidade, custo_unitario')
+            .eq('ativo', true);
+          const resumo = (estoqueData || []).reduce((acc, item) => ({
+            valorTotal: acc.valorTotal + ((item.quantidade || 0) * (item.custo_unitario || 0)),
+            totalItens: acc.totalItens + (item.quantidade || 0),
+          }), { valorTotal: 0, totalItens: 0 });
+          setEstoqueResumo(resumo);
+        };
+
+        await Promise.all([fetchDespesas(), fetchTiposCustosVariaveis(), fetchEstoque()]);
       } catch (err) {
         console.error('Erro ao buscar dados DRE:', err);
       } finally {
@@ -563,6 +577,21 @@ export default function DREMesDirecao() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Valor de Estoque */}
+            <div className="rounded-xl bg-white/5 border border-white/10 p-4">
+              <h3 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-3">Estoque</h3>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                  <span className="text-sm text-white/60">Total de Itens</span>
+                  <span className="text-sm font-medium text-white">{estoqueResumo.totalItens.toLocaleString('pt-BR')}</span>
+                </div>
+                <div className="flex items-center justify-between py-1.5">
+                  <span className="text-sm text-white/60">Valor Total</span>
+                  <span className="text-sm font-bold text-white">{formatCurrency(estoqueResumo.valorTotal)}</span>
+                </div>
+              </div>
             </div>
           </div>
 
