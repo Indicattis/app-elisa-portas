@@ -1,35 +1,29 @@
 
+# Adicionar tag de % margem em cada coluna da tabela de Faturamento/Lucro
 
-# Criar página de Folha de Pagamento minimalista + integração com DRE
+## O que será feito
 
-## Problema
-O botão "Gerar Folha" navega para `/dashboard/administrativo/rh/colaboradores/folha-pagamento` — rota que não existe no sistema novo. A página `FolhaPagamentoNova.tsx` existe mas usa o layout antigo e não está roteada.
+Na primeira seção (tabela com Faturamento e Lucro), adicionar uma terceira linha "Margem %" que mostra a porcentagem de margem de cada coluna: `(lucro / faturamento) * 100`.
 
-## Plano
+Alternativamente, adicionar a porcentagem como uma tag/badge inline na própria linha de Lucro, ao lado do valor.
 
-### 1. Criar nova página minimalista
-Criar `src/pages/administrativo/rh-dp/FolhaPagamentoMinimalista.tsx` baseada na lógica de `FolhaPagamentoNova.tsx`, mas:
-- Usar `MinimalistLayout` com breadcrumb (Home > Administrativo > RH/DP > Colaboradores > Folha de Pagamento)
-- Estilo dark/glass (bg-white/5, border-white/10, text-white)
-- Mesma funcionalidade: selecionar mês, data vencimento, tabela de colaboradores em folha com horas extras/acréscimos/descontos
-- Botão "Finalizar" que gera folha + contas a pagar
+## Alteração em `DREMesDirecao.tsx`
 
-### 2. Integração com DRE (folha_salarial)
-Ao finalizar a folha, além de criar registros em `folhas_pagamento`, `folha_pagamento_itens` e `contas_pagar`, **inserir uma despesa em `despesas_mensais`** com:
-- `modalidade = 'folha_salarial'`
-- `nome = 'Folha de Pagamento - [Mês/Ano]'`
-- `valor = totais.totalLiquido`
-- `mes_referencia = [mês selecionado no formato YYYY-MM]`
-- `status = 'decretada'`
+Na tabela de faturamento/lucro (linhas 387-412), adicionar uma nova linha `<tr>` após a linha de Lucro:
 
-Isso faz com que o valor apareça automaticamente na seção "Folha Salarial" do DRE mensal.
+```
+<tr>
+  <td>Margem %</td>
+  {columns.map(col => {
+    const perc = faturamento[col.key] > 0 
+      ? (lucro[col.key] / faturamento[col.key]) * 100 
+      : 0;
+    return <td>{perc.toFixed(1)}%</td>;
+  })}
+</tr>
+```
 
-### 3. Rota + navegação
-- Adicionar rota `/administrativo/rh-dp/colaboradores/folha-pagamento` no `App.tsx`
-- Atualizar o botão em `ColaboradoresMinimalista.tsx` para navegar para a nova rota
+Cada célula exibirá a porcentagem com 1 casa decimal, cor condicional (verde para positivo, vermelho para negativo), e uma tag/badge estilizada com `rounded-full bg-white/10 px-2 py-0.5 text-xs`.
 
-### 4. Arquivos alterados
-- **Novo**: `src/pages/administrativo/rh-dp/FolhaPagamentoMinimalista.tsx`
-- **Editar**: `src/App.tsx` (importar + rota)
-- **Editar**: `src/pages/administrativo/ColaboradoresMinimalista.tsx` (corrigir path do navigate)
-
+## Arquivo alterado
+- `src/pages/direcao/DREMesDirecao.tsx` (linhas ~399-412, adicionar `<tr>` após linha de Lucro)
