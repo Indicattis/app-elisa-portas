@@ -1,44 +1,32 @@
 
 
-# Tooltip com Top 5 mais vendidos em Acessórios e Adicionais
+# Adicionar coluna "Gasto do Mês" na seção Despesas Projetadas do Ano
 
 ## O que será feito
 
-Nos headers "Acessórios" e "Adicionais" da tabela de Faturamento/Lucro, ao passar o mouse aparecerá um tooltip com os 5 itens mais vendidos (por quantidade) no mês, mostrando nome e quantidade.
+Na seção lateral "Despesas Projetadas do Ano", adicionar uma segunda coluna mostrando o valor real gasto no mês atual para cada tipo de custo. Os dados já existem em `despesasProjetadas` (despesas com `modalidade = 'projetada'`). Basta cruzar pelo nome com `tiposCustosVariaveis`.
 
-## Alterações em `DREMesDirecao.tsx`
+## Alteração em `DREMesDirecao.tsx` (linhas ~527-551)
 
-### 1. Buscar dados de ranking no `useEffect`
+### Layout atualizado
 
-Dentro do `fetchData`, após processar os produtos, agrupar os itens de tipo `acessorio` e `adicional`/`manutencao` por `descricao` (ou buscar nome via `acessorio_id`/`adicional_id`), somar quantidades, ordenar e guardar os top 5 de cada em dois novos estados:
+Para cada item de `tiposCustosVariaveis`, buscar em `despesasProjetadas` a despesa correspondente pelo nome e exibir seu `valor_real`. A tabela terá 3 colunas: Nome | Gasto Mês | Projetado Anual.
 
-```typescript
-const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
-const [topAdicionais, setTopAdicionais] = useState<{nome: string, qtd: number}[]>([]);
+```
+Despesas Projetadas do Ano
+                              Mês Atual    Anual
+Bônus Colaboradores          R$ 0,00    R$ 48.000
+Comissão de Vendas           R$ 5.000   R$ 240.000
+...
+Total                        R$ X       R$ Y
 ```
 
-A query de `produtos_vendas` precisa incluir `descricao, quantidade, acessorio_id, adicional_id` além dos campos já buscados. Com esses dados, agrupar por nome/descrição e pegar os 5 maiores.
+### Detalhes técnicos
+- Cruzar `tiposCustosVariaveis[].nome` com `despesasProjetadas[].nome` para encontrar o valor gasto no mês
+- Adicionar header com "Mês" e "Anual"
+- Adicionar total do mês (que já é `totalDespProjetadas`)
+- Estilo consistente com o painel existente
 
-### 2. Tooltip nos headers da tabela
-
-Importar `Tooltip, TooltipTrigger, TooltipContent, TooltipProvider` de `@/components/ui/tooltip`. No `columns.map` do `<thead>`, para as colunas `acessorios` e `adicionais`, envolver o label com um `Tooltip` que mostra a listinha:
-
-```tsx
-<TooltipProvider>
-  <Tooltip>
-    <TooltipTrigger className="cursor-default">
-      {col.label}
-    </TooltipTrigger>
-    <TooltipContent>
-      <p className="font-semibold mb-1">Top 5 mais vendidos</p>
-      {topList.map((item, i) => (
-        <p key={i} className="text-xs">{i+1}. {item.nome} ({item.qtd})</p>
-      ))}
-    </TooltipContent>
-  </Tooltip>
-</TooltipProvider>
-```
-
-### 3. Arquivos alterados
-- `src/pages/direcao/DREMesDirecao.tsx` — adicionar estados, expandir query, adicionar tooltips nos headers
+### Arquivo alterado
+- `src/pages/direcao/DREMesDirecao.tsx` (seção ~527-551)
 
