@@ -1,48 +1,54 @@
 
 
-# Adicionar botões "Despesas" e "Custos" em /direcao/dre
+# Corrigir verificação de carregamento no PedidoCard
 
-## O que será feito
+## Problema
 
-Adicionar dois botões de navegação abaixo do grid de meses na página `/direcao/dre` (`DREDirecao.tsx`):
+Pedidos na etapa `correcoes` não mostram o botão "Avançar" mesmo com carregamento concluído, porque o código verifica **apenas a tabela `correcoes`** para essa etapa. Porém, o carregamento foi marcado como concluído na tabela `instalacoes` (de uma etapa anterior).
 
-1. **Despesas** → navega para `/direcao/dre/despesas` — página nova que é uma versão simplificada de `CustosGridMinimalista.tsx`, contendo **somente** a seção de Tipos de Custos (tabela + CRUD + gerenciador de categorias), sem o grid de meses e sem os summary cards.
+Dados confirmados no banco:
+- Pedidos 0223, 0140, 0089, 0088, 0087, 0183 → etapa `correcoes`, `correcoes.carregamento_concluido = false`, mas `instalacoes.carregamento_concluido = true`
+- Pedido 0200 → etapa `correcoes`, `correcoes.carregamento_concluido = false`, mas `ordens_carregamento.carregamento_concluido = true`
 
-2. **Custos** → navega para `/direcao/dre/custos` — página nova que lista os itens do estoque com foco em configuração de `custo_unitario`, permitindo editar o custo de cada item.
+## Solução
 
-## Alterações
+Alterar a query `pedido-carregamento` em `PedidoCard.tsx` (linhas 388-465) para consultar **todas as três tabelas** (`ordens_carregamento`, `instalacoes`, `correcoes`) em paralelo para qualquer etapa logística, e considerar concluído se **qualquer** fonte tiver `carregamento_concluido = true`. Isso é consistente com a regra de integridade já aplicada em outras partes do sistema (ex: verificação no avanço de etapa, linhas ~1067-1069).
 
-### 1. `src/pages/direcao/DREDirecao.tsx`
-Adicionar dois botões após o grid de meses (após linha 101), no estilo minimalista existente:
-```tsx
-<div className="flex gap-4 mt-6">
-  <button onClick={() => navigate('/direcao/dre/despesas')} className="...">Despesas</button>
-  <button onClick={() => navigate('/direcao/dre/custos')} className="...">Custos</button>
-</div>
+### Alteração em `src/components/pedidos/PedidoCard.tsx`
+
+Substituir a lógica condicional por etapa (linhas 390-464) por consultas paralelas:
+
+```typescript
+queryFn: async () => {
+  if (!['aguardando_coleta', 'instalacoes', 'correcoes', 'finalizado'].includes(pedido.etapa_atual)) {
+    return { concluido: false, temData: true, dataCarregamento: null, ... };
+  }
+
+  // Consultar as 3 fontes em paralelo
+  const [ordensRes, instRes, corrRes] = await Promise.all([
+    supabase.from('ordens_carregamento').select('...').eq('pedido_id', pedido.id).order(...).limit(1),
+    supabase.from('instalacoes').select('...').eq('pedido_id', pedido.id).order(...).limit(1),
+    supabase.from('correcoes').select('...').eq('pedido_id', pedido.id).order(...).limit(1),
+  ]);
+
+  const todasFontes = [ordensRes.data?.[0], instRes.data?.[0], corrRes.data?.[0]].filter(Boolean);
+  const concluido = todasFontes.some(f => f.carregamento_concluido);
+
+  // Para dados de exibição (data, responsável), priorizar a fonte da etapa atual,
+  // com fallback para qualquer fonte que tenha dados
+  const fontePrioritaria = /* fonte da etapa atual */ || todasFontes.find(f => f.carregamento_concluido) || todasFontes[0];
+
+  return {
+    concluido,
+    temData: !!fontePrioritaria?.data_carregamento,
+    dataCarregamento: fontePrioritaria?.data_carregamento || null,
+    responsavelNome: fontePrioritaria?.responsavel_carregamento_nome || null,
+    tipoCarregamento: fontePrioritaria?.tipo_carregamento || null,
+    vezesAgendado: fontePrioritaria?.vezes_agendado || 0
+  };
+}
 ```
 
-### 2. Nova página: `src/pages/direcao/DREDespesasDirecao.tsx`
-- Clone da seção de Tipos de Custos de `CustosGridMinimalista.tsx` (linhas 240-562)
-- Usa `MinimalistLayout` com breadcrumb `Home > Direção > DRE > Despesas`
-- Back path: `/direcao/dre`
-- Inclui: tabela de tipos de custos com filtros, CRUD completo, gerenciador de categorias/subcategorias
-- **Não inclui**: grid de meses, summary cards
-
-### 3. Nova página: `src/pages/direcao/DRECustosDirecao.tsx`
-- Lista itens do estoque (tabela `estoque`, ativo=true) com colunas: Nome, Categoria, Unidade, Custo Unitário
-- Permite edição inline do `custo_unitario` (click para editar, Enter/blur para salvar)
-- Busca com filtro por nome
-- Usa `MinimalistLayout` com breadcrumb `Home > Direção > DRE > Custos`
-- Back path: `/direcao/dre`
-
-### 4. `src/App.tsx`
-Registrar as duas novas rotas:
-- `/direcao/dre/despesas` → `DREDespesasDirecao`
-- `/direcao/dre/custos` → `DRECustosDirecao`
-
-## Arquivos alterados/criados
-- `src/pages/direcao/DREDirecao.tsx` (editado)
-- `src/pages/direcao/DREDespesasDirecao.tsx` (novo)
-- `src/pages/direcao/DRECustosDirecao.tsx` (novo)
-- `src/App.tsx` (editado)
+### Arquivo alterado
+- `src/components/pedidos/PedidoCard.tsx`
 
