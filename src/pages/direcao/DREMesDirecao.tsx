@@ -410,6 +410,21 @@ export default function DREMesDirecao() {
                       );
                     })}
                   </tr>
+                  <tr className="border-t border-white/5">
+                    <td className="p-3 text-white/60 font-medium text-xs uppercase">Margem %</td>
+                    {columns.map(col => {
+                      const perc = faturamento[col.key] > 0
+                        ? (lucro[col.key] / faturamento[col.key]) * 100
+                        : 0;
+                      return (
+                        <td key={col.key} className={`text-right p-3 ${col.key === 'total' ? 'bg-white/5' : ''}`}>
+                          <span className={`inline-block rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold ${perc >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {perc.toFixed(1)}%
+                          </span>
+                        </td>
+                      );
+                    })}
+                  </tr>
                 </tbody>
               </table>
             </div>
