@@ -511,9 +511,6 @@ export default function GestaoFabricaDirecao() {
             >
               <Archive className="h-4 w-4 flex-shrink-0" />
               <span className="text-xs">Arquivo Morto</span>
-              <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">
-                {pedidosArquivados.length}
-              </span>
             </TabsTrigger>
           </TooltipProvider>
         </TabsList>
