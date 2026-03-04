@@ -1,15 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
-import { useCustosMensais, CustoMensal } from "@/hooks/useCustosMensais";
-import { useTiposCustos, TipoCusto } from "@/hooks/useTiposCustos";
+import { useCustosMensais } from "@/hooks/useCustosMensais";
+import { useTiposCustos } from "@/hooks/useTiposCustos";
 import { formatCurrency } from "@/lib/utils";
 
 const MESES_NOMES = [
@@ -22,16 +21,14 @@ export default function CustosMesMinimalista() {
   const { mes } = useParams<{ mes: string }>();
   const [mounted, setMounted] = useState(false);
 
-  // Parse mes param (format: 2026-01)
   const mesDate = mes ? `${mes}-01` : "";
   const mesIndex = mes ? parseInt(mes.split("-")[1]) - 1 : 0;
   const anoMes = mes ? parseInt(mes.split("-")[0]) : new Date().getFullYear();
   const nomeMes = MESES_NOMES[mesIndex] || "";
 
   const { custosMes, loading: loadingCustos, saving, saveCustosMensaisBatch, fetchCustosMes } = useCustosMensais(mesDate);
-  const { tiposCustos, categorias, loading: loadingTipos } = useTiposCustos();
+  const { tiposCustos, loading: loadingTipos } = useTiposCustos();
 
-  // Local form state: { [tipo_custo_id]: { valor_real, observacoes } }
   const [formValues, setFormValues] = useState<Record<string, { valor_real: number; observacoes: string }>>({});
 
   useEffect(() => {
@@ -39,47 +36,22 @@ export default function CustosMesMinimalista() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Initialize form values when data loads
   useEffect(() => {
     const values: Record<string, { valor_real: number; observacoes: string }> = {};
-    
-    // Start with all active tipos
     tiposCustos.filter(t => t.ativo).forEach(t => {
       values[t.id] = { valor_real: 0, observacoes: "" };
     });
-
-    // Override with existing custos
     custosMes.forEach(c => {
       values[c.tipo_custo_id] = {
         valor_real: Number(c.valor_real) || 0,
         observacoes: c.observacoes || "",
       };
     });
-
     setFormValues(values);
   }, [custosMes, tiposCustos]);
 
   const tiposAtivos = useMemo(() => tiposCustos.filter(t => t.ativo), [tiposCustos]);
 
-  // Group by category
-  const groupedTipos = useMemo(() => {
-    const groups: Record<string, { categoria: { id: string; nome: string; cor: string | null } | null; tipos: TipoCusto[] }> = {};
-
-    tiposAtivos.forEach(t => {
-      const catId = t.categoria_id || "sem-categoria";
-      if (!groups[catId]) {
-        groups[catId] = {
-          categoria: t.categoria ? { id: t.categoria.id, nome: t.categoria.nome, cor: t.categoria.cor } : null,
-          tipos: [],
-        };
-      }
-      groups[catId].tipos.push(t);
-    });
-
-    return Object.values(groups);
-  }, [tiposAtivos]);
-
-  // Totals
   const totalReal = Object.values(formValues).reduce((acc, v) => acc + (v.valor_real || 0), 0);
   const totalLimite = tiposAtivos.reduce((acc, t) => acc + t.valor_maximo_mensal, 0);
   const percentual = totalLimite > 0 ? (totalReal / totalLimite) * 100 : 0;
@@ -92,21 +64,12 @@ export default function CustosMesMinimalista() {
         valor_real: vals.valor_real,
         observacoes: vals.observacoes || undefined,
       }));
-
     const success = await saveCustosMensaisBatch(mesDate, custos);
-    if (success) {
-      fetchCustosMes(mesDate);
-    }
+    if (success) fetchCustosMes(mesDate);
   };
 
   const updateValue = (tipoCustoId: string, field: "valor_real" | "observacoes", value: string | number) => {
-    setFormValues(prev => ({
-      ...prev,
-      [tipoCustoId]: {
-        ...prev[tipoCustoId],
-        [field]: value,
-      },
-    }));
+    setFormValues(prev => ({ ...prev, [tipoCustoId]: { ...prev[tipoCustoId], [field]: value } }));
   };
 
   const loading = loadingCustos || loadingTipos;
@@ -137,18 +100,11 @@ export default function CustosMesMinimalista() {
         ]}
         mounted={mounted}
       />
-
       <FloatingProfileMenu mounted={mounted} />
-
       <button
         onClick={() => navigate("/administrativo/financeiro/custos")}
-        className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
-                   hover:bg-white/10 transition-all duration-300"
-        style={{
-          opacity: mounted ? 1 : 0,
-          transform: mounted ? "translateX(0)" : "translateX(-20px)",
-          transition: "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 100ms",
-        }}
+        className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
+        style={{ opacity: mounted ? 1 : 0, transform: mounted ? "translateX(0)" : "translateX(-20px)", transition: "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 100ms" }}
       >
         <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20">
           <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
@@ -156,25 +112,16 @@ export default function CustosMesMinimalista() {
       </button>
 
       <div className="container mx-auto p-6 pt-20 space-y-6">
-        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold">Custos - {nomeMes} {anoMes}</h1>
-            <p className="text-white/60">
-              Lance os valores reais de cada tipo de custo
-            </p>
+            <p className="text-white/60">Lance os valores reais de cada tipo de custo</p>
           </div>
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? "Salvando..." : "Salvar Custos"}
+          <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+            <Save className="h-4 w-4 mr-2" />{saving ? "Salvando..." : "Salvar Custos"}
           </Button>
         </div>
 
-        {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="bg-white/5 border-white/10">
             <CardContent className="pt-6">
@@ -191,114 +138,55 @@ export default function CustosMesMinimalista() {
           <Card className="bg-white/5 border-white/10">
             <CardContent className="pt-6">
               <p className="text-sm text-white/60 mb-1">% Utilizado</p>
-              <p className={`text-2xl font-bold ${
-                percentual > 100 ? "text-red-400" : percentual > 80 ? "text-amber-400" : "text-green-400"
-              }`}>
+              <p className={`text-2xl font-bold ${percentual > 100 ? "text-red-400" : percentual > 80 ? "text-amber-400" : "text-green-400"}`}>
                 {percentual.toFixed(1)}%
               </p>
               <div className="mt-2 h-2 rounded-full overflow-hidden bg-white/10">
-                <div
-                  className={`h-full rounded-full transition-all ${
-                    percentual > 100 ? "bg-red-400" : percentual > 80 ? "bg-amber-400" : "bg-green-400"
-                  }`}
-                  style={{ width: `${Math.min(percentual, 100)}%` }}
-                />
+                <div className={`h-full rounded-full transition-all ${percentual > 100 ? "bg-red-400" : percentual > 80 ? "bg-amber-400" : "bg-green-400"}`} style={{ width: `${Math.min(percentual, 100)}%` }} />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Cost entries by category */}
-        {groupedTipos.length === 0 ? (
+        {tiposAtivos.length === 0 ? (
           <Card className="bg-white/5 border-white/10">
             <CardContent className="py-12 text-center text-white/50">
               Nenhum tipo de custo configurado. Configure os tipos de custos primeiro.
             </CardContent>
           </Card>
         ) : (
-          groupedTipos.map((group, gi) => (
-            <Card key={gi} className="bg-white/5 border-white/10">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  {group.categoria ? (
-                    <Badge
-                      variant="outline"
-                      style={{
-                        borderColor: group.categoria.cor || undefined,
-                        color: group.categoria.cor || undefined,
-                      }}
-                    >
-                      {group.categoria.nome}
-                    </Badge>
-                  ) : (
-                    <span className="text-white/70">Sem Categoria</span>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {group.tipos.map((tipo) => {
-                  const vals = formValues[tipo.id] || { valor_real: 0, observacoes: "" };
-                  const tipoPercentual = tipo.valor_maximo_mensal > 0
-                    ? (vals.valor_real / tipo.valor_maximo_mensal) * 100
-                    : 0;
-
-                  return (
-                    <div
-                      key={tipo.id}
-                      className="flex flex-col md:flex-row md:items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-white truncate">{tipo.nome}</p>
-                        <p className="text-xs text-white/40">
-                          Limite: {formatCurrency(tipo.valor_maximo_mensal)}
-                          {tipo.tipo === "fixa" ? " • Fixa" : " • Variável"}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-40">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={vals.valor_real || ""}
-                            onChange={(e) =>
-                              updateValue(tipo.id, "valor_real", parseFloat(e.target.value) || 0)
-                            }
-                            placeholder="R$ 0,00"
-                            className="bg-white/5 border-white/20 text-white text-right"
-                          />
-                        </div>
-                        <div className="w-48 hidden md:block">
-                          <Input
-                            type="text"
-                            value={vals.observacoes}
-                            onChange={(e) =>
-                              updateValue(tipo.id, "observacoes", e.target.value)
-                            }
-                            placeholder="Observações"
-                            className="bg-white/5 border-white/20 text-white text-sm"
-                          />
-                        </div>
-                        {tipo.valor_maximo_mensal > 0 && (
-                          <span
-                            className={`text-xs font-medium w-12 text-right ${
-                              tipoPercentual > 100
-                                ? "text-red-400"
-                                : tipoPercentual > 80
-                                ? "text-amber-400"
-                                : "text-green-400"
-                            }`}
-                          >
-                            {tipoPercentual.toFixed(0)}%
-                          </span>
-                        )}
-                      </div>
+          <Card className="bg-white/5 border-white/10">
+            <CardContent className="pt-6 space-y-3">
+              {tiposAtivos.map((tipo) => {
+                const vals = formValues[tipo.id] || { valor_real: 0, observacoes: "" };
+                const tipoPercentual = tipo.valor_maximo_mensal > 0 ? (vals.valor_real / tipo.valor_maximo_mensal) * 100 : 0;
+                return (
+                  <div key={tipo.id} className="flex flex-col md:flex-row md:items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-white truncate">{tipo.nome}</p>
+                      <p className="text-xs text-white/40">
+                        Limite: {formatCurrency(tipo.valor_maximo_mensal)}
+                        {tipo.tipo === "fixa" ? " • Fixa" : " • Variável"}
+                      </p>
                     </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-          ))
+                    <div className="flex items-center gap-3">
+                      <div className="w-40">
+                        <Input type="number" step="0.01" min="0" value={vals.valor_real || ""} onChange={(e) => updateValue(tipo.id, "valor_real", parseFloat(e.target.value) || 0)} placeholder="R$ 0,00" className="bg-white/5 border-white/20 text-white text-right" />
+                      </div>
+                      <div className="w-48 hidden md:block">
+                        <Input type="text" value={vals.observacoes} onChange={(e) => updateValue(tipo.id, "observacoes", e.target.value)} placeholder="Observações" className="bg-white/5 border-white/20 text-white text-sm" />
+                      </div>
+                      {tipo.valor_maximo_mensal > 0 && (
+                        <span className={`text-xs font-medium w-12 text-right ${tipoPercentual > 100 ? "text-red-400" : tipoPercentual > 80 ? "text-amber-400" : "text-green-400"}`}>
+                          {tipoPercentual.toFixed(0)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>
