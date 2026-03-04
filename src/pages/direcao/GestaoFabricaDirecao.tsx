@@ -12,7 +12,7 @@ import { CalendarioExpedicaoModal } from "@/components/pedidos/CalendarioExpedic
 import { SelecionarPedidoInstalacaoModal } from "@/components/instalacoes/SelecionarPedidoInstalacaoModal";
 import { CriarPedidoTesteModal } from "@/components/pedidos/CriarPedidoTesteModal";
 import { SelecionarResponsavelEtapaModal } from "@/components/pedidos/SelecionarResponsavelEtapaModal";
-import { CorrecaoDetalhesSheet } from "@/components/pedidos/CorrecaoDetalhesSheet";
+
 import { AdicionarOrdemCalendarioModal } from "@/components/expedicao/AdicionarOrdemCalendarioModal";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -79,8 +79,6 @@ export default function GestaoFabricaDirecao() {
   const [etapaParaAtribuir, setEtapaParaAtribuir] = useState<EtapaPedido | null>(null);
   const [showCalendarioModal, setShowCalendarioModal] = useState(false);
   const [showCalendarioInstalacoesModal, setShowCalendarioInstalacoesModal] = useState(false);
-  const [correcaoDetalhesPedidoId, setCorrecaoDetalhesPedidoId] = useState<string | null>(null);
-  const [correcaoDetalhesOpen, setCorrecaoDetalhesOpen] = useState(false);
   const [agendarModalOpen, setAgendarModalOpen] = useState(false);
   const [agendarData, setAgendarData] = useState(new Date());
   const [agendarPedidoId, setAgendarPedidoId] = useState<string | null>(null);
@@ -645,10 +643,6 @@ export default function GestaoFabricaDirecao() {
                       onArquivar={handleArquivar}
                       onDeletar={handleDeletarPedido}
                       onAgendar={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleAgendarPedido : undefined}
-                      onCorrecaoDetalhesClick={etapa === 'correcoes' ? (pedidoId: string) => {
-                        setCorrecaoDetalhesPedidoId(pedidoId);
-                        setCorrecaoDetalhesOpen(true);
-                      } : undefined}
                       hideOrdensStatus={['aguardando_coleta','instalacoes','correcoes','finalizado'].includes(etapa)}
                       showPosicao={true}
                       onAvisoEspera={handleAvisoEspera}
@@ -984,23 +978,6 @@ export default function GestaoFabricaDirecao() {
         }}
       />
 
-      {/* Sheet de Detalhes da Correção */}
-      {correcaoDetalhesPedidoId && (() => {
-        const pedidoCorrecao = pedidos.find((p: any) => p.id === correcaoDetalhesPedidoId);
-        const vendaData = pedidoCorrecao ? (Array.isArray((pedidoCorrecao as any).vendas) ? (pedidoCorrecao as any).vendas[0] : (pedidoCorrecao as any).vendas) : null;
-        return (
-          <CorrecaoDetalhesSheet
-            open={correcaoDetalhesOpen}
-            onOpenChange={(open) => {
-              setCorrecaoDetalhesOpen(open);
-              if (!open) setCorrecaoDetalhesPedidoId(null);
-            }}
-            pedidoId={correcaoDetalhesPedidoId}
-            numeroPedido={(pedidoCorrecao as any)?.numero_pedido?.toString() || ''}
-            nomeCliente={vendaData?.cliente_nome || ''}
-          />
-        );
-      })()}
     </MinimalistLayout>
   );
 }
