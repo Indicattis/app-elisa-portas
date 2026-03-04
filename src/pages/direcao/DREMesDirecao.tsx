@@ -317,11 +317,17 @@ export default function DREMesDirecao() {
           .select(`
             tipo_produto,
             valor_total_sem_frete,
+            valor_produto,
+            valor_pintura,
+            valor_instalacao,
+            quantidade,
+            tipo_desconto,
+            desconto_percentual,
+            desconto_valor,
             lucro_produto,
             lucro_pintura,
             lucro_item,
             descricao,
-            quantidade,
             vendas!inner(data_venda)
           `)
           .gte('vendas.data_venda', start + ' 00:00:00')
@@ -337,8 +343,32 @@ export default function DREMesDirecao() {
           const valorTotal = p.valor_total_sem_frete || 0;
 
           if (['porta_enrolar', 'porta_social'].includes(tipo)) {
-            fat.portas += valorTotal;
-            luc.portas += p.lucro_item || 0;
+            // Calcular valor base da porta SEM pintura e instalação
+            const qty = p.quantidade || 1;
+            const valorProdutoBase = (p.valor_produto || 0) * qty;
+            const valorPinturaBase = (p.valor_pintura || 0) * qty;
+            const valorInstalacaoBase = (p.valor_instalacao || 0) * qty;
+            const valorBrutoTotal = valorProdutoBase + valorPinturaBase + valorInstalacaoBase;
+            
+            // Calcular desconto proporcional
+            let descontoTotal = 0;
+            if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+              descontoTotal = valorBrutoTotal * (p.desconto_percentual / 100);
+            } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
+              descontoTotal = p.desconto_valor;
+            }
+            
+            // Proporção do desconto para cada componente
+            const proporcaoProduto = valorBrutoTotal > 0 ? valorProdutoBase / valorBrutoTotal : 1;
+            const proporcaoPintura = valorBrutoTotal > 0 ? valorPinturaBase / valorBrutoTotal : 0;
+            
+            const valorPortaLiquido = valorProdutoBase - (descontoTotal * proporcaoProduto);
+            const valorPinturaLiquido = valorPinturaBase - (descontoTotal * proporcaoPintura);
+            
+            fat.portas += valorPortaLiquido;
+            fat.pintura += valorPinturaLiquido;
+            luc.portas += p.lucro_produto || 0;
+            luc.pintura += p.lucro_pintura || 0;
           } else if (tipo === 'pintura_epoxi') {
             fat.pintura += valorTotal;
             luc.pintura += p.lucro_item || 0;
