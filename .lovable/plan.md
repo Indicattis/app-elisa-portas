@@ -1,33 +1,36 @@
 
 
-# Adicionar campo "Lucro" na Tabela de Preços
+# Melhorias na página /direcao/dre/custos
 
-## O que será feito
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-Adicionar um campo `lucro` (valor numérico) em cada configuração de porta na tabela de preços, permitindo informar o lucro esperado por configuração. O valor aparecerá na tabela listagem e no modal de criação/edição.
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-## Alterações
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-### 1. Migração SQL
-Adicionar coluna `lucro` (numeric, default 0) na tabela `tabela_precos_portas`.
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-### 2. Hook `useTabelaPrecos.ts`
-- Adicionar `lucro` nas interfaces `ItemTabelaPreco` e `ItemTabelaPrecoInput`.
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-### 3. Modal `ItemModal.tsx`
-- Adicionar campo "Lucro" no formulário, na mesma linha dos valores (grid de 3 colunas vira 4, ou adicionar numa nova linha).
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
 
-### 4. Página `TabelaPrecos.tsx`
-- Adicionar coluna "Lucro" na tabela entre "Total" e "Ações".
-- Mostrar lucro também na pesquisa rápida de orçamento.
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
 
-### 5. `BulkUploadTabelaPrecos.tsx`
-- Suportar coluna `lucro` no upload em massa (se aplicável).
+### Estrutura da tabela final
 
-## Arquivos afetados
-- Migração SQL (nova coluna)
-- `src/hooks/useTabelaPrecos.ts`
-- `src/components/tabela-precos/ItemModal.tsx`
-- `src/pages/TabelaPrecos.tsx`
-- `src/components/tabela-precos/BulkUploadTabelaPrecos.tsx`
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
+
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 

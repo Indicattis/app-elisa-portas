@@ -22,6 +22,7 @@ interface ItemUpload {
   valor_porta: number;
   valor_instalacao: number;
   valor_pintura: number;
+  lucro: number;
 }
 
 interface BulkUploadTabelaPrecosProps {
@@ -39,8 +40,8 @@ export function BulkUploadTabelaPrecos({ onUploadComplete }: BulkUploadTabelaPre
   });
 
   const generateCSVTemplate = () => {
-    const headers = ['descricao', 'largura', 'altura', 'valor_porta', 'valor_instalacao', 'valor_pintura'];
-    const exampleRow = ['Porta 2.00 x 2.10', '2.00', '2.10', '1500.00', '300.00', '200.00'];
+    const headers = ['descricao', 'largura', 'altura', 'valor_porta', 'valor_instalacao', 'valor_pintura', 'lucro'];
+    const exampleRow = ['Porta 2.00 x 2.10', '2.00', '2.10', '1500.00', '300.00', '200.00', '500.00'];
     return `${headers.join(',')}\n${exampleRow.join(',')}`;
   };
 
@@ -58,10 +59,10 @@ export function BulkUploadTabelaPrecos({ onUploadComplete }: BulkUploadTabelaPre
   };
 
   const exampleData = {
-    csv: `descricao,largura,altura,valor_porta,valor_instalacao,valor_pintura
-Porta 2.00 x 2.10,2.00,2.10,1500.00,300.00,200.00
-Porta 2.50 x 2.10,2.50,2.10,1800.00,350.00,250.00
-Porta 3.00 x 2.10,3.00,2.10,2100.00,400.00,300.00`,
+    csv: `descricao,largura,altura,valor_porta,valor_instalacao,valor_pintura,lucro
+Porta 2.00 x 2.10,2.00,2.10,1500.00,300.00,200.00,500.00
+Porta 2.50 x 2.10,2.50,2.10,1800.00,350.00,250.00,600.00
+Porta 3.00 x 2.10,3.00,2.10,2100.00,400.00,300.00,700.00`,
     json: `[
   {
     "descricao": "Porta 2.00 x 2.10",
@@ -69,7 +70,8 @@ Porta 3.00 x 2.10,3.00,2.10,2100.00,400.00,300.00`,
     "altura": 2.10,
     "valor_porta": 1500.00,
     "valor_instalacao": 300.00,
-    "valor_pintura": 200.00
+    "valor_pintura": 200.00,
+    "lucro": 500.00
   },
   {
     "descricao": "Porta 2.50 x 2.10",
@@ -77,7 +79,8 @@ Porta 3.00 x 2.10,3.00,2.10,2100.00,400.00,300.00`,
     "altura": 2.10,
     "valor_porta": 1800.00,
     "valor_instalacao": 350.00,
-    "valor_pintura": 250.00
+    "valor_pintura": 250.00,
+    "lucro": 600.00
   }
 ]`
   };
@@ -105,7 +108,7 @@ Porta 3.00 x 2.10,3.00,2.10,2100.00,400.00,300.00`,
       
       headers.forEach((header, i) => {
         const value = values[i];
-        if (['largura', 'altura', 'valor_porta', 'valor_instalacao', 'valor_pintura'].includes(header)) {
+        if (['largura', 'altura', 'valor_porta', 'valor_instalacao', 'valor_pintura', 'lucro'].includes(header)) {
           item[header] = parseFloat(value.replace(',', '.'));
         } else {
           item[header] = value;
@@ -185,6 +188,7 @@ Porta 3.00 x 2.10,3.00,2.10,2100.00,400.00,300.00`,
               valor_porta: item.valor_porta,
               valor_instalacao: item.valor_instalacao,
               valor_pintura: item.valor_pintura,
+              lucro: item.lucro || 0,
               created_by: user?.id
             }]);
 
