@@ -1,28 +1,36 @@
 
 
-# Reorganizar layout de despesas: "Despesa real" e "Projetado" lado a lado
+# Melhorias na página /direcao/dre/custos
 
-## Alteração
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-Na listagem de despesas dentro do `DespesaSection` (linhas 152-192 de `DREMesDirecao.tsx`), reorganizar cada item para:
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-1. **Linha superior** com dois labels lado a lado: "Despesa real" (à esquerda) e "Projetado" (à direita, só se houver tipo correspondente)
-2. **Linha inferior** com os valores correspondentes: valor real à esquerda, valor projetado à direita
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-Layout de cada despesa:
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
 ```text
-● Nome da despesa
-  Despesa real          Projetado
-  R$ 1.200,00           R$ 1.500,00/mês
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
 ```
 
-### Mudanças em `DREMesDirecao.tsx` (linhas 153-186)
-
-- Mover o valor real (`d.valor_real`) para dentro do bloco de conteúdo do item
-- Adicionar labels "Despesa real" e "Projetado" como cabeçalhos inline
-- Posicionar ambos os valores abaixo dos respectivos labels, alinhados lado a lado
-- Manter o botão de delete no hover
-
-## Arquivo afetado
-- `src/pages/direcao/DREMesDirecao.tsx`
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 

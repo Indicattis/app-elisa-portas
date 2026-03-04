@@ -164,18 +164,28 @@ function DespesaSection({
                     }`}
                   />
                 </button>
-                <div>
+              <div className="flex-1">
                   <span className="text-sm text-white/60">{d.nome}</span>
                   {(() => {
                     const tipoRef = tiposDisponiveis?.find(t => t.nome === d.nome);
-                    return tipoRef ? (
-                      <p className="text-xs text-white/30">Projetado: {formatCurrency(tipoRef.valor_maximo_mensal)}/mês</p>
-                    ) : null;
+                    return (
+                      <div className="flex gap-6 mt-1">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-white/40">Despesa real</p>
+                          <span className="text-sm font-medium text-white">{formatCurrency(d.valor_real)}</span>
+                        </div>
+                        {tipoRef && (
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wider text-white/40">Projetado</p>
+                            <span className="text-sm text-white/40">{formatCurrency(tipoRef.valor_maximo_mensal)}/mês</span>
+                          </div>
+                        )}
+                      </div>
+                    );
                   })()}
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-white">{formatCurrency(d.valor_real)}</span>
                 <button
                   onClick={() => onDelete(d.id)}
                   className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 text-white/30 hover:text-red-400 transition-all"
