@@ -2152,6 +2152,11 @@ className="flex h-[20px] w-full rounded-[3px]"
                   </TooltipContent>
                 </Tooltip>
                 <h3 className="font-semibold text-xs truncate">{venda?.cliente_nome}</h3>
+                {ultimoComentario && (
+                  <p className="text-[9px] text-muted-foreground truncate" title={ultimoComentario.comentario}>
+                    {ultimoComentario.comentario}
+                  </p>
+                )}
               </div>
               
               {/* Círculos de cores à direita */}
