@@ -1,0 +1,1 @@
+ALTER TABLE public.dre_custos_produtos ADD COLUMN preco_sugerido NUMERIC DEFAULT NULL;

@@ -13,15 +13,17 @@ interface CustoProduto {
   produto: string;
   custo: number;
   lucro: number;
+  preco_sugerido: number | null;
 }
 
-type EditingField = { id: string; field: "custo" | "lucro" | "produto" } | null;
+type EditingField = { id: string; field: "custo" | "lucro" | "produto" | "preco_sugerido" } | null;
 
 const calcBase = (item: CustoProduto) => item.custo + item.lucro;
 const calcImpostos = (item: CustoProduto) => calcBase(item) * 0.10;
 const calcComissao = (item: CustoProduto) => calcBase(item) * 0.08;
 const calcCartao = (item: CustoProduto) => calcBase(item) * 0.04;
-const calcPrecoSugerido = (item: CustoProduto) => calcBase(item) * 1.22;
+const calcPrecoSugeridoAuto = (item: CustoProduto) => calcBase(item) * 1.22;
+const getPrecoSugerido = (item: CustoProduto) => item.preco_sugerido ?? calcPrecoSugeridoAuto(item);
 
 export default function DRECustosDirecao() {
   const [itens, setItens] = useState<CustoProduto[]>([]);
@@ -39,10 +41,10 @@ export default function DRECustosDirecao() {
       setLoading(true);
       const { data, error } = await supabase
         .from("dre_custos_produtos")
-        .select("id, produto, custo, lucro")
+        .select("id, produto, custo, lucro, preco_sugerido")
         .order("produto", { ascending: true });
       if (error) throw error;
-      setItens((data || []).map(d => ({ ...d, custo: Number(d.custo), lucro: Number(d.lucro) })));
+      setItens((data || []).map(d => ({ ...d, custo: Number(d.custo), lucro: Number(d.lucro), preco_sugerido: d.preco_sugerido != null ? Number(d.preco_sugerido) : null })));
     } catch (error) {
       toast.error("Erro ao carregar produtos");
       console.error(error);
@@ -61,9 +63,11 @@ export default function DRECustosDirecao() {
     if (addingNew && newInputRef.current) newInputRef.current.focus();
   }, [addingNew]);
 
-  const handleStartEdit = (item: CustoProduto, field: "custo" | "lucro" | "produto") => {
+  const handleStartEdit = (item: CustoProduto, field: "custo" | "lucro" | "produto" | "preco_sugerido") => {
     setEditingField({ id: item.id, field });
-    setEditValue(field === "produto" ? item.produto : item[field].toString());
+    if (field === "produto") setEditValue(item.produto);
+    else if (field === "preco_sugerido") setEditValue(getPrecoSugerido(item).toString());
+    else setEditValue(item[field].toString());
   };
 
   const handleSave = async () => {
@@ -103,9 +107,9 @@ export default function DRECustosDirecao() {
     const nome = newProduto.trim();
     if (!nome) { toast.error("Informe o nome do produto"); return; }
     try {
-      const { data, error } = await supabase.from("dre_custos_produtos").insert({ produto: nome }).select("id, produto, custo, lucro").single();
+      const { data, error } = await supabase.from("dre_custos_produtos").insert({ produto: nome }).select("id, produto, custo, lucro, preco_sugerido").single();
       if (error) throw error;
-      setItens(prev => [...prev, { ...data, custo: Number(data.custo), lucro: Number(data.lucro) }]);
+      setItens(prev => [...prev, { ...data, custo: Number(data.custo), lucro: Number(data.lucro), preco_sugerido: data.preco_sugerido != null ? Number(data.preco_sugerido) : null }]);
       setNewProduto("");
       setAddingNew(false);
       toast.success("Produto adicionado");
@@ -125,7 +129,7 @@ export default function DRECustosDirecao() {
     i.produto.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const renderEditableCell = (item: CustoProduto, field: "custo" | "lucro" | "produto", displayValue: string, align: string = "text-right") => {
+  const renderEditableCell = (item: CustoProduto, field: "custo" | "lucro" | "produto" | "preco_sugerido", displayValue: string, align: string = "text-right") => {
     if (editingField?.id === item.id && editingField.field === field) {
       return (
         <div className="flex items-center gap-1 justify-end">
@@ -152,7 +156,6 @@ export default function DRECustosDirecao() {
       </button>
     );
   };
-
   return (
     <MinimalistLayout
       title="Custos de Produtos"
@@ -235,7 +238,9 @@ export default function DRECustosDirecao() {
                       <TableCell className="text-right text-white/70">{formatCurrency(calcImpostos(item))}</TableCell>
                       <TableCell className="text-right text-white/70">{formatCurrency(calcComissao(item))}</TableCell>
                       <TableCell className="text-right text-white/70">{formatCurrency(calcCartao(item))}</TableCell>
-                      <TableCell className="text-right font-bold text-white">{formatCurrency(calcPrecoSugerido(item))}</TableCell>
+                      <TableCell className="text-right">
+                        {renderEditableCell(item, "preco_sugerido", formatCurrency(getPrecoSugerido(item)))}
+                      </TableCell>
                       <TableCell>
                         <button onClick={() => handleDelete(item.id)} className="p-1 text-red-400/60 hover:text-red-400 transition-colors">
                           <Trash2 className="h-3.5 w-3.5" />
@@ -254,7 +259,7 @@ export default function DRECustosDirecao() {
                     <TableCell className="text-right font-bold text-white/70">{formatCurrency(filtered.reduce((s, i) => s + calcImpostos(i), 0))}</TableCell>
                     <TableCell className="text-right font-bold text-white/70">{formatCurrency(filtered.reduce((s, i) => s + calcComissao(i), 0))}</TableCell>
                     <TableCell className="text-right font-bold text-white/70">{formatCurrency(filtered.reduce((s, i) => s + calcCartao(i), 0))}</TableCell>
-                    <TableCell className="text-right font-bold text-white">{formatCurrency(filtered.reduce((s, i) => s + calcPrecoSugerido(i), 0))}</TableCell>
+                    <TableCell className="text-right font-bold text-white">{formatCurrency(filtered.reduce((s, i) => s + getPrecoSugerido(i), 0))}</TableCell>
                     <TableCell></TableCell>
                   </TableRow>
                 </TableFooter>

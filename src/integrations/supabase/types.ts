@@ -1806,6 +1806,7 @@ export type Database = {
           custo: number | null
           id: string
           lucro: number | null
+          preco_sugerido: number | null
           produto: string
         }
         Insert: {
@@ -1813,6 +1814,7 @@ export type Database = {
           custo?: number | null
           id?: string
           lucro?: number | null
+          preco_sugerido?: number | null
           produto: string
         }
         Update: {
@@ -1820,6 +1822,7 @@ export type Database = {
           custo?: number | null
           id?: string
           lucro?: number | null
+          preco_sugerido?: number | null
           produto?: string
         }
         Relationships: []
