@@ -1252,6 +1252,11 @@ export function PedidoCard({
                   <p>{venda?.cliente_nome}</p>
                 </TooltipContent>
               </Tooltip>
+              {ultimoComentario && (
+                <p className="text-[9px] text-muted-foreground truncate max-w-[170px]" title={ultimoComentario.comentario}>
+                  {ultimoComentario.comentario}
+                </p>
+              )}
 
               {/* Col 4: Cidade/Estado */}
               <Tooltip>
