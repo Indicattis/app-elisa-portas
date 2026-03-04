@@ -40,6 +40,7 @@ function DespesaSection({
   onToggleStatus,
   onDelete,
   formatCurrency,
+  tiposDisponiveis,
 }: {
   title: string;
   despesas: Despesa[];
@@ -48,16 +49,25 @@ function DespesaSection({
   onToggleStatus: (id: string, current: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   formatCurrency: (v: number) => string;
+  tiposDisponiveis?: TipoCustoVariavel[];
 }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<NewDespesa>(emptyNewDespesa);
   const [saving, setSaving] = useState(false);
+  const [selectedRef, setSelectedRef] = useState<number | null>(null);
+
+  const handleSelectTipo = (nome: string) => {
+    const tipo = tiposDisponiveis?.find(t => t.nome === nome);
+    setForm(f => ({ ...f, nome }));
+    setSelectedRef(tipo?.valor_maximo_mensal ?? null);
+  };
 
   const handleSave = async () => {
     if (!form.nome.trim() || !form.valor_real) return;
     setSaving(true);
     await onAdd(form);
     setForm(emptyNewDespesa);
+    setSelectedRef(null);
     setShowForm(false);
     setSaving(false);
   };
@@ -77,12 +87,27 @@ function DespesaSection({
       {showForm && (
         <div className="mb-3 p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
           <div className="flex gap-2">
-            <input
-              placeholder="Nome"
-              value={form.nome}
-              onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
-              className="flex-1 bg-white/5 border border-white/10 rounded-md px-2 py-1.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20"
-            />
+            {tiposDisponiveis ? (
+              <select
+                value={form.nome}
+                onChange={e => handleSelectTipo(e.target.value)}
+                className="flex-1 bg-white/5 border border-white/10 rounded-md px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/20"
+              >
+                <option value="" className="bg-zinc-900">Selecione...</option>
+                {tiposDisponiveis.map(t => (
+                  <option key={t.id} value={t.nome} className="bg-zinc-900">
+                    {t.nome}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                placeholder="Nome"
+                value={form.nome}
+                onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
+                className="flex-1 bg-white/5 border border-white/10 rounded-md px-2 py-1.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20"
+              />
+            )}
             <input
               placeholder="Valor"
               type="number"
@@ -92,6 +117,11 @@ function DespesaSection({
               className="w-28 bg-white/5 border border-white/10 rounded-md px-2 py-1.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20"
             />
           </div>
+          {selectedRef !== null && (
+            <p className="text-xs text-white/40">
+              Despesa projetada: {formatCurrency(selectedRef)}/mês
+            </p>
+          )}
           <div className="flex items-center gap-2">
             <select
               value={form.tipo_status}
