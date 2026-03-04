@@ -329,30 +329,10 @@ export function NeoInstalacaoCardGestao({
                 )}
               </div>
 
-              {/* Col 16-21: Status das Ordens - placeholders */}
-              <div className="flex items-center justify-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
-              </div>
-              <div className="flex items-center justify-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
-              </div>
-              <div className="flex items-center justify-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
-              </div>
-              <div className="flex items-center justify-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
-              </div>
-              <div className="flex items-center justify-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
-              </div>
-              <div className="flex items-center justify-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
-              </div>
-
-              {/* Col 18: Data criação + Cronômetro */}
+              {/* Col 16-22: Data criação + Cronômetro (span across ordens + tempo cols) */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="flex items-center justify-center gap-1 cursor-help">
+                  <div className="flex items-center justify-center gap-1 cursor-help" style={{ gridColumn: '16 / 23' }}>
                     <span className="text-[9px] text-muted-foreground leading-none">
                       {format(new Date(neoInstalacao.created_at), "dd/MM/yy")}
                     </span>
