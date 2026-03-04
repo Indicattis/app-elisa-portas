@@ -1,50 +1,36 @@
 
 
-# Comentários nos Pedidos (Downbar + Card)
+# Melhorias na página /direcao/dre/custos
 
-## 1. Criar tabela `pedido_comentarios` (migração SQL)
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-```sql
-CREATE TABLE public.pedido_comentarios (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  pedido_id UUID NOT NULL REFERENCES public.pedidos(id) ON DELETE CASCADE,
-  autor_id UUID NOT NULL,
-  autor_nome TEXT NOT NULL,
-  comentario TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-ALTER TABLE public.pedido_comentarios ENABLE ROW LEVEL SECURITY;
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-CREATE POLICY "Authenticated users can read pedido_comentarios"
-  ON public.pedido_comentarios FOR SELECT TO authenticated USING (true);
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-CREATE POLICY "Authenticated users can insert pedido_comentarios"
-  ON public.pedido_comentarios FOR INSERT TO authenticated WITH CHECK (true);
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-CREATE INDEX idx_pedido_comentarios_pedido_id ON public.pedido_comentarios(pedido_id);
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
 ```
 
-## 2. Adicionar seção de comentários na downbar (`PedidoDetalhesSheet.tsx`)
-
-- Adicionar uma nova seção colapsável "Comentários" (com ícone `MessageSquare`) após o histórico de movimentações
-- Dentro: lista de comentários existentes (autor, data, texto) + input para novo comentário
-- Buscar comentários via `supabase.from('pedido_comentarios').select('*').eq('pedido_id', pedido.id).order('created_at', { ascending: false })`
-- Inserir novo comentário usando o user autenticado (via `useAuth`)
-- Recarregar lista após inserção
-
-## 3. Mostrar último comentário no PedidoCard
-
-Padrão igual às neos (descrição abaixo do nome do cliente):
-
-- Na coluna do nome do cliente (Col 3), abaixo do `<h3>` com o nome, adicionar uma linha com o último comentário truncado (texto pequeno, `text-[9px] text-muted-foreground truncate`)
-- Buscar o último comentário do pedido. Para evitar N+1, vou buscar de forma lazy ou via um state local no card que faz fetch ao montar
-- Alternativa mais eficiente: adicionar campo `ultimo_comentario` na query principal dos pedidos via subquery ou fazer um batch fetch no componente pai. Como o padrão das neos usa `descricao` que já vem no objeto, a abordagem mais simples é fazer um fetch individual no PedidoCard (como já é feito para outros dados como ordens)
-
-**Abordagem escolhida**: Fetch individual no PedidoCard com cache via estado, buscando apenas o último comentário por pedido_id.
-
-## Arquivos alterados
-- **Migração SQL**: nova tabela `pedido_comentarios`
-- `src/components/pedidos/PedidoDetalhesSheet.tsx`: seção de comentários
-- `src/components/pedidos/PedidoCard.tsx`: exibir último comentário abaixo do nome do cliente (ambas views list e grid)
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 

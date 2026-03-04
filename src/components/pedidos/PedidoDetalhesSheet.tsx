@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { 
   Package, Phone, MapPin, Calendar, DollarSign, ListChecks, 
   ShoppingCart, CheckCircle2, Clock, AlertCircle, XCircle,
-  FolderOpen, ChevronDown, User, Wrench, Factory, History, ChevronRight, FileText, RefreshCw
+  FolderOpen, ChevronDown, User, Wrench, Factory, History, ChevronRight, FileText, RefreshCw, MessageSquare, Send
 } from "lucide-react";
 import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
 import { ProcessoAvancoModal } from "./ProcessoAvancoModal";
@@ -16,7 +16,9 @@ import { useToast } from "@/hooks/use-toast";
 import { PedidoHistoricoMovimentacoes } from "./PedidoHistoricoMovimentacoes";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { formatarNumeroPedidoMensal } from "@/utils/pedidoFormatters";
 import { PedidoFluxogramaMap } from "./PedidoFluxogramaMap";
@@ -93,7 +95,12 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
   const [verificandoAvanco, setVerificandoAvanco] = useState(false);
   const [etapasHistorico, setEtapasHistorico] = useState<any[]>([]);
   const [tempoEtapasOpen, setTempoEtapasOpen] = useState(false);
+  const [comentariosOpen, setComentariosOpen] = useState(false);
+  const [comentarios, setComentarios] = useState<any[]>([]);
+  const [novoComentario, setNovoComentario] = useState('');
+  const [enviandoComentario, setEnviandoComentario] = useState(false);
   
+  const { userRole } = useAuth();
   const { verificarEAvancarManual, processos, modalOpen, setModalOpen } = usePedidoAutoAvanco();
   
   useEffect(() => {
@@ -101,8 +108,42 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
       fetchOrdens();
       fetchObservacoesVisita();
       fetchEtapasHistorico();
+      fetchComentarios();
     }
   }, [open, pedido?.id]);
+
+  const fetchComentarios = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('pedido_comentarios')
+        .select('*')
+        .eq('pedido_id', pedido.id)
+        .order('created_at', { ascending: false });
+      if (!error && data) setComentarios(data);
+    } catch (err) {
+      console.error("Erro ao buscar comentários:", err);
+    }
+  };
+
+  const handleEnviarComentario = async () => {
+    if (!novoComentario.trim() || !userRole) return;
+    setEnviandoComentario(true);
+    try {
+      const { error } = await supabase.from('pedido_comentarios').insert({
+        pedido_id: pedido.id,
+        autor_id: userRole.user_id,
+        autor_nome: userRole.nome,
+        comentario: novoComentario.trim(),
+      });
+      if (error) throw error;
+      setNovoComentario('');
+      fetchComentarios();
+    } catch (err) {
+      console.error("Erro ao enviar comentário:", err);
+    } finally {
+      setEnviandoComentario(false);
+    }
+  };
 
   const fetchObservacoesVisita = async () => {
     try {
@@ -824,6 +865,66 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
               </CollapsibleContent>
             </Collapsible>
           )}
+
+          {/* Comentários */}
+          <Collapsible open={comentariosOpen} onOpenChange={setComentariosOpen}>
+            <CollapsibleTrigger asChild>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-blue-400" />
+                  <span className="font-medium text-white text-sm">Comentários</span>
+                  {comentarios.length > 0 && (
+                    <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">
+                      {comentarios.length}
+                    </Badge>
+                  )}
+                </div>
+                <ChevronDown className={cn(
+                  "h-4 w-4 text-white/60 transition-transform duration-200",
+                  comentariosOpen && "rotate-180"
+                )} />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 space-y-2 pl-2">
+              {/* Input novo comentário */}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Adicionar comentário..."
+                  value={novoComentario}
+                  onChange={(e) => setNovoComentario(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleEnviarComentario()}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm"
+                />
+                <Button
+                  size="sm"
+                  onClick={handleEnviarComentario}
+                  disabled={enviandoComentario || !novoComentario.trim()}
+                  className="bg-blue-600 hover:bg-blue-700 px-3"
+                >
+                  <Send className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+
+              {/* Lista de comentários */}
+              {comentarios.length > 0 ? (
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {comentarios.map((c) => (
+                    <div key={c.id} className="bg-white/5 rounded-lg border border-white/5 p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-white/80">{c.autor_nome}</span>
+                        <span className="text-[10px] text-white/40">
+                          {format(new Date(c.created_at), "dd/MM/yy HH:mm")}
+                        </span>
+                      </div>
+                      <p className="text-sm text-white/70">{c.comentario}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-white/40 text-center py-2">Nenhum comentário ainda.</p>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* Histórico de Movimentações */}
           <Collapsible open={historicoOpen} onOpenChange={setHistoricoOpen}>

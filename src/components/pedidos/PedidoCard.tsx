@@ -331,6 +331,22 @@ export function PedidoCard({
     }
   });
 
+  // Buscar último comentário do pedido
+  const { data: ultimoComentario } = useQuery({
+    queryKey: ['pedido-ultimo-comentario', pedido.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pedido_comentarios')
+        .select('comentario, autor_nome, created_at')
+        .eq('pedido_id', pedido.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+  });
+
   // Verificar se todas as ordens de produção estão concluídas (para etapa em_producao)
   const {
     data: ordensStatus
@@ -1236,6 +1252,11 @@ export function PedidoCard({
                   <p>{venda?.cliente_nome}</p>
                 </TooltipContent>
               </Tooltip>
+              {ultimoComentario && (
+                <p className="text-[9px] text-muted-foreground truncate max-w-[170px]" title={ultimoComentario.comentario}>
+                  {ultimoComentario.comentario}
+                </p>
+              )}
 
               {/* Col 4: Cidade/Estado */}
               <Tooltip>
@@ -2136,6 +2157,11 @@ className="flex h-[20px] w-full rounded-[3px]"
                   </TooltipContent>
                 </Tooltip>
                 <h3 className="font-semibold text-xs truncate">{venda?.cliente_nome}</h3>
+                {ultimoComentario && (
+                  <p className="text-[9px] text-muted-foreground truncate" title={ultimoComentario.comentario}>
+                    {ultimoComentario.comentario}
+                  </p>
+                )}
               </div>
               
               {/* Círculos de cores à direita */}
