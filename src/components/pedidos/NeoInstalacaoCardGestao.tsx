@@ -329,43 +329,25 @@ export function NeoInstalacaoCardGestao({
                 )}
               </div>
 
-              {/* Col 16-21: Status das Ordens - placeholders */}
-              <div className="flex items-center justify-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
+              {/* Col 16-22: Data criação + Cronômetro (span across ordens + tempo cols) */}
+              <div style={{ gridColumn: '16 / 23' }}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center justify-center gap-1 cursor-help">
+                      <span className="text-[9px] text-muted-foreground leading-none">
+                        {format(new Date(neoInstalacao.created_at), "dd/MM/yy")}
+                      </span>
+                      <CronometroEtapaBadge dataEntrada={neoInstalacao.created_at} compact />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Criado em: {format(new Date(neoInstalacao.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                    {neoInstalacao.hora && (
+                      <p className="text-[10px] text-muted-foreground">Hora agendada: {neoInstalacao.hora.substring(0, 5)}</p>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
               </div>
-              <div className="flex items-center justify-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
-              </div>
-              <div className="flex items-center justify-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
-              </div>
-              <div className="flex items-center justify-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
-              </div>
-              <div className="flex items-center justify-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
-              </div>
-              <div className="flex items-center justify-center">
-                <span className="text-[9px] text-muted-foreground/50">—</span>
-              </div>
-
-              {/* Col 18: Data criação + Cronômetro */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center justify-center gap-1 cursor-help">
-                    <span className="text-[9px] text-muted-foreground leading-none">
-                      {format(new Date(neoInstalacao.created_at), "dd/MM/yy")}
-                    </span>
-                    <CronometroEtapaBadge dataEntrada={neoInstalacao.created_at} compact />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Criado em: {format(new Date(neoInstalacao.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
-                  {neoInstalacao.hora && (
-                    <p className="text-[10px] text-muted-foreground">Hora agendada: {neoInstalacao.hora.substring(0, 5)}</p>
-                  )}
-                </TooltipContent>
-              </Tooltip>
 
               {/* Col 23: Botões de ação ou status concluído */}
               <div className="flex items-center justify-end gap-1">
