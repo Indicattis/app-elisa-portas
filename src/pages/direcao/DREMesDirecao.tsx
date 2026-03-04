@@ -396,19 +396,18 @@ export default function DREMesDirecao() {
 
         const { data: vendas } = await supabase
           .from('vendas')
-          .select('valor_credito, valor_instalacao, lucro_instalacao')
+          .select('valor_credito, lucro_instalacao, valor_instalacao')
           .gte('data_venda', start + ' 00:00:00')
           .lte('data_venda', end + ' 23:59:59');
 
         const totalCredito = vendas?.reduce((sum, v) => sum + ((v as any).valor_credito || 0), 0) || 0;
-        const totalFatInstalacao = vendas?.reduce((sum, v) => sum + ((v as any).valor_instalacao || 0), 0) || 0;
         const totalLucroInstalacao = vendas?.reduce((sum, v) => {
-          const valorInst = (v as any).valor_instalacao || 0;
           const lucroInst = (v as any).lucro_instalacao;
+          // Usar lucro real se disponível, senão fallback 30% sobre o valor bruto
+          const valorInst = (v as any).valor_instalacao || 0;
           return sum + (lucroInst != null && lucroInst > 0 ? lucroInst : valorInst * 0.30);
         }, 0) || 0;
 
-        fat.instalacoes = totalFatInstalacao;
         luc.instalacoes = totalLucroInstalacao;
 
         fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.acessorios + fat.adicionais + totalCredito;
