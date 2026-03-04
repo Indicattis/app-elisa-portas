@@ -24,6 +24,7 @@ export interface ItemTabelaPrecoInput {
   valor_porta: number;
   valor_instalacao: number;
   valor_pintura: number;
+  lucro: number;
 }
 
 export function useTabelaPrecos(searchTerm: string = '') {
