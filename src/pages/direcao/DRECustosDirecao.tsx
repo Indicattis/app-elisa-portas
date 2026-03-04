@@ -63,7 +63,7 @@ export default function DRECustosDirecao() {
     if (addingNew && newInputRef.current) newInputRef.current.focus();
   }, [addingNew]);
 
-  const handleStartEdit = (item: CustoProduto, field: "custo" | "lucro" | "produto") => {
+  const handleStartEdit = (item: CustoProduto, field: "custo" | "lucro" | "produto" | "preco_sugerido") => {
     setEditingField({ id: item.id, field });
     if (field === "produto") setEditValue(item.produto);
     else if (field === "preco_sugerido") setEditValue(getPrecoSugerido(item).toString());
