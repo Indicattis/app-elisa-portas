@@ -1,36 +1,23 @@
 
 
-# Melhorias na página /direcao/dre/custos
+# Separar Despesas em Duas Colunas: Fixa e Variável
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+## O que será feito
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+Reorganizar a página `/direcao/dre/despesas` para exibir as despesas em **duas colunas lado a lado**: uma coluna dedicada às despesas **Fixas** e outra às **Variáveis**, em vez de uma única tabela com todas misturadas.
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+## Alterações em `DREDespesasDirecao.tsx`
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+1. **Separar os dados filtrados** em dois arrays: `fixas` e `variaveis` a partir de `filteredTiposCustos`.
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+2. **Layout em grid de 2 colunas** (`grid grid-cols-1 lg:grid-cols-2 gap-4`), cada uma com:
+   - Título/header ("Despesas Fixas" / "Despesas Variáveis") com contagem
+   - Tabela própria com as colunas: Nome, Categoria, Limite Mensal, Ações
+   - Remover a coluna "Tipo" (já separado visualmente)
+   - Total do limite mensal no rodapé de cada tabela
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
+3. **Filtros e busca** permanecem globais no topo, aplicando-se a ambas as colunas.
 
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+## Arquivo afetado
+- `src/pages/direcao/DREDespesasDirecao.tsx`
 
