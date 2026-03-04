@@ -2,7 +2,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays, Archive, Search, Calendar, User, Undo2 } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays, Archive, Search, Calendar, User, Undo2, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { usePedidosArquivados } from "@/hooks/usePedidosArquivados";
 import { format } from "date-fns";
@@ -859,61 +860,66 @@ export default function GestaoFabricaDirecao() {
       </Tabs>
 
       {/* Legenda dos limites de tempo por etapa */}
-      <div className="mt-6 p-4 rounded-lg bg-primary/5 border border-primary/10">
-        <h3 className="text-sm font-semibold text-foreground mb-3">Legenda — Limites de tempo por etapa</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 text-xs text-muted-foreground">
-          <div className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" /> Pedidos em Aberto</span>
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 6h</Badge>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5"><ShieldCheck className="h-3 w-3" /> Aprovação CEO</span>
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 6h</Badge>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5"><Factory className="h-3 w-3" /> Em Produção</span>
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 4 dias</Badge>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5"><ClipboardCheck className="h-3 w-3" /> Inspeção de Qualidade</span>
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 3h</Badge>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5"><Paintbrush className="h-3 w-3" /> Aguardando Pintura</span>
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 4 dias</Badge>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5"><Package className="h-3 w-3" /> Embalagem</span>
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 3h</Badge>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5"><Package className="h-3 w-3" /> Expedição Coleta</span>
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 48 dias</Badge>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5"><HardHat className="h-3 w-3" /> Instalações</span>
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 3 dias</Badge>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5"><AlertTriangle className="h-3 w-3" /> Correções</span>
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 3 dias</Badge>
-          </div>
-        </div>
-        <div className="mt-3 pt-3 border-t border-primary/10">
-          <h4 className="text-xs font-semibold text-foreground mb-2">Tempo total do pedido (dias corridos)</h4>
-          <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 25 dias</Badge>
-              <span>Pedidos sem porta de enrolar</span>
+      <Collapsible className="mt-6">
+        <CollapsibleTrigger className="w-full p-4 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-between cursor-pointer hover:bg-primary/10 transition-colors">
+          <h3 className="text-sm font-semibold text-foreground">Legenda — Limites de tempo por etapa</h3>
+          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 rounded-b-lg bg-primary/5 border border-t-0 border-primary/10">
+          <div className="pt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 text-xs text-muted-foreground">
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" /> Pedidos em Aberto</span>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 6h</Badge>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 30 dias</Badge>
-              <span>Pedidos com porta de enrolar</span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5"><ShieldCheck className="h-3 w-3" /> Aprovação CEO</span>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 6h</Badge>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5"><Factory className="h-3 w-3" /> Em Produção</span>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 4 dias</Badge>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5"><ClipboardCheck className="h-3 w-3" /> Inspeção de Qualidade</span>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 3h</Badge>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5"><Paintbrush className="h-3 w-3" /> Aguardando Pintura</span>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 4 dias</Badge>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5"><Package className="h-3 w-3" /> Embalagem</span>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 3h</Badge>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5"><Package className="h-3 w-3" /> Expedição Coleta</span>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 48 dias</Badge>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5"><HardHat className="h-3 w-3" /> Instalações</span>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 3 dias</Badge>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5"><AlertTriangle className="h-3 w-3" /> Correções</span>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 3 dias</Badge>
             </div>
           </div>
-        </div>
-        <p className="mt-2 text-[10px] text-muted-foreground/60">* Horário comercial: 07:00 às 17:00, seg-sex. Tempo total usa dias corridos.</p>
-      </div>
+          <div className="mt-3 pt-3 border-t border-primary/10">
+            <h4 className="text-xs font-semibold text-foreground mb-2">Tempo total do pedido (dias corridos)</h4>
+            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 25 dias</Badge>
+                <span>Pedidos sem porta de enrolar</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 30 dias</Badge>
+                <span>Pedidos com porta de enrolar</span>
+              </div>
+            </div>
+          </div>
+          <p className="mt-2 text-[10px] text-muted-foreground/60">* Horário comercial: 07:00 às 17:00, seg-sex. Tempo total usa dias corridos.</p>
+        </CollapsibleContent>
+      </Collapsible>
 
       <CriarPedidoTesteModal
         open={modalPedidoTesteAberto}
