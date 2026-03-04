@@ -71,6 +71,49 @@ export function useDesempenhoEtapas(dataInicio: string, dataFim: string) {
         }
       }
 
+      // Buscar carregamentos concluídos (correcoes não tem carregamento_concluido_por)
+      const [ordensRes, instRes] = await Promise.all([
+        supabase
+          .from("ordens_carregamento")
+          .select("carregamento_concluido_por")
+          .eq("carregamento_concluido", true)
+          .gte("carregamento_concluido_em", `${dataInicio}T00:00:00`)
+          .lte("carregamento_concluido_em", `${dataFim}T23:59:59`),
+        supabase
+          .from("instalacoes")
+          .select("carregamento_concluido_por")
+          .eq("carregamento_concluido", true)
+          .gte("carregamento_concluido_em", `${dataInicio}T00:00:00`)
+          .lte("carregamento_concluido_em", `${dataFim}T23:59:59`),
+      ]);
+
+      const allCarregamentos = [
+        ...(ordensRes.data || []),
+        ...(instRes.data || []),
+      ];
+
+      for (const row of allCarregamentos) {
+        const userId = row.carregamento_concluido_por;
+        if (!userId) continue;
+        let entry = map.get(userId);
+        if (!entry) {
+          entry = {
+            user_id: userId,
+            nome: "",
+            foto_perfil_url: null,
+            perfiladas_metros: 0,
+            soldadas: 0,
+            soldadas_p: 0,
+            soldadas_g: 0,
+            separadas: 0,
+            pintura_m2: 0,
+            carregamentos: 0,
+          };
+          map.set(userId, entry);
+        }
+        entry.carregamentos += 1;
+      }
+
       // Buscar nomes e fotos dos colaboradores
       const userIds = Array.from(map.keys());
       const { data: usuarios } = await supabase
