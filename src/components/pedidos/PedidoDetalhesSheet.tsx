@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { 
   Package, Phone, MapPin, Calendar, DollarSign, ListChecks, 
   ShoppingCart, CheckCircle2, Clock, AlertCircle, XCircle,
-  FolderOpen, ChevronDown, User, Wrench, Factory, History, ChevronRight, FileText, RefreshCw
+  FolderOpen, ChevronDown, User, Wrench, Factory, History, ChevronRight, FileText, RefreshCw, MessageSquare, Send
 } from "lucide-react";
 import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
 import { ProcessoAvancoModal } from "./ProcessoAvancoModal";
@@ -16,7 +16,9 @@ import { useToast } from "@/hooks/use-toast";
 import { PedidoHistoricoMovimentacoes } from "./PedidoHistoricoMovimentacoes";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { formatarNumeroPedidoMensal } from "@/utils/pedidoFormatters";
 import { PedidoFluxogramaMap } from "./PedidoFluxogramaMap";
