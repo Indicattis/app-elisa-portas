@@ -163,19 +163,21 @@ export default function DREDespesasDirecao() {
                     <TableRow className="border-white/10 hover:bg-white/5">
                       <TableHead className="text-white/70">Nome</TableHead>
                       <TableHead className="text-white/70">Categoria</TableHead>
-                      <TableHead className="text-white/70 text-right">Limite Mensal</TableHead>
+                      <TableHead className="text-white/70 text-right">Despesa Projetada</TableHead>
+                      <TableHead className="text-white/70 text-right">Projetada do Ano</TableHead>
                       <TableHead className="text-white/70 text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {items.length === 0 ? (
-                      <TableRow><TableCell colSpan={4} className="text-center text-white/50 py-8">Nenhuma despesa encontrada</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={5} className="text-center text-white/50 py-8">Nenhuma despesa encontrada</TableCell></TableRow>
                     ) : (
                       items.map((tipo) => (
                         <TableRow key={tipo.id} className="border-white/10 hover:bg-white/5">
                           <TableCell className="font-medium text-white">{tipo.nome}</TableCell>
                           <TableCell>{tipo.categoria && (<Badge variant="outline" style={{ borderColor: tipo.categoria.cor, color: tipo.categoria.cor }}>{tipo.categoria.nome}</Badge>)}</TableCell>
                           <TableCell className="text-right font-medium text-white">{formatCurrency(tipo.valor_maximo_mensal)}</TableCell>
+                          <TableCell className="text-right font-medium text-white">{formatCurrency(tipo.valor_maximo_mensal * 12)}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="sm" onClick={() => handleEditTipoCusto(tipo)} className="text-white/70 hover:text-white hover:bg-white/10"><Pencil className="h-4 w-4" /></Button>
@@ -189,6 +191,7 @@ export default function DREDespesasDirecao() {
                       <TableRow className="border-white/10 bg-white/5">
                         <TableCell colSpan={2} className="font-semibold text-white/70">Total</TableCell>
                         <TableCell className="text-right font-bold text-white">{formatCurrency(total)}</TableCell>
+                        <TableCell className="text-right font-bold text-white">{formatCurrency(total * 12)}</TableCell>
                         <TableCell />
                       </TableRow>
                     )}
@@ -241,7 +244,7 @@ export default function DREDespesasDirecao() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="valor">Valor Máximo Mensal</Label>
+                <Label htmlFor="valor">Despesa Projetada</Label>
                 <Input id="valor" type="number" value={tipoCustoForm.valor_maximo_mensal} onChange={(e) => setTipoCustoForm({ ...tipoCustoForm, valor_maximo_mensal: parseFloat(e.target.value) || 0 })} />
               </div>
               <div className="grid gap-2">
