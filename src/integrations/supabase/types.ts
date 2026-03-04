@@ -1800,6 +1800,30 @@ export type Database = {
         }
         Relationships: []
       }
+      dre_custos_produtos: {
+        Row: {
+          created_at: string | null
+          custo: number | null
+          id: string
+          lucro: number | null
+          produto: string
+        }
+        Insert: {
+          created_at?: string | null
+          custo?: number | null
+          id?: string
+          lucro?: number | null
+          produto: string
+        }
+        Update: {
+          created_at?: string | null
+          custo?: number | null
+          id?: string
+          lucro?: number | null
+          produto?: string
+        }
+        Relationships: []
+      }
       dre_mensais: {
         Row: {
           created_at: string | null
