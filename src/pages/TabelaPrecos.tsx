@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search, Plus, Pencil, Trash2, Upload } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Search, Plus, Pencil, Trash2, Upload, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -21,9 +21,36 @@ export default function TabelaPrecos() {
   const [itemParaInativar, setItemParaInativar] = useState<ItemTabelaPreco | null>(null);
   const [alturaRapida, setAlturaRapida] = useState('');
   const [larguraRapida, setLarguraRapida] = useState('');
+  const [editingLucroId, setEditingLucroId] = useState<string | null>(null);
+  const [editingLucroValue, setEditingLucroValue] = useState('');
+  const lucroInputRef = useRef<HTMLInputElement>(null);
 
   const queryClient = useQueryClient();
   const { itens, isLoading, adicionarItem, editarItem, inativarItem } = useTabelaPrecos(searchTerm);
+
+  useEffect(() => {
+    if (editingLucroId && lucroInputRef.current) {
+      lucroInputRef.current.focus();
+      lucroInputRef.current.select();
+    }
+  }, [editingLucroId]);
+
+  const handleStartEditLucro = (item: ItemTabelaPreco) => {
+    setEditingLucroId(item.id);
+    setEditingLucroValue(String(item.lucro || 0));
+  };
+
+  const handleSaveLucro = async (id: string) => {
+    const valor = parseFloat(editingLucroValue);
+    if (!isNaN(valor) && valor >= 0) {
+      await editarItem({ id, dados: { lucro: valor } });
+    }
+    setEditingLucroId(null);
+  };
+
+  const handleCancelLucro = () => {
+    setEditingLucroId(null);
+  };
 
   const handleUploadComplete = () => {
     queryClient.invalidateQueries({ queryKey: ['tabela-precos'] });
@@ -273,11 +300,37 @@ export default function TabelaPrecos() {
                               })}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right hidden md:table-cell text-white/70">
-                            {(item.lucro || 0).toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL' 
-                            })}
+                          <TableCell className="text-right hidden md:table-cell">
+                            {editingLucroId === item.id ? (
+                              <div className="flex items-center justify-end gap-1">
+                                <Input
+                                  ref={lucroInputRef}
+                                  type="number"
+                                  step="0.01"
+                                  value={editingLucroValue}
+                                  onChange={(e) => setEditingLucroValue(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveLucro(item.id);
+                                    if (e.key === 'Escape') handleCancelLucro();
+                                  }}
+                                  className="w-28 h-7 text-right text-sm bg-white/10 border-white/20 text-white"
+                                />
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-green-400 hover:text-green-300" onClick={() => handleSaveLucro(item.id)}>
+                                  <Check className="h-3 w-3" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-red-400 hover:text-red-300" onClick={handleCancelLucro}>
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <span
+                                className="cursor-pointer text-white/70 hover:text-white hover:underline decoration-dashed underline-offset-4 transition-colors"
+                                onClick={() => handleStartEditLucro(item)}
+                                title="Clique para editar"
+                              >
+                                {(item.lucro || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                              </span>
+                            )}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center justify-center gap-1">
