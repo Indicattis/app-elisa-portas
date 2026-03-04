@@ -22,6 +22,7 @@ export function ItemModal({ open, onOpenChange, onSubmit, itemEditando }: ItemMo
       valor_porta: 0,
       valor_instalacao: 0,
       valor_pintura: 0,
+      lucro: 0,
     }
   });
 
@@ -36,6 +37,7 @@ export function ItemModal({ open, onOpenChange, onSubmit, itemEditando }: ItemMo
         valor_porta: 0,
         valor_instalacao: 0,
         valor_pintura: 0,
+        lucro: 0,
       });
     }
   }, [itemEditando, reset, open]);
@@ -53,6 +55,7 @@ export function ItemModal({ open, onOpenChange, onSubmit, itemEditando }: ItemMo
       valor_porta: Number(dados.valor_porta),
       valor_instalacao: Number(dados.valor_instalacao),
       valor_pintura: Number(dados.valor_pintura),
+      lucro: Number(dados.lucro),
     });
     onOpenChange(false);
   };
@@ -115,7 +118,7 @@ export function ItemModal({ open, onOpenChange, onSubmit, itemEditando }: ItemMo
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="valor_porta">Valor Porta *</Label>
               <Input
@@ -164,6 +167,23 @@ export function ItemModal({ open, onOpenChange, onSubmit, itemEditando }: ItemMo
               />
               {errors.valor_pintura && (
                 <p className="text-sm text-destructive">{errors.valor_pintura.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="lucro">Lucro *</Label>
+              <Input
+                id="lucro"
+                type="number"
+                step="0.01"
+                {...register('lucro', { 
+                  required: 'Valor do lucro é obrigatório',
+                  min: { value: 0, message: 'Valor deve ser maior ou igual a 0' }
+                })}
+                placeholder="500.00"
+              />
+              {errors.lucro && (
+                <p className="text-sm text-destructive">{errors.lucro.message}</p>
               )}
             </div>
           </div>

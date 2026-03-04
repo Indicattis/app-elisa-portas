@@ -1,0 +1,1 @@
+ALTER TABLE public.tabela_precos_portas ADD COLUMN lucro NUMERIC DEFAULT 0;

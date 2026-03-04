@@ -170,7 +170,8 @@ export default function TabelaPrecos() {
                       <div className="text-xs text-white/40 px-1">
                         Porta: {itemEncontrado.valor_porta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} | 
                         Instalação: {itemEncontrado.valor_instalacao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} | 
-                        Pintura: {itemEncontrado.valor_pintura.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        Pintura: {itemEncontrado.valor_pintura.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} | 
+                        Lucro: {(itemEncontrado.lucro || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                       </div>
                     </div>
                   ) : (
@@ -234,6 +235,7 @@ export default function TabelaPrecos() {
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Instalação</TableHead>
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Pintura</TableHead>
                       <TableHead className="text-right text-white/60">Total</TableHead>
+                      <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>
                       <TableHead className="text-center w-24 text-white/60">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -270,6 +272,12 @@ export default function TabelaPrecos() {
                                 currency: 'BRL' 
                               })}
                             </Badge>
+                          </TableCell>
+                          <TableCell className="text-right hidden md:table-cell text-white/70">
+                            {(item.lucro || 0).toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL' 
+                            })}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center justify-center gap-1">

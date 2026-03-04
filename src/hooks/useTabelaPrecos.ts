@@ -10,6 +10,7 @@ export interface ItemTabelaPreco {
   valor_porta: number;
   valor_instalacao: number;
   valor_pintura: number;
+  lucro: number;
   ativo: boolean;
   created_at: string;
   updated_at: string;

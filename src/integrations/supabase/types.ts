@@ -6424,6 +6424,7 @@ export type Database = {
           descricao: string
           id: string
           largura: number
+          lucro: number | null
           updated_at: string
           valor_instalacao: number
           valor_pintura: number
@@ -6437,6 +6438,7 @@ export type Database = {
           descricao: string
           id?: string
           largura: number
+          lucro?: number | null
           updated_at?: string
           valor_instalacao?: number
           valor_pintura?: number
@@ -6450,6 +6452,7 @@ export type Database = {
           descricao?: string
           id?: string
           largura?: number
+          lucro?: number | null
           updated_at?: string
           valor_instalacao?: number
           valor_pintura?: number
