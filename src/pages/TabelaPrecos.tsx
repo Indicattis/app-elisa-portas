@@ -21,9 +21,36 @@ export default function TabelaPrecos() {
   const [itemParaInativar, setItemParaInativar] = useState<ItemTabelaPreco | null>(null);
   const [alturaRapida, setAlturaRapida] = useState('');
   const [larguraRapida, setLarguraRapida] = useState('');
+  const [editingLucroId, setEditingLucroId] = useState<string | null>(null);
+  const [editingLucroValue, setEditingLucroValue] = useState('');
+  const lucroInputRef = useRef<HTMLInputElement>(null);
 
   const queryClient = useQueryClient();
   const { itens, isLoading, adicionarItem, editarItem, inativarItem } = useTabelaPrecos(searchTerm);
+
+  useEffect(() => {
+    if (editingLucroId && lucroInputRef.current) {
+      lucroInputRef.current.focus();
+      lucroInputRef.current.select();
+    }
+  }, [editingLucroId]);
+
+  const handleStartEditLucro = (item: ItemTabelaPreco) => {
+    setEditingLucroId(item.id);
+    setEditingLucroValue(String(item.lucro || 0));
+  };
+
+  const handleSaveLucro = async (id: string) => {
+    const valor = parseFloat(editingLucroValue);
+    if (!isNaN(valor) && valor >= 0) {
+      await editarItem({ id, dados: { lucro: valor } });
+    }
+    setEditingLucroId(null);
+  };
+
+  const handleCancelLucro = () => {
+    setEditingLucroId(null);
+  };
 
   const handleUploadComplete = () => {
     queryClient.invalidateQueries({ queryKey: ['tabela-precos'] });
