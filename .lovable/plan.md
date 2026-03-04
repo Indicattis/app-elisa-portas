@@ -1,36 +1,52 @@
 
 
-# Melhorias na página /direcao/dre/custos
+# Corrigir faturamento total: instalações vindas de fonte errada
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+## Problema identificado
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+A análise do trigger do banco confirma que:
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
-
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
-
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
-
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
+```sql
+-- Produto: valor_total_sem_frete = (valor_produto + valor_pintura + valor_instalacao) * qty - desconto
+-- Venda: valor_venda = SUM(valor_total dos produtos) + valor_frete
+-- Venda: valor_instalacao = SUM(produtos_vendas.valor_instalacao) -- valor BRUTO, sem desconto
 ```
 
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+Ou seja, `valor_total_sem_frete` de cada produto **já inclui** `valor_instalacao` (descontado proporcionalmente). E `vendas.valor_instalacao` é o valor **bruto** (sem desconto).
+
+O código atual:
+1. Para portas: computa `valorPortaLiquido + valorPinturaLiquido` (correto, mas **exclui** a parcela de instalação descontada)
+2. Usa `vendas.valor_instalacao` (bruto) para `fat.instalacoes`
+
+**Resultado**: a parcela de instalação descontada é substituída pela bruta, e a diferença de desconto é perdida. Além disso, para portas, `valorPortaLiquido + valorPinturaLiquido < valor_total_sem_frete` porque a fração de instalação foi removida. Isso causa a diferença de ~R$ 29.000.
+
+## Solução
+
+Extrair a parcela de instalação **dos próprios produtos** (descontada proporcionalmente), em vez de usar `vendas.valor_instalacao`. Assim:
+
+```
+valorPortaLiquido + valorPinturaLiquido + valorInstalacaoLiquido = valor_total_sem_frete
+```
+
+E o total fecha corretamente: `sum(valor_total_sem_frete) + sum(valor_credito) = faturamento real`.
+
+### Alterações em `DREMesDirecao.tsx`
+
+**1. No loop de portas (linhas 355-381)**: adicionar cálculo de `valorInstalacaoLiquido` e somar em `fat.instalacoes`:
+
+```typescript
+const proporcaoInstalacao = valorBrutoTotal > 0 ? valorInstalacaoBase / valorBrutoTotal : 0;
+const valorInstalacaoLiquido = valorInstalacaoBase - (descontoTotal * proporcaoInstalacao);
+
+fat.portas += valorPortaLiquido;
+fat.pintura += valorPinturaLiquido;
+fat.instalacoes += valorInstalacaoLiquido; // NOVO
+```
+
+**2. Remover `vendas.valor_instalacao` do faturamento (linhas 401, 408)**: não usar mais `totalFatInstalacao` para `fat.instalacoes` (que agora vem dos produtos). Manter a query de vendas apenas para `valor_credito` e `lucro_instalacao`.
+
+**3. Lucro de instalação**: manter a lógica atual que usa `vendas.lucro_instalacao` com fallback de 30%, mas aplicar sobre o valor descontado (da fonte de produtos) em vez do bruto.
+
+## Arquivo afetado
+- `src/pages/direcao/DREMesDirecao.tsx`
 
