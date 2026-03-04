@@ -330,22 +330,24 @@ export function NeoInstalacaoCardGestao({
               </div>
 
               {/* Col 16-22: Data criação + Cronômetro (span across ordens + tempo cols) */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center justify-center gap-1 cursor-help" style={{ gridColumn: '16 / 23' }}>
-                    <span className="text-[9px] text-muted-foreground leading-none">
-                      {format(new Date(neoInstalacao.created_at), "dd/MM/yy")}
-                    </span>
-                    <CronometroEtapaBadge dataEntrada={neoInstalacao.created_at} compact />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Criado em: {format(new Date(neoInstalacao.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
-                  {neoInstalacao.hora && (
-                    <p className="text-[10px] text-muted-foreground">Hora agendada: {neoInstalacao.hora.substring(0, 5)}</p>
-                  )}
-                </TooltipContent>
-              </Tooltip>
+              <div style={{ gridColumn: '16 / 23' }}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center justify-center gap-1 cursor-help">
+                      <span className="text-[9px] text-muted-foreground leading-none">
+                        {format(new Date(neoInstalacao.created_at), "dd/MM/yy")}
+                      </span>
+                      <CronometroEtapaBadge dataEntrada={neoInstalacao.created_at} compact />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Criado em: {format(new Date(neoInstalacao.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                    {neoInstalacao.hora && (
+                      <p className="text-[10px] text-muted-foreground">Hora agendada: {neoInstalacao.hora.substring(0, 5)}</p>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
 
               {/* Col 23: Botões de ação ou status concluído */}
               <div className="flex items-center justify-end gap-1">
