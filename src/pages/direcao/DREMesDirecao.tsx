@@ -50,6 +50,7 @@ function DespesaSection({
   onDelete: (id: string) => Promise<void>;
   formatCurrency: (v: number) => string;
   tiposDisponiveis?: TipoCustoVariavel[];
+  hideAddButton?: boolean;
 }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<NewDespesa>(emptyNewDespesa);
@@ -160,7 +161,15 @@ function DespesaSection({
                     }`}
                   />
                 </button>
-                <span className="text-sm text-white/60">{d.nome}</span>
+                <div>
+                  <span className="text-sm text-white/60">{d.nome}</span>
+                  {(() => {
+                    const tipoRef = tiposDisponiveis?.find(t => t.nome === d.nome);
+                    return tipoRef ? (
+                      <p className="text-xs text-white/30">Projetado: {formatCurrency(tipoRef.valor_maximo_mensal)}/mês</p>
+                    ) : null;
+                  })()}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-white">{formatCurrency(d.valor_real)}</span>
@@ -553,6 +562,7 @@ export default function DREMesDirecao() {
                 onToggleStatus={handleToggleStatus}
                 onDelete={handleDeleteDespesa}
                 formatCurrency={formatCurrency}
+                hideAddButton={true}
               />
               <DespesaSection
                 title="Despesas Variáveis"
