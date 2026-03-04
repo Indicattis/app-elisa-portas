@@ -26,16 +26,16 @@ export function PedidosFiltrosMinimalista({
   mostrarProntos,
   onMostrarProntosToggle
 }: PedidosFiltrosMinimalistaProps) {
-  
+
   const { data: cores = [] } = useQuery({
     queryKey: ['cores-filtro'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('catalogo_cores')
-        .select('id, nome, codigo_hex')
-        .eq('ativa', true)
-        .order('nome');
-      
+      const { data, error } = await supabase.
+      from('catalogo_cores').
+      select('id, nome, codigo_hex').
+      eq('ativa', true).
+      order('nome');
+
       if (error) throw error;
       return data;
     }
@@ -50,8 +50,8 @@ export function PedidosFiltrosMinimalista({
           placeholder="Cliente..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-8 h-8 text-xs"
-        />
+          className="pl-8 h-8 text-xs" />
+        
       </div>
 
       {/* Tipo de Entrega */}
@@ -73,30 +73,30 @@ export function PedidosFiltrosMinimalista({
         </SelectTrigger>
         <SelectContent className="max-h-80 bg-background z-50">
           <SelectItem value="todas">Todas</SelectItem>
-          {cores.map((cor) => (
-            <SelectItem key={cor.id} value={cor.nome}>
+          {cores.map((cor) =>
+          <SelectItem key={cor.id} value={cor.nome}>
               <div className="flex items-center gap-2">
-                <div 
-                  className="w-3 h-3 rounded-full border" 
-                  style={{ backgroundColor: cor.codigo_hex }}
-                />
+                <div
+                className="w-3 h-3 rounded-full border"
+                style={{ backgroundColor: cor.codigo_hex }} />
+              
                 {cor.nome}
               </div>
             </SelectItem>
-          ))}
+          )}
         </SelectContent>
       </Select>
 
       {/* Botão de prontos para avançar */}
-      <Button
-        size="sm"
-        variant={mostrarProntos ? "default" : "outline"}
-        onClick={onMostrarProntosToggle}
-        className="h-8 text-xs px-3"
-        title="Filtrar pedidos prontos para avançar"
-      >
-        <CheckCircle2 className="h-3.5 w-3.5" />
-      </Button>
-    </div>
-  );
+      
+
+
+
+
+
+
+
+      
+    </div>);
+
 }
