@@ -400,7 +400,7 @@ export default function DREMesDirecao() {
           setEstoqueResumo(resumo);
         };
 
-        await Promise.all([fetchDespesas(), fetchTiposCustosVariaveis(), fetchEstoque()]);
+        await Promise.all([fetchDespesas(), fetchTiposCustosAtivos(), fetchEstoque()]);
       } catch (err) {
         console.error('Erro ao buscar dados DRE:', err);
       } finally {
@@ -543,6 +543,7 @@ export default function DREMesDirecao() {
                 onToggleStatus={handleToggleStatus}
                 onDelete={handleDeleteDespesa}
                 formatCurrency={formatCurrency}
+                tiposDisponiveis={tiposCustosFixos}
               />
               <DespesaSection
                 title="Folha Salarial"
@@ -561,6 +562,7 @@ export default function DREMesDirecao() {
                 onToggleStatus={handleToggleStatus}
                 onDelete={handleDeleteDespesa}
                 formatCurrency={formatCurrency}
+                tiposDisponiveis={tiposCustosVariaveis}
               />
             </div>
 
