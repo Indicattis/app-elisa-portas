@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Search, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const UNIDADES_ESTOQUE = ["UN", "KG", "L", "M", "M²", "M³", "PCT", "CX", "PAR", "ROL", "GL", "ML", "CM"];
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -152,16 +155,18 @@ export default function DRECustosDirecao() {
                       <TableCell className="font-medium text-white">{item.nome_produto}</TableCell>
                       <TableCell className="text-white/70">{item.categoria || "-"}</TableCell>
                       <TableCell>
-                        {editingField?.id === item.id && editingField.field === 'unidade' ? (
+                      {editingField?.id === item.id && editingField.field === 'unidade' ? (
                           <div className="flex items-center gap-1">
-                            <Input
-                              value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
-                              onKeyDown={handleKeyDown}
-                              onBlur={handleSave}
-                              autoFocus
-                              className="w-24 h-8 bg-white/10 border-white/20 text-white"
-                            />
+                            <Select value={editValue} onValueChange={(val) => { setEditValue(val); }}>
+                              <SelectTrigger className="w-28 h-8 bg-white/10 border-white/20 text-white">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {UNIDADES_ESTOQUE.map((u) => (
+                                  <SelectItem key={u} value={u}>{u}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <button onClick={handleSave} className="p-1 text-green-400 hover:text-green-300"><Check className="h-4 w-4" /></button>
                             <button onClick={handleCancel} className="p-1 text-red-400 hover:text-red-300"><X className="h-4 w-4" /></button>
                           </div>
