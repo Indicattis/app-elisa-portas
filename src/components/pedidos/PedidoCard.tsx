@@ -1222,41 +1222,43 @@ export function PedidoCard({
               </Tooltip>
               
               {/* Col 3: Nome do cliente - flex grow */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <h3 
-                    className={cn(
-                      "font-semibold text-sm truncate",
-                      !disableClienteClick && "cursor-pointer hover:text-primary transition-colors"
-                    )}
-                    onClick={(e) => {
-                      if (disableClienteClick) return;
-                      e.stopPropagation();
-                      if (isAdministrativo) {
-                        navigate(`/administrativo/pedidos/${pedido.id}`);
-                      } else if (isProducao) {
-                        navigate(`/producao/controle/pedido/${pedido.id}/view`);
-                      } else if (isDirecao) {
-                        navigate(`/direcao/pedidos/${pedido.id}`);
-                      } else {
-                        navigate(`/dashboard/pedido/${pedido.id}/view`);
-                      }
-                    }}
-                  >
-                    {venda?.cliente_nome && venda.cliente_nome.length > 20 
-                      ? `${venda.cliente_nome.substring(0, 20)}...` 
-                      : venda?.cliente_nome}
-                  </h3>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{venda?.cliente_nome}</p>
-                </TooltipContent>
-              </Tooltip>
-              {ultimoComentario && (
-                <p className="text-[9px] text-muted-foreground truncate max-w-[170px]" title={ultimoComentario.comentario}>
-                  {ultimoComentario.comentario}
-                </p>
-              )}
+              <div className="min-w-0">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <h3 
+                      className={cn(
+                        "font-semibold text-sm truncate",
+                        !disableClienteClick && "cursor-pointer hover:text-primary transition-colors"
+                      )}
+                      onClick={(e) => {
+                        if (disableClienteClick) return;
+                        e.stopPropagation();
+                        if (isAdministrativo) {
+                          navigate(`/administrativo/pedidos/${pedido.id}`);
+                        } else if (isProducao) {
+                          navigate(`/producao/controle/pedido/${pedido.id}/view`);
+                        } else if (isDirecao) {
+                          navigate(`/direcao/pedidos/${pedido.id}`);
+                        } else {
+                          navigate(`/dashboard/pedido/${pedido.id}/view`);
+                        }
+                      }}
+                    >
+                      {venda?.cliente_nome && venda.cliente_nome.length > 20 
+                        ? `${venda.cliente_nome.substring(0, 20)}...` 
+                        : venda?.cliente_nome}
+                    </h3>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{venda?.cliente_nome}</p>
+                  </TooltipContent>
+                </Tooltip>
+                {ultimoComentario && (
+                  <p className="text-[9px] text-muted-foreground truncate" title={ultimoComentario.comentario}>
+                    {ultimoComentario.comentario}
+                  </p>
+                )}
+              </div>
 
               {/* Col 4: Cidade/Estado */}
               <Tooltip>
