@@ -331,6 +331,22 @@ export function PedidoCard({
     }
   });
 
+  // Buscar último comentário do pedido
+  const { data: ultimoComentario } = useQuery({
+    queryKey: ['pedido-ultimo-comentario', pedido.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pedido_comentarios')
+        .select('comentario, autor_nome, created_at')
+        .eq('pedido_id', pedido.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+  });
+
   // Verificar se todas as ordens de produção estão concluídas (para etapa em_producao)
   const {
     data: ordensStatus
