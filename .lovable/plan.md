@@ -1,36 +1,34 @@
 
 
-# Melhorias na página /direcao/dre/custos
+# Fix: "Carregada" sem data na etapa Correções
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+## Diagnóstico
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+O pedido #0200 (ff552e4d) está na etapa `correcoes`. O card mostra "Carregada" sem data porque:
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+1. A query busca 3 fontes em paralelo: `ordens_carregamento`, `instalacoes` e `correcoes`
+2. A variavel `concluido` usa `todasFontes.some(f => f.carregamento_concluido)` — retorna `true` porque a `ordens_carregamento` antiga (da entrega original) tem `carregamento_concluido = true`
+3. Porém, a `fontePrioritaria` para a etapa `correcoes` é `corrRes.data?.[0]`, que tem `data_carregamento = null` (a correção ainda nem foi agendada)
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+Resultado: mostra "Carregada" (do flag antigo) mas sem data (pois a correção não tem data).
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+## Correção
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
+Em `src/components/pedidos/PedidoCard.tsx` (linhas 440-453), o `concluido` deve respeitar a fonte prioritária da etapa atual, não qualquer fonte:
 
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+```typescript
+// ANTES (errado - usa qualquer fonte)
+const concluido = todasFontes.some(f => f.carregamento_concluido);
 
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
+// DEPOIS (correto - priorizar fonte da etapa)
+const fontePrioritaria = fontePorEtapa[pedido.etapa_atual] 
+  || todasFontes.find(f => f.carregamento_concluido) 
+  || todasFontes[0];
+const concluido = fontePrioritaria?.carregamento_concluido || false;
 ```
 
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+Isso garante que na etapa `correcoes`, o status de carregamento venha da tabela `correcoes` (que é `false`), e não da `ordens_carregamento` antiga.
+
+## Arquivo afetado
+- `src/components/pedidos/PedidoCard.tsx` (linha 441)
 
