@@ -198,6 +198,7 @@ export default function DREMesDirecao() {
   const [despesasFolha, setDespesasFolha] = useState<Despesa[]>([]);
   const [despesasProjetadas, setDespesasProjetadas] = useState<Despesa[]>([]);
   const [despesasNaoEsperadas, setDespesasNaoEsperadas] = useState<Despesa[]>([]);
+  const [tiposCustosFixos, setTiposCustosFixos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosVariaveis, setTiposCustosVariaveis] = useState<TipoCustoVariavel[]>([]);
   const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
   const [topAdicionais, setTopAdicionais] = useState<{nome: string, qtd: number}[]>([]);
