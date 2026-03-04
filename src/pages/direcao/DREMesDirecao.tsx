@@ -234,19 +234,20 @@ export default function DREMesDirecao() {
     setDespesasNaoEsperadas(all.filter((d: any) => d.modalidade === 'variavel_nao_esperada').map(mapDespesa));
   };
 
-  const fetchTiposCustosVariaveis = async () => {
+  const fetchTiposCustosAtivos = async () => {
     const { data, error } = await supabase
       .from('tipos_custos' as any)
-      .select('id, nome, valor_maximo_mensal')
-      .eq('tipo', 'variavel')
+      .select('id, nome, valor_maximo_mensal, tipo')
       .eq('ativo', true)
       .order('nome');
 
     if (error) {
-      console.error('Erro ao buscar tipos custos variáveis:', error);
+      console.error('Erro ao buscar tipos custos:', error);
       return;
     }
-    setTiposCustosVariaveis((data || []) as unknown as TipoCustoVariavel[]);
+    const all = (data || []) as unknown as (TipoCustoVariavel & { tipo: string })[];
+    setTiposCustosFixos(all.filter(t => t.tipo === 'fixa'));
+    setTiposCustosVariaveis(all.filter(t => t.tipo === 'variavel'));
   };
 
   const handleAddDespesa = async (modalidade: string, data: NewDespesa) => {
