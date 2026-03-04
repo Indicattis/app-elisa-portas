@@ -108,8 +108,42 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
       fetchOrdens();
       fetchObservacoesVisita();
       fetchEtapasHistorico();
+      fetchComentarios();
     }
   }, [open, pedido?.id]);
+
+  const fetchComentarios = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('pedido_comentarios')
+        .select('*')
+        .eq('pedido_id', pedido.id)
+        .order('created_at', { ascending: false });
+      if (!error && data) setComentarios(data);
+    } catch (err) {
+      console.error("Erro ao buscar comentários:", err);
+    }
+  };
+
+  const handleEnviarComentario = async () => {
+    if (!novoComentario.trim() || !userRole) return;
+    setEnviandoComentario(true);
+    try {
+      const { error } = await supabase.from('pedido_comentarios').insert({
+        pedido_id: pedido.id,
+        autor_id: userRole.user_id,
+        autor_nome: userRole.nome,
+        comentario: novoComentario.trim(),
+      });
+      if (error) throw error;
+      setNovoComentario('');
+      fetchComentarios();
+    } catch (err) {
+      console.error("Erro ao enviar comentário:", err);
+    } finally {
+      setEnviandoComentario(false);
+    }
+  };
 
   const fetchObservacoesVisita = async () => {
     try {
