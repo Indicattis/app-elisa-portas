@@ -71,8 +71,8 @@ export function useDesempenhoEtapas(dataInicio: string, dataFim: string) {
         }
       }
 
-      // Buscar carregamentos concluídos nas 3 tabelas
-      const [ordensRes, instRes, corrRes] = await Promise.all([
+      // Buscar carregamentos concluídos (correcoes não tem carregamento_concluido_por)
+      const [ordensRes, instRes] = await Promise.all([
         supabase
           .from("ordens_carregamento")
           .select("carregamento_concluido_por")
@@ -85,18 +85,11 @@ export function useDesempenhoEtapas(dataInicio: string, dataFim: string) {
           .eq("carregamento_concluido", true)
           .gte("carregamento_concluido_em", `${dataInicio}T00:00:00`)
           .lte("carregamento_concluido_em", `${dataFim}T23:59:59`),
-        supabase
-          .from("correcoes")
-          .select("carregamento_concluido_por")
-          .eq("carregamento_concluido", true)
-          .gte("carregamento_concluido_em", `${dataInicio}T00:00:00`)
-          .lte("carregamento_concluido_em", `${dataFim}T23:59:59`),
       ]);
 
       const allCarregamentos = [
         ...(ordensRes.data || []),
         ...(instRes.data || []),
-        ...(corrRes.data || []),
       ];
 
       for (const row of allCarregamentos) {
