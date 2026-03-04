@@ -74,7 +74,7 @@ export function NeoCorrecaoCardGestao({
             {/* Grid layout IDÊNTICO ao PedidoCard */}
             <div 
               className="grid items-center gap-1.5 h-full px-2 w-full" 
-              style={{ gridTemplateColumns: '20px 20px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 24px 24px 24px 24px 24px 24px 1fr 55px' }}
+              style={{ gridTemplateColumns: '20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px 65px 24px 24px 24px 24px 24px 24px 1fr 55px' }}
             >
               {/* Col 1: Drag handle */}
               <div className="flex items-center justify-center">
@@ -100,8 +100,11 @@ export function NeoCorrecaoCardGestao({
                   <p className="text-[10px] text-muted-foreground">Correção Avulsa</p>
                 </TooltipContent>
               </Tooltip>
+
+              {/* Col 3: Símbolos placeholder */}
+              <div />
               
-              {/* Col 3: Nome do cliente */}
+              {/* Col 4: Nome do cliente */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <h3 className="font-semibold text-sm truncate">
@@ -118,7 +121,7 @@ export function NeoCorrecaoCardGestao({
                 </TooltipContent>
               </Tooltip>
 
-              {/* Col 4: Cidade/Estado */}
+              {/* Col 5: Cidade/Estado */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center justify-center text-center">
@@ -136,14 +139,92 @@ export function NeoCorrecaoCardGestao({
                 </TooltipContent>
               </Tooltip>
 
-              {/* Col 5: Terceirização placeholder */}
+              {/* Col 6: Terceirização placeholder */}
               <div />
 
-              {/* Col 6: Valor Total */}
+              {/* Col 7: Metragem linear placeholder */}
+              <div />
+
+              {/* Col 8: Metragem quadrada placeholder */}
+              <div />
+
+              {/* Col 9: Data de Agendamento */}
+              <div className="text-center">
+                {neoCorrecao.data_correcao ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex flex-col items-center leading-tight cursor-help">
+                        <span className={`text-[9px] font-medium ${atrasado ? 'text-red-500' : 'text-purple-400'}`}>
+                          {atrasado ? 'Atrasado' : 'Agendado'}
+                        </span>
+                        <span className={`text-xs font-bold ${atrasado ? 'text-red-500' : 'text-purple-400'}`}>
+                          {format(parseISO(neoCorrecao.data_correcao), "dd/MM/yy")}
+                        </span>
+                      </div>
+                    </TooltipTrigger>
+                    {neoCorrecao.vezes_agendado >= 2 && (
+                      <TooltipContent>
+                        <p className="text-xs">Reagendado {neoCorrecao.vezes_agendado} vezes</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                ) : (
+                  <span className="text-[10px] font-bold text-destructive">
+                    Não agendado
+                  </span>
+                )}
+              </div>
+
+              {/* Col 10: Responsável/Equipe */}
+              <div className="text-center overflow-hidden">
+                {neoCorrecao.equipe_nome ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span 
+                        className="text-[10px] font-medium truncate block cursor-help"
+                        style={{ color: corEquipe }}
+                      >
+                        {neoCorrecao.equipe_nome.length > 10 
+                          ? `${neoCorrecao.equipe_nome.substring(0, 10)}...` 
+                          : neoCorrecao.equipe_nome}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">{neoCorrecao.equipe_nome}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <span className="text-[9px] text-muted-foreground/50">—</span>
+                )}
+              </div>
+
+              {/* Col 11: Portas P/G - Badge Avulso */}
+              <div className="flex items-center gap-0.5 overflow-hidden">
+                <Badge 
+                  variant="outline" 
+                  className="text-[9px] px-1 py-0 h-4 text-purple-400 bg-purple-500/20 border-purple-500/50"
+                >
+                  AVULSO
+                </Badge>
+              </div>
+
+              {/* Col 12: Tags/Badges (Correção) */}
+              <div className="flex items-center justify-center gap-1">
+                <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-purple-500/10 text-purple-400 border-purple-500/50">
+                  <AlertTriangle className="h-2.5 w-2.5" />
+                </Badge>
+              </div>
+
+              {/* Col 13: Cores placeholder */}
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] text-muted-foreground/50">—</span>
+              </div>
+
+              {/* Col 14: Valor Total */}
               <div className="text-center">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="text-[9px] text-muted-foreground font-medium cursor-help">
+                    <span className="text-[10px] text-muted-foreground font-medium cursor-help">
                       {neoCorrecao.valor_total ? formatCurrency(neoCorrecao.valor_total).replace('R$\u00a0', '') : '—'}
                     </span>
                   </TooltipTrigger>
@@ -151,7 +232,7 @@ export function NeoCorrecaoCardGestao({
                 </Tooltip>
               </div>
 
-              {/* Col 7: Valor a Receber */}
+              {/* Col 15: Valor a Receber */}
               <div className="text-center">
                 {onUpdateValor ? (
                   <Popover open={popoverValorOpen} onOpenChange={(open) => {
@@ -162,7 +243,7 @@ export function NeoCorrecaoCardGestao({
                   }}>
                     <PopoverTrigger asChild>
                       <button
-                        className={`text-[9px] font-medium cursor-pointer hover:underline ${
+                        className={`text-[10px] font-medium cursor-pointer hover:underline ${
                           (neoCorrecao.valor_a_receber_texto || neoCorrecao.valor_a_receber) ? 'text-emerald-400' : 'text-muted-foreground/50'
                         }`}
                         onClick={(e) => e.stopPropagation()}
@@ -218,7 +299,7 @@ export function NeoCorrecaoCardGestao({
                 ) : (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className={`text-[9px] font-medium cursor-help ${(neoCorrecao.valor_a_receber_texto || neoCorrecao.valor_a_receber) ? 'text-emerald-400' : 'text-muted-foreground/50'}`}>
+                      <span className={`text-[10px] font-medium cursor-help ${(neoCorrecao.valor_a_receber_texto || neoCorrecao.valor_a_receber) ? 'text-emerald-400' : 'text-muted-foreground/50'}`}>
                         {neoCorrecao.valor_a_receber_texto || (neoCorrecao.valor_a_receber ? formatCurrency(neoCorrecao.valor_a_receber).replace('R$\u00a0', '') : '—')}
                       </span>
                     </TooltipTrigger>
@@ -227,79 +308,10 @@ export function NeoCorrecaoCardGestao({
                 )}
               </div>
 
-              {/* Col 8: Data de Agendamento */}
-              <div className="text-center">
-                {neoCorrecao.data_correcao ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex flex-col items-center leading-tight cursor-help">
-                        <span className={`text-[9px] font-medium ${atrasado ? 'text-red-500' : 'text-purple-400'}`}>
-                          {atrasado ? 'Atrasado' : 'Agendado'}
-                        </span>
-                        <span className={`text-xs font-bold ${atrasado ? 'text-red-500' : 'text-purple-400'}`}>
-                          {format(parseISO(neoCorrecao.data_correcao), "dd/MM/yy")}
-                        </span>
-                      </div>
-                    </TooltipTrigger>
-                    {neoCorrecao.vezes_agendado >= 2 && (
-                      <TooltipContent>
-                        <p className="text-xs">Reagendado {neoCorrecao.vezes_agendado} vezes</p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                ) : (
-                  <span className="text-[10px] font-bold text-destructive">
-                    Não agendado
-                  </span>
-                )}
-              </div>
-
-              {/* Col 9: Responsável/Equipe */}
-              <div className="text-center overflow-hidden">
-                {neoCorrecao.equipe_nome ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span 
-                        className="text-[10px] font-medium truncate block cursor-help"
-                        style={{ color: corEquipe }}
-                      >
-                        {neoCorrecao.equipe_nome.length > 10 
-                          ? `${neoCorrecao.equipe_nome.substring(0, 10)}...` 
-                          : neoCorrecao.equipe_nome}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs">{neoCorrecao.equipe_nome}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <span className="text-[9px] text-muted-foreground/50">—</span>
-                )}
-              </div>
-
-              {/* Col 10: Portas P/G - Badge Avulso */}
-              <div className="flex items-center gap-0.5 overflow-hidden">
-                <Badge 
-                  variant="outline" 
-                  className="text-[9px] px-1 py-0 h-4 text-purple-400 bg-purple-500/20 border-purple-500/50"
-                >
-                  AVULSO
-                </Badge>
-              </div>
-
-              {/* Col 11: Tags/Badges (Correção) */}
-              <div className="flex items-center justify-center gap-1">
-                <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-purple-500/10 text-purple-400 border-purple-500/50">
-                  <AlertTriangle className="h-2.5 w-2.5" />
-                </Badge>
-              </div>
-
-              {/* Col 12: Cores placeholder */}
-              <div className="flex items-center gap-1">
+              {/* Col 16-21: Status das Ordens - placeholders */}
+              <div className="flex items-center justify-center">
                 <span className="text-[9px] text-muted-foreground/50">—</span>
               </div>
-
-              {/* Col 13-17: Status das Ordens - placeholders */}
               <div className="flex items-center justify-center">
                 <span className="text-[9px] text-muted-foreground/50">—</span>
               </div>
@@ -334,8 +346,8 @@ export function NeoCorrecaoCardGestao({
                 </TooltipContent>
               </Tooltip>
 
-              {/* Col 19: Botões de ação ou status concluído */}
-              <div className="flex items-center justify-end gap-1" style={{ gridColumn: '19 / -1' }}>
+              {/* Col 23: Botões de ação ou status concluído */}
+              <div className="flex items-center justify-end gap-1">
                 {onEditar && !showConcluido && (
                   <Button
                     size="icon"
