@@ -1,32 +1,36 @@
 
 
-# Remover sistema de categorias e subcategorias das despesas
+# Melhorias na página /direcao/dre/custos
 
-## Escopo
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-Remover toda a lógica de categorias/subcategorias da página `/direcao/dre/despesas` e do hook `useTiposCustos`. Isso inclui:
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-## Alterações
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-### 1. `src/pages/direcao/DREDespesasDirecao.tsx`
-- Remover botão "Categorias" do header (linha 119-121)
-- Remover filtro de categoria do search bar (linhas 140-146)
-- Remover coluna "Categoria" da tabela (linha 165, 178, 192)
-- Remover campos categoria/subcategoria do dialog de tipo de custo (linhas 229-244)
-- Remover todo o dialog "Categorias Manager" com abas categorias/subcategorias (linhas 269-344)
-- Remover dialog de criação/edição de categoria (linhas 346-372)
-- Remover dialog de criação/edição de subcategoria (linhas 374-400)
-- Remover states: `categoriasManagerDialog`, `categoriaDialog`, `subcategoriaDialog`, `editingCategoria`, `editingSubcategoria`, `categoriaForm`, `subcategoriaForm`, `filterCategoria`
-- Remover funções: `handleSaveCategoria`, `handleSaveSubcategoria`, `handleEditCategoria`, `handleEditSubcategoria`, `toggleCategoriaStatus`, `toggleSubcategoriaStatus`, `resetCategoriaForm`, `resetSubcategoriaForm`
-- Remover `categoria_id`/`subcategoria_id` do `tipoCustoForm` e `handleSaveTipoCusto`
-- Atualizar `filteredTiposCustos` para não filtrar por categoria
-- Ajustar `colSpan` na linha de totais de 2 para 1
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-### 2. `src/hooks/useTiposCustos.ts`
-- Remover `CustoCategoria` e `CustoSubcategoria` interfaces
-- Remover `categoria_id`/`subcategoria_id` do `TipoCusto` interface
-- Remover states `categorias` e `subcategorias`
-- Remover funções `fetchCategorias`, `fetchSubcategorias` e todas as CRUD de categorias/subcategorias
-- Simplificar `fetchTiposCustos` para não fazer join com categorias/subcategorias
-- Remover exports de categorias/subcategorias
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
+
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
