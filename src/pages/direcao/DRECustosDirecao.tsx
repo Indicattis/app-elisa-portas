@@ -13,15 +13,17 @@ interface CustoProduto {
   produto: string;
   custo: number;
   lucro: number;
+  preco_sugerido: number | null;
 }
 
-type EditingField = { id: string; field: "custo" | "lucro" | "produto" } | null;
+type EditingField = { id: string; field: "custo" | "lucro" | "produto" | "preco_sugerido" } | null;
 
 const calcBase = (item: CustoProduto) => item.custo + item.lucro;
 const calcImpostos = (item: CustoProduto) => calcBase(item) * 0.10;
 const calcComissao = (item: CustoProduto) => calcBase(item) * 0.08;
 const calcCartao = (item: CustoProduto) => calcBase(item) * 0.04;
-const calcPrecoSugerido = (item: CustoProduto) => calcBase(item) * 1.22;
+const calcPrecoSugeridoAuto = (item: CustoProduto) => calcBase(item) * 1.22;
+const getPrecoSugerido = (item: CustoProduto) => item.preco_sugerido ?? calcPrecoSugeridoAuto(item);
 
 export default function DRECustosDirecao() {
   const [itens, setItens] = useState<CustoProduto[]>([]);
