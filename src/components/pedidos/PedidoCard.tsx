@@ -438,7 +438,6 @@ export function PedidoCard({
       ]);
 
       const todasFontes = [ordensRes.data?.[0], instRes.data?.[0], corrRes.data?.[0]].filter(Boolean);
-      const concluido = todasFontes.some(f => f.carregamento_concluido);
 
       // Priorizar fonte da etapa atual, fallback para qualquer concluída, fallback para qualquer
       const fontePorEtapa: Record<string, any> = {
@@ -448,6 +447,7 @@ export function PedidoCard({
         finalizado: ordensRes.data?.[0],
       };
       const fontePrioritaria = fontePorEtapa[pedido.etapa_atual] || todasFontes.find(f => f.carregamento_concluido) || todasFontes[0];
+      const concluido = fontePrioritaria?.carregamento_concluido || false;
 
       return {
         concluido,
