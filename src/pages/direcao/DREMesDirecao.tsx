@@ -41,6 +41,7 @@ function DespesaSection({
   onDelete,
   formatCurrency,
   tiposDisponiveis,
+  hideAddButton,
 }: {
   title: string;
   despesas: Despesa[];
