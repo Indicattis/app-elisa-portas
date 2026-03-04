@@ -1,36 +1,45 @@
 
 
-# Melhorias na página /direcao/dre/custos
+# Reformular /direcao/dre/custos com nova tabela de produtos
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+## Resumo
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+Substituir a tabela de estoque por uma nova tabela `dre_custos_produtos` com campos editáveis para PRODUTO, CUSTO e LUCRO. As colunas IMPOSTOS (10%), COMISSÃO (8%), CARTÃO (4%) e PREÇO SUGERIDO serão calculadas automaticamente a partir de CUSTO + LUCRO.
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+## Lógica de cálculo
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+- **Base** = CUSTO + LUCRO
+- **IMPOSTOS** = Base × 10%
+- **COMISSÃO** = Base × 8%
+- **CARTÃO** = Base × 4%
+- **PREÇO SUGERIDO** = Base + IMPOSTOS + COMISSÃO + CARTÃO (= Base × 1.22)
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+## 1. Migração SQL — Nova tabela `dre_custos_produtos`
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
+```sql
+CREATE TABLE public.dre_custos_produtos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  produto TEXT NOT NULL,
+  custo NUMERIC DEFAULT 0,
+  lucro NUMERIC DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.dre_custos_produtos ENABLE ROW LEVEL SECURITY;
+-- Policies para authenticated read/insert/update/delete
 ```
 
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+## 2. Reescrever `DRECustosDirecao.tsx`
+
+- Buscar dados de `dre_custos_produtos` em vez de `estoque`
+- Colunas: Nº, PRODUTO, CUSTO, LUCRO, IMPOSTOS 10%, COMISSÃO 8%, CARTÃO 4%, PREÇO SUGERIDO
+- CUSTO e LUCRO: editáveis inline (click-to-edit)
+- IMPOSTOS, COMISSÃO, CARTÃO, PREÇO SUGERIDO: calculados no frontend (read-only)
+- Botão para adicionar novo produto (input inline ou modal simples)
+- Botão para excluir produto
+- Busca por nome de produto
+- Título/subtítulo atualizados
+
+## Arquivos afetados
+- Migração SQL (nova tabela)
+- `src/pages/direcao/DRECustosDirecao.tsx` (reescrita completa)
 
