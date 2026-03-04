@@ -1351,7 +1351,7 @@ export function PedidoCard({
               {/* Col 6: Data de Carregamento */}
               <div className="text-center">
                 {(() => {
-                  const isExpedicao = etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes';
+                  const isExpedicao = etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes';
                   
                   if (isExpedicao) {
                     // Se carregamento concluído, mostrar "Carregada"
