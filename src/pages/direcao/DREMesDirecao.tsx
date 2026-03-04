@@ -41,6 +41,7 @@ function DespesaSection({
   onDelete,
   formatCurrency,
   tiposDisponiveis,
+  hideAddButton,
 }: {
   title: string;
   despesas: Despesa[];
@@ -50,6 +51,7 @@ function DespesaSection({
   onDelete: (id: string) => Promise<void>;
   formatCurrency: (v: number) => string;
   tiposDisponiveis?: TipoCustoVariavel[];
+  hideAddButton?: boolean;
 }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<NewDespesa>(emptyNewDespesa);
@@ -76,12 +78,14 @@ function DespesaSection({
     <div className="rounded-xl bg-white/5 border border-white/10 p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-white/70 uppercase">{title}</h3>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="p-1 rounded-md hover:bg-white/10 text-white/40 hover:text-white/80 transition-colors"
-        >
-          {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-        </button>
+        {!hideAddButton && (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="p-1 rounded-md hover:bg-white/10 text-white/40 hover:text-white/80 transition-colors"
+          >
+            {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          </button>
+        )}
       </div>
 
       {showForm && (
@@ -160,7 +164,15 @@ function DespesaSection({
                     }`}
                   />
                 </button>
-                <span className="text-sm text-white/60">{d.nome}</span>
+                <div>
+                  <span className="text-sm text-white/60">{d.nome}</span>
+                  {(() => {
+                    const tipoRef = tiposDisponiveis?.find(t => t.nome === d.nome);
+                    return tipoRef ? (
+                      <p className="text-xs text-white/30">Projetado: {formatCurrency(tipoRef.valor_maximo_mensal)}/mês</p>
+                    ) : null;
+                  })()}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-white">{formatCurrency(d.valor_real)}</span>
@@ -553,6 +565,7 @@ export default function DREMesDirecao() {
                 onToggleStatus={handleToggleStatus}
                 onDelete={handleDeleteDespesa}
                 formatCurrency={formatCurrency}
+                hideAddButton={true}
               />
               <DespesaSection
                 title="Despesas Variáveis"

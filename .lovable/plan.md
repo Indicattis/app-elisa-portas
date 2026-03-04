@@ -1,23 +1,36 @@
 
 
-# Mostrar valor projetado nas despesas listadas e remover formulário da Folha Salarial
+# Melhorias na página /direcao/dre/custos
 
-## Alterações em `DREMesDirecao.tsx`
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-### 1. Exibir valor projetado nas despesas já adicionadas
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-Na listagem de cada despesa (linhas 149-174), mostrar ao lado do nome o valor projetado do mês correspondente àquela despesa. Para isso:
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-- Passar `tiposDisponiveis` para o mapeamento de despesas na renderização da lista
-- Para cada despesa listada, buscar o tipo correspondente pelo nome (`tiposDisponiveis?.find(t => t.nome === d.nome)`)
-- Se encontrado, exibir o `valor_maximo_mensal` como texto auxiliar (ex: "Projetado: R$ X.XXX,XX") abaixo do nome da despesa
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-### 2. Remover formulário de adição na Folha Salarial
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-- Adicionar uma nova prop opcional `hideAddButton?: boolean` ao `DespesaSection`
-- Quando `hideAddButton` for `true`, esconder o botão "+" e impedir a abertura do formulário
-- Passar `hideAddButton={true}` na instância de `DespesaSection` da "Folha Salarial" (linha 548)
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
 
-## Arquivo afetado
-- `src/pages/direcao/DREMesDirecao.tsx`
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
+
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
