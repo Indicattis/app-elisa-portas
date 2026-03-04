@@ -95,7 +95,12 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
   const [verificandoAvanco, setVerificandoAvanco] = useState(false);
   const [etapasHistorico, setEtapasHistorico] = useState<any[]>([]);
   const [tempoEtapasOpen, setTempoEtapasOpen] = useState(false);
+  const [comentariosOpen, setComentariosOpen] = useState(false);
+  const [comentarios, setComentarios] = useState<any[]>([]);
+  const [novoComentario, setNovoComentario] = useState('');
+  const [enviandoComentario, setEnviandoComentario] = useState(false);
   
+  const { userRole } = useAuth();
   const { verificarEAvancarManual, processos, modalOpen, setModalOpen } = usePedidoAutoAvanco();
   
   useEffect(() => {
