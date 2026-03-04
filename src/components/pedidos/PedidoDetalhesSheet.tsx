@@ -866,6 +866,66 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
             </Collapsible>
           )}
 
+          {/* Comentários */}
+          <Collapsible open={comentariosOpen} onOpenChange={setComentariosOpen}>
+            <CollapsibleTrigger asChild>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-blue-400" />
+                  <span className="font-medium text-white text-sm">Comentários</span>
+                  {comentarios.length > 0 && (
+                    <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">
+                      {comentarios.length}
+                    </Badge>
+                  )}
+                </div>
+                <ChevronDown className={cn(
+                  "h-4 w-4 text-white/60 transition-transform duration-200",
+                  comentariosOpen && "rotate-180"
+                )} />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 space-y-2 pl-2">
+              {/* Input novo comentário */}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Adicionar comentário..."
+                  value={novoComentario}
+                  onChange={(e) => setNovoComentario(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleEnviarComentario()}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm"
+                />
+                <Button
+                  size="sm"
+                  onClick={handleEnviarComentario}
+                  disabled={enviandoComentario || !novoComentario.trim()}
+                  className="bg-blue-600 hover:bg-blue-700 px-3"
+                >
+                  <Send className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+
+              {/* Lista de comentários */}
+              {comentarios.length > 0 ? (
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {comentarios.map((c) => (
+                    <div key={c.id} className="bg-white/5 rounded-lg border border-white/5 p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-white/80">{c.autor_nome}</span>
+                        <span className="text-[10px] text-white/40">
+                          {format(new Date(c.created_at), "dd/MM/yy HH:mm")}
+                        </span>
+                      </div>
+                      <p className="text-sm text-white/70">{c.comentario}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-white/40 text-center py-2">Nenhum comentário ainda.</p>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
+
           {/* Histórico de Movimentações */}
           <Collapsible open={historicoOpen} onOpenChange={setHistoricoOpen}>
             <CollapsibleTrigger asChild>
