@@ -146,44 +146,64 @@ export default function DREDespesasDirecao() {
             </Select>
           </div>
 
-          {/* Table */}
-          <div className="rounded-xl border border-white/10 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/10 hover:bg-white/5">
-                  <TableHead className="text-white/70">Nome</TableHead>
-                  <TableHead className="text-white/70">Categoria</TableHead>
-                  <TableHead className="text-white/70">Subcategoria</TableHead>
-                  <TableHead className="text-white/70 text-right">Limite Mensal</TableHead>
-                  <TableHead className="text-white/70 text-center">Tipo</TableHead>
-                  
-                  <TableHead className="text-white/70 text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTiposCustos.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-white/50 py-8">Nenhum tipo de custo encontrado</TableCell></TableRow>
-                ) : (
-                  filteredTiposCustos.map((tipo) => (
-                    <TableRow key={tipo.id} className="border-white/10 hover:bg-white/5">
-                      <TableCell className="font-medium text-white">{tipo.nome}</TableCell>
-                      <TableCell>{tipo.categoria && (<Badge variant="outline" style={{ borderColor: tipo.categoria.cor, color: tipo.categoria.cor }}>{tipo.categoria.nome}</Badge>)}</TableCell>
-                      <TableCell className="text-white/70">{tipo.subcategoria?.nome || "-"}</TableCell>
-                      <TableCell className="text-right font-medium text-white">{formatCurrency(tipo.valor_maximo_mensal)}</TableCell>
-                      <TableCell className="text-center"><Badge variant={tipo.tipo === 'fixa' ? 'default' : 'secondary'}>{tipo.tipo === 'fixa' ? 'Fixa' : 'Variável'}</Badge></TableCell>
-                      
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => handleEditTipoCusto(tipo)} className="text-white/70 hover:text-white hover:bg-white/10"><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="sm" onClick={() => setDeleteDialog({ type: "tipo", id: tipo.id })} className="text-white/70 hover:text-red-400 hover:bg-white/10"><Trash2 className="h-4 w-4" /></Button>
-                        </div>
-                      </TableCell>
+          {/* Two-column layout */}
+          {(() => {
+            const fixas = filteredTiposCustos.filter(t => t.tipo === 'fixa');
+            const variaveis = filteredTiposCustos.filter(t => t.tipo === 'variavel');
+            const totalFixas = fixas.reduce((sum, t) => sum + t.valor_maximo_mensal, 0);
+            const totalVariaveis = variaveis.reduce((sum, t) => sum + t.valor_maximo_mensal, 0);
+
+            const renderTable = (items: TipoCusto[], title: string, total: number) => (
+              <div className="rounded-xl border border-white/10 overflow-hidden">
+                <div className="px-4 py-3 border-b border-white/10 bg-white/5 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-white">{title} <span className="text-white/50 font-normal">({items.length})</span></h3>
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10 hover:bg-white/5">
+                      <TableHead className="text-white/70">Nome</TableHead>
+                      <TableHead className="text-white/70">Categoria</TableHead>
+                      <TableHead className="text-white/70 text-right">Limite Mensal</TableHead>
+                      <TableHead className="text-white/70 text-right">Ações</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {items.length === 0 ? (
+                      <TableRow><TableCell colSpan={4} className="text-center text-white/50 py-8">Nenhuma despesa encontrada</TableCell></TableRow>
+                    ) : (
+                      items.map((tipo) => (
+                        <TableRow key={tipo.id} className="border-white/10 hover:bg-white/5">
+                          <TableCell className="font-medium text-white">{tipo.nome}</TableCell>
+                          <TableCell>{tipo.categoria && (<Badge variant="outline" style={{ borderColor: tipo.categoria.cor, color: tipo.categoria.cor }}>{tipo.categoria.nome}</Badge>)}</TableCell>
+                          <TableCell className="text-right font-medium text-white">{formatCurrency(tipo.valor_maximo_mensal)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button variant="ghost" size="sm" onClick={() => handleEditTipoCusto(tipo)} className="text-white/70 hover:text-white hover:bg-white/10"><Pencil className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="sm" onClick={() => setDeleteDialog({ type: "tipo", id: tipo.id })} className="text-white/70 hover:text-red-400 hover:bg-white/10"><Trash2 className="h-4 w-4" /></Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                    {items.length > 0 && (
+                      <TableRow className="border-white/10 bg-white/5">
+                        <TableCell colSpan={2} className="font-semibold text-white/70">Total</TableCell>
+                        <TableCell className="text-right font-bold text-white">{formatCurrency(total)}</TableCell>
+                        <TableCell />
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            );
+
+            return (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {renderTable(fixas, "Despesas Fixas", totalFixas)}
+                {renderTable(variaveis, "Despesas Variáveis", totalVariaveis)}
+              </div>
+            );
+          })()}
         </div>
       )}
 
