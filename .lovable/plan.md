@@ -1,36 +1,39 @@
 
 
-# Melhorias na página /direcao/dre/custos
+# Correção: Lucro de portas R$ 0,00 e verificação do faturamento
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+## Diagnóstico
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
-
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
-
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
-
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
-
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
+### 1. Lucro portas = R$ 0,00 (Bug confirmado)
+Consultei o banco e confirmei: `lucro_produto` e `lucro_pintura` são **sempre 0** para todos os tipos de produto. O lucro real está em `lucro_item`.
 
 ```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
+porta_enrolar:  lucro_item = R$ 167.441,19 | lucro_produto = R$ 0,00 | lucro_pintura = R$ 0,00
+pintura_epoxi:  lucro_item = R$  28.785,32 | lucro_produto = R$ 0,00 | lucro_pintura = R$ 0,00
+acessorio:      lucro_item = R$   9.104,70 | lucro_produto = R$ 0,00 | lucro_pintura = R$ 0,00
 ```
 
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+O código na linha 383 usa `p.lucro_produto` (sempre 0) em vez de `p.lucro_item`.
+
+### 2. Faturamento total
+Verifiquei no banco: `SUM(valor_total_sem_frete) = R$ 1.118.842,91` + `SUM(valor_credito) = R$ 16.387,00` = **R$ 1.135.229,91**. A lógica de cálculo proporcional no código preserva esse total matematicamente. Se o valor ainda aparece errado, pode ser cache do navegador — a correção do lucro vai forçar um novo deploy.
+
+## Correção em `DREMesDirecao.tsx`
+
+**Linha 383-384** — Substituir `lucro_produto`/`lucro_pintura` por `lucro_item` para portas:
+
+```typescript
+// ANTES (errado - lucro_produto é sempre 0)
+luc.portas += p.lucro_produto || 0;
+luc.pintura += p.lucro_pintura || 0;
+
+// DEPOIS (correto - usar lucro_item)
+luc.portas += p.lucro_item || 0;
+// Não adicionar lucro_pintura separado para portas (já está incluído em lucro_item)
+```
+
+Para `pintura_epoxi` standalone (linha 387), o código já usa `p.lucro_item` — correto.
+
+## Arquivo afetado
+- `src/pages/direcao/DREMesDirecao.tsx` (linhas 383-384)
 
