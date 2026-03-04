@@ -1,30 +1,36 @@
 
 
-# Buscar despesas configuradas ao adicionar no DRE mensal
+# Melhorias na página /direcao/dre/custos
 
-## O que será feito
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-No `DespesaSection` do `DREMesDirecao.tsx`, ao adicionar uma despesa fixa ou variável, o sistema buscará os tipos de custos configurados em `/direcao/dre/despesas` (tabela `tipos_custos`) para que o usuário selecione a despesa em um dropdown em vez de digitar o nome manualmente. O valor projetado (Despesa Projetada) será exibido como referência.
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-## Alterações em `DREMesDirecao.tsx`
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-1. **Buscar tipos de custos fixos e variáveis** -- já existe `fetchTiposCustosVariaveis` que busca apenas variáveis. Criar um fetch adicional para os fixos, ou buscar todos os tipos ativos e separar por `tipo` ('fixa' / 'variavel').
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-2. **Passar lista de tipos ao `DespesaSection`** -- nova prop `tiposDisponiveis` com `{id, nome, valor_maximo_mensal}[]`.
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-3. **Substituir input de nome por select/dropdown** -- ao adicionar despesa, o usuário escolhe de uma lista. Ao selecionar, o nome é preenchido automaticamente e o valor projetado é exibido como referência (placeholder ou label).
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
 
-4. **Manter opção de valor livre** -- o campo de valor continua editável para o usuário inserir o custo real do mês.
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
 
-5. **Mapear modalidade corretamente** -- para Despesas Fixas, filtrar `tipo === 'fixa'`; para seções variáveis, filtrar `tipo === 'variavel'`. Folha salarial mantém input livre.
+### Estrutura da tabela final
 
-## Detalhes técnicos
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
 
-- Alterar `fetchTiposCustosVariaveis` para buscar **todos** os tipos ativos (sem filtro de tipo), renomear para `tiposCustosAtivos`
-- Separar `tiposCustosFixos` e `tiposCustosVariaveis` via filter no estado
-- `DespesaSection` recebe `tiposDisponiveis?: TipoCustoVariavel[]`; quando presente, renderiza `<select>` no lugar do `<input>` de nome
-- Ao selecionar um tipo, preencher `form.nome` com o nome do tipo selecionado
-
-## Arquivo afetado
-- `src/pages/direcao/DREMesDirecao.tsx`
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
