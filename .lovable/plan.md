@@ -1,36 +1,29 @@
 
 
-# Melhorias na página /direcao/dre/custos
+# Ranking de Carregamentos: mostrar colaboradores que realizaram carregamentos
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+## Problema
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+O card "Carregamentos" mostra o número correto (1 carregamento) vindo da RPC `get_portas_por_etapa`, mas o mini-ranking abaixo fica vazio porque o hook `useDesempenhoEtapas` só busca dados da tabela `pontuacao_colaboradores`, que não possui registros do tipo "carregamento". O campo `carregamentos` de cada colaborador fica sempre em 0.
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+## Solução
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+No hook `useDesempenhoEtapas` (`src/hooks/useDesempenhoEtapas.ts`), após buscar e processar os dados de `pontuacao_colaboradores`, fazer uma consulta adicional nas 3 tabelas que registram carregamentos concluídos (`ordens_carregamento`, `instalacoes` e `correcoes`), filtrando por `carregamento_concluido = true` e pela data de conclusão (`carregamento_concluido_em`) dentro do período selecionado. Agrupar por `carregamento_concluido_por` para contar quantos carregamentos cada colaborador realizou.
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+### Detalhes técnicos
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
+Em `src/hooks/useDesempenhoEtapas.ts`:
 
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+1. Após o bloco do switch/for das pontuações, executar 3 queries em paralelo:
+   - `ordens_carregamento` onde `carregamento_concluido = true` e `carregamento_concluido_em` no período
+   - `instalacoes` com mesmos filtros
+   - `correcoes` com mesmos filtros
 
-### Estrutura da tabela final
+2. Selecionar apenas `carregamento_concluido_por` de cada tabela
 
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
+3. Contar ocorrências por `carregamento_concluido_por` e somar ao campo `carregamentos` de cada colaborador no map (criando a entrada se não existir)
 
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+4. Incluir esses novos `user_id`s na busca de nomes/fotos em `admin_users`
+
+Arquivo afetado: `src/hooks/useDesempenhoEtapas.ts`
 
