@@ -409,14 +409,9 @@ export default function DREMesDirecao() {
           .lte('data_venda', end + ' 23:59:59');
 
         const totalCredito = vendas?.reduce((sum, v) => sum + ((v as any).valor_credito || 0), 0) || 0;
-        const totalLucroInstalacao = vendas?.reduce((sum, v) => {
-          const lucroInst = (v as any).lucro_instalacao;
-          // Usar lucro real se disponível, senão fallback 30% sobre o valor bruto
-          const valorInst = (v as any).valor_instalacao || 0;
-          return sum + (lucroInst != null && lucroInst > 0 ? lucroInst : valorInst * 0.30);
-        }, 0) || 0;
-
-        luc.instalacoes = totalLucroInstalacao;
+        
+        // Lucro de instalações = 30% sobre o faturamento líquido de instalações (mesma base)
+        luc.instalacoes = fat.instalacoes * 0.30;
 
         fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.acessorios + fat.adicionais + totalCredito;
         luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.acessorios + luc.adicionais;
