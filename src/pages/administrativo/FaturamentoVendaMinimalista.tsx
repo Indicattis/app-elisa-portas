@@ -811,7 +811,7 @@ export default function FaturamentoVendaMinimalista() {
                             </Badge>
                           ) : temLucro ? (
                             <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                              {produto.tipo_produto === 'porta_enrolar' ? 'Tabela' : 'Informado'}
+                              {produto.tipo_produto === 'porta_enrolar' ? 'Tabela' : produto.tipo_produto === 'pintura_epoxi' ? 'Fórmula' : 'Informado'}
                             </Badge>
                           ) : (
                             <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
@@ -820,7 +820,7 @@ export default function FaturamentoVendaMinimalista() {
                           )}
                         </TableCell>
                         <TableCell className="text-center">
-                          {produto.tipo_produto === 'porta_enrolar' ? (
+                          {(produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'pintura_epoxi') ? (
                             <CheckCircle2 className="h-4 w-4 text-emerald-400 mx-auto" />
                           ) : (
                             <Button
