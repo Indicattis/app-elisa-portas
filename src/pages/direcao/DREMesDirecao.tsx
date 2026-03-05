@@ -149,57 +149,66 @@ function DespesaSection({
       {despesas.length === 0 && !showForm ? (
         <p className="text-white/30 text-sm">Nenhuma despesa registrada</p>
       ) : (
-        <div className="space-y-2">
-          {despesas.map(d => (
-            <div key={d.id} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0 group">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => onToggleStatus(d.id, d.tipo_status)}
-                  className="flex-shrink-0"
-                  title={d.tipo_status === 'decretada' ? 'Decretada' : 'Em teste'}
-                >
-                  <span
-                    className={`block w-2.5 h-2.5 rounded-full transition-colors ${
-                      d.tipo_status === 'decretada' ? 'bg-emerald-400' : 'bg-amber-400'
-                    }`}
-                  />
-                </button>
-              <div className="flex-1">
-                  <span className="text-sm text-white/60">{d.nome}</span>
-                  {(() => {
-                    const tipoRef = tiposDisponiveis?.find(t => t.nome === d.nome);
-                    return (
-                      <div className="flex gap-6 mt-1">
-                        <div>
-                          <p className="text-[10px] uppercase tracking-wider text-white/40">Despesa real</p>
-                          <span className="text-sm font-medium text-white">{formatCurrency(d.valor_real)}</span>
-                        </div>
-                        {tipoRef && (
-                          <div>
-                            <p className="text-[10px] uppercase tracking-wider text-white/40">Projetado</p>
-                            <span className="text-sm text-white/40">{formatCurrency(tipoRef.valor_maximo_mensal)}/mês</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => onDelete(d.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 text-white/30 hover:text-red-400 transition-all"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
-          <div className="flex items-center justify-between pt-2 border-t border-white/10">
-            <span className="text-sm font-semibold text-white/80">Total</span>
-            <span className="text-sm font-bold text-white">{formatCurrency(total)}</span>
-          </div>
-        </div>
+        <table className="w-full">
+          <thead>
+            <tr className="h-[24px]">
+              <th className="w-8 text-left text-[10px] uppercase tracking-wider text-white/40 font-medium"></th>
+              <th className="text-left text-[10px] uppercase tracking-wider text-white/40 font-medium">Nome</th>
+              <th className="text-right text-[10px] uppercase tracking-wider text-white/40 font-medium w-28">Despesa real</th>
+              {tiposDisponiveis && tiposDisponiveis.length > 0 && (
+                <th className="text-right text-[10px] uppercase tracking-wider text-white/40 font-medium w-28">Projetado</th>
+              )}
+              <th className="w-8"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {despesas.map(d => {
+              const tipoRef = tiposDisponiveis?.find(t => t.nome === d.nome);
+              return (
+                <tr key={d.id} className="h-[30px] border-b border-white/5 last:border-0 group">
+                  <td className="align-middle">
+                    <button
+                      onClick={() => onToggleStatus(d.id, d.tipo_status)}
+                      title={d.tipo_status === 'decretada' ? 'Decretada' : 'Em teste'}
+                    >
+                      <span className={`block w-2 h-2 rounded-full ${d.tipo_status === 'decretada' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                    </button>
+                  </td>
+                  <td className="align-middle text-xs text-white/60">{d.nome}</td>
+                  <td className="align-middle text-right text-xs font-medium text-white">{formatCurrency(d.valor_real)}</td>
+                  {tiposDisponiveis && tiposDisponiveis.length > 0 && (
+                    <td className="align-middle text-right text-xs text-white/40">
+                      {tipoRef ? formatCurrency(tipoRef.valor_maximo_mensal) : '—'}
+                    </td>
+                  )}
+                  <td className="align-middle text-right">
+                    <button
+                      onClick={() => onDelete(d.id)}
+                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-white/10 text-white/30 hover:text-red-400 transition-all"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+          {despesas.length > 0 && (
+            <tfoot>
+              <tr className="h-[30px] border-t border-white/10">
+                <td></td>
+                <td className="text-xs font-semibold text-white/80">Total</td>
+                <td className="text-right text-xs font-bold text-white">{formatCurrency(total)}</td>
+                {tiposDisponiveis && tiposDisponiveis.length > 0 && (
+                  <td className="text-right text-xs font-bold text-white/40">
+                    {formatCurrency(tiposDisponiveis.reduce((s, t) => s + t.valor_maximo_mensal, 0))}
+                  </td>
+                )}
+                <td></td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
       )}
     </div>
   );
