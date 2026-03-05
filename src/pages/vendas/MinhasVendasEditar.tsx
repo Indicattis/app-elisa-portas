@@ -488,7 +488,7 @@ export default function MinhasVendasEditar() {
               {/* Data e Público */}
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm font-medium text-blue-300/70">
-                  <Calendar className="h-4 w-4" />
+                  <CalendarIcon className="h-4 w-4" />
                   Data da Venda
                 </div>
                 <p className="font-medium text-white">{formatDate(venda.data_venda)}</p>
