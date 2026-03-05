@@ -773,7 +773,7 @@ export default function FaturamentoVendaMinimalista() {
                         : '-';
                     
                     return (
-                      <TableRow key={produto.id} className="border-white/10 hover:bg-white/5">
+                      <TableRow key={produto.id} className={`border-white/10 ${produto.faturamento ? 'bg-emerald-500/10 hover:bg-emerald-500/15' : 'hover:bg-white/5'}`}>
                         <TableCell className="text-sm text-white/80">
                           {getTipoProdutoLabel(produto.tipo_produto)}
                         </TableCell>
