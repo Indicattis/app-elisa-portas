@@ -518,7 +518,7 @@ export default function FaturamentoVendaMinimalista() {
     { label: "Financeiro", path: "/administrativo/financeiro" },
     { label: "Faturamento", path: "/administrativo/financeiro/faturamento" },
     { label: "Por Venda", path: "/administrativo/financeiro/faturamento/vendas" },
-    { label: venda?.cliente_nome || "Venda" },
+    { label: "Faturando venda" },
   ];
 
   if (loading || isLoadingProdutos) {
