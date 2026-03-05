@@ -177,6 +177,7 @@ import MinhasVendas from "./pages/vendas/MinhasVendas";
 import MinhasVendasEditar from "./pages/vendas/MinhasVendasEditar";
 import VendaNovaMinimalista from "./pages/vendas/VendaNovaMinimalista";
 import MeusClientes from "./pages/vendas/MeusClientes";
+import MeuClienteDetalhe from "./pages/vendas/MeuClienteDetalhe";
 import CatalogoMinimalista from "./pages/vendas/Catalogo";
 import CatalogoNovoMinimalista from "./pages/vendas/CatalogoNovoMinimalista";
 import MeusOrcamentos from "./pages/vendas/MeusOrcamentos";
@@ -431,6 +432,7 @@ const App = () => (
                 <Route path="/vendas/minhas-vendas/nova" element={<ProtectedRoute routeKey="vendas_hub"><VendaNovaMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/minhas-vendas/editar/:id" element={<ProtectedRoute routeKey="vendas_hub"><MinhasVendasEditar /></ProtectedRoute>} />
                 <Route path="/vendas/meus-clientes" element={<ProtectedRoute routeKey="vendas_hub"><MeusClientes /></ProtectedRoute>} />
+                <Route path="/vendas/meus-clientes/:id" element={<ProtectedRoute routeKey="vendas_hub"><MeuClienteDetalhe /></ProtectedRoute>} />
                 <Route path="/vendas/catalogo" element={<ProtectedRoute routeKey="vendas_hub"><CatalogoMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/catalogo/new" element={<ProtectedRoute routeKey="vendas_hub"><CatalogoNovoMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/catalogo/editar/:id" element={<ProtectedRoute routeKey="vendas_hub"><CatalogoEditMinimalista /></ProtectedRoute>} />
