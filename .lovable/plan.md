@@ -1,36 +1,23 @@
 
 
-# Melhorias na página /direcao/dre/custos
+# Bloquear meses já preenchidos na seleção de referência
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+## Problema
+O select de "Mês de Referência" permite selecionar meses que já possuem folha de pagamento finalizada na tabela `folhas_pagamento`.
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+## Solução
+No `FolhaPagamentoNova.tsx`:
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+1. **Query para buscar meses já usados**: Adicionar uma query que busca todos os `mes_referencia` distintos da tabela `folhas_pagamento` e armazena num Set.
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+2. **Desabilitar meses no Select**: No loop de `mesesDisponiveis`, verificar se o mês já existe no Set. Se sim, desabilitar o `SelectItem` com `disabled={true}` e adicionar um indicador visual (ex: texto " (já preenchido)").
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+3. **Auto-selecionar mês válido**: Se o mês atual já estiver preenchido, selecionar automaticamente o próximo mês disponível.
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
+### Mudanças no arquivo `src/pages/FolhaPagamentoNova.tsx`:
 
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+- Adicionar query `folhas_existentes` que faz `SELECT mes_referencia FROM folhas_pagamento`
+- Criar um `Set<string>` com os meses no formato `yyyy-MM`
+- No `SelectItem`, adicionar `disabled` quando o mês está no Set
+- Ajustar o estado inicial de `mesReferencia` para o primeiro mês não preenchido
 
