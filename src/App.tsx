@@ -566,6 +566,7 @@ const App = () => (
                 {/* Hub RH/DP Minimalista */}
                 <Route path="/administrativo/rh-dp" element={<ProtectedRoute routeKey="administrativo_hub"><RhDpHub /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/colaboradores" element={<ProtectedRoute routeKey="administrativo_hub"><ColaboradoresMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/rh-dp/colaboradores/folha-pagamento" element={<ProtectedRoute routeKey="administrativo_hub"><FolhaPagamentoNova /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/colaboradores/novo" element={<ProtectedRoute routeKey="administrativo_hub"><NovoColaborador /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/vagas" element={<ProtectedRoute routeKey="administrativo_hub"><VagasPage /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/responsabilidades" element={<ProtectedRoute routeKey="administrativo_hub"><ResponsabilidadesPage /></ProtectedRoute>} />

@@ -184,7 +184,7 @@ export default function ColaboradoresMinimalista() {
       <Button
         variant="outline"
         size="sm"
-        onClick={() => navigate("/dashboard/administrativo/rh/colaboradores/folha-pagamento")}
+        onClick={() => navigate("/administrativo/rh-dp/colaboradores/folha-pagamento")}
         className="bg-white/5 border-white/10 text-white hover:bg-white/10"
       >
         <FileText className="w-4 h-4 mr-2" />
