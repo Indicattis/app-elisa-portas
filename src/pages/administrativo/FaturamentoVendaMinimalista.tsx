@@ -298,6 +298,64 @@ export default function FaturamentoVendaMinimalista() {
     });
   }, [produtos]);
 
+  // Auto-faturar produtos porta_enrolar com lucro da tabela de preços
+  useEffect(() => {
+    if (!produtos || produtos.length === 0 || isUpdatingLucro) return;
+    
+    const portasParaAutoFaturar = produtos.filter(p => 
+      p.tipo_produto === 'porta_enrolar' && 
+      (p.lucro_item === null || p.lucro_item === undefined || p.lucro_item === 0) &&
+      !p.faturamento &&
+      !autoFaturadosRef.current.has(p.id)
+    );
+    
+    if (portasParaAutoFaturar.length === 0) return;
+    
+    portasParaAutoFaturar.forEach(async (produto) => {
+      autoFaturadosRef.current.add(produto.id);
+      
+      let altura = produto.altura || 0;
+      let largura = produto.largura || 0;
+      
+      if ((!altura || !largura) && produto.tamanho) {
+        const partes = produto.tamanho.split('x');
+        if (partes.length === 2) {
+          largura = parseFloat(partes[0]) || 0;
+          altura = parseFloat(partes[1]) || 0;
+        }
+      }
+      
+      if (!largura || !altura) return;
+      
+      const TOLERANCIA = 0.15;
+      
+      try {
+        const { data: itens, error } = await supabase
+          .from('tabela_precos_portas')
+          .select('lucro')
+          .eq('ativo', true)
+          .gte('largura', largura - TOLERANCIA)
+          .gte('altura', altura - TOLERANCIA)
+          .order('largura', { ascending: true })
+          .order('altura', { ascending: true })
+          .limit(1);
+        
+        if (error || !itens || itens.length === 0) return;
+        
+        const lucroTabela = itens[0].lucro * produto.quantidade;
+        const custoCalculado = produto.valor_total - lucroTabela;
+        
+        await updateLucroItem({ 
+          produtoId: produto.id, 
+          lucroItem: lucroTabela,
+          custoProducao: custoCalculado 
+        });
+      } catch (err) {
+        console.error('Erro ao buscar lucro da tabela para porta:', err);
+      }
+    });
+  }, [produtos]);
+
   const fetchVenda = async () => {
     try {
       setLoading(true);
@@ -744,6 +802,7 @@ export default function FaturamentoVendaMinimalista() {
                           ) : temLucro ? (
                             <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
                               {formatCurrency(produto.lucro_item!)}
+                              {produto.tipo_produto === 'porta_enrolar' && ' (Tabela)'}
                             </Badge>
                           ) : (
                             <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
@@ -752,14 +811,18 @@ export default function FaturamentoVendaMinimalista() {
                           )}
                         </TableCell>
                         <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedProduto(produto)}
-                            className="text-white/70 hover:text-white hover:bg-white/10"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          {produto.tipo_produto === 'porta_enrolar' ? (
+                            <CheckCircle2 className="h-4 w-4 text-emerald-400 mx-auto" />
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedProduto(produto)}
+                              className="text-white/70 hover:text-white hover:bg-white/10"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
