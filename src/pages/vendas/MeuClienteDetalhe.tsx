@@ -59,7 +59,7 @@ export default function MeuClienteDetalhe() {
       if (!id) return [];
       const { data, error } = await supabase
         .from('vendas')
-        .select('id, data_venda, valor_venda, status, nome_cliente')
+        .select('id, data_venda, valor_venda, cliente_nome, forma_pagamento')
         .eq('cliente_id', id)
         .order('data_venda', { ascending: false });
       if (error) throw error;
