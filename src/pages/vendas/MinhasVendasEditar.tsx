@@ -6,7 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCanEditVenda } from "@/hooks/useCanEditVenda";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Calendar, User, MapPin, CreditCard, Truck, MessageSquare, Store, Percent, Save, Loader2, Paperclip, FileText, ExternalLink } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, User, MapPin, CreditCard, Truck, MessageSquare, Store, Percent, Save, Loader2, Paperclip, FileText, ExternalLink } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { ComprovanteUploadModal } from "@/components/vendas/ComprovanteUploadModal";
 import { Textarea } from "@/components/ui/textarea";
 import type { Tables } from "@/integrations/supabase/types";
@@ -533,11 +536,48 @@ export default function MinhasVendasEditar() {
                     Frete: {formatCurrency(venda.valor_frete)}
                   </p>
                 )}
-                {venda.data_prevista_entrega && (
-                  <p className="text-sm text-blue-300/60">
-                    Previsão: {formatDateOnly(venda.data_prevista_entrega)}
-                  </p>
-                )}
+                <div className="flex items-center gap-2 mt-1">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "justify-start text-left font-normal h-8 text-sm",
+                          !venda.data_prevista_entrega && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-1 h-3 w-3" />
+                        {venda.data_prevista_entrega
+                          ? `Previsão: ${formatDateOnly(venda.data_prevista_entrega)}`
+                          : "Definir data de entrega"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={venda.data_prevista_entrega ? new Date(venda.data_prevista_entrega + 'T12:00:00') : undefined}
+                        onSelect={async (date) => {
+                          if (!date || !id) return;
+                          const formatted = format(date, 'yyyy-MM-dd') + 'T12:00:00.000Z';
+                          const { error } = await supabase
+                            .from('vendas')
+                            .update({ data_prevista_entrega: formatted })
+                            .eq('id', id);
+                          if (error) {
+                            toast({ title: "Erro ao atualizar data", description: error.message, variant: "destructive" });
+                          } else {
+                            setVenda(prev => prev ? { ...prev, data_prevista_entrega: formatted } : prev);
+                            toast({ title: "Data de entrega atualizada" });
+                          }
+                        }}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
               </div>
 
               {/* Endereço */}

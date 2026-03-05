@@ -1,16 +1,36 @@
 
 
-# Permitir edição da data de entrega em MinhasVendasEditar
+# Melhorias na página /direcao/dre/custos
 
-## Alteração
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-No arquivo `src/pages/vendas/MinhasVendasEditar.tsx`, na seção de "Entrega" (linhas 536-540), substituir o texto estático da `data_prevista_entrega` por um DatePicker editável usando Popover + Calendar.
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-### Mudanças:
-1. **Adicionar imports**: `Popover`, `PopoverTrigger`, `PopoverContent`, `Calendar` e `CalendarIcon`
-2. **Adicionar estado** para controlar a data: usar o próprio `venda.data_prevista_entrega` e atualizar no Supabase ao selecionar nova data
-3. **Substituir o `<p>` estático** (linhas 536-540) por um botão que abre o Calendar, e ao selecionar uma data, salva automaticamente no banco via `supabase.from('vendas').update({ data_prevista_entrega })` — seguindo o padrão de `T12:00:00.000Z` para evitar problemas de timezone
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-### Arquivo
-- `src/pages/vendas/MinhasVendasEditar.tsx`
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
+
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
