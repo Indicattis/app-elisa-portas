@@ -1,36 +1,18 @@
 
 
-# Melhorias na página /direcao/dre/custos
+# Adicionar modal de confirmação ao "Finalizar e Gerar Contas a Pagar"
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+## O que será feito
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+Adicionar um `AlertDialog` de confirmação antes de executar `handleFinalizar`. O botão passará a abrir o modal em vez de chamar a função diretamente.
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+## Mudanças em `src/pages/FolhaPagamentoNova.tsx`
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
-
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
-
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+1. **Importar** `AlertDialog` e seus subcomponentes de `@/components/ui/alert-dialog`
+2. **Adicionar estado** `showConfirmDialog` (boolean, default false)
+3. **Alterar o onClick do botão** de `handleFinalizar` para `() => setShowConfirmDialog(true)`
+4. **Renderizar o AlertDialog** com:
+   - Título: "Confirmar Finalização"
+   - Descrição: "Tem certeza que deseja finalizar a folha de pagamento de [mês/ano] e gerar as contas a pagar? Esta ação não pode ser desfeita."
+   - Botão "Cancelar" e botão "Sim, Finalizar" (que chama `handleFinalizar`)
 
