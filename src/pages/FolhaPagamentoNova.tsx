@@ -1,15 +1,11 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, startOfMonth, endOfMonth, addMonths } from "date-fns";
+import { format, startOfMonth, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowLeft, Save, CheckCircle, Loader2, CalendarIcon } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle, Loader2, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -18,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { MinimalistLayout } from "@/components/MinimalistLayout";
 
 interface Colaborador {
   id: string;
@@ -52,7 +49,6 @@ export default function FolhaPagamentoNova() {
   const [itens, setItens] = useState<Record<string, ItemFolha>>({});
   const [isSaving, setIsSaving] = useState(false);
 
-  // Gerar lista de meses para seleção (6 meses anteriores + atual + 2 futuros)
   const mesesDisponiveis = useMemo(() => {
     const meses = [];
     for (let i = -6; i <= 2; i++) {
@@ -61,7 +57,6 @@ export default function FolhaPagamentoNova() {
     return meses;
   }, []);
 
-  // Buscar colaboradores em folha
   const { data: colaboradores = [], isLoading } = useQuery({
     queryKey: ["colaboradores-folha"],
     queryFn: async () => {
@@ -75,7 +70,6 @@ export default function FolhaPagamentoNova() {
 
       if (error) throw error;
       
-      // Inicializar itens com os colaboradores
       const initialItens: Record<string, ItemFolha> = {};
       (data || []).forEach((col: Colaborador) => {
         initialItens[col.id] = {
@@ -147,7 +141,6 @@ export default function FolhaPagamentoNova() {
         throw new Error("Nenhum colaborador para gerar folha");
       }
 
-      // 1. Criar a folha de pagamento
       const { data: folha, error: folhaError } = await supabase
         .from("folhas_pagamento")
         .insert({
@@ -165,7 +158,6 @@ export default function FolhaPagamentoNova() {
 
       if (folhaError) throw folhaError;
 
-      // 2. Para cada colaborador, criar item e conta a pagar
       const mesRef = format(mesReferencia, "MMMM/yyyy", { locale: ptBR });
       const grupoId = crypto.randomUUID();
 
@@ -174,7 +166,6 @@ export default function FolhaPagamentoNova() {
         const totalLiquido = calcularTotalLiquido(item);
         const totalHorasAdicionais = item.horas_adicionais * item.valor_hora_adicional;
 
-        // Criar conta a pagar
         const { data: contaPagar, error: contaError } = await supabase
           .from("contas_pagar")
           .insert({
@@ -193,7 +184,6 @@ export default function FolhaPagamentoNova() {
 
         if (contaError) throw contaError;
 
-        // Criar item da folha
         const { error: itemError } = await supabase
           .from("folha_pagamento_itens")
           .insert({
@@ -222,7 +212,7 @@ export default function FolhaPagamentoNova() {
     onSuccess: () => {
       toast.success("Folha de pagamento finalizada! Contas a pagar geradas com sucesso.");
       queryClient.invalidateQueries({ queryKey: ["contas-pagar"] });
-      navigate("/dashboard/administrativo/rh/colaboradores");
+      navigate("/administrativo/rh-dp/colaboradores");
     },
     onError: (error) => {
       toast.error(error.message || "Erro ao finalizar folha de pagamento");
@@ -235,47 +225,39 @@ export default function FolhaPagamentoNova() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate("/dashboard/administrativo/rh/colaboradores")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Nova Folha de Pagamento</h1>
-          <p className="text-muted-foreground text-sm">
-            Gere a folha de pagamento mensal dos colaboradores
-          </p>
-        </div>
-      </div>
-
-      {/* Configuração da Folha */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Configuração</CardTitle>
-          <CardDescription className="text-xs">
-            Defina o mês de referência e a data de vencimento
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+    <MinimalistLayout
+      title="Folha de Pagamento"
+      subtitle="Gere a folha mensal dos colaboradores"
+      backPath="/administrativo/rh-dp/colaboradores"
+      breadcrumbItems={[
+        { label: 'Home', path: '/home' },
+        { label: 'Administrativo', path: '/administrativo' },
+        { label: 'RH/DP', path: '/administrativo/rh-dp/colaboradores' },
+        { label: 'Folha de Pagamento' },
+      ]}
+    >
+      <div className="space-y-6">
+        {/* Configuração da Folha */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4">
+          <div className="mb-4">
+            <h2 className="text-sm font-semibold text-white">Configuração</h2>
+            <p className="text-xs text-white/40 mt-0.5">Defina o mês de referência e a data de vencimento</p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label className="text-xs">Mês de Referência</Label>
+            <div className="space-y-1.5">
+              <label className="text-[10px] uppercase tracking-wider text-white/40 font-medium">Mês de Referência</label>
               <Select
                 value={format(mesReferencia, "yyyy-MM")}
                 onValueChange={(value) => setMesReferencia(new Date(value + "-01"))}
               >
-                <SelectTrigger className="h-9 text-sm">
+                <SelectTrigger className="h-9 text-sm bg-white/5 border-white/10 text-white hover:bg-white/10 transition-colors">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -288,18 +270,18 @@ export default function FolhaPagamentoNova() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs">Data de Vencimento</Label>
+            <div className="space-y-1.5">
+              <label className="text-[10px] uppercase tracking-wider text-white/40 font-medium">Data de Vencimento</label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal h-9 text-sm",
-                      !dataVencimento && "text-muted-foreground"
+                      "w-full justify-start text-left font-normal h-9 text-sm bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white",
+                      !dataVencimento && "text-white/40"
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="mr-2 h-4 w-4 text-white/40" />
                     {dataVencimento ? format(dataVencimento, "dd/MM/yyyy") : "Selecione"}
                   </Button>
                 </PopoverTrigger>
@@ -315,173 +297,173 @@ export default function FolhaPagamentoNova() {
               </Popover>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs">Observações</Label>
+            <div className="space-y-1.5">
+              <label className="text-[10px] uppercase tracking-wider text-white/40 font-medium">Observações</label>
               <Textarea
                 placeholder="Observações gerais da folha..."
                 value={observacoes}
                 onChange={(e) => setObservacoes(e.target.value)}
-                className="h-9 min-h-9 text-sm resize-none"
+                className="h-9 min-h-9 text-sm resize-none bg-white/5 border-white/10 text-white placeholder:text-white/20"
               />
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Colaboradores */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+        {/* Colaboradores */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <CardTitle className="text-base">Colaboradores em Folha</CardTitle>
-              <CardDescription className="text-xs">
+              <h2 className="text-sm font-semibold text-white">Colaboradores em Folha</h2>
+              <p className="text-xs text-white/40 mt-0.5">
                 {colaboradores.length} colaboradores • Informe horas extras, acréscimos e descontos
-              </CardDescription>
+              </p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-muted-foreground">Total a Pagar</p>
-              <p className="text-lg font-bold text-primary">{formatCurrency(totais.totalLiquido)}</p>
+              <p className="text-[10px] uppercase tracking-wider text-white/40">Total a Pagar</p>
+              <p className="text-lg font-bold text-blue-400">{formatCurrency(totais.totalLiquido)}</p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="h-8">
-                  <TableHead className="text-[10px] py-1 px-2 min-w-[150px]">Colaborador</TableHead>
-                  <TableHead className="text-[10px] py-1 px-2">Modalidade</TableHead>
-                  <TableHead className="text-[10px] py-1 px-2 text-right">Salário Base</TableHead>
-                  <TableHead className="text-[10px] py-1 px-2 text-center">Horas Add</TableHead>
-                  <TableHead className="text-[10px] py-1 px-2 text-right">Valor/h</TableHead>
-                  <TableHead className="text-[10px] py-1 px-2 text-right">Acréscimos</TableHead>
-                  <TableHead className="text-[10px] py-1 px-2 text-right">Descontos</TableHead>
-                  <TableHead className="text-[10px] py-1 px-2 text-right">Total Líquido</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+
+          <div className="rounded-lg border border-white/10 overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-[10px] uppercase tracking-wider text-white/40 font-medium text-left py-2 px-3 min-w-[150px]">Colaborador</th>
+                  <th className="text-[10px] uppercase tracking-wider text-white/40 font-medium text-left py-2 px-3">Modalidade</th>
+                  <th className="text-[10px] uppercase tracking-wider text-white/40 font-medium text-right py-2 px-3">Salário Base</th>
+                  <th className="text-[10px] uppercase tracking-wider text-white/40 font-medium text-center py-2 px-3">Horas Add</th>
+                  <th className="text-[10px] uppercase tracking-wider text-white/40 font-medium text-right py-2 px-3">Valor/h</th>
+                  <th className="text-[10px] uppercase tracking-wider text-white/40 font-medium text-right py-2 px-3">Acréscimos</th>
+                  <th className="text-[10px] uppercase tracking-wider text-white/40 font-medium text-right py-2 px-3">Descontos</th>
+                  <th className="text-[10px] uppercase tracking-wider text-white/40 font-medium text-right py-2 px-3">Total Líquido</th>
+                </tr>
+              </thead>
+              <tbody>
                 {colaboradores.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground text-sm">
+                  <tr>
+                    <td colSpan={8} className="text-center py-8 text-white/30 text-sm">
                       Nenhum colaborador em folha encontrado
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ) : (
                   colaboradores.map((colaborador) => {
                     const item = itens[colaborador.id];
                     if (!item) return null;
                     
                     return (
-                      <TableRow key={colaborador.id} className="h-10">
-                        <TableCell className="py-1 px-2 text-[11px] font-medium">
+                      <tr key={colaborador.id} className="h-[30px] border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                        <td className="py-1 px-3 text-xs font-medium text-white">
                           {colaborador.nome}
-                        </TableCell>
-                        <TableCell className="py-1 px-2">
-                          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
+                        </td>
+                        <td className="py-1 px-3">
+                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/10 border border-white/20 text-white/70">
                             {item.modalidade_pagamento === "diaria" ? "Diária" : "Mensal"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-1 px-2 text-[11px] text-right font-medium">
+                          </span>
+                        </td>
+                        <td className="py-1 px-3 text-xs text-right font-medium text-white/80">
                           {formatCurrency(item.salario_base)}
-                        </TableCell>
-                        <TableCell className="py-1 px-2">
+                        </td>
+                        <td className="py-1 px-3">
                           <Input
                             type="number"
                             min="0"
                             step="0.5"
                             value={item.horas_adicionais || ""}
                             onChange={(e) => updateItem(colaborador.id, "horas_adicionais", parseFloat(e.target.value) || 0)}
-                            className="h-7 w-16 text-xs text-center"
+                            className="h-7 w-16 text-xs text-center bg-white/5 border-white/10 text-white placeholder:text-white/20"
                             placeholder="0"
                           />
-                        </TableCell>
-                        <TableCell className="py-1 px-2">
+                        </td>
+                        <td className="py-1 px-3">
                           <Input
                             type="number"
                             min="0"
                             step="0.01"
                             value={item.valor_hora_adicional || ""}
                             onChange={(e) => updateItem(colaborador.id, "valor_hora_adicional", parseFloat(e.target.value) || 0)}
-                            className="h-7 w-20 text-xs text-right"
+                            className="h-7 w-20 text-xs text-right bg-white/5 border-white/10 text-white placeholder:text-white/20"
                             placeholder="0,00"
                           />
-                        </TableCell>
-                        <TableCell className="py-1 px-2">
+                        </td>
+                        <td className="py-1 px-3">
                           <Input
                             type="number"
                             min="0"
                             step="0.01"
                             value={item.acrescimos || ""}
                             onChange={(e) => updateItem(colaborador.id, "acrescimos", parseFloat(e.target.value) || 0)}
-                            className="h-7 w-24 text-xs text-right"
+                            className="h-7 w-24 text-xs text-right bg-white/5 border-white/10 text-white placeholder:text-white/20"
                             placeholder="0,00"
                           />
-                        </TableCell>
-                        <TableCell className="py-1 px-2">
+                        </td>
+                        <td className="py-1 px-3">
                           <Input
                             type="number"
                             min="0"
                             step="0.01"
                             value={item.descontos || ""}
                             onChange={(e) => updateItem(colaborador.id, "descontos", parseFloat(e.target.value) || 0)}
-                            className="h-7 w-24 text-xs text-right"
+                            className="h-7 w-24 text-xs text-right bg-white/5 border-white/10 text-white placeholder:text-white/20"
                             placeholder="0,00"
                           />
-                        </TableCell>
-                        <TableCell className="py-1 px-2 text-right">
-                          <span className="text-[11px] font-bold text-primary">
+                        </td>
+                        <td className="py-1 px-3 text-right">
+                          <span className="text-xs font-bold text-blue-400">
                             {formatCurrency(calcularTotalLiquido(item))}
                           </span>
-                        </TableCell>
-                      </TableRow>
+                        </td>
+                      </tr>
                     );
                   })
                 )}
-              </TableBody>
-            </Table>
+              </tbody>
+            </table>
           </div>
 
           {/* Resumo */}
           <div className="mt-4 flex justify-end">
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2 min-w-[280px]">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Total Bruto:</span>
-                <span className="font-medium">{formatCurrency(totais.totalBruto)}</span>
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 space-y-2 min-w-[280px]">
+              <div className="flex justify-between text-xs">
+                <span className="text-white/40">Total Bruto:</span>
+                <span className="font-medium text-white">{formatCurrency(totais.totalBruto)}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Total Descontos:</span>
-                <span className="font-medium text-destructive">- {formatCurrency(totais.totalDescontos)}</span>
+              <div className="flex justify-between text-xs">
+                <span className="text-white/40">Total Descontos:</span>
+                <span className="font-medium text-red-400">- {formatCurrency(totais.totalDescontos)}</span>
               </div>
-              <div className="border-t pt-2 flex justify-between text-base">
-                <span className="font-semibold">Total Líquido:</span>
-                <span className="font-bold text-primary">{formatCurrency(totais.totalLiquido)}</span>
+              <div className="border-t border-white/10 pt-2 flex justify-between text-sm">
+                <span className="font-semibold text-white">Total Líquido:</span>
+                <span className="font-bold text-blue-400">{formatCurrency(totais.totalLiquido)}</span>
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Ações */}
-      <div className="flex justify-end gap-3">
-        <Button
-          variant="outline"
-          onClick={() => navigate("/dashboard/administrativo/rh/colaboradores")}
-        >
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleFinalizar}
-          disabled={finalizarMutation.isPending || colaboradores.length === 0}
-          className="gap-2"
-        >
-          {finalizarMutation.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <CheckCircle className="h-4 w-4" />
-          )}
-          Finalizar e Gerar Contas a Pagar
-        </Button>
+        {/* Ações */}
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => navigate("/administrativo/rh-dp/colaboradores")}
+            className="px-4 py-2 text-sm rounded-lg bg-white/5 border border-white/10 text-white/70 
+                       hover:bg-white/10 hover:text-white transition-all duration-200"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleFinalizar}
+            disabled={finalizarMutation.isPending || colaboradores.length === 0}
+            className="px-5 py-2 text-sm rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 text-white font-medium
+                       shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-200
+                       disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {finalizarMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <CheckCircle className="h-4 w-4" />
+            )}
+            Finalizar e Gerar Contas a Pagar
+          </button>
+        </div>
       </div>
-    </div>
+    </MinimalistLayout>
   );
 }
