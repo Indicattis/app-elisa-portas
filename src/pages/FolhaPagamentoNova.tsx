@@ -1,4 +1,14 @@
 import { useState, useMemo } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfMonth, addMonths } from "date-fns";
@@ -48,6 +58,7 @@ export default function FolhaPagamentoNova() {
   const [observacoes, setObservacoes] = useState("");
   const [itens, setItens] = useState<Record<string, ItemFolha>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const mesesDisponiveis = useMemo(() => {
     const meses = [];
@@ -475,7 +486,7 @@ export default function FolhaPagamentoNova() {
             Cancelar
           </button>
           <button
-            onClick={handleFinalizar}
+            onClick={() => setShowConfirmDialog(true)}
             disabled={finalizarMutation.isPending || colaboradores.length === 0}
             className="px-5 py-2 text-sm rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 text-white font-medium
                        shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-200
@@ -488,6 +499,27 @@ export default function FolhaPagamentoNova() {
             )}
             Finalizar e Gerar Contas a Pagar
           </button>
+
+          <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmar Finalização</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tem certeza que deseja finalizar a folha de pagamento de{" "}
+                  <strong className="text-foreground">
+                    {format(mesReferencia, "MMMM 'de' yyyy", { locale: ptBR })}
+                  </strong>{" "}
+                  e gerar as contas a pagar? Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleFinalizar}>
+                  Sim, Finalizar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </MinimalistLayout>
