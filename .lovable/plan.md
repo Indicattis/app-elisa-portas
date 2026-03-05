@@ -1,34 +1,36 @@
 
 
-# Otimizar listagem de despesas para tabela compacta (30px por linha)
+# Melhorias na página /direcao/dre/custos
 
-## O que muda
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-Substituir a listagem atual de despesas (cards com `space-y-2`, labels empilhados) por uma tabela HTML compacta com linhas de 30px de altura dentro do componente `DespesaSection`.
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-## Alterações em `src/pages/direcao/DREMesDirecao.tsx`
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-### Componente `DespesaSection` (linhas 149-201)
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-Substituir o bloco `<div className="space-y-2">` por uma `<table>` compacta:
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
 
 ```text
-┌──────┬────────────────┬──────────────┬──────────────┬────────┐
-│ ●/●  │ Nome           │ Despesa real │ Projetado    │  🗑    │
-├──────┼────────────────┼──────────────┼──────────────┼────────┤
-│  ●   │ Aluguel        │ R$ 3.500,00  │ R$ 3.500,00  │  🗑   │  ← 30px
-│  ●   │ Internet       │ R$ 250,00    │ R$ 300,00    │  🗑   │  ← 30px
-├──────┼────────────────┼──────────────┼──────────────┼────────┤
-│      │ Total          │              │ R$ 3.750,00  │        │
-└──────┴────────────────┴──────────────┴──────────────┴────────┘
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
 ```
 
-- Cada `<tr>` terá `h-[30px]` com `text-xs`
-- Colunas: status dot (w-8), nome (flex-1), valor real, projetado (se disponível), ações
-- Header da tabela com `text-[10px] uppercase text-white/40`
-- Linha de total no `<tfoot>`
-- O formulário de adicionar despesa permanece inalterado acima da tabela
-
-### Arquivo afetado
-- `src/pages/direcao/DREMesDirecao.tsx` — refatorar apenas o bloco de renderização de despesas dentro de `DespesaSection`
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
