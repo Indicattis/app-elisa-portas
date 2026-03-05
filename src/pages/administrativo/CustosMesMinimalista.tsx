@@ -68,7 +68,8 @@ export default function CustosMesMinimalista() {
         valor_real: vals.valor_real,
         observacoes: vals.observacoes || undefined,
       }));
-    const success = await saveCustosMensaisBatch(mesDate, custos);
+    const tiposRef = tiposAtivos.map(t => ({ id: t.id, nome: t.nome, tipo: t.tipo }));
+    const success = await saveCustosMensaisBatch(mesDate, custos, tiposRef);
     if (success) fetchCustosMes(mesDate);
   };
 
