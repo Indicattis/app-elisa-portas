@@ -756,6 +756,8 @@ export default function FaturamentoVendaMinimalista() {
                     <TableHead className="text-white/70 text-center">Qtd</TableHead>
                     <TableHead className="text-white/70 text-right">Valor Total</TableHead>
                     <TableHead className="text-white/70 text-right">Lucro</TableHead>
+                    <TableHead className="text-white/70 text-right">Margem %</TableHead>
+                    <TableHead className="text-white/70 text-right">Status</TableHead>
                     <TableHead className="text-white/70 text-center">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -793,6 +795,14 @@ export default function FaturamentoVendaMinimalista() {
                         <TableCell className="text-right font-medium text-white">
                           {formatCurrency(valorTotalLinha)}
                         </TableCell>
+                        <TableCell className="text-right text-white/80">
+                          {temLucro ? formatCurrency(produto.lucro_item!) : '-'}
+                        </TableCell>
+                        <TableCell className="text-right text-white/80">
+                          {temLucro && valorTotalLinha > 0
+                            ? `${((produto.lucro_item! / valorTotalLinha) * 100).toFixed(1)}%`
+                            : '-'}
+                        </TableCell>
                         <TableCell className="text-right">
                           {produto.faturamento ? (
                             <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
@@ -801,8 +811,7 @@ export default function FaturamentoVendaMinimalista() {
                             </Badge>
                           ) : temLucro ? (
                             <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                              {formatCurrency(produto.lucro_item!)}
-                              {produto.tipo_produto === 'porta_enrolar' && ' (Tabela)'}
+                              {produto.tipo_produto === 'porta_enrolar' ? 'Tabela' : 'Informado'}
                             </Badge>
                           ) : (
                             <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
@@ -849,6 +858,12 @@ export default function FaturamentoVendaMinimalista() {
                       <TableCell className="text-right font-medium text-white">
                         {formatCurrency(valorInstalacao)}
                       </TableCell>
+                      <TableCell className="text-right text-white/80">
+                        {formatCurrency(lucroInstalacaoCalculado)}
+                      </TableCell>
+                      <TableCell className="text-right text-white/80">
+                        30.0%
+                      </TableCell>
                       <TableCell className="text-right">
                         {venda.instalacao_faturada ? (
                           <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
@@ -857,7 +872,7 @@ export default function FaturamentoVendaMinimalista() {
                           </Badge>
                         ) : (
                           <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                            {formatCurrency(lucroInstalacaoCalculado)} (30%)
+                            30%
                           </Badge>
                         )}
                       </TableCell>
@@ -875,7 +890,7 @@ export default function FaturamentoVendaMinimalista() {
                     <TableCell className="text-right font-semibold text-white">
                       {formatCurrency(venda.valor_frete)}
                     </TableCell>
-                    <TableCell colSpan={2} className="text-white/50 text-sm">
+                    <TableCell colSpan={4} className="text-white/50 text-sm">
                       Apenas visualização
                     </TableCell>
                   </TableRow>
@@ -889,51 +904,40 @@ export default function FaturamentoVendaMinimalista() {
                       <TableCell className="text-right font-semibold text-white">
                         {formatCurrency(venda.valor_credito)}
                       </TableCell>
-                      <TableCell colSpan={2} className="text-white/50 text-sm">
+                      <TableCell colSpan={4} className="text-white/50 text-sm">
                         Apenas visualização
                       </TableCell>
                     </TableRow>
                   )}
 
                   {/* Linha Total Geral */}
-                  <TableRow className="bg-white/10 border-t border-white/20">
-                    <TableCell colSpan={6} className="font-bold text-white text-sm">
-                      Total Geral
-                    </TableCell>
-                    <TableCell className="text-right font-bold text-white">
-                      {formatCurrency(
-                        (produtos?.reduce((acc, p) => acc + (p.valor_total || 0), 0) || 0) +
-                        (venda.valor_frete || 0) +
-                        (venda.valor_credito || 0)
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right" />
-                    <TableCell className="text-right font-bold text-white">
-                      {formatCurrency(
-                        (produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0) +
-                        (lucroInstalacaoCalculado || 0)
-                      )}
-                    </TableCell>
-                    <TableCell />
-                  </TableRow>
-
-                  {/* Linha Total Lucro */}
-                  <TableRow className="bg-emerald-500/5 border-white/10">
-                    <TableCell colSpan={6} className="font-semibold text-emerald-400 text-sm">
-                      Total Lucro
-                    </TableCell>
-                    <TableCell className="text-right" />
-                    <TableCell className="text-right" />
-                    <TableCell className="text-right">
-                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 font-bold">
-                        {formatCurrency(
-                          (produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0) +
-                          (lucroInstalacaoCalculado || 0)
-                        )}
-                      </Badge>
-                    </TableCell>
-                    <TableCell />
-                  </TableRow>
+                  {(() => {
+                    const totalValor = (produtos?.reduce((acc, p) => acc + (p.valor_total || 0), 0) || 0) +
+                      (venda.valor_frete || 0) +
+                      (venda.valor_credito || 0) +
+                      (valorInstalacao || 0);
+                    const totalLucroGeral = (produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0) +
+                      (lucroInstalacaoCalculado || 0);
+                    const margemGeral = totalValor > 0 ? (totalLucroGeral / totalValor) * 100 : 0;
+                    return (
+                      <TableRow className="bg-white/10 border-t border-white/20">
+                        <TableCell colSpan={6} className="font-bold text-white text-sm">
+                          Total Geral
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-white">
+                          {formatCurrency(totalValor)}
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-emerald-400">
+                          {formatCurrency(totalLucroGeral)}
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-emerald-400">
+                          {margemGeral.toFixed(1)}%
+                        </TableCell>
+                        <TableCell />
+                        <TableCell />
+                      </TableRow>
+                    );
+                  })()}
                 </TableBody>
               </Table>
             </ScrollArea>
