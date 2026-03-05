@@ -1,36 +1,62 @@
 
 
-# Melhorias na página /direcao/dre/custos
+# Propagar alterações do cliente para vendas e tabelas relacionadas
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+## Problema
+Quando o nome ou telefone do cliente é atualizado na tabela `clientes`, as tabelas `vendas`, `pedidos_producao` e `instalacoes_cadastradas` mantêm os dados antigos pois armazenam cópias desnormalizadas (`cliente_nome`, `cliente_telefone`, etc.).
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+## Solução
+Criar um **trigger no banco de dados** na tabela `clientes` que, ao detectar alteração no nome ou telefone, propaga automaticamente para todas as tabelas relacionadas via `cliente_id` ou `venda_id`.
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+### Migration SQL
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+```sql
+CREATE OR REPLACE FUNCTION public.propagar_alteracao_cliente()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Atualizar vendas vinculadas ao cliente
+  IF OLD.nome IS DISTINCT FROM NEW.nome OR OLD.telefone IS DISTINCT FROM NEW.telefone THEN
+    UPDATE public.vendas
+    SET 
+      cliente_nome = COALESCE(NEW.nome, cliente_nome),
+      cliente_telefone = COALESCE(NEW.telefone, cliente_telefone)
+    WHERE cliente_id = NEW.id;
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+    -- Atualizar pedidos_producao via vendas
+    UPDATE public.pedidos_producao pp
+    SET
+      cliente_nome = COALESCE(NEW.nome, pp.cliente_nome),
+      cliente_telefone = COALESCE(NEW.telefone, pp.cliente_telefone)
+    FROM public.vendas v
+    WHERE pp.venda_id = v.id AND v.cliente_id = NEW.id;
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
+    -- Atualizar instalacoes_cadastradas via vendas
+    UPDATE public.instalacoes_cadastradas ic
+    SET
+      nome_cliente = COALESCE(NEW.nome, ic.nome_cliente),
+      telefone_cliente = COALESCE(NEW.telefone, ic.telefone_cliente)
+    FROM public.vendas v
+    WHERE ic.venda_id = v.id AND v.cliente_id = NEW.id;
+  END IF;
 
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+  RETURN NEW;
+END;
+$$;
 
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
+CREATE TRIGGER trigger_propagar_alteracao_cliente
+AFTER UPDATE ON public.clientes
+FOR EACH ROW
+EXECUTE FUNCTION public.propagar_alteracao_cliente();
 ```
 
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+### Tabelas afetadas (somente dados, sem mudança de schema)
+- `vendas` → campos `cliente_nome`, `cliente_telefone`
+- `pedidos_producao` → campos `cliente_nome`, `cliente_telefone`
+- `instalacoes_cadastradas` → campos `nome_cliente`, `telefone_cliente`
+
+### Arquivo
+- Nenhum arquivo de código precisa ser alterado -- a propagação acontece inteiramente no banco via trigger.
 
