@@ -41,11 +41,15 @@ export default function CustosMesMinimalista() {
     tiposCustos.filter(t => t.ativo).forEach(t => {
       values[t.id] = { valor_real: 0, observacoes: "" };
     });
+    // Mapeia custosMes (vindos de despesas_mensais) ao tipo_custo correspondente
     custosMes.forEach(c => {
-      values[c.tipo_custo_id] = {
-        valor_real: Number(c.valor_real) || 0,
-        observacoes: c.observacoes || "",
-      };
+      // c.tipo_custo_id já foi resolvido pelo hook via match por nome
+      if (c.tipo_custo_id) {
+        values[c.tipo_custo_id] = {
+          valor_real: Number(c.valor_real) || 0,
+          observacoes: c.observacoes || "",
+        };
+      }
     });
     setFormValues(values);
   }, [custosMes, tiposCustos]);
