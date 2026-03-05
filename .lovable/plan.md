@@ -1,38 +1,36 @@
 
 
-# Unificar Custos Administrativos e DRE na tabela `despesas_mensais`
+# Melhorias na página /direcao/dre/custos
 
-## Situação Atual
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-- **Admin** (`/administrativo/financeiro/custos/2026-01`): salva em `custos_mensais` (vinculado a `tipos_custos` por `tipo_custo_id`)
-- **DRE** (`/direcao/dre/2026-01`): salva em `despesas_mensais` (campos `nome`, `modalidade`, `valor_real`, `tipo_status`)
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-São tabelas distintas, logo alterações em uma não aparecem na outra.
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-## Solução
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-Migrar a página admin de custos para ler/escrever na `despesas_mensais`, usando `tipos_custos` apenas como catálogo de referência (nomes e limites). Assim ambas as páginas compartilham os mesmos dados.
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-### 1. Refatorar `useCustosMensais.ts`
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
 
-- `fetchCustosMes(mesDate)`: buscar de `despesas_mensais` onde `mes = mesDate` e `modalidade in ('fixa', 'variavel_nao_esperada', 'projetada')`, fazendo match por `nome` com os `tipos_custos`
-- `saveCustosMensaisBatch`: para cada tipo de custo, fazer upsert em `despesas_mensais` usando a combinação `mes + nome` como chave. A `modalidade` será determinada pelo `tipo` do `tipos_custos` ('fixa' → 'fixa', 'variavel' → 'projetada'). O `tipo_status` padrão será 'decretada'.
-- `fetchTotaisPorMes`: buscar de `despesas_mensais` em vez de `custos_mensais`
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
 
-### 2. Adaptar `CustosMesMinimalista.tsx`
+### Estrutura da tabela final
 
-- O `formValues` continua indexado por `tipo_custo.id`, mas ao salvar/carregar, faz a correspondência por `nome` com `despesas_mensais`
-- Ao carregar, busca despesas do mês e mapeia cada uma ao `tipo_custo` correspondente pelo `nome`
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
 
-### 3. Arquivos afetados
-
-- `src/hooks/useCustosMensais.ts` — reescrever queries para usar `despesas_mensais`
-- `src/pages/administrativo/CustosMesMinimalista.tsx` — ajustar mapeamento de dados (mínimo)
-
-### 4. O que NÃO muda
-
-- `DREMesDirecao.tsx` — já lê de `despesas_mensais`, continua igual
-- `tipos_custos` — continua sendo o catálogo de referência
-- `useDRE.ts` — já lê de `despesas_mensais`
-- Tabela `custos_mensais` — não será removida, apenas deixará de ser usada
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
