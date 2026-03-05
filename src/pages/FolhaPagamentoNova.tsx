@@ -283,11 +283,15 @@ export default function FolhaPagamentoNova() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {mesesDisponiveis.map((mes) => (
-                    <SelectItem key={format(mes, "yyyy-MM")} value={format(mes, "yyyy-MM")} className="text-sm">
-                      {format(mes, "MMMM 'de' yyyy", { locale: ptBR })}
-                    </SelectItem>
-                  ))}
+                  {mesesDisponiveis.map((mes) => {
+                    const key = format(mes, "yyyy-MM");
+                    const jaPreenchido = mesesPreenchidos.has(key);
+                    return (
+                      <SelectItem key={key} value={key} className="text-sm" disabled={jaPreenchido}>
+                        {format(mes, "MMMM 'de' yyyy", { locale: ptBR })}{jaPreenchido ? " (já preenchido)" : ""}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
