@@ -177,6 +177,7 @@ import MinhasVendas from "./pages/vendas/MinhasVendas";
 import MinhasVendasEditar from "./pages/vendas/MinhasVendasEditar";
 import VendaNovaMinimalista from "./pages/vendas/VendaNovaMinimalista";
 import MeusClientes from "./pages/vendas/MeusClientes";
+import MeuClienteDetalhe from "./pages/vendas/MeuClienteDetalhe";
 import CatalogoMinimalista from "./pages/vendas/Catalogo";
 import CatalogoNovoMinimalista from "./pages/vendas/CatalogoNovoMinimalista";
 import MeusOrcamentos from "./pages/vendas/MeusOrcamentos";

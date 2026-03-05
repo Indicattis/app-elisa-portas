@@ -137,7 +137,7 @@ export default function MeusClientes() {
           clientesFiltrados.map((cliente) => (
             <div
               key={cliente.id}
-              onClick={() => navigate(`/dashboard/clientes`)}
+              onClick={() => navigate(`/vendas/meus-clientes/${cliente.id}`)}
               className="bg-primary/5 border border-primary/10 rounded-xl p-4 backdrop-blur-xl
                          hover:bg-primary/10 transition-colors cursor-pointer group"
             >
