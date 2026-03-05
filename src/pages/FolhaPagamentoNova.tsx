@@ -57,6 +57,28 @@ export default function FolhaPagamentoNova() {
     return meses;
   }, []);
 
+  const { data: mesesPreenchidos = new Set<string>() } = useQuery({
+    queryKey: ["folhas-meses-preenchidos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("folhas_pagamento")
+        .select("mes_referencia");
+      if (error) throw error;
+      return new Set((data || []).map((f: { mes_referencia: string }) => f.mes_referencia.substring(0, 7)));
+    },
+  });
+
+  // Auto-select first available month
+  useMemo(() => {
+    if (mesesPreenchidos.size > 0) {
+      const currentKey = format(mesReferencia, "yyyy-MM");
+      if (mesesPreenchidos.has(currentKey)) {
+        const available = mesesDisponiveis.find(m => !mesesPreenchidos.has(format(m, "yyyy-MM")));
+        if (available) setMesReferencia(available);
+      }
+    }
+  }, [mesesPreenchidos]);
+
   const { data: colaboradores = [], isLoading } = useQuery({
     queryKey: ["colaboradores-folha"],
     queryFn: async () => {
@@ -261,11 +283,15 @@ export default function FolhaPagamentoNova() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {mesesDisponiveis.map((mes) => (
-                    <SelectItem key={format(mes, "yyyy-MM")} value={format(mes, "yyyy-MM")} className="text-sm">
-                      {format(mes, "MMMM 'de' yyyy", { locale: ptBR })}
-                    </SelectItem>
-                  ))}
+                  {mesesDisponiveis.map((mes) => {
+                    const key = format(mes, "yyyy-MM");
+                    const jaPreenchido = mesesPreenchidos.has(key);
+                    return (
+                      <SelectItem key={key} value={key} className="text-sm" disabled={jaPreenchido}>
+                        {format(mes, "MMMM 'de' yyyy", { locale: ptBR })}{jaPreenchido ? " (já preenchido)" : ""}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
