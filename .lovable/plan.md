@@ -1,36 +1,26 @@
 
 
-# Melhorias na página /direcao/dre/custos
+# Adicionar colunas de Lucro e % Margem na tabela de Produtos
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+## Alterações em `FaturamentoVendaMinimalista.tsx`
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+### 1. Adicionar 2 novas colunas no header (após "Valor Total")
+- **Lucro** (text-right) — valor numérico do lucro do item
+- **Margem %** (text-right) — percentual `(lucro / valor_total) * 100`
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+A coluna existente "Lucro" (que mostra badges Faturado/Pendente) será renomeada para **Status** para evitar confusão.
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+### 2. Adicionar células nas linhas de produtos
+- Coluna Lucro: `formatCurrency(produto.lucro_item)` ou "-" se pendente
+- Coluna Margem: `((lucro_item / valor_total) * 100).toFixed(1)%` ou "-"
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+### 3. Ajustar colSpans nas linhas totais (agora 11 colunas em vez de 9)
+- **Frete**: `colSpan={8}` + valor na coluna Valor Total + `colSpan={3}` para o resto
+- **Crédito**: idem
+- **Total Geral**: `colSpan={8}` + valor total + lucro total + margem total + ações
+- **Instalação**: adicionar células de lucro e margem (30%)
+- **Total Lucro**: ajustar colSpans
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+### Arquivo afetado
+- `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
