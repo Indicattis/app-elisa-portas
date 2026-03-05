@@ -1,36 +1,38 @@
 
 
-# Melhorias na página /direcao/dre/custos
+# Página de Detalhes do Cliente em /vendas/meus-clientes/:id
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+## Problema
+Ao clicar em um cliente na lista, o `navigate` vai para `/dashboard/clientes` (rota inexistente ou errada), voltando à home.
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+## Solução
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+### 1. Criar nova página `src/pages/vendas/MeuClienteDetalhe.tsx`
+- Recebe `:id` via URL params
+- Busca dados do cliente na tabela `clientes` (filtrando por `created_by = user.id`)
+- Busca vendas do cliente na tabela `vendas` (filtrando por `cliente_id`)
+- Layout com `MinimalistLayout`, breadcrumb: Home > Vendas > Meus Clientes > Nome do Cliente
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+**Seções da página:**
+- **Card de informações do cliente**: nome, CPF/CNPJ, telefone, email, endereço, cidade/estado, tipo (CE/CR), badges fidelizado/parceiro, observações
+- **Botão "Editar"**: abre modal com `ClienteForm` pré-preenchido (reutilizando o componente existente + `useUpdateCliente`)
+- **Tabela de vendas**: lista as vendas do cliente com data, valor, status
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
-
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
+### 2. Registrar rota no App.tsx
+```
+/vendas/meus-clientes/:id → <MeuClienteDetalhe />
 ```
 
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+### 3. Corrigir navegação em MeusClientes.tsx
+```tsx
+// De:
+onClick={() => navigate(`/dashboard/clientes`)}
+// Para:
+onClick={() => navigate(`/vendas/meus-clientes/${cliente.id}`)}
+```
+
+### Arquivos
+- **Criar**: `src/pages/vendas/MeuClienteDetalhe.tsx`
+- **Editar**: `src/App.tsx` (adicionar rota)
+- **Editar**: `src/pages/vendas/MeusClientes.tsx` (corrigir navigate)
 
