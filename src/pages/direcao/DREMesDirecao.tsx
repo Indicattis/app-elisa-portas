@@ -175,7 +175,7 @@ function DespesaSection({
                     </button>
                   </td>
                   <td className="align-middle text-xs text-white/60">{d.nome}</td>
-                  <td className="align-middle text-right text-xs font-medium text-white">{formatCurrency(d.valor_real)}</td>
+                  <td className={`align-middle text-right text-xs font-medium ${tipoRef ? (d.valor_real > tipoRef.valor_maximo_mensal ? 'text-red-400' : d.valor_real < tipoRef.valor_maximo_mensal ? 'text-emerald-400' : 'text-white') : 'text-white'}`}>{formatCurrency(d.valor_real)}</td>
                   {tiposDisponiveis && tiposDisponiveis.length > 0 && (
                     <td className="align-middle text-right text-xs text-white/40">
                       {tipoRef ? formatCurrency(tipoRef.valor_maximo_mensal) : '—'}
