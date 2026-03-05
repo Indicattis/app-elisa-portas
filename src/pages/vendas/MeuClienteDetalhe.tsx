@@ -218,7 +218,7 @@ export default function MeuClienteDetalhe() {
                   <TableRow className="border-white/10 hover:bg-transparent">
                     <TableHead className="text-white/50">Data</TableHead>
                     <TableHead className="text-white/50">Valor</TableHead>
-                    <TableHead className="text-white/50">Status</TableHead>
+                    <TableHead className="text-white/50">Pagamento</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -233,7 +233,7 @@ export default function MeuClienteDetalhe() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="border-white/20 text-white/60 text-xs">
-                          {venda.status || 'pendente'}
+                          {venda.forma_pagamento || '-'}
                         </Badge>
                       </TableCell>
                     </TableRow>
