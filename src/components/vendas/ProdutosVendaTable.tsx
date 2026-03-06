@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Trash2, Pencil, X } from 'lucide-react';
 import { ProdutoVenda } from '@/hooks/useVendas';
+import { useCatalogoCores } from '@/hooks/useCatalogoCores';
 
 interface ProdutosVendaTableProps {
   produtos: ProdutoVenda[];
