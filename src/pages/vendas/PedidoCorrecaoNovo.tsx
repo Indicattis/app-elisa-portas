@@ -183,59 +183,61 @@ export default function PedidoCorrecaoNovo() {
     >
       <div className="space-y-6 max-w-4xl mx-auto">
         {/* Seletor de Pedido Referência */}
-        <Section title="Pedido de Referência" icon={Search} className="relative z-20 overflow-visible">
-          {pedidoSelecionado ? (
-            <div className="flex items-center justify-between bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
-              <div>
-                <p className="text-sm font-semibold text-purple-300">
-                  Pedido: <span className="text-purple-200">{numeroPedidoFormatado}</span>
-                </p>
-                <p className="text-sm text-muted-foreground">{pedidoSelecionado.cliente_nome || 'Sem cliente'}</p>
+        <div className="relative z-20">
+          <Section title="Pedido de Referência" icon={Search}>
+            {pedidoSelecionado ? (
+              <div className="flex items-center justify-between bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+                <div>
+                  <p className="text-sm font-semibold text-purple-300">
+                    Pedido: <span className="text-purple-200">{numeroPedidoFormatado}</span>
+                  </p>
+                  <p className="text-sm text-muted-foreground">{pedidoSelecionado.cliente_nome || 'Sem cliente'}</p>
+                </div>
+                <button
+                  onClick={() => setPedidoSelecionado(null)}
+                  className="text-xs text-purple-400 hover:text-purple-300 underline transition-colors"
+                >
+                  Alterar
+                </button>
               </div>
-              <button
-                onClick={() => setPedidoSelecionado(null)}
-                className="text-xs text-purple-400 hover:text-purple-300 underline transition-colors"
-              >
-                Alterar
-              </button>
-            </div>
-          ) : (
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                className={cn(inputClass, "pl-10")}
-                placeholder="Busque por número do pedido ou nome do cliente..."
-                value={buscaPedido}
-                onChange={(e) => {
-                  setBuscaPedido(e.target.value);
-                  setShowResultados(true);
-                }}
-                onFocus={() => setShowResultados(true)}
-              />
-              {showResultados && pedidosResultado.length > 0 && (
-                <div className="absolute z-50 top-full mt-1 w-full rounded-lg border border-purple-500/30 bg-background/95 backdrop-blur-xl shadow-xl max-h-60 overflow-auto">
-                  {pedidosResultado.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => handleSelecionarPedido(p)}
-                      className="w-full text-left px-4 py-3 hover:bg-purple-500/10 transition-colors border-b border-border/50 last:border-0"
-                    >
-                      <p className="text-sm font-medium text-foreground">
-                        {formatarNumeroPedidoMensal(p.numero_mes, p.mes_vigencia, p.numero_pedido)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{p.cliente_nome || 'Sem cliente'}</p>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {showResultados && buscaPedido.length >= 2 && pedidosResultado.length === 0 && (
-                <div className="absolute z-50 top-full mt-1 w-full rounded-lg border border-border bg-background/95 backdrop-blur-xl shadow-xl p-4 text-center text-sm text-muted-foreground">
-                  Nenhum pedido encontrado
-                </div>
-              )}
-            </div>
-          )}
-        </Section>
+            ) : (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  className={cn(inputClass, "pl-10")}
+                  placeholder="Busque por número do pedido ou nome do cliente..."
+                  value={buscaPedido}
+                  onChange={(e) => {
+                    setBuscaPedido(e.target.value);
+                    setShowResultados(true);
+                  }}
+                  onFocus={() => setShowResultados(true)}
+                />
+                {showResultados && pedidosResultado.length > 0 && (
+                  <div className="absolute z-50 top-full mt-1 w-full rounded-lg border border-purple-500/30 bg-background/95 backdrop-blur-xl shadow-xl max-h-60 overflow-auto">
+                    {pedidosResultado.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => handleSelecionarPedido(p)}
+                        className="w-full text-left px-4 py-3 hover:bg-purple-500/10 transition-colors border-b border-border/50 last:border-0"
+                      >
+                        <p className="text-sm font-medium text-foreground">
+                          {formatarNumeroPedidoMensal(p.numero_mes, p.mes_vigencia, p.numero_pedido)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{p.cliente_nome || 'Sem cliente'}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {showResultados && buscaPedido.length >= 2 && pedidosResultado.length === 0 && (
+                  <div className="absolute z-50 top-full mt-1 w-full rounded-lg border border-border bg-background/95 backdrop-blur-xl shadow-xl p-4 text-center text-sm text-muted-foreground">
+                    Nenhum pedido encontrado
+                  </div>
+                )}
+              </div>
+            )}
+          </Section>
+        </div>
 
         {/* Produtos */}
         <Section title="Produtos da Correção" icon={Package}>
