@@ -28,7 +28,23 @@ export function PinturaItemCatalogoModal({
   const [selectedIndex, setSelectedIndex] = useState<string>('');
   const [corId, setCorId] = useState('');
   const [valorPintura, setValorPintura] = useState('');
+  const [carregando, setCarregando] = useState(false);
   const { coresAtivas } = useCatalogoCores();
+
+  useEffect(() => {
+    if (selectedIndex === '') return;
+    const item = portas[Number(selectedIndex)];
+    if (!item?.largura || !item?.altura) return;
+
+    setCarregando(true);
+    buscarPrecosPorMedidas(item.largura, item.altura)
+      .then((result) => {
+        if (result?.valor_pintura) {
+          setValorPintura(String(result.valor_pintura));
+        }
+      })
+      .finally(() => setCarregando(false));
+  }, [selectedIndex, portas]);
 
   const itensDisponiveis = portas
     .map((p, i) => ({ index: i, label: getItemLabel(p, i), produto: p }))
