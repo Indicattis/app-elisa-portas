@@ -89,6 +89,21 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
               </TableCell>
               <TableCell>{detalhes}</TableCell>
               <TableCell>
+                {(() => {
+                  const cor = produto.cor_id ? cores.find(c => c.id === produto.cor_id) : null;
+                  if (!cor) return <span className="text-muted-foreground">-</span>;
+                  return (
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="h-4 w-4 rounded-full border border-border"
+                        style={{ backgroundColor: cor.codigo_hex }}
+                      />
+                      <span className="text-sm">{cor.nome}</span>
+                    </div>
+                  );
+                })()}
+              </TableCell>
+              <TableCell>
                 {onUpdateQuantidade ? (
                   (() => {
                     const permiteDecimal = produto.unidade?.toLowerCase() === 'metro' || 
