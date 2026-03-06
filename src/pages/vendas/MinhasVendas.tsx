@@ -470,6 +470,81 @@ export default function MinhasVendas() {
         </div>
       }
     >
+      {/* Seção de Rascunhos */}
+      {rascunhos && rascunhos.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-blue-300/80 uppercase tracking-wider mb-3">
+            Rascunhos ({rascunhos.length})
+          </h2>
+          <div className="px-10">
+            <Carousel opts={{ align: 'start' }} className="w-full">
+              <CarouselContent className="-ml-3">
+                {rascunhos.map((rascunho) => (
+                  <CarouselItem key={rascunho.id} className="pl-3 basis-full sm:basis-1/2 lg:basis-1/3">
+                    <div className={cn(cardClass, "p-4 space-y-3")}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                          Rascunho
+                        </span>
+                        <span className="text-xs text-blue-300/50">
+                          {format(new Date(rascunho.created_at), 'dd/MM/yy HH:mm')}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-white truncate">
+                          {rascunho.cliente_nome || 'Cliente não informado'}
+                        </p>
+                        {(rascunho.cidade || rascunho.estado) && (
+                          <p className="text-xs text-blue-300/60 flex items-center gap-1 mt-1">
+                            <MapPin className="w-3 h-3" />
+                            {[rascunho.cidade, rascunho.estado].filter(Boolean).join('/')}
+                          </p>
+                        )}
+                      </div>
+                      <p className="text-lg font-bold text-white">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(rascunho.valor_venda || 0)}
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => navigate(`/vendas/minhas-vendas/editar/${rascunho.id}`)}
+                          className="flex-1 h-8 rounded-lg text-xs font-medium border border-blue-500/30 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 hover:border-blue-400/50 transition-all flex items-center justify-center gap-1.5"
+                        >
+                          <Edit className="w-3 h-3" />
+                          Continuar
+                        </button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button className="h-8 w-8 rounded-lg text-xs border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-400/50 transition-all flex items-center justify-center">
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir rascunho?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação não pode ser desfeita. O rascunho será excluído permanentemente.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteRascunhoMutation.mutate(rascunho.id)}>
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </div>
+        </div>
+      )}
+
       {/* Cards de estatísticas */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className={cardClass}>
