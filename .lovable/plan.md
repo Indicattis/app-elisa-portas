@@ -1,44 +1,36 @@
 
 
-# Salvar Venda como Rascunho + Seção de Rascunhos em Minhas Vendas
+# Melhorias na página /direcao/dre/custos
 
-## 1. Migration: Adicionar coluna `is_rascunho` na tabela `vendas`
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-```sql
-ALTER TABLE vendas ADD COLUMN is_rascunho boolean NOT NULL DEFAULT false;
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
 ```
 
-## 2. `src/hooks/useVendas.ts` — Criar mutation `createRascunho`
-
-- Reutilizar a lógica de `createVendaMutation` mas com validações relaxadas (não exigir todos os campos obrigatórios como CEP, bairro, endereço, comprovante).
-- Inserir a venda com `is_rascunho: true`.
-- Produtos são salvos normalmente em `produtos_vendas`.
-- Pagamento pode ser salvo parcialmente ou ignorado.
-
-## 3. `src/pages/vendas/VendaNovaMinimalista.tsx` — Botão "Salvar Rascunho"
-
-- Adicionar botão "Salvar Rascunho" ao lado de "Criar Venda" (linha ~1016).
-- O botão chama uma função `handleSalvarRascunho` que:
-  - Não exige validações obrigatórias (localização, produtos, etc.)
-  - Salva o que foi preenchido até o momento com `is_rascunho: true`
-  - Navega para `/vendas/minhas-vendas` após salvar
-
-## 4. `src/pages/vendas/MinhasVendas.tsx` — Seção de Rascunhos em Carrossel
-
-- Adicionar query separada para buscar rascunhos: `vendas` onde `is_rascunho = true` e `atendente_id = user.id`.
-- A query principal existente recebe filtro `.eq('is_rascunho', false)` para não misturar.
-- Exibir seção "Rascunhos" acima da tabela, usando o componente `Carousel` existente.
-- Cada card do carrossel mostra: nome do cliente, cidade, valor parcial, data de criação, e botão para continuar editando.
-- Botão "Continuar" navega para `/vendas/minhas-vendas/editar/:id`.
-- Botão de excluir rascunho com confirmação.
-
-## 5. Edição de Rascunho
-
-- Na página de edição (`MinhasVendasEditar`), ao salvar um rascunho como venda final, setar `is_rascunho: false` e aplicar validações normais.
-
-## Arquivos alterados
-- Migration SQL (nova coluna)
-- `src/hooks/useVendas.ts` — mutation de rascunho
-- `src/pages/vendas/VendaNovaMinimalista.tsx` — botão salvar rascunho
-- `src/pages/vendas/MinhasVendas.tsx` — query de rascunhos + carrossel
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 

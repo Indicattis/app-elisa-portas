@@ -6897,6 +6897,7 @@ export type Database = {
           id: string
           instalacao_faturada: boolean | null
           intervalo_boletos: number | null
+          is_rascunho: boolean
           justificativa_nao_faturada: string | null
           lucro_instalacao: number | null
           lucro_total: number | null
@@ -6949,6 +6950,7 @@ export type Database = {
           id?: string
           instalacao_faturada?: boolean | null
           intervalo_boletos?: number | null
+          is_rascunho?: boolean
           justificativa_nao_faturada?: string | null
           lucro_instalacao?: number | null
           lucro_total?: number | null
@@ -7001,6 +7003,7 @@ export type Database = {
           id?: string
           instalacao_faturada?: boolean | null
           intervalo_boletos?: number | null
+          is_rascunho?: boolean
           justificativa_nao_faturada?: string | null
           lucro_instalacao?: number | null
           lucro_total?: number | null

@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, ShoppingCart, DollarSign, FileCheck, Search, CalendarIcon, Truck, Hammer, ArrowUpDown, ArrowUp, ArrowDown, Download, FileText, FileSpreadsheet } from 'lucide-react';
+import { Plus, ShoppingCart, DollarSign, FileCheck, Search, CalendarIcon, Truck, Hammer, ArrowUpDown, ArrowUp, ArrowDown, Download, FileText, FileSpreadsheet, Edit, Trash2, MapPin } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { generateVendasRelatorioPDF } from '@/utils/vendasPDFGenerator';
 import { toast } from 'sonner';
@@ -21,6 +21,8 @@ import { useColumnConfig, ColumnConfig } from '@/hooks/useColumnConfig';
 import { cn } from '@/lib/utils';
 import { VendaBloqueadaDialog } from "@/components/vendas/VendaBloqueadaDialog";
 import { BlockReason } from "@/hooks/useCanEditVenda";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface ProdutoVenda {
   id: string;
@@ -72,6 +74,7 @@ type SortDirection = 'asc' | 'desc';
 export default function MinhasVendas() {
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const [mesAtual] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState('');
   const [dataInicio, setDataInicio] = useState<Date | undefined>(startOfMonth(new Date()));
@@ -120,7 +123,8 @@ export default function MinhasVendas() {
           produtos_vendas(id, tipo_produto, desconto_valor, faturamento),
           pedidos_producao!left(id, status)
         `)
-        .eq('atendente_id', user.id);
+        .eq('atendente_id', user.id)
+        .eq('is_rascunho', false);
 
       if (dataInicio) {
         query = query.gte('data_venda', dataInicio.toISOString());
@@ -135,6 +139,38 @@ export default function MinhasVendas() {
       return (data || []) as unknown as Venda[];
     },
     enabled: !!user?.id
+  });
+
+  // Query para rascunhos
+  const { data: rascunhos, isLoading: isLoadingRascunhos } = useQuery({
+    queryKey: ['rascunhos-vendas', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('vendas')
+        .select('id, cliente_nome, cidade, estado, valor_venda, data_venda, created_at')
+        .eq('atendente_id', user.id)
+        .eq('is_rascunho', true)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id
+  });
+
+  // Mutation para excluir rascunho
+  const deleteRascunhoMutation = useMutation({
+    mutationFn: async (vendaId: string) => {
+      const { error } = await supabase.rpc('delete_venda_completa', { p_venda_id: vendaId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rascunhos-vendas'] });
+      toast.success('Rascunho excluído com sucesso');
+    },
+    onError: () => {
+      toast.error('Erro ao excluir rascunho');
+    }
   });
 
   // Filtrar e ordenar vendas
@@ -434,6 +470,81 @@ export default function MinhasVendas() {
         </div>
       }
     >
+      {/* Seção de Rascunhos */}
+      {rascunhos && rascunhos.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-blue-300/80 uppercase tracking-wider mb-3">
+            Rascunhos ({rascunhos.length})
+          </h2>
+          <div className="px-10">
+            <Carousel opts={{ align: 'start' }} className="w-full">
+              <CarouselContent className="-ml-3">
+                {rascunhos.map((rascunho) => (
+                  <CarouselItem key={rascunho.id} className="pl-3 basis-full sm:basis-1/2 lg:basis-1/3">
+                    <div className={cn(cardClass, "p-4 space-y-3")}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                          Rascunho
+                        </span>
+                        <span className="text-xs text-blue-300/50">
+                          {format(new Date(rascunho.created_at), 'dd/MM/yy HH:mm')}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-white truncate">
+                          {rascunho.cliente_nome || 'Cliente não informado'}
+                        </p>
+                        {(rascunho.cidade || rascunho.estado) && (
+                          <p className="text-xs text-blue-300/60 flex items-center gap-1 mt-1">
+                            <MapPin className="w-3 h-3" />
+                            {[rascunho.cidade, rascunho.estado].filter(Boolean).join('/')}
+                          </p>
+                        )}
+                      </div>
+                      <p className="text-lg font-bold text-white">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(rascunho.valor_venda || 0)}
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => navigate(`/vendas/minhas-vendas/editar/${rascunho.id}`)}
+                          className="flex-1 h-8 rounded-lg text-xs font-medium border border-blue-500/30 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 hover:border-blue-400/50 transition-all flex items-center justify-center gap-1.5"
+                        >
+                          <Edit className="w-3 h-3" />
+                          Continuar
+                        </button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button className="h-8 w-8 rounded-lg text-xs border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-400/50 transition-all flex items-center justify-center">
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir rascunho?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação não pode ser desfeita. O rascunho será excluído permanentemente.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteRascunhoMutation.mutate(rascunho.id)}>
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </div>
+        </div>
+      )}
+
       {/* Cards de estatísticas */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className={cardClass}>

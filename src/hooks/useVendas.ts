@@ -510,13 +510,142 @@ export function useVendas() {
     }
   });
 
+  const createRascunhoMutation = useMutation({
+    mutationFn: async ({ 
+      vendaData, 
+      portas, 
+      pagamentoData,
+      creditoVenda
+    }: { 
+      vendaData: VendaFormData; 
+      portas: ProdutoVenda[];
+      pagamentoData?: PagamentoData;
+      creditoVenda?: CreditoVenda;
+    }) => {
+      // 1. Obter usuário atual
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // 2. Buscar admin_user correspondente
+      const { data: adminUser, error: adminError } = await supabase
+        .from('admin_users')
+        .select('id, user_id, nome, email')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (adminError) throw new Error(`Erro ao buscar usuário: ${adminError.message}`);
+      if (!adminUser) throw new Error('Usuário não encontrado no sistema.');
+
+      // 3. Calcular totais
+      const totais = portas.reduce((acc, produto) => {
+        const valorBase = (produto.valor_produto + produto.valor_pintura + produto.valor_instalacao) * (produto.quantidade || 1);
+        const descontoAplicado = produto.tipo_desconto === 'valor' 
+          ? (produto.desconto_valor || 0)
+          : valorBase * ((produto.desconto_percentual || 0) / 100);
+        return {
+          valor_produto: acc.valor_produto + (produto.valor_produto * (produto.quantidade || 1)),
+          valor_pintura: acc.valor_pintura + (produto.valor_pintura * (produto.quantidade || 1)),
+          valor_instalacao: acc.valor_instalacao + (produto.valor_instalacao * (produto.quantidade || 1)),
+          valor_total: acc.valor_total + (valorBase - descontoAplicado)
+        };
+      }, { valor_produto: 0, valor_pintura: 0, valor_instalacao: 0, valor_total: 0 });
+
+      const valorCreditoVenda = creditoVenda?.valorCredito || 0;
+      const valor_frete = vendaData.valor_frete || 0;
+      const valor_total_venda = totais.valor_total + valorCreditoVenda + valor_frete;
+      const valor_entrada = vendaData.valor_entrada || 0;
+      const valor_a_receber = valor_total_venda - valor_entrada;
+
+      // 4. Criar venda como rascunho (sem validações obrigatórias)
+      const { endereco, venda_presencial, cliente_id: _, ...vendaDataLimpo } = vendaData;
+      const metodoPrincipal = pagamentoData?.metodos?.[0]?.tipo || vendaData.forma_pagamento;
+
+      const vendaPayload = {
+        ...vendaDataLimpo,
+        is_rascunho: true,
+        cpf_cliente: vendaData.cpf_cliente || null,
+        atendente_id: adminUser.user_id,
+        data_venda: vendaData.data_venda || new Date().toISOString(),
+        valor_venda: valor_total_venda,
+        lucro_total: 0,
+        valor_frete: valor_frete,
+        valor_instalacao: totais.valor_instalacao,
+        valor_entrada: valor_entrada,
+        valor_a_receber: valor_a_receber,
+        valor_credito: valorCreditoVenda,
+        percentual_credito: creditoVenda?.percentualCredito || 0,
+        metodo_pagamento: metodoPrincipal,
+        empresa_receptora_id: pagamentoData?.metodos?.[0]?.empresa_receptora_id || null,
+        quantidade_parcelas: pagamentoData?.metodos?.[0]?.parcelas_boleto || pagamentoData?.metodos?.[0]?.parcelas_cartao || 1,
+        pago_na_instalacao: false,
+        pagamento_na_entrega: pagamentoData?.pagamento_na_entrega || false
+      };
+
+      const { data: venda, error: vendaError } = await supabase
+        .from('vendas')
+        .insert([vendaPayload])
+        .select()
+        .single();
+      
+      if (vendaError) throw vendaError;
+
+      // 5. Salvar produtos (se houver)
+      if (portas.length > 0) {
+        const produtosComVendaId = portas.map(produto => ({
+          venda_id: venda.id,
+          tipo_produto: produto.tipo_produto,
+          tamanho: produto.tamanho || '',
+          cor_id: produto.cor_id || null,
+          acessorio_id: produto.acessorio_id || null,
+          adicional_id: produto.adicional_id || null,
+          valor_produto: produto.valor_produto,
+          valor_pintura: produto.valor_pintura,
+          valor_instalacao: produto.valor_instalacao,
+          valor_frete: produto.valor_frete,
+          tipo_desconto: produto.tipo_desconto,
+          desconto_percentual: produto.desconto_percentual,
+          desconto_valor: produto.desconto_valor,
+          quantidade: produto.quantidade,
+          descricao: produto.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produto.descricao || null),
+          valor_credito: produto.valor_credito || 0,
+          percentual_credito: produto.percentual_credito || 0
+        }));
+        
+        const { error: produtosError } = await supabase
+          .from('produtos_vendas')
+          .insert(produtosComVendaId);
+        
+        if (produtosError) throw produtosError;
+      }
+
+      return venda;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['rascunhos-vendas'] });
+      toast({
+        title: 'Rascunho salvo',
+        description: 'A venda foi salva como rascunho.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao salvar rascunho',
+        description: error.message,
+      });
+    }
+  });
+
   return {
     vendas,
     isLoading,
     refetch,
     createVenda: createVendaMutation.mutateAsync,
+    createRascunho: createRascunhoMutation.mutateAsync,
     deleteVenda: deleteVendaMutation.mutateAsync,
     isCreating: createVendaMutation.isPending,
+    isCreatingRascunho: createRascunhoMutation.isPending,
     isDeleting: deleteVendaMutation.isPending
   };
 }

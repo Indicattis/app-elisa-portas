@@ -1,0 +1,1 @@
+ALTER TABLE vendas ADD COLUMN is_rascunho boolean NOT NULL DEFAULT false;
