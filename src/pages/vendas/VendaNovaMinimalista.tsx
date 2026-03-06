@@ -1084,6 +1084,19 @@ export default function VendaNovaMinimalista() {
           onSkip={() => setPortaRecemAdicionada(null)}
         />
       )}
+
+      <PinturaItemCatalogoModal
+        open={pinturaItemModalOpen}
+        onOpenChange={setPinturaItemModalOpen}
+        portas={portas}
+        onConfirm={(pintura) => {
+          setPortas(prev => {
+            const newPortas = [...prev, pintura];
+            recalcularTotais(newPortas);
+            return newPortas;
+          });
+        }}
+      />
     </MinimalistLayout>
   );
 }
