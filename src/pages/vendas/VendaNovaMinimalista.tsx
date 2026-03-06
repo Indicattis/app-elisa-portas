@@ -26,6 +26,7 @@ import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
 import { CreditoVendaModal } from '@/components/vendas/CreditoVendaModal';
 import { AutorizacaoDescontoModal } from '@/components/vendas/AutorizacaoDescontoModal';
 import { PinturaRapidaModal } from '@/components/vendas/PinturaRapidaModal';
+import { PinturaItemCatalogoModal } from '@/components/vendas/PinturaItemCatalogoModal';
 import { validarDesconto, getTipoAutorizacaoNecessaria, ConfigLimites } from '@/utils/descontoVendasRules';
 import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
 import { useAuth } from '@/hooks/useAuth';
@@ -159,6 +160,7 @@ export default function VendaNovaMinimalista() {
 
   const [pinturaRapidaOpen, setPinturaRapidaOpen] = useState(false);
   const [portaRecemAdicionada, setPortaRecemAdicionada] = useState<{largura: number, altura: number} | null>(null);
+  const [pinturaItemModalOpen, setPinturaItemModalOpen] = useState(false);
 
   const [pagamentoData, setPagamentoData] = useState<PagamentoData>(createEmptyPagamentoData());
 
@@ -620,13 +622,7 @@ export default function VendaNovaMinimalista() {
               />
               <ProductButton 
                 label="Pintura Eletrostática"
-                onClick={() => {
-                  setProdutoEditando(undefined);
-                  setIndexEditando(undefined);
-                  setTipoInicial('pintura_epoxi');
-                  setPermitirTrocaTipo(false);
-                  setDialogOpen(true);
-                }}
+                onClick={() => setPinturaItemModalOpen(true)}
               />
               <ProductButton 
                 label="Serviços"
@@ -1088,6 +1084,23 @@ export default function VendaNovaMinimalista() {
           onSkip={() => setPortaRecemAdicionada(null)}
         />
       )}
+
+      <PinturaItemCatalogoModal
+        open={pinturaItemModalOpen}
+        onOpenChange={setPinturaItemModalOpen}
+        portas={portas}
+        onConfirm={(pintura) => {
+          setPortas(prev => {
+            const newPortas = [...prev, pintura];
+            const valorTotal = recalcularValorTotal(newPortas);
+            setFormData(prevForm => ({
+              ...prevForm,
+              valor_venda: valorTotal,
+            }));
+            return newPortas;
+          });
+        }}
+      />
     </MinimalistLayout>
   );
 }
