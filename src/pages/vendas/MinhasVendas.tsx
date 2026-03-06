@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, ShoppingCart, DollarSign, FileCheck, Search, CalendarIcon, Truck, Hammer, ArrowUpDown, ArrowUp, ArrowDown, Download, FileText, FileSpreadsheet } from 'lucide-react';
+import { Plus, ShoppingCart, DollarSign, FileCheck, Search, CalendarIcon, Truck, Hammer, ArrowUpDown, ArrowUp, ArrowDown, Download, FileText, FileSpreadsheet, Edit, Trash2, MapPin } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { generateVendasRelatorioPDF } from '@/utils/vendasPDFGenerator';
 import { toast } from 'sonner';
@@ -21,6 +21,8 @@ import { useColumnConfig, ColumnConfig } from '@/hooks/useColumnConfig';
 import { cn } from '@/lib/utils';
 import { VendaBloqueadaDialog } from "@/components/vendas/VendaBloqueadaDialog";
 import { BlockReason } from "@/hooks/useCanEditVenda";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface ProdutoVenda {
   id: string;
