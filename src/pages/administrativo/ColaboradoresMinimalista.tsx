@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Search, X, Edit, Loader2, FileText, Plus, Bell, FileDown } from "lucide-react";
+import { Search, X, Edit, Loader2, FileText, Plus, FileDown } from "lucide-react";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Input } from "@/components/ui/input";
@@ -59,18 +59,6 @@ export default function ColaboradoresMinimalista() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingColaborador, setEditingColaborador] = useState<Colaborador | null>(null);
 
-  // Buscar contagem de solicitações pendentes
-  const { data: pendingCount = 0 } = useQuery({
-    queryKey: ["solicitacoes-pendentes-count"],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("solicitacoes_mudanca_cadastro")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "pendente");
-      if (error) throw error;
-      return count || 0;
-    },
-  });
 
   // Buscar colaboradores ativos
   const { data: colaboradores = [], isLoading } = useQuery({
@@ -196,21 +184,6 @@ export default function ColaboradoresMinimalista() {
       >
         <FileText className="h-4 w-4" />
         Gerar Folha
-      </button>
-      <button
-        onClick={() => navigate("/dashboard/administrativo/rh/colaboradores/solicitacoes")}
-        className="relative flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg 
-                   bg-white/5 backdrop-blur-xl border border-white/10 text-white/80
-                   hover:bg-white/10 hover:text-white hover:border-white/20 
-                   transition-all duration-200"
-      >
-        <Bell className="h-4 w-4" />
-        <span className="hidden sm:inline">Solicitações</span>
-        {pendingCount > 0 && (
-          <span className="absolute -top-2 -right-2 h-5 min-w-5 px-1 text-xs flex items-center justify-center rounded-full bg-red-500 text-white font-medium">
-            {pendingCount}
-          </span>
-        )}
       </button>
     </div>
   );
