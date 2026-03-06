@@ -407,17 +407,31 @@ export default function MinhasVendas() {
         { label: "Minhas Vendas" }
       ]}
       headerActions={
-        <button 
-          onClick={() => navigate('/vendas/minhas-vendas/nova')}
-          className="h-10 px-5 rounded-lg font-medium text-white border
-                     bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30 
-                     shadow-lg shadow-blue-500/30
-                     hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/40
-                     transition-all duration-200 flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Nova Venda
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => navigate('/vendas/minhas-vendas/correcao')}
+            className="h-10 px-5 rounded-lg font-medium text-white border
+                       bg-gradient-to-r from-purple-500 to-purple-700 border-purple-400/30 
+                       shadow-lg shadow-purple-500/30
+                       hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/40
+                       transition-all duration-200 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Pedido de Correção</span>
+            <span className="sm:hidden">Correção</span>
+          </button>
+          <button 
+            onClick={() => navigate('/vendas/minhas-vendas/nova')}
+            className="h-10 px-5 rounded-lg font-medium text-white border
+                       bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30 
+                       shadow-lg shadow-blue-500/30
+                       hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/40
+                       transition-all duration-200 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Venda
+          </button>
+        </div>
       }
     >
       {/* Cards de estatísticas */}

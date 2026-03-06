@@ -430,6 +430,7 @@ const App = () => (
                 <Route path="/vendas" element={<ProtectedRoute routeKeyPrefix="vendas_"><VendasHub /></ProtectedRoute>} />
                 <Route path="/vendas/minhas-vendas" element={<ProtectedRoute routeKey="vendas_hub"><MinhasVendas /></ProtectedRoute>} />
                 <Route path="/vendas/minhas-vendas/nova" element={<ProtectedRoute routeKey="vendas_hub"><VendaNovaMinimalista /></ProtectedRoute>} />
+                <Route path="/vendas/minhas-vendas/correcao" element={<ProtectedRoute routeKey="vendas_hub"><PedidoCorrecaoNovo /></ProtectedRoute>} />
                 <Route path="/vendas/minhas-vendas/editar/:id" element={<ProtectedRoute routeKey="vendas_hub"><MinhasVendasEditar /></ProtectedRoute>} />
                 <Route path="/vendas/meus-clientes" element={<ProtectedRoute routeKey="vendas_hub"><MeusClientes /></ProtectedRoute>} />
                 <Route path="/vendas/meus-clientes/:id" element={<ProtectedRoute routeKey="vendas_hub"><MeuClienteDetalhe /></ProtectedRoute>} />
