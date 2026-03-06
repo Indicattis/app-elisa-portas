@@ -29,11 +29,9 @@ export function PinturaItemCatalogoModal({
   const [valorPintura, setValorPintura] = useState('');
   const { coresAtivas } = useCatalogoCores();
 
-  const itensDisponiveis = portas.map((p, i) => ({
-    index: i,
-    label: getItemLabel(p, i),
-    produto: p,
-  }));
+  const itensDisponiveis = portas
+    .map((p, i) => ({ index: i, label: getItemLabel(p, i), produto: p }))
+    .filter(({ produto }) => produto.tipo_produto !== 'pintura_epoxi');
 
   function getItemLabel(p: ProdutoVenda, i: number) {
     const tipo = getLabelTipoProduto(p.tipo_produto);
