@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfMonth, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CheckCircle, Loader2, CalendarIcon, Save } from "lucide-react";
+import { CheckCircle, Loader2, CalendarIcon, Save, FileText, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -461,6 +461,47 @@ export default function FolhaPagamentoNova() {
       ]}
     >
       <div className="space-y-6">
+        {/* Saved drafts section */}
+        {rascunhosSalvos.length > 0 && (
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <FileText className="h-4 w-4 text-amber-400" />
+              <h2 className="text-sm font-semibold text-white">Rascunhos Salvos</h2>
+              <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full">{rascunhosSalvos.length}</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {rascunhosSalvos.map((rascunho) => {
+                const rMesKey = rascunho.mes_referencia.substring(0, 7);
+                const isActive = mesKey === rMesKey && !!rascunhoId;
+                return (
+                  <button
+                    key={rascunho.id}
+                    onClick={() => setMesReferencia(new Date(rascunho.mes_referencia + "T12:00:00"))}
+                    className={cn(
+                      "text-left p-3 rounded-lg border transition-all hover:bg-white/10",
+                      isActive
+                        ? "border-amber-500/50 bg-amber-500/10"
+                        : "border-white/10 bg-white/5"
+                    )}
+                  >
+                    <p className="text-sm font-medium text-white capitalize">
+                      {format(new Date(rascunho.mes_referencia + "T12:00:00"), "MMMM 'de' yyyy", { locale: ptBR })}
+                    </p>
+                    <div className="flex items-center justify-between mt-1.5">
+                      <span className="text-xs text-white/50">
+                        Total: R$ {(rascunho.total_liquido ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </span>
+                      <span className="text-[10px] text-white/30 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {format(new Date(rascunho.created_at), "dd/MM/yy")}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {/* Draft indicator */}
         {rascunhoId && (
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-2.5 flex items-center gap-2">
