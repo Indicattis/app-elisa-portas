@@ -1,36 +1,43 @@
 
 
-# Melhorias na página /direcao/dre/custos
+# Adicionar Pintura a Itens de Catálogo na Criação de Venda
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+## Resumo
+Permitir que, ao selecionar itens do catálogo no modal `SelecionarAcessoriosModal`, o vendedor possa marcar que o item será pintado, selecionar a cor e informar o valor da pintura manualmente. O item salvo terá `valor_pintura > 0` e `cor_id` preenchido, garantindo que no pedido o fluxograma detecte pintura corretamente.
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+## Mudanças
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+### 1. Expandir `SelecionarAcessoriosModal.tsx`
+- Após selecionar itens e clicar "Adicionar", em vez de fechar direto, abrir uma etapa intermediária para configurar pintura nos itens selecionados.
+- Para cada item selecionado, exibir:
+  - Toggle/checkbox "Pintura?" 
+  - Se marcado: select de cor (usando query `catalogo_cores`) + input de valor da pintura (manual, R$)
+- Ao confirmar, gerar o `ProdutoVenda` com `valor_pintura` e `cor_id` preenchidos quando aplicável.
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
-
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
-
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
+### 2. Fluxo do modal (duas etapas)
 ```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
+Etapa 1: Seleção de itens (como hoje)
+  → Clica "Adicionar"
+Etapa 2: Configuração de pintura (novo)
+  → Para cada item: toggle pintura, cor, valor
+  → Clica "Confirmar"
+  → Gera ProdutoVenda[] com valor_pintura e cor_id
 ```
 
+Se nenhum item tiver pintura marcada, a etapa 2 pode ser pulada (botão "Pular" ou auto-skip).
+
+### 3. Dados gerados
+Quando pintura marcada, o `ProdutoVenda` gerado terá:
+- `valor_pintura`: valor informado pelo vendedor
+- `cor_id`: ID da cor selecionada
+- Os demais campos permanecem iguais
+
+### 4. Impacto no fluxograma
+Com `valor_pintura > 0` no produto, o `determinarFluxograma` já detecta pintura (`p.valor_pintura > 0`). Combinado com a correção planejada de incluir itens de catálogo na ordem de pintura (plano anterior), o fluxo ficará completo.
+
+### 5. Exibição no pedido
+Na tabela de produtos da venda e no pedido, itens com `valor_pintura > 0` e `cor_id` já mostram indicação de pintura nos componentes existentes.
+
 ### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+- `src/components/vendas/SelecionarAcessoriosModal.tsx`
 
