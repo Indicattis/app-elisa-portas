@@ -26,6 +26,7 @@ import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
 import { CreditoVendaModal } from '@/components/vendas/CreditoVendaModal';
 import { AutorizacaoDescontoModal } from '@/components/vendas/AutorizacaoDescontoModal';
 import { PinturaRapidaModal } from '@/components/vendas/PinturaRapidaModal';
+import { PinturaItemCatalogoModal } from '@/components/vendas/PinturaItemCatalogoModal';
 import { validarDesconto, getTipoAutorizacaoNecessaria, ConfigLimites } from '@/utils/descontoVendasRules';
 import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
 import { useAuth } from '@/hooks/useAuth';
