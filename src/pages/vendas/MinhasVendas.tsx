@@ -74,6 +74,7 @@ type SortDirection = 'asc' | 'desc';
 export default function MinhasVendas() {
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const [mesAtual] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState('');
   const [dataInicio, setDataInicio] = useState<Date | undefined>(startOfMonth(new Date()));
@@ -122,7 +123,8 @@ export default function MinhasVendas() {
           produtos_vendas(id, tipo_produto, desconto_valor, faturamento),
           pedidos_producao!left(id, status)
         `)
-        .eq('atendente_id', user.id);
+        .eq('atendente_id', user.id)
+        .eq('is_rascunho', false);
 
       if (dataInicio) {
         query = query.gte('data_venda', dataInicio.toISOString());
@@ -137,6 +139,38 @@ export default function MinhasVendas() {
       return (data || []) as unknown as Venda[];
     },
     enabled: !!user?.id
+  });
+
+  // Query para rascunhos
+  const { data: rascunhos, isLoading: isLoadingRascunhos } = useQuery({
+    queryKey: ['rascunhos-vendas', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('vendas')
+        .select('id, cliente_nome, cidade, estado, valor_venda, data_venda, created_at')
+        .eq('atendente_id', user.id)
+        .eq('is_rascunho', true)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id
+  });
+
+  // Mutation para excluir rascunho
+  const deleteRascunhoMutation = useMutation({
+    mutationFn: async (vendaId: string) => {
+      const { error } = await supabase.rpc('delete_venda_completa', { p_venda_id: vendaId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rascunhos-vendas'] });
+      toast.success('Rascunho excluído com sucesso');
+    },
+    onError: () => {
+      toast.error('Erro ao excluir rascunho');
+    }
   });
 
   // Filtrar e ordenar vendas
