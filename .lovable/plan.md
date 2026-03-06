@@ -1,36 +1,17 @@
 
 
-# Melhorias na página /direcao/dre/custos
+# Fix: Search results hidden behind section below
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+## Problem
+The search results dropdown in the order search field has `z-50` but the parent `Section` component likely creates a stacking context that clips or overlaps it. The next section ("Produtos da Correção") renders on top.
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+## Solution
+Add `relative z-10` (or `overflow-visible`) to the parent `Section` wrapper of the search field, or more simply, add `overflow-visible` and a higher `z-index` to the `<Section>` containing the search, ensuring the dropdown isn't clipped.
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+**File: `src/pages/vendas/PedidoCorrecaoNovo.tsx`**
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+- On the `<div className="relative">` wrapping the search input (line 203), it already has `relative` — that's fine.
+- The issue is the parent `<Section>` likely has `overflow-hidden` or creates a stacking context. The fix: wrap the search section's content in a container with a higher z-index, or ensure the Section around the search (line 238) gets `className="relative z-20 overflow-visible"` while the Produtos section below stays at default z-index.
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
-
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+Concrete change: Add `className="relative z-20 overflow-visible"` prop to the Section containing the search, or add a wrapper `div` with those classes around lines 188-238 if Section doesn't accept className. Also check the Section component to see if it applies `overflow-hidden`.
 
