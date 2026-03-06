@@ -1092,7 +1092,11 @@ export default function VendaNovaMinimalista() {
         onConfirm={(pintura) => {
           setPortas(prev => {
             const newPortas = [...prev, pintura];
-            recalcularTotais(newPortas);
+            const valorTotal = recalcularValorTotal(newPortas);
+            setFormData(prevForm => ({
+              ...prevForm,
+              valor_venda: valorTotal,
+            }));
             return newPortas;
           });
         }}
