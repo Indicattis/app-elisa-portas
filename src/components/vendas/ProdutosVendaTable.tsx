@@ -43,6 +43,8 @@ const getTipoProdutoVariant = (tipo: string): "default" | "secondary" | "outline
 };
 
 export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, onUpdateQuantidade, onRemoverDesconto }: ProdutosVendaTableProps) {
+  const { cores } = useCatalogoCores();
+
   if (produtos.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/50">
