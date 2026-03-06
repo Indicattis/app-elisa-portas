@@ -69,6 +69,20 @@ export default function FolhaPagamentoNova() {
     return meses;
   }, []);
 
+  // List all drafts
+  const { data: rascunhosSalvos = [] } = useQuery({
+    queryKey: ["folhas-rascunhos-salvos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("folhas_pagamento")
+        .select("id, mes_referencia, total_liquido, created_at")
+        .eq("status", "rascunho")
+        .order("mes_referencia", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   // Only block months that are "finalizada"
   const { data: mesesPreenchidos = new Set<string>() } = useQuery({
     queryKey: ["folhas-meses-preenchidos"],
