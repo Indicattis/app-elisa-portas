@@ -160,6 +160,7 @@ export default function VendaNovaMinimalista() {
 
   const [pinturaRapidaOpen, setPinturaRapidaOpen] = useState(false);
   const [portaRecemAdicionada, setPortaRecemAdicionada] = useState<{largura: number, altura: number} | null>(null);
+  const [pinturaItemModalOpen, setPinturaItemModalOpen] = useState(false);
 
   const [pagamentoData, setPagamentoData] = useState<PagamentoData>(createEmptyPagamentoData());
 
@@ -621,13 +622,7 @@ export default function VendaNovaMinimalista() {
               />
               <ProductButton 
                 label="Pintura Eletrostática"
-                onClick={() => {
-                  setProdutoEditando(undefined);
-                  setIndexEditando(undefined);
-                  setTipoInicial('pintura_epoxi');
-                  setPermitirTrocaTipo(false);
-                  setDialogOpen(true);
-                }}
+                onClick={() => setPinturaItemModalOpen(true)}
               />
               <ProductButton 
                 label="Serviços"
