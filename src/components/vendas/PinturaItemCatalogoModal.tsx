@@ -162,15 +162,21 @@ export function PinturaItemCatalogoModal({
 
             <div className="space-y-2">
               <Label className="text-sm font-medium">Valor da Pintura (R$)</Label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0,00"
-                value={valorPintura}
-                onChange={(e) => setValorPintura(e.target.value)}
-                className="h-9"
-              />
+              <div className="relative">
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0,00"
+                  value={valorPintura}
+                  onChange={(e) => setValorPintura(e.target.value)}
+                  className="h-9"
+                  disabled={carregando}
+                />
+                {carregando && (
+                  <Loader2 className="absolute right-3 top-2 h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
             </div>
           </div>
         )}
