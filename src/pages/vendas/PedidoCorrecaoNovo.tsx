@@ -183,7 +183,7 @@ export default function PedidoCorrecaoNovo() {
     >
       <div className="space-y-6 max-w-4xl mx-auto">
         {/* Seletor de Pedido Referência */}
-        <Section title="Pedido de Referência" icon={Search}>
+        <Section title="Pedido de Referência" icon={Search} className="relative z-20 overflow-visible">
           {pedidoSelecionado ? (
             <div className="flex items-center justify-between bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
               <div>
