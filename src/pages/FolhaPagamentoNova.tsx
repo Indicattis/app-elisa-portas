@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfMonth, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CheckCircle, Loader2, CalendarIcon } from "lucide-react";
+import { CheckCircle, Loader2, CalendarIcon, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -59,6 +59,7 @@ export default function FolhaPagamentoNova() {
   const [itens, setItens] = useState<Record<string, ItemFolha>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [rascunhoId, setRascunhoId] = useState<string | null>(null);
 
   const mesesDisponiveis = useMemo(() => {
     const meses = [];
@@ -68,14 +69,41 @@ export default function FolhaPagamentoNova() {
     return meses;
   }, []);
 
+  // Only block months that are "finalizada"
   const { data: mesesPreenchidos = new Set<string>() } = useQuery({
     queryKey: ["folhas-meses-preenchidos"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("folhas_pagamento")
-        .select("mes_referencia");
+        .select("mes_referencia, status")
+        .eq("status", "finalizada");
       if (error) throw error;
       return new Set((data || []).map((f: { mes_referencia: string }) => f.mes_referencia.substring(0, 7)));
+    },
+  });
+
+  // Load draft for selected month
+  const mesKey = format(mesReferencia, "yyyy-MM");
+  const { data: rascunhoData } = useQuery({
+    queryKey: ["folha-rascunho", mesKey],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("folhas_pagamento")
+        .select("*")
+        .eq("status", "rascunho")
+        .gte("mes_referencia", mesKey + "-01")
+        .lt("mes_referencia", mesKey + "-32")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+
+      const { data: itensData, error: itensError } = await supabase
+        .from("folha_pagamento_itens")
+        .select("*")
+        .eq("folha_id", data.id);
+      if (itensError) throw itensError;
+
+      return { folha: data, itens: itensData || [] };
     },
   });
 
@@ -102,27 +130,56 @@ export default function FolhaPagamentoNova() {
         .order("nome");
 
       if (error) throw error;
-      
-      const initialItens: Record<string, ItemFolha> = {};
-      (data || []).forEach((col: Colaborador) => {
-        initialItens[col.id] = {
-          colaborador_id: col.id,
-          colaborador_nome: col.nome,
-          salario_base: col.salario || 0,
-          modalidade_pagamento: col.modalidade_pagamento,
-          horas_adicionais: 0,
-          valor_hora_adicional: 0,
-          acrescimos: 0,
-          descontos: 0,
-          descricao_acrescimos: "",
-          descricao_descontos: "",
-        };
-      });
-      setItens(initialItens);
-      
       return data as Colaborador[];
     },
   });
+
+  // Initialize items from collaborators, then overlay draft data
+  useEffect(() => {
+    if (!colaboradores.length) return;
+
+    const initialItens: Record<string, ItemFolha> = {};
+    colaboradores.forEach((col) => {
+      initialItens[col.id] = {
+        colaborador_id: col.id,
+        colaborador_nome: col.nome,
+        salario_base: col.salario || 0,
+        modalidade_pagamento: col.modalidade_pagamento,
+        horas_adicionais: 0,
+        valor_hora_adicional: 0,
+        acrescimos: 0,
+        descontos: 0,
+        descricao_acrescimos: "",
+        descricao_descontos: "",
+      };
+    });
+
+    if (rascunhoData) {
+      setRascunhoId(rascunhoData.folha.id);
+      setObservacoes(rascunhoData.folha.observacoes || "");
+      if (rascunhoData.folha.data_vencimento) {
+        setDataVencimento(new Date(rascunhoData.folha.data_vencimento + "T12:00:00"));
+      }
+      rascunhoData.itens.forEach((item: any) => {
+        if (initialItens[item.colaborador_id]) {
+          initialItens[item.colaborador_id] = {
+            ...initialItens[item.colaborador_id],
+            salario_base: item.salario_base ?? initialItens[item.colaborador_id].salario_base,
+            horas_adicionais: item.horas_adicionais ?? 0,
+            valor_hora_adicional: item.valor_hora_adicional ?? 0,
+            acrescimos: item.acrescimos ?? 0,
+            descontos: item.descontos ?? 0,
+            descricao_acrescimos: item.descricao_acrescimos ?? "",
+            descricao_descontos: item.descricao_descontos ?? "",
+          };
+        }
+      });
+    } else {
+      setRascunhoId(null);
+    }
+
+    setItens(initialItens);
+  }, [colaboradores, rascunhoData]);
 
   const updateItem = (colaboradorId: string, field: keyof ItemFolha, value: number | string) => {
     setItens(prev => ({
@@ -164,6 +221,90 @@ export default function FolhaPagamentoNova() {
     }).format(value);
   };
 
+  // Save draft mutation
+  const salvarRascunhoMutation = useMutation({
+    mutationFn: async () => {
+      if (!dataVencimento) throw new Error("Selecione a data de vencimento");
+      if (Object.keys(itens).length === 0) throw new Error("Nenhum colaborador para salvar");
+
+      let folhaId = rascunhoId;
+
+      if (folhaId) {
+        // Update existing draft
+        const { error } = await supabase
+          .from("folhas_pagamento")
+          .update({
+            data_vencimento: format(dataVencimento, "yyyy-MM-dd"),
+            total_bruto: totais.totalBruto,
+            total_descontos: totais.totalDescontos,
+            total_liquido: totais.totalLiquido,
+            observacoes,
+          })
+          .eq("id", folhaId);
+        if (error) throw error;
+
+        // Delete old items
+        const { error: delError } = await supabase
+          .from("folha_pagamento_itens")
+          .delete()
+          .eq("folha_id", folhaId);
+        if (delError) throw delError;
+      } else {
+        // Insert new draft
+        const { data: folha, error } = await supabase
+          .from("folhas_pagamento")
+          .insert({
+            mes_referencia: format(mesReferencia, "yyyy-MM-dd"),
+            data_vencimento: format(dataVencimento, "yyyy-MM-dd"),
+            total_bruto: totais.totalBruto,
+            total_descontos: totais.totalDescontos,
+            total_liquido: totais.totalLiquido,
+            status: "rascunho",
+            observacoes,
+            created_by: user?.id,
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        folhaId = folha.id;
+        setRascunhoId(folha.id);
+      }
+
+      // Insert items
+      const itemsToInsert = Object.values(itens).map(item => {
+        const totalHorasAdicionais = item.horas_adicionais * item.valor_hora_adicional;
+        return {
+          folha_id: folhaId!,
+          colaborador_id: item.colaborador_id,
+          colaborador_nome: item.colaborador_nome,
+          salario_base: item.salario_base,
+          modalidade_pagamento: item.modalidade_pagamento,
+          horas_adicionais: item.horas_adicionais,
+          valor_hora_adicional: item.valor_hora_adicional,
+          total_horas_adicionais: totalHorasAdicionais,
+          acrescimos: item.acrescimos,
+          descontos: item.descontos,
+          descricao_acrescimos: item.descricao_acrescimos,
+          descricao_descontos: item.descricao_descontos,
+          total_bruto: calcularTotalBruto(item),
+          total_liquido: calcularTotalLiquido(item),
+        };
+      });
+
+      const { error: insertError } = await supabase
+        .from("folha_pagamento_itens")
+        .insert(itemsToInsert);
+      if (insertError) throw insertError;
+    },
+    onSuccess: () => {
+      toast.success("Rascunho salvo com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["folha-rascunho"] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao salvar rascunho");
+    },
+  });
+
   const finalizarMutation = useMutation({
     mutationFn: async () => {
       if (!dataVencimento) {
@@ -174,22 +315,49 @@ export default function FolhaPagamentoNova() {
         throw new Error("Nenhum colaborador para gerar folha");
       }
 
-      const { data: folha, error: folhaError } = await supabase
-        .from("folhas_pagamento")
-        .insert({
-          mes_referencia: format(mesReferencia, "yyyy-MM-dd"),
-          data_vencimento: format(dataVencimento, "yyyy-MM-dd"),
-          total_bruto: totais.totalBruto,
-          total_descontos: totais.totalDescontos,
-          total_liquido: totais.totalLiquido,
-          status: "finalizada",
-          observacoes,
-          created_by: user?.id,
-        })
-        .select()
-        .single();
+      let folhaId: string;
 
-      if (folhaError) throw folhaError;
+      if (rascunhoId) {
+        // Update existing draft to finalized
+        const { error } = await supabase
+          .from("folhas_pagamento")
+          .update({
+            data_vencimento: format(dataVencimento, "yyyy-MM-dd"),
+            total_bruto: totais.totalBruto,
+            total_descontos: totais.totalDescontos,
+            total_liquido: totais.totalLiquido,
+            status: "finalizada",
+            observacoes,
+          })
+          .eq("id", rascunhoId);
+        if (error) throw error;
+        folhaId = rascunhoId;
+
+        // Delete old items (will re-insert with conta_pagar_id)
+        const { error: delError } = await supabase
+          .from("folha_pagamento_itens")
+          .delete()
+          .eq("folha_id", folhaId);
+        if (delError) throw delError;
+      } else {
+        const { data: folha, error: folhaError } = await supabase
+          .from("folhas_pagamento")
+          .insert({
+            mes_referencia: format(mesReferencia, "yyyy-MM-dd"),
+            data_vencimento: format(dataVencimento, "yyyy-MM-dd"),
+            total_bruto: totais.totalBruto,
+            total_descontos: totais.totalDescontos,
+            total_liquido: totais.totalLiquido,
+            status: "finalizada",
+            observacoes,
+            created_by: user?.id,
+          })
+          .select()
+          .single();
+
+        if (folhaError) throw folhaError;
+        folhaId = folha.id;
+      }
 
       const mesRef = format(mesReferencia, "MMMM/yyyy", { locale: ptBR });
       const grupoId = crypto.randomUUID();
@@ -220,7 +388,7 @@ export default function FolhaPagamentoNova() {
         const { error: itemError } = await supabase
           .from("folha_pagamento_itens")
           .insert({
-            folha_id: folha.id,
+            folha_id: folhaId,
             colaborador_id: item.colaborador_id,
             colaborador_nome: item.colaborador_nome,
             salario_base: item.salario_base,
@@ -240,11 +408,13 @@ export default function FolhaPagamentoNova() {
         if (itemError) throw itemError;
       }
 
-      return folha;
+      return folhaId;
     },
     onSuccess: () => {
       toast.success("Folha de pagamento finalizada! Contas a pagar geradas com sucesso.");
       queryClient.invalidateQueries({ queryKey: ["contas-pagar"] });
+      queryClient.invalidateQueries({ queryKey: ["folhas-meses-preenchidos"] });
+      queryClient.invalidateQueries({ queryKey: ["folha-rascunho"] });
       navigate("/administrativo/rh-dp/colaboradores");
     },
     onError: (error) => {
@@ -277,6 +447,16 @@ export default function FolhaPagamentoNova() {
       ]}
     >
       <div className="space-y-6">
+        {/* Draft indicator */}
+        {rascunhoId && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <Save className="h-4 w-4 text-amber-400" />
+            <span className="text-xs text-amber-300">
+              Rascunho carregado para {format(mesReferencia, "MMMM 'de' yyyy", { locale: ptBR })}. Continue editando e salve ou finalize.
+            </span>
+          </div>
+        )}
+
         {/* Configuração da Folha */}
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4">
           <div className="mb-4">
@@ -299,7 +479,7 @@ export default function FolhaPagamentoNova() {
                     const jaPreenchido = mesesPreenchidos.has(key);
                     return (
                       <SelectItem key={key} value={key} className="text-sm" disabled={jaPreenchido}>
-                        {format(mes, "MMMM 'de' yyyy", { locale: ptBR })}{jaPreenchido ? " (já preenchido)" : ""}
+                        {format(mes, "MMMM 'de' yyyy", { locale: ptBR })}{jaPreenchido ? " (já finalizada)" : ""}
                       </SelectItem>
                     );
                   })}
@@ -484,6 +664,20 @@ export default function FolhaPagamentoNova() {
                        hover:bg-white/10 hover:text-white transition-all duration-200"
           >
             Cancelar
+          </button>
+          <button
+            onClick={() => salvarRascunhoMutation.mutate()}
+            disabled={salvarRascunhoMutation.isPending || colaboradores.length === 0}
+            className="px-4 py-2 text-sm rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 font-medium
+                       hover:bg-amber-500/30 hover:text-amber-200 transition-all duration-200
+                       disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {salvarRascunhoMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            Salvar Rascunho
           </button>
           <button
             onClick={() => setShowConfirmDialog(true)}
