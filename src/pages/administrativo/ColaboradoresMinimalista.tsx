@@ -166,47 +166,52 @@ export default function ColaboradoresMinimalista() {
 
   const headerActions = (
     <div className="flex items-center gap-2">
-      <Button
+      <button
         onClick={() => navigate("/administrativo/rh-dp/colaboradores/novo")}
+        className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg 
+                   bg-white/5 backdrop-blur-xl border border-white/10 text-white/80
+                   hover:bg-white/10 hover:text-white hover:border-white/20 
+                   transition-all duration-200"
       >
-        <Plus className="h-4 w-4 mr-2" />
-        Adicionar Colaborador
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
+        <Plus className="h-4 w-4" />
+        <span className="hidden sm:inline">Adicionar</span>
+      </button>
+      <button
         onClick={() => gerarColaboradoresPDF(filteredColaboradores)}
-        className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+        className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg 
+                   bg-white/5 backdrop-blur-xl border border-white/10 text-white/80
+                   hover:bg-white/10 hover:text-white hover:border-white/20 
+                   transition-all duration-200"
       >
-        <FileDown className="w-4 h-4 mr-2" />
-        Gerar PDF
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
+        <FileDown className="h-4 w-4" />
+        <span className="hidden sm:inline">PDF</span>
+      </button>
+      <button
         onClick={() => navigate("/administrativo/rh-dp/colaboradores/folha-pagamento")}
-        className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+        className="flex items-center gap-2 px-4 py-1.5 text-sm rounded-lg font-medium
+                   bg-gradient-to-r from-blue-500 to-blue-600 text-white
+                   shadow-lg shadow-blue-500/25 border border-blue-400/30
+                   hover:shadow-blue-500/40 hover:from-blue-400 hover:to-blue-500
+                   transition-all duration-200"
       >
-        <FileText className="w-4 h-4 mr-2" />
+        <FileText className="h-4 w-4" />
         Gerar Folha
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
+      </button>
+      <button
         onClick={() => navigate("/dashboard/administrativo/rh/colaboradores/solicitacoes")}
-        className="bg-white/5 border-white/10 text-white hover:bg-white/10 relative"
+        className="relative flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg 
+                   bg-white/5 backdrop-blur-xl border border-white/10 text-white/80
+                   hover:bg-white/10 hover:text-white hover:border-white/20 
+                   transition-all duration-200"
       >
-        <Bell className="w-4 h-4 mr-2" />
-        Solicitações
+        <Bell className="h-4 w-4" />
+        <span className="hidden sm:inline">Solicitações</span>
         {pendingCount > 0 && (
-          <Badge 
-            variant="destructive" 
-            className="absolute -top-2 -right-2 h-5 min-w-5 px-1 text-xs flex items-center justify-center"
-          >
+          <span className="absolute -top-2 -right-2 h-5 min-w-5 px-1 text-xs flex items-center justify-center rounded-full bg-red-500 text-white font-medium">
             {pendingCount}
-          </Badge>
+          </span>
         )}
-      </Button>
+      </button>
     </div>
   );
 
