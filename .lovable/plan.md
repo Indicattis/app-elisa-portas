@@ -1,19 +1,36 @@
 
 
-# Auto-buscar preço de pintura da tabela de preços no PinturaItemCatalogoModal
+# Melhorias na página /direcao/dre/custos
 
-## Problema
-Quando o usuário seleciona um item no modal "Pintura Eletrostática" (`PinturaItemCatalogoModal`), o valor da pintura não é buscado automaticamente da tabela de preços. No modal "Adicionar Pintura?" (`PinturaRapidaModal`) e no form de produto (`ProdutoVendaForm`), o sistema já chama `buscarPrecosPorMedidas` para preencher o valor automaticamente.
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-## Solução
-Adicionar um `useEffect` (ou chamada no `onValueChange` do radio) em `PinturaItemCatalogoModal.tsx` que, ao selecionar um item, busca o preço da pintura via `buscarPrecosPorMedidas(largura, altura)` e pré-preenche o campo `valorPintura` com `item.valor_pintura` da tabela. O usuário ainda poderá editar manualmente.
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-## Arquivo alterado
-- `src/components/vendas/PinturaItemCatalogoModal.tsx`
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-## Mudanças
-1. Importar `buscarPrecosPorMedidas` e `useEffect`
-2. Adicionar state `carregando` (boolean)
-3. Quando `selectedIndex` mudar e o item tiver `largura` e `altura`, chamar `buscarPrecosPorMedidas(largura, altura)` e setar `valorPintura` com o `valor_pintura` retornado
-4. Mostrar indicador de loading no campo de valor enquanto busca
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
+
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 

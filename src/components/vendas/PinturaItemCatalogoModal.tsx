@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,10 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Paintbrush } from 'lucide-react';
+import { Paintbrush, Loader2 } from 'lucide-react';
 import { useCatalogoCores } from '@/hooks/useCatalogoCores';
 import type { ProdutoVenda } from '@/hooks/useVendas';
 import { getLabelTipoProduto } from '@/utils/tipoProdutoLabels';
+import { buscarPrecosPorMedidas } from '@/utils/tabelaPrecosHelper';
 
 interface PinturaItemCatalogoModalProps {
   open: boolean;
@@ -27,7 +28,23 @@ export function PinturaItemCatalogoModal({
   const [selectedIndex, setSelectedIndex] = useState<string>('');
   const [corId, setCorId] = useState('');
   const [valorPintura, setValorPintura] = useState('');
+  const [carregando, setCarregando] = useState(false);
   const { coresAtivas } = useCatalogoCores();
+
+  useEffect(() => {
+    if (selectedIndex === '') return;
+    const item = portas[Number(selectedIndex)];
+    if (!item?.largura || !item?.altura) return;
+
+    setCarregando(true);
+    buscarPrecosPorMedidas(item.largura, item.altura)
+      .then((result) => {
+        if (result?.valor_pintura) {
+          setValorPintura(String(result.valor_pintura));
+        }
+      })
+      .finally(() => setCarregando(false));
+  }, [selectedIndex, portas]);
 
   const itensDisponiveis = portas
     .map((p, i) => ({ index: i, label: getItemLabel(p, i), produto: p }))
@@ -145,15 +162,21 @@ export function PinturaItemCatalogoModal({
 
             <div className="space-y-2">
               <Label className="text-sm font-medium">Valor da Pintura (R$)</Label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0,00"
-                value={valorPintura}
-                onChange={(e) => setValorPintura(e.target.value)}
-                className="h-9"
-              />
+              <div className="relative">
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0,00"
+                  value={valorPintura}
+                  onChange={(e) => setValorPintura(e.target.value)}
+                  className="h-9"
+                  disabled={carregando}
+                />
+                {carregando && (
+                  <Loader2 className="absolute right-3 top-2 h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
             </div>
           </div>
         )}
