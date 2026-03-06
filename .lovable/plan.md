@@ -1,36 +1,39 @@
 
 
-# Melhorias na página /direcao/dre/custos
+# Salvar Folha de Pagamento como Rascunho
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+## Resumo
+Permitir que o usuário salve a folha de pagamento como rascunho (status "rascunho") sem gerar contas a pagar, podendo retomar o preenchimento depois. Ao acessar a página, se existir um rascunho para o mês selecionado, os dados são carregados automaticamente.
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+## Mudanças no banco de dados
+Nenhuma. A tabela `folhas_pagamento` já possui coluna `status` (string) e `folha_pagamento_itens` já suporta todos os campos. Basta usar `status: "rascunho"` em vez de `"finalizada"`.
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+## Mudanças em `src/pages/FolhaPagamentoNova.tsx`
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+### 1. Carregar rascunho existente
+- Adicionar query que busca `folhas_pagamento` com `status = 'rascunho'` para o `mesReferencia` selecionado.
+- Se encontrar, carregar os dados da folha (observações, data de vencimento) e seus itens (`folha_pagamento_itens`), preenchendo o state `itens` com os valores salvos.
+- Guardar o `rascunhoId` em state para saber se é update ou insert.
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+### 2. Mutation de salvar rascunho
+- Criar `salvarRascunhoMutation` que:
+  - Se `rascunhoId` existe: faz UPDATE na `folhas_pagamento` e DELETE + INSERT nos itens.
+  - Se não existe: faz INSERT com `status: "rascunho"` e insere os itens (sem criar contas a pagar).
+- Toast de sucesso: "Rascunho salvo com sucesso".
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
+### 3. Ajustar lógica de finalizar
+- Se finalizando a partir de um rascunho, fazer UPDATE do status para "finalizada" em vez de INSERT novo.
 
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+### 4. Ajustar filtro de meses preenchidos
+- Mudar a query de `mesesPreenchidos` para filtrar apenas `status = 'finalizada'`, permitindo que meses com rascunho continuem selecionáveis.
 
-### Estrutura da tabela final
+### 5. Adicionar botão "Salvar Rascunho"
+- Novo botão entre "Cancelar" e "Finalizar", com estilo amber/yellow para diferenciar.
+- Ícone `Save`.
 
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+## Fluxo
+1. Usuário acessa a folha → se há rascunho do mês, carrega automaticamente.
+2. Preenche dados → clica "Salvar Rascunho" → salva sem gerar contas.
+3. Pode sair e voltar depois → rascunho carrega de novo.
+4. Quando pronto, clica "Finalizar" → gera contas a pagar normalmente.
 
