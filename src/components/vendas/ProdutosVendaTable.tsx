@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Trash2, Pencil, X } from 'lucide-react';
 import { ProdutoVenda } from '@/hooks/useVendas';
+import { useCatalogoCores } from '@/hooks/useCatalogoCores';
 
 interface ProdutosVendaTableProps {
   produtos: ProdutoVenda[];
@@ -42,6 +43,8 @@ const getTipoProdutoVariant = (tipo: string): "default" | "secondary" | "outline
 };
 
 export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, onUpdateQuantidade, onRemoverDesconto }: ProdutosVendaTableProps) {
+  const { cores } = useCatalogoCores();
+
   if (produtos.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/50">
@@ -56,6 +59,7 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
         <TableRow>
           <TableHead>Tipo</TableHead>
           <TableHead>Detalhes</TableHead>
+          <TableHead>Cor</TableHead>
           <TableHead>Qtd</TableHead>
           <TableHead>Valor Unit.</TableHead>
           <TableHead>Desconto</TableHead>
@@ -84,6 +88,21 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
                 </Badge>
               </TableCell>
               <TableCell>{detalhes}</TableCell>
+              <TableCell>
+                {(() => {
+                  const cor = produto.cor_id ? cores.find(c => c.id === produto.cor_id) : null;
+                  if (!cor) return <span className="text-muted-foreground">-</span>;
+                  return (
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="h-4 w-4 rounded-full border border-border"
+                        style={{ backgroundColor: cor.codigo_hex }}
+                      />
+                      <span className="text-sm">{cor.nome}</span>
+                    </div>
+                  );
+                })()}
+              </TableCell>
               <TableCell>
                 {onUpdateQuantidade ? (
                   (() => {
