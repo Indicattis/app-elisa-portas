@@ -59,6 +59,7 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
         <TableRow>
           <TableHead>Tipo</TableHead>
           <TableHead>Detalhes</TableHead>
+          <TableHead>Cor</TableHead>
           <TableHead>Qtd</TableHead>
           <TableHead>Valor Unit.</TableHead>
           <TableHead>Desconto</TableHead>
