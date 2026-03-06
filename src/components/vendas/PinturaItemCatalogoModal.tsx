@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,10 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Paintbrush } from 'lucide-react';
+import { Paintbrush, Loader2 } from 'lucide-react';
 import { useCatalogoCores } from '@/hooks/useCatalogoCores';
 import type { ProdutoVenda } from '@/hooks/useVendas';
 import { getLabelTipoProduto } from '@/utils/tipoProdutoLabels';
+import { buscarPrecosPorMedidas } from '@/utils/tabelaPrecosHelper';
 
 interface PinturaItemCatalogoModalProps {
   open: boolean;
