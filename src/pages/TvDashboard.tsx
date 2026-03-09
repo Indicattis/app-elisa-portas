@@ -102,7 +102,7 @@ export default function TvDashboard() {
       if (!isHovering) {
         api.scrollNext();
       }
-    }, 10000); // 10 seconds
+    }, 5000); // 5 seconds
 
     return () => clearInterval(interval);
   }, [api, isHovering]);
