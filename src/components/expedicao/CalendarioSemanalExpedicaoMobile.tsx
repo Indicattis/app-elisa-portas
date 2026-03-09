@@ -30,6 +30,7 @@ interface CalendarioSemanalExpedicaoMobileProps {
   activeLegend?: string | null;
   onLegendToggle?: (legend: string) => void;
   readOnly?: boolean;
+  hideLegendas?: boolean;
 }
 
 export const CalendarioSemanalExpedicaoMobile = ({
@@ -53,6 +54,7 @@ export const CalendarioSemanalExpedicaoMobile = ({
   activeLegend,
   onLegendToggle,
   readOnly = false,
+  hideLegendas = false,
 }: CalendarioSemanalExpedicaoMobileProps) => {
   // Configuração dos sensores para DnD
   const mouseSensor = useSensor(MouseSensor);
@@ -91,7 +93,7 @@ export const CalendarioSemanalExpedicaoMobile = ({
       </div>
 
       {/* Legendas */}
-      <CalendarioLegendas activeLegend={activeLegend} onToggle={onLegendToggle} />
+      {!hideLegendas && <CalendarioLegendas activeLegend={activeLegend} onToggle={onLegendToggle} />}
 
       {/* Grid de dias - Mobile First */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">

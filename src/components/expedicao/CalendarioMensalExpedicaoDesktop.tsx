@@ -39,6 +39,7 @@ interface CalendarioMensalExpedicaoDesktopProps {
   activeLegend?: string | null;
   onLegendToggle?: (legend: string) => void;
   readOnly?: boolean;
+  hideLegendas?: boolean;
 }
 
 export const CalendarioMensalExpedicaoDesktop = ({
@@ -66,6 +67,7 @@ export const CalendarioMensalExpedicaoDesktop = ({
   activeLegend,
   onLegendToggle,
   readOnly = false,
+  hideLegendas = false,
 }: CalendarioMensalExpedicaoDesktopProps) => {
   const [activeOrdem, setActiveOrdem] = useState<OrdemCarregamento | null>(null);
   const [activeNeo, setActiveNeo] = useState<NeoInstalacao | null>(null);
@@ -244,7 +246,7 @@ export const CalendarioMensalExpedicaoDesktop = ({
       </div>
 
       {/* Legendas */}
-      <CalendarioLegendas activeLegend={activeLegend} onToggle={onLegendToggle} />
+      {!hideLegendas && <CalendarioLegendas activeLegend={activeLegend} onToggle={onLegendToggle} />}
 
       {/* Grid do calendário */}
       <div className="rounded-lg overflow-hidden bg-muted/20 border border-border">
