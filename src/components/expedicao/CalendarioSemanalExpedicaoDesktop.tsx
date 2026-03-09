@@ -71,6 +71,7 @@ export const CalendarioSemanalExpedicaoDesktop = ({
   activeLegend,
   onLegendToggle,
   readOnly = false,
+  hideLegendas = false,
 }: CalendarioSemanalExpedicaoDesktopProps) => {
   const [activeOrdem, setActiveOrdem] = useState<OrdemCarregamento | null>(null);
   const [activeNeo, setActiveNeo] = useState<NeoInstalacao | null>(null);
