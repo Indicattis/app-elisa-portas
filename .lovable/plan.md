@@ -1,36 +1,21 @@
 
+# Simplificar a página /producao/instalacoes
 
-# Melhorias na página /direcao/dre/custos
+## Mudanças
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+### 1. `src/pages/producao/ProducaoInstalacoes.tsx`
+- Remover os dois `Select` de filtro (equipe e autorizado) e o `Button` de download PDF (linhas 155-208 área dos filtros/download)
+- Remover states e queries relacionados: `equipeIdFiltro`, `autorizadoIdFiltro`, query `equipes_instalacao_ativas_filtro`, `useAutorizadosAptos`, `handleDownloadPDF`, `displayEquipeNome`, `displayEquipeCor`
+- Remover imports não mais usados (`Download`, `Filter`, `Select*`, `baixarCronogramaMinimalistaPDF`, `useAutorizadosAptos`)
+- Passar `hideLegendas={true}` nos 3 componentes de calendário
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+### 2. Adicionar prop `hideLegendas?: boolean` nos 3 componentes de calendário
+- `src/components/expedicao/CalendarioSemanalExpedicaoDesktop.tsx` — aceitar prop, renderizar `CalendarioLegendas` condicionalmente
+- `src/components/expedicao/CalendarioMensalExpedicaoDesktop.tsx` — idem
+- `src/components/expedicao/CalendarioSemanalExpedicaoMobile.tsx` — idem
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
-
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
-
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
-
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
-
+### Arquivos alterados
+- `src/pages/producao/ProducaoInstalacoes.tsx`
+- `src/components/expedicao/CalendarioSemanalExpedicaoDesktop.tsx`
+- `src/components/expedicao/CalendarioMensalExpedicaoDesktop.tsx`
+- `src/components/expedicao/CalendarioSemanalExpedicaoMobile.tsx`
