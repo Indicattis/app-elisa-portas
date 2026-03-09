@@ -114,11 +114,11 @@ export default function TvDashboard() {
     const progressInterval = setInterval(() => {
       setProgress((prevProgress) => {
         if (prevProgress >= 100) {
-          return 0; // Reset when reaching 100%
+          return 0;
         }
-        return prevProgress + 1; // Increment by 1% every 100ms (10s total)
+        return prevProgress + 2; // Increment by 2% every 100ms (5s total)
       });
-    }, 100); // Update every 100ms
+    }, 100);
 
     return () => clearInterval(progressInterval);
   }, [api, isHovering, selectedIndex]);
