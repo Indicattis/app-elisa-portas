@@ -299,7 +299,7 @@ export default function TvDashboard() {
 
               {/* Logo */}
               <div>
-                <img src={elisaLogoSite} alt="Grupo Elisa" className="h-24 w-auto" />
+                <img src={elisaLogoSite} alt="Grupo Elisa" className="h-40 w-auto" />
               </div>
 
             </div>
