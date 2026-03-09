@@ -302,17 +302,6 @@ export default function TvDashboard() {
                 <img src={elisaLogoSite} alt="Grupo Elisa" className="h-24 w-auto" />
               </div>
 
-              {/* Data e hora atual */}
-              <div className="text-center text-muted-foreground space-y-3">
-                <div className="text-xl font-semibold uppercase ">
-                  {format(today, "MMMM 'de' yyyy", {
-                  locale: ptBR
-                })}
-                </div>
-                
-                {/* Linha horizontal */}
-                <div className="w-32 h-0.5 bg-muted-foreground mx-auto"></div>
-              </div>
             </div>
           </CarouselItem>
 
