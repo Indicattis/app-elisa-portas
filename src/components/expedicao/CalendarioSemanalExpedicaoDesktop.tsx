@@ -228,7 +228,7 @@ export const CalendarioSemanalExpedicaoDesktop = ({
       </div>
 
       {/* Legendas */}
-      <CalendarioLegendas activeLegend={activeLegend} onToggle={onLegendToggle} />
+      {!hideLegendas && <CalendarioLegendas activeLegend={activeLegend} onToggle={onLegendToggle} />}
 
       {/* Grid de dias */}
       <div className="grid grid-cols-7 gap-4">

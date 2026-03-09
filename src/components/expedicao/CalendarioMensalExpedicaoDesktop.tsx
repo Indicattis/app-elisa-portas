@@ -246,7 +246,7 @@ export const CalendarioMensalExpedicaoDesktop = ({
       </div>
 
       {/* Legendas */}
-      <CalendarioLegendas activeLegend={activeLegend} onToggle={onLegendToggle} />
+      {!hideLegendas && <CalendarioLegendas activeLegend={activeLegend} onToggle={onLegendToggle} />}
 
       {/* Grid do calendário */}
       <div className="rounded-lg overflow-hidden bg-muted/20 border border-border">
