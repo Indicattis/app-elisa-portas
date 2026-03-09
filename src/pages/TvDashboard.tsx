@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useInstalacoesCadastradas } from '@/hooks/useInstalacoesCadastradas';
 import { useFaturamentoPorProduto } from '@/hooks/useFaturamentoPorProduto';
 import { Package, Wrench, Truck, TrendingUp } from "lucide-react";
-import elisaLogoSite from "@/assets/elisa-logo-ouro.jpg";
+import elisaLogoSite from "@/assets/elisa-logo-ouro.png";
 interface VendedorRanking {
   nome: string;
   total_vendas: number;
