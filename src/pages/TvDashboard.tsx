@@ -369,17 +369,14 @@ export default function TvDashboard() {
         <CarouselNext className="right-2 sm:-right-12" />
       </Carousel>
       
-      {/* Progress Bar */}
-      <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 w-80">
-        <Progress
-        value={progress}
-        className="h-2 bg-white/20 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-primary/80 [&>div]:transition-all [&>div]:duration-100" />
-
-      </div>
-      
-      {/* Slide Indicators */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        {[0, 1].map((index) => <button key={index} onClick={() => handleDotClick(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${selectedIndex === index ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/70'}`} />)}
+      {/* Progress Bar - Footer */}
+      <div className="absolute bottom-0 left-0 w-full">
+        <div className="h-1 w-full bg-white/10">
+          <div
+            className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-100"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
     </div>;
 }
