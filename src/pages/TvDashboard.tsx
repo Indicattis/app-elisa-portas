@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useInstalacoesCadastradas } from '@/hooks/useInstalacoesCadastradas';
 import { useFaturamentoPorProduto } from '@/hooks/useFaturamentoPorProduto';
 import { Package, Wrench, Truck, TrendingUp } from "lucide-react";
+import elisaLogoSite from "@/assets/elisa-logo-site.jpg";
 interface VendedorRanking {
   nome: string;
   total_vendas: number;
@@ -271,11 +272,6 @@ export default function TvDashboard() {
           {/* Slide 1: Faturamento */}
           <CarouselItem className="h-full w-full flex items-center justify-center">
             <div className="h-full flex flex-col items-center justify-center p-6 space-y-6 w-full">
-              {/* Logo */}
-              <div>
-                <img src="/lovable-uploads/31df71a1-a366-49f8-81f7-acee745d5a32.png" alt="Grupo Elisa" className="h-20 w-auto" />
-              </div>
-              
               {/* Título Faturamento */}
               <h1 className="font-anton text-7xl">FATURAMENTO</h1>
               
@@ -301,6 +297,11 @@ export default function TvDashboard() {
                 </div>
               </div>
 
+              {/* Logo */}
+              <div>
+                <img src={elisaLogoSite} alt="Grupo Elisa" className="h-24 w-auto" />
+              </div>
+
               {/* Data e hora atual */}
               <div className="text-center text-muted-foreground space-y-3">
                 <div className="text-xl font-semibold uppercase ">
@@ -311,12 +312,6 @@ export default function TvDashboard() {
                 
                 {/* Linha horizontal */}
                 <div className="w-32 h-0.5 bg-muted-foreground mx-auto"></div>
-                
-                
-
-
-
-
               </div>
             </div>
           </CarouselItem>
