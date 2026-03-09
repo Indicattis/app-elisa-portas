@@ -54,6 +54,7 @@ export const CalendarioSemanalExpedicaoMobile = ({
   activeLegend,
   onLegendToggle,
   readOnly = false,
+  hideLegendas = false,
 }: CalendarioSemanalExpedicaoMobileProps) => {
   // Configuração dos sensores para DnD
   const mouseSensor = useSensor(MouseSensor);
