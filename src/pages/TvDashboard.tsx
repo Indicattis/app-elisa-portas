@@ -102,7 +102,7 @@ export default function TvDashboard() {
       if (!isHovering) {
         api.scrollNext();
       }
-    }, 10000); // 10 seconds
+    }, 5000); // 5 seconds
 
     return () => clearInterval(interval);
   }, [api, isHovering]);
@@ -114,11 +114,11 @@ export default function TvDashboard() {
     const progressInterval = setInterval(() => {
       setProgress((prevProgress) => {
         if (prevProgress >= 100) {
-          return 0; // Reset when reaching 100%
+          return 0;
         }
-        return prevProgress + 1; // Increment by 1% every 100ms (10s total)
+        return prevProgress + 2; // Increment by 2% every 100ms (5s total)
       });
-    }, 100); // Update every 100ms
+    }, 100);
 
     return () => clearInterval(progressInterval);
   }, [api, isHovering, selectedIndex]);
