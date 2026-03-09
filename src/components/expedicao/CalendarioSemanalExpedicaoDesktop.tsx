@@ -41,6 +41,7 @@ interface CalendarioSemanalExpedicaoDesktopProps {
   activeLegend?: string | null;
   onLegendToggle?: (legend: string) => void;
   readOnly?: boolean;
+  hideLegendas?: boolean;
 }
 
 export const CalendarioSemanalExpedicaoDesktop = ({
