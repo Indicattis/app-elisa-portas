@@ -1,50 +1,36 @@
 
 
-## Plan: Add file attachments to vehicle history page
+# Melhorias na página /direcao/dre/custos
 
-The history page (`/logistica/frota/:id/conferencias`) currently only shows conference records. We need to add a section for attaching files (documents, images, PDFs) to the vehicle, with upload, list, and delete capabilities.
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-### 1. Create `veiculos_arquivos` table (migration)
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-```sql
-create table public.veiculos_arquivos (
-  id uuid primary key default gen_random_uuid(),
-  veiculo_id uuid references public.veiculos(id) on delete cascade not null,
-  nome text not null,
-  url text not null,
-  tipo text, -- mime type
-  tamanho bigint, -- file size in bytes
-  uploaded_by uuid references auth.users(id),
-  created_at timestamptz default now()
-);
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-alter table public.veiculos_arquivos enable row level security;
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-create policy "Authenticated users can manage vehicle files"
-  on public.veiculos_arquivos for all
-  to authenticated
-  using (true)
-  with check (true);
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
 ```
 
-### 2. Create hook `src/hooks/useVeiculoArquivos.ts`
-
-- Fetch all files for a given `veiculo_id` from `veiculos_arquivos`
-- Upload mutation: upload to `documentos-publicos` bucket, insert row into table
-- Delete mutation: delete from storage + delete row from table
-- Standard react-query pattern matching existing hooks
-
-### 3. Update `FrotaConferenciasHistoricoMinimalista.tsx`
-
-Add a new section below the conference grid (or as a tab/section header) with:
-- "Arquivos" section title with upload button in the header
-- File list showing name, date, size with download link and delete button
-- Upload area: hidden file input triggered by button, accepts any file type
-- Glassmorphism styling matching existing cards (`bg-white/5 border-blue-500/10 backdrop-blur-xl`)
-- Each file row shows: file icon, name (truncated), date, size, download/delete actions
-
-### Files affected
-- **Migration**: new `veiculos_arquivos` table
-- **New**: `src/hooks/useVeiculoArquivos.ts`
-- **Edit**: `src/pages/logistica/FrotaConferenciasHistoricoMinimalista.tsx`
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
