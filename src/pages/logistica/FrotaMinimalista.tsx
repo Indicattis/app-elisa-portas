@@ -191,7 +191,7 @@ export default function FrotaMinimalista() {
                   ))}
                   {veiculos?.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center py-8 text-white/50">
+                      <TableCell colSpan={11} className="text-center py-8 text-white/50">
                         Nenhum veículo cadastrado
                       </TableCell>
                     </TableRow>
