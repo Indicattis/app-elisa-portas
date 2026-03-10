@@ -270,6 +270,7 @@ import EstoqueEditMinimalista from "./pages/administrativo/EstoqueEditMinimalist
 import RequisicoesMinimalista from "./pages/administrativo/RequisicoesMinimalista";
 import FornecedoresMinimalista from "./pages/administrativo/FornecedoresMinimalista";
 import FrotaMinimalista from "./pages/logistica/FrotaMinimalista";
+import FrotaNovoMinimalista from "./pages/logistica/FrotaNovoMinimalista";
 import FrotaEditMinimalista from "./pages/logistica/FrotaEditMinimalista";
 import FrotaConferenciasHistoricoMinimalista from "./pages/logistica/FrotaConferenciasHistoricoMinimalista";
 import FrotaConferenciaMinimalista from "./pages/logistica/FrotaConferenciaMinimalista";
