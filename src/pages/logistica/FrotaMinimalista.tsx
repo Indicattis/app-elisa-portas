@@ -56,12 +56,12 @@ export default function FrotaMinimalista() {
       />
       
       <div className="relative z-10 min-h-screen flex flex-col pt-14">
-        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-primary/10">
+        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-white/10">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => navigate('/logistica')}
-                className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
               >
                 <ArrowLeft className="w-5 h-5 text-white/80" />
               </button>
@@ -76,7 +76,7 @@ export default function FrotaMinimalista() {
                 variant="outline"
                 size="sm"
                 onClick={() => setTrocaOleoOpen(true)}
-                className="border-primary/30 bg-primary/10 text-white hover:bg-primary/20 text-xs gap-1"
+                className="border-white/20 bg-white/10 text-white hover:bg-white/15 text-xs gap-1"
               >
                 <Droplet className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Troca Óleo</span>
@@ -84,7 +84,7 @@ export default function FrotaMinimalista() {
               <Button
                 size="sm"
                 onClick={() => navigate('/dashboard/logistica/frota/novo')}
-                className="text-xs gap-1"
+                className="bg-white/10 hover:bg-white/15 text-white border border-white/20 text-xs gap-1"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Novo</span>
@@ -93,7 +93,7 @@ export default function FrotaMinimalista() {
                 variant="ghost"
                 size="sm"
                 onClick={signOut}
-                className="text-white/80 hover:text-white hover:bg-primary/10"
+                className="text-white/80 hover:text-white hover:bg-white/10"
               >
                 <LogOut className="h-4 w-4" />
               </Button>
@@ -104,16 +104,16 @@ export default function FrotaMinimalista() {
         <main className="flex-1 p-4 overflow-auto">
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white/70"></div>
             </div>
           ) : (
             <div className="max-w-7xl mx-auto">
-              <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+              <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
                     <Table className="text-xs">
                       <TableHeader>
-                        <TableRow className="border-primary/10 hover:bg-primary/5">
+                        <TableRow className="border-white/10 hover:bg-white/5">
                           <TableHead className="text-xs text-white/70">Foto</TableHead>
                           <TableHead className="text-xs text-white/70">Modelo</TableHead>
                           <TableHead className="text-xs text-white/70">Placa</TableHead>
@@ -131,7 +131,7 @@ export default function FrotaMinimalista() {
                           <TableRow 
                             key={veiculo.id}
                             onClick={() => handleRowClick(veiculo.id)}
-                            className="cursor-pointer border-primary/10 hover:bg-primary/10 text-white/90"
+                            className="cursor-pointer border-white/10 hover:bg-white/5 text-white/90"
                           >
                             <TableCell>
                               {veiculo.foto_url ? (
@@ -141,7 +141,7 @@ export default function FrotaMinimalista() {
                                   className="w-10 h-10 object-cover rounded"
                                 />
                               ) : (
-                                <div className="w-10 h-10 bg-primary/20 rounded flex items-center justify-center text-[10px] text-white/50">
+                                <div className="w-10 h-10 bg-white/10 rounded flex items-center justify-center text-[10px] text-white/50">
                                   -
                                 </div>
                               )}
@@ -166,7 +166,7 @@ export default function FrotaMinimalista() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 w-7 p-0 text-white/70 hover:text-white hover:bg-primary/20"
+                                  className="h-7 w-7 p-0 text-white/70 hover:text-white hover:bg-white/10"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     navigate(`/dashboard/logistica/frota/${veiculo.id}/editar`);
@@ -213,16 +213,16 @@ export default function FrotaMinimalista() {
       />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-black/90 border-white/10 backdrop-blur-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-white">Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
               Tem certeza que deseja excluir este veículo? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
+            <AlertDialogCancel className="border-white/20 bg-white/10 text-white hover:bg-white/15">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-500/80 hover:bg-red-500 text-white">Excluir</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

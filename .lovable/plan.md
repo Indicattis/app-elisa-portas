@@ -1,36 +1,36 @@
 
 
-## Plan: Restyle `/logistica/frota` with glassmorphism
+# Melhorias na página /direcao/dre/custos
 
-The current page already has a dark theme but uses `bg-primary/5 border-primary/10` styling. The goal is to align it with the glassmorphism pattern used across other minimalist pages (`bg-white/5 border-white/10 backdrop-blur-xl`).
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-### Changes to `src/pages/logistica/FrotaMinimalista.tsx`
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-**Card wrapper**: Change `bg-primary/5 border-primary/10 backdrop-blur-xl` to `bg-white/5 border-white/10 backdrop-blur-xl`
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-**Table header row**: Change `border-primary/10 hover:bg-primary/5` to `border-white/10 hover:bg-white/5`
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-**Table header cells**: Change `text-white/70` styling — keep as-is (already correct)
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-**Table body rows**: Change `border-primary/10 hover:bg-primary/10` to `border-white/10 hover:bg-white/5`
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
 
-**Header bar**: Change `border-b border-primary/10` to `border-b border-white/10`
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
 
-**Back button**: Change `hover:bg-primary/10` to `hover:bg-white/10`
+### Estrutura da tabela final
 
-**Action buttons in header**:
-- Troca Óleo button: `border-white/20 bg-white/10 text-white hover:bg-white/15`
-- Novo button: `bg-white/10 hover:bg-white/15 text-white border border-white/20`
-- LogOut button: `hover:bg-white/10`
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
 
-**Photo placeholder**: Change `bg-primary/20` to `bg-white/10`
-
-**Row action buttons**: Change `hover:bg-primary/20` to `hover:bg-white/10`
-
-**Loading spinner**: Change `border-primary` to `border-white/70`
-
-**AlertDialog**: Style with `bg-black/90 border-white/10 backdrop-blur-xl` for dark glassmorphism consistency
-
-### Files affected
-- `src/pages/logistica/FrotaMinimalista.tsx` — restyle all classes from primary-based to white-based glassmorphism
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
