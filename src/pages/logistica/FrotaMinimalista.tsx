@@ -104,6 +104,7 @@ export default function FrotaMinimalista() {
                     <TableHead className="text-xs text-white/70">Km Atual</TableHead>
                     <TableHead className="text-xs text-white/70">Próx. Troca Óleo</TableHead>
                     <TableHead className="text-xs text-white/70">Status</TableHead>
+                    <TableHead className="text-xs text-white/70">Aviso</TableHead>
                     <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
