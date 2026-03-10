@@ -32,10 +32,9 @@ import {
 export default function FrotaMinimalista() {
   const navigate = useNavigate();
   useAuth();
-  const { veiculos, isLoading, deleteVeiculo, updateVeiculo } = useVeiculos();
+  const { veiculos, isLoading, deleteVeiculo } = useVeiculos();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [trocaOleoOpen, setTrocaOleoOpen] = useState(false);
-  const [avisoVeiculo, setAvisoVeiculo] = useState<{ id: string; nome: string; aviso: string | null; data: string | null } | null>(null);
 
   const handleRowClick = (veiculoId: string) => {
     navigate(`/logistica/frota/${veiculoId}/conferencias`);
