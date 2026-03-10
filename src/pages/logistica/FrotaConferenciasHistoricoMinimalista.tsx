@@ -36,11 +36,11 @@ export default function FrotaConferenciasHistoricoMinimalista() {
       />
 
       <div className="relative z-10 min-h-screen flex flex-col pt-14">
-        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-primary/10">
+        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-blue-500/20">
           <div className="max-w-7xl mx-auto flex items-center gap-3">
             <button
               onClick={() => navigate("/logistica/frota")}
-              className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
+              className="p-2 rounded-lg hover:bg-blue-500/10 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-white/80" />
             </button>
@@ -60,7 +60,7 @@ export default function FrotaConferenciasHistoricoMinimalista() {
         <main className="flex-1 p-4 overflow-auto">
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400" />
             </div>
           ) : !veiculo ? (
             <div className="flex items-center justify-center h-64 text-white/50">
@@ -71,7 +71,7 @@ export default function FrotaConferenciasHistoricoMinimalista() {
               {conferencias?.map((conferencia) => (
                 <Card
                   key={conferencia.id}
-                  className="bg-white/5 border-white/10 backdrop-blur-xl cursor-pointer hover:bg-white/10 transition-all duration-200"
+                  className="bg-white/5 border-blue-500/10 backdrop-blur-xl cursor-pointer hover:bg-blue-500/5 transition-all duration-200"
                   onClick={() => setSelectedFoto(conferencia.foto_url)}
                 >
                   <CardContent className="p-4">

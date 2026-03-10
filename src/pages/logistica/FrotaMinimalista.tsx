@@ -56,7 +56,7 @@ export default function FrotaMinimalista() {
       />
       
       <div className="relative z-10 min-h-screen flex flex-col pt-14">
-        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-white/10">
+        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-blue-500/20">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
@@ -66,7 +66,7 @@ export default function FrotaMinimalista() {
                 <ArrowLeft className="w-5 h-5 text-white/80" />
               </button>
               <div>
-                <h1 className="text-lg font-semibold text-white">Frota</h1>
+                <h1 className="text-lg font-semibold text-blue-400">Frota</h1>
                 <p className="text-xs text-white/60">Gerencie os veículos da empresa</p>
               </div>
             </div>
@@ -76,7 +76,7 @@ export default function FrotaMinimalista() {
                 variant="outline"
                 size="sm"
                 onClick={() => setTrocaOleoOpen(true)}
-                className="bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg shadow-white/5 hover:bg-white/20 hover:border-white/30 transition-all duration-300 text-xs gap-1"
+                className="bg-white/10 backdrop-blur-md border border-blue-500/30 text-white shadow-lg shadow-blue-500/5 hover:bg-white/20 hover:border-blue-400/40 transition-all duration-300 text-xs gap-1"
               >
                 <Droplet className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Troca Óleo</span>
@@ -84,7 +84,7 @@ export default function FrotaMinimalista() {
               <Button
                 size="sm"
                 onClick={() => navigate('/dashboard/logistica/frota/novo')}
-                className="bg-white/15 backdrop-blur-md border border-white/25 text-white shadow-lg shadow-white/5 hover:bg-white/25 hover:border-white/35 transition-all duration-300 text-xs gap-1"
+                className="bg-blue-500/15 backdrop-blur-md border border-blue-500/25 text-white shadow-lg shadow-blue-500/5 hover:bg-blue-500/25 hover:border-blue-400/35 transition-all duration-300 text-xs gap-1"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Novo</span>
@@ -96,16 +96,16 @@ export default function FrotaMinimalista() {
         <main className="flex-1 p-4 overflow-auto">
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white/70"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
             </div>
           ) : (
             <div className="max-w-7xl mx-auto">
-              <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+              <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
                     <Table className="text-xs">
                       <TableHeader>
-                        <TableRow className="border-white/10 hover:bg-white/5">
+                         <TableRow className="border-blue-500/10 hover:bg-white/5">
                           <TableHead className="text-xs text-white/70">Foto</TableHead>
                           <TableHead className="text-xs text-white/70">Modelo</TableHead>
                           <TableHead className="text-xs text-white/70">Placa</TableHead>
@@ -123,7 +123,7 @@ export default function FrotaMinimalista() {
                           <TableRow 
                             key={veiculo.id}
                             onClick={() => handleRowClick(veiculo.id)}
-                            className="cursor-pointer border-white/10 hover:bg-white/5 text-white/90"
+                            className="cursor-pointer border-white/10 hover:bg-blue-500/5 text-white/90"
                           >
                             <TableCell>
                               {veiculo.foto_url ? (
@@ -158,7 +158,7 @@ export default function FrotaMinimalista() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 w-7 p-0 text-white/70 hover:text-white hover:bg-white/10"
+                                  className="h-7 w-7 p-0 text-white/70 hover:text-blue-400 hover:bg-blue-500/10"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     navigate(`/logistica/frota/${veiculo.id}/editar`);

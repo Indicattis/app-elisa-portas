@@ -97,7 +97,7 @@ export default function FrotaEditMinimalista() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white/70" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400" />
       </div>
     );
   }
@@ -113,7 +113,7 @@ export default function FrotaEditMinimalista() {
     );
   }
 
-  const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-white/30 focus-visible:ring-white/20";
+  const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-blue-400/40 focus-visible:ring-blue-400/20";
   const labelClass = "text-white/70 text-xs";
 
   return (
@@ -129,7 +129,7 @@ export default function FrotaEditMinimalista() {
       />
 
       <div className="relative z-10 min-h-screen flex flex-col pt-14">
-        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-white/10">
+        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-blue-500/20">
           <div className="max-w-3xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button onClick={() => navigate("/logistica/frota")} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
@@ -144,7 +144,7 @@ export default function FrotaEditMinimalista() {
               size="sm"
               onClick={handleSave}
               disabled={isUpdating}
-              className="bg-white/15 backdrop-blur-md border border-white/25 text-white shadow-lg shadow-white/5 hover:bg-white/25 hover:border-white/35 transition-all duration-300 text-xs gap-1"
+              className="bg-blue-500/15 backdrop-blur-md border border-blue-500/25 text-white shadow-lg shadow-blue-500/5 hover:bg-blue-500/25 hover:border-blue-400/35 transition-all duration-300 text-xs gap-1"
             >
               <Save className="h-3.5 w-3.5" />
               {isUpdating ? "Salvando..." : "Salvar"}
@@ -156,7 +156,7 @@ export default function FrotaEditMinimalista() {
           <div className="max-w-3xl mx-auto space-y-4">
             {/* Foto e Documento */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+              <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
                 <CardContent className="p-4 space-y-3">
                   <Label className={labelClass}>Foto do Veículo</Label>
                   {form.foto_url ? (
@@ -172,7 +172,7 @@ export default function FrotaEditMinimalista() {
                   ) : (
                     <div
                       onClick={() => fotoInputRef.current?.click()}
-                      className="w-full h-40 rounded-lg border border-dashed border-white/20 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-white/40 hover:bg-white/5 transition-all"
+                      className="w-full h-40 rounded-lg border border-dashed border-white/20 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-400/40 hover:bg-blue-500/5 transition-all"
                     >
                       <Camera className="h-6 w-6 text-white/40" />
                       <span className="text-xs text-white/40">{isUploading ? "Enviando..." : "Clique para adicionar foto"}</span>
@@ -182,7 +182,7 @@ export default function FrotaEditMinimalista() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+              <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
                 <CardContent className="p-4 space-y-3">
                   <Label className={labelClass}>Documento</Label>
                   {form.documento_url ? (
@@ -196,7 +196,7 @@ export default function FrotaEditMinimalista() {
                   ) : (
                     <div
                       onClick={() => docInputRef.current?.click()}
-                      className="w-full h-20 rounded-lg border border-dashed border-white/20 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-white/40 hover:bg-white/5 transition-all"
+                      className="w-full h-20 rounded-lg border border-dashed border-white/20 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-400/40 hover:bg-blue-500/5 transition-all"
                     >
                       <Upload className="h-5 w-5 text-white/40" />
                       <span className="text-xs text-white/40">{isUploadingDocumento ? "Enviando..." : "Clique para enviar documento"}</span>
@@ -208,7 +208,7 @@ export default function FrotaEditMinimalista() {
             </div>
 
             {/* Campos do formulário */}
-            <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+            <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
               <CardContent className="p-4 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
@@ -258,7 +258,7 @@ export default function FrotaEditMinimalista() {
                 </div>
 
                 {/* Campos somente leitura */}
-                <div className="pt-3 border-t border-white/10 space-y-3">
+                <div className="pt-3 border-t border-blue-500/10 space-y-3">
                   <p className="text-[10px] uppercase tracking-wider text-white/40">Informações gerenciadas pelo sistema</p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-1.5">
