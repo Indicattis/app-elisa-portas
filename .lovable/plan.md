@@ -1,27 +1,36 @@
 
 
-## Plan: Unified timeline showing conferences and file uploads
+# Melhorias na página /direcao/dre/custos
 
-Currently the history page shows conferences in a grid and files in a separate section below. The goal is to merge both into a single chronological timeline so file uploads appear as history events alongside conferences.
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-### Approach: Frontend merge (no DB changes needed)
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-Both `conferencias` and `arquivos` are already fetched on the page. We'll merge them into a single sorted timeline.
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-### Changes to `FrotaConferenciasHistoricoMinimalista.tsx`
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-1. **Create a unified timeline array** merging conferences and file uploads, sorted by `created_at` descending. Each item has a `type: 'conferencia' | 'arquivo'` discriminator.
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-2. **Replace the two separate sections** (conference grid + files section) with a single timeline grid:
-   - **Conference items**: Render exactly as today (photo card with km, status, date, etc.)
-   - **File items**: Render as a compact card with a file icon (FileText/Paperclip), file name, size, date, and download/delete actions — styled consistently as a glassmorphism card in the same grid
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
 
-3. **Keep the upload button** in a header area above the timeline (with the "Anexar arquivo" button).
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
 
-4. **Visual differentiation**: File cards get a small "Arquivo anexado" label/badge to distinguish from conference cards. No photo section — instead show a large file icon area.
+### Estrutura da tabela final
 
-5. **Subtitle** updated to reflect total events: `${timeline.length} registros no histórico`.
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
 
-### Single file change
-Only `src/pages/logistica/FrotaConferenciasHistoricoMinimalista.tsx` is modified. No database or hook changes required.
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
