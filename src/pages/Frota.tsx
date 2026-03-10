@@ -7,9 +7,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useVeiculos } from "@/hooks/useVeiculos";
 import { StatusBadge } from "@/components/frota/StatusBadge";
 import { TrocaOleoDialog } from "@/components/frota/TrocaOleoDialog";
-import { AvisoVeiculoModal } from "@/components/frota/AvisoVeiculoModal";
-import { format } from "date-fns";
+import { format, startOfWeek, isAfter } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+function isConferenciaEmDia(data: string | null | undefined): boolean {
+  if (!data) return false;
+  const lastMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
+  return isAfter(new Date(data), lastMonday);
+}
 import {
   AlertDialog,
   AlertDialogAction,
