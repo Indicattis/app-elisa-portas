@@ -182,7 +182,7 @@ export default function FrotaEditMinimalista() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+              <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
                 <CardContent className="p-4 space-y-3">
                   <Label className={labelClass}>Documento</Label>
                   {form.documento_url ? (
