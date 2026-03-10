@@ -1,36 +1,26 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Plan: Show all roles, allow deletion of empty ones, improve vaga button
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+### Changes to `src/pages/direcao/GestaoColaboradoresDirecao.tsx`
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+**1. Show all roles per sector**
+- Remove the `.filter(g => g.users.length > 0 || g.openVagas > 0)` so every role in `SETOR_ROLES` for the selected sector is always displayed, even if empty.
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+**2. Allow deleting empty roles**
+- Add a delete button (Trash2 icon) next to role headers, visible only when `group.users.length === 0 && group.openVagas === 0`.
+- On click, show an `AlertDialog` confirming deletion.
+- On confirm, call `supabase.from('system_roles').delete().eq('key', role)` and also remove the role from `SETOR_ROLES` mapping (or just invalidate queries and let the page refresh). Since `system_roles` is the source of truth and `SETOR_ROLES` is hardcoded, we'll set `ativo = false` instead of deleting, matching the existing pattern used elsewhere.
+- Invalidate `system-roles` and related queries.
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+**3. Replace "+ Vaga" button with a card**
+- Remove the small text button from the role header.
+- Add a clickable card at the end of each role's grid (after users and open vagas) styled like a collaborator card but with a dashed border and a "+" icon in the avatar area, similar to the existing vacancy placeholders but clickable.
+- Clicking it opens the existing vaga justification dialog.
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+**4. Fetch system_roles for labels**
+- Query `system_roles` to get dynamic labels instead of relying solely on the hardcoded `ROLE_LABELS`, ensuring newly created roles display correctly.
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+### Files changed
+- `src/pages/direcao/GestaoColaboradoresDirecao.tsx` — all changes in this single file
 
