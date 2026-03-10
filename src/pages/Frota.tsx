@@ -87,6 +87,7 @@ export default function Frota() {
                   <TableHead className="text-xs">Km Atual</TableHead>
                   <TableHead className="text-xs">Próx. Troca Óleo</TableHead>
                   <TableHead className="text-xs">Status</TableHead>
+                  <TableHead className="text-xs">Aviso</TableHead>
                   <TableHead className="text-right text-xs">Ações</TableHead>
                 </TableRow>
               </TableHeader>
