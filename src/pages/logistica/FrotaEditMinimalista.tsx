@@ -113,7 +113,7 @@ export default function FrotaEditMinimalista() {
     );
   }
 
-  const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-white/30 focus-visible:ring-white/20";
+  const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-blue-400/40 focus-visible:ring-blue-400/20";
   const labelClass = "text-white/70 text-xs";
 
   return (
