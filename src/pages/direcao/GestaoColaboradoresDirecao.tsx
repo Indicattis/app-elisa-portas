@@ -6,12 +6,14 @@ import { SETOR_LABELS, SETOR_ROLES } from '@/utils/setorMapping';
 import { ROLE_LABELS } from '@/types/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Users, Loader2, Plus, UserMinus, Trash2, ArrowRightLeft } from 'lucide-react';
+import { Users, Loader2, Plus, UserMinus, Trash2, ArrowRightLeft, Pencil } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { CreateRoleModal } from '@/components/admin/CreateRoleModal';
+import { EditRoleModal } from '@/components/admin/EditRoleModal';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
