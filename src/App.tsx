@@ -514,6 +514,9 @@ const App = () => (
                 <Route path="/direcao/dre/custos" element={<ProtectedRoute routeKey="direcao_hub"><DRECustosDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/dre/:mes" element={<ProtectedRoute routeKey="direcao_hub"><DREMesDirecao /></ProtectedRoute>} />
 
+                {/* Organograma RH */}
+                <Route path="/direcao/gestao-colaboradores" element={<ProtectedRoute routeKey="direcao_hub"><GestaoColaboradoresDirecao /></ProtectedRoute>} />
+
                 {/* Hub de Aprovações da Direção */}
                 <Route path="/direcao/aprovacoes" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoAprovacoesHub /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><AprovacoesProducao /></ProtectedRoute>} />

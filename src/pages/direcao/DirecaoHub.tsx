@@ -16,6 +16,7 @@ const menuItems = [
   { label: 'Metas', icon: Target, path: '/direcao/metas' },
   { label: 'Autorizados', icon: Users, path: '/direcao/autorizados' },
   { label: 'Aprovações', icon: ShieldCheck, path: '/direcao/aprovacoes' },
+  { label: 'Organograma RH', icon: Network, path: '/direcao/gestao-colaboradores' },
 ];
 
 export default function DirecaoHub() {
