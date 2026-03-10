@@ -1,0 +1,2 @@
+ALTER TABLE veiculos ADD COLUMN aviso_justificativa TEXT DEFAULT NULL;
+ALTER TABLE veiculos ADD COLUMN aviso_data TIMESTAMPTZ DEFAULT NULL;
