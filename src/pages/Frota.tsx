@@ -96,7 +96,7 @@ export default function Frota() {
                   <TableRow 
                     key={veiculo.id}
                     onDoubleClick={() => handleRowDoubleClick(veiculo.id)}
-                    className="cursor-pointer hover:bg-muted/50"
+                    className={`cursor-pointer hover:bg-muted/50 ${veiculo.aviso_justificativa ? 'border-l-2 border-l-amber-500' : ''}`}
                   >
                     <TableCell>
                       {veiculo.foto_url ? (
