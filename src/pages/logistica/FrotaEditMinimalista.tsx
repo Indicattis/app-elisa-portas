@@ -114,44 +114,32 @@ export default function FrotaEditMinimalista() {
   const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-blue-400/40 focus-visible:ring-blue-400/20";
   const labelClass = "text-white/70 text-xs";
 
+  const headerActions = (
+    <Button
+      size="sm"
+      onClick={handleSave}
+      disabled={isUpdating}
+      className="bg-blue-500/15 backdrop-blur-md border border-blue-500/25 text-white shadow-lg shadow-blue-500/5 hover:bg-blue-500/25 hover:border-blue-400/35 transition-all duration-300 text-xs gap-1"
+    >
+      <Save className="h-3.5 w-3.5" />
+      {isUpdating ? "Salvando..." : "Salvar"}
+    </Button>
+  );
+
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
-      <AnimatedBreadcrumb
-        items={[
-          { label: "Home", path: "/home" },
-          { label: "Logística", path: "/logistica" },
-          { label: "Frota", path: "/logistica/frota" },
-          { label: "Editar" },
-        ]}
-        mounted={mounted}
-      />
-
-      <div className="relative z-10 min-h-screen flex flex-col pt-14">
-        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-blue-500/20">
-          <div className="max-w-3xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button onClick={() => navigate("/logistica/frota")} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
-                <ArrowLeft className="w-5 h-5 text-white/80" />
-              </button>
-              <div>
-                <h1 className="text-lg font-semibold text-white">Editar Veículo</h1>
-                <p className="text-xs text-white/60">{veiculo.nome} — {veiculo.modelo}</p>
-              </div>
-            </div>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={isUpdating}
-              className="bg-blue-500/15 backdrop-blur-md border border-blue-500/25 text-white shadow-lg shadow-blue-500/5 hover:bg-blue-500/25 hover:border-blue-400/35 transition-all duration-300 text-xs gap-1"
-            >
-              <Save className="h-3.5 w-3.5" />
-              {isUpdating ? "Salvando..." : "Salvar"}
-            </Button>
-          </div>
-        </header>
-
-        <main className="flex-1 p-4 overflow-auto">
-          <div className="max-w-3xl mx-auto space-y-4">
+    <MinimalistLayout
+      title="Editar Veículo"
+      subtitle={`${veiculo.nome} — ${veiculo.modelo}`}
+      backPath="/logistica/frota"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Logística", path: "/logistica" },
+        { label: "Frota", path: "/logistica/frota" },
+        { label: "Editar" },
+      ]}
+      headerActions={headerActions}
+    >
+      <div className="max-w-3xl mx-auto space-y-4">
             {/* Foto e Documento */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
