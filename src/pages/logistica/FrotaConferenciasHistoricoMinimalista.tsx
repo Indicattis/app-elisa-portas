@@ -30,8 +30,17 @@ export default function FrotaConferenciasHistoricoMinimalista() {
   const veiculo = veiculos?.find(v => v.id === id);
   const isLoading = loadingVeiculos || loadingConferencias;
 
+  type TimelineItem =
+    | { type: 'conferencia'; created_at: string; data: NonNullable<typeof conferencias>[number] }
+    | { type: 'arquivo'; created_at: string; data: NonNullable<typeof arquivos>[number] };
+
+  const timeline: TimelineItem[] = [
+    ...(conferencias?.map(c => ({ type: 'conferencia' as const, created_at: c.created_at, data: c })) || []),
+    ...(arquivos?.map(a => ({ type: 'arquivo' as const, created_at: a.created_at, data: a })) || []),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
   const dynamicTitle = isLoading ? "Carregando..." : veiculo ? `Histórico: ${veiculo.nome}` : "Veículo não encontrado";
-  const dynamicSubtitle = veiculo ? `${conferencias?.length || 0} conferências registradas` : undefined;
+  const dynamicSubtitle = veiculo ? `${timeline.length} registros no histórico` : undefined;
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
