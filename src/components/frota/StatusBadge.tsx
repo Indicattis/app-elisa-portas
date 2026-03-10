@@ -1,44 +1,21 @@
 import { Badge } from "@/components/ui/badge";
 
 const statusConfig = {
-  pronto: {
-    label: 'Pronto',
-    variant: 'default' as const,
-    className: 'bg-green-500 hover:bg-green-600'
-  },
-  pendente_conferencia: {
-    label: 'Pendente Conferência',
-    variant: 'default' as const,
-    className: 'bg-yellow-500 hover:bg-yellow-600 text-black'
-  },
-  pendente_oleo: {
-    label: 'Pendente Óleo',
-    variant: 'default' as const,
-    className: 'bg-orange-500 hover:bg-orange-600'
-  },
-  atencao: {
-    label: 'Atenção',
-    variant: 'default' as const,
-    className: 'bg-yellow-500 hover:bg-yellow-600'
-  },
-  critico: {
-    label: 'Crítico',
-    variant: 'destructive' as const,
-    className: ''
+  rodando: {
+    label: 'Rodando',
+    className: 'bg-green-500 hover:bg-green-600 text-white'
   },
   mecanico: {
     label: 'Mecânico',
-    variant: 'default' as const,
-    className: 'bg-purple-500 hover:bg-purple-600'
+    className: 'bg-gray-500 hover:bg-gray-600 text-white'
   },
-  em_uso: {
-    label: 'Em Uso',
-    variant: 'default' as const,
-    className: 'bg-blue-500 hover:bg-blue-600'
+  parado: {
+    label: 'Parado',
+    className: 'bg-red-500 hover:bg-red-600 text-white'
   }
 };
 
-export type StatusVeiculo = 'pronto' | 'pendente_conferencia' | 'pendente_oleo' | 'atencao' | 'critico' | 'mecanico' | 'em_uso';
+export type StatusVeiculo = 'rodando' | 'mecanico' | 'parado';
 
 interface StatusBadgeProps {
   status: StatusVeiculo;
@@ -46,11 +23,11 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const config = statusConfig[status] || statusConfig.pronto;
+  const config = statusConfig[status] || statusConfig.rodando;
   
   return (
     <Badge 
-      variant={config.variant}
+      variant="default"
       className={`${config.className} ${className || ''}`}
     >
       {config.label}
