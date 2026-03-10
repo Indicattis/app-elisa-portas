@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useVeiculos } from "@/hooks/useVeiculos";
 import { StatusBadge } from "@/components/frota/StatusBadge";
 import { TrocaOleoDialog } from "@/components/frota/TrocaOleoDialog";
+import { AvisoVeiculoModal } from "@/components/frota/AvisoVeiculoModal";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
