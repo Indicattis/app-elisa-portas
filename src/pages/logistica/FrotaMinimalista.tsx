@@ -155,6 +155,17 @@ export default function FrotaMinimalista() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            className="h-7 w-7 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAvisoVeiculo({ id: veiculo.id, nome: veiculo.nome, aviso: veiculo.aviso_justificativa, data: veiculo.aviso_data });
+                            }}
+                          >
+                            <MessageSquareWarning className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="h-7 w-7 p-0 text-white/70 hover:text-blue-400 hover:bg-blue-500/10"
                             onClick={(e) => {
                               e.stopPropagation();
