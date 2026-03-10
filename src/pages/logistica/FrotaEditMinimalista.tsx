@@ -156,7 +156,7 @@ export default function FrotaEditMinimalista() {
           <div className="max-w-3xl mx-auto space-y-4">
             {/* Foto e Documento */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+              <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
                 <CardContent className="p-4 space-y-3">
                   <Label className={labelClass}>Foto do Veículo</Label>
                   {form.foto_url ? (
