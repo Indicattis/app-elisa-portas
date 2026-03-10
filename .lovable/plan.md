@@ -1,36 +1,29 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Plan: Create dedicated "Novo Veículo" page
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+The "Novo" button navigates to `/dashboard/logistica/frota/novo` but no route exists for that path, causing a fallback to `/home`. Need to create a new page and register the route.
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+### Approach
+Create `src/pages/logistica/FrotaNovoMinimalista.tsx` based on the edit page (`FrotaEditMinimalista.tsx`) but adapted for creation:
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+### 1. New file: `src/pages/logistica/FrotaNovoMinimalista.tsx`
+- Same structure as `FrotaEditMinimalista.tsx` using `MinimalistLayout`
+- Title: "Novo Veículo", subtitle: "Cadastre um novo veículo da frota"
+- Breadcrumb: Home > Logística > Frota > Novo
+- `backPath="/logistica/frota"`
+- Header action: "Cadastrar" button (instead of "Salvar")
+- Form fields: Modelo, Apelido, Placa, Ano, Responsável, Status (same as edit page)
+- Photo and document upload sections (same as edit page)
+- No read-only fields (Km Atual, Última Troca, Próx. Troca) since it's a new vehicle
+- Uses `createVeiculo` from `useVeiculos` instead of `updateVeiculo`
+- After successful creation, navigates to `/logistica/frota`
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+### 2. Update routing in `src/App.tsx`
+- Import `FrotaNovoMinimalista`
+- Add route: `/logistica/frota/novo` with `ProtectedRoute routeKey="logistica_hub"`
+- Place it BEFORE the `/:id/editar` route to avoid "novo" matching as an `:id`
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
-
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+### 3. Fix navigate path in `src/pages/logistica/FrotaMinimalista.tsx`
+- Change `navigate('/dashboard/logistica/frota/novo')` to `navigate('/logistica/frota/novo')` (the `/dashboard` prefix doesn't match the route definitions)
 
