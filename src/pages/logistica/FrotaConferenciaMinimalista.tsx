@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera, X, Loader2, Check } from "lucide-react";
-import { useRef } from "react";
+import { Camera, X, Loader2, Check } from "lucide-react";
 
-import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
+import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,8 +30,6 @@ export default function FrotaConferenciaMinimalista() {
   const [nivelOleoConferido, setNivelOleoConferido] = useState(false);
   const [observacoes, setObservacoes] = useState("");
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
 
   const veiculo = veiculos?.find(v => v.id === selectedVeiculo);
 
@@ -104,35 +101,18 @@ export default function FrotaConferenciaMinimalista() {
     "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-blue-400/40 focus-visible:ring-blue-400/20";
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
-      <AnimatedBreadcrumb
-        items={[
-          { label: "Home", path: "/home" },
-          { label: "Logística", path: "/logistica" },
-          { label: "Frota", path: "/logistica/frota" },
-          { label: "Conferência" },
-        ]}
-        mounted={mounted}
-      />
-
-      <div className="relative z-10 min-h-screen flex flex-col pt-14">
-        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-blue-500/20">
-          <div className="max-w-4xl mx-auto flex items-center gap-3">
-            <button
-              onClick={handleBack}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-white/80" />
-            </button>
-            <div>
-              <h1 className="text-lg font-semibold text-blue-400">Conferência</h1>
-              <p className="text-xs text-white/60">{stepTitle}</p>
-            </div>
-          </div>
-        </header>
-
-        <main className="flex-1 p-4 overflow-auto">
-          <div className="max-w-4xl mx-auto">
+    <MinimalistLayout
+      title="Conferência"
+      subtitle={stepTitle}
+      backPath="/logistica/frota"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Logística", path: "/logistica" },
+        { label: "Frota", path: "/logistica/frota" },
+        { label: "Conferência" },
+      ]}
+    >
+      <div className="max-w-4xl mx-auto">
             {isLoading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400" />
@@ -323,9 +303,7 @@ export default function FrotaConferenciaMinimalista() {
                 </div>
               </form>
             )}
-          </div>
-        </main>
       </div>
-    </div>
+    </MinimalistLayout>
   );
 }
