@@ -71,7 +71,7 @@ export default function FrotaConferenciasHistoricoMinimalista() {
               {conferencias?.map((conferencia) => (
                 <Card
                   key={conferencia.id}
-                  className="bg-white/5 border-white/10 backdrop-blur-xl cursor-pointer hover:bg-white/10 transition-all duration-200"
+                  className="bg-white/5 border-blue-500/10 backdrop-blur-xl cursor-pointer hover:bg-blue-500/5 transition-all duration-200"
                   onClick={() => setSelectedFoto(conferencia.foto_url)}
                 >
                   <CardContent className="p-4">

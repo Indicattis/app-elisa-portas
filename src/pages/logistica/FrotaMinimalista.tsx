@@ -158,7 +158,7 @@ export default function FrotaMinimalista() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 w-7 p-0 text-white/70 hover:text-white hover:bg-white/10"
+                                  className="h-7 w-7 p-0 text-white/70 hover:text-blue-400 hover:bg-blue-500/10"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     navigate(`/logistica/frota/${veiculo.id}/editar`);

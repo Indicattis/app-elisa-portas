@@ -258,7 +258,7 @@ export default function FrotaEditMinimalista() {
                 </div>
 
                 {/* Campos somente leitura */}
-                <div className="pt-3 border-t border-white/10 space-y-3">
+                <div className="pt-3 border-t border-blue-500/10 space-y-3">
                   <p className="text-[10px] uppercase tracking-wider text-white/40">Informações gerenciadas pelo sistema</p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-1.5">
