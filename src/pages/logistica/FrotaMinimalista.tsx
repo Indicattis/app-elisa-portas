@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, Droplet, ClipboardCheck } from "lucide-react";
+import { Plus, Edit, Trash2, Droplet, ClipboardCheck, AlertTriangle, MessageSquareWarning } from "lucide-react";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
