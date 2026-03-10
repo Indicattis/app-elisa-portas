@@ -66,7 +66,7 @@ export default function FrotaMinimalista() {
                 <ArrowLeft className="w-5 h-5 text-white/80" />
               </button>
               <div>
-                <h1 className="text-lg font-semibold text-white">Frota</h1>
+                <h1 className="text-lg font-semibold text-blue-400">Frota</h1>
                 <p className="text-xs text-white/60">Gerencie os veículos da empresa</p>
               </div>
             </div>
