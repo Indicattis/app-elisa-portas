@@ -100,7 +100,7 @@ export default function FrotaMinimalista() {
             </div>
           ) : (
             <div className="max-w-7xl mx-auto">
-              <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+              <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
                     <Table className="text-xs">
