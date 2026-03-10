@@ -1,36 +1,32 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Plan: Create minimalist glassmorphism edit page for vehicles
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+### Overview
+Create a new `FrotaEditMinimalista.tsx` page with the same dark glassmorphism theme used in `FrotaMinimalista.tsx`, and update the navigation to point to a new route `/logistica/frota/:id/editar`.
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+### Changes
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+**1. Create `src/pages/logistica/FrotaEditMinimalista.tsx`**
+- Dark theme: `min-h-screen bg-black text-white`
+- AnimatedBreadcrumb: Home > Logística > Frota > Editar
+- Header with ArrowLeft back to `/logistica/frota`, vehicle name
+- Form fields styled with glassmorphism inputs (`bg-white/5 border-white/10 text-white`)
+- Two-column grid layout for form fields (same fields as VeiculoForm: foto, documento, apelido, placa, modelo, ano, responsável, km, oil dates, status)
+- Photo preview and document upload with dark-themed styling
+- Submit button with glassmorphism style (`bg-white/15 border-white/25`)
+- Reuses `useVeiculos` hook logic for update/upload, redirects to `/logistica/frota` on success
+- Loading spinner and redirect if vehicle not found
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+**2. Add route in `src/App.tsx`**
+- Import `FrotaEditMinimalista`
+- Add route: `/logistica/frota/:id/editar` → `FrotaEditMinimalista`
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+**3. Update `src/pages/logistica/FrotaMinimalista.tsx`**
+- Change edit button navigation from `/dashboard/logistica/frota/${veiculo.id}/editar` to `/logistica/frota/${veiculo.id}/editar`
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+### Files affected
+- `src/pages/logistica/FrotaEditMinimalista.tsx` — new file
+- `src/App.tsx` — add route + import
+- `src/pages/logistica/FrotaMinimalista.tsx` — update edit navigation path
 
