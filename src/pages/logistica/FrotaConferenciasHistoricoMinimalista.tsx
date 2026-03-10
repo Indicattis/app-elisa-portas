@@ -19,41 +19,21 @@ export default function FrotaConferenciasHistoricoMinimalista() {
   const veiculo = veiculos?.find(v => v.id === id);
   const isLoading = loadingVeiculos || loadingConferencias;
 
+  const dynamicTitle = isLoading ? "Carregando..." : veiculo ? `Histórico: ${veiculo.nome}` : "Veículo não encontrado";
+  const dynamicSubtitle = veiculo ? `${conferencias?.length || 0} conferências registradas` : undefined;
+
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
-      <AnimatedBreadcrumb
-        items={[
-          { label: "Home", path: "/home" },
-          { label: "Logística", path: "/logistica" },
-          { label: "Frota", path: "/logistica/frota" },
-          { label: "Histórico" },
-        ]}
-        mounted={mounted}
-      />
-
-      <div className="relative z-10 min-h-screen flex flex-col pt-14">
-        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-blue-500/20">
-          <div className="max-w-7xl mx-auto flex items-center gap-3">
-            <button
-              onClick={() => navigate("/logistica/frota")}
-              className="p-2 rounded-lg hover:bg-blue-500/10 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-white/80" />
-            </button>
-            <div>
-              <h1 className="text-lg font-semibold text-white">
-                {isLoading ? "Carregando..." : veiculo ? `Histórico: ${veiculo.nome}` : "Veículo não encontrado"}
-              </h1>
-              {veiculo && (
-                <p className="text-xs text-white/60">
-                  {conferencias?.length || 0} conferências registradas
-                </p>
-              )}
-            </div>
-          </div>
-        </header>
-
-        <main className="flex-1 p-4 overflow-auto">
+    <MinimalistLayout
+      title={dynamicTitle}
+      subtitle={dynamicSubtitle}
+      backPath="/logistica/frota"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Logística", path: "/logistica" },
+        { label: "Frota", path: "/logistica/frota" },
+        { label: "Histórico" },
+      ]}
+    >
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400" />
