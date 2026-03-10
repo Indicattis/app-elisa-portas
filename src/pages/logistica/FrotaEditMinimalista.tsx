@@ -212,16 +212,16 @@ export default function FrotaEditMinimalista() {
               <CardContent className="p-4 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
+                    <Label className={labelClass}>Modelo</Label>
+                    <Input value={form.modelo} onChange={(e) => setForm((f) => ({ ...f, modelo: e.target.value }))} className={inputClass} placeholder="Fiat Ducato" />
+                  </div>
+                  <div className="space-y-1.5">
                     <Label className={labelClass}>Apelido</Label>
                     <Input value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))} className={inputClass} placeholder="Ex: Ducato" />
                   </div>
                   <div className="space-y-1.5">
                     <Label className={labelClass}>Placa</Label>
                     <Input value={form.placa} onChange={(e) => setForm((f) => ({ ...f, placa: e.target.value }))} className={inputClass} placeholder="ABC-1234" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className={labelClass}>Modelo</Label>
-                    <Input value={form.modelo} onChange={(e) => setForm((f) => ({ ...f, modelo: e.target.value }))} className={inputClass} placeholder="Fiat Ducato" />
                   </div>
                   <div className="space-y-1.5">
                     <Label className={labelClass}>Ano</Label>
