@@ -172,7 +172,7 @@ export default function FrotaEditMinimalista() {
                   ) : (
                     <div
                       onClick={() => fotoInputRef.current?.click()}
-                      className="w-full h-40 rounded-lg border border-dashed border-white/20 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-white/40 hover:bg-white/5 transition-all"
+                      className="w-full h-40 rounded-lg border border-dashed border-white/20 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-400/40 hover:bg-blue-500/5 transition-all"
                     >
                       <Camera className="h-6 w-6 text-white/40" />
                       <span className="text-xs text-white/40">{isUploading ? "Enviando..." : "Clique para adicionar foto"}</span>
