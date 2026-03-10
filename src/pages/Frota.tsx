@@ -23,9 +23,10 @@ import {
 
 export default function Frota() {
   const navigate = useNavigate();
-  const { veiculos, isLoading, deleteVeiculo } = useVeiculos();
+  const { veiculos, isLoading, deleteVeiculo, updateVeiculo } = useVeiculos();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [trocaOleoOpen, setTrocaOleoOpen] = useState(false);
+  const [avisoVeiculo, setAvisoVeiculo] = useState<{ id: string; nome: string; aviso: string | null; data: string | null } | null>(null);
 
   const handleRowDoubleClick = (veiculoId: string) => {
     navigate(`/dashboard/logistica/frota/${veiculoId}/conferencias`);
