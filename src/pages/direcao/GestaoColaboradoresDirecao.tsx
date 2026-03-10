@@ -51,12 +51,18 @@ export default function GestaoColaboradoresDirecao() {
   const [newRole, setNewRole] = useState('');
   const [changingRole, setChangingRole] = useState(false);
 
+  const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<{
+    id: string; key: string; label: string; setor: string | null;
+    descricao: string | null; ativo: boolean; ordem: number;
+  } | null>(null);
+
   const { data: systemRoles } = useQuery({
     queryKey: ['system-roles-active'],
     queryFn: async () => {
       const { data } = await supabase
         .from('system_roles')
-        .select('key, label')
+        .select('id, key, label, setor, descricao, ativo, ordem')
         .eq('ativo', true)
         .order('label');
       return data || [];
