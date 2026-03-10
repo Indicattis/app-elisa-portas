@@ -208,7 +208,7 @@ export default function FrotaEditMinimalista() {
             </div>
 
             {/* Campos do formulário */}
-            <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+            <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
               <CardContent className="p-4 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
