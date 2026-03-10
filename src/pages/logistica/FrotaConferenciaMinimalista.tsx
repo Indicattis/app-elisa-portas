@@ -30,8 +30,6 @@ export default function FrotaConferenciaMinimalista() {
   const [nivelOleoConferido, setNivelOleoConferido] = useState(false);
   const [observacoes, setObservacoes] = useState("");
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
 
   const veiculo = veiculos?.find(v => v.id === selectedVeiculo);
 
