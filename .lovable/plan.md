@@ -1,26 +1,36 @@
 
 
-## Plan: Add deactivation, job openings, and headcount scoreboard to Organograma RH
+# Melhorias na página /direcao/dre/custos
 
-### Overview
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-Enhance `GestaoColaboradoresDirecao.tsx` with three features:
-1. **Deactivate users** — click a user card to show a confirmation dialog, then set `ativo = false` in `admin_users`
-2. **Add job openings** — button per role group to create a vaga (reuses existing `useVagas` hook + `vagas` table)
-3. **Headcount scoreboard** — each role header shows `colaboradores / (vagas abertas + colaboradores)` count
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-### Changes
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-**1. `src/pages/direcao/GestaoColaboradoresDirecao.tsx`**
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-- Import `useVagas` hook, `AlertDialog` components, `supabase` client, `useQueryClient`
-- Add state for user deactivation confirmation (`userToDeactivate`)
-- On user card click → open AlertDialog confirming deactivation → call `supabase.from('admin_users').update({ ativo: false }).eq('id', user.id)` → invalidate `all-users` query
-- Add a `+ Vaga` button next to each role group header → opens a small dialog to input justification → calls `createVaga({ cargo: role, justificativa })` from `useVagas`
-- Update role header badge to show scoreboard: fetch open vagas (`status = 'aberta' OR status = 'em_analise'`) for each role, display as `{users.length} / {users.length + openVagas}` with color coding (green if full, amber if has open vagas)
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-**2. No database changes needed** — uses existing `admin_users.ativo` field and `vagas` table
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
 
-### Files changed
-- `src/pages/direcao/GestaoColaboradoresDirecao.tsx` — all three features
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
+
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
