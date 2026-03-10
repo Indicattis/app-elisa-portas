@@ -141,6 +141,17 @@ export default function Frota() {
                           className="h-7 w-7 p-0"
                           onClick={(e) => {
                             e.stopPropagation();
+                            setAvisoVeiculo({ id: veiculo.id, nome: veiculo.nome, aviso: veiculo.aviso_justificativa, data: veiculo.aviso_data });
+                          }}
+                        >
+                          <MessageSquareWarning className="h-3.5 w-3.5 text-amber-500" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
                             navigate(`/dashboard/logistica/frota/${veiculo.id}/editar`);
                           }}
                         >
