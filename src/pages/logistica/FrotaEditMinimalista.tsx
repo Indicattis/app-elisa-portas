@@ -36,8 +36,6 @@ export default function FrotaEditMinimalista() {
     status: "rodando" as "rodando" | "mecanico" | "parado",
   });
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (veiculo) {
