@@ -1,7 +1,7 @@
 import { UserRole } from "@/types/permissions";
 
 export const SETOR_ROLES: Record<string, UserRole[]> = {
-  vendas: ['gerente_comercial', 'coordenador_vendas', 'vendedor'],
+  vendas: ['gerente_comercial', 'coordenador_vendas', 'vendedor', 'atendente'],
   marketing: ['gerente_marketing', 'analista_marketing', 'assistente_marketing'],
   instalacoes: ['gerente_instalacoes', 'instalador', 'aux_instalador'],
   fabrica: ['gerente_fabril', 'gerente_producao', 'soldador', 'pintor', 'aux_pintura', 'aux_geral'],
