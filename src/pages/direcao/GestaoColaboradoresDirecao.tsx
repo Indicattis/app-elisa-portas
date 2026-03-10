@@ -433,6 +433,19 @@ export default function GestaoColaboradoresDirecao() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create role modal */}
+      <CreateRoleModal
+        open={createRoleModalOpen}
+        onOpenChange={setCreateRoleModalOpen}
+      />
+
+      {/* Edit role modal */}
+      <EditRoleModal
+        open={!!editingRole}
+        onOpenChange={(open) => { if (!open) setEditingRole(null); }}
+        role={editingRole}
+      />
     </MinimalistLayout>
   );
 }
