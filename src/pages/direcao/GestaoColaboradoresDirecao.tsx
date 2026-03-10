@@ -231,13 +231,22 @@ export default function GestaoColaboradoresDirecao() {
                               <p className="text-sm font-medium text-white truncate">{user.nome}</p>
                               <p className="text-xs text-white/40 truncate">{user.email}</p>
                             </div>
-                            <button
-                              onClick={() => setUserToDeactivate(user)}
-                              className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
-                              title="Desativar colaborador"
-                            >
-                              <UserMinus className="w-4 h-4" />
-                            </button>
+                            <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all">
+                              <button
+                                onClick={() => { setUserToChangeRole(user); setNewRole(user.role); }}
+                                className="p-1.5 rounded-lg hover:bg-blue-500/20 text-white/30 hover:text-blue-400 transition-all"
+                                title="Alterar função"
+                              >
+                                <ArrowRightLeft className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setUserToDeactivate(user)}
+                                className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
+                                title="Desativar colaborador"
+                              >
+                                <UserMinus className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
