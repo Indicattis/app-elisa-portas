@@ -270,6 +270,7 @@ import EstoqueEditMinimalista from "./pages/administrativo/EstoqueEditMinimalist
 import RequisicoesMinimalista from "./pages/administrativo/RequisicoesMinimalista";
 import FornecedoresMinimalista from "./pages/administrativo/FornecedoresMinimalista";
 import FrotaMinimalista from "./pages/logistica/FrotaMinimalista";
+import FrotaNovoMinimalista from "./pages/logistica/FrotaNovoMinimalista";
 import FrotaEditMinimalista from "./pages/logistica/FrotaEditMinimalista";
 import FrotaConferenciasHistoricoMinimalista from "./pages/logistica/FrotaConferenciasHistoricoMinimalista";
 import FrotaConferenciaMinimalista from "./pages/logistica/FrotaConferenciaMinimalista";
@@ -523,6 +524,7 @@ const App = () => (
                 
                 <Route path="/logistica/expedicao" element={<ProtectedRoute routeKey="logistica_hub"><ExpedicaoMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/frota" element={<ProtectedRoute routeKey="logistica_hub"><FrotaMinimalista /></ProtectedRoute>} />
+                <Route path="/logistica/frota/novo" element={<ProtectedRoute routeKey="logistica_hub"><FrotaNovoMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/frota/:id/editar" element={<ProtectedRoute routeKey="logistica_hub"><FrotaEditMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/frota/:id/conferencias" element={<ProtectedRoute routeKey="logistica_hub"><FrotaConferenciasHistoricoMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/frota/conferencia" element={<ProtectedRoute routeKey="logistica_hub"><FrotaConferenciaMinimalista /></ProtectedRoute>} />

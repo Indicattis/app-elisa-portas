@@ -61,7 +61,7 @@ export default function FrotaMinimalista() {
       </Button>
       <Button
         size="sm"
-        onClick={() => navigate('/dashboard/logistica/frota/novo')}
+        onClick={() => navigate('/logistica/frota/novo')}
         className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 border border-blue-400/30 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
       >
         <Plus className="h-4 w-4" />
