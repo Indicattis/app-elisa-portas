@@ -40,7 +40,7 @@ export default function FrotaConferenciasHistoricoMinimalista() {
           <div className="max-w-7xl mx-auto flex items-center gap-3">
             <button
               onClick={() => navigate("/logistica/frota")}
-              className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
+              className="p-2 rounded-lg hover:bg-blue-500/10 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-white/80" />
             </button>
