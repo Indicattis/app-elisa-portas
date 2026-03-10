@@ -138,10 +138,10 @@ export default function FrotaMinimalista() {
                                 </div>
                               )}
                             </TableCell>
-                            <TableCell>{veiculo.modelo}</TableCell>
+                            <TableCell>{veiculo.nome}</TableCell>
                             <TableCell>{veiculo.placa || '-'}</TableCell>
                             <TableCell>{veiculo.ano}</TableCell>
-                            <TableCell className="font-medium">{veiculo.nome}</TableCell>
+                            <TableCell className="font-medium">{veiculo.modelo}</TableCell>
                             <TableCell>{veiculo.responsavel || '-'}</TableCell>
                             <TableCell>{veiculo.km_atual.toLocaleString('pt-BR')} km</TableCell>
                             <TableCell>

@@ -1,16 +1,36 @@
 
 
-## Plan: Swap Apelido and Modelo column data
+# Melhorias na página /direcao/dre/custos
 
-The "Modelo" column currently shows `veiculo.modelo` and "Apelido" shows `veiculo.nome`. These need to be swapped so the header labels match the correct data fields.
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-### Changes in `src/pages/logistica/FrotaMinimalista.tsx`
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-**Line 141**: Change `{veiculo.modelo}` → `{veiculo.nome}`
-**Line 144**: Change `{veiculo.nome}` → `{veiculo.modelo}`
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-This way "Modelo" displays the vehicle's display name (`nome`) and "Apelido" displays the model (`modelo`), matching the memory note about the column restructuring.
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-### Files affected
-- `src/pages/logistica/FrotaMinimalista.tsx` — swap two cell values
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
+
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
