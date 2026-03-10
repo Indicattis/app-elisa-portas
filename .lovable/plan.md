@@ -1,36 +1,34 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Plan: Create minimalist vehicle conference page
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+Recreate the vehicle conference flow (`FrotaConferencia`) with the dark glassmorphism + blue accents style, and add a button in the fleet list to access it.
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+### Flow (3 steps, same as original)
+1. **Select vehicle** — grid of vehicle cards
+2. **Capture photo** — file input with camera capture
+3. **Fill form** — km, oil date, water check, oil level check, observations, submit
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+### Files
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+**1. Create `src/pages/logistica/FrotaConferenciaMinimalista.tsx`**
+- Dark theme (`bg-black text-white`), glassmorphism cards (`bg-white/5 border-blue-500/10 backdrop-blur-xl`)
+- AnimatedBreadcrumb: Home > Logística > Frota > Conferência
+- Step 1: Vehicle grid cards with photo, name, model, status badge — click selects
+- Step 2: Camera capture area with dark-styled file input, blue accent upload button
+- Step 3: Form with `inputClass` pattern from edit page, checkboxes for água/óleo, submit button `bg-blue-500/15 border-blue-500/25`
+- Uses `useVeiculos` and `useConferencias` hooks
+- On success navigates to `/logistica/frota`
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+**2. Update `src/App.tsx`**
+- Import `FrotaConferenciaMinimalista`
+- Add route: `/logistica/frota/conferencia`
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
+**3. Update `src/pages/logistica/FrotaMinimalista.tsx`**
+- Add a "Conferir" button next to the existing "Troca Óleo" and "Novo" buttons in the header, navigating to `/logistica/frota/conferencia`
 
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+### Files affected
+- `src/pages/logistica/FrotaConferenciaMinimalista.tsx` — new file
+- `src/App.tsx` — add route
+- `src/pages/logistica/FrotaMinimalista.tsx` — add button
 
