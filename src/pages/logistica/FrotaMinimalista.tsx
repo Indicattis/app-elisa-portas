@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, Droplet, ArrowLeft, LogOut } from "lucide-react";
+import { Plus, Edit, Trash2, Droplet, ArrowLeft } from "lucide-react";
 
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
