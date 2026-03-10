@@ -1,31 +1,36 @@
 
 
-## Plan: Add "Create Role" and "Edit Role" to Organograma RH
+# Melhorias na página /direcao/dre/custos
 
-### Changes to `src/pages/direcao/GestaoColaboradoresDirecao.tsx`
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-**1. Import existing modals**
-- Import `CreateRoleModal` and `EditRoleModal` from `@/components/admin/`
-- Import `Pencil` icon from lucide-react
-- Add `SystemRole` interface (matching EditRoleModal's expected shape)
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-**2. Add state**
-- `createRoleModalOpen: boolean` for the create modal
-- `editingRole: SystemRole | null` for the edit modal
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-**3. Expand `system-roles-active` query**
-- Fetch full role objects (`id, key, label, setor, descricao, ativo, ordem`) instead of just `key, label`, so we can pass the role object to `EditRoleModal`
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-**4. Add "Nova Função" button**
-- Place a button in the header area (next to the sector title or at the top of the content area) that opens `CreateRoleModal`
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-**5. Add "Edit" button per role header**
-- Next to each role label (beside the delete button area), add a `Pencil` icon button
-- On click, find the full `SystemRole` object from the query data matching `group.role` and set `editingRole`
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
 
-**6. Render modals**
-- Add `<CreateRoleModal>` and `<EditRoleModal>` at the bottom of the component, both invalidating `system-roles-active` and `all-users` queries on success
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
 
-### Files changed
-- `src/pages/direcao/GestaoColaboradoresDirecao.tsx`
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
+
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 

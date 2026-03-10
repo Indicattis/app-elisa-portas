@@ -6,12 +6,14 @@ import { SETOR_LABELS, SETOR_ROLES } from '@/utils/setorMapping';
 import { ROLE_LABELS } from '@/types/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Users, Loader2, Plus, UserMinus, Trash2, ArrowRightLeft } from 'lucide-react';
+import { Users, Loader2, Plus, UserMinus, Trash2, ArrowRightLeft, Pencil } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { CreateRoleModal } from '@/components/admin/CreateRoleModal';
+import { EditRoleModal } from '@/components/admin/EditRoleModal';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -49,12 +51,18 @@ export default function GestaoColaboradoresDirecao() {
   const [newRole, setNewRole] = useState('');
   const [changingRole, setChangingRole] = useState(false);
 
+  const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<{
+    id: string; key: string; label: string; setor: string | null;
+    descricao: string | null; ativo: boolean; ordem: number;
+  } | null>(null);
+
   const { data: systemRoles } = useQuery({
     queryKey: ['system-roles-active'],
     queryFn: async () => {
       const { data } = await supabase
         .from('system_roles')
-        .select('key, label')
+        .select('id, key, label, setor, descricao, ativo, ordem')
         .eq('ativo', true)
         .order('label');
       return data || [];
@@ -198,7 +206,17 @@ export default function GestaoColaboradoresDirecao() {
               <p className="text-sm">Nenhum colaborador neste setor</p>
             </div>
           ) : (
-            <div className="space-y-6">
+             <div className="space-y-6">
+              <div className="flex justify-end">
+                <Button
+                  onClick={() => setCreateRoleModalOpen(true)}
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  Nova Função
+                </Button>
+              </div>
               {grouped.map(group => {
                 const total = group.users.length + group.openVagas;
                 const isFull = group.openVagas === 0 && group.users.length > 0;
@@ -219,6 +237,16 @@ export default function GestaoColaboradoresDirecao() {
                       >
                         {group.users.length}/{total || 0}
                       </Badge>
+                      <button
+                        onClick={() => {
+                          const role = (systemRoles || []).find(r => r.key === group.role);
+                          if (role) setEditingRole(role);
+                        }}
+                        className="p-1 rounded hover:bg-white/10 text-white/30 hover:text-white/70 transition-all"
+                        title="Editar função"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
                       {isEmpty && (
                         <button
                           onClick={() => setRoleToDelete(group.role)}
@@ -405,6 +433,19 @@ export default function GestaoColaboradoresDirecao() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create role modal */}
+      <CreateRoleModal
+        open={createRoleModalOpen}
+        onOpenChange={setCreateRoleModalOpen}
+      />
+
+      {/* Edit role modal */}
+      <EditRoleModal
+        open={!!editingRole}
+        onOpenChange={(open) => { if (!open) setEditingRole(null); }}
+        role={editingRole}
+      />
     </MinimalistLayout>
   );
 }
