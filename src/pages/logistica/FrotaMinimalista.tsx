@@ -148,25 +148,19 @@ export default function FrotaMinimalista() {
                         <StatusBadge status={veiculo.status} />
                       </TableCell>
                       <TableCell>
-                        {veiculo.aviso_justificativa ? (
-                          <AlertTriangle className="h-4 w-4 text-amber-500 animate-pulse" />
-                        ) : (
-                          <span className="text-white/30">-</span>
-                        )}
+                        {(() => {
+                          const emDia = isConferenciaEmDia(veiculo.ultima_conferencia_data);
+                          return (
+                            <span className={emDia ? 'text-green-400' : 'text-red-400'}>
+                              {veiculo.ultima_conferencia_data 
+                                ? format(new Date(veiculo.ultima_conferencia_data), "dd/MM/yy", { locale: ptBR })
+                                : 'Nunca'}
+                            </span>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setAvisoVeiculo({ id: veiculo.id, nome: veiculo.nome, aviso: veiculo.aviso_justificativa, data: veiculo.aviso_data });
-                            }}
-                          >
-                            <MessageSquareWarning className="h-3.5 w-3.5" />
-                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
