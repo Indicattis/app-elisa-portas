@@ -218,6 +218,7 @@ import VendaDetalhesDirecao from "./pages/direcao/VendaDetalhesDirecao";
 import FaturamentoDirecao from "./pages/direcao/FaturamentoDirecao";
 import FaturamentoVendaDirecao from "./pages/direcao/FaturamentoVendaDirecao";
 import GestaoFabricaDirecao from "./pages/direcao/GestaoFabricaDirecao";
+import GestaoColaboradoresDirecao from "./pages/direcao/GestaoColaboradoresDirecao";
 import GestaoInstalacaoDirecao from "./pages/direcao/GestaoInstalacaoDirecao";
 import OrdensInstalacoesDirecao from "./pages/direcao/OrdensInstalacoesDirecao";
 import CalendarioExpedicaoDirecao from "./pages/direcao/CalendarioExpedicaoDirecao";
@@ -513,6 +514,9 @@ const App = () => (
                 <Route path="/direcao/dre/despesas" element={<ProtectedRoute routeKey="direcao_hub"><DREDespesasDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/dre/custos" element={<ProtectedRoute routeKey="direcao_hub"><DRECustosDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/dre/:mes" element={<ProtectedRoute routeKey="direcao_hub"><DREMesDirecao /></ProtectedRoute>} />
+
+                {/* Organograma RH */}
+                <Route path="/direcao/gestao-colaboradores" element={<ProtectedRoute routeKey="direcao_hub"><GestaoColaboradoresDirecao /></ProtectedRoute>} />
 
                 {/* Hub de Aprovações da Direção */}
                 <Route path="/direcao/aprovacoes" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoAprovacoesHub /></ProtectedRoute>} />

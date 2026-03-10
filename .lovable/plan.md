@@ -1,35 +1,36 @@
 
 
-## Plan: Add "Organograma RH" button and page
+# Melhorias na página /direcao/dre/custos
 
-### 1. Add button to DirecaoHub
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-In `src/pages/direcao/DirecaoHub.tsx`, add a new menu item:
-```ts
-{ label: 'Organograma RH', icon: Network, path: '/direcao/gestao-colaboradores' }
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
 ```
-Import `Network` from lucide-react.
 
-### 2. Add route in App.tsx
-
-Add route for `/direcao/gestao-colaboradores` pointing to a new page component, protected with `direcao_hub`.
-
-### 3. Create page `src/pages/direcao/GestaoColaboradoresDirecao.tsx`
-
-Minimalist glassmorphism page using `MinimalistLayout` with `backPath="/direcao"` and `fullWidth`.
-
-**Layout**: Two-panel design:
-- **Left sidebar** — glassmorphism panel listing sectors from `SETOR_LABELS` (Vendas, Marketing, Instalações, Fábrica, Administrativo). Each is a clickable item with active state highlight.
-- **Right content** — displays collaborators of the selected sector, fetched from `admin_users` where `role` is in `getRolesFromSetor(selectedSetor)`, ordered by role. Grouped by role with `ROLE_LABELS` as section headers.
-
-**Data**: Uses `useAllUsers` hook (already fetches all active users). Filters client-side by sector using `SETOR_ROLES` mapping. Groups and orders by role hierarchy (order defined in `SETOR_ROLES` arrays).
-
-**Each collaborator card**: Glassmorphism card showing avatar (`foto_perfil_url` or initials), name, role badge, and email. Uses the existing dark/glass aesthetic.
-
-**Mobile**: On small screens, the sidebar collapses to a horizontal scrollable row of sector chips at the top, with the collaborator list below.
-
-### Files changed
-- `src/pages/direcao/DirecaoHub.tsx` — add menu item
-- `src/App.tsx` — add route + lazy import
-- `src/pages/direcao/GestaoColaboradoresDirecao.tsx` — new page
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
