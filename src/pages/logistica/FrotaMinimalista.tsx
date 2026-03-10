@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, Droplet, ArrowLeft, ClipboardCheck } from "lucide-react";
+import { Plus, Edit, Trash2, Droplet, ClipboardCheck } from "lucide-react";
 
-import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
+import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -41,171 +41,146 @@ export default function FrotaMinimalista() {
     }
   };
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const headerActions = (
+    <>
+      <Button
+        size="sm"
+        onClick={() => navigate('/logistica/frota/conferencia')}
+        className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-400/20 text-white shadow-lg shadow-blue-500/10 hover:from-blue-500/30 hover:to-blue-600/30 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
+      >
+        <ClipboardCheck className="h-4 w-4" />
+        <span className="hidden sm:inline">Conferir</span>
+      </Button>
+      <Button
+        size="sm"
+        onClick={() => setTrocaOleoOpen(true)}
+        className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-400/20 text-white shadow-lg shadow-blue-500/10 hover:from-blue-500/30 hover:to-blue-600/30 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
+      >
+        <Droplet className="h-4 w-4" />
+        <span className="hidden sm:inline">Troca Óleo</span>
+      </Button>
+      <Button
+        size="sm"
+        onClick={() => navigate('/dashboard/logistica/frota/novo')}
+        className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 border border-blue-400/30 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
+      >
+        <Plus className="h-4 w-4" />
+        <span className="hidden sm:inline">Novo</span>
+      </Button>
+    </>
+  );
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
-      <AnimatedBreadcrumb 
-        items={[
-          { label: "Home", path: "/home" },
-          { label: "Logística", path: "/logistica" },
-          { label: "Frota" }
-        ]} 
-        mounted={mounted} 
-      />
-      
-      <div className="relative z-10 min-h-screen flex flex-col pt-14">
-        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-blue-500/20">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/logistica')}
-                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-white/80" />
-              </button>
-              <div>
-                <h1 className="text-lg font-semibold text-blue-400">Frota</h1>
-                <p className="text-xs text-white/60">Gerencie os veículos da empresa</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/logistica/frota/conferencia')}
-                className="bg-white/10 backdrop-blur-md border border-blue-500/30 text-white shadow-lg shadow-blue-500/5 hover:bg-white/20 hover:border-blue-400/40 transition-all duration-300 text-xs gap-1"
-              >
-                <ClipboardCheck className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Conferir</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setTrocaOleoOpen(true)}
-                className="bg-white/10 backdrop-blur-md border border-blue-500/30 text-white shadow-lg shadow-blue-500/5 hover:bg-white/20 hover:border-blue-400/40 transition-all duration-300 text-xs gap-1"
-              >
-                <Droplet className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Troca Óleo</span>
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => navigate('/dashboard/logistica/frota/novo')}
-                className="bg-blue-500/15 backdrop-blur-md border border-blue-500/25 text-white shadow-lg shadow-blue-500/5 hover:bg-blue-500/25 hover:border-blue-400/35 transition-all duration-300 text-xs gap-1"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Novo</span>
-              </Button>
-            </div>
-          </div>
-        </header>
-
-        <main className="flex-1 p-4 overflow-auto">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
-            </div>
-          ) : (
-            <div className="max-w-7xl mx-auto">
-              <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <Table className="text-xs">
-                      <TableHeader>
-                         <TableRow className="border-blue-500/10 hover:bg-white/5">
-                          <TableHead className="text-xs text-white/70">Foto</TableHead>
-                          <TableHead className="text-xs text-white/70">Modelo</TableHead>
-                          <TableHead className="text-xs text-white/70">Placa</TableHead>
-                          <TableHead className="text-xs text-white/70">Ano</TableHead>
-                          <TableHead className="text-xs text-white/70">Apelido</TableHead>
-                          <TableHead className="text-xs text-white/70">Responsável</TableHead>
-                          <TableHead className="text-xs text-white/70">Km Atual</TableHead>
-                          <TableHead className="text-xs text-white/70">Próx. Troca Óleo</TableHead>
-                          <TableHead className="text-xs text-white/70">Status</TableHead>
-                          <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {veiculos?.map((veiculo) => (
-                          <TableRow 
-                            key={veiculo.id}
-                            onClick={() => handleRowClick(veiculo.id)}
-                            className="cursor-pointer border-white/10 hover:bg-blue-500/5 text-white/90"
-                          >
-                            <TableCell>
-                              {veiculo.foto_url ? (
-                                <img 
-                                  src={veiculo.foto_url} 
-                                  alt={veiculo.nome}
-                                  className="w-10 h-10 object-cover rounded"
-                                />
-                              ) : (
-                                <div className="w-10 h-10 bg-white/10 rounded flex items-center justify-center text-[10px] text-white/50">
-                                  -
-                                </div>
-                              )}
-                            </TableCell>
-                            <TableCell>{veiculo.nome}</TableCell>
-                            <TableCell>{veiculo.placa || '-'}</TableCell>
-                            <TableCell>{veiculo.ano}</TableCell>
-                            <TableCell className="font-medium">{veiculo.modelo}</TableCell>
-                            <TableCell>{veiculo.responsavel || '-'}</TableCell>
-                            <TableCell>{veiculo.km_atual.toLocaleString('pt-BR')} km</TableCell>
-                            <TableCell>
-                              {veiculo.data_proxima_troca_oleo 
-                                ? format(new Date(veiculo.data_proxima_troca_oleo), "dd/MM/yy", { locale: ptBR })
-                                : '-'
-                              }
-                            </TableCell>
-                            <TableCell>
-                              <StatusBadge status={veiculo.status} />
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0 text-white/70 hover:text-blue-400 hover:bg-blue-500/10"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/logistica/frota/${veiculo.id}/editar`);
-                                  }}
-                                >
-                                  <Edit className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setDeleteId(veiculo.id);
-                                  }}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {veiculos?.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={10} className="text-center py-8 text-white/50">
-                              Nenhum veículo cadastrado
-                            </TableCell>
-                          </TableRow>
+    <MinimalistLayout
+      title="Frota"
+      subtitle="Gerencie os veículos da empresa"
+      backPath="/logistica"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Logística", path: "/logistica" },
+        { label: "Frota" }
+      ]}
+      headerActions={headerActions}
+    >
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
+        </div>
+      ) : (
+        <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table className="text-xs">
+                <TableHeader>
+                  <TableRow className="border-blue-500/10 hover:bg-white/5">
+                    <TableHead className="text-xs text-white/70">Foto</TableHead>
+                    <TableHead className="text-xs text-white/70">Modelo</TableHead>
+                    <TableHead className="text-xs text-white/70">Placa</TableHead>
+                    <TableHead className="text-xs text-white/70">Ano</TableHead>
+                    <TableHead className="text-xs text-white/70">Apelido</TableHead>
+                    <TableHead className="text-xs text-white/70">Responsável</TableHead>
+                    <TableHead className="text-xs text-white/70">Km Atual</TableHead>
+                    <TableHead className="text-xs text-white/70">Próx. Troca Óleo</TableHead>
+                    <TableHead className="text-xs text-white/70">Status</TableHead>
+                    <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {veiculos?.map((veiculo) => (
+                    <TableRow 
+                      key={veiculo.id}
+                      onClick={() => handleRowClick(veiculo.id)}
+                      className="cursor-pointer border-white/10 hover:bg-blue-500/5 text-white/90"
+                    >
+                      <TableCell>
+                        {veiculo.foto_url ? (
+                          <img 
+                            src={veiculo.foto_url} 
+                            alt={veiculo.nome}
+                            className="w-10 h-10 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-white/10 rounded flex items-center justify-center text-[10px] text-white/50">
+                            -
+                          </div>
                         )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
+                      </TableCell>
+                      <TableCell>{veiculo.nome}</TableCell>
+                      <TableCell>{veiculo.placa || '-'}</TableCell>
+                      <TableCell>{veiculo.ano}</TableCell>
+                      <TableCell className="font-medium">{veiculo.modelo}</TableCell>
+                      <TableCell>{veiculo.responsavel || '-'}</TableCell>
+                      <TableCell>{veiculo.km_atual.toLocaleString('pt-BR')} km</TableCell>
+                      <TableCell>
+                        {veiculo.data_proxima_troca_oleo 
+                          ? format(new Date(veiculo.data_proxima_troca_oleo), "dd/MM/yy", { locale: ptBR })
+                          : '-'
+                        }
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={veiculo.status} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-white/70 hover:text-blue-400 hover:bg-blue-500/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/logistica/frota/${veiculo.id}/editar`);
+                            }}
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(veiculo.id);
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {veiculos?.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={10} className="text-center py-8 text-white/50">
+                        Nenhum veículo cadastrado
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
-          )}
-        </main>
-      </div>
+          </CardContent>
+        </Card>
+      )}
 
       <TrocaOleoDialog 
         open={trocaOleoOpen} 
@@ -227,6 +202,6 @@ export default function FrotaMinimalista() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </MinimalistLayout>
   );
 }
