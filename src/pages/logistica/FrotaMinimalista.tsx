@@ -76,7 +76,7 @@ export default function FrotaMinimalista() {
                 variant="outline"
                 size="sm"
                 onClick={() => setTrocaOleoOpen(true)}
-                className="bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg shadow-white/5 hover:bg-white/20 hover:border-white/30 transition-all duration-300 text-xs gap-1"
+                className="bg-white/10 backdrop-blur-md border border-blue-500/30 text-white shadow-lg shadow-blue-500/5 hover:bg-white/20 hover:border-blue-400/40 transition-all duration-300 text-xs gap-1"
               >
                 <Droplet className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Troca Óleo</span>
