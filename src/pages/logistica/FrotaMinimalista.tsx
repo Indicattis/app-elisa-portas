@@ -143,6 +143,13 @@ export default function FrotaMinimalista() {
                       <TableCell>
                         <StatusBadge status={veiculo.status} />
                       </TableCell>
+                      <TableCell>
+                        {veiculo.aviso_justificativa ? (
+                          <AlertTriangle className="h-4 w-4 text-amber-500 animate-pulse" />
+                        ) : (
+                          <span className="text-white/30">-</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           <Button
