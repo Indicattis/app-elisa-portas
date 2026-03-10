@@ -105,7 +105,7 @@ export default function FrotaMinimalista() {
                   <div className="overflow-x-auto">
                     <Table className="text-xs">
                       <TableHeader>
-                        <TableRow className="border-white/10 hover:bg-white/5">
+                         <TableRow className="border-blue-500/10 hover:bg-white/5">
                           <TableHead className="text-xs text-white/70">Foto</TableHead>
                           <TableHead className="text-xs text-white/70">Modelo</TableHead>
                           <TableHead className="text-xs text-white/70">Placa</TableHead>
