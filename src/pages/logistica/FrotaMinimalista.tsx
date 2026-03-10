@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, Droplet, ClipboardCheck, AlertTriangle, MessageSquareWarning } from "lucide-react";
+import { Plus, Edit, Trash2, Droplet, ClipboardCheck } from "lucide-react";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useVeiculos } from "@/hooks/useVeiculos";
 import { StatusBadge } from "@/components/frota/StatusBadge";
 import { TrocaOleoDialog } from "@/components/frota/TrocaOleoDialog";
-import { AvisoVeiculoModal } from "@/components/frota/AvisoVeiculoModal";
-import { format } from "date-fns";
+import { format, startOfWeek, isAfter } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
+
+function isConferenciaEmDia(data: string | null | undefined): boolean {
+  if (!data) return false;
+  const lastMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
+  return isAfter(new Date(data), lastMonday);
+}
 import {
   AlertDialog,
   AlertDialogAction,
