@@ -30,8 +30,8 @@ export default function FrotaMinimalista() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [trocaOleoOpen, setTrocaOleoOpen] = useState(false);
 
-  const handleRowDoubleClick = (veiculoId: string) => {
-    navigate(`/dashboard/logistica/frota/${veiculoId}/conferencias`);
+  const handleRowClick = (veiculoId: string) => {
+    navigate(`/logistica/frota/${veiculoId}/conferencias`);
   };
 
   const handleDelete = async () => {
@@ -130,7 +130,7 @@ export default function FrotaMinimalista() {
                         {veiculos?.map((veiculo) => (
                           <TableRow 
                             key={veiculo.id}
-                            onDoubleClick={() => handleRowDoubleClick(veiculo.id)}
+                            onClick={() => handleRowClick(veiculo.id)}
                             className="cursor-pointer border-primary/10 hover:bg-primary/10 text-white/90"
                           >
                             <TableCell>
