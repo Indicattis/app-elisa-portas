@@ -161,7 +161,7 @@ export default function FrotaMinimalista() {
                                   className="h-7 w-7 p-0 text-white/70 hover:text-white hover:bg-white/10"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    navigate(`/dashboard/logistica/frota/${veiculo.id}/editar`);
+                                    navigate(`/logistica/frota/${veiculo.id}/editar`);
                                   }}
                                 >
                                   <Edit className="h-3.5 w-3.5" />
