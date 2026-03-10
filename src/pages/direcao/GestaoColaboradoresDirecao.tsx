@@ -237,6 +237,16 @@ export default function GestaoColaboradoresDirecao() {
                       >
                         {group.users.length}/{total || 0}
                       </Badge>
+                      <button
+                        onClick={() => {
+                          const role = (systemRoles || []).find(r => r.key === group.role);
+                          if (role) setEditingRole(role);
+                        }}
+                        className="p-1 rounded hover:bg-white/10 text-white/30 hover:text-white/70 transition-all"
+                        title="Editar função"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
                       {isEmpty && (
                         <button
                           onClick={() => setRoleToDelete(group.role)}
