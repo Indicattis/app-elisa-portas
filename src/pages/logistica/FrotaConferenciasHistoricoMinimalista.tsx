@@ -1,14 +1,13 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useVeiculos } from "@/hooks/useVeiculos";
 import { useConferencias } from "@/hooks/useConferencias";
 import { StatusBadge } from "@/components/frota/StatusBadge";
-import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
+import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function FrotaConferenciasHistoricoMinimalista() {
   const { id } = useParams<{ id: string }>();
