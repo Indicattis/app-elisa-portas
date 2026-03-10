@@ -57,7 +57,7 @@ export default function FrotaConferencia() {
       data_troca_oleo: data.data_troca_oleo,
       agua_conferida: data.agua_conferida,
       observacoes: data.observacoes,
-      status: veiculo?.status || 'pronto'
+      status: veiculo?.status || 'rodando'
     });
 
     navigate('/dashboard/instalacoes/frota');

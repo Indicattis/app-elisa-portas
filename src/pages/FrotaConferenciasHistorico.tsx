@@ -83,7 +83,7 @@ export default function FrotaConferenciasHistorico() {
                     <span className="text-xs text-muted-foreground">
                       {format(new Date(conferencia.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                     </span>
-                    <StatusBadge status={conferencia.status} />
+                    <StatusBadge status={conferencia.status as any} />
                   </div>
                   <div className="text-sm space-y-1">
                     <p><strong>Km:</strong> {conferencia.km_atual.toLocaleString('pt-BR')}</p>
