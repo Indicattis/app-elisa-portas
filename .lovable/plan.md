@@ -1,28 +1,36 @@
 
 
-## Plan: Restyle TrocaOleoDialog with glassmorphism minimalist design
+# Melhorias na página /direcao/dre/custos
 
-Rewrite `src/components/frota/TrocaOleoDialog.tsx` applying the same dark glassmorphism style used across all fleet pages. The logic and functionality remain identical.
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-### Changes in `src/components/frota/TrocaOleoDialog.tsx`
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-**DialogContent**: Apply `bg-black/80 backdrop-blur-xl border-white/10 text-white` (replacing default theme).
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-**Header**: Style title text white, description `text-white/60`, Droplet icon `text-blue-400`.
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-**Form inputs** (Select triggers, date button, disabled inputs): Use the standard `inputClass` pattern: `bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-blue-400/40`.
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-**Labels**: `text-white/70 text-xs`.
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
 
-**SelectContent / PopoverContent (Calendar)**: Dark dropdown styling `bg-black/90 border-white/10 backdrop-blur-xl`, items with `text-white focus:bg-white/10 focus:text-white`.
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
 
-**Disabled info fields** (KM Atual, KM Próxima Troca, Data Próxima Troca): `bg-white/5 border-white/10 text-white/50` instead of `bg-muted`.
+### Estrutura da tabela final
 
-**Border separator**: `border-white/10` instead of `border-t`.
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
 
-**Footer buttons**:
-- Cancel: `bg-white/5 border-white/10 text-white hover:bg-white/10`
-- Submit: `bg-blue-500/15 backdrop-blur-md border border-blue-500/25 text-white hover:bg-blue-500/25 hover:border-blue-400/35`
-
-Single file change, no structural or logic modifications.
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 

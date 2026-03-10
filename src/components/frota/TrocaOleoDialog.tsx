@@ -48,6 +48,9 @@ interface TrocaOleoFormData {
   data_troca_oleo: Date;
 }
 
+const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-blue-400/40";
+const labelClass = "text-white/70 text-xs";
+
 export function TrocaOleoDialog({ open, onOpenChange, veiculos }: TrocaOleoDialogProps) {
   const { updateVeiculo, isUpdating } = useVeiculos();
   const [selectedVeiculo, setSelectedVeiculo] = useState<Veiculo | null>(null);
@@ -63,7 +66,6 @@ export function TrocaOleoDialog({ open, onOpenChange, veiculos }: TrocaOleoDialo
     setSelectedVeiculo(veiculo || null);
   };
 
-  // Valores calculados automaticamente
   const kmAtual = selectedVeiculo?.km_atual || 0;
   const kmProximaTroca = kmAtual + 5000;
   const dataProximaTroca = addMonths(new Date(), 6);
@@ -83,7 +85,6 @@ export function TrocaOleoDialog({ open, onOpenChange, veiculos }: TrocaOleoDialo
     onOpenChange(false);
   };
 
-  // Reset quando o dialog fecha
   useEffect(() => {
     if (!open) {
       form.reset();
@@ -93,13 +94,13 @@ export function TrocaOleoDialog({ open, onOpenChange, veiculos }: TrocaOleoDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-black/80 backdrop-blur-xl border-white/10 text-white">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Droplet className="h-5 w-5" />
+          <DialogTitle className="flex items-center gap-2 text-white">
+            <Droplet className="h-5 w-5 text-blue-400" />
             Marcar Troca de Óleo
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-white/60">
             Registre a troca de óleo de um veículo da frota.
           </DialogDescription>
         </DialogHeader>
@@ -112,7 +113,7 @@ export function TrocaOleoDialog({ open, onOpenChange, veiculos }: TrocaOleoDialo
               rules={{ required: "Selecione um veículo" }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Veículo</FormLabel>
+                  <FormLabel className={labelClass}>Veículo</FormLabel>
                   <Select 
                     onValueChange={(value) => {
                       field.onChange(value);
@@ -121,13 +122,17 @@ export function TrocaOleoDialog({ open, onOpenChange, veiculos }: TrocaOleoDialo
                     value={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className={inputClass}>
                         <SelectValue placeholder="Selecione o veículo" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="bg-black/90 border-white/10 backdrop-blur-xl">
                       {veiculos.map((veiculo) => (
-                        <SelectItem key={veiculo.id} value={veiculo.id}>
+                        <SelectItem 
+                          key={veiculo.id} 
+                          value={veiculo.id}
+                          className="text-white focus:bg-white/10 focus:text-white"
+                        >
                           {veiculo.nome} - {veiculo.placa || veiculo.modelo}
                         </SelectItem>
                       ))}
@@ -144,7 +149,7 @@ export function TrocaOleoDialog({ open, onOpenChange, veiculos }: TrocaOleoDialo
               rules={{ required: "Informe a data da troca" }}
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Data da Troca</FormLabel>
+                  <FormLabel className={labelClass}>Data da Troca</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -152,7 +157,8 @@ export function TrocaOleoDialog({ open, onOpenChange, veiculos }: TrocaOleoDialo
                           variant="outline"
                           className={cn(
                             "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
+                            inputClass,
+                            !field.value && "text-white/40"
                           )}
                         >
                           {field.value ? (
@@ -164,14 +170,14 @@ export function TrocaOleoDialog({ open, onOpenChange, veiculos }: TrocaOleoDialo
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 bg-black/90 border-white/10 backdrop-blur-xl" align="start">
                       <Calendar
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
                         disabled={(date) => date > new Date()}
                         initialFocus
-                        className={cn("p-3 pointer-events-auto")}
+                        className={cn("p-3 pointer-events-auto text-white")}
                       />
                     </PopoverContent>
                   </Popover>
@@ -181,41 +187,50 @@ export function TrocaOleoDialog({ open, onOpenChange, veiculos }: TrocaOleoDialo
             />
 
             {selectedVeiculo && (
-              <div className="space-y-3 pt-2 border-t">
+              <div className="space-y-3 pt-2 border-t border-white/10">
                 <div className="grid grid-cols-2 gap-4">
                   <FormItem>
-                    <FormLabel className="text-muted-foreground">KM Atual</FormLabel>
+                    <FormLabel className={labelClass}>KM Atual</FormLabel>
                     <Input
                       value={kmAtual.toLocaleString('pt-BR')}
                       disabled
-                      className="bg-muted"
+                      className="bg-white/5 border-white/10 text-white/50"
                     />
                   </FormItem>
                   <FormItem>
-                    <FormLabel className="text-muted-foreground">KM Próxima Troca</FormLabel>
+                    <FormLabel className={labelClass}>KM Próxima Troca</FormLabel>
                     <Input
                       value={kmProximaTroca.toLocaleString('pt-BR')}
                       disabled
-                      className="bg-muted"
+                      className="bg-white/5 border-white/10 text-white/50"
                     />
                   </FormItem>
                 </div>
                 <FormItem>
-                  <FormLabel className="text-muted-foreground">Data Próxima Troca</FormLabel>
+                  <FormLabel className={labelClass}>Data Próxima Troca</FormLabel>
                   <Input
                     value={format(dataProximaTroca, "dd/MM/yyyy", { locale: ptBR })}
                     disabled
-                    className="bg-muted"
+                    className="bg-white/5 border-white/10 text-white/50"
                   />
                 </FormItem>
               </div>
             )}
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+                className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+              >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isUpdating || !selectedVeiculo}>
+              <Button 
+                type="submit" 
+                disabled={isUpdating || !selectedVeiculo}
+                className="bg-blue-500/15 backdrop-blur-md border border-blue-500/25 text-white hover:bg-blue-500/25 hover:border-blue-400/35"
+              >
                 {isUpdating ? "Salvando..." : "Salvar"}
               </Button>
             </DialogFooter>
