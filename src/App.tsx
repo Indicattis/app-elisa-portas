@@ -272,6 +272,7 @@ import FornecedoresMinimalista from "./pages/administrativo/FornecedoresMinimali
 import FrotaMinimalista from "./pages/logistica/FrotaMinimalista";
 import FrotaEditMinimalista from "./pages/logistica/FrotaEditMinimalista";
 import FrotaConferenciasHistoricoMinimalista from "./pages/logistica/FrotaConferenciasHistoricoMinimalista";
+import FrotaConferenciaMinimalista from "./pages/logistica/FrotaConferenciaMinimalista";
 import FreteMinimalista from "./pages/logistica/FreteMinimalista";
 import AcordosAutorizados from "./pages/logistica/AcordosAutorizados";
 import AutorizadosLogistica from "./pages/logistica/AutorizadosLogistica";
