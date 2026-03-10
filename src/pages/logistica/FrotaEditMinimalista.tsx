@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useVeiculos, type Veiculo } from "@/hooks/useVeiculos";
+import { useAllUsers } from "@/hooks/useAllUsers";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,6 +17,7 @@ export default function FrotaEditMinimalista() {
   const navigate = useNavigate();
   useAuth();
   const { veiculos, isLoading, updateVeiculo, uploadFoto, uploadDocumento, isUpdating, isUploading, isUploadingDocumento } = useVeiculos();
+  const { data: users } = useAllUsers();
   const { toast } = useToast();
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
@@ -227,7 +229,18 @@ export default function FrotaEditMinimalista() {
                   </div>
                   <div className="space-y-1.5">
                     <Label className={labelClass}>Responsável</Label>
-                    <Input value={form.responsavel} onChange={(e) => setForm((f) => ({ ...f, responsavel: e.target.value }))} className={inputClass} placeholder="Nome do responsável" />
+                    <Select value={form.responsavel} onValueChange={(v) => setForm((f) => ({ ...f, responsavel: v }))}>
+                      <SelectTrigger className={inputClass}>
+                        <SelectValue placeholder="Selecione o responsável" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-black/90 border-white/10 backdrop-blur-xl">
+                        {users?.map((user) => (
+                          <SelectItem key={user.id} value={user.nome} className="text-white focus:bg-white/10 focus:text-white">
+                            {user.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-1.5">
                     <Label className={labelClass}>Status</Label>
