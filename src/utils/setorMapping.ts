@@ -5,7 +5,7 @@ export const SETOR_ROLES: Record<string, UserRole[]> = {
   marketing: ['gerente_marketing', 'analista_marketing', 'assistente_marketing'],
   instalacoes: ['gerente_instalacoes', 'instalador', 'aux_instalador'],
   fabrica: ['gerente_fabril', 'gerente_producao', 'soldador', 'pintor', 'aux_pintura', 'aux_geral'],
-  administrativo: ['diretor', 'administrador', 'gerente_financeiro', 'assistente_administrativo', 'atendente']
+  administrativo: ['diretor', 'administrador', 'gerente_financeiro', 'assistente_administrativo']
 };
 
 export const SETOR_LABELS: Record<string, string> = {
