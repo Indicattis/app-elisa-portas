@@ -9,7 +9,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useRef } from "react";
-import { Upload, FileText, Trash2, Download, Loader2 } from "lucide-react";
+import { Upload, FileText, Trash2, Download, Loader2, Paperclip } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 function formatFileSize(bytes: number | null) {
   if (!bytes) return "—";
