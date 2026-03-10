@@ -1,36 +1,34 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Plan: Refactor 3 pages to use MinimalistLayout header
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+All three pages currently use a custom header with manual `AnimatedBreadcrumb` + back button + sticky header bar. They need to be wrapped in `MinimalistLayout` to match the design of `/logistica/frota`.
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+### 1. `src/pages/logistica/FrotaEditMinimalista.tsx`
+- Replace manual breadcrumb (lines 121-129), back button, and header (lines 131-153) with `MinimalistLayout`
+- Props: `title="Editar Veículo"`, `subtitle="{veiculo.nome} — {veiculo.modelo}"`, `backPath="/logistica/frota"`
+- `headerActions`: the "Salvar" button
+- `breadcrumbItems`: Home > Logística > Frota > Editar
+- Remove `mounted` state, `AnimatedBreadcrumb` import, manual `ArrowLeft` back button
+- Content (`<main>`) becomes children of `MinimalistLayout`
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+### 2. `src/pages/logistica/FrotaConferenciaMinimalista.tsx`
+- Replace manual breadcrumb (lines 108-116) and header (lines 118-133) with `MinimalistLayout`
+- Props: `title="Conferência"`, `subtitle={stepTitle}`, `backPath` handled by custom `handleBack`
+- Since this page has a custom back behavior (step-based), set `showBackButton=false` and keep an inline back button in `headerActions`, or override `backPath` dynamically
+- Actually simpler: use `MinimalistLayout` with `showBackButton={false}` and put a back button + title info in `headerActions` — but that breaks the layout pattern. Better approach: use `MinimalistLayout` with dynamic back behavior by not using the built-in back button and adding a custom one in headerActions.
+- Simplest: wrap in `MinimalistLayout` with `title="Conferência"`, `subtitle={stepTitle}`, `backPath="/logistica/frota"`, and breadcrumb. The built-in back button always goes to `/logistica/frota` which is acceptable (user can also use browser back for step navigation).
+- `breadcrumbItems`: Home > Logística > Frota > Conferência
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+### 3. `src/pages/logistica/FrotaConferenciasHistoricoMinimalista.tsx`
+- Replace manual breadcrumb (lines 28-36) and header (lines 38-58) with `MinimalistLayout`
+- Props: `title` dynamic based on loading/veiculo state, `subtitle="{count} conferências registradas"`, `backPath="/logistica/frota"`
+- `breadcrumbItems`: Home > Logística > Frota > Histórico
+- Remove `mounted` state, manual back button
+- Content stays as children
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
-
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+### Files affected
+- `src/pages/logistica/FrotaEditMinimalista.tsx`
+- `src/pages/logistica/FrotaConferenciaMinimalista.tsx`
+- `src/pages/logistica/FrotaConferenciasHistoricoMinimalista.tsx`
 
