@@ -15,9 +15,6 @@ export default function FrotaConferenciasHistoricoMinimalista() {
   const { veiculos, isLoading: loadingVeiculos } = useVeiculos();
   const { conferencias, isLoading: loadingConferencias } = useConferencias(id);
   const [selectedFoto, setSelectedFoto] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => { setMounted(true); }, []);
 
   const veiculo = veiculos?.find(v => v.id === id);
   const isLoading = loadingVeiculos || loadingConferencias;
