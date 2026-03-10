@@ -25,7 +25,7 @@ import {
 
 export default function FrotaMinimalista() {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  useAuth();
   const { veiculos, isLoading, deleteVeiculo } = useVeiculos();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [trocaOleoOpen, setTrocaOleoOpen] = useState(false);
