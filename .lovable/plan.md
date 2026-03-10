@@ -1,33 +1,36 @@
 
 
-## Plan: Replace "Aviso" column with weekly conference check indicator
+# Melhorias na página /direcao/dre/custos
 
-The current "Aviso" column (justificativa/data system) will be replaced with a "Últ. Conferência" column that shows the date of the last conference for each vehicle, color-coded:
-- **Green**: last conference is from the current week (since last Monday)
-- **Red**: no conference since last Monday (or never)
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-### Already available data
-The `useVeiculos` hook already joins `veiculos_conferencias` and maps `ultima_conferencia_data`. However, it doesn't order the conferences — need to fix this to ensure the latest one is picked.
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-### Changes
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-**1. `src/hooks/useVeiculos.ts`**
-- Fix the query to order conferences by `created_at` descending so `[0]` is the most recent
-- Remove `aviso_justificativa` and `aviso_data` from the `Veiculo` interface (clean up)
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-**2. `src/pages/logistica/FrotaMinimalista.tsx`**
-- Replace the "Aviso" column header with "Últ. Conferência"
-- Replace the amber warning icon cell with the formatted date of `ultima_conferencia_data`
-- Add a helper function `isConferenciaEmDia(date)` that checks if the date is on or after last Monday (using `startOfWeek` from date-fns with `weekStartsOn: 1`)
-- Show date text in `text-green-400` if em dia, `text-red-400` if not, or "Nunca" in red if null
-- Remove all aviso modal state, imports, and the `AvisoVeiculoModal` integration
-- Remove the `MessageSquareWarning` action button from the actions column
-- Remove the amber left border styling on rows
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-**3. `src/pages/Frota.tsx`** — Same column changes for consistency
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
 
-**4. Cleanup** — The `AvisoVeiculoModal` component and the DB columns (`aviso_justificativa`, `aviso_data`) can remain for now (no harm), or be removed via migration. I'll leave them since removing columns is destructive.
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
 
-### No database changes needed
-The conference data is already being fetched. Only frontend logic changes.
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
+
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 

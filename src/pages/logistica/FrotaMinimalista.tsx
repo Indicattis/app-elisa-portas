@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, Droplet, ClipboardCheck, AlertTriangle, MessageSquareWarning } from "lucide-react";
+import { Plus, Edit, Trash2, Droplet, ClipboardCheck } from "lucide-react";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useVeiculos } from "@/hooks/useVeiculos";
 import { StatusBadge } from "@/components/frota/StatusBadge";
 import { TrocaOleoDialog } from "@/components/frota/TrocaOleoDialog";
-import { AvisoVeiculoModal } from "@/components/frota/AvisoVeiculoModal";
-import { format } from "date-fns";
+import { format, startOfWeek, isAfter } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
+
+function isConferenciaEmDia(data: string | null | undefined): boolean {
+  if (!data) return false;
+  const lastMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
+  return isAfter(new Date(data), lastMonday);
+}
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,10 +32,9 @@ import {
 export default function FrotaMinimalista() {
   const navigate = useNavigate();
   useAuth();
-  const { veiculos, isLoading, deleteVeiculo, updateVeiculo } = useVeiculos();
+  const { veiculos, isLoading, deleteVeiculo } = useVeiculos();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [trocaOleoOpen, setTrocaOleoOpen] = useState(false);
-  const [avisoVeiculo, setAvisoVeiculo] = useState<{ id: string; nome: string; aviso: string | null; data: string | null } | null>(null);
 
   const handleRowClick = (veiculoId: string) => {
     navigate(`/logistica/frota/${veiculoId}/conferencias`);
@@ -104,7 +108,7 @@ export default function FrotaMinimalista() {
                     <TableHead className="text-xs text-white/70">Km Atual</TableHead>
                     <TableHead className="text-xs text-white/70">Próx. Troca Óleo</TableHead>
                     <TableHead className="text-xs text-white/70">Status</TableHead>
-                    <TableHead className="text-xs text-white/70">Aviso</TableHead>
+                    <TableHead className="text-xs text-white/70">Últ. Conferência</TableHead>
                     <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -113,7 +117,7 @@ export default function FrotaMinimalista() {
                     <TableRow 
                       key={veiculo.id}
                       onClick={() => handleRowClick(veiculo.id)}
-                      className={`cursor-pointer border-white/10 hover:bg-blue-500/5 text-white/90 ${veiculo.aviso_justificativa ? 'border-l-2 border-l-amber-500' : ''}`}
+                      className="cursor-pointer border-white/10 hover:bg-blue-500/5 text-white/90"
                     >
                       <TableCell>
                         {veiculo.foto_url ? (
@@ -144,25 +148,19 @@ export default function FrotaMinimalista() {
                         <StatusBadge status={veiculo.status} />
                       </TableCell>
                       <TableCell>
-                        {veiculo.aviso_justificativa ? (
-                          <AlertTriangle className="h-4 w-4 text-amber-500 animate-pulse" />
-                        ) : (
-                          <span className="text-white/30">-</span>
-                        )}
+                        {(() => {
+                          const emDia = isConferenciaEmDia(veiculo.ultima_conferencia_data);
+                          return (
+                            <span className={emDia ? 'text-green-400' : 'text-red-400'}>
+                              {veiculo.ultima_conferencia_data 
+                                ? format(new Date(veiculo.ultima_conferencia_data), "dd/MM/yy", { locale: ptBR })
+                                : 'Nunca'}
+                            </span>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setAvisoVeiculo({ id: veiculo.id, nome: veiculo.nome, aviso: veiculo.aviso_justificativa, data: veiculo.aviso_data });
-                            }}
-                          >
-                            <MessageSquareWarning className="h-3.5 w-3.5" />
-                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -209,23 +207,6 @@ export default function FrotaMinimalista() {
         veiculos={veiculos || []} 
       />
 
-      {avisoVeiculo && (
-        <AvisoVeiculoModal
-          open={!!avisoVeiculo}
-          onOpenChange={(open) => !open && setAvisoVeiculo(null)}
-          veiculoNome={avisoVeiculo.nome}
-          avisoAtual={avisoVeiculo.aviso}
-          avisoData={avisoVeiculo.data}
-          onSalvar={async (justificativa) => {
-            await updateVeiculo({ id: avisoVeiculo.id, data: { aviso_justificativa: justificativa, aviso_data: new Date().toISOString() } as any });
-            setAvisoVeiculo(null);
-          }}
-          onRemover={async () => {
-            await updateVeiculo({ id: avisoVeiculo.id, data: { aviso_justificativa: null, aviso_data: null } as any });
-            setAvisoVeiculo(null);
-          }}
-        />
-      )}
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent className="bg-black/90 border-white/10 backdrop-blur-xl">
