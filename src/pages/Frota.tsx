@@ -4,7 +4,7 @@ import { Plus, Edit, Trash2, Droplet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useVeiculos, calcularStatusVeiculo } from "@/hooks/useVeiculos";
+import { useVeiculos } from "@/hooks/useVeiculos";
 import { StatusBadge } from "@/components/frota/StatusBadge";
 import { TrocaOleoDialog } from "@/components/frota/TrocaOleoDialog";
 import { format } from "date-fns";
@@ -77,106 +77,83 @@ export default function Frota() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs">Foto</TableHead>
-                  <TableHead className="text-xs">Nome</TableHead>
-                  <TableHead className="text-xs">Placa</TableHead>
                   <TableHead className="text-xs">Modelo</TableHead>
+                  <TableHead className="text-xs">Placa</TableHead>
                   <TableHead className="text-xs">Ano</TableHead>
+                  <TableHead className="text-xs">Apelido</TableHead>
+                  <TableHead className="text-xs">Responsável</TableHead>
                   <TableHead className="text-xs">Km Atual</TableHead>
-                  <TableHead className="text-xs">Última Troca Óleo</TableHead>
                   <TableHead className="text-xs">Próx. Troca Óleo</TableHead>
-                  <TableHead className="text-xs">KM Próx. Troca</TableHead>
                   <TableHead className="text-xs">Status</TableHead>
-                  <TableHead className="text-xs">Última Conferência</TableHead>
                   <TableHead className="text-right text-xs">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {veiculos?.map((veiculo) => {
-                  const statusCalculado = calcularStatusVeiculo(veiculo);
-                  
-                  return (
-                    <TableRow 
-                      key={veiculo.id}
-                      onDoubleClick={() => handleRowDoubleClick(veiculo.id)}
-                      className="cursor-pointer hover:bg-muted/50"
-                    >
-                      <TableCell>
-                        {veiculo.foto_url ? (
-                          <img 
-                            src={veiculo.foto_url} 
-                            alt={veiculo.nome}
-                            className="w-10 h-10 object-cover rounded"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 bg-muted rounded flex items-center justify-center text-[10px] text-muted-foreground">
-                            -
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-medium">{veiculo.nome}</TableCell>
-                      <TableCell>{(veiculo as any).placa || '-'}</TableCell>
-                      <TableCell>{veiculo.modelo}</TableCell>
-                      <TableCell>{veiculo.ano}</TableCell>
-                      <TableCell>{veiculo.km_atual.toLocaleString('pt-BR')} km</TableCell>
-                      <TableCell>
-                        {veiculo.data_troca_oleo 
-                          ? format(new Date(veiculo.data_troca_oleo), "dd/MM/yy", { locale: ptBR })
-                          : '-'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        {veiculo.data_proxima_troca_oleo 
-                          ? format(new Date(veiculo.data_proxima_troca_oleo), "dd/MM/yy", { locale: ptBR })
-                          : '-'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        {veiculo.km_proxima_troca_oleo 
-                          ? `${veiculo.km_proxima_troca_oleo.toLocaleString('pt-BR')} km`
-                          : '-'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={statusCalculado} />
-                      </TableCell>
-                      <TableCell>
-                        {veiculo.ultima_conferencia_data 
-                          ? format(new Date(veiculo.ultima_conferencia_data), "dd/MM/yy", { locale: ptBR })
-                          : <span className="text-muted-foreground">Nunca</span>
-                        }
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/dashboard/logistica/frota/${veiculo.id}/editar`);
-                            }}
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteId(veiculo.id);
-                            }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                          </Button>
+                {veiculos?.map((veiculo) => (
+                  <TableRow 
+                    key={veiculo.id}
+                    onDoubleClick={() => handleRowDoubleClick(veiculo.id)}
+                    className="cursor-pointer hover:bg-muted/50"
+                  >
+                    <TableCell>
+                      {veiculo.foto_url ? (
+                        <img 
+                          src={veiculo.foto_url} 
+                          alt={veiculo.nome}
+                          className="w-10 h-10 object-cover rounded"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-muted rounded flex items-center justify-center text-[10px] text-muted-foreground">
+                          -
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                      )}
+                    </TableCell>
+                    <TableCell>{veiculo.modelo}</TableCell>
+                    <TableCell>{veiculo.placa || '-'}</TableCell>
+                    <TableCell>{veiculo.ano}</TableCell>
+                    <TableCell className="font-medium">{veiculo.nome}</TableCell>
+                    <TableCell>{veiculo.responsavel || '-'}</TableCell>
+                    <TableCell>{veiculo.km_atual.toLocaleString('pt-BR')} km</TableCell>
+                    <TableCell>
+                      {veiculo.data_proxima_troca_oleo 
+                        ? format(new Date(veiculo.data_proxima_troca_oleo), "dd/MM/yy", { locale: ptBR })
+                        : '-'
+                      }
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={veiculo.status} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/dashboard/logistica/frota/${veiculo.id}/editar`);
+                          }}
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteId(veiculo.id);
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
                 {veiculos?.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                       Nenhum veículo cadastrado
                     </TableCell>
                   </TableRow>

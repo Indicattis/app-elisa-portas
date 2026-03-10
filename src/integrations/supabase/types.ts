@@ -6778,6 +6778,7 @@ export type Database = {
           modelo: string
           nome: string
           placa: string | null
+          responsavel: string | null
           status: string
           updated_at: string
         }
@@ -6797,6 +6798,7 @@ export type Database = {
           modelo: string
           nome: string
           placa?: string | null
+          responsavel?: string | null
           status?: string
           updated_at?: string
         }
@@ -6816,6 +6818,7 @@ export type Database = {
           modelo?: string
           nome?: string
           placa?: string | null
+          responsavel?: string | null
           status?: string
           updated_at?: string
         }

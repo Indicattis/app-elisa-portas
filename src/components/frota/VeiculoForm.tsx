@@ -32,7 +32,8 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = f
       data_troca_oleo: initialData?.data_troca_oleo || '',
       km_proxima_troca_oleo: (initialData as any)?.km_proxima_troca_oleo || undefined,
       data_proxima_troca_oleo: (initialData as any)?.data_proxima_troca_oleo || '',
-      status: initialData?.status || 'pronto'
+      status: initialData?.status || 'rodando',
+      responsavel: initialData?.responsavel || ''
     }
   });
 
@@ -41,9 +42,7 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = f
     if (file) {
       setFotoFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setFotoPreview(reader.result as string);
-      };
+      reader.onloadend = () => { setFotoPreview(reader.result as string); };
       reader.readAsDataURL(file);
     }
   };
@@ -51,17 +50,11 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = f
   const handleDocumentoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.type !== 'application/pdf') {
-        alert('Apenas arquivos PDF são permitidos');
-        return;
-      }
-      if (file.size > 20 * 1024 * 1024) {
-        alert('O arquivo deve ter no máximo 20MB');
-        return;
-      }
+      if (file.type !== 'application/pdf') { alert('Apenas arquivos PDF são permitidos'); return; }
+      if (file.size > 20 * 1024 * 1024) { alert('O arquivo deve ter no máximo 20MB'); return; }
       setDocumentoFile(file);
       setDocumentoNome(file.name);
-      setDocumentoUrl(null); // Remove URL antiga quando seleciona novo arquivo
+      setDocumentoUrl(null);
     }
   };
 
@@ -72,13 +65,11 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = f
   };
 
   const onFormSubmit = async (data: VeiculoFormData) => {
-    // Sanitizar campos de data vazios (converter '' para null/undefined)
     const sanitizedData = {
       ...data,
       data_troca_oleo: data.data_troca_oleo || undefined,
       data_proxima_troca_oleo: (data as any).data_proxima_troca_oleo || undefined,
       km_proxima_troca_oleo: (data as any).km_proxima_troca_oleo || undefined,
-      // Se documento foi removido, enviar null
       documento_url: documentoUrl === null && !documentoFile ? null : undefined,
       documento_nome: documentoNome === null && !documentoFile ? null : undefined,
     };
@@ -97,25 +88,11 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = f
           <Label>Foto do Veículo</Label>
           <div className="flex items-center gap-4">
             {fotoPreview && (
-              <img 
-                src={fotoPreview} 
-                alt="Preview" 
-                className="w-24 h-24 object-cover rounded-lg border"
-              />
+              <img src={fotoPreview} alt="Preview" className="w-24 h-24 object-cover rounded-lg border" />
             )}
             <div>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={handleFotoChange}
-                className="hidden"
-                id="foto-upload"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById('foto-upload')?.click()}
-              >
+              <Input type="file" accept="image/*" onChange={handleFotoChange} className="hidden" id="foto-upload" />
+              <Button type="button" variant="outline" onClick={() => document.getElementById('foto-upload')?.click()}>
                 <Camera className="h-4 w-4 mr-2" />
                 {fotoPreview ? 'Trocar Foto' : 'Adicionar Foto'}
               </Button>
@@ -131,40 +108,20 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = f
               <FileText className="h-5 w-5 text-primary flex-shrink-0" />
               <span className="text-sm truncate flex-1">{documentoNome || 'Documento'}</span>
               {documentoUrl && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  asChild
-                >
+                <Button type="button" variant="ghost" size="sm" asChild>
                   <a href={documentoUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 </Button>
               )}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleRemoverDocumento}
-              >
+              <Button type="button" variant="ghost" size="sm" onClick={handleRemoverDocumento}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
           ) : (
             <div>
-              <Input
-                type="file"
-                accept="application/pdf"
-                onChange={handleDocumentoChange}
-                className="hidden"
-                id="documento-upload"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById('documento-upload')?.click()}
-              >
+              <Input type="file" accept="application/pdf" onChange={handleDocumentoChange} className="hidden" id="documento-upload" />
+              <Button type="button" variant="outline" onClick={() => document.getElementById('documento-upload')?.click()}>
                 <FileText className="h-4 w-4 mr-2" />
                 Anexar Documento (PDF)
               </Button>
@@ -176,31 +133,19 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = f
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="nome">Nome do Veículo *</Label>
-          <Input
-            id="nome"
-            {...register('nome', { required: 'Nome é obrigatório' })}
-            placeholder="Ex: Caminhão Azul"
-          />
+          <Label htmlFor="nome">Apelido do Veículo *</Label>
+          <Input id="nome" {...register('nome', { required: 'Apelido é obrigatório' })} placeholder="Ex: Caminhão Azul" />
           {errors.nome && <p className="text-sm text-destructive">{errors.nome.message}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="placa">Placa</Label>
-          <Input
-            id="placa"
-            {...register('placa')}
-            placeholder="Ex: ABC-1234"
-          />
+          <Input id="placa" {...register('placa')} placeholder="Ex: ABC-1234" />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="modelo">Modelo *</Label>
-          <Input
-            id="modelo"
-            {...register('modelo', { required: 'Modelo é obrigatório' })}
-            placeholder="Ex: Ford Cargo 1319"
-          />
+          <Input id="modelo" {...register('modelo', { required: 'Modelo é obrigatório' })} placeholder="Ex: Ford Cargo 1319" />
           {errors.modelo && <p className="text-sm text-destructive">{errors.modelo.message}</p>}
         </div>
 
@@ -217,6 +162,11 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = f
             })}
           />
           {errors.ano && <p className="text-sm text-destructive">{errors.ano.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="responsavel">Responsável pelo Veículo</Label>
+          <Input id="responsavel" {...register('responsavel')} placeholder="Ex: João Silva" />
         </div>
 
         <div className="space-y-2">
@@ -282,11 +232,9 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = f
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="pronto">Pronto</SelectItem>
-              <SelectItem value="atencao">Atenção</SelectItem>
-              <SelectItem value="critico">Crítico</SelectItem>
+              <SelectItem value="rodando">Rodando</SelectItem>
               <SelectItem value="mecanico">Mecânico</SelectItem>
-              <SelectItem value="em_uso">Em Uso</SelectItem>
+              <SelectItem value="parado">Parado</SelectItem>
             </SelectContent>
           </Select>
         </div>
