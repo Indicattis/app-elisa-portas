@@ -144,7 +144,7 @@ export default function FrotaEditMinimalista() {
               size="sm"
               onClick={handleSave}
               disabled={isUpdating}
-              className="bg-white/15 backdrop-blur-md border border-white/25 text-white shadow-lg shadow-white/5 hover:bg-white/25 hover:border-white/35 transition-all duration-300 text-xs gap-1"
+              className="bg-blue-500/15 backdrop-blur-md border border-blue-500/25 text-white shadow-lg shadow-blue-500/5 hover:bg-blue-500/25 hover:border-blue-400/35 transition-all duration-300 text-xs gap-1"
             >
               <Save className="h-3.5 w-3.5" />
               {isUpdating ? "Salvando..." : "Salvar"}
