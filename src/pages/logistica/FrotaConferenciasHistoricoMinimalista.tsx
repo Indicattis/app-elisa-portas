@@ -36,7 +36,7 @@ export default function FrotaConferenciasHistoricoMinimalista() {
       />
 
       <div className="relative z-10 min-h-screen flex flex-col pt-14">
-        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-primary/10">
+        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-blue-500/20">
           <div className="max-w-7xl mx-auto flex items-center gap-3">
             <button
               onClick={() => navigate("/logistica/frota")}
