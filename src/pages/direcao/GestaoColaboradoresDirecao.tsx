@@ -6,7 +6,9 @@ import { SETOR_LABELS, SETOR_ROLES } from '@/utils/setorMapping';
 import { ROLE_LABELS } from '@/types/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Users, Loader2, Plus, UserMinus, Trash2 } from 'lucide-react';
+import { Users, Loader2, Plus, UserMinus, Trash2, ArrowRightLeft } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -42,6 +44,22 @@ export default function GestaoColaboradoresDirecao() {
   const [vagaDialogRole, setVagaDialogRole] = useState<string | null>(null);
   const [vagaJustificativa, setVagaJustificativa] = useState('');
   const [creatingVaga, setCreatingVaga] = useState(false);
+
+  const [userToChangeRole, setUserToChangeRole] = useState<User | null>(null);
+  const [newRole, setNewRole] = useState('');
+  const [changingRole, setChangingRole] = useState(false);
+
+  const { data: systemRoles } = useQuery({
+    queryKey: ['system-roles-active'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('system_roles')
+        .select('key, label')
+        .eq('ativo', true)
+        .order('label');
+      return data || [];
+    },
+  });
 
   const rolesForSetor = SETOR_ROLES[selectedSetor] || [];
   const filteredUsers = (allUsers || []).filter(u => rolesForSetor.includes(u.role as any));
@@ -98,6 +116,23 @@ export default function GestaoColaboradoresDirecao() {
     setCreatingVaga(false);
     setVagaDialogRole(null);
     setVagaJustificativa('');
+  };
+
+  const handleChangeRole = async () => {
+    if (!userToChangeRole || !newRole || newRole === userToChangeRole.role) return;
+    setChangingRole(true);
+    const { error } = await supabase
+      .from('admin_users')
+      .update({ role: newRole })
+      .eq('id', userToChangeRole.id);
+    setChangingRole(false);
+    setUserToChangeRole(null);
+    if (error) {
+      toast.error('Erro ao alterar função');
+    } else {
+      toast.success('Função alterada com sucesso');
+      queryClient.invalidateQueries({ queryKey: ['all-users'] });
+    }
   };
 
   return (
@@ -213,13 +248,22 @@ export default function GestaoColaboradoresDirecao() {
                               <p className="text-sm font-medium text-white truncate">{user.nome}</p>
                               <p className="text-xs text-white/40 truncate">{user.email}</p>
                             </div>
-                            <button
-                              onClick={() => setUserToDeactivate(user)}
-                              className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
-                              title="Desativar colaborador"
-                            >
-                              <UserMinus className="w-4 h-4" />
-                            </button>
+                            <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all">
+                              <button
+                                onClick={() => { setUserToChangeRole(user); setNewRole(user.role); }}
+                                className="p-1.5 rounded-lg hover:bg-blue-500/20 text-white/30 hover:text-blue-400 transition-all"
+                                title="Alterar função"
+                              >
+                                <ArrowRightLeft className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setUserToDeactivate(user)}
+                                className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
+                                title="Desativar colaborador"
+                              >
+                                <UserMinus className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -324,6 +368,39 @@ export default function GestaoColaboradoresDirecao() {
               className="bg-blue-600 hover:bg-blue-700"
             >
               {creatingVaga ? 'Criando...' : 'Criar vaga'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change role dialog */}
+      <Dialog open={!!userToChangeRole} onOpenChange={open => !open && setUserToChangeRole(null)}>
+        <DialogContent className="bg-[#1a1a2e] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>Alterar função</DialogTitle>
+            <DialogDescription className="text-white/60">
+              Alterar a função de <strong className="text-white">{userToChangeRole?.nome}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <Select value={newRole} onValueChange={setNewRole}>
+            <SelectTrigger className="bg-white/5 border-white/10 text-white">
+              <SelectValue placeholder="Selecione a função" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#1a1a2e] border-white/10">
+              {(systemRoles || []).map(r => (
+                <SelectItem key={r.key} value={r.key} className="text-white hover:bg-white/10 focus:bg-white/10 focus:text-white">
+                  {r.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <DialogFooter>
+            <Button
+              onClick={handleChangeRole}
+              disabled={changingRole || !newRole || newRole === userToChangeRole?.role}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {changingRole ? 'Alterando...' : 'Confirmar'}
             </Button>
           </DialogFooter>
         </DialogContent>
