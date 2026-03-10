@@ -58,6 +58,15 @@ export function useVeiculos() {
         .eq('ativo', true)
         .order('nome', { ascending: true });
       
+      // Sort conferences descending so [0] is the most recent
+      if (data) {
+        data.forEach((v: any) => {
+          if (v.conferencias?.length > 1) {
+            v.conferencias.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          }
+        });
+      }
+      
       if (error) throw error;
       
       return data.map(veiculo => ({
