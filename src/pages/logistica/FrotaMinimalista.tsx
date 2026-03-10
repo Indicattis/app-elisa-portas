@@ -209,6 +209,24 @@ export default function FrotaMinimalista() {
         veiculos={veiculos || []} 
       />
 
+      {avisoVeiculo && (
+        <AvisoVeiculoModal
+          open={!!avisoVeiculo}
+          onOpenChange={(open) => !open && setAvisoVeiculo(null)}
+          veiculoNome={avisoVeiculo.nome}
+          avisoAtual={avisoVeiculo.aviso}
+          avisoData={avisoVeiculo.data}
+          onSalvar={async (justificativa) => {
+            await updateVeiculo({ id: avisoVeiculo.id, data: { aviso_justificativa: justificativa, aviso_data: new Date().toISOString() } as any });
+            setAvisoVeiculo(null);
+          }}
+          onRemover={async () => {
+            await updateVeiculo({ id: avisoVeiculo.id, data: { aviso_justificativa: null, aviso_data: null } as any });
+            setAvisoVeiculo(null);
+          }}
+        />
+      )}
+
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent className="bg-black/90 border-white/10 backdrop-blur-xl">
           <AlertDialogHeader>
