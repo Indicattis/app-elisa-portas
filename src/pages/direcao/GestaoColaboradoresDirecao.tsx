@@ -6,7 +6,7 @@ import { SETOR_LABELS, SETOR_ROLES } from '@/utils/setorMapping';
 import { ROLE_LABELS } from '@/types/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Users, Loader2, Plus, UserMinus } from 'lucide-react';
+import { Users, Loader2, Plus, UserMinus, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -36,6 +36,9 @@ export default function GestaoColaboradoresDirecao() {
   const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
   const [deactivating, setDeactivating] = useState(false);
 
+  const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
+  const [deletingRole, setDeletingRole] = useState(false);
+
   const [vagaDialogRole, setVagaDialogRole] = useState<string | null>(null);
   const [vagaJustificativa, setVagaJustificativa] = useState('');
   const [creatingVaga, setCreatingVaga] = useState(false);
@@ -46,14 +49,13 @@ export default function GestaoColaboradoresDirecao() {
   const openVagasByRole = (role: string) =>
     (vagas || []).filter(v => v.cargo === role && (v.status === 'aberta' || v.status === 'em_analise')).length;
 
-  const grouped = rolesForSetor
-    .map(role => ({
-      role,
-      label: ROLE_LABELS[role] || role,
-      users: filteredUsers.filter(u => u.role === role),
-      openVagas: openVagasByRole(role),
-    }))
-    .filter(g => g.users.length > 0 || g.openVagas > 0);
+  // Show ALL roles — no filtering
+  const grouped = rolesForSetor.map(role => ({
+    role,
+    label: ROLE_LABELS[role] || role,
+    users: filteredUsers.filter(u => u.role === role),
+    openVagas: openVagasByRole(role),
+  }));
 
   const handleDeactivate = async () => {
     if (!userToDeactivate) return;
@@ -69,6 +71,23 @@ export default function GestaoColaboradoresDirecao() {
     } else {
       toast.success('Colaborador desativado com sucesso');
       queryClient.invalidateQueries({ queryKey: ['all-users'] });
+    }
+  };
+
+  const handleDeleteRole = async () => {
+    if (!roleToDelete) return;
+    setDeletingRole(true);
+    const { error } = await supabase
+      .from('system_roles')
+      .update({ ativo: false })
+      .eq('key', roleToDelete);
+    setDeletingRole(false);
+    setRoleToDelete(null);
+    if (error) {
+      toast.error('Erro ao excluir função');
+    } else {
+      toast.success('Função excluída com sucesso');
+      queryClient.invalidateQueries({ queryKey: ['system-roles'] });
     }
   };
 
@@ -147,7 +166,8 @@ export default function GestaoColaboradoresDirecao() {
             <div className="space-y-6">
               {grouped.map(group => {
                 const total = group.users.length + group.openVagas;
-                const isFull = group.openVagas === 0;
+                const isFull = group.openVagas === 0 && group.users.length > 0;
+                const isEmpty = group.users.length === 0 && group.openVagas === 0;
                 return (
                   <div key={group.role}>
                     <div className="flex items-center gap-3 mb-3 flex-wrap">
@@ -155,19 +175,24 @@ export default function GestaoColaboradoresDirecao() {
                       <Badge
                         variant="outline"
                         className={`text-[10px] ${
-                          isFull
-                            ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
-                            : 'border-amber-500/30 text-amber-400 bg-amber-500/10'
+                          isEmpty
+                            ? 'border-white/10 text-white/30 bg-white/5'
+                            : isFull
+                              ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
+                              : 'border-amber-500/30 text-amber-400 bg-amber-500/10'
                         }`}
                       >
-                        {group.users.length}/{total}
+                        {group.users.length}/{total || 0}
                       </Badge>
-                      <button
-                        onClick={() => { setVagaDialogRole(group.role); setVagaJustificativa(''); }}
-                        className="ml-auto flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Vaga
-                      </button>
+                      {isEmpty && (
+                        <button
+                          onClick={() => setRoleToDelete(group.role)}
+                          className="ml-auto flex items-center gap-1 text-[11px] text-red-400/60 hover:text-red-400 transition-colors"
+                          title="Excluir função"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {group.users.map(user => (
@@ -212,6 +237,18 @@ export default function GestaoColaboradoresDirecao() {
                           </div>
                         </div>
                       ))}
+                      {/* Add vaga card */}
+                      <button
+                        onClick={() => { setVagaDialogRole(group.role); setVagaJustificativa(''); }}
+                        className="p-1.5 rounded-xl border border-dashed border-white/10 bg-white/[0.02] hover:bg-white/5 hover:border-blue-500/30 transition-all duration-200 cursor-pointer text-left"
+                      >
+                        <div className="flex items-center gap-3 px-3 py-2.5">
+                          <div className="h-10 w-10 rounded-full border border-dashed border-white/20 flex items-center justify-center">
+                            <Plus className="w-4 h-4 text-white/30" />
+                          </div>
+                          <p className="text-xs text-white/40">Adicionar vaga</p>
+                        </div>
+                      </button>
                     </div>
                   </div>
                 );
@@ -221,7 +258,7 @@ export default function GestaoColaboradoresDirecao() {
         </div>
       </div>
 
-      {/* Deactivate confirmation */}
+      {/* Deactivate user confirmation */}
       <AlertDialog open={!!userToDeactivate} onOpenChange={open => !open && setUserToDeactivate(null)}>
         <AlertDialogContent className="bg-[#1a1a2e] border-white/10 text-white">
           <AlertDialogHeader>
@@ -238,6 +275,28 @@ export default function GestaoColaboradoresDirecao() {
               className="bg-red-600 hover:bg-red-700 text-white"
             >
               {deactivating ? 'Desativando...' : 'Desativar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete role confirmation */}
+      <AlertDialog open={!!roleToDelete} onOpenChange={open => !open && setRoleToDelete(null)}>
+        <AlertDialogContent className="bg-[#1a1a2e] border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir função</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Tem certeza que deseja excluir a função <strong className="text-white">{roleToDelete && (ROLE_LABELS[roleToDelete as keyof typeof ROLE_LABELS] || roleToDelete)}</strong>? Ela será desativada do sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteRole}
+              disabled={deletingRole}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deletingRole ? 'Excluindo...' : 'Excluir'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
