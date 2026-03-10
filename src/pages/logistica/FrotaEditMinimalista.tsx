@@ -263,9 +263,7 @@ export default function FrotaEditMinimalista() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </main>
       </div>
-    </div>
+    </MinimalistLayout>
   );
 }

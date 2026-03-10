@@ -83,9 +83,6 @@ export default function FrotaConferenciasHistoricoMinimalista() {
               )}
             </div>
           )}
-        </main>
-      </div>
-
       <Dialog open={!!selectedFoto} onOpenChange={() => setSelectedFoto(null)}>
         <DialogContent className="max-w-4xl bg-black/90 border-white/10 backdrop-blur-xl">
           {selectedFoto && (
@@ -93,6 +90,6 @@ export default function FrotaConferenciasHistoricoMinimalista() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </MinimalistLayout>
   );
 }

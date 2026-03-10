@@ -303,9 +303,7 @@ export default function FrotaConferenciaMinimalista() {
                 </div>
               </form>
             )}
-          </div>
-        </main>
       </div>
-    </div>
+    </MinimalistLayout>
   );
 }
