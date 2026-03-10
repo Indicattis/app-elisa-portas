@@ -45,6 +45,22 @@ export default function GestaoColaboradoresDirecao() {
   const [vagaJustificativa, setVagaJustificativa] = useState('');
   const [creatingVaga, setCreatingVaga] = useState(false);
 
+  const [userToChangeRole, setUserToChangeRole] = useState<User | null>(null);
+  const [newRole, setNewRole] = useState('');
+  const [changingRole, setChangingRole] = useState(false);
+
+  const { data: systemRoles } = useQuery({
+    queryKey: ['system-roles-active'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('system_roles')
+        .select('key, label')
+        .eq('ativo', true)
+        .order('label');
+      return data || [];
+    },
+  });
+
   const rolesForSetor = SETOR_ROLES[selectedSetor] || [];
   const filteredUsers = (allUsers || []).filter(u => rolesForSetor.includes(u.role as any));
 
