@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, Droplet, ArrowLeft, LogOut } from "lucide-react";
+import { Plus, Edit, Trash2, Droplet, ArrowLeft } from "lucide-react";
 
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ import {
 
 export default function FrotaMinimalista() {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  useAuth();
   const { veiculos, isLoading, deleteVeiculo } = useVeiculos();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [trocaOleoOpen, setTrocaOleoOpen] = useState(false);
@@ -76,7 +76,7 @@ export default function FrotaMinimalista() {
                 variant="outline"
                 size="sm"
                 onClick={() => setTrocaOleoOpen(true)}
-                className="border-white/20 bg-white/10 text-white hover:bg-white/15 text-xs gap-1"
+                className="bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg shadow-white/5 hover:bg-white/20 hover:border-white/30 transition-all duration-300 text-xs gap-1"
               >
                 <Droplet className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Troca Óleo</span>
@@ -84,18 +84,10 @@ export default function FrotaMinimalista() {
               <Button
                 size="sm"
                 onClick={() => navigate('/dashboard/logistica/frota/novo')}
-                className="bg-white/10 hover:bg-white/15 text-white border border-white/20 text-xs gap-1"
+                className="bg-white/15 backdrop-blur-md border border-white/25 text-white shadow-lg shadow-white/5 hover:bg-white/25 hover:border-white/35 transition-all duration-300 text-xs gap-1"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Novo</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={signOut}
-                className="text-white/80 hover:text-white hover:bg-white/10"
-              >
-                <LogOut className="h-4 w-4" />
               </Button>
             </div>
           </div>
