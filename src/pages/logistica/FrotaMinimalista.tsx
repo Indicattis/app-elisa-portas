@@ -123,7 +123,7 @@ export default function FrotaMinimalista() {
                           <TableRow 
                             key={veiculo.id}
                             onClick={() => handleRowClick(veiculo.id)}
-                            className="cursor-pointer border-white/10 hover:bg-white/5 text-white/90"
+                            className="cursor-pointer border-white/10 hover:bg-blue-500/5 text-white/90"
                           >
                             <TableCell>
                               {veiculo.foto_url ? (
