@@ -6824,6 +6824,47 @@ export type Database = {
         }
         Relationships: []
       }
+      veiculos_arquivos: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+          tamanho: number | null
+          tipo: string | null
+          uploaded_by: string | null
+          url: string
+          veiculo_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+          tamanho?: number | null
+          tipo?: string | null
+          uploaded_by?: string | null
+          url: string
+          veiculo_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+          tamanho?: number | null
+          tipo?: string | null
+          uploaded_by?: string | null
+          url?: string
+          veiculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "veiculos_arquivos_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       veiculos_conferencias: {
         Row: {
           agua_conferida: boolean
