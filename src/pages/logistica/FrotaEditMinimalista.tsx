@@ -196,7 +196,7 @@ export default function FrotaEditMinimalista() {
                   ) : (
                     <div
                       onClick={() => docInputRef.current?.click()}
-                      className="w-full h-20 rounded-lg border border-dashed border-white/20 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-white/40 hover:bg-white/5 transition-all"
+                      className="w-full h-20 rounded-lg border border-dashed border-white/20 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-400/40 hover:bg-blue-500/5 transition-all"
                     >
                       <Upload className="h-5 w-5 text-white/40" />
                       <span className="text-xs text-white/40">{isUploadingDocumento ? "Enviando..." : "Clique para enviar documento"}</span>
