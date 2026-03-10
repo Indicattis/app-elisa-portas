@@ -1,36 +1,28 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Plan: Refactor FrotaMinimalista header to use MinimalistLayout
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+The MinhasVendas page uses `MinimalistLayout` which provides a consistent header design: a floating back button (blue gradient), animated breadcrumb, and a glassmorphism header card (`bg-white/5 backdrop-blur-xl border border-white/10`) with title + action buttons on the right.
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+FrotaMinimalista currently has a custom inline header. The fix is to wrap it in `MinimalistLayout` like MinhasVendas does.
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+### Change in `src/pages/logistica/FrotaMinimalista.tsx`
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+1. Replace the manual `AnimatedBreadcrumb`, back button, and `<header>` block with `MinimalistLayout`
+2. Pass props:
+   - `title="Frota"`
+   - `subtitle="Gerencie os veículos da empresa"`
+   - `backPath="/logistica"`
+   - `breadcrumbItems` with Home > Logística > Frota
+   - `headerActions` containing the three buttons (Conferir, Troca Óleo, Novo) — restyled to match MinhasVendas button style (`h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30 shadow-lg shadow-blue-500/30 hover:scale-[1.02]`)
+3. Move the `<main>` content into the `children` of `MinimalistLayout`
+4. Remove the now-unnecessary `AnimatedBreadcrumb` import, manual `mounted` state, and manual header/back button code
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+### Buttons styling (matching MinhasVendas)
+- **Novo**: `bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30 shadow-lg shadow-blue-500/30`
+- **Troca Óleo**: `bg-gradient-to-r from-blue-500/20 to-blue-600/20 border-blue-400/20` (secondary style)
+- **Conferir**: same secondary style as Troca Óleo
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+### Files affected
+- `src/pages/logistica/FrotaMinimalista.tsx` — refactor to use `MinimalistLayout`
 
