@@ -1013,6 +1013,77 @@ export default function PerformanceMinimalista() {
             )}
           </CardContent>
         </Card>
+
+        {/* Listagem de Cliques da Roleta WhatsApp */}
+        <Card className="bg-white/5 border-white/10">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white flex items-center gap-2">
+              <Phone className="h-5 w-5 text-green-400" />
+              Cliques da Roleta WhatsApp
+              <Badge variant="outline" className="ml-2 text-white/60 border-white/20">
+                {whatsAppClicks.length} cliques
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingWhatsApp ? (
+              <div className="text-center py-8 text-white/50">Carregando...</div>
+            ) : whatsAppClicks.length === 0 ? (
+              <div className="text-center py-8 text-white/50">Nenhum clique encontrado no período</div>
+            ) : (
+              <div className="border border-white/10 rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10 hover:bg-transparent">
+                      <TableHead className="text-white/60">Data/Hora</TableHead>
+                      <TableHead className="text-white/60">Atendente</TableHead>
+                      <TableHead className="text-white/60">Canal</TableHead>
+                      <TableHead className="text-white/60">UTM Source</TableHead>
+                      <TableHead className="text-white/60">UTM Campaign</TableHead>
+                      <TableHead className="text-white/60">Referrer</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {whatsAppClicks.map((click) => {
+                      const canal = click.fbclid
+                        ? "Facebook Ads"
+                        : click.gclid
+                        ? "Google Ads"
+                        : click.utm_source
+                        ? click.utm_source
+                        : click.traffic_channel || "Direto";
+
+                      return (
+                        <TableRow key={click.id} className="border-white/10">
+                          <TableCell className="text-white/80 text-xs">
+                            {format(new Date(click.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell className="text-white font-medium text-sm">
+                            {click.atendente_nome}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs border-white/20 text-white/70">
+                              {canal}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-white/60 text-xs">
+                            {click.utm_source || "-"}
+                          </TableCell>
+                          <TableCell className="text-white/60 text-xs">
+                            {click.utm_campaign || "-"}
+                          </TableCell>
+                          <TableCell className="text-white/60 text-xs truncate max-w-[200px]">
+                            {click.referrer || "-"}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </MinimalistLayout>
   );
