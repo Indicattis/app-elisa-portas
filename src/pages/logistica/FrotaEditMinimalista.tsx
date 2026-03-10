@@ -229,7 +229,18 @@ export default function FrotaEditMinimalista() {
                   </div>
                   <div className="space-y-1.5">
                     <Label className={labelClass}>Responsável</Label>
-                    <Input value={form.responsavel} onChange={(e) => setForm((f) => ({ ...f, responsavel: e.target.value }))} className={inputClass} placeholder="Nome do responsável" />
+                    <Select value={form.responsavel} onValueChange={(v) => setForm((f) => ({ ...f, responsavel: v }))}>
+                      <SelectTrigger className={inputClass}>
+                        <SelectValue placeholder="Selecione o responsável" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-black/90 border-white/10 backdrop-blur-xl">
+                        {users?.map((user) => (
+                          <SelectItem key={user.id} value={user.nome} className="text-white focus:bg-white/10 focus:text-white">
+                            {user.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-1.5">
                     <Label className={labelClass}>Status</Label>
