@@ -372,6 +372,39 @@ export default function GestaoColaboradoresDirecao() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Change role dialog */}
+      <Dialog open={!!userToChangeRole} onOpenChange={open => !open && setUserToChangeRole(null)}>
+        <DialogContent className="bg-[#1a1a2e] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>Alterar função</DialogTitle>
+            <DialogDescription className="text-white/60">
+              Alterar a função de <strong className="text-white">{userToChangeRole?.nome}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <Select value={newRole} onValueChange={setNewRole}>
+            <SelectTrigger className="bg-white/5 border-white/10 text-white">
+              <SelectValue placeholder="Selecione a função" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#1a1a2e] border-white/10">
+              {(systemRoles || []).map(r => (
+                <SelectItem key={r.key} value={r.key} className="text-white hover:bg-white/10 focus:bg-white/10 focus:text-white">
+                  {r.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <DialogFooter>
+            <Button
+              onClick={handleChangeRole}
+              disabled={changingRole || !newRole || newRole === userToChangeRole?.role}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {changingRole ? 'Alterando...' : 'Confirmar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MinimalistLayout>
   );
 }
