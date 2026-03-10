@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Save, Upload, Camera, FileText, X } from "lucide-react";
-import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
+import { Save, Upload, Camera, FileText, X } from "lucide-react";
+import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
