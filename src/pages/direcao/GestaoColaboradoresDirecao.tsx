@@ -118,6 +118,23 @@ export default function GestaoColaboradoresDirecao() {
     setVagaJustificativa('');
   };
 
+  const handleChangeRole = async () => {
+    if (!userToChangeRole || !newRole || newRole === userToChangeRole.role) return;
+    setChangingRole(true);
+    const { error } = await supabase
+      .from('admin_users')
+      .update({ role: newRole })
+      .eq('id', userToChangeRole.id);
+    setChangingRole(false);
+    setUserToChangeRole(null);
+    if (error) {
+      toast.error('Erro ao alterar função');
+    } else {
+      toast.success('Função alterada com sucesso');
+      queryClient.invalidateQueries({ queryKey: ['all-users'] });
+    }
+  };
+
   return (
     <MinimalistLayout
       title="Organograma RH"
