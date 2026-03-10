@@ -130,7 +130,7 @@ export default function FrotaMinimalista() {
                         {veiculos?.map((veiculo) => (
                           <TableRow 
                             key={veiculo.id}
-                            onDoubleClick={() => handleRowDoubleClick(veiculo.id)}
+                            onClick={() => handleRowClick(veiculo.id)}
                             className="cursor-pointer border-primary/10 hover:bg-primary/10 text-white/90"
                           >
                             <TableCell>

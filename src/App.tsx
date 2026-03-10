@@ -521,6 +521,7 @@ const App = () => (
                 
                 <Route path="/logistica/expedicao" element={<ProtectedRoute routeKey="logistica_hub"><ExpedicaoMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/frota" element={<ProtectedRoute routeKey="logistica_hub"><FrotaMinimalista /></ProtectedRoute>} />
+                <Route path="/logistica/frota/:id/conferencias" element={<ProtectedRoute routeKey="logistica_hub"><FrotaConferenciasHistoricoMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/frete" element={<ProtectedRoute routeKey="logistica_hub"><FreteMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/autorizados" element={<ProtectedRoute routeKey="logistica_hub"><AutorizadosLogistica /></ProtectedRoute>} />
                 <Route path="/logistica/autorizados/estado/:estadoId" element={<ProtectedRoute routeKey="logistica_hub"><EstadoAutorizadosDirecao /></ProtectedRoute>} />
