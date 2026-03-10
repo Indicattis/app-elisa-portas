@@ -17,6 +17,7 @@ export default function FrotaEditMinimalista() {
   const navigate = useNavigate();
   useAuth();
   const { veiculos, isLoading, updateVeiculo, uploadFoto, uploadDocumento, isUpdating, isUploading, isUploadingDocumento } = useVeiculos();
+  const { data: users } = useAllUsers();
   const { toast } = useToast();
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
