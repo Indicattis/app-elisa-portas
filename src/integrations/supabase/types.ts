@@ -6765,6 +6765,8 @@ export type Database = {
         Row: {
           ano: number
           ativo: boolean
+          aviso_data: string | null
+          aviso_justificativa: string | null
           created_at: string
           created_by: string | null
           data_proxima_troca_oleo: string | null
@@ -6785,6 +6787,8 @@ export type Database = {
         Insert: {
           ano: number
           ativo?: boolean
+          aviso_data?: string | null
+          aviso_justificativa?: string | null
           created_at?: string
           created_by?: string | null
           data_proxima_troca_oleo?: string | null
@@ -6805,6 +6809,8 @@ export type Database = {
         Update: {
           ano?: number
           ativo?: boolean
+          aviso_data?: string | null
+          aviso_justificativa?: string | null
           created_at?: string
           created_by?: string | null
           data_proxima_troca_oleo?: string | null

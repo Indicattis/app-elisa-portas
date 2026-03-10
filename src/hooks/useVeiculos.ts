@@ -18,6 +18,8 @@ export interface Veiculo {
   documento_url: string | null;
   documento_nome: string | null;
   ativo: boolean;
+  aviso_justificativa: string | null;
+  aviso_data: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;

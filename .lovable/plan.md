@@ -1,47 +1,36 @@
 
 
-## Plan: Add notice/warning system for vehicles (Avisos)
+# Melhorias na página /direcao/dre/custos
 
-Similar to the "Aviso de Espera" system in production orders, this adds two columns to the `veiculos` table and integrates a warning indicator + modal in the fleet list page.
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-### 1. Database Migration
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-Add two nullable columns to `veiculos`:
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-```sql
-ALTER TABLE veiculos ADD COLUMN aviso_justificativa TEXT DEFAULT NULL;
-ALTER TABLE veiculos ADD COLUMN aviso_data TIMESTAMPTZ DEFAULT NULL;
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
 ```
 
-### 2. Update `useVeiculos` hook
-
-- Add `aviso_justificativa` and `aviso_data` to the `Veiculo` interface
-- No query changes needed (already uses `select *`)
-
-### 3. Create `AvisoVeiculoModal` component
-
-Reuse the same pattern as `AvisoEsperaModal` from pedidos:
-- Props: `open`, `onOpenChange`, `veiculoNome`, `avisoAtual`, `avisoData`, `onSalvar`, `onRemover`
-- Textarea for justification, save/remove buttons
-- Shows timestamp of when notice was registered
-
-### 4. Update `FrotaMinimalista.tsx`
-
-- Add a new **Aviso** column in the table (between Status and Ações)
-- Show an amber warning icon (AlertTriangle) if `aviso_justificativa` exists, otherwise "-"
-- Add a small button in the actions column (MessageSquareWarning icon) to open the modal
-- Row gets an amber left border when notice is active: `border-l-2 border-l-amber-500`
-- Wire modal to call `updateVeiculo` with `aviso_justificativa` and `aviso_data` fields
-- On save: set both fields; on remove: set both to `null`
-
-### 5. Update `Frota.tsx` (dashboard version)
-
-Same changes as FrotaMinimalista for consistency.
-
-### Files changed
-- **Migration**: add 2 columns to `veiculos`
-- `src/hooks/useVeiculos.ts` — update interface
-- `src/components/frota/AvisoVeiculoModal.tsx` — new file
-- `src/pages/logistica/FrotaMinimalista.tsx` — add column + modal
-- `src/pages/Frota.tsx` — add column + modal
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
