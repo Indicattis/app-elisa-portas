@@ -64,130 +64,129 @@ export default function FrotaConferenciasHistoricoMinimalista() {
         { label: "Histórico" },
       ]}
     >
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400" />
-            </div>
-          ) : !veiculo ? (
-            <div className="flex items-center justify-center h-64 text-white/50">
-              Veículo não encontrado
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {/* Conferências */}
-              <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {/* Upload button */}
-              <div className="max-w-7xl mx-auto flex justify-end mb-4">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500/15 backdrop-blur-md border border-blue-500/25 text-white text-sm hover:bg-blue-500/25 hover:border-blue-400/35 transition-all disabled:opacity-50"
-                >
-                  {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                  {isUploading ? "Enviando..." : "Anexar arquivo"}
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-              </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400" />
+        </div>
+      ) : !veiculo ? (
+        <div className="flex items-center justify-center h-64 text-white/50">
+          Veículo não encontrado
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {/* Upload button */}
+          <div className="max-w-7xl mx-auto flex justify-end mb-4">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500/15 backdrop-blur-md border border-blue-500/25 text-white text-sm hover:bg-blue-500/25 hover:border-blue-400/35 transition-all disabled:opacity-50"
+            >
+              {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              {isUploading ? "Enviando..." : "Anexar arquivo"}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handleFileUpload}
+            />
+          </div>
 
-              {/* Unified Timeline */}
-              <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {timeline.map((item) => {
-                  if (item.type === 'conferencia') {
-                    const conferencia = item.data;
-                    return (
-                      <Card
-                        key={`conf-${conferencia.id}`}
-                        className="bg-white/5 border-blue-500/10 backdrop-blur-xl cursor-pointer hover:bg-blue-500/5 transition-all duration-200"
-                        onClick={() => setSelectedFoto(conferencia.foto_url)}
-                      >
-                        <CardContent className="p-4">
-                          <div className="space-y-3">
-                            <img
-                              src={conferencia.foto_url}
-                              alt="Foto da conferência"
-                              className="w-full h-48 object-cover rounded-lg"
-                            />
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs text-white/50">
-                                  {format(new Date(conferencia.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                                </span>
-                                <StatusBadge status={conferencia.status as any} />
-                              </div>
-                              <div className="text-sm space-y-1 text-white/80">
-                                <p><span className="text-white/50">Km:</span> {conferencia.km_atual.toLocaleString("pt-BR")}</p>
-                                {conferencia.data_troca_oleo && (
-                                  <p><span className="text-white/50">Troca óleo:</span> {format(new Date(conferencia.data_troca_oleo), "dd/MM/yyyy", { locale: ptBR })}</p>
-                                )}
-                                <p><span className="text-white/50">Água:</span> {conferencia.agua_conferida ? "Conferida ✓" : "Não conferida"}</p>
-                              </div>
-                            </div>
+          {/* Unified Timeline */}
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {timeline.map((item) => {
+              if (item.type === 'conferencia') {
+                const conferencia = item.data;
+                return (
+                  <Card
+                    key={`conf-${conferencia.id}`}
+                    className="bg-white/5 border-blue-500/10 backdrop-blur-xl cursor-pointer hover:bg-blue-500/5 transition-all duration-200"
+                    onClick={() => setSelectedFoto(conferencia.foto_url)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <img
+                          src={conferencia.foto_url}
+                          alt="Foto da conferência"
+                          className="w-full h-48 object-cover rounded-lg"
+                        />
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-white/50">
+                              {format(new Date(conferencia.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                            </span>
+                            <StatusBadge status={conferencia.status as any} />
                           </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  }
-
-                  const arquivo = item.data;
-                  return (
-                    <Card
-                      key={`arq-${arquivo.id}`}
-                      className="bg-white/5 border-blue-500/10 backdrop-blur-xl hover:bg-blue-500/5 transition-all duration-200"
-                    >
-                      <CardContent className="p-4">
-                        <div className="space-y-3">
-                          <div className="w-full h-48 rounded-lg bg-white/5 flex flex-col items-center justify-center gap-2">
-                            <Paperclip className="h-10 w-10 text-blue-400/60" />
-                            <Badge variant="secondary" className="bg-blue-500/15 text-blue-300 border-blue-500/20 text-[10px]">
-                              Arquivo anexado
-                            </Badge>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs text-white/50">
-                                {format(new Date(arquivo.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                              </span>
-                              <div className="flex items-center gap-1">
-                                <a
-                                  href={arquivo.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="p-1.5 rounded-md hover:bg-white/10 text-white/50 hover:text-white transition-colors"
-                                >
-                                  <Download className="h-4 w-4" />
-                                </a>
-                                <button
-                                  onClick={() => deleteArquivo(arquivo)}
-                                  disabled={isDeleting}
-                                  className="p-1.5 rounded-md hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-colors disabled:opacity-50"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                              </div>
-                            </div>
-                            <p className="text-sm text-white/90 truncate">{arquivo.nome}</p>
-                            <p className="text-xs text-white/40">{formatFileSize(arquivo.tamanho)}</p>
+                          <div className="text-sm space-y-1 text-white/80">
+                            <p><span className="text-white/50">Km:</span> {conferencia.km_atual.toLocaleString("pt-BR")}</p>
+                            {conferencia.data_troca_oleo && (
+                              <p><span className="text-white/50">Troca óleo:</span> {format(new Date(conferencia.data_troca_oleo), "dd/MM/yyyy", { locale: ptBR })}</p>
+                            )}
+                            <p><span className="text-white/50">Água:</span> {conferencia.agua_conferida ? "Conferida ✓" : "Não conferida"}</p>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-                {timeline.length === 0 && (
-                  <div className="col-span-full text-center py-12 text-white/40">
-                    Nenhum registro encontrado para este veículo
-                  </div>
-                )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              }
+
+              const arquivo = item.data;
+              return (
+                <Card
+                  key={`arq-${arquivo.id}`}
+                  className="bg-white/5 border-blue-500/10 backdrop-blur-xl hover:bg-blue-500/5 transition-all duration-200"
+                >
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="w-full h-48 rounded-lg bg-white/5 flex flex-col items-center justify-center gap-2">
+                        <Paperclip className="h-10 w-10 text-blue-400/60" />
+                        <Badge variant="secondary" className="bg-blue-500/15 text-blue-300 border-blue-500/20 text-[10px]">
+                          Arquivo anexado
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-white/50">
+                            {format(new Date(arquivo.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <a
+                              href={arquivo.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="p-1.5 rounded-md hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                            >
+                              <Download className="h-4 w-4" />
+                            </a>
+                            <button
+                              onClick={() => deleteArquivo(arquivo)}
+                              disabled={isDeleting}
+                              className="p-1.5 rounded-md hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-colors disabled:opacity-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-sm text-white/90 truncate">{arquivo.nome}</p>
+                        <p className="text-xs text-white/40">{formatFileSize(arquivo.tamanho)}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+            {timeline.length === 0 && (
+              <div className="col-span-full text-center py-12 text-white/40">
+                Nenhum registro encontrado para este veículo
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        </div>
+      )}
+
       <Dialog open={!!selectedFoto} onOpenChange={() => setSelectedFoto(null)}>
         <DialogContent className="max-w-4xl bg-black/90 border-white/10 backdrop-blur-xl">
           {selectedFoto && (
