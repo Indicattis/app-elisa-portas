@@ -1,36 +1,22 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Plan: Add "Change Role" button to user cards
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+### Changes to `src/pages/direcao/GestaoColaboradoresDirecao.tsx`
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+**1. Add state and data for role change**
+- New state: `userToChangeRole` (User | null), `newRole` (string), `changingRole` (boolean)
+- Fetch active `system_roles` with a `useQuery` call (pattern already used in many files)
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+**2. Add button next to deactivate**
+- Next to the `UserMinus` button, add a `RefreshCw` (or `ArrowRightLeft`) icon button with same hover-reveal style
+- On click, sets `userToChangeRole` to the user and opens a dialog
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+**3. Add role change dialog**
+- `Dialog` with a `Select` dropdown listing all active roles from `system_roles`
+- "Confirmar" button calls `supabase.from('admin_users').update({ role: newRole }).eq('id', user.id)` then invalidates `all-users`
+- Import `Select, SelectContent, SelectItem, SelectTrigger, SelectValue` from ui/select
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
-
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+### Files changed
+- `src/pages/direcao/GestaoColaboradoresDirecao.tsx`
 
