@@ -21,6 +21,7 @@ export function useAllUsers() {
         .from("admin_users")
         .select("*")
         .eq("ativo", true)
+        .eq("tipo_usuario", "colaborador")
         .order("nome");
 
       if (error) {
