@@ -35,7 +35,7 @@ function getInitials(name: string) {
 export default function GestaoColaboradoresDirecao() {
   const [selectedSetor, setSelectedSetor] = useState(SETOR_KEYS[0]);
   const { data: allUsers, isLoading } = useAllUsers();
-  const { vagas, createVaga } = useVagas();
+  const { vagas, createVaga, updateVagaStatus } = useVagas();
   const queryClient = useQueryClient();
 
   const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
