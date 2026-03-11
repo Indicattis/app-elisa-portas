@@ -70,7 +70,7 @@ export default function GestaoColaboradoresDirecao() {
         .from('system_roles')
         .select('id, key, label, setor, descricao, ativo, ordem')
         .eq('ativo', true)
-        .order('label');
+        .order('ordem', { ascending: true });
       return data || [];
     },
   });
