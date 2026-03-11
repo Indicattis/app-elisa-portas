@@ -76,6 +76,14 @@ export default function GestaoColaboradoresDirecao() {
   );
   const filteredUsers = (allUsers || []).filter(u => rolesForSetor.includes(u.role as any));
 
+  const getSetorCounts = (setor: string) => {
+    const roles = (SETOR_ROLES[setor] || []).filter(r => activeRoleKeys.includes(r));
+    const users = (allUsers || []).filter(u => roles.includes(u.role as any));
+    const vagasAbertas = (vagas || []).filter(v => roles.includes(v.cargo as any) && (v.status === 'aberta' || v.status === 'em_analise'));
+    const total = users.length + vagasAbertas.length;
+    return { current: users.length, total };
+  };
+
   const openVagasForRole = (role: string): Vaga[] =>
     (vagas || []).filter(v => v.cargo === role && (v.status === 'aberta' || v.status === 'em_analise'));
 
