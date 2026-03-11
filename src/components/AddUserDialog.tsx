@@ -49,6 +49,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
     role: "",
     data_nascimento: "",
     tipo_usuario: "colaborador",
+    visivel_organograma: true,
   });
   const { toast } = useToast();
 
