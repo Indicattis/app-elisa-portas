@@ -56,6 +56,7 @@ export function useVeiculos() {
           conferencias:veiculos_conferencias(created_at)
         `)
         .eq('ativo', true)
+        .order('ordem', { ascending: true })
         .order('nome', { ascending: true });
       
       // Sort conferences descending so [0] is the most recent
@@ -128,6 +129,23 @@ export function useVeiculos() {
     }
   });
 
+  const updateOrdemMutation = useMutation({
+    mutationFn: async (items: { id: string; ordem: number }[]) => {
+      const promises = items.map(item =>
+        supabase.from('veiculos').update({ ordem: item.ordem } as any).eq('id', item.id)
+      );
+      const results = await Promise.all(promises);
+      const error = results.find(r => r.error)?.error;
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['veiculos'] });
+    },
+    onError: (error: Error) => {
+      toast({ variant: 'destructive', title: 'Erro ao reordenar', description: error.message });
+    }
+  });
+
   const uploadFotoMutation = useMutation({
     mutationFn: async ({ file, veiculo_id }: { file: File; veiculo_id?: string }) => {
       const fileExt = file.name.split('.').pop();
@@ -163,6 +181,7 @@ export function useVeiculos() {
     createVeiculo: createVeiculoMutation.mutateAsync,
     updateVeiculo: updateVeiculoMutation.mutateAsync,
     deleteVeiculo: deleteVeiculoMutation.mutateAsync,
+    updateOrdem: updateOrdemMutation.mutateAsync,
     uploadFoto: uploadFotoMutation.mutateAsync,
     uploadDocumento: uploadDocumentoMutation.mutateAsync,
     isCreating: createVeiculoMutation.isPending,

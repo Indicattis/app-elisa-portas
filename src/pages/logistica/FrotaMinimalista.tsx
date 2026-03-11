@@ -1,23 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, Droplet, ClipboardCheck } from "lucide-react";
+import { Plus, Droplet, ClipboardCheck } from "lucide-react";
+import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useVeiculos } from "@/hooks/useVeiculos";
-import { StatusBadge } from "@/components/frota/StatusBadge";
+import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from "@/components/ui/table";
+import { useVeiculos, Veiculo } from "@/hooks/useVeiculos";
 import { TrocaOleoDialog } from "@/components/frota/TrocaOleoDialog";
-import { format, startOfWeek, isAfter } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { SortableVeiculoRow } from "@/components/frota/SortableVeiculoRow";
 import { useAuth } from "@/hooks/useAuth";
-
-function isConferenciaEmDia(data: string | null | undefined): boolean {
-  if (!data) return false;
-  const lastMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
-  return isAfter(new Date(data), lastMonday);
-}
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,12 +27,30 @@ import {
 export default function FrotaMinimalista() {
   const navigate = useNavigate();
   useAuth();
-  const { veiculos, isLoading, deleteVeiculo } = useVeiculos();
+  const { veiculos, isLoading, deleteVeiculo, updateOrdem } = useVeiculos();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [trocaOleoOpen, setTrocaOleoOpen] = useState(false);
+  const [orderedVeiculos, setOrderedVeiculos] = useState<Veiculo[]>([]);
 
-  const handleRowClick = (veiculoId: string) => {
-    navigate(`/logistica/frota/${veiculoId}/conferencias`);
+  useEffect(() => {
+    if (veiculos) setOrderedVeiculos(veiculos);
+  }, [veiculos]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor)
+  );
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = orderedVeiculos.findIndex((v) => v.id === active.id);
+    const newIndex = orderedVeiculos.findIndex((v) => v.id === over.id);
+    const newOrder = arrayMove(orderedVeiculos, oldIndex, newIndex);
+    setOrderedVeiculos(newOrder);
+
+    await updateOrdem(newOrder.map((v, i) => ({ id: v.id, ordem: i })));
   };
 
   const handleDelete = async () => {
@@ -96,117 +109,59 @@ export default function FrotaMinimalista() {
         <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <Table className="text-xs">
-                <TableHeader>
-                  <TableRow className="border-blue-500/10 hover:bg-white/5">
-                    <TableHead className="text-xs text-white/70">Foto</TableHead>
-                    <TableHead className="text-xs text-white/70">Modelo</TableHead>
-                    <TableHead className="text-xs text-white/70">Placa</TableHead>
-                    <TableHead className="text-xs text-white/70">Ano</TableHead>
-                    <TableHead className="text-xs text-white/70">Apelido</TableHead>
-                    <TableHead className="text-xs text-white/70">Responsável</TableHead>
-                    <TableHead className="text-xs text-white/70">Km Atual</TableHead>
-                    <TableHead className="text-xs text-white/70">Próx. Troca Óleo</TableHead>
-                    <TableHead className="text-xs text-white/70">Status</TableHead>
-                    <TableHead className="text-xs text-white/70">Últ. Conferência</TableHead>
-                    <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {veiculos?.map((veiculo) => (
-                    <TableRow 
-                      key={veiculo.id}
-                      onClick={() => handleRowClick(veiculo.id)}
-                      className="cursor-pointer border-white/10 hover:bg-blue-500/5 text-white/90"
-                    >
-                      <TableCell>
-                        {veiculo.foto_url ? (
-                          <img 
-                            src={veiculo.foto_url} 
-                            alt={veiculo.nome}
-                            className="w-10 h-10 object-cover rounded"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 bg-white/10 rounded flex items-center justify-center text-[10px] text-white/50">
-                            -
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>{veiculo.nome}</TableCell>
-                      <TableCell>{veiculo.placa || '-'}</TableCell>
-                      <TableCell>{veiculo.ano}</TableCell>
-                      <TableCell className="font-medium">{veiculo.modelo}</TableCell>
-                      <TableCell>{veiculo.responsavel || '-'}</TableCell>
-                      <TableCell>{veiculo.km_atual.toLocaleString('pt-BR')} km</TableCell>
-                      <TableCell>
-                        {veiculo.data_proxima_troca_oleo 
-                          ? format(new Date(veiculo.data_proxima_troca_oleo), "dd/MM/yy", { locale: ptBR })
-                          : '-'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={veiculo.status} />
-                      </TableCell>
-                      <TableCell>
-                        {(() => {
-                          const emDia = isConferenciaEmDia(veiculo.ultima_conferencia_data);
-                          return (
-                            <span className={emDia ? 'text-green-400' : 'text-red-400'}>
-                              {veiculo.ultima_conferencia_data 
-                                ? format(new Date(veiculo.ultima_conferencia_data), "dd/MM/yy", { locale: ptBR })
-                                : 'Nunca'}
-                            </span>
-                          );
-                        })()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-white/70 hover:text-blue-400 hover:bg-blue-500/10"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/logistica/frota/${veiculo.id}/editar`);
-                            }}
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteId(veiculo.id);
-                            }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </TableCell>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+                modifiers={[restrictToVerticalAxis]}
+              >
+                <Table className="text-xs">
+                  <TableHeader>
+                    <TableRow className="border-blue-500/10 hover:bg-white/5">
+                      <TableHead className="w-8 text-xs text-white/70"></TableHead>
+                      <TableHead className="text-xs text-white/70">Foto</TableHead>
+                      <TableHead className="text-xs text-white/70">Modelo</TableHead>
+                      <TableHead className="text-xs text-white/70">Placa</TableHead>
+                      <TableHead className="text-xs text-white/70">Ano</TableHead>
+                      <TableHead className="text-xs text-white/70">Apelido</TableHead>
+                      <TableHead className="text-xs text-white/70">Responsável</TableHead>
+                      <TableHead className="text-xs text-white/70">Km Atual</TableHead>
+                      <TableHead className="text-xs text-white/70">Próx. Troca Óleo</TableHead>
+                      <TableHead className="text-xs text-white/70">Status</TableHead>
+                      <TableHead className="text-xs text-white/70">Últ. Conferência</TableHead>
+                      <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
                     </TableRow>
-                  ))}
-                  {veiculos?.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={11} className="text-center py-8 text-white/50">
-                        Nenhum veículo cadastrado
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <SortableContext items={orderedVeiculos.map(v => v.id)} strategy={verticalListSortingStrategy}>
+                    <TableBody>
+                      {orderedVeiculos.map((veiculo) => (
+                        <SortableVeiculoRow
+                          key={veiculo.id}
+                          veiculo={veiculo}
+                          onDelete={setDeleteId}
+                        />
+                      ))}
+                      {orderedVeiculos.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={12} className="text-center py-8 text-white/50">
+                            Nenhum veículo cadastrado
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </SortableContext>
+                </Table>
+              </DndContext>
             </div>
           </CardContent>
         </Card>
       )}
 
-      <TrocaOleoDialog 
-        open={trocaOleoOpen} 
-        onOpenChange={setTrocaOleoOpen} 
-        veiculos={veiculos || []} 
+      <TrocaOleoDialog
+        open={trocaOleoOpen}
+        onOpenChange={setTrocaOleoOpen}
+        veiculos={veiculos || []}
       />
-
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent className="bg-black/90 border-white/10 backdrop-blur-xl">
