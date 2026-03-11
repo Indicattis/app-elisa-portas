@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { useAllUsers } from '@/hooks/useAllUsers';
 import { useVagas, type Vaga } from '@/hooks/useVagas';
-import { SETOR_LABELS, SETOR_ROLES } from '@/utils/setorMapping';
+import { SETOR_LABELS } from '@/utils/setorMapping';
 import { ROLE_LABELS } from '@/types/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
