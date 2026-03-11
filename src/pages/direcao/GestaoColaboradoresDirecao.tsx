@@ -44,7 +44,8 @@ export default function GestaoColaboradoresDirecao() {
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   const [deletingRole, setDeletingRole] = useState(false);
 
-  const [vagaDialogRole, setVagaDialogRole] = useState<string | null>(null);
+  const [vagaDialogOpen, setVagaDialogOpen] = useState(false);
+  const [vagaDialogRole, setVagaDialogRole] = useState<string>('');
   const [vagaJustificativa, setVagaJustificativa] = useState('');
   const [creatingVaga, setCreatingVaga] = useState(false);
 
