@@ -47,7 +47,7 @@ const roleSchema = z.object({
     .trim()
     .min(3, "O nome deve ter no mínimo 3 caracteres")
     .max(100, "O nome deve ter no máximo 100 caracteres"),
-  setor: z.string().optional(),
+  setor: z.string().min(1, "Selecione um setor"),
   descricao: z.string().trim().max(500, "A descrição deve ter no máximo 500 caracteres").optional(),
   ordem: z.number().int().min(0).default(0),
 });
@@ -68,7 +68,7 @@ export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
     defaultValues: {
       key: "",
       label: "",
-      setor: undefined,
+      setor: "",
       descricao: "",
       ordem: 0,
     },
@@ -82,7 +82,7 @@ export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
           {
             key: data.key,
             label: data.label,
-            setor: data.setor || null,
+            setor: data.setor,
             descricao: data.descricao || null,
             ordem: data.ordem,
             ativo: true,
@@ -96,6 +96,7 @@ export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["system-roles"] });
+      queryClient.invalidateQueries({ queryKey: ["system-roles-active"] });
       queryClient.invalidateQueries({ queryKey: ["role-stats"] });
       toast.success("Cargo criado com sucesso!");
       form.reset();
@@ -122,10 +123,10 @@ export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-black/90 backdrop-blur-xl border-white/10">
         <DialogHeader>
-          <DialogTitle>Criar Novo Cargo</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-white">Criar Novo Cargo</DialogTitle>
+          <DialogDescription className="text-white/50">
             Adicione um novo cargo ao sistema. A chave deve ser única e seguir o padrão snake_case.
           </DialogDescription>
         </DialogHeader>
@@ -137,17 +138,17 @@ export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
               name="key"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Chave do Cargo *</FormLabel>
+                  <FormLabel className="text-white/70">Chave do Cargo *</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="ex: analista_vendas"
                       {...field}
                       disabled={isSubmitting}
+                      className="bg-white/10 border-white/10 text-white placeholder:text-white/30"
                     />
                   </FormControl>
-                  <FormDescription>
+                  <FormDescription className="text-white/40">
                     Identificador único em snake_case (letras minúsculas, números e underscores).
-                    Esta chave será usada internamente no sistema.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -159,15 +160,16 @@ export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
               name="label"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome do Cargo *</FormLabel>
+                  <FormLabel className="text-white/70">Nome do Cargo *</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="ex: Analista de Vendas"
                       {...field}
                       disabled={isSubmitting}
+                      className="bg-white/10 border-white/10 text-white placeholder:text-white/30"
                     />
                   </FormControl>
-                  <FormDescription>
+                  <FormDescription className="text-white/40">
                     Nome amigável que será exibido na interface do usuário.
                   </FormDescription>
                   <FormMessage />
@@ -180,27 +182,27 @@ export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
               name="setor"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Setor</FormLabel>
+                  <FormLabel className="text-white/70">Setor *</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
                     disabled={isSubmitting}
                   >
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um setor (opcional)" />
+                      <SelectTrigger className="bg-white/10 border-white/10 text-white">
+                        <SelectValue placeholder="Selecione um setor" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="bg-black/95 border-white/10">
                       {Object.entries(SETOR_LABELS).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>
+                        <SelectItem key={key} value={key} className="text-white/80 focus:bg-white/10 focus:text-white">
                           {label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormDescription>
-                    Setor ao qual este cargo pertence (opcional).
+                  <FormDescription className="text-white/40">
+                    Setor ao qual este cargo pertence.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -212,16 +214,17 @@ export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
               name="descricao"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrição</FormLabel>
+                  <FormLabel className="text-white/70">Descrição</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Descrição das responsabilidades deste cargo..."
                       {...field}
                       disabled={isSubmitting}
                       rows={4}
+                      className="bg-white/10 border-white/10 text-white placeholder:text-white/30"
                     />
                   </FormControl>
-                  <FormDescription>
+                  <FormDescription className="text-white/40">
                     Descrição opcional das responsabilidades e atribuições do cargo.
                   </FormDescription>
                   <FormMessage />
@@ -234,7 +237,7 @@ export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
               name="ordem"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ordem de Exibição</FormLabel>
+                  <FormLabel className="text-white/70">Ordem de Exibição</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -242,9 +245,10 @@ export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
                       {...field}
                       onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                       disabled={isSubmitting}
+                      className="bg-white/10 border-white/10 text-white"
                     />
                   </FormControl>
-                  <FormDescription>
+                  <FormDescription className="text-white/40">
                     Ordem de exibição do cargo nas listas (menor número aparece primeiro).
                   </FormDescription>
                   <FormMessage />
@@ -258,10 +262,11 @@ export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
                 variant="outline"
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
+                className="border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white">
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Criar Cargo
               </Button>

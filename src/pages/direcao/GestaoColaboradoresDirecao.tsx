@@ -99,7 +99,7 @@ export default function GestaoColaboradoresDirecao() {
   // Show ALL roles — no filtering
   const grouped = rolesForSetor.map(role => ({
     role,
-    label: ROLE_LABELS[role] || role,
+    label: (systemRoles || []).find(r => r.key === role)?.label || ROLE_LABELS[role] || role,
     users: filteredUsers.filter(u => u.role === role),
     openVagas: openVagasByRole(role),
     openVagasList: openVagasForRole(role),

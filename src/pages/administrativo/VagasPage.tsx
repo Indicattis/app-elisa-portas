@@ -65,7 +65,7 @@ export default function VagasPage() {
 
   const grouped = rolesForSetor.map(role => ({
     role,
-    label: ROLE_LABELS[role] || role,
+    label: (systemRoles || []).find(r => r.key === role)?.label || ROLE_LABELS[role] || role,
     users: filteredUsers.filter(u => u.role === role),
     openVagas: openVagasForRole(role).length,
     openVagasList: openVagasForRole(role),
