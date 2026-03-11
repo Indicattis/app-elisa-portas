@@ -316,32 +316,27 @@ export default function GestaoColaboradoresDirecao() {
                           </div>
                         </div>
                       ))}
-                      {/* Open vacancy placeholders */}
-                      {Array.from({ length: group.openVagas }).map((_, i) => (
+                      {/* Open vacancy placeholders with cancel */}
+                      {group.openVagasList.map((vaga) => (
                         <div
-                          key={`vaga-${i}`}
-                          className="p-1.5 rounded-xl border border-dashed border-amber-500/20 bg-amber-500/5"
+                          key={vaga.id}
+                          className="group/vaga p-1.5 rounded-xl border border-dashed border-amber-500/20 bg-amber-500/5 relative"
                         >
                           <div className="flex items-center gap-3 px-3 py-2.5">
                             <div className="h-10 w-10 rounded-full border border-dashed border-amber-500/30 flex items-center justify-center">
                               <Plus className="w-4 h-4 text-amber-500/50" />
                             </div>
-                            <p className="text-xs text-amber-400/70">Vaga aberta</p>
+                            <p className="text-xs text-amber-400/70 flex-1">Vaga aberta</p>
+                            <button
+                              onClick={() => handleCancelVaga(vaga.id)}
+                              className="opacity-0 group-hover/vaga:opacity-100 p-1 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
+                              title="Cancelar vaga"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       ))}
-                      {/* Add vaga card */}
-                      <button
-                        onClick={() => { setVagaDialogRole(group.role); setVagaJustificativa(''); }}
-                        className="p-1.5 rounded-xl border border-dashed border-white/10 bg-white/[0.02] hover:bg-white/5 hover:border-blue-500/30 transition-all duration-200 cursor-pointer text-left"
-                      >
-                        <div className="flex items-center gap-3 px-3 py-2.5">
-                          <div className="h-10 w-10 rounded-full border border-dashed border-white/20 flex items-center justify-center">
-                            <Plus className="w-4 h-4 text-white/30" />
-                          </div>
-                          <p className="text-xs text-white/40">Adicionar vaga</p>
-                        </div>
-                      </button>
                     </div>
                   </div>
                 );
