@@ -1,36 +1,36 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Plano: Adicionar seção "Observação da Venda" abaixo dos Produtos da Venda
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+### O que será feito
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+Adicionar um novo `Card` entre a seção "Produtos da Venda" (linha ~702) e "Medidas das Portas de Enrolar" (linha ~704) no arquivo `PedidoViewMinimalista.tsx`.
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+### Detalhes
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+O campo `observacoes_venda` já é buscado na query da venda (linha 192) e está disponível em `pedido.venda.observacoes_venda`. A seção só será exibida quando houver observação preenchida.
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+**Arquivo**: `src/pages/administrativo/PedidoViewMinimalista.tsx`
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
+Após a linha 702 (fechamento do card de Produtos da Venda), inserir:
 
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
+```tsx
+{pedido.venda?.observacoes_venda && (
+  <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+    <CardHeader className="pb-3">
+      <CardTitle className="text-sm flex items-center gap-2 text-white">
+        <FileText className="w-4 h-4" />
+        Observação da Venda
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <p className="text-sm text-white/80 whitespace-pre-wrap bg-white/5 p-3 rounded-md">
+        {pedido.venda.observacoes_venda}
+      </p>
+    </CardContent>
+  </Card>
+)}
 ```
 
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+O estilo segue o padrão visual já usado nas demais seções da página (cores, backdrop, borders).
 
