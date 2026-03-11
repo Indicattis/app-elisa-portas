@@ -181,6 +181,7 @@ export type Database = {
           tipo_usuario: string
           updated_at: string
           user_id: string
+          visivel_organograma: boolean
         }
         Insert: {
           ativo?: boolean
@@ -203,6 +204,7 @@ export type Database = {
           tipo_usuario?: string
           updated_at?: string
           user_id: string
+          visivel_organograma?: boolean
         }
         Update: {
           ativo?: boolean
@@ -225,6 +227,7 @@ export type Database = {
           tipo_usuario?: string
           updated_at?: string
           user_id?: string
+          visivel_organograma?: boolean
         }
         Relationships: [
           {

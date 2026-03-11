@@ -106,7 +106,8 @@ serve(async (req) => {
       cpf,
       eh_colaborador,
       tipo_usuario,
-      em_teste
+      em_teste,
+      visivel_organograma
     } = await req.json();
 
     if (!email || !password || !nome || !role) {
@@ -159,6 +160,7 @@ serve(async (req) => {
         eh_colaborador: eh_colaborador !== undefined ? eh_colaborador : false,
         tipo_usuario: tipo_usuario || 'colaborador',
         em_teste: em_teste !== undefined ? em_teste : false,
+        visivel_organograma: visivel_organograma !== undefined ? visivel_organograma : true,
       });
 
     if (insertError) {

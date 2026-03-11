@@ -17,12 +17,14 @@ export function useAllUsers() {
   return useQuery({
     queryKey: ["all-users"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const query = supabase
         .from("admin_users")
         .select("*")
         .eq("ativo", true)
-        .eq("tipo_usuario", "colaborador")
-        .order("nome");
+        .eq("tipo_usuario", "colaborador");
+
+      // Filter by visivel_organograma (column added via migration, not yet in generated types)
+      const { data, error } = await (query as any).eq("visivel_organograma", true).order("nome");
 
       if (error) {
         console.error("Erro ao buscar usuários:", error);

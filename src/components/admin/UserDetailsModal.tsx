@@ -15,6 +15,7 @@ import {
   Building2, 
   CreditCard, 
   User,
+  Users,
   Clock,
   DollarSign
 } from "lucide-react";
@@ -36,6 +37,7 @@ interface AdminUser {
   created_at: string;
   updated_at: string;
   tipo_usuario?: string;
+  visivel_organograma?: boolean;
 }
 
 interface UserDetailsModalProps {
@@ -45,9 +47,10 @@ interface UserDetailsModalProps {
   roleLabel: string;
   onAvatarUpdate?: (userId: string, newAvatarUrl: string | null) => void;
   onToggleAtivo?: (userId: string, novoStatus: boolean) => void;
+  onToggleVisivelOrganograma?: (userId: string, novoStatus: boolean) => void;
 }
 
-export function UserDetailsModal({ open, onOpenChange, user, roleLabel, onAvatarUpdate, onToggleAtivo }: UserDetailsModalProps) {
+export function UserDetailsModal({ open, onOpenChange, user, roleLabel, onAvatarUpdate, onToggleAtivo, onToggleVisivelOrganograma }: UserDetailsModalProps) {
   if (!user) return null;
 
   const formatCPF = (cpf: string | null) => {
@@ -198,6 +201,19 @@ export function UserDetailsModal({ open, onOpenChange, user, roleLabel, onAvatar
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Visível no Organograma */}
+          <div className="flex items-center justify-between pt-4 border-t border-border">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Visível no Organograma</span>
+            </div>
+            <Switch
+              checked={user.visivel_organograma ?? true}
+              onCheckedChange={(checked) => onToggleVisivelOrganograma?.(user.id, checked)}
+              className="data-[state=checked]:bg-primary"
+            />
           </div>
 
           {/* Datas de Sistema */}

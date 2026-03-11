@@ -1,0 +1,1 @@
+ALTER TABLE public.admin_users ADD COLUMN visivel_organograma boolean NOT NULL DEFAULT true;

@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { Plus, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 const errorTranslations: Record<string, string> = {
   "A user with this email address has already been registered":
@@ -48,6 +49,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
     role: "",
     data_nascimento: "",
     tipo_usuario: "colaborador",
+    visivel_organograma: true,
   });
   const { toast } = useToast();
 
@@ -87,6 +89,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
           role: formData.role,
           data_nascimento: formData.data_nascimento || null,
           tipo_usuario: formData.tipo_usuario,
+          visivel_organograma: formData.visivel_organograma,
         },
       });
 
@@ -121,6 +124,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
         role: "",
         data_nascimento: "",
         tipo_usuario: "colaborador",
+        visivel_organograma: true,
       });
       setOpen(false);
       onUserAdded();
@@ -252,6 +256,21 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
                   <SelectItem value="metamorfo">Metamorfo</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="visivel_organograma" className="text-right">
+                Organograma
+              </Label>
+              <div className="col-span-3 flex items-center gap-2">
+                <Switch
+                  id="visivel_organograma"
+                  checked={formData.visivel_organograma}
+                  onCheckedChange={(checked) => setFormData({ ...formData, visivel_organograma: checked })}
+                />
+                <span className="text-sm text-muted-foreground">
+                  Visível no organograma
+                </span>
+              </div>
             </div>
           </div>
           <DialogFooter>
