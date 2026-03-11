@@ -181,6 +181,7 @@ export function useVeiculos() {
     createVeiculo: createVeiculoMutation.mutateAsync,
     updateVeiculo: updateVeiculoMutation.mutateAsync,
     deleteVeiculo: deleteVeiculoMutation.mutateAsync,
+    updateOrdem: updateOrdemMutation.mutateAsync,
     uploadFoto: uploadFotoMutation.mutateAsync,
     uploadDocumento: uploadDocumentoMutation.mutateAsync,
     isCreating: createVeiculoMutation.isPending,
