@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { Plus, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 const errorTranslations: Record<string, string> = {
   "A user with this email address has already been registered":
