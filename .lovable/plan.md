@@ -1,21 +1,36 @@
 
 
-## Ordenação de funções com drag and drop em /direcao/gestao-colaboradores
+# Melhorias na página /direcao/dre/custos
 
-A tabela `system_roles` já possui coluna `ordem`. O plano é tornar os blocos de função (groups) arrastáveis dentro do setor selecionado usando `@dnd-kit`.
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-### Mudanças em `GestaoColaboradoresDirecao.tsx`
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-1. **Ordenar `grouped` por `ordem`** — a query já busca `ordem`, mas o array `rolesForSetor` não respeita essa ordenação. Ordenar com base no campo `ordem` do `system_roles`.
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-2. **Envolver a lista de grupos com `DndContext` + `SortableContext`** — cada grupo de função será um item sortable (id = role key).
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-3. **Criar componente `SortableRoleGroup`** — extrai o bloco de cada função (header + grid de cards) para um componente que usa `useSortable`, com um handle de drag (ícone `GripVertical`) no header da função.
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-4. **`handleDragEnd`** — ao soltar, reordena o array e faz `UPDATE` em batch na tabela `system_roles` atualizando o campo `ordem` de cada role do setor, depois invalida a query.
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
 
-5. **Atualizar a query `system-roles-active`** para ordenar por `ordem` em vez de `label`.
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
 
-### Arquivos editados
-- `src/pages/direcao/GestaoColaboradoresDirecao.tsx` — adicionar DnD nos grupos de funções + persistir ordem
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
+
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 

@@ -6,12 +6,17 @@ import { SETOR_LABELS, SETOR_ROLES } from '@/utils/setorMapping';
 import { ROLE_LABELS } from '@/types/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Users, Loader2, Plus, UserMinus, Trash2, ArrowRightLeft, Pencil, X } from 'lucide-react';
+import { Users, Loader2, Plus, UserMinus, Trash2, ArrowRightLeft, Pencil, X, GripVertical } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import {
+  DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors,
+} from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { CreateRoleModal } from '@/components/admin/CreateRoleModal';
 import { EditRoleModal } from '@/components/admin/EditRoleModal';
 import {
@@ -29,6 +34,156 @@ const SETOR_KEYS = Object.keys(SETOR_LABELS);
 
 function getInitials(name: string) {
   return name.split(' ').map(n => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+}
+
+interface RoleGroup {
+  role: string;
+  label: string;
+  users: User[];
+  openVagas: number;
+  openVagasList: Vaga[];
+}
+
+interface SortableRoleGroupProps {
+  group: RoleGroup;
+  systemRoles: { id: string; key: string; label: string; setor: string | null; descricao: string | null; ativo: boolean; ordem: number }[];
+  onEditRole: (role: any) => void;
+  onDeleteRole: (roleKey: string) => void;
+  onDeactivateUser: (user: User) => void;
+  onChangeUserRole: (user: User) => void;
+  onCancelVaga: (vagaId: string) => void;
+}
+
+function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDeactivateUser, onChangeUserRole, onCancelVaga }: SortableRoleGroupProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: group.role });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 10 : 'auto' as const,
+  };
+
+  const total = group.users.length + group.openVagas;
+  const isFull = group.openVagas === 0 && group.users.length > 0;
+  const isEmpty = group.users.length === 0 && group.openVagas === 0;
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div className="flex items-center gap-3 mb-3 flex-wrap">
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-1 text-white/30 hover:text-white/60 transition-all touch-none"
+          title="Arrastar para reordenar"
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
+        <h2 className="text-sm font-semibold text-white/80">{group.label}</h2>
+        <Badge
+          variant="outline"
+          className={`text-[10px] ${
+            isEmpty
+              ? 'border-white/10 text-white/30 bg-white/5'
+              : isFull
+                ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
+                : 'border-amber-500/30 text-amber-400 bg-amber-500/10'
+          }`}
+        >
+          {group.users.length}/{total || 0}
+        </Badge>
+        <button
+          onClick={() => {
+            const role = systemRoles.find(r => r.key === group.role);
+            if (role) onEditRole(role);
+          }}
+          className="p-1 rounded hover:bg-white/10 text-white/30 hover:text-white/70 transition-all"
+          title="Editar função"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+        </button>
+        {isEmpty && (
+          <button
+            onClick={() => onDeleteRole(group.role)}
+            className="ml-auto flex items-center gap-1 text-[11px] text-red-400/60 hover:text-red-400 transition-colors"
+            title="Excluir função"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {group.users.map(user => (
+          <div
+            key={user.id}
+            className={`group p-1.5 rounded-xl backdrop-blur-xl hover:bg-white/[0.08] transition-all duration-200 ${
+              user.em_teste
+                ? "bg-blue-500/10 border border-blue-500/30"
+                : "bg-white/5 border border-white/10"
+            }`}
+          >
+            <div className="flex items-center gap-3 px-3 py-2.5">
+              <Avatar className={`h-10 w-10 border ${user.em_teste ? "border-blue-500/30" : "border-white/10"}`}>
+                {user.foto_perfil_url ? (
+                  <AvatarImage src={user.foto_perfil_url} alt={user.nome} />
+                ) : null}
+                <AvatarFallback className={`text-xs font-medium ${user.em_teste ? "bg-blue-500/30 text-blue-200" : "bg-blue-600/20 text-blue-300"}`}>
+                  {getInitials(user.nome)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-white truncate">{user.nome}</p>
+                  {user.em_teste && (
+                    <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 text-[10px] px-1.5 py-0">
+                      Em teste
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-white/40 truncate">{user.email}</p>
+              </div>
+              <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all">
+                <button
+                  onClick={() => onChangeUserRole(user)}
+                  className="p-1.5 rounded-lg hover:bg-blue-500/20 text-white/30 hover:text-blue-400 transition-all"
+                  title="Alterar função"
+                >
+                  <ArrowRightLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onDeactivateUser(user)}
+                  className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
+                  title="Desativar colaborador"
+                >
+                  <UserMinus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {group.openVagasList.map((vaga) => (
+          <div
+            key={vaga.id}
+            className="group/vaga p-1.5 rounded-xl border border-dashed border-amber-500/20 bg-amber-500/5 relative"
+          >
+            <div className="flex items-center gap-3 px-3 py-2.5">
+              <div className="h-10 w-10 rounded-full border border-dashed border-amber-500/30 flex items-center justify-center">
+                <Plus className="w-4 h-4 text-amber-500/50" />
+              </div>
+              <p className="text-xs text-amber-400/70 flex-1">Vaga aberta</p>
+              <button
+                onClick={() => onCancelVaga(vaga.id)}
+                className="opacity-0 group-hover/vaga:opacity-100 p-1 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
+                title="Cancelar vaga"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function GestaoColaboradoresDirecao() {
@@ -65,7 +220,7 @@ export default function GestaoColaboradoresDirecao() {
         .from('system_roles')
         .select('id, key, label, setor, descricao, ativo, ordem')
         .eq('ativo', true)
-        .order('label');
+        .order('ordem', { ascending: true });
       return data || [];
     },
   });
@@ -77,7 +232,13 @@ export default function GestaoColaboradoresDirecao() {
     const dynamic = (systemRoles || [])
       .filter(r => r.setor === setor && !hardcoded.includes(r.key))
       .map(r => r.key);
-    return [...hardcoded, ...dynamic];
+    const all = [...hardcoded, ...dynamic];
+    // Sort by ordem from systemRoles
+    return all.sort((a, b) => {
+      const ordemA = (systemRoles || []).find(r => r.key === a)?.ordem ?? 999;
+      const ordemB = (systemRoles || []).find(r => r.key === b)?.ordem ?? 999;
+      return ordemA - ordemB;
+    });
   };
 
   const rolesForSetor = getRolesForSetor(selectedSetor);
@@ -96,7 +257,6 @@ export default function GestaoColaboradoresDirecao() {
 
   const openVagasByRole = (role: string) => openVagasForRole(role).length;
 
-  // Show ALL roles — no filtering
   const grouped = rolesForSetor.map(role => ({
     role,
     label: (systemRoles || []).find(r => r.key === role)?.label || ROLE_LABELS[role] || role,
@@ -104,6 +264,44 @@ export default function GestaoColaboradoresDirecao() {
     openVagas: openVagasByRole(role),
     openVagasList: openVagasForRole(role),
   }));
+
+  // DnD for role ordering
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const handleRoleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = rolesForSetor.indexOf(active.id as string);
+    const newIndex = rolesForSetor.indexOf(over.id as string);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const newOrder = [...rolesForSetor];
+    const [moved] = newOrder.splice(oldIndex, 1);
+    newOrder.splice(newIndex, 0, moved);
+
+    // Optimistic update: update systemRoles cache
+    const updates = newOrder.map((roleKey, index) => {
+      const sr = (systemRoles || []).find(r => r.key === roleKey);
+      return sr ? { id: sr.id, ordem: index + 1 } : null;
+    }).filter(Boolean) as { id: string; ordem: number }[];
+
+    // Optimistic cache update
+    queryClient.setQueryData(['system-roles-active'], (old: typeof systemRoles) =>
+      (old || []).map(r => {
+        const upd = updates.find(u => u.id === r.id);
+        return upd ? { ...r, ordem: upd.ordem } : r;
+      })
+    );
+
+    // Persist to DB
+    for (const u of updates) {
+      await supabase.from('system_roles').update({ ordem: u.ordem }).eq('id', u.id);
+    }
+    queryClient.invalidateQueries({ queryKey: ['system-roles-active'] });
+  };
 
   const handleDeactivate = async () => {
     if (!userToDeactivate) return;
@@ -273,122 +471,24 @@ export default function GestaoColaboradoresDirecao() {
               <p className="text-sm">Nenhum colaborador neste setor</p>
             </div>
           ) : (
-             <div className="space-y-6">
-              {grouped.map(group => {
-                const total = group.users.length + group.openVagas;
-                const isFull = group.openVagas === 0 && group.users.length > 0;
-                const isEmpty = group.users.length === 0 && group.openVagas === 0;
-                return (
-                  <div key={group.role}>
-                    <div className="flex items-center gap-3 mb-3 flex-wrap">
-                      <h2 className="text-sm font-semibold text-white/80">{group.label}</h2>
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] ${
-                          isEmpty
-                            ? 'border-white/10 text-white/30 bg-white/5'
-                            : isFull
-                              ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
-                              : 'border-amber-500/30 text-amber-400 bg-amber-500/10'
-                        }`}
-                      >
-                        {group.users.length}/{total || 0}
-                      </Badge>
-                      <button
-                        onClick={() => {
-                          const role = (systemRoles || []).find(r => r.key === group.role);
-                          if (role) setEditingRole(role);
-                        }}
-                        className="p-1 rounded hover:bg-white/10 text-white/30 hover:text-white/70 transition-all"
-                        title="Editar função"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                      {isEmpty && (
-                        <button
-                          onClick={() => setRoleToDelete(group.role)}
-                          className="ml-auto flex items-center gap-1 text-[11px] text-red-400/60 hover:text-red-400 transition-colors"
-                          title="Excluir função"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {group.users.map(user => (
-                        <div
-                          key={user.id}
-                          className={`group p-1.5 rounded-xl backdrop-blur-xl hover:bg-white/[0.08] transition-all duration-200 ${
-                            user.em_teste
-                              ? "bg-blue-500/10 border border-blue-500/30"
-                              : "bg-white/5 border border-white/10"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3 px-3 py-2.5">
-                            <Avatar className={`h-10 w-10 border ${user.em_teste ? "border-blue-500/30" : "border-white/10"}`}>
-                              {user.foto_perfil_url ? (
-                                <AvatarImage src={user.foto_perfil_url} alt={user.nome} />
-                              ) : null}
-                              <AvatarFallback className={`text-xs font-medium ${user.em_teste ? "bg-blue-500/30 text-blue-200" : "bg-blue-600/20 text-blue-300"}`}>
-                                {getInitials(user.nome)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-medium text-white truncate">{user.nome}</p>
-                                {user.em_teste && (
-                                  <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 text-[10px] px-1.5 py-0">
-                                    Em teste
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-xs text-white/40 truncate">{user.email}</p>
-                            </div>
-                            <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all">
-                              <button
-                                onClick={() => { setUserToChangeRole(user); setNewRole(user.role); }}
-                                className="p-1.5 rounded-lg hover:bg-blue-500/20 text-white/30 hover:text-blue-400 transition-all"
-                                title="Alterar função"
-                              >
-                                <ArrowRightLeft className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => setUserToDeactivate(user)}
-                                className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
-                                title="Desativar colaborador"
-                              >
-                                <UserMinus className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      {/* Open vacancy placeholders with cancel */}
-                      {group.openVagasList.map((vaga) => (
-                        <div
-                          key={vaga.id}
-                          className="group/vaga p-1.5 rounded-xl border border-dashed border-amber-500/20 bg-amber-500/5 relative"
-                        >
-                          <div className="flex items-center gap-3 px-3 py-2.5">
-                            <div className="h-10 w-10 rounded-full border border-dashed border-amber-500/30 flex items-center justify-center">
-                              <Plus className="w-4 h-4 text-amber-500/50" />
-                            </div>
-                            <p className="text-xs text-amber-400/70 flex-1">Vaga aberta</p>
-                            <button
-                              onClick={() => handleCancelVaga(vaga.id)}
-                              className="opacity-0 group-hover/vaga:opacity-100 p-1 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
-                              title="Cancelar vaga"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+             <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleRoleDragEnd}>
+               <SortableContext items={rolesForSetor} strategy={verticalListSortingStrategy}>
+                 <div className="space-y-6">
+                   {grouped.map(group => (
+                     <SortableRoleGroup
+                       key={group.role}
+                       group={group}
+                       systemRoles={systemRoles || []}
+                       onEditRole={setEditingRole}
+                       onDeleteRole={setRoleToDelete}
+                       onDeactivateUser={setUserToDeactivate}
+                       onChangeUserRole={(user) => { setUserToChangeRole(user); setNewRole(user.role); }}
+                       onCancelVaga={handleCancelVaga}
+                     />
+                   ))}
+                 </div>
+               </SortableContext>
+             </DndContext>
           )}
         </div>
       </div>
