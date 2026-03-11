@@ -1,0 +1,1 @@
+ALTER TABLE public.admin_users ADD COLUMN IF NOT EXISTS em_teste boolean NOT NULL DEFAULT false;

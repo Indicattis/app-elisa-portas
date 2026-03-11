@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Users, Loader2, Plus, UserPlus } from "lucide-react";
 
@@ -10,7 +11,7 @@ import { useAllUsers } from "@/hooks/useAllUsers";
 import { useVagas, type Vaga } from "@/hooks/useVagas";
 import { SETOR_LABELS, SETOR_ROLES } from "@/utils/setorMapping";
 import { ROLE_LABELS } from "@/types/permissions";
-import { PreencherVagaDialog } from "@/components/vagas/PreencherVagaDialog";
+
 
 const SETOR_KEYS = Object.keys(SETOR_LABELS);
 
@@ -20,13 +21,10 @@ function getInitials(name: string) {
 
 export default function VagasPage() {
   const [selectedSetor, setSelectedSetor] = useState(SETOR_KEYS[0]);
+  const navigate = useNavigate();
   const { data: allUsers, isLoading } = useAllUsers();
-  const { vagas, updateVagaStatus } = useVagas();
+  const { vagas } = useVagas();
   const queryClient = useQueryClient();
-
-  // Dialog Preencher Vaga
-  const [preencherVagaId, setPreencherVagaId] = useState<string | null>(null);
-  const [preencherVagaCargo, setPreencherVagaCargo] = useState("");
 
   const { data: systemRoles } = useQuery({
     queryKey: ["system-roles-active"],
@@ -67,17 +65,7 @@ export default function VagasPage() {
   }));
 
   const handlePreencherClick = (vaga: Vaga) => {
-    setPreencherVagaId(vaga.id);
-    setPreencherVagaCargo(vaga.cargo);
-  };
-
-  const handlePreencherSuccess = async () => {
-    if (preencherVagaId) {
-      await updateVagaStatus(preencherVagaId, "preenchida");
-    }
-    setPreencherVagaId(null);
-    setPreencherVagaCargo("");
-    queryClient.invalidateQueries({ queryKey: ["all-users"] });
+    navigate(`/administrativo/rh-dp/vagas/preencher/${vaga.id}`);
   };
 
   return (
@@ -229,18 +217,6 @@ export default function VagasPage() {
         </div>
       </div>
 
-      {/* Dialog Preencher Vaga */}
-      <PreencherVagaDialog
-        open={!!preencherVagaId}
-        onOpenChange={(open) => {
-          if (!open) {
-            setPreencherVagaId(null);
-            setPreencherVagaCargo("");
-          }
-        }}
-        defaultRole={preencherVagaCargo}
-        onSuccess={handlePreencherSuccess}
-      />
     </MinimalistLayout>
   );
 }
