@@ -17,7 +17,6 @@ interface ConferenciaFormProps {
   onSubmit: (data: ConferenciaFormData) => Promise<void>;
   onCancel: () => void;
   isSubmitting?: boolean;
-  initialDataTrocaOleo?: string;
   initialKmAtual?: number;
 }
 
