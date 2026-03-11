@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { useAllUsers } from '@/hooks/useAllUsers';
-import { useVagas } from '@/hooks/useVagas';
+import { useVagas, type Vaga } from '@/hooks/useVagas';
+import { X } from 'lucide-react';
 import { SETOR_LABELS, SETOR_ROLES } from '@/utils/setorMapping';
 import { ROLE_LABELS } from '@/types/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
