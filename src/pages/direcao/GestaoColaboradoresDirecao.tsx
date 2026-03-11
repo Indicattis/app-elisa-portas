@@ -71,13 +71,20 @@ export default function GestaoColaboradoresDirecao() {
   });
 
   const activeRoleKeys = (systemRoles || []).map(r => r.key);
-  const rolesForSetor = (SETOR_ROLES[selectedSetor] || []).filter(
-    role => activeRoleKeys.includes(role)
-  );
+
+  const getRolesForSetor = (setor: string) => {
+    const hardcoded = (SETOR_ROLES[setor] || []).filter(r => activeRoleKeys.includes(r));
+    const dynamic = (systemRoles || [])
+      .filter(r => r.setor === setor && !hardcoded.includes(r.key))
+      .map(r => r.key);
+    return [...hardcoded, ...dynamic];
+  };
+
+  const rolesForSetor = getRolesForSetor(selectedSetor);
   const filteredUsers = (allUsers || []).filter(u => rolesForSetor.includes(u.role as any));
 
   const getSetorCounts = (setor: string) => {
-    const roles = (SETOR_ROLES[setor] || []).filter(r => activeRoleKeys.includes(r));
+    const roles = getRolesForSetor(setor);
     const users = (allUsers || []).filter(u => roles.includes(u.role as any));
     const vagasAbertas = (vagas || []).filter(v => roles.includes(v.cargo as any) && (v.status === 'aberta' || v.status === 'em_analise'));
     const total = users.length + vagasAbertas.length;
@@ -92,7 +99,7 @@ export default function GestaoColaboradoresDirecao() {
   // Show ALL roles — no filtering
   const grouped = rolesForSetor.map(role => ({
     role,
-    label: ROLE_LABELS[role] || role,
+    label: (systemRoles || []).find(r => r.key === role)?.label || ROLE_LABELS[role] || role,
     users: filteredUsers.filter(u => u.role === role),
     openVagas: openVagasByRole(role),
     openVagasList: openVagasForRole(role),
