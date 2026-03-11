@@ -106,7 +106,8 @@ serve(async (req) => {
       cpf,
       eh_colaborador,
       tipo_usuario,
-      em_teste
+      em_teste,
+      visivel_organograma
     } = await req.json();
 
     if (!email || !password || !nome || !role) {
