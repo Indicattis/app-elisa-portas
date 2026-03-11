@@ -1,36 +1,34 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Correções: Funções dinâmicas na sidebar + Modal de criação
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+### Problema 1: Função criada não aparece no setor
+O código em `GestaoColaboradoresDirecao.tsx` (e `VagasPage.tsx`) usa o mapeamento **hardcoded** `SETOR_ROLES` do `setorMapping.ts` para determinar quais roles pertencem a cada setor. Funções criadas dinamicamente via `system_roles` (que têm coluna `setor`) são ignoradas porque não estão nesse mapeamento estático.
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+**Solução**: Alterar a lógica de `rolesForSetor` para combinar os roles do `SETOR_ROLES` com os roles vindos da tabela `system_roles` que tenham o mesmo setor. Ou seja, para um dado setor, os roles válidos serão a união de `SETOR_ROLES[setor]` com `systemRoles.filter(r => r.setor === setor).map(r => r.key)`.
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+Isso também deve ser invalidado na query `system-roles-active` no `onSuccess` do `CreateRoleModal`.
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+**Arquivos**: `GestaoColaboradoresDirecao.tsx`, `VagasPage.tsx`
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+### Problema 2: Setor é opcional no modal mas deveria ser obrigatório
+No schema zod do `CreateRoleModal.tsx`, `setor` está como `z.string().optional()`. Deve ser `z.string().min(1, "Selecione um setor")` (obrigatório). Remover o texto "(opcional)" do placeholder e da descrição.
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
+**Arquivo**: `CreateRoleModal.tsx`
 
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+### Problema 3: Modal sem estilo dark/glassmorphism
+O `DialogContent` do `CreateRoleModal` não tem as classes dark do padrão da página (ex: `bg-black/90 backdrop-blur-xl border-white/10`). Os inputs, labels e textos também precisam de classes de cor adequadas (`text-white`, `bg-white/10`, etc.) para combinar com o restante da interface.
 
-### Estrutura da tabela final
+Mesmo ajuste no `EditRoleModal`.
 
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
+**Arquivos**: `CreateRoleModal.tsx`, `EditRoleModal.tsx`
 
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+### Resumo de mudanças
+
+| Arquivo | Mudança |
+|---|---|
+| `CreateRoleModal.tsx` | Setor obrigatório no schema; dark styling no dialog e inputs |
+| `EditRoleModal.tsx` | Dark styling no dialog e inputs |
+| `GestaoColaboradoresDirecao.tsx` | `rolesForSetor` usa union de `SETOR_ROLES` + `systemRoles` por setor |
+| `VagasPage.tsx` | Mesma lógica de union para roles por setor |
 
