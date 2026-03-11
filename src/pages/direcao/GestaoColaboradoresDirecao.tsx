@@ -70,7 +70,10 @@ export default function GestaoColaboradoresDirecao() {
     },
   });
 
-  const rolesForSetor = SETOR_ROLES[selectedSetor] || [];
+  const activeRoleKeys = (systemRoles || []).map(r => r.key);
+  const rolesForSetor = (SETOR_ROLES[selectedSetor] || []).filter(
+    role => activeRoleKeys.includes(role)
+  );
   const filteredUsers = (allUsers || []).filter(u => rolesForSetor.includes(u.role as any));
 
   const openVagasForRole = (role: string): Vaga[] =>
