@@ -107,14 +107,15 @@ export default function GestaoColaboradoresDirecao() {
   const handleDeleteRole = async () => {
     if (!roleToDelete) return;
     setDeletingRole(true);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('system_roles')
       .update({ ativo: false })
-      .eq('key', roleToDelete);
+      .eq('key', roleToDelete)
+      .select();
     setDeletingRole(false);
     setRoleToDelete(null);
-    if (error) {
-      toast.error('Erro ao excluir função');
+    if (error || !data || data.length === 0) {
+      toast.error('Erro ao excluir função. Verifique suas permissões.');
     } else {
       toast.success('Função excluída com sucesso');
       queryClient.invalidateQueries({ queryKey: ['system-roles'] });

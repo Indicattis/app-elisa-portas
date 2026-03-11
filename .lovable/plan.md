@@ -1,54 +1,36 @@
 
 
-## Bug Analysis: Exclusão de funções mostra sucesso mas não funciona
+# Melhorias na página /direcao/dre/custos
 
-### Root Cause
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-Two issues working together:
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-1. **RLS Policy blocks the update silently.** The `system_roles` table UPDATE policy only allows users with `role = 'administrador'`. If you're logged in as "diretor", the Supabase update query returns no error — it simply affects 0 rows. The code only checks `if (error)`, so it falls through to the success toast.
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-2. **Code doesn't verify rows were actually updated.** The `handleDeleteRole` function (line 107-122 of `GestaoColaboradoresDirecao.tsx`) does `.update({ ativo: false }).eq('key', roleToDelete)` but never checks if any row was actually modified.
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-### Fix
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-**1. Update RLS policy** — Add `diretor` to the UPDATE policy on `system_roles` so directors can also manage roles (consistent with them having access to this management page).
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
 
-SQL migration:
-```sql
-DROP POLICY IF EXISTS "Admins podem atualizar roles" ON system_roles;
-CREATE POLICY "Admins e diretores podem atualizar roles"
-ON system_roles FOR UPDATE
-USING (
-  EXISTS (
-    SELECT 1 FROM admin_users
-    WHERE user_id = auth.uid()
-    AND role IN ('administrador', 'diretor')
-    AND ativo = true
-  )
-);
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
 ```
 
-Also update INSERT and DELETE policies similarly for consistency.
-
-**2. Add response validation in code** — In `handleDeleteRole`, check if the update actually returned data. If no rows were affected, show an error instead of success.
-
-```ts
-const { data, error } = await supabase
-  .from('system_roles')
-  .update({ ativo: false })
-  .eq('key', roleToDelete)
-  .select();
-
-if (error || !data || data.length === 0) {
-  toast.error('Erro ao excluir função. Verifique suas permissões.');
-} else {
-  toast.success('Função excluída com sucesso');
-  queryClient.invalidateQueries({ queryKey: ['system-roles'] });
-}
-```
-
-### Files changed
-- **SQL migration** — Update RLS policies for `system_roles` to include `diretor`
-- **`src/pages/direcao/GestaoColaboradoresDirecao.tsx`** — Add `.select()` and validate returned data in `handleDeleteRole`
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
