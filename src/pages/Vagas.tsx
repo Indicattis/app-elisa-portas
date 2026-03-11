@@ -37,7 +37,7 @@ export default function Vagas() {
   const { data: systemRoles = [] } = useQuery<Array<{key: string; label: string}>>({
     queryKey: ['system-roles-active'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('system_roles').select('key, label').eq('active', true);
+      const { data, error } = await (supabase as any).from('system_roles').select('key, label').eq('active', true);
       if (error) throw error;
       return (data || []) as Array<{key: string; label: string}>;
     },
