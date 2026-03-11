@@ -61,7 +61,7 @@ export default function Vagas() {
     const success = await createVaga(formData);
     if (success) {
       setIsDialogOpen(false);
-      setFormData({ cargo: "atendente", justificativa: "" });
+      setFormData({ cargo: "", justificativa: "" });
     }
   };
 
