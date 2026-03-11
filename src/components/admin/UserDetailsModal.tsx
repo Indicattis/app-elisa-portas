@@ -46,6 +46,7 @@ interface UserDetailsModalProps {
   roleLabel: string;
   onAvatarUpdate?: (userId: string, newAvatarUrl: string | null) => void;
   onToggleAtivo?: (userId: string, novoStatus: boolean) => void;
+  onToggleVisivelOrganograma?: (userId: string, novoStatus: boolean) => void;
 }
 
 export function UserDetailsModal({ open, onOpenChange, user, roleLabel, onAvatarUpdate, onToggleAtivo }: UserDetailsModalProps) {
