@@ -20,13 +20,12 @@ interface ConferenciaFormProps {
   initialKmAtual?: number;
 }
 
-export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting, initialDataTrocaOleo, initialKmAtual }: ConferenciaFormProps) {
+export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting, initialKmAtual }: ConferenciaFormProps) {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ConferenciaFormData>({
     defaultValues: {
       km_atual: initialKmAtual || 0,
       agua_conferida: false,
       nivel_oleo_conferido: false,
-      data_troca_oleo: initialDataTrocaOleo || '',
       observacoes: ''
     }
   });
