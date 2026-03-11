@@ -49,7 +49,7 @@ interface UserDetailsModalProps {
   onToggleVisivelOrganograma?: (userId: string, novoStatus: boolean) => void;
 }
 
-export function UserDetailsModal({ open, onOpenChange, user, roleLabel, onAvatarUpdate, onToggleAtivo }: UserDetailsModalProps) {
+export function UserDetailsModal({ open, onOpenChange, user, roleLabel, onAvatarUpdate, onToggleAtivo, onToggleVisivelOrganograma }: UserDetailsModalProps) {
   if (!user) return null;
 
   const formatCPF = (cpf: string | null) => {
