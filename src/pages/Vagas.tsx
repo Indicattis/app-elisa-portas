@@ -18,27 +18,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ROLE_LABELS } from "@/types/permissions";
 
-const cargoLabels: Record<UserRole, string> = {
-  administrador: "Administrador",
-  atendente: "Atendente",
-  gerente_comercial: "Gerente Comercial",
-  gerente_fabril: "Gerente Fabril",
-  diretor: "Diretor",
-  gerente_marketing: "Gerente de Marketing",
-  gerente_financeiro: "Gerente Financeiro",
-  gerente_producao: "Gerente de Produção",
-  gerente_instalacoes: "Gerente de Instalações",
-  instalador: "Instalador",
-  aux_instalador: "Auxiliar de Instalação",
-  analista_marketing: "Analista de Marketing",
-  assistente_marketing: "Assistente de Marketing",
-  coordenador_vendas: "Coordenador de Vendas",
-  vendedor: "Vendedor",
-  assistente_administrativo: "Assistente Administrativo",
-  soldador: "Soldador",
-  aux_geral: "Auxiliar Geral",
-  pintor: "Pintor",
-  aux_pintura: "Auxiliar de Pintura",
+const getCargoLabel = (cargo: string, systemRoles: Array<{key: string; label: string}>) => {
+  const sr = systemRoles.find(r => r.key === cargo);
+  if (sr) return sr.label;
+  return ROLE_LABELS[cargo] || cargo;
 };
 
 const statusConfig: Record<StatusVaga, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
