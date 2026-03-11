@@ -1,28 +1,36 @@
 
 
-## Plan: Move buttons to header and add cancel vaga functionality
+# Melhorias na página /direcao/dre/custos
 
-### 1. Move "Nova Função" and "Adicionar Vaga" buttons to the header
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-In `src/pages/direcao/GestaoColaboradoresDirecao.tsx`:
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-- Add a `headerActions` prop to `MinimalistLayout` with two buttons: "Nova Função" and "Nova Vaga"
-- The "Nova Vaga" button opens a dialog where the user selects a role (from `systemRoles`) and provides a justification — reusing the existing vaga dialog but now with a role selector
-- Remove the inline "Nova Função" button (lines 210-219) and the per-role "+ Vaga" card (lines 312-323)
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-### 2. Update the "Nova Vaga" dialog
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-- Add a `Select` for choosing the cargo/role (since it's no longer tied to a specific role card)
-- Keep the existing justificativa textarea
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-### 3. Add "Cancelar Vaga" functionality
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
 
-- Import `updateVagaStatus` from `useVagas` (already available in the hook)
-- On each open vacancy placeholder card (the amber dashed cards, lines 299-311), add a cancel button (X icon) that appears on hover
-- Clicking it calls `updateVagaStatus(vagaId, 'fechada')`
-- To support this, change the vacancy rendering: instead of `Array.from({ length: group.openVagas })`, map the actual open vaga objects so we have access to their IDs
-- Filter vagas by role to get the actual vaga records for each group
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
 
-### Files changed
-- `src/pages/direcao/GestaoColaboradoresDirecao.tsx` — all changes in this single file
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
+```
+
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 

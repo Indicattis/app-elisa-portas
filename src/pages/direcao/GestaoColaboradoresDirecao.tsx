@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { useAllUsers } from '@/hooks/useAllUsers';
-import { useVagas } from '@/hooks/useVagas';
+import { useVagas, type Vaga } from '@/hooks/useVagas';
 import { SETOR_LABELS, SETOR_ROLES } from '@/utils/setorMapping';
 import { ROLE_LABELS } from '@/types/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Users, Loader2, Plus, UserMinus, Trash2, ArrowRightLeft, Pencil } from 'lucide-react';
+import { Users, Loader2, Plus, UserMinus, Trash2, ArrowRightLeft, Pencil, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,7 +34,7 @@ function getInitials(name: string) {
 export default function GestaoColaboradoresDirecao() {
   const [selectedSetor, setSelectedSetor] = useState(SETOR_KEYS[0]);
   const { data: allUsers, isLoading } = useAllUsers();
-  const { vagas, createVaga } = useVagas();
+  const { vagas, createVaga, updateVagaStatus } = useVagas();
   const queryClient = useQueryClient();
 
   const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
@@ -43,7 +43,8 @@ export default function GestaoColaboradoresDirecao() {
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   const [deletingRole, setDeletingRole] = useState(false);
 
-  const [vagaDialogRole, setVagaDialogRole] = useState<string | null>(null);
+  const [vagaDialogOpen, setVagaDialogOpen] = useState(false);
+  const [vagaDialogRole, setVagaDialogRole] = useState<string>('');
   const [vagaJustificativa, setVagaJustificativa] = useState('');
   const [creatingVaga, setCreatingVaga] = useState(false);
 
@@ -72,8 +73,10 @@ export default function GestaoColaboradoresDirecao() {
   const rolesForSetor = SETOR_ROLES[selectedSetor] || [];
   const filteredUsers = (allUsers || []).filter(u => rolesForSetor.includes(u.role as any));
 
-  const openVagasByRole = (role: string) =>
-    (vagas || []).filter(v => v.cargo === role && (v.status === 'aberta' || v.status === 'em_analise')).length;
+  const openVagasForRole = (role: string): Vaga[] =>
+    (vagas || []).filter(v => v.cargo === role && (v.status === 'aberta' || v.status === 'em_analise'));
+
+  const openVagasByRole = (role: string) => openVagasForRole(role).length;
 
   // Show ALL roles — no filtering
   const grouped = rolesForSetor.map(role => ({
@@ -81,6 +84,7 @@ export default function GestaoColaboradoresDirecao() {
     label: ROLE_LABELS[role] || role,
     users: filteredUsers.filter(u => u.role === role),
     openVagas: openVagasByRole(role),
+    openVagasList: openVagasForRole(role),
   }));
 
   const handleDeactivate = async () => {
@@ -122,8 +126,13 @@ export default function GestaoColaboradoresDirecao() {
     setCreatingVaga(true);
     await createVaga({ cargo: vagaDialogRole as any, justificativa: vagaJustificativa.trim() });
     setCreatingVaga(false);
-    setVagaDialogRole(null);
+    setVagaDialogOpen(false);
+    setVagaDialogRole('');
     setVagaJustificativa('');
+  };
+
+  const handleCancelVaga = async (vagaId: string) => {
+    await updateVagaStatus(vagaId, 'fechada');
   };
 
   const handleChangeRole = async () => {
@@ -149,6 +158,27 @@ export default function GestaoColaboradoresDirecao() {
       subtitle="Colaboradores por setor"
       backPath="/direcao"
       fullWidth
+      headerActions={
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setCreateRoleModalOpen(true)}
+            size="sm"
+            variant="outline"
+            className="border-white/10 bg-white/5 text-white hover:bg-white/10 gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Função
+          </Button>
+          <Button
+            onClick={() => { setVagaDialogOpen(true); setVagaDialogRole(''); setVagaJustificativa(''); }}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Vaga
+          </Button>
+        </div>
+      }
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
         { label: 'Direção', path: '/direcao' },
@@ -207,16 +237,6 @@ export default function GestaoColaboradoresDirecao() {
             </div>
           ) : (
              <div className="space-y-6">
-              <div className="flex justify-end">
-                <Button
-                  onClick={() => setCreateRoleModalOpen(true)}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
-                >
-                  <Plus className="w-4 h-4" />
-                  Nova Função
-                </Button>
-              </div>
               {grouped.map(group => {
                 const total = group.users.length + group.openVagas;
                 const isFull = group.openVagas === 0 && group.users.length > 0;
@@ -295,32 +315,27 @@ export default function GestaoColaboradoresDirecao() {
                           </div>
                         </div>
                       ))}
-                      {/* Open vacancy placeholders */}
-                      {Array.from({ length: group.openVagas }).map((_, i) => (
+                      {/* Open vacancy placeholders with cancel */}
+                      {group.openVagasList.map((vaga) => (
                         <div
-                          key={`vaga-${i}`}
-                          className="p-1.5 rounded-xl border border-dashed border-amber-500/20 bg-amber-500/5"
+                          key={vaga.id}
+                          className="group/vaga p-1.5 rounded-xl border border-dashed border-amber-500/20 bg-amber-500/5 relative"
                         >
                           <div className="flex items-center gap-3 px-3 py-2.5">
                             <div className="h-10 w-10 rounded-full border border-dashed border-amber-500/30 flex items-center justify-center">
                               <Plus className="w-4 h-4 text-amber-500/50" />
                             </div>
-                            <p className="text-xs text-amber-400/70">Vaga aberta</p>
+                            <p className="text-xs text-amber-400/70 flex-1">Vaga aberta</p>
+                            <button
+                              onClick={() => handleCancelVaga(vaga.id)}
+                              className="opacity-0 group-hover/vaga:opacity-100 p-1 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
+                              title="Cancelar vaga"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       ))}
-                      {/* Add vaga card */}
-                      <button
-                        onClick={() => { setVagaDialogRole(group.role); setVagaJustificativa(''); }}
-                        className="p-1.5 rounded-xl border border-dashed border-white/10 bg-white/[0.02] hover:bg-white/5 hover:border-blue-500/30 transition-all duration-200 cursor-pointer text-left"
-                      >
-                        <div className="flex items-center gap-3 px-3 py-2.5">
-                          <div className="h-10 w-10 rounded-full border border-dashed border-white/20 flex items-center justify-center">
-                            <Plus className="w-4 h-4 text-white/30" />
-                          </div>
-                          <p className="text-xs text-white/40">Adicionar vaga</p>
-                        </div>
-                      </button>
                     </div>
                   </div>
                 );
@@ -375,24 +390,38 @@ export default function GestaoColaboradoresDirecao() {
       </AlertDialog>
 
       {/* Create vaga dialog */}
-      <Dialog open={!!vagaDialogRole} onOpenChange={open => !open && setVagaDialogRole(null)}>
+      <Dialog open={vagaDialogOpen} onOpenChange={setVagaDialogOpen}>
         <DialogContent className="bg-[#1a1a2e] border-white/10 text-white">
           <DialogHeader>
             <DialogTitle>Solicitar vaga</DialogTitle>
             <DialogDescription className="text-white/60">
-              {vagaDialogRole && (ROLE_LABELS[vagaDialogRole as keyof typeof ROLE_LABELS] || vagaDialogRole)}
+              Selecione a função e justifique a abertura da vaga.
             </DialogDescription>
           </DialogHeader>
-          <Textarea
-            placeholder="Justificativa da vaga..."
-            value={vagaJustificativa}
-            onChange={e => setVagaJustificativa(e.target.value)}
-            className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[80px]"
-          />
+          <div className="space-y-4">
+            <Select value={vagaDialogRole} onValueChange={setVagaDialogRole}>
+              <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectValue placeholder="Selecione a função" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a1a2e] border-white/10">
+                {(systemRoles || []).map(r => (
+                  <SelectItem key={r.key} value={r.key} className="text-white hover:bg-white/10 focus:bg-white/10 focus:text-white">
+                    {r.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Textarea
+              placeholder="Justificativa da vaga..."
+              value={vagaJustificativa}
+              onChange={e => setVagaJustificativa(e.target.value)}
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[80px]"
+            />
+          </div>
           <DialogFooter>
             <Button
               onClick={handleCreateVaga}
-              disabled={creatingVaga || !vagaJustificativa.trim()}
+              disabled={creatingVaga || !vagaDialogRole || !vagaJustificativa.trim()}
               className="bg-blue-600 hover:bg-blue-700"
             >
               {creatingVaga ? 'Criando...' : 'Criar vaga'}
