@@ -1,36 +1,26 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Placar de ocupação na sidebar de setores
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+Adicionar a cada item da sidebar (desktop e mobile) um indicador mostrando `colaboradores / (colaboradores + vagas abertas)` para o setor correspondente.
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+### Implementação
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+Em `GestaoColaboradoresDirecao.tsx`:
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+1. **Calcular contagens por setor** — criar um helper que, para cada setor, filtra os roles ativos daquele setor, conta os users com esses roles, e soma as vagas abertas (`aberta` ou `em_analise`) desses roles:
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
-
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
+```ts
+const getSetorCounts = (setor: string) => {
+  const roles = (SETOR_ROLES[setor] || []).filter(r => activeRoleKeys.includes(r));
+  const users = (allUsers || []).filter(u => roles.includes(u.role as any));
+  const vagasAbertas = (vagas || []).filter(v => roles.includes(v.cargo) && (v.status === 'aberta' || v.status === 'em_analise'));
+  const total = users.length + vagasAbertas.length;
+  return { current: users.length, total };
+};
 ```
 
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+2. **Renderizar o placar** nos botões da sidebar desktop (linhas ~219-230) e nos chips mobile (linhas ~199-211), ao lado do label do setor, com estilo condicional (verde se completo, âmbar se há vagas).
+
+**Arquivo:** `src/pages/direcao/GestaoColaboradoresDirecao.tsx`
 
