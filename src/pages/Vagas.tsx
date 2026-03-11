@@ -215,7 +215,7 @@ export default function Vagas() {
                   vagasFiltradas.map((vaga) => (
                     <TableRow key={vaga.id}>
                       <TableCell>
-                        <Badge variant="outline">{cargoLabels[vaga.cargo]}</Badge>
+                        <Badge variant="outline">{getCargoLabel(vaga.cargo, systemRoles)}</Badge>
                       </TableCell>
                       <TableCell>
                         <Badge variant={statusConfig[vaga.status].variant}>
