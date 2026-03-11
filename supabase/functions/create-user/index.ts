@@ -158,6 +158,7 @@ serve(async (req) => {
         cpf: cpf || null,
         eh_colaborador: eh_colaborador !== undefined ? eh_colaborador : false,
         tipo_usuario: tipo_usuario || 'colaborador',
+        em_teste: em_teste !== undefined ? em_teste : false,
       });
 
     if (insertError) {
