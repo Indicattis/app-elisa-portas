@@ -1,36 +1,29 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Refatorar /administrativo/rh-dp/vagas com layout do Organograma
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+Substituir a página atual de vagas (tabela com filtros) por um layout idêntico ao `/direcao/gestao-colaboradores`, mas em modo somente-leitura — sem botões de editar/excluir funções, desativar usuários, alterar cargos, criar vagas ou nova função. A única ação disponível será **preencher vagas abertas** clicando no card de vaga.
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+### Mudanças no arquivo `src/pages/administrativo/VagasPage.tsx`
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+Reescrever completamente o componente para replicar o layout do `GestaoColaboradoresDirecao.tsx`, com as seguintes diferenças:
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+1. **Sidebar de setores** — idêntica (mobile chips + desktop sidebar), com placar de ocupação (colaboradores/total).
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+2. **Grid de colaboradores por função** — mostra todos os roles ativos do setor selecionado, com cards de colaboradores existentes (sem ações de hover como desativar/alterar função) e cards de vagas abertas.
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
+3. **Cards de vaga aberta** — ao clicar, abrem o `PreencherVagaDialog` já existente. Após sucesso, marca a vaga como `preenchida` e invalida as queries.
 
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+4. **Sem ações admin** — remover: header com "Nova Vaga", botões de aprovar/recusar, editar/excluir função, desativar colaborador, alterar função, criar função.
 
-### Estrutura da tabela final
+5. **Breadcrumbs e navegação** — manter `backPath="/administrativo/rh-dp"` e breadcrumbs corretos.
 
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
+### Dados necessários (já disponíveis via hooks existentes)
+- `useAllUsers()` — colaboradores ativos
+- `useVagas()` — vagas e `updateVagaStatus`
+- Query `system-roles-active` — roles ativos
+- `SETOR_LABELS`, `SETOR_ROLES`, `ROLE_LABELS` — mapeamentos de setor/função
 
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+### Arquivo editado
+- `src/pages/administrativo/VagasPage.tsx` — reescrita completa
 
