@@ -284,15 +284,15 @@ export default function Vagas() {
                 <Label htmlFor="cargo">Cargo</Label>
                 <Select
                   value={formData.cargo}
-                  onValueChange={(value) => setFormData({ ...formData, cargo: value as UserRole })}
+                  onValueChange={(value) => setFormData({ ...formData, cargo: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(cargoLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
+                    {systemRoles.map((role) => (
+                      <SelectItem key={role.key} value={role.key}>
+                        {role.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
