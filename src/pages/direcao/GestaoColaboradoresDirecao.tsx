@@ -82,7 +82,13 @@ export default function GestaoColaboradoresDirecao() {
     const dynamic = (systemRoles || [])
       .filter(r => r.setor === setor && !hardcoded.includes(r.key))
       .map(r => r.key);
-    return [...hardcoded, ...dynamic];
+    const all = [...hardcoded, ...dynamic];
+    // Sort by ordem from systemRoles
+    return all.sort((a, b) => {
+      const ordemA = (systemRoles || []).find(r => r.key === a)?.ordem ?? 999;
+      const ordemB = (systemRoles || []).find(r => r.key === b)?.ordem ?? 999;
+      return ordemA - ordemB;
+    });
   };
 
   const rolesForSetor = getRolesForSetor(selectedSetor);
@@ -101,7 +107,6 @@ export default function GestaoColaboradoresDirecao() {
 
   const openVagasByRole = (role: string) => openVagasForRole(role).length;
 
-  // Show ALL roles — no filtering
   const grouped = rolesForSetor.map(role => ({
     role,
     label: (systemRoles || []).find(r => r.key === role)?.label || ROLE_LABELS[role] || role,
@@ -109,6 +114,44 @@ export default function GestaoColaboradoresDirecao() {
     openVagas: openVagasByRole(role),
     openVagasList: openVagasForRole(role),
   }));
+
+  // DnD for role ordering
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const handleRoleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = rolesForSetor.indexOf(active.id as string);
+    const newIndex = rolesForSetor.indexOf(over.id as string);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const newOrder = [...rolesForSetor];
+    const [moved] = newOrder.splice(oldIndex, 1);
+    newOrder.splice(newIndex, 0, moved);
+
+    // Optimistic update: update systemRoles cache
+    const updates = newOrder.map((roleKey, index) => {
+      const sr = (systemRoles || []).find(r => r.key === roleKey);
+      return sr ? { id: sr.id, ordem: index + 1 } : null;
+    }).filter(Boolean) as { id: string; ordem: number }[];
+
+    // Optimistic cache update
+    queryClient.setQueryData(['system-roles-active'], (old: typeof systemRoles) =>
+      (old || []).map(r => {
+        const upd = updates.find(u => u.id === r.id);
+        return upd ? { ...r, ordem: upd.ordem } : r;
+      })
+    );
+
+    // Persist to DB
+    for (const u of updates) {
+      await supabase.from('system_roles').update({ ordem: u.ordem }).eq('id', u.id);
+    }
+    queryClient.invalidateQueries({ queryKey: ['system-roles-active'] });
+  };
 
   const handleDeactivate = async () => {
     if (!userToDeactivate) return;
