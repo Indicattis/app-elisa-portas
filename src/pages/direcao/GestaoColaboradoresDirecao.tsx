@@ -127,8 +127,13 @@ export default function GestaoColaboradoresDirecao() {
     setCreatingVaga(true);
     await createVaga({ cargo: vagaDialogRole as any, justificativa: vagaJustificativa.trim() });
     setCreatingVaga(false);
-    setVagaDialogRole(null);
+    setVagaDialogOpen(false);
+    setVagaDialogRole('');
     setVagaJustificativa('');
+  };
+
+  const handleCancelVaga = async (vagaId: string) => {
+    await updateVagaStatus(vagaId, 'fechada');
   };
 
   const handleChangeRole = async () => {
