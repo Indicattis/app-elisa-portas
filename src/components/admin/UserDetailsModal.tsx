@@ -36,6 +36,7 @@ interface AdminUser {
   created_at: string;
   updated_at: string;
   tipo_usuario?: string;
+  visivel_organograma?: boolean;
 }
 
 interface UserDetailsModalProps {
