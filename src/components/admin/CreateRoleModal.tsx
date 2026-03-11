@@ -78,7 +78,7 @@ export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
     mutationFn: async (data: RoleFormData) => {
       const { data: result, error } = await supabase
         .from("system_roles")
-        .insert([
+        .upsert(
           {
             key: data.key,
             label: data.label,
@@ -87,7 +87,8 @@ export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
             ordem: data.ordem,
             ativo: true,
           },
-        ])
+          { onConflict: 'key' }
+        )
         .select()
         .single();
 
