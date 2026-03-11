@@ -1,36 +1,19 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Plan: Add tooltip with next conference date on vehicle row
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+### Logic
+- Calculate "next Monday" from current date using `nextMonday` from `date-fns`
+- If conference is **not** up to date (`emDia === false`): tooltip shows "Deveria ter sido conferido em dd/MM/yy" using **last Monday** (the missed deadline)
+- If conference **is** up to date: tooltip shows "Próxima conferência: dd/MM/yy" using **next Monday**
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+### Changes to `src/components/frota/SortableVeiculoRow.tsx`
+1. Import `Tooltip, TooltipContent, TooltipTrigger` from `@/components/ui/tooltip` and `nextMonday` from `date-fns`
+2. Wrap the entire `<TableRow>` content area (or the "Últ. Conferência" cell specifically) with a `Tooltip` showing the appropriate message
+3. Use `startOfWeek(new Date(), { weekStartsOn: 1 })` for the missed deadline date, and `nextMonday(new Date())` for the upcoming one
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+### Changes to `src/pages/logistica/FrotaMinimalista.tsx`
+1. Import `TooltipProvider` and wrap the table (or the page content) with `<TooltipProvider>` so tooltips work
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
-
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
-
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+Two files, minimal changes.
 
