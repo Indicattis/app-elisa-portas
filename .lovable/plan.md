@@ -1,43 +1,36 @@
 
 
-## Bug: Exclusão de funções parece falhar mas na verdade funciona
+# Melhorias na página /direcao/dre/custos
 
-### Root Cause
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-The update itself **is working** (evidence: `gerente_fabril`, `coordenador_vendas`, `vendedor` all have `ativo: false` in the database). The problem is the **validation logic after the update**.
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-The code does:
-```ts
-const { data, error } = await supabase
-  .from('system_roles')
-  .update({ ativo: false })
-  .eq('key', roleToDelete)
-  .select();  // ← THIS is the problem
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-if (error || !data || data.length === 0) {
-  toast.error('Erro ao excluir função...');  // ← always hits this
-}
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
 ```
 
-After setting `ativo = false`, the `.select()` tries to return the updated row. But there's a SELECT RLS policy: `"Todos podem visualizar system_roles ativos"` which filters `WHERE ativo = true`. Since the row now has `ativo = false`, it's excluded from the SELECT result — so `data` is empty, and the code shows an error even though the update succeeded.
-
-### Fix
-
-In `src/pages/direcao/GestaoColaboradoresDirecao.tsx`, remove `.select()` and only check for `error`:
-
-```ts
-const { error } = await supabase
-  .from('system_roles')
-  .update({ ativo: false })
-  .eq('key', roleToDelete);
-
-if (error) {
-  toast.error('Erro ao excluir função. Verifique suas permissões.');
-} else {
-  toast.success('Função excluída com sucesso');
-  queryClient.invalidateQueries({ queryKey: ['system-roles'] });
-}
-```
-
-Single line change in one file.
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
