@@ -325,10 +325,6 @@ export default function FrotaConferenciaMinimalista() {
                   <Label className="text-white/70 text-xs">Km Atual *</Label>
                   <Input type="number" step="0.1" value={kmAtual} onChange={(e) => setKmAtual(e.target.value)} placeholder="Quilometragem atual" required className={inputClass} />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-white/70 text-xs">Data da Última Troca de Óleo</Label>
-                  <Input type="date" value={dataTrocaOleo} onChange={(e) => setDataTrocaOleo(e.target.value)} className={inputClass} />
-                </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox id="agua" checked={aguaConferida} onCheckedChange={(c) => setAguaConferida(c as boolean)} className="border-white/20 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500" />
                   <Label htmlFor="agua" className="text-white/70 text-sm cursor-pointer">Água conferida</Label>
