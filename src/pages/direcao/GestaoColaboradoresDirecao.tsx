@@ -230,19 +230,26 @@ export default function GestaoColaboradoresDirecao() {
         <div className="hidden md:flex flex-col w-56 shrink-0">
           <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
             <div className="flex flex-col gap-1 p-2">
-              {SETOR_KEYS.map(setor => (
-                <button
-                  key={setor}
-                  onClick={() => setSelectedSetor(setor)}
-                  className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                    ${selectedSetor === setor
-                      ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20'
-                      : 'text-white/60 hover:bg-white/10 hover:text-white'
-                    }`}
-                >
-                  {SETOR_LABELS[setor]}
-                </button>
-              ))}
+              {SETOR_KEYS.map(setor => {
+                const counts = getSetorCounts(setor);
+                const isFull = counts.total > 0 && counts.current === counts.total;
+                return (
+                  <button
+                    key={setor}
+                    onClick={() => setSelectedSetor(setor)}
+                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                      ${selectedSetor === setor
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20'
+                        : 'text-white/60 hover:bg-white/10 hover:text-white'
+                      }`}
+                  >
+                    {SETOR_LABELS[setor]}
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isFull ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                      {counts.current}/{counts.total}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
