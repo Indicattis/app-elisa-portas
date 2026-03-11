@@ -89,6 +89,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
           role: formData.role,
           data_nascimento: formData.data_nascimento || null,
           tipo_usuario: formData.tipo_usuario,
+          visivel_organograma: formData.visivel_organograma,
         },
       });
 
