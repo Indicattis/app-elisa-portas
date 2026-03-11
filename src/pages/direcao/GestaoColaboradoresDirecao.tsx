@@ -225,20 +225,11 @@ export default function GestaoColaboradoresDirecao() {
     },
   });
 
-  const activeRoleKeys = (systemRoles || []).map(r => r.key);
-
   const getRolesForSetor = (setor: string) => {
-    const hardcoded = (SETOR_ROLES[setor] || []).filter(r => activeRoleKeys.includes(r));
-    const dynamic = (systemRoles || [])
-      .filter(r => r.setor === setor && !hardcoded.includes(r.key))
+    return (systemRoles || [])
+      .filter(r => r.setor === setor)
+      .sort((a, b) => (a.ordem ?? 999) - (b.ordem ?? 999))
       .map(r => r.key);
-    const all = [...hardcoded, ...dynamic];
-    // Sort by ordem from systemRoles
-    return all.sort((a, b) => {
-      const ordemA = (systemRoles || []).find(r => r.key === a)?.ordem ?? 999;
-      const ordemB = (systemRoles || []).find(r => r.key === b)?.ordem ?? 999;
-      return ordemA - ordemB;
-    });
   };
 
   const rolesForSetor = getRolesForSetor(selectedSetor);
