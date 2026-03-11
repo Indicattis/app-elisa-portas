@@ -796,7 +796,18 @@ export function OrdemDetalhesSheet({
                 <span className="text-sm font-medium">Itens de Produção</span>
               </div>
               <div className="flex items-center gap-2">
-                {tipoOrdem !== 'perfiladeira' && ordem.pedido && (
+                {(tipoOrdem === 'perfiladeira' || tipoOrdem === 'embalagem') && ordem.pedido && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                    onClick={handleImprimirTodasEtiquetas}
+                  >
+                    <Printer className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Imprimir Todas Etiquetas</span>
+                  </Button>
+                )}
+                {tipoOrdem !== 'perfiladeira' && tipoOrdem !== 'embalagem' && ordem.pedido && (
                   <Button
                     size="sm"
                     variant="outline"
@@ -1154,7 +1165,7 @@ export function OrdemDetalhesSheet({
       )}
 
       {/* Modal de Imprimir Etiquetas */}
-      {tipoOrdem !== 'perfiladeira' && ordem?.pedido && (
+      {tipoOrdem !== 'perfiladeira' && tipoOrdem !== 'embalagem' && ordem?.pedido && (
         <ImprimirEtiquetasModal
           open={imprimirEtiquetasOpen}
           onOpenChange={setImprimirEtiquetasOpen}
