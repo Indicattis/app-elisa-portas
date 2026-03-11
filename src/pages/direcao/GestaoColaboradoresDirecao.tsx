@@ -161,23 +161,28 @@ export default function GestaoColaboradoresDirecao() {
       fullWidth
       headerActions={
         <div className="flex items-center gap-2">
-          <Button
+          <button
             onClick={() => setCreateRoleModalOpen(true)}
-            size="sm"
-            variant="outline"
-            className="border-white/10 bg-white/5 text-white hover:bg-white/10 gap-1.5"
+            className="h-10 px-5 rounded-lg font-medium text-white text-sm border
+                       bg-gradient-to-r from-purple-500 to-purple-700 border-purple-400/30
+                       shadow-lg shadow-purple-500/30
+                       hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/40
+                       transition-all duration-200 flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             Nova Função
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={() => { setVagaDialogOpen(true); setVagaDialogRole(''); setVagaJustificativa(''); }}
-            size="sm"
-            className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
+            className="h-10 px-5 rounded-lg font-medium text-white text-sm border
+                       bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30
+                       shadow-lg shadow-blue-500/30
+                       hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/40
+                       transition-all duration-200 flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             Nova Vaga
-          </Button>
+          </button>
         </div>
       }
       breadcrumbItems={[
