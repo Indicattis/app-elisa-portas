@@ -701,6 +701,23 @@ export default function PedidoViewMinimalista() {
           </Card>
         )}
 
+        {/* Observação da Venda */}
+        {pedido.venda?.observacoes_venda && (
+          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2 text-white">
+                <FileText className="w-4 h-4" />
+                Observação da Venda
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-white/80 whitespace-pre-wrap bg-white/5 p-3 rounded-md">
+                {pedido.venda.observacoes_venda}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Medidas das Portas de Enrolar */}
         {pedido.venda?.produtos && pedido.venda.produtos.some((p: any) => p.tipo_produto === 'porta_enrolar') && (
           <MedidasPortasSection
