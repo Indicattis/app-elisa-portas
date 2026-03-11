@@ -9,6 +9,7 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from "@/components/ui/table";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useVeiculos, Veiculo } from "@/hooks/useVeiculos";
 import { TrocaOleoDialog } from "@/components/frota/TrocaOleoDialog";
 import { SortableVeiculoRow } from "@/components/frota/SortableVeiculoRow";
