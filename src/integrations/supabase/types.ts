@@ -6736,7 +6736,7 @@ export type Database = {
       }
       vagas: {
         Row: {
-          cargo: Database["public"]["Enums"]["user_role"]
+          cargo: string
           created_at: string | null
           created_by: string | null
           id: string
@@ -6745,7 +6745,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          cargo: Database["public"]["Enums"]["user_role"]
+          cargo: string
           created_at?: string | null
           created_by?: string | null
           id?: string
@@ -6754,7 +6754,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          cargo?: Database["public"]["Enums"]["user_role"]
+          cargo?: string
           created_at?: string | null
           created_by?: string | null
           id?: string

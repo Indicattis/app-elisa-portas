@@ -12,30 +12,16 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useVagas, VagaFormData, UserRole, StatusVaga, Vaga } from "@/hooks/useVagas";
+import { useVagas, VagaFormData, StatusVaga, Vaga } from "@/hooks/useVagas";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { ROLE_LABELS } from "@/types/permissions";
 
-const cargoLabels: Record<UserRole, string> = {
-  administrador: "Administrador",
-  atendente: "Atendente",
-  gerente_comercial: "Gerente Comercial",
-  gerente_fabril: "Gerente Fabril",
-  diretor: "Diretor",
-  gerente_marketing: "Gerente de Marketing",
-  gerente_financeiro: "Gerente Financeiro",
-  gerente_producao: "Gerente de Produção",
-  gerente_instalacoes: "Gerente de Instalações",
-  instalador: "Instalador",
-  aux_instalador: "Auxiliar de Instalação",
-  analista_marketing: "Analista de Marketing",
-  assistente_marketing: "Assistente de Marketing",
-  coordenador_vendas: "Coordenador de Vendas",
-  vendedor: "Vendedor",
-  assistente_administrativo: "Assistente Administrativo",
-  soldador: "Soldador",
-  aux_geral: "Auxiliar Geral",
-  pintor: "Pintor",
-  aux_pintura: "Auxiliar de Pintura",
+const getCargoLabel = (cargo: string, systemRoles: Array<{key: string; label: string}>) => {
+  const sr = systemRoles.find(r => r.key === cargo);
+  if (sr) return sr.label;
+  return ROLE_LABELS[cargo] || cargo;
 };
 
 const statusConfig: Record<StatusVaga, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
@@ -48,6 +34,15 @@ const statusConfig: Record<StatusVaga, { label: string; variant: "default" | "se
 export default function Vagas() {
   const { vagas, loading, createVaga, updateVagaStatus, deleteVaga } = useVagas();
   
+  const { data: systemRoles = [] } = useQuery<Array<{key: string; label: string}>>({
+    queryKey: ['system-roles-active'],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from('system_roles').select('key, label').eq('active', true);
+      if (error) throw error;
+      return (data || []) as Array<{key: string; label: string}>;
+    },
+  });
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
@@ -57,7 +52,7 @@ export default function Vagas() {
   const [filtroStatus, setFiltroStatus] = useState<StatusVaga | "todas">("todas");
 
   const [formData, setFormData] = useState<VagaFormData>({
-    cargo: "atendente",
+    cargo: "",
     justificativa: "",
   });
 
@@ -66,7 +61,7 @@ export default function Vagas() {
     const success = await createVaga(formData);
     if (success) {
       setIsDialogOpen(false);
-      setFormData({ cargo: "atendente", justificativa: "" });
+      setFormData({ cargo: "", justificativa: "" });
     }
   };
 
@@ -221,7 +216,7 @@ export default function Vagas() {
                   vagasFiltradas.map((vaga) => (
                     <TableRow key={vaga.id}>
                       <TableCell>
-                        <Badge variant="outline">{cargoLabels[vaga.cargo]}</Badge>
+                        <Badge variant="outline">{getCargoLabel(vaga.cargo, systemRoles)}</Badge>
                       </TableCell>
                       <TableCell>
                         <Badge variant={statusConfig[vaga.status].variant}>
@@ -290,15 +285,15 @@ export default function Vagas() {
                 <Label htmlFor="cargo">Cargo</Label>
                 <Select
                   value={formData.cargo}
-                  onValueChange={(value) => setFormData({ ...formData, cargo: value as UserRole })}
+                  onValueChange={(value) => setFormData({ ...formData, cargo: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(cargoLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
+                    {systemRoles.map((role) => (
+                      <SelectItem key={role.key} value={role.key}>
+                        {role.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -337,7 +332,7 @@ export default function Vagas() {
               <div>
                 <Label className="text-muted-foreground">Cargo</Label>
                 <div className="mt-1">
-                  <Badge variant="outline">{cargoLabels[selectedVaga.cargo]}</Badge>
+                  <Badge variant="outline">{getCargoLabel(selectedVaga.cargo, systemRoles)}</Badge>
                 </div>
               </div>
               <div>
