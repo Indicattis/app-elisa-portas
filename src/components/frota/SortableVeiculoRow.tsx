@@ -2,14 +2,14 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Edit, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { format, startOfWeek, isAfter, nextMonday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { StatusBadge } from "@/components/frota/StatusBadge";
 import { Veiculo } from "@/hooks/useVeiculos";
-import { startOfWeek, isAfter } from "date-fns";
 
 function isConferenciaEmDia(data: string | null | undefined): boolean {
   if (!data) return false;
@@ -90,12 +90,24 @@ export function SortableVeiculoRow({ veiculo, onDelete }: Props) {
       <TableCell>
         {(() => {
           const emDia = isConferenciaEmDia(veiculo.ultima_conferencia_data);
+          const lastMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
+          const proxSegunda = nextMonday(new Date());
+          const tooltipMsg = emDia
+            ? `Próxima conferência: ${format(proxSegunda, "dd/MM/yy", { locale: ptBR })}`
+            : `Deveria ter sido conferido em ${format(lastMonday, "dd/MM/yy", { locale: ptBR })}`;
           return (
-            <span className={emDia ? "text-green-400" : "text-red-400"}>
-              {veiculo.ultima_conferencia_data
-                ? format(new Date(veiculo.ultima_conferencia_data), "dd/MM/yy", { locale: ptBR })
-                : "Nunca"}
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className={`cursor-default ${emDia ? "text-green-400" : "text-red-400"}`}>
+                  {veiculo.ultima_conferencia_data
+                    ? format(new Date(veiculo.ultima_conferencia_data), "dd/MM/yy", { locale: ptBR })
+                    : "Nunca"}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{tooltipMsg}</p>
+              </TooltipContent>
+            </Tooltip>
           );
         })()}
       </TableCell>

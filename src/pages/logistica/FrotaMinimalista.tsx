@@ -9,6 +9,7 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from "@/components/ui/table";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useVeiculos, Veiculo } from "@/hooks/useVeiculos";
 import { TrocaOleoDialog } from "@/components/frota/TrocaOleoDialog";
 import { SortableVeiculoRow } from "@/components/frota/SortableVeiculoRow";
@@ -109,49 +110,51 @@ export default function FrotaMinimalista() {
         <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-                modifiers={[restrictToVerticalAxis]}
-              >
-                <Table className="text-xs">
-                  <TableHeader>
-                    <TableRow className="border-blue-500/10 hover:bg-white/5">
-                      <TableHead className="w-8 text-xs text-white/70"></TableHead>
-                      <TableHead className="text-xs text-white/70">Foto</TableHead>
-                      <TableHead className="text-xs text-white/70">Modelo</TableHead>
-                      <TableHead className="text-xs text-white/70">Placa</TableHead>
-                      <TableHead className="text-xs text-white/70">Ano</TableHead>
-                      <TableHead className="text-xs text-white/70">Apelido</TableHead>
-                      <TableHead className="text-xs text-white/70">Responsável</TableHead>
-                      <TableHead className="text-xs text-white/70">Km Atual</TableHead>
-                      <TableHead className="text-xs text-white/70">Próx. Troca Óleo</TableHead>
-                      <TableHead className="text-xs text-white/70">Status</TableHead>
-                      <TableHead className="text-xs text-white/70">Últ. Conferência</TableHead>
-                      <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <SortableContext items={orderedVeiculos.map(v => v.id)} strategy={verticalListSortingStrategy}>
-                    <TableBody>
-                      {orderedVeiculos.map((veiculo) => (
-                        <SortableVeiculoRow
-                          key={veiculo.id}
-                          veiculo={veiculo}
-                          onDelete={setDeleteId}
-                        />
-                      ))}
-                      {orderedVeiculos.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={12} className="text-center py-8 text-white/50">
-                            Nenhum veículo cadastrado
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </SortableContext>
-                </Table>
-              </DndContext>
+              <TooltipProvider>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                  modifiers={[restrictToVerticalAxis]}
+                >
+                  <Table className="text-xs">
+                    <TableHeader>
+                      <TableRow className="border-blue-500/10 hover:bg-white/5">
+                        <TableHead className="w-8 text-xs text-white/70"></TableHead>
+                        <TableHead className="text-xs text-white/70">Foto</TableHead>
+                        <TableHead className="text-xs text-white/70">Modelo</TableHead>
+                        <TableHead className="text-xs text-white/70">Placa</TableHead>
+                        <TableHead className="text-xs text-white/70">Ano</TableHead>
+                        <TableHead className="text-xs text-white/70">Apelido</TableHead>
+                        <TableHead className="text-xs text-white/70">Responsável</TableHead>
+                        <TableHead className="text-xs text-white/70">Km Atual</TableHead>
+                        <TableHead className="text-xs text-white/70">Próx. Troca Óleo</TableHead>
+                        <TableHead className="text-xs text-white/70">Status</TableHead>
+                        <TableHead className="text-xs text-white/70">Últ. Conferência</TableHead>
+                        <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <SortableContext items={orderedVeiculos.map(v => v.id)} strategy={verticalListSortingStrategy}>
+                      <TableBody>
+                        {orderedVeiculos.map((veiculo) => (
+                          <SortableVeiculoRow
+                            key={veiculo.id}
+                            veiculo={veiculo}
+                            onDelete={setDeleteId}
+                          />
+                        ))}
+                        {orderedVeiculos.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={12} className="text-center py-8 text-white/50">
+                              Nenhum veículo cadastrado
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </SortableContext>
+                  </Table>
+                </DndContext>
+              </TooltipProvider>
             </div>
           </CardContent>
         </Card>
