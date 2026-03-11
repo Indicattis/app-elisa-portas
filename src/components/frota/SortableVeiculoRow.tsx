@@ -2,14 +2,14 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Edit, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { format, startOfWeek, isAfter, nextMonday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { StatusBadge } from "@/components/frota/StatusBadge";
 import { Veiculo } from "@/hooks/useVeiculos";
-import { startOfWeek, isAfter } from "date-fns";
 
 function isConferenciaEmDia(data: string | null | undefined): boolean {
   if (!data) return false;
