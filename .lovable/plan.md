@@ -1,36 +1,26 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Plan: Add drag-and-drop reordering to fleet listing
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+### Database change
+- Add `ordem` column to `veiculos` table (integer, default 0) to persist sort order
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+### Changes to `src/hooks/useVeiculos.ts`
+- Change query ordering from `.order('nome')` to `.order('ordem').order('nome')` so manual order takes precedence
+- Add `updateOrdem` mutation that batch-updates `ordem` for each vehicle after reorder
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+### Changes to `src/pages/logistica/FrotaMinimalista.tsx`
+Following the existing pattern from `ProdutosFabrica.tsx`:
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+1. **Imports**: Add `DndContext`, `closestCenter`, `useSensor`, `useSensors`, `PointerSensor`, `KeyboardSensor` from `@dnd-kit/core`; `SortableContext`, `verticalListSortingStrategy`, `useSortable`, `arrayMove` from `@dnd-kit/sortable`; `GripVertical` icon
+2. **Create `SortableVeiculoRow` component**: Wraps each `TableRow` with `useSortable`, adds a drag handle column with `GripVertical` icon
+3. **Local state**: `orderedVeiculos` synced from query data, updated optimistically on drag end
+4. **DndContext + SortableContext**: Wrap the `Table` body, using `verticalListSortingStrategy`
+5. **onDragEnd handler**: Calls `arrayMove`, updates local state, then persists new `ordem` values to Supabase
+6. **Add drag handle column**: New first `TableHead` + `TableCell` with grip icon (colSpan updated to 12 for empty state)
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
-
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+### Files changed
+- `src/hooks/useVeiculos.ts`
+- `src/pages/logistica/FrotaMinimalista.tsx`
+- SQL: `ALTER TABLE veiculos ADD COLUMN ordem integer DEFAULT 0`
 
