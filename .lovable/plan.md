@@ -1,34 +1,36 @@
 
 
-## Problema
+# Melhorias na página /direcao/dre/custos
 
-Ao excluir uma função, o sistema faz soft-delete (`ativo = false`), mas o registro permanece no banco. Quando o usuário tenta criar uma nova função com a mesma chave, viola a constraint `UNIQUE` na coluna `key`.
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-## Solução
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-Alterar `CreateRoleModal.tsx` para usar **upsert** ao invés de insert: se já existir um registro com a mesma `key` (inclusive inativo), reativá-lo atualizando seus dados. Caso contrário, criar normalmente.
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-### Mudança em `src/components/admin/CreateRoleModal.tsx`
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-Substituir o `insert` por `upsert` com `onConflict: 'key'`:
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-```tsx
-const { data: result, error } = await supabase
-  .from("system_roles")
-  .upsert(
-    {
-      key: data.key,
-      label: data.label,
-      setor: data.setor,
-      descricao: data.descricao || null,
-      ordem: data.ordem,
-      ativo: true,
-    },
-    { onConflict: 'key' }
-  )
-  .select()
-  .single();
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
 ```
 
-Isso reativa a função existente com os novos dados se a chave já existir, ou cria uma nova se não existir. Nenhuma outra mudança necessária.
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
