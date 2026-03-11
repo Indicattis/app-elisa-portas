@@ -10,6 +10,7 @@ export interface User {
   foto_perfil_url?: string;
   cpf?: string;
   ativo: boolean;
+  em_teste?: boolean;
 }
 
 export function useAllUsers() {
