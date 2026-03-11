@@ -264,6 +264,7 @@ import RhDpHub from "./pages/administrativo/RhDpHub";
 import ColaboradoresMinimalista from "./pages/administrativo/ColaboradoresMinimalista";
 import NovoColaborador from "./pages/administrativo/rh-dp/NovoColaborador";
 import VagasPage from "./pages/administrativo/VagasPage";
+import PreencherVagaPage from "./pages/administrativo/rh-dp/PreencherVagaPage";
 import ResponsabilidadesPage from "./pages/administrativo/ResponsabilidadesPage";
 import FuncoesPage from "./pages/administrativo/FuncoesPage";
 import EstoqueMinimalista from "./pages/administrativo/EstoqueMinimalista";
