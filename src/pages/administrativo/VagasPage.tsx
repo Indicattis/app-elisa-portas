@@ -65,17 +65,7 @@ export default function VagasPage() {
   }));
 
   const handlePreencherClick = (vaga: Vaga) => {
-    setPreencherVagaId(vaga.id);
-    setPreencherVagaCargo(vaga.cargo);
-  };
-
-  const handlePreencherSuccess = async () => {
-    if (preencherVagaId) {
-      await updateVagaStatus(preencherVagaId, "preenchida");
-    }
-    setPreencherVagaId(null);
-    setPreencherVagaCargo("");
-    queryClient.invalidateQueries({ queryKey: ["all-users"] });
+    navigate(`/administrativo/rh-dp/vagas/preencher/${vaga.id}`);
   };
 
   return (
