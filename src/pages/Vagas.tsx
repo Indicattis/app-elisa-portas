@@ -331,7 +331,7 @@ export default function Vagas() {
               <div>
                 <Label className="text-muted-foreground">Cargo</Label>
                 <div className="mt-1">
-                  <Badge variant="outline">{cargoLabels[selectedVaga.cargo]}</Badge>
+                  <Badge variant="outline">{getCargoLabel(selectedVaga.cargo, systemRoles)}</Badge>
                 </div>
               </div>
               <div>
