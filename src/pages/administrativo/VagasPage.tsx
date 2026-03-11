@@ -217,18 +217,6 @@ export default function VagasPage() {
         </div>
       </div>
 
-      {/* Dialog Preencher Vaga */}
-      <PreencherVagaDialog
-        open={!!preencherVagaId}
-        onOpenChange={(open) => {
-          if (!open) {
-            setPreencherVagaId(null);
-            setPreencherVagaCargo("");
-          }
-        }}
-        defaultRole={preencherVagaCargo}
-        onSuccess={handlePreencherSuccess}
-      />
     </MinimalistLayout>
   );
 }
