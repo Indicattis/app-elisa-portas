@@ -34,10 +34,11 @@ const statusConfig: Record<StatusVaga, { label: string; variant: "default" | "se
 export default function Vagas() {
   const { vagas, loading, createVaga, updateVagaStatus, deleteVaga } = useVagas();
   
-  const { data: systemRoles = [] } = useQuery({
+  const { data: systemRoles = [] } = useQuery<Array<{key: string; label: string}>>({
     queryKey: ['system-roles-active'],
     queryFn: async () => {
-      const { data } = await supabase.from('system_roles').select('key, label').eq('active', true).order('label');
+      const { data, error } = await supabase.from('system_roles').select('key, label').eq('active', true);
+      if (error) throw error;
       return (data || []) as Array<{key: string; label: string}>;
     },
   });
