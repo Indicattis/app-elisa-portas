@@ -238,16 +238,6 @@ export default function GestaoColaboradoresDirecao() {
             </div>
           ) : (
              <div className="space-y-6">
-              <div className="flex justify-end">
-                <Button
-                  onClick={() => setCreateRoleModalOpen(true)}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
-                >
-                  <Plus className="w-4 h-4" />
-                  Nova Função
-                </Button>
-              </div>
               {grouped.map(group => {
                 const total = group.users.length + group.openVagas;
                 const isFull = group.openVagas === 0 && group.users.length > 0;
