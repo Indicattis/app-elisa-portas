@@ -15,7 +15,7 @@ export interface Vaga {
 }
 
 export interface VagaFormData {
-  cargo: UserRole;
+  cargo: string;
   justificativa: string;
 }
 
