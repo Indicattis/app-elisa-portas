@@ -117,7 +117,7 @@ export default function GestaoColaboradoresDirecao() {
       toast.error('Erro ao excluir função. Verifique suas permissões.');
     } else {
       toast.success('Função excluída com sucesso');
-      queryClient.invalidateQueries({ queryKey: ['system-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['system-roles-active'] });
     }
   };
 
