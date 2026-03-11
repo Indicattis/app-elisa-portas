@@ -56,6 +56,7 @@ export function useVeiculos() {
           conferencias:veiculos_conferencias(created_at)
         `)
         .eq('ativo', true)
+        .order('ordem', { ascending: true })
         .order('nome', { ascending: true });
       
       // Sort conferences descending so [0] is the most recent
