@@ -7,7 +7,6 @@ import { Loader2 } from "lucide-react";
 
 export interface ConferenciaFormData {
   km_atual: number;
-  data_troca_oleo?: string;
   agua_conferida: boolean;
   nivel_oleo_conferido: boolean;
   observacoes?: string;
@@ -18,17 +17,15 @@ interface ConferenciaFormProps {
   onSubmit: (data: ConferenciaFormData) => Promise<void>;
   onCancel: () => void;
   isSubmitting?: boolean;
-  initialDataTrocaOleo?: string;
   initialKmAtual?: number;
 }
 
-export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting, initialDataTrocaOleo, initialKmAtual }: ConferenciaFormProps) {
+export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting, initialKmAtual }: ConferenciaFormProps) {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ConferenciaFormData>({
     defaultValues: {
       km_atual: initialKmAtual || 0,
       agua_conferida: false,
       nivel_oleo_conferido: false,
-      data_troca_oleo: initialDataTrocaOleo || '',
       observacoes: ''
     }
   });
@@ -60,15 +57,6 @@ export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting,
           {errors.km_atual && (
             <p className="text-sm text-destructive">{errors.km_atual.message}</p>
           )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="data_troca_oleo">Data da Última Troca de Óleo</Label>
-          <Input
-            id="data_troca_oleo"
-            type="date"
-            {...register('data_troca_oleo')}
-          />
         </div>
 
         <div className="flex items-center space-x-2">
