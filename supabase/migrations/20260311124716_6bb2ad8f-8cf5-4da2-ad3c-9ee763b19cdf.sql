@@ -1,0 +1,1 @@
+ALTER TABLE veiculos ADD COLUMN ordem integer DEFAULT 0;
