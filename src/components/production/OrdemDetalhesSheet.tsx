@@ -1165,7 +1165,7 @@ export function OrdemDetalhesSheet({
       )}
 
       {/* Modal de Imprimir Etiquetas */}
-      {tipoOrdem !== 'perfiladeira' && ordem?.pedido && (
+      {tipoOrdem !== 'perfiladeira' && tipoOrdem !== 'embalagem' && ordem?.pedido && (
         <ImprimirEtiquetasModal
           open={imprimirEtiquetasOpen}
           onOpenChange={setImprimirEtiquetasOpen}
