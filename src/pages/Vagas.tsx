@@ -34,6 +34,14 @@ const statusConfig: Record<StatusVaga, { label: string; variant: "default" | "se
 export default function Vagas() {
   const { vagas, loading, createVaga, updateVagaStatus, deleteVaga } = useVagas();
   
+  const { data: systemRoles = [] } = useQuery({
+    queryKey: ['system-roles-active'],
+    queryFn: async () => {
+      const { data } = await supabase.from('system_roles').select('key, label').eq('active', true).order('label');
+      return data || [];
+    },
+  });
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
