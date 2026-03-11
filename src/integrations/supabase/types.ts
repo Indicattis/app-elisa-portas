@@ -168,6 +168,7 @@ export type Database = {
           data_nascimento: string | null
           eh_colaborador: boolean | null
           em_folha: boolean | null
+          em_teste: boolean
           email: string
           foto_perfil_url: string | null
           id: string
@@ -189,6 +190,7 @@ export type Database = {
           data_nascimento?: string | null
           eh_colaborador?: boolean | null
           em_folha?: boolean | null
+          em_teste?: boolean
           email: string
           foto_perfil_url?: string | null
           id?: string
@@ -210,6 +212,7 @@ export type Database = {
           data_nascimento?: string | null
           eh_colaborador?: boolean | null
           em_folha?: boolean | null
+          em_teste?: boolean
           email?: string
           foto_perfil_url?: string | null
           id?: string
