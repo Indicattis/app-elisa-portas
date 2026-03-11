@@ -11,7 +11,7 @@ import { useAllUsers } from "@/hooks/useAllUsers";
 import { useVagas, type Vaga } from "@/hooks/useVagas";
 import { SETOR_LABELS, SETOR_ROLES } from "@/utils/setorMapping";
 import { ROLE_LABELS } from "@/types/permissions";
-import { PreencherVagaDialog } from "@/components/vagas/PreencherVagaDialog";
+
 
 const SETOR_KEYS = Object.keys(SETOR_LABELS);
 
