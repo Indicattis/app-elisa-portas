@@ -391,24 +391,38 @@ export default function GestaoColaboradoresDirecao() {
       </AlertDialog>
 
       {/* Create vaga dialog */}
-      <Dialog open={!!vagaDialogRole} onOpenChange={open => !open && setVagaDialogRole(null)}>
+      <Dialog open={vagaDialogOpen} onOpenChange={setVagaDialogOpen}>
         <DialogContent className="bg-[#1a1a2e] border-white/10 text-white">
           <DialogHeader>
             <DialogTitle>Solicitar vaga</DialogTitle>
             <DialogDescription className="text-white/60">
-              {vagaDialogRole && (ROLE_LABELS[vagaDialogRole as keyof typeof ROLE_LABELS] || vagaDialogRole)}
+              Selecione a função e justifique a abertura da vaga.
             </DialogDescription>
           </DialogHeader>
-          <Textarea
-            placeholder="Justificativa da vaga..."
-            value={vagaJustificativa}
-            onChange={e => setVagaJustificativa(e.target.value)}
-            className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[80px]"
-          />
+          <div className="space-y-4">
+            <Select value={vagaDialogRole} onValueChange={setVagaDialogRole}>
+              <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectValue placeholder="Selecione a função" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a1a2e] border-white/10">
+                {(systemRoles || []).map(r => (
+                  <SelectItem key={r.key} value={r.key} className="text-white hover:bg-white/10 focus:bg-white/10 focus:text-white">
+                    {r.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Textarea
+              placeholder="Justificativa da vaga..."
+              value={vagaJustificativa}
+              onChange={e => setVagaJustificativa(e.target.value)}
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[80px]"
+            />
+          </div>
           <DialogFooter>
             <Button
               onClick={handleCreateVaga}
-              disabled={creatingVaga || !vagaJustificativa.trim()}
+              disabled={creatingVaga || !vagaDialogRole || !vagaJustificativa.trim()}
               className="bg-blue-600 hover:bg-blue-700"
             >
               {creatingVaga ? 'Criando...' : 'Criar vaga'}
