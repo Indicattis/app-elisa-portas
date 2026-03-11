@@ -12,8 +12,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useVagas, VagaFormData, UserRole, StatusVaga, Vaga } from "@/hooks/useVagas";
+import { useVagas, VagaFormData, StatusVaga, Vaga } from "@/hooks/useVagas";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { ROLE_LABELS } from "@/types/permissions";
 
 const cargoLabels: Record<UserRole, string> = {
   administrador: "Administrador",
