@@ -586,6 +586,7 @@ const App = () => (
                 <Route path="/administrativo/rh-dp/colaboradores/folha-pagamento" element={<ProtectedRoute routeKey="administrativo_hub"><FolhaPagamentoNova /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/colaboradores/novo" element={<ProtectedRoute routeKey="administrativo_hub"><NovoColaborador /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/vagas" element={<ProtectedRoute routeKey="administrativo_hub"><VagasPage /></ProtectedRoute>} />
+                <Route path="/administrativo/rh-dp/vagas/preencher/:vagaId" element={<ProtectedRoute routeKey="administrativo_hub"><PreencherVagaPage /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/responsabilidades" element={<ProtectedRoute routeKey="administrativo_hub"><ResponsabilidadesPage /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/funcoes" element={<ProtectedRoute routeKey="administrativo_hub"><FuncoesPage /></ProtectedRoute>} />
 
