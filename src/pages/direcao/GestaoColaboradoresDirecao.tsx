@@ -76,6 +76,14 @@ export default function GestaoColaboradoresDirecao() {
   );
   const filteredUsers = (allUsers || []).filter(u => rolesForSetor.includes(u.role as any));
 
+  const getSetorCounts = (setor: string) => {
+    const roles = (SETOR_ROLES[setor] || []).filter(r => activeRoleKeys.includes(r));
+    const users = (allUsers || []).filter(u => roles.includes(u.role as any));
+    const vagasAbertas = (vagas || []).filter(v => roles.includes(v.cargo as any) && (v.status === 'aberta' || v.status === 'em_analise'));
+    const total = users.length + vagasAbertas.length;
+    return { current: users.length, total };
+  };
+
   const openVagasForRole = (role: string): Vaga[] =>
     (vagas || []).filter(v => v.cargo === role && (v.status === 'aberta' || v.status === 'em_analise'));
 
@@ -196,38 +204,52 @@ export default function GestaoColaboradoresDirecao() {
       <div className="flex flex-col md:flex-row gap-4">
         {/* Mobile: horizontal chips */}
         <div className="md:hidden flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {SETOR_KEYS.map(setor => (
-            <button
-              key={setor}
-              onClick={() => setSelectedSetor(setor)}
-              className={`shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                ${selectedSetor === setor
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                  : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'
-                }`}
-            >
-              {SETOR_LABELS[setor]}
-            </button>
-          ))}
+          {SETOR_KEYS.map(setor => {
+            const counts = getSetorCounts(setor);
+            const isFull = counts.total > 0 && counts.current === counts.total;
+            return (
+              <button
+                key={setor}
+                onClick={() => setSelectedSetor(setor)}
+                className={`shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2
+                  ${selectedSetor === setor
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                    : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'
+                  }`}
+              >
+                {SETOR_LABELS[setor]}
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isFull ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                  {counts.current}/{counts.total}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Desktop: sidebar */}
         <div className="hidden md:flex flex-col w-56 shrink-0">
           <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
             <div className="flex flex-col gap-1 p-2">
-              {SETOR_KEYS.map(setor => (
-                <button
-                  key={setor}
-                  onClick={() => setSelectedSetor(setor)}
-                  className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                    ${selectedSetor === setor
-                      ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20'
-                      : 'text-white/60 hover:bg-white/10 hover:text-white'
-                    }`}
-                >
-                  {SETOR_LABELS[setor]}
-                </button>
-              ))}
+              {SETOR_KEYS.map(setor => {
+                const counts = getSetorCounts(setor);
+                const isFull = counts.total > 0 && counts.current === counts.total;
+                return (
+                  <button
+                    key={setor}
+                    onClick={() => setSelectedSetor(setor)}
+                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                      ${selectedSetor === setor
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20'
+                        : 'text-white/60 hover:bg-white/10 hover:text-white'
+                      }`}
+                  >
+                    {SETOR_LABELS[setor]}
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isFull ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                      {counts.current}/{counts.total}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
