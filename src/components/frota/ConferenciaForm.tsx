@@ -59,15 +59,6 @@ export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting,
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="data_troca_oleo">Data da Última Troca de Óleo</Label>
-          <Input
-            id="data_troca_oleo"
-            type="date"
-            {...register('data_troca_oleo')}
-          />
-        </div>
-
         <div className="flex items-center space-x-2">
           <Checkbox
             id="agua_conferida"
