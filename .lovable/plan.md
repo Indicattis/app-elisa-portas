@@ -1,36 +1,22 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Bug: Lista não atualiza após excluir função
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+### Causa raiz
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+A query de busca usa `queryKey: ['system-roles-active']` (linha 62), mas após a exclusão o código invalida `queryKey: ['system-roles']` (linha 120). Como as keys não batem, o React Query não refaz a busca e a lista permanece inalterada na tela — mesmo que o banco tenha sido atualizado corretamente.
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+### Correção
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+Em `src/pages/direcao/GestaoColaboradoresDirecao.tsx`, linha 120, trocar:
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+```ts
+// De:
+queryClient.invalidateQueries({ queryKey: ['system-roles'] });
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
+// Para:
+queryClient.invalidateQueries({ queryKey: ['system-roles-active'] });
 ```
 
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+Uma única linha alterada em um único arquivo.
 
