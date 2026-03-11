@@ -1,36 +1,29 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Fix: 403 on delete role due to SELECT policy conflict
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+### Root Cause
+The delete operation does `UPDATE ativo=false` + `.select()`. After the update, the row has `ativo = false`. The SELECT policy `"Todos podem visualizar system_roles ativos"` only shows rows where `ativo = true`. Since the user isn't an admin (who has a separate SELECT policy for all rows), PostgREST returns 403 because the updated row is no longer visible.
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+### Solution
+Add a SELECT policy allowing managers (the same roles that can update) to view ALL system_roles, including inactive ones. This way the `.select()` after update can return the modified row.
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+### Changes
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
-
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
-
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
+**1. Migration SQL**
+```sql
+CREATE POLICY "Gestores podem visualizar todos os roles"
+ON public.system_roles FOR SELECT TO public
+USING (EXISTS (
+  SELECT 1 FROM admin_users
+  WHERE admin_users.user_id = auth.uid()
+    AND admin_users.role IN (
+      'administrador','diretor','gerente_marketing','gerente_comercial',
+      'gerente_producao','gerente_fabril','gerente_instalacoes','gerente_financeiro'
+    )
+    AND admin_users.ativo = true
+));
 ```
 
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+No frontend changes needed — the existing error handling and `.select()` logic is correct.
 
