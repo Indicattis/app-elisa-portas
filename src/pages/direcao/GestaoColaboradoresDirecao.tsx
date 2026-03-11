@@ -74,8 +74,10 @@ export default function GestaoColaboradoresDirecao() {
   const rolesForSetor = SETOR_ROLES[selectedSetor] || [];
   const filteredUsers = (allUsers || []).filter(u => rolesForSetor.includes(u.role as any));
 
-  const openVagasByRole = (role: string) =>
-    (vagas || []).filter(v => v.cargo === role && (v.status === 'aberta' || v.status === 'em_analise')).length;
+  const openVagasForRole = (role: string): Vaga[] =>
+    (vagas || []).filter(v => v.cargo === role && (v.status === 'aberta' || v.status === 'em_analise'));
+
+  const openVagasByRole = (role: string) => openVagasForRole(role).length;
 
   // Show ALL roles — no filtering
   const grouped = rolesForSetor.map(role => ({
@@ -83,6 +85,7 @@ export default function GestaoColaboradoresDirecao() {
     label: ROLE_LABELS[role] || role,
     users: filteredUsers.filter(u => u.role === role),
     openVagas: openVagasByRole(role),
+    openVagasList: openVagasForRole(role),
   }));
 
   const handleDeactivate = async () => {
