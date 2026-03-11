@@ -1,36 +1,31 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Diagnóstico: `atendente` aparece em dois setores
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+### Causa
+A função `getRolesForSetor` combina duas fontes:
+1. **Hardcoded** (`SETOR_ROLES`): `atendente` está mapeado para `vendas`
+2. **Dinâmico** (`system_roles` tabela): `atendente` provavelmente tem `setor = 'administrativo'` no banco
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+O filtro dinâmico (linha 233) só exclui roles que já estão no hardcoded **do mesmo setor**. Como `atendente` está no hardcoded de `vendas`, ele não é excluído do dinâmico de `administrativo`.
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+### Solução
+Usar **apenas** `system_roles` como fonte de verdade para o setor, eliminando a dependência do `SETOR_ROLES` hardcoded na função `getRolesForSetor`.
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+### Mudança em `GestaoColaboradoresDirecao.tsx`
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
-
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
-
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
-
-### Estrutura da tabela final
-
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
+Substituir `getRolesForSetor` por:
+```tsx
+const getRolesForSetor = (setor: string) => {
+  return (systemRoles || [])
+    .filter(r => r.setor === setor)
+    .sort((a, b) => (a.ordem ?? 999) - (b.ordem ?? 999))
+    .map(r => r.key);
+};
 ```
 
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+Isso elimina a duplicação e torna `system_roles.setor` a única fonte de verdade. Remover o import de `SETOR_ROLES` se não for mais utilizado em nenhum outro ponto do arquivo.
+
+### Arquivo editado
+- `src/pages/direcao/GestaoColaboradoresDirecao.tsx`
 
