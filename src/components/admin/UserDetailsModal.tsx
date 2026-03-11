@@ -202,6 +202,19 @@ export function UserDetailsModal({ open, onOpenChange, user, roleLabel, onAvatar
             )}
           </div>
 
+          {/* Visível no Organograma */}
+          <div className="flex items-center justify-between pt-4 border-t border-border">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Visível no Organograma</span>
+            </div>
+            <Switch
+              checked={user.visivel_organograma ?? true}
+              onCheckedChange={(checked) => onToggleVisivelOrganograma?.(user.id, checked)}
+              className="data-[state=checked]:bg-primary"
+            />
+          </div>
+
           {/* Datas de Sistema */}
           <div className="pt-4 border-t border-border">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
