@@ -159,6 +159,27 @@ export default function GestaoColaboradoresDirecao() {
       subtitle="Colaboradores por setor"
       backPath="/direcao"
       fullWidth
+      headerActions={
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setCreateRoleModalOpen(true)}
+            size="sm"
+            variant="outline"
+            className="border-white/10 bg-white/5 text-white hover:bg-white/10 gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Função
+          </Button>
+          <Button
+            onClick={() => { setVagaDialogOpen(true); setVagaDialogRole(''); setVagaJustificativa(''); }}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Vaga
+          </Button>
+        </div>
+      }
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
         { label: 'Direção', path: '/direcao' },
