@@ -1,36 +1,46 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Plano: Filtrar Administrador do organograma + adicionar toggle "visível no organograma"
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+### O que será feito
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+1. **Migração de banco**: Adicionar coluna `visivel_organograma` (boolean, default `true`) na tabela `admin_users`.
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+2. **Filtro no hook `useAllUsers`**: Adicionar `.eq("visivel_organograma", true)` à query, garantindo que apenas usuários marcados como visíveis apareçam no organograma.
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+3. **Filtro do cargo Administrador no organograma**: No componente `GestaoColaboradoresDirecao.tsx`, filtrar o role `administrador` da lista de roles exibidos por setor (no `getRolesForSetor`).
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+4. **Toggle no cadastro de usuário (`AddUserDialog`)**: Adicionar um campo Switch "Visível no Organograma" no formulário de criação, enviado junto ao body da edge function `create-user`.
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
+5. **Toggle no modal de detalhes (`UserDetailsModal`)**: Exibir o campo `visivel_organograma` como Switch editável, permitindo ativar/desativar a visibilidade diretamente.
 
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+6. **Edge function `create-user`**: Passar o campo `visivel_organograma` ao inserir o registro em `admin_users`.
 
-### Estrutura da tabela final
+### Detalhes técnicos
 
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
+**Migração SQL:**
+```sql
+ALTER TABLE public.admin_users 
+ADD COLUMN visivel_organograma boolean NOT NULL DEFAULT true;
 ```
 
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+**`useAllUsers.ts`** — adicionar filtro:
+```typescript
+.eq("visivel_organograma", true)
+```
+
+**`GestaoColaboradoresDirecao.tsx`** — excluir administrador:
+```typescript
+const getRolesForSetor = (setor: string) => {
+  return (systemRoles || [])
+    .filter(r => r.setor === setor && r.key !== 'administrador')
+    ...
+};
+```
+
+**`AddUserDialog.tsx`** — adicionar Switch no form e enviar no body.
+
+**`UserDetailsModal.tsx`** — exibir Switch para `visivel_organograma` com callback de update.
+
+**Edge function `create-user`** — aceitar e persistir `visivel_organograma`.
 
