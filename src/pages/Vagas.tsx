@@ -52,7 +52,7 @@ export default function Vagas() {
   const [filtroStatus, setFiltroStatus] = useState<StatusVaga | "todas">("todas");
 
   const [formData, setFormData] = useState<VagaFormData>({
-    cargo: "atendente",
+    cargo: "",
     justificativa: "",
   });
 
