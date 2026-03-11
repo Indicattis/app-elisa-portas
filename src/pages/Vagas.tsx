@@ -38,7 +38,7 @@ export default function Vagas() {
     queryKey: ['system-roles-active'],
     queryFn: async () => {
       const { data } = await supabase.from('system_roles').select('key, label').eq('active', true).order('label');
-      return data || [];
+      return (data || []) as Array<{key: string; label: string}>;
     },
   });
 
