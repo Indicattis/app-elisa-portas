@@ -227,7 +227,7 @@ export default function GestaoColaboradoresDirecao() {
 
   const getRolesForSetor = (setor: string) => {
     return (systemRoles || [])
-      .filter(r => r.setor === setor)
+      .filter(r => r.setor === setor && r.key !== 'administrador')
       .sort((a, b) => (a.ordem ?? 999) - (b.ordem ?? 999))
       .map(r => r.key);
   };

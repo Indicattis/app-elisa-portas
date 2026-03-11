@@ -22,6 +22,7 @@ export function useAllUsers() {
         .select("*")
         .eq("ativo", true)
         .eq("tipo_usuario", "colaborador")
+        .eq("visivel_organograma", true)
         .order("nome");
 
       if (error) {

@@ -257,6 +257,21 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="visivel_organograma" className="text-right">
+                Organograma
+              </Label>
+              <div className="col-span-3 flex items-center gap-2">
+                <Switch
+                  id="visivel_organograma"
+                  checked={formData.visivel_organograma}
+                  onCheckedChange={(checked) => setFormData({ ...formData, visivel_organograma: checked })}
+                />
+                <span className="text-sm text-muted-foreground">
+                  Visível no organograma
+                </span>
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

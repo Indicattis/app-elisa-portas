@@ -15,6 +15,7 @@ import {
   Building2, 
   CreditCard, 
   User,
+  Users,
   Clock,
   DollarSign
 } from "lucide-react";
