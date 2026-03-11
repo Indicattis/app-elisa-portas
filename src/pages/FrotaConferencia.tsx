@@ -56,7 +56,7 @@ export default function FrotaConferencia() {
       km_atual: data.km_atual,
       agua_conferida: data.agua_conferida,
       observacoes: data.observacoes,
-      status: veiculo?.status || 'rodando'
+      status: veiculo?.status === 'rodando' ? 'em_uso' : veiculo?.status === 'parado' ? 'pronto' : 'mecanico'
     });
 
     navigate('/dashboard/instalacoes/frota');

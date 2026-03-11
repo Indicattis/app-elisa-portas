@@ -1,19 +1,36 @@
 
 
-## Plan: Fix conferência status constraint violation
+# Melhorias na página /direcao/dre/custos
 
-**Problem**: `FrotaConferencia.tsx` line 59 sends the vehicle's status (`'rodando'`, `'mecanico'`, `'parado'`) as the conferência status, but `veiculos_conferencias` only accepts `'pronto'`, `'atencao'`, `'critico'`, `'mecanico'`, `'em_uso'`.
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-**Fix in `src/pages/FrotaConferencia.tsx`**: Map the vehicle status to a valid conferência status before inserting:
-- `'rodando'` → `'em_uso'`
-- `'mecanico'` → `'mecanico'` (already valid)
-- `'parado'` → `'pronto'`
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-Change line 59 from:
-```ts
-status: veiculo?.status || 'rodando'
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
 ```
-to a mapped value using the vehicle's current status.
 
-Single line change, one file.
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 

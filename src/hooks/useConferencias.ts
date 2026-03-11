@@ -25,7 +25,7 @@ export interface ConferenciaFormData {
   data_troca_oleo?: string;
   agua_conferida: boolean;
   observacoes?: string;
-  status: 'rodando' | 'mecanico' | 'parado';
+  status: 'pronto' | 'atencao' | 'critico' | 'mecanico' | 'em_uso';
 }
 
 export function useConferencias(veiculoId?: string) {

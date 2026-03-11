@@ -93,7 +93,7 @@ export default function FrotaConferenciaMinimalista() {
       data_troca_oleo: dataTrocaOleo || undefined,
       agua_conferida: aguaConferida,
       observacoes: observacoes || undefined,
-      status: veiculo?.status || "rodando"
+      status: veiculo?.status === 'rodando' ? 'em_uso' : veiculo?.status === 'parado' ? 'pronto' : 'mecanico'
     });
 
     navigate("/logistica/frota");
