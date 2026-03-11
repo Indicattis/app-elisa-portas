@@ -90,12 +90,24 @@ export function SortableVeiculoRow({ veiculo, onDelete }: Props) {
       <TableCell>
         {(() => {
           const emDia = isConferenciaEmDia(veiculo.ultima_conferencia_data);
+          const lastMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
+          const proxSegunda = nextMonday(new Date());
+          const tooltipMsg = emDia
+            ? `Próxima conferência: ${format(proxSegunda, "dd/MM/yy", { locale: ptBR })}`
+            : `Deveria ter sido conferido em ${format(lastMonday, "dd/MM/yy", { locale: ptBR })}`;
           return (
-            <span className={emDia ? "text-green-400" : "text-red-400"}>
-              {veiculo.ultima_conferencia_data
-                ? format(new Date(veiculo.ultima_conferencia_data), "dd/MM/yy", { locale: ptBR })
-                : "Nunca"}
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className={`cursor-default ${emDia ? "text-green-400" : "text-red-400"}`}>
+                  {veiculo.ultima_conferencia_data
+                    ? format(new Date(veiculo.ultima_conferencia_data), "dd/MM/yy", { locale: ptBR })
+                    : "Nunca"}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{tooltipMsg}</p>
+              </TooltipContent>
+            </Tooltip>
           );
         })()}
       </TableCell>
