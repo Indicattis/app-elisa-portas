@@ -1,38 +1,36 @@
 
 
-## Diagnóstico: Operações falham silenciosamente por falta de permissão RLS
+# Melhorias na página /direcao/dre/custos
 
-### Causa raiz
-O usuário logado tem role `gerente_marketing`. As políticas RLS da tabela `system_roles` só permitem UPDATE/DELETE para `administrador` e `diretor`. O Supabase não retorna erro quando RLS bloqueia um UPDATE — simplesmente afeta 0 linhas. Por isso o toast de sucesso aparece, mas nada muda no banco.
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-Isso afeta tanto a exclusão (UPDATE `ativo=false`) quanto o drag-and-drop (UPDATE `ordem`).
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-### Solução
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-**1. Atualizar a policy RLS de UPDATE em `system_roles`** para incluir roles com acesso à gestão (ex: adicionar `gerente_marketing` ou, melhor, qualquer role que tenha acesso à rota `/direcao`).
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-Migration SQL:
-```sql
-DROP POLICY "Admins e diretores podem atualizar roles" ON public.system_roles;
-CREATE POLICY "Gestores podem atualizar roles" ON public.system_roles
-  FOR UPDATE TO public
-  USING (EXISTS (
-    SELECT 1 FROM admin_users
-    WHERE admin_users.user_id = auth.uid()
-      AND admin_users.role IN ('administrador', 'diretor', 'gerente_marketing', 'gerente_vendas', 'gerente_producao')
-      AND admin_users.ativo = true
-  ));
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
 ```
 
-**2. Adicionar verificação de resultado no código** para detectar quando 0 linhas foram afetadas e mostrar erro adequado ao invés de falso sucesso.
-
-Em `handleDeleteRole` e `handleRoleDragEnd` em `GestaoColaboradoresDirecao.tsx`:
-- Adicionar `.select()` ao update e verificar se retornou dados
-- Se não retornou, mostrar `toast.error` com mensagem de permissão
-
-### Arquivos
-| Arquivo | Mudança |
-|---|---|
-| Migration SQL | Atualizar policy de UPDATE e DELETE para incluir gerentes |
-| `GestaoColaboradoresDirecao.tsx` | Verificar resultado das operações de update |
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 

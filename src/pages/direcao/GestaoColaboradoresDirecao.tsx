@@ -297,8 +297,16 @@ export default function GestaoColaboradoresDirecao() {
     );
 
     // Persist to DB
+    let failed = false;
     for (const u of updates) {
-      await supabase.from('system_roles').update({ ordem: u.ordem }).eq('id', u.id);
+      const { data, error } = await supabase.from('system_roles').update({ ordem: u.ordem }).eq('id', u.id).select();
+      if (error || !data || data.length === 0) {
+        failed = true;
+        break;
+      }
+    }
+    if (failed) {
+      toast.error('Sem permissão para reordenar funções.');
     }
     queryClient.invalidateQueries({ queryKey: ['system-roles-active'] });
   };
@@ -323,14 +331,17 @@ export default function GestaoColaboradoresDirecao() {
   const handleDeleteRole = async () => {
     if (!roleToDelete) return;
     setDeletingRole(true);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('system_roles')
       .update({ ativo: false })
-      .eq('key', roleToDelete);
+      .eq('key', roleToDelete)
+      .select();
     setDeletingRole(false);
     setRoleToDelete(null);
     if (error) {
-      toast.error('Erro ao excluir função. Verifique suas permissões.');
+      toast.error('Erro ao excluir função: ' + error.message);
+    } else if (!data || data.length === 0) {
+      toast.error('Sem permissão para excluir funções. Contate um administrador.');
     } else {
       toast.success('Função excluída com sucesso');
       queryClient.invalidateQueries({ queryKey: ['system-roles-active'] });
