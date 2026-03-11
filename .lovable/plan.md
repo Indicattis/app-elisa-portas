@@ -1,36 +1,27 @@
 
 
-# Melhorias na página /direcao/dre/custos
+## Plano: Adicionar quebra de etiquetas na Embalagem (como na Perfiladeira)
 
-## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
+### Situação atual
+- **Perfiladeira**: Usa geração inline de etiquetas com lógica de quebra (divisor), tanto por linha individual quanto "Imprimir Todas Etiquetas" via `handleImprimirTodasEtiquetas`.
+- **Embalagem**: Usa o `ImprimirEtiquetasModal` genérico, sem a lógica de quebra por divisor/quantidade parcial.
 
-### 1. Buscar `quantidade` junto com os demais campos
-Adicionar `quantidade` ao select e à interface `EstoqueItem`.
+### O que será feito
 
-### 2. Unidade editável (inline, como o custo)
-Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
+Alterar `OrdemDetalhesSheet.tsx` para que a **embalagem** também use a mesma lógica de etiquetas da perfiladeira:
 
-Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
+1. **Botão "Imprimir Todas Etiquetas"**: Atualmente o botão de imprimir etiquetas em lote (modal) aparece quando `tipoOrdem !== 'perfiladeira'`. Mudar a condição para excluir também `embalagem`, e adicionar um botão "Imprimir Todas Etiquetas" (inline, como perfiladeira) para embalagem.
 
-### 3. Coluna "Custo Total"
-Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
+2. **Ajustar condição do modal**: O `ImprimirEtiquetasModal` (linhas 1157) será excluído também para embalagem: `tipoOrdem !== 'perfiladeira' && tipoOrdem !== 'embalagem'`.
 
-### 4. Coluna de índice (#)
-Primeira coluna com número sequencial (1, 2, 3...).
+3. **Botão "Imprimir Todas" para embalagem**: Na seção de cabeçalho dos itens (linha 798), adicionar o botão de "Imprimir Todas Etiquetas" (que chama `handleImprimirTodasEtiquetas`) quando `tipoOrdem === 'embalagem'`, igual já funciona para perfiladeira.
 
-### 5. Linha de totais (footer)
-Linha no final da tabela com:
-- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+### Mudanças no arquivo
 
-### Estrutura da tabela final
+**`src/components/production/OrdemDetalhesSheet.tsx`**:
+- Linha ~799: Mudar condição de `tipoOrdem !== 'perfiladeira'` para `tipoOrdem !== 'perfiladeira' && tipoOrdem !== 'embalagem'` (botão do modal).
+- Adicionar botão "Imprimir Todas Etiquetas" para embalagem (chamando `handleImprimirTodasEtiquetas`), ao lado ou no lugar do botão do modal.
+- Linha ~1157: Mudar condição do `ImprimirEtiquetasModal` para excluir embalagem também.
 
-```text
-#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
-1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
-...
-   |      |           |         | TOTAL          | R$ XXX
-```
-
-### Arquivo alterado
-- `src/pages/direcao/DRECustosDirecao.tsx`
+O botão individual de impressão por linha já funciona para embalagem (já existe para todos os tipos). A quebra de etiquetas com divisor já está implementada em `handleImprimirEtiqueta` e `handleImprimirTodasEtiquetas`.
 
