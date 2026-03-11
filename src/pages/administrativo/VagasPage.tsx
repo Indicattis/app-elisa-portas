@@ -21,13 +21,10 @@ function getInitials(name: string) {
 
 export default function VagasPage() {
   const [selectedSetor, setSelectedSetor] = useState(SETOR_KEYS[0]);
+  const navigate = useNavigate();
   const { data: allUsers, isLoading } = useAllUsers();
-  const { vagas, updateVagaStatus } = useVagas();
+  const { vagas } = useVagas();
   const queryClient = useQueryClient();
-
-  // Dialog Preencher Vaga
-  const [preencherVagaId, setPreencherVagaId] = useState<string | null>(null);
-  const [preencherVagaCargo, setPreencherVagaCargo] = useState("");
 
   const { data: systemRoles } = useQuery({
     queryKey: ["system-roles-active"],
