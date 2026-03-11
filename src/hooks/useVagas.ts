@@ -3,15 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export type StatusVaga = 'em_analise' | 'aberta' | 'fechada' | 'preenchida';
-export type UserRole = 'administrador' | 'atendente' | 'gerente_comercial' | 'gerente_fabril' | 
-  'diretor' | 'gerente_marketing' | 'gerente_financeiro' | 'gerente_producao' | 
-  'gerente_instalacoes' | 'instalador' | 'aux_instalador' | 'analista_marketing' | 
-  'assistente_marketing' | 'coordenador_vendas' | 'vendedor' | 'assistente_administrativo' | 
-  'soldador' | 'aux_geral' | 'pintor' | 'aux_pintura';
 
 export interface Vaga {
   id: string;
-  cargo: UserRole;
+  cargo: string;
   justificativa: string;
   status: StatusVaga;
   created_by: string | null;

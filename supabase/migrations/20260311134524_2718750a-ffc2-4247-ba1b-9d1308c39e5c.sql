@@ -1,0 +1,1 @@
+ALTER TABLE public.vagas ALTER COLUMN cargo TYPE text;
