@@ -170,6 +170,11 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = f
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="mecanico">Mecânico</Label>
+          <Input id="mecanico" {...register('mecanico')} placeholder="Ex: Oficina do João" />
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="km_atual">Km Atual {!isEditing && '*'}</Label>
           <Input
             id="km_atual"

@@ -6783,6 +6783,7 @@ export type Database = {
           id: string
           km_atual: number
           km_proxima_troca_oleo: number | null
+          mecanico: string | null
           modelo: string
           nome: string
           ordem: number | null
@@ -6806,6 +6807,7 @@ export type Database = {
           id?: string
           km_atual?: number
           km_proxima_troca_oleo?: number | null
+          mecanico?: string | null
           modelo: string
           nome: string
           ordem?: number | null
@@ -6829,6 +6831,7 @@ export type Database = {
           id?: string
           km_atual?: number
           km_proxima_troca_oleo?: number | null
+          mecanico?: string | null
           modelo?: string
           nome?: string
           ordem?: number | null

@@ -25,6 +25,7 @@ export default function FrotaNovoMinimalista() {
     modelo: "",
     ano: 2024,
     responsavel: "",
+    mecanico: "",
     foto_url: "",
     documento_url: "",
     documento_nome: "",
@@ -59,6 +60,7 @@ export default function FrotaNovoMinimalista() {
         ano: form.ano,
         km_atual: 0,
         responsavel: form.responsavel || undefined,
+        mecanico: form.mecanico || undefined,
         foto_url: form.foto_url || undefined,
         documento_url: form.documento_url || undefined,
         documento_nome: form.documento_nome || undefined,
@@ -184,6 +186,10 @@ export default function FrotaNovoMinimalista() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className={labelClass}>Mecânico</Label>
+                <Input value={form.mecanico} onChange={(e) => setForm((f) => ({ ...f, mecanico: e.target.value }))} className={inputClass} placeholder="Nome do mecânico" />
               </div>
               <div className="space-y-1.5">
                 <Label className={labelClass}>Status</Label>
