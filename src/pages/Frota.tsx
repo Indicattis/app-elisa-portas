@@ -88,6 +88,7 @@ export default function Frota() {
                   <TableHead className="text-xs">Ano</TableHead>
                   <TableHead className="text-xs">Apelido</TableHead>
                   <TableHead className="text-xs">Responsável</TableHead>
+                  <TableHead className="text-xs">Mecânico</TableHead>
                   <TableHead className="text-xs">Km Atual</TableHead>
                   <TableHead className="text-xs">Próx. Troca Óleo</TableHead>
                   <TableHead className="text-xs">Status</TableHead>
@@ -120,6 +121,7 @@ export default function Frota() {
                     <TableCell>{veiculo.ano}</TableCell>
                     <TableCell className="font-medium">{veiculo.nome}</TableCell>
                     <TableCell>{veiculo.responsavel || '-'}</TableCell>
+                    <TableCell>{veiculo.mecanico || '-'}</TableCell>
                     <TableCell>{veiculo.km_atual.toLocaleString('pt-BR')} km</TableCell>
                     <TableCell>
                       {veiculo.data_proxima_troca_oleo 
@@ -172,7 +174,7 @@ export default function Frota() {
                 ))}
                 {veiculos?.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
                       Nenhum veículo cadastrado
                     </TableCell>
                   </TableRow>

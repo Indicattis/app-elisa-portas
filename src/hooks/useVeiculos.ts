@@ -24,6 +24,7 @@ export interface Veiculo {
   updated_at: string;
   created_by: string | null;
   ultima_conferencia_data?: string | null;
+  mecanico?: string | null;
 }
 
 export interface VeiculoFormData {
@@ -37,6 +38,7 @@ export interface VeiculoFormData {
   data_proxima_troca_oleo?: string;
   status: 'rodando' | 'mecanico' | 'parado';
   responsavel?: string;
+  mecanico?: string;
   foto_url?: string;
   documento_url?: string;
   documento_nome?: string;
