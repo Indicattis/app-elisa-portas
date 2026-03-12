@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Edit, Trash2 } from "lucide-react";
+import { GripVertical, Edit, Trash2, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, startOfWeek, isAfter, nextMonday } from "date-fns";
 import { ptBR } from "date-fns/locale";
