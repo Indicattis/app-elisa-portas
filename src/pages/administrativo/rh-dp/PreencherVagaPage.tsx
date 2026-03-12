@@ -99,8 +99,15 @@ export default function PreencherVagaPage() {
       }
 
       const cargo = data.cargo as string;
+
+      const { data: roleData } = await supabase
+        .from("system_roles")
+        .select("setor")
+        .eq("key", cargo)
+        .single();
+
       setVagaCargo(cargo);
-      setVagaSetor(getSetorFromRole(cargo as any) || "");
+      setVagaSetor(roleData?.setor || getSetorFromRole(cargo as any) || "");
       setLoadingVaga(false);
     }
     fetchVaga();
