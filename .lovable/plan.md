@@ -1,27 +1,36 @@
 
 
-## Plano: Corrigir setor não encontrado ao preencher vaga
+# Melhorias na página /direcao/dre/custos
 
-### Problema
-O `PreencherVagaPage` usa `getSetorFromRole()` que depende de um mapeamento hardcoded (`SETOR_ROLES` em `setorMapping.ts`). Roles criados dinamicamente (como `social_media`, `designer`) não estão nesse mapeamento, resultando em setor vazio.
+## Alterações em `src/pages/direcao/DREDespesasDirecao.tsx` → na verdade `src/pages/direcao/DRECustosDirecao.tsx`
 
-### Solução
-Alterar `PreencherVagaPage.tsx` para buscar o setor diretamente da tabela `system_roles` em vez de usar o mapeamento estático.
+### 1. Buscar `quantidade` junto com os demais campos
+Adicionar `quantidade` ao select e à interface `EstoqueItem`.
 
-**Arquivo**: `src/pages/administrativo/rh-dp/PreencherVagaPage.tsx`
+### 2. Unidade editável (inline, como o custo)
+Adicionar estado para edição de unidade. Ao clicar na célula de unidade, abre um input text inline com os mesmos controles (Enter salva, Escape cancela). Salva via `supabase.from("estoque").update({ unidade })`.
 
-Na função `fetchVaga`, após obter o cargo da vaga, buscar o setor na tabela `system_roles`:
+Usar um estado separado `editingField` para distinguir se está editando `custo` ou `unidade`, evitando conflito.
 
-```typescript
-const { data: roleData } = await supabase
-  .from("system_roles")
-  .select("setor")
-  .eq("key", cargo)
-  .single();
+### 3. Coluna "Custo Total"
+Nova coluna `Custo Total = quantidade × custo_unitario`, exibida com `formatCurrency`.
 
-setVagaCargo(cargo);
-setVagaSetor(roleData?.setor || getSetorFromRole(cargo as any) || "");
+### 4. Coluna de índice (#)
+Primeira coluna com número sequencial (1, 2, 3...).
+
+### 5. Linha de totais (footer)
+Linha no final da tabela com:
+- **Custo Total**: soma de todos os `quantidade × custo_unitario` dos itens filtrados
+
+### Estrutura da tabela final
+
+```text
+#  | Nome | Categoria | Unidade | Custo Unitário | Custo Total
+1  | ...  | ...       | UN (ed) | R$ ... (ed)    | R$ ...
+...
+   |      |           |         | TOTAL          | R$ XXX
 ```
 
-Isso usa `system_roles` como fonte primária e mantém o mapeamento estático como fallback.
+### Arquivo alterado
+- `src/pages/direcao/DRECustosDirecao.tsx`
 
