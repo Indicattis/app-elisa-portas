@@ -42,6 +42,8 @@ export interface VeiculoFormData {
   foto_url?: string;
   documento_url?: string;
   documento_nome?: string;
+  aviso_justificativa?: string | null;
+  aviso_data?: string | null;
 }
 
 export function useVeiculos() {

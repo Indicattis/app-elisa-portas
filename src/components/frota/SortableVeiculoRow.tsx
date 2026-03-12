@@ -89,6 +89,22 @@ export function SortableVeiculoRow({ veiculo, onDelete }: Props) {
         <StatusBadge status={veiculo.status} />
       </TableCell>
       <TableCell>
+        {veiculo.aviso_justificativa ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="cursor-default">
+                <AlertTriangle className="h-4 w-4 text-amber-400 animate-pulse" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p className="text-xs">{veiculo.aviso_justificativa}</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <span className="text-white/20">—</span>
+        )}
+      </TableCell>
+      <TableCell>
         {(() => {
           const emDia = isConferenciaEmDia(veiculo.ultima_conferencia_data);
           const lastMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
