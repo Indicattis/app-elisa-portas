@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { useVeiculos, type Veiculo } from "@/hooks/useVeiculos";
 import { useAllUsers } from "@/hooks/useAllUsers";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,8 +37,13 @@ export default function FrotaEditMinimalista() {
     documento_url: "",
     documento_nome: "",
     status: "rodando" as "rodando" | "mecanico" | "parado",
+    aviso_justificativa: "" as string,
   });
 
+  const [statusOriginal, setStatusOriginal] = useState<string>("rodando");
+  const [showAvisoModal, setShowAvisoModal] = useState(false);
+  const [observacao, setObservacao] = useState("");
+  const [pendingStatus, setPendingStatus] = useState<"mecanico" | "parado" | null>(null);
 
   useEffect(() => {
     if (veiculo) {
@@ -51,9 +58,41 @@ export default function FrotaEditMinimalista() {
         documento_url: veiculo.documento_url || "",
         documento_nome: veiculo.documento_nome || "",
         status: veiculo.status,
+        aviso_justificativa: veiculo.aviso_justificativa || "",
       });
+      setStatusOriginal(veiculo.status);
     }
   }, [veiculo]);
+
+  const handleStatusChange = (newStatus: string) => {
+    if (newStatus === "parado" || newStatus === "mecanico") {
+      setPendingStatus(newStatus as "parado" | "mecanico");
+      setObservacao(form.aviso_justificativa || "");
+      setShowAvisoModal(true);
+    } else {
+      // Voltando para "rodando" → limpar aviso
+      setForm((f) => ({ ...f, status: newStatus as any, aviso_justificativa: "" }));
+    }
+  };
+
+  const handleConfirmarAviso = () => {
+    if (!observacao.trim()) return;
+    if (pendingStatus) {
+      setForm((f) => ({
+        ...f,
+        status: pendingStatus,
+        aviso_justificativa: observacao.trim(),
+      }));
+    }
+    setShowAvisoModal(false);
+    setPendingStatus(null);
+  };
+
+  const handleCancelarAviso = () => {
+    setShowAvisoModal(false);
+    setPendingStatus(null);
+    setObservacao("");
+  };
 
   const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -76,6 +115,7 @@ export default function FrotaEditMinimalista() {
   const handleSave = async () => {
     if (!id) return;
     try {
+      const isParadoOuMecanico = form.status === "parado" || form.status === "mecanico";
       await updateVeiculo({
         id,
         data: {
@@ -89,6 +129,8 @@ export default function FrotaEditMinimalista() {
           documento_url: form.documento_url || undefined,
           documento_nome: form.documento_nome || undefined,
           status: form.status,
+          aviso_justificativa: isParadoOuMecanico ? form.aviso_justificativa || null : null,
+          aviso_data: isParadoOuMecanico && form.aviso_justificativa ? new Date().toISOString() : null,
         },
       });
       navigate("/logistica/frota");
@@ -237,7 +279,7 @@ export default function FrotaEditMinimalista() {
                   </div>
                   <div className="space-y-1.5">
                     <Label className={labelClass}>Status</Label>
-                    <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v as "rodando" | "mecanico" | "parado" }))}>
+                    <Select value={form.status} onValueChange={handleStatusChange}>
                       <SelectTrigger className={inputClass}>
                         <SelectValue />
                       </SelectTrigger>
@@ -249,6 +291,14 @@ export default function FrotaEditMinimalista() {
                     </Select>
                   </div>
                 </div>
+
+                {/* Aviso atual (se existir) */}
+                {form.aviso_justificativa && (form.status === "parado" || form.status === "mecanico") && (
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-1">
+                    <p className="text-[10px] uppercase tracking-wider text-amber-400/80 font-medium">Aviso registrado</p>
+                    <p className="text-xs text-white/70">{form.aviso_justificativa}</p>
+                  </div>
+                )}
 
                 {/* Campos somente leitura */}
                 <div className="pt-3 border-t border-blue-500/10 space-y-3">
@@ -271,6 +321,41 @@ export default function FrotaEditMinimalista() {
               </CardContent>
             </Card>
       </div>
+
+      {/* Modal de observação ao mudar status */}
+      <Dialog open={showAvisoModal} onOpenChange={(open) => { if (!open) handleCancelarAviso(); }}>
+        <DialogContent className="max-w-md bg-black/90 border-white/10 backdrop-blur-xl">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              Observação obrigatória
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              Informe o motivo para alterar o status do veículo para{" "}
+              <span className="text-amber-400 font-medium">
+                {pendingStatus === "mecanico" ? "Mecânico" : "Parado"}
+              </span>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label className="text-white/70 text-xs">Observação</Label>
+            <Textarea
+              placeholder="Descreva o motivo..."
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+              rows={3}
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-blue-400/40"
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" size="sm" onClick={handleCancelarAviso} className="border-white/20 bg-white/10 text-white hover:bg-white/15">
+              Cancelar
+            </Button>
+            <Button size="sm" onClick={handleConfirmarAviso} disabled={!observacao.trim()} className="bg-amber-500/80 hover:bg-amber-500 text-white">
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MinimalistLayout>
   );
 }
