@@ -131,6 +131,7 @@ export default function FrotaMinimalista() {
                         <TableHead className="text-xs text-white/70">Km Atual</TableHead>
                         <TableHead className="text-xs text-white/70">Próx. Troca Óleo</TableHead>
                         <TableHead className="text-xs text-white/70">Status</TableHead>
+                        <TableHead className="text-xs text-white/70">Aviso</TableHead>
                         <TableHead className="text-xs text-white/70">Últ. Conferência</TableHead>
                         <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
                       </TableRow>
@@ -146,7 +147,7 @@ export default function FrotaMinimalista() {
                         ))}
                         {orderedVeiculos.length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={13} className="text-center py-8 text-white/50">
+                            <TableCell colSpan={14} className="text-center py-8 text-white/50">
                               Nenhum veículo cadastrado
                             </TableCell>
                           </TableRow>

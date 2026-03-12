@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Edit, Trash2 } from "lucide-react";
+import { GripVertical, Edit, Trash2, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, startOfWeek, isAfter, nextMonday } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -87,6 +87,22 @@ export function SortableVeiculoRow({ veiculo, onDelete }: Props) {
       </TableCell>
       <TableCell>
         <StatusBadge status={veiculo.status} />
+      </TableCell>
+      <TableCell>
+        {veiculo.aviso_justificativa ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="cursor-default">
+                <AlertTriangle className="h-4 w-4 text-amber-400 animate-pulse" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p className="text-xs">{veiculo.aviso_justificativa}</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <span className="text-white/20">—</span>
+        )}
       </TableCell>
       <TableCell>
         {(() => {
