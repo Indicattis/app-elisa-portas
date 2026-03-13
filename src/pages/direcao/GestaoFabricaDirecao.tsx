@@ -342,6 +342,10 @@ export default function GestaoFabricaDirecao() {
     await arquivarPedido.mutateAsync(pedidoId);
   };
 
+  const handleFinalizarDireto = async (pedidoId: string) => {
+    await finalizarDireto.mutateAsync(pedidoId);
+  };
+
   const handleDeletarPedido = async (pedidoId: string) => {
     await deletarPedido.mutateAsync(pedidoId);
   };
