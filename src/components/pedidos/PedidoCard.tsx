@@ -2546,5 +2546,36 @@ className="flex h-[20px] w-full rounded-[3px]"
         pedido={pedido}
         isLoading={isExcluindo}
       />
+
+      <AlertDialog open={showFinalizarDireto} onOpenChange={setShowFinalizarDireto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Finalizar pedido diretamente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O pedido será movido diretamente para a etapa "Finalizado", pulando todas as etapas intermediárias. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isFinalizandoDireto}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isFinalizandoDireto}
+              className="bg-emerald-600 hover:bg-emerald-700"
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!onFinalizarDireto) return;
+                setIsFinalizandoDireto(true);
+                try {
+                  await onFinalizarDireto(pedido.id);
+                  setShowFinalizarDireto(false);
+                } finally {
+                  setIsFinalizandoDireto(false);
+                }
+              }}
+            >
+              {isFinalizandoDireto ? 'Finalizando...' : 'Sim, finalizar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>;
 }
