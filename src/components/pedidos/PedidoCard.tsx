@@ -9,6 +9,16 @@ import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench, CalendarPlus, Star, Triangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { CriarPedidoCorrecaoModal } from "./CriarPedidoCorrecaoModal";
 import { EnviarCorrecaoModal } from "./EnviarCorrecaoModal";
 import { useEnviarParaCorrecao } from "@/hooks/useEnviarParaCorrecao";

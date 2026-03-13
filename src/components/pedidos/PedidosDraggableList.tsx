@@ -115,6 +115,7 @@ function SortableItem({
         onAvisoEspera={onAvisoEspera}
         onAgendar={onAgendar}
         onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
+        onFinalizarDireto={onFinalizarDireto}
         isDragging={isDragging}
         dragHandleProps={{ ...attributes, ...listeners }}
         posicao={posicao}
