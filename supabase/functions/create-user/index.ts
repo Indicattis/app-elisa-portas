@@ -82,7 +82,8 @@ serve(async (req) => {
       );
     }
 
-    if (adminUser.role !== 'administrador') {
+    const allowedRoles = ['administrador', 'analista_rh'];
+    if (!allowedRoles.includes(adminUser.role)) {
       console.error('Insufficient permissions - role:', adminUser.role);
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions - admin role required' }),
