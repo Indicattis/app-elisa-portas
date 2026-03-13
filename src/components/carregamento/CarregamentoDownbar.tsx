@@ -192,6 +192,34 @@ export function CarregamentoDownbar({
           </SheetHeader>
         </div>
 
+        <ScrollArea className="h-[calc(85vh-80px)] px-6 py-4">
+          <div className="space-y-4 pb-4">
+            {/* Hero card */}
+            <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-white/10 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white font-semibold text-base">{ordem.nome_cliente}</p>
+                  <p className="text-white/50 text-xs">Pedido {ordem.pedido?.numero_pedido || "N/A"}</p>
+                </div>
+                {ordem.data_carregamento && (
+                  <div className="text-right">
+                    <p className="text-white/50 text-xs">Agendado</p>
+                    <p className="text-white/80 text-sm font-medium">
+                      {format(new Date(ordem.data_carregamento + 'T12:00:00'), "dd/MM/yy", { locale: ptBR })}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-center">
+                <CoresPortasEnrolar produtos={ordem.venda?.produtos} />
+              </div>
+              {(ordem.venda?.cidade || ordem.venda?.bairro) && (
+                <p className="text-white/40 text-xs">
+                  {[ordem.venda?.bairro, ordem.venda?.cidade, ordem.venda?.estado].filter(Boolean).join(', ')}
+                </p>
+              )}
+            </div>
+
             {/* Observações do Pedido */}
             {ordem.pedido?.observacoes && (
               <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
