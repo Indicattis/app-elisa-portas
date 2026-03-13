@@ -216,7 +216,9 @@ export const useOrdensCarregamentoUnificadas = () => {
             numero_pedido,
             etapa_atual,
             observacoes,
-            updated_at
+            updated_at,
+            ficha_visita_url,
+            ficha_visita_nome
           )
         `)
         .eq("carregamento_concluido", false)
