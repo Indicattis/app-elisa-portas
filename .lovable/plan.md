@@ -1,22 +1,32 @@
 
 
-## Plano: Adicionar coluna "Mecânico" na Frota
+## Plano: Corrigir divergência entre totais e ranking de colaboradores
 
-### O que será feito
+### Problema
 
-Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
+Os valores totais do "Desempenho por Etapa" e os valores do ranking de colaboradores vêm de **fontes de dados diferentes**:
+
+- **Totais (cabeçalho)**: RPC `get_portas_por_etapa` → consulta tabelas de produção reais (`ordens_soldagem`, `ordens_perfiladeira`, `ordens_separacao`, `ordens_pintura`, `instalacoes`)
+- **Ranking (colaboradores)**: hook `useDesempenhoEtapas` → consulta tabela `pontuacao_colaboradores` + `ordens_carregamento` + `instalacoes`
+
+Como as tabelas são diferentes, os números não batem.
+
+### Solução
+
+Eliminar o uso da RPC `get_portas_por_etapa` no componente `PortasPorEtapa.tsx` e calcular os totais como a **soma dos valores dos colaboradores** retornados por `useDesempenhoEtapas`. Isso garante que o total sempre seja igual à soma do ranking.
 
 ### Mudanças
 
-1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
+**1. `src/components/producao/dashboard/PortasPorEtapa.tsx`**
+- Remover import e uso de `usePortasPorEtapa`
+- Criar um `useMemo` que soma os campos de todos os colaboradores do `useDesempenhoEtapas`:
+  - `metros_perfilados` = soma de `perfiladas_metros`
+  - `portas_soldadas` = soma de `soldadas`
+  - `pedidos_separados` = soma de `separadas`
+  - `pintura_m2` = soma de `pintura_m2`
+  - `carregamentos` = soma de `carregamentos`
+- Usar esses totais calculados no lugar de `data?.metros_perfilados`, etc.
+- Remover a variável `isLoading` do RPC, usar apenas `isLoadingDesempenho`
 
-2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
-
-3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
-
-4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
-
-5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
-
-6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
+Nenhum outro arquivo precisa ser alterado. A mudança é isolada ao componente de exibição.
 
