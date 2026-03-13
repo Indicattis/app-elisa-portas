@@ -212,7 +212,7 @@ export function PortasPorEtapa() {
     },
     {
       label: "Soldadas",
-      value: data?.portas_soldadas ?? 0,
+      value: totais.portas_soldadas,
       extra: "portas",
       icon: Flame,
       bgColor: "bg-orange-500/10",
