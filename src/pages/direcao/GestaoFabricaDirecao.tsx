@@ -110,7 +110,8 @@ export default function GestaoFabricaDirecao() {
     atualizarPrioridade,
     reorganizarPedidos,
     arquivarPedido,
-    deletarPedido
+    deletarPedido,
+    finalizarDireto
   } = usePedidosEtapas(etapaParaQuery);
   const { updateOrdem } = useOrdensCarregamentoCalendario(new Date(), 'month');
   const { ordens: ordensUnificadas } = useOrdensCarregamentoUnificadas();
