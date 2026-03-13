@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { PackageCheck, Loader2, Truck, Tags, Wrench, FileText, CheckSquare } from "lucide-react";
+import { PackageCheck, Loader2, Truck, Tags, Wrench, FileText, CheckSquare, Paperclip, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
