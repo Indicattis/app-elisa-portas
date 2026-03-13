@@ -281,6 +281,8 @@ export const useOrdensCarregamentoUnificadas = () => {
           etapa_atual,
           observacoes,
           updated_at,
+          ficha_visita_url,
+          ficha_visita_nome,
           vendas:vendas!inner(
             id, cliente_nome, cliente_telefone, cliente_email,
             cidade, estado, bairro, cep, tipo_entrega, atendente_id,
