@@ -59,6 +59,7 @@ interface SortableItemProps {
   onAvisoEspera?: (pedidoId: string, justificativa: string | null) => Promise<void>;
   onAgendar?: (pedidoId: string) => void;
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
+  onFinalizarDireto?: (pedidoId: string) => Promise<void>;
   disableClienteClick?: boolean;
   hideOrdensStatus?: boolean;
   hideCorrecaoButton?: boolean;
