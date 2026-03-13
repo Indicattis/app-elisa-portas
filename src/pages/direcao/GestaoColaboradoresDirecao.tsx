@@ -141,6 +141,11 @@ function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDea
                   )}
                 </div>
                 <p className="text-xs text-white/40 truncate">{user.email}</p>
+                {user.salario != null && (
+                  <p className="text-xs text-emerald-400/60">
+                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(user.salario)}
+                  </p>
+                )}
               </div>
               <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all">
                 <button
