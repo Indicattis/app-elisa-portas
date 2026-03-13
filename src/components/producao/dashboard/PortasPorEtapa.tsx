@@ -242,7 +242,7 @@ export function PortasPorEtapa() {
     },
     {
       label: "Carregamentos",
-      value: data?.carregamentos ?? 0,
+      value: totais.carregamentos,
       extra: null,
       icon: Truck,
       bgColor: "bg-emerald-600/10",
