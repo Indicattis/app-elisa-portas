@@ -11,6 +11,7 @@ export interface User {
   cpf?: string;
   ativo: boolean;
   em_teste?: boolean;
+  salario?: number | null;
 }
 
 export function useAllUsers() {
