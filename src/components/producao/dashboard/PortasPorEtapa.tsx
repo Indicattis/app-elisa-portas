@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { usePortasPorEtapa } from "@/hooks/usePortasPorEtapa";
 import { useDesempenhoEtapas, DesempenhoColaborador } from "@/hooks/useDesempenhoEtapas";
 import { Cog, Flame, Package, Paintbrush, Truck, CalendarIcon } from "lucide-react";
 import { format, startOfWeek, startOfMonth, startOfYear } from "date-fns";
