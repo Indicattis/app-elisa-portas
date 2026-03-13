@@ -34,6 +34,8 @@ export interface OrdemCarregamentoUnificada {
     etapa_atual?: string;
     observacoes?: string;
     updated_at?: string;
+    ficha_visita_url?: string | null;
+    ficha_visita_nome?: string | null;
   } | null;
   venda?: {
     id: string;

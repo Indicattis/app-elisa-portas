@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { PackageCheck, Loader2, Truck, Tags, Wrench, FileText, CheckSquare } from "lucide-react";
+import { PackageCheck, Loader2, Truck, Tags, Wrench, FileText, CheckSquare, Paperclip, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
@@ -206,6 +206,24 @@ export function CarregamentoDownbar({
                 </p>
               )}
             </div>
+
+            {/* Anexo da Visita Técnica */}
+            {ordem.pedido?.ficha_visita_url && (
+              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <a
+                  href={ordem.pedido.ficha_visita_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-blue-300 hover:text-blue-200 transition-colors"
+                >
+                  <Paperclip className="h-3.5 w-3.5" />
+                  <span className="text-xs font-medium flex-1">
+                    {ordem.pedido.ficha_visita_nome || 'Ficha de Visita Técnica'}
+                  </span>
+                  <ExternalLink className="h-3 w-3 text-blue-400/60" />
+                </a>
+              </div>
+            )}
 
             {/* Observações do Pedido */}
             {ordem.pedido?.observacoes && (

@@ -38,6 +38,8 @@ export interface OrdemCarregamentoUnificada {
     etapa_atual?: string;
     observacoes?: string;
     updated_at?: string;
+    ficha_visita_url?: string | null;
+    ficha_visita_nome?: string | null;
   } | null;
   venda?: {
     id: string;
@@ -97,7 +99,9 @@ export const useOrdensCarregamentoUnificadas = () => {
             numero_pedido,
             etapa_atual,
             observacoes,
-            updated_at
+            updated_at,
+            ficha_visita_url,
+            ficha_visita_nome
           )
         `)
         .eq("carregamento_concluido", false)
@@ -183,7 +187,9 @@ export const useOrdensCarregamentoUnificadas = () => {
             numero_pedido,
             etapa_atual,
             observacoes,
-            updated_at
+            updated_at,
+            ficha_visita_url,
+            ficha_visita_nome
           )
         `)
         .eq("carregamento_concluido", false)
@@ -210,7 +216,9 @@ export const useOrdensCarregamentoUnificadas = () => {
             numero_pedido,
             etapa_atual,
             observacoes,
-            updated_at
+            updated_at,
+            ficha_visita_url,
+            ficha_visita_nome
           )
         `)
         .eq("carregamento_concluido", false)
@@ -273,6 +281,8 @@ export const useOrdensCarregamentoUnificadas = () => {
           etapa_atual,
           observacoes,
           updated_at,
+          ficha_visita_url,
+          ficha_visita_nome,
           vendas:vendas!inner(
             id, cliente_nome, cliente_telefone, cliente_email,
             cidade, estado, bairro, cep, tipo_entrega, atendente_id,
@@ -404,6 +414,8 @@ export const useOrdensCarregamentoUnificadas = () => {
               etapa_atual: pedido.etapa_atual || undefined,
               observacoes: pedido.observacoes || undefined,
               updated_at: pedido.updated_at || undefined,
+              ficha_visita_url: (pedido as any).ficha_visita_url || null,
+              ficha_visita_nome: (pedido as any).ficha_visita_nome || null,
             },
             venda: venda ? {
               id: venda.id,
