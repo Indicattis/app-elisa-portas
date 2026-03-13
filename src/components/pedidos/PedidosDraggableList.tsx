@@ -80,6 +80,7 @@ function SortableItem({
   onAvisoEspera,
   onAgendar,
   onCorrecaoDetalhesClick,
+  onFinalizarDireto,
   disableClienteClick,
   hideOrdensStatus,
   hideCorrecaoButton,
