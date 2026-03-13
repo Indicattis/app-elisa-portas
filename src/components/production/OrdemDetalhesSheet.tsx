@@ -243,25 +243,62 @@ export function OrdemDetalhesSheet({
         }
       }
       
-      // Gerar apenas 1 etiqueta individual
-      const tag = {
-        tagNumero: 1,
-        totalTags: calculo.etiquetasNecessarias,
-        nomeProduto: calculo.nomeProduto,
-        numeroPedido: ordem?.pedido?.numero_pedido || ordem?.numero_ordem || '',
-        quantidade: calculo.quantidade,
-        largura: calculo.largura,
-        altura: calculo.altura,
-        clienteNome: ordem?.pedido?.cliente_nome,
-        tamanho: linha.tamanho,
-        corNome: linha.cor_nome,
-        tipoPintura: linha.tipo_pintura,
-        origemOrdem: origemOrdemLabel,
-        responsavelNome: ordem?.admin_users?.nome,
-        portaLabel,
-      };
-      
-      const doc = gerarPDFEtiquetaProducao(tag);
+      // Aplicar lógica de quebra de etiquetas (divisor)
+      const divisor = calculo.divisor || 1;
+      const quantidadeTotal = calculo.quantidade;
+      let doc;
+
+      if (calculo.etiquetasNecessarias > 1) {
+        const tags: any[] = [];
+        for (let i = 1; i <= calculo.etiquetasNecessarias; i++) {
+          const isUltimaEtiqueta = i === calculo.etiquetasNecessarias;
+          const resto = quantidadeTotal % divisor;
+          let quantidadeParcial: number;
+          if (divisor > 1) {
+            quantidadeParcial = isUltimaEtiqueta && resto > 0 ? resto : divisor;
+          } else {
+            quantidadeParcial = quantidadeTotal;
+          }
+          tags.push({
+            tagNumero: i,
+            totalTags: calculo.etiquetasNecessarias,
+            nomeProduto: calculo.nomeProduto,
+            numeroPedido: ordem?.pedido?.numero_pedido || ordem?.numero_ordem || '',
+            quantidade: quantidadeParcial,
+            quantidadeParcial,
+            quantidadeTotal,
+            divisor,
+            largura: calculo.largura,
+            altura: calculo.altura,
+            clienteNome: ordem?.pedido?.cliente_nome,
+            tamanho: linha.tamanho,
+            corNome: linha.cor_nome,
+            tipoPintura: linha.tipo_pintura,
+            origemOrdem: origemOrdemLabel,
+            responsavelNome: ordem?.admin_users?.nome,
+            portaLabel,
+          });
+        }
+        doc = gerarPDFEtiquetasProducaoMultiplas(tags);
+      } else {
+        const tag = {
+          tagNumero: 1,
+          totalTags: 1,
+          nomeProduto: calculo.nomeProduto,
+          numeroPedido: ordem?.pedido?.numero_pedido || ordem?.numero_ordem || '',
+          quantidade: quantidadeTotal,
+          largura: calculo.largura,
+          altura: calculo.altura,
+          clienteNome: ordem?.pedido?.cliente_nome,
+          tamanho: linha.tamanho,
+          corNome: linha.cor_nome,
+          tipoPintura: linha.tipo_pintura,
+          origemOrdem: origemOrdemLabel,
+          responsavelNome: ordem?.admin_users?.nome,
+          portaLabel,
+        };
+        doc = gerarPDFEtiquetaProducao(tag);
+      }
       
       // Criar iframe oculto para impressão na aba atual
       const blobUrl = String(doc.output('bloburl'));
@@ -305,7 +342,8 @@ export function OrdemDetalhesSheet({
       
       iframe.src = blobUrl;
       
-      toast.success('1 etiqueta pronta para impressão');
+      const totalGeradas = calculo.etiquetasNecessarias;
+      toast.success(`${totalGeradas} etiqueta${totalGeradas > 1 ? 's' : ''} pronta${totalGeradas > 1 ? 's' : ''} para impressão`);
     } catch (error) {
       console.error('Erro ao gerar etiqueta:', error);
       toast.error('Erro ao gerar etiqueta');

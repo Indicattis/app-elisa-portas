@@ -1,31 +1,22 @@
 
 
-## Plano: Corrigir quebra de etiquetas na impressão individual (Embalagem)
+## Plano: Adicionar coluna "Mecânico" na Frota
 
-### Problema
+### O que será feito
 
-Ao clicar no botão de impressão individual (ícone de impressora por linha), o sistema gera **apenas 1 etiqueta** com a quantidade total, ignorando as regras de divisor. A função `handleImprimirEtiqueta` (linha 213) faz:
+Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
 
-```
-quantidade: calculo.quantidade  // quantidade total, sem quebra
-tagNumero: 1
-totalTags: calculo.etiquetasNecessarias
-```
+### Mudanças
 
-Já a função `handleImprimirTodasEtiquetas` (linha 355) aplica corretamente o divisor, gerando múltiplas etiquetas com quantidades parciais.
+1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
 
-### Solução
+2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
 
-Modificar `handleImprimirEtiqueta` para aplicar a mesma lógica de quebra de `handleImprimirTodasEtiquetas`: quando há divisor > 1, gerar múltiplas etiquetas com `quantidadeParcial` e usar `gerarPDFEtiquetasProducaoMultiplas` em vez de `gerarPDFEtiquetaProducao`.
+3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
 
-### Mudança
+4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
 
-**`src/components/production/OrdemDetalhesSheet.tsx`** — função `handleImprimirEtiqueta` (linhas 213-313):
+5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
 
-- Calcular `divisor` a partir de `calculo.divisor || 1`
-- Se `calculo.etiquetasNecessarias > 1`, gerar array de tags com quantidades parciais (mesma lógica do `handleImprimirTodasEtiquetas`)
-- Usar `gerarPDFEtiquetasProducaoMultiplas` para múltiplas tags
-- Se apenas 1 etiqueta, manter comportamento atual com `gerarPDFEtiquetaProducao`
-
-Nenhum outro arquivo precisa ser alterado.
+6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
 
