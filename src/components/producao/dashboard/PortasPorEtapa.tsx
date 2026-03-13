@@ -222,7 +222,7 @@ export function PortasPorEtapa() {
     },
     {
       label: "Separadas",
-      value: data?.pedidos_separados ?? 0,
+      value: totais.pedidos_separados,
       extra: "pedidos",
       icon: Package,
       bgColor: "bg-green-500/10",
