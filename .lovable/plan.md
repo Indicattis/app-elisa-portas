@@ -1,22 +1,17 @@
 
 
-## Plano: Adicionar coluna "Mecânico" na Frota
+## Plano: Mostrar link do anexo da visita técnica na downbar de carregamento
 
-### O que será feito
-
-Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
+### Problema
+A downbar de carregamento (`CarregamentoDownbar.tsx`) não exibe o link para o anexo da visita técnica. O campo `ficha_visita_url` existe na tabela `pedidos_producao`, mas o hook `useOrdensCarregamentoUnificadas` não o busca.
 
 ### Mudanças
 
-1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
+**1. `src/hooks/useOrdensCarregamentoUnificadas.ts`**
+- Adicionar `ficha_visita_url` e `ficha_visita_nome` no select de `pedidos_producao` (nos 3 pontos: ordens_carregamento, instalacoes e correcoes)
+- Adicionar esses campos na interface `OrdemCarregamentoUnificada.pedido`
 
-2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
-
-3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
-
-4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
-
-5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
-
-6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
+**2. `src/components/carregamento/CarregamentoDownbar.tsx`**
+- Adicionar seção com link para o anexo da visita técnica quando `ordem.pedido?.ficha_visita_url` existir
+- Usar ícone `ExternalLink` / `Paperclip`, estilo visual consistente (tons de blue/purple), abrindo em nova aba
 
