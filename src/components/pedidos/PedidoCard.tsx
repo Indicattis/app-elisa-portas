@@ -52,6 +52,7 @@ interface PedidoCardProps {
   onArquivar?: (pedidoId: string) => Promise<void>;
   onDeletar?: (pedidoId: string) => Promise<void>;
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
+  onFinalizarDireto?: (pedidoId: string) => Promise<void>;
   basePath?: string;
   readOnly?: boolean;
   disableClienteClick?: boolean;
