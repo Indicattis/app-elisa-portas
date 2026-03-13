@@ -143,6 +143,7 @@ export function PedidosDraggableList({
   onAvisoEspera,
   onAgendar,
   onCorrecaoDetalhesClick,
+  onFinalizarDireto,
   enableDragAndDrop = true,
   showPosicao = true,
   disableClienteClick = false,
