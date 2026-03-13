@@ -649,6 +649,7 @@ export default function GestaoFabricaDirecao() {
                       onDeletar={handleDeletarPedido}
                       onAgendar={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleAgendarPedido : undefined}
                       hideOrdensStatus={['aguardando_coleta','instalacoes','correcoes','finalizado'].includes(etapa)}
+                      onFinalizarDireto={etapa !== 'finalizado' ? handleFinalizarDireto : undefined}
                       showPosicao={true}
                       onAvisoEspera={handleAvisoEspera}
                       enableDragAndDrop={true}
