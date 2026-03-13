@@ -1,0 +1,3 @@
+-- Inserir linha faltante "Guia G - 180mm / Testeira 45" na ordem PINT-00141
+INSERT INTO linhas_ordens (pedido_id, ordem_id, tipo_ordem, estoque_id, quantidade, concluida, item, produto_venda_id, indice_porta)
+VALUES ('116c8036-e4c8-4658-b7e2-a320329b7418', '6afac3a4-7afc-4eb0-b956-5e7707b40a2b', 'pintura', 'fb922ebf-47b8-49c1-aeda-fa244aab9819', 2, false, 'Guia G - 180mm / Testeira 45', 'd718e068-afc4-4674-b853-c78755f5a27f', 0);
