@@ -354,7 +354,7 @@ export function PortasPorEtapa() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">{etapa.label}</p>
-                  {isLoading ? (
+                  {isLoadingDesempenho ? (
                     <Skeleton className="h-6 w-12 mt-1" />
                   ) : (
                     <p className="text-xl font-bold">
