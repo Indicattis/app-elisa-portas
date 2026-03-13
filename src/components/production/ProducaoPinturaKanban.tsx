@@ -11,6 +11,25 @@ import { useState } from "react";
 import { VisualizarBacklogOrdemModal } from "./VisualizarBacklogOrdemModal";
 import { ProdutosIcons } from "@/components/pedidos/ProdutosIcons";
 import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
+import {
+  OPCOES_TUBO, OPCOES_INTERNA_EXTERNA, OPCOES_POSICAO_GUIA,
+  OPCOES_GUIA, OPCOES_ROLO, OPCOES_TUBO_TIRAS_FRONTAIS,
+  OPCOES_LADO_MOTOR, OPCOES_APARENCIA_TESTEIRA,
+} from "@/types/pedidoObservacoes";
+import { ClipboardList } from "lucide-react";
+
+interface ObservacaoVisita {
+  id?: string;
+  indice_porta?: number;
+  opcao_tubo?: string;
+  interna_externa?: string;
+  posicao_guia?: string;
+  opcao_guia?: string;
+  opcao_rolo?: string;
+  tubo_tiras_frontais?: string;
+  lado_motor?: string;
+  aparencia_testeira?: string;
+}
 
 interface Ordem {
   id: string;
@@ -22,6 +41,7 @@ interface Ordem {
   tempo_conclusao_segundos?: number;
   em_backlog?: boolean;
   prioridade?: number;
+  observacoesVisita?: ObservacaoVisita[];
   pedido?: {
     cliente_nome: string;
     vendas?: {
