@@ -57,6 +57,12 @@ export function useOrdemEmbalagem(onOrdemConcluida?: (pedidoId: string, tipoOrde
             item: linha.estoque?.nome_produto || linha.item,
           })) || [];
 
+          // Buscar observações da visita técnica
+          const { data: observacoesVisita } = await supabase
+            .from('pedido_porta_observacoes')
+            .select('*')
+            .eq('pedido_id', ordem.pedido_id);
+
           const vendasArray = Array.isArray(pedido?.vendas) ? pedido.vendas : [pedido?.vendas];
           const primeiraVenda = vendasArray.length > 0 ? vendasArray[0] : null;
           const produtos = primeiraVenda?.produtos || [];
@@ -70,6 +76,7 @@ export function useOrdemEmbalagem(onOrdemConcluida?: (pedidoId: string, tipoOrde
             } : { id: '', numero_pedido: '', cliente_nome: 'Cliente não encontrado', venda_id: undefined, produtos: [], vendas: undefined },
             admin_users: responsavel,
             linhas,
+            observacoesVisita: observacoesVisita || [],
           };
         })
       );

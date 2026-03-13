@@ -11,6 +11,25 @@ import { useState } from "react";
 import { VisualizarBacklogOrdemModal } from "./VisualizarBacklogOrdemModal";
 import { ProdutosIcons } from "@/components/pedidos/ProdutosIcons";
 import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
+import {
+  OPCOES_TUBO, OPCOES_INTERNA_EXTERNA, OPCOES_POSICAO_GUIA,
+  OPCOES_GUIA, OPCOES_ROLO, OPCOES_TUBO_TIRAS_FRONTAIS,
+  OPCOES_LADO_MOTOR, OPCOES_APARENCIA_TESTEIRA,
+} from "@/types/pedidoObservacoes";
+import { ClipboardList } from "lucide-react";
+
+interface ObservacaoVisita {
+  id?: string;
+  indice_porta?: number;
+  opcao_tubo?: string;
+  interna_externa?: string;
+  posicao_guia?: string;
+  opcao_guia?: string;
+  opcao_rolo?: string;
+  tubo_tiras_frontais?: string;
+  lado_motor?: string;
+  aparencia_testeira?: string;
+}
 
 interface Ordem {
   id: string;
@@ -22,6 +41,7 @@ interface Ordem {
   tempo_conclusao_segundos?: number;
   em_backlog?: boolean;
   prioridade?: number;
+  observacoesVisita?: ObservacaoVisita[];
   pedido?: {
     cliente_nome: string;
     vendas?: {
@@ -173,9 +193,41 @@ function OrdemCard({
               <div className="col-span-1 sm:col-span-2">
                 <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium">
                   <FileText className="h-3 w-3" />
-                  Observações da Visita
+                  Observações da Venda
                 </p>
                 <p className="text-[10px] sm:text-xs line-clamp-2 text-amber-700 dark:text-amber-300">{ordem.pedido.vendas.observacoes_venda}</p>
+              </div>
+            )}
+
+            {ordem.observacoesVisita && ordem.observacoesVisita.length > 0 && (
+              <div className="col-span-1 sm:col-span-2">
+                <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium mb-1">
+                  <ClipboardList className="h-3 w-3" />
+                  Observações da Visita ({ordem.observacoesVisita.length} {ordem.observacoesVisita.length === 1 ? 'porta' : 'portas'})
+                </p>
+                <div className="space-y-1.5">
+                  {ordem.observacoesVisita.map((obs, idx) => {
+                    const items = [
+                      obs.opcao_tubo && OPCOES_TUBO[obs.opcao_tubo as keyof typeof OPCOES_TUBO],
+                      obs.interna_externa && OPCOES_INTERNA_EXTERNA[obs.interna_externa as keyof typeof OPCOES_INTERNA_EXTERNA],
+                      obs.posicao_guia && OPCOES_POSICAO_GUIA[obs.posicao_guia as keyof typeof OPCOES_POSICAO_GUIA],
+                      obs.opcao_guia && OPCOES_GUIA[obs.opcao_guia as keyof typeof OPCOES_GUIA],
+                      obs.opcao_rolo && OPCOES_ROLO[obs.opcao_rolo as keyof typeof OPCOES_ROLO],
+                      obs.tubo_tiras_frontais && OPCOES_TUBO_TIRAS_FRONTAIS[obs.tubo_tiras_frontais as keyof typeof OPCOES_TUBO_TIRAS_FRONTAIS],
+                      obs.lado_motor && `Motor: ${OPCOES_LADO_MOTOR[obs.lado_motor as keyof typeof OPCOES_LADO_MOTOR]}`,
+                      obs.aparencia_testeira && `Testeira: ${OPCOES_APARENCIA_TESTEIRA[obs.aparencia_testeira as keyof typeof OPCOES_APARENCIA_TESTEIRA]}`,
+                    ].filter(Boolean);
+
+                    return (
+                      <div key={obs.id || idx} className="text-[10px] sm:text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 rounded px-2 py-1 border border-amber-200 dark:border-amber-800">
+                        {ordem.observacoesVisita!.length > 1 && (
+                          <span className="font-semibold">Porta {(obs.indice_porta ?? 0) + 1}: </span>
+                        )}
+                        {items.join(' · ')}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>

@@ -1,18 +1,22 @@
 
 
-## Plano: Mostrar observações da visita nos cards de embalagem
+## Plano: Adicionar coluna "Mecânico" na Frota
 
-### Problema
-Os cards de embalagem em `/producao/embalagem` não mostram as observações da visita técnica (dados de `pedido_porta_observacoes`). O hook `useOrdemEmbalagem` não busca esses dados, ao contrário do `useOrdemPintura` que já faz isso.
+### O que será feito
+
+Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
 
 ### Mudanças
 
-**1. `src/hooks/useOrdemEmbalagem.ts`**
-- Adicionar query para buscar `pedido_porta_observacoes` por `pedido_id` (mesmo padrão do `useOrdemPintura`, linhas 153-157)
-- Incluir `observacoesVisita` no objeto retornado de cada ordem
+1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
 
-**2. `src/components/production/ProducaoPinturaKanban.tsx`**
-- Adicionar `observacoesVisita` na interface `Ordem`
-- Exibir as observações da visita nos cards, com as opções estruturadas (tubo, interna/externa, posição guia, etc.) usando os labels de `pedidoObservacoes.ts`
-- Mostrar abaixo das observações existentes, com ícone e estilo amber (mesmo padrão visual já usado)
+2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
+
+3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
+
+4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
+
+5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
+
+6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
 
