@@ -151,8 +151,20 @@ export function PortasPorEtapa() {
     }
   }, [periodo, dataInicioCustom, dataFimCustom]);
 
-  const { data, isLoading } = usePortasPorEtapa(dataInicio, dataFim);
   const { data: desempenho = [], isLoading: isLoadingDesempenho } = useDesempenhoEtapas(dataInicio, dataFim);
+
+  const totais = useMemo(() => {
+    return desempenho.reduce(
+      (acc, col) => ({
+        metros_perfilados: acc.metros_perfilados + (col.perfiladas_metros || 0),
+        portas_soldadas: acc.portas_soldadas + (col.soldadas || 0),
+        pedidos_separados: acc.pedidos_separados + (col.separadas || 0),
+        pintura_m2: acc.pintura_m2 + (col.pintura_m2 || 0),
+        carregamentos: acc.carregamentos + (col.carregamentos || 0),
+      }),
+      { metros_perfilados: 0, portas_soldadas: 0, pedidos_separados: 0, pintura_m2: 0, carregamentos: 0 }
+    );
+  }, [desempenho]);
 
   const getPeriodoLabel = () => {
     switch (periodo) {
