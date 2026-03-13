@@ -219,6 +219,7 @@ export function PedidosDraggableList({
               onAvisoEspera={onAvisoEspera}
               onAgendar={onAgendar}
               onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
+              onFinalizarDireto={onFinalizarDireto}
               posicao={showPosicao ? index + 1 : undefined}
               total={showPosicao ? pedidos.length : undefined}
               disableClienteClick={disableClienteClick}
