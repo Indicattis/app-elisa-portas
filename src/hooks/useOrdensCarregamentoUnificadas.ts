@@ -414,6 +414,8 @@ export const useOrdensCarregamentoUnificadas = () => {
               etapa_atual: pedido.etapa_atual || undefined,
               observacoes: pedido.observacoes || undefined,
               updated_at: pedido.updated_at || undefined,
+              ficha_visita_url: (pedido as any).ficha_visita_url || null,
+              ficha_visita_nome: (pedido as any).ficha_visita_nome || null,
             },
             venda: venda ? {
               id: venda.id,
