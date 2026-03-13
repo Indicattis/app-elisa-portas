@@ -182,12 +182,12 @@ export function PortasPorEtapa() {
     }
   };
 
-  const metrosFormatados = data?.metros_perfilados 
-    ? `${data.metros_perfilados.toFixed(2).replace('.', ',')}m`
+  const metrosFormatados = totais.metros_perfilados 
+    ? `${totais.metros_perfilados.toFixed(2).replace('.', ',')}m`
     : "0m";
 
-  const pinturaFormatada = data?.pintura_m2 
-    ? `${data.pintura_m2.toFixed(1).replace('.', ',')} m²`
+  const pinturaFormatada = totais.pintura_m2 
+    ? `${totais.pintura_m2.toFixed(1).replace('.', ',')} m²`
     : "0 m²";
 
   const etapas: {
