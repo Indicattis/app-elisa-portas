@@ -169,61 +169,28 @@ export function CarregamentoDownbar({
         {/* Header gradiente */}
         <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm px-6 py-4 rounded-t-2xl border-b border-white/10">
           <SheetHeader>
-            <SheetTitle className="flex items-center gap-2 text-white">
-              <div className="p-1.5 rounded-lg bg-white/10">
-                <Icon className="h-4 w-4 text-blue-300" />
-              </div>
-              Carregamento — {tipoLabel}
-            </SheetTitle>
-          </SheetHeader>
-        </div>
-
-        <ScrollArea className="h-[calc(85vh-80px)] px-6 py-4">
-          <div className="space-y-4 pb-4">
-            {/* Hero card */}
-            <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-white/10 rounded-xl p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-white font-semibold text-base">{ordem.nome_cliente}</p>
-                  <p className="text-white/50 text-xs">Pedido {ordem.pedido?.numero_pedido || "N/A"}</p>
+            <SheetTitle className="flex items-center justify-between text-white">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-white/10">
+                  <Icon className="h-4 w-4 text-blue-300" />
                 </div>
-                {ordem.data_carregamento && (
-                  <div className="text-right">
-                    <p className="text-white/50 text-xs">Agendado</p>
-                    <p className="text-white/80 text-sm font-medium">
-                      {format(new Date(ordem.data_carregamento + 'T12:00:00'), "dd/MM/yy", { locale: ptBR })}
-                    </p>
-                  </div>
-                )}
+                Carregamento — {tipoLabel}
               </div>
-              <div className="flex justify-center">
-                <CoresPortasEnrolar produtos={ordem.venda?.produtos} />
-              </div>
-              {/* Localização */}
-              {(ordem.venda?.cidade || ordem.venda?.bairro) && (
-                <p className="text-white/40 text-xs">
-                  {[ordem.venda?.bairro, ordem.venda?.cidade, ordem.venda?.estado].filter(Boolean).join(', ')}
-                </p>
-              )}
-            </div>
-
-            {/* Anexo da Visita Técnica */}
-            {ordem.pedido?.ficha_visita_url && (
-              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              {ordem.pedido?.ficha_visita_url && (
                 <a
                   href={ordem.pedido.ficha_visita_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-blue-300 hover:text-blue-200 transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-medium text-blue-300 hover:text-blue-200 transition-colors bg-white/5 hover:bg-white/10 px-2.5 py-1.5 rounded-lg"
                 >
                   <Paperclip className="h-3.5 w-3.5" />
-                  <span className="text-xs font-medium flex-1">
-                    {ordem.pedido.ficha_visita_nome || 'Ficha de Visita Técnica'}
-                  </span>
-                  <ExternalLink className="h-3 w-3 text-blue-400/60" />
+                  Visita Técnica
+                  <ExternalLink className="h-3 w-3 opacity-60" />
                 </a>
-              </div>
-            )}
+              )}
+            </SheetTitle>
+          </SheetHeader>
+        </div>
 
             {/* Observações do Pedido */}
             {ordem.pedido?.observacoes && (
