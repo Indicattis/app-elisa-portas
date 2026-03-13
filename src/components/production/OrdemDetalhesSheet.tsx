@@ -342,7 +342,8 @@ export function OrdemDetalhesSheet({
       
       iframe.src = blobUrl;
       
-      toast.success('1 etiqueta pronta para impressão');
+      const totalGeradas = calculo.etiquetasNecessarias;
+      toast.success(`${totalGeradas} etiqueta${totalGeradas > 1 ? 's' : ''} pronta${totalGeradas > 1 ? 's' : ''} para impressão`);
     } catch (error) {
       console.error('Erro ao gerar etiqueta:', error);
       toast.error('Erro ao gerar etiqueta');
