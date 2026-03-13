@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { usePortasPorEtapa } from "@/hooks/usePortasPorEtapa";
 import { useDesempenhoEtapas, DesempenhoColaborador } from "@/hooks/useDesempenhoEtapas";
 import { Cog, Flame, Package, Paintbrush, Truck, CalendarIcon } from "lucide-react";
 import { format, startOfWeek, startOfMonth, startOfYear } from "date-fns";
@@ -152,8 +151,20 @@ export function PortasPorEtapa() {
     }
   }, [periodo, dataInicioCustom, dataFimCustom]);
 
-  const { data, isLoading } = usePortasPorEtapa(dataInicio, dataFim);
   const { data: desempenho = [], isLoading: isLoadingDesempenho } = useDesempenhoEtapas(dataInicio, dataFim);
+
+  const totais = useMemo(() => {
+    return desempenho.reduce(
+      (acc, col) => ({
+        metros_perfilados: acc.metros_perfilados + (col.perfiladas_metros || 0),
+        portas_soldadas: acc.portas_soldadas + (col.soldadas || 0),
+        pedidos_separados: acc.pedidos_separados + (col.separadas || 0),
+        pintura_m2: acc.pintura_m2 + (col.pintura_m2 || 0),
+        carregamentos: acc.carregamentos + (col.carregamentos || 0),
+      }),
+      { metros_perfilados: 0, portas_soldadas: 0, pedidos_separados: 0, pintura_m2: 0, carregamentos: 0 }
+    );
+  }, [desempenho]);
 
   const getPeriodoLabel = () => {
     switch (periodo) {
@@ -171,12 +182,12 @@ export function PortasPorEtapa() {
     }
   };
 
-  const metrosFormatados = data?.metros_perfilados 
-    ? `${data.metros_perfilados.toFixed(2).replace('.', ',')}m`
+  const metrosFormatados = totais.metros_perfilados 
+    ? `${totais.metros_perfilados.toFixed(2).replace('.', ',')}m`
     : "0m";
 
-  const pinturaFormatada = data?.pintura_m2 
-    ? `${data.pintura_m2.toFixed(1).replace('.', ',')} m²`
+  const pinturaFormatada = totais.pintura_m2 
+    ? `${totais.pintura_m2.toFixed(1).replace('.', ',')} m²`
     : "0 m²";
 
   const etapas: {
@@ -201,7 +212,7 @@ export function PortasPorEtapa() {
     },
     {
       label: "Soldadas",
-      value: data?.portas_soldadas ?? 0,
+      value: totais.portas_soldadas,
       extra: "portas",
       icon: Flame,
       bgColor: "bg-orange-500/10",
@@ -211,7 +222,7 @@ export function PortasPorEtapa() {
     },
     {
       label: "Separadas",
-      value: data?.pedidos_separados ?? 0,
+      value: totais.pedidos_separados,
       extra: "pedidos",
       icon: Package,
       bgColor: "bg-green-500/10",
@@ -231,7 +242,7 @@ export function PortasPorEtapa() {
     },
     {
       label: "Carregamentos",
-      value: data?.carregamentos ?? 0,
+      value: totais.carregamentos,
       extra: null,
       icon: Truck,
       bgColor: "bg-emerald-600/10",
@@ -343,7 +354,7 @@ export function PortasPorEtapa() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">{etapa.label}</p>
-                  {isLoading ? (
+                  {isLoadingDesempenho ? (
                     <Skeleton className="h-6 w-12 mt-1" />
                   ) : (
                     <p className="text-xl font-bold">
