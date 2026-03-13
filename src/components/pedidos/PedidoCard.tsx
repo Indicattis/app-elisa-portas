@@ -9,6 +9,16 @@ import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench, CalendarPlus, Star, Triangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { CriarPedidoCorrecaoModal } from "./CriarPedidoCorrecaoModal";
 import { EnviarCorrecaoModal } from "./EnviarCorrecaoModal";
 import { useEnviarParaCorrecao } from "@/hooks/useEnviarParaCorrecao";
@@ -52,6 +62,7 @@ interface PedidoCardProps {
   onArquivar?: (pedidoId: string) => Promise<void>;
   onDeletar?: (pedidoId: string) => Promise<void>;
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
+  onFinalizarDireto?: (pedidoId: string) => Promise<void>;
   basePath?: string;
   readOnly?: boolean;
   disableClienteClick?: boolean;
@@ -75,6 +86,7 @@ export function PedidoCard({
   onArquivar,
   onDeletar,
   onCorrecaoDetalhesClick,
+  onFinalizarDireto,
   readOnly = false,
   disableClienteClick = false,
   showEtapaBadge = false,
@@ -94,6 +106,8 @@ export function PedidoCard({
   const [showRemoverResponsavel, setShowRemoverResponsavel] = useState(false);
   const [showExcluirPedido, setShowExcluirPedido] = useState(false);
   const [isExcluindo, setIsExcluindo] = useState(false);
+  const [showFinalizarDireto, setShowFinalizarDireto] = useState(false);
+  const [isFinalizandoDireto, setIsFinalizandoDireto] = useState(false);
   const [showAvisoEspera, setShowAvisoEspera] = useState(false);
   const [ordemParaRemover, setOrdemParaRemover] = useState<{ ordem: any; nomeSetor: string } | null>(null);
   const [processos, setProcessos] = useState<Processo[]>([]);
@@ -1890,6 +1904,28 @@ className="flex h-[20px] w-full rounded-[3px]"
                       );
                     }
 
+                    // Botão "Finalizar Direto" (pula etapas intermediárias)
+                    if (onFinalizarDireto && etapaAtual !== 'finalizado') {
+                      middleButtons.push(
+                        <Tooltip key="finalizar-direto">
+                          <TooltipTrigger asChild>
+                            <Button 
+                              size="icon" 
+                              variant="outline" 
+                              onClick={(e) => { e.stopPropagation(); setShowFinalizarDireto(true); }} 
+                              title="Finalizar Direto" 
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-500/50"
+                            >
+                              <CheckCircle className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="text-xs">Finalizar Direto</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
                     // Botão de arquivar (apenas etapa finalizado)
                     if (etapaAtual === 'finalizado' && onArquivar) {
                       middleButtons.push(
@@ -2520,5 +2556,36 @@ className="flex h-[20px] w-full rounded-[3px]"
         pedido={pedido}
         isLoading={isExcluindo}
       />
+
+      <AlertDialog open={showFinalizarDireto} onOpenChange={setShowFinalizarDireto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Finalizar pedido diretamente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O pedido será movido diretamente para a etapa "Finalizado", pulando todas as etapas intermediárias. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isFinalizandoDireto}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isFinalizandoDireto}
+              className="bg-emerald-600 hover:bg-emerald-700"
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!onFinalizarDireto) return;
+                setIsFinalizandoDireto(true);
+                try {
+                  await onFinalizarDireto(pedido.id);
+                  setShowFinalizarDireto(false);
+                } finally {
+                  setIsFinalizandoDireto(false);
+                }
+              }}
+            >
+              {isFinalizandoDireto ? 'Finalizando...' : 'Sim, finalizar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>;
 }

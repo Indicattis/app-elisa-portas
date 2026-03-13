@@ -36,6 +36,7 @@ interface PedidosDraggableListProps {
   onAvisoEspera?: (pedidoId: string, justificativa: string | null) => Promise<void>;
   onAgendar?: (pedidoId: string) => void;
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
+  onFinalizarDireto?: (pedidoId: string) => Promise<void>;
   enableDragAndDrop?: boolean;
   showPosicao?: boolean;
   disableClienteClick?: boolean;
@@ -58,6 +59,7 @@ interface SortableItemProps {
   onAvisoEspera?: (pedidoId: string, justificativa: string | null) => Promise<void>;
   onAgendar?: (pedidoId: string) => void;
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
+  onFinalizarDireto?: (pedidoId: string) => Promise<void>;
   disableClienteClick?: boolean;
   hideOrdensStatus?: boolean;
   hideCorrecaoButton?: boolean;
@@ -78,6 +80,7 @@ function SortableItem({
   onAvisoEspera,
   onAgendar,
   onCorrecaoDetalhesClick,
+  onFinalizarDireto,
   disableClienteClick,
   hideOrdensStatus,
   hideCorrecaoButton,
@@ -112,6 +115,7 @@ function SortableItem({
         onAvisoEspera={onAvisoEspera}
         onAgendar={onAgendar}
         onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
+        onFinalizarDireto={onFinalizarDireto}
         isDragging={isDragging}
         dragHandleProps={{ ...attributes, ...listeners }}
         posicao={posicao}
@@ -139,6 +143,7 @@ export function PedidosDraggableList({
   onAvisoEspera,
   onAgendar,
   onCorrecaoDetalhesClick,
+  onFinalizarDireto,
   enableDragAndDrop = true,
   showPosicao = true,
   disableClienteClick = false,
@@ -214,6 +219,7 @@ export function PedidosDraggableList({
               onAvisoEspera={onAvisoEspera}
               onAgendar={onAgendar}
               onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
+              onFinalizarDireto={onFinalizarDireto}
               posicao={showPosicao ? index + 1 : undefined}
               total={showPosicao ? pedidos.length : undefined}
               disableClienteClick={disableClienteClick}
@@ -262,6 +268,7 @@ export function PedidosDraggableList({
               onAvisoEspera={onAvisoEspera}
               onAgendar={onAgendar}
               onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
+              onFinalizarDireto={onFinalizarDireto}
               disableClienteClick={disableClienteClick}
               hideOrdensStatus={hideOrdensStatus}
               hideCorrecaoButton={hideCorrecaoButton}
