@@ -1650,6 +1650,50 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     }
   });
 
+  // Mutation para finalizar direto (pular etapas)
+  const finalizarDireto = useMutation({
+    mutationFn: async (pedidoId: string) => {
+      const now = new Date().toISOString();
+
+      // 1. Fechar etapa atual (setar data_saida)
+      await supabase
+        .from('pedidos_etapas')
+        .update({ data_saida: now, updated_at: now })
+        .eq('pedido_id', pedidoId)
+        .is('data_saida', null);
+
+      // 2. Upsert etapa finalizado
+      await supabase
+        .from('pedidos_etapas')
+        .upsert({
+          pedido_id: pedidoId,
+          etapa: 'finalizado',
+          data_entrada: now,
+          data_saida: null,
+          checkboxes: [],
+          created_at: now,
+          updated_at: now,
+        }, { onConflict: 'pedido_id,etapa' });
+
+      // 3. Atualizar etapa_atual no pedidos_producao
+      const { error } = await supabase
+        .from('pedidos_producao')
+        .update({ etapa_atual: 'finalizado', updated_at: now })
+        .eq('id', pedidoId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+      toast({ title: 'Pedido finalizado diretamente' });
+    },
+    onError: (error) => {
+      console.error('Erro ao finalizar direto:', error);
+      toast({ variant: 'destructive', title: 'Erro ao finalizar pedido' });
+    },
+  });
+
   return {
     pedidos,
     isLoading,
@@ -1662,5 +1706,6 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     arquivarPedido,
     deletarPedido,
     removerResponsavelOrdem,
+    finalizarDireto,
   };
 }
