@@ -76,6 +76,7 @@ export function PedidoCard({
   onArquivar,
   onDeletar,
   onCorrecaoDetalhesClick,
+  onFinalizarDireto,
   readOnly = false,
   disableClienteClick = false,
   showEtapaBadge = false,
