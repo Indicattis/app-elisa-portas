@@ -268,6 +268,7 @@ export function PedidosDraggableList({
               onAvisoEspera={onAvisoEspera}
               onAgendar={onAgendar}
               onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
+              onFinalizarDireto={onFinalizarDireto}
               disableClienteClick={disableClienteClick}
               hideOrdensStatus={hideOrdensStatus}
               hideCorrecaoButton={hideCorrecaoButton}
