@@ -1,41 +1,22 @@
 
 
-## Diagnóstico: Pintura mostrando 0m² e classificação de solda incorreta
+## Plano: Adicionar coluna "Mecânico" na Frota
 
-### Problema encontrado
+### O que será feito
 
-A função SQL `registrar_pontuacao_ordem` divide `largura` e `altura` por 1000, assumindo que estão em **milímetros**. Porém, os valores em `produtos_vendas` já estão em **metros** (ex: largura=4.76, altura=5.50).
+Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
 
-Resultado:
-- **Pintura**: `4.76/1000 × 5.50/1000 = 0.00002618 m²` em vez de `26.18 m²` → aparece como "0,0m²"
-- **Solda**: todas as portas classificadas como "P" pois a área calculada nunca atinge os thresholds de 25/50
+### Mudanças
 
-### Solução
+1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
 
-Alterar a função `registrar_pontuacao_ordem` para usar `largura * altura` diretamente (sem dividir por 1000), em **dois pontos**:
+2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
 
-1. **Pintura** (cálculo do m² total): `SUM(pv.largura * pv.altura * COALESCE(pv.quantidade, 1))`
-2. **Soldagem** (classificação P/G/GG): `pv.largura * pv.altura` nos thresholds
+3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
 
-Também será necessário **corrigir os dados existentes** na `pontuacao_colaboradores` — multiplicar `metragem_quadrada_pintada` por `1000000` (1000×1000) para restaurar os valores corretos.
+4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
 
-### Arquivo alterado
-- Migration SQL (via ferramenta de migração do Supabase)
+5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
 
-### SQL da migração
-
-```sql
--- 1. Corrigir a função removendo /1000.0
-CREATE OR REPLACE FUNCTION registrar_pontuacao_ordem()
-  -- Mesmo corpo, mas com:
-  -- Soldagem: (pv.largura * pv.altura) em vez de (pv.largura/1000.0 * pv.altura/1000.0)
-  -- Pintura: SUM(pv.largura * pv.altura * ...) em vez de SUM((pv.largura/1000.0) * (pv.altura/1000.0) * ...)
-
--- 2. Corrigir dados históricos
-UPDATE pontuacao_colaboradores
-SET metragem_quadrada_pintada = metragem_quadrada_pintada * 1000000
-WHERE tipo_ranking = 'pintura'
-  AND metragem_quadrada_pintada IS NOT NULL
-  AND metragem_quadrada_pintada > 0;
-```
+6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
 
