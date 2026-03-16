@@ -143,8 +143,25 @@ function InlineCustoEditor({ user, onSave }: { user: User; onSave: (userId: stri
   );
 }
 
-function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDeactivateUser, onChangeUserRole, onCancelVaga, onFillVaga, onUpdateCusto }: SortableRoleGroupProps) {
+function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDeactivateUser, onChangeUserRole, onCancelVaga, onFillVaga, onUpdateCusto, onUserReorder }: SortableRoleGroupProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: group.role });
+
+  const userDndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const handleUserDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = group.users.findIndex(u => u.id === active.id);
+    const newIndex = group.users.findIndex(u => u.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const newOrder = [...group.users];
+    const [moved] = newOrder.splice(oldIndex, 1);
+    newOrder.splice(newIndex, 0, moved);
+    const updates = newOrder.map((u, i) => ({ id: u.id, ordem: i + 1 }));
+    onUserReorder(group.role, updates);
+  };
 
   const style = {
     transform: CSS.Transform.toString(transform),
