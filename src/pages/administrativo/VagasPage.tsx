@@ -82,6 +82,40 @@ export default function VagasPage() {
     navigate(`/administrativo/rh-dp/vagas/preencher/${vaga.id}`);
   };
 
+  const handleOpenTransfer = (user: User) => {
+    setTransferUser(user);
+    setNewRole(user.role);
+  };
+
+  const handleTransferUser = async () => {
+    if (!transferUser || !newRole || newRole === transferUser.role) return;
+    setTransferring(true);
+    try {
+      const { error } = await supabase
+        .from("admin_users")
+        .update({ role: newRole })
+        .eq("id", transferUser.id);
+      if (error) throw error;
+      toast.success(`${transferUser.nome} transferido com sucesso!`);
+      queryClient.invalidateQueries({ queryKey: ["all-users"] });
+      setTransferUser(null);
+    } catch (err: any) {
+      toast.error("Erro ao transferir colaborador");
+      console.error(err);
+    } finally {
+      setTransferring(false);
+    }
+  };
+
+  const rolesBySetor = SETOR_KEYS.map(setor => ({
+    setor,
+    label: SETOR_LABELS[setor],
+    roles: getRolesForSetor(setor).map(key => ({
+      key,
+      label: (systemRoles || []).find(r => r.key === key)?.label || ROLE_LABELS[key] || key,
+    })),
+  })).filter(g => g.roles.length > 0);
+
   return (
     <MinimalistLayout
       title="Vagas"
