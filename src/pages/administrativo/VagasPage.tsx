@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, Loader2, Plus, UserPlus, ArrowRightLeft, UserX, Trash2, FlaskConical } from "lucide-react";
+import { Users, Loader2, Plus, UserPlus, ArrowRightLeft, UserX, Trash2, FlaskConical, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
@@ -18,6 +18,8 @@ import { useVagas, type Vaga } from "@/hooks/useVagas";
 import { SETOR_LABELS, SETOR_ROLES } from "@/utils/setorMapping";
 import { ROLE_LABELS } from "@/types/permissions";
 import { PreencherVagaDialog } from "@/components/vagas/PreencherVagaDialog";
+import { CreateRoleModal } from "@/components/admin/CreateRoleModal";
+import { EditRoleModal } from "@/components/admin/EditRoleModal";
 
 
 const SETOR_KEYS = Object.keys(SETOR_LABELS);
@@ -38,6 +40,8 @@ export default function VagasPage() {
   const [novaVagaJustificativa, setNovaVagaJustificativa] = useState("");
   const [criandoVaga, setCriandoVaga] = useState(false);
   const [preencherEmTesteOpen, setPreencherEmTesteOpen] = useState(false);
+  const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<any>(null);
   const navigate = useNavigate();
   const { data: allUsers, isLoading } = useAllUsers();
   const { vagas, createVaga, deleteVaga } = useVagas();
@@ -157,17 +161,30 @@ export default function VagasPage() {
       backPath="/administrativo/rh-dp"
       fullWidth
       headerActions={
-        <button
-          onClick={() => setCriarVagaOpen(true)}
-          className="h-10 px-5 rounded-lg font-medium text-white text-sm border
-                     bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30
-                     shadow-lg shadow-blue-500/30
-                     hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/40
-                     transition-all duration-200 flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Nova Vaga
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCreateRoleModalOpen(true)}
+            className="h-10 px-5 rounded-lg font-medium text-white text-sm border
+                       bg-gradient-to-r from-purple-500 to-purple-700 border-purple-400/30
+                       shadow-lg shadow-purple-500/30
+                       hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/40
+                       transition-all duration-200 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Função
+          </button>
+          <button
+            onClick={() => setCriarVagaOpen(true)}
+            className="h-10 px-5 rounded-lg font-medium text-white text-sm border
+                       bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30
+                       shadow-lg shadow-blue-500/30
+                       hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/40
+                       transition-all duration-200 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Vaga
+          </button>
+        </div>
       }
       breadcrumbItems={[
         { label: "Home", path: "/home" },
@@ -265,6 +282,16 @@ export default function VagasPage() {
                   <div key={group.role}>
                     <div className="flex items-center gap-3 mb-3">
                       <h2 className="text-sm font-semibold text-white/80">{group.label}</h2>
+                      <button
+                        onClick={() => {
+                          const roleData = (systemRoles || []).find(r => r.key === group.role);
+                          if (roleData) setEditingRole(roleData);
+                        }}
+                        className="p-1 rounded-md hover:bg-white/10 text-white/30 hover:text-white/70 transition-colors"
+                        title="Editar função"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
                       <Badge
                         variant="outline"
                         className={`text-[10px] ${
@@ -595,6 +622,9 @@ export default function VagasPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CreateRoleModal open={createRoleModalOpen} onOpenChange={setCreateRoleModalOpen} />
+      <EditRoleModal open={!!editingRole} onOpenChange={(open) => !open && setEditingRole(null)} role={editingRole} />
 
     </MinimalistLayout>
   );
