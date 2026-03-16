@@ -207,7 +207,7 @@ export function PreencherVagaDialog({ open, onOpenChange, defaultRole, onSuccess
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancelar</Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Criar e Preencher Vaga
+                {emTeste ? "Criar Usuário em Teste" : "Criar e Preencher Vaga"}
               </Button>
             </DialogFooter>
           </form>
