@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, Loader2, Plus, UserPlus } from "lucide-react";
+import { Users, Loader2, Plus, UserPlus, ArrowRightLeft } from "lucide-react";
+import { toast } from "sonner";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useAllUsers } from "@/hooks/useAllUsers";
+import { useAllUsers, type User } from "@/hooks/useAllUsers";
 import { useVagas, type Vaga } from "@/hooks/useVagas";
 import { SETOR_LABELS, SETOR_ROLES } from "@/utils/setorMapping";
 import { ROLE_LABELS } from "@/types/permissions";
