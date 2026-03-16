@@ -54,6 +54,7 @@ interface SortableRoleGroupProps {
   onDeactivateUser: (user: User) => void;
   onChangeUserRole: (user: User) => void;
   onCancelVaga: (vagaId: string) => void;
+  onFillVaga: (vaga: Vaga) => void;
   onUpdateCusto: (userId: string, value: number | null) => void;
 }
 
