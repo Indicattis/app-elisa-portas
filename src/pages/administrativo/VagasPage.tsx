@@ -239,6 +239,13 @@ export default function VagasPage() {
                               <p className="text-xs text-white/40 truncate">{user.email}</p>
                             </div>
                             <button
+                              onClick={() => setUserToDeactivate(user)}
+                              className="opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400"
+                              title="Desativar colaborador"
+                            >
+                              <UserX className="w-3.5 h-3.5" />
+                            </button>
+                            <button
                               onClick={() => handleOpenTransfer(user)}
                               className="opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white/80"
                               title="Transferir função"
