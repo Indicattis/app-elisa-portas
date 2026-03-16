@@ -80,15 +80,16 @@ export function PreencherVagaDialog({ open, onOpenChange, defaultRole, onSuccess
     },
   });
 
-  // Set default role when dialog opens
+  // Set default role/setor when dialog opens
   useEffect(() => {
-    if (open && defaultRole) {
-      form.setValue("role", defaultRole);
+    if (open) {
+      if (defaultRole) form.setValue("role", defaultRole);
+      if (defaultSetor) form.setValue("setor", defaultSetor);
     }
     if (!open) {
       form.reset();
     }
-  }, [open, defaultRole]);
+  }, [open, defaultRole, defaultSetor]);
 
   const formatCPF = (value: string) => {
     const numbers = value.replace(/\D/g, "").slice(0, 11);
