@@ -282,6 +282,16 @@ export default function VagasPage() {
                   <div key={group.role}>
                     <div className="flex items-center gap-3 mb-3">
                       <h2 className="text-sm font-semibold text-white/80">{group.label}</h2>
+                      <button
+                        onClick={() => {
+                          const roleData = (systemRoles || []).find(r => r.key === group.role);
+                          if (roleData) setEditingRole(roleData);
+                        }}
+                        className="p-1 rounded-md hover:bg-white/10 text-white/30 hover:text-white/70 transition-colors"
+                        title="Editar função"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
                       <Badge
                         variant="outline"
                         className={`text-[10px] ${
