@@ -245,17 +245,6 @@ export default function VagasPage() {
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          {/* Nova Vaga button */}
-          <div className="flex justify-end mb-4">
-            <Button
-              onClick={() => setCriarVagaOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              size="sm"
-            >
-              <Plus className="w-4 h-4 mr-1.5" />
-              Nova Vaga
-            </Button>
-          </div>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
