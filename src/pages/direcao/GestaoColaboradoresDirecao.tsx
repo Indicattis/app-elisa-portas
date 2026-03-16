@@ -393,7 +393,9 @@ export default function GestaoColaboradoresDirecao() {
   const grouped = rolesForSetor.map(role => ({
     role,
     label: (systemRoles || []).find(r => r.key === role)?.label || ROLE_LABELS[role] || role,
-    users: filteredUsers.filter(u => u.role === role && u.em_teste !== true),
+    users: filteredUsers
+      .filter(u => u.role === role && u.em_teste !== true)
+      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)),
     openVagas: openVagasByRole(role),
     openVagasList: openVagasForRole(role),
   }));
