@@ -541,8 +541,8 @@ export default function GestaoColaboradoresDirecao() {
         const upd = updates.find(x => x.id === u.id);
         return upd ? { ...u, ordem: upd.ordem } : u;
       })
-    );
-
+  );
+}
     // Persist
     for (const u of updates) {
       await (supabase.from('admin_users').update({ ordem: u.ordem } as any).eq('id', u.id));
