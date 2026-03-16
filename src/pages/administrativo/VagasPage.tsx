@@ -272,6 +272,67 @@ export default function VagasPage() {
         </div>
       </div>
 
+      {/* Transfer Dialog */}
+      <Dialog open={!!transferUser} onOpenChange={(open) => !open && setTransferUser(null)}>
+        <DialogContent className="bg-[#1a1a2e] border-white/10 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white">Transferir Colaborador</DialogTitle>
+          </DialogHeader>
+          {transferUser && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+                <Avatar className="h-10 w-10 border border-white/10">
+                  {transferUser.foto_perfil_url ? (
+                    <AvatarImage src={transferUser.foto_perfil_url} alt={transferUser.nome} />
+                  ) : null}
+                  <AvatarFallback className="bg-blue-600/20 text-blue-300 text-xs font-medium">
+                    {getInitials(transferUser.nome)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium">{transferUser.nome}</p>
+                  <p className="text-xs text-white/40">{transferUser.email}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs text-white/60">Nova função</label>
+                <Select value={newRole} onValueChange={setNewRole}>
+                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                    <SelectValue placeholder="Selecione a função" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a1a2e] border-white/10">
+                    {rolesBySetor.map(group => (
+                      <SelectGroup key={group.setor}>
+                        <SelectLabel className="text-white/40 text-xs">{group.label}</SelectLabel>
+                        {group.roles.map(role => (
+                          <SelectItem key={role.key} value={role.key} className="text-white hover:bg-white/10">
+                            {role.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTransferUser(null)} className="text-white/60">
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleTransferUser}
+              disabled={transferring || !newRole || newRole === transferUser?.role}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {transferring ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ArrowRightLeft className="w-4 h-4 mr-2" />}
+              Transferir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </MinimalistLayout>
   );
 }
