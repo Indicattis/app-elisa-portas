@@ -40,6 +40,8 @@ export default function VagasPage() {
   const [novaVagaJustificativa, setNovaVagaJustificativa] = useState("");
   const [criandoVaga, setCriandoVaga] = useState(false);
   const [preencherEmTesteOpen, setPreencherEmTesteOpen] = useState(false);
+  const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<any>(null);
   const navigate = useNavigate();
   const { data: allUsers, isLoading } = useAllUsers();
   const { vagas, createVaga, deleteVaga } = useVagas();
