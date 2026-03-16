@@ -1,21 +1,23 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, Loader2, Plus, UserPlus, ArrowRightLeft, UserX, Trash2 } from "lucide-react";
+import { Users, Loader2, Plus, UserPlus, ArrowRightLeft, UserX, Trash2, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAllUsers, type User } from "@/hooks/useAllUsers";
 import { useVagas, type Vaga } from "@/hooks/useVagas";
 import { SETOR_LABELS, SETOR_ROLES } from "@/utils/setorMapping";
 import { ROLE_LABELS } from "@/types/permissions";
+import { PreencherVagaDialog } from "@/components/vagas/PreencherVagaDialog";
 
 
 const SETOR_KEYS = Object.keys(SETOR_LABELS);
@@ -31,9 +33,14 @@ export default function VagasPage() {
   const [transferring, setTransferring] = useState(false);
   const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
   const [vagaToDelete, setVagaToDelete] = useState<Vaga | null>(null);
+  const [criarVagaOpen, setCriarVagaOpen] = useState(false);
+  const [novaVagaCargo, setNovaVagaCargo] = useState("");
+  const [novaVagaJustificativa, setNovaVagaJustificativa] = useState("");
+  const [criandoVaga, setCriandoVaga] = useState(false);
+  const [preencherEmTesteOpen, setPreencherEmTesteOpen] = useState(false);
   const navigate = useNavigate();
   const { data: allUsers, isLoading } = useAllUsers();
-  const { vagas, deleteVaga } = useVagas();
+  const { vagas, createVaga, deleteVaga } = useVagas();
   const queryClient = useQueryClient();
 
   const { data: systemRoles } = useQuery({
@@ -60,6 +67,8 @@ export default function VagasPage() {
 
   const rolesForSetor = getRolesForSetor(selectedSetor);
   const filteredUsers = (allUsers || []).filter(u => rolesForSetor.includes(u.role as any));
+  const emTesteUsers = filteredUsers.filter(u => u.em_teste === true);
+  const regularUsers = filteredUsers.filter(u => u.em_teste !== true);
 
   const getSetorCounts = (setor: string) => {
     const roles = getRolesForSetor(setor);
@@ -70,13 +79,18 @@ export default function VagasPage() {
     return { current: users.length, total: users.length + vagasAbertas.length };
   };
 
+  const getSetorEmTesteCount = (setor: string) => {
+    const roles = getRolesForSetor(setor);
+    return (allUsers || []).filter(u => roles.includes(u.role as any) && u.em_teste === true).length;
+  };
+
   const openVagasForRole = (role: string): Vaga[] =>
     (vagas || []).filter(v => v.cargo === role && (v.status === "aberta" || v.status === "em_analise"));
 
   const grouped = rolesForSetor.map(role => ({
     role,
     label: (systemRoles || []).find(r => r.key === role)?.label || ROLE_LABELS[role] || role,
-    users: filteredUsers.filter(u => u.role === role),
+    users: regularUsers.filter(u => u.role === role),
     openVagas: openVagasForRole(role).length,
     openVagasList: openVagasForRole(role),
   }));
@@ -110,6 +124,18 @@ export default function VagasPage() {
     }
   };
 
+  const handleCriarVaga = async () => {
+    if (!novaVagaCargo || !novaVagaJustificativa.trim()) return;
+    setCriandoVaga(true);
+    const success = await createVaga({ cargo: novaVagaCargo, justificativa: novaVagaJustificativa.trim() });
+    if (success) {
+      setCriarVagaOpen(false);
+      setNovaVagaCargo("");
+      setNovaVagaJustificativa("");
+    }
+    setCriandoVaga(false);
+  };
+
   const rolesBySetor = SETOR_KEYS.map(setor => ({
     setor,
     label: SETOR_LABELS[setor],
@@ -118,6 +144,11 @@ export default function VagasPage() {
       label: (systemRoles || []).find(r => r.key === key)?.label || ROLE_LABELS[key] || key,
     })),
   })).filter(g => g.roles.length > 0);
+
+  const rolesForSelectedSetor = getRolesForSetor(selectedSetor).map(key => ({
+    key,
+    label: (systemRoles || []).find(r => r.key === key)?.label || ROLE_LABELS[key] || key,
+  }));
 
   return (
     <MinimalistLayout
@@ -138,6 +169,7 @@ export default function VagasPage() {
           {SETOR_KEYS.map(setor => {
             const counts = getSetorCounts(setor);
             const isFull = counts.total > 0 && counts.current === counts.total;
+            const emTesteCount = getSetorEmTesteCount(setor);
             return (
               <button
                 key={setor}
@@ -152,6 +184,11 @@ export default function VagasPage() {
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isFull ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>
                   {counts.current}/{counts.total}
                 </span>
+                {emTesteCount > 0 && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400">
+                    {emTesteCount}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -164,6 +201,7 @@ export default function VagasPage() {
               {SETOR_KEYS.map(setor => {
                 const counts = getSetorCounts(setor);
                 const isFull = counts.total > 0 && counts.current === counts.total;
+                const emTesteCount = getSetorEmTesteCount(setor);
                 return (
                   <button
                     key={setor}
@@ -175,9 +213,16 @@ export default function VagasPage() {
                       }`}
                   >
                     {SETOR_LABELS[setor]}
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isFull ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>
-                      {counts.current}/{counts.total}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {emTesteCount > 0 && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400">
+                          {emTesteCount}
+                        </span>
+                      )}
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isFull ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>
+                        {counts.current}/{counts.total}
+                      </span>
+                    </div>
                   </button>
                 );
               })}
@@ -187,6 +232,18 @@ export default function VagasPage() {
 
         {/* Content */}
         <div className="flex-1 min-w-0">
+          {/* Nova Vaga button */}
+          <div className="flex justify-end mb-4">
+            <Button
+              onClick={() => setCriarVagaOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              size="sm"
+            >
+              <Plus className="w-4 h-4 mr-1.5" />
+              Nova Vaga
+            </Button>
+          </div>
+
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
@@ -287,10 +344,134 @@ export default function VagasPage() {
                   </div>
                 );
               })}
+
+              {/* Em Teste Section */}
+              <div className="mt-8">
+                <div className="flex items-center gap-3 mb-3">
+                  <FlaskConical className="w-4 h-4 text-red-400" />
+                  <h2 className="text-sm font-semibold text-red-400">Em Teste</h2>
+                  {emTesteUsers.length > 0 && (
+                    <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400 bg-red-500/10">
+                      {emTesteUsers.length}
+                    </Badge>
+                  )}
+                  <button
+                    onClick={() => setPreencherEmTesteOpen(true)}
+                    className="ml-auto p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors"
+                    title="Cadastrar usuário em teste"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                {emTesteUsers.length === 0 ? (
+                  <p className="text-xs text-white/30 italic">Nenhum usuário em teste neste setor</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {emTesteUsers.map(user => (
+                      <div
+                        key={user.id}
+                        className="p-1.5 rounded-xl bg-red-500/5 backdrop-blur-xl border border-red-500/20 transition-all duration-200 group/card"
+                      >
+                        <div className="flex items-center gap-3 px-3 py-2.5">
+                          <Avatar className="h-10 w-10 border border-red-500/20">
+                            {user.foto_perfil_url ? (
+                              <AvatarImage src={user.foto_perfil_url} alt={user.nome} />
+                            ) : null}
+                            <AvatarFallback className="bg-red-600/20 text-red-300 text-xs font-medium">
+                              {getInitials(user.nome)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-white truncate">{user.nome}</p>
+                            <p className="text-xs text-white/40 truncate">
+                              {(systemRoles || []).find(r => r.key === user.role)?.label || ROLE_LABELS[user.role] || user.role}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => setUserToDeactivate(user)}
+                            className="opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400"
+                            title="Desativar colaborador"
+                          >
+                            <UserX className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleOpenTransfer(user)}
+                            className="opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white/80"
+                            title="Transferir função"
+                          >
+                            <ArrowRightLeft className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Criar Vaga Dialog */}
+      <Dialog open={criarVagaOpen} onOpenChange={setCriarVagaOpen}>
+        <DialogContent className="bg-[#1a1a2e] border-white/10 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white">Nova Vaga</DialogTitle>
+            <DialogDescription className="text-white/60">Crie uma solicitação de vaga para o setor selecionado.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs text-white/60">Cargo *</label>
+              <Select value={novaVagaCargo} onValueChange={setNovaVagaCargo}>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue placeholder="Selecione o cargo" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1a1a2e] border-white/10">
+                  {rolesForSelectedSetor.map(role => (
+                    <SelectItem key={role.key} value={role.key} className="text-white hover:bg-white/10">
+                      {role.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs text-white/60">Justificativa *</label>
+              <Textarea
+                value={novaVagaJustificativa}
+                onChange={e => setNovaVagaJustificativa(e.target.value)}
+                placeholder="Descreva a justificativa para a abertura desta vaga..."
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[80px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCriarVagaOpen(false)} className="text-white/60">
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCriarVaga}
+              disabled={criandoVaga || !novaVagaCargo || !novaVagaJustificativa.trim()}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {criandoVaga ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+              Criar Vaga
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preencher Em Teste Dialog */}
+      <PreencherVagaDialog
+        open={preencherEmTesteOpen}
+        onOpenChange={setPreencherEmTesteOpen}
+        defaultRole=""
+        defaultSetor={selectedSetor}
+        emTeste
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["all-users"] });
+        }}
+      />
 
       {/* Transfer Dialog */}
       <Dialog open={!!transferUser} onOpenChange={(open) => !open && setTransferUser(null)}>
