@@ -220,7 +220,7 @@ export default function VagasPage() {
                       {group.users.map(user => (
                         <div
                           key={user.id}
-                          className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 transition-all duration-200"
+                          className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 transition-all duration-200 group/card"
                         >
                           <div className="flex items-center gap-3 px-3 py-2.5">
                             <Avatar className="h-10 w-10 border border-white/10">
@@ -235,6 +235,13 @@ export default function VagasPage() {
                               <p className="text-sm font-medium text-white truncate">{user.nome}</p>
                               <p className="text-xs text-white/40 truncate">{user.email}</p>
                             </div>
+                            <button
+                              onClick={() => handleOpenTransfer(user)}
+                              className="opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white/80"
+                              title="Transferir função"
+                            >
+                              <ArrowRightLeft className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
                       ))}
