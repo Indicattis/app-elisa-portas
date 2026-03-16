@@ -623,6 +623,9 @@ export default function VagasPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <CreateRoleModal open={createRoleModalOpen} onOpenChange={setCreateRoleModalOpen} />
+      <EditRoleModal open={!!editingRole} onOpenChange={(open) => !open && setEditingRole(null)} role={editingRole} />
+
     </MinimalistLayout>
   );
 }
