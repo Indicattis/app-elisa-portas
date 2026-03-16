@@ -568,6 +568,7 @@ export default function GestaoColaboradoresDirecao() {
               {SETOR_KEYS.map(setor => {
                 const counts = getSetorCounts(setor);
                 const isFull = counts.total > 0 && counts.current === counts.total;
+                const emTesteCount = getSetorEmTesteCount(setor);
                 return (
                   <button
                     key={setor}
@@ -579,9 +580,16 @@ export default function GestaoColaboradoresDirecao() {
                       }`}
                   >
                     {SETOR_LABELS[setor]}
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isFull ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
-                      {counts.current}/{counts.total}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isFull ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                        {counts.current}/{counts.total}
+                      </span>
+                      {emTesteCount > 0 && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400">
+                          {emTesteCount}
+                        </span>
+                      )}
+                    </div>
                   </button>
                 );
               })}
