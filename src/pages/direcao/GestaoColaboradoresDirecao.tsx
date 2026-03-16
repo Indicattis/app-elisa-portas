@@ -750,6 +750,19 @@ export default function GestaoColaboradoresDirecao() {
         onOpenChange={(open) => { if (!open) setEditingRole(null); }}
         role={editingRole}
       />
+
+      {/* Preencher vaga dialog */}
+      <PreencherVagaDialog
+        open={preencherVagaOpen}
+        onOpenChange={(open) => { setPreencherVagaOpen(open); if (!open) setVagaToFill(null); }}
+        defaultRole={vagaToFill?.cargo || ''}
+        onSuccess={async () => {
+          if (vagaToFill) {
+            await updateVagaStatus(vagaToFill.id, 'preenchida');
+          }
+          queryClient.invalidateQueries({ queryKey: ['all-users'] });
+        }}
+      />
     </MinimalistLayout>
   );
 }
