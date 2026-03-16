@@ -112,7 +112,7 @@ export function EditColaboradorModal({
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
+      queryClient.invalidateQueries({ queryKey: ["colaboradores-minimalista"] });
       toast({ title: "Colaborador atualizado com sucesso" });
       onOpenChange(false);
     },
