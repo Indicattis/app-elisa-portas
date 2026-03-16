@@ -878,10 +878,12 @@ export default function GestaoColaboradoresDirecao() {
       {/* Preencher vaga dialog */}
       <PreencherVagaDialog
         open={preencherVagaOpen}
-        onOpenChange={(open) => { setPreencherVagaOpen(open); if (!open) setVagaToFill(null); }}
+        onOpenChange={(open) => { setPreencherVagaOpen(open); if (!open) { setVagaToFill(null); setPreencherVagaEmTeste(false); } }}
         defaultRole={vagaToFill?.cargo || ''}
+        defaultSetor={preencherVagaEmTeste ? selectedSetor : undefined}
+        emTeste={preencherVagaEmTeste}
         onSuccess={async () => {
-          if (vagaToFill) {
+          if (vagaToFill && !preencherVagaEmTeste) {
             await updateVagaStatus(vagaToFill.id, 'preenchida');
           }
           queryClient.invalidateQueries({ queryKey: ['all-users'] });
