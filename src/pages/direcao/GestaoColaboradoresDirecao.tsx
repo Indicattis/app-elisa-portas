@@ -534,7 +534,22 @@ export default function GestaoColaboradoresDirecao() {
     }
   };
 
-  return (
+  const handleUserReorder = async (_roleKey: string, updates: { id: string; ordem: number }[]) => {
+    // Optimistic update
+    queryClient.setQueryData(['all-users'], (old: User[] | undefined) =>
+      (old || []).map(u => {
+        const upd = updates.find(x => x.id === u.id);
+        return upd ? { ...u, ordem: upd.ordem } : u;
+      })
+    );
+
+    // Persist
+    for (const u of updates) {
+      await (supabase.from('admin_users').update({ ordem: u.ordem } as any).eq('id', u.id));
+    }
+    queryClient.invalidateQueries({ queryKey: ['all-users'] });
+  };
+
     <MinimalistLayout
       title="Organograma RH"
       subtitle="Colaboradores por setor"
