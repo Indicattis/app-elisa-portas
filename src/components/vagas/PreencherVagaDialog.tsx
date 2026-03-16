@@ -150,8 +150,8 @@ export function PreencherVagaDialog({ open, onOpenChange, defaultRole, onSuccess
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Preencher Vaga</DialogTitle>
-          <DialogDescription>Cadastre o novo colaborador para preencher esta vaga.</DialogDescription>
+          <DialogTitle>{emTeste ? "Cadastrar Usuário em Teste" : "Preencher Vaga"}</DialogTitle>
+          <DialogDescription>{emTeste ? "Cadastre um novo colaborador em período de teste." : "Cadastre o novo colaborador para preencher esta vaga."}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
