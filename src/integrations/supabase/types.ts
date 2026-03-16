@@ -175,6 +175,7 @@ export type Database = {
           id: string
           modalidade_pagamento: string | null
           nome: string
+          ordem: number | null
           role: string
           salario: number | null
           setor: Database["public"]["Enums"]["setor_type"] | null
@@ -199,6 +200,7 @@ export type Database = {
           id?: string
           modalidade_pagamento?: string | null
           nome: string
+          ordem?: number | null
           role: string
           salario?: number | null
           setor?: Database["public"]["Enums"]["setor_type"] | null
@@ -223,6 +225,7 @@ export type Database = {
           id?: string
           modalidade_pagamento?: string | null
           nome?: string
+          ordem?: number | null
           role?: string
           salario?: number | null
           setor?: Database["public"]["Enums"]["setor_type"] | null
