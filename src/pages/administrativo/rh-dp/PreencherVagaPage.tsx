@@ -69,6 +69,7 @@ export default function PreencherVagaPage() {
   const [vagaSetor, setVagaSetor] = useState<string>("");
   const [loadingVaga, setLoadingVaga] = useState(true);
   const { updateVagaStatus } = useVagas();
+  const queryClient = useQueryClient();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
