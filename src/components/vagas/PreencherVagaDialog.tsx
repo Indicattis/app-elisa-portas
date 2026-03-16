@@ -51,9 +51,11 @@ interface PreencherVagaDialogProps {
   onOpenChange: (open: boolean) => void;
   defaultRole: string;
   onSuccess: () => void;
+  emTeste?: boolean;
+  defaultSetor?: string;
 }
 
-export function PreencherVagaDialog({ open, onOpenChange, defaultRole, onSuccess }: PreencherVagaDialogProps) {
+export function PreencherVagaDialog({ open, onOpenChange, defaultRole, onSuccess, emTeste, defaultSetor }: PreencherVagaDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
