@@ -45,6 +45,7 @@ export interface VeiculoFormData {
   documento_nome?: string;
   aviso_justificativa?: string | null;
   aviso_data?: string | null;
+  tipo_frota?: 'empresa' | 'particular';
 }
 
 export function useVeiculos() {

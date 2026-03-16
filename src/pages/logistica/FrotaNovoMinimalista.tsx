@@ -194,6 +194,18 @@ export default function FrotaNovoMinimalista() {
                 <Input value={form.mecanico} onChange={(e) => setForm((f) => ({ ...f, mecanico: e.target.value }))} className={inputClass} placeholder="Nome do mecânico" />
               </div>
               <div className="space-y-1.5">
+                <Label className={labelClass}>Tipo de Frota</Label>
+                <Select value={form.tipo_frota} onValueChange={(v) => setForm((f) => ({ ...f, tipo_frota: v as "empresa" | "particular" }))}>
+                  <SelectTrigger className={inputClass}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-black/90 border-white/10 backdrop-blur-xl">
+                    <SelectItem value="empresa" className="text-white focus:bg-white/10 focus:text-white">Empresa</SelectItem>
+                    <SelectItem value="particular" className="text-white focus:bg-white/10 focus:text-white">Particular</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
                 <Label className={labelClass}>Status</Label>
                 <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v as "rodando" | "mecanico" | "parado" }))}>
                   <SelectTrigger className={inputClass}>
