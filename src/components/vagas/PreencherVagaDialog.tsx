@@ -136,7 +136,7 @@ export function PreencherVagaDialog({ open, onOpenChange, defaultRole, onSuccess
       if (response.error) throw new Error(response.error.message || "Erro ao criar colaborador");
       if (response.data?.error) throw new Error(response.data.error);
 
-      toast({ title: "Colaborador criado!", description: `${values.nome} foi adicionado e a vaga preenchida.` });
+      toast({ title: emTeste ? "Usuário em teste criado!" : "Colaborador criado!", description: emTeste ? `${values.nome} foi cadastrado em teste.` : `${values.nome} foi adicionado e a vaga preenchida.` });
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
