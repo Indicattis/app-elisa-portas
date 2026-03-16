@@ -285,6 +285,9 @@ export default function GestaoColaboradoresDirecao() {
   const [newRole, setNewRole] = useState('');
   const [changingRole, setChangingRole] = useState(false);
 
+  const [preencherVagaOpen, setPreencherVagaOpen] = useState(false);
+  const [vagaToFill, setVagaToFill] = useState<Vaga | null>(null);
+
   const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<{
     id: string; key: string; label: string; setor: string | null;
