@@ -315,6 +315,19 @@ export default function GestaoColaboradoresDirecao() {
     return { current: users.length, total };
   };
 
+  const getSetorCusto = (setor: string) => {
+    const roles = getRolesForSetor(setor);
+    const users = (allUsers || []).filter(u => roles.includes(u.role as any));
+    const total = users.reduce((acc, u) => acc + (Number(u.custo_colaborador) || 0), 0);
+    const comCusto = users.filter(u => u.custo_colaborador != null && u.custo_colaborador > 0).length;
+    return { total, comCusto, totalUsers: users.length };
+  };
+
+  const formatCurrencyValue = (v: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+
+  const custoSetorAtual = getSetorCusto(selectedSetor);
+
   const openVagasForRole = (role: string): Vaga[] =>
     (vagas || []).filter(v => v.cargo === role && (v.status === 'aberta' || v.status === 'em_analise'));
 
