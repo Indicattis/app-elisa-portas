@@ -255,23 +255,33 @@ export default function VagasPage() {
                           </div>
                         </div>
                       ))}
-                      {/* Open vacancy cards — clickable to fill */}
                       {group.openVagasList.map(vaga => (
-                        <button
+                        <div
                           key={vaga.id}
-                          onClick={() => handlePreencherClick(vaga)}
-                          className="p-1.5 rounded-xl border border-dashed border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/40 transition-all duration-200 text-left cursor-pointer"
+                          className="p-1.5 rounded-xl border border-dashed border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/40 transition-all duration-200 group/vaga relative"
                         >
-                          <div className="flex items-center gap-3 px-3 py-2.5">
-                            <div className="h-10 w-10 rounded-full border border-dashed border-amber-500/30 flex items-center justify-center">
-                              <UserPlus className="w-4 h-4 text-amber-500/50" />
+                          <button
+                            onClick={() => setVagaToDelete(vaga)}
+                            className="absolute top-2 right-2 opacity-0 group-hover/vaga:opacity-100 transition-opacity p-1 rounded-lg hover:bg-red-500/10 text-white/30 hover:text-red-400 z-10"
+                            title="Excluir vaga"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handlePreencherClick(vaga)}
+                            className="w-full text-left cursor-pointer"
+                          >
+                            <div className="flex items-center gap-3 px-3 py-2.5">
+                              <div className="h-10 w-10 rounded-full border border-dashed border-amber-500/30 flex items-center justify-center">
+                                <UserPlus className="w-4 h-4 text-amber-500/50" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs text-amber-400/70">Vaga aberta</p>
+                                <p className="text-[10px] text-amber-400/40">Clique para preencher</p>
+                              </div>
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs text-amber-400/70">Vaga aberta</p>
-                              <p className="text-[10px] text-amber-400/40">Clique para preencher</p>
-                            </div>
-                          </div>
-                        </button>
+                          </button>
+                        </div>
                       ))}
                     </div>
                   </div>
