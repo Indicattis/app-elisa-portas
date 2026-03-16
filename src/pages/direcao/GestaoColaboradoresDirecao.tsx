@@ -716,8 +716,9 @@ export default function GestaoColaboradoresDirecao() {
                        onChangeUserRole={(user) => { setUserToChangeRole(user); setNewRole(user.role); }}
                        onCancelVaga={handleCancelVaga}
                        onFillVaga={(vaga) => { setVagaToFill(vaga); setPreencherVagaEmTeste(false); setPreencherVagaOpen(true); }}
-                       onUpdateCusto={handleUpdateCusto}
-                     />
+                        onUpdateCusto={handleUpdateCusto}
+                        onUserReorder={handleUserReorder}
+                      />
                    ))}
                  </div>
                </SortableContext>
