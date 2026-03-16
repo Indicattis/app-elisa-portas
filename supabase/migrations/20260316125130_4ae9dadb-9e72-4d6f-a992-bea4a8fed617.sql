@@ -1,0 +1,1 @@
+ALTER TABLE public.admin_users ADD COLUMN IF NOT EXISTS custo_colaborador numeric DEFAULT NULL;

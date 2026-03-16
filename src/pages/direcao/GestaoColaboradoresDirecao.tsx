@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { useAllUsers } from '@/hooks/useAllUsers';
 import { useVagas, type Vaga } from '@/hooks/useVagas';
@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
 import {
   DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core';
@@ -52,9 +54,78 @@ interface SortableRoleGroupProps {
   onDeactivateUser: (user: User) => void;
   onChangeUserRole: (user: User) => void;
   onCancelVaga: (vagaId: string) => void;
+  onUpdateCusto: (userId: string, value: number | null) => void;
 }
 
-function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDeactivateUser, onChangeUserRole, onCancelVaga }: SortableRoleGroupProps) {
+function InlineCustoEditor({ user, onSave }: { user: User; onSave: (userId: string, value: number | null) => void }) {
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [open]);
+
+  const handleOpen = () => {
+    const current = user.custo_colaborador;
+    setInputValue(current != null ? current.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '');
+    setOpen(true);
+  };
+
+  const handleConfirm = () => {
+    const cleaned = inputValue.replace(/\./g, '').replace(',', '.');
+    const parsed = parseFloat(cleaned);
+    onSave(user.id, isNaN(parsed) ? null : parsed);
+    setOpen(false);
+  };
+
+  const formatCurrency = (v: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+
+  const handleInputChange = (value: string) => {
+    const numericValue = value.replace(/\D/g, '');
+    if (numericValue) {
+      const formatted = (parseInt(numericValue) / 100).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+      setInputValue(formatted);
+    } else {
+      setInputValue('');
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          onClick={handleOpen}
+          className="text-xs text-emerald-400/60 hover:text-emerald-400 transition-colors cursor-pointer"
+        >
+          {user.custo_colaborador != null ? formatCurrency(user.custo_colaborador) : 'Definir custo'}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-48 p-2" align="start">
+        <div className="flex flex-col gap-2">
+          <label className="text-[10px] text-muted-foreground">Custo (R$)</label>
+          <Input
+            ref={inputRef}
+            value={inputValue}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleConfirm(); }}
+            placeholder="0,00"
+            className="h-8 text-sm"
+          />
+          <Button size="sm" className="h-7 text-xs" onClick={handleConfirm}>Salvar</Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDeactivateUser, onChangeUserRole, onCancelVaga, onUpdateCusto }: SortableRoleGroupProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: group.role });
 
   const style = {
@@ -141,11 +212,7 @@ function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDea
                   )}
                 </div>
                 <p className="text-xs text-white/40 truncate">{user.email}</p>
-                {user.salario != null && (
-                  <p className="text-xs text-emerald-400/60">
-                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(user.salario)}
-                  </p>
-                )}
+                <InlineCustoEditor user={user} onSave={onUpdateCusto} />
               </div>
               <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all">
                 <button
@@ -375,6 +442,19 @@ export default function GestaoColaboradoresDirecao() {
     }
   };
 
+  const handleUpdateCusto = async (userId: string, value: number | null) => {
+    const { error } = await (supabase
+      .from('admin_users')
+      .update({ custo_colaborador: value } as any)
+      .eq('id', userId));
+    if (error) {
+      toast.error('Erro ao atualizar custo');
+    } else {
+      toast.success('Custo atualizado');
+      queryClient.invalidateQueries({ queryKey: ['all-users'] });
+    }
+  };
+
   return (
     <MinimalistLayout
       title="Organograma RH"
@@ -490,7 +570,8 @@ export default function GestaoColaboradoresDirecao() {
                        onDeleteRole={setRoleToDelete}
                        onDeactivateUser={setUserToDeactivate}
                        onChangeUserRole={(user) => { setUserToChangeRole(user); setNewRole(user.role); }}
-                       onCancelVaga={handleCancelVaga}
+                        onCancelVaga={handleCancelVaga}
+                        onUpdateCusto={handleUpdateCusto}
                      />
                    ))}
                  </div>

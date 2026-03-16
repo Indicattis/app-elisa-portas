@@ -12,6 +12,7 @@ export interface User {
   ativo: boolean;
   em_teste?: boolean;
   salario?: number | null;
+  custo_colaborador?: number | null;
 }
 
 export function useAllUsers() {
