@@ -608,8 +608,9 @@ export default function GestaoColaboradoresDirecao() {
                        onDeleteRole={setRoleToDelete}
                        onDeactivateUser={setUserToDeactivate}
                        onChangeUserRole={(user) => { setUserToChangeRole(user); setNewRole(user.role); }}
-                        onCancelVaga={handleCancelVaga}
-                        onUpdateCusto={handleUpdateCusto}
+                         onCancelVaga={handleCancelVaga}
+                         onFillVaga={(vaga) => { setVagaToFill(vaga); setPreencherVagaOpen(true); }}
+                         onUpdateCusto={handleUpdateCusto}
                      />
                    ))}
                  </div>
