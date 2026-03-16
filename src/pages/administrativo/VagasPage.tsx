@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, Loader2, Plus, UserPlus } from "lucide-react";
+import { Users, Loader2, Plus, UserPlus, ArrowRightLeft } from "lucide-react";
+import { toast } from "sonner";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useAllUsers } from "@/hooks/useAllUsers";
+import { useAllUsers, type User } from "@/hooks/useAllUsers";
 import { useVagas, type Vaga } from "@/hooks/useVagas";
 import { SETOR_LABELS, SETOR_ROLES } from "@/utils/setorMapping";
 import { ROLE_LABELS } from "@/types/permissions";
@@ -21,6 +25,9 @@ function getInitials(name: string) {
 
 export default function VagasPage() {
   const [selectedSetor, setSelectedSetor] = useState(SETOR_KEYS[0]);
+  const [transferUser, setTransferUser] = useState<User | null>(null);
+  const [newRole, setNewRole] = useState("");
+  const [transferring, setTransferring] = useState(false);
   const navigate = useNavigate();
   const { data: allUsers, isLoading } = useAllUsers();
   const { vagas } = useVagas();
@@ -74,6 +81,40 @@ export default function VagasPage() {
   const handlePreencherClick = (vaga: Vaga) => {
     navigate(`/administrativo/rh-dp/vagas/preencher/${vaga.id}`);
   };
+
+  const handleOpenTransfer = (user: User) => {
+    setTransferUser(user);
+    setNewRole(user.role);
+  };
+
+  const handleTransferUser = async () => {
+    if (!transferUser || !newRole || newRole === transferUser.role) return;
+    setTransferring(true);
+    try {
+      const { error } = await supabase
+        .from("admin_users")
+        .update({ role: newRole })
+        .eq("id", transferUser.id);
+      if (error) throw error;
+      toast.success(`${transferUser.nome} transferido com sucesso!`);
+      queryClient.invalidateQueries({ queryKey: ["all-users"] });
+      setTransferUser(null);
+    } catch (err: any) {
+      toast.error("Erro ao transferir colaborador");
+      console.error(err);
+    } finally {
+      setTransferring(false);
+    }
+  };
+
+  const rolesBySetor = SETOR_KEYS.map(setor => ({
+    setor,
+    label: SETOR_LABELS[setor],
+    roles: getRolesForSetor(setor).map(key => ({
+      key,
+      label: (systemRoles || []).find(r => r.key === key)?.label || ROLE_LABELS[key] || key,
+    })),
+  })).filter(g => g.roles.length > 0);
 
   return (
     <MinimalistLayout
@@ -179,7 +220,7 @@ export default function VagasPage() {
                       {group.users.map(user => (
                         <div
                           key={user.id}
-                          className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 transition-all duration-200"
+                          className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 transition-all duration-200 group/card"
                         >
                           <div className="flex items-center gap-3 px-3 py-2.5">
                             <Avatar className="h-10 w-10 border border-white/10">
@@ -194,6 +235,13 @@ export default function VagasPage() {
                               <p className="text-sm font-medium text-white truncate">{user.nome}</p>
                               <p className="text-xs text-white/40 truncate">{user.email}</p>
                             </div>
+                            <button
+                              onClick={() => handleOpenTransfer(user)}
+                              className="opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white/80"
+                              title="Transferir função"
+                            >
+                              <ArrowRightLeft className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -223,6 +271,67 @@ export default function VagasPage() {
           )}
         </div>
       </div>
+
+      {/* Transfer Dialog */}
+      <Dialog open={!!transferUser} onOpenChange={(open) => !open && setTransferUser(null)}>
+        <DialogContent className="bg-[#1a1a2e] border-white/10 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white">Transferir Colaborador</DialogTitle>
+          </DialogHeader>
+          {transferUser && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+                <Avatar className="h-10 w-10 border border-white/10">
+                  {transferUser.foto_perfil_url ? (
+                    <AvatarImage src={transferUser.foto_perfil_url} alt={transferUser.nome} />
+                  ) : null}
+                  <AvatarFallback className="bg-blue-600/20 text-blue-300 text-xs font-medium">
+                    {getInitials(transferUser.nome)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium">{transferUser.nome}</p>
+                  <p className="text-xs text-white/40">{transferUser.email}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs text-white/60">Nova função</label>
+                <Select value={newRole} onValueChange={setNewRole}>
+                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                    <SelectValue placeholder="Selecione a função" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a1a2e] border-white/10">
+                    {rolesBySetor.map(group => (
+                      <SelectGroup key={group.setor}>
+                        <SelectLabel className="text-white/40 text-xs">{group.label}</SelectLabel>
+                        {group.roles.map(role => (
+                          <SelectItem key={role.key} value={role.key} className="text-white hover:bg-white/10">
+                            {role.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTransferUser(null)} className="text-white/60">
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleTransferUser}
+              disabled={transferring || !newRole || newRole === transferUser?.role}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {transferring ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ArrowRightLeft className="w-4 h-4 mr-2" />}
+              Transferir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </MinimalistLayout>
   );

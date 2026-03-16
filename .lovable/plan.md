@@ -1,25 +1,22 @@
 
 
-## Plano: Editar função e transferir colaboradores entre funções na página de Vagas
+## Plano: Adicionar coluna "Mecânico" na Frota
 
-### Resumo
-Adicionar interatividade nos cards de colaboradores para permitir alterar a função (role) de cada um diretamente na página `/administrativo/rh-dp/vagas`, usando um select/popover inline.
+### O que será feito
+
+Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
 
 ### Mudanças
 
-**`src/pages/administrativo/VagasPage.tsx`**
+1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
 
-1. **Card do colaborador com ação de transferência** — Adicionar um botão (ícone de edição ou o card inteiro clicável) que abre um `Dialog` ou `Popover` com:
-   - Nome do colaborador (read-only, para contexto)
-   - Select com todas as funções ativas (da query `system-roles-active` já existente) para escolher a nova função
-   - Botão confirmar
+2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
 
-2. **Função `handleTransferUser`** — Ao confirmar:
-   - `supabase.from("admin_users").update({ role: novaRole }).eq("id", userId)`
-   - Invalidar query `all-users` para refletir a mudança
-   - Toast de sucesso/erro
+3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
 
-3. **UX** — Cada card de colaborador ganha um pequeno ícone de edição (lápis ou setas) no canto. Ao clicar, abre o dialog de transferência com a função atual pré-selecionada. O select mostra todas as funções agrupadas por setor para facilitar a escolha.
+4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
 
-Nenhuma migração SQL necessária — o campo `role` já existe em `admin_users` e é do tipo `text`.
+5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
+
+6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
 
