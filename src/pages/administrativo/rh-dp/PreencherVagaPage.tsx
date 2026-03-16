@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,6 +69,7 @@ export default function PreencherVagaPage() {
   const [vagaSetor, setVagaSetor] = useState<string>("");
   const [loadingVaga, setLoadingVaga] = useState(true);
   const { updateVagaStatus } = useVagas();
+  const queryClient = useQueryClient();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -150,6 +152,10 @@ export default function PreencherVagaPage() {
         title: "Colaborador criado com sucesso!",
         description: `${values.nome} foi adicionado ao sistema.`,
       });
+
+      // Invalidate queries so VagasPage updates immediately
+      await queryClient.invalidateQueries({ queryKey: ["vagas"] });
+      await queryClient.invalidateQueries({ queryKey: ["all-users"] });
 
       navigate("/administrativo/rh-dp/vagas");
     } catch (error: any) {
