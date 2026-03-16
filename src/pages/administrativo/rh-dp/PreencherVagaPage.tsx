@@ -153,6 +153,10 @@ export default function PreencherVagaPage() {
         description: `${values.nome} foi adicionado ao sistema.`,
       });
 
+      // Invalidate queries so VagasPage updates immediately
+      await queryClient.invalidateQueries({ queryKey: ["vagas"] });
+      await queryClient.invalidateQueries({ queryKey: ["all-users"] });
+
       navigate("/administrativo/rh-dp/vagas");
     } catch (error: any) {
       console.error("Erro ao criar colaborador:", error);
