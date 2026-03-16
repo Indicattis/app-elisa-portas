@@ -29,9 +29,11 @@ export default function VagasPage() {
   const [transferUser, setTransferUser] = useState<User | null>(null);
   const [newRole, setNewRole] = useState("");
   const [transferring, setTransferring] = useState(false);
+  const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
+  const [vagaToDelete, setVagaToDelete] = useState<Vaga | null>(null);
   const navigate = useNavigate();
   const { data: allUsers, isLoading } = useAllUsers();
-  const { vagas } = useVagas();
+  const { vagas, deleteVaga } = useVagas();
   const queryClient = useQueryClient();
 
   const { data: systemRoles } = useQuery({
