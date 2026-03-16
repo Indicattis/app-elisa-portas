@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -19,27 +19,25 @@ export interface VagaFormData {
   justificativa: string;
 }
 
+const VAGAS_QUERY_KEY = ["vagas"];
+
+const fetchVagas = async (): Promise<Vaga[]> => {
+  const { data, error } = await supabase
+    .from("vagas")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return (data || []) as Vaga[];
+};
+
 export const useVagas = () => {
-  const [vagas, setVagas] = useState<Vaga[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchVagas = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("vagas")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setVagas((data || []) as Vaga[]);
-    } catch (error: any) {
-      toast.error("Erro ao carregar vagas");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: vagas = [], isLoading: loading } = useQuery({
+    queryKey: VAGAS_QUERY_KEY,
+    queryFn: fetchVagas,
+  });
 
   const createVaga = async (formData: VagaFormData) => {
     try {
@@ -56,7 +54,7 @@ export const useVagas = () => {
 
       if (error) throw error;
       toast.success("Solicitação de vaga criada com sucesso!");
-      await fetchVagas();
+      await queryClient.invalidateQueries({ queryKey: VAGAS_QUERY_KEY });
       return true;
     } catch (error: any) {
       toast.error("Erro ao criar vaga");
@@ -74,7 +72,7 @@ export const useVagas = () => {
 
       if (error) throw error;
       toast.success("Status da vaga atualizado com sucesso!");
-      await fetchVagas();
+      await queryClient.invalidateQueries({ queryKey: VAGAS_QUERY_KEY });
       return true;
     } catch (error: any) {
       toast.error("Erro ao atualizar status");
@@ -92,7 +90,7 @@ export const useVagas = () => {
 
       if (error) throw error;
       toast.success("Vaga excluída com sucesso!");
-      await fetchVagas();
+      await queryClient.invalidateQueries({ queryKey: VAGAS_QUERY_KEY });
       return true;
     } catch (error: any) {
       toast.error("Erro ao excluir vaga");
@@ -101,16 +99,12 @@ export const useVagas = () => {
     }
   };
 
-  useEffect(() => {
-    fetchVagas();
-  }, []);
-
   return {
     vagas,
     loading,
     createVaga,
     updateVagaStatus,
     deleteVaga,
-    refetch: fetchVagas,
+    refetch: () => queryClient.invalidateQueries({ queryKey: VAGAS_QUERY_KEY }),
   };
 };
