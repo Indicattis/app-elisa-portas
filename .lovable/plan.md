@@ -1,22 +1,38 @@
 
 
-## Plano: Adicionar coluna "Mecânico" na Frota
+## Plano: Drag and drop para reordenar colaboradores dentro de cada grupo de função
 
-### O que será feito
+### Problema
+Atualmente, apenas os **grupos de função** (role groups) podem ser reordenados via drag-and-drop. Os **colaboradores dentro de cada grupo** não têm ordenação arrastável.
 
-Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
+### Mudanças necessárias
 
-### Mudanças
+#### 1. Adicionar coluna `ordem` na tabela `admin_users`
+- Adicionar coluna `ordem integer default 0` à tabela `admin_users`
+- Isso persiste a posição de cada colaborador dentro do seu grupo
 
-1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
+#### 2. Modificar `SortableRoleGroup` para suportar DnD interno de colaboradores
+- Envolver o grid de user cards com um **segundo `DndContext` + `SortableContext`** (nested, separado do DnD de roles)
+- Cada card de usuário vira um `SortableUserCard` com `useSortable` e ícone `GripVertical`
+- O drag handle aparece no hover, ao lado do avatar
 
-2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
+#### 3. Criar componente `SortableUserCard`
+- Wrapper sortable ao redor do card de colaborador existente (linhas 189-236)
+- Adiciona `GripVertical` como drag handle
+- Estilo com opacity reduzida durante arrasto
 
-3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
+#### 4. Handler `handleUserDragEnd` no componente principal
+- Recebe o role group para saber qual grupo foi reordenado
+- Calcula nova ordem e faz update otimista no cache `all-users`
+- Persiste via `supabase.from('admin_users').update({ ordem })` para cada usuário reordenado
 
-4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
+#### 5. Ordenar usuários por `ordem` no agrupamento
+- Na construção do `grouped` (linha 346-352), ordenar `users` por `ordem` ascendente
+- Garantir que o hook `useAllUsers` retorna o campo `ordem`
 
-5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
+### Arquivo modificado
+- `src/pages/direcao/GestaoColaboradoresDirecao.tsx` -- adicionar `SortableUserCard`, nested DnD context, handler de reordenação
 
-6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
+### Observação importante
+Como já existe um `DndContext` para reordenar roles, o DnD de colaboradores usará um **DndContext separado nested** dentro de cada `SortableRoleGroup`, evitando conflitos entre os dois níveis de drag-and-drop.
 
