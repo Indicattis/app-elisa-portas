@@ -25,6 +25,9 @@ function getInitials(name: string) {
 
 export default function VagasPage() {
   const [selectedSetor, setSelectedSetor] = useState(SETOR_KEYS[0]);
+  const [transferUser, setTransferUser] = useState<User | null>(null);
+  const [newRole, setNewRole] = useState("");
+  const [transferring, setTransferring] = useState(false);
   const navigate = useNavigate();
   const { data: allUsers, isLoading } = useAllUsers();
   const { vagas } = useVagas();
