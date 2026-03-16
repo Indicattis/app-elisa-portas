@@ -57,7 +57,10 @@ export function ExcluirPedidoModal({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
-            onClick={onConfirmar}
+            onClick={(e) => {
+              e.preventDefault();
+              onConfirmar();
+            }}
             disabled={isLoading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
