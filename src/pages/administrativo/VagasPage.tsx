@@ -161,17 +161,30 @@ export default function VagasPage() {
       backPath="/administrativo/rh-dp"
       fullWidth
       headerActions={
-        <button
-          onClick={() => setCriarVagaOpen(true)}
-          className="h-10 px-5 rounded-lg font-medium text-white text-sm border
-                     bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30
-                     shadow-lg shadow-blue-500/30
-                     hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/40
-                     transition-all duration-200 flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Nova Vaga
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCreateRoleModalOpen(true)}
+            className="h-10 px-5 rounded-lg font-medium text-white text-sm border
+                       bg-gradient-to-r from-purple-500 to-purple-700 border-purple-400/30
+                       shadow-lg shadow-purple-500/30
+                       hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/40
+                       transition-all duration-200 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Função
+          </button>
+          <button
+            onClick={() => setCriarVagaOpen(true)}
+            className="h-10 px-5 rounded-lg font-medium text-white text-sm border
+                       bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30
+                       shadow-lg shadow-blue-500/30
+                       hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/40
+                       transition-all duration-200 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Vaga
+          </button>
+        </div>
       }
       breadcrumbItems={[
         { label: "Home", path: "/home" },
