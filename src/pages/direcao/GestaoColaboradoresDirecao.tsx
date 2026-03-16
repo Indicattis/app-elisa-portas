@@ -6,7 +6,7 @@ import { SETOR_LABELS } from '@/utils/setorMapping';
 import { ROLE_LABELS } from '@/types/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Users, Loader2, Plus, UserMinus, Trash2, ArrowRightLeft, Pencil, X, GripVertical } from 'lucide-react';
+import { Users, Loader2, Plus, UserMinus, Trash2, ArrowRightLeft, Pencil, X, GripVertical, DollarSign } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
@@ -315,6 +315,19 @@ export default function GestaoColaboradoresDirecao() {
     return { current: users.length, total };
   };
 
+  const getSetorCusto = (setor: string) => {
+    const roles = getRolesForSetor(setor);
+    const users = (allUsers || []).filter(u => roles.includes(u.role as any));
+    const total = users.reduce((acc, u) => acc + (Number(u.custo_colaborador) || 0), 0);
+    const comCusto = users.filter(u => u.custo_colaborador != null && u.custo_colaborador > 0).length;
+    return { total, comCusto, totalUsers: users.length };
+  };
+
+  const formatCurrencyValue = (v: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+
+  const custoSetorAtual = getSetorCusto(selectedSetor);
+
   const openVagasForRole = (role: string): Vaga[] =>
     (vagas || []).filter(v => v.cargo === role && (v.status === 'aberta' || v.status === 'em_analise'));
 
@@ -517,6 +530,13 @@ export default function GestaoColaboradoresDirecao() {
             );
           })}
         </div>
+        {/* Mobile: custo do setor */}
+        <div className="md:hidden flex items-center gap-2 px-1 text-xs">
+          <DollarSign className="w-3.5 h-3.5 text-emerald-400/70" />
+          <span className="text-white/50">Custo do setor:</span>
+          <span className="font-semibold text-emerald-400">{formatCurrencyValue(custoSetorAtual.total)}</span>
+          <span className="text-white/30">({custoSetorAtual.comCusto}/{custoSetorAtual.totalUsers})</span>
+        </div>
 
         {/* Desktop: sidebar */}
         <div className="hidden md:flex flex-col w-56 shrink-0">
@@ -543,6 +563,15 @@ export default function GestaoColaboradoresDirecao() {
                 );
               })}
             </div>
+          </div>
+          {/* Sidebar: custo do setor */}
+          <div className="mt-3 p-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+            <div className="flex items-center gap-2 mb-2">
+              <DollarSign className="w-4 h-4 text-emerald-400/70" />
+              <span className="text-xs font-medium text-white/60">Custo do Setor</span>
+            </div>
+            <p className="text-lg font-bold text-emerald-400">{formatCurrencyValue(custoSetorAtual.total)}</p>
+            <p className="text-[10px] text-white/30 mt-1">{custoSetorAtual.comCusto} de {custoSetorAtual.totalUsers} com custo definido</p>
           </div>
         </div>
 

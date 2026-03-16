@@ -1,24 +1,22 @@
 
 
-## Plano: Adicionar índice de Custo do Setor
+## Plano: Adicionar coluna "Mecânico" na Frota
 
-### Onde colocar
-Na sidebar esquerda (desktop) e nos chips (mobile), logo abaixo de cada botão de setor, exibir o custo total do setor selecionado. Adicionalmente, um banner/card de resumo no topo da área de conteúdo mostrando o custo total do setor atual.
+### O que será feito
 
-### Implementação
+Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
 
-**`src/pages/direcao/GestaoColaboradoresDirecao.tsx`**
+### Mudanças
 
-1. Criar função `getSetorCusto(setor)` que soma `custo_colaborador` de todos os usuários do setor (usando os dados já carregados em `allUsers`)
+1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
 
-2. **Sidebar desktop** — Abaixo do bloco de botões de setor, adicionar um card com:
-   - "Custo do Setor" como label
-   - Valor total formatado em R$ (soma dos `custo_colaborador` dos colaboradores do setor selecionado)
-   - Quantidade de colaboradores com custo definido vs total
+2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
 
-3. **Mobile chips** — Após os chips, exibir uma linha com o custo total do setor selecionado
+3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
 
-4. **Topo do conteúdo** — Antes da lista de funções, um pequeno indicador inline mostrando o custo total do setor em destaque
+4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
 
-Nenhuma migração SQL necessária — o campo `custo_colaborador` já existe na tabela.
+5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
+
+6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
 
