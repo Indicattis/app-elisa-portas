@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { useAllUsers } from '@/hooks/useAllUsers';
 import { useVagas, type Vaga } from '@/hooks/useVagas';
@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
 import {
   DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core';
