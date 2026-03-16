@@ -66,6 +66,7 @@ export default function FrotaNovoMinimalista() {
         documento_url: form.documento_url || undefined,
         documento_nome: form.documento_nome || undefined,
         status: form.status,
+        tipo_frota: form.tipo_frota,
       });
       navigate("/logistica/frota");
     } catch {}
