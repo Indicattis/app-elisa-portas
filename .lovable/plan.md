@@ -1,29 +1,22 @@
 
 
-## Plano: Permitir preencher vagas diretamente do organograma
+## Plano: Adicionar coluna "Mecânico" na Frota
 
-### Resumo
-Tornar os cards de "Vaga aberta" clicáveis no organograma, abrindo o `PreencherVagaDialog` já existente para cadastrar um novo colaborador diretamente na vaga. Ao concluir, a vaga é marcada como `preenchida`.
+### O que será feito
+
+Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
 
 ### Mudanças
 
-**`src/pages/direcao/GestaoColaboradoresDirecao.tsx`**
+1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
 
-1. **Importar** `PreencherVagaDialog` de `@/components/vagas/PreencherVagaDialog`
+2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
 
-2. **Adicionar estados** para controlar o dialog:
-   - `preencherVagaOpen: boolean`
-   - `vagaToFill: Vaga | null` (para saber qual vaga está sendo preenchida)
+3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
 
-3. **No card de vaga aberta** (linhas 236-255) — adicionar onClick no card ou um botão "Preencher" que abre o dialog com `defaultRole` = `vaga.cargo`
+4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
 
-4. **Callback `onSuccess`** do dialog:
-   - Atualizar status da vaga para `preenchida` via `updateVagaStatus(vagaToFill.id, 'preenchida')`
-   - Invalidar queries `all-users` para refletir o novo colaborador
+5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
 
-5. **Renderizar** `<PreencherVagaDialog>` no componente principal com os estados acima
-
-6. **Propagar** `onCancelVaga` e o novo `onFillVaga` para o `SortableRoleGroup` via props
-
-Nenhuma migração SQL necessária.
+6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
 

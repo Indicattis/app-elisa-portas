@@ -31,6 +31,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import type { User } from '@/hooks/useAllUsers';
+import { PreencherVagaDialog } from '@/components/vagas/PreencherVagaDialog';
 
 const SETOR_KEYS = Object.keys(SETOR_LABELS);
 
@@ -54,6 +55,7 @@ interface SortableRoleGroupProps {
   onDeactivateUser: (user: User) => void;
   onChangeUserRole: (user: User) => void;
   onCancelVaga: (vagaId: string) => void;
+  onFillVaga: (vaga: Vaga) => void;
   onUpdateCusto: (userId: string, value: number | null) => void;
 }
 
@@ -125,7 +127,7 @@ function InlineCustoEditor({ user, onSave }: { user: User; onSave: (userId: stri
   );
 }
 
-function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDeactivateUser, onChangeUserRole, onCancelVaga, onUpdateCusto }: SortableRoleGroupProps) {
+function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDeactivateUser, onChangeUserRole, onCancelVaga, onFillVaga, onUpdateCusto }: SortableRoleGroupProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: group.role });
 
   const style = {
@@ -236,15 +238,19 @@ function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDea
         {group.openVagasList.map((vaga) => (
           <div
             key={vaga.id}
-            className="group/vaga p-1.5 rounded-xl border border-dashed border-amber-500/20 bg-amber-500/5 relative"
+            onClick={() => onFillVaga(vaga)}
+            className="group/vaga p-1.5 rounded-xl border border-dashed border-amber-500/20 bg-amber-500/5 relative cursor-pointer hover:bg-amber-500/10 transition-all"
           >
             <div className="flex items-center gap-3 px-3 py-2.5">
               <div className="h-10 w-10 rounded-full border border-dashed border-amber-500/30 flex items-center justify-center">
                 <Plus className="w-4 h-4 text-amber-500/50" />
               </div>
-              <p className="text-xs text-amber-400/70 flex-1">Vaga aberta</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-amber-400/70">Vaga aberta</p>
+                <p className="text-[10px] text-amber-400/40">Clique para preencher</p>
+              </div>
               <button
-                onClick={() => onCancelVaga(vaga.id)}
+                onClick={(e) => { e.stopPropagation(); onCancelVaga(vaga.id); }}
                 className="opacity-0 group-hover/vaga:opacity-100 p-1 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
                 title="Cancelar vaga"
               >
@@ -278,6 +284,9 @@ export default function GestaoColaboradoresDirecao() {
   const [userToChangeRole, setUserToChangeRole] = useState<User | null>(null);
   const [newRole, setNewRole] = useState('');
   const [changingRole, setChangingRole] = useState(false);
+
+  const [preencherVagaOpen, setPreencherVagaOpen] = useState(false);
+  const [vagaToFill, setVagaToFill] = useState<Vaga | null>(null);
 
   const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<{
@@ -599,8 +608,9 @@ export default function GestaoColaboradoresDirecao() {
                        onDeleteRole={setRoleToDelete}
                        onDeactivateUser={setUserToDeactivate}
                        onChangeUserRole={(user) => { setUserToChangeRole(user); setNewRole(user.role); }}
-                        onCancelVaga={handleCancelVaga}
-                        onUpdateCusto={handleUpdateCusto}
+                         onCancelVaga={handleCancelVaga}
+                         onFillVaga={(vaga) => { setVagaToFill(vaga); setPreencherVagaOpen(true); }}
+                         onUpdateCusto={handleUpdateCusto}
                      />
                    ))}
                  </div>
@@ -739,6 +749,19 @@ export default function GestaoColaboradoresDirecao() {
         open={!!editingRole}
         onOpenChange={(open) => { if (!open) setEditingRole(null); }}
         role={editingRole}
+      />
+
+      {/* Preencher vaga dialog */}
+      <PreencherVagaDialog
+        open={preencherVagaOpen}
+        onOpenChange={(open) => { setPreencherVagaOpen(open); if (!open) setVagaToFill(null); }}
+        defaultRole={vagaToFill?.cargo || ''}
+        onSuccess={async () => {
+          if (vagaToFill) {
+            await updateVagaStatus(vagaToFill.id, 'preenchida');
+          }
+          queryClient.invalidateQueries({ queryKey: ['all-users'] });
+        }}
       />
     </MinimalistLayout>
   );
