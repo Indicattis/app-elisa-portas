@@ -2061,19 +2061,6 @@ className="flex h-[20px] w-full rounded-[3px]"
                   <GripVertical className="h-3 w-3 text-muted-foreground" />
                 </div>}
               
-              {/* Símbolos do cliente */}
-              {(() => {
-                const cliente = venda?.cliente;
-                const isFidelizado = cliente?.fidelizado;
-                const isParceiro = cliente?.parceiro;
-                if (!isFidelizado && !isParceiro) return null;
-                return (
-                  <div className="flex items-center gap-0.5">
-                    {isFidelizado && <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />}
-                    {isParceiro && <Triangle className="h-3.5 w-3.5 text-purple-500 fill-purple-500" />}
-                  </div>
-                );
-              })()}
               
               {(emBacklog || temHistoricoBacklog) && (
                 <Tooltip>
