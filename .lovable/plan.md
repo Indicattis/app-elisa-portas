@@ -1,22 +1,25 @@
 
 
-## Plano: Adicionar coluna "Mecânico" na Frota
+## Plano: Desativar usuários e excluir vagas na página de Vagas
 
-### O que será feito
+### Mudanças em `src/pages/administrativo/VagasPage.tsx`
 
-Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
+1. **Desativar usuários** — Adicionar botão com ícone `UserX` ou `Power` no card do colaborador (ao lado do botão de transferir, visível no hover). Ao clicar:
+   - Abrir `AlertDialog` de confirmação ("Deseja desativar {nome}?")
+   - Ao confirmar: `supabase.from("admin_users").update({ ativo: false }).eq("id", user.id)`
+   - Invalidar query `all-users`
+   - Toast de sucesso
 
-### Mudanças
+2. **Excluir vagas** — Adicionar botão com ícone `Trash2` no card de vaga aberta (canto superior direito, visível no hover). Ao clicar:
+   - Abrir `AlertDialog` de confirmação ("Deseja excluir esta vaga?")
+   - Ao confirmar: usar `deleteVaga(vaga.id)` do hook `useVagas` já disponível
+   - Toast de sucesso (já tratado pelo hook)
 
-1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
+3. **Imports adicionais**: `UserX` ou `Power`, `Trash2` de lucide-react; `AlertDialog` components de `@/components/ui/alert-dialog`
 
-2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
+4. **Estados**: 
+   - `userToDeactivate: User | null` para o alert de desativação
+   - `vagaToDelete: Vaga | null` para o alert de exclusão
 
-3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
-
-4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
-
-5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
-
-6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
+Nenhuma migração SQL necessária.
 
