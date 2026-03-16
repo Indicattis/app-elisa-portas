@@ -346,10 +346,17 @@ export default function GestaoColaboradoresDirecao() {
   const grouped = rolesForSetor.map(role => ({
     role,
     label: (systemRoles || []).find(r => r.key === role)?.label || ROLE_LABELS[role] || role,
-    users: filteredUsers.filter(u => u.role === role),
+    users: filteredUsers.filter(u => u.role === role && u.em_teste !== true),
     openVagas: openVagasByRole(role),
     openVagasList: openVagasForRole(role),
   }));
+
+  const emTesteUsers = filteredUsers.filter(u => u.em_teste === true);
+
+  const getSetorEmTesteCount = (setor: string) => {
+    const roles = getRolesForSetor(setor);
+    return (allUsers || []).filter(u => roles.includes(u.role as any) && u.em_teste === true).length;
+  };
 
   // DnD for role ordering
   const dndSensors = useSensors(
