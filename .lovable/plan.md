@@ -1,22 +1,16 @@
 
 
-## Plano: Adicionar coluna "Mecânico" na Frota
-
-### O que será feito
-
-Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
+## Plano: Adicionar criação e edição de funções na página de Vagas
 
 ### Mudanças
 
-1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
+**Arquivo: `src/pages/administrativo/VagasPage.tsx`**
 
-2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
+1. **Imports**: Adicionar `CreateRoleModal`, `EditRoleModal`, e `Pencil` icon
+2. **Estados**: Adicionar `createRoleModalOpen` e `editingRole` (mesmo padrão do GestaoColaboradoresDirecao)
+3. **Header**: Adicionar botão "Nova Função" (roxo) ao lado do "Nova Vaga" existente, envolvendo ambos em um `div` com `flex gap-2`
+4. **Botão editar por grupo de role**: No título de cada role group (linha 266), adicionar ícone de lápis que abre `EditRoleModal` com os dados da role do `systemRoles`
+5. **Modais**: Renderizar `CreateRoleModal` e `EditRoleModal` no final do componente
 
-3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
-
-4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
-
-5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
-
-6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
+Replica exatamente o padrão já implementado em `GestaoColaboradoresDirecao.tsx`.
 
