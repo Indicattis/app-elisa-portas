@@ -1,14 +1,22 @@
 
 
-## Plano: Remover sistema de estrela/triângulo dos cards de gestão de pedidos
+## Plano: Adicionar coluna "Mecânico" na Frota
 
-### Problema
-Os cards de pedidos (`PedidoCard.tsx`) exibem ícones de estrela (fidelizado) e triângulo (parceiro) ao lado do nome do cliente. O usuário quer remover esses símbolos.
+### O que será feito
+
+Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
 
 ### Mudanças
 
-**`src/components/pedidos/PedidoCard.tsx`**
-- **Linhas 1202-1215**: Remover o bloco "Col 2: Símbolos do cliente" que renderiza Star e Triangle no layout desktop/expandido
-- **Linhas 2077-2089**: Remover o bloco "Símbolos do cliente" que renderiza Star e Triangle no layout compacto/mobile
-- Limpar imports de `Star` e `Triangle` de lucide-react se não forem mais usados no arquivo
+1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
+
+2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
+
+3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
+
+4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
+
+5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
+
+6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
 
