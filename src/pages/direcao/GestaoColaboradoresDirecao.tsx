@@ -564,6 +564,15 @@ export default function GestaoColaboradoresDirecao() {
               })}
             </div>
           </div>
+          {/* Sidebar: custo do setor */}
+          <div className="mt-3 p-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+            <div className="flex items-center gap-2 mb-2">
+              <DollarSign className="w-4 h-4 text-emerald-400/70" />
+              <span className="text-xs font-medium text-white/60">Custo do Setor</span>
+            </div>
+            <p className="text-lg font-bold text-emerald-400">{formatCurrencyValue(custoSetorAtual.total)}</p>
+            <p className="text-[10px] text-white/30 mt-1">{custoSetorAtual.comCusto} de {custoSetorAtual.totalUsers} com custo definido</p>
+          </div>
         </div>
 
         {/* Content */}
