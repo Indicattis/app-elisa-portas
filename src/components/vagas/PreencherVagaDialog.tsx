@@ -51,9 +51,11 @@ interface PreencherVagaDialogProps {
   onOpenChange: (open: boolean) => void;
   defaultRole: string;
   onSuccess: () => void;
+  emTeste?: boolean;
+  defaultSetor?: string;
 }
 
-export function PreencherVagaDialog({ open, onOpenChange, defaultRole, onSuccess }: PreencherVagaDialogProps) {
+export function PreencherVagaDialog({ open, onOpenChange, defaultRole, onSuccess, emTeste, defaultSetor }: PreencherVagaDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -78,15 +80,16 @@ export function PreencherVagaDialog({ open, onOpenChange, defaultRole, onSuccess
     },
   });
 
-  // Set default role when dialog opens
+  // Set default role/setor when dialog opens
   useEffect(() => {
-    if (open && defaultRole) {
-      form.setValue("role", defaultRole);
+    if (open) {
+      if (defaultRole) form.setValue("role", defaultRole);
+      if (defaultSetor) form.setValue("setor", defaultSetor);
     }
     if (!open) {
       form.reset();
     }
-  }, [open, defaultRole]);
+  }, [open, defaultRole, defaultSetor]);
 
   const formatCPF = (value: string) => {
     const numbers = value.replace(/\D/g, "").slice(0, 11);
@@ -126,13 +129,14 @@ export function PreencherVagaDialog({ open, onOpenChange, defaultRole, onSuccess
           em_folha: values.em_folha,
           cpf: values.cpf?.replace(/\D/g, "") || null,
           eh_colaborador: true,
+          em_teste: emTeste || false,
         },
       });
 
       if (response.error) throw new Error(response.error.message || "Erro ao criar colaborador");
       if (response.data?.error) throw new Error(response.data.error);
 
-      toast({ title: "Colaborador criado!", description: `${values.nome} foi adicionado e a vaga preenchida.` });
+      toast({ title: emTeste ? "Usuário em teste criado!" : "Colaborador criado!", description: emTeste ? `${values.nome} foi cadastrado em teste.` : `${values.nome} foi adicionado e a vaga preenchida.` });
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
@@ -146,8 +150,8 @@ export function PreencherVagaDialog({ open, onOpenChange, defaultRole, onSuccess
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Preencher Vaga</DialogTitle>
-          <DialogDescription>Cadastre o novo colaborador para preencher esta vaga.</DialogDescription>
+          <DialogTitle>{emTeste ? "Cadastrar Usuário em Teste" : "Preencher Vaga"}</DialogTitle>
+          <DialogDescription>{emTeste ? "Cadastre um novo colaborador em período de teste." : "Cadastre o novo colaborador para preencher esta vaga."}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -203,7 +207,7 @@ export function PreencherVagaDialog({ open, onOpenChange, defaultRole, onSuccess
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancelar</Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Criar e Preencher Vaga
+                {emTeste ? "Criar Usuário em Teste" : "Criar e Preencher Vaga"}
               </Button>
             </DialogFooter>
           </form>

@@ -286,6 +286,7 @@ export default function GestaoColaboradoresDirecao() {
   const [changingRole, setChangingRole] = useState(false);
 
   const [preencherVagaOpen, setPreencherVagaOpen] = useState(false);
+  const [preencherVagaEmTeste, setPreencherVagaEmTeste] = useState(false);
   const [vagaToFill, setVagaToFill] = useState<Vaga | null>(null);
 
   const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
@@ -345,10 +346,17 @@ export default function GestaoColaboradoresDirecao() {
   const grouped = rolesForSetor.map(role => ({
     role,
     label: (systemRoles || []).find(r => r.key === role)?.label || ROLE_LABELS[role] || role,
-    users: filteredUsers.filter(u => u.role === role),
+    users: filteredUsers.filter(u => u.role === role && u.em_teste !== true),
     openVagas: openVagasByRole(role),
     openVagasList: openVagasForRole(role),
   }));
+
+  const emTesteUsers = filteredUsers.filter(u => u.em_teste === true);
+
+  const getSetorEmTesteCount = (setor: string) => {
+    const roles = getRolesForSetor(setor);
+    return (allUsers || []).filter(u => roles.includes(u.role as any) && u.em_teste === true).length;
+  };
 
   // DnD for role ordering
   const dndSensors = useSensors(
@@ -521,6 +529,7 @@ export default function GestaoColaboradoresDirecao() {
           {SETOR_KEYS.map(setor => {
             const counts = getSetorCounts(setor);
             const isFull = counts.total > 0 && counts.current === counts.total;
+            const emTesteCount = getSetorEmTesteCount(setor);
             return (
               <button
                 key={setor}
@@ -535,6 +544,11 @@ export default function GestaoColaboradoresDirecao() {
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isFull ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
                   {counts.current}/{counts.total}
                 </span>
+                {emTesteCount > 0 && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400">
+                    {emTesteCount}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -554,6 +568,7 @@ export default function GestaoColaboradoresDirecao() {
               {SETOR_KEYS.map(setor => {
                 const counts = getSetorCounts(setor);
                 const isFull = counts.total > 0 && counts.current === counts.total;
+                const emTesteCount = getSetorEmTesteCount(setor);
                 return (
                   <button
                     key={setor}
@@ -565,9 +580,16 @@ export default function GestaoColaboradoresDirecao() {
                       }`}
                   >
                     {SETOR_LABELS[setor]}
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isFull ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
-                      {counts.current}/{counts.total}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isFull ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                        {counts.current}/{counts.total}
+                      </span>
+                      {emTesteCount > 0 && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400">
+                          {emTesteCount}
+                        </span>
+                      )}
+                    </div>
                   </button>
                 );
               })}
@@ -630,6 +652,7 @@ export default function GestaoColaboradoresDirecao() {
               <p className="text-sm">Nenhum colaborador neste setor</p>
             </div>
           ) : (
+            <>
              <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleRoleDragEnd}>
                <SortableContext items={rolesForSetor} strategy={verticalListSortingStrategy}>
                  <div className="space-y-6">
@@ -642,15 +665,82 @@ export default function GestaoColaboradoresDirecao() {
                        onDeleteRole={setRoleToDelete}
                        onDeactivateUser={setUserToDeactivate}
                        onChangeUserRole={(user) => { setUserToChangeRole(user); setNewRole(user.role); }}
-                         onCancelVaga={handleCancelVaga}
-                         onFillVaga={(vaga) => { setVagaToFill(vaga); setPreencherVagaOpen(true); }}
-                         onUpdateCusto={handleUpdateCusto}
+                       onCancelVaga={handleCancelVaga}
+                       onFillVaga={(vaga) => { setVagaToFill(vaga); setPreencherVagaEmTeste(false); setPreencherVagaOpen(true); }}
+                       onUpdateCusto={handleUpdateCusto}
                      />
                    ))}
                  </div>
                </SortableContext>
              </DndContext>
-          )}
+
+             {/* Seção Em Teste */}
+             <div className="mt-8 pt-6 border-t border-red-500/20">
+               <div className="flex items-center gap-3 mb-4">
+                 <h2 className="text-sm font-semibold text-red-400">Em Teste</h2>
+                 <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-[10px]">
+                   {emTesteUsers.length}
+                 </Badge>
+                 <button
+                   onClick={() => { setVagaToFill(null); setPreencherVagaEmTeste(true); setPreencherVagaOpen(true); }}
+                   className="ml-auto p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all"
+                   title="Cadastrar usuário em teste"
+                 >
+                   <Plus className="w-4 h-4" />
+                 </button>
+               </div>
+               {emTesteUsers.length === 0 ? (
+                 <p className="text-xs text-white/30">Nenhum colaborador em teste neste setor.</p>
+               ) : (
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                   {emTesteUsers.map(user => (
+                     <div
+                       key={user.id}
+                       className="group p-1.5 rounded-xl backdrop-blur-xl bg-red-500/5 border border-red-500/20 hover:bg-red-500/10 transition-all duration-200"
+                     >
+                       <div className="flex items-center gap-3 px-3 py-2.5">
+                         <Avatar className="h-10 w-10 border border-red-500/30">
+                           {user.foto_perfil_url ? (
+                             <AvatarImage src={user.foto_perfil_url} alt={user.nome} />
+                           ) : null}
+                           <AvatarFallback className="text-xs font-medium bg-red-500/20 text-red-300">
+                             {getInitials(user.nome)}
+                           </AvatarFallback>
+                         </Avatar>
+                         <div className="min-w-0 flex-1">
+                           <div className="flex items-center gap-2">
+                             <p className="text-sm font-medium text-white truncate">{user.nome}</p>
+                             <Badge className="bg-red-500/20 text-red-300 border-red-500/30 text-[10px] px-1.5 py-0">
+                               Em teste
+                             </Badge>
+                           </div>
+                           <p className="text-xs text-white/40 truncate">{user.email}</p>
+                           <p className="text-[10px] text-white/30">{(systemRoles || []).find(r => r.key === user.role)?.label || user.role}</p>
+                         </div>
+                         <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all">
+                           <button
+                             onClick={() => { setUserToChangeRole(user); setNewRole(user.role); }}
+                             className="p-1.5 rounded-lg hover:bg-blue-500/20 text-white/30 hover:text-blue-400 transition-all"
+                             title="Alterar função"
+                           >
+                             <ArrowRightLeft className="w-4 h-4" />
+                           </button>
+                           <button
+                             onClick={() => setUserToDeactivate(user)}
+                             className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
+                             title="Desativar colaborador"
+                           >
+                             <UserMinus className="w-4 h-4" />
+                           </button>
+                         </div>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               )}
+             </div>
+            </>
+           )}
         </div>
       </div>
 
@@ -788,10 +878,12 @@ export default function GestaoColaboradoresDirecao() {
       {/* Preencher vaga dialog */}
       <PreencherVagaDialog
         open={preencherVagaOpen}
-        onOpenChange={(open) => { setPreencherVagaOpen(open); if (!open) setVagaToFill(null); }}
+        onOpenChange={(open) => { setPreencherVagaOpen(open); if (!open) { setVagaToFill(null); setPreencherVagaEmTeste(false); } }}
         defaultRole={vagaToFill?.cargo || ''}
+        defaultSetor={preencherVagaEmTeste ? selectedSetor : undefined}
+        emTeste={preencherVagaEmTeste}
         onSuccess={async () => {
-          if (vagaToFill) {
+          if (vagaToFill && !preencherVagaEmTeste) {
             await updateVagaStatus(vagaToFill.id, 'preenchida');
           }
           queryClient.invalidateQueries({ queryKey: ['all-users'] });
