@@ -156,6 +156,19 @@ export default function VagasPage() {
       subtitle="Quadro de vagas por setor"
       backPath="/administrativo/rh-dp"
       fullWidth
+      headerActions={
+        <button
+          onClick={() => setCriarVagaOpen(true)}
+          className="h-10 px-5 rounded-lg font-medium text-white text-sm border
+                     bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30
+                     shadow-lg shadow-blue-500/30
+                     hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/40
+                     transition-all duration-200 flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Nova Vaga
+        </button>
+      }
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Administrativo", path: "/administrativo" },
