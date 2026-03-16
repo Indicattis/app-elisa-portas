@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, Loader2, Plus, UserPlus, ArrowRightLeft } from "lucide-react";
+import { Users, Loader2, Plus, UserPlus, ArrowRightLeft, UserX, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,9 +29,11 @@ export default function VagasPage() {
   const [transferUser, setTransferUser] = useState<User | null>(null);
   const [newRole, setNewRole] = useState("");
   const [transferring, setTransferring] = useState(false);
+  const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
+  const [vagaToDelete, setVagaToDelete] = useState<Vaga | null>(null);
   const navigate = useNavigate();
   const { data: allUsers, isLoading } = useAllUsers();
-  const { vagas } = useVagas();
+  const { vagas, deleteVaga } = useVagas();
   const queryClient = useQueryClient();
 
   const { data: systemRoles } = useQuery({
@@ -236,6 +239,13 @@ export default function VagasPage() {
                               <p className="text-xs text-white/40 truncate">{user.email}</p>
                             </div>
                             <button
+                              onClick={() => setUserToDeactivate(user)}
+                              className="opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400"
+                              title="Desativar colaborador"
+                            >
+                              <UserX className="w-3.5 h-3.5" />
+                            </button>
+                            <button
                               onClick={() => handleOpenTransfer(user)}
                               className="opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white/80"
                               title="Transferir função"
@@ -245,23 +255,33 @@ export default function VagasPage() {
                           </div>
                         </div>
                       ))}
-                      {/* Open vacancy cards — clickable to fill */}
                       {group.openVagasList.map(vaga => (
-                        <button
+                        <div
                           key={vaga.id}
-                          onClick={() => handlePreencherClick(vaga)}
-                          className="p-1.5 rounded-xl border border-dashed border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/40 transition-all duration-200 text-left cursor-pointer"
+                          className="p-1.5 rounded-xl border border-dashed border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/40 transition-all duration-200 group/vaga relative"
                         >
-                          <div className="flex items-center gap-3 px-3 py-2.5">
-                            <div className="h-10 w-10 rounded-full border border-dashed border-amber-500/30 flex items-center justify-center">
-                              <UserPlus className="w-4 h-4 text-amber-500/50" />
+                          <button
+                            onClick={() => setVagaToDelete(vaga)}
+                            className="absolute top-2 right-2 opacity-0 group-hover/vaga:opacity-100 transition-opacity p-1 rounded-lg hover:bg-red-500/10 text-white/30 hover:text-red-400 z-10"
+                            title="Excluir vaga"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handlePreencherClick(vaga)}
+                            className="w-full text-left cursor-pointer"
+                          >
+                            <div className="flex items-center gap-3 px-3 py-2.5">
+                              <div className="h-10 w-10 rounded-full border border-dashed border-amber-500/30 flex items-center justify-center">
+                                <UserPlus className="w-4 h-4 text-amber-500/50" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs text-amber-400/70">Vaga aberta</p>
+                                <p className="text-[10px] text-amber-400/40">Clique para preencher</p>
+                              </div>
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs text-amber-400/70">Vaga aberta</p>
-                              <p className="text-[10px] text-amber-400/40">Clique para preencher</p>
-                            </div>
-                          </div>
-                        </button>
+                          </button>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -332,6 +352,66 @@ export default function VagasPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Deactivate User Alert */}
+      <AlertDialog open={!!userToDeactivate} onOpenChange={(open) => !open && setUserToDeactivate(null)}>
+        <AlertDialogContent className="bg-[#1a1a2e] border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Desativar colaborador</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Deseja realmente desativar <span className="font-semibold text-white/80">{userToDeactivate?.nome}</span>? O colaborador perderá acesso ao sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={async () => {
+                if (!userToDeactivate) return;
+                try {
+                  const { error } = await supabase
+                    .from("admin_users")
+                    .update({ ativo: false })
+                    .eq("id", userToDeactivate.id);
+                  if (error) throw error;
+                  toast.success(`${userToDeactivate.nome} foi desativado`);
+                  queryClient.invalidateQueries({ queryKey: ["all-users"] });
+                } catch {
+                  toast.error("Erro ao desativar colaborador");
+                }
+                setUserToDeactivate(null);
+              }}
+            >
+              Desativar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Vaga Alert */}
+      <AlertDialog open={!!vagaToDelete} onOpenChange={(open) => !open && setVagaToDelete(null)}>
+        <AlertDialogContent className="bg-[#1a1a2e] border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Excluir vaga</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Deseja realmente excluir esta vaga de <span className="font-semibold text-white/80">{(systemRoles || []).find(r => r.key === vagaToDelete?.cargo)?.label || vagaToDelete?.cargo}</span>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={async () => {
+                if (!vagaToDelete) return;
+                await deleteVaga(vagaToDelete.id);
+                setVagaToDelete(null);
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </MinimalistLayout>
   );
