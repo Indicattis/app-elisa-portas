@@ -353,6 +353,66 @@ export default function VagasPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Deactivate User Alert */}
+      <AlertDialog open={!!userToDeactivate} onOpenChange={(open) => !open && setUserToDeactivate(null)}>
+        <AlertDialogContent className="bg-[#1a1a2e] border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Desativar colaborador</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Deseja realmente desativar <span className="font-semibold text-white/80">{userToDeactivate?.nome}</span>? O colaborador perderá acesso ao sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={async () => {
+                if (!userToDeactivate) return;
+                try {
+                  const { error } = await supabase
+                    .from("admin_users")
+                    .update({ ativo: false })
+                    .eq("id", userToDeactivate.id);
+                  if (error) throw error;
+                  toast.success(`${userToDeactivate.nome} foi desativado`);
+                  queryClient.invalidateQueries({ queryKey: ["all-users"] });
+                } catch {
+                  toast.error("Erro ao desativar colaborador");
+                }
+                setUserToDeactivate(null);
+              }}
+            >
+              Desativar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Vaga Alert */}
+      <AlertDialog open={!!vagaToDelete} onOpenChange={(open) => !open && setVagaToDelete(null)}>
+        <AlertDialogContent className="bg-[#1a1a2e] border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Excluir vaga</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Deseja realmente excluir esta vaga de <span className="font-semibold text-white/80">{(systemRoles || []).find(r => r.key === vagaToDelete?.cargo)?.label || vagaToDelete?.cargo}</span>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={async () => {
+                if (!vagaToDelete) return;
+                await deleteVaga(vagaToDelete.id);
+                setVagaToDelete(null);
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </MinimalistLayout>
   );
 }
