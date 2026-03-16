@@ -30,6 +30,7 @@ export default function FrotaNovoMinimalista() {
     documento_url: "",
     documento_nome: "",
     status: "rodando" as "rodando" | "mecanico" | "parado",
+    tipo_frota: "empresa" as "empresa" | "particular",
   });
 
   const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,6 +66,7 @@ export default function FrotaNovoMinimalista() {
         documento_url: form.documento_url || undefined,
         documento_nome: form.documento_nome || undefined,
         status: form.status,
+        tipo_frota: form.tipo_frota,
       });
       navigate("/logistica/frota");
     } catch {}
@@ -190,6 +192,18 @@ export default function FrotaNovoMinimalista() {
               <div className="space-y-1.5">
                 <Label className={labelClass}>Mecânico</Label>
                 <Input value={form.mecanico} onChange={(e) => setForm((f) => ({ ...f, mecanico: e.target.value }))} className={inputClass} placeholder="Nome do mecânico" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className={labelClass}>Tipo de Frota</Label>
+                <Select value={form.tipo_frota} onValueChange={(v) => setForm((f) => ({ ...f, tipo_frota: v as "empresa" | "particular" }))}>
+                  <SelectTrigger className={inputClass}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-black/90 border-white/10 backdrop-blur-xl">
+                    <SelectItem value="empresa" className="text-white focus:bg-white/10 focus:text-white">Empresa</SelectItem>
+                    <SelectItem value="particular" className="text-white focus:bg-white/10 focus:text-white">Particular</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label className={labelClass}>Status</Label>

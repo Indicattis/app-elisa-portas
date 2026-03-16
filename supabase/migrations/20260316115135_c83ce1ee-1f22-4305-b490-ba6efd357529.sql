@@ -1,0 +1,1 @@
+ALTER TABLE public.veiculos ADD COLUMN tipo_frota text NOT NULL DEFAULT 'empresa';
