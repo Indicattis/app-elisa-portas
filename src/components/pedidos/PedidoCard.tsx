@@ -1199,20 +1199,7 @@ export function PedidoCard({
                 </div>
               )}
               
-              {/* Col 2: Símbolos do cliente */}
               <div className="flex items-center justify-center">
-                {(() => {
-                  const cliente = venda?.cliente;
-                  const isFidelizado = cliente?.fidelizado;
-                  const isParceiro = cliente?.parceiro;
-                  if (!isFidelizado && !isParceiro) return null;
-                  return (
-                    <div className="flex items-center gap-0.5">
-                      {isFidelizado && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
-                      {isParceiro && <Triangle className="h-4 w-4 text-purple-500 fill-purple-500" />}
-                    </div>
-                  );
-                })()}
                 {(pedido as any).is_correcao && (
                   <Badge variant="outline" className="h-5 px-1 text-[8px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
                     CORREÇÃO
