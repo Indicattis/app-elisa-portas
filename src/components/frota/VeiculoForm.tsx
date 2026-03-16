@@ -227,6 +227,22 @@ export function VeiculoForm({ onSubmit, initialData, isSubmitting, isEditing = f
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="tipo_frota">Tipo de Frota</Label>
+          <Select
+            value={watch('tipo_frota') || 'empresa'}
+            onValueChange={(value) => setValue('tipo_frota', value as any)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="empresa">Empresa</SelectItem>
+              <SelectItem value="particular">Particular</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="status">Status {!isEditing && '*'}</Label>
           <Select
             value={watch('status')}
