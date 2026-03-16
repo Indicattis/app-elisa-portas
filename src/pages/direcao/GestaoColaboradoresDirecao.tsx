@@ -573,7 +573,7 @@ export default function GestaoColaboradoresDirecao() {
               })}
             </div>
           </div>
-          {/* Sidebar: custo do setor */}
+          {/* Sidebar: custo do setor e índices */}
           <div className="mt-3 p-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign className="w-4 h-4 text-emerald-400/70" />
@@ -581,6 +581,40 @@ export default function GestaoColaboradoresDirecao() {
             </div>
             <p className="text-lg font-bold text-emerald-400">{formatCurrencyValue(custoSetorAtual.total)}</p>
             <p className="text-[10px] text-white/30 mt-1">{custoSetorAtual.comCusto} de {custoSetorAtual.totalUsers} com custo definido</p>
+          </div>
+
+          {/* Quantidade de colaboradores no setor */}
+          <div className="mt-3 p-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="w-4 h-4 text-blue-400/70" />
+              <span className="text-xs font-medium text-white/60">Colaboradores no Setor</span>
+            </div>
+            <p className="text-lg font-bold text-blue-400">{custoSetorAtual.totalUsers}</p>
+            <p className="text-[10px] text-white/30 mt-1">ativos visíveis no organograma</p>
+          </div>
+
+          {/* Quantidade total de colaboradores da empresa */}
+          <div className="mt-3 p-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="w-4 h-4 text-violet-400/70" />
+              <span className="text-xs font-medium text-white/60">Total Colaboradores</span>
+            </div>
+            <p className="text-lg font-bold text-violet-400">{(allUsers || []).length}</p>
+            <p className="text-[10px] text-white/30 mt-1">todos os colaboradores da empresa</p>
+          </div>
+
+          {/* Custo total de colaboradores da empresa */}
+          <div className="mt-3 p-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+            <div className="flex items-center gap-2 mb-2">
+              <DollarSign className="w-4 h-4 text-amber-400/70" />
+              <span className="text-xs font-medium text-white/60">Custo Total Empresa</span>
+            </div>
+            <p className="text-lg font-bold text-amber-400">
+              {formatCurrencyValue((allUsers || []).reduce((acc, u) => acc + (Number(u.custo_colaborador) || 0), 0))}
+            </p>
+            <p className="text-[10px] text-white/30 mt-1">
+              {(allUsers || []).filter(u => u.custo_colaborador != null && u.custo_colaborador > 0).length} com custo definido
+            </p>
           </div>
         </div>
 
