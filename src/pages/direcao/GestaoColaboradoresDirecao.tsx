@@ -57,6 +57,22 @@ interface SortableRoleGroupProps {
   onCancelVaga: (vagaId: string) => void;
   onFillVaga: (vaga: Vaga) => void;
   onUpdateCusto: (userId: string, value: number | null) => void;
+  onUserReorder: (roleKey: string, updates: { id: string; ordem: number }[]) => void;
+}
+
+function SortableUserCard({ user, children }: { user: User; children: (dragHandleProps: Record<string, any>, isDragging: boolean) => React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: user.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.3 : 1,
+    zIndex: isDragging ? 10 : 'auto' as const,
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children({ ...attributes, ...listeners }, isDragging)}
+    </div>
+  );
 }
 
 function InlineCustoEditor({ user, onSave }: { user: User; onSave: (userId: string, value: number | null) => void }) {

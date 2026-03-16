@@ -13,6 +13,7 @@ export interface User {
   em_teste?: boolean;
   salario?: number | null;
   custo_colaborador?: number | null;
+  ordem?: number;
 }
 
 export function useAllUsers() {
