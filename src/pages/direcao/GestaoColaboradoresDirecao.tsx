@@ -442,6 +442,19 @@ export default function GestaoColaboradoresDirecao() {
     }
   };
 
+  const handleUpdateCusto = async (userId: string, value: number | null) => {
+    const { error } = await (supabase
+      .from('admin_users')
+      .update({ custo_colaborador: value } as any)
+      .eq('id', userId));
+    if (error) {
+      toast.error('Erro ao atualizar custo');
+    } else {
+      toast.success('Custo atualizado');
+      queryClient.invalidateQueries({ queryKey: ['all-users'] });
+    }
+  };
+
   return (
     <MinimalistLayout
       title="Organograma RH"
