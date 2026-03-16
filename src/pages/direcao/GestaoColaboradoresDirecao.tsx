@@ -530,6 +530,13 @@ export default function GestaoColaboradoresDirecao() {
             );
           })}
         </div>
+        {/* Mobile: custo do setor */}
+        <div className="md:hidden flex items-center gap-2 px-1 text-xs">
+          <DollarSign className="w-3.5 h-3.5 text-emerald-400/70" />
+          <span className="text-white/50">Custo do setor:</span>
+          <span className="font-semibold text-emerald-400">{formatCurrencyValue(custoSetorAtual.total)}</span>
+          <span className="text-white/30">({custoSetorAtual.comCusto}/{custoSetorAtual.totalUsers})</span>
+        </div>
 
         {/* Desktop: sidebar */}
         <div className="hidden md:flex flex-col w-56 shrink-0">
