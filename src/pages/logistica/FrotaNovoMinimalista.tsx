@@ -30,6 +30,7 @@ export default function FrotaNovoMinimalista() {
     documento_url: "",
     documento_nome: "",
     status: "rodando" as "rodando" | "mecanico" | "parado",
+    tipo_frota: "empresa" as "empresa" | "particular",
   });
 
   const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
