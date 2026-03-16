@@ -25,6 +25,7 @@ export interface Veiculo {
   created_by: string | null;
   ultima_conferencia_data?: string | null;
   mecanico?: string | null;
+  tipo_frota: 'empresa' | 'particular';
 }
 
 export interface VeiculoFormData {
