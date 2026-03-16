@@ -31,6 +31,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import type { User } from '@/hooks/useAllUsers';
+import { PreencherVagaDialog } from '@/components/vagas/PreencherVagaDialog';
 
 const SETOR_KEYS = Object.keys(SETOR_LABELS);
 
