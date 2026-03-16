@@ -165,6 +165,7 @@ export type Database = {
           bypass_permissions: boolean | null
           cpf: string | null
           created_at: string
+          custo_colaborador: number | null
           data_nascimento: string | null
           eh_colaborador: boolean | null
           em_folha: boolean | null
@@ -188,6 +189,7 @@ export type Database = {
           bypass_permissions?: boolean | null
           cpf?: string | null
           created_at?: string
+          custo_colaborador?: number | null
           data_nascimento?: string | null
           eh_colaborador?: boolean | null
           em_folha?: boolean | null
@@ -211,6 +213,7 @@ export type Database = {
           bypass_permissions?: boolean | null
           cpf?: string | null
           created_at?: string
+          custo_colaborador?: number | null
           data_nascimento?: string | null
           eh_colaborador?: boolean | null
           em_folha?: boolean | null
