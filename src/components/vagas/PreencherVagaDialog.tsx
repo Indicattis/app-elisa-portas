@@ -129,6 +129,7 @@ export function PreencherVagaDialog({ open, onOpenChange, defaultRole, onSuccess
           em_folha: values.em_folha,
           cpf: values.cpf?.replace(/\D/g, "") || null,
           eh_colaborador: true,
+          em_teste: emTeste || false,
         },
       });
 
