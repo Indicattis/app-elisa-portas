@@ -6790,6 +6790,7 @@ export type Database = {
           placa: string | null
           responsavel: string | null
           status: string
+          tipo_frota: string
           updated_at: string
         }
         Insert: {
@@ -6814,6 +6815,7 @@ export type Database = {
           placa?: string | null
           responsavel?: string | null
           status?: string
+          tipo_frota?: string
           updated_at?: string
         }
         Update: {
@@ -6838,6 +6840,7 @@ export type Database = {
           placa?: string | null
           responsavel?: string | null
           status?: string
+          tipo_frota?: string
           updated_at?: string
         }
         Relationships: []
