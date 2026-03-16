@@ -57,6 +57,22 @@ interface SortableRoleGroupProps {
   onCancelVaga: (vagaId: string) => void;
   onFillVaga: (vaga: Vaga) => void;
   onUpdateCusto: (userId: string, value: number | null) => void;
+  onUserReorder: (roleKey: string, updates: { id: string; ordem: number }[]) => void;
+}
+
+function SortableUserCard({ user, children }: { user: User; children: (dragHandleProps: Record<string, any>, isDragging: boolean) => React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: user.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.3 : 1,
+    zIndex: isDragging ? 10 : 'auto' as const,
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children({ ...attributes, ...listeners }, isDragging)}
+    </div>
+  );
 }
 
 function InlineCustoEditor({ user, onSave }: { user: User; onSave: (userId: string, value: number | null) => void }) {
@@ -127,8 +143,25 @@ function InlineCustoEditor({ user, onSave }: { user: User; onSave: (userId: stri
   );
 }
 
-function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDeactivateUser, onChangeUserRole, onCancelVaga, onFillVaga, onUpdateCusto }: SortableRoleGroupProps) {
+function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDeactivateUser, onChangeUserRole, onCancelVaga, onFillVaga, onUpdateCusto, onUserReorder }: SortableRoleGroupProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: group.role });
+
+  const userDndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const handleUserDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = group.users.findIndex(u => u.id === active.id);
+    const newIndex = group.users.findIndex(u => u.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const newOrder = [...group.users];
+    const [moved] = newOrder.splice(oldIndex, 1);
+    newOrder.splice(newIndex, 0, moved);
+    const updates = newOrder.map((u, i) => ({ id: u.id, ordem: i + 1 }));
+    onUserReorder(group.role, updates);
+  };
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -185,81 +218,95 @@ function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDea
           </button>
         )}
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {group.users.map(user => (
-          <div
-            key={user.id}
-            className={`group p-1.5 rounded-xl backdrop-blur-xl hover:bg-white/[0.08] transition-all duration-200 ${
-              user.em_teste
-                ? "bg-blue-500/10 border border-blue-500/30"
-                : "bg-white/5 border border-white/10"
-            }`}
-          >
-            <div className="flex items-center gap-3 px-3 py-2.5">
-              <Avatar className={`h-10 w-10 border ${user.em_teste ? "border-blue-500/30" : "border-white/10"}`}>
-                {user.foto_perfil_url ? (
-                  <AvatarImage src={user.foto_perfil_url} alt={user.nome} />
-                ) : null}
-                <AvatarFallback className={`text-xs font-medium ${user.em_teste ? "bg-blue-500/30 text-blue-200" : "bg-blue-600/20 text-blue-300"}`}>
-                  {getInitials(user.nome)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-white truncate">{user.nome}</p>
-                  {user.em_teste && (
-                    <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 text-[10px] px-1.5 py-0">
-                      Em teste
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-xs text-white/40 truncate">{user.email}</p>
-                <InlineCustoEditor user={user} onSave={onUpdateCusto} />
-              </div>
-              <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all">
-                <button
-                  onClick={() => onChangeUserRole(user)}
-                  className="p-1.5 rounded-lg hover:bg-blue-500/20 text-white/30 hover:text-blue-400 transition-all"
-                  title="Alterar função"
-                >
-                  <ArrowRightLeft className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => onDeactivateUser(user)}
-                  className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
-                  title="Desativar colaborador"
-                >
-                  <UserMinus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-        {group.openVagasList.map((vaga) => (
-          <div
-            key={vaga.id}
-            onClick={() => onFillVaga(vaga)}
-            className="group/vaga p-1.5 rounded-xl border border-dashed border-amber-500/20 bg-amber-500/5 relative cursor-pointer hover:bg-amber-500/10 transition-all"
-          >
-            <div className="flex items-center gap-3 px-3 py-2.5">
-              <div className="h-10 w-10 rounded-full border border-dashed border-amber-500/30 flex items-center justify-center">
-                <Plus className="w-4 h-4 text-amber-500/50" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-amber-400/70">Vaga aberta</p>
-                <p className="text-[10px] text-amber-400/40">Clique para preencher</p>
-              </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); onCancelVaga(vaga.id); }}
-                className="opacity-0 group-hover/vaga:opacity-100 p-1 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
-                title="Cancelar vaga"
+      <DndContext sensors={userDndSensors} collisionDetection={closestCenter} onDragEnd={handleUserDragEnd}>
+        <SortableContext items={group.users.map(u => u.id)} strategy={verticalListSortingStrategy}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {group.users.map(user => (
+              <SortableUserCard key={user.id} user={user}>
+                {(dragHandleProps, isUserDragging) => (
+                  <div
+                    className={`group p-1.5 rounded-xl backdrop-blur-xl hover:bg-white/[0.08] transition-all duration-200 ${
+                      user.em_teste
+                        ? "bg-blue-500/10 border border-blue-500/30"
+                        : "bg-white/5 border border-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 px-3 py-2.5">
+                      <button
+                        {...dragHandleProps}
+                        className="cursor-grab active:cursor-grabbing p-0.5 text-white/20 hover:text-white/50 transition-all touch-none opacity-0 group-hover:opacity-100"
+                        title="Arrastar para reordenar"
+                      >
+                        <GripVertical className="w-3.5 h-3.5" />
+                      </button>
+                      <Avatar className={`h-10 w-10 border ${user.em_teste ? "border-blue-500/30" : "border-white/10"}`}>
+                        {user.foto_perfil_url ? (
+                          <AvatarImage src={user.foto_perfil_url} alt={user.nome} />
+                        ) : null}
+                        <AvatarFallback className={`text-xs font-medium ${user.em_teste ? "bg-blue-500/30 text-blue-200" : "bg-blue-600/20 text-blue-300"}`}>
+                          {getInitials(user.nome)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-white truncate">{user.nome}</p>
+                          {user.em_teste && (
+                            <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 text-[10px] px-1.5 py-0">
+                              Em teste
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-white/40 truncate">{user.email}</p>
+                        <InlineCustoEditor user={user} onSave={onUpdateCusto} />
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all">
+                        <button
+                          onClick={() => onChangeUserRole(user)}
+                          className="p-1.5 rounded-lg hover:bg-blue-500/20 text-white/30 hover:text-blue-400 transition-all"
+                          title="Alterar função"
+                        >
+                          <ArrowRightLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => onDeactivateUser(user)}
+                          className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
+                          title="Desativar colaborador"
+                        >
+                          <UserMinus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </SortableUserCard>
+            ))}
+            {group.openVagasList.map((vaga) => (
+              <div
+                key={vaga.id}
+                onClick={() => onFillVaga(vaga)}
+                className="group/vaga p-1.5 rounded-xl border border-dashed border-amber-500/20 bg-amber-500/5 relative cursor-pointer hover:bg-amber-500/10 transition-all"
               >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+                <div className="flex items-center gap-3 px-3 py-2.5">
+                  <div className="h-10 w-10 rounded-full border border-dashed border-amber-500/30 flex items-center justify-center">
+                    <Plus className="w-4 h-4 text-amber-500/50" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-amber-400/70">Vaga aberta</p>
+                    <p className="text-[10px] text-amber-400/40">Clique para preencher</p>
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onCancelVaga(vaga.id); }}
+                    className="opacity-0 group-hover/vaga:opacity-100 p-1 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
+                    title="Cancelar vaga"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 }
@@ -346,7 +393,9 @@ export default function GestaoColaboradoresDirecao() {
   const grouped = rolesForSetor.map(role => ({
     role,
     label: (systemRoles || []).find(r => r.key === role)?.label || ROLE_LABELS[role] || role,
-    users: filteredUsers.filter(u => u.role === role && u.em_teste !== true),
+    users: filteredUsers
+      .filter(u => u.role === role && u.em_teste !== true)
+      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)),
     openVagas: openVagasByRole(role),
     openVagasList: openVagasForRole(role),
   }));
@@ -483,6 +532,22 @@ export default function GestaoColaboradoresDirecao() {
       toast.success('Custo atualizado');
       queryClient.invalidateQueries({ queryKey: ['all-users'] });
     }
+  };
+
+  const handleUserReorder = async (_roleKey: string, updates: { id: string; ordem: number }[]) => {
+    // Optimistic update
+    queryClient.setQueryData(['all-users'], (old: User[] | undefined) =>
+      (old || []).map(u => {
+        const upd = updates.find(x => x.id === u.id);
+        return upd ? { ...u, ordem: upd.ordem } : u;
+      })
+    );
+
+    // Persist
+    for (const u of updates) {
+      await (supabase.from('admin_users').update({ ordem: u.ordem } as any).eq('id', u.id));
+    }
+    queryClient.invalidateQueries({ queryKey: ['all-users'] });
   };
 
   return (
@@ -667,8 +732,9 @@ export default function GestaoColaboradoresDirecao() {
                        onChangeUserRole={(user) => { setUserToChangeRole(user); setNewRole(user.role); }}
                        onCancelVaga={handleCancelVaga}
                        onFillVaga={(vaga) => { setVagaToFill(vaga); setPreencherVagaEmTeste(false); setPreencherVagaOpen(true); }}
-                       onUpdateCusto={handleUpdateCusto}
-                     />
+                        onUpdateCusto={handleUpdateCusto}
+                        onUserReorder={handleUserReorder}
+                      />
                    ))}
                  </div>
                </SortableContext>
