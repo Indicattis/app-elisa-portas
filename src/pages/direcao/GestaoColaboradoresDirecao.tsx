@@ -57,7 +57,75 @@ interface SortableRoleGroupProps {
   onUpdateCusto: (userId: string, value: number | null) => void;
 }
 
-function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDeactivateUser, onChangeUserRole, onCancelVaga }: SortableRoleGroupProps) {
+function InlineCustoEditor({ user, onSave }: { user: User; onSave: (userId: string, value: number | null) => void }) {
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [open]);
+
+  const handleOpen = () => {
+    const current = user.custo_colaborador;
+    setInputValue(current != null ? current.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '');
+    setOpen(true);
+  };
+
+  const handleConfirm = () => {
+    const cleaned = inputValue.replace(/\./g, '').replace(',', '.');
+    const parsed = parseFloat(cleaned);
+    onSave(user.id, isNaN(parsed) ? null : parsed);
+    setOpen(false);
+  };
+
+  const formatCurrency = (v: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+
+  const handleInputChange = (value: string) => {
+    const numericValue = value.replace(/\D/g, '');
+    if (numericValue) {
+      const formatted = (parseInt(numericValue) / 100).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+      setInputValue(formatted);
+    } else {
+      setInputValue('');
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          onClick={handleOpen}
+          className="text-xs text-emerald-400/60 hover:text-emerald-400 transition-colors cursor-pointer"
+        >
+          {user.custo_colaborador != null ? formatCurrency(user.custo_colaborador) : 'Definir custo'}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-48 p-2" align="start">
+        <div className="flex flex-col gap-2">
+          <label className="text-[10px] text-muted-foreground">Custo (R$)</label>
+          <Input
+            ref={inputRef}
+            value={inputValue}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleConfirm(); }}
+            placeholder="0,00"
+            className="h-8 text-sm"
+          />
+          <Button size="sm" className="h-7 text-xs" onClick={handleConfirm}>Salvar</Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDeactivateUser, onChangeUserRole, onCancelVaga, onUpdateCusto }: SortableRoleGroupProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: group.role });
 
   const style = {
