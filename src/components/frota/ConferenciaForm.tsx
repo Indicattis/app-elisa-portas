@@ -7,6 +7,8 @@ import { Loader2 } from "lucide-react";
 
 export interface ConferenciaFormData {
   km_atual: number;
+  km_proxima_troca_oleo?: number;
+  data_proxima_troca_oleo?: string;
   agua_conferida: boolean;
   nivel_oleo_conferido: boolean;
   data_troca_oleo?: string;
