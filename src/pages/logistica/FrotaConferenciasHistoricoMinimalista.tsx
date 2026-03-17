@@ -3,13 +3,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useVeiculos } from "@/hooks/useVeiculos";
 import { useConferencias, Conferencia } from "@/hooks/useConferencias";
 import { useVeiculoArquivos } from "@/hooks/useVeiculoArquivos";
+import { useVeiculoKmHistorico, KmHistorico } from "@/hooks/useVeiculoKmHistorico";
 import { StatusBadge } from "@/components/frota/StatusBadge";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useRef } from "react";
-import { Upload, FileText, Trash2, Download, Loader2, Paperclip, Droplets, Calendar, Gauge } from "lucide-react";
+import { Upload, FileText, Trash2, Download, Loader2, Paperclip, Droplets, Calendar, Gauge, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 function formatFileSize(bytes: number | null) {
@@ -25,6 +26,7 @@ export default function FrotaConferenciasHistoricoMinimalista() {
   const { veiculos, isLoading: loadingVeiculos } = useVeiculos();
   const { conferencias, isLoading: loadingConferencias } = useConferencias(id);
   const { arquivos, isLoading: loadingArquivos, uploadArquivo, deleteArquivo, isUploading, isDeleting } = useVeiculoArquivos(id);
+  const { kmHistorico, isLoading: loadingKm } = useVeiculoKmHistorico(id);
   const [selectedConferencia, setSelectedConferencia] = useState<Conferencia | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -33,11 +35,13 @@ export default function FrotaConferenciasHistoricoMinimalista() {
 
   type TimelineItem =
     | { type: 'conferencia'; created_at: string; data: NonNullable<typeof conferencias>[number] }
-    | { type: 'arquivo'; created_at: string; data: NonNullable<typeof arquivos>[number] };
+    | { type: 'arquivo'; created_at: string; data: NonNullable<typeof arquivos>[number] }
+    | { type: 'km'; created_at: string; data: KmHistorico };
 
   const timeline: TimelineItem[] = [
     ...(conferencias?.map(c => ({ type: 'conferencia' as const, created_at: c.created_at, data: c })) || []),
     ...(arquivos?.map(a => ({ type: 'arquivo' as const, created_at: a.created_at, data: a })) || []),
+    ...(kmHistorico?.map(k => ({ type: 'km' as const, created_at: k.created_at, data: k })) || []),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const dynamicTitle = isLoading ? "Carregando..." : veiculo ? `Histórico: ${veiculo.nome}` : "Veículo não encontrado";
@@ -132,51 +136,94 @@ export default function FrotaConferenciasHistoricoMinimalista() {
                 );
               }
 
-              const arquivo = item.data;
-              return (
-                <Card
-                  key={`arq-${arquivo.id}`}
-                  className="bg-white/5 border-blue-500/10 backdrop-blur-xl hover:bg-blue-500/5 transition-all duration-200"
-                >
-                  <CardContent className="p-4">
-                    <div className="space-y-3">
-                      <div className="w-full h-48 rounded-lg bg-white/5 flex flex-col items-center justify-center gap-2">
-                        <Paperclip className="h-10 w-10 text-blue-400/60" />
-                        <Badge variant="secondary" className="bg-blue-500/15 text-blue-300 border-blue-500/20 text-[10px]">
-                          Arquivo anexado
-                        </Badge>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-white/50">
-                            {format(new Date(arquivo.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <a
-                              href={arquivo.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="p-1.5 rounded-md hover:bg-white/10 text-white/50 hover:text-white transition-colors"
-                            >
-                              <Download className="h-4 w-4" />
-                            </a>
-                            <button
-                              onClick={() => deleteArquivo(arquivo)}
-                              disabled={isDeleting}
-                              className="p-1.5 rounded-md hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-colors disabled:opacity-50"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+              if (item.type === 'km') {
+                const km = item.data as KmHistorico;
+                const origemLabel: Record<string, string> = {
+                  conferencia: 'Conferência',
+                  troca_oleo: 'Troca de Óleo',
+                  manual: 'Atualização Manual',
+                };
+                return (
+                  <Card
+                    key={`km-${km.id}`}
+                    className="bg-white/5 border-blue-500/10 backdrop-blur-xl hover:bg-blue-500/5 transition-all duration-200"
+                  >
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div className="w-full h-48 rounded-lg bg-white/5 flex flex-col items-center justify-center gap-3">
+                          <Gauge className="h-10 w-10 text-blue-400/60" />
+                          <div className="flex items-center gap-2 text-white/80">
+                            <span className="text-lg font-semibold">{Number(km.km_anterior).toLocaleString("pt-BR")}</span>
+                            <ArrowRight className="h-4 w-4 text-blue-400" />
+                            <span className="text-lg font-semibold text-blue-300">{Number(km.km_novo).toLocaleString("pt-BR")}</span>
                           </div>
+                          <Badge variant="secondary" className="bg-blue-500/15 text-blue-300 border-blue-500/20 text-[10px]">
+                            Atualização de KM
+                          </Badge>
                         </div>
-                        <p className="text-sm text-white/90 truncate">{arquivo.nome}</p>
-                        <p className="text-xs text-white/40">{formatFileSize(arquivo.tamanho)}</p>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-white/50">
+                              {format(new Date(km.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                            </span>
+                          </div>
+                          <p className="text-sm text-white/70">{origemLabel[km.origem] || km.origem}</p>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
+                    </CardContent>
+                  </Card>
+                );
+              }
+
+              if (item.type === 'arquivo') {
+                const arquivo = item.data as NonNullable<typeof arquivos>[number];
+                return (
+                  <Card
+                    key={`arq-${arquivo.id}`}
+                    className="bg-white/5 border-blue-500/10 backdrop-blur-xl hover:bg-blue-500/5 transition-all duration-200"
+                  >
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div className="w-full h-48 rounded-lg bg-white/5 flex flex-col items-center justify-center gap-2">
+                          <Paperclip className="h-10 w-10 text-blue-400/60" />
+                          <Badge variant="secondary" className="bg-blue-500/15 text-blue-300 border-blue-500/20 text-[10px]">
+                            Arquivo anexado
+                          </Badge>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-white/50">
+                              {format(new Date(arquivo.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <a
+                                href={arquivo.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="p-1.5 rounded-md hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                              >
+                                <Download className="h-4 w-4" />
+                              </a>
+                              <button
+                                onClick={() => deleteArquivo(arquivo)}
+                                disabled={isDeleting}
+                                className="p-1.5 rounded-md hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-colors disabled:opacity-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-sm text-white/90 truncate">{arquivo.nome}</p>
+                          <p className="text-xs text-white/40">{formatFileSize(arquivo.tamanho)}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              }
+
+              return null;
             })}
             {timeline.length === 0 && (
               <div className="col-span-full text-center py-12 text-white/40">
