@@ -1042,6 +1042,7 @@ export default function PerformanceMinimalista() {
                       <TableHead className="text-white/60">UTM Source</TableHead>
                       <TableHead className="text-white/60">UTM Campaign</TableHead>
                       <TableHead className="text-white/60">Referrer</TableHead>
+                      <TableHead className="text-white/60">IP</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
