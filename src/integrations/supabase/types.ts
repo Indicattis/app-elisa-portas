@@ -7403,6 +7403,7 @@ export type Database = {
           fbclid: string | null
           gclid: string | null
           id: string
+          ip: string | null
           page_url: string | null
           referrer: string | null
           source: string | null
@@ -7419,6 +7420,7 @@ export type Database = {
           fbclid?: string | null
           gclid?: string | null
           id?: string
+          ip?: string | null
           page_url?: string | null
           referrer?: string | null
           source?: string | null
@@ -7435,6 +7437,7 @@ export type Database = {
           fbclid?: string | null
           gclid?: string | null
           id?: string
+          ip?: string | null
           page_url?: string | null
           referrer?: string | null
           source?: string | null
