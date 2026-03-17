@@ -102,10 +102,8 @@ export function VendasNaoFaturadasHistorico({ onOpenJustificativa }: Props) {
         if (portas.length === 0) return true;
         
         const freteAprovado = venda.frete_aprovado === true;
-        const temCustoTotal = (venda.custo_total || 0) > 0;
-        if (!freteAprovado || !temCustoTotal) return true;
-        
-        return !portas.every((p: any) => p.faturamento === true);
+        const todosFaturados = portas.every((p: any) => p.faturamento === true);
+        return !(freteAprovado && todosFaturados);
       });
 
       const hoje = new Date();
