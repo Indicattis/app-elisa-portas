@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { useVeiculos } from "@/hooks/useVeiculos";
-import { useConferencias } from "@/hooks/useConferencias";
+import { useConferencias, Conferencia } from "@/hooks/useConferencias";
 import { useVeiculoArquivos } from "@/hooks/useVeiculoArquivos";
 import { StatusBadge } from "@/components/frota/StatusBadge";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
@@ -9,7 +9,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useRef } from "react";
-import { Upload, FileText, Trash2, Download, Loader2, Paperclip } from "lucide-react";
+import { Upload, FileText, Trash2, Download, Loader2, Paperclip, Droplets, Calendar, Gauge } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 function formatFileSize(bytes: number | null) {
@@ -25,7 +25,7 @@ export default function FrotaConferenciasHistoricoMinimalista() {
   const { veiculos, isLoading: loadingVeiculos } = useVeiculos();
   const { conferencias, isLoading: loadingConferencias } = useConferencias(id);
   const { arquivos, isLoading: loadingArquivos, uploadArquivo, deleteArquivo, isUploading, isDeleting } = useVeiculoArquivos(id);
-  const [selectedFoto, setSelectedFoto] = useState<string | null>(null);
+  const [selectedConferencia, setSelectedConferencia] = useState<Conferencia | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const veiculo = veiculos?.find(v => v.id === id);
@@ -102,7 +102,7 @@ export default function FrotaConferenciasHistoricoMinimalista() {
                   <Card
                     key={`conf-${conferencia.id}`}
                     className="bg-white/5 border-blue-500/10 backdrop-blur-xl cursor-pointer hover:bg-blue-500/5 transition-all duration-200"
-                    onClick={() => setSelectedFoto(conferencia.foto_url)}
+                    onClick={() => setSelectedConferencia(conferencia)}
                   >
                     <CardContent className="p-4">
                       <div className="space-y-3">
@@ -187,10 +187,76 @@ export default function FrotaConferenciasHistoricoMinimalista() {
         </div>
       )}
 
-      <Dialog open={!!selectedFoto} onOpenChange={() => setSelectedFoto(null)}>
-        <DialogContent className="max-w-4xl bg-black/90 border-white/10 backdrop-blur-xl">
-          {selectedFoto && (
-            <img src={selectedFoto} alt="Foto em detalhe" className="w-full h-auto rounded-lg" />
+      {/* Dialog de detalhes da conferência */}
+      <Dialog open={!!selectedConferencia} onOpenChange={() => setSelectedConferencia(null)}>
+        <DialogContent className="max-w-2xl bg-black/95 border-white/10 backdrop-blur-xl p-0 overflow-hidden">
+          {selectedConferencia && (
+            <div className="space-y-0">
+              {/* Foto em destaque */}
+              <a href={selectedConferencia.foto_url} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={selectedConferencia.foto_url}
+                  alt="Foto da conferência"
+                  className="w-full max-h-[400px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                />
+              </a>
+
+              {/* Informações */}
+              <div className="p-6 space-y-4">
+                {/* Header: data + status */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white/50">
+                    {format(new Date(selectedConferencia.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  </span>
+                  <StatusBadge status={selectedConferencia.status as any} />
+                </div>
+
+                {/* Grid de informações */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5">
+                    <Gauge className="h-5 w-5 text-blue-400" />
+                    <div>
+                      <p className="text-xs text-white/40">Km Atual</p>
+                      <p className="text-sm font-medium text-white">{selectedConferencia.km_atual.toLocaleString("pt-BR")} km</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5">
+                    <Droplets className="h-5 w-5 text-blue-400" />
+                    <div>
+                      <p className="text-xs text-white/40">Água</p>
+                      <p className="text-sm font-medium text-white">
+                        {selectedConferencia.agua_conferida ? "Conferida ✓" : "Não conferida ✗"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {selectedConferencia.data_troca_oleo && (
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5">
+                      <Calendar className="h-5 w-5 text-blue-400" />
+                      <div>
+                        <p className="text-xs text-white/40">Troca de Óleo</p>
+                        <p className="text-sm font-medium text-white">
+                          {format(new Date(selectedConferencia.data_troca_oleo), "dd/MM/yyyy", { locale: ptBR })}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedConferencia.conferente && (
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5">
+                      <div className="h-5 w-5 rounded-full bg-blue-500/30 flex items-center justify-center text-[10px] text-blue-300 font-bold">
+                        {selectedConferencia.conferente.nome.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/40">Conferente</p>
+                        <p className="text-sm font-medium text-white">{selectedConferencia.conferente.nome}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
