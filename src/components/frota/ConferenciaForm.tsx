@@ -21,6 +21,8 @@ interface ConferenciaFormProps {
   onCancel: () => void;
   isSubmitting?: boolean;
   initialKmAtual?: number;
+  initialKmProximaTroca?: number | null;
+  initialDataProximaTroca?: string | null;
 }
 
 export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting, initialKmAtual }: ConferenciaFormProps) {
