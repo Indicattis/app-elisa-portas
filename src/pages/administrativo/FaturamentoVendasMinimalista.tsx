@@ -27,6 +27,7 @@ import { format, startOfMonth, endOfMonth, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
+import { isVendaFaturada } from "@/lib/faturamentoStatus";
 import { useToast } from "@/hooks/use-toast";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { ColumnManager } from "@/components/ColumnManager";
