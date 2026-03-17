@@ -39,6 +39,7 @@ export default function FrotaConferenciaMinimalista() {
   const [dataTroca, setDataTroca] = useState(format(new Date(), "yyyy-MM-dd"));
   const [kmAtualTroca, setKmAtualTroca] = useState(0);
   const [kmProximaTroca, setKmProximaTroca] = useState(0);
+  const [dataProximaTrocaOleo, setDataProximaTrocaOleo] = useState("");
 
   const veiculo = veiculos?.find(v => v.id === selectedVeiculo);
 
