@@ -22,6 +22,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
+import { isVendaFaturada } from "@/lib/faturamentoStatus";
 import { StatusBadge } from "@/components/vendas/StatusBadge";
 
 import { ProductIconsSummary } from "@/components/vendas/ProductIconsSummary";
