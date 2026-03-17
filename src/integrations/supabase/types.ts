@@ -6942,6 +6942,44 @@ export type Database = {
           },
         ]
       }
+      veiculos_km_historico: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          km_anterior: number
+          km_novo: number
+          origem: string
+          veiculo_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          km_anterior: number
+          km_novo: number
+          origem?: string
+          veiculo_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          km_anterior?: number
+          km_novo?: number
+          origem?: string
+          veiculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "veiculos_km_historico_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendas: {
         Row: {
           atendente_id: string
