@@ -37,6 +37,8 @@ export default function FrotaConferenciaMinimalista() {
 
   // Troca de óleo fields
   const [dataTroca, setDataTroca] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [kmAtualTroca, setKmAtualTroca] = useState(0);
+  const [kmProximaTroca, setKmProximaTroca] = useState(0);
 
   const veiculo = veiculos?.find(v => v.id === selectedVeiculo);
 
@@ -44,6 +46,8 @@ export default function FrotaConferenciaMinimalista() {
     if (veiculo) {
       setKmAtual(String(veiculo.km_atual || ""));
       setDataTrocaOleo(veiculo.data_troca_oleo || "");
+      setKmAtualTroca(veiculo.km_atual || 0);
+      setKmProximaTroca((veiculo.km_atual || 0) + 5000);
     }
   }, [veiculo]);
 
@@ -103,13 +107,13 @@ export default function FrotaConferenciaMinimalista() {
     e.preventDefault();
     if (!selectedVeiculo || !veiculo) return;
 
-    const kmProximaTroca = (veiculo.km_atual || 0) + 5000;
     const dataProximaTroca = format(addMonths(new Date(dataTroca + "T12:00:00"), 6), "yyyy-MM-dd");
 
     await updateVeiculo({
       id: selectedVeiculo,
       data: {
         data_troca_oleo: dataTroca,
+        km_atual: kmAtualTroca,
         km_proxima_troca_oleo: kmProximaTroca,
         data_proxima_troca_oleo: dataProximaTroca,
       }
@@ -235,9 +239,9 @@ export default function FrotaConferenciaMinimalista() {
                   <Label className="text-white/70 text-xs">Km Atual</Label>
                   <Input
                     type="number"
-                    value={veiculo?.km_atual || 0}
-                    readOnly
-                    className={`${inputClass} opacity-60`}
+                    value={kmAtualTroca}
+                    onChange={(e) => setKmAtualTroca(Number(e.target.value))}
+                    className={inputClass}
                   />
                 </div>
 
@@ -245,9 +249,9 @@ export default function FrotaConferenciaMinimalista() {
                   <Label className="text-white/70 text-xs">Km Próxima Troca</Label>
                   <Input
                     type="number"
-                    value={(veiculo?.km_atual || 0) + 5000}
-                    readOnly
-                    className={`${inputClass} opacity-60`}
+                    value={kmProximaTroca}
+                    onChange={(e) => setKmProximaTroca(Number(e.target.value))}
+                    className={inputClass}
                   />
                 </div>
 

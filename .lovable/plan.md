@@ -1,21 +1,22 @@
 
 
-## Plano: Tornar Km Atual e Km Próxima Troca editáveis no fluxo de Troca de Óleo
+## Plano: Adicionar coluna "Mecânico" na Frota
 
-### Contexto
-Os campos "Km Atual" e "Km Próxima Troca" no formulário de troca de óleo (linhas 234-251) estão `readOnly` com valores computados. O usuário quer poder editá-los.
+### O que será feito
 
-### Mudanças em `src/pages/logistica/FrotaConferenciaMinimalista.tsx`
+Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
 
-1. **Adicionar states** para `kmAtualTroca` e `kmProximaTroca`, inicializados via `useEffect` quando o veículo é selecionado:
-   - `kmAtualTroca` = `veiculo.km_atual`
-   - `kmProximaTroca` = `(veiculo.km_atual || 0) + 5000`
+### Mudanças
 
-2. **Tornar os inputs editáveis** (remover `readOnly` e `opacity-60`):
-   - "Km Atual" → controlado por `kmAtualTroca` / `setKmAtualTroca`
-   - "Km Próxima Troca" → controlado por `kmProximaTroca` / `setKmProximaTroca`
+1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
 
-3. **Atualizar `handleSubmitTrocaOleo`** para usar os valores dos states em vez de calculá-los automaticamente:
-   - `km_atual` do veículo atualizado com `kmAtualTroca`
-   - `km_proxima_troca_oleo` atualizado com `kmProximaTroca`
+2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
+
+3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
+
+4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
+
+5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
+
+6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
 
