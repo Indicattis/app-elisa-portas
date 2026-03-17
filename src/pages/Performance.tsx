@@ -32,6 +32,7 @@ interface WhatsAppClick {
   source: string | null;
   page_url: string | null;
   referrer: string | null;
+  ip: string | null;
 }
 
 interface AtendenteStats {
