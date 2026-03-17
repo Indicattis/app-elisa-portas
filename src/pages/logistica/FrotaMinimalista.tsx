@@ -141,14 +141,7 @@ export default function FrotaMinimalista() {
         <ClipboardCheck className="h-4 w-4" />
         <span className="hidden sm:inline">Conferir</span>
       </Button>
-      <Button
-        size="sm"
-        onClick={() => setTrocaOleoOpen(true)}
-        className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-400/20 text-white shadow-lg shadow-blue-500/10 hover:from-blue-500/30 hover:to-blue-600/30 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
-      >
-        <Droplet className="h-4 w-4" />
-        <span className="hidden sm:inline">Troca Óleo</span>
-      </Button>
+      
       <Button
         size="sm"
         onClick={() => navigate('/logistica/frota/novo')}
