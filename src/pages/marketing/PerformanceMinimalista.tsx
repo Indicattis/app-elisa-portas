@@ -33,6 +33,7 @@ interface WhatsAppClick {
   source: string | null;
   page_url: string | null;
   referrer: string | null;
+  ip: string | null;
 }
 
 interface AtendenteStats {
@@ -1041,6 +1042,7 @@ export default function PerformanceMinimalista() {
                       <TableHead className="text-white/60">UTM Source</TableHead>
                       <TableHead className="text-white/60">UTM Campaign</TableHead>
                       <TableHead className="text-white/60">Referrer</TableHead>
+                      <TableHead className="text-white/60">IP</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1074,6 +1076,9 @@ export default function PerformanceMinimalista() {
                           </TableCell>
                           <TableCell className="text-white/60 text-xs truncate max-w-[200px]">
                             {click.referrer || "-"}
+                          </TableCell>
+                          <TableCell className="text-white/60 text-xs">
+                            {click.ip || "-"}
                           </TableCell>
                         </TableRow>
                       );

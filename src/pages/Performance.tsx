@@ -32,6 +32,7 @@ interface WhatsAppClick {
   source: string | null;
   page_url: string | null;
   referrer: string | null;
+  ip: string | null;
 }
 
 interface AtendenteStats {
@@ -1330,6 +1331,7 @@ export default function Performance() {
                     <TableHead className="whitespace-nowrap text-xs h-8 py-1 hidden sm:table-cell">Telefone</TableHead>
                     <TableHead className="whitespace-nowrap text-xs h-8 py-1 hidden md:table-cell">Referenciador</TableHead>
                     <TableHead className="whitespace-nowrap text-xs h-8 py-1 hidden lg:table-cell">Origem</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs h-8 py-1 hidden lg:table-cell">IP</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1377,6 +1379,9 @@ export default function Performance() {
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-[10px] text-muted-foreground h-[35px] py-1">
                           {click.page_url ? new URL(click.page_url).hostname : '-'}
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-[10px] text-muted-foreground h-[35px] py-1">
+                          {click.ip || '-'}
                         </TableCell>
                       </TableRow>
                     );
