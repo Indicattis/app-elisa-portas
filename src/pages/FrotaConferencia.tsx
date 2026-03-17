@@ -11,7 +11,7 @@ import { StatusBadge } from "@/components/frota/StatusBadge";
 
 export default function FrotaConferencia() {
   const navigate = useNavigate();
-  const { veiculos, isLoading } = useVeiculos();
+  const { veiculos, isLoading, updateVeiculo } = useVeiculos();
   const { createConferencia, uploadFotoConferencia, isCreating, isUploading } = useConferencias();
 
   const [selectedVeiculo, setSelectedVeiculo] = useState<string | null>(null);
