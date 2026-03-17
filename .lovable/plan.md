@@ -1,22 +1,55 @@
 
 
-## Plano: Adicionar coluna "Mecânico" na Frota
+## Diagnóstico: Venda faturada aparece como "pendente"
 
-### O que será feito
+### Causa raiz
 
-Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
+A venda `c3c2400b...` tem:
+- `frete_aprovado = true`
+- 1 produto com `faturamento = true`
+- **`custo_total = 0`**
 
-### Mudanças
+Na página de faturamento (`FaturamentoEdit` e `FaturamentoVendaMinimalista`), a lógica é:
+```
+vendaFaturada = todosProdutosFaturados && frete_aprovado
+```
+→ Resultado: **faturada** ✓
 
-1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
+Porém, em `VendasNaoFaturadasHistorico.tsx` (linha 105-106), a lógica é:
+```
+temCustoTotal = (custo_total || 0) > 0
+if (!freteAprovado || !temCustoTotal) return true  // ← trata como NÃO faturada
+```
 
-2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
+Como `custo_total = 0`, a venda é incluída na lista de "não faturadas" mesmo estando corretamente faturada. Isso é um bug — custo zero é válido (ex: adicionais sem custo de produção).
 
-3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
+Adicionalmente, em `FaturamentoDirecao.tsx` (linha 159):
+```
+if (portas.length === 0) return false
+```
+Isso usa `portas` (alias de `produtos_vendas`) — se o produto for do tipo "adicional", ainda conta, então esse caminho está ok.
 
-4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
+### Correção
 
-5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
+**Arquivo**: `src/components/faturamento/VendasNaoFaturadasHistorico.tsx`
 
-6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
+Remover a checagem de `temCustoTotal` da lógica de filtro. A condição correta para "não faturada" deve ser consistente com o resto do sistema:
+
+```
+// Antes (bugado):
+const freteAprovado = venda.frete_aprovado === true;
+const temCustoTotal = (venda.custo_total || 0) > 0;
+if (!freteAprovado || !temCustoTotal) return true;
+return !portas.every(p => p.faturamento === true);
+
+// Depois (corrigido):
+const freteAprovado = venda.frete_aprovado === true;
+const todosFaturados = portas.every(p => p.faturamento === true);
+return !(freteAprovado && todosFaturados);
+```
+
+Isso alinha a lógica com `FaturamentoVendaMinimalista.tsx` e `useFaturamento.ts`, onde faturada = todos produtos faturados + frete aprovado.
+
+### Arquivos afetados
+- **Editar**: `src/components/faturamento/VendasNaoFaturadasHistorico.tsx` (remover checagem de `temCustoTotal`)
 
