@@ -25,10 +25,12 @@ interface ConferenciaFormProps {
   initialDataProximaTroca?: string | null;
 }
 
-export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting, initialKmAtual }: ConferenciaFormProps) {
+export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting, initialKmAtual, initialKmProximaTroca, initialDataProximaTroca }: ConferenciaFormProps) {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ConferenciaFormData>({
     defaultValues: {
       km_atual: initialKmAtual || 0,
+      km_proxima_troca_oleo: initialKmProximaTroca || undefined,
+      data_proxima_troca_oleo: initialDataProximaTroca || '',
       agua_conferida: false,
       nivel_oleo_conferido: false,
       data_troca_oleo: '',
