@@ -88,7 +88,6 @@ export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting,
             {...register('data_proxima_troca_oleo')}
           />
         </div>
-        </div>
 
         <div className="flex items-center space-x-2">
           <Checkbox
