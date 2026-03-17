@@ -87,7 +87,7 @@ export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting,
             type="date"
             {...register('data_proxima_troca_oleo')}
           />
-          )}
+        </div>
         </div>
 
         <div className="flex items-center space-x-2">
