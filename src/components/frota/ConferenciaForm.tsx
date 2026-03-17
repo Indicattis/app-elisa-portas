@@ -27,9 +27,12 @@ export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting,
       km_atual: initialKmAtual || 0,
       agua_conferida: false,
       nivel_oleo_conferido: false,
+      data_troca_oleo: '',
       observacoes: ''
     }
   });
+
+  const nivelOleoConferido = watch('nivel_oleo_conferido');
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
