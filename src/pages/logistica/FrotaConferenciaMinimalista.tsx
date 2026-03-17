@@ -49,6 +49,7 @@ export default function FrotaConferenciaMinimalista() {
       setDataTrocaOleo(veiculo.data_troca_oleo || "");
       setKmAtualTroca(veiculo.km_atual || 0);
       setKmProximaTroca((veiculo.km_atual || 0) + 5000);
+      setDataProximaTrocaOleo(format(addMonths(new Date(), 6), "yyyy-MM-dd"));
     }
   }, [veiculo]);
 
