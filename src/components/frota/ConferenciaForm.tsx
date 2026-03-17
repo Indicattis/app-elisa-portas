@@ -9,6 +9,7 @@ export interface ConferenciaFormData {
   km_atual: number;
   agua_conferida: boolean;
   nivel_oleo_conferido: boolean;
+  data_troca_oleo?: string;
   observacoes?: string;
 }
 
