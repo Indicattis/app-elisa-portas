@@ -9,6 +9,7 @@ export interface ConferenciaFormData {
   km_atual: number;
   agua_conferida: boolean;
   nivel_oleo_conferido: boolean;
+  data_troca_oleo?: string;
   observacoes?: string;
 }
 
@@ -26,9 +27,12 @@ export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting,
       km_atual: initialKmAtual || 0,
       agua_conferida: false,
       nivel_oleo_conferido: false,
+      data_troca_oleo: '',
       observacoes: ''
     }
   });
+
+  const nivelOleoConferido = watch('nivel_oleo_conferido');
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -73,13 +77,25 @@ export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting,
         <div className="flex items-center space-x-2">
           <Checkbox
             id="nivel_oleo_conferido"
-            checked={watch('nivel_oleo_conferido')}
+            checked={nivelOleoConferido}
             onCheckedChange={(checked) => setValue('nivel_oleo_conferido', checked as boolean)}
           />
           <Label htmlFor="nivel_oleo_conferido" className="cursor-pointer">
-            Nível do óleo
+            Nível do óleo conferido
           </Label>
         </div>
+
+        {nivelOleoConferido && (
+          <div className="space-y-2 ml-6 p-3 rounded-md border border-border bg-muted/30">
+            <Label htmlFor="data_troca_oleo">Data da troca de óleo (se houve troca)</Label>
+            <Input
+              id="data_troca_oleo"
+              type="date"
+              {...register('data_troca_oleo')}
+            />
+            <p className="text-xs text-muted-foreground">Preencha apenas se o óleo foi trocado nesta conferência</p>
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="observacoes">Observações</Label>
