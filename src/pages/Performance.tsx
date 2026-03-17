@@ -1331,6 +1331,7 @@ export default function Performance() {
                     <TableHead className="whitespace-nowrap text-xs h-8 py-1 hidden sm:table-cell">Telefone</TableHead>
                     <TableHead className="whitespace-nowrap text-xs h-8 py-1 hidden md:table-cell">Referenciador</TableHead>
                     <TableHead className="whitespace-nowrap text-xs h-8 py-1 hidden lg:table-cell">Origem</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs h-8 py-1 hidden lg:table-cell">IP</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
