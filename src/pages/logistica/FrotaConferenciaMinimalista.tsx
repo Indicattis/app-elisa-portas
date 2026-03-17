@@ -239,9 +239,9 @@ export default function FrotaConferenciaMinimalista() {
                   <Label className="text-white/70 text-xs">Km Atual</Label>
                   <Input
                     type="number"
-                    value={veiculo?.km_atual || 0}
-                    readOnly
-                    className={`${inputClass} opacity-60`}
+                    value={kmAtualTroca}
+                    onChange={(e) => setKmAtualTroca(Number(e.target.value))}
+                    className={inputClass}
                   />
                 </div>
 
@@ -249,9 +249,9 @@ export default function FrotaConferenciaMinimalista() {
                   <Label className="text-white/70 text-xs">Km Próxima Troca</Label>
                   <Input
                     type="number"
-                    value={(veiculo?.km_atual || 0) + 5000}
-                    readOnly
-                    className={`${inputClass} opacity-60`}
+                    value={kmProximaTroca}
+                    onChange={(e) => setKmProximaTroca(Number(e.target.value))}
+                    className={inputClass}
                   />
                 </div>
 
