@@ -22,6 +22,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
+import { isVendaFaturada } from "@/lib/faturamentoStatus";
 import { StatusBadge } from "@/components/vendas/StatusBadge";
 
 import { ProductIconsSummary } from "@/components/vendas/ProductIconsSummary";
@@ -143,25 +144,7 @@ export default function Faturamento() {
   const { createPedidoFromVenda } = usePedidoCreation();
 
   // Função para verificar se uma venda está faturada
-  const isFaturada = (venda: Venda) => {
-    const portas = venda.portas || [];
-    if (portas.length === 0) return false;
-    
-    // PRIMEIRO: verificar os indicadores da venda
-    const freteAprovado = (venda as any).frete_aprovado === true;
-    const temCustoTotal = ((venda as any).custo_total || 0) > 0;
-    
-    // Se a venda não foi processada, NÃO está faturada
-    // (independente do campo faturamento dos produtos)
-    if (!freteAprovado || !temCustoTotal) {
-      return false;
-    }
-    
-    // SEGUNDO: verificar se todos os produtos têm faturamento = true
-    const todosProdutosFaturados = portas.every((p: any) => p.faturamento === true);
-    
-    return todosProdutosFaturados;
-  };
+  const isFaturada = (venda: Venda) => isVendaFaturada(venda);
 
 
   // Função para calcular total de descontos

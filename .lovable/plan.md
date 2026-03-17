@@ -1,28 +1,22 @@
 
-Diagnóstico confirmado para a venda `f1634106-e5eb-45fc-bfe3-59e3dfe01125`:
-- Banco: `frete_aprovado = true`, `custo_total = 0`, e todos os itens em `produtos_vendas` com `faturamento = true`.
-- Portanto, ela está faturada no critério funcional atual.
-- O motivo de aparecer como pendente é que ainda existe outra regra antiga na listagem de faturamento (`FaturamentoVendasMinimalista`) exigindo `custo_total > 0`.
 
-Plano de correção (curto e direto):
-1. Padronizar a regra de status de faturamento em um helper único (ex.: `isVendaFaturada`), com o critério:
-   - tem itens,
-   - `frete_aprovado === true`,
-   - todos os itens com `faturamento === true`.
-   - sem depender de `custo_total > 0`.
+## Plano: Adicionar coluna "Mecânico" na Frota
 
-2. Aplicar esse helper nos pontos que ainda usam a regra antiga:
-   - `src/pages/administrativo/FaturamentoVendasMinimalista.tsx` (principal origem do problema reportado).
-   - `src/pages/Faturamento.tsx` (evitar inconsistência na versão legada da tela).
+### O que será feito
 
-3. Revisar consistência nos indicadores da tela (cards “Faturadas/Pendentes”, filtro por status e ordenação por faturamento), já que todos dependem da mesma função `isFaturada`.
+Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
 
-4. Validação pós-ajuste (com os 2 IDs já reportados):
-   - `c3c2400b-2891-45e1-970d-98d67c9f2e3b`
-   - `f1634106-e5eb-45fc-bfe3-59e3dfe01125`
-   Resultado esperado: ambas saem de “pendentes” e passam para “faturadas” nas listagens.
+### Mudanças
 
-Arquivos impactados:
-- Novo: `src/lib/faturamentoStatus.ts` (helper compartilhado)
-- Editar: `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
-- Editar: `src/pages/Faturamento.tsx`
+1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
+
+2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
+
+3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
+
+4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
+
+5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
+
+6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
+
