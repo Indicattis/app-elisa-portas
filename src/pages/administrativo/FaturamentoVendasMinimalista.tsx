@@ -358,14 +358,7 @@ export default function FaturamentoMinimalista() {
     }
   };
 
-  const isFaturada = (venda: Venda) => {
-    const portas = venda.portas || [];
-    if (portas.length === 0) return false;
-    const freteAprovado = (venda as any).frete_aprovado === true;
-    const temCustoTotal = ((venda as any).custo_total || 0) > 0;
-    if (!freteAprovado || !temCustoTotal) return false;
-    return portas.every((p: any) => p.faturamento === true);
-  };
+  const isFaturada = (venda: Venda) => isVendaFaturada(venda);
 
   const calcularLucroVenda = (venda: Venda) => {
     const portas = venda.portas || [];
