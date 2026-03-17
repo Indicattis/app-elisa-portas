@@ -26,6 +26,7 @@ export default function FrotaConferenciasHistoricoMinimalista() {
   const { veiculos, isLoading: loadingVeiculos } = useVeiculos();
   const { conferencias, isLoading: loadingConferencias } = useConferencias(id);
   const { arquivos, isLoading: loadingArquivos, uploadArquivo, deleteArquivo, isUploading, isDeleting } = useVeiculoArquivos(id);
+  const { kmHistorico, isLoading: loadingKm } = useVeiculoKmHistorico(id);
   const [selectedConferencia, setSelectedConferencia] = useState<Conferencia | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -34,11 +35,13 @@ export default function FrotaConferenciasHistoricoMinimalista() {
 
   type TimelineItem =
     | { type: 'conferencia'; created_at: string; data: NonNullable<typeof conferencias>[number] }
-    | { type: 'arquivo'; created_at: string; data: NonNullable<typeof arquivos>[number] };
+    | { type: 'arquivo'; created_at: string; data: NonNullable<typeof arquivos>[number] }
+    | { type: 'km'; created_at: string; data: KmHistorico };
 
   const timeline: TimelineItem[] = [
     ...(conferencias?.map(c => ({ type: 'conferencia' as const, created_at: c.created_at, data: c })) || []),
     ...(arquivos?.map(a => ({ type: 'arquivo' as const, created_at: a.created_at, data: a })) || []),
+    ...(kmHistorico?.map(k => ({ type: 'km' as const, created_at: k.created_at, data: k })) || []),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const dynamicTitle = isLoading ? "Carregando..." : veiculo ? `Histórico: ${veiculo.nome}` : "Veículo não encontrado";
