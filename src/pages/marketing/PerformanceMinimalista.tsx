@@ -1077,6 +1077,9 @@ export default function PerformanceMinimalista() {
                           <TableCell className="text-white/60 text-xs truncate max-w-[200px]">
                             {click.referrer || "-"}
                           </TableCell>
+                          <TableCell className="text-white/60 text-xs">
+                            {click.ip || "-"}
+                          </TableCell>
                         </TableRow>
                       );
                     })}

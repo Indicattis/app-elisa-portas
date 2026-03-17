@@ -1380,6 +1380,9 @@ export default function Performance() {
                         <TableCell className="hidden lg:table-cell text-[10px] text-muted-foreground h-[35px] py-1">
                           {click.page_url ? new URL(click.page_url).hostname : '-'}
                         </TableCell>
+                        <TableCell className="hidden lg:table-cell text-[10px] text-muted-foreground h-[35px] py-1">
+                          {click.ip || '-'}
+                        </TableCell>
                       </TableRow>
                     );
                   })}
