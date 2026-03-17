@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useVeiculos } from "@/hooks/useVeiculos";
 import { useConferencias, Conferencia } from "@/hooks/useConferencias";
 import { useVeiculoArquivos } from "@/hooks/useVeiculoArquivos";
+import { useVeiculoKmHistorico, KmHistorico } from "@/hooks/useVeiculoKmHistorico";
 import { StatusBadge } from "@/components/frota/StatusBadge";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
