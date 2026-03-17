@@ -60,6 +60,15 @@ export default function FrotaConferencia() {
       status: veiculo?.status === 'rodando' ? 'em_uso' : veiculo?.status === 'parado' ? 'pronto' : 'mecanico'
     });
 
+    await updateVeiculo({
+      id: selectedVeiculo,
+      data: {
+        km_atual: data.km_atual,
+        km_proxima_troca_oleo: data.km_proxima_troca_oleo || undefined,
+        data_proxima_troca_oleo: data.data_proxima_troca_oleo || undefined,
+      }
+    });
+
     navigate('/dashboard/instalacoes/frota');
   };
 
