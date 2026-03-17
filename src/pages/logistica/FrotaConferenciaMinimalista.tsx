@@ -109,15 +109,13 @@ export default function FrotaConferenciaMinimalista() {
     e.preventDefault();
     if (!selectedVeiculo || !veiculo) return;
 
-    const dataProximaTroca = format(addMonths(new Date(dataTroca + "T12:00:00"), 6), "yyyy-MM-dd");
-
     await updateVeiculo({
       id: selectedVeiculo,
       data: {
         data_troca_oleo: dataTroca,
         km_atual: kmAtualTroca,
         km_proxima_troca_oleo: kmProximaTroca,
-        data_proxima_troca_oleo: dataProximaTroca,
+        data_proxima_troca_oleo: dataProximaTrocaOleo,
       }
     });
 
