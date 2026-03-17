@@ -7,6 +7,8 @@ import { Loader2 } from "lucide-react";
 
 export interface ConferenciaFormData {
   km_atual: number;
+  km_proxima_troca_oleo?: number;
+  data_proxima_troca_oleo?: string;
   agua_conferida: boolean;
   nivel_oleo_conferido: boolean;
   data_troca_oleo?: string;
@@ -19,12 +21,16 @@ interface ConferenciaFormProps {
   onCancel: () => void;
   isSubmitting?: boolean;
   initialKmAtual?: number;
+  initialKmProximaTroca?: number | null;
+  initialDataProximaTroca?: string | null;
 }
 
-export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting, initialKmAtual }: ConferenciaFormProps) {
+export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting, initialKmAtual, initialKmProximaTroca, initialDataProximaTroca }: ConferenciaFormProps) {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ConferenciaFormData>({
     defaultValues: {
       km_atual: initialKmAtual || 0,
+      km_proxima_troca_oleo: initialKmProximaTroca || undefined,
+      data_proxima_troca_oleo: initialDataProximaTroca || '',
       agua_conferida: false,
       nivel_oleo_conferido: false,
       data_troca_oleo: '',
@@ -61,6 +67,26 @@ export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting,
           {errors.km_atual && (
             <p className="text-sm text-destructive">{errors.km_atual.message}</p>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="km_proxima_troca_oleo">Km Próxima Troca de Óleo</Label>
+          <Input
+            id="km_proxima_troca_oleo"
+            type="number"
+            step="0.1"
+            {...register('km_proxima_troca_oleo', { valueAsNumber: true })}
+            placeholder="Quilometragem da próxima troca"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="data_proxima_troca_oleo">Data Próxima Troca de Óleo</Label>
+          <Input
+            id="data_proxima_troca_oleo"
+            type="date"
+            {...register('data_proxima_troca_oleo')}
+          />
         </div>
 
         <div className="flex items-center space-x-2">

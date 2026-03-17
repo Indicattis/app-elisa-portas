@@ -11,7 +11,7 @@ import { StatusBadge } from "@/components/frota/StatusBadge";
 
 export default function FrotaConferencia() {
   const navigate = useNavigate();
-  const { veiculos, isLoading } = useVeiculos();
+  const { veiculos, isLoading, updateVeiculo } = useVeiculos();
   const { createConferencia, uploadFotoConferencia, isCreating, isUploading } = useConferencias();
 
   const [selectedVeiculo, setSelectedVeiculo] = useState<string | null>(null);
@@ -58,6 +58,15 @@ export default function FrotaConferencia() {
       agua_conferida: data.agua_conferida,
       observacoes: data.observacoes,
       status: veiculo?.status === 'rodando' ? 'em_uso' : veiculo?.status === 'parado' ? 'pronto' : 'mecanico'
+    });
+
+    await updateVeiculo({
+      id: selectedVeiculo,
+      data: {
+        km_atual: data.km_atual,
+        km_proxima_troca_oleo: data.km_proxima_troca_oleo || undefined,
+        data_proxima_troca_oleo: data.data_proxima_troca_oleo || undefined,
+      }
     });
 
     navigate('/dashboard/instalacoes/frota');
@@ -188,6 +197,8 @@ export default function FrotaConferencia() {
             onCancel={handleCancelPhoto}
             isSubmitting={isCreating || isUploading}
             initialKmAtual={veiculo?.km_atual}
+            initialKmProximaTroca={veiculo?.km_proxima_troca_oleo}
+            initialDataProximaTroca={veiculo?.data_proxima_troca_oleo}
           />
         </CardContent>
       </Card>
