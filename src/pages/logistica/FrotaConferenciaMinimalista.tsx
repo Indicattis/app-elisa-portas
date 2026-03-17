@@ -46,6 +46,8 @@ export default function FrotaConferenciaMinimalista() {
     if (veiculo) {
       setKmAtual(String(veiculo.km_atual || ""));
       setDataTrocaOleo(veiculo.data_troca_oleo || "");
+      setKmAtualTroca(veiculo.km_atual || 0);
+      setKmProximaTroca((veiculo.km_atual || 0) + 5000);
     }
   }, [veiculo]);
 
