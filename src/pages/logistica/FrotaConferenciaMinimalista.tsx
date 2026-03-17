@@ -39,6 +39,7 @@ export default function FrotaConferenciaMinimalista() {
   const [dataTroca, setDataTroca] = useState(format(new Date(), "yyyy-MM-dd"));
   const [kmAtualTroca, setKmAtualTroca] = useState(0);
   const [kmProximaTroca, setKmProximaTroca] = useState(0);
+  const [dataProximaTrocaOleo, setDataProximaTrocaOleo] = useState("");
 
   const veiculo = veiculos?.find(v => v.id === selectedVeiculo);
 
@@ -48,6 +49,7 @@ export default function FrotaConferenciaMinimalista() {
       setDataTrocaOleo(veiculo.data_troca_oleo || "");
       setKmAtualTroca(veiculo.km_atual || 0);
       setKmProximaTroca((veiculo.km_atual || 0) + 5000);
+      setDataProximaTrocaOleo(format(addMonths(new Date(), 6), "yyyy-MM-dd"));
     }
   }, [veiculo]);
 
@@ -107,15 +109,13 @@ export default function FrotaConferenciaMinimalista() {
     e.preventDefault();
     if (!selectedVeiculo || !veiculo) return;
 
-    const dataProximaTroca = format(addMonths(new Date(dataTroca + "T12:00:00"), 6), "yyyy-MM-dd");
-
     await updateVeiculo({
       id: selectedVeiculo,
       data: {
         data_troca_oleo: dataTroca,
         km_atual: kmAtualTroca,
         km_proxima_troca_oleo: kmProximaTroca,
-        data_proxima_troca_oleo: dataProximaTroca,
+        data_proxima_troca_oleo: dataProximaTrocaOleo,
       }
     });
 
@@ -258,10 +258,10 @@ export default function FrotaConferenciaMinimalista() {
                 <div className="space-y-2">
                   <Label className="text-white/70 text-xs">Data Próxima Troca</Label>
                   <Input
-                    type="text"
-                    value={dataTroca ? format(addMonths(new Date(dataTroca + "T12:00:00"), 6), "dd/MM/yyyy") : "-"}
-                    readOnly
-                    className={`${inputClass} opacity-60`}
+                    type="date"
+                    value={dataProximaTrocaOleo}
+                    onChange={(e) => setDataProximaTrocaOleo(e.target.value)}
+                    className={inputClass}
                   />
                 </div>
               </CardContent>
