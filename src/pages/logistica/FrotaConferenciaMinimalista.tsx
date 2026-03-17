@@ -258,10 +258,10 @@ export default function FrotaConferenciaMinimalista() {
                 <div className="space-y-2">
                   <Label className="text-white/70 text-xs">Data Próxima Troca</Label>
                   <Input
-                    type="text"
-                    value={dataTroca ? format(addMonths(new Date(dataTroca + "T12:00:00"), 6), "dd/MM/yyyy") : "-"}
-                    readOnly
-                    className={`${inputClass} opacity-60`}
+                    type="date"
+                    value={dataProximaTrocaOleo}
+                    onChange={(e) => setDataProximaTrocaOleo(e.target.value)}
+                    className={inputClass}
                   />
                 </div>
               </CardContent>
