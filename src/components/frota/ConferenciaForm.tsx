@@ -69,6 +69,27 @@ export function ConferenciaForm({ fotoPreview, onSubmit, onCancel, isSubmitting,
           )}
         </div>
 
+        <div className="space-y-2">
+          <Label htmlFor="km_proxima_troca_oleo">Km Próxima Troca de Óleo</Label>
+          <Input
+            id="km_proxima_troca_oleo"
+            type="number"
+            step="0.1"
+            {...register('km_proxima_troca_oleo', { valueAsNumber: true })}
+            placeholder="Quilometragem da próxima troca"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="data_proxima_troca_oleo">Data Próxima Troca de Óleo</Label>
+          <Input
+            id="data_proxima_troca_oleo"
+            type="date"
+            {...register('data_proxima_troca_oleo')}
+          />
+          )}
+        </div>
+
         <div className="flex items-center space-x-2">
           <Checkbox
             id="agua_conferida"
