@@ -397,6 +397,7 @@ export default function PedidosAdminMinimalista() {
                   pedido={pedido}
                   isAberto={etapaConfig.id === 'aberto'}
                   viewMode="list"
+                  readOnly={etapaConfig.id !== 'aberto'}
                   onMoverEtapa={handleMoverEtapa}
                   onRetrocederEtapa={handleRetrocederEtapa}
                   onDeletar={etapaConfig.id === 'aberto' ? handleDeletarPedido : undefined}
