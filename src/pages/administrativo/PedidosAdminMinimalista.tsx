@@ -364,7 +364,7 @@ export default function PedidosAdminMinimalista() {
                   onMoverEtapa={handleMoverEtapa}
                   onRetrocederEtapa={handleRetrocederEtapa}
                   onDeletar={etapaConfig.id === 'aberto' ? handleDeletarPedido : undefined}
-                  onAvisoEspera={handleAvisoEspera}
+                  
                 />
               ))}
             </div>
