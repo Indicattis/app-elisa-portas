@@ -1147,6 +1147,48 @@ export default function PedidoViewMinimalista() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Modal de Preenchimento Paralelo */}
+        <PreenchimentoParaleloModal
+          open={mostrarPreenchimento}
+          onOpenChange={setMostrarPreenchimento}
+          pedidoId={id || ''}
+          vendaId={pedido.venda_id}
+          produtos={pedido.venda?.produtos || []}
+          linhas={pedido.linhas}
+          portasEnrolar={portasEnrolar}
+          portasSocial={portasSocial}
+          observacoesTexto={observacoesTexto}
+          observacoesPedido={pedido.observacoes || null}
+          onAdicionarLinha={adicionarLinha}
+          onRemoverLinha={removerLinha}
+          onAtualizarLinha={(linhaId, campo, valor) => {
+            setLinhasEditadas(prev => {
+              const novoMapa = new Map(prev);
+              const linhaExistente = novoMapa.get(linhaId) || { id: linhaId };
+              novoMapa.set(linhaId, { ...linhaExistente, [campo]: valor });
+              return novoMapa;
+            });
+          }}
+          onAtualizarLinhaCompleta={async (linhaId, dados) => { await atualizarLinha({ id: linhaId, ...dados }); }}
+          onRefresh={fetchPedidoDetails}
+          usuarios={usuarios}
+          autorizados={autorizados}
+          getObservacoesPorPorta={getObservacoesPorPorta}
+          getObservacoesSocialPorPorta={getObservacoesSocialPorPorta}
+          salvarObservacao={salvarObservacao}
+          salvarObservacaoSocial={salvarObservacaoSocial}
+          onSalvarObservacoes={async (texto) => {
+            const { error } = await supabase
+              .from('pedidos_producao')
+              .update({ observacoes: texto.trim() || null })
+              .eq('id', pedido.id);
+            if (error) throw error;
+            setPedido(prev => prev ? { ...prev, observacoes: texto.trim() || null } : null);
+            setObservacoesTexto(texto);
+            sonnerToast.success('Observação salva com sucesso');
+          }}
+        />
       </div>
     </MinimalistLayout>
   );
