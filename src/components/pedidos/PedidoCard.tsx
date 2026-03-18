@@ -1122,7 +1122,7 @@ export function PedidoCard({
           className={cn(
             "hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", 
             isDragging && "opacity-50 cursor-grabbing",
-            pedido.aviso_espera && "border-amber-500/50 bg-amber-500/5",
+            
             (pedido as any).is_correcao && "border-l-4 border-l-purple-600",
             pedido.reprovado_ceo && "border-2 border-red-500 shadow-sm shadow-red-500/20"
           )}
@@ -1142,30 +1142,6 @@ export function PedidoCard({
                   <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing" onClick={(e) => e.stopPropagation()}>
                     <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>
-                ) : onAvisoEspera ? (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setShowAvisoEspera(true); }}
-                          className="flex items-center justify-center"
-                        >
-                          <Clock className={cn(
-                            "h-3.5 w-3.5",
-                            pedido.aviso_espera 
-                              ? "text-amber-500 animate-pulse" 
-                              : "text-muted-foreground hover:text-amber-500"
-                          )} />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-[250px]">
-                        {pedido.aviso_espera 
-                          ? <span className="text-xs">{pedido.aviso_espera}</span>
-                          : <span className="text-xs">Adicionar aviso de espera</span>
-                        }
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
                 ) : (
                   <span />
                 )}
@@ -1699,27 +1675,6 @@ export function PedidoCard({
                       );
                     }
 
-                    // Botão de aviso de espera (vai no meio)
-                    if (onAvisoEspera && pedido.aviso_espera) {
-                      middleButtons.push(
-                        <Tooltip key="aviso-espera">
-                          <TooltipTrigger asChild>
-                            <Button 
-                              size="icon" 
-                              variant="outline" 
-                              onClick={(e) => { e.stopPropagation(); setShowAvisoEspera(true); }} 
-                              title="Ver aviso de espera" 
-                              className="flex h-[20px] w-[20px] rounded-[3px] bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-amber-500/50"
-                            >
-                              <PauseCircle className="h-3 w-3" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-[250px]">
-                            <span className="text-xs">{pedido.aviso_espera}</span>
-                          </TooltipContent>
-                        </Tooltip>
-                      );
-                    }
 
 
                     // Botão de agendar no calendário
