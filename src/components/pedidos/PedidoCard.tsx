@@ -1122,7 +1122,7 @@ export function PedidoCard({
           className={cn(
             "hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", 
             isDragging && "opacity-50 cursor-grabbing",
-            pedido.aviso_espera && "border-amber-500/50 bg-amber-500/5",
+            
             (pedido as any).is_correcao && "border-l-4 border-l-purple-600",
             pedido.reprovado_ceo && "border-2 border-red-500 shadow-sm shadow-red-500/20"
           )}
