@@ -227,43 +227,6 @@ export default function PedidosAdminMinimalista() {
     }
   };
 
-  // Handler para aviso de espera
-  const handleAvisoEspera = async (pedidoId: string, justificativa: string | null) => {
-    try {
-      const updateData: any = {
-        aviso_espera: justificativa,
-        aviso_espera_data: justificativa ? new Date().toISOString() : null,
-      };
-      // Se registrando aviso, mover para última posição (prioridade 0)
-      // Se removendo, restaurar prioridade mínima (1)
-      if (justificativa) {
-        updateData.prioridade_etapa = 0;
-      } else {
-        updateData.prioridade_etapa = 1;
-      }
-
-      const { error } = await supabase
-        .from('pedidos_producao')
-        .update(updateData)
-        .eq('id', pedidoId);
-
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
-      toast({
-        title: justificativa ? "Aviso registrado" : "Aviso removido",
-        description: justificativa 
-          ? "Pedido movido para a última posição" 
-          : "Aviso de espera removido",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao atualizar aviso de espera",
-        variant: "destructive"
-      });
-    }
-  };
 
   // Filtrar pedidos por etapa
   const filtrarPedidos = (pedidos: any[]) => {
