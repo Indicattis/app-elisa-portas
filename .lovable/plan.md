@@ -1,22 +1,43 @@
 
 
-## Plano: Adicionar coluna "Mecânico" na Frota
+## Plano: Esconder ações do PedidoCard fora da etapa "Aberto"
 
-### O que será feito
+### Mudança
 
-Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
+No arquivo `src/pages/administrativo/PedidosAdminMinimalista.tsx`, na renderização do `PedidoCard` (linha ~395), passar `readOnly={true}` quando a etapa não for `'aberto'`.
 
-### Mudanças
+### Alteração
 
-1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
+**Arquivo**: `src/pages/administrativo/PedidosAdminMinimalista.tsx` (~linha 395)
 
-2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
+Trocar:
+```tsx
+<PedidoCard
+  key={pedido.id}
+  pedido={pedido}
+  isAberto={etapaConfig.id === 'aberto'}
+  viewMode="list"
+  onMoverEtapa={handleMoverEtapa}
+  onRetrocederEtapa={handleRetrocederEtapa}
+  onDeletar={etapaConfig.id === 'aberto' ? handleDeletarPedido : undefined}
+  onAvisoEspera={handleAvisoEspera}
+/>
+```
 
-3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
+Por:
+```tsx
+<PedidoCard
+  key={pedido.id}
+  pedido={pedido}
+  isAberto={etapaConfig.id === 'aberto'}
+  viewMode="list"
+  readOnly={etapaConfig.id !== 'aberto'}
+  onMoverEtapa={handleMoverEtapa}
+  onRetrocederEtapa={handleRetrocederEtapa}
+  onDeletar={etapaConfig.id === 'aberto' ? handleDeletarPedido : undefined}
+  onAvisoEspera={handleAvisoEspera}
+/>
+```
 
-4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
-
-5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
-
-6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
+O `PedidoCard` já respeita a prop `readOnly` para ocultar todos os botões de ação. Basta passá-la como `true` para etapas diferentes de `'aberto'`.
 
