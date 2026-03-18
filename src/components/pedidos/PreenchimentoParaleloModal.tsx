@@ -10,7 +10,7 @@ import { ObservacoesPortaForm } from "./ObservacoesPortaForm";
 import { ObservacoesPortaSocialForm } from "./ObservacoesPortaSocialForm";
 import { PortaFolderCard } from "./PortaFolderCard";
 import { getLabelProdutoExpandido } from "@/utils/tipoProdutoLabels";
-import type { PedidoLinha, PedidoLinhaNova } from "@/hooks/usePedidoLinhas";
+import type { PedidoLinha, PedidoLinhaNova, CategoriaLinha } from "@/hooks/usePedidoLinhas";
 import { cn } from "@/lib/utils";
 
 interface LinhaEditData {
@@ -21,7 +21,7 @@ interface LinhaEditData {
   descricao_produto?: string;
   quantidade?: number;
   tamanho?: string;
-  categoria_linha?: string;
+  categoria_linha?: CategoriaLinha;
 }
 
 interface PreenchimentoParaleloModalProps {
