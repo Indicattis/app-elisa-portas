@@ -513,8 +513,6 @@ export default function PedidosAdminMinimalista() {
         </Select>
       </div>
 
-      {/* Seção de vendas faturadas sem pedido */}
-      <VendasFaturadasSemPedido />
 
       {/* Tabs para alternar entre etapas */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
