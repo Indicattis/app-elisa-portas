@@ -117,6 +117,7 @@ export default function PedidoViewMinimalista() {
   const [salvandoProduto, setSalvandoProduto] = useState(false);
   const [pastaObsAberta, setPastaObsAberta] = useState<string | null>(null);
   const [pastaSocialAberta, setPastaSocialAberta] = useState<string | null>(null);
+  const [mostrarPreenchimento, setMostrarPreenchimento] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { coresAtivas } = useCatalogoCores();
