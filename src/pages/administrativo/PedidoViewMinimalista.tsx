@@ -31,6 +31,7 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { MedidasPortasSection } from "@/components/pedidos/MedidasPortasSection";
 import { PortaFolderCard } from "@/components/pedidos/PortaFolderCard";
 import { getLabelProdutoExpandido } from "@/utils/tipoProdutoLabels";
+import { PreenchimentoParaleloModal } from "@/components/pedidos/PreenchimentoParaleloModal";
 
 interface Ordem {
   id: string;
@@ -116,6 +117,7 @@ export default function PedidoViewMinimalista() {
   const [salvandoProduto, setSalvandoProduto] = useState(false);
   const [pastaObsAberta, setPastaObsAberta] = useState<string | null>(null);
   const [pastaSocialAberta, setPastaSocialAberta] = useState<string | null>(null);
+  const [mostrarPreenchimento, setMostrarPreenchimento] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { coresAtivas } = useCatalogoCores();
@@ -459,6 +461,17 @@ export default function PedidoViewMinimalista() {
       ]}
       headerActions={
         <div className="flex items-center gap-2">
+          {podeEditarLinhas && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMostrarPreenchimento(true)}
+              className="text-white/70 hover:text-white hover:bg-white/10 gap-1"
+            >
+              <ClipboardList className="w-4 h-4" />
+              <span className="hidden sm:inline text-xs">Preencher</span>
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={() => fetchPedidoDetails()} className="text-white/70 hover:text-white hover:bg-white/10">
             <RefreshCw className="w-4 h-4" />
           </Button>
@@ -1134,6 +1147,48 @@ export default function PedidoViewMinimalista() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Modal de Preenchimento Paralelo */}
+        <PreenchimentoParaleloModal
+          open={mostrarPreenchimento}
+          onOpenChange={setMostrarPreenchimento}
+          pedidoId={id || ''}
+          vendaId={pedido.venda_id}
+          produtos={pedido.venda?.produtos || []}
+          linhas={pedido.linhas}
+          portasEnrolar={portasEnrolar}
+          portasSocial={portasSocial}
+          observacoesTexto={observacoesTexto}
+          observacoesPedido={pedido.observacoes || null}
+          onAdicionarLinha={adicionarLinha}
+          onRemoverLinha={removerLinha}
+          onAtualizarLinha={(linhaId, campo, valor) => {
+            setLinhasEditadas(prev => {
+              const novoMapa = new Map(prev);
+              const linhaExistente = novoMapa.get(linhaId) || { id: linhaId };
+              novoMapa.set(linhaId, { ...linhaExistente, [campo]: valor });
+              return novoMapa;
+            });
+          }}
+          onAtualizarLinhaCompleta={async (linhaId, dados) => { await atualizarLinha({ id: linhaId, ...dados }); }}
+          onRefresh={fetchPedidoDetails}
+          usuarios={usuarios}
+          autorizados={autorizados}
+          getObservacoesPorPorta={getObservacoesPorPorta}
+          getObservacoesSocialPorPorta={getObservacoesSocialPorPorta}
+          salvarObservacao={salvarObservacao}
+          salvarObservacaoSocial={salvarObservacaoSocial}
+          onSalvarObservacoes={async (texto) => {
+            const { error } = await supabase
+              .from('pedidos_producao')
+              .update({ observacoes: texto.trim() || null })
+              .eq('id', pedido.id);
+            if (error) throw error;
+            setPedido(prev => prev ? { ...prev, observacoes: texto.trim() || null } : null);
+            setObservacoesTexto(texto);
+            sonnerToast.success('Observação salva com sucesso');
+          }}
+        />
       </div>
     </MinimalistLayout>
   );
