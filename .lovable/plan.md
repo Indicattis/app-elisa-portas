@@ -1,22 +1,17 @@
 
 
-## Plano: Adicionar coluna "Mecânico" na Frota
+## Plano: Alinhar estilo visual do Pedido com a Frota
 
-### O que será feito
-
-Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
+A página do pedido já usa `MinimalistLayout` (fundo escuro), mas os cards usam `bg-primary/5 border-primary/10` enquanto a frota usa `bg-white/5 border-blue-500/10`. A diferença principal é a paleta de cores dos cards e botões.
 
 ### Mudanças
 
-1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
+**Arquivo**: `src/pages/administrativo/PedidoViewMinimalista.tsx`
 
-2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
+1. **Cards**: Trocar todas as ocorrências de `bg-primary/5 border-primary/10` por `bg-white/5 border-blue-500/10` (padrão da frota)
+2. **Textarea**: Trocar `bg-primary/5 border-primary/10` por `bg-white/5 border-blue-500/10`
+3. **Spinner de loading**: Trocar `border-primary` por `border-blue-400` (padrão frota)
+4. **Botões de ação**: Alinhar estilo dos botões do header com o padrão gradiente da frota (`bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-400/20`)
 
-3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
-
-4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
-
-5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
-
-6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
+São apenas alterações de classes CSS, sem mudança de lógica.
 
