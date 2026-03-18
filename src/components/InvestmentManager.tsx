@@ -91,7 +91,7 @@ export default function InvestmentManager({ selectedYear }: InvestmentManagerPro
       .not("estado", "is", null);
 
     if (error) throw error;
-    const regionesUnicas = [...new Set(data?.map(v => v.estado))];
+    const regionesUnicas = [...new Set(data?.map(v => v.estado).filter((e): e is string => typeof e === 'string'))];
     setRegioes(regionesUnicas);
   };
 

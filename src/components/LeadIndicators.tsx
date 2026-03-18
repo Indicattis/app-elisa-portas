@@ -62,7 +62,7 @@ export function LeadIndicators() {
         } = await supabase.from("admin_users").select("user_id, nome").in("user_id", atendenteIds);
 
         // Criar map de atendentes
-        const atendenteMap = new Map(atendentesData?.map(atendente => [atendente.user_id, atendente.nome]) || []);
+        const atendenteMap = new Map<string, string>(atendentesData?.map(atendente => [atendente.user_id, atendente.nome] as [string, string]) || []);
 
         // Placar de atendentes
         const placarMap = new Map<string, AtendenteVenda>();
