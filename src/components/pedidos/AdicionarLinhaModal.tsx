@@ -142,8 +142,8 @@ export function AdicionarLinhaModal({
     return portas.find(p => p._virtualKey === portaSelecionadaKey) ?? null;
   }, [portas, portaSelecionadaKey]);
 
-  const larguraAtual = portaAtual?.largura ?? portaLargura;
-  const alturaAtual = portaAtual?.altura ?? portaAltura;
+  const larguraAtual = portaAtual?.largura ?? portaLargura ?? portas[0]?.largura;
+  const alturaAtual = portaAtual?.altura ?? portaAltura ?? portas[0]?.altura;
 
   const [formData, setFormData] = useState<PedidoLinhaNova>({
     produto_venda_id: portaId || '',
