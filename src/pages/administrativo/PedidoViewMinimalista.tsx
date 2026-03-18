@@ -426,7 +426,7 @@ export default function PedidoViewMinimalista() {
     return (
       <MinimalistLayout title="Carregando..." backPath="/administrativo/pedidos">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
         </div>
       </MinimalistLayout>
     );
@@ -485,7 +485,7 @@ export default function PedidoViewMinimalista() {
         {/* Grid: Informações do Cliente e Ações Rápidas */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {pedido.venda && (
-            <Card className="lg:col-span-2 bg-primary/5 border-primary/10 backdrop-blur-xl">
+            <Card className="lg:col-span-2 bg-white/5 border-blue-500/10 backdrop-blur-xl">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2 text-white">
                   <User className="w-4 h-4" />
@@ -536,7 +536,7 @@ export default function PedidoViewMinimalista() {
             </Card>
           )}
           
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm text-white">Ações Rápidas</CardTitle>
             </CardHeader>
@@ -561,7 +561,7 @@ export default function PedidoViewMinimalista() {
 
         {/* Produtos da Venda */}
         {pedido.venda?.produtos && pedido.venda.produtos.length > 0 && (
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2 text-white">
                 <Package className="w-4 h-4" />
@@ -716,7 +716,7 @@ export default function PedidoViewMinimalista() {
 
         {/* Observação da Venda */}
         {pedido.venda?.observacoes_venda && (
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2 text-white">
                 <FileText className="w-4 h-4" />
@@ -740,7 +740,7 @@ export default function PedidoViewMinimalista() {
         )}
 
         {/* Itens do Pedido */}
-        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+        <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm flex items-center gap-2 text-white">
@@ -788,7 +788,7 @@ export default function PedidoViewMinimalista() {
 
         {/* Observações da Visita Técnica */}
         {portasEnrolar.length > 0 && (
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2 text-white">
                 <FileText className="w-4 h-4" />
@@ -852,7 +852,7 @@ export default function PedidoViewMinimalista() {
 
         {/* Especificações Porta Social */}
         {portasSocial.length > 0 && (
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2 text-white">
                 <Package className="w-4 h-4" />
@@ -914,7 +914,7 @@ export default function PedidoViewMinimalista() {
 
         {/* Observações da Venda */}
         {pedido.venda?.observacoes_venda && (
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2 text-white">
                 <FileText className="w-4 h-4" />
@@ -928,7 +928,7 @@ export default function PedidoViewMinimalista() {
         )}
 
         {/* Observações do Pedido */}
-        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+        <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2 text-white">
               <MessageSquare className="w-4 h-4" />
@@ -941,7 +941,7 @@ export default function PedidoViewMinimalista() {
                 placeholder="Adicione observações sobre este pedido..."
                 value={observacoesTexto}
                 onChange={(e) => setObservacoesTexto(e.target.value)}
-                className="min-h-[100px] bg-primary/5 border-primary/10 text-white placeholder:text-white/40 resize-none"
+                className="min-h-[100px] bg-white/5 border-blue-500/10 text-white placeholder:text-white/40 resize-none"
               />
               <div className="flex justify-end">
                 <Button
@@ -968,7 +968,7 @@ export default function PedidoViewMinimalista() {
         </Card>
 
         {/* Ficha de Visita Técnica */}
-        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+        <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2 text-white">
               <ClipboardList className="w-4 h-4" />
@@ -1001,7 +1001,7 @@ export default function PedidoViewMinimalista() {
         </Card>
 
         {/* Histórico de Movimentações */}
-        <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+        <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2 text-white">
               <Clock className="w-4 h-4" />
@@ -1018,7 +1018,7 @@ export default function PedidoViewMinimalista() {
 
         {/* Ordens de Produção */}
         {pedido.ordens.length > 0 && (
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2 text-white">
                 <Hammer className="w-4 h-4" />
