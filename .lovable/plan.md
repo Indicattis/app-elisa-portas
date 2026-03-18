@@ -1,13 +1,22 @@
 
 
-## Plano: Remover funcionalidade "Aviso de Espera" da página /administrativo/pedidos
+## Plano: Adicionar coluna "Mecânico" na Frota
+
+### O que será feito
+
+Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
 
 ### Mudanças
 
-**Arquivo**: `src/pages/administrativo/PedidosAdminMinimalista.tsx`
+1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
 
-1. **Remover o handler `handleAvisoEspera`** (~linhas 230-252) — função que salva/remove o aviso de espera no Supabase
-2. **Remover a prop `onAvisoEspera={handleAvisoEspera}`** do `PedidoCard` (~linha 404)
+2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
 
-Sem essa prop, o `PedidoCard` automaticamente não renderiza o botão de relógio nem o modal de aviso de espera. Nenhuma alteração no `PedidoCard` é necessária.
+3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
+
+4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
+
+5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
+
+6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
 
