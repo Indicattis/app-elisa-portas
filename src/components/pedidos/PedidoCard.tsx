@@ -1142,30 +1142,6 @@ export function PedidoCard({
                   <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing" onClick={(e) => e.stopPropagation()}>
                     <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>
-                ) : onAvisoEspera ? (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setShowAvisoEspera(true); }}
-                          className="flex items-center justify-center"
-                        >
-                          <Clock className={cn(
-                            "h-3.5 w-3.5",
-                            pedido.aviso_espera 
-                              ? "text-amber-500 animate-pulse" 
-                              : "text-muted-foreground hover:text-amber-500"
-                          )} />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-[250px]">
-                        {pedido.aviso_espera 
-                          ? <span className="text-xs">{pedido.aviso_espera}</span>
-                          : <span className="text-xs">Adicionar aviso de espera</span>
-                        }
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
                 ) : (
                   <span />
                 )}
