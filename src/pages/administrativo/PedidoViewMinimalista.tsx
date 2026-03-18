@@ -461,6 +461,17 @@ export default function PedidoViewMinimalista() {
       ]}
       headerActions={
         <div className="flex items-center gap-2">
+          {podeEditarLinhas && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMostrarPreenchimento(true)}
+              className="text-white/70 hover:text-white hover:bg-white/10 gap-1"
+            >
+              <ClipboardList className="w-4 h-4" />
+              <span className="hidden sm:inline text-xs">Preencher</span>
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={() => fetchPedidoDetails()} className="text-white/70 hover:text-white hover:bg-white/10">
             <RefreshCw className="w-4 h-4" />
           </Button>
