@@ -12,7 +12,7 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { VendasFaturadasSemPedido } from "@/components/pedidos/VendasFaturadasSemPedido";
+
 import { supabase } from "@/integrations/supabase/client";
 
 
@@ -513,8 +513,6 @@ export default function PedidosAdminMinimalista() {
         </Select>
       </div>
 
-      {/* Seção de vendas faturadas sem pedido */}
-      <VendasFaturadasSemPedido />
 
       {/* Tabs para alternar entre etapas */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
