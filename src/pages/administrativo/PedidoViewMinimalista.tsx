@@ -31,6 +31,7 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { MedidasPortasSection } from "@/components/pedidos/MedidasPortasSection";
 import { PortaFolderCard } from "@/components/pedidos/PortaFolderCard";
 import { getLabelProdutoExpandido } from "@/utils/tipoProdutoLabels";
+import { PreenchimentoParaleloModal } from "@/components/pedidos/PreenchimentoParaleloModal";
 
 interface Ordem {
   id: string;
