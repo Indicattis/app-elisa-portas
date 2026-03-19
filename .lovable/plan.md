@@ -1,24 +1,35 @@
 
 
-## Plano: Adicionar seção de alteração de senha em /perfil
+## Diagnóstico: Ranking de equipes vazio
 
-### Arquivo: `src/pages/MeuPerfil.tsx`
+### Problema identificado
 
-Adicionar uma nova seção abaixo das informações do usuário com:
+A query no hook `useRankingEquipesInstalacao.ts` filtra instalações com **ambas** as condições:
+- `responsavel_instalacao_id IS NOT NULL`
+- `pedido_id IS NOT NULL`
 
-- Título "Alterar Senha"
-- Campo "Senha atual" (type password)
-- Campo "Nova senha" (type password)
-- Campo "Confirmar nova senha" (type password)
-- Botão "Salvar nova senha"
-- Validações: senha mínima 6 caracteres, confirmação deve coincidir
-- Usa `supabase.auth.updateUser({ password })` para alterar
-- Toast de sucesso/erro
-- Ícone de cadeado (`Lock`) no título da seção
+Porém, os dados mostram que as instalações concluídas têm **ou** `responsavel_instalacao_id` preenchido (com `pedido_id` nulo) **ou** `pedido_id` preenchido (com `responsavel_instalacao_id` nulo). A combinação AND retorna zero resultados.
 
-### Detalhes técnicos
+Existem 18 instalações concluídas com `responsavel_instalacao_id` preenchido que deveriam aparecer no ranking.
 
-- Não precisa de edge function — o método `updateUser` do Supabase já permite que o usuário autenticado altere sua própria senha
-- A "senha atual" será verificada via `signInWithPassword` antes de aplicar a mudança (para confirmar identidade)
-- Campos limpos após sucesso
+### Correção
+
+**Arquivo:** `src/hooks/useRankingEquipesInstalacao.ts`
+
+Remover o filtro `.not('pedido_id', 'is', null)` da query de instalações (linha 70), mantendo apenas o filtro de `responsavel_instalacao_id` que é o campo relevante para associar a equipe.
+
+**Antes:**
+```ts
+.eq('instalacao_concluida', true)
+.eq('tipo_instalacao', 'elisa')
+.not('responsavel_instalacao_id', 'is', null)
+.not('pedido_id', 'is', null);
+```
+
+**Depois:**
+```ts
+.eq('instalacao_concluida', true)
+.eq('tipo_instalacao', 'elisa')
+.not('responsavel_instalacao_id', 'is', null);
+```
 
