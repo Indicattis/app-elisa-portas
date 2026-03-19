@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTarefas } from "@/hooks/useTarefas";
 import { useSetorInfo } from "@/hooks/useSetorInfo";
 import { NovaTarefaModal } from "@/components/todo/NovaTarefaModal";
