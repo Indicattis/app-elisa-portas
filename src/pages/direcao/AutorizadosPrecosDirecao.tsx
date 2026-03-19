@@ -256,8 +256,8 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
             </div>
           )}
 
-          {contexto !== 'logistica' && (
-            <>
+          {/* Separador */}
+          <div className="border-t border-primary/10" />
               {/* Separador */}
               <div className="border-t border-primary/10" />
 
