@@ -1,43 +1,21 @@
 
 
-## Plano: Painel de Produção Read-Only no Administrativo
+## Plano: Alinhar estilo de /administrativo/producao com /logistica/frota
 
-### Resumo
+### O que sera feito
 
-Criar uma nova pagina `/administrativo/producao` que exibe os pedidos por etapa (igual `/direcao/gestao-fabrica`) mas somente para visualizacao, sem acoes de mover, reorganizar, arquivar ou deletar. Abaixo dos pedidos, exibir uma tabela com os itens (`linhas_ordens`) nao concluidos agrupados por etapa.
+Atualizar as classes CSS em `ProducaoAdminReadOnly.tsx` para usar o mesmo esquema de cores da pagina de Frota:
 
-### Arquivos a criar/modificar
+**Arquivo: `src/pages/administrativo/ProducaoAdminReadOnly.tsx`**
 
-**1. `src/pages/administrativo/ProducaoAdminReadOnly.tsx`** (Novo)
-- Usa `MinimalistLayout` com breadcrumb `Home > Administrativo > Produção`
-- Reutiliza `usePedidosContadores` e `usePedidosEtapas` para exibir pedidos por etapa em tabs (mesmo layout de tabs com grupos coloridos do GestaoFabricaDirecao)
-- Renderiza `PedidosDraggableList` com `enableDragAndDrop={false}` e sem callbacks de mover/retroceder/arquivar/deletar (passando `undefined`)
-- Sem botoes de "Pedido Teste", atribuir responsavel, calendarios, etc.
-- Inclui filtros basicos (busca por nome/numero)
-- Abaixo das tabs, nova secao **"Itens por Etapa"**: busca `linhas_ordens` com `concluida = false`, juntando com `pedidos_producao` para obter a `etapa_atual`. Agrupa itens por etapa e exibe em tabela com colunas: Item, Quantidade, Tamanho, Pedido (numero), Etapa
+1. **Cards**: trocar `bg-primary/5 border-primary/10` por `bg-white/5 border-blue-500/10 backdrop-blur-xl`
+2. **Tabs**: trocar `bg-primary/5 border-primary/10` por `bg-white/5 border-blue-500/10`
+3. **Tab triggers**: trocar `data-[state=active]:bg-primary/10` por `data-[state=active]:bg-white/10`
+4. **Badges/contadores**: trocar `bg-primary/10` por `bg-blue-500/20 text-blue-400`
+5. **Input de busca**: trocar `bg-primary/5 border-primary/10` por `bg-white/5 border-blue-500/10`
+6. **Table rows**: adicionar `border-blue-500/10 hover:bg-white/5`
+7. **Select mobile**: mesmas trocas de cores
+8. **Collapsible cards de itens**: mesmas trocas para manter consistencia
 
-**2. `src/hooks/useItensNaoConcluidosPorEtapa.ts`** (Novo)
-- Hook que busca `linhas_ordens` onde `concluida = false`
-- Join com `pedidos_producao` via `pedido_id` para obter `etapa_atual` e `numero_pedido`
-- Join com `estoque` via `estoque_id` para nome do produto
-- Retorna dados agrupados por etapa
-
-**3. `src/pages/administrativo/AdministrativoHub.tsx`** (Modificar)
-- Adicionar item: `{ label: "Produção", icon: Factory, path: "/administrativo/producao", ativo: true }`
-
-**4. `src/App.tsx`** (Modificar)
-- Registrar rota `/administrativo/producao` → `ProducaoAdminReadOnly`
-
-### Detalhes tecnicos
-
-- A secao de itens usara uma query Supabase com select aninhado:
-  ```sql
-  linhas_ordens(id, item, quantidade, tamanho, largura, altura, concluida, tipo_ordem,
-    estoque:estoque_id(nome_produto),
-    pedidos_producao:pedido_id(numero_pedido, etapa_atual)
-  ) where concluida = false
-  ```
-- Itens serao exibidos em um `Collapsible` por etapa, com contador de itens pendentes
-- Tabela usa componentes `Table` existentes do projeto
-- Nenhuma migracao de banco necessaria
+Apenas mudancas de classes CSS, sem alteracao de logica ou estrutura.
 
