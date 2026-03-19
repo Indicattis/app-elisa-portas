@@ -1,21 +1,24 @@
 
 
-## Plano: Alinhar estilo de /administrativo/producao com /logistica/frota
+## Plano: Adicionar coluna "Tamanho Total" na tabela de itens pendentes
 
-### O que sera feito
+### O que será feito
 
-Atualizar as classes CSS em `ProducaoAdminReadOnly.tsx` para usar o mesmo esquema de cores da pagina de Frota:
+Adicionar uma coluna **Tamanho Total** na tabela de itens pendentes por etapa, que soma os valores de `largura * altura * quantidade` (ou `tamanho * quantidade` quando aplicável) agrupados por item.
 
-**Arquivo: `src/pages/administrativo/ProducaoAdminReadOnly.tsx`**
+### Alterações
 
-1. **Cards**: trocar `bg-primary/5 border-primary/10` por `bg-white/5 border-blue-500/10 backdrop-blur-xl`
-2. **Tabs**: trocar `bg-primary/5 border-primary/10` por `bg-white/5 border-blue-500/10`
-3. **Tab triggers**: trocar `data-[state=active]:bg-primary/10` por `data-[state=active]:bg-white/10`
-4. **Badges/contadores**: trocar `bg-primary/10` por `bg-blue-500/20 text-blue-400`
-5. **Input de busca**: trocar `bg-primary/5 border-primary/10` por `bg-white/5 border-blue-500/10`
-6. **Table rows**: adicionar `border-blue-500/10 hover:bg-white/5`
-7. **Select mobile**: mesmas trocas de cores
-8. **Collapsible cards de itens**: mesmas trocas para manter consistencia
+**1. `src/pages/administrativo/ProducaoAdminReadOnly.tsx`**
 
-Apenas mudancas de classes CSS, sem alteracao de logica ou estrutura.
+- No `useMemo` de `itensAgrupadosPorEtapa`, adicionar campo `tamanhoTotal` ao tipo do grupo, acumulando `(largura && altura ? largura * altura : 0) * quantidade` para cada item
+- Na `TableHeader`, adicionar coluna "Tamanho Total" entre "Qtd Total" e "Pedidos"
+- Na `TableBody`, exibir o valor formatado com 2 casas decimais e sufixo "m²"
+
+**2. `src/hooks/useItensNaoConcluidosPorEtapa.ts`**
+
+- Nenhuma alteração — `largura` e `altura` já são retornados pelo hook
+
+### Detalhes técnicos
+
+O cálculo será: para cada linha, somar `(largura * altura) * quantidade` ao `tamanhoTotal` do grupo. Itens sem largura/altura contribuem 0.
 
