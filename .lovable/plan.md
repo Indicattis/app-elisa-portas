@@ -1,29 +1,31 @@
 
 
-## Plano: Adicionar gestão semanal de tarefas por colaborador ao Checklist Liderança
+## Plano: Adicionar bordas coloridas agrupando as abas na Gestão de Fábrica
 
 ### O que será feito
 
-Integrar na página `ChecklistLideranca` as funcionalidades de gestão semanal que já existem no `DirecaoChecklist`: calendário semanal, navegação entre semanas, tabela de tarefas com responsável/hora/status, filtros por colaborador, e botão de programação (recorrentes).
+Envolver as abas (TabsTrigger) do desktop em 3 grupos visuais com bordas coloridas:
+
+- **Borda vermelha**: Pedidos em Aberto, Aprovação CEO, Em Produção, Inspeção de Qualidade, Aguardando Pintura, Embalagem (etapas: `aberto` → `embalagem`)
+- **Borda amarela**: Expedição Coleta, Instalações, Correções (etapas: `aguardando_coleta` → `correcoes`)
+- **Borda verde**: Finalizado + Arquivo Morto
 
 ### Implementação
 
-**1. Atualizar `ChecklistLideranca.tsx`**
-- Adicionar estados para navegação semanal (`semanaOffset`), dia do calendário, filtros (usuário, tipo, status, data), e toggle lixeira
-- Importar e usar os componentes já existentes: `CalendarioSemanal`, `TarefasTabela`, `ChecklistFiltros`
-- Adicionar lógica de filtragem por semana (usando `startOfWeek`/`endOfWeek`/`isWithinInterval`) e filtros adicionais
-- Adicionar navegação entre semanas (anterior/próxima/hoje) no card de tarefas
-- Substituir as listas simples de cards por `TarefasTabela` com responsável, hora, status e tipo
-- Manter o seletor de setor, botões "Nova Tarefa" e "Recorrentes", e o card do responsável
+**Arquivo: `src/pages/direcao/GestaoFabricaDirecao.tsx`**
 
-**2. Layout final da página**
-- Header: Voltar + Título + Seletor de setor + Card responsável + Botões ação
-- Calendário semanal (componente existente)
-- Filtros (componente existente `ChecklistFiltros`)
-- Card de tarefas com navegação de semana + `TarefasTabela`
-- FAB mobile para Nova Tarefa
+Dentro da `TabsList` desktop (linha ~474-520), substituir o loop único `ORDEM_ETAPAS.map(...)` + tab Arquivo Morto por 3 `div` wrappers:
+
+1. `div` com `border-2 border-red-500/50 rounded-lg p-1 flex gap-1` contendo as 6 primeiras etapas (aberto, aprovacao_ceo, em_producao, inspecao_qualidade, aguardando_pintura, embalagem)
+2. `div` com `border-2 border-yellow-500/50 rounded-lg p-1 flex gap-1` contendo 3 etapas (aguardando_coleta, instalacoes, correcoes)
+3. `div` com `border-2 border-green-500/50 rounded-lg p-1 flex gap-1` contendo a tab `finalizado` + `arquivo_morto`
+
+Cada grupo renderiza seus TabsTriggers com a mesma lógica atual (ícone, label, badge, responsável tooltip). O código do map será extraído para uma função auxiliar local para evitar repetição.
 
 ### Detalhes técnicos
 
-Todos os componentes necessários já existem (`CalendarioSemanal`, `TarefasTabela`, `ChecklistFiltros`). A mudança é essencialmente reorganizar `ChecklistLideranca.tsx` para usar o mesmo padrão do `DirecaoChecklist.tsx`, mantendo o filtro por setor como diferencial.
+- Definir 3 arrays constantes para as etapas de cada grupo
+- Criar função `renderTabTrigger(etapa)` reutilizável
+- Manter todo o comportamento existente (tooltips, avatares, contadores)
+- Apenas afeta o layout desktop (`hidden md:flex`)
 
