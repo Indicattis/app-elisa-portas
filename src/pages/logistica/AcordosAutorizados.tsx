@@ -237,6 +237,7 @@ export default function AcordosAutorizados() {
                         <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                         <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
                         <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
+                        <TableHead className="text-xs text-white/70 text-right">Excesso</TableHead>
                         <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
                         <TableHead className="text-xs text-white/70 text-center">Data</TableHead>
                         <TableHead className="text-xs text-white/70 text-center">Criado por</TableHead>
@@ -267,6 +268,17 @@ export default function AcordosAutorizados() {
                           </TableCell>
                           <TableCell className="text-right font-medium text-green-400">
                             {formatCurrency(acordo.valor_acordado)}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {acordo.portas.length > 0 ? (() => {
+                              const totalRef = acordo.portas.reduce((sum, p) => sum + p.valor_unitario, 0);
+                              const excesso = acordo.valor_acordado - totalRef;
+                              return (
+                                <span className={excesso > 0 ? 'text-red-400' : 'text-green-400'}>
+                                  {excesso > 0 ? '+' : ''}{formatCurrency(excesso)}
+                                </span>
+                              );
+                            })() : <span className="text-white/40">—</span>}
                           </TableCell>
                           <TableCell className="text-center">
                             <Badge 
