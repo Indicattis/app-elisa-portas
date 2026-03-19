@@ -1,20 +1,74 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { AvatarUpload } from "@/components/AvatarUpload";
-import { ArrowLeft, Mail, Shield, Building2 } from "lucide-react";
+import { ArrowLeft, Mail, Shield, Building2, Lock, Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { SETOR_LABELS } from "@/utils/setorMapping";
 import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function MeuPerfil() {
   const navigate = useNavigate();
   const { user, userRole } = useAuth();
+  const { toast } = useToast();
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   if (!user || !userRole) return null;
 
   const handleAvatarUpdate = (url: string | null) => {
-    // Force re-render by reloading
     window.location.reload();
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!currentPassword) {
+      toast({ variant: "destructive", title: "Erro", description: "Informe a senha atual" });
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast({ variant: "destructive", title: "Erro", description: "A nova senha deve ter pelo menos 6 caracteres" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ variant: "destructive", title: "Erro", description: "As senhas não coincidem" });
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      // Verify current password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email!,
+        password: currentPassword,
+      });
+      if (signInError) {
+        toast({ variant: "destructive", title: "Erro", description: "Senha atual incorreta" });
+        return;
+      }
+
+      // Update password
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+
+      toast({ title: "Sucesso", description: "Senha alterada com sucesso" });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erro", description: error.message || "Erro ao alterar senha" });
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const setorLabel = userRole.setor ? SETOR_LABELS[userRole.setor] || userRole.setor : null;
@@ -80,6 +134,73 @@ export default function MeuPerfil() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Alterar Senha */}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6 space-y-5 mt-6">
+          <div className="flex items-center gap-2">
+            <Lock className="w-5 h-5 text-white/60" />
+            <h2 className="text-lg font-semibold">Alterar Senha</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-white/60 text-xs uppercase tracking-wider">Senha atual</Label>
+              <div className="relative">
+                <Input
+                  type={showCurrent ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="bg-white/5 border-white/10 text-white pr-10"
+                  placeholder="••••••"
+                />
+                <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
+                  {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-white/60 text-xs uppercase tracking-wider">Nova senha</Label>
+              <div className="relative">
+                <Input
+                  type={showNew ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="bg-white/5 border-white/10 text-white pr-10"
+                  placeholder="Mínimo 6 caracteres"
+                />
+                <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
+                  {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-white/60 text-xs uppercase tracking-wider">Confirmar nova senha</Label>
+              <div className="relative">
+                <Input
+                  type={showConfirm ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="bg-white/5 border-white/10 text-white pr-10"
+                  placeholder="Repita a nova senha"
+                />
+                <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
+                  {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <Button
+            onClick={handleUpdatePassword}
+            disabled={changingPassword}
+            className="w-full"
+          >
+            {changingPassword && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Salvar nova senha
+          </Button>
         </div>
       </div>
     </div>
