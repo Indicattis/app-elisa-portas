@@ -56,7 +56,7 @@ export default function PedidosPagosSemEntrega() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('pedidos_pagos_sem_entrega').insert({
+      const { error } = await (supabase.from as any)('pedidos_pagos_sem_entrega').insert({
         cliente: form.cliente.trim(),
         estado: form.estado.trim(),
         cidade: form.cidade.trim(),
