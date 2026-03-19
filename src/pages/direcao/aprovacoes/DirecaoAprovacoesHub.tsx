@@ -44,10 +44,10 @@ export default function DirecaoAprovacoesHub() {
   const { data: countAutorizados } = useQuery({
     queryKey: ['aprovacoes-autorizados-count'],
     queryFn: async () => {
-      const { count } = await supabase
+      const { count } = await (supabase
         .from('acordos_instalacao_autorizados')
-        .select('*', { count: 'exact', head: true })
-        .eq('aprovado_direcao' as any, false);
+        .select('*', { count: 'exact', head: true }) as any)
+        .eq('aprovado_direcao', false);
       return count || 0;
     },
   });
