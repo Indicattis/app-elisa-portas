@@ -11,6 +11,7 @@ import { DelayedParticles } from '@/components/DelayedParticles';
 const menuItems = [
   { label: 'Aprovações Fábrica', icon: Factory, path: '/direcao/aprovacoes/fabrica' },
   { label: 'Aprovações Vendas', icon: ShoppingCart, path: '/direcao/aprovacoes/vendas' },
+  { label: 'Aprovações Autorizados', icon: Users, path: '/direcao/aprovacoes/autorizados' },
 ];
 
 export default function DirecaoAprovacoesHub() {
