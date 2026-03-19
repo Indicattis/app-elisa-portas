@@ -41,9 +41,21 @@ export default function DirecaoAprovacoesHub() {
     },
   });
 
+  const { data: countAutorizados } = useQuery({
+    queryKey: ['aprovacoes-autorizados-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('acordos_instalacao_autorizados')
+        .select('*', { count: 'exact', head: true })
+        .eq('aprovado_direcao', false);
+      return count || 0;
+    },
+  });
+
   const countsMap: Record<string, number> = {
     '/direcao/aprovacoes/fabrica': countFabrica || 0,
     '/direcao/aprovacoes/vendas': (countVendas as number) || 0,
+    '/direcao/aprovacoes/autorizados': countAutorizados || 0,
   };
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
