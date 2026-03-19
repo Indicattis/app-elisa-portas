@@ -269,6 +269,17 @@ export default function AcordosAutorizados() {
                           <TableCell className="text-right font-medium text-green-400">
                             {formatCurrency(acordo.valor_acordado)}
                           </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {acordo.portas.length > 0 ? (() => {
+                              const totalRef = acordo.portas.reduce((sum, p) => sum + p.valor_unitario, 0);
+                              const excesso = acordo.valor_acordado - totalRef;
+                              return (
+                                <span className={excesso > 0 ? 'text-red-400' : 'text-green-400'}>
+                                  {excesso > 0 ? '+' : ''}{formatCurrency(excesso)}
+                                </span>
+                              );
+                            })() : <span className="text-white/40">—</span>}
+                          </TableCell>
                           <TableCell className="text-center">
                             <Badge 
                               variant="outline" 
