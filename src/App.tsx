@@ -527,6 +527,9 @@ const App = () => (
                 <Route path="/direcao/aprovacoes/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><AprovacoesProducao /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/vendas" element={<ProtectedRoute routeKey="direcao_hub"><AprovacoesVendas /></ProtectedRoute>} />
 
+                {/* Checklist Liderança */}
+                <Route path="/direcao/checklist-lideranca" element={<ProtectedRoute routeKey="direcao_hub"><ChecklistLideranca /></ProtectedRoute>} />
+
                 {/* Hub de Logística Minimalista */}
                 <Route path="/logistica" element={<ProtectedRoute routeKeyPrefix="logistica_"><LogisticaHub /></ProtectedRoute>} />
                 

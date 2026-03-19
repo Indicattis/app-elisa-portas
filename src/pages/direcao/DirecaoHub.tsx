@@ -17,6 +17,7 @@ const menuItems = [
   { label: 'Autorizados', icon: Users, path: '/direcao/autorizados' },
   { label: 'Aprovações', icon: ShieldCheck, path: '/direcao/aprovacoes' },
   { label: 'Organograma RH', icon: Network, path: '/direcao/gestao-colaboradores' },
+  { label: 'Checklist Liderança', icon: ClipboardCheck, path: '/direcao/checklist-lideranca' },
 ];
 
 export default function DirecaoHub() {
