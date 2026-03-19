@@ -74,6 +74,8 @@ export default function OrdensInstalacoesLogistica() {
   
   const isConcluindoNeoCorrecao = concluirNeoCorrecao.isPending;
 
+  const { finalizados, isLoading: isLoadingFinalizados } = useNeoFinalizados();
+
 
 
 
