@@ -5469,6 +5469,48 @@ export type Database = {
           },
         ]
       }
+      pedidos_pagos_sem_entrega: {
+        Row: {
+          cidade: string
+          cliente: string
+          created_at: string | null
+          created_by: string | null
+          descricao: string | null
+          estado: string
+          id: string
+          portas_g: number
+          portas_gg: number
+          portas_p: number
+          valor_pago: number
+        }
+        Insert: {
+          cidade: string
+          cliente: string
+          created_at?: string | null
+          created_by?: string | null
+          descricao?: string | null
+          estado: string
+          id?: string
+          portas_g?: number
+          portas_gg?: number
+          portas_p?: number
+          valor_pago?: number
+        }
+        Update: {
+          cidade?: string
+          cliente?: string
+          created_at?: string | null
+          created_by?: string | null
+          descricao?: string | null
+          estado?: string
+          id?: string
+          portas_g?: number
+          portas_gg?: number
+          portas_p?: number
+          valor_pago?: number
+        }
+        Relationships: []
+      }
       pedidos_producao: {
         Row: {
           arquivado: boolean
