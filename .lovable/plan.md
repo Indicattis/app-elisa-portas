@@ -1,30 +1,30 @@
 
 
-## Plano: Seção de concluídos em Ordens de Instalação
+## Plano: Incluir instalações normais e remover limite de 30 dias
 
 ### O que será feito
 
-Adicionar uma nova seção accordion "Concluídas" ao final da página `/logistica/instalacoes/ordens-instalacoes`, listando Neo Instalações e Neo Correções finalizadas. Usará o componente `NeoFinalizadoRow` já existente.
+Expandir a seção "Concluídas" para incluir também as instalações normais (tabela `instalacoes`) além das Neo, e remover o filtro de 30 dias para mostrar todas.
 
 ### Implementação
 
-**1. Criar hook `useNeoFinalizados`** (`src/hooks/useNeoFinalizados.ts`)
-- Query em `neo_instalacoes` com `concluida = true`, limitado aos últimos 30 dias
-- Query em `neo_correcoes` com `concluida = true`, limitado aos últimos 30 dias
-- Buscar dados do concluidor (`concluida_por` → `admin_users`)
-- Combinar e ordenar por `concluida_em` descendente (mais recentes primeiro)
-- Retornar lista unificada com `_tipo` marcado
+**1. Atualizar hook `useNeoFinalizados.ts`** (renomear para `useFinalizados` semanticamente)
+- Adicionar terceira query: `instalacoes` com `instalacao_concluida = true`
+- Remover filtro `.gte("concluida_em", limite)` das 3 queries
+- Normalizar dados da tabela `instalacoes` (campos diferentes: `instalacao_concluida_em` → `concluida_em`, `instalacao_concluida_por` → `concluida_por`)
+- Marcar com `_tipo: "instalacao"` para diferenciar
+- Buscar concluidor de ambos os conjuntos de user IDs
 
-**2. Modificar `OrdensInstalacoesLogistica.tsx`**
-- Importar o novo hook e `NeoFinalizadoRow`
-- Importar `CheckCircle2` do lucide
-- Adicionar nova `AccordionItem` value="concluidas" após "Correções Avulsas"
-- Ícone `CheckCircle2` verde esmeralda, badge com contagem
-- Renderizar cada item com `NeoFinalizadoRow`
+**2. Atualizar `NeoFinalizadoRow.tsx`**
+- Aceitar o novo tipo `"instalacao"` no `_tipo`
+- Adicionar ícone diferenciado (ex: `Truck` azul) para instalações normais
+- Badge "Instalação" azul para normais, "Neo Instalação" laranja, "Neo Correção" roxa
 
 ### Detalhes técnicos
 
-- Filtro de 30 dias evita carregar histórico completo
-- Reutiliza `NeoFinalizadoRow` que já exibe ícone do tipo, nome, badge, localização, tempo relativo e avatar do concluidor
-- Accordion começa fechado (collapsible, sem defaultValue)
+- Campos na tabela `instalacoes`: `instalacao_concluida`, `instalacao_concluida_em`, `instalacao_concluida_por`, `nome_cliente`, `cidade`, `estado`
+- Campos nas tabelas neo: `concluida`, `concluida_em`, `concluida_por`, `nome_cliente`, `cidade`, `estado`
+- Normalização feita no hook para que o componente receba interface unificada
+- Sem limite de 30 dias — traz todo o histórico
+- Supabase tem limite de 1000 rows por query — se necessário no futuro, paginação pode ser adicionada
 
