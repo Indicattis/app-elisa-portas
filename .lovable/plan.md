@@ -1,19 +1,25 @@
 
 
-## Plano: Coluna "Excesso" na tabela de Pagamentos Autorizados
+## Plano: Aplicar estilo MinimalistLayout em Pagamentos Autorizados
+
+### Diferença atual
+
+- **Frota** (`FrotaMinimalista.tsx`): Usa o componente `MinimalistLayout` que fornece breadcrumb animado, header com título/subtítulo/botão voltar/ações, e layout consistente com fundo escuro.
+- **Pagamentos Autorizados** (`AcordosAutorizados.tsx`): Monta o layout manualmente com header, breadcrumb e filtros separados, sem usar `MinimalistLayout`.
 
 ### O que será feito
 
-Adicionar uma coluna **"Excesso"** na tabela de acordos em `/logistica/pagamentos-autorizados` que mostra a diferença entre o `valor_acordado` e a soma dos `valor_unitario` das portas (valor de referência/permitido).
-
-### Implementação
+Refatorar `AcordosAutorizados.tsx` para usar o `MinimalistLayout`, alinhando o visual com a página de Frota.
 
 **Arquivo: `src/pages/logistica/AcordosAutorizados.tsx`**
 
-1. Adicionar `<TableHead>` "Excesso" após a coluna "Valor"
-2. Calcular o excesso por acordo: `valor_acordado - soma(portas.valor_unitario)`
-3. Exibir o valor formatado com cor condicional:
-   - **Verde** se excesso ≤ 0 (dentro do permitido)
-   - **Vermelho** se excesso > 0 (acima do permitido)
-4. Mostrar "—" se não houver portas cadastradas
+1. Substituir a estrutura manual (`min-h-screen bg-black`, header sticky, `AnimatedBreadcrumb`) pelo componente `MinimalistLayout`
+2. Mover o botão "Novo Acordo" e os filtros (busca + status) para o `headerActions` do layout
+3. Manter a tabela, dialogs e toda a lógica inalterados
+4. Configurar breadcrumb: `Home > Logística > Pagamentos Autorizados`
+5. Usar `backPath="/logistica"`, título "Pagamentos Autorizados", subtítulo "Gerencie acordos de instalação"
+
+### Resultado
+
+A página terá o mesmo padrão visual de header, breadcrumb e espaçamento que a Frota, com os filtros integrados no header.
 
