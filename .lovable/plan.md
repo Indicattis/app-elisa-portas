@@ -1,22 +1,21 @@
 
 
-## Plano: Adicionar coluna "Mecânico" na Frota
-
-### O que será feito
-
-Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
+## Plano: Criar página de Perfil do Usuário
 
 ### Mudanças
 
-1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
+**1. Nova página**: `src/pages/MeuPerfil.tsx`
+- Página com tema escuro (consistente com o resto do app)
+- Exibe: foto de perfil (grande), nome, email, cargo (role), setor
+- Usa o componente `AvatarUpload` existente para permitir alterar a foto
+- Breadcrumb simples: "Início > Meu Perfil"
+- Botão de voltar
 
-2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
+**2. Rota no App.tsx**
+- Adicionar import de `MeuPerfil`
+- Adicionar rota protegida `/perfil`
 
-3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
-
-4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
-
-5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
-
-6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
+**3. Menu flutuante**: `src/components/FloatingProfileMenu.tsx`
+- Adicionar item "Meu Perfil" com ícone `User` antes dos outros itens do menu
+- Sem verificação de permissão (todos os usuários autenticados podem acessar)
 
