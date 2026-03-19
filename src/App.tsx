@@ -253,6 +253,7 @@ import FornecedoresDirecao from "./pages/direcao/estoque/FornecedoresDirecao";
 import DirecaoAprovacoesHub from "./pages/direcao/aprovacoes/DirecaoAprovacoesHub";
 import AprovacoesProducao from "./pages/direcao/aprovacoes/AprovacoesProducao";
 import AprovacoesVendas from "./pages/direcao/aprovacoes/AprovacoesVendas";
+import AprovacoesAutorizados from "./pages/direcao/aprovacoes/AprovacoesAutorizados";
 
 // Hub de Logística Minimalista
 import LogisticaHub from "./pages/logistica/LogisticaHub";
