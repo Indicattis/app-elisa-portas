@@ -46,11 +46,11 @@ export default function PedidosPagosSemEntrega() {
     queryKey: ['pedidos-pagos-sem-entrega'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('pedidos_pagos_sem_entrega')
+        .from('pedidos_pagos_sem_entrega' as any)
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as Pedido[];
+      return (data || []) as Pedido[];
     },
   });
 
