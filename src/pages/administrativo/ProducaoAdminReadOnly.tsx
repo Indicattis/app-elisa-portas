@@ -68,23 +68,19 @@ export default function ProducaoAdminReadOnly() {
 
   // Agrupar itens por etapa, e dentro de cada etapa agrupar por nome do item
   const itensAgrupadosPorEtapa = useMemo(() => {
+    const parseTamanho = (t: string | null): number => {
+      if (!t) return 0;
+      const val = parseFloat(t.replace(',', '.'));
+      return isNaN(val) ? 0 : val;
+    };
     const porEtapa: Record<string, Record<string, { nome: string; quantidadeTotal: number; tamanhoTotal: number; pedidos: Set<number> }>> = {};
     for (const item of itens) {
       const etapa = item.etapa_atual || "sem_etapa";
-      const nome = item.estoque_nome || item.item;
+      const nome = item.estoque_nome || item.nome_produto;
       if (!porEtapa[etapa]) porEtapa[etapa] = {};
       if (!porEtapa[etapa][nome]) porEtapa[etapa][nome] = { nome, quantidadeTotal: 0, tamanhoTotal: 0, pedidos: new Set() };
       porEtapa[etapa][nome].quantidadeTotal += item.quantidade;
-      const parseTamanho = (t: string | null): number => {
-        if (!t) return 0;
-        const val = parseFloat(t.replace(',', '.'));
-        return isNaN(val) ? 0 : val;
-      };
-
-      let tamanho = parseTamanho(item.tamanho);
-      if (tamanho === 0) {
-        tamanho = parseTamanho(item.pedido_linha_tamanho);
-      }
+      const tamanho = parseTamanho(item.tamanho);
       porEtapa[etapa][nome].tamanhoTotal += tamanho * item.quantidade;
       if (item.pedido_numero) porEtapa[etapa][nome].pedidos.add(item.pedido_numero);
     }
