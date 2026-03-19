@@ -53,7 +53,7 @@ export default function ProducaoAdminReadOnly() {
   const contadores = usePedidosContadores();
   const { pedidos, isLoading } = usePedidosEtapas(etapaAtiva);
   const { getResponsavel } = useEtapaResponsaveis();
-  const { itensPorEtapa, isLoading: isLoadingItens } = useItensNaoConcluidosPorEtapa();
+  const { itensPorEtapa, itens, isLoading: isLoadingItens } = useItensNaoConcluidosPorEtapa();
 
   const pedidosFiltrados = useMemo(() => {
     if (!searchTerm.trim()) return pedidos;
@@ -65,6 +65,22 @@ export default function ProducaoAdminReadOnly() {
       return clienteNome.includes(termo) || numeroPedido.includes(termo);
     });
   }, [pedidos, searchTerm]);
+
+  // Agrupar itens por nome do item
+  const itensPorNome = useMemo(() => {
+    const grouped: Record<string, { nome: string; quantidadeTotal: number; etapas: Record<string, number>; pedidos: Set<number> }> = {};
+    for (const item of itens) {
+      const nome = item.estoque_nome || item.item;
+      if (!grouped[nome]) {
+        grouped[nome] = { nome, quantidadeTotal: 0, etapas: {}, pedidos: new Set() };
+      }
+      grouped[nome].quantidadeTotal += item.quantidade;
+      const etapa = item.etapa_atual || "sem_etapa";
+      grouped[nome].etapas[etapa] = (grouped[nome].etapas[etapa] || 0) + item.quantidade;
+      if (item.pedido_numero) grouped[nome].pedidos.add(item.pedido_numero);
+    }
+    return Object.values(grouped).sort((a, b) => b.quantidadeTotal - a.quantidadeTotal);
+  }, [itens]);
 
   // no-op handlers required by PedidosDraggableList
   const noopReorganizar = async () => {};
