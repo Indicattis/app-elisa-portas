@@ -309,8 +309,9 @@ export default function ProducaoAdminReadOnly() {
                             <TableHeader>
                               <TableRow className="border-blue-500/10 hover:bg-white/5">
                                 <TableHead className="text-white/70">Item</TableHead>
-                                <TableHead className="text-white/70 text-right">Qtd Total</TableHead>
-                                <TableHead className="text-white/70">Pedidos</TableHead>
+                                 <TableHead className="text-white/70 text-right">Qtd Total</TableHead>
+                                 <TableHead className="text-white/70 text-right">Tamanho Total</TableHead>
+                                 <TableHead className="text-white/70">Pedidos</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
