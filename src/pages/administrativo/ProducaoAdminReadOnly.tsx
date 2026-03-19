@@ -77,29 +77,15 @@ export default function ProducaoAdminReadOnly() {
       porEtapa[etapa][nome].quantidadeTotal += item.quantidade;
       const parseTamanho = (t: string | null): number => {
         if (!t) return 0;
-        const matchLxA = t.match(/(\d+[.,]?\d*)\s*[xX]\s*(\d+[.,]?\d*)/);
-        if (matchLxA) {
-          return parseFloat(matchLxA[1].replace(',', '.')) * parseFloat(matchLxA[2].replace(',', '.'));
-        }
         const val = parseFloat(t.replace(',', '.'));
         return isNaN(val) ? 0 : val;
       };
 
-      let area = 0;
-      if (item.largura && item.altura) {
-        area = item.largura * item.altura;
-      } else if (item.tamanho) {
-        area = parseTamanho(item.tamanho);
+      let tamanho = parseTamanho(item.tamanho);
+      if (tamanho === 0) {
+        tamanho = parseTamanho(item.pedido_linha_tamanho);
       }
-      // Fallback: dados do pedido_linhas
-      if (area === 0) {
-        if (item.pedido_linha_largura && item.pedido_linha_altura) {
-          area = item.pedido_linha_largura * item.pedido_linha_altura;
-        } else if (item.pedido_linha_tamanho) {
-          area = parseTamanho(item.pedido_linha_tamanho);
-        }
-      }
-      porEtapa[etapa][nome].tamanhoTotal += area * item.quantidade;
+      porEtapa[etapa][nome].tamanhoTotal += tamanho * item.quantidade;
       if (item.pedido_numero) porEtapa[etapa][nome].pedidos.add(item.pedido_numero);
     }
     return porEtapa;
@@ -342,7 +328,7 @@ export default function ProducaoAdminReadOnly() {
                                 <TableRow key={grupo.nome} className="border-blue-500/10 hover:bg-white/5">
                                   <TableCell className="text-white text-sm font-medium">{grupo.nome}</TableCell>
                                    <TableCell className="text-white text-sm text-right font-semibold">{grupo.quantidadeTotal}</TableCell>
-                                   <TableCell className="text-white text-sm text-right">{grupo.tamanhoTotal > 0 ? `${grupo.tamanhoTotal.toFixed(2)}m²` : "-"}</TableCell>
+                                   <TableCell className="text-white text-sm text-right">{grupo.tamanhoTotal > 0 ? `${grupo.tamanhoTotal.toFixed(2)}m` : "-"}</TableCell>
                                    <TableCell className="text-white/60 text-sm">
                                     {Array.from(grupo.pedidos).sort((a, b) => a - b).map(n => `#${n}`).join(", ")}
                                   </TableCell>
