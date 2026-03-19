@@ -73,8 +73,10 @@ export default function ProducaoAdminReadOnly() {
       const etapa = item.etapa_atual || "sem_etapa";
       const nome = item.estoque_nome || item.item;
       if (!porEtapa[etapa]) porEtapa[etapa] = {};
-      if (!porEtapa[etapa][nome]) porEtapa[etapa][nome] = { nome, quantidadeTotal: 0, pedidos: new Set() };
+      if (!porEtapa[etapa][nome]) porEtapa[etapa][nome] = { nome, quantidadeTotal: 0, tamanhoTotal: 0, pedidos: new Set() };
       porEtapa[etapa][nome].quantidadeTotal += item.quantidade;
+      const area = (item.largura && item.altura) ? item.largura * item.altura : 0;
+      porEtapa[etapa][nome].tamanhoTotal += area * item.quantidade;
       if (item.pedido_numero) porEtapa[etapa][nome].pedidos.add(item.pedido_numero);
     }
     return porEtapa;
