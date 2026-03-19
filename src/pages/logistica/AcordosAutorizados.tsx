@@ -1,6 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, Plus, Edit2, Trash2, MoreHorizontal } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Search, Plus, Edit2, Trash2, MoreHorizontal } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,37 +7,19 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
+import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { useAcordosAutorizados, type AcordoAutorizado, type NovoAcordo } from '@/hooks/useAcordosAutorizados';
 import { NovoAcordoDialog } from '@/components/autorizados/NovoAcordoDialog';
 import { formatCurrency } from '@/lib/utils';
@@ -64,20 +45,19 @@ const STATUS_LABELS: Record<string, string> = {
   concluido: 'Concluído',
 };
 
+const PORTA_COLORS: Record<string, string> = {
+  P: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40',
+  G: 'bg-purple-500/20 text-purple-400 border-purple-500/40',
+  GG: 'bg-orange-500/20 text-orange-400 border-orange-500/40',
+};
+
 export default function AcordosAutorizados() {
-  const navigate = useNavigate();
   const { acordos, loading, createAcordo, updateAcordo, deleteAcordo } = useAcordosAutorizados();
-  const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('todos');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [acordoParaEditar, setAcordoParaEditar] = useState<AcordoAutorizado | null>(null);
   const [acordoParaDeletar, setAcordoParaDeletar] = useState<AcordoAutorizado | null>(null);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 50);
-    return () => clearTimeout(timer);
-  }, []);
 
   const acordosFiltrados = useMemo(() => {
     return acordos.filter((acordo) => {
@@ -115,14 +95,6 @@ export default function AcordosAutorizados() {
     }
   };
 
-  // Cores das portas por tamanho
-  const PORTA_COLORS: Record<string, string> = {
-    P: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40',
-    G: 'bg-purple-500/20 text-purple-400 border-purple-500/40',
-    GG: 'bg-orange-500/20 text-orange-400 border-orange-500/40',
-  };
-
-  // Resumo de portas como badges
   const getResumoPortasBadges = (acordo: AcordoAutorizado) => {
     const resumo = acordo.portas.reduce((acc, p) => {
       acc[p.tamanho] = (acc[p.tamanho] || 0) + 1;
@@ -140,221 +112,196 @@ export default function AcordosAutorizados() {
     ));
   };
 
-  // Iniciais do nome
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
-      <AnimatedBreadcrumb 
-        items={[
-          { label: "Home", path: "/home" },
-          { label: "Logística", path: "/logistica" },
-          { label: "Acordos" }
-        ]} 
-        mounted={mounted} 
-      />
-      
-      <div className="pt-12">
-        {/* Header */}
-        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-primary/10">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/logistica')}
-                className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-white/80" />
-              </button>
-              <div>
-                <h1 className="text-lg font-semibold text-white">Acordos com Autorizados</h1>
-                <p className="text-xs text-white/60">Gerencie acordos de instalação</p>
-              </div>
-            </div>
-            <Button
-              onClick={handleNovoAcordo}
-              className="bg-primary hover:bg-primary/90"
-              size="sm"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Acordo
-            </Button>
-          </div>
-        </header>
-
-        {/* Filtros */}
-        <div className="px-4 py-3 border-b border-primary/10">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-              <Input
-                placeholder="Buscar por cliente, autorizado ou cidade..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
-              />
-            </div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full sm:w-48 bg-white/5 border-white/10 text-white">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent className="bg-zinc-800 border-zinc-700">
-                {STATUS_OPTIONS.map(opt => (
-                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Conteúdo */}
-        <div className="px-4 py-4 max-w-7xl mx-auto">
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-            </div>
-          ) : acordosFiltrados.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-white/60">Nenhum acordo encontrado</p>
-              <Button
-                onClick={handleNovoAcordo}
-                variant="outline"
-                className="mt-4 border-white/20 text-white hover:bg-white/10"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Primeiro Acordo
-              </Button>
-            </div>
-          ) : (
-            <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <Table className="text-xs">
-                    <TableHeader>
-                      <TableRow className="border-primary/10 hover:bg-primary/5">
-                        <TableHead className="text-xs text-white/70">Cliente</TableHead>
-                        <TableHead className="text-xs text-white/70">Autorizado</TableHead>
-                        <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
-                        <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
-                        <TableHead className="text-xs text-white/70 text-right">Excesso</TableHead>
-                        <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
-                        <TableHead className="text-xs text-white/70 text-center">Data</TableHead>
-                        <TableHead className="text-xs text-white/70 text-center">Criado por</TableHead>
-                        <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {acordosFiltrados.map((acordo) => (
-                        <TableRow 
-                          key={acordo.id}
-                          className="border-primary/10 hover:bg-primary/10 text-white/90"
-                        >
-                          <TableCell>
-                            <div>
-                              <span className="font-medium">{acordo.cliente_nome}</span>
-                              <p className="text-white/50 text-xs">
-                                {acordo.cliente_cidade} - {acordo.cliente_estado}
-                              </p>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-white/70">
-                            {acordo.autorizado_nome}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              {getResumoPortasBadges(acordo)}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right font-medium text-green-400">
-                            {formatCurrency(acordo.valor_acordado)}
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {acordo.portas.length > 0 ? (() => {
-                              const totalRef = acordo.portas.reduce((sum, p) => sum + p.valor_unitario, 0);
-                              const excesso = acordo.valor_acordado - totalRef;
-                              return (
-                                <span className={excesso > 0 ? 'text-red-400' : 'text-green-400'}>
-                                  {excesso > 0 ? '+' : ''}{formatCurrency(excesso)}
-                                </span>
-                              );
-                            })() : <span className="text-white/40">—</span>}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge 
-                              variant="outline" 
-                              className={STATUS_COLORS[acordo.status]}
-                            >
-                              {STATUS_LABELS[acordo.status]}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center text-white/60">
-                            {format(new Date(acordo.data_acordo), 'dd/MM/yy', { locale: ptBR })}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {acordo.criador ? (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="flex justify-center">
-                                      <Avatar className="h-6 w-6">
-                                        <AvatarImage src={acordo.criador.foto_perfil_url} />
-                                        <AvatarFallback className="text-[10px] bg-primary/20 text-primary">
-                                          {getInitials(acordo.criador.nome)}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>{acordo.criador.nome}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            ) : (
-                              <span className="text-white/40">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 hover:bg-primary/10"
-                                >
-                                  <MoreHorizontal className="h-4 w-4 text-white/60" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700">
-                                <DropdownMenuItem
-                                  className="text-white hover:bg-zinc-700 cursor-pointer"
-                                  onClick={() => handleEditarAcordo(acordo)}
-                                >
-                                  <Edit2 className="h-4 w-4 mr-2" />
-                                  Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-red-400 hover:bg-red-500/20 cursor-pointer"
-                                  onClick={() => setAcordoParaDeletar(acordo)}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Excluir
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+        <Input
+          placeholder="Buscar..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9 w-40 sm:w-56 h-10 bg-white/5 border-white/10 text-white placeholder:text-white/40 text-xs"
+        />
       </div>
+      <Select value={filterStatus} onValueChange={setFilterStatus}>
+        <SelectTrigger className="w-36 h-10 bg-white/5 border-white/10 text-white text-xs">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent className="bg-zinc-800 border-zinc-700">
+          {STATUS_OPTIONS.map(opt => (
+            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button
+        onClick={handleNovoAcordo}
+        size="sm"
+        className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 border border-blue-400/30 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
+      >
+        <Plus className="h-4 w-4" />
+        <span className="hidden sm:inline">Novo Acordo</span>
+      </Button>
+    </div>
+  );
 
-      {/* Dialog de Novo/Editar Acordo */}
+  return (
+    <MinimalistLayout
+      title="Pagamentos Autorizados"
+      subtitle="Gerencie acordos de instalação"
+      backPath="/logistica"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Logística", path: "/logistica" },
+        { label: "Pagamentos Autorizados" }
+      ]}
+      headerActions={headerActions}
+    >
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
+        </div>
+      ) : acordosFiltrados.length === 0 ? (
+        <div className="text-center py-20">
+          <p className="text-white/60">Nenhum acordo encontrado</p>
+          <Button
+            onClick={handleNovoAcordo}
+            variant="outline"
+            className="mt-4 border-white/20 text-white hover:bg-white/10"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Criar Primeiro Acordo
+          </Button>
+        </div>
+      ) : (
+        <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table className="text-xs">
+                <TableHeader>
+                  <TableRow className="border-blue-500/10 hover:bg-white/5">
+                    <TableHead className="text-xs text-white/70">Cliente</TableHead>
+                    <TableHead className="text-xs text-white/70">Autorizado</TableHead>
+                    <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
+                    <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
+                    <TableHead className="text-xs text-white/70 text-right">Excesso</TableHead>
+                    <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
+                    <TableHead className="text-xs text-white/70 text-center">Data</TableHead>
+                    <TableHead className="text-xs text-white/70 text-center">Criado por</TableHead>
+                    <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {acordosFiltrados.map((acordo) => (
+                    <TableRow 
+                      key={acordo.id}
+                      className="border-blue-500/10 hover:bg-white/5 text-white/90"
+                    >
+                      <TableCell>
+                        <div>
+                          <span className="font-medium">{acordo.cliente_nome}</span>
+                          <p className="text-white/50 text-xs">
+                            {acordo.cliente_cidade} - {acordo.cliente_estado}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-white/70">
+                        {acordo.autorizado_nome}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          {getResumoPortasBadges(acordo)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-medium text-green-400">
+                        {formatCurrency(acordo.valor_acordado)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {acordo.portas.length > 0 ? (() => {
+                          const totalRef = acordo.portas.reduce((sum, p) => sum + p.valor_unitario, 0);
+                          const excesso = acordo.valor_acordado - totalRef;
+                          return (
+                            <span className={excesso > 0 ? 'text-red-400' : 'text-green-400'}>
+                              {excesso > 0 ? '+' : ''}{formatCurrency(excesso)}
+                            </span>
+                          );
+                        })() : <span className="text-white/40">—</span>}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge 
+                          variant="outline" 
+                          className={STATUS_COLORS[acordo.status]}
+                        >
+                          {STATUS_LABELS[acordo.status]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center text-white/60">
+                        {format(new Date(acordo.data_acordo), 'dd/MM/yy', { locale: ptBR })}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {acordo.criador ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex justify-center">
+                                  <Avatar className="h-6 w-6">
+                                    <AvatarImage src={acordo.criador.foto_perfil_url} />
+                                    <AvatarFallback className="text-[10px] bg-primary/20 text-primary">
+                                      {getInitials(acordo.criador.nome)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{acordo.criador.nome}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          <span className="text-white/40">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-white/10"
+                            >
+                              <MoreHorizontal className="h-4 w-4 text-white/60" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700">
+                            <DropdownMenuItem
+                              className="text-white hover:bg-zinc-700 cursor-pointer"
+                              onClick={() => handleEditarAcordo(acordo)}
+                            >
+                              <Edit2 className="h-4 w-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-red-400 hover:bg-red-500/20 cursor-pointer"
+                              onClick={() => setAcordoParaDeletar(acordo)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <NovoAcordoDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
@@ -362,9 +309,8 @@ export default function AcordosAutorizados() {
         acordoParaEditar={acordoParaEditar}
       />
 
-      {/* Dialog de Confirmação de Delete */}
       <AlertDialog open={!!acordoParaDeletar} onOpenChange={() => setAcordoParaDeletar(null)}>
-        <AlertDialogContent className="bg-zinc-900 border-zinc-700">
+        <AlertDialogContent className="bg-black/90 border-white/10 backdrop-blur-xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">Confirmar Exclusão</AlertDialogTitle>
             <AlertDialogDescription className="text-white/60">
@@ -373,18 +319,18 @@ export default function AcordosAutorizados() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-zinc-800 border-zinc-600 text-white hover:bg-zinc-700">
+            <AlertDialogCancel className="border-white/20 bg-white/10 text-white hover:bg-white/15">
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmarDelete}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-500/80 hover:bg-red-500 text-white"
             >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </MinimalistLayout>
   );
 }
