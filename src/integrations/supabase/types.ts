@@ -75,6 +75,9 @@ export type Database = {
       }
       acordos_instalacao_autorizados: {
         Row: {
+          aprovado_direcao: boolean
+          aprovado_direcao_em: string | null
+          aprovado_direcao_por: string | null
           autorizado_id: string
           cliente_cidade: string
           cliente_estado: string
@@ -90,6 +93,9 @@ export type Database = {
           valor_acordado: number
         }
         Insert: {
+          aprovado_direcao?: boolean
+          aprovado_direcao_em?: string | null
+          aprovado_direcao_por?: string | null
           autorizado_id: string
           cliente_cidade: string
           cliente_estado: string
@@ -105,6 +111,9 @@ export type Database = {
           valor_acordado?: number
         }
         Update: {
+          aprovado_direcao?: boolean
+          aprovado_direcao_em?: string | null
+          aprovado_direcao_por?: string | null
           autorizado_id?: string
           cliente_cidade?: string
           cliente_estado?: string
