@@ -10,6 +10,7 @@ const menuItems = [
   { label: 'Vendas', icon: ShoppingCart, path: '/direcao/vendas' },
   { label: 'DRE', icon: Calculator, path: '/direcao/dre' },
   { label: 'Faturamento', icon: DollarSign, path: '/direcao/faturamento' },
+  { label: 'Checklist Liderança', icon: ClipboardCheck, path: '/direcao/checklist-lideranca' },
   { label: 'Gestão de Fábrica', icon: Factory, path: '/direcao/gestao-fabrica' },
   { label: 'Gestão de Instalações', icon: Truck, path: '/direcao/gestao-instalacao' },
   { label: 'Estoque', icon: Warehouse, path: '/direcao/estoque' },
@@ -17,7 +18,6 @@ const menuItems = [
   { label: 'Autorizados', icon: Users, path: '/direcao/autorizados' },
   { label: 'Aprovações', icon: ShieldCheck, path: '/direcao/aprovacoes' },
   { label: 'Organograma RH', icon: Network, path: '/direcao/gestao-colaboradores' },
-  { label: 'Checklist Liderança', icon: ClipboardCheck, path: '/direcao/checklist-lideranca' },
 ];
 
 export default function DirecaoHub() {
