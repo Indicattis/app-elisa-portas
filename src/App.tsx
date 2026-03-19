@@ -253,6 +253,7 @@ import FornecedoresDirecao from "./pages/direcao/estoque/FornecedoresDirecao";
 import DirecaoAprovacoesHub from "./pages/direcao/aprovacoes/DirecaoAprovacoesHub";
 import AprovacoesProducao from "./pages/direcao/aprovacoes/AprovacoesProducao";
 import AprovacoesVendas from "./pages/direcao/aprovacoes/AprovacoesVendas";
+import AprovacoesAutorizados from "./pages/direcao/aprovacoes/AprovacoesAutorizados";
 
 // Hub de Logística Minimalista
 import LogisticaHub from "./pages/logistica/LogisticaHub";
@@ -528,6 +529,7 @@ const App = () => (
                 <Route path="/direcao/aprovacoes" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoAprovacoesHub /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><AprovacoesProducao /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/vendas" element={<ProtectedRoute routeKey="direcao_hub"><AprovacoesVendas /></ProtectedRoute>} />
+                <Route path="/direcao/aprovacoes/autorizados" element={<ProtectedRoute routeKey="direcao_hub"><AprovacoesAutorizados /></ProtectedRoute>} />
 
                 {/* Checklist Liderança */}
                 <Route path="/direcao/checklist-lideranca" element={<ProtectedRoute routeKey="direcao_hub"><ChecklistLideranca /></ProtectedRoute>} />

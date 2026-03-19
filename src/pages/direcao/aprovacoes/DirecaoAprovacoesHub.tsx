@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Factory, ArrowLeft, ShieldCheck, ShoppingCart } from 'lucide-react';
+import { Factory, ArrowLeft, ShieldCheck, ShoppingCart, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -11,6 +11,7 @@ import { DelayedParticles } from '@/components/DelayedParticles';
 const menuItems = [
   { label: 'Aprovações Fábrica', icon: Factory, path: '/direcao/aprovacoes/fabrica' },
   { label: 'Aprovações Vendas', icon: ShoppingCart, path: '/direcao/aprovacoes/vendas' },
+  { label: 'Aprovações Autorizados', icon: Users, path: '/direcao/aprovacoes/autorizados' },
 ];
 
 export default function DirecaoAprovacoesHub() {
@@ -40,9 +41,21 @@ export default function DirecaoAprovacoesHub() {
     },
   });
 
+  const { data: countAutorizados } = useQuery({
+    queryKey: ['aprovacoes-autorizados-count'],
+    queryFn: async () => {
+      const { count } = await (supabase
+        .from('acordos_instalacao_autorizados')
+        .select('*', { count: 'exact', head: true }) as any)
+        .eq('aprovado_direcao', false);
+      return count || 0;
+    },
+  });
+
   const countsMap: Record<string, number> = {
     '/direcao/aprovacoes/fabrica': countFabrica || 0,
     '/direcao/aprovacoes/vendas': (countVendas as number) || 0,
+    '/direcao/aprovacoes/autorizados': (countAutorizados as number) || 0,
   };
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
