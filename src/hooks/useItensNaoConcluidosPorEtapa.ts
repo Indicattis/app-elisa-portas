@@ -14,6 +14,9 @@ export interface ItemNaoConcluido {
   estoque_nome: string | null;
   pedido_numero: number | null;
   etapa_atual: string | null;
+  pedido_linha_tamanho: string | null;
+  pedido_linha_largura: number | null;
+  pedido_linha_altura: number | null;
 }
 
 export function useItensNaoConcluidosPorEtapa() {
