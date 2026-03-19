@@ -97,11 +97,23 @@ export default function ChecklistLideranca() {
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <h1 className="text-3xl font-bold">
-            Checklist Liderança - {setorLabel}
+            Checklist Liderança
           </h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie tarefas do setor {setorLabel.toLowerCase()}
+            Gerencie tarefas por setor
           </p>
+          <div className="mt-3 w-64">
+            <Select value={setor} onValueChange={setSetor}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o setor" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(SETOR_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Card do Responsável */}
