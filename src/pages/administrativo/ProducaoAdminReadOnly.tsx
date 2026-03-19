@@ -311,7 +311,6 @@ export default function ProducaoAdminReadOnly() {
             </div>
           </Card>
         )}
-        )}
       </div>
     </MinimalistLayout>
   );
