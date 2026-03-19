@@ -26,6 +26,8 @@ import { useNeoCorrecoesListagem } from "@/hooks/useNeoCorrecoes";
 import { OrdemInstalacaoRow } from "@/components/instalacoes/OrdemInstalacaoRow";
 import { NeoInstalacaoRow } from "@/components/instalacoes/NeoInstalacaoRow";
 import { NeoCorrecaoRow } from "@/components/instalacoes/NeoCorrecaoRow";
+import { NeoFinalizadoRow } from "@/components/instalacoes/NeoFinalizadoRow";
+import { useNeoFinalizados } from "@/hooks/useNeoFinalizados";
 import { PedidoDetalhesSheet } from "@/components/pedidos/PedidoDetalhesSheet";
 import { NeoInstalacao } from "@/types/neoInstalacao";
 import { NeoCorrecao } from "@/types/neoCorrecao";
