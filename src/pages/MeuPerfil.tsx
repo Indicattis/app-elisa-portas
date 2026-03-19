@@ -16,11 +16,9 @@ export default function MeuPerfil() {
   const { user, userRole } = useAuth();
   const { toast } = useToast();
 
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
-  const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -31,10 +29,6 @@ export default function MeuPerfil() {
   };
 
   const handleUpdatePassword = async () => {
-    if (!currentPassword) {
-      toast({ variant: "destructive", title: "Erro", description: "Informe a senha atual" });
-      return;
-    }
     if (newPassword.length < 6) {
       toast({ variant: "destructive", title: "Erro", description: "A nova senha deve ter pelo menos 6 caracteres" });
       return;
@@ -46,22 +40,10 @@ export default function MeuPerfil() {
 
     setChangingPassword(true);
     try {
-      // Verify current password
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email!,
-        password: currentPassword,
-      });
-      if (signInError) {
-        toast({ variant: "destructive", title: "Erro", description: "Senha atual incorreta" });
-        return;
-      }
-
-      // Update password
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
 
       toast({ title: "Sucesso", description: "Senha alterada com sucesso" });
-      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: any) {
@@ -144,22 +126,6 @@ export default function MeuPerfil() {
           </div>
 
           <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-white/60 text-xs uppercase tracking-wider">Senha atual</Label>
-              <div className="relative">
-                <Input
-                  type={showCurrent ? "text" : "password"}
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white pr-10"
-                  placeholder="••••••"
-                />
-                <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
-                  {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
             <div className="space-y-1.5">
               <Label className="text-white/60 text-xs uppercase tracking-wider">Nova senha</Label>
               <div className="relative">
