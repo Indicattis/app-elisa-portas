@@ -56,6 +56,13 @@ export function NeoFinalizadoRow({ item }: NeoFinalizadoRowProps) {
         {item.cidade}/{item.estado}
       </span>
 
+      {item.equipe_nome && (
+        <span className="text-xs text-muted-foreground shrink-0 hidden sm:flex items-center gap-1">
+          <Users className="h-3 w-3" />
+          {item.equipe_nome}
+        </span>
+      )}
+
       {tempoRelativo && (
         <span className="text-xs text-muted-foreground shrink-0 hidden md:block">
           {tempoRelativo}
