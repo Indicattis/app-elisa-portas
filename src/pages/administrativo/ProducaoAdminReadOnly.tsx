@@ -75,7 +75,15 @@ export default function ProducaoAdminReadOnly() {
       if (!porEtapa[etapa]) porEtapa[etapa] = {};
       if (!porEtapa[etapa][nome]) porEtapa[etapa][nome] = { nome, quantidadeTotal: 0, tamanhoTotal: 0, pedidos: new Set() };
       porEtapa[etapa][nome].quantidadeTotal += item.quantidade;
-      const area = (item.largura && item.altura) ? item.largura * item.altura : 0;
+      let area = 0;
+      if (item.largura && item.altura) {
+        area = item.largura * item.altura;
+      } else if (item.tamanho) {
+        const match = item.tamanho.match(/(\d+[.,]?\d*)\s*[xX]\s*(\d+[.,]?\d*)/);
+        if (match) {
+          area = parseFloat(match[1].replace(',', '.')) * parseFloat(match[2].replace(',', '.'));
+        }
+      }
       porEtapa[etapa][nome].tamanhoTotal += area * item.quantidade;
       if (item.pedido_numero) porEtapa[etapa][nome].pedidos.add(item.pedido_numero);
     }
