@@ -310,12 +310,7 @@ export default function ProducaoAdminReadOnly() {
               </Table>
             </div>
           </Card>
-                      </CollapsibleContent>
-                    </Card>
-                  </Collapsible>
-                );
-              })}
-          </div>
+        )}
         )}
       </div>
     </MinimalistLayout>
