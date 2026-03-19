@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { DollarSign, Users, ShoppingCart, FileText, Package, Lock, ArrowLeft, FolderOpen, AlertTriangle } from "lucide-react";
+import { DollarSign, Users, ShoppingCart, FileText, Package, Lock, ArrowLeft, FolderOpen, AlertTriangle, Factory } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
