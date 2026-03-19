@@ -66,20 +66,18 @@ export default function ProducaoAdminReadOnly() {
     });
   }, [pedidos, searchTerm]);
 
-  // Agrupar itens por nome do item
-  const itensPorNome = useMemo(() => {
-    const grouped: Record<string, { nome: string; quantidadeTotal: number; etapas: Record<string, number>; pedidos: Set<number> }> = {};
+  // Agrupar itens por etapa, e dentro de cada etapa agrupar por nome do item
+  const itensAgrupadosPorEtapa = useMemo(() => {
+    const porEtapa: Record<string, Record<string, { nome: string; quantidadeTotal: number; pedidos: Set<number> }>> = {};
     for (const item of itens) {
-      const nome = item.estoque_nome || item.item;
-      if (!grouped[nome]) {
-        grouped[nome] = { nome, quantidadeTotal: 0, etapas: {}, pedidos: new Set() };
-      }
-      grouped[nome].quantidadeTotal += item.quantidade;
       const etapa = item.etapa_atual || "sem_etapa";
-      grouped[nome].etapas[etapa] = (grouped[nome].etapas[etapa] || 0) + item.quantidade;
-      if (item.pedido_numero) grouped[nome].pedidos.add(item.pedido_numero);
+      const nome = item.estoque_nome || item.item;
+      if (!porEtapa[etapa]) porEtapa[etapa] = {};
+      if (!porEtapa[etapa][nome]) porEtapa[etapa][nome] = { nome, quantidadeTotal: 0, pedidos: new Set() };
+      porEtapa[etapa][nome].quantidadeTotal += item.quantidade;
+      if (item.pedido_numero) porEtapa[etapa][nome].pedidos.add(item.pedido_numero);
     }
-    return Object.values(grouped).sort((a, b) => b.quantidadeTotal - a.quantidadeTotal);
+    return porEtapa;
   }, [itens]);
 
   // no-op handlers required by PedidosDraggableList
