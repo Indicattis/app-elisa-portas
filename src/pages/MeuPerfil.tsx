@@ -126,6 +126,7 @@ export default function MeuPerfil() {
           </div>
 
           <div className="space-y-4">
+            <div className="space-y-1.5">
               <Label className="text-white/60 text-xs uppercase tracking-wider">Nova senha</Label>
               <div className="relative">
                 <Input
@@ -170,5 +171,4 @@ export default function MeuPerfil() {
       </div>
     </div>
   );
-}
 }
