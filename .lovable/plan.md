@@ -1,30 +1,30 @@
 
 
-## Plano: Incluir instalações normais e remover limite de 30 dias
+## Plano: Adicionar equipe responsável nas concluídas
 
 ### O que será feito
 
-Expandir a seção "Concluídas" para incluir também as instalações normais (tabela `instalacoes`) além das Neo, e remover o filtro de 30 dias para mostrar todas.
+Mostrar o nome da equipe que realizou cada instalação/correção na seção "Concluídas".
 
 ### Implementação
 
-**1. Atualizar hook `useNeoFinalizados.ts`** (renomear para `useFinalizados` semanticamente)
-- Adicionar terceira query: `instalacoes` com `instalacao_concluida = true`
-- Remover filtro `.gte("concluida_em", limite)` das 3 queries
-- Normalizar dados da tabela `instalacoes` (campos diferentes: `instalacao_concluida_em` → `concluida_em`, `instalacao_concluida_por` → `concluida_por`)
-- Marcar com `_tipo: "instalacao"` para diferenciar
-- Buscar concluidor de ambos os conjuntos de user IDs
+**1. Atualizar `useNeoFinalizados.ts`**
+- Adicionar `equipe_nome` ao select de `neo_instalacoes` e `neo_correcoes`
+- Adicionar `responsavel_instalacao_nome` ao select de `instalacoes`
+- Normalizar para um campo unificado `equipe_nome` no `FinalizadoItem`
+- Adicionar `equipe_nome: string | null` à interface `FinalizadoItem`
 
 **2. Atualizar `NeoFinalizadoRow.tsx`**
-- Aceitar o novo tipo `"instalacao"` no `_tipo`
-- Adicionar ícone diferenciado (ex: `Truck` azul) para instalações normais
-- Badge "Instalação" azul para normais, "Neo Instalação" laranja, "Neo Correção" roxa
+- Exibir o nome da equipe como badge ou texto ao lado da localização
+- Usar um estilo discreto (texto muted ou badge outline) para não poluir a linha
 
 ### Detalhes técnicos
 
-- Campos na tabela `instalacoes`: `instalacao_concluida`, `instalacao_concluida_em`, `instalacao_concluida_por`, `nome_cliente`, `cidade`, `estado`
-- Campos nas tabelas neo: `concluida`, `concluida_em`, `concluida_por`, `nome_cliente`, `cidade`, `estado`
-- Normalização feita no hook para que o componente receba interface unificada
-- Sem limite de 30 dias — traz todo o histórico
-- Supabase tem limite de 1000 rows por query — se necessário no futuro, paginação pode ser adicionada
+| Tabela | Campo equipe |
+|--------|-------------|
+| `neo_instalacoes` | `equipe_nome` (já desnormalizado) |
+| `neo_correcoes` | `equipe_nome` (já desnormalizado) |
+| `instalacoes` | `responsavel_instalacao_nome` |
+
+Os campos já existem nas tabelas — não precisa de joins adicionais, apenas incluir nos selects.
 
