@@ -281,6 +281,7 @@ import FrotaConferenciasHistoricoMinimalista from "./pages/logistica/FrotaConfer
 import FrotaConferenciaMinimalista from "./pages/logistica/FrotaConferenciaMinimalista";
 import FreteMinimalista from "./pages/logistica/FreteMinimalista";
 import AcordosAutorizados from "./pages/logistica/AcordosAutorizados";
+import PedidosPagosSemEntrega from "./pages/logistica/PedidosPagosSemEntrega";
 import AutorizadosLogistica from "./pages/logistica/AutorizadosLogistica";
 import AutorizadosPrecosDirecao from "./pages/direcao/AutorizadosPrecosDirecao";
 import EstadoAutorizadosDirecao from "./pages/direcao/EstadoAutorizadosDirecao";
