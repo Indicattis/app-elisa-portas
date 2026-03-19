@@ -1,25 +1,41 @@
 
 
-## Plano: Aplicar estilo MinimalistLayout em Pagamentos Autorizados
-
-### Diferença atual
-
-- **Frota** (`FrotaMinimalista.tsx`): Usa o componente `MinimalistLayout` que fornece breadcrumb animado, header com título/subtítulo/botão voltar/ações, e layout consistente com fundo escuro.
-- **Pagamentos Autorizados** (`AcordosAutorizados.tsx`): Monta o layout manualmente com header, breadcrumb e filtros separados, sem usar `MinimalistLayout`.
+## Plano: Aprovações Autorizados em /direcao/aprovacoes
 
 ### O que será feito
 
-Refatorar `AcordosAutorizados.tsx` para usar o `MinimalistLayout`, alinhando o visual com a página de Frota.
+1. **Migração DB**: Adicionar coluna `aprovado_direcao` (boolean, default false) e `aprovado_direcao_por` (uuid) e `aprovado_direcao_em` (timestamptz) na tabela `acordos_instalacao_autorizados`
+2. **Nova página**: Criar `src/pages/direcao/aprovacoes/AprovacoesAutorizados.tsx` — reutiliza a mesma tabela de acordos do `AcordosAutorizados.tsx` mas sem criar/editar/excluir, e com botão de aprovar por linha
+3. **Hub**: Adicionar botão "Aprovações Autorizados" com ícone `Users` no `DirecaoAprovacoesHub.tsx` com contador de acordos pendentes de aprovação (`aprovado_direcao = false`)
+4. **Rota**: Registrar `/direcao/aprovacoes/autorizados` no `App.tsx`
 
-**Arquivo: `src/pages/logistica/AcordosAutorizados.tsx`**
+### Implementação
 
-1. Substituir a estrutura manual (`min-h-screen bg-black`, header sticky, `AnimatedBreadcrumb`) pelo componente `MinimalistLayout`
-2. Mover o botão "Novo Acordo" e os filtros (busca + status) para o `headerActions` do layout
-3. Manter a tabela, dialogs e toda a lógica inalterados
-4. Configurar breadcrumb: `Home > Logística > Pagamentos Autorizados`
-5. Usar `backPath="/logistica"`, título "Pagamentos Autorizados", subtítulo "Gerencie acordos de instalação"
+**1. Migração SQL**
+```sql
+ALTER TABLE public.acordos_instalacao_autorizados
+  ADD COLUMN aprovado_direcao boolean NOT NULL DEFAULT false,
+  ADD COLUMN aprovado_direcao_por uuid REFERENCES auth.users(id),
+  ADD COLUMN aprovado_direcao_em timestamptz;
+```
 
-### Resultado
+**2. `src/pages/direcao/aprovacoes/AprovacoesAutorizados.tsx`**
+- Usa `MinimalistLayout` com breadcrumb `Home > Direção > Aprovações > Autorizados`
+- Busca acordos com `aprovado_direcao = false` (pendentes) — com toggle para ver todos
+- Mesma tabela do `AcordosAutorizados` (cliente, autorizado, portas, valor, excesso, status, data, criador)
+- Coluna extra "Aprovação" com botão verde "Aprovar" que seta `aprovado_direcao = true`, `aprovado_direcao_por = user.id`, `aprovado_direcao_em = now()`
+- Badge visual para acordos já aprovados
 
-A página terá o mesmo padrão visual de header, breadcrumb e espaçamento que a Frota, com os filtros integrados no header.
+**3. `DirecaoAprovacoesHub.tsx`**
+- Adicionar item: `{ label: 'Aprovações Autorizados', icon: Users, path: '/direcao/aprovacoes/autorizados' }`
+- Contador: acordos com `aprovado_direcao = false`
+
+**4. `App.tsx`**
+- Nova rota `/direcao/aprovacoes/autorizados` → `AprovacoesAutorizados`
+
+### Detalhes técnicos
+
+- A nova página é read-only do ponto de vista de CRUD (sem criar/editar/excluir acordos)
+- Apenas a ação de aprovar é permitida, atualizando os 3 campos de aprovação
+- O hook `useAcordosAutorizados` será reutilizado para buscar dados; a aprovação será uma chamada direta ao Supabase na página
 
