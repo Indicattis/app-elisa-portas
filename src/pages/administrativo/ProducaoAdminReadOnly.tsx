@@ -68,13 +68,15 @@ export default function ProducaoAdminReadOnly() {
 
   // Agrupar itens por etapa, e dentro de cada etapa agrupar por nome do item
   const itensAgrupadosPorEtapa = useMemo(() => {
-    const porEtapa: Record<string, Record<string, { nome: string; quantidadeTotal: number; pedidos: Set<number> }>> = {};
+    const porEtapa: Record<string, Record<string, { nome: string; quantidadeTotal: number; tamanhoTotal: number; pedidos: Set<number> }>> = {};
     for (const item of itens) {
       const etapa = item.etapa_atual || "sem_etapa";
       const nome = item.estoque_nome || item.item;
       if (!porEtapa[etapa]) porEtapa[etapa] = {};
-      if (!porEtapa[etapa][nome]) porEtapa[etapa][nome] = { nome, quantidadeTotal: 0, pedidos: new Set() };
+      if (!porEtapa[etapa][nome]) porEtapa[etapa][nome] = { nome, quantidadeTotal: 0, tamanhoTotal: 0, pedidos: new Set() };
       porEtapa[etapa][nome].quantidadeTotal += item.quantidade;
+      const area = (item.largura && item.altura) ? item.largura * item.altura : 0;
+      porEtapa[etapa][nome].tamanhoTotal += area * item.quantidade;
       if (item.pedido_numero) porEtapa[etapa][nome].pedidos.add(item.pedido_numero);
     }
     return porEtapa;
@@ -307,16 +309,18 @@ export default function ProducaoAdminReadOnly() {
                             <TableHeader>
                               <TableRow className="border-blue-500/10 hover:bg-white/5">
                                 <TableHead className="text-white/70">Item</TableHead>
-                                <TableHead className="text-white/70 text-right">Qtd Total</TableHead>
-                                <TableHead className="text-white/70">Pedidos</TableHead>
+                                 <TableHead className="text-white/70 text-right">Qtd Total</TableHead>
+                                 <TableHead className="text-white/70 text-right">Tamanho Total</TableHead>
+                                 <TableHead className="text-white/70">Pedidos</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
                               {listaItens.map((grupo) => (
                                 <TableRow key={grupo.nome} className="border-blue-500/10 hover:bg-white/5">
                                   <TableCell className="text-white text-sm font-medium">{grupo.nome}</TableCell>
-                                  <TableCell className="text-white text-sm text-right font-semibold">{grupo.quantidadeTotal}</TableCell>
-                                  <TableCell className="text-white/60 text-sm">
+                                   <TableCell className="text-white text-sm text-right font-semibold">{grupo.quantidadeTotal}</TableCell>
+                                   <TableCell className="text-white text-sm text-right">{grupo.tamanhoTotal > 0 ? `${grupo.tamanhoTotal.toFixed(2)}m²` : "-"}</TableCell>
+                                   <TableCell className="text-white/60 text-sm">
                                     {Array.from(grupo.pedidos).sort((a, b) => a - b).map(n => `#${n}`).join(", ")}
                                   </TableCell>
                                 </TableRow>
