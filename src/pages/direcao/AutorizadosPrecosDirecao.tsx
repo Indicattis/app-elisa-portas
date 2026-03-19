@@ -206,7 +206,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                 <Plus className="h-4 w-4 mr-1" />
                 Novo Estado
               </Button>
-              {contexto !== 'logistica' && (
+              {contexto === 'logistica' && (
                 <Button
                   onClick={handleNovoAcordo}
                   className="bg-primary hover:bg-primary/90"
