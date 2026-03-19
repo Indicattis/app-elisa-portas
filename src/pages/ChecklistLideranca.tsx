@@ -42,6 +42,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 export default function ChecklistLideranca() {
+  const navigate = useNavigate();
   // Filtrar tarefas do setor "Direção"
   const setor = 'direcao';
   
