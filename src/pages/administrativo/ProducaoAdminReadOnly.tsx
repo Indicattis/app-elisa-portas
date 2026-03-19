@@ -328,7 +328,7 @@ export default function ProducaoAdminReadOnly() {
                                 <TableRow key={grupo.nome} className="border-blue-500/10 hover:bg-white/5">
                                   <TableCell className="text-white text-sm font-medium">{grupo.nome}</TableCell>
                                    <TableCell className="text-white text-sm text-right font-semibold">{grupo.quantidadeTotal}</TableCell>
-                                   <TableCell className="text-white text-sm text-right">{grupo.tamanhoTotal > 0 ? `${grupo.tamanhoTotal.toFixed(2)}m²` : "-"}</TableCell>
+                                   <TableCell className="text-white text-sm text-right">{grupo.tamanhoTotal > 0 ? `${grupo.tamanhoTotal.toFixed(2)}m` : "-"}</TableCell>
                                    <TableCell className="text-white/60 text-sm">
                                     {Array.from(grupo.pedidos).sort((a, b) => a - b).map(n => `#${n}`).join(", ")}
                                   </TableCell>
