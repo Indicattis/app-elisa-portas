@@ -421,7 +421,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
         estadosCadastrados={estados.map(e => e.sigla)}
       />
 
-      {contexto !== 'logistica' && (
+      {contexto === 'logistica' && (
         <>
           <NovoAcordoDialog
             open={acordoDialogOpen}
