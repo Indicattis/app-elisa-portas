@@ -66,8 +66,7 @@ export function useRankingEquipesInstalacao() {
         `)
         .eq('instalacao_concluida', true)
         .eq('tipo_instalacao', 'elisa')
-        .not('responsavel_instalacao_id', 'is', null)
-        .not('pedido_id', 'is', null);
+        .not('responsavel_instalacao_id', 'is', null);
 
       let queryNeoInstalacoes = supabase
         .from('neo_instalacoes')
