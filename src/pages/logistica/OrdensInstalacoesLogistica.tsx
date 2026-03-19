@@ -403,6 +403,36 @@ export default function OrdensInstalacoesLogistica() {
                 )}
               </AccordionContent>
             </AccordionItem>
+
+            {/* SEÇÃO 6: Concluídas */}
+            <AccordionItem value="concluidas" className="border rounded-lg px-3">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                  <span className="text-lg font-semibold">Concluídas</span>
+                  <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-600">
+                    {finalizados.length}
+                  </Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                {isLoadingFinalizados ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    Carregando concluídas...
+                  </div>
+                ) : finalizados.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground text-sm">
+                    Nenhuma instalação ou correção concluída nos últimos 30 dias.
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {finalizados.map((item) => (
+                      <NeoFinalizadoRow key={item.id} item={item} />
+                    ))}
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
           </Accordion>
         </div>
       </div>
