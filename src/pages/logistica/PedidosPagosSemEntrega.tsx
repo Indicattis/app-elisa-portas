@@ -50,7 +50,7 @@ export default function PedidosPagosSemEntrega() {
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []) as Pedido[];
+      return (data || []) as unknown as Pedido[];
     },
   });
 
