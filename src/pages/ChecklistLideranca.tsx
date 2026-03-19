@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTarefas } from "@/hooks/useTarefas";
 import { useSetorInfo } from "@/hooks/useSetorInfo";
 import { NovaTarefaModal } from "@/components/todo/NovaTarefaModal";
@@ -43,8 +44,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
 
 export default function ChecklistLideranca() {
   const navigate = useNavigate();
-  // Filtrar tarefas do setor "Direção"
-  const setor = 'direcao';
+  const [setor, setSetor] = useState<string>('vendas');
   
   const { user, userRole } = useAuth();
   const { 
@@ -66,7 +66,7 @@ export default function ChecklistLideranca() {
   const [tarefaParaDeletar, setTarefaParaDeletar] = useState<string | null>(null);
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
-  const setorLabel = SETOR_LABELS[setor as keyof typeof SETOR_LABELS] || 'Direção';
+  const setorLabel = SETOR_LABELS[setor as keyof typeof SETOR_LABELS] || setor;
   
   // Verificar se o usuário é o responsável pelo setor
   const isResponsavelSetor = responsavelSetor?.user_id === user?.id;
@@ -97,11 +97,23 @@ export default function ChecklistLideranca() {
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <h1 className="text-3xl font-bold">
-            Checklist Liderança - {setorLabel}
+            Checklist Liderança
           </h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie tarefas do setor {setorLabel.toLowerCase()}
+            Gerencie tarefas por setor
           </p>
+          <div className="mt-3 w-64">
+            <Select value={setor} onValueChange={setSetor}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o setor" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(SETOR_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Card do Responsável */}
