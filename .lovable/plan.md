@@ -1,35 +1,30 @@
 
 
-## Diagnóstico: Ranking de equipes vazio
+## Plano: Seção de concluídos em Ordens de Instalação
 
-### Problema identificado
+### O que será feito
 
-A query no hook `useRankingEquipesInstalacao.ts` filtra instalações com **ambas** as condições:
-- `responsavel_instalacao_id IS NOT NULL`
-- `pedido_id IS NOT NULL`
+Adicionar uma nova seção accordion "Concluídas" ao final da página `/logistica/instalacoes/ordens-instalacoes`, listando Neo Instalações e Neo Correções finalizadas. Usará o componente `NeoFinalizadoRow` já existente.
 
-Porém, os dados mostram que as instalações concluídas têm **ou** `responsavel_instalacao_id` preenchido (com `pedido_id` nulo) **ou** `pedido_id` preenchido (com `responsavel_instalacao_id` nulo). A combinação AND retorna zero resultados.
+### Implementação
 
-Existem 18 instalações concluídas com `responsavel_instalacao_id` preenchido que deveriam aparecer no ranking.
+**1. Criar hook `useNeoFinalizados`** (`src/hooks/useNeoFinalizados.ts`)
+- Query em `neo_instalacoes` com `concluida = true`, limitado aos últimos 30 dias
+- Query em `neo_correcoes` com `concluida = true`, limitado aos últimos 30 dias
+- Buscar dados do concluidor (`concluida_por` → `admin_users`)
+- Combinar e ordenar por `concluida_em` descendente (mais recentes primeiro)
+- Retornar lista unificada com `_tipo` marcado
 
-### Correção
+**2. Modificar `OrdensInstalacoesLogistica.tsx`**
+- Importar o novo hook e `NeoFinalizadoRow`
+- Importar `CheckCircle2` do lucide
+- Adicionar nova `AccordionItem` value="concluidas" após "Correções Avulsas"
+- Ícone `CheckCircle2` verde esmeralda, badge com contagem
+- Renderizar cada item com `NeoFinalizadoRow`
 
-**Arquivo:** `src/hooks/useRankingEquipesInstalacao.ts`
+### Detalhes técnicos
 
-Remover o filtro `.not('pedido_id', 'is', null)` da query de instalações (linha 70), mantendo apenas o filtro de `responsavel_instalacao_id` que é o campo relevante para associar a equipe.
-
-**Antes:**
-```ts
-.eq('instalacao_concluida', true)
-.eq('tipo_instalacao', 'elisa')
-.not('responsavel_instalacao_id', 'is', null)
-.not('pedido_id', 'is', null);
-```
-
-**Depois:**
-```ts
-.eq('instalacao_concluida', true)
-.eq('tipo_instalacao', 'elisa')
-.not('responsavel_instalacao_id', 'is', null);
-```
+- Filtro de 30 dias evita carregar histórico completo
+- Reutiliza `NeoFinalizadoRow` que já exibe ícone do tipo, nome, badge, localização, tempo relativo e avatar do concluidor
+- Accordion começa fechado (collapsible, sem defaultValue)
 
