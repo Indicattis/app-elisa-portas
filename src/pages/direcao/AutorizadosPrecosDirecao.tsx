@@ -340,6 +340,17 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                                 <TableCell className="text-right font-medium text-green-400">
                                   {formatCurrency(acordo.valor_acordado)}
                                 </TableCell>
+                                <TableCell className="text-right font-medium">
+                                  {(() => {
+                                    const totalRef = acordo.portas.reduce((sum, p) => sum + (p.valor_unitario || 0), 0);
+                                    const excesso = acordo.valor_acordado - totalRef;
+                                    return (
+                                      <span className={excesso > 0 ? 'text-red-400' : 'text-green-400'}>
+                                        {excesso > 0 ? '+' : ''}{formatCurrency(excesso)}
+                                      </span>
+                                    );
+                                  })()}
+                                </TableCell>
                                 <TableCell className="text-center">
                                   <Badge variant="outline" className={STATUS_COLORS[acordo.status]}>
                                     {STATUS_LABELS[acordo.status]}
@@ -369,23 +380,25 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                                     <span className="text-white/40">-</span>
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right">
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-primary/10">
-                                        <MoreHorizontal className="h-4 w-4 text-white/60" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700">
-                                      <DropdownMenuItem className="text-white hover:bg-zinc-700 cursor-pointer" onClick={() => handleEditarAcordo(acordo)}>
-                                        <Edit2 className="h-4 w-4 mr-2" /> Editar
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem className="text-red-400 hover:bg-red-500/20 cursor-pointer" onClick={() => setAcordoParaDeletar(acordo)}>
-                                        <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </TableCell>
+                                {contexto === 'logistica' && (
+                                  <TableCell className="text-right">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-primary/10">
+                                          <MoreHorizontal className="h-4 w-4 text-white/60" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700">
+                                        <DropdownMenuItem className="text-white hover:bg-zinc-700 cursor-pointer" onClick={() => handleEditarAcordo(acordo)}>
+                                          <Edit2 className="h-4 w-4 mr-2" /> Editar
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="text-red-400 hover:bg-red-500/20 cursor-pointer" onClick={() => setAcordoParaDeletar(acordo)}>
+                                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </TableCell>
+                                )}
                               </TableRow>
                             ))}
                           </TableBody>
