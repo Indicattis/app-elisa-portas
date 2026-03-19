@@ -68,7 +68,7 @@ export default function ProducaoAdminReadOnly() {
 
   // Agrupar itens por etapa, e dentro de cada etapa agrupar por nome do item
   const itensAgrupadosPorEtapa = useMemo(() => {
-    const porEtapa: Record<string, Record<string, { nome: string; quantidadeTotal: number; pedidos: Set<number> }>> = {};
+    const porEtapa: Record<string, Record<string, { nome: string; quantidadeTotal: number; tamanhoTotal: number; pedidos: Set<number> }>> = {};
     for (const item of itens) {
       const etapa = item.etapa_atual || "sem_etapa";
       const nome = item.estoque_nome || item.item;
