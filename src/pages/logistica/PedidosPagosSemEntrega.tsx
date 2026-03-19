@@ -80,7 +80,7 @@ export default function PedidosPagosSemEntrega() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('pedidos_pagos_sem_entrega').delete().eq('id', id);
+      const { error } = await (supabase.from as any)('pedidos_pagos_sem_entrega').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
