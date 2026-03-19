@@ -14,6 +14,9 @@ export interface ItemNaoConcluido {
   estoque_nome: string | null;
   pedido_numero: number | null;
   etapa_atual: string | null;
+  pedido_linha_tamanho: string | null;
+  pedido_linha_largura: number | null;
+  pedido_linha_altura: number | null;
 }
 
 export function useItensNaoConcluidosPorEtapa() {
@@ -32,7 +35,8 @@ export function useItensNaoConcluidosPorEtapa() {
           tipo_ordem,
           cor_nome,
           estoque:estoque_id (nome_produto),
-          pedidos_producao:pedido_id (numero_pedido, etapa_atual)
+          pedidos_producao:pedido_id (numero_pedido, etapa_atual),
+          pedido_linhas:pedido_linha_id (tamanho, largura, altura)
         `)
         .eq("concluida", false);
 
@@ -53,6 +57,9 @@ export function useItensNaoConcluidosPorEtapa() {
         estoque_nome: row.estoque?.nome_produto || null,
         pedido_numero: row.pedidos_producao?.numero_pedido || null,
         etapa_atual: row.pedidos_producao?.etapa_atual || null,
+        pedido_linha_tamanho: row.pedido_linhas?.tamanho || null,
+        pedido_linha_largura: row.pedido_linhas?.largura || null,
+        pedido_linha_altura: row.pedido_linhas?.altura || null,
       })) as ItemNaoConcluido[];
     },
   });
