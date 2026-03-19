@@ -29,7 +29,7 @@ export const useNeoFinalizados = () => {
           .order("concluida_em", { ascending: false }),
         supabase
           .from("neo_correcoes")
-          .select("id, nome_cliente, cidade, estado, concluida_em, concluida_por")
+          .select("id, nome_cliente, cidade, estado, concluida_em, concluida_por, equipe_nome")
           .eq("concluida", true)
           .order("concluida_em", { ascending: false }),
         supabase
