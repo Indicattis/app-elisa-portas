@@ -8,6 +8,7 @@ export interface FinalizadoItem {
   estado: string | null;
   concluida_em: string | null;
   concluida_por: string | null;
+  equipe_nome: string | null;
   _tipo: "neo_instalacao" | "neo_correcao" | "instalacao";
   concluidor?: {
     id: string;
@@ -23,17 +24,17 @@ export const useNeoFinalizados = () => {
       const [neoInstRes, neoCorrRes, instRes] = await Promise.all([
         supabase
           .from("neo_instalacoes")
-          .select("id, nome_cliente, cidade, estado, concluida_em, concluida_por")
+          .select("id, nome_cliente, cidade, estado, concluida_em, concluida_por, equipe_nome")
           .eq("concluida", true)
           .order("concluida_em", { ascending: false }),
         supabase
           .from("neo_correcoes")
-          .select("id, nome_cliente, cidade, estado, concluida_em, concluida_por")
+          .select("id, nome_cliente, cidade, estado, concluida_em, concluida_por, equipe_nome")
           .eq("concluida", true)
           .order("concluida_em", { ascending: false }),
         supabase
           .from("instalacoes")
-          .select("id, nome_cliente, cidade, estado, instalacao_concluida_em, instalacao_concluida_por")
+          .select("id, nome_cliente, cidade, estado, instalacao_concluida_em, instalacao_concluida_por, responsavel_instalacao_nome")
           .eq("instalacao_concluida", true)
           .order("instalacao_concluida_em", { ascending: false }),
       ]);
@@ -49,6 +50,7 @@ export const useNeoFinalizados = () => {
         estado: item.estado,
         concluida_em: item.concluida_em,
         concluida_por: item.concluida_por,
+        equipe_nome: item.equipe_nome || null,
         _tipo: "neo_instalacao" as const,
       }));
 
@@ -59,6 +61,7 @@ export const useNeoFinalizados = () => {
         estado: item.estado,
         concluida_em: item.concluida_em,
         concluida_por: item.concluida_por,
+        equipe_nome: item.equipe_nome || null,
         _tipo: "neo_correcao" as const,
       }));
 
@@ -69,6 +72,7 @@ export const useNeoFinalizados = () => {
         estado: item.estado,
         concluida_em: item.instalacao_concluida_em,
         concluida_por: item.instalacao_concluida_por,
+        equipe_nome: item.responsavel_instalacao_nome || null,
         _tipo: "instalacao" as const,
       }));
 

@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CheckCircle2, Hammer, Wrench, Truck } from "lucide-react";
+import { CheckCircle2, Hammer, Wrench, Truck, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -55,6 +55,13 @@ export function NeoFinalizadoRow({ item }: NeoFinalizadoRowProps) {
       <span className="text-xs text-muted-foreground shrink-0 hidden sm:block">
         {item.cidade}/{item.estado}
       </span>
+
+      {item.equipe_nome && (
+        <span className="text-xs text-muted-foreground shrink-0 hidden sm:flex items-center gap-1">
+          <Users className="h-3 w-3" />
+          {item.equipe_nome}
+        </span>
+      )}
 
       {tempoRelativo && (
         <span className="text-xs text-muted-foreground shrink-0 hidden md:block">
