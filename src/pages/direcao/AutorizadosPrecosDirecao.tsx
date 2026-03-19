@@ -256,138 +256,142 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
             </div>
           )}
 
-          {/* Separador */}
-          <div className="border-t border-primary/10" />
+          {contexto !== 'logistica' && (
+            <>
+              {/* Separador */}
+              <div className="border-t border-primary/10" />
 
-          {/* Seção Acordos */}
-          <div>
-            <h2 className="text-sm font-medium text-white/70 mb-3">Acordos com Autorizados</h2>
+              {/* Seção Acordos */}
+              <div>
+                <h2 className="text-sm font-medium text-white/70 mb-3">Acordos com Autorizados</h2>
 
-            {/* Filtros */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                <Input
-                  placeholder="Buscar por cliente, autorizado ou cidade..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
-                />
-              </div>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full sm:w-48 bg-white/5 border-white/10 text-white">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
-                  {STATUS_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {loadingAcordos ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-              </div>
-            ) : acordosFiltrados.length === 0 ? (
-              <div className="text-center py-8 bg-primary/5 rounded-lg border border-primary/10">
-                <p className="text-white/60 mb-4">Nenhum acordo encontrado</p>
-                <Button onClick={handleNovoAcordo} variant="outline" className="bg-primary/10 border-primary/20">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Criar Primeiro Acordo
-                </Button>
-              </div>
-            ) : (
-              <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <Table className="text-xs">
-                      <TableHeader>
-                        <TableRow className="border-primary/10 hover:bg-primary/5">
-                          <TableHead className="text-xs text-white/70">Cliente</TableHead>
-                          <TableHead className="text-xs text-white/70">Autorizado</TableHead>
-                          <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
-                          <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
-                          <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
-                          <TableHead className="text-xs text-white/70 text-center">Data</TableHead>
-                          <TableHead className="text-xs text-white/70 text-center">Criado por</TableHead>
-                          <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {acordosFiltrados.map((acordo) => (
-                          <TableRow key={acordo.id} className="border-primary/10 hover:bg-primary/10 text-white/90">
-                            <TableCell>
-                              <div>
-                                <span className="font-medium">{acordo.cliente_nome}</span>
-                                <p className="text-white/50 text-xs">{acordo.cliente_cidade} - {acordo.cliente_estado}</p>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-white/70">{acordo.autorizado_nome}</TableCell>
-                            <TableCell className="text-center">
-                              <div className="flex items-center justify-center gap-1">
-                                {getResumoPortasBadges(acordo)}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right font-medium text-green-400">
-                              {formatCurrency(acordo.valor_acordado)}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Badge variant="outline" className={STATUS_COLORS[acordo.status]}>
-                                {STATUS_LABELS[acordo.status]}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-center text-white/60">
-                              {format(new Date(acordo.data_acordo), 'dd/MM/yy', { locale: ptBR })}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {acordo.criador ? (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div className="flex justify-center">
-                                        <Avatar className="h-6 w-6">
-                                          <AvatarImage src={acordo.criador.foto_perfil_url} />
-                                          <AvatarFallback className="text-[10px] bg-primary/20 text-primary">
-                                            {getInitials(acordo.criador.nome)}
-                                          </AvatarFallback>
-                                        </Avatar>
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>{acordo.criador.nome}</p></TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              ) : (
-                                <span className="text-white/40">-</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-primary/10">
-                                    <MoreHorizontal className="h-4 w-4 text-white/60" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700">
-                                  <DropdownMenuItem className="text-white hover:bg-zinc-700 cursor-pointer" onClick={() => handleEditarAcordo(acordo)}>
-                                    <Edit2 className="h-4 w-4 mr-2" /> Editar
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem className="text-red-400 hover:bg-red-500/20 cursor-pointer" onClick={() => setAcordoParaDeletar(acordo)}>
-                                    <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                {/* Filtros */}
+                <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+                    <Input
+                      placeholder="Buscar por cliente, autorizado ou cidade..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                    />
                   </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-full sm:w-48 bg-white/5 border-white/10 text-white">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border-zinc-700">
+                      {STATUS_OPTIONS.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {loadingAcordos ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+                  </div>
+                ) : acordosFiltrados.length === 0 ? (
+                  <div className="text-center py-8 bg-primary/5 rounded-lg border border-primary/10">
+                    <p className="text-white/60 mb-4">Nenhum acordo encontrado</p>
+                    <Button onClick={handleNovoAcordo} variant="outline" className="bg-primary/10 border-primary/20">
+                      <Plus className="h-4 w-4 mr-1" />
+                      Criar Primeiro Acordo
+                    </Button>
+                  </div>
+                ) : (
+                  <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+                    <CardContent className="p-0">
+                      <div className="overflow-x-auto">
+                        <Table className="text-xs">
+                          <TableHeader>
+                            <TableRow className="border-primary/10 hover:bg-primary/5">
+                              <TableHead className="text-xs text-white/70">Cliente</TableHead>
+                              <TableHead className="text-xs text-white/70">Autorizado</TableHead>
+                              <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
+                              <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
+                              <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
+                              <TableHead className="text-xs text-white/70 text-center">Data</TableHead>
+                              <TableHead className="text-xs text-white/70 text-center">Criado por</TableHead>
+                              <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {acordosFiltrados.map((acordo) => (
+                              <TableRow key={acordo.id} className="border-primary/10 hover:bg-primary/10 text-white/90">
+                                <TableCell>
+                                  <div>
+                                    <span className="font-medium">{acordo.cliente_nome}</span>
+                                    <p className="text-white/50 text-xs">{acordo.cliente_cidade} - {acordo.cliente_estado}</p>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-white/70">{acordo.autorizado_nome}</TableCell>
+                                <TableCell className="text-center">
+                                  <div className="flex items-center justify-center gap-1">
+                                    {getResumoPortasBadges(acordo)}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-right font-medium text-green-400">
+                                  {formatCurrency(acordo.valor_acordado)}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Badge variant="outline" className={STATUS_COLORS[acordo.status]}>
+                                    {STATUS_LABELS[acordo.status]}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-center text-white/60">
+                                  {format(new Date(acordo.data_acordo), 'dd/MM/yy', { locale: ptBR })}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {acordo.criador ? (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="flex justify-center">
+                                            <Avatar className="h-6 w-6">
+                                              <AvatarImage src={acordo.criador.foto_perfil_url} />
+                                              <AvatarFallback className="text-[10px] bg-primary/20 text-primary">
+                                                {getInitials(acordo.criador.nome)}
+                                              </AvatarFallback>
+                                            </Avatar>
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>{acordo.criador.nome}</p></TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  ) : (
+                                    <span className="text-white/40">-</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-primary/10">
+                                        <MoreHorizontal className="h-4 w-4 text-white/60" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700">
+                                      <DropdownMenuItem className="text-white hover:bg-zinc-700 cursor-pointer" onClick={() => handleEditarAcordo(acordo)}>
+                                        <Edit2 className="h-4 w-4 mr-2" /> Editar
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem className="text-red-400 hover:bg-red-500/20 cursor-pointer" onClick={() => setAcordoParaDeletar(acordo)}>
+                                        <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
 

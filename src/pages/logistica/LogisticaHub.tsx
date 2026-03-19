@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
-import { Truck, Car, CalendarDays, ArrowLeft, Package, Users, AlertCircle } from "lucide-react";
+import { Truck, Car, CalendarDays, ArrowLeft, Package, Users, AlertCircle, DollarSign } from "lucide-react";
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
@@ -13,6 +13,7 @@ const menuItems = [
   { label: "Instalações", icon: CalendarDays, path: "/logistica/instalacoes" },
   { label: "Frete", icon: Package, path: "/logistica/frete" },
   { label: "Autorizados", icon: Users, path: "/logistica/autorizados" },
+  { label: "Pagamentos Autorizados", icon: DollarSign, path: "/logistica/pagamentos-autorizados" },
   { label: "Pedidos s/ Entrega", icon: AlertCircle, path: "/logistica/pedidos-sem-entrega" },
 ];
 
