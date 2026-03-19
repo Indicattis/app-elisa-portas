@@ -471,51 +471,131 @@ export default function GestaoFabricaDirecao() {
         </div>
 
         {/* Tabs - Desktop */}
-        <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-1 bg-primary/5 border border-primary/10">
+        <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-2 bg-primary/5 border border-primary/10">
           <TooltipProvider>
-            {ORDEM_ETAPAS.map(etapa => {
-              const config = ETAPAS_CONFIG[etapa];
-              const count = contadores[etapa] || 0;
-              const IconComponent = ETAPA_ICONS[etapa];
-              const responsavel = getResponsavel(etapa);
-              return (
-                <TabsTrigger 
-                  key={etapa} 
-                  value={etapa} 
-                  className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white"
-                >
-                  {responsavel ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Avatar className="h-5 w-5 border border-primary/30">
-                          <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                          <AvatarFallback className="text-[10px] bg-primary/20">
-                            {responsavel.nome.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs">Responsável: {responsavel.nome}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <IconComponent className="h-4 w-4 flex-shrink-0" />
-                  )}
-                  <span className="text-xs">{config.label}</span>
-                  <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
-                    {count}
-                  </span>
-                </TabsTrigger>
-              );
-            })}
-            {/* Tab Arquivo Morto */}
-            <TabsTrigger 
-              value="arquivo_morto" 
-              className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-emerald-400/60 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-400"
-            >
-              <Archive className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs">Arquivo Morto</span>
-            </TabsTrigger>
+            {/* Grupo Vermelho: Produção */}
+            <div className="flex gap-1 border-2 border-red-500/50 rounded-lg p-1">
+              {(['aberto', 'aprovacao_ceo', 'em_producao', 'inspecao_qualidade', 'aguardando_pintura', 'embalagem'] as const).map(etapa => {
+                const config = ETAPAS_CONFIG[etapa];
+                const count = contadores[etapa] || 0;
+                const IconComponent = ETAPA_ICONS[etapa];
+                const responsavel = getResponsavel(etapa);
+                return (
+                  <TabsTrigger 
+                    key={etapa} 
+                    value={etapa} 
+                    className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white"
+                  >
+                    {responsavel ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Avatar className="h-5 w-5 border border-primary/30">
+                            <AvatarImage src={responsavel.foto_perfil_url || undefined} />
+                            <AvatarFallback className="text-[10px] bg-primary/20">
+                              {responsavel.nome.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">Responsável: {responsavel.nome}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <IconComponent className="h-4 w-4 flex-shrink-0" />
+                    )}
+                    <span className="text-xs">{config.label}</span>
+                    <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
+                      {count}
+                    </span>
+                  </TabsTrigger>
+                );
+              })}
+            </div>
+
+            {/* Grupo Amarelo: Expedição */}
+            <div className="flex gap-1 border-2 border-yellow-500/50 rounded-lg p-1">
+              {(['aguardando_coleta', 'instalacoes', 'correcoes'] as const).map(etapa => {
+                const config = ETAPAS_CONFIG[etapa];
+                const count = contadores[etapa] || 0;
+                const IconComponent = ETAPA_ICONS[etapa];
+                const responsavel = getResponsavel(etapa);
+                return (
+                  <TabsTrigger 
+                    key={etapa} 
+                    value={etapa} 
+                    className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white"
+                  >
+                    {responsavel ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Avatar className="h-5 w-5 border border-primary/30">
+                            <AvatarImage src={responsavel.foto_perfil_url || undefined} />
+                            <AvatarFallback className="text-[10px] bg-primary/20">
+                              {responsavel.nome.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">Responsável: {responsavel.nome}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <IconComponent className="h-4 w-4 flex-shrink-0" />
+                    )}
+                    <span className="text-xs">{config.label}</span>
+                    <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
+                      {count}
+                    </span>
+                  </TabsTrigger>
+                );
+              })}
+            </div>
+
+            {/* Grupo Verde: Finalizados */}
+            <div className="flex gap-1 border-2 border-green-500/50 rounded-lg p-1">
+              {(['finalizado'] as const).map(etapa => {
+                const config = ETAPAS_CONFIG[etapa];
+                const count = contadores[etapa] || 0;
+                const IconComponent = ETAPA_ICONS[etapa];
+                const responsavel = getResponsavel(etapa);
+                return (
+                  <TabsTrigger 
+                    key={etapa} 
+                    value={etapa} 
+                    className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white"
+                  >
+                    {responsavel ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Avatar className="h-5 w-5 border border-primary/30">
+                            <AvatarImage src={responsavel.foto_perfil_url || undefined} />
+                            <AvatarFallback className="text-[10px] bg-primary/20">
+                              {responsavel.nome.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">Responsável: {responsavel.nome}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <IconComponent className="h-4 w-4 flex-shrink-0" />
+                    )}
+                    <span className="text-xs">{config.label}</span>
+                    <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
+                      {count}
+                    </span>
+                  </TabsTrigger>
+                );
+              })}
+              <TabsTrigger 
+                value="arquivo_morto" 
+                className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-emerald-400/60 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-400"
+              >
+                <Archive className="h-4 w-4 flex-shrink-0" />
+                <span className="text-xs">Arquivo Morto</span>
+              </TabsTrigger>
+            </div>
           </TooltipProvider>
         </TabsList>
 
