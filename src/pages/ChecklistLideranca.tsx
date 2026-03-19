@@ -44,8 +44,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
 
 export default function ChecklistLideranca() {
   const navigate = useNavigate();
-  // Filtrar tarefas do setor "Direção"
-  const setor = 'direcao';
+  const [setor, setSetor] = useState<string>('vendas');
   
   const { user, userRole } = useAuth();
   const { 
@@ -67,7 +66,7 @@ export default function ChecklistLideranca() {
   const [tarefaParaDeletar, setTarefaParaDeletar] = useState<string | null>(null);
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
-  const setorLabel = SETOR_LABELS[setor as keyof typeof SETOR_LABELS] || 'Direção';
+  const setorLabel = SETOR_LABELS[setor as keyof typeof SETOR_LABELS] || setor;
   
   // Verificar se o usuário é o responsável pelo setor
   const isResponsavelSetor = responsavelSetor?.user_id === user?.id;
