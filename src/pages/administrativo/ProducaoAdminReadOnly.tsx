@@ -75,13 +75,28 @@ export default function ProducaoAdminReadOnly() {
       if (!porEtapa[etapa]) porEtapa[etapa] = {};
       if (!porEtapa[etapa][nome]) porEtapa[etapa][nome] = { nome, quantidadeTotal: 0, tamanhoTotal: 0, pedidos: new Set() };
       porEtapa[etapa][nome].quantidadeTotal += item.quantidade;
+      const parseTamanho = (t: string | null): number => {
+        if (!t) return 0;
+        const matchLxA = t.match(/(\d+[.,]?\d*)\s*[xX]\s*(\d+[.,]?\d*)/);
+        if (matchLxA) {
+          return parseFloat(matchLxA[1].replace(',', '.')) * parseFloat(matchLxA[2].replace(',', '.'));
+        }
+        const val = parseFloat(t.replace(',', '.'));
+        return isNaN(val) ? 0 : val;
+      };
+
       let area = 0;
       if (item.largura && item.altura) {
         area = item.largura * item.altura;
       } else if (item.tamanho) {
-        const match = item.tamanho.match(/(\d+[.,]?\d*)\s*[xX]\s*(\d+[.,]?\d*)/);
-        if (match) {
-          area = parseFloat(match[1].replace(',', '.')) * parseFloat(match[2].replace(',', '.'));
+        area = parseTamanho(item.tamanho);
+      }
+      // Fallback: dados do pedido_linhas
+      if (area === 0) {
+        if (item.pedido_linha_largura && item.pedido_linha_altura) {
+          area = item.pedido_linha_largura * item.pedido_linha_altura;
+        } else if (item.pedido_linha_tamanho) {
+          area = parseTamanho(item.pedido_linha_tamanho);
         }
       }
       porEtapa[etapa][nome].tamanhoTotal += area * item.quantidade;
