@@ -8,6 +8,7 @@ export interface FinalizadoItem {
   estado: string | null;
   concluida_em: string | null;
   concluida_por: string | null;
+  equipe_nome: string | null;
   _tipo: "neo_instalacao" | "neo_correcao" | "instalacao";
   concluidor?: {
     id: string;
