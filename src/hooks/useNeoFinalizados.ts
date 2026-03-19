@@ -24,7 +24,7 @@ export const useNeoFinalizados = () => {
       const [neoInstRes, neoCorrRes, instRes] = await Promise.all([
         supabase
           .from("neo_instalacoes")
-          .select("id, nome_cliente, cidade, estado, concluida_em, concluida_por, equipe_nome")
+          .select("id, nome_cliente, cidade, estado, concluida_em, concluida_por, equipe_nome, equipe_id")
           .eq("concluida", true)
           .order("concluida_em", { ascending: false }),
         supabase
