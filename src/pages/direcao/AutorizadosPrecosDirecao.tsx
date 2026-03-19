@@ -405,28 +405,32 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
         estadosCadastrados={estados.map(e => e.sigla)}
       />
 
-      <NovoAcordoDialog
-        open={acordoDialogOpen}
-        onOpenChange={setAcordoDialogOpen}
-        onSave={handleSalvarAcordo}
-        acordoParaEditar={acordoParaEditar}
-      />
+      {contexto !== 'logistica' && (
+        <>
+          <NovoAcordoDialog
+            open={acordoDialogOpen}
+            onOpenChange={setAcordoDialogOpen}
+            onSave={handleSalvarAcordo}
+            acordoParaEditar={acordoParaEditar}
+          />
 
-      <AlertDialog open={!!acordoParaDeletar} onOpenChange={() => setAcordoParaDeletar(null)}>
-        <AlertDialogContent className="bg-zinc-900 border-zinc-700">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription className="text-white/60">
-              Tem certeza que deseja excluir o acordo com <strong>{acordoParaDeletar?.cliente_nome}</strong>?
-              Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-zinc-800 border-zinc-600 text-white hover:bg-zinc-700">Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmarDelete} className="bg-red-600 hover:bg-red-700 text-white">Excluir</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          <AlertDialog open={!!acordoParaDeletar} onOpenChange={() => setAcordoParaDeletar(null)}>
+            <AlertDialogContent className="bg-zinc-900 border-zinc-700">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-white">Confirmar Exclusão</AlertDialogTitle>
+                <AlertDialogDescription className="text-white/60">
+                  Tem certeza que deseja excluir o acordo com <strong>{acordoParaDeletar?.cliente_nome}</strong>?
+                  Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="bg-zinc-800 border-zinc-600 text-white hover:bg-zinc-700">Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmarDelete} className="bg-red-600 hover:bg-red-700 text-white">Excluir</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      )}
     </div>
   );
 }
