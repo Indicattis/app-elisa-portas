@@ -72,7 +72,8 @@ export const useNeoFinalizados = () => {
         estado: item.estado,
         concluida_em: item.instalacao_concluida_em,
         concluida_por: item.instalacao_concluida_por,
-        equipe_nome: item.responsavel_instalacao_nome || null,
+        equipe_nome: null,
+        _equipe_id: item.responsavel_instalacao_id || null,
         _tipo: "instalacao" as const,
       }));
 
