@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Factory, ArrowLeft, ShieldCheck, ShoppingCart } from 'lucide-react';
+import { Factory, ArrowLeft, ShieldCheck, ShoppingCart, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
