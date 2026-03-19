@@ -166,6 +166,7 @@ import PaineisHome from "./pages/PaineisHome";
 import DirecaoHome from "./pages/DirecaoHome";
 import DirecaoChecklist from "./pages/DirecaoChecklist";
 import DirecaoChecklistProgramacao from "./pages/DirecaoChecklistProgramacao";
+import ChecklistLideranca from "./pages/ChecklistLideranca";
 import Caixa from "./pages/Caixa";
 import ContasReceber from "./pages/ContasReceber";
 import ContasPagar from "./pages/ContasPagar";
