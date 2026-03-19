@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, PanelLeft, Settings, Lock, Factory } from 'lucide-react';
+import { LogOut, LayoutDashboard, PanelLeft, Settings, Lock, Factory, User } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
@@ -125,6 +125,17 @@ export function FloatingProfileMenu({ mounted = true }: FloatingProfileMenuProps
         </div>
 
         <div className="py-1">
+          <button
+            onClick={() => {
+              navigate('/perfil');
+              setProfileMenuOpen(false);
+            }}
+            className="w-full px-3 py-2 flex items-center gap-3 text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+          >
+            <User className="w-4 h-4" />
+            <span className="text-sm">Meu Perfil</span>
+          </button>
+
           {menuItems.map((item) => {
             const Icon = item.icon;
             const canAccess = hasAccess(item.path);

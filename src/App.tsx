@@ -206,6 +206,8 @@ import OrdensPorPedido from "./pages/fabrica/OrdensPorPedido";
 import CronogramaProducao from "./pages/fabrica/CronogramaProducao";
 import ArquivoMorto from "./pages/fabrica/ArquivoMorto";
 
+import MeuPerfil from "./pages/MeuPerfil";
+
 // Home - Páginas de acesso rápido (read-only)
 import PedidosProducaoReadOnly from "./pages/home/PedidosProducaoReadOnly";
 import CalendarioExpedicaoReadOnly from "./pages/home/CalendarioExpedicaoReadOnly";
@@ -421,6 +423,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                <Route path="/perfil" element={<ProtectedRoute><MeuPerfil /></ProtectedRoute>} />
                 <Route path="/home/pedidos-producao" element={<ProtectedRoute><PedidosProducaoReadOnly /></ProtectedRoute>} />
                 <Route path="/home/calendario-expedicao" element={<ProtectedRoute><CalendarioExpedicaoReadOnly /></ProtectedRoute>} />
                 <Route path="/auth" element={<Auth />} />
