@@ -206,14 +206,16 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                 <Plus className="h-4 w-4 mr-1" />
                 Novo Estado
               </Button>
-              <Button
-                onClick={handleNovoAcordo}
-                className="bg-primary hover:bg-primary/90"
-                size="sm"
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Novo Acordo
-              </Button>
+              {contexto !== 'logistica' && (
+                <Button
+                  onClick={handleNovoAcordo}
+                  className="bg-primary hover:bg-primary/90"
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Novo Acordo
+                </Button>
+              )}
             </div>
           </div>
         </header>
