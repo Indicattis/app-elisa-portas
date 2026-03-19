@@ -13,6 +13,7 @@ const menuItems = [
   { label: "Instalações", icon: CalendarDays, path: "/logistica/instalacoes" },
   { label: "Frete", icon: Package, path: "/logistica/frete" },
   { label: "Autorizados", icon: Users, path: "/logistica/autorizados" },
+  { label: "Pedidos s/ Entrega", icon: AlertCircle, path: "/logistica/pedidos-sem-entrega" },
 ];
 
 export default function LogisticaHub() {
