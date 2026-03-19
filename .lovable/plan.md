@@ -1,24 +1,40 @@
 
 
-## Plano: Adicionar coluna "Tamanho Total" na tabela de itens pendentes
+## Plano: Corrigir cálculo do Tamanho Total usando campo `tamanho`
 
-### O que será feito
+### Problema
 
-Adicionar uma coluna **Tamanho Total** na tabela de itens pendentes por etapa, que soma os valores de `largura * altura * quantidade` (ou `tamanho * quantidade` quando aplicável) agrupados por item.
+O cálculo atual só considera `largura * altura`, mas muitos itens têm as dimensões no campo `tamanho` (string como "3.00 x 2.50") sem `largura`/`altura` preenchidos numericamente.
 
-### Alterações
+### Alteração
 
-**1. `src/pages/administrativo/ProducaoAdminReadOnly.tsx`**
+**Arquivo: `src/pages/administrativo/ProducaoAdminReadOnly.tsx`**
 
-- No `useMemo` de `itensAgrupadosPorEtapa`, adicionar campo `tamanhoTotal` ao tipo do grupo, acumulando `(largura && altura ? largura * altura : 0) * quantidade` para cada item
-- Na `TableHeader`, adicionar coluna "Tamanho Total" entre "Qtd Total" e "Pedidos"
-- Na `TableBody`, exibir o valor formatado com 2 casas decimais e sufixo "m²"
+No `useMemo` de `itensAgrupadosPorEtapa`, alterar o cálculo de `area`:
 
-**2. `src/hooks/useItensNaoConcluidosPorEtapa.ts`**
+1. Se `largura` e `altura` existem, usar `largura * altura`
+2. Senão, tentar fazer parse do campo `tamanho` com regex `(\d+[.,]?\d*)\s*[xX]\s*(\d+[.,]?\d*)` para extrair largura e altura
+3. Multiplicar a área resultante pela quantidade
 
-- Nenhuma alteração — `largura` e `altura` já são retornados pelo hook
+Esse padrão de fallback já é usado em `usePedidosAprovacaoCEO.ts` (linhas 73-76 e 117-120).
 
 ### Detalhes técnicos
 
-O cálculo será: para cada linha, somar `(largura * altura) * quantidade` ao `tamanhoTotal` do grupo. Itens sem largura/altura contribuem 0.
+```typescript
+// Antes
+const area = (item.largura && item.altura) ? item.largura * item.altura : 0;
+
+// Depois
+let area = 0;
+if (item.largura && item.altura) {
+  area = item.largura * item.altura;
+} else if (item.tamanho) {
+  const match = item.tamanho.match(/(\d+[.,]?\d*)\s*[xX]\s*(\d+[.,]?\d*)/);
+  if (match) {
+    area = parseFloat(match[1].replace(',', '.')) * parseFloat(match[2].replace(',', '.'));
+  }
+}
+```
+
+Nenhum outro arquivo precisa ser alterado — o hook já retorna `tamanho`.
 
