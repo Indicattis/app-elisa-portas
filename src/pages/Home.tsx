@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
-import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar } from "lucide-react";
+import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -156,6 +156,17 @@ export default function Home() {
             </div>
 
             <div className="py-1">
+              <button
+                onClick={() => {
+                  navigate('/perfil');
+                  setProfileMenuOpen(false);
+                }}
+                className="w-full px-3 py-2 flex items-center gap-3 text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <User className="w-4 h-4" />
+                <span className="text-sm">Meu Perfil</span>
+              </button>
+
               <button
                 onClick={() => {
                   navigate('/paineis');
