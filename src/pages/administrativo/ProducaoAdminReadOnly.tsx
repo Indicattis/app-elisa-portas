@@ -101,7 +101,7 @@ export default function ProducaoAdminReadOnly() {
         {/* Mobile selector */}
         <div className="md:hidden mb-4">
           <Select value={etapaAtiva} onValueChange={(v) => setEtapaAtiva(v as EtapaPedido)}>
-            <SelectTrigger className="w-full h-12 bg-primary/5 border-primary/10 text-white">
+            <SelectTrigger className="w-full h-12 bg-white/5 border-blue-500/10 text-white">
               <SelectValue>
                 {(() => {
                   const config = ETAPAS_CONFIG[etapaAtiva];
@@ -111,13 +111,13 @@ export default function ProducaoAdminReadOnly() {
                     <div className="flex items-center gap-2">
                       <IconComp className="h-5 w-5" />
                       <span className="font-medium">{config.label}</span>
-                      <Badge variant="secondary" className="ml-auto bg-primary/10">{count}</Badge>
+                      <Badge variant="secondary" className="ml-auto bg-blue-500/20 text-blue-400">{count}</Badge>
                     </div>
                   );
                 })()}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent className="bg-zinc-900 border-primary/10">
+            <SelectContent className="bg-zinc-900 border-blue-500/10">
               {ORDEM_ETAPAS.map((etapa) => {
                 const config = ETAPAS_CONFIG[etapa];
                 const count = contadores[etapa] || 0;
@@ -127,7 +127,7 @@ export default function ProducaoAdminReadOnly() {
                     <div className="flex items-center gap-2 w-full">
                       <IconComp className="h-4 w-4 flex-shrink-0" />
                       <span className="flex-1">{config.label}</span>
-                      <Badge variant="secondary" className="text-xs bg-primary/10">{count}</Badge>
+                      <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-400">{count}</Badge>
                     </div>
                   </SelectItem>
                 );
@@ -137,7 +137,7 @@ export default function ProducaoAdminReadOnly() {
         </div>
 
         {/* Desktop tabs with colored groups */}
-        <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-2 bg-primary/5 border border-primary/10">
+        <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-2 bg-white/5 border border-blue-500/10">
           <TooltipProvider>
             {/* Grupo Vermelho: Produção */}
             <div className="flex gap-1 border-2 border-red-500/50 rounded-lg p-1">
@@ -147,13 +147,13 @@ export default function ProducaoAdminReadOnly() {
                 const IconComp = ETAPA_ICONS[etapa];
                 const responsavel = getResponsavel(etapa);
                 return (
-                  <TabsTrigger key={etapa} value={etapa} className="flex-shrink-0 px-2 py-2 gap-1.5 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white">
+                  <TabsTrigger key={etapa} value={etapa} className="flex-shrink-0 px-2 py-2 gap-1.5 text-white/60 data-[state=active]:bg-white/10 data-[state=active]:text-white">
                     {responsavel ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Avatar className="h-5 w-5 border border-primary/30">
+                          <Avatar className="h-5 w-5 border border-blue-500/30">
                             <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                            <AvatarFallback className="text-[10px] bg-primary/20">{responsavel.nome.charAt(0).toUpperCase()}</AvatarFallback>
+                            <AvatarFallback className="text-[10px] bg-blue-500/20">{responsavel.nome.charAt(0).toUpperCase()}</AvatarFallback>
                           </Avatar>
                         </TooltipTrigger>
                         <TooltipContent><p className="text-xs">Responsável: {responsavel.nome}</p></TooltipContent>
@@ -176,13 +176,13 @@ export default function ProducaoAdminReadOnly() {
                 const IconComp = ETAPA_ICONS[etapa];
                 const responsavel = getResponsavel(etapa);
                 return (
-                  <TabsTrigger key={etapa} value={etapa} className="flex-shrink-0 px-2 py-2 gap-1.5 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white">
+                  <TabsTrigger key={etapa} value={etapa} className="flex-shrink-0 px-2 py-2 gap-1.5 text-white/60 data-[state=active]:bg-white/10 data-[state=active]:text-white">
                     {responsavel ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Avatar className="h-5 w-5 border border-primary/30">
+                          <Avatar className="h-5 w-5 border border-blue-500/30">
                             <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                            <AvatarFallback className="text-[10px] bg-primary/20">{responsavel.nome.charAt(0).toUpperCase()}</AvatarFallback>
+                            <AvatarFallback className="text-[10px] bg-blue-500/20">{responsavel.nome.charAt(0).toUpperCase()}</AvatarFallback>
                           </Avatar>
                         </TooltipTrigger>
                         <TooltipContent><p className="text-xs">Responsável: {responsavel.nome}</p></TooltipContent>
@@ -204,7 +204,7 @@ export default function ProducaoAdminReadOnly() {
                 const count = contadores[etapa] || 0;
                 const IconComp = ETAPA_ICONS[etapa];
                 return (
-                  <TabsTrigger key={etapa} value={etapa} className="flex-shrink-0 px-2 py-2 gap-1.5 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white">
+                  <TabsTrigger key={etapa} value={etapa} className="flex-shrink-0 px-2 py-2 gap-1.5 text-white/60 data-[state=active]:bg-white/10 data-[state=active]:text-white">
                     <IconComp className="h-4 w-4 flex-shrink-0" />
                     <span className="text-xs">{config.label}</span>
                     <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">{count}</span>
@@ -217,7 +217,7 @@ export default function ProducaoAdminReadOnly() {
 
         {ORDEM_ETAPAS.map((etapa) => (
           <TabsContent key={etapa} value={etapa} className="mt-4">
-            <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl w-full max-w-none">
+            <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
               <CardHeader className="pb-3 px-4 py-4">
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                   <CardTitle className="text-lg flex items-center gap-2 text-white">
@@ -232,7 +232,7 @@ export default function ProducaoAdminReadOnly() {
                       placeholder="Buscar pedido..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-9 bg-primary/5 border-primary/10 text-white placeholder:text-white/40"
+                      className="pl-9 bg-white/5 border-blue-500/10 text-white placeholder:text-white/40"
                     />
                   </div>
                 </div>
@@ -288,13 +288,13 @@ export default function ProducaoAdminReadOnly() {
                 const totalItens = listaItens.reduce((s, i) => s + i.quantidadeTotal, 0);
                 return (
                   <Collapsible key={etapa}>
-                    <Card className="bg-primary/5 border-primary/10">
+                    <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
                       <CollapsibleTrigger className="w-full">
                         <div className="flex items-center justify-between px-4 py-3">
                           <div className="flex items-center gap-2 text-white">
                             <IconComp className="h-4 w-4" />
                             <span className="font-medium text-sm">{label}</span>
-                            <Badge variant="secondary" className="bg-primary/10 text-white text-xs">
+                            <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 text-xs">
                               {listaItens.length} {listaItens.length === 1 ? "item" : "itens"} · {totalItens} un.
                             </Badge>
                           </div>
@@ -305,7 +305,7 @@ export default function ProducaoAdminReadOnly() {
                         <div className="px-4 pb-4">
                           <Table>
                             <TableHeader>
-                              <TableRow className="border-primary/10">
+                              <TableRow className="border-blue-500/10 hover:bg-white/5">
                                 <TableHead className="text-white/70">Item</TableHead>
                                 <TableHead className="text-white/70 text-right">Qtd Total</TableHead>
                                 <TableHead className="text-white/70">Pedidos</TableHead>
@@ -313,7 +313,7 @@ export default function ProducaoAdminReadOnly() {
                             </TableHeader>
                             <TableBody>
                               {listaItens.map((grupo) => (
-                                <TableRow key={grupo.nome} className="border-primary/10">
+                                <TableRow key={grupo.nome} className="border-blue-500/10 hover:bg-white/5">
                                   <TableCell className="text-white text-sm font-medium">{grupo.nome}</TableCell>
                                   <TableCell className="text-white text-sm text-right font-semibold">{grupo.quantidadeTotal}</TableCell>
                                   <TableCell className="text-white/60 text-sm">
