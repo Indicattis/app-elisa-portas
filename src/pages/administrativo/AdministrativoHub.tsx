@@ -15,6 +15,7 @@ const menuItems = [
   { label: "Pedidos", icon: Package, path: "/administrativo/pedidos", ativo: true },
   { label: "Documentos", icon: FolderOpen, path: "/administrativo/documentos", ativo: true },
   { label: "Multas", icon: AlertTriangle, path: "/administrativo/multas", ativo: true },
+  { label: "Produção", icon: Factory, path: "/administrativo/producao", ativo: true },
 ];
 
 export default function AdministrativoHub() {
