@@ -206,6 +206,8 @@ import OrdensPorPedido from "./pages/fabrica/OrdensPorPedido";
 import CronogramaProducao from "./pages/fabrica/CronogramaProducao";
 import ArquivoMorto from "./pages/fabrica/ArquivoMorto";
 
+import MeuPerfil from "./pages/MeuPerfil";
+
 // Home - Páginas de acesso rápido (read-only)
 import PedidosProducaoReadOnly from "./pages/home/PedidosProducaoReadOnly";
 import CalendarioExpedicaoReadOnly from "./pages/home/CalendarioExpedicaoReadOnly";
