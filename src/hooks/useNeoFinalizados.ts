@@ -34,7 +34,7 @@ export const useNeoFinalizados = () => {
           .order("concluida_em", { ascending: false }),
         supabase
           .from("instalacoes")
-          .select("id, nome_cliente, cidade, estado, instalacao_concluida_em, instalacao_concluida_por, responsavel_instalacao_nome")
+          .select("id, nome_cliente, cidade, estado, instalacao_concluida_em, instalacao_concluida_por, responsavel_instalacao_id")
           .eq("instalacao_concluida", true)
           .order("instalacao_concluida_em", { ascending: false }),
       ]);
