@@ -1,18 +1,20 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTarefas } from "@/hooks/useTarefas";
 import { useSetorInfo } from "@/hooks/useSetorInfo";
 import { NovaTarefaModal } from "@/components/todo/NovaTarefaModal";
 import { TarefasRecorrentesModal } from "@/components/todo/TarefasRecorrentesModal";
+import { CalendarioSemanal } from "@/components/todo/CalendarioSemanal";
+import { ChecklistFiltros } from "@/components/todo/ChecklistFiltros";
+import { TarefasTabela } from "@/components/todo/TarefasTabela";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Calendar, Repeat, Trash2, List, ArrowLeft } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, Calendar, Trash, List, ArrowLeft, CalendarDays } from "lucide-react";
+import { isSameDay, parseISO, startOfWeek, endOfWeek, isWithinInterval, format, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { SETOR_LABELS } from "@/utils/setorMapping";
@@ -44,9 +46,20 @@ const ROLE_LABELS: Record<UserRole, string> = {
 
 export default function ChecklistLideranca() {
   const navigate = useNavigate();
+  const { user, userRole } = useAuth();
+  
+  // Setor
   const [setor, setSetor] = useState<string>('vendas');
   
-  const { user, userRole } = useAuth();
+  // Filtros
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState<string>("todos");
+  const [tipoSelecionado, setTipoSelecionado] = useState<string>("todos");
+  const [statusSelecionado, setStatusSelecionado] = useState<string>("todos");
+  const [dataSelecionada, setDataSelecionada] = useState<Date | undefined>(undefined);
+  const [mostrarLixeira, setMostrarLixeira] = useState(false);
+  const [semanaOffset, setSemanaOffset] = useState(0);
+  const [diaCalendario, setDiaCalendario] = useState<Date>(new Date());
+
   const { 
     tarefas, 
     isLoading, 
@@ -59,21 +72,62 @@ export default function ChecklistLideranca() {
     toggleTemplate,
     deletarTemplate,
     atualizarTemplate
-  } = useTarefas(user?.id, setor);
+  } = useTarefas(usuarioSelecionado === "todos" ? undefined : usuarioSelecionado, setor);
   const { data: responsavelSetor } = useSetorInfo(setor);
+  
   const [modalAberto, setModalAberto] = useState(false);
   const [modalRecorrentes, setModalRecorrentes] = useState(false);
   const [tarefaParaDeletar, setTarefaParaDeletar] = useState<string | null>(null);
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
-  const setorLabel = SETOR_LABELS[setor as keyof typeof SETOR_LABELS] || setor;
-  
-  // Verificar se o usuário é o responsável pelo setor
   const isResponsavelSetor = responsavelSetor?.user_id === user?.id;
   const podeMarcarConcluida = podeGerenciar || isResponsavelSetor;
 
-  const tarefasEmAndamento = tarefas.filter(t => t.status === 'em_andamento');
-  const tarefasConcluidas = tarefas.filter(t => t.status === 'concluida');
+  // Calcular intervalo da semana selecionada
+  const semanaAtual = useMemo(() => {
+    const hoje = new Date();
+    const semanaBase = semanaOffset === 0 ? hoje : 
+      semanaOffset > 0 ? addWeeks(hoje, semanaOffset) : subWeeks(hoje, Math.abs(semanaOffset));
+    const inicio = startOfWeek(semanaBase, { weekStartsOn: 0 });
+    const fim = endOfWeek(semanaBase, { weekStartsOn: 0 });
+    return { inicio, fim };
+  }, [semanaOffset]);
+
+  // Filtrar tarefas da semana
+  const tarefasDaSemana = useMemo(() => {
+    return tarefas.filter(tarefa => {
+      const dataStr = tarefa.data_referencia || tarefa.created_at;
+      if (!dataStr) return false;
+      const dataTarefa = parseISO(dataStr.split('T')[0]);
+      return isWithinInterval(dataTarefa, { start: semanaAtual.inicio, end: semanaAtual.fim });
+    });
+  }, [tarefas, semanaAtual]);
+
+  const tarefasFiltradas = useMemo(() => {
+    return tarefasDaSemana.filter(tarefa => {
+      if (tipoSelecionado === "unica" && tarefa.recorrente) return false;
+      if (tipoSelecionado === "recorrente" && !tarefa.recorrente) return false;
+      if (statusSelecionado === "em_andamento" && tarefa.status !== "em_andamento") return false;
+      if (statusSelecionado === "concluida" && tarefa.status !== "concluida") return false;
+      if (dataSelecionada) {
+        const dataStr = tarefa.data_referencia || tarefa.created_at;
+        const dataTarefa = parseISO(dataStr.split('T')[0]);
+        if (!isSameDay(dataTarefa, dataSelecionada)) return false;
+      }
+      if (!mostrarLixeira && tarefa.status === 'concluida') return false;
+      if (mostrarLixeira && tarefa.status !== 'concluida') return false;
+      return true;
+    });
+  }, [tarefasDaSemana, tipoSelecionado, statusSelecionado, dataSelecionada, mostrarLixeira]);
+
+  const tarefasAtivas = tarefasFiltradas.filter(t => t.status === 'em_andamento');
+  const tarefasConcluidas = tarefasFiltradas.filter(t => t.status === 'concluida');
+  const totalEmAndamento = tarefasDaSemana.filter(t => t.status === 'em_andamento').length;
+  const totalConcluidas = tarefasDaSemana.filter(t => t.status === 'concluida').length;
+
+  const labelSemana = useMemo(() => {
+    return `${format(semanaAtual.inicio, "dd MMM", { locale: ptBR })} - ${format(semanaAtual.fim, "dd MMM", { locale: ptBR })}`;
+  }, [semanaAtual]);
 
   if (isLoading) {
     return (
@@ -84,211 +138,191 @@ export default function ChecklistLideranca() {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-      <Button 
-        variant="ghost" 
-        size="sm"
-        onClick={() => navigate('/direcao')}
-        className="w-fit -ml-2"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Voltar
-      </Button>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold">
-            Checklist Liderança
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie tarefas por setor
-          </p>
-          <div className="mt-3 w-64">
-            <Select value={setor} onValueChange={setSetor}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o setor" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(SETOR_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>{label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+    <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6 pb-24 md:pb-6">
+      {/* Header */}
+      <div className="flex flex-col gap-3">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => navigate('/direcao')}
+          className="w-fit -ml-2"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
 
-        {/* Card do Responsável */}
-        {responsavelSetor && (
-          <Card className="w-80 shrink-0">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">
-                Responsável pelo Setor
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={responsavelSetor.foto_perfil_url || undefined} />
-                  <AvatarFallback>
-                    {responsavelSetor.nome.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{responsavelSetor.nome}</p>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {responsavelSetor.email}
-                  </p>
-                  <Badge variant="secondary" className="mt-1 text-xs">
-                    {ROLE_LABELS[responsavelSetor.role as UserRole]}
-                  </Badge>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl md:text-3xl font-bold truncate">
+              Checklist Liderança
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1 hidden md:block">
+              Gerencie tarefas por setor
+            </p>
+            <div className="mt-3 w-64">
+              <Select value={setor} onValueChange={setSetor}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o setor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(SETOR_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Card do Responsável */}
+          {responsavelSetor && (
+            <Card className="w-80 shrink-0 hidden md:block">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">
+                  Responsável pelo Setor
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={responsavelSetor.foto_perfil_url || undefined} />
+                    <AvatarFallback>
+                      {responsavelSetor.nome.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{responsavelSetor.nome}</p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {responsavelSetor.email}
+                    </p>
+                    <Badge variant="secondary" className="mt-1 text-xs">
+                      {ROLE_LABELS[responsavelSetor.role as UserRole]}
+                    </Badge>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+          )}
 
-        {podeGerenciar && (
-          <div className="flex gap-2 shrink-0">
-            <Button variant="outline" onClick={() => setModalRecorrentes(true)}>
-              <List className="h-4 w-4 mr-2" />
-              Recorrentes ({templates.length})
-            </Button>
-            <Button onClick={() => setModalAberto(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Tarefa
-            </Button>
-          </div>
-        )}
+          {/* Desktop buttons */}
+          {podeGerenciar && (
+            <div className="hidden md:flex gap-2 shrink-0">
+              <Button variant="outline" onClick={() => setModalRecorrentes(true)}>
+                <List className="h-4 w-4 mr-2" />
+                Recorrentes ({templates.length})
+              </Button>
+              <Button onClick={() => setModalAberto(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Tarefa
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Tarefas em Andamento */}
+      {/* Badges de resumo */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0">
+        <Badge variant="destructive" className="text-xs md:text-sm px-2 md:px-3 py-1 whitespace-nowrap">
+          {totalEmAndamento} pendente(s)
+        </Badge>
+        <Badge className="bg-success text-success-foreground text-xs md:text-sm px-2 md:px-3 py-1 whitespace-nowrap">
+          {totalConcluidas} concluída(s)
+        </Badge>
+      </div>
+
+      {/* Calendário Semanal */}
+      <CalendarioSemanal 
+        tarefas={tarefas} 
+        diaSelecionado={diaCalendario}
+        onDiaChange={setDiaCalendario}
+      />
+
+      {/* Filtros */}
+      <ChecklistFiltros
+        usuarioSelecionado={usuarioSelecionado}
+        setUsuarioSelecionado={setUsuarioSelecionado}
+        tipoSelecionado={tipoSelecionado}
+        setTipoSelecionado={setTipoSelecionado}
+        statusSelecionado={statusSelecionado}
+        setStatusSelecionado={setStatusSelecionado}
+        dataSelecionada={dataSelecionada}
+        setDataSelecionada={setDataSelecionada}
+      />
+
+      {/* Tabela de Tarefas da Semana */}
       <Card>
-        <CardHeader>
-          <CardTitle>Em Andamento ({tarefasEmAndamento.length})</CardTitle>
-          <CardDescription>Tarefas que precisam da sua atenção</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {tarefasEmAndamento.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
-              Nenhuma tarefa em andamento
-            </p>
-          ) : (
-            tarefasEmAndamento.map((tarefa) => (
-              <div
-                key={tarefa.id}
-                className="flex items-center gap-3 py-2 px-3 border-b last:border-b-0 hover:bg-accent/30 transition-colors"
+        <CardHeader className="pb-3 px-4 md:px-6">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-base md:text-lg flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                {mostrarLixeira ? "Lixeira da Semana" : "Tarefas da Semana"}
+              </CardTitle>
+              <Button
+                variant={mostrarLixeira ? "default" : "outline"}
+                size="sm"
+                onClick={() => setMostrarLixeira(!mostrarLixeira)}
               >
-                <Checkbox
-                  checked={false}
-                  onCheckedChange={() => marcarConcluida.mutate(tarefa.id)}
-                  disabled={!podeMarcarConcluida}
-                  className="shrink-0"
-                />
-
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{tarefa.descricao}</p>
-                  
-                  <div className="flex flex-wrap items-center gap-2 mt-1">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {format(new Date(tarefa.created_at), "dd/MM", { locale: ptBR })}
-                    </span>
-
-                    {tarefa.recorrente && (
-                      <Badge variant="secondary" className="h-5 text-xs flex items-center gap-1 px-1.5">
-                        <Repeat className="h-3 w-3" />
-                        {tarefa.tipo_recorrencia === 'todos_os_dias' && 'Diária'}
-                        {tarefa.tipo_recorrencia === 'primeiro_dia_mes' && '1° do mês'}
-                        {tarefa.tipo_recorrencia === 'cada_7_dias' && 'Semanal'}
-                        {tarefa.tipo_recorrencia === 'cada_15_dias' && 'Quinzenal'}
-                        {tarefa.tipo_recorrencia === 'cada_30_dias' && 'Mensal'}
-                      </Badge>
-                    )}
-
-                    {tarefa.criador && (
-                      <span className="text-xs text-muted-foreground hidden sm:inline">
-                        por {tarefa.criador.nome}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {podeGerenciar && (
+                <Trash className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">
+                  {mostrarLixeira ? "Voltar" : `Lixeira (${totalConcluidas})`}
+                </span>
+                <span className="md:hidden ml-1">{totalConcluidas}</span>
+              </Button>
+            </div>
+            
+            {/* Navegação de semana */}
+            <div className="flex items-center justify-between bg-muted/50 rounded-lg p-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSemanaOffset(prev => prev - 1)}
+              >
+                ← Anterior
+              </Button>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{labelSemana}</span>
+                {semanaOffset !== 0 && (
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    onClick={() => setTarefaParaDeletar(tarefa.id)}
+                    size="sm"
+                    onClick={() => setSemanaOffset(0)}
+                    className="text-xs h-6 px-2"
                   >
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    Hoje
                   </Button>
                 )}
               </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Tarefas Concluídas */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Concluídas ({tarefasConcluidas.length})</CardTitle>
-          <CardDescription>Tarefas finalizadas</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {tarefasConcluidas.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
-              Nenhuma tarefa concluída
-            </p>
-          ) : (
-            tarefasConcluidas.map((tarefa) => (
-              <div
-                key={tarefa.id}
-                className="flex items-center gap-3 py-2 px-3 border-b last:border-b-0 opacity-50"
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSemanaOffset(prev => prev + 1)}
               >
-                <Checkbox
-                  checked={true}
-                  onCheckedChange={() => reabrirTarefa.mutate(tarefa.id)}
-                  disabled={!podeMarcarConcluida}
-                  className="shrink-0"
-                />
-
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium line-through truncate">{tarefa.descricao}</p>
-                  
-                  <div className="flex flex-wrap items-center gap-2 mt-1">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {format(new Date(tarefa.created_at), "dd/MM", { locale: ptBR })}
-                    </span>
-
-                    {tarefa.recorrente && (
-                      <Badge variant="outline" className="h-5 text-xs flex items-center gap-1 px-1.5">
-                        <Repeat className="h-3 w-3" />
-                        {tarefa.tipo_recorrencia === 'todos_os_dias' && 'Diária'}
-                        {tarefa.tipo_recorrencia === 'primeiro_dia_mes' && '1° do mês'}
-                        {tarefa.tipo_recorrencia === 'cada_7_dias' && 'Semanal'}
-                        {tarefa.tipo_recorrencia === 'cada_15_dias' && 'Quinzenal'}
-                        {tarefa.tipo_recorrencia === 'cada_30_dias' && 'Mensal'}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                {podeGerenciar && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    onClick={() => setTarefaParaDeletar(tarefa.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                  </Button>
-                )}
-              </div>
-            ))
-          )}
+                Próxima →
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0 px-4 md:px-6">
+          <TarefasTabela
+            tarefas={mostrarLixeira ? tarefasConcluidas : tarefasAtivas}
+            podeGerenciar={podeMarcarConcluida}
+            onMarcarConcluida={(id) => marcarConcluida.mutate(id)}
+            onReabrir={(id) => reabrirTarefa.mutate(id)}
+            onDeletar={(id) => setTarefaParaDeletar(id)}
+          />
         </CardContent>
       </Card>
+
+      {/* FAB Mobile - Nova Tarefa */}
+      {podeGerenciar && (
+        <Button
+          onClick={() => setModalAberto(true)}
+          size="lg"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg md:hidden z-50"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      )}
 
       {/* Modal Nova Tarefa */}
       <NovaTarefaModal
@@ -313,7 +347,7 @@ export default function ChecklistLideranca() {
 
       {/* Confirmação de Deleção */}
       <AlertDialog open={!!tarefaParaDeletar} onOpenChange={() => setTarefaParaDeletar(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[90vw] md:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
