@@ -408,8 +408,6 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                   </Card>
                 )}
               </div>
-            </>
-          )}
         </div>
       </div>
 
