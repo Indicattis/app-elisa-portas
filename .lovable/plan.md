@@ -1,28 +1,29 @@
 
 
-## Plano: Transformar ChecklistLideranca em gestor de tarefas por setor
+## Plano: Adicionar gestão semanal de tarefas por colaborador ao Checklist Liderança
 
 ### O que será feito
 
-A página `ChecklistLideranca` atualmente está fixa no setor "direcao". Vamos transformá-la para permitir selecionar qualquer setor e criar/gerenciar tarefas para cada um deles.
+Integrar na página `ChecklistLideranca` as funcionalidades de gestão semanal que já existem no `DirecaoChecklist`: calendário semanal, navegação entre semanas, tabela de tarefas com responsável/hora/status, filtros por colaborador, e botão de programação (recorrentes).
 
 ### Implementação
 
-**1. Adicionar seletor de setor na página `ChecklistLideranca.tsx`**
-- Substituir o `setor = 'direcao'` fixo por um estado `setorSelecionado`
-- Adicionar um `Select` com todos os setores disponíveis (Vendas, Marketing, Instalações, Fábrica, Administrativo) usando `SETOR_LABELS`
-- O hook `useTarefas` e `useSetorInfo` passam a usar o setor selecionado
-- Manter os botões "Nova Tarefa" e "Recorrentes" funcionando com o setor selecionado
-- Passar o `setor` selecionado ao `NovaTarefaModal`
+**1. Atualizar `ChecklistLideranca.tsx`**
+- Adicionar estados para navegação semanal (`semanaOffset`), dia do calendário, filtros (usuário, tipo, status, data), e toggle lixeira
+- Importar e usar os componentes já existentes: `CalendarioSemanal`, `TarefasTabela`, `ChecklistFiltros`
+- Adicionar lógica de filtragem por semana (usando `startOfWeek`/`endOfWeek`/`isWithinInterval`) e filtros adicionais
+- Adicionar navegação entre semanas (anterior/próxima/hoje) no card de tarefas
+- Substituir as listas simples de cards por `TarefasTabela` com responsável, hora, status e tipo
+- Manter o seletor de setor, botões "Nova Tarefa" e "Recorrentes", e o card do responsável
 
-**2. Ajustar layout do header**
-- Mover o seletor de setor para uma posição de destaque (abaixo do título ou ao lado)
-- Atualizar título dinâmico: "Checklist Liderança - {setorLabel}"
+**2. Layout final da página**
+- Header: Voltar + Título + Seletor de setor + Card responsável + Botões ação
+- Calendário semanal (componente existente)
+- Filtros (componente existente `ChecklistFiltros`)
+- Card de tarefas com navegação de semana + `TarefasTabela`
+- FAB mobile para Nova Tarefa
 
 ### Detalhes técnicos
 
-- Componente `Select` do shadcn com os 5 setores do `SETOR_LABELS`
-- Estado inicial: primeiro setor da lista ou "vendas"
-- O `useTarefas(user?.id, setorSelecionado)` já suporta trocar setor dinamicamente
-- O `NovaTarefaModal` já recebe prop `setor` e a repassa no submit
+Todos os componentes necessários já existem (`CalendarioSemanal`, `TarefasTabela`, `ChecklistFiltros`). A mudança é essencialmente reorganizar `ChecklistLideranca.tsx` para usar o mesmo padrão do `DirecaoChecklist.tsx`, mantendo o filtro por setor como diferencial.
 
