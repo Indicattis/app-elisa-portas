@@ -295,10 +295,12 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                 ) : acordosFiltrados.length === 0 ? (
                   <div className="text-center py-8 bg-primary/5 rounded-lg border border-primary/10">
                     <p className="text-white/60 mb-4">Nenhum acordo encontrado</p>
-                    <Button onClick={handleNovoAcordo} variant="outline" className="bg-primary/10 border-primary/20">
-                      <Plus className="h-4 w-4 mr-1" />
-                      Criar Primeiro Acordo
-                    </Button>
+                    {contexto === 'logistica' && (
+                      <Button onClick={handleNovoAcordo} variant="outline" className="bg-primary/10 border-primary/20">
+                        <Plus className="h-4 w-4 mr-1" />
+                        Criar Primeiro Acordo
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
