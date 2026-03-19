@@ -29,10 +29,6 @@ export default function MeuPerfil() {
   };
 
   const handleUpdatePassword = async () => {
-    if (!currentPassword) {
-      toast({ variant: "destructive", title: "Erro", description: "Informe a senha atual" });
-      return;
-    }
     if (newPassword.length < 6) {
       toast({ variant: "destructive", title: "Erro", description: "A nova senha deve ter pelo menos 6 caracteres" });
       return;
@@ -44,22 +40,10 @@ export default function MeuPerfil() {
 
     setChangingPassword(true);
     try {
-      // Verify current password
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email!,
-        password: currentPassword,
-      });
-      if (signInError) {
-        toast({ variant: "destructive", title: "Erro", description: "Senha atual incorreta" });
-        return;
-      }
-
-      // Update password
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
 
       toast({ title: "Sucesso", description: "Senha alterada com sucesso" });
-      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: any) {
