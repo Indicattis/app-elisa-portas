@@ -237,6 +237,7 @@ export default function AcordosAutorizados() {
                         <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                         <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
                         <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
+                        <TableHead className="text-xs text-white/70 text-right">Excesso</TableHead>
                         <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
                         <TableHead className="text-xs text-white/70 text-center">Data</TableHead>
                         <TableHead className="text-xs text-white/70 text-center">Criado por</TableHead>
