@@ -1,30 +1,21 @@
 
 
-## Plano: Adicionar equipe responsável nas concluídas
+## Plano: Adicionar Checklist Liderança ao hub da Direção
 
 ### O que será feito
 
-Mostrar o nome da equipe que realizou cada instalação/correção na seção "Concluídas".
+Criar uma nova rota `/direcao/checklist-lideranca` que renderiza o componente `ChecklistLideranca` já existente (`src/pages/ChecklistLideranca.tsx`), e adicionar um botão correspondente no hub da Direção.
 
 ### Implementação
 
-**1. Atualizar `useNeoFinalizados.ts`**
-- Adicionar `equipe_nome` ao select de `neo_instalacoes` e `neo_correcoes`
-- Adicionar `responsavel_instalacao_nome` ao select de `instalacoes`
-- Normalizar para um campo unificado `equipe_nome` no `FinalizadoItem`
-- Adicionar `equipe_nome: string | null` à interface `FinalizadoItem`
+**1. Adicionar rota em `src/App.tsx`**
+- Importar `ChecklistLideranca` de `src/pages/ChecklistLideranca`
+- Adicionar `<Route path="/direcao/checklist-lideranca" ...>` junto às outras rotas de direção, com `ProtectedRoute` usando `routeKey="direcao_hub"`
 
-**2. Atualizar `NeoFinalizadoRow.tsx`**
-- Exibir o nome da equipe como badge ou texto ao lado da localização
-- Usar um estilo discreto (texto muted ou badge outline) para não poluir a linha
+**2. Adicionar botão no `src/pages/direcao/DirecaoHub.tsx`**
+- Importar ícone `ClipboardCheck` do lucide
+- Adicionar item `{ label: 'Checklist Liderança', icon: ClipboardCheck, path: '/direcao/checklist-lideranca' }` ao array `menuItems`
 
-### Detalhes técnicos
-
-| Tabela | Campo equipe |
-|--------|-------------|
-| `neo_instalacoes` | `equipe_nome` (já desnormalizado) |
-| `neo_correcoes` | `equipe_nome` (já desnormalizado) |
-| `instalacoes` | `responsavel_instalacao_nome` |
-
-Os campos já existem nas tabelas — não precisa de joins adicionais, apenas incluir nos selects.
+**3. Adicionar navegação de volta no `ChecklistLideranca.tsx`**
+- Adicionar um botão "Voltar" que navega para `/direcao`, seguindo o padrão visual das outras páginas da direção (botão fixo no canto superior esquerdo com gradiente azul)
 
