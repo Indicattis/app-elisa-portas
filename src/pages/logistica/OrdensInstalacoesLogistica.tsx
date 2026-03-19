@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, Search, Filter, MapPin, Truck, Package, Hammer, Wrench } from "lucide-react";
+import { RefreshCw, Search, Filter, MapPin, Truck, Package, Hammer, Wrench, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,8 @@ import { useNeoCorrecoesListagem } from "@/hooks/useNeoCorrecoes";
 import { OrdemInstalacaoRow } from "@/components/instalacoes/OrdemInstalacaoRow";
 import { NeoInstalacaoRow } from "@/components/instalacoes/NeoInstalacaoRow";
 import { NeoCorrecaoRow } from "@/components/instalacoes/NeoCorrecaoRow";
+import { NeoFinalizadoRow } from "@/components/instalacoes/NeoFinalizadoRow";
+import { useNeoFinalizados } from "@/hooks/useNeoFinalizados";
 import { PedidoDetalhesSheet } from "@/components/pedidos/PedidoDetalhesSheet";
 import { NeoInstalacao } from "@/types/neoInstalacao";
 import { NeoCorrecao } from "@/types/neoCorrecao";
@@ -71,6 +73,8 @@ export default function OrdensInstalacoesLogistica() {
   } = useNeoCorrecoesListagem();
   
   const isConcluindoNeoCorrecao = concluirNeoCorrecao.isPending;
+
+  const { finalizados, isLoading: isLoadingFinalizados } = useNeoFinalizados();
 
 
 
@@ -394,6 +398,36 @@ export default function OrdensInstalacoesLogistica() {
                         onConcluir={(n) => setConfirmNeoCorrecaoDialog({ open: true, neoCorrecao: n })}
                         isConcluindo={isConcluindoNeoCorrecao}
                       />
+                    ))}
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* SEÇÃO 6: Concluídas */}
+            <AccordionItem value="concluidas" className="border rounded-lg px-3">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                  <span className="text-lg font-semibold">Concluídas</span>
+                  <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-600">
+                    {finalizados.length}
+                  </Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                {isLoadingFinalizados ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    Carregando concluídas...
+                  </div>
+                ) : finalizados.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground text-sm">
+                    Nenhuma instalação ou correção concluída nos últimos 30 dias.
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {finalizados.map((item) => (
+                      <NeoFinalizadoRow key={item.id} item={item} />
                     ))}
                   </div>
                 )}
