@@ -325,6 +325,7 @@ import ContasReceberMinimalista from "./pages/administrativo/ContasReceberMinima
 import ContasPagarMinimalista from "./pages/administrativo/ContasPagarMinimalista";
 import DocumentosMinimalista from "./pages/administrativo/DocumentosMinimalista";
 import MultasMinimalista from "./pages/administrativo/MultasMinimalista";
+import ProducaoAdminReadOnly from "./pages/administrativo/ProducaoAdminReadOnly";
 
 // Hub Fiscal Minimalista
 import FiscalHub from "./pages/administrativo/FiscalHub";
