@@ -1,22 +1,24 @@
 
 
-## Plano: Adicionar coluna "Mecânico" na Frota
+## Plano: Adicionar seção de alteração de senha em /perfil
 
-### O que será feito
+### Arquivo: `src/pages/MeuPerfil.tsx`
 
-Adicionar um campo `mecanico` (text, nullable) na tabela `veiculos` e exibi-lo na listagem de frota.
+Adicionar uma nova seção abaixo das informações do usuário com:
 
-### Mudanças
+- Título "Alterar Senha"
+- Campo "Senha atual" (type password)
+- Campo "Nova senha" (type password)
+- Campo "Confirmar nova senha" (type password)
+- Botão "Salvar nova senha"
+- Validações: senha mínima 6 caracteres, confirmação deve coincidir
+- Usa `supabase.auth.updateUser({ password })` para alterar
+- Toast de sucesso/erro
+- Ícone de cadeado (`Lock`) no título da seção
 
-1. **Migration SQL**: Adicionar coluna `mecanico text null` na tabela `veiculos`.
+### Detalhes técnicos
 
-2. **`src/hooks/useVeiculos.ts`**: Adicionar `mecanico: string | null` na interface `Veiculo` e `mecanico?: string` na `VeiculoFormData`.
-
-3. **`src/components/frota/SortableVeiculoRow.tsx`**: Adicionar `<TableCell>` para `veiculo.mecanico` entre "Responsável" e "Km Atual".
-
-4. **`src/pages/logistica/FrotaMinimalista.tsx`**: Adicionar `<TableHead>` "Mecânico" no header e ajustar colspan do empty state.
-
-5. **`src/pages/logistica/FrotaNovoMinimalista.tsx`** e **`src/pages/logistica/FrotaEditMinimalista.tsx`**: Adicionar campo de input para "Mecânico" no formulário.
-
-6. **`src/pages/Frota.tsx`** e **`src/pages/FrotaEdit.tsx`**: Adicionar coluna correspondente (versão não-minimalista).
+- Não precisa de edge function — o método `updateUser` do Supabase já permite que o usuário autenticado altere sua própria senha
+- A "senha atual" será verificada via `signInWithPassword` antes de aplicar a mudança (para confirmar identidade)
+- Campos limpos após sucesso
 
