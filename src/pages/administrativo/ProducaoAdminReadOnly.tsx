@@ -53,7 +53,7 @@ export default function ProducaoAdminReadOnly() {
   const contadores = usePedidosContadores();
   const { pedidos, isLoading } = usePedidosEtapas(etapaAtiva);
   const { getResponsavel } = useEtapaResponsaveis();
-  const { itensPorEtapa, isLoading: isLoadingItens } = useItensNaoConcluidosPorEtapa();
+  const { itensPorEtapa, itens, isLoading: isLoadingItens } = useItensNaoConcluidosPorEtapa();
 
   const pedidosFiltrados = useMemo(() => {
     if (!searchTerm.trim()) return pedidos;
@@ -65,6 +65,22 @@ export default function ProducaoAdminReadOnly() {
       return clienteNome.includes(termo) || numeroPedido.includes(termo);
     });
   }, [pedidos, searchTerm]);
+
+  // Agrupar itens por nome do item
+  const itensPorNome = useMemo(() => {
+    const grouped: Record<string, { nome: string; quantidadeTotal: number; etapas: Record<string, number>; pedidos: Set<number> }> = {};
+    for (const item of itens) {
+      const nome = item.estoque_nome || item.item;
+      if (!grouped[nome]) {
+        grouped[nome] = { nome, quantidadeTotal: 0, etapas: {}, pedidos: new Set() };
+      }
+      grouped[nome].quantidadeTotal += item.quantidade;
+      const etapa = item.etapa_atual || "sem_etapa";
+      grouped[nome].etapas[etapa] = (grouped[nome].etapas[etapa] || 0) + item.quantidade;
+      if (item.pedido_numero) grouped[nome].pedidos.add(item.pedido_numero);
+    }
+    return Object.values(grouped).sort((a, b) => b.quantidadeTotal - a.quantidadeTotal);
+  }, [itens]);
 
   // no-op handlers required by PedidosDraggableList
   const noopReorganizar = async () => {};
@@ -252,78 +268,48 @@ export default function ProducaoAdminReadOnly() {
 
       {/* Seção: Itens Não Concluídos por Etapa */}
       <div className="mt-8">
-        <h2 className="text-lg font-semibold text-white mb-4">Itens Pendentes por Etapa</h2>
+        <h2 className="text-lg font-semibold text-white mb-4">Itens Pendentes (agrupado por item)</h2>
         {isLoadingItens ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : Object.keys(itensPorEtapa).length === 0 ? (
+        ) : itensPorNome.length === 0 ? (
           <p className="text-white/60 text-center py-8">Nenhum item pendente encontrado.</p>
         ) : (
-          <div className="space-y-3">
-            {Object.entries(itensPorEtapa)
-              .sort(([a], [b]) => {
-                const orderA = ORDEM_ETAPAS.indexOf(a as EtapaPedido);
-                const orderB = ORDEM_ETAPAS.indexOf(b as EtapaPedido);
-                return (orderA === -1 ? 999 : orderA) - (orderB === -1 ? 999 : orderB);
-              })
-              .map(([etapa, itens]) => {
-                const label = ETAPA_LABELS[etapa] || etapa;
-                const IconComp = ETAPA_ICONS[etapa] || Package;
-                return (
-                  <Collapsible key={etapa}>
-                    <Card className="bg-primary/5 border-primary/10">
-                      <CollapsibleTrigger className="w-full">
-                        <div className="flex items-center justify-between px-4 py-3">
-                          <div className="flex items-center gap-2 text-white">
-                            <IconComp className="h-4 w-4" />
-                            <span className="font-medium text-sm">{label}</span>
-                            <Badge variant="secondary" className="bg-primary/10 text-white text-xs">
-                              {itens.length} {itens.length === 1 ? "item" : "itens"}
+          <Card className="bg-primary/5 border-primary/10">
+            <div className="px-4 py-4">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-primary/10">
+                    <TableHead className="text-white/70">Item</TableHead>
+                    <TableHead className="text-white/70 text-right">Qtd Total</TableHead>
+                    <TableHead className="text-white/70">Etapas</TableHead>
+                    <TableHead className="text-white/70">Pedidos</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {itensPorNome.map((grupo) => (
+                    <TableRow key={grupo.nome} className="border-primary/10">
+                      <TableCell className="text-white text-sm font-medium">{grupo.nome}</TableCell>
+                      <TableCell className="text-white text-sm text-right font-semibold">{grupo.quantidadeTotal}</TableCell>
+                      <TableCell className="text-sm">
+                        <div className="flex flex-wrap gap-1">
+                          {Object.entries(grupo.etapas).map(([etapa, qty]) => (
+                            <Badge key={etapa} variant="secondary" className="bg-primary/10 text-white/80 text-xs">
+                              {ETAPA_LABELS[etapa] || etapa}: {qty}
                             </Badge>
-                          </div>
-                          <ChevronDown className="h-4 w-4 text-white/40 transition-transform duration-200" />
+                          ))}
                         </div>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <div className="px-4 pb-4">
-                          <Table>
-                            <TableHeader>
-                              <TableRow className="border-primary/10">
-                                <TableHead className="text-white/70">Item</TableHead>
-                                <TableHead className="text-white/70">Qtd</TableHead>
-                                <TableHead className="text-white/70">Tamanho</TableHead>
-                                <TableHead className="text-white/70">Cor</TableHead>
-                                <TableHead className="text-white/70">Tipo</TableHead>
-                                <TableHead className="text-white/70">Pedido</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {itens.map((item) => (
-                                <TableRow key={item.id} className="border-primary/10">
-                                  <TableCell className="text-white text-sm">
-                                    {item.estoque_nome || item.item}
-                                  </TableCell>
-                                  <TableCell className="text-white/80 text-sm">{item.quantidade}</TableCell>
-                                  <TableCell className="text-white/80 text-sm">
-                                    {item.tamanho || (item.largura && item.altura ? `${item.largura}x${item.altura}` : "—")}
-                                  </TableCell>
-                                  <TableCell className="text-white/80 text-sm">{item.cor_nome || "—"}</TableCell>
-                                  <TableCell className="text-white/80 text-sm">{item.tipo_ordem}</TableCell>
-                                  <TableCell className="text-white/80 text-sm">
-                                    {item.pedido_numero ? `#${item.pedido_numero}` : "—"}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </CollapsibleContent>
-                    </Card>
-                  </Collapsible>
-                );
-              })}
-          </div>
+                      </TableCell>
+                      <TableCell className="text-white/60 text-sm">
+                        {Array.from(grupo.pedidos).sort((a, b) => a - b).map(n => `#${n}`).join(", ")}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
         )}
       </div>
     </MinimalistLayout>
