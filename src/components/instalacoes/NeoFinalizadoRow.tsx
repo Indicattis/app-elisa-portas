@@ -1,40 +1,32 @@
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CheckCircle2, Hammer, Wrench } from "lucide-react";
+import { CheckCircle2, Hammer, Wrench, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import type { NeoInstalacao } from "@/types/neoInstalacao";
-import type { NeoCorrecao } from "@/types/neoCorrecao";
-
-type NeoFinalizadoItem = (NeoInstalacao | NeoCorrecao) & {
-  concluidor?: {
-    id: string;
-    nome: string;
-    foto_perfil_url: string | null;
-  } | null;
-};
+import type { FinalizadoItem } from "@/hooks/useNeoFinalizados";
 
 interface NeoFinalizadoRowProps {
-  item: NeoFinalizadoItem;
+  item: FinalizadoItem;
 }
 
+const tipoConfig = {
+  instalacao: { icon: Truck, color: "text-blue-500", badgeClass: "border-blue-500/30 text-blue-500 bg-blue-500/10", label: "Instalação" },
+  neo_instalacao: { icon: Hammer, color: "text-orange-500", badgeClass: "border-orange-500/30 text-orange-500 bg-orange-500/10", label: "Neo Instalação" },
+  neo_correcao: { icon: Wrench, color: "text-purple-500", badgeClass: "border-purple-500/30 text-purple-500 bg-purple-500/10", label: "Neo Correção" },
+};
+
 export function NeoFinalizadoRow({ item }: NeoFinalizadoRowProps) {
-  const isInstalacao = item._tipo === 'neo_instalacao';
+  const config = tipoConfig[item._tipo];
+  const Icon = config.icon;
   const concluidaEm = item.concluida_em ? new Date(item.concluida_em) : null;
 
   const tempoRelativo = concluidaEm
     ? formatDistanceToNow(concluidaEm, { addSuffix: true, locale: ptBR })
     : null;
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
-  };
+  const getInitials = (name: string) =>
+    name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
 
   return (
     <div
@@ -45,46 +37,31 @@ export function NeoFinalizadoRow({ item }: NeoFinalizadoRowProps) {
         "h-[35px]"
       )}
     >
-      {/* Ícone do tipo */}
       <div className="shrink-0">
-        {isInstalacao ? (
-          <Hammer className="h-4 w-4 text-orange-500" />
-        ) : (
-          <Wrench className="h-4 w-4 text-purple-500" />
-        )}
+        <Icon className={cn("h-4 w-4", config.color)} />
       </div>
 
-      {/* Nome do cliente */}
       <span className="text-sm font-medium text-foreground truncate flex-1 min-w-0">
         {item.nome_cliente}
       </span>
 
-      {/* Badge do tipo */}
       <Badge
         variant="outline"
-        className={cn(
-          "text-[10px] px-1.5 py-0 h-5 shrink-0",
-          isInstalacao
-            ? "border-orange-500/30 text-orange-500 bg-orange-500/10"
-            : "border-purple-500/30 text-purple-500 bg-purple-500/10"
-        )}
+        className={cn("text-[10px] px-1.5 py-0 h-5 shrink-0", config.badgeClass)}
       >
-        {isInstalacao ? "Instalação" : "Correção"}
+        {config.label}
       </Badge>
 
-      {/* Localização */}
       <span className="text-xs text-muted-foreground shrink-0 hidden sm:block">
         {item.cidade}/{item.estado}
       </span>
 
-      {/* Tempo relativo */}
       {tempoRelativo && (
         <span className="text-xs text-muted-foreground shrink-0 hidden md:block">
           {tempoRelativo}
         </span>
       )}
 
-      {/* Quem concluiu */}
       {item.concluidor && (
         <div className="flex items-center gap-1 shrink-0">
           <Avatar className="h-5 w-5">
@@ -96,7 +73,6 @@ export function NeoFinalizadoRow({ item }: NeoFinalizadoRowProps) {
         </div>
       )}
 
-      {/* Ícone de conclusão */}
       <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
     </div>
   );

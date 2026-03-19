@@ -1,52 +1,78 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { subDays, format } from "date-fns";
-import type { NeoInstalacao } from "@/types/neoInstalacao";
-import type { NeoCorrecao } from "@/types/neoCorrecao";
 
-type NeoFinalizadoItem = (NeoInstalacao | NeoCorrecao) & {
+export interface FinalizadoItem {
+  id: string;
+  nome_cliente: string;
+  cidade: string | null;
+  estado: string | null;
+  concluida_em: string | null;
+  concluida_por: string | null;
+  _tipo: "neo_instalacao" | "neo_correcao" | "instalacao";
   concluidor?: {
     id: string;
     nome: string;
     foto_perfil_url: string | null;
   } | null;
-};
+}
 
 export const useNeoFinalizados = () => {
-  const limite = format(subDays(new Date(), 30), "yyyy-MM-dd");
-
   const { data: finalizados = [], isLoading } = useQuery({
-    queryKey: ["neo_finalizados", limite],
+    queryKey: ["finalizados_todos"],
     queryFn: async () => {
-      const [instRes, corrRes] = await Promise.all([
+      const [neoInstRes, neoCorrRes, instRes] = await Promise.all([
         supabase
           .from("neo_instalacoes")
-          .select("*")
+          .select("id, nome_cliente, cidade, estado, concluida_em, concluida_por")
           .eq("concluida", true)
-          .gte("concluida_em", limite)
           .order("concluida_em", { ascending: false }),
         supabase
           .from("neo_correcoes")
-          .select("*")
+          .select("id, nome_cliente, cidade, estado, concluida_em, concluida_por")
           .eq("concluida", true)
-          .gte("concluida_em", limite)
           .order("concluida_em", { ascending: false }),
+        supabase
+          .from("instalacoes")
+          .select("id, nome_cliente, cidade, estado, instalacao_concluida_em, instalacao_concluida_por")
+          .eq("instalacao_concluida", true)
+          .order("instalacao_concluida_em", { ascending: false }),
       ]);
 
+      if (neoInstRes.error) throw neoInstRes.error;
+      if (neoCorrRes.error) throw neoCorrRes.error;
       if (instRes.error) throw instRes.error;
-      if (corrRes.error) throw corrRes.error;
 
-      const instalacoes: NeoFinalizadoItem[] = (instRes.data || []).map((item: any) => ({
-        ...item,
+      const neoInstalacoes: FinalizadoItem[] = (neoInstRes.data || []).map((item: any) => ({
+        id: item.id,
+        nome_cliente: item.nome_cliente,
+        cidade: item.cidade,
+        estado: item.estado,
+        concluida_em: item.concluida_em,
+        concluida_por: item.concluida_por,
         _tipo: "neo_instalacao" as const,
       }));
 
-      const correcoes: NeoFinalizadoItem[] = (corrRes.data || []).map((item: any) => ({
-        ...item,
+      const neoCorrecoes: FinalizadoItem[] = (neoCorrRes.data || []).map((item: any) => ({
+        id: item.id,
+        nome_cliente: item.nome_cliente,
+        cidade: item.cidade,
+        estado: item.estado,
+        concluida_em: item.concluida_em,
+        concluida_por: item.concluida_por,
         _tipo: "neo_correcao" as const,
       }));
 
-      const todos = [...instalacoes, ...correcoes].sort((a, b) => {
+      const instalacoes: FinalizadoItem[] = (instRes.data || []).map((item: any) => ({
+        id: item.id,
+        nome_cliente: item.nome_cliente,
+        cidade: item.cidade,
+        estado: item.estado,
+        concluida_em: item.instalacao_concluida_em,
+        concluida_por: item.instalacao_concluida_por,
+        _tipo: "instalacao" as const,
+      }));
+
+      const todos = [...neoInstalacoes, ...neoCorrecoes, ...instalacoes].sort((a, b) => {
         const dateA = a.concluida_em ? new Date(a.concluida_em).getTime() : 0;
         const dateB = b.concluida_em ? new Date(b.concluida_em).getTime() : 0;
         return dateB - dateA;
