@@ -206,7 +206,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                 <Plus className="h-4 w-4 mr-1" />
                 Novo Estado
               </Button>
-              {contexto !== 'logistica' && (
+              {contexto === 'logistica' && (
                 <Button
                   onClick={handleNovoAcordo}
                   className="bg-primary hover:bg-primary/90"
@@ -256,8 +256,8 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
             </div>
           )}
 
-          {contexto !== 'logistica' && (
-            <>
+          {/* Separador */}
+          <div className="border-t border-primary/10" />
               {/* Separador */}
               <div className="border-t border-primary/10" />
 
@@ -295,10 +295,12 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                 ) : acordosFiltrados.length === 0 ? (
                   <div className="text-center py-8 bg-primary/5 rounded-lg border border-primary/10">
                     <p className="text-white/60 mb-4">Nenhum acordo encontrado</p>
-                    <Button onClick={handleNovoAcordo} variant="outline" className="bg-primary/10 border-primary/20">
-                      <Plus className="h-4 w-4 mr-1" />
-                      Criar Primeiro Acordo
-                    </Button>
+                    {contexto === 'logistica' && (
+                      <Button onClick={handleNovoAcordo} variant="outline" className="bg-primary/10 border-primary/20">
+                        <Plus className="h-4 w-4 mr-1" />
+                        Criar Primeiro Acordo
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
@@ -311,10 +313,13 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                               <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                               <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
                               <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
+                              <TableHead className="text-xs text-white/70 text-right">Excesso</TableHead>
                               <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
                               <TableHead className="text-xs text-white/70 text-center">Data</TableHead>
                               <TableHead className="text-xs text-white/70 text-center">Criado por</TableHead>
-                              <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
+                              {contexto === 'logistica' && (
+                                <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
+                              )}
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -334,6 +339,17 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                                 </TableCell>
                                 <TableCell className="text-right font-medium text-green-400">
                                   {formatCurrency(acordo.valor_acordado)}
+                                </TableCell>
+                                <TableCell className="text-right font-medium">
+                                  {(() => {
+                                    const totalRef = acordo.portas.reduce((sum, p) => sum + (p.valor_unitario || 0), 0);
+                                    const excesso = acordo.valor_acordado - totalRef;
+                                    return (
+                                      <span className={excesso > 0 ? 'text-red-400' : 'text-green-400'}>
+                                        {excesso > 0 ? '+' : ''}{formatCurrency(excesso)}
+                                      </span>
+                                    );
+                                  })()}
                                 </TableCell>
                                 <TableCell className="text-center">
                                   <Badge variant="outline" className={STATUS_COLORS[acordo.status]}>
@@ -364,23 +380,25 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                                     <span className="text-white/40">-</span>
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right">
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-primary/10">
-                                        <MoreHorizontal className="h-4 w-4 text-white/60" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700">
-                                      <DropdownMenuItem className="text-white hover:bg-zinc-700 cursor-pointer" onClick={() => handleEditarAcordo(acordo)}>
-                                        <Edit2 className="h-4 w-4 mr-2" /> Editar
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem className="text-red-400 hover:bg-red-500/20 cursor-pointer" onClick={() => setAcordoParaDeletar(acordo)}>
-                                        <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </TableCell>
+                                {contexto === 'logistica' && (
+                                  <TableCell className="text-right">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-primary/10">
+                                          <MoreHorizontal className="h-4 w-4 text-white/60" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700">
+                                        <DropdownMenuItem className="text-white hover:bg-zinc-700 cursor-pointer" onClick={() => handleEditarAcordo(acordo)}>
+                                          <Edit2 className="h-4 w-4 mr-2" /> Editar
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="text-red-400 hover:bg-red-500/20 cursor-pointer" onClick={() => setAcordoParaDeletar(acordo)}>
+                                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </TableCell>
+                                )}
                               </TableRow>
                             ))}
                           </TableBody>
@@ -390,8 +408,6 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                   </Card>
                 )}
               </div>
-            </>
-          )}
         </div>
       </div>
 
@@ -405,7 +421,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
         estadosCadastrados={estados.map(e => e.sigla)}
       />
 
-      {contexto !== 'logistica' && (
+      {contexto === 'logistica' && (
         <>
           <NovoAcordoDialog
             open={acordoDialogOpen}
