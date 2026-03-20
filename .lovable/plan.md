@@ -1,26 +1,40 @@
 
 
-## Plano: Adicionar botão de Programação ao Checklist Liderança
+## Plano: Integrar Programação Semanal no Checklist Liderança
 
 ### Resumo
-Adicionar um botão "Programação" no header da página `/direcao/checklist-lideranca` que navega para `/dashboard/direcao/checklist/programacao`, permitindo configurar tarefas recorrentes diretamente a partir desta tela.
+Embutir o conteúdo da página `/dashboard/direcao/checklist/programacao` (calendário semanal de templates recorrentes) diretamente na página `/direcao/checklist-lideranca`, usando Tabs para alternar entre "Tarefas" e "Programação". Remover o botão de navegação externa.
 
-### Alteração em `src/pages/ChecklistLideranca.tsx`
+### Alterações
 
-No bloco do header (após o botão "Voltar", junto aos botões de ação), adicionar um botão:
+**1. `src/pages/ChecklistLideranca.tsx`**
+- Adicionar estado `abaPrincipal` para controlar a tab ativa ("tarefas" | "programacao")
+- Importar componentes necessários: `Tabs, TabsList, TabsTrigger, TabsContent`, `Tooltip/TooltipProvider`, `Clock`, `Trash2`, `cn`
+- Adicionar estados do módulo de programação: `templateParaDeletar`, `filtroResponsavel`, `modalRecorrenteAberto`
+- Adicionar lógica de agrupamento `templatesPorDia` e filtro por responsável (copiada do Programação)
+- Substituir o botão "Programação" por uma tab no layout
+- Na tab "Programação": renderizar o grid de 7 colunas com os templates agrupados por dia da semana, incluindo filtro de responsável e botão "Nova Recorrente"
+- Na tab "Tarefas": manter todo o conteúdo atual (calendário semanal, filtros, tabela)
+- Adicionar o `AlertDialog` de confirmação de deleção de template
+- Adicionar o `NovaRecorrenteModal` (importar de `@/components/todo/NovaRecorrenteModal`)
 
-```tsx
-<Button 
-  variant="outline" 
-  size="sm"
-  onClick={() => navigate('/dashboard/direcao/checklist/programacao')}
->
-  <CalendarDays className="h-4 w-4 mr-2" />
-  Programação
-</Button>
+**2. Remoção da rota antiga (opcional)**
+- Remover ou manter a rota `/dashboard/direcao/checklist/programacao` como redirect — a critério do usuário
+
+### Estrutura visual
+
+```text
+┌─────────────────────────────────────────────┐
+│ Checklist Liderança                         │
+│ [Setor ▼]           [Recorrentes] [+ Tarefa]│
+│                                             │
+│  ┌──────────┐ ┌──────────────┐              │
+│  │ Tarefas  │ │ Programação  │   ← Tabs     │
+│  └──────────┘ └──────────────┘              │
+│                                             │
+│  (conteúdo da tab ativa)                    │
+└─────────────────────────────────────────────┘
 ```
-
-O ícone `CalendarDays` já está importado no arquivo. O botão será posicionado ao lado dos botões existentes de "Nova Tarefa" e "Recorrentes".
 
 ### Arquivo impactado
 - `src/pages/ChecklistLideranca.tsx`
