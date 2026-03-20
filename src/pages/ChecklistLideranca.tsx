@@ -2,20 +2,13 @@ import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTarefas, TarefaTemplate } from "@/hooks/useTarefas";
-import { NovaTarefaModal } from "@/components/todo/NovaTarefaModal";
 import { TarefasRecorrentesModal } from "@/components/todo/TarefasRecorrentesModal";
 import { NovaRecorrenteModal } from "@/components/todo/NovaRecorrenteModal";
-import { CalendarioSemanal } from "@/components/todo/CalendarioSemanal";
-import { ChecklistFiltros } from "@/components/todo/ChecklistFiltros";
-import { TarefasTabela } from "@/components/todo/TarefasTabela";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Calendar, Trash, List, CalendarDays, Clock, Trash2, User, ChevronLeft, ChevronRight } from "lucide-react";
-import { isSameDay, parseISO, startOfWeek, endOfWeek, isWithinInterval, format, addWeeks, subWeeks } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { Plus, List, CalendarDays, Clock, Trash2, User } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
@@ -30,86 +23,24 @@ const DIAS_SEMANA = [
 ];
 
 export default function ChecklistLideranca() {
-  const { user, userRole } = useAuth();
-
-  // Filtros (Tarefas)
-  const [usuarioSelecionado, setUsuarioSelecionado] = useState<string>("todos");
-  const [tipoSelecionado, setTipoSelecionado] = useState<string>("todos");
-  const [statusSelecionado, setStatusSelecionado] = useState<string>("todos");
-  const [dataSelecionada, setDataSelecionada] = useState<Date | undefined>(undefined);
-  const [mostrarLixeira, setMostrarLixeira] = useState(false);
-  const [semanaOffset, setSemanaOffset] = useState(0);
-  const [diaCalendario, setDiaCalendario] = useState<Date>(new Date());
+  const { userRole } = useAuth();
 
   // Programação states
   const [modalRecorrenteAberto, setModalRecorrenteAberto] = useState(false);
   const [templateParaDeletar, setTemplateParaDeletar] = useState<TarefaTemplate | null>(null);
   const [filtroResponsavel, setFiltroResponsavel] = useState<string | null>(null);
+  const [modalRecorrentes, setModalRecorrentes] = useState(false);
 
   const {
-    tarefas,
     isLoading,
     templates,
-    criarTarefa,
     criarTemplate,
-    marcarConcluida,
-    reabrirTarefa,
-    deletarTarefa,
     toggleTemplate,
     deletarTemplate,
     atualizarTemplate
-  } = useTarefas(usuarioSelecionado === "todos" ? undefined : usuarioSelecionado);
-
-  const [modalAberto, setModalAberto] = useState(false);
-  const [modalRecorrentes, setModalRecorrentes] = useState(false);
-  const [tarefaParaDeletar, setTarefaParaDeletar] = useState<string | null>(null);
+  } = useTarefas();
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
-
-  // === Tarefas logic ===
-  const semanaAtual = useMemo(() => {
-    const hoje = new Date();
-    const semanaBase = semanaOffset === 0 ? hoje :
-      semanaOffset > 0 ? addWeeks(hoje, semanaOffset) : subWeeks(hoje, Math.abs(semanaOffset));
-    const inicio = startOfWeek(semanaBase, { weekStartsOn: 0 });
-    const fim = endOfWeek(semanaBase, { weekStartsOn: 0 });
-    return { inicio, fim };
-  }, [semanaOffset]);
-
-  const tarefasDaSemana = useMemo(() => {
-    return tarefas.filter(tarefa => {
-      const dataStr = tarefa.data_referencia || tarefa.created_at;
-      if (!dataStr) return false;
-      const dataTarefa = parseISO(dataStr.split('T')[0]);
-      return isWithinInterval(dataTarefa, { start: semanaAtual.inicio, end: semanaAtual.fim });
-    });
-  }, [tarefas, semanaAtual]);
-
-  const tarefasFiltradas = useMemo(() => {
-    return tarefasDaSemana.filter(tarefa => {
-      if (tipoSelecionado === "unica" && tarefa.recorrente) return false;
-      if (tipoSelecionado === "recorrente" && !tarefa.recorrente) return false;
-      if (statusSelecionado === "em_andamento" && tarefa.status !== "em_andamento") return false;
-      if (statusSelecionado === "concluida" && tarefa.status !== "concluida") return false;
-      if (dataSelecionada) {
-        const dataStr = tarefa.data_referencia || tarefa.created_at;
-        const dataTarefa = parseISO(dataStr.split('T')[0]);
-        if (!isSameDay(dataTarefa, dataSelecionada)) return false;
-      }
-      if (!mostrarLixeira && tarefa.status === 'concluida') return false;
-      if (mostrarLixeira && tarefa.status !== 'concluida') return false;
-      return true;
-    });
-  }, [tarefasDaSemana, tipoSelecionado, statusSelecionado, dataSelecionada, mostrarLixeira]);
-
-  const tarefasAtivas = tarefasFiltradas.filter(t => t.status === 'em_andamento');
-  const tarefasConcluidas = tarefasFiltradas.filter(t => t.status === 'concluida');
-  const totalEmAndamento = tarefasDaSemana.filter(t => t.status === 'em_andamento').length;
-  const totalConcluidas = tarefasDaSemana.filter(t => t.status === 'concluida').length;
-
-  const labelSemana = useMemo(() => {
-    return `${format(semanaAtual.inicio, "dd MMM", { locale: ptBR })} - ${format(semanaAtual.fim, "dd MMM", { locale: ptBR })}`;
-  }, [semanaAtual]);
 
   // === Programação logic ===
   const responsaveis = useMemo(() => {
@@ -164,7 +95,7 @@ export default function ChecklistLideranca() {
         <span className="hidden md:inline">Recorrentes ({templates.length})</span>
       </button>
       <button
-        onClick={() => setModalAberto(true)}
+        onClick={() => setModalRecorrenteAberto(true)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700
                    text-white text-sm font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-200"
       >
@@ -187,110 +118,7 @@ export default function ChecklistLideranca() {
       ]}
     >
       <div className="space-y-8">
-        {/* ═══════════════════════════════════════════════════════ */}
-        {/* SEÇÃO 1: Tarefas da Semana                            */}
-        {/* ═══════════════════════════════════════════════════════ */}
-        <section className="space-y-4">
-          {/* Section header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20">
-                <Calendar className="h-4 w-4 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-white">Tarefas da Semana</h2>
-                <div className="flex gap-2 mt-1">
-                  <Badge className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs px-2 py-0.5">
-                    {totalEmAndamento} pendente(s)
-                  </Badge>
-                  <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-0.5">
-                    {totalConcluidas} concluída(s)
-                  </Badge>
-                </div>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setMostrarLixeira(!mostrarLixeira)}
-              className={cn(
-                "text-white/60 hover:text-white hover:bg-white/10",
-                mostrarLixeira && "bg-white/10 text-white"
-              )}
-            >
-              <Trash className="h-4 w-4 mr-1.5" />
-              {mostrarLixeira ? "Voltar" : `Lixeira (${totalConcluidas})`}
-            </Button>
-          </div>
-
-          {/* Calendário Semanal */}
-          <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-blue-500/10">
-            <CalendarioSemanal
-              tarefas={tarefas}
-              diaSelecionado={diaCalendario}
-              onDiaChange={setDiaCalendario}
-            />
-          </div>
-
-          {/* Filtros */}
-          <ChecklistFiltros
-            usuarioSelecionado={usuarioSelecionado}
-            setUsuarioSelecionado={setUsuarioSelecionado}
-            tipoSelecionado={tipoSelecionado}
-            setTipoSelecionado={setTipoSelecionado}
-            statusSelecionado={statusSelecionado}
-            setStatusSelecionado={setStatusSelecionado}
-            dataSelecionada={dataSelecionada}
-            setDataSelecionada={setDataSelecionada}
-          />
-
-          {/* Navegação de semana + Tabela */}
-          <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-blue-500/10">
-            <div className="px-4 py-3">
-              {/* Navegação de semana */}
-              <div className="flex items-center justify-between mb-4">
-                <button
-                  onClick={() => setSemanaOffset(prev => prev - 1)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/10 transition-all"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Anterior
-                </button>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-white">{labelSemana}</span>
-                  {semanaOffset !== 0 && (
-                    <button
-                      onClick={() => setSemanaOffset(0)}
-                      className="text-xs px-2 py-1 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-all"
-                    >
-                      Hoje
-                    </button>
-                  )}
-                </div>
-                <button
-                  onClick={() => setSemanaOffset(prev => prev + 1)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/10 transition-all"
-                >
-                  Próxima
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-
-              {/* Tabela */}
-              <TarefasTabela
-                tarefas={mostrarLixeira ? tarefasConcluidas : tarefasAtivas}
-                podeGerenciar={podeGerenciar}
-                onMarcarConcluida={(id) => marcarConcluida.mutate(id)}
-                onReabrir={(id) => reabrirTarefa.mutate(id)}
-                onDeletar={(id) => setTarefaParaDeletar(id)}
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════════════════ */}
-        {/* SEÇÃO 2: Programação Semanal                          */}
-        {/* ═══════════════════════════════════════════════════════ */}
+        {/* Programação Semanal */}
         <section className="space-y-4">
           {/* Section header */}
           <div className="flex items-center justify-between flex-wrap gap-3">
@@ -351,18 +179,6 @@ export default function ChecklistLideranca() {
                   ))}
                 </SelectContent>
               </Select>
-
-              {/* Botão nova recorrente */}
-              {podeGerenciar && (
-                <button
-                  onClick={() => setModalRecorrenteAberto(true)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700
-                             text-white text-sm font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-200"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden md:inline">Nova Recorrente</span>
-                </button>
-              )}
             </div>
           </div>
 
@@ -494,20 +310,13 @@ export default function ChecklistLideranca() {
       {/* FAB Mobile */}
       {podeGerenciar && (
         <Button
-          onClick={() => setModalAberto(true)}
+          onClick={() => setModalRecorrenteAberto(true)}
           size="lg"
           className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg md:hidden z-50 bg-gradient-to-r from-blue-500 to-blue-700"
         >
           <Plus className="h-6 w-6" />
         </Button>
       )}
-
-      {/* Modal Nova Tarefa */}
-      <NovaTarefaModal
-        open={modalAberto}
-        onOpenChange={setModalAberto}
-        onSubmit={(tarefa) => criarTarefa.mutate(tarefa)}
-      />
 
       {/* Modal Nova Recorrente */}
       <NovaRecorrenteModal
@@ -527,31 +336,6 @@ export default function ChecklistLideranca() {
         onEdit={(id, updates) => atualizarTemplate.mutate({ id, ...updates })}
         podeGerenciar={podeGerenciar}
       />
-
-      {/* Confirmação de Deleção de Tarefa */}
-      <AlertDialog open={!!tarefaParaDeletar} onOpenChange={() => setTarefaParaDeletar(null)}>
-        <AlertDialogContent className="max-w-[90vw] md:max-w-lg">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja deletar esta tarefa? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (tarefaParaDeletar) {
-                  deletarTarefa.mutate(tarefaParaDeletar);
-                  setTarefaParaDeletar(null);
-                }
-              }}
-            >
-              Deletar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Confirmação de Deleção de Template */}
       <AlertDialog open={!!templateParaDeletar} onOpenChange={() => setTemplateParaDeletar(null)}>
