@@ -620,59 +620,6 @@ export default function PerformanceMinimalista() {
       ]}
     >
       <div className="space-y-6">
-        {/* KPIs de WhatsApp */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white/70">
-                Cliques WhatsApp (Mês)
-              </CardTitle>
-              <Phone className="h-4 w-4 text-green-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{totalClicks}</div>
-              <p className="text-xs text-white/60">
-                {format(today, "MMMM 'de' yyyy", { locale: ptBR })}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white/70">
-                Principal Canal
-              </CardTitle>
-              <Globe className="h-4 w-4 text-blue-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {canalStats[0]?.canal || "-"}
-              </div>
-              <p className="text-xs text-white/60">
-                {canalStats[0]?.total_clicks || 0} cliques
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white/70">
-                Média por Dia
-              </CardTitle>
-              <Mouse className="h-4 w-4 text-purple-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {Math.round(totalClicks / today.getDate())}
-              </div>
-              <p className="text-xs text-white/60">
-                cliques/dia
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-
         {/* Seção de Análise de Vendas */}
         <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
           <CardHeader>
