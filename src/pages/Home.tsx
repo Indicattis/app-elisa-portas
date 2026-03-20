@@ -128,17 +128,26 @@ export default function Home() {
             transform: mounted ? 'translateY(0) scale(1)' : 'translateY(-20px) scale(0.8)'
           }}
         >
-          <button
-            onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-            className="focus:outline-none"
-          >
-            <Avatar className="w-12 h-12 border-2 border-white/20 shadow-lg shadow-black/50 cursor-pointer hover:border-blue-500/50 transition-colors">
-              <AvatarImage src={userRole.foto_perfil_url || undefined} alt={userRole.nome} />
-              <AvatarFallback className="bg-blue-500/30 text-white font-medium">
-                {getUserInitials(userRole.nome)}
-              </AvatarFallback>
-            </Avatar>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMinhasTarefasOpen(true)}
+              className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg shadow-black/50 flex items-center justify-center text-white/70 hover:text-white hover:border-blue-500/50 transition-colors active:scale-95"
+            >
+              <ClipboardList className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+              className="focus:outline-none"
+            >
+              <Avatar className="w-12 h-12 border-2 border-white/20 shadow-lg shadow-black/50 cursor-pointer hover:border-blue-500/50 transition-colors">
+                <AvatarImage src={userRole.foto_perfil_url || undefined} alt={userRole.nome} />
+                <AvatarFallback className="bg-blue-500/30 text-white font-medium">
+                  {getUserInitials(userRole.nome)}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+          </div>
 
           {/* Dropdown Menu */}
           <div 
