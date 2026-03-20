@@ -1,18 +1,22 @@
 
+## Plano: Aplicar estilo MinimalistLayout à página PedidosPagosSemEntrega
 
-## Plano: Trocar coluna "Próx. Troca Óleo" de data para KM
+A página atual usa layout genérico (`bg-background`, botão outline, sem glassmorphism). Precisa usar o `MinimalistLayout` como `/logistica/frota` faz.
 
-### Mudanças
+### Mudanças em `src/pages/logistica/PedidosPagosSemEntrega.tsx`
 
-**1. `src/components/frota/SortableVeiculoRow.tsx`** (FrotaMinimalista)
-- Linha ~85: trocar `veiculo.data_proxima_troca_oleo` por `veiculo.km_proxima_troca_oleo`
-- Exibir como `veiculo.km_proxima_troca_oleo?.toLocaleString('pt-BR') + ' km'` ou `'-'`
-- Remover o `format(...)` de data nessa célula
+1. **Envolver com `MinimalistLayout`** — substituir o wrapper manual (`div.min-h-screen`, header com botão voltar) pelo componente `MinimalistLayout` com:
+   - `title="Pedidos Pagos sem Data de Entrega"`
+   - `subtitle="Pedidos pagos aguardando data de entrega"`
+   - `backPath="/logistica"`
+   - `breadcrumbItems` com Home > Logística > Pedidos sem Entrega
+   - `headerActions` com o botão "Novo Cadastro"
 
-**2. `src/pages/logistica/FrotaMinimalista.tsx`**
-- Linha ~56 (header): renomear "Próx. Troca Óleo" para "Km Próx. Troca"
+2. **Estilizar a tabela** com glassmorphism — envolver em `Card` com classes `bg-white/5 border-blue-500/10 backdrop-blur-xl`, aplicar `text-white/70` nos headers e `text-white/90` nas cells, `hover:bg-white/5` nas rows.
 
-**3. `src/pages/Frota.tsx`** (página legada, manter consistente)
-- Header (~linha 89): renomear para "Km Próx. Troca"
-- Body (~linha 129): trocar `format(data_proxima_troca_oleo)` por `km_proxima_troca_oleo?.toLocaleString('pt-BR') + ' km'`
+3. **Estilizar o Dialog** — adicionar classes de glassmorphism ao `DialogContent` (`bg-black/90 border-white/10 backdrop-blur-xl`), labels e inputs com cores white/70.
 
+4. **Loading e empty state** — spinner com `border-blue-400`, texto vazio com `text-white/50`.
+
+### Arquivo
+- `src/pages/logistica/PedidosPagosSemEntrega.tsx` — reescrita do layout e estilos
