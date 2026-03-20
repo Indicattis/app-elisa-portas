@@ -1,35 +1,29 @@
 
 
-## Plano: Tela fullscreen de tarefas/missões do usuário (slide da esquerda)
+## Plano: Ajustar tela Minhas Tarefas
 
-### O que será feito
-Adicionar um botão flutuante (ícone de checklist) ao lado do avatar de perfil no `FloatingProfileMenu`. Ao clicar, uma tela fullscreen desliza da esquerda para a direita, mostrando todas as tarefas e missões atribuídas ao usuário logado. Estilo glassmorphism igual ao da `/direcao/checklist-lideranca`, otimizado para mobile.
+### Mudanças
 
-### Arquivos
+**1. Animação da direita para esquerda**
+- Trocar `'-translate-x-full'` por `'translate-x-full'` no estado fechado, fazendo o painel entrar pela direita.
 
-**1. Novo: `src/components/MinhasTarefasFullscreen.tsx`**
-- Recebe `open`, `onOpenChange`
-- Usa `useTarefas(user.id)` para buscar tarefas do usuário logado
-- Usa `useMissoes()` e filtra por `responsavel_id === user.id`
-- Renderiza um painel fixo fullscreen com animação slide-in da esquerda (`translate-x` transition)
-- Botão X para fechar no canto superior direito
-- Duas seções verticais:
-  - **Minhas Tarefas**: lista de tarefas com status (em_andamento/concluída), toggle de status, descrição, data
-  - **Minhas Missões**: cards de missões com progress bar, checkboxes marcáveis, badges de atraso
-- Estilo: `bg-black`, cards com `bg-white/5 border-white/10 backdrop-blur-xl`, textos brancos, gradientes azuis, mesma paleta do ChecklistLideranca
-- Ao clicar numa missão, abre o `DetalhesMissaoModal` existente
+**2. Exibir somente tarefas pendentes da semana**
+- Filtrar `tarefasPendentes` para mostrar apenas tarefas com `data_referencia` dentro da semana atual (segunda a domingo).
+- Remover a seção "Concluídas recentemente" que lista tarefas já finalizadas.
+- Atualizar o título da seção para "Tarefas da Semana".
 
-**2. Editar: `src/components/FloatingProfileMenu.tsx`**
-- Adicionar state `minhasTarefasOpen`
-- Renderizar botão flutuante (ícone `ClipboardList`) à esquerda do avatar, com mesmo estilo glassmorphism
-- Renderizar `<MinhasTarefasFullscreen>` controlado pelo state
-- O botão só aparece se `userRole` existe
+**3. Checkboxes de missões inline (sem modal)**
+- Remover o `DetalhesMissaoModal` e todo o estado associado (`missaoSelecionada`, `missaoModalOpen`).
+- Trocar o card de missão de `<button>` clicável para um `<div>` estático.
+- Exibir **todos** os checkboxes da missão (não só preview de 3) com `Checkbox` interativo do Radix.
+- Ao marcar/desmarcar um checkbox, chamar `toggleCheckbox.mutate()` diretamente na tela.
+- Manter progress bar e badge de atraso no card.
+
+### Arquivo editado
+- `src/components/MinhasTarefasFullscreen.tsx`
 
 ### Detalhes técnicos
-
-- A tela fullscreen será um `div` fixo com `inset-0 z-[60]` e transição CSS (`transform: translateX(-100%)` → `translateX(0)`)
-- Sem usar Sheet/Drawer — implementação custom para controle total do layout fullscreen
-- Scroll interno via `overflow-y-auto` no conteúdo
-- Toggle de tarefa usa `toggleStatus` do `useTarefas` existente
-- Toggle de checkbox de missão usa `toggleCheckbox` do `useMissoes`
+- Para filtro da semana: usar `startOfWeek` e `endOfWeek` do `date-fns` com `{ weekStartsOn: 1 }` (segunda).
+- Comparar `tarefa.data_referencia` contra o intervalo da semana.
+- Cada checkbox renderizado com `<Checkbox checked={cb.concluida} onCheckedChange={...} />` e descrição ao lado, com badge "atrasado" quando aplicável.
 
