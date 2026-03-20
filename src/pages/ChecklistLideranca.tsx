@@ -7,6 +7,7 @@ import { TarefasRecorrentesModal } from "@/components/todo/TarefasRecorrentesMod
 import { NovaRecorrenteModal } from "@/components/todo/NovaRecorrenteModal";
 import { HistoricoRecorrenteModal } from "@/components/todo/HistoricoRecorrenteModal";
 import { NovaMissaoModal } from "@/components/todo/NovaMissaoModal";
+import { DetalhesMissaoModal } from "@/components/todo/DetalhesMissaoModal";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -51,7 +52,8 @@ export default function ChecklistLideranca() {
     atualizarTemplate
   } = useTarefas();
 
-  const { missoes, isLoading: loadingMissoes, criarMissao } = useMissoes();
+  const { missoes, isLoading: loadingMissoes, criarMissao, deletarMissao, toggleCheckbox } = useMissoes();
+  const [missaoSelecionada, setMissaoSelecionada] = useState<import("@/hooks/useMissoes").Missao | null>(null);
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
 
@@ -379,6 +381,7 @@ export default function ChecklistLideranca() {
                 return (
                   <div
                     key={missao.id}
+                    onClick={() => setMissaoSelecionada(missao)}
                     className={cn(
                       "rounded-xl p-3 border transition-all duration-200 cursor-pointer hover:border-amber-500/40",
                       vencida
@@ -512,7 +515,16 @@ export default function ChecklistLideranca() {
         isLoading={criarMissao.isPending}
       />
 
-      {/* Confirmação de Deleção de Template */}
+      {/* Modal Detalhes Missão */}
+      <DetalhesMissaoModal
+        missao={missaoSelecionada}
+        open={!!missaoSelecionada}
+        onOpenChange={(open) => !open && setMissaoSelecionada(null)}
+        onToggleCheckbox={(params) => toggleCheckbox.mutate(params)}
+        onDelete={(id) => deletarMissao.mutate(id)}
+      />
+
+
       <AlertDialog open={!!templateParaDeletar} onOpenChange={() => setTemplateParaDeletar(null)}>
         <AlertDialogContent className="max-w-[90vw] md:max-w-lg">
           <AlertDialogHeader>

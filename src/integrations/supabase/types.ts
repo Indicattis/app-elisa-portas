@@ -3429,6 +3429,7 @@ export type Database = {
       missao_checkboxes: {
         Row: {
           concluida: boolean | null
+          concluida_em: string | null
           created_at: string | null
           descricao: string
           id: string
@@ -3438,6 +3439,7 @@ export type Database = {
         }
         Insert: {
           concluida?: boolean | null
+          concluida_em?: string | null
           created_at?: string | null
           descricao: string
           id?: string
@@ -3447,6 +3449,7 @@ export type Database = {
         }
         Update: {
           concluida?: boolean | null
+          concluida_em?: string | null
           created_at?: string | null
           descricao?: string
           id?: string
