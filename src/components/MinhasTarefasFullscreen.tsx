@@ -110,24 +110,38 @@ export function MinhasTarefasFullscreen({ open, onOpenChange }: MinhasTarefasFul
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {tarefasDaSemana.map(tarefa => (
-                    <button
-                      key={tarefa.id}
-                      onClick={() => handleToggleTarefa(tarefa)}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 flex items-start gap-3 text-left hover:bg-white/10 transition-colors active:scale-[0.98]"
-                    >
-                      <Circle className="w-5 h-5 text-white/30 mt-0.5 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white/90 text-sm leading-snug">{tarefa.descricao}</p>
-                        {tarefa.data_referencia && (
-                          <p className="text-white/40 text-xs mt-1 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {format(new Date(tarefa.data_referencia + 'T00:00:00'), "dd MMM", { locale: ptBR })}
-                          </p>
+                  {tarefasDaSemana.map(tarefa => {
+                    const isAtrasada = tarefa.data_referencia && isPast(startOfDay(new Date(tarefa.data_referencia + 'T00:00:00')));
+                    return (
+                      <div
+                        key={tarefa.id}
+                        onClick={() => !isAtrasada && handleToggleTarefa(tarefa)}
+                        className={cn(
+                          "w-full bg-white/5 border border-white/10 rounded-xl p-3 flex items-start gap-3 text-left transition-colors",
+                          isAtrasada ? "opacity-50 cursor-not-allowed" : "hover:bg-white/10 cursor-pointer active:scale-[0.98]"
                         )}
+                      >
+                        {isAtrasada
+                          ? <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5 shrink-0" />
+                          : <Circle className="w-5 h-5 text-white/30 mt-0.5 shrink-0" />
+                        }
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white/90 text-sm leading-snug">{tarefa.descricao}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            {tarefa.data_referencia && (
+                              <p className="text-white/40 text-xs flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {format(new Date(tarefa.data_referencia + 'T00:00:00'), "dd MMM", { locale: ptBR })}
+                              </p>
+                            )}
+                            {isAtrasada && (
+                              <span className="text-amber-400 text-[10px] font-semibold uppercase tracking-wide">Atrasada</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </button>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </section>
