@@ -227,7 +227,9 @@ export function useAcordosAutorizados() {
           const portasParaInserir = dadosAtualizados.portas.map(p => ({
             acordo_id: id,
             tamanho: p.tamanho,
-            valor_unitario: p.valor_unitario
+            valor_unitario: p.valor_unitario,
+            largura: p.largura || null,
+            altura: p.altura || null
           }));
 
           const { error: portasError } = await supabase
