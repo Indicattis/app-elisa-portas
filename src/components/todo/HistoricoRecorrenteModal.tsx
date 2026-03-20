@@ -69,7 +69,7 @@ export function HistoricoRecorrenteModal({ template, open, onOpenChange, onDelet
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md bg-[#0a1628]/95 backdrop-blur-xl border-white/10 text-white p-0 gap-0">
+        <DialogContent className="max-w-md bg-white/5 backdrop-blur-xl border-white/10 text-white p-0 gap-0 rounded-xl">
           <DialogHeader className="p-4 pb-3 border-b border-white/10">
             <DialogTitle className="text-base font-semibold text-white">
               {template.descricao}
