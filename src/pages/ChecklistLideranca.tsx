@@ -308,15 +308,13 @@ export default function ChecklistLideranca() {
       </div>
 
       {/* FAB Mobile */}
-      {podeGerenciar && (
-        <Button
-          onClick={() => setModalRecorrenteAberto(true)}
-          size="lg"
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg md:hidden z-50 bg-gradient-to-r from-blue-500 to-blue-700"
-        >
-          <Plus className="h-6 w-6" />
-        </Button>
-      )}
+      <Button
+        onClick={() => setModalRecorrenteAberto(true)}
+        size="lg"
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg md:hidden z-50 bg-gradient-to-r from-blue-500 to-blue-700"
+      >
+        <Plus className="h-6 w-6" />
+      </Button>
 
       {/* Modal Nova Recorrente */}
       <NovaRecorrenteModal
