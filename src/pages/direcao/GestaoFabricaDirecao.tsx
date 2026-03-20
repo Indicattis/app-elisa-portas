@@ -378,7 +378,7 @@ export default function GestaoFabricaDirecao() {
         <FlaskConical className="h-4 w-4 mr-2" />
         Pedido Teste
       </Button>
-      <Button variant="outline" onClick={handleRefresh} size="sm" className="bg-primary/5 border-primary/10 text-white hover:bg-primary/10">
+      <Button variant="outline" onClick={handleRefresh} size="sm" className="bg-white/5 border-blue-500/10 text-white hover:bg-white/10">
         <RefreshCw className="h-4 w-4" />
       </Button>
     </div>
@@ -411,7 +411,7 @@ export default function GestaoFabricaDirecao() {
         {/* Seletor mobile */}
         <div className="md:hidden mb-4">
           <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto')}>
-            <SelectTrigger className="w-full h-12 bg-primary/5 border-primary/10 text-white">
+            <SelectTrigger className="w-full h-12 bg-white/5 border-blue-500/10 text-white">
               <SelectValue>
                 {(() => {
                   if (etapaAtiva === 'arquivo_morto') {
@@ -432,7 +432,7 @@ export default function GestaoFabricaDirecao() {
                     <div className="flex items-center gap-2">
                       <IconComponent className="h-5 w-5" />
                       <span className="font-medium">{config.label}</span>
-                      <Badge variant="secondary" className="ml-auto bg-primary/10">
+                      <Badge variant="secondary" className="ml-auto bg-blue-500/10">
                         {count}
                       </Badge>
                     </div>
@@ -440,7 +440,7 @@ export default function GestaoFabricaDirecao() {
                 })()}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent className="bg-zinc-900 border-primary/10">
+            <SelectContent className="bg-zinc-900 border-blue-500/10">
               {ORDEM_ETAPAS.map(etapa => {
                 const config = ETAPAS_CONFIG[etapa];
                 const count = contadores[etapa] || 0;
@@ -450,7 +450,7 @@ export default function GestaoFabricaDirecao() {
                     <div className="flex items-center gap-2 w-full">
                       <IconComponent className="h-4 w-4 flex-shrink-0" />
                       <span className="flex-1">{config.label}</span>
-                      <Badge variant="secondary" className="text-xs bg-primary/10">
+                      <Badge variant="secondary" className="text-xs bg-blue-500/10">
                         {count}
                       </Badge>
                     </div>
@@ -471,7 +471,7 @@ export default function GestaoFabricaDirecao() {
         </div>
 
         {/* Tabs - Desktop */}
-        <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-2 bg-primary/5 border border-primary/10">
+        <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-2 bg-white/5 border border-blue-500/10">
           <TooltipProvider>
             {/* Grupo Vermelho: Produção */}
             <div className="flex gap-1 border-2 border-red-500/50 rounded-lg p-1">
@@ -484,14 +484,14 @@ export default function GestaoFabricaDirecao() {
                   <TabsTrigger 
                     key={etapa} 
                     value={etapa} 
-                    className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white"
+                    className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
                   >
                     {responsavel ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Avatar className="h-5 w-5 border border-primary/30">
+                          <Avatar className="h-5 w-5 border border-blue-500/30">
                             <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                            <AvatarFallback className="text-[10px] bg-primary/20">
+                            <AvatarFallback className="text-[10px] bg-blue-500/20">
                               {responsavel.nome.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
@@ -523,14 +523,14 @@ export default function GestaoFabricaDirecao() {
                   <TabsTrigger 
                     key={etapa} 
                     value={etapa} 
-                    className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white"
+                    className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
                   >
                     {responsavel ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Avatar className="h-5 w-5 border border-primary/30">
+                          <Avatar className="h-5 w-5 border border-blue-500/30">
                             <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                            <AvatarFallback className="text-[10px] bg-primary/20">
+                            <AvatarFallback className="text-[10px] bg-blue-500/20">
                               {responsavel.nome.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
@@ -562,14 +562,14 @@ export default function GestaoFabricaDirecao() {
                   <TabsTrigger 
                     key={etapa} 
                     value={etapa} 
-                    className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white"
+                    className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
                   >
                     {responsavel ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Avatar className="h-5 w-5 border border-primary/30">
+                          <Avatar className="h-5 w-5 border border-blue-500/30">
                             <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                            <AvatarFallback className="text-[10px] bg-primary/20">
+                            <AvatarFallback className="text-[10px] bg-blue-500/20">
                               {responsavel.nome.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
@@ -601,7 +601,7 @@ export default function GestaoFabricaDirecao() {
 
         {ORDEM_ETAPAS.map(etapa => (
           <TabsContent key={etapa} value={etapa} className="mt-4">
-            <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl w-full max-w-none">
+            <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
               <CardHeader className="pb-3 px-4 py-4">
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                   <CardTitle className="text-lg flex items-center gap-2 text-white">
@@ -610,7 +610,7 @@ export default function GestaoFabricaDirecao() {
                       {pedidosFiltrados.length} {pedidosFiltrados.length === 1 ? 'pedido' : 'pedidos'}
                     </span>
                     {totalPortasEtapa > 0 && (
-                      <Badge variant="secondary" className="text-xs ml-2 bg-primary/10 text-white">
+                      <Badge variant="secondary" className="text-xs ml-2 bg-blue-500/10 text-white">
                         🚪 {totalPortasEtapa} {totalPortasEtapa === 1 ? 'porta' : 'portas'}
                       </Badge>
                     )}
@@ -625,11 +625,11 @@ export default function GestaoFabricaDirecao() {
                               <TooltipTrigger asChild>
                                 <button 
                                   onClick={() => handleAbrirModalResponsavel(etapa)}
-                                  className="flex items-center gap-2 px-2 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
+                                  className="flex items-center gap-2 px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
                                 >
-                                  <Avatar className="h-6 w-6 border border-primary/30">
+                                  <Avatar className="h-6 w-6 border border-blue-500/30">
                                     <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                                    <AvatarFallback className="text-[10px] bg-primary/20">
+                                    <AvatarFallback className="text-[10px] bg-blue-500/20">
                                       {responsavel.nome.charAt(0).toUpperCase()}
                                     </AvatarFallback>
                                   </Avatar>
@@ -649,7 +649,7 @@ export default function GestaoFabricaDirecao() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleAbrirModalResponsavel(etapa)}
-                                  className="h-7 px-2 text-white/50 hover:text-white hover:bg-primary/10"
+                                  className="h-7 px-2 text-white/50 hover:text-white hover:bg-white/10"
                                 >
                                   <UserPlus className="h-4 w-4" />
                                 </Button>
@@ -675,7 +675,7 @@ export default function GestaoFabricaDirecao() {
                                     setShowCalendarioModal(true);
                                   }
                                 }}
-                                className="h-7 px-2 text-white/70 hover:text-white hover:bg-primary/10"
+                                className="h-7 px-2 text-white/70 hover:text-white hover:bg-white/10"
                               >
                                 <CalendarDays className="h-4 w-4" />
                               </Button>
@@ -830,7 +830,7 @@ export default function GestaoFabricaDirecao() {
 
         {/* Tab Content - Arquivo Morto */}
         <TabsContent value="arquivo_morto" className="mt-4">
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl w-full max-w-none">
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
             <CardHeader className="pb-3 px-4 py-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <CardTitle className="text-lg flex items-center gap-2 text-white">
@@ -846,7 +846,7 @@ export default function GestaoFabricaDirecao() {
                     placeholder="Buscar por nº ou cliente..."
                     value={arquivoSearch}
                     onChange={(e) => setArquivoSearch(e.target.value)}
-                    className="pl-10 bg-primary/5 border-primary/10 text-foreground placeholder:text-muted-foreground"
+                    className="pl-10 bg-white/5 border-blue-500/10 text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
@@ -868,7 +868,7 @@ export default function GestaoFabricaDirecao() {
                   {pedidosArquivados.map((pedido) => (
                     <div
                       key={pedido.id}
-                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-colors"
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-lg bg-white/5 border border-blue-500/10 hover:bg-white/10 transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         <div className="p-2 rounded-lg bg-emerald-500/20">
@@ -941,11 +941,11 @@ export default function GestaoFabricaDirecao() {
 
       {/* Legenda dos limites de tempo por etapa */}
       <Collapsible className="mt-6">
-        <CollapsibleTrigger className="w-full p-4 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-between cursor-pointer hover:bg-primary/10 transition-colors">
+        <CollapsibleTrigger className="w-full p-4 rounded-lg bg-white/5 border border-blue-500/10 flex items-center justify-between cursor-pointer hover:bg-white/10 transition-colors">
           <h3 className="text-sm font-semibold text-foreground">Legenda — Limites de tempo por etapa</h3>
           <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
         </CollapsibleTrigger>
-        <CollapsibleContent className="px-4 pb-4 rounded-b-lg bg-primary/5 border border-t-0 border-primary/10">
+        <CollapsibleContent className="px-4 pb-4 rounded-b-lg bg-white/5 border border-t-0 border-blue-500/10">
           <div className="pt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 text-xs text-muted-foreground">
             <div className="flex items-center justify-between gap-2">
               <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" /> Pedidos em Aberto</span>
@@ -984,7 +984,7 @@ export default function GestaoFabricaDirecao() {
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 3 dias</Badge>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-primary/10">
+          <div className="mt-3 pt-3 border-t border-blue-500/10">
             <h4 className="text-xs font-semibold text-foreground mb-2">Tempo total do pedido (dias corridos)</h4>
             <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-2">
