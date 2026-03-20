@@ -84,7 +84,7 @@ export default function ChecklistLideranca() {
     );
   }
 
-  const headerActions = podeGerenciar ? (
+  const headerActions = (
     <div className="flex gap-2">
       <button
         onClick={() => setModalRecorrentes(true)}
@@ -103,7 +103,7 @@ export default function ChecklistLideranca() {
         <span className="hidden md:inline">Nova Tarefa</span>
       </button>
     </div>
-  ) : undefined;
+  );
 
   return (
     <MinimalistLayout
