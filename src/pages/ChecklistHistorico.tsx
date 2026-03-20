@@ -172,7 +172,7 @@ export default function ChecklistHistorico() {
   return (
     <MinimalistLayout
       title="Histórico de Tarefas"
-      subtitle={`${totalConcluidas} concluída${totalConcluidas !== 1 ? "s" : ""} · ${totalNaoConcluidas} não concluída${totalNaoConcluidas !== 1 ? "s" : ""}`}
+      subtitle={`${totalConcluidas} concluída${totalConcluidas !== 1 ? "s" : ""} · ${totalPendentes} pendente${totalPendentes !== 1 ? "s" : ""} · ${totalNaoConcluidas} não concluída${totalNaoConcluidas !== 1 ? "s" : ""}`}
       backPath="/direcao/checklist-lideranca"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
