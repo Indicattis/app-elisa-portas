@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, Database, DollarSign, Lock, ArrowLeft, Image } from 'lucide-react';
+import { TrendingUp, Database, DollarSign, Lock, ArrowLeft, Image, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
@@ -11,6 +11,7 @@ const menuItems = [
   { label: "Canais de Aquisição", icon: Database, path: "/marketing/canais-aquisicao", ativo: true },
   { label: "Investimentos", icon: DollarSign, path: "/marketing/investimentos", ativo: true },
   { label: "Mídias", icon: Image, path: "/marketing/midias", ativo: true },
+  { label: "LTV", icon: Users, path: "/marketing/ltv", ativo: true },
 ];
 
 export default function MarketingHub() {
