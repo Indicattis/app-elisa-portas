@@ -59,7 +59,7 @@ const interfaces = [
 ];
 
 export function UserRouteAccessManager() {
-  const { isAdmin } = useAuth();
+  const { } = useAuth();
   const queryClient = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedInterface, setSelectedInterface] = useState<string>('padrao');
