@@ -129,9 +129,10 @@ export function useMissoes() {
 
   const toggleCheckbox = useMutation({
     mutationFn: async ({ id, concluida }: { id: string; concluida: boolean }) => {
+      const updateData: any = { concluida, concluida_em: concluida ? new Date().toISOString() : null };
       const { error } = await (supabase as any)
         .from("missao_checkboxes")
-        .update({ concluida })
+        .update(updateData)
         .eq("id", id);
       if (error) throw error;
     },

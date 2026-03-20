@@ -51,7 +51,8 @@ export default function ChecklistLideranca() {
     atualizarTemplate
   } = useTarefas();
 
-  const { missoes, isLoading: loadingMissoes, criarMissao } = useMissoes();
+  const { missoes, isLoading: loadingMissoes, criarMissao, deletarMissao, toggleCheckbox } = useMissoes();
+  const [missaoSelecionada, setMissaoSelecionada] = useState<import("@/hooks/useMissoes").Missao | null>(null);
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
 
