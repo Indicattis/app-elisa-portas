@@ -3426,6 +3426,68 @@ export type Database = {
         }
         Relationships: []
       }
+      missao_checkboxes: {
+        Row: {
+          concluida: boolean | null
+          created_at: string | null
+          descricao: string
+          id: string
+          missao_id: string
+          ordem: number | null
+        }
+        Insert: {
+          concluida?: boolean | null
+          created_at?: string | null
+          descricao: string
+          id?: string
+          missao_id: string
+          ordem?: number | null
+        }
+        Update: {
+          concluida?: boolean | null
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          missao_id?: string
+          ordem?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "missao_checkboxes_missao_id_fkey"
+            columns: ["missao_id"]
+            isOneToOne: false
+            referencedRelation: "missoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      missoes: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          prazo: string
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          prazo: string
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          prazo?: string
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       multas: {
         Row: {
           created_at: string
