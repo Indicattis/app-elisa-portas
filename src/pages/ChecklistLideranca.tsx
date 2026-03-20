@@ -381,6 +381,7 @@ export default function ChecklistLideranca() {
                 return (
                   <div
                     key={missao.id}
+                    onClick={() => setMissaoSelecionada(missao)}
                     className={cn(
                       "rounded-xl p-3 border transition-all duration-200 cursor-pointer hover:border-amber-500/40",
                       vencida
