@@ -463,7 +463,7 @@ export default function PerformanceMinimalista() {
           valor_frete, 
           lucro_total,
           estado,
-          produtos_vendas(faturamento)
+          produtos_vendas(faturamento, valor_total)
         `)
         .gte("data_venda", mesInicio)
         .lte("data_venda", mesFim + " 23:59:59");
