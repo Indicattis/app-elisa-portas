@@ -58,6 +58,26 @@ export default function AcordosAutorizados() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [acordoParaEditar, setAcordoParaEditar] = useState<AcordoAutorizado | null>(null);
   const [acordoParaDeletar, setAcordoParaDeletar] = useState<AcordoAutorizado | null>(null);
+  const [precosMap, setPrecosMap] = useState<Map<string, { P: number; G: number; GG: number }>>(new Map());
+
+  // Buscar preços padrões dos autorizados
+  useEffect(() => {
+    if (acordos.length === 0) return;
+    const autorizadoIds = [...new Set(acordos.map(a => a.autorizado_id))];
+    supabase
+      .from('autorizado_precos_portas')
+      .select('autorizado_id, tamanho, valor')
+      .in('autorizado_id', autorizadoIds)
+      .then(({ data }) => {
+        const map = new Map<string, { P: number; G: number; GG: number }>();
+        data?.forEach((row) => {
+          const existing = map.get(row.autorizado_id) || { P: 0, G: 0, GG: 0 };
+          existing[row.tamanho as 'P' | 'G' | 'GG'] = Number(row.valor);
+          map.set(row.autorizado_id, existing);
+        });
+        setPrecosMap(map);
+      });
+  }, [acordos]);
 
   const acordosFiltrados = useMemo(() => {
     return acordos.filter((acordo) => {
