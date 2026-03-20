@@ -61,6 +61,7 @@ import MarketingHub from "./pages/marketing/MarketingHub";
 import PerformanceMinimalista from "./pages/marketing/PerformanceMinimalista";
 import CanaisAquisicaoMinimalista from "./pages/marketing/CanaisAquisicaoMinimalista";
 import InvestimentosMinimalista from "./pages/marketing/InvestimentosMinimalista";
+import LtvMinimalista from "./pages/marketing/LtvMinimalista";
 import MidiasMinimalista from "./pages/marketing/MidiasMinimalista";
 
 import FabricaHome from "./pages/FabricaHome";
