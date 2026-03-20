@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -21,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { useAutorizadosPrecos } from '@/hooks/useAutorizadosPrecos';
 import { formatCurrency } from '@/lib/utils';
-import type { NovoAcordo, PortaAcordo, AcordoAutorizado } from '@/hooks/useAcordosAutorizados';
+import type { NovoAcordo, AcordoAutorizado } from '@/hooks/useAcordosAutorizados';
 
 const ESTADOS_BR = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS',
@@ -34,12 +33,6 @@ interface NovoAcordoDialogProps {
   onOpenChange: (open: boolean) => void;
   onSave: (acordo: NovoAcordo) => Promise<any>;
   acordoParaEditar?: AcordoAutorizado | null;
-}
-
-interface PortaLocal {
-  id: string;
-  tamanho: 'P' | 'G' | 'GG';
-  valor_unitario: number;
 }
 
 export function NovoAcordoDialog({ 
@@ -56,7 +49,9 @@ export function NovoAcordoDialog({
   const [clienteCidade, setClienteCidade] = useState('');
   const [clienteEstado, setClienteEstado] = useState('');
   const [autorizadoId, setAutorizadoId] = useState('');
-  const [portas, setPortas] = useState<PortaLocal[]>([]);
+  const [portaTamanho, setPortaTamanho] = useState<'P' | 'G' | 'GG'>('P');
+  const [portaLargura, setPortaLargura] = useState('');
+  const [portaAltura, setPortaAltura] = useState('');
   const [valorAcordado, setValorAcordado] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [dataAcordo, setDataAcordo] = useState(new Date().toISOString().split('T')[0]);
@@ -69,11 +64,10 @@ export function NovoAcordoDialog({
         setClienteCidade(acordoParaEditar.cliente_cidade);
         setClienteEstado(acordoParaEditar.cliente_estado);
         setAutorizadoId(acordoParaEditar.autorizado_id);
-        setPortas(acordoParaEditar.portas.map((p, idx) => ({
-          id: p.id || `temp-${idx}`,
-          tamanho: p.tamanho,
-          valor_unitario: p.valor_unitario
-        })));
+        const porta = acordoParaEditar.portas[0];
+        setPortaTamanho(porta?.tamanho || 'P');
+        setPortaLargura(porta?.largura ? String(porta.largura) : '');
+        setPortaAltura(porta?.altura ? String(porta.altura) : '');
         setValorAcordado(String(acordoParaEditar.valor_acordado));
         setObservacoes(acordoParaEditar.observacoes || '');
         setDataAcordo(acordoParaEditar.data_acordo);
@@ -82,7 +76,9 @@ export function NovoAcordoDialog({
         setClienteCidade('');
         setClienteEstado('');
         setAutorizadoId('');
-        setPortas([{ id: 'temp-1', tamanho: 'P', valor_unitario: 0 }]);
+        setPortaTamanho('P');
+        setPortaLargura('');
+        setPortaAltura('');
         setValorAcordado('');
         setObservacoes('');
         setDataAcordo(new Date().toISOString().split('T')[0]);
@@ -90,37 +86,9 @@ export function NovoAcordoDialog({
     }
   }, [open, acordoParaEditar]);
 
-  // Calcular valor sugerido baseado nos preços cadastrados
+  // Valor sugerido baseado nos preços cadastrados
   const autorizadoSelecionado = autorizados.find(a => a.id === autorizadoId);
-  const valorSugerido = portas.reduce((total, porta) => {
-    if (!autorizadoSelecionado) return total;
-    const precoTamanho = autorizadoSelecionado.precos[porta.tamanho] || 0;
-    return total + precoTamanho;
-  }, 0);
-
-  const adicionarPorta = () => {
-    setPortas([...portas, { 
-      id: `temp-${Date.now()}`, 
-      tamanho: 'P', 
-      valor_unitario: autorizadoSelecionado?.precos.P || 0 
-    }]);
-  };
-
-  const removerPorta = (id: string) => {
-    if (portas.length > 1) {
-      setPortas(portas.filter(p => p.id !== id));
-    }
-  };
-
-  const atualizarPorta = (id: string, tamanho: 'P' | 'G' | 'GG') => {
-    setPortas(portas.map(p => {
-      if (p.id === id) {
-        const novoValor = autorizadoSelecionado?.precos[tamanho] || 0;
-        return { ...p, tamanho, valor_unitario: novoValor };
-      }
-      return p;
-    }));
-  };
+  const valorSugerido = autorizadoSelecionado?.precos[portaTamanho] || 0;
 
   const handleSave = async () => {
     if (!clienteNome || !clienteCidade || !clienteEstado || !autorizadoId) {
@@ -138,10 +106,12 @@ export function NovoAcordoDialog({
         status: 'pendente',
         data_acordo: dataAcordo,
         observacoes: observacoes || undefined,
-        portas: portas.map(p => ({
-          tamanho: p.tamanho,
-          valor_unitario: p.valor_unitario
-        }))
+        portas: [{
+          tamanho: portaTamanho,
+          valor_unitario: autorizadoSelecionado?.precos[portaTamanho] || 0,
+          largura: portaLargura ? parseFloat(portaLargura) : undefined,
+          altura: portaAltura ? parseFloat(portaAltura) : undefined,
+        }]
       };
 
       await onSave(novoAcordo);
@@ -152,16 +122,6 @@ export function NovoAcordoDialog({
       setSaving(false);
     }
   };
-
-  // Resumo de portas
-  const resumoPortas = portas.reduce((acc, p) => {
-    acc[p.tamanho] = (acc[p.tamanho] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const resumoTexto = Object.entries(resumoPortas)
-    .map(([tam, qtd]) => `${qtd}${tam}`)
-    .join(', ');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -222,52 +182,48 @@ export function NovoAcordoDialog({
             </Select>
           </div>
 
-          {/* Portas */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-white/70">
-              PORTAS {portas.length > 0 && <span className="text-white/50">({resumoTexto})</span>}
-            </Label>
-            <div className="space-y-2">
-              {portas.map((porta, index) => (
-                <div key={porta.id} className="flex items-center gap-2 p-2 bg-zinc-800/50 rounded-lg">
-                  <span className="text-xs text-white/50 w-16">Porta {index + 1}</span>
-                  <Select 
-                    value={porta.tamanho} 
-                    onValueChange={(v) => atualizarPorta(porta.id, v as 'P' | 'G' | 'GG')}
-                  >
-                    <SelectTrigger className="flex-1 bg-zinc-800 border-zinc-700 text-white h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-800 border-zinc-700">
-                      <SelectItem value="P">P (&lt;25m²)</SelectItem>
-                      <SelectItem value="G">G (25-50m²)</SelectItem>
-                      <SelectItem value="GG">GG (&gt;50m²)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <span className="text-xs text-green-400 w-24 text-right">
-                    {porta.valor_unitario > 0 ? formatCurrency(porta.valor_unitario) : '-'}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 hover:bg-red-500/20 hover:text-red-400"
-                    onClick={() => removerPorta(porta.id)}
-                    disabled={portas.length <= 1}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+          {/* Porta */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-white/70">PORTA</Label>
+            <Select value={portaTamanho} onValueChange={(v) => setPortaTamanho(v as 'P' | 'G' | 'GG')}>
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-800 border-zinc-700">
+                <SelectItem value="P">P (&lt;25m²)</SelectItem>
+                <SelectItem value="G">G (25-50m²)</SelectItem>
+                <SelectItem value="GG">GG (&gt;50m²)</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs text-white/50">Largura (m)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 2.10"
+                  value={portaLargura}
+                  onChange={(e) => setPortaLargura(e.target.value)}
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-white/50">Altura (m)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 2.50"
+                  value={portaAltura}
+                  onChange={(e) => setPortaAltura(e.target.value)}
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                />
+              </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full border-dashed border-zinc-600 text-white/70 hover:text-white hover:bg-zinc-800"
-              onClick={adicionarPorta}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Porta
-            </Button>
+            {valorSugerido > 0 && (
+              <p className="text-xs text-white/50">
+                Valor unitário: {formatCurrency(valorSugerido)}
+              </p>
+            )}
           </div>
 
           {/* Valor Acordado */}

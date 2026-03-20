@@ -7,6 +7,8 @@ export interface PortaAcordo {
   id?: string;
   tamanho: 'P' | 'G' | 'GG';
   valor_unitario: number;
+  largura?: number;
+  altura?: number;
 }
 
 export interface AcordoAutorizado {
@@ -117,7 +119,9 @@ export function useAcordosAutorizados() {
           .map(p => ({
             id: p.id,
             tamanho: p.tamanho as 'P' | 'G' | 'GG',
-            valor_unitario: Number(p.valor_unitario)
+            valor_unitario: Number(p.valor_unitario),
+            largura: p.largura ? Number(p.largura) : undefined,
+            altura: p.altura ? Number(p.altura) : undefined
           })),
         criador: acordo.created_by ? criadoresMap[acordo.created_by] : undefined
       }));
@@ -162,7 +166,9 @@ export function useAcordosAutorizados() {
         const portasParaInserir = novoAcordo.portas.map(p => ({
           acordo_id: acordoCriado.id,
           tamanho: p.tamanho,
-          valor_unitario: p.valor_unitario
+          valor_unitario: p.valor_unitario,
+          largura: p.largura || null,
+          altura: p.altura || null
         }));
 
         const { error: portasError } = await supabase
@@ -221,7 +227,9 @@ export function useAcordosAutorizados() {
           const portasParaInserir = dadosAtualizados.portas.map(p => ({
             acordo_id: id,
             tamanho: p.tamanho,
-            valor_unitario: p.valor_unitario
+            valor_unitario: p.valor_unitario,
+            largura: p.largura || null,
+            altura: p.altura || null
           }));
 
           const { error: portasError } = await supabase

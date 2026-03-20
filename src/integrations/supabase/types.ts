@@ -47,19 +47,25 @@ export type Database = {
       acordo_portas: {
         Row: {
           acordo_id: string
+          altura: number | null
           id: string
+          largura: number | null
           tamanho: string
           valor_unitario: number
         }
         Insert: {
           acordo_id: string
+          altura?: number | null
           id?: string
+          largura?: number | null
           tamanho: string
           valor_unitario?: number
         }
         Update: {
           acordo_id?: string
+          altura?: number | null
           id?: string
+          largura?: number | null
           tamanho?: string
           valor_unitario?: number
         }
