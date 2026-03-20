@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
@@ -59,7 +59,6 @@ const interfaces = [
 ];
 
 export function UserRouteAccessManager() {
-  const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedInterface, setSelectedInterface] = useState<string>('padrao');
@@ -97,7 +96,6 @@ export function UserRouteAccessManager() {
       if (error) throw error;
       return data;
     },
-    enabled: isAdmin,
   });
 
   // Buscar todas as rotas disponíveis
@@ -113,7 +111,6 @@ export function UserRouteAccessManager() {
       if (error) throw error;
       return data as unknown as AppRoute[];
     },
-    enabled: isAdmin,
   });
 
   // Buscar acessos do usuário selecionado
@@ -130,7 +127,7 @@ export function UserRouteAccessManager() {
       if (error) throw error;
       return data as unknown as UserRouteAccess[];
     },
-    enabled: !!selectedUserId && isAdmin,
+    enabled: !!selectedUserId,
   });
 
   // Mutation para atualizar acessos
@@ -207,15 +204,6 @@ export function UserRouteAccessManager() {
     },
   });
 
-  if (!isAdmin) {
-    return (
-      <Alert className="bg-red-500/10 border-red-500/30">
-        <AlertDescription className="text-red-400">
-          Apenas administradores podem gerenciar permissões de acesso.
-        </AlertDescription>
-      </Alert>
-    );
-  }
 
   const hasAccess = (routeKey: string) => {
     return userAccess?.some(access => access.route_key === routeKey && access.can_access) || false;
