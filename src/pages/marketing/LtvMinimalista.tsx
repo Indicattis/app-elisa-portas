@@ -229,6 +229,7 @@ export default function LtvMinimalista() {
                 <th className="text-left px-4 py-3 font-medium">
                   <SortBtn k="nome">Cliente</SortBtn>
                 </th>
+                <th className="text-left px-4 py-3 font-medium hidden md:table-cell">Canal</th>
                 <th className="text-center px-4 py-3 font-medium">
                   <SortBtn k="numeroCompras">Nº Compras</SortBtn>
                 </th>
@@ -247,13 +248,14 @@ export default function LtvMinimalista() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={7} className="text-center py-10 text-white/40">Carregando...</td></tr>
+                <tr><td colSpan={8} className="text-center py-10 text-white/40">Carregando...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-10 text-white/40">Nenhum cliente encontrado</td></tr>
+                <tr><td colSpan={8} className="text-center py-10 text-white/40">Nenhum cliente encontrado</td></tr>
               ) : (
                 filtered.map(c => (
                   <tr key={c.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <td className="px-4 py-3 text-white font-medium">{c.nome}</td>
+                    <td className="px-4 py-3 text-left text-white/50 hidden md:table-cell text-xs">{c.canalAquisicaoNome || '—'}</td>
                     <td className="px-4 py-3 text-center text-white/70 tabular-nums">{c.numeroCompras}</td>
                     <td className="px-4 py-3 text-center text-white/50 hidden md:table-cell tabular-nums">{fmtDate(c.primeiraCompra)}</td>
                     <td className="px-4 py-3 text-center text-white/50 hidden md:table-cell tabular-nums">{fmtDate(c.ultimaCompra)}</td>
