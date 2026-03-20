@@ -283,9 +283,7 @@ export default function ChecklistHistorico() {
           </div>
         ) : (
           <div className="space-y-2">
-            {tarefasFiltradas.map((tarefa) => {
-              return (
-              return (
+            {tarefasFiltradas.map((tarefa) => (
                 <div
                   key={tarefa.id}
                   className="flex items-center gap-3 p-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
