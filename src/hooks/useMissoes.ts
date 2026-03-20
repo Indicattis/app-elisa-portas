@@ -28,13 +28,13 @@ export function useMissoes() {
   const { data: missoes = [], isLoading } = useQuery({
     queryKey: ["missoes"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("missoes")
         .select("*, missao_checkboxes(*)")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return (data as any[]).map((m) => ({
+      return (data as any[]).map((m: any) => ({
         ...m,
         missao_checkboxes: (m.missao_checkboxes || []).sort(
           (a: MissaoCheckbox, b: MissaoCheckbox) => a.ordem - b.ordem
@@ -52,7 +52,7 @@ export function useMissoes() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
-      const { data: missao, error: missaoError } = await supabase
+      const { data: missao, error: missaoError } = await (supabase as any)
         .from("missoes")
         .insert({ titulo: params.titulo, prazo: params.prazo, created_by: user.id })
         .select()
@@ -66,7 +66,7 @@ export function useMissoes() {
           descricao: cb.descricao,
           ordem: i,
         }));
-        const { error: cbError } = await supabase
+        const { error: cbError } = await (supabase as any)
           .from("missao_checkboxes")
           .insert(checkboxes);
         if (cbError) throw cbError;
@@ -85,7 +85,7 @@ export function useMissoes() {
 
   const deletarMissao = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("missoes").delete().eq("id", id);
+      const { error } = await (supabase as any).from("missoes").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -99,7 +99,7 @@ export function useMissoes() {
 
   const toggleCheckbox = useMutation({
     mutationFn: async ({ id, concluida }: { id: string; concluida: boolean }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("missao_checkboxes")
         .update({ concluida })
         .eq("id", id);
