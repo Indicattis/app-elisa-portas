@@ -119,7 +119,9 @@ export function useAcordosAutorizados() {
           .map(p => ({
             id: p.id,
             tamanho: p.tamanho as 'P' | 'G' | 'GG',
-            valor_unitario: Number(p.valor_unitario)
+            valor_unitario: Number(p.valor_unitario),
+            largura: p.largura ? Number(p.largura) : undefined,
+            altura: p.altura ? Number(p.altura) : undefined
           })),
         criador: acordo.created_by ? criadoresMap[acordo.created_by] : undefined
       }));
