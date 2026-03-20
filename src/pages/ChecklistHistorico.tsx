@@ -343,8 +343,8 @@ export default function ChecklistHistorico() {
                     {format(new Date(tarefa.data_referencia || tarefa.updated_at), "dd/MM/yy", { locale: ptBR })}
                   </span>
                 </div>
-              );
-            })}
+              ))}
+           </div>
           </div>
         )}
       </div>
