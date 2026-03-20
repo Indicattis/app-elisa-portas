@@ -51,7 +51,7 @@ export default function ChecklistHistorico() {
 
       if (err1) throw err1;
 
-      // Fetch recorrentes não concluídas de semanas passadas
+      // Fetch recorrentes não concluídas de semanas passadas (atrasadas)
       const { data: naoConcluidas, error: err2 } = await supabase
         .from("tarefas")
         .select("id, descricao, responsavel_id, updated_at, data_referencia, status, recorrente")
@@ -62,7 +62,17 @@ export default function ChecklistHistorico() {
 
       if (err2) throw err2;
 
-      const allTarefas = [...(concluidas || []), ...(naoConcluidas || [])];
+      // Fetch pendentes da semana atual (ainda abertas)
+      const { data: pendentes, error: err3 } = await supabase
+        .from("tarefas")
+        .select("id, descricao, responsavel_id, updated_at, data_referencia, status, recorrente")
+        .eq("status", "em_andamento")
+        .gte("data_referencia", inicioSemanaAtual)
+        .order("data_referencia", { ascending: false });
+
+      if (err3) throw err3;
+
+      const allTarefas = [...(concluidas || []), ...(naoConcluidas || []), ...(pendentes || [])];
 
       // Fetch responsaveis
       const responsavelIds = [...new Set(allTarefas.map((t: any) => t.responsavel_id).filter(Boolean))];
