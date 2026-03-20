@@ -1,29 +1,30 @@
 
 
-## Plano: Reestruturar tabela de Pagamentos Autorizados
+## Plano: Tooltip na linha inteira com preços padrões P/G/GG
 
-### Alterações
+### Situação atual
+- O tooltip só aparece ao fazer hover na célula "Portas"
+- Exibe os valores acordados por porta do acordo
+
+### O que mudar
 
 **Arquivo: `src/pages/logistica/AcordosAutorizados.tsx`**
 
-1. **Reordenar e simplificar colunas** para:
-   - **Portas** (badges P/G/GG)
-   - **Cliente** (nome do cliente)
-   - **Cidade** (cidade - estado)
-   - **Data** (data do acordo)
-   - **Valor** (valor acordado)
-   - **Valor excesso** (diferença entre acordado e referência)
-   - **Status** (badge pendente/em andamento/concluído)
-   - Manter coluna **Ações** (menu dropdown editar/excluir) — sem ela perde-se a funcionalidade
+1. **Buscar preços padrões**: Adicionar query ao `autorizado_precos_portas` para obter os preços de referência (P, G, GG) de cada autorizado envolvido nos acordos.
 
-2. **Remover colunas**: "Autorizado", "Criado por"
+2. **Mover tooltip para a linha inteira**: Envolver o `<TableRow>` com `<Tooltip>`, usando o `<TooltipTrigger>` na row toda. Assim, o hover em qualquer célula aciona o tooltip.
 
-3. **Adicionar Tooltip na linha**: Ao fazer hover na row de cada acordo, exibir um `Tooltip` com os valores acordados por porta — lista detalhada de cada porta com tamanho e valor unitário.
+3. **Conteúdo do tooltip**: Exibir os preços padrões do autorizado vinculado ao acordo:
+   - Porta P: R$ X
+   - Porta G: R$ X
+   - Porta GG: R$ X
+
+4. **Remover tooltip antigo** da célula de Portas (substitui pelo tooltip da row).
 
 ### Detalhes técnicos
-- Usar `TooltipProvider` + `Tooltip` + `TooltipTrigger` + `TooltipContent` já importados
-- O tooltip será aplicado na célula de **Portas**, mostrando cada porta com seu tamanho e `valor_unitario` formatado
-- Manter toda a lógica existente de filtros, CRUD e dialogs
+- Importar `useEffect`/`useState` e `supabase` para buscar `autorizado_precos_portas` dos `autorizado_id`s presentes nos acordos
+- Criar um `Map<autorizado_id, {P, G, GG}>` com os preços padrões
+- O `TooltipTrigger` envolverá o conteúdo da row (usando `asChild` num wrapper `<tr>`)
 
 ### Arquivo impactado
 - `src/pages/logistica/AcordosAutorizados.tsx`
