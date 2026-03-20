@@ -167,6 +167,7 @@ import DirecaoHome from "./pages/DirecaoHome";
 import DirecaoChecklist from "./pages/DirecaoChecklist";
 import DirecaoChecklistProgramacao from "./pages/DirecaoChecklistProgramacao";
 import ChecklistLideranca from "./pages/ChecklistLideranca";
+import ChecklistHistorico from "./pages/ChecklistHistorico";
 import Caixa from "./pages/Caixa";
 import ContasReceber from "./pages/ContasReceber";
 import ContasPagar from "./pages/ContasPagar";
