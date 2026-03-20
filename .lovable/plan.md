@@ -1,51 +1,24 @@
 
 
-## Plano: Criar página LTV no Marketing Hub
+## Plano: Permitir acesso à página de permissões para não-administradores
 
-### O que é
-Nova página `/marketing/ltv` acessível pelo hub de Marketing, exibindo o **Lifetime Value** de todos os clientes cadastrados. O LTV será calculado a partir dos dados já existentes nas tabelas `clientes` e `vendas`.
+### Problema
+O componente `UserRouteAccessManager` bloqueia qualquer usuário que não seja `administrador` (verifica `isAdmin` do `useAuth`). Usuários com acesso à rota `/admin/permissions` via `user_route_access` são barrados pelo componente mesmo tendo permissão na rota.
 
-### Mudanças
+### Solução
+Remover a dependência de `isAdmin` no componente e usar a própria presença na página como prova de autorização (a rota já é protegida por `ProtectedRoute` com `routeKey`).
 
-**1. `src/pages/marketing/MarketingHub.tsx`**
-- Adicionar novo item no array `menuItems`: `{ label: "LTV", icon: Users, path: "/marketing/ltv", ativo: true }`
-- Importar ícone `Users` do lucide-react
+### Mudanças em `src/components/UserRouteAccessManager.tsx`
 
-**2. Criar `src/pages/marketing/LtvMinimalista.tsx`** (nova página)
-- Usar `MinimalistLayout` com title "LTV" e subtitle "Lifetime Value dos clientes"
-- Buscar todos os clientes ativos (`clientes`) e todas as vendas (`vendas`) via Supabase
-- Calcular por cliente: total de vendas (LTV), número de compras, ticket médio, primeira e última compra
-- Exibir cards de resumo no topo: LTV médio, LTV total, total de clientes, ticket médio geral
-- Tabela com colunas: Cliente, Nº Compras, Primeira Compra, Última Compra, Ticket Médio, LTV (total gasto)
-- Ordenação padrão por LTV decrescente
-- Busca por nome de cliente
-- Estilo glassmorphism consistente com as demais páginas do marketing
+1. **Remover o guard `isAdmin`** (linhas 210-218) — deletar o bloco que retorna o `Alert` de "apenas administradores".
 
-**3. `src/App.tsx`**
-- Adicionar rota: `<Route path="/marketing/ltv" element={<ProtectedRoute routeKey="marketing_ltv"><LtvMinimalista /></ProtectedRoute>} />`
-- Importar o componente `LtvMinimalista`
+2. **Remover `isAdmin` das condições `enabled`** das queries (linhas 100, 116, 133) — trocar `enabled: isAdmin` por `enabled: true` (ou simplesmente remover), para que as queries rodem para qualquer usuário que chegue à página.
 
-### Dados utilizados
-- `clientes` (id, nome, created_at) — já existe
-- `vendas` (cliente_id, valor_venda, data_venda) — já existe
-- Não precisa de migração de banco
+3. **Remover import de `isAdmin`** — ajustar o destructuring de `useAuth()` na linha 62 para não pegar mais `isAdmin` (ou mantê-lo se for usado em outro lugar — verificar).
 
-### Estrutura da página
+### Segurança
+O acesso à página já é controlado por `ProtectedRoute` com `routeKey` no `App.tsx`. As operações no banco (`user_route_access`, `app_routes`) dependem das RLS policies do Supabase, não do frontend. A remoção do guard no componente não compromete a segurança.
 
-```text
-┌─────────────────────────────────────────┐
-│  MinimalistLayout (LTV)                 │
-│  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐   │
-│  │LTV   │ │LTV   │ │Total │ │Ticket│   │
-│  │Médio │ │Total │ │Client│ │Médio │   │
-│  └──────┘ └──────┘ └──────┘ └──────┘   │
-│                                         │
-│  [Busca por cliente]                    │
-│  ┌─────────────────────────────────────┐│
-│  │ Cliente │ Compras │ 1ª │ Última │...││
-│  │─────────│─────────│────│────────│...││
-│  │ João    │ 5       │ ...│ ...    │...││
-│  └─────────────────────────────────────┘│
-└─────────────────────────────────────────┘
-```
+### Arquivo
+- `src/components/UserRouteAccessManager.tsx`
 
