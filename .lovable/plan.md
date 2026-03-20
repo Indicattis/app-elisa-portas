@@ -1,38 +1,30 @@
 
 
-## Plano: Corrigir cálculo de Tamanho Total para metros lineares
-
-### Diagnóstico
-
-Dois problemas encontrados:
-
-1. **Fonte de dados errada**: O hook `useItensNaoConcluidosPorEtapa` busca dados de `linhas_ordens`, mas o `tamanho` está preenchido em `pedido_linhas`. Muitas `linhas_ordens` têm `tamanho` nulo, e o fallback via `pedido_linha_id` também retorna nulo (FK não preenchida).
-
-2. **Cálculo errado**: O código atual faz `tamanho × quantidade`. Para meia canas, o `tamanho` é o comprimento de corte (ex: 5,50m = largura da porta), e `quantidade` é o número de peças para aquela porta. O "Tamanho Total" correto é a **soma dos tamanhos** (metros lineares de corte), **sem multiplicar pela quantidade**.
-
-   - Dados verificados no banco: `SUM(tamanho)` para "Meia cana lisa - 0,70mm" em `em_producao` via `pedido_linhas` = ~130m (próximo de 136m, variação por dados em tempo real).
-   - `SUM(tamanho × quantidade)` = 3.617m (claramente errado).
+## Plano: Reestruturar tabela de Pagamentos Autorizados
 
 ### Alterações
 
-**Arquivo: `src/hooks/useItensNaoConcluidosPorEtapa.ts`**
-- Alterar a query para buscar de `pedido_linhas` em vez de `linhas_ordens`, trazendo: `tamanho`, `quantidade`, `estoque_id`, `nome_produto` (do estoque), `pedido_id` → `etapa_atual`, `numero_pedido`.
-- Filtrar por pedidos que não estejam em etapa `finalizado` ou `arquivo_morto`.
+**Arquivo: `src/pages/logistica/AcordosAutorizados.tsx`**
 
-**Arquivo: `src/pages/administrativo/ProducaoAdminReadOnly.tsx`**
-- Remover a multiplicação `tamanho × quantidade` no cálculo de `tamanhoTotal`.
-- Usar apenas `SUM(tamanho)` — somar o valor do tamanho de cada linha sem multiplicar pela quantidade.
+1. **Reordenar e simplificar colunas** para:
+   - **Portas** (badges P/G/GG)
+   - **Cliente** (nome do cliente)
+   - **Cidade** (cidade - estado)
+   - **Data** (data do acordo)
+   - **Valor** (valor acordado)
+   - **Valor excesso** (diferença entre acordado e referência)
+   - **Status** (badge pendente/em andamento/concluído)
+   - Manter coluna **Ações** (menu dropdown editar/excluir) — sem ela perde-se a funcionalidade
 
-### Resumo do cálculo corrigido
-```
-// Antes (errado):
-tamanhoTotal += parseTamanho(item.tamanho) * item.quantidade;
+2. **Remover colunas**: "Autorizado", "Criado por"
 
-// Depois (correto):
-tamanhoTotal += parseTamanho(item.tamanho);
-```
+3. **Adicionar Tooltip na linha**: Ao fazer hover na row de cada acordo, exibir um `Tooltip` com os valores acordados por porta — lista detalhada de cada porta com tamanho e valor unitário.
 
-### Arquivos impactados
-- `src/hooks/useItensNaoConcluidosPorEtapa.ts`
-- `src/pages/administrativo/ProducaoAdminReadOnly.tsx`
+### Detalhes técnicos
+- Usar `TooltipProvider` + `Tooltip` + `TooltipTrigger` + `TooltipContent` já importados
+- O tooltip será aplicado na célula de **Portas**, mostrando cada porta com seu tamanho e `valor_unitario` formatado
+- Manter toda a lógica existente de filtros, CRUD e dialogs
+
+### Arquivo impactado
+- `src/pages/logistica/AcordosAutorizados.tsx`
 
