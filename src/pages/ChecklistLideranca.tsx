@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useTarefas, TarefaTemplate } from "@/hooks/useTarefas";
 import { TarefasRecorrentesModal } from "@/components/todo/TarefasRecorrentesModal";
 import { NovaRecorrenteModal } from "@/components/todo/NovaRecorrenteModal";
+import { HistoricoRecorrenteModal } from "@/components/todo/HistoricoRecorrenteModal";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
