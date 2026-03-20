@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAllUsers } from "@/hooks/useAllUsers";
 import { useAllUsers } from "@/hooks/useAllUsers";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
