@@ -112,7 +112,6 @@ export function UserRouteAccessManager() {
       if (error) throw error;
       return data as unknown as AppRoute[];
     },
-    enabled: isAdmin,
   });
 
   // Buscar acessos do usuário selecionado
