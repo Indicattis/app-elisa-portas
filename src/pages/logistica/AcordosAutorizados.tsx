@@ -200,6 +200,7 @@ export default function AcordosAutorizados() {
                 <TableHeader>
                   <TableRow className="border-blue-500/10 hover:bg-white/5">
                     <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
+                    <TableHead className="text-xs text-white/70 text-center">Tamanho</TableHead>
                     <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                     <TableHead className="text-xs text-white/70">Cliente</TableHead>
                     <TableHead className="text-xs text-white/70">Cidade</TableHead>
@@ -224,6 +225,9 @@ export default function AcordosAutorizados() {
                             <div className="flex items-center justify-center gap-1">
                               {getResumoPortasBadges(acordo)}
                             </div>
+                          </TableCell>
+                          <TableCell className="text-center text-white/70 text-xs">
+                            {acordo.portas.map(p => p.tamanho).join(', ') || '-'}
                           </TableCell>
                           <TableCell className="text-white/70">
                             {acordo.autorizado_nome}
