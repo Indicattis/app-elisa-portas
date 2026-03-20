@@ -205,15 +205,6 @@ export function UserRouteAccessManager() {
     },
   });
 
-  if (!isAdmin) {
-    return (
-      <Alert className="bg-red-500/10 border-red-500/30">
-        <AlertDescription className="text-red-400">
-          Apenas administradores podem gerenciar permissões de acesso.
-        </AlertDescription>
-      </Alert>
-    );
-  }
 
   const hasAccess = (routeKey: string) => {
     return userAccess?.some(access => access.route_key === routeKey && access.can_access) || false;
