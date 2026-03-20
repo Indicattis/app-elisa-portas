@@ -227,7 +227,9 @@ export default function AcordosAutorizados() {
                             </div>
                           </TableCell>
                           <TableCell className="text-center text-white/70 text-xs">
-                            {acordo.portas.map(p => p.tamanho).join(', ') || '-'}
+                            {acordo.portas.map(p => 
+                              p.largura && p.altura ? `${p.largura}m × ${p.altura}m` : '-'
+                            ).join(', ')}
                           </TableCell>
                           <TableCell className="text-white/70">
                             {acordo.autorizado_nome}
