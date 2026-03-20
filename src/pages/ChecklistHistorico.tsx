@@ -204,6 +204,7 @@ export default function ChecklistHistorico() {
               <SelectContent className="bg-[#0a1628] border-white/10">
                 <SelectItem value="todos" className="text-white/70 focus:bg-white/10 focus:text-white">Todos</SelectItem>
                 <SelectItem value="concluidas" className="text-white/70 focus:bg-white/10 focus:text-white">Concluídas</SelectItem>
+                <SelectItem value="pendentes" className="text-white/70 focus:bg-white/10 focus:text-white">Pendentes</SelectItem>
                 <SelectItem value="nao_concluidas" className="text-white/70 focus:bg-white/10 focus:text-white">Não concluídas</SelectItem>
               </SelectContent>
             </Select>
