@@ -123,10 +123,10 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] bg-[#0a1628]/95 backdrop-blur-xl border border-white/10 text-white shadow-2xl">
         <DialogHeader>
-          <DialogTitle>Nova Tarefa Recorrente</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-white">Nova Tarefa Recorrente</DialogTitle>
+          <DialogDescription className="text-white/50">
             Crie uma tarefa que será criada automaticamente nos dias selecionados
           </DialogDescription>
         </DialogHeader>
@@ -135,18 +135,18 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoa
           {/* Seleção de Responsável */}
           {podeEscolherResponsavel && (
             <div className="space-y-2">
-              <label className="text-sm font-medium">Responsável</label>
+              <label className="text-sm font-medium text-white/70">Responsável</label>
               <Select value={responsavelId} onValueChange={setResponsavelId}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white hover:bg-white/10">
                   <SelectValue placeholder="Selecione o responsável" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#0f1d32] border-white/10">
                   {todosUsuarios?.map((usuario) => (
-                    <SelectItem key={usuario.user_id} value={usuario.user_id}>
+                    <SelectItem key={usuario.user_id} value={usuario.user_id} className="text-white/80 focus:bg-white/10 focus:text-white">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-5 w-5">
                           <AvatarImage src={usuario.foto_perfil_url} />
-                          <AvatarFallback className="text-xs">
+                          <AvatarFallback className="text-xs bg-white/10 text-white/70">
                             {usuario.nome?.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -161,39 +161,41 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoa
 
           {/* Descrição */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Descrição da tarefa</label>
+            <label className="text-sm font-medium text-white/70">Descrição da tarefa</label>
             <Textarea
               placeholder="Digite a descrição da tarefa..."
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               rows={3}
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-blue-500/50"
             />
           </div>
 
           {/* Seletor de Dias da Semana */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Dias da semana</label>
+            <label className="text-sm font-medium text-white/70">Dias da semana</label>
             <div className="grid grid-cols-7 gap-2">
               {DIAS_SEMANA.map((dia) => (
-                <Button
+                <button
                   key={dia.value}
                   type="button"
-                  variant={diasSelecionados.includes(dia.value) ? "default" : "outline"}
                   className={cn(
-                    "h-12 text-sm font-medium transition-all",
-                    diasSelecionados.includes(dia.value) && "shadow-md"
+                    "h-12 text-sm font-medium rounded-lg transition-all duration-200 border",
+                    diasSelecionados.includes(dia.value)
+                      ? "bg-gradient-to-r from-blue-500 to-blue-700 text-white border-blue-500/30 shadow-lg shadow-blue-500/20"
+                      : "bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white"
                   )}
                   onClick={() => toggleDia(dia.value)}
                 >
                   {dia.label}
-                </Button>
+                </button>
               ))}
             </div>
           </div>
 
           {/* Horário de Criação */}
           <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-2">
+            <label className="text-sm font-medium text-white/70 flex items-center gap-2">
               <Clock className="h-4 w-4" />
               Horário de criação da tarefa
             </label>
@@ -201,38 +203,43 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoa
               type="time"
               value={horaCriacao}
               onChange={(e) => setHoraCriacao(e.target.value)}
-              className="w-full"
+              className="w-full bg-white/5 border-white/10 text-white focus:border-blue-500/50"
             />
           </div>
 
           {/* Preview */}
           {diasSelecionados.length > 0 && (
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                As tarefas serão criadas automaticamente <strong>{previewDias}</strong> às <strong>{horaCriacao}</strong>
-              </AlertDescription>
-            </Alert>
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <Info className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
+              <p className="text-sm text-blue-200/80">
+                As tarefas serão criadas automaticamente <strong className="text-blue-300">{previewDias}</strong> às <strong className="text-blue-300">{horaCriacao}</strong>
+              </p>
+            </div>
           )}
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+          <button
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+            className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white text-sm transition-all duration-200 disabled:opacity-50"
+          >
             Cancelar
-          </Button>
-          <Button 
+          </button>
+          <button
             onClick={handleSubmit}
             disabled={!descricao.trim() || diasSelecionados.length === 0 || (podeEscolherResponsavel && !responsavelId) || isLoading}
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 text-white text-sm font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block" />
                 Criando tarefas...
               </>
             ) : (
               'Criar Tarefa Recorrente'
             )}
-          </Button>
+          </button>
         </div>
       </DialogContent>
     </Dialog>
