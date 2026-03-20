@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, LayoutDashboard, PanelLeft, Settings, Lock, Factory, User, ClipboardList } from 'lucide-react';
 import { MinhasTarefasFullscreen } from '@/components/MinhasTarefasFullscreen';
@@ -189,7 +190,10 @@ export function FloatingProfileMenu({ mounted = true }: FloatingProfileMenuProps
         </div>
       </div>
 
-      <MinhasTarefasFullscreen open={minhasTarefasOpen} onOpenChange={setMinhasTarefasOpen} />
+      {createPortal(
+        <MinhasTarefasFullscreen open={minhasTarefasOpen} onOpenChange={setMinhasTarefasOpen} />,
+        document.body
+      )}
     </div>
   );
 }
