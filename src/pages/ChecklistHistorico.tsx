@@ -158,7 +158,8 @@ export default function ChecklistHistorico() {
   }, [tarefas, filtroResponsavel, filtroBusca, filtroStatus, dateRange]);
 
   const totalConcluidas = tarefasFiltradas.filter((t) => t.status === "concluida").length;
-  const totalNaoConcluidas = tarefasFiltradas.filter((t) => t.status !== "concluida").length;
+  const totalNaoConcluidas = tarefasFiltradas.filter((t) => t.status !== "concluida" && new Date(t.data_referencia || t.updated_at) < new Date(inicioSemanaAtual)).length;
+  const totalPendentes = tarefasFiltradas.filter((t) => t.status !== "concluida" && new Date(t.data_referencia || t.updated_at) >= new Date(inicioSemanaAtual)).length;
 
   if (isLoading) {
     return (
