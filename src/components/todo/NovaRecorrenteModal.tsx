@@ -228,7 +228,7 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoa
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!descricao.trim() || diasSelecionados.length === 0 || (podeEscolherResponsavel && !responsavelId) || isLoading}
+            disabled={!descricao.trim() || diasSelecionados.length === 0 || !responsavelId || isLoading}
             className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 text-white text-sm font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
