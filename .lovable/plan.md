@@ -1,38 +1,51 @@
 
 
-## Diagnóstico: Faturamento incorreto na seção CAC por Canal Pago
+## Plano: Criar página LTV no Marketing Hub
 
-### Problema encontrado
+### O que é
+Nova página `/marketing/ltv` acessível pelo hub de Marketing, exibindo o **Lifetime Value** de todos os clientes cadastrados. O LTV será calculado a partir dos dados já existentes nas tabelas `clientes` e `vendas`.
 
-A coluna `faturamento` na tabela `produtos_vendas` é do tipo **boolean** (indica se o produto foi faturado ou não), e **não** um valor monetário. O código atual faz:
+### Mudanças
 
-```typescript
-produtos_vendas(faturamento)
-// ...
-venda.produtos_vendas?.reduce((sum, p) => sum + (p.faturamento || 0), 0)
+**1. `src/pages/marketing/MarketingHub.tsx`**
+- Adicionar novo item no array `menuItems`: `{ label: "LTV", icon: Users, path: "/marketing/ltv", ativo: true }`
+- Importar ícone `Users` do lucide-react
+
+**2. Criar `src/pages/marketing/LtvMinimalista.tsx`** (nova página)
+- Usar `MinimalistLayout` com title "LTV" e subtitle "Lifetime Value dos clientes"
+- Buscar todos os clientes ativos (`clientes`) e todas as vendas (`vendas`) via Supabase
+- Calcular por cliente: total de vendas (LTV), número de compras, ticket médio, primeira e última compra
+- Exibir cards de resumo no topo: LTV médio, LTV total, total de clientes, ticket médio geral
+- Tabela com colunas: Cliente, Nº Compras, Primeira Compra, Última Compra, Ticket Médio, LTV (total gasto)
+- Ordenação padrão por LTV decrescente
+- Busca por nome de cliente
+- Estilo glassmorphism consistente com as demais páginas do marketing
+
+**3. `src/App.tsx`**
+- Adicionar rota: `<Route path="/marketing/ltv" element={<ProtectedRoute routeKey="marketing_ltv"><LtvMinimalista /></ProtectedRoute>} />`
+- Importar o componente `LtvMinimalista`
+
+### Dados utilizados
+- `clientes` (id, nome, created_at) — já existe
+- `vendas` (cliente_id, valor_venda, data_venda) — já existe
+- Não precisa de migração de banco
+
+### Estrutura da página
+
+```text
+┌─────────────────────────────────────────┐
+│  MinimalistLayout (LTV)                 │
+│  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐   │
+│  │LTV   │ │LTV   │ │Total │ │Ticket│   │
+│  │Médio │ │Total │ │Client│ │Médio │   │
+│  └──────┘ └──────┘ └──────┘ └──────┘   │
+│                                         │
+│  [Busca por cliente]                    │
+│  ┌─────────────────────────────────────┐│
+│  │ Cliente │ Compras │ 1ª │ Última │...││
+│  │─────────│─────────│────│────────│...││
+│  │ João    │ 5       │ ...│ ...    │...││
+│  └─────────────────────────────────────┘│
+└─────────────────────────────────────────┘
 ```
-
-Como `true` vira `1` em JavaScript, o "faturamento" exibido é simplesmente a **contagem de produtos faturados** (17 para Google, 8 para Meta), não o valor real.
-
-### Correção
-
-**Arquivo:** `src/pages/marketing/PerformanceMinimalista.tsx`
-
-1. **Alterar a query** (linha ~466): trocar `produtos_vendas(faturamento)` por `produtos_vendas(valor_total, faturamento)` para buscar o valor monetário real junto com o flag de faturamento.
-
-2. **Alterar o cálculo** (linhas ~513-520): somar `valor_total` dos produtos que têm `faturamento = true`, em vez de somar o campo booleano:
-
-```typescript
-vendasDoCanal.forEach((venda: any) => {
-  const produtosFaturados = venda.produtos_vendas?.filter((p: any) => p.faturamento === true) || [];
-  if (produtosFaturados.length > 0) {
-    vendasFaturadas++;
-    faturamento += produtosFaturados.reduce((sum: number, p: any) => sum + (p.valor_total || 0), 0);
-  } else {
-    vendasPendentes++;
-  }
-});
-```
-
-Isso garante que o faturamento exibido seja a soma dos `valor_total` dos produtos efetivamente faturados.
 
