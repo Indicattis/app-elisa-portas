@@ -128,7 +128,7 @@ export function UserRouteAccessManager() {
       if (error) throw error;
       return data as unknown as UserRouteAccess[];
     },
-    enabled: !!selectedUserId && isAdmin,
+    enabled: !!selectedUserId,
   });
 
   // Mutation para atualizar acessos
