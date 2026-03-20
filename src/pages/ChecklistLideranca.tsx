@@ -33,6 +33,7 @@ export default function ChecklistLideranca() {
   const [templateParaDeletar, setTemplateParaDeletar] = useState<TarefaTemplate | null>(null);
   const [filtroResponsavel, setFiltroResponsavel] = useState<string | null>(null);
   const [modalRecorrentes, setModalRecorrentes] = useState(false);
+  const [templateSelecionado, setTemplateSelecionado] = useState<TarefaTemplate | null>(null);
 
   const {
     isLoading,
