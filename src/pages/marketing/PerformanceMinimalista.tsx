@@ -672,64 +672,6 @@ export default function PerformanceMinimalista() {
           </Card>
         </div>
 
-        {/* Gráficos por Canal e Referenciador */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-            <CardHeader>
-              <CardTitle className="text-white">Cliques por Canal</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={canalStats} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis type="number" stroke="rgba(255,255,255,0.5)" />
-                  <YAxis dataKey="canal" type="category" width={150} stroke="rgba(255,255,255,0.5)" tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }} />
-                  <RechartsTooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(0,0,0,0.9)', 
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '8px',
-                      color: 'white'
-                    }} 
-                  />
-                  <Bar dataKey="total_clicks" radius={[0, 4, 4, 0]}>
-                    {canalStats.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-            <CardHeader>
-              <CardTitle className="text-white">Cliques por Referenciador</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={referrerStats} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis type="number" stroke="rgba(255,255,255,0.5)" />
-                  <YAxis dataKey="referrer" type="category" width={150} stroke="rgba(255,255,255,0.5)" tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }} />
-                  <RechartsTooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(0,0,0,0.9)', 
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '8px',
-                      color: 'white'
-                    }} 
-                  />
-                  <Bar dataKey="total_clicks" radius={[0, 4, 4, 0]}>
-                    {referrerStats.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Seção de Análise de Vendas */}
         <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
