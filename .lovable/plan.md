@@ -1,31 +1,32 @@
 
 
-## Plano: Tooltip na linha inteira com preços padrões P/G/GG
+## Plano: Porta única com medidas de largura e altura
 
-### Situação atual
-- O tooltip só aparece ao fazer hover na célula "Portas"
-- Exibe os valores acordados por porta do acordo
+### Resumo
+Simplificar o formulário de acordo para permitir apenas **uma porta** com seleção de tamanho (P/G/GG) e campos de **largura** e **altura**. Remover a lista dinâmica de múltiplas portas.
 
-### O que mudar
+### 1. Migração de banco de dados
+Adicionar colunas `largura` e `altura` na tabela `acordo_portas`:
+```sql
+ALTER TABLE acordo_portas
+  ADD COLUMN largura numeric,
+  ADD COLUMN altura numeric;
+```
 
-**Arquivo: `src/pages/logistica/AcordosAutorizados.tsx`**
+### 2. Alterações no formulário (`NovoAcordoDialog.tsx`)
+- Remover a lista dinâmica de portas (botões adicionar/remover)
+- Substituir por uma seção "PORTA" com:
+  - Select de tamanho (P / G / GG)
+  - Input de largura (metros)
+  - Input de altura (metros)
+- Ao salvar, enviar array com uma única porta contendo `tamanho`, `valor_unitario`, `largura` e `altura`
 
-1. **Buscar preços padrões**: Adicionar query ao `autorizado_precos_portas` para obter os preços de referência (P, G, GG) de cada autorizado envolvido nos acordos.
+### 3. Tipos e hook (`useAcordosAutorizados.ts`)
+- Adicionar `largura?` e `altura?` ao interface `PortaAcordo`
+- Incluir `largura` e `altura` nos inserts/selects de `acordo_portas`
 
-2. **Mover tooltip para a linha inteira**: Envolver o `<TableRow>` com `<Tooltip>`, usando o `<TooltipTrigger>` na row toda. Assim, o hover em qualquer célula aciona o tooltip.
-
-3. **Conteúdo do tooltip**: Exibir os preços padrões do autorizado vinculado ao acordo:
-   - Porta P: R$ X
-   - Porta G: R$ X
-   - Porta GG: R$ X
-
-4. **Remover tooltip antigo** da célula de Portas (substitui pelo tooltip da row).
-
-### Detalhes técnicos
-- Importar `useEffect`/`useState` e `supabase` para buscar `autorizado_precos_portas` dos `autorizado_id`s presentes nos acordos
-- Criar um `Map<autorizado_id, {P, G, GG}>` com os preços padrões
-- O `TooltipTrigger` envolverá o conteúdo da row (usando `asChild` num wrapper `<tr>`)
-
-### Arquivo impactado
-- `src/pages/logistica/AcordosAutorizados.tsx`
+### Arquivos impactados
+- `acordo_portas` (migração)
+- `src/components/autorizados/NovoAcordoDialog.tsx`
+- `src/hooks/useAcordosAutorizados.ts`
 
