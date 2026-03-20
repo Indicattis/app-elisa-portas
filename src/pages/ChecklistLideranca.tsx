@@ -24,6 +24,7 @@ const DIAS_SEMANA = [
 ];
 
 export default function ChecklistLideranca() {
+  const navigate = useNavigate();
   const { userRole } = useAuth();
 
   // Programação states
