@@ -78,7 +78,7 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoa
       return;
     }
 
-    if (!responsavelId && podeEscolherResponsavel) {
+    if (!responsavelId) {
       return;
     }
 
