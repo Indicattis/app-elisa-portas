@@ -81,11 +81,8 @@ export default function ProducaoAdminReadOnly() {
         return isNaN(val) ? 0 : val;
       };
 
-      let tamanho = parseTamanho(item.tamanho);
-      if (tamanho === 0) {
-        tamanho = parseTamanho(item.pedido_linha_tamanho);
-      }
-      porEtapa[etapa][nome].tamanhoTotal += tamanho * item.quantidade;
+      const tamanho = parseTamanho(item.tamanho);
+      porEtapa[etapa][nome].tamanhoTotal += tamanho;
       if (item.pedido_numero) porEtapa[etapa][nome].pedidos.add(item.pedido_numero);
     }
     return porEtapa;
