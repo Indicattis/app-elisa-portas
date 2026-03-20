@@ -229,6 +229,7 @@ export default function LtvMinimalista() {
                 <th className="text-left px-4 py-3 font-medium">
                   <SortBtn k="nome">Cliente</SortBtn>
                 </th>
+                <th className="text-left px-4 py-3 font-medium hidden md:table-cell">Canal</th>
                 <th className="text-center px-4 py-3 font-medium">
                   <SortBtn k="numeroCompras">Nº Compras</SortBtn>
                 </th>
