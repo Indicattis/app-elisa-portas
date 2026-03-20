@@ -7,6 +7,7 @@ import { TarefasRecorrentesModal } from "@/components/todo/TarefasRecorrentesMod
 import { NovaRecorrenteModal } from "@/components/todo/NovaRecorrenteModal";
 import { HistoricoRecorrenteModal } from "@/components/todo/HistoricoRecorrenteModal";
 import { NovaMissaoModal } from "@/components/todo/NovaMissaoModal";
+import { DetalhesMissaoModal } from "@/components/todo/DetalhesMissaoModal";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
