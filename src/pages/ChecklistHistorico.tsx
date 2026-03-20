@@ -126,7 +126,9 @@ export default function ChecklistHistorico() {
     if (filtroStatus === "concluidas") {
       resultado = resultado.filter((t) => t.status === "concluida");
     } else if (filtroStatus === "nao_concluidas") {
-      resultado = resultado.filter((t) => t.status !== "concluida");
+      resultado = resultado.filter((t) => t.status !== "concluida" && new Date(t.data_referencia || t.updated_at) < new Date(inicioSemanaAtual));
+    } else if (filtroStatus === "pendentes") {
+      resultado = resultado.filter((t) => t.status !== "concluida" && new Date(t.data_referencia || t.updated_at) >= new Date(inicioSemanaAtual));
     }
 
     if (dateRange?.from) {
