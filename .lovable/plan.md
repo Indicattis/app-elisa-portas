@@ -1,41 +1,64 @@
 
 
-## Plano: Integrar Programação Semanal no Checklist Liderança
+## Plano: Refazer layout do Checklist Liderança
 
 ### Resumo
-Embutir o conteúdo da página `/dashboard/direcao/checklist/programacao` (calendário semanal de templates recorrentes) diretamente na página `/direcao/checklist-lideranca`, usando Tabs para alternar entre "Tarefas" e "Programação". Remover o botão de navegação externa.
+Reescrever `ChecklistLideranca.tsx` usando o `MinimalistLayout` (mesmo padrão da Frota), removendo filtro de setor e card de responsável, e separando Tarefas e Programação em duas seções visíveis simultaneamente (sem tabs).
 
-### Alterações
+### Alterações em `src/pages/ChecklistLideranca.tsx`
 
-**1. `src/pages/ChecklistLideranca.tsx`**
-- Adicionar estado `abaPrincipal` para controlar a tab ativa ("tarefas" | "programacao")
-- Importar componentes necessários: `Tabs, TabsList, TabsTrigger, TabsContent`, `Tooltip/TooltipProvider`, `Clock`, `Trash2`, `cn`
-- Adicionar estados do módulo de programação: `templateParaDeletar`, `filtroResponsavel`, `modalRecorrenteAberto`
-- Adicionar lógica de agrupamento `templatesPorDia` e filtro por responsável (copiada do Programação)
-- Substituir o botão "Programação" por uma tab no layout
-- Na tab "Programação": renderizar o grid de 7 colunas com os templates agrupados por dia da semana, incluindo filtro de responsável e botão "Nova Recorrente"
-- Na tab "Tarefas": manter todo o conteúdo atual (calendário semanal, filtros, tabela)
-- Adicionar o `AlertDialog` de confirmação de deleção de template
-- Adicionar o `NovaRecorrenteModal` (importar de `@/components/todo/NovaRecorrenteModal`)
+**1. Usar MinimalistLayout como wrapper**
+- Remover layout manual (botão voltar, header, container)
+- Usar `MinimalistLayout` com `backPath="/direcao"` e breadcrumb:
+  ```
+  Home > Direção > Checklist Liderança
+  ```
+- Botões de ação no `headerActions` (Recorrentes, Nova Tarefa, Nova Recorrente) com estilo blue gradient igual à Frota
 
-**2. Remoção da rota antiga (opcional)**
-- Remover ou manter a rota `/dashboard/direcao/checklist/programacao` como redirect — a critério do usuário
+**2. Remover elementos**
+- Select de setor (`setor` state e `SETOR_LABELS`)
+- Card "Responsável pelo Setor" (`responsavelSetor`, `useSetorInfo`)
+- Imports não usados: `SETOR_LABELS`, `useSetorInfo`, `ROLE_LABELS`, `ArrowLeft`
+
+**3. Dividir Tarefas e Programação em seções separadas (não tabs)**
+- Remover `Tabs/TabsList/TabsTrigger/TabsContent`
+- Renderizar ambas as seções em sequência vertical:
+  - **Seção 1: Tarefas da Semana** — badges de resumo, calendário semanal, filtros, tabela com navegação de semana
+  - **Seção 2: Programação Semanal** — filtro de responsável, grid de 7 colunas com templates
+- Cada seção com um título/header visual separado (Card ou heading)
+
+**4. Estilo dark/glass (padrão MinimalistLayout)**
+- Cards: `bg-white/5 border-blue-500/10 backdrop-blur-xl`
+- Textos: `text-white`, `text-white/60`
+- Badges: `bg-blue-500/10`, `border-blue-500/20`
+- Botões: gradientes blue como na Frota
+- Spinner de loading: `border-blue-400`
 
 ### Estrutura visual
 
 ```text
-┌─────────────────────────────────────────────┐
-│ Checklist Liderança                         │
-│ [Setor ▼]           [Recorrentes] [+ Tarefa]│
-│                                             │
-│  ┌──────────┐ ┌──────────────┐              │
-│  │ Tarefas  │ │ Programação  │   ← Tabs     │
-│  └──────────┘ └──────────────┘              │
-│                                             │
-│  (conteúdo da tab ativa)                    │
-└─────────────────────────────────────────────┘
+┌─ AnimatedBreadcrumb: Home > Direção > Checklist Liderança ─┐
+│                                                             │
+│ [← Back]   Checklist Liderança          [Recorrentes] [+]  │
+│            Gerencie tarefas semanais                        │
+│                                                             │
+│ ┌─ Tarefas da Semana ─────────────────────────────────────┐ │
+│ │ 5 pendentes  3 concluídas                               │ │
+│ │ [CalendarioSemanal]                                     │ │
+│ │ [Filtros]                                               │ │
+│ │ [← Anterior]  01 Jan - 07 Jan  [Próxima →]             │ │
+│ │ [TarefasTabela]                                         │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ ┌─ Programação Semanal ──────────────────────────────────┐  │
+│ │ [Filtro responsável ▼]  12 templates                   │  │
+│ │ ┌─Dom─┐┌─Seg─┐┌─Ter─┐┌─Qua─┐┌─Qui─┐┌─Sex─┐┌─Sab─┐   │  │
+│ │ │     ││     ││     ││     ││     ││     ││     │   │  │
+│ │ └─────┘└─────┘└─────┘└─────┘└─────┘└─────┘└─────┘   │  │
+│ └────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ### Arquivo impactado
-- `src/pages/ChecklistLideranca.tsx`
+- `src/pages/ChecklistLideranca.tsx` (reescrita completa)
 
