@@ -1,16 +1,18 @@
 
 
-## Plano: Bloquear marcação de tarefas atrasadas
+## Plano: Trocar coluna "Próx. Troca Óleo" de data para KM
 
-### Mudança
+### Mudanças
 
-No `MinhasTarefasFullscreen.tsx`, para cada tarefa da semana, verificar se `data_referencia` já passou (comparando com `startOfDay(new Date())`). Se passou:
+**1. `src/components/frota/SortableVeiculoRow.tsx`** (FrotaMinimalista)
+- Linha ~85: trocar `veiculo.data_proxima_troca_oleo` por `veiculo.km_proxima_troca_oleo`
+- Exibir como `veiculo.km_proxima_troca_oleo?.toLocaleString('pt-BR') + ' km'` ou `'-'`
+- Remover o `format(...)` de data nessa célula
 
-- Desabilitar o clique (trocar `<button>` por `<div>` ou adicionar condição no `onClick`)
-- Reduzir opacidade do card (`opacity-50`)
-- Mostrar badge/texto "Atrasada" em vermelho/âmbar
-- Trocar o ícone `Circle` por `AlertTriangle` em âmbar
+**2. `src/pages/logistica/FrotaMinimalista.tsx`**
+- Linha ~56 (header): renomear "Próx. Troca Óleo" para "Km Próx. Troca"
 
-### Arquivo
-- `src/components/MinhasTarefasFullscreen.tsx` — linhas 113-130: adicionar verificação `isPast(startOfDay(new Date(tarefa.data_referencia + 'T00:00:00')))` e condicionar o `onClick` e estilo.
+**3. `src/pages/Frota.tsx`** (página legada, manter consistente)
+- Header (~linha 89): renomear para "Km Próx. Troca"
+- Body (~linha 129): trocar `format(data_proxima_troca_oleo)` por `km_proxima_troca_oleo?.toLocaleString('pt-BR') + ' km'`
 
