@@ -1,24 +1,26 @@
 
 
-## Plano: Permitir acesso à página de permissões para não-administradores
+## Plano: Adicionar rotas recentes ao gerenciamento de permissões
 
-### Problema
-O componente `UserRouteAccessManager` bloqueia qualquer usuário que não seja `administrador` (verifica `isAdmin` do `useAuth`). Usuários com acesso à rota `/admin/permissions` via `user_route_access` são barrados pelo componente mesmo tendo permissão na rota.
+### Rotas faltantes
 
-### Solução
-Remover a dependência de `isAdmin` no componente e usar a própria presença na página como prova de autorização (a rota já é protegida por `ProtectedRoute` com `routeKey`).
+Duas páginas criadas recentemente não estão registradas na tabela `app_routes`, portanto não aparecem em `/admin/permissions`:
 
-### Mudanças em `src/components/UserRouteAccessManager.tsx`
+| key | path | label | parent_key |
+|-----|------|-------|------------|
+| `marketing_midias` | `/marketing/midias` | Mídias | `marketing_hub` |
+| `marketing_ltv` | `/marketing/ltv` | LTV | `marketing_hub` |
 
-1. **Remover o guard `isAdmin`** (linhas 210-218) — deletar o bloco que retorna o `Alert` de "apenas administradores".
+### Mudança
 
-2. **Remover `isAdmin` das condições `enabled`** das queries (linhas 100, 116, 133) — trocar `enabled: isAdmin` por `enabled: true` (ou simplesmente remover), para que as queries rodem para qualquer usuário que chegue à página.
+Uma única **migração SQL** para inserir as duas rotas na tabela `app_routes`, com `interface = 'padrao'`, `active = true`, e `parent_key = 'marketing_hub'` para ficarem agrupadas sob Marketing no painel de permissões.
 
-3. **Remover import de `isAdmin`** — ajustar o destructuring de `useAuth()` na linha 62 para não pegar mais `isAdmin` (ou mantê-lo se for usado em outro lugar — verificar).
+```sql
+INSERT INTO app_routes (key, path, label, icon, interface, parent_key, active, sort_order)
+VALUES
+  ('marketing_midias', '/marketing/midias', 'Mídias', 'Image', 'padrao', 'marketing_hub', true, 54),
+  ('marketing_ltv', '/marketing/ltv', 'LTV', 'Users', 'padrao', 'marketing_hub', true, 55);
+```
 
-### Segurança
-O acesso à página já é controlado por `ProtectedRoute` com `routeKey` no `App.tsx`. As operações no banco (`user_route_access`, `app_routes`) dependem das RLS policies do Supabase, não do frontend. A remoção do guard no componente não compromete a segurança.
-
-### Arquivo
-- `src/components/UserRouteAccessManager.tsx`
+Nenhuma alteração de código é necessária — as rotas já estão protegidas por `ProtectedRoute` com os `routeKey` correspondentes.
 
