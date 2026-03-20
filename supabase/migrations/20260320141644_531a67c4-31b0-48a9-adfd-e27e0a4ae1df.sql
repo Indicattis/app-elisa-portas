@@ -1,0 +1,1 @@
+ALTER TABLE public.missao_checkboxes ADD COLUMN concluida_em timestamptz;
