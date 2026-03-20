@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useTarefas, TarefaTemplate } from "@/hooks/useTarefas";
 import { TarefasRecorrentesModal } from "@/components/todo/TarefasRecorrentesModal";
 import { NovaRecorrenteModal } from "@/components/todo/NovaRecorrenteModal";
+import { HistoricoRecorrenteModal } from "@/components/todo/HistoricoRecorrenteModal";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,6 +33,7 @@ export default function ChecklistLideranca() {
   const [templateParaDeletar, setTemplateParaDeletar] = useState<TarefaTemplate | null>(null);
   const [filtroResponsavel, setFiltroResponsavel] = useState<string | null>(null);
   const [modalRecorrentes, setModalRecorrentes] = useState(false);
+  const [templateSelecionado, setTemplateSelecionado] = useState<TarefaTemplate | null>(null);
 
   const {
     isLoading,
@@ -242,7 +244,10 @@ export default function ChecklistLideranca() {
                         <TooltipProvider key={template.id}>
                           <Tooltip delayDuration={200}>
                             <TooltipTrigger asChild>
-                              <div className="p-2 rounded-lg bg-white/5 border border-white/10 group cursor-pointer hover:border-blue-500/30 transition-all duration-200">
+                              <div
+                                className="p-2 rounded-lg bg-white/5 border border-white/10 group cursor-pointer hover:border-blue-500/30 transition-all duration-200"
+                                onClick={() => setTemplateSelecionado(template)}
+                              >
                                 <div className="flex items-start gap-2">
                                   <Avatar className="h-6 w-6 flex-shrink-0">
                                     <AvatarImage src={template.responsavel?.foto_perfil_url || undefined} />
@@ -343,6 +348,14 @@ export default function ChecklistLideranca() {
         onDelete={(id) => deletarTemplate.mutate(id)}
         onEdit={(id, updates) => atualizarTemplate.mutate({ id, ...updates })}
         podeGerenciar={podeGerenciar}
+      />
+
+      {/* Modal Histórico Recorrente */}
+      <HistoricoRecorrenteModal
+        template={templateSelecionado}
+        open={!!templateSelecionado}
+        onOpenChange={(open) => !open && setTemplateSelecionado(null)}
+        onDelete={(id) => deletarTemplate.mutate(id)}
       />
 
       {/* Confirmação de Deleção de Template */}
