@@ -1,43 +1,35 @@
 
 
-## Plano: Modal de detalhes da missão ao clicar no card
+## Plano: Tela fullscreen de tarefas/missões do usuário (slide da esquerda)
 
 ### O que será feito
-Ao clicar no card de uma missão, abrirá um modal exibindo todas as informações: título, responsável, todos os checkboxes (marcáveis), prazo de cada item, e para itens concluídos após o prazo, o tempo de atraso.
+Adicionar um botão flutuante (ícone de checklist) ao lado do avatar de perfil no `FloatingProfileMenu`. Ao clicar, uma tela fullscreen desliza da esquerda para a direita, mostrando todas as tarefas e missões atribuídas ao usuário logado. Estilo glassmorphism igual ao da `/direcao/checklist-lideranca`, otimizado para mobile.
 
 ### Arquivos
 
-**1. Novo: `src/components/todo/DetalhesMissaoModal.tsx`**
-- Recebe a `Missao` selecionada, `open`, `onOpenChange`, `onToggleCheckbox`, `onDelete`
-- Exibe título, responsável (avatar + nome), barra de progresso
-- Lista todos os checkboxes com:
-  - Checkbox marcável (chama `onToggleCheckbox`)
-  - Descrição do item
-  - Prazo formatado (dd/MM/yyyy)
-  - Se concluído e tinha prazo: exibe data de conclusão (baseado em `updated_at` ou momento do toggle)
-  - Se concluído após o prazo: badge vermelho com tempo de atraso (ex: "2 dias de atraso")
-  - Se pendente e prazo vencido: badge "Atrasado"
-- Botão "Excluir Missão" com AlertDialog de confirmação
-- Estilo glassmorphism (bg-slate-900/95, border-white/10)
+**1. Novo: `src/components/MinhasTarefasFullscreen.tsx`**
+- Recebe `open`, `onOpenChange`
+- Usa `useTarefas(user.id)` para buscar tarefas do usuário logado
+- Usa `useMissoes()` e filtra por `responsavel_id === user.id`
+- Renderiza um painel fixo fullscreen com animação slide-in da esquerda (`translate-x` transition)
+- Botão X para fechar no canto superior direito
+- Duas seções verticais:
+  - **Minhas Tarefas**: lista de tarefas com status (em_andamento/concluída), toggle de status, descrição, data
+  - **Minhas Missões**: cards de missões com progress bar, checkboxes marcáveis, badges de atraso
+- Estilo: `bg-black`, cards com `bg-white/5 border-white/10 backdrop-blur-xl`, textos brancos, gradientes azuis, mesma paleta do ChecklistLideranca
+- Ao clicar numa missão, abre o `DetalhesMissaoModal` existente
 
-**2. Editar: `src/pages/ChecklistLideranca.tsx`**
-- Adicionar state `missaoSelecionada` para controlar o modal
-- No card da missão, adicionar `onClick={() => setMissaoSelecionada(missao)}`
-- Renderizar `DetalhesMissaoModal` passando `toggleCheckbox` e `deletarMissao`
+**2. Editar: `src/components/FloatingProfileMenu.tsx`**
+- Adicionar state `minhasTarefasOpen`
+- Renderizar botão flutuante (ícone `ClipboardList`) à esquerda do avatar, com mesmo estilo glassmorphism
+- Renderizar `<MinhasTarefasFullscreen>` controlado pelo state
+- O botão só aparece se `userRole` existe
 
-### Observação sobre data de conclusão
-A tabela `missao_checkboxes` não possui coluna `concluida_em`. Para calcular atraso precisaremos compará-lo com o prazo. Duas opções:
-1. Adicionar coluna `concluida_em` (timestamp) na tabela — permite cálculo preciso de atraso
-2. Usar apenas indicação visual "Atrasado" / "No prazo" sem data exata
+### Detalhes técnicos
 
-Recomendo a opção 1: adicionar coluna `concluida_em` via migration, e ao marcar checkbox, gravar a data atual.
-
-### Migration SQL
-```sql
-ALTER TABLE public.missao_checkboxes ADD COLUMN concluida_em timestamptz;
-```
-
-### Alteração no hook `useMissoes.ts`
-- No `toggleCheckbox`, ao marcar como concluída enviar `concluida_em: new Date().toISOString()`, ao desmarcar enviar `concluida_em: null`
-- Atualizar interface `MissaoCheckbox` para incluir `concluida_em`
+- A tela fullscreen será um `div` fixo com `inset-0 z-[60]` e transição CSS (`transform: translateX(-100%)` → `translateX(0)`)
+- Sem usar Sheet/Drawer — implementação custom para controle total do layout fullscreen
+- Scroll interno via `overflow-y-auto` no conteúdo
+- Toggle de tarefa usa `toggleStatus` do `useTarefas` existente
+- Toggle de checkbox de missão usa `toggleCheckbox` do `useMissoes`
 
