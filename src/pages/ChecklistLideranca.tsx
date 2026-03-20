@@ -2,17 +2,21 @@ import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTarefas, TarefaTemplate } from "@/hooks/useTarefas";
+import { useMissoes } from "@/hooks/useMissoes";
 import { TarefasRecorrentesModal } from "@/components/todo/TarefasRecorrentesModal";
 import { NovaRecorrenteModal } from "@/components/todo/NovaRecorrenteModal";
 import { HistoricoRecorrenteModal } from "@/components/todo/HistoricoRecorrenteModal";
+import { NovaMissaoModal } from "@/components/todo/NovaMissaoModal";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, List, CalendarDays, Clock, Trash2, User, History } from "lucide-react";
+import { Plus, List, CalendarDays, Clock, Trash2, User, History, Target, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { format, isPast, startOfDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const DIAS_SEMANA = [
   { key: 0, nome: "Dom", nomeCompleto: "Domingo" },
@@ -35,6 +39,9 @@ export default function ChecklistLideranca() {
   const [modalRecorrentes, setModalRecorrentes] = useState(false);
   const [templateSelecionado, setTemplateSelecionado] = useState<TarefaTemplate | null>(null);
 
+  // Missões states
+  const [modalMissaoAberto, setModalMissaoAberto] = useState(false);
+
   const {
     isLoading,
     templates,
@@ -43,6 +50,8 @@ export default function ChecklistLideranca() {
     deletarTemplate,
     atualizarTemplate
   } = useTarefas();
+
+  const { missoes, isLoading: loadingMissoes, criarMissao } = useMissoes();
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
 
@@ -107,6 +116,14 @@ export default function ChecklistLideranca() {
         <span className="hidden md:inline">Recorrentes ({templates.length})</span>
       </button>
       <button
+        onClick={() => setModalMissaoAberto(true)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10
+                   hover:bg-white/10 text-white/70 hover:text-white text-sm transition-all duration-200"
+      >
+        <Target className="h-4 w-4" />
+        <span className="hidden md:inline">Nova Missão</span>
+      </button>
+      <button
         onClick={() => setModalRecorrenteAberto(true)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700
                    text-white text-sm font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-200"
@@ -147,7 +164,6 @@ export default function ChecklistLideranca() {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Filtro responsável */}
               <Select
                 value={filtroResponsavel || "todos"}
                 onValueChange={(value) => setFiltroResponsavel(value === "todos" ? null : value)}
@@ -210,7 +226,6 @@ export default function ChecklistLideranca() {
                       : "bg-white/5 border border-blue-500/10"
                   )}
                 >
-                  {/* Dia header */}
                   <div className={cn(
                     "text-center py-2 rounded-lg mb-2",
                     isHoje ? "bg-blue-500/20" : "bg-white/5"
@@ -231,7 +246,6 @@ export default function ChecklistLideranca() {
                     )}
                   </div>
 
-                  {/* Templates */}
                   <div className="flex-1 overflow-y-auto space-y-2 px-1">
                     {templatesDoDia.length === 0 ? (
                       <div className="flex items-center justify-center h-full">
@@ -320,6 +334,117 @@ export default function ChecklistLideranca() {
             })}
           </div>
         </section>
+
+        {/* Seção Missões */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/20">
+              <Target className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Missões</h2>
+              <p className="text-sm text-white/40">
+                {missoes.length} missão(ões) ativa(s)
+              </p>
+            </div>
+          </div>
+
+          {missoes.length === 0 ? (
+            <div className="rounded-xl bg-white/5 border border-white/10 p-8 text-center">
+              <Target className="h-8 w-8 text-white/20 mx-auto mb-3" />
+              <p className="text-white/40 text-sm">Nenhuma missão cadastrada</p>
+              <button
+                onClick={() => setModalMissaoAberto(true)}
+                className="mt-3 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                Criar primeira missão
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {missoes.map((missao) => {
+                const total = missao.missao_checkboxes.length;
+                const concluidas = missao.missao_checkboxes.filter(c => c.concluida).length;
+                const progresso = total > 0 ? Math.round((concluidas / total) * 100) : 0;
+                const prazoDate = new Date(missao.prazo + "T12:00:00");
+                const vencida = isPast(startOfDay(prazoDate)) && progresso < 100;
+                const primeiros5 = missao.missao_checkboxes.slice(0, 5);
+
+                return (
+                  <div
+                    key={missao.id}
+                    className={cn(
+                      "rounded-xl p-3 border transition-all duration-200 cursor-pointer hover:border-amber-500/40",
+                      vencida
+                        ? "bg-red-500/5 border-red-500/20"
+                        : progresso === 100
+                          ? "bg-emerald-500/5 border-emerald-500/20"
+                          : "bg-white/5 border-white/10"
+                    )}
+                  >
+                    {/* Header */}
+                    <div className="mb-2">
+                      <h3 className="text-sm font-semibold text-white line-clamp-2 leading-tight">{missao.titulo}</h3>
+                      <div className="flex items-center justify-between mt-1.5">
+                        <span className={cn(
+                          "text-[10px] px-1.5 py-0.5 rounded-full",
+                          vencida
+                            ? "bg-red-500/20 text-red-400"
+                            : progresso === 100
+                              ? "bg-emerald-500/20 text-emerald-400"
+                              : "bg-white/10 text-white/50"
+                        )}>
+                          {format(prazoDate, "dd/MM/yy")}
+                        </span>
+                        <span className="text-[10px] text-white/40">{concluidas}/{total}</span>
+                      </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="h-1 rounded-full bg-white/10 mb-2 overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all duration-300",
+                          progresso === 100
+                            ? "bg-emerald-500"
+                            : vencida
+                              ? "bg-red-500"
+                              : "bg-amber-500"
+                        )}
+                        style={{ width: `${progresso}%` }}
+                      />
+                    </div>
+
+                    {/* Primeiros 5 checkboxes (não marcáveis) */}
+                    <div className="space-y-1">
+                      {primeiros5.map((cb) => (
+                        <div key={cb.id} className="flex items-center gap-1.5">
+                          <div className={cn(
+                            "h-3 w-3 rounded-sm border flex-shrink-0 flex items-center justify-center",
+                            cb.concluida
+                              ? "bg-emerald-500/20 border-emerald-500/40"
+                              : "border-white/20"
+                          )}>
+                            {cb.concluida && <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400" />}
+                          </div>
+                          <span className={cn(
+                            "text-[11px] leading-tight line-clamp-1",
+                            cb.concluida ? "text-white/30 line-through" : "text-white/60"
+                          )}>
+                            {cb.descricao}
+                          </span>
+                        </div>
+                      ))}
+                      {total > 5 && (
+                        <p className="text-[10px] text-white/30 pl-5">+{total - 5} mais</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </div>
 
       {/* FAB Mobile */}
@@ -356,6 +481,14 @@ export default function ChecklistLideranca() {
         open={!!templateSelecionado}
         onOpenChange={(open) => !open && setTemplateSelecionado(null)}
         onDelete={(id) => deletarTemplate.mutate(id)}
+      />
+
+      {/* Modal Nova Missão */}
+      <NovaMissaoModal
+        open={modalMissaoAberto}
+        onOpenChange={setModalMissaoAberto}
+        onSubmit={(data) => criarMissao.mutate(data)}
+        isLoading={criarMissao.isPending}
       />
 
       {/* Confirmação de Deleção de Template */}
