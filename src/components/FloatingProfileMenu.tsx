@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, PanelLeft, Settings, Lock, Factory, User } from 'lucide-react';
+import { LogOut, LayoutDashboard, PanelLeft, Settings, Lock, Factory, User, ClipboardList } from 'lucide-react';
+import { MinhasTarefasFullscreen } from '@/components/MinhasTarefasFullscreen';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
@@ -28,6 +29,7 @@ export function FloatingProfileMenu({ mounted = true }: FloatingProfileMenuProps
   const navigate = useNavigate();
   const { user, userRole, signOut, hasBypassPermissions } = useAuth();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [minhasTarefasOpen, setMinhasTarefasOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Fechar menu ao clicar fora
@@ -95,17 +97,27 @@ export function FloatingProfileMenu({ mounted = true }: FloatingProfileMenuProps
         transform: mounted ? 'translateY(0) scale(1)' : 'translateY(-20px) scale(0.8)'
       }}
     >
-      <button
-        onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-        className="focus:outline-none"
-      >
-        <Avatar className="w-12 h-12 border-2 border-white/20 shadow-lg shadow-black/50 cursor-pointer hover:border-blue-500/50 transition-colors">
-          <AvatarImage src={userRole.foto_perfil_url || undefined} alt={userRole.nome} />
-          <AvatarFallback className="bg-blue-500/30 text-white font-medium">
-            {getUserInitials(userRole.nome)}
-          </AvatarFallback>
-        </Avatar>
-      </button>
+      <div className="flex items-center gap-2">
+        {/* Botão Minhas Tarefas */}
+        <button
+          onClick={() => setMinhasTarefasOpen(true)}
+          className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg shadow-black/50 flex items-center justify-center text-white/70 hover:text-white hover:border-blue-500/50 transition-colors active:scale-95"
+        >
+          <ClipboardList className="w-5 h-5" />
+        </button>
+
+        <button
+          onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+          className="focus:outline-none"
+        >
+          <Avatar className="w-12 h-12 border-2 border-white/20 shadow-lg shadow-black/50 cursor-pointer hover:border-blue-500/50 transition-colors">
+            <AvatarImage src={userRole.foto_perfil_url || undefined} alt={userRole.nome} />
+            <AvatarFallback className="bg-blue-500/30 text-white font-medium">
+              {getUserInitials(userRole.nome)}
+            </AvatarFallback>
+          </Avatar>
+        </button>
+      </div>
 
       {/* Dropdown Menu */}
       <div 
@@ -176,6 +188,8 @@ export function FloatingProfileMenu({ mounted = true }: FloatingProfileMenuProps
           </button>
         </div>
       </div>
+
+      <MinhasTarefasFullscreen open={minhasTarefasOpen} onOpenChange={setMinhasTarefasOpen} />
     </div>
   );
 }
