@@ -1,48 +1,36 @@
 
 
-## Plano: Sistema de Missões no Checklist Liderança
+## Plano: Adicionar responsável à missão e prazo individual por item
 
-### O que será feito
-Um novo sistema de "Missões" na página `/direcao/checklist-lideranca`. Cada missão é um conjunto de checkboxes com título e prazo. As missões aparecem em uma seção abaixo da Programação Semanal em grid de 5 colunas.
+### Mudanças necessárias
 
-### 1. Banco de dados — 2 novas tabelas
+**1. Banco de dados (migration)**
+- Adicionar coluna `responsavel_id` (uuid, nullable, ref admin_users.user_id) na tabela `missoes`
+- Adicionar coluna `prazo` (date, nullable) na tabela `missao_checkboxes`
+- Remover coluna `prazo` da tabela `missoes` (o prazo agora é por item)
 
-**`missoes`** — armazena cada missão
-- `id` (uuid, PK)
-- `titulo` (text, NOT NULL)
-- `prazo` (date, NOT NULL)
-- `created_by` (uuid, ref auth.users)
-- `created_at`, `updated_at` (timestamps)
+**2. Hook `useMissoes.ts`**
+- Atualizar interface `Missao` para incluir `responsavel_id` e remover `prazo`
+- Atualizar interface `MissaoCheckbox` para incluir `prazo`
+- Atualizar `criarMissao` para enviar `responsavel_id` na missão e `prazo` em cada checkbox
+- Atualizar query para buscar dados do responsável (join com admin_users)
 
-**`missao_checkboxes`** — itens de cada missão
-- `id` (uuid, PK)
-- `missao_id` (uuid, FK → missoes, ON DELETE CASCADE)
-- `descricao` (text, NOT NULL)
-- `concluida` (boolean, default false)
-- `ordem` (integer, default 0)
-- `created_at` (timestamp)
+**3. Modal `NovaMissaoModal.tsx`**
+- Adicionar Select de responsável (usando `useAllUsers` existente)
+- Remover date picker global da missão
+- Adicionar um date picker por item de checkbox (inline, compacto)
+- Atualizar state: cada item agora é `{ descricao: string, prazo?: Date }` em vez de `string`
+- Atualizar `onSubmit` para enviar `responsavel_id` e prazo por item
 
-RLS: leitura para authenticated, inserção/deleção para o criador ou admin/diretor.
-
-### 2. Hook `useMissoes.ts`
-- Query: buscar missões com seus checkboxes (`missoes` + `missao_checkboxes`)
-- Mutations: `criarMissao` (insere missão + checkboxes), `deletarMissao`, `toggleCheckbox`
-
-### 3. Modal `NovaMissaoModal.tsx`
-- Campos: título, prazo (date picker)
-- Lista dinâmica de checkboxes: input + botão adicionar, sem limite
-- Botão remover em cada item
-- Estilo glassmorphism consistente
-
-### 4. Seção na página `ChecklistLideranca.tsx`
-- Nova seção "Missões" abaixo da Programação Semanal
-- Grid de 5 colunas com cards mostrando: título, prazo, progresso, primeiros 5 checkboxes (não marcáveis, apenas visuais)
-- Botão "Adicionar Missão" no header da página (junto aos outros botões)
-- Ao clicar no card, poder ver detalhes / marcar checkboxes (futura expansão)
+**4. Página `ChecklistLideranca.tsx`**
+- Atualizar a seção de cards das missões: remover referência ao `missao.prazo`
+- Exibir o prazo de cada checkbox nos primeiros 5 itens
+- Prazo vencido: calcular com base no maior prazo dos checkboxes não concluídos
+- Exibir nome do responsável no card
 
 ### Arquivos impactados
-- **Novo**: migration SQL (2 tabelas + RLS)
-- **Novo**: `src/hooks/useMissoes.ts`
-- **Novo**: `src/components/todo/NovaMissaoModal.tsx`
-- **Editar**: `src/pages/ChecklistLideranca.tsx` — botão no header + seção de missões
+- **Novo**: migration SQL (alter tables)
+- **Editar**: `src/hooks/useMissoes.ts`
+- **Editar**: `src/components/todo/NovaMissaoModal.tsx`
+- **Editar**: `src/pages/ChecklistLideranca.tsx`
 
