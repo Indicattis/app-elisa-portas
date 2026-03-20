@@ -2,12 +2,13 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
-import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User } from "lucide-react";
+import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { DelayedParticles } from "@/components/DelayedParticles";
+import { MinhasTarefasFullscreen } from "@/components/MinhasTarefasFullscreen";
 
 // Mapeamento de path para prefixo de route_key no banco
 const routePrefixMap: Record<string, string> = {
@@ -35,6 +36,7 @@ export default function Home() {
   
   
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [minhasTarefasOpen, setMinhasTarefasOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Buscar todos os acessos do usuário
@@ -126,17 +128,26 @@ export default function Home() {
             transform: mounted ? 'translateY(0) scale(1)' : 'translateY(-20px) scale(0.8)'
           }}
         >
-          <button
-            onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-            className="focus:outline-none"
-          >
-            <Avatar className="w-12 h-12 border-2 border-white/20 shadow-lg shadow-black/50 cursor-pointer hover:border-blue-500/50 transition-colors">
-              <AvatarImage src={userRole.foto_perfil_url || undefined} alt={userRole.nome} />
-              <AvatarFallback className="bg-blue-500/30 text-white font-medium">
-                {getUserInitials(userRole.nome)}
-              </AvatarFallback>
-            </Avatar>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMinhasTarefasOpen(true)}
+              className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg shadow-black/50 flex items-center justify-center text-white/70 hover:text-white hover:border-blue-500/50 transition-colors active:scale-95"
+            >
+              <ClipboardList className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+              className="focus:outline-none"
+            >
+              <Avatar className="w-12 h-12 border-2 border-white/20 shadow-lg shadow-black/50 cursor-pointer hover:border-blue-500/50 transition-colors">
+                <AvatarImage src={userRole.foto_perfil_url || undefined} alt={userRole.nome} />
+                <AvatarFallback className="bg-blue-500/30 text-white font-medium">
+                  {getUserInitials(userRole.nome)}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+          </div>
 
           {/* Dropdown Menu */}
           <div 
@@ -200,6 +211,8 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      <MinhasTarefasFullscreen open={minhasTarefasOpen} onOpenChange={setMinhasTarefasOpen} />
 
       {/* Conteúdo centralizado */}
       <div className="relative z-10 flex flex-col items-center px-6 py-10 w-full max-w-md">
