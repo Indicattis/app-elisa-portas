@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, CheckCircle2, Search, AlertCircle } from "lucide-react";
+import { CalendarIcon, CheckCircle2, Search, AlertCircle, Clock } from "lucide-react";
 import { format, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -51,7 +51,7 @@ export default function ChecklistHistorico() {
 
       if (err1) throw err1;
 
-      // Fetch recorrentes não concluídas de semanas passadas
+      // Fetch recorrentes não concluídas de semanas passadas (atrasadas)
       const { data: naoConcluidas, error: err2 } = await supabase
         .from("tarefas")
         .select("id, descricao, responsavel_id, updated_at, data_referencia, status, recorrente")
@@ -62,7 +62,17 @@ export default function ChecklistHistorico() {
 
       if (err2) throw err2;
 
-      const allTarefas = [...(concluidas || []), ...(naoConcluidas || [])];
+      // Fetch pendentes da semana atual (ainda abertas)
+      const { data: pendentes, error: err3 } = await supabase
+        .from("tarefas")
+        .select("id, descricao, responsavel_id, updated_at, data_referencia, status, recorrente")
+        .eq("status", "em_andamento")
+        .gte("data_referencia", inicioSemanaAtual)
+        .order("data_referencia", { ascending: false });
+
+      if (err3) throw err3;
+
+      const allTarefas = [...(concluidas || []), ...(naoConcluidas || []), ...(pendentes || [])];
 
       // Fetch responsaveis
       const responsavelIds = [...new Set(allTarefas.map((t: any) => t.responsavel_id).filter(Boolean))];
@@ -116,7 +126,9 @@ export default function ChecklistHistorico() {
     if (filtroStatus === "concluidas") {
       resultado = resultado.filter((t) => t.status === "concluida");
     } else if (filtroStatus === "nao_concluidas") {
-      resultado = resultado.filter((t) => t.status !== "concluida");
+      resultado = resultado.filter((t) => t.status !== "concluida" && new Date(t.data_referencia || t.updated_at) < new Date(inicioSemanaAtual));
+    } else if (filtroStatus === "pendentes") {
+      resultado = resultado.filter((t) => t.status !== "concluida" && new Date(t.data_referencia || t.updated_at) >= new Date(inicioSemanaAtual));
     }
 
     if (dateRange?.from) {
@@ -146,7 +158,8 @@ export default function ChecklistHistorico() {
   }, [tarefas, filtroResponsavel, filtroBusca, filtroStatus, dateRange]);
 
   const totalConcluidas = tarefasFiltradas.filter((t) => t.status === "concluida").length;
-  const totalNaoConcluidas = tarefasFiltradas.filter((t) => t.status !== "concluida").length;
+  const totalNaoConcluidas = tarefasFiltradas.filter((t) => t.status !== "concluida" && new Date(t.data_referencia || t.updated_at) < new Date(inicioSemanaAtual)).length;
+  const totalPendentes = tarefasFiltradas.filter((t) => t.status !== "concluida" && new Date(t.data_referencia || t.updated_at) >= new Date(inicioSemanaAtual)).length;
 
   if (isLoading) {
     return (
@@ -159,7 +172,7 @@ export default function ChecklistHistorico() {
   return (
     <MinimalistLayout
       title="Histórico de Tarefas"
-      subtitle={`${totalConcluidas} concluída${totalConcluidas !== 1 ? "s" : ""} · ${totalNaoConcluidas} não concluída${totalNaoConcluidas !== 1 ? "s" : ""}`}
+      subtitle={`${totalConcluidas} concluída${totalConcluidas !== 1 ? "s" : ""} · ${totalPendentes} pendente${totalPendentes !== 1 ? "s" : ""} · ${totalNaoConcluidas} não concluída${totalNaoConcluidas !== 1 ? "s" : ""}`}
       backPath="/direcao/checklist-lideranca"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
@@ -191,6 +204,7 @@ export default function ChecklistHistorico() {
               <SelectContent className="bg-[#0a1628] border-white/10">
                 <SelectItem value="todos" className="text-white/70 focus:bg-white/10 focus:text-white">Todos</SelectItem>
                 <SelectItem value="concluidas" className="text-white/70 focus:bg-white/10 focus:text-white">Concluídas</SelectItem>
+                <SelectItem value="pendentes" className="text-white/70 focus:bg-white/10 focus:text-white">Pendentes</SelectItem>
                 <SelectItem value="nao_concluidas" className="text-white/70 focus:bg-white/10 focus:text-white">Não concluídas</SelectItem>
               </SelectContent>
             </Select>
@@ -269,29 +283,43 @@ export default function ChecklistHistorico() {
           </div>
         ) : (
           <div className="space-y-2">
-            {tarefasFiltradas.map((tarefa) => {
-              const concluida = tarefa.status === "concluida";
-              return (
+            {tarefasFiltradas.map((tarefa) => (
                 <div
                   key={tarefa.id}
                   className="flex items-center gap-3 p-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
                              hover:bg-white/[0.07] transition-colors duration-200"
                 >
-                  {concluida ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
-                  )}
+                  {(() => {
+                    const concluida = tarefa.status === "concluida";
+                    const pendente = !concluida && new Date(tarefa.data_referencia || tarefa.updated_at) >= new Date(inicioSemanaAtual);
+                    return (
+                      <>
+                        {concluida ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                        ) : pendente ? (
+                          <Clock className="h-4 w-4 text-amber-400 shrink-0" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
+                        )}
 
-                  <span className={cn("flex-1 text-sm truncate", concluida ? "text-white/80" : "text-white/70")}>
-                    {tarefa.descricao}
-                  </span>
+                        <span className={cn("flex-1 text-sm truncate", concluida ? "text-white/80" : "text-white/70")}>
+                          {tarefa.descricao}
+                        </span>
 
-                  {!concluida && (
-                    <Badge className="bg-red-500/20 text-red-300 border-red-500/30 text-[10px] shrink-0">
-                      Não concluída
-                    </Badge>
-                  )}
+                        {pendente && (
+                          <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] shrink-0">
+                            Pendente
+                          </Badge>
+                        )}
+
+                        {!concluida && !pendente && (
+                          <Badge className="bg-red-500/20 text-red-300 border-red-500/30 text-[10px] shrink-0">
+                            Não concluída
+                          </Badge>
+                        )}
+                      </>
+                    );
+                  })()}
 
                   {tarefa.responsavel && (
                     <div className="flex items-center gap-2 shrink-0">
@@ -315,8 +343,7 @@ export default function ChecklistHistorico() {
                     {format(new Date(tarefa.data_referencia || tarefa.updated_at), "dd/MM/yy", { locale: ptBR })}
                   </span>
                 </div>
-              );
-            })}
+              ))}
           </div>
         )}
       </div>
