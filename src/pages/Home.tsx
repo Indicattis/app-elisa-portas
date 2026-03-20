@@ -36,6 +36,7 @@ export default function Home() {
   
   
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [minhasTarefasOpen, setMinhasTarefasOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Buscar todos os acessos do usuário
