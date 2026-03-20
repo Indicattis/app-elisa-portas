@@ -244,7 +244,10 @@ export default function ChecklistLideranca() {
                         <TooltipProvider key={template.id}>
                           <Tooltip delayDuration={200}>
                             <TooltipTrigger asChild>
-                              <div className="p-2 rounded-lg bg-white/5 border border-white/10 group cursor-pointer hover:border-blue-500/30 transition-all duration-200">
+                              <div
+                                className="p-2 rounded-lg bg-white/5 border border-white/10 group cursor-pointer hover:border-blue-500/30 transition-all duration-200"
+                                onClick={() => setTemplateSelecionado(template)}
+                              >
                                 <div className="flex items-start gap-2">
                                   <Avatar className="h-6 w-6 flex-shrink-0">
                                     <AvatarImage src={template.responsavel?.foto_perfil_url || undefined} />
