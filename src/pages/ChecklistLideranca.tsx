@@ -8,7 +8,8 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, List, CalendarDays, Clock, Trash2, User } from "lucide-react";
+import { Plus, List, CalendarDays, Clock, Trash2, User, History } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const DIAS_SEMANA = [
 ];
 
 export default function ChecklistLideranca() {
+  const navigate = useNavigate();
   const { userRole } = useAuth();
 
   // Programação states
@@ -86,6 +88,14 @@ export default function ChecklistLideranca() {
 
   const headerActions = (
     <div className="flex gap-2">
+      <button
+        onClick={() => navigate('/direcao/checklist-lideranca/historico')}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10
+                   hover:bg-white/10 text-white/70 hover:text-white text-sm transition-all duration-200"
+      >
+        <History className="h-4 w-4" />
+        <span className="hidden md:inline">Histórico</span>
+      </button>
       <button
         onClick={() => setModalRecorrentes(true)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10
