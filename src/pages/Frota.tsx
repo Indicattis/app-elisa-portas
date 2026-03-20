@@ -124,8 +124,8 @@ export default function Frota() {
                     <TableCell>{veiculo.mecanico || '-'}</TableCell>
                     <TableCell>{veiculo.km_atual.toLocaleString('pt-BR')} km</TableCell>
                     <TableCell>
-                      {veiculo.data_proxima_troca_oleo 
-                        ? format(new Date(veiculo.data_proxima_troca_oleo), "dd/MM/yy", { locale: ptBR })
+                      {veiculo.km_proxima_troca_oleo
+                        ? `${veiculo.km_proxima_troca_oleo.toLocaleString('pt-BR')} km`
                         : '-'
                       }
                     </TableCell>

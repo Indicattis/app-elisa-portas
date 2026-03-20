@@ -54,7 +54,7 @@ function FrotaTable({ veiculos, onDelete, sensors, onDragEnd }: {
                     <TableHead className="text-xs text-white/70">Responsável</TableHead>
                     <TableHead className="text-xs text-white/70">Mecânico</TableHead>
                     <TableHead className="text-xs text-white/70">Km Atual</TableHead>
-                    <TableHead className="text-xs text-white/70">Próx. Troca Óleo</TableHead>
+                    <TableHead className="text-xs text-white/70">Km Próx. Troca</TableHead>
                     <TableHead className="text-xs text-white/70">Status</TableHead>
                     <TableHead className="text-xs text-white/70">Aviso</TableHead>
                     <TableHead className="text-xs text-white/70">Últ. Conferência</TableHead>
