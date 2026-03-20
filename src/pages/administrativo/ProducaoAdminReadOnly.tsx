@@ -71,7 +71,7 @@ export default function ProducaoAdminReadOnly() {
     const porEtapa: Record<string, Record<string, { nome: string; quantidadeTotal: number; tamanhoTotal: number; pedidos: Set<number> }>> = {};
     for (const item of itens) {
       const etapa = item.etapa_atual || "sem_etapa";
-      const nome = item.estoque_nome || item.item;
+      const nome = item.estoque_nome || item.nome_produto;
       if (!porEtapa[etapa]) porEtapa[etapa] = {};
       if (!porEtapa[etapa][nome]) porEtapa[etapa][nome] = { nome, quantidadeTotal: 0, tamanhoTotal: 0, pedidos: new Set() };
       porEtapa[etapa][nome].quantidadeTotal += item.quantidade;
