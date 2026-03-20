@@ -191,96 +191,107 @@ export default function AcordosAutorizados() {
                 </TableHeader>
                 <TableBody>
                   <TooltipProvider>
-                  {acordosFiltrados.map((acordo) => (
-                    <TableRow 
-                      key={acordo.id}
-                      className="border-blue-500/10 hover:bg-white/5 text-white/90"
-                    >
-                      <TableCell className="text-center">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex items-center justify-center gap-1 cursor-default">
+                  {acordosFiltrados.map((acordo) => {
+                    const precos = precosMap.get(acordo.autorizado_id);
+                    return (
+                    <Tooltip key={acordo.id}>
+                      <TooltipTrigger asChild>
+                        <TableRow 
+                          className="border-blue-500/10 hover:bg-white/5 text-white/90 cursor-default"
+                        >
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-1">
                               {getResumoPortasBadges(acordo)}
                             </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="bg-zinc-900 border-zinc-700">
-                            <div className="space-y-1 text-xs">
-                              <p className="font-semibold text-white/80 mb-1.5">Valores acordados</p>
-                              {acordo.portas.map((p, i) => (
-                                <div key={p.id || i} className="flex items-center justify-between gap-4">
-                                  <span className="text-white/60">Porta {p.tamanho}</span>
-                                  <span className="text-white font-medium">{formatCurrency(p.valor_unitario)}</span>
-                                </div>
-                              ))}
-                              {acordo.portas.length === 0 && (
-                                <p className="text-white/40">Sem portas cadastradas</p>
-                              )}
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-medium">{acordo.cliente_nome}</span>
-                      </TableCell>
-                      <TableCell className="text-white/70">
-                        {acordo.cliente_cidade} - {acordo.cliente_estado}
-                      </TableCell>
-                      <TableCell className="text-center text-white/60">
-                        {format(new Date(acordo.data_acordo), 'dd/MM/yy', { locale: ptBR })}
-                      </TableCell>
-                      <TableCell className="text-right font-medium text-green-400">
-                        {formatCurrency(acordo.valor_acordado)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {acordo.portas.length > 0 ? (() => {
-                          const totalRef = acordo.portas.reduce((sum, p) => sum + p.valor_unitario, 0);
-                          const excesso = acordo.valor_acordado - totalRef;
-                          return (
-                            <span className={excesso > 0 ? 'text-red-400' : 'text-green-400'}>
-                              {excesso > 0 ? '+' : ''}{formatCurrency(excesso)}
-                            </span>
-                          );
-                        })() : <span className="text-white/40">—</span>}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge 
-                          variant="outline" 
-                          className={STATUS_COLORS[acordo.status]}
-                        >
-                          {STATUS_LABELS[acordo.status]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 hover:bg-white/10"
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-medium">{acordo.cliente_nome}</span>
+                          </TableCell>
+                          <TableCell className="text-white/70">
+                            {acordo.cliente_cidade} - {acordo.cliente_estado}
+                          </TableCell>
+                          <TableCell className="text-center text-white/60">
+                            {format(new Date(acordo.data_acordo), 'dd/MM/yy', { locale: ptBR })}
+                          </TableCell>
+                          <TableCell className="text-right font-medium text-green-400">
+                            {formatCurrency(acordo.valor_acordado)}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {acordo.portas.length > 0 ? (() => {
+                              const totalRef = acordo.portas.reduce((sum, p) => sum + p.valor_unitario, 0);
+                              const excesso = acordo.valor_acordado - totalRef;
+                              return (
+                                <span className={excesso > 0 ? 'text-red-400' : 'text-green-400'}>
+                                  {excesso > 0 ? '+' : ''}{formatCurrency(excesso)}
+                                </span>
+                              );
+                            })() : <span className="text-white/40">—</span>}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge 
+                              variant="outline" 
+                              className={STATUS_COLORS[acordo.status]}
                             >
-                              <MoreHorizontal className="h-4 w-4 text-white/60" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700">
-                            <DropdownMenuItem
-                              className="text-white hover:bg-zinc-700 cursor-pointer"
-                              onClick={() => handleEditarAcordo(acordo)}
-                            >
-                              <Edit2 className="h-4 w-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-red-400 hover:bg-red-500/20 cursor-pointer"
-                              onClick={() => setAcordoParaDeletar(acordo)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                              {STATUS_LABELS[acordo.status]}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 hover:bg-white/10"
+                                >
+                                  <MoreHorizontal className="h-4 w-4 text-white/60" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700">
+                                <DropdownMenuItem
+                                  className="text-white hover:bg-zinc-700 cursor-pointer"
+                                  onClick={() => handleEditarAcordo(acordo)}
+                                >
+                                  <Edit2 className="h-4 w-4 mr-2" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-red-400 hover:bg-red-500/20 cursor-pointer"
+                                  onClick={() => setAcordoParaDeletar(acordo)}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="bg-zinc-900 border-zinc-700">
+                        <div className="space-y-1 text-xs">
+                          <p className="font-semibold text-white/80 border-b border-zinc-700 pb-1 mb-1">Preços Padrão</p>
+                          {precos ? (
+                            <>
+                              <div className="flex items-center justify-between gap-6">
+                                <span className="text-white/60">Porta P</span>
+                                <span className="text-white font-medium">{formatCurrency(precos.P)}</span>
+                              </div>
+                              <div className="flex items-center justify-between gap-6">
+                                <span className="text-white/60">Porta G</span>
+                                <span className="text-white font-medium">{formatCurrency(precos.G)}</span>
+                              </div>
+                              <div className="flex items-center justify-between gap-6">
+                                <span className="text-white/60">Porta GG</span>
+                                <span className="text-white font-medium">{formatCurrency(precos.GG)}</span>
+                              </div>
+                            </>
+                          ) : (
+                            <p className="text-white/40">Sem preços cadastrados</p>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                    );
+                  })}
                   </TooltipProvider>
                 </TableBody>
               </Table>
