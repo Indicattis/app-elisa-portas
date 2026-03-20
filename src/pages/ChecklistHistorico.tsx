@@ -344,7 +344,6 @@ export default function ChecklistHistorico() {
                   </span>
                 </div>
               ))}
-           </div>
           </div>
         )}
       </div>
