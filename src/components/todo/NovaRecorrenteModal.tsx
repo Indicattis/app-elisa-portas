@@ -47,7 +47,7 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoa
   const [diasSelecionados, setDiasSelecionados] = useState<number[]>([]);
   const [horaCriacao, setHoraCriacao] = useState("08:00");
 
-  const podeEscolherResponsavel = userRole?.role === 'diretor' || userRole?.role === 'administrador';
+  
 
   const previewDias = useMemo(() => {
     if (diasSelecionados.length === 0) return "";
