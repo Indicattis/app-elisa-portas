@@ -515,7 +515,16 @@ export default function ChecklistLideranca() {
         isLoading={criarMissao.isPending}
       />
 
-      {/* Confirmação de Deleção de Template */}
+      {/* Modal Detalhes Missão */}
+      <DetalhesMissaoModal
+        missao={missaoSelecionada}
+        open={!!missaoSelecionada}
+        onOpenChange={(open) => !open && setMissaoSelecionada(null)}
+        onToggleCheckbox={(params) => toggleCheckbox.mutate(params)}
+        onDelete={(id) => deletarMissao.mutate(id)}
+      />
+
+
       <AlertDialog open={!!templateParaDeletar} onOpenChange={() => setTemplateParaDeletar(null)}>
         <AlertDialogContent className="max-w-[90vw] md:max-w-lg">
           <AlertDialogHeader>
