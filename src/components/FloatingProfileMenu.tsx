@@ -29,6 +29,7 @@ export function FloatingProfileMenu({ mounted = true }: FloatingProfileMenuProps
   const navigate = useNavigate();
   const { user, userRole, signOut, hasBypassPermissions } = useAuth();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [minhasTarefasOpen, setMinhasTarefasOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Fechar menu ao clicar fora
