@@ -188,6 +188,8 @@ export function FloatingProfileMenu({ mounted = true }: FloatingProfileMenuProps
           </button>
         </div>
       </div>
+
+      <MinhasTarefasFullscreen open={minhasTarefasOpen} onOpenChange={setMinhasTarefasOpen} />
     </div>
   );
 }
