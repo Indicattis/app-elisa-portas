@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, PanelLeft, Settings, Lock, Factory, User } from 'lucide-react';
+import { LogOut, LayoutDashboard, PanelLeft, Settings, Lock, Factory, User, ClipboardList } from 'lucide-react';
+import { MinhasTarefasFullscreen } from '@/components/MinhasTarefasFullscreen';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
