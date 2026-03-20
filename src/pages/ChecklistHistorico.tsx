@@ -288,7 +288,7 @@ export default function ChecklistHistorico() {
                   </span>
 
                   {!concluida && (
-                    <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] shrink-0">
+                    <Badge className="bg-red-500/20 text-red-300 border-red-500/30 text-[10px] shrink-0">
                       Não concluída
                     </Badge>
                   )}
