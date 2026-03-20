@@ -1,13 +1,14 @@
 
 
-## Plano: Cor vermelha para não concluídas + ordenação por data decrescente
+## Plano: Sempre exibir seletor de responsável no modal de Nova Tarefa Recorrente
 
-### Alterações em `src/pages/ChecklistHistorico.tsx`
+### Alteração em `src/components/todo/NovaRecorrenteModal.tsx`
 
-**1. Trocar cor amarela/amber por vermelha nas não concluídas**
-- Ícone `AlertCircle`: de `text-amber-400` para `text-red-400`
-- Badge: de `bg-amber-500/20 text-amber-300 border-amber-500/30` para `bg-red-500/20 text-red-300 border-red-500/30`
+- Remover a variável `podeEscolherResponsavel` e a condição que esconde o seletor
+- Exibir o `Select` de responsável **sempre**, independente do role do usuário
+- Atualizar a validação do `handleSubmit` para sempre exigir `responsavelId`
+- Atualizar o `disabled` do botão de submit para sempre verificar `responsavelId`
 
-**2. Ordenar listagem por data decrescente**
-- Após aplicar os filtros, ordenar `tarefasFiltradas` por `data_referencia || updated_at` decrescente
+### Arquivo impactado
+- `src/components/todo/NovaRecorrenteModal.tsx`
 
