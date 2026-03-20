@@ -213,9 +213,20 @@ export function MinhasTarefasFullscreen({ open, onOpenChange }: MinhasTarefasFul
                                   )}>
                                     {cb.descricao}
                                   </span>
-                                  {atrasado && (
-                                    <span className="ml-1.5 text-amber-400 text-[10px] font-medium">atrasado</span>
-                                  )}
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    {cb.prazo && (
+                                      <span className={cn(
+                                        'text-[10px] flex items-center gap-0.5',
+                                        atrasado ? 'text-amber-400' : cb.concluida ? 'text-white/20' : 'text-white/40'
+                                      )}>
+                                        <Clock className="w-2.5 h-2.5" />
+                                        {format(new Date(cb.prazo + 'T00:00:00'), "dd MMM", { locale: ptBR })}
+                                      </span>
+                                    )}
+                                    {atrasado && (
+                                      <span className="text-amber-400 text-[10px] font-medium">atrasado</span>
+                                    )}
+                                  </div>
                                 </div>
                               </label>
                             );
