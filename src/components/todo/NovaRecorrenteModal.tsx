@@ -39,7 +39,6 @@ const DIAS_SEMANA = [
 const DIAS_SEMANA_NOMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoading }: NovaRecorrenteModalProps) {
-  const { userRole } = useAuth();
   const { data: todosUsuarios } = useAllUsers();
   
   const [descricao, setDescricao] = useState("");
