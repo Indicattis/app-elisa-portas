@@ -1,14 +1,12 @@
 import { useState } from 'react';
-import { X, CheckCircle2, Circle, Target, Clock, AlertTriangle, ChevronRight } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { X, CheckCircle2, Circle, Target, Clock, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
 import { useTarefas, Tarefa } from '@/hooks/useTarefas';
 import { useMissoes, Missao } from '@/hooks/useMissoes';
-import { DetalhesMissaoModal } from '@/components/todo/DetalhesMissaoModal';
-import { format, isPast, startOfDay } from 'date-fns';
+import { format, isPast, startOfDay, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
@@ -20,16 +18,21 @@ interface MinhasTarefasFullscreenProps {
 export function MinhasTarefasFullscreen({ open, onOpenChange }: MinhasTarefasFullscreenProps) {
   const { user } = useAuth();
   const { tarefas, marcarConcluida, reabrirTarefa } = useTarefas(user?.id);
-  const { missoes, toggleCheckbox, deletarMissao } = useMissoes();
-  const [missaoSelecionada, setMissaoSelecionada] = useState<Missao | null>(null);
-  const [missaoModalOpen, setMissaoModalOpen] = useState(false);
+  const { missoes, toggleCheckbox } = useMissoes();
 
-  // Filtrar missões do usuário
   const minhasMissoes = missoes.filter(m => m.responsavel_id === user?.id);
 
-  // Separar tarefas
-  const tarefasPendentes = tarefas.filter(t => t.status === 'em_andamento');
-  const tarefasConcluidas = tarefas.filter(t => t.status === 'concluida').slice(0, 10);
+  // Tarefas pendentes da semana atual
+  const agora = new Date();
+  const inicioSemana = startOfWeek(agora, { weekStartsOn: 1 });
+  const fimSemana = endOfWeek(agora, { weekStartsOn: 1 });
+
+  const tarefasDaSemana = tarefas.filter(t => {
+    if (t.status !== 'em_andamento') return false;
+    if (!t.data_referencia) return false;
+    const data = new Date(t.data_referencia + 'T00:00:00');
+    return isWithinInterval(data, { start: inicioSemana, end: fimSemana });
+  });
 
   const handleToggleTarefa = (tarefa: Tarefa) => {
     if (tarefa.status === 'concluida') {
@@ -63,11 +66,11 @@ export function MinhasTarefasFullscreen({ open, onOpenChange }: MinhasTarefasFul
         onClick={() => onOpenChange(false)}
       />
 
-      {/* Panel */}
+      {/* Panel - slides from right */}
       <div
         className={cn(
           'fixed inset-0 z-[61] transition-transform duration-300 ease-out',
-          open ? 'translate-x-0' : '-translate-x-full'
+          open ? 'translate-x-0' : 'translate-x-full'
         )}
       >
         <div className="h-full w-full bg-black overflow-y-auto">
@@ -86,28 +89,28 @@ export function MinhasTarefasFullscreen({ open, onOpenChange }: MinhasTarefasFul
           </div>
 
           <div className="px-4 py-6 space-y-8">
-            {/* === TAREFAS SECTION === */}
+            {/* === TAREFAS DA SEMANA === */}
             <section>
               <div className="flex items-center gap-2 mb-4">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 <h2 className="text-sm font-semibold text-white/90 uppercase tracking-wider">
-                  Tarefas Pendentes
+                  Tarefas da Semana
                 </h2>
-                {tarefasPendentes.length > 0 && (
+                {tarefasDaSemana.length > 0 && (
                   <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 text-xs">
-                    {tarefasPendentes.length}
+                    {tarefasDaSemana.length}
                   </Badge>
                 )}
               </div>
 
-              {tarefasPendentes.length === 0 ? (
+              {tarefasDaSemana.length === 0 ? (
                 <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
                   <CheckCircle2 className="w-8 h-8 text-emerald-400/50 mx-auto mb-2" />
-                  <p className="text-white/40 text-sm">Nenhuma tarefa pendente</p>
+                  <p className="text-white/40 text-sm">Nenhuma tarefa pendente esta semana</p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {tarefasPendentes.map(tarefa => (
+                  {tarefasDaSemana.map(tarefa => (
                     <button
                       key={tarefa.id}
                       onClick={() => handleToggleTarefa(tarefa)}
@@ -127,28 +130,9 @@ export function MinhasTarefasFullscreen({ open, onOpenChange }: MinhasTarefasFul
                   ))}
                 </div>
               )}
-
-              {/* Concluídas recentes */}
-              {tarefasConcluidas.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-white/30 text-xs font-medium uppercase tracking-wider mb-2">Concluídas recentemente</p>
-                  <div className="space-y-1">
-                    {tarefasConcluidas.map(tarefa => (
-                      <button
-                        key={tarefa.id}
-                        onClick={() => handleToggleTarefa(tarefa)}
-                        className="w-full bg-white/[0.02] border border-white/5 rounded-lg p-2.5 flex items-start gap-3 text-left hover:bg-white/5 transition-colors active:scale-[0.98]"
-                      >
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500/60 mt-0.5 shrink-0" />
-                        <p className="text-white/30 text-sm line-through">{tarefa.descricao}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </section>
 
-            {/* === MISSÕES SECTION === */}
+            {/* === MISSÕES SECTION (inline checkboxes) === */}
             <section>
               <div className="flex items-center gap-2 mb-4">
                 <Target className="w-4 h-4 text-blue-400" />
@@ -176,45 +160,54 @@ export function MinhasTarefasFullscreen({ open, onOpenChange }: MinhasTarefasFul
                     const concluidas = missao.missao_checkboxes.filter(c => c.concluida).length;
 
                     return (
-                      <button
+                      <div
                         key={missao.id}
-                        onClick={() => {
-                          setMissaoSelecionada(missao);
-                          setMissaoModalOpen(true);
-                        }}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-left hover:bg-white/10 transition-colors active:scale-[0.98]"
+                        className="bg-white/5 border border-white/10 rounded-xl p-4"
                       >
                         <div className="flex items-start justify-between gap-2 mb-3">
                           <h3 className="text-white/90 text-sm font-medium leading-snug flex-1">{missao.titulo}</h3>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {atrasada && <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />}
-                            <ChevronRight className="w-4 h-4 text-white/30" />
-                          </div>
+                          {atrasada && <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 mb-3">
                           <Progress value={progresso} className="h-1.5 flex-1 bg-white/10" />
                           <span className="text-white/50 text-xs font-medium whitespace-nowrap">
                             {concluidas}/{total}
                           </span>
                         </div>
 
-                        {/* Preview dos próximos checkboxes pendentes */}
-                        <div className="mt-3 space-y-1.5">
-                          {missao.missao_checkboxes
-                            .filter(c => !c.concluida)
-                            .slice(0, 3)
-                            .map(cb => (
-                              <div key={cb.id} className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-sm border border-white/20 shrink-0" />
-                                <span className="text-white/50 text-xs truncate">{cb.descricao}</span>
-                                {cb.prazo && isPast(startOfDay(new Date(cb.prazo + 'T00:00:00'))) && (
-                                  <span className="text-amber-400 text-[10px] shrink-0">atrasado</span>
-                                )}
-                              </div>
-                            ))}
+                        {/* All checkboxes inline */}
+                        <div className="space-y-2">
+                          {missao.missao_checkboxes.map(cb => {
+                            const atrasado = !cb.concluida && cb.prazo && isPast(startOfDay(new Date(cb.prazo + 'T00:00:00')));
+                            return (
+                              <label
+                                key={cb.id}
+                                className="flex items-start gap-2.5 cursor-pointer group"
+                              >
+                                <Checkbox
+                                  checked={cb.concluida}
+                                  onCheckedChange={(checked) => {
+                                    toggleCheckbox.mutate({ id: cb.id, concluida: !!checked });
+                                  }}
+                                  className="mt-0.5 border-white/30 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <span className={cn(
+                                    'text-xs leading-snug',
+                                    cb.concluida ? 'text-white/30 line-through' : 'text-white/70 group-hover:text-white/90'
+                                  )}>
+                                    {cb.descricao}
+                                  </span>
+                                  {atrasado && (
+                                    <span className="ml-1.5 text-amber-400 text-[10px] font-medium">atrasado</span>
+                                  )}
+                                </div>
+                              </label>
+                            );
+                          })}
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -223,15 +216,6 @@ export function MinhasTarefasFullscreen({ open, onOpenChange }: MinhasTarefasFul
           </div>
         </div>
       </div>
-
-      {/* Modal de detalhes da missão */}
-      <DetalhesMissaoModal
-        missao={missaoSelecionada}
-        open={missaoModalOpen}
-        onOpenChange={setMissaoModalOpen}
-        onToggleCheckbox={({ id, concluida }) => toggleCheckbox.mutate({ id, concluida })}
-        onDelete={(id) => deletarMissao.mutate(id)}
-      />
     </>
   );
 }
