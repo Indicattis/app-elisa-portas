@@ -133,7 +133,7 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoa
 
         <div className="space-y-4 py-4">
           {/* Seleção de Responsável */}
-          {podeEscolherResponsavel && (
+          {(
             <div className="space-y-2">
               <label className="text-sm font-medium text-white/70">Responsável</label>
               <Select value={responsavelId} onValueChange={setResponsavelId}>
