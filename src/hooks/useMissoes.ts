@@ -9,6 +9,7 @@ export interface MissaoCheckbox {
   concluida: boolean;
   ordem: number;
   prazo: string | null;
+  concluida_em: string | null;
   created_at: string;
 }
 
