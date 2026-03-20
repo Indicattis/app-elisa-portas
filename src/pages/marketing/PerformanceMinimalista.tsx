@@ -511,10 +511,10 @@ export default function PerformanceMinimalista() {
         let vendasPendentes = 0;
         
         vendasDoCanal.forEach((venda: any) => {
-          const faturamentoProdutos = venda.produtos_vendas?.reduce((sum: number, p: any) => sum + (p.faturamento || 0), 0) || 0;
-          if (faturamentoProdutos > 0) {
+          const produtosFaturados = venda.produtos_vendas?.filter((p: any) => p.faturamento === true) || [];
+          if (produtosFaturados.length > 0) {
             vendasFaturadas++;
-            faturamento += faturamentoProdutos;
+            faturamento += produtosFaturados.reduce((sum: number, p: any) => sum + (p.valor_total || 0), 0);
           } else {
             vendasPendentes++;
           }
