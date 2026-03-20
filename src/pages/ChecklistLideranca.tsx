@@ -206,6 +206,10 @@ export default function ChecklistLideranca() {
           {/* Desktop buttons */}
           {podeGerenciar && (
             <div className="hidden md:flex gap-2 shrink-0">
+              <Button variant="outline" onClick={() => navigate('/dashboard/direcao/checklist/programacao')}>
+                <CalendarDays className="h-4 w-4 mr-2" />
+                Programação
+              </Button>
               <Button variant="outline" onClick={() => setModalRecorrentes(true)}>
                 <List className="h-4 w-4 mr-2" />
                 Recorrentes ({templates.length})
