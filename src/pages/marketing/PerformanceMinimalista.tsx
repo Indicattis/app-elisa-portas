@@ -575,7 +575,7 @@ export default function PerformanceMinimalista() {
         <Button 
           variant="ghost" 
           size="icon" 
-          className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
+          className="h-8 w-8 bg-blue-500/20 border border-blue-400/30 backdrop-blur-sm text-blue-300 hover:bg-blue-500/30 hover:text-blue-200"
           onClick={() => onIndexChange((currentIndex - 1 + vendedores.length) % vendedores.length)}
         >
           <ChevronLeft className="h-4 w-4" />
