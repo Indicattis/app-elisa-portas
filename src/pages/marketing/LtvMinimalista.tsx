@@ -14,9 +14,22 @@ interface ClienteLtv {
   ticketMedio: number;
   primeiraCompra: string | null;
   ultimaCompra: string | null;
+  canalAquisicaoNome: string | null;
+  mesAquisicao: string | null;
+  cac: number | null;
 }
 
-type SortKey = 'nome' | 'totalVendas' | 'numeroCompras' | 'ticketMedio';
+type SortKey = 'nome' | 'totalVendas' | 'numeroCompras' | 'ticketMedio' | 'cac';
+
+// Maps canal name to the investment column key
+function getInvestmentKey(canalNome: string): string | null {
+  const lower = canalNome.toLowerCase();
+  if (lower.includes('google')) return 'investimento_google_ads';
+  if (lower.includes('meta') || lower.includes('facebook') || lower.includes('instagram')) return 'investimento_meta_ads';
+  if (lower.includes('linkedin')) return 'investimento_linkedin_ads';
+  if (lower.includes('tiktok') || lower.includes('outro')) return 'outros_investimentos';
+  return null; // Indicação, Cliente fidelizado, Autorizado — no paid investment
+}
 
 export default function LtvMinimalista() {
   const [busca, setBusca] = useState('');
@@ -26,11 +39,29 @@ export default function LtvMinimalista() {
   const { data: clientesLtv = [], isLoading } = useQuery({
     queryKey: ['ltv-clientes'],
     queryFn: async () => {
-      const [{ data: clientes }, { data: vendas }] = await Promise.all([
-        supabase.from('clientes' as any).select('id, nome').eq('ativo', true),
+      const [{ data: clientes }, { data: vendas }, { data: canais }, { data: investimentos }] = await Promise.all([
+        supabase.from('clientes' as any).select('id, nome, canal_aquisicao_id, created_at').eq('ativo', true),
         supabase.from('vendas').select('cliente_id, valor_venda, data_venda'),
+        supabase.from('canais_aquisicao').select('id, nome'),
+        supabase.from('marketing_investimentos').select('mes, investimento_google_ads, investimento_meta_ads, investimento_linkedin_ads, outros_investimentos'),
       ]);
 
+      // Build canal map: id → nome
+      const canalMap = new Map<string, string>();
+      (canais || []).forEach((c: any) => canalMap.set(c.id, c.nome));
+
+      // Build investment map: "YYYY-MM|investmentKey" → total across regions
+      const investMap = new Map<string, number>();
+      (investimentos || []).forEach((inv: any) => {
+        const mes = (inv.mes as string)?.substring(0, 7); // YYYY-MM
+        if (!mes) return;
+        for (const key of ['investimento_google_ads', 'investimento_meta_ads', 'investimento_linkedin_ads', 'outros_investimentos']) {
+          const mapKey = `${mes}|${key}`;
+          investMap.set(mapKey, (investMap.get(mapKey) || 0) + (inv[key] || 0));
+        }
+      });
+
+      // Build vendas map
       const vendasMap = new Map<string, { total: number; count: number; primeira: string; ultima: string }>();
       (vendas || []).forEach((v: any) => {
         if (!v.cliente_id) return;
@@ -42,8 +73,30 @@ export default function LtvMinimalista() {
         vendasMap.set(v.cliente_id, entry);
       });
 
+      // Count clients per canal+month for CAC denominator
+      const clientesPerCanalMes = new Map<string, number>();
+      (clientes || []).forEach((c: any) => {
+        if (!c.canal_aquisicao_id || !c.created_at) return;
+        const mes = (c.created_at as string).substring(0, 7);
+        const key = `${c.canal_aquisicao_id}|${mes}`;
+        clientesPerCanalMes.set(key, (clientesPerCanalMes.get(key) || 0) + 1);
+      });
+
       return (clientes || []).map((c: any): ClienteLtv => {
         const info = vendasMap.get(c.id);
+        const canalNome = c.canal_aquisicao_id ? canalMap.get(c.canal_aquisicao_id) || null : null;
+        const mesAquisicao = c.created_at ? (c.created_at as string).substring(0, 7) : null;
+
+        let cac: number | null = null;
+        if (canalNome && mesAquisicao) {
+          const invKey = getInvestmentKey(canalNome);
+          if (invKey) {
+            const totalInvest = investMap.get(`${mesAquisicao}|${invKey}`) || 0;
+            const numClientes = clientesPerCanalMes.get(`${c.canal_aquisicao_id}|${mesAquisicao}`) || 1;
+            cac = totalInvest > 0 ? totalInvest / numClientes : 0;
+          }
+        }
+
         return {
           id: c.id,
           nome: c.nome,
@@ -52,6 +105,9 @@ export default function LtvMinimalista() {
           ticketMedio: info ? info.total / info.count : 0,
           primeiraCompra: info?.primeira || null,
           ultimaCompra: info?.ultima || null,
+          canalAquisicaoNome: canalNome,
+          mesAquisicao,
+          cac,
         };
       });
     },
@@ -66,6 +122,9 @@ export default function LtvMinimalista() {
     list.sort((a, b) => {
       const valA = a[sortKey];
       const valB = b[sortKey];
+      if (valA === null && valB === null) return 0;
+      if (valA === null) return 1;
+      if (valB === null) return -1;
       if (typeof valA === 'string' && typeof valB === 'string') {
         return sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
       }
@@ -175,6 +234,9 @@ export default function LtvMinimalista() {
                 </th>
                 <th className="text-center px-4 py-3 font-medium hidden md:table-cell">Primeira Compra</th>
                 <th className="text-center px-4 py-3 font-medium hidden md:table-cell">Última Compra</th>
+                <th className="text-right px-4 py-3 font-medium hidden md:table-cell">
+                  <SortBtn k="cac">CAC</SortBtn>
+                </th>
                 <th className="text-right px-4 py-3 font-medium">
                   <SortBtn k="ticketMedio">Ticket Médio</SortBtn>
                 </th>
@@ -185,9 +247,9 @@ export default function LtvMinimalista() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={6} className="text-center py-10 text-white/40">Carregando...</td></tr>
+                <tr><td colSpan={7} className="text-center py-10 text-white/40">Carregando...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-10 text-white/40">Nenhum cliente encontrado</td></tr>
+                <tr><td colSpan={7} className="text-center py-10 text-white/40">Nenhum cliente encontrado</td></tr>
               ) : (
                 filtered.map(c => (
                   <tr key={c.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
@@ -195,6 +257,7 @@ export default function LtvMinimalista() {
                     <td className="px-4 py-3 text-center text-white/70 tabular-nums">{c.numeroCompras}</td>
                     <td className="px-4 py-3 text-center text-white/50 hidden md:table-cell tabular-nums">{fmtDate(c.primeiraCompra)}</td>
                     <td className="px-4 py-3 text-center text-white/50 hidden md:table-cell tabular-nums">{fmtDate(c.ultimaCompra)}</td>
+                    <td className="px-4 py-3 text-right text-white/70 hidden md:table-cell tabular-nums">{c.cac !== null ? fmt(c.cac) : '—'}</td>
                     <td className="px-4 py-3 text-right text-white/70 tabular-nums">{fmt(c.ticketMedio)}</td>
                     <td className="px-4 py-3 text-right text-white font-semibold tabular-nums">{fmt(c.totalVendas)}</td>
                   </tr>
