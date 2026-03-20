@@ -284,7 +284,7 @@ export default function ChecklistHistorico() {
         ) : (
           <div className="space-y-2">
             {tarefasFiltradas.map((tarefa) => {
-              const concluida = tarefa.status === "concluida";
+              return (
               return (
                 <div
                   key={tarefa.id}
