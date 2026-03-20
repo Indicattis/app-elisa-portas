@@ -136,6 +136,12 @@ export default function ChecklistHistorico() {
       });
     }
 
+    resultado.sort((a, b) => {
+      const da = new Date(a.data_referencia || a.updated_at).getTime();
+      const db = new Date(b.data_referencia || b.updated_at).getTime();
+      return db - da;
+    });
+
     return resultado;
   }, [tarefas, filtroResponsavel, filtroBusca, filtroStatus, dateRange]);
 
@@ -274,7 +280,7 @@ export default function ChecklistHistorico() {
                   {concluida ? (
                     <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                   ) : (
-                    <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
+                    <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
                   )}
 
                   <span className={cn("flex-1 text-sm truncate", concluida ? "text-white/80" : "text-white/70")}>
@@ -282,7 +288,7 @@ export default function ChecklistHistorico() {
                   </span>
 
                   {!concluida && (
-                    <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] shrink-0">
+                    <Badge className="bg-red-500/20 text-red-300 border-red-500/30 text-[10px] shrink-0">
                       Não concluída
                     </Badge>
                   )}
