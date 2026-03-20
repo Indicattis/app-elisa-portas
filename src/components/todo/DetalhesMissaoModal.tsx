@@ -31,7 +31,7 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="bg-slate-900/95 border-white/10 backdrop-blur-xl text-white max-w-lg max-h-[85vh] overflow-y-auto p-0">
+        <DialogContent className="bg-white/5 border-white/10 backdrop-blur-xl text-white max-w-lg max-h-[85vh] overflow-y-auto p-0 rounded-xl">
           <DialogHeader className="p-4 pb-0">
             <DialogTitle className="text-base font-semibold text-white pr-6">{missao.titulo}</DialogTitle>
           </DialogHeader>
