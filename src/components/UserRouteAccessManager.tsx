@@ -97,7 +97,6 @@ export function UserRouteAccessManager() {
       if (error) throw error;
       return data;
     },
-    enabled: isAdmin,
   });
 
   // Buscar todas as rotas disponíveis
