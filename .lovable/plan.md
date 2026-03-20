@@ -1,22 +1,38 @@
 
-## Plano: Aplicar estilo MinimalistLayout à página PedidosPagosSemEntrega
 
-A página atual usa layout genérico (`bg-background`, botão outline, sem glassmorphism). Precisa usar o `MinimalistLayout` como `/logistica/frota` faz.
+## Diagnóstico: Faturamento incorreto na seção CAC por Canal Pago
 
-### Mudanças em `src/pages/logistica/PedidosPagosSemEntrega.tsx`
+### Problema encontrado
 
-1. **Envolver com `MinimalistLayout`** — substituir o wrapper manual (`div.min-h-screen`, header com botão voltar) pelo componente `MinimalistLayout` com:
-   - `title="Pedidos Pagos sem Data de Entrega"`
-   - `subtitle="Pedidos pagos aguardando data de entrega"`
-   - `backPath="/logistica"`
-   - `breadcrumbItems` com Home > Logística > Pedidos sem Entrega
-   - `headerActions` com o botão "Novo Cadastro"
+A coluna `faturamento` na tabela `produtos_vendas` é do tipo **boolean** (indica se o produto foi faturado ou não), e **não** um valor monetário. O código atual faz:
 
-2. **Estilizar a tabela** com glassmorphism — envolver em `Card` com classes `bg-white/5 border-blue-500/10 backdrop-blur-xl`, aplicar `text-white/70` nos headers e `text-white/90` nas cells, `hover:bg-white/5` nas rows.
+```typescript
+produtos_vendas(faturamento)
+// ...
+venda.produtos_vendas?.reduce((sum, p) => sum + (p.faturamento || 0), 0)
+```
 
-3. **Estilizar o Dialog** — adicionar classes de glassmorphism ao `DialogContent` (`bg-black/90 border-white/10 backdrop-blur-xl`), labels e inputs com cores white/70.
+Como `true` vira `1` em JavaScript, o "faturamento" exibido é simplesmente a **contagem de produtos faturados** (17 para Google, 8 para Meta), não o valor real.
 
-4. **Loading e empty state** — spinner com `border-blue-400`, texto vazio com `text-white/50`.
+### Correção
 
-### Arquivo
-- `src/pages/logistica/PedidosPagosSemEntrega.tsx` — reescrita do layout e estilos
+**Arquivo:** `src/pages/marketing/PerformanceMinimalista.tsx`
+
+1. **Alterar a query** (linha ~466): trocar `produtos_vendas(faturamento)` por `produtos_vendas(valor_total, faturamento)` para buscar o valor monetário real junto com o flag de faturamento.
+
+2. **Alterar o cálculo** (linhas ~513-520): somar `valor_total` dos produtos que têm `faturamento = true`, em vez de somar o campo booleano:
+
+```typescript
+vendasDoCanal.forEach((venda: any) => {
+  const produtosFaturados = venda.produtos_vendas?.filter((p: any) => p.faturamento === true) || [];
+  if (produtosFaturados.length > 0) {
+    vendasFaturadas++;
+    faturamento += produtosFaturados.reduce((sum: number, p: any) => sum + (p.valor_total || 0), 0);
+  } else {
+    vendasPendentes++;
+  }
+});
+```
+
+Isso garante que o faturamento exibido seja a soma dos `valor_total` dos produtos efetivamente faturados.
+
