@@ -291,21 +291,37 @@ export default function ChecklistHistorico() {
                   className="flex items-center gap-3 p-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
                              hover:bg-white/[0.07] transition-colors duration-200"
                 >
-                  {concluida ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
-                  )}
+                  {(() => {
+                    const concluida = tarefa.status === "concluida";
+                    const pendente = !concluida && new Date(tarefa.data_referencia || tarefa.updated_at) >= new Date(inicioSemanaAtual);
+                    return (
+                      <>
+                        {concluida ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                        ) : pendente ? (
+                          <Clock className="h-4 w-4 text-amber-400 shrink-0" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
+                        )}
 
-                  <span className={cn("flex-1 text-sm truncate", concluida ? "text-white/80" : "text-white/70")}>
-                    {tarefa.descricao}
-                  </span>
+                        <span className={cn("flex-1 text-sm truncate", concluida ? "text-white/80" : "text-white/70")}>
+                          {tarefa.descricao}
+                        </span>
 
-                  {!concluida && (
-                    <Badge className="bg-red-500/20 text-red-300 border-red-500/30 text-[10px] shrink-0">
-                      Não concluída
-                    </Badge>
-                  )}
+                        {pendente && (
+                          <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] shrink-0">
+                            Pendente
+                          </Badge>
+                        )}
+
+                        {!concluida && !pendente && (
+                          <Badge className="bg-red-500/20 text-red-300 border-red-500/30 text-[10px] shrink-0">
+                            Não concluída
+                          </Badge>
+                        )}
+                      </>
+                    );
+                  })()}
 
                   {tarefa.responsavel && (
                     <div className="flex items-center gap-2 shrink-0">
