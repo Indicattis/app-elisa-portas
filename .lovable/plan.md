@@ -1,36 +1,43 @@
 
 
-## Plano: Adicionar responsável à missão e prazo individual por item
+## Plano: Modal de detalhes da missão ao clicar no card
 
-### Mudanças necessárias
+### O que será feito
+Ao clicar no card de uma missão, abrirá um modal exibindo todas as informações: título, responsável, todos os checkboxes (marcáveis), prazo de cada item, e para itens concluídos após o prazo, o tempo de atraso.
 
-**1. Banco de dados (migration)**
-- Adicionar coluna `responsavel_id` (uuid, nullable, ref admin_users.user_id) na tabela `missoes`
-- Adicionar coluna `prazo` (date, nullable) na tabela `missao_checkboxes`
-- Remover coluna `prazo` da tabela `missoes` (o prazo agora é por item)
+### Arquivos
 
-**2. Hook `useMissoes.ts`**
-- Atualizar interface `Missao` para incluir `responsavel_id` e remover `prazo`
-- Atualizar interface `MissaoCheckbox` para incluir `prazo`
-- Atualizar `criarMissao` para enviar `responsavel_id` na missão e `prazo` em cada checkbox
-- Atualizar query para buscar dados do responsável (join com admin_users)
+**1. Novo: `src/components/todo/DetalhesMissaoModal.tsx`**
+- Recebe a `Missao` selecionada, `open`, `onOpenChange`, `onToggleCheckbox`, `onDelete`
+- Exibe título, responsável (avatar + nome), barra de progresso
+- Lista todos os checkboxes com:
+  - Checkbox marcável (chama `onToggleCheckbox`)
+  - Descrição do item
+  - Prazo formatado (dd/MM/yyyy)
+  - Se concluído e tinha prazo: exibe data de conclusão (baseado em `updated_at` ou momento do toggle)
+  - Se concluído após o prazo: badge vermelho com tempo de atraso (ex: "2 dias de atraso")
+  - Se pendente e prazo vencido: badge "Atrasado"
+- Botão "Excluir Missão" com AlertDialog de confirmação
+- Estilo glassmorphism (bg-slate-900/95, border-white/10)
 
-**3. Modal `NovaMissaoModal.tsx`**
-- Adicionar Select de responsável (usando `useAllUsers` existente)
-- Remover date picker global da missão
-- Adicionar um date picker por item de checkbox (inline, compacto)
-- Atualizar state: cada item agora é `{ descricao: string, prazo?: Date }` em vez de `string`
-- Atualizar `onSubmit` para enviar `responsavel_id` e prazo por item
+**2. Editar: `src/pages/ChecklistLideranca.tsx`**
+- Adicionar state `missaoSelecionada` para controlar o modal
+- No card da missão, adicionar `onClick={() => setMissaoSelecionada(missao)}`
+- Renderizar `DetalhesMissaoModal` passando `toggleCheckbox` e `deletarMissao`
 
-**4. Página `ChecklistLideranca.tsx`**
-- Atualizar a seção de cards das missões: remover referência ao `missao.prazo`
-- Exibir o prazo de cada checkbox nos primeiros 5 itens
-- Prazo vencido: calcular com base no maior prazo dos checkboxes não concluídos
-- Exibir nome do responsável no card
+### Observação sobre data de conclusão
+A tabela `missao_checkboxes` não possui coluna `concluida_em`. Para calcular atraso precisaremos compará-lo com o prazo. Duas opções:
+1. Adicionar coluna `concluida_em` (timestamp) na tabela — permite cálculo preciso de atraso
+2. Usar apenas indicação visual "Atrasado" / "No prazo" sem data exata
 
-### Arquivos impactados
-- **Novo**: migration SQL (alter tables)
-- **Editar**: `src/hooks/useMissoes.ts`
-- **Editar**: `src/components/todo/NovaMissaoModal.tsx`
-- **Editar**: `src/pages/ChecklistLideranca.tsx`
+Recomendo a opção 1: adicionar coluna `concluida_em` via migration, e ao marcar checkbox, gravar a data atual.
+
+### Migration SQL
+```sql
+ALTER TABLE public.missao_checkboxes ADD COLUMN concluida_em timestamptz;
+```
+
+### Alteração no hook `useMissoes.ts`
+- No `toggleCheckbox`, ao marcar como concluída enviar `concluida_em: new Date().toISOString()`, ao desmarcar enviar `concluida_em: null`
+- Atualizar interface `MissaoCheckbox` para incluir `concluida_em`
 
