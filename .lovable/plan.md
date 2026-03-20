@@ -1,10 +1,27 @@
 
 
-## Plano: Mostrar botões do header para todos os usuários
+## Plano: Adicionar botão "Histórico" no header + nova página de histórico
 
-### Alteração
-Remover a condição `podeGerenciar` que guarda o `headerActions`, fazendo com que os botões "Recorrentes" e "Nova Tarefa" apareçam para todos os usuários independente do role.
+### Alterações
 
-### Arquivo impactado
-- `src/pages/ChecklistLideranca.tsx` — Mudar `headerActions` de condicional para sempre definido (remover o ternário `podeGerenciar ? ... : undefined`)
+**1. Nova página `src/pages/ChecklistHistorico.tsx`**
+- Página com `MinimalistLayout` (mesmo estilo glassmorphism)
+- Breadcrumb: Home > Direção > Checklist Liderança > Histórico
+- Busca tarefas com status `concluida` usando query no Supabase (tabela de tarefas, com joins em responsável/criador)
+- Lista as tarefas concluídas com: descrição, responsável (avatar + nome), data de conclusão
+- Filtro por responsável e por período (date range)
+- Botão voltar para `/direcao/checklist-lideranca`
+
+**2. `src/pages/ChecklistLideranca.tsx`** — Adicionar botão "Histórico" no `headerActions`
+- Novo botão com ícone `History` (lucide) entre "Recorrentes" e "Nova Tarefa"
+- Estilo glass igual ao botão "Recorrentes" (`bg-white/5 border-white/10`)
+- Navega para `/direcao/checklist-lideranca/historico`
+
+**3. `src/App.tsx`** — Adicionar rota
+- Nova rota: `/direcao/checklist-lideranca/historico` → `ChecklistHistorico` com `ProtectedRoute` key `direcao_hub`
+
+### Arquivos impactados
+- `src/pages/ChecklistHistorico.tsx` (novo)
+- `src/pages/ChecklistLideranca.tsx` (botão no header)
+- `src/App.tsx` (rota)
 
