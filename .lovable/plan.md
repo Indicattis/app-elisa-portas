@@ -1,30 +1,48 @@
 
 
-## Plano: Modal de histórico ao clicar no card da tarefa recorrente
+## Plano: Sistema de Missões no Checklist Liderança
 
 ### O que será feito
-Ao clicar no card de um template na programação semanal, abrirá um modal mostrando:
-1. Informações do template (descrição, responsável, dias da semana, horário)
-2. Histórico das últimas 7 tarefas geradas por esse template
-3. Botão para excluir a tarefa recorrente (e todas as futuras)
+Um novo sistema de "Missões" na página `/direcao/checklist-lideranca`. Cada missão é um conjunto de checkboxes com título e prazo. As missões aparecem em uma seção abaixo da Programação Semanal em grid de 5 colunas.
 
-### Arquivos
+### 1. Banco de dados — 2 novas tabelas
 
-**1. Novo componente: `src/components/todo/HistoricoRecorrenteModal.tsx`**
-- Modal (Dialog) recebendo o `TarefaTemplate` selecionado
-- Consulta ao Supabase: buscar as últimas 7 tarefas da tabela `tarefas` onde `template_id = template.id`, ordenadas por `data_referencia` desc, limit 7
-- Exibe cada tarefa com: data, status (concluída/pendente/não concluída), ícone e badge correspondente
-- Botão "Excluir tarefa recorrente" com confirmação (AlertDialog) que chama `onDelete`
-- Estilo glassmorphism consistente com o restante da página
+**`missoes`** — armazena cada missão
+- `id` (uuid, PK)
+- `titulo` (text, NOT NULL)
+- `prazo` (date, NOT NULL)
+- `created_by` (uuid, ref auth.users)
+- `created_at`, `updated_at` (timestamps)
 
-**2. Alteração: `src/pages/ChecklistLideranca.tsx`**
-- Adicionar state `templateSelecionado` para controlar qual template foi clicado
-- No card do template (linha ~245), adicionar `onClick` para abrir o modal com o template clicado
-- Renderizar o novo `HistoricoRecorrenteModal`
-- Passar `deletarTemplate.mutate` como callback de exclusão
+**`missao_checkboxes`** — itens de cada missão
+- `id` (uuid, PK)
+- `missao_id` (uuid, FK → missoes, ON DELETE CASCADE)
+- `descricao` (text, NOT NULL)
+- `concluida` (boolean, default false)
+- `ordem` (integer, default 0)
+- `created_at` (timestamp)
 
-### Detalhes técnicos
-- Query Supabase: `supabase.from('tarefas').select('*, responsavel:admin_users!tarefas_responsavel_id_fkey(nome, foto_perfil_url)').eq('template_id', templateId).order('data_referencia', { ascending: false }).limit(7)`
-- Usar `useQuery` com `enabled: !!template` para buscar apenas quando o modal estiver aberto
-- Status visual: verde (concluída), vermelho (não concluída com data passada), amarelo (pendente)
+RLS: leitura para authenticated, inserção/deleção para o criador ou admin/diretor.
+
+### 2. Hook `useMissoes.ts`
+- Query: buscar missões com seus checkboxes (`missoes` + `missao_checkboxes`)
+- Mutations: `criarMissao` (insere missão + checkboxes), `deletarMissao`, `toggleCheckbox`
+
+### 3. Modal `NovaMissaoModal.tsx`
+- Campos: título, prazo (date picker)
+- Lista dinâmica de checkboxes: input + botão adicionar, sem limite
+- Botão remover em cada item
+- Estilo glassmorphism consistente
+
+### 4. Seção na página `ChecklistLideranca.tsx`
+- Nova seção "Missões" abaixo da Programação Semanal
+- Grid de 5 colunas com cards mostrando: título, prazo, progresso, primeiros 5 checkboxes (não marcáveis, apenas visuais)
+- Botão "Adicionar Missão" no header da página (junto aos outros botões)
+- Ao clicar no card, poder ver detalhes / marcar checkboxes (futura expansão)
+
+### Arquivos impactados
+- **Novo**: migration SQL (2 tabelas + RLS)
+- **Novo**: `src/hooks/useMissoes.ts`
+- **Novo**: `src/components/todo/NovaMissaoModal.tsx`
+- **Editar**: `src/pages/ChecklistLideranca.tsx` — botão no header + seção de missões
 
