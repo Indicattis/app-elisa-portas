@@ -36,10 +36,12 @@ export function HistoricoRecorrenteModal({ template, open, onOpenChange, onDelet
     queryKey: ['historico-template', template?.id],
     enabled: !!template && open,
     queryFn: async () => {
+      const hoje = new Date().toISOString().split('T')[0];
       const { data, error } = await supabase
         .from('tarefas')
         .select('id, descricao, status, data_referencia, created_at')
         .eq('template_id', template!.id)
+        .lte('data_referencia', hoje)
         .order('data_referencia', { ascending: false })
         .limit(7);
 
