@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import { useAllUsers } from "@/hooks/useAllUsers";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -39,7 +38,6 @@ const DIAS_SEMANA = [
 const DIAS_SEMANA_NOMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoading }: NovaRecorrenteModalProps) {
-  const { userRole } = useAuth();
   const { data: todosUsuarios } = useAllUsers();
   
   const [descricao, setDescricao] = useState("");
@@ -47,7 +45,7 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoa
   const [diasSelecionados, setDiasSelecionados] = useState<number[]>([]);
   const [horaCriacao, setHoraCriacao] = useState("08:00");
 
-  const podeEscolherResponsavel = userRole?.role === 'diretor' || userRole?.role === 'administrador';
+  
 
   const previewDias = useMemo(() => {
     if (diasSelecionados.length === 0) return "";
@@ -78,7 +76,7 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoa
       return;
     }
 
-    if (!responsavelId && podeEscolherResponsavel) {
+    if (!responsavelId) {
       return;
     }
 
@@ -133,7 +131,7 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoa
 
         <div className="space-y-4 py-4">
           {/* Seleção de Responsável */}
-          {podeEscolherResponsavel && (
+          {(
             <div className="space-y-2">
               <label className="text-sm font-medium text-white/70">Responsável</label>
               <Select value={responsavelId} onValueChange={setResponsavelId}>
@@ -228,7 +226,7 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoa
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!descricao.trim() || diasSelecionados.length === 0 || (podeEscolherResponsavel && !responsavelId) || isLoading}
+            disabled={!descricao.trim() || diasSelecionados.length === 0 || !responsavelId || isLoading}
             className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 text-white text-sm font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
