@@ -212,6 +212,8 @@ export default function Home() {
         </div>
       )}
 
+      <MinhasTarefasFullscreen open={minhasTarefasOpen} onOpenChange={setMinhasTarefasOpen} />
+
       {/* Conteúdo centralizado */}
       <div className="relative z-10 flex flex-col items-center px-6 py-10 w-full max-w-md">
         {/* Logo */}
