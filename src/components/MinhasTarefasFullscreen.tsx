@@ -70,7 +70,7 @@ export function MinhasTarefasFullscreen({ open, onOpenChange }: MinhasTarefasFul
       <div
         className={cn(
           'fixed inset-0 z-[61] transition-transform duration-300 ease-out',
-          open ? 'translate-x-0' : 'translate-x-full'
+          open ? 'translate-x-0' : 'translate-x-full pointer-events-none'
         )}
       >
         <div className="h-full w-full bg-black overflow-y-auto">
