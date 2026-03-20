@@ -226,6 +226,9 @@ export default function AcordosAutorizados() {
                               {getResumoPortasBadges(acordo)}
                             </div>
                           </TableCell>
+                          <TableCell className="text-center text-white/70 text-xs">
+                            {acordo.portas.map(p => p.tamanho).join(', ') || '-'}
+                          </TableCell>
                           <TableCell className="text-white/70">
                             {acordo.autorizado_nome}
                           </TableCell>
