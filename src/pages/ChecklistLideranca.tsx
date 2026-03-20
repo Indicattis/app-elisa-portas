@@ -1,52 +1,23 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTarefas, TarefaTemplate } from "@/hooks/useTarefas";
-import { useSetorInfo } from "@/hooks/useSetorInfo";
 import { NovaTarefaModal } from "@/components/todo/NovaTarefaModal";
 import { TarefasRecorrentesModal } from "@/components/todo/TarefasRecorrentesModal";
 import { NovaRecorrenteModal } from "@/components/todo/NovaRecorrenteModal";
 import { CalendarioSemanal } from "@/components/todo/CalendarioSemanal";
 import { ChecklistFiltros } from "@/components/todo/ChecklistFiltros";
 import { TarefasTabela } from "@/components/todo/TarefasTabela";
+import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Calendar, Trash, List, ArrowLeft, CalendarDays, Clock, Trash2, User } from "lucide-react";
+import { Plus, Calendar, Trash, List, CalendarDays, Clock, Trash2, User, ChevronLeft, ChevronRight } from "lucide-react";
 import { isSameDay, parseISO, startOfWeek, endOfWeek, isWithinInterval, format, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { SETOR_LABELS } from "@/utils/setorMapping";
-import { UserRole } from "@/types/permissions";
 import { cn } from "@/lib/utils";
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  diretor: 'Diretor',
-  administrador: 'Administrador',
-  gerente_comercial: 'Gerente Comercial',
-  coordenador_vendas: 'Coordenador de Vendas',
-  vendedor: 'Vendedor',
-  gerente_marketing: 'Gerente de Marketing',
-  analista_marketing: 'Analista de Marketing',
-  assistente_marketing: 'Assistente de Marketing',
-  gerente_instalacoes: 'Gerente de Instalações',
-  instalador: 'Instalador',
-  aux_instalador: 'Auxiliar de Instalação',
-  gerente_fabril: 'Gerente Fabril',
-  gerente_producao: 'Gerente de Produção',
-  soldador: 'Soldador',
-  pintor: 'Pintor',
-  aux_pintura: 'Auxiliar de Pintura',
-  aux_geral: 'Auxiliar Geral',
-  gerente_financeiro: 'Gerente Financeiro',
-  assistente_administrativo: 'Assistente Administrativo',
-  atendente: 'Atendente',
-  tecnico_qualidade: 'Técnico de Qualidade',
-};
 
 const DIAS_SEMANA = [
   { key: 0, nome: "Dom", nomeCompleto: "Domingo" },
@@ -59,15 +30,8 @@ const DIAS_SEMANA = [
 ];
 
 export default function ChecklistLideranca() {
-  const navigate = useNavigate();
   const { user, userRole } = useAuth();
-  
-  // Tab state
-  const [abaPrincipal, setAbaPrincipal] = useState<string>("tarefas");
 
-  // Setor
-  const [setor, setSetor] = useState<string>('vendas');
-  
   // Filtros (Tarefas)
   const [usuarioSelecionado, setUsuarioSelecionado] = useState<string>("todos");
   const [tipoSelecionado, setTipoSelecionado] = useState<string>("todos");
@@ -82,33 +46,30 @@ export default function ChecklistLideranca() {
   const [templateParaDeletar, setTemplateParaDeletar] = useState<TarefaTemplate | null>(null);
   const [filtroResponsavel, setFiltroResponsavel] = useState<string | null>(null);
 
-  const { 
-    tarefas, 
-    isLoading, 
+  const {
+    tarefas,
+    isLoading,
     templates,
-    criarTarefa, 
+    criarTarefa,
     criarTemplate,
-    marcarConcluida, 
-    reabrirTarefa, 
+    marcarConcluida,
+    reabrirTarefa,
     deletarTarefa,
     toggleTemplate,
     deletarTemplate,
     atualizarTemplate
-  } = useTarefas(usuarioSelecionado === "todos" ? undefined : usuarioSelecionado, setor);
-  const { data: responsavelSetor } = useSetorInfo(setor);
-  
+  } = useTarefas(usuarioSelecionado === "todos" ? undefined : usuarioSelecionado);
+
   const [modalAberto, setModalAberto] = useState(false);
   const [modalRecorrentes, setModalRecorrentes] = useState(false);
   const [tarefaParaDeletar, setTarefaParaDeletar] = useState<string | null>(null);
 
   const podeGerenciar = userRole?.role === 'diretor' || userRole?.role === 'administrador';
-  const isResponsavelSetor = responsavelSetor?.user_id === user?.id;
-  const podeMarcarConcluida = podeGerenciar || isResponsavelSetor;
 
   // === Tarefas logic ===
   const semanaAtual = useMemo(() => {
     const hoje = new Date();
-    const semanaBase = semanaOffset === 0 ? hoje : 
+    const semanaBase = semanaOffset === 0 ? hoje :
       semanaOffset > 0 ? addWeeks(hoje, semanaOffset) : subWeeks(hoje, Math.abs(semanaOffset));
     const inicio = startOfWeek(semanaBase, { weekStartsOn: 0 });
     const fim = endOfWeek(semanaBase, { weekStartsOn: 0 });
@@ -172,15 +133,11 @@ export default function ChecklistLideranca() {
 
   const templatesPorDia = useMemo(() => {
     const resultado: Record<number, TarefaTemplate[]> = {};
-    DIAS_SEMANA.forEach(dia => {
-      resultado[dia.key] = [];
-    });
+    DIAS_SEMANA.forEach(dia => { resultado[dia.key] = []; });
     templatesFiltrados.forEach(template => {
       if (!template.dias_semana || template.dias_semana.length === 0) return;
       template.dias_semana.forEach(diaSemana => {
-        if (resultado[diaSemana]) {
-          resultado[diaSemana].push(template);
-        }
+        if (resultado[diaSemana]) resultado[diaSemana].push(template);
       });
     });
     return resultado;
@@ -190,125 +147,90 @@ export default function ChecklistLideranca() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
       </div>
     );
   }
 
+  const headerActions = podeGerenciar ? (
+    <div className="flex gap-2">
+      <button
+        onClick={() => setModalRecorrentes(true)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10
+                   hover:bg-white/10 text-white/70 hover:text-white text-sm transition-all duration-200"
+      >
+        <List className="h-4 w-4" />
+        <span className="hidden md:inline">Recorrentes ({templates.length})</span>
+      </button>
+      <button
+        onClick={() => setModalAberto(true)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700
+                   text-white text-sm font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-200"
+      >
+        <Plus className="h-4 w-4" />
+        <span className="hidden md:inline">Nova Tarefa</span>
+      </button>
+    </div>
+  ) : undefined;
+
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6 pb-24 md:pb-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3">
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => navigate('/direcao')}
-          className="w-fit -ml-2"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
-        </Button>
-
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl md:text-3xl font-bold truncate">
-              Checklist Liderança
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1 hidden md:block">
-              Gerencie tarefas por setor
-            </p>
-            <div className="mt-3 w-64">
-              <Select value={setor} onValueChange={setSetor}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o setor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(SETOR_LABELS).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Card do Responsável */}
-          {responsavelSetor && (
-            <Card className="w-80 shrink-0 hidden md:block">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">
-                  Responsável pelo Setor
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={responsavelSetor.foto_perfil_url || undefined} />
-                    <AvatarFallback>
-                      {responsavelSetor.nome.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{responsavelSetor.nome}</p>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {responsavelSetor.email}
-                    </p>
-                    <Badge variant="secondary" className="mt-1 text-xs">
-                      {ROLE_LABELS[responsavelSetor.role as UserRole]}
-                    </Badge>
-                  </div>
+    <MinimalistLayout
+      title="Checklist Liderança"
+      subtitle="Gerencie tarefas semanais da equipe"
+      backPath="/direcao"
+      headerActions={headerActions}
+      breadcrumbItems={[
+        { label: 'Home', path: '/home' },
+        { label: 'Direção', path: '/direcao' },
+        { label: 'Checklist Liderança' }
+      ]}
+    >
+      <div className="space-y-8">
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* SEÇÃO 1: Tarefas da Semana                            */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        <section className="space-y-4">
+          {/* Section header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20">
+                <Calendar className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-white">Tarefas da Semana</h2>
+                <div className="flex gap-2 mt-1">
+                  <Badge className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs px-2 py-0.5">
+                    {totalEmAndamento} pendente(s)
+                  </Badge>
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-0.5">
+                    {totalConcluidas} concluída(s)
+                  </Badge>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Desktop buttons */}
-          {podeGerenciar && (
-            <div className="hidden md:flex gap-2 shrink-0">
-              <Button variant="outline" onClick={() => setModalRecorrentes(true)}>
-                <List className="h-4 w-4 mr-2" />
-                Recorrentes ({templates.length})
-              </Button>
-              <Button onClick={() => abaPrincipal === 'programacao' ? setModalRecorrenteAberto(true) : setModalAberto(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                {abaPrincipal === 'programacao' ? 'Nova Recorrente' : 'Nova Tarefa'}
-              </Button>
+              </div>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <Tabs value={abaPrincipal} onValueChange={setAbaPrincipal}>
-        <TabsList>
-          <TabsTrigger value="tarefas" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Tarefas
-          </TabsTrigger>
-          <TabsTrigger value="programacao" className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4" />
-            Programação
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Tab: Tarefas */}
-        <TabsContent value="tarefas" className="space-y-4 mt-4">
-          {/* Badges de resumo */}
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            <Badge variant="destructive" className="text-xs md:text-sm px-2 md:px-3 py-1 whitespace-nowrap">
-              {totalEmAndamento} pendente(s)
-            </Badge>
-            <Badge className="bg-success text-success-foreground text-xs md:text-sm px-2 md:px-3 py-1 whitespace-nowrap">
-              {totalConcluidas} concluída(s)
-            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMostrarLixeira(!mostrarLixeira)}
+              className={cn(
+                "text-white/60 hover:text-white hover:bg-white/10",
+                mostrarLixeira && "bg-white/10 text-white"
+              )}
+            >
+              <Trash className="h-4 w-4 mr-1.5" />
+              {mostrarLixeira ? "Voltar" : `Lixeira (${totalConcluidas})`}
+            </Button>
           </div>
 
           {/* Calendário Semanal */}
-          <CalendarioSemanal 
-            tarefas={tarefas} 
-            diaSelecionado={diaCalendario}
-            onDiaChange={setDiaCalendario}
-          />
+          <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-blue-500/10">
+            <CalendarioSemanal
+              tarefas={tarefas}
+              diaSelecionado={diaCalendario}
+              onDiaChange={setDiaCalendario}
+            />
+          </div>
 
           {/* Filtros */}
           <ChecklistFiltros
@@ -322,153 +244,170 @@ export default function ChecklistLideranca() {
             setDataSelecionada={setDataSelecionada}
           />
 
-          {/* Tabela de Tarefas da Semana */}
-          <Card>
-            <CardHeader className="pb-3 px-4 md:px-6">
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between gap-2">
-                  <CardTitle className="text-base md:text-lg flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    {mostrarLixeira ? "Lixeira da Semana" : "Tarefas da Semana"}
-                  </CardTitle>
-                  <Button
-                    variant={mostrarLixeira ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setMostrarLixeira(!mostrarLixeira)}
-                  >
-                    <Trash className="h-4 w-4 md:mr-2" />
-                    <span className="hidden md:inline">
-                      {mostrarLixeira ? "Voltar" : `Lixeira (${totalConcluidas})`}
-                    </span>
-                    <span className="md:hidden ml-1">{totalConcluidas}</span>
-                  </Button>
+          {/* Navegação de semana + Tabela */}
+          <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-blue-500/10">
+            <div className="px-4 py-3">
+              {/* Navegação de semana */}
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() => setSemanaOffset(prev => prev - 1)}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/10 transition-all"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Anterior
+                </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-white">{labelSemana}</span>
+                  {semanaOffset !== 0 && (
+                    <button
+                      onClick={() => setSemanaOffset(0)}
+                      className="text-xs px-2 py-1 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-all"
+                    >
+                      Hoje
+                    </button>
+                  )}
                 </div>
-                
-                {/* Navegação de semana */}
-                <div className="flex items-center justify-between bg-muted/50 rounded-lg p-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSemanaOffset(prev => prev - 1)}
-                  >
-                    ← Anterior
-                  </Button>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{labelSemana}</span>
-                    {semanaOffset !== 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSemanaOffset(0)}
-                        className="text-xs h-6 px-2"
-                      >
-                        Hoje
-                      </Button>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSemanaOffset(prev => prev + 1)}
-                  >
-                    Próxima →
-                  </Button>
-                </div>
+                <button
+                  onClick={() => setSemanaOffset(prev => prev + 1)}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/10 transition-all"
+                >
+                  Próxima
+                  <ChevronRight className="h-4 w-4" />
+                </button>
               </div>
-            </CardHeader>
-            <CardContent className="pt-0 px-4 md:px-6">
+
+              {/* Tabela */}
               <TarefasTabela
                 tarefas={mostrarLixeira ? tarefasConcluidas : tarefasAtivas}
-                podeGerenciar={podeMarcarConcluida}
+                podeGerenciar={podeGerenciar}
                 onMarcarConcluida={(id) => marcarConcluida.mutate(id)}
                 onReabrir={(id) => reabrirTarefa.mutate(id)}
                 onDeletar={(id) => setTarefaParaDeletar(id)}
               />
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          </div>
+        </section>
 
-        {/* Tab: Programação */}
-        <TabsContent value="programacao" className="space-y-4 mt-4">
-          {/* Filtro de responsável + badge */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <Select
-              value={filtroResponsavel || "todos"}
-              onValueChange={(value) => setFiltroResponsavel(value === "todos" ? null : value)}
-            >
-              <SelectTrigger className="w-[200px] h-9">
-                <SelectValue placeholder="Filtrar responsável">
-                  {filtroResponsavel ? (
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* SEÇÃO 2: Programação Semanal                          */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        <section className="space-y-4">
+          {/* Section header */}
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20">
+                <CalendarDays className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-white">Programação Semanal</h2>
+                <p className="text-sm text-white/40">
+                  {templatesFiltrados.length} template(s) {filtroResponsavel ? "filtrado(s)" : "configurado(s)"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Filtro responsável */}
+              <Select
+                value={filtroResponsavel || "todos"}
+                onValueChange={(value) => setFiltroResponsavel(value === "todos" ? null : value)}
+              >
+                <SelectTrigger className="w-[200px] h-9 bg-white/5 border-white/10 text-white">
+                  <SelectValue placeholder="Filtrar responsável">
+                    {filtroResponsavel ? (
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={responsaveis.find(r => r.id === filtroResponsavel)?.foto_perfil_url || undefined} />
+                          <AvatarFallback className="text-[9px] bg-blue-500/20 text-blue-400">
+                            {responsaveis.find(r => r.id === filtroResponsavel)?.nome?.charAt(0)?.toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="truncate">{responsaveis.find(r => r.id === filtroResponsavel)?.nome?.split(' ')[0]}</span>
+                      </div>
+                    ) : (
+                      "Todos os responsáveis"
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="bg-popover z-50">
+                  <SelectItem value="todos">
                     <div className="flex items-center gap-2">
-                      <Avatar className="h-5 w-5">
-                        <AvatarImage src={responsaveis.find(r => r.id === filtroResponsavel)?.foto_perfil_url || undefined} />
-                        <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
-                          {responsaveis.find(r => r.id === filtroResponsavel)?.nome?.charAt(0)?.toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="truncate">{responsaveis.find(r => r.id === filtroResponsavel)?.nome?.split(' ')[0]}</span>
-                    </div>
-                  ) : (
-                    "Todos os responsáveis"
-                  )}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="bg-popover z-50">
-                <SelectItem value="todos">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <span>Todos os responsáveis</span>
-                  </div>
-                </SelectItem>
-                {responsaveis.map((resp) => (
-                  <SelectItem key={resp.id} value={resp.id}>
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-5 w-5">
-                        <AvatarImage src={resp.foto_perfil_url || undefined} />
-                        <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
-                          {resp.nome.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>{resp.nome}</span>
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span>Todos os responsáveis</span>
                     </div>
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  {responsaveis.map((resp) => (
+                    <SelectItem key={resp.id} value={resp.id}>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={resp.foto_perfil_url || undefined} />
+                          <AvatarFallback className="text-[9px] bg-blue-500/20 text-blue-400">
+                            {resp.nome.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{resp.nome}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Badge variant="secondary" className="text-xs md:text-sm px-2 md:px-3 py-1">
-              {templatesFiltrados.length} template(s) {filtroResponsavel ? "filtrado(s)" : "configurado(s)"}
-            </Badge>
+              {/* Botão nova recorrente */}
+              {podeGerenciar && (
+                <button
+                  onClick={() => setModalRecorrenteAberto(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700
+                             text-white text-sm font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-200"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden md:inline">Nova Recorrente</span>
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Calendário Semanal em Colunas */}
+          {/* Grid de 7 colunas */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
             {DIAS_SEMANA.map((dia) => {
               const isHoje = dia.key === diaHoje;
               const templatesDoDia = templatesPorDia[dia.key] || [];
 
               return (
-                <Card
+                <div
                   key={dia.key}
                   className={cn(
-                    "min-h-[220px] flex flex-col",
-                    isHoje && "border-primary ring-1 ring-primary/20 bg-primary/5"
+                    "min-h-[220px] flex flex-col rounded-xl p-1.5",
+                    isHoje
+                      ? "bg-blue-500/10 border border-blue-500/30"
+                      : "bg-white/5 border border-blue-500/10"
                   )}
                 >
-                  <CardHeader className="p-3 pb-2 border-b bg-muted/30">
-                    <div className="text-center">
-                      <p className={cn(
-                        "text-sm font-medium",
-                        isHoje ? "text-primary" : "text-muted-foreground"
+                  {/* Dia header */}
+                  <div className={cn(
+                    "text-center py-2 rounded-lg mb-2",
+                    isHoje ? "bg-blue-500/20" : "bg-white/5"
+                  )}>
+                    <p className={cn(
+                      "text-sm font-medium",
+                      isHoje ? "text-blue-400" : "text-white/50"
+                    )}>
+                      {dia.nomeCompleto}
+                    </p>
+                    {templatesDoDia.length > 0 && (
+                      <span className={cn(
+                        "text-[10px]",
+                        isHoje ? "text-blue-400/70" : "text-white/30"
                       )}>
-                        {dia.nomeCompleto}
-                      </p>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-2 flex-1 overflow-y-auto space-y-2">
+                        {templatesDoDia.length} tarefa(s)
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Templates */}
+                  <div className="flex-1 overflow-y-auto space-y-2 px-1">
                     {templatesDoDia.length === 0 ? (
                       <div className="flex items-center justify-center h-full">
-                        <p className="text-xs text-muted-foreground text-center py-4">
+                        <p className="text-xs text-white/20 text-center py-4">
                           Sem tarefas
                         </p>
                       </div>
@@ -477,20 +416,20 @@ export default function ChecklistLideranca() {
                         <TooltipProvider key={template.id}>
                           <Tooltip delayDuration={200}>
                             <TooltipTrigger asChild>
-                              <div className="p-2 rounded-md border bg-background border-border group cursor-pointer hover:border-primary/50 transition-colors">
+                              <div className="p-2 rounded-lg bg-white/5 border border-white/10 group cursor-pointer hover:border-blue-500/30 transition-all duration-200">
                                 <div className="flex items-start gap-2">
                                   <Avatar className="h-6 w-6 flex-shrink-0">
                                     <AvatarImage src={template.responsavel?.foto_perfil_url || undefined} />
-                                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                    <AvatarFallback className="text-[10px] bg-blue-500/20 text-blue-400">
                                       {template.responsavel?.nome?.charAt(0)?.toUpperCase() || <User className="h-3 w-3" />}
                                     </AvatarFallback>
                                   </Avatar>
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium leading-tight line-clamp-2">
+                                    <p className="text-xs font-medium leading-tight line-clamp-2 text-white/80">
                                       {template.descricao || "Tarefa"}
                                     </p>
                                     {template.hora_criacao && (
-                                      <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                                      <p className="text-[10px] text-white/40 mt-0.5 flex items-center gap-1">
                                         <Clock className="h-2.5 w-2.5" />
                                         {template.hora_criacao.slice(0, 5)}
                                       </p>
@@ -500,7 +439,7 @@ export default function ChecklistLideranca() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 hover:bg-red-500/10"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setTemplateParaDeletar(template);
@@ -516,7 +455,7 @@ export default function ChecklistLideranca() {
                               <div className="flex items-center gap-2">
                                 <Avatar className="h-8 w-8">
                                   <AvatarImage src={template.responsavel?.foto_perfil_url || undefined} />
-                                  <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                  <AvatarFallback className="text-xs bg-blue-500/20 text-blue-400">
                                     {template.responsavel?.nome?.charAt(0)?.toUpperCase() || <User className="h-4 w-4" />}
                                   </AvatarFallback>
                                 </Avatar>
@@ -533,11 +472,6 @@ export default function ChecklistLideranca() {
                                     Horário: {template.hora_criacao.slice(0, 5)}
                                   </p>
                                 )}
-                                {template.setor && (
-                                  <p className="text-xs text-muted-foreground">
-                                    Setor: {template.setor}
-                                  </p>
-                                )}
                                 {template.dias_semana && template.dias_semana.length > 0 && (
                                   <p className="text-xs text-muted-foreground">
                                     Dias: {template.dias_semana.map(d => DIAS_SEMANA.find(dia => dia.key === d)?.nome).filter(Boolean).join(", ")}
@@ -549,20 +483,20 @@ export default function ChecklistLideranca() {
                         </TooltipProvider>
                       ))
                     )}
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               );
             })}
           </div>
-        </TabsContent>
-      </Tabs>
+        </section>
+      </div>
 
       {/* FAB Mobile */}
       {podeGerenciar && (
         <Button
-          onClick={() => abaPrincipal === 'programacao' ? setModalRecorrenteAberto(true) : setModalAberto(true)}
+          onClick={() => setModalAberto(true)}
           size="lg"
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg md:hidden z-50"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg md:hidden z-50 bg-gradient-to-r from-blue-500 to-blue-700"
         >
           <Plus className="h-6 w-6" />
         </Button>
@@ -572,19 +506,14 @@ export default function ChecklistLideranca() {
       <NovaTarefaModal
         open={modalAberto}
         onOpenChange={setModalAberto}
-        onSubmit={(tarefa) => {
-          criarTarefa.mutate(tarefa);
-        }}
-        setor={setor}
+        onSubmit={(tarefa) => criarTarefa.mutate(tarefa)}
       />
 
       {/* Modal Nova Recorrente */}
       <NovaRecorrenteModal
         open={modalRecorrenteAberto}
         onOpenChange={setModalRecorrenteAberto}
-        onSubmit={(template) => {
-          criarTemplate.mutate(template);
-        }}
+        onSubmit={(template) => criarTemplate.mutate(template)}
         isLoading={criarTemplate.isPending}
       />
 
@@ -648,6 +577,6 @@ export default function ChecklistLideranca() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </MinimalistLayout>
   );
 }
