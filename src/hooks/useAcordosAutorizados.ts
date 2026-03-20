@@ -7,6 +7,8 @@ export interface PortaAcordo {
   id?: string;
   tamanho: 'P' | 'G' | 'GG';
   valor_unitario: number;
+  largura?: number;
+  altura?: number;
 }
 
 export interface AcordoAutorizado {
