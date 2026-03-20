@@ -620,6 +620,139 @@ export default function PerformanceMinimalista() {
       ]}
     >
       <div className="space-y-6">
+        {/* Seção de CAC por Canal Pago */}
+        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+          <CardHeader>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-white">CAC por Canal Pago</CardTitle>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="h-4 w-4 text-white/50" />
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-zinc-900 border-white/10 text-white max-w-xs">
+                      <p>Custo de Aquisição de Cliente por canal de marketing pago. Calculado dividindo o investimento pelo número de vendas.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
+                    onClick={() => setCacMesIndex((cacMesIndex + 1) % cacMeses.length)}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm text-white min-w-[120px] text-center">
+                    {cacMes && format(cacMes, "MMMM yyyy", { locale: ptBR })}
+                  </span>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
+                    onClick={() => setCacMesIndex((cacMesIndex - 1 + cacMeses.length) % cacMeses.length)}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
+                    onClick={() => setCacRegiaoIndex((cacRegiaoIndex - 1 + cacRegioes.length) % cacRegioes.length)}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm text-white min-w-[80px] text-center">
+                    {cacRegiao === "all" ? "Todas Regiões" : cacRegiao}
+                  </span>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
+                    onClick={() => setCacRegiaoIndex((cacRegiaoIndex + 1) % cacRegioes.length)}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <VendedorCarousel 
+                  vendedores={vendedoresCompletos} 
+                  currentIndex={vendedorIndexCAC}
+                  onIndexChange={setVendedorIndexCAC}
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingCAC ? (
+              <div className="flex items-center justify-center h-40">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              </div>
+            ) : cacData.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-40 text-white/60">
+                <AlertCircle className="h-8 w-8 mb-2" />
+                <p>Nenhum canal pago configurado</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10">
+                      <TableHead className="text-white/70">Canal</TableHead>
+                      <TableHead className="text-white/70 text-right">Investimento</TableHead>
+                      <TableHead className="text-white/70 text-right">Vendas</TableHead>
+                      <TableHead className="text-white/70 text-right">Faturamento</TableHead>
+                      <TableHead className="text-white/70 text-right">Lucro</TableHead>
+                      <TableHead className="text-white/70 text-right">CAC</TableHead>
+                      <TableHead className="text-white/70 text-right">ROI</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {cacData.map((canal) => (
+                      <TableRow key={canal.canal_id} className="border-white/10">
+                        <TableCell className="text-white font-medium">{canal.canal_nome}</TableCell>
+                        <TableCell className="text-white/80 text-right">{formatCurrency(canal.investimento)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <span className="text-white/80">{canal.totalVendas}</span>
+                            {canal.vendasPendentes > 0 && (
+                              <Badge variant="outline" className="text-xs bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                                {canal.vendasPendentes} pendente{canal.vendasPendentes > 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-white/80 text-right">{formatCurrency(canal.faturamento)}</TableCell>
+                        <TableCell className={cn(
+                          "text-right font-medium",
+                          canal.lucroLiquido >= 0 ? "text-green-400" : "text-red-400"
+                        )}>
+                          {formatCurrency(canal.lucroLiquido)}
+                        </TableCell>
+                        <TableCell className="text-white/80 text-right">{formatCurrency(canal.cac)}</TableCell>
+                        <TableCell className={cn(
+                          "text-right font-medium",
+                          canal.roi >= 0 ? "text-green-400" : "text-red-400"
+                        )}>
+                          {canal.roi.toFixed(1)}%
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Seção de Análise de Vendas */}
         <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
           <CardHeader>
@@ -768,139 +901,6 @@ export default function PerformanceMinimalista() {
                 </ResponsiveContainer>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Seção de CAC por Canal Pago */}
-        <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-          <CardHeader>
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-white">CAC por Canal Pago</CardTitle>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Info className="h-4 w-4 text-white/50" />
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-zinc-900 border-white/10 text-white max-w-xs">
-                      <p>Custo de Aquisição de Cliente por canal de marketing pago. Calculado dividindo o investimento pelo número de vendas.</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              
-              <div className="flex items-center gap-4 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
-                    onClick={() => setCacMesIndex((cacMesIndex + 1) % cacMeses.length)}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm text-white min-w-[120px] text-center">
-                    {cacMes && format(cacMes, "MMMM yyyy", { locale: ptBR })}
-                  </span>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
-                    onClick={() => setCacMesIndex((cacMesIndex - 1 + cacMeses.length) % cacMeses.length)}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
-                    onClick={() => setCacRegiaoIndex((cacRegiaoIndex - 1 + cacRegioes.length) % cacRegioes.length)}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm text-white min-w-[80px] text-center">
-                    {cacRegiao === "all" ? "Todas Regiões" : cacRegiao}
-                  </span>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
-                    onClick={() => setCacRegiaoIndex((cacRegiaoIndex + 1) % cacRegioes.length)}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <VendedorCarousel 
-                  vendedores={vendedoresCompletos} 
-                  currentIndex={vendedorIndexCAC}
-                  onIndexChange={setVendedorIndexCAC}
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loadingCAC ? (
-              <div className="flex items-center justify-center h-40">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              </div>
-            ) : cacData.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-40 text-white/60">
-                <AlertCircle className="h-8 w-8 mb-2" />
-                <p>Nenhum canal pago configurado</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-white/10">
-                      <TableHead className="text-white/70">Canal</TableHead>
-                      <TableHead className="text-white/70 text-right">Investimento</TableHead>
-                      <TableHead className="text-white/70 text-right">Vendas</TableHead>
-                      <TableHead className="text-white/70 text-right">Faturamento</TableHead>
-                      <TableHead className="text-white/70 text-right">Lucro</TableHead>
-                      <TableHead className="text-white/70 text-right">CAC</TableHead>
-                      <TableHead className="text-white/70 text-right">ROI</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {cacData.map((canal) => (
-                      <TableRow key={canal.canal_id} className="border-white/10">
-                        <TableCell className="text-white font-medium">{canal.canal_nome}</TableCell>
-                        <TableCell className="text-white/80 text-right">{formatCurrency(canal.investimento)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <span className="text-white/80">{canal.totalVendas}</span>
-                            {canal.vendasPendentes > 0 && (
-                              <Badge variant="outline" className="text-xs bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                                {canal.vendasPendentes} pendente{canal.vendasPendentes > 1 ? 's' : ''}
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-white/80 text-right">{formatCurrency(canal.faturamento)}</TableCell>
-                        <TableCell className={cn(
-                          "text-right font-medium",
-                          canal.lucroLiquido >= 0 ? "text-green-400" : "text-red-400"
-                        )}>
-                          {formatCurrency(canal.lucroLiquido)}
-                        </TableCell>
-                        <TableCell className="text-white/80 text-right">{formatCurrency(canal.cac)}</TableCell>
-                        <TableCell className={cn(
-                          "text-right font-medium",
-                          canal.roi >= 0 ? "text-green-400" : "text-red-400"
-                        )}>
-                          {canal.roi.toFixed(1)}%
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
           </CardContent>
         </Card>
 
