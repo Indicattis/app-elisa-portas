@@ -121,7 +121,7 @@ export function NovaRecorrenteModal({ open, onOpenChange, onSubmit, setor, isLoa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-[#0a1628]/95 backdrop-blur-xl border border-white/10 text-white shadow-2xl">
+      <DialogContent className="sm:max-w-[500px] bg-white/5 backdrop-blur-xl border border-white/10 text-white shadow-2xl rounded-xl">
         <DialogHeader>
           <DialogTitle className="text-white">Nova Tarefa Recorrente</DialogTitle>
           <DialogDescription className="text-white/50">
