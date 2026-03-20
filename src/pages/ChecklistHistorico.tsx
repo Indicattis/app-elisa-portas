@@ -280,7 +280,7 @@ export default function ChecklistHistorico() {
                   {concluida ? (
                     <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                   ) : (
-                    <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
+                    <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
                   )}
 
                   <span className={cn("flex-1 text-sm truncate", concluida ? "text-white/80" : "text-white/70")}>
