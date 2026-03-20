@@ -225,6 +225,9 @@ export default function AcordosAutorizados() {
                               {getResumoPortasBadges(acordo)}
                             </div>
                           </TableCell>
+                          <TableCell className="text-white/70">
+                            {acordo.autorizado_nome}
+                          </TableCell>
                           <TableCell>
                             <span className="font-medium">{acordo.cliente_nome}</span>
                           </TableCell>
