@@ -8,17 +8,19 @@ export interface MissaoCheckbox {
   descricao: string;
   concluida: boolean;
   ordem: number;
+  prazo: string | null;
   created_at: string;
 }
 
 export interface Missao {
   id: string;
   titulo: string;
-  prazo: string;
+  responsavel_id: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
   missao_checkboxes: MissaoCheckbox[];
+  responsavel?: { nome: string; foto_perfil_url: string | null } | null;
 }
 
 export function useMissoes() {
@@ -34,11 +36,34 @@ export function useMissoes() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return (data as any[]).map((m: any) => ({
+
+      // Fetch responsavel info separately
+      const missoesList = (data as any[]).map((m: any) => ({
         ...m,
         missao_checkboxes: (m.missao_checkboxes || []).sort(
           (a: MissaoCheckbox, b: MissaoCheckbox) => a.ordem - b.ordem
         ),
+      }));
+
+      // Get unique responsavel_ids
+      const responsavelIds = [...new Set(missoesList.map(m => m.responsavel_id).filter(Boolean))];
+      let responsaveisMap: Record<string, { nome: string; foto_perfil_url: string | null }> = {};
+
+      if (responsavelIds.length > 0) {
+        const { data: users } = await supabase
+          .from("admin_users")
+          .select("user_id, nome, foto_perfil_url")
+          .in("user_id", responsavelIds);
+        if (users) {
+          users.forEach(u => {
+            responsaveisMap[u.user_id] = { nome: u.nome, foto_perfil_url: u.foto_perfil_url };
+          });
+        }
+      }
+
+      return missoesList.map(m => ({
+        ...m,
+        responsavel: m.responsavel_id ? responsaveisMap[m.responsavel_id] || null : null,
       })) as Missao[];
     },
   });
@@ -46,15 +71,18 @@ export function useMissoes() {
   const criarMissao = useMutation({
     mutationFn: async (params: {
       titulo: string;
-      prazo: string;
-      checkboxes: { descricao: string }[];
+      responsavel_id?: string;
+      checkboxes: { descricao: string; prazo?: string }[];
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
+      const insertData: any = { titulo: params.titulo, created_by: user.id };
+      if (params.responsavel_id) insertData.responsavel_id = params.responsavel_id;
+
       const { data: missao, error: missaoError } = await (supabase as any)
         .from("missoes")
-        .insert({ titulo: params.titulo, prazo: params.prazo, created_by: user.id })
+        .insert(insertData)
         .select()
         .single();
 
@@ -64,6 +92,7 @@ export function useMissoes() {
         const checkboxes = params.checkboxes.map((cb, i) => ({
           missao_id: missao.id,
           descricao: cb.descricao,
+          prazo: cb.prazo || null,
           ordem: i,
         }));
         const { error: cbError } = await (supabase as any)

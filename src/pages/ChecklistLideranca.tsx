@@ -366,8 +366,14 @@ export default function ChecklistLideranca() {
                 const total = missao.missao_checkboxes.length;
                 const concluidas = missao.missao_checkboxes.filter(c => c.concluida).length;
                 const progresso = total > 0 ? Math.round((concluidas / total) * 100) : 0;
-                const prazoDate = new Date(missao.prazo + "T12:00:00");
-                const vencida = isPast(startOfDay(prazoDate)) && progresso < 100;
+                // Find latest prazo among incomplete checkboxes
+                const prazosNaoConcluidos = missao.missao_checkboxes
+                  .filter(c => !c.concluida && c.prazo)
+                  .map(c => new Date(c.prazo + "T12:00:00"));
+                const maiorPrazo = prazosNaoConcluidos.length > 0
+                  ? new Date(Math.max(...prazosNaoConcluidos.map(d => d.getTime())))
+                  : null;
+                const vencida = maiorPrazo ? isPast(startOfDay(maiorPrazo)) && progresso < 100 : false;
                 const primeiros5 = missao.missao_checkboxes.slice(0, 5);
 
                 return (
@@ -386,16 +392,21 @@ export default function ChecklistLideranca() {
                     <div className="mb-2">
                       <h3 className="text-sm font-semibold text-white line-clamp-2 leading-tight">{missao.titulo}</h3>
                       <div className="flex items-center justify-between mt-1.5">
-                        <span className={cn(
-                          "text-[10px] px-1.5 py-0.5 rounded-full",
-                          vencida
-                            ? "bg-red-500/20 text-red-400"
-                            : progresso === 100
-                              ? "bg-emerald-500/20 text-emerald-400"
-                              : "bg-white/10 text-white/50"
-                        )}>
-                          {format(prazoDate, "dd/MM/yy")}
-                        </span>
+                        {missao.responsavel ? (
+                          <div className="flex items-center gap-1">
+                            <Avatar className="h-4 w-4">
+                              <AvatarImage src={missao.responsavel.foto_perfil_url || undefined} />
+                              <AvatarFallback className="text-[8px] bg-blue-500/20 text-blue-400">
+                                {missao.responsavel.nome.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-[10px] text-white/50 truncate max-w-[80px]">
+                              {missao.responsavel.nome.split(' ')[0]}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-white/30">Sem responsável</span>
+                        )}
                         <span className="text-[10px] text-white/40">{concluidas}/{total}</span>
                       </div>
                     </div>
@@ -415,7 +426,7 @@ export default function ChecklistLideranca() {
                       />
                     </div>
 
-                    {/* Primeiros 5 checkboxes (não marcáveis) */}
+                    {/* Primeiros 5 checkboxes */}
                     <div className="space-y-1">
                       {primeiros5.map((cb) => (
                         <div key={cb.id} className="flex items-center gap-1.5">
@@ -428,11 +439,21 @@ export default function ChecklistLideranca() {
                             {cb.concluida && <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400" />}
                           </div>
                           <span className={cn(
-                            "text-[11px] leading-tight line-clamp-1",
+                            "text-[11px] leading-tight line-clamp-1 flex-1",
                             cb.concluida ? "text-white/30 line-through" : "text-white/60"
                           )}>
                             {cb.descricao}
                           </span>
+                          {cb.prazo && (
+                            <span className={cn(
+                              "text-[9px] flex-shrink-0",
+                              !cb.concluida && isPast(startOfDay(new Date(cb.prazo + "T12:00:00")))
+                                ? "text-red-400"
+                                : "text-white/30"
+                            )}>
+                              {format(new Date(cb.prazo + "T12:00:00"), "dd/MM")}
+                            </span>
+                          )}
                         </div>
                       ))}
                       {total > 5 && (
