@@ -90,7 +90,17 @@ export default function LtvMinimalista() {
   };
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  const fmtDate = (d: string | null) => d ? format(new Date(d + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR }) : '—';
+  const fmtDate = (d: string | null) => {
+    if (!d) return '—';
+    try {
+      const dateStr = d.length === 10 ? d + 'T12:00:00' : d;
+      const parsed = new Date(dateStr);
+      if (isNaN(parsed.getTime())) return '—';
+      return format(parsed, 'dd/MM/yyyy', { locale: ptBR });
+    } catch {
+      return '—';
+    }
+  };
 
   const cards = [
     { label: 'LTV Médio', value: fmt(resumo.ltvMedio), icon: TrendingUp },
