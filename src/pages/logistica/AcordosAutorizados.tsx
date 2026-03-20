@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -112,10 +111,6 @@ export default function AcordosAutorizados() {
     ));
   };
 
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
   const headerActions = (
     <div className="flex items-center gap-2">
       <div className="relative">
@@ -183,38 +178,54 @@ export default function AcordosAutorizados() {
               <Table className="text-xs">
                 <TableHeader>
                   <TableRow className="border-blue-500/10 hover:bg-white/5">
-                    <TableHead className="text-xs text-white/70">Cliente</TableHead>
-                    <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                     <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
-                    <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
-                    <TableHead className="text-xs text-white/70 text-right">Excesso</TableHead>
-                    <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
+                    <TableHead className="text-xs text-white/70">Cliente</TableHead>
+                    <TableHead className="text-xs text-white/70">Cidade</TableHead>
                     <TableHead className="text-xs text-white/70 text-center">Data</TableHead>
-                    <TableHead className="text-xs text-white/70 text-center">Criado por</TableHead>
+                    <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
+                    <TableHead className="text-xs text-white/70 text-right">Valor excesso</TableHead>
+                    <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
                     <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
+                  <TooltipProvider>
                   {acordosFiltrados.map((acordo) => (
                     <TableRow 
                       key={acordo.id}
                       className="border-blue-500/10 hover:bg-white/5 text-white/90"
                     >
+                      <TableCell className="text-center">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center justify-center gap-1 cursor-default">
+                              {getResumoPortasBadges(acordo)}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="bg-zinc-900 border-zinc-700">
+                            <div className="space-y-1 text-xs">
+                              <p className="font-semibold text-white/80 mb-1.5">Valores acordados</p>
+                              {acordo.portas.map((p, i) => (
+                                <div key={p.id || i} className="flex items-center justify-between gap-4">
+                                  <span className="text-white/60">Porta {p.tamanho}</span>
+                                  <span className="text-white font-medium">{formatCurrency(p.valor_unitario)}</span>
+                                </div>
+                              ))}
+                              {acordo.portas.length === 0 && (
+                                <p className="text-white/40">Sem portas cadastradas</p>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
                       <TableCell>
-                        <div>
-                          <span className="font-medium">{acordo.cliente_nome}</span>
-                          <p className="text-white/50 text-xs">
-                            {acordo.cliente_cidade} - {acordo.cliente_estado}
-                          </p>
-                        </div>
+                        <span className="font-medium">{acordo.cliente_nome}</span>
                       </TableCell>
                       <TableCell className="text-white/70">
-                        {acordo.autorizado_nome}
+                        {acordo.cliente_cidade} - {acordo.cliente_estado}
                       </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          {getResumoPortasBadges(acordo)}
-                        </div>
+                      <TableCell className="text-center text-white/60">
+                        {format(new Date(acordo.data_acordo), 'dd/MM/yy', { locale: ptBR })}
                       </TableCell>
                       <TableCell className="text-right font-medium text-green-400">
                         {formatCurrency(acordo.valor_acordado)}
@@ -237,32 +248,6 @@ export default function AcordosAutorizados() {
                         >
                           {STATUS_LABELS[acordo.status]}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-center text-white/60">
-                        {format(new Date(acordo.data_acordo), 'dd/MM/yy', { locale: ptBR })}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {acordo.criador ? (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex justify-center">
-                                  <Avatar className="h-6 w-6">
-                                    <AvatarImage src={acordo.criador.foto_perfil_url} />
-                                    <AvatarFallback className="text-[10px] bg-primary/20 text-primary">
-                                      {getInitials(acordo.criador.nome)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{acordo.criador.nome}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        ) : (
-                          <span className="text-white/40">-</span>
-                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -295,6 +280,7 @@ export default function AcordosAutorizados() {
                       </TableCell>
                     </TableRow>
                   ))}
+                  </TooltipProvider>
                 </TableBody>
               </Table>
             </div>
