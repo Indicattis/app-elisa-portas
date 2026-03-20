@@ -350,6 +350,14 @@ export default function ChecklistLideranca() {
         podeGerenciar={podeGerenciar}
       />
 
+      {/* Modal Histórico Recorrente */}
+      <HistoricoRecorrenteModal
+        template={templateSelecionado}
+        open={!!templateSelecionado}
+        onOpenChange={(open) => !open && setTemplateSelecionado(null)}
+        onDelete={(id) => deletarTemplate.mutate(id)}
+      />
+
       {/* Confirmação de Deleção de Template */}
       <AlertDialog open={!!templateParaDeletar} onOpenChange={() => setTemplateParaDeletar(null)}>
         <AlertDialogContent className="max-w-[90vw] md:max-w-lg">
