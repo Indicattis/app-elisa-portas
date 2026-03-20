@@ -3434,6 +3434,7 @@ export type Database = {
           id: string
           missao_id: string
           ordem: number | null
+          prazo: string | null
         }
         Insert: {
           concluida?: boolean | null
@@ -3442,6 +3443,7 @@ export type Database = {
           id?: string
           missao_id: string
           ordem?: number | null
+          prazo?: string | null
         }
         Update: {
           concluida?: boolean | null
@@ -3450,6 +3452,7 @@ export type Database = {
           id?: string
           missao_id?: string
           ordem?: number | null
+          prazo?: string | null
         }
         Relationships: [
           {
@@ -3466,7 +3469,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           id: string
-          prazo: string
+          responsavel_id: string | null
           titulo: string
           updated_at: string | null
         }
@@ -3474,7 +3477,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
-          prazo: string
+          responsavel_id?: string | null
           titulo: string
           updated_at?: string | null
         }
@@ -3482,11 +3485,19 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
-          prazo?: string
+          responsavel_id?: string | null
           titulo?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "missoes_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       multas: {
         Row: {
