@@ -68,7 +68,7 @@ export function NovaMissaoModal({ open, onOpenChange, onSubmit, isLoading }: Pro
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
-      <DialogContent className="max-w-[95vw] sm:max-w-lg bg-slate-900/95 border-white/10 text-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-lg bg-white/5 backdrop-blur-xl border-white/10 text-white max-h-[90vh] overflow-y-auto rounded-xl">
         <DialogHeader>
           <DialogTitle className="text-white">Nova Missão</DialogTitle>
         </DialogHeader>
