@@ -90,7 +90,7 @@ export default function Frota() {
                   <TableHead className="text-xs">Responsável</TableHead>
                   <TableHead className="text-xs">Mecânico</TableHead>
                   <TableHead className="text-xs">Km Atual</TableHead>
-                  <TableHead className="text-xs">Próx. Troca Óleo</TableHead>
+                  <TableHead className="text-xs">Km Próx. Troca</TableHead>
                   <TableHead className="text-xs">Status</TableHead>
                   <TableHead className="text-xs">Últ. Conferência</TableHead>
                   <TableHead className="text-right text-xs">Ações</TableHead>
@@ -124,8 +124,8 @@ export default function Frota() {
                     <TableCell>{veiculo.mecanico || '-'}</TableCell>
                     <TableCell>{veiculo.km_atual.toLocaleString('pt-BR')} km</TableCell>
                     <TableCell>
-                      {veiculo.data_proxima_troca_oleo 
-                        ? format(new Date(veiculo.data_proxima_troca_oleo), "dd/MM/yy", { locale: ptBR })
+                      {veiculo.km_proxima_troca_oleo
+                        ? `${veiculo.km_proxima_troca_oleo.toLocaleString('pt-BR')} km`
                         : '-'
                       }
                     </TableCell>
