@@ -136,6 +136,12 @@ export default function ChecklistHistorico() {
       });
     }
 
+    resultado.sort((a, b) => {
+      const da = new Date(a.data_referencia || a.updated_at).getTime();
+      const db = new Date(b.data_referencia || b.updated_at).getTime();
+      return db - da;
+    });
+
     return resultado;
   }, [tarefas, filtroResponsavel, filtroBusca, filtroStatus, dateRange]);
 
