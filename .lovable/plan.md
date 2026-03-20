@@ -1,42 +1,18 @@
 
 
-## Plano: Adicionar coluna CAC por canal na tabela LTV
+## Plano: Destacar botões dos controladores com azul glassmorphism
 
 ### O que será feito
 
-Adicionar uma coluna **"CAC"** na tabela de LTV que mostra o Custo de Aquisição do Cliente, calculado com base no **canal de aquisição** do cliente e no **mês de cadastro** (created_at).
+Atualizar o estilo dos botões de navegação (setas ChevronLeft/ChevronRight) nos controladores — tanto no `VendedorCarousel` quanto nos seletores de mês e região do CAC — aplicando um visual azul com glassmorphism.
 
-### Lógica de cálculo
+### Alterações em `src/pages/marketing/PerformanceMinimalista.tsx`
 
-```text
-CAC do cliente = Investimento do canal no mês de cadastro ÷ Nº de clientes adquiridos por esse canal no mesmo mês
-```
+1. **VendedorCarousel** (linhas 578, 602): Trocar a classe dos botões de seta de:
+   - `text-white/70 hover:text-white hover:bg-white/10`
+   - Para: `bg-blue-500/20 border border-blue-400/30 backdrop-blur-sm text-blue-300 hover:bg-blue-500/30 hover:text-blue-200`
 
-**Mapeamento canal → coluna de investimento:**
-- Google → `investimento_google_ads`
-- Meta (Facebook/Instagram) → `investimento_meta_ads`
-- LinkedIn → `investimento_linkedin_ads`
-- TikTok / Outros → `outros_investimentos`
-- Indicação, Cliente fidelizado, Autorizado → sem investimento (CAC = "—")
+2. **Seletores de mês e região do CAC** (linhas 646, 657, 668, 679): Aplicar o mesmo estilo glassmorphism azul nos 4 botões de seta.
 
-Os investimentos são somados entre todas as regiões para o mês.
-
-### Alterações no arquivo `LtvMinimalista.tsx`
-
-1. **Interface `ClienteLtv`**: adicionar campos `canalAquisicaoId`, `canalAquisicaoNome`, `mesAquisicao` (YYYY-MM) e `cac: number | null`
-
-2. **Query (`queryFn`)**: buscar também `canal_aquisicao_id` e `created_at` dos clientes, a tabela `canais_aquisicao` e `marketing_investimentos`. Calcular para cada cliente:
-   - Identificar o mês de cadastro (YYYY-MM de `created_at`)
-   - Mapear o canal para a coluna de investimento correspondente
-   - Somar investimentos daquele canal naquele mês (todas as regiões)
-   - Contar quantos clientes ativos têm o mesmo canal e mesmo mês de cadastro
-   - CAC = investimento total do canal no mês ÷ nº de clientes desse canal no mês
-
-3. **SortKey**: adicionar `'cac'` como opção de ordenação
-
-4. **Tabela**: adicionar coluna "CAC" entre "Última Compra" e "Ticket Médio", com `hidden md:table-cell`, mostrando `fmt(cac)` ou "—" quando não aplicável
-
-5. **Colspan**: ajustar de 6 para 7
-
-Nenhuma alteração de banco de dados necessária — todos os dados já existem.
+Total: 6 botões atualizados com o mesmo padrão visual.
 
