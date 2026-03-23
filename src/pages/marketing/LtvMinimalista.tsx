@@ -33,6 +33,7 @@ function getInvestmentKey(canalNome: string): string | null {
 
 export default function LtvMinimalista() {
   const [busca, setBusca] = useState('');
+  const [canalFiltro, setCanalFiltro] = useState('todos');
   const [sortKey, setSortKey] = useState<SortKey>('totalVendas');
   const [sortAsc, setSortAsc] = useState(false);
 
