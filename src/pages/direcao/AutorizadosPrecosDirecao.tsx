@@ -65,8 +65,8 @@ const PORTA_COLORS: Record<string, string> = {
 
 export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props) {
   const navigate = useNavigate();
-  // Estados
-  const { estados, loading: loadingEstados, criarEstado, editarEstado, reordenarEstados } = useEstadosCidades();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [novoEstadoOpen, setNovoEstadoOpen] = useState(false);
   const [estadoParaEditar, setEstadoParaEditar] = useState<typeof estados[0] | null>(null);
 
