@@ -1031,7 +1031,7 @@ export default function PedidoView() {
               <Package className="w-4 h-4" />
               Itens do Pedido {pedido.linhas.length > 0 && `(${pedido.linhas.length})`}
             </CardTitle>
-            {isAberto && (
+            {isEditavel && (
               <div className="flex items-center gap-2">
                 {!modoEdicao ? (
                   <Button
@@ -1081,7 +1081,7 @@ export default function PedidoView() {
         <CardContent>
           <PedidoLinhasEditor
             linhas={pedido.linhas}
-            isReadOnly={!isAberto || !modoEdicao}
+            isReadOnly={!isEditavel || !modoEdicao}
             vendaId={pedido.venda_id}
             temPortasEnrolar={portasEnrolar.length > 0}
             onAdicionarLinha={adicionarLinha}
@@ -1127,7 +1127,7 @@ export default function PedidoView() {
                   valoresIniciais={getObservacoesPorPorta(porta._originalId, porta._indicePorta)}
                   onSalvar={salvarObservacao}
                   pedidoId={id || ''}
-                  isReadOnly={!isAberto}
+                  isReadOnly={!isEditavel}
                 />
               ))}
             </div>
@@ -1156,7 +1156,7 @@ export default function PedidoView() {
                   valoresIniciais={getObservacoesSocialPorPorta(porta._originalId, porta._indicePorta)}
                   onSalvar={salvarObservacaoSocial}
                   pedidoId={id || ''}
-                  isReadOnly={!isAberto}
+                  isReadOnly={!isEditavel}
                 />
               ))}
             </div>
