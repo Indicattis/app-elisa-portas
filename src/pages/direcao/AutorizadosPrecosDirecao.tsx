@@ -179,6 +179,47 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     ));
   };
 
+  const handleAprovar = useCallback(async (acordoId: string) => {
+    try {
+      setApprovingId(acordoId);
+      const { error } = await supabase
+        .from('acordos_instalacao_autorizados')
+        .update({
+          aprovado_direcao: true,
+          aprovado_direcao_por: user?.id,
+          aprovado_direcao_em: new Date().toISOString(),
+        } as any)
+        .eq('id', acordoId);
+      if (error) throw error;
+      toast({ title: 'Sucesso', description: 'Acordo aprovado com sucesso' });
+      await refetch();
+    } catch (error: any) {
+      console.error('Erro ao aprovar acordo:', error);
+      toast({ title: 'Erro', description: 'Não foi possível aprovar o acordo', variant: 'destructive' });
+    } finally {
+      setApprovingId(null);
+    }
+  }, [user?.id, toast]);
+
+  const handleReprovar = useCallback(async (acordoId: string) => {
+    try {
+      setRejectingId(acordoId);
+      const { error } = await supabase
+        .from('acordos_instalacao_autorizados')
+        .update({
+          reprovado_direcao: true,
+        } as any)
+        .eq('id', acordoId);
+      if (error) throw error;
+      toast({ title: 'Sucesso', description: 'Acordo reprovado' });
+      await refetch();
+    } catch (error: any) {
+      console.error('Erro ao reprovar acordo:', error);
+      toast({ title: 'Erro', description: 'Não foi possível reprovar o acordo', variant: 'destructive' });
+    } finally {
+      setRejectingId(null);
+    }
+  }, [toast]);
 
 
   const headerActions = (
