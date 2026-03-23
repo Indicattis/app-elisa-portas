@@ -182,6 +182,7 @@ export function OrdemDetalhesSheet({
   const [imprimirEtiquetasOpen, setImprimirEtiquetasOpen] = useState(false);
   const [isMarcandoCiente, setIsMarcandoCiente] = useState(false);
   const [linhaSelecionada, setLinhaSelecionada] = useState<LinhaOrdem | null>(null);
+  const [checklistExtraQualidade, setChecklistExtraQualidade] = useState(false);
   const { buscarDadosOrdem } = useOrdemPDFData();
   const { calcularEtiquetasLinha } = useEtiquetasProducao();
   const { encontrarRegraAplicavel, encontrarRegraPorNome } = useRegrasEtiquetas();
@@ -546,6 +547,21 @@ export function OrdemDetalhesSheet({
             </div>
           </div>
           
+          {/* Checklist extra de verificação para qualidade */}
+          {tipoOrdem === 'qualidade' && todasConcluidas && linhas.length > 0 && podeMarcarLinhas && ordem.status !== 'concluido' && !temLinhaComProblema && (
+            <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-2">
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-400">Verificações obrigatórias</p>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={checklistExtraQualidade}
+                  onCheckedChange={(v) => setChecklistExtraQualidade(!!v)}
+                  className="border-amber-500/50 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                />
+                <span className="text-sm text-foreground">Verifiquei que a testeira é compatível com motor</span>
+              </label>
+            </div>
+          )}
+
           {/* Botão de concluir no header quando todos os itens estão marcados */}
           {todasConcluidas && linhas.length > 0 && podeMarcarLinhas && ordem.status !== 'concluido' && ordem.status !== 'pronta' && !temLinhaComProblema && (
             <div className="mt-4">
@@ -561,7 +577,7 @@ export function OrdemDetalhesSheet({
               ) : (
                 <Button
                   className="w-full"
-                  disabled={isUpdating}
+                  disabled={isUpdating || (tipoOrdem === 'qualidade' && !checklistExtraQualidade)}
                   onClick={() => onConcluirOrdem(ordem.id)}
                 >
                   <CheckCircle2 className="h-4 w-4 mr-2" />
