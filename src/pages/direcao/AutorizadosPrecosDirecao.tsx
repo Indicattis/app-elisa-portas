@@ -67,6 +67,8 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  // Estados
+  const { estados, loading: loadingEstados, criarEstado, editarEstado, reordenarEstados } = useEstadosCidades();
   const [novoEstadoOpen, setNovoEstadoOpen] = useState(false);
   const [estadoParaEditar, setEstadoParaEditar] = useState<typeof estados[0] | null>(null);
 
