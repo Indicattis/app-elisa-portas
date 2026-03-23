@@ -90,9 +90,9 @@ export default function DirecaoHub() {
                              text-white font-medium 
                              transition-all duration-300
                              ${item.label === 'Checklist Liderança'
-                               ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 shadow-lg shadow-cyan-500/20 border border-cyan-400/30 hover:from-cyan-400 hover:to-indigo-500'
-                               : 'bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20 border border-blue-400/30 hover:from-blue-400 hover:to-blue-600'
-                             }`}
+                                ? 'bg-gradient-to-r from-slate-700 to-slate-900 shadow-lg shadow-slate-700/20 border border-slate-500/30 hover:from-slate-600 hover:to-slate-800'
+                                : 'bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20 border border-blue-400/30 hover:from-blue-400 hover:to-blue-600'
+                              }`}
                 >
                   <Icon className="w-5 h-5" strokeWidth={1.5} />
                   <span className="text-sm font-medium">{item.label}</span>
@@ -130,8 +130,8 @@ export default function DirecaoHub() {
                              text-white font-medium 
                              transition-all duration-300
                              ${item.label === 'Checklist Liderança'
-                               ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 shadow-lg shadow-cyan-500/20 border border-cyan-400/30 hover:from-cyan-400 hover:to-indigo-500'
-                               : 'bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20 border border-blue-400/30 hover:from-blue-400 hover:to-blue-600'
+                                ? 'bg-gradient-to-r from-slate-700 to-slate-900 shadow-lg shadow-slate-700/20 border border-slate-500/30 hover:from-slate-600 hover:to-slate-800'
+                                : 'bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20 border border-blue-400/30 hover:from-blue-400 hover:to-blue-600'
                              }`}
                 >
                   <Icon className="w-5 h-5" strokeWidth={1.5} />
