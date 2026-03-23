@@ -34,6 +34,8 @@ export function CarregamentoDownbar({
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [loadingSuccess, setLoadingSuccess] = useState(false);
   const [itensMarcados, setItensMarcados] = useState<Set<string>>(new Set());
+  const [checkTesteiraMotor, setCheckTesteiraMotor] = useState(false);
+  const [checkPlacaSoleira, setCheckPlacaSoleira] = useState(false);
   const { calcularEtiquetasLinha } = useEtiquetasProducao();
 
   const toggleItem = (id: string) => {
@@ -50,7 +52,8 @@ export function CarregamentoDownbar({
     setItensMarcados(new Set(linhas.map(l => l.id)));
   };
 
-  const todosMarcados = linhas && linhas.length > 0 && itensMarcados.size === linhas.length;
+  const todosItensMarcados = linhas && linhas.length > 0 && itensMarcados.size === linhas.length;
+  const todosMarcados = todosItensMarcados && checkTesteiraMotor && checkPlacaSoleira;
 
   const handleImprimirEtiquetas = () => {
     try {
@@ -162,7 +165,7 @@ export function CarregamentoDownbar({
 
   return (
     <Sheet open={open} onOpenChange={(o) => {
-      if (!o) { setItensMarcados(new Set()); setIsSubmitting(false); }
+      if (!o) { setItensMarcados(new Set()); setCheckTesteiraMotor(false); setCheckPlacaSoleira(false); setIsSubmitting(false); }
       onOpenChange(o);
     }}>
       <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl max-w-[700px] mx-auto bg-zinc-900 border-t border-white/10 p-0">
@@ -318,6 +321,27 @@ export function CarregamentoDownbar({
                   Nenhum item encontrado
                 </p>
               )}
+            </div>
+
+            {/* Verificações obrigatórias */}
+            <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-2">
+              <p className="text-xs font-medium text-amber-400">Verificações obrigatórias</p>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={checkTesteiraMotor}
+                  onCheckedChange={(v) => setCheckTesteiraMotor(!!v)}
+                  className="border-amber-500/50 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                />
+                <span className="text-sm text-white/80">Verifiquei que a testeira é compatível com motor</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={checkPlacaSoleira}
+                  onCheckedChange={(v) => setCheckPlacaSoleira(!!v)}
+                  className="border-amber-500/50 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                />
+                <span className="text-sm text-white/80">Placa Soleira Elisa</span>
+              </label>
             </div>
 
             {/* Botões */}
