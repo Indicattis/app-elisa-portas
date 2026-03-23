@@ -1,27 +1,47 @@
 
 
-## Plano: Substituir seção de Acordos pelo conteúdo de Pagamentos Autorizados
+## Plano: Aprovar/Reprovar acordos em /direcao/autorizados
 
-### Contexto
-A seção "Acordos com Autorizados" em `/direcao/autorizados` (linhas 242-389 de `AutorizadosPrecosDirecao.tsx`) tem uma tabela simplificada. A página `/logistica/pagamentos-autorizados` (`AcordosAutorizados.tsx`) tem uma versão mais rica com:
-- Coluna "Medidas" (largura × altura)
-- Tooltip no hover da linha mostrando preços padrão do autorizado (P/G/GG)
-- Busca de `precosMap` via `autorizado_precos_portas`
-- Ordem de colunas diferente (Portas, Medidas, Autorizado, Cliente, Cidade, Data, Valor, Excesso, Status)
+### Problema
+A página `/direcao/autorizados` exibe acordos em modo somente leitura. O usuário quer poder aprovar ou reprovar acordos diretamente nesta página.
 
-### Alteração
+### Alterações
 
-**Arquivo: `src/pages/direcao/AutorizadosPrecosDirecao.tsx`**
+#### 1. Migração SQL — Adicionar campo de reprovação
+Adicionar coluna `reprovado_direcao` (boolean, default false) na tabela `acordos_instalacao_autorizados` para distinguir entre pendente, aprovado e reprovado.
 
-1. Adicionar `useEffect` e import do `supabase` para buscar `precosMap` (preços padrão dos autorizados), copiando a lógica de `AcordosAutorizados.tsx` (linhas 63-80)
+```sql
+ALTER TABLE acordos_instalacao_autorizados 
+  ADD COLUMN IF NOT EXISTS reprovado_direcao boolean DEFAULT false;
+```
 
-2. Substituir a seção "Acordos com Autorizados" (linhas 242-389) pela tabela de `AcordosAutorizados.tsx`:
-   - Mesmas colunas: Portas, Medidas, Autorizado, Cliente, Cidade, Data, Valor, Valor excesso, Status
-   - Tooltip no hover de cada linha mostrando preços padrão P/G/GG
-   - Coluna "Ações" aparece apenas quando `contexto === 'logistica'` (direção vê somente leitura)
-   - Manter filtros de busca e status já existentes na seção
+#### 2. Arquivo: `src/pages/direcao/AutorizadosPrecosDirecao.tsx`
 
-3. Remover imports não mais usados (Avatar/AvatarFallback/AvatarImage que eram usados na coluna "Criado por")
+Quando `contexto === 'direcao'`, adicionar uma coluna **"Aprovação"** na tabela de acordos com:
 
-Nenhum outro arquivo precisa ser alterado.
+- **Acordo pendente** (`aprovado_direcao = false` e `reprovado_direcao = false`): dois botões — "Aprovar" (verde, ícone Check) e "Reprovar" (vermelho, ícone X)
+- **Acordo aprovado** (`aprovado_direcao = true`): Badge verde "Aprovado" com ícone CheckCircle2
+- **Acordo reprovado** (`reprovado_direcao = true`): Badge vermelho "Reprovado" com ícone XCircle
+
+Lógica de aprovação (mesma de `AprovacoesAutorizados.tsx`):
+```tsx
+await supabase.from('acordos_instalacao_autorizados')
+  .update({ aprovado_direcao: true, aprovado_direcao_por: user?.id, aprovado_direcao_em: new Date().toISOString() })
+  .eq('id', acordoId);
+```
+
+Lógica de reprovação:
+```tsx
+await supabase.from('acordos_instalacao_autorizados')
+  .update({ reprovado_direcao: true })
+  .eq('id', acordoId);
+```
+
+Imports adicionais: `Check`, `X`, `CheckCircle2`, `XCircle` do lucide-react; `useAuth` e `useToast`.
+
+Estado local: `approvingId` e `rejectingId` para loading nos botões.
+
+#### 3. Arquivo: `src/hooks/useAcordosAutorizados.ts`
+
+Adicionar `aprovado_direcao` e `reprovado_direcao` à interface `AcordoAutorizado` e ao mapeamento no `fetchAcordos` para que a informação esteja disponível sem cast `as any`.
 
