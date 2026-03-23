@@ -1,13 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Search, Edit2, Trash2, MoreHorizontal } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
+import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { useEstadosCidades } from '@/hooks/useEstadosCidades';
 import { SortableEstadoCard } from '@/components/autorizados/EstadoCard';
 import { NovoEstadoDialog } from '@/components/autorizados/NovoEstadoDialog';
@@ -63,8 +63,6 @@ const PORTA_COLORS: Record<string, string> = {
 
 export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props) {
   const navigate = useNavigate();
-  const [mounted, setMounted] = useState(false);
-
   // Estados
   const { estados, loading: loadingEstados, criarEstado, editarEstado, reordenarEstados } = useEstadosCidades();
   const [novoEstadoOpen, setNovoEstadoOpen] = useState(false);
@@ -82,11 +80,6 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   );
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 50);
-    return () => clearTimeout(timer);
-  }, []);
 
   const backPath = contexto === 'logistica' ? '/logistica' : '/direcao';
   const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : 'Direção';
@@ -164,63 +157,50 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
+  const headerActions = (
+    <>
+      <Button
+        size="sm"
+        onClick={() => navigate(`/${contexto}/autorizados/novo`)}
+        className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-400/20 text-white shadow-lg shadow-blue-500/10 hover:from-blue-500/30 hover:to-blue-600/30 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
+      >
+        <Plus className="h-4 w-4" />
+        <span className="hidden sm:inline">Novo Autorizado</span>
+      </Button>
+      <Button
+        size="sm"
+        onClick={() => setNovoEstadoOpen(true)}
+        className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-400/20 text-white shadow-lg shadow-blue-500/10 hover:from-blue-500/30 hover:to-blue-600/30 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
+      >
+        <Plus className="h-4 w-4" />
+        <span className="hidden sm:inline">Novo Estado</span>
+      </Button>
+      {contexto === 'logistica' && (
+        <Button
+          size="sm"
+          onClick={handleNovoAcordo}
+          className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 border border-blue-400/30 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
+        >
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline">Novo Acordo</span>
+        </Button>
+      )}
+    </>
+  );
+
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
-      <AnimatedBreadcrumb
-        items={[
-          { label: "Home", path: "/home" },
-          { label: breadcrumbLabel, path: backPath },
-          { label: "Autorizados" }
-        ]}
-        mounted={mounted}
-      />
-
-      <div className="pt-12">
-        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-primary/10">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate(backPath)}
-                className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-white/80" />
-              </button>
-              <div>
-                <h1 className="text-lg font-semibold text-white">Gestão de Autorizados</h1>
-                <p className="text-xs text-white/60">{estados.length} estados cadastrados</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => navigate(`/${contexto}/autorizados/novo`)}
-                className="bg-primary/20 hover:bg-primary/30 border border-primary/30"
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Novo Autorizado
-              </Button>
-              <Button
-                onClick={() => setNovoEstadoOpen(true)}
-                variant="outline"
-                className="border-primary/30 text-white/80"
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Novo Estado
-              </Button>
-              {contexto === 'logistica' && (
-                <Button
-                  onClick={handleNovoAcordo}
-                  className="bg-primary hover:bg-primary/90"
-                  size="sm"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Novo Acordo
-                </Button>
-              )}
-            </div>
-          </div>
-        </header>
-
-        <div className="px-4 py-4 max-w-7xl mx-auto space-y-8">
+    <MinimalistLayout
+      title="Gestão de Autorizados"
+      subtitle={`${estados.length} estados cadastrados`}
+      backPath={backPath}
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: breadcrumbLabel, path: backPath },
+        { label: "Autorizados" }
+      ]}
+      headerActions={headerActions}
+    >
+      <div className="space-y-8">
           {/* Seção Estados */}
           {loadingEstados ? (
             <div className="flex items-center justify-center py-20">
@@ -257,9 +237,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
           )}
 
           {/* Separador */}
-          <div className="border-t border-primary/10" />
-              {/* Separador */}
-              <div className="border-t border-primary/10" />
+          <div className="border-t border-blue-500/10" />
 
               {/* Seção Acordos */}
               <div>
@@ -303,12 +281,12 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                     )}
                   </div>
                 ) : (
-                  <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+                  <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
                     <CardContent className="p-0">
                       <div className="overflow-x-auto">
                         <Table className="text-xs">
                           <TableHeader>
-                            <TableRow className="border-primary/10 hover:bg-primary/5">
+                            <TableRow className="border-blue-500/10 hover:bg-white/5">
                               <TableHead className="text-xs text-white/70">Cliente</TableHead>
                               <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                               <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
@@ -324,7 +302,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                           </TableHeader>
                           <TableBody>
                             {acordosFiltrados.map((acordo) => (
-                              <TableRow key={acordo.id} className="border-primary/10 hover:bg-primary/10 text-white/90">
+                              <TableRow key={acordo.id} className="border-blue-500/10 hover:bg-white/5 text-white/90">
                                 <TableCell>
                                   <div>
                                     <span className="font-medium">{acordo.cliente_nome}</span>
@@ -408,10 +386,8 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                   </Card>
                 )}
               </div>
-        </div>
       </div>
 
-      {/* Dialogs */}
       <NovoEstadoDialog
         open={novoEstadoOpen}
         onOpenChange={handleCloseEstadoDialog}
@@ -431,7 +407,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
           />
 
           <AlertDialog open={!!acordoParaDeletar} onOpenChange={() => setAcordoParaDeletar(null)}>
-            <AlertDialogContent className="bg-zinc-900 border-zinc-700">
+            <AlertDialogContent className="bg-black/90 border-white/10 backdrop-blur-xl">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-white">Confirmar Exclusão</AlertDialogTitle>
                 <AlertDialogDescription className="text-white/60">
@@ -440,13 +416,13 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="bg-zinc-800 border-zinc-600 text-white hover:bg-zinc-700">Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleConfirmarDelete} className="bg-red-600 hover:bg-red-700 text-white">Excluir</AlertDialogAction>
+                <AlertDialogCancel className="border-white/20 bg-white/10 text-white hover:bg-white/15">Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmarDelete} className="bg-red-500/80 hover:bg-red-500 text-white">Excluir</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         </>
       )}
-    </div>
+    </MinimalistLayout>
   );
 }
