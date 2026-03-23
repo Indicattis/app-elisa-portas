@@ -1,32 +1,21 @@
 
 
-## Plano: Separar Programação e adicionar Calendário de Tarefas
-
-### Resumo
-
-1. Criar nova página `ChecklistProgramacao.tsx` com a seção "Programação Semanal" (movida de `ChecklistLideranca.tsx`)
-2. Adicionar rota `/direcao/checklist-lideranca/programacao`
-3. Adicionar botão "Programação" no header do `ChecklistLideranca.tsx`
-4. Substituir a seção removida por um calendário semanal de tarefas (usando `useTarefasCalendario`)
+## Plano: Permitir edição de itens também na etapa "Aprovação CEO"
 
 ### Alterações
 
-#### 1. Nova página `src/pages/ChecklistProgramacao.tsx`
-- Mover toda a seção "Programação Semanal" (grid de 7 colunas, filtro de responsável, modais de template) para esta nova página
-- Usar `MinimalistLayout` com breadcrumb incluindo "Checklist Liderança" como pai
-- Manter os botões de ação relevantes (Nova Tarefa, Recorrentes) no header
-- Mover states e lógica associados: `filtroResponsavel`, `templateParaDeletar`, `modalRecorrenteAberto`, `modalRecorrentes`, `templateSelecionado`, e seus modais
+#### 1. `src/pages/administrativo/PedidosAdminMinimalista.tsx`
+- Linha 363: mudar `readOnly={etapaConfig.id !== 'aberto'}` para `readOnly={etapaConfig.id !== 'aberto' && etapaConfig.id !== 'aprovacao_ceo'}`
+- Linha 366: incluir `aprovacao_ceo` na condição de `onDeletar`
 
-#### 2. `src/App.tsx`
-- Adicionar rota: `/direcao/checklist-lideranca/programacao` → `ChecklistProgramacao`
-- Adicionar import do novo componente
+#### 2. `src/pages/PedidoView.tsx`
+- Linha 631: mudar `isAberto` para incluir `aprovacao_ceo`:
+  ```ts
+  const isEditavel = pedido.etapa_atual === 'aberto' || pedido.etapa_atual === 'aprovacao_ceo';
+  ```
+- Substituir todas as referências a `isAberto` usadas para controle de edição (linhas ~1033, 1083, 1129, 1158) por `isEditavel`
+- Manter `isAberto` se usado em outros contextos não relacionados à edição
 
-#### 3. `src/pages/ChecklistLideranca.tsx`
-- Adicionar botão "Programação" no `headerActions` (com ícone `CalendarDays`, navega para `/direcao/checklist-lideranca/programacao`)
-- Remover a seção "Programação Semanal" (linhas ~152-338) e states/lógica associados
-- Adicionar nova seção "Calendário de Tarefas" no lugar, usando `useTarefasCalendario`:
-  - Navegação semanal (anterior/próxima semana, botão "Hoje")
-  - Grid de 7 dias mostrando tarefas com status (pendente/concluída), avatar do responsável
-  - Estilo glassmorphism consistente (bg-white/5, border-white/10)
-  - Reutilizar padrão visual do `CalendarioSemanalTarefasMobile` / `DiaCardTarefa` adaptado ao tema escuro
+#### 3. `src/pages/PedidoPreparacao.tsx`
+- Linha 175: mudar para `const isReadOnly = pedido.etapa_atual !== 'aberto' && pedido.etapa_atual !== 'aprovacao_ceo';`
 
