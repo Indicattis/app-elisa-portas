@@ -145,6 +145,8 @@ export function CarregamentoDownbar({
       await new Promise(resolve => setTimeout(resolve, 1500));
       setShowLoadingModal(false);
       setItensMarcados(new Set());
+      setCheckTesteiraMotor(false);
+      setCheckPlacaSoleira(false);
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
