@@ -25,6 +25,8 @@ export interface AcordoAutorizado {
   observacoes?: string;
   created_at: string;
   portas: PortaAcordo[];
+  aprovado_direcao: boolean;
+  reprovado_direcao: boolean;
   criador?: {
     nome: string;
     foto_perfil_url?: string;
@@ -123,6 +125,8 @@ export function useAcordosAutorizados() {
             largura: p.largura ? Number(p.largura) : undefined,
             altura: p.altura ? Number(p.altura) : undefined
           })),
+        aprovado_direcao: acordo.aprovado_direcao ?? false,
+        reprovado_direcao: (acordo as any).reprovado_direcao ?? false,
         criador: acordo.created_by ? criadoresMap[acordo.created_by] : undefined
       }));
 

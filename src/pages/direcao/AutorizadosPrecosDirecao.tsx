@@ -1,7 +1,9 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, MoreHorizontal } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -63,19 +65,23 @@ const PORTA_COLORS: Record<string, string> = {
 
 export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
   // Estados
   const { estados, loading: loadingEstados, criarEstado, editarEstado, reordenarEstados } = useEstadosCidades();
   const [novoEstadoOpen, setNovoEstadoOpen] = useState(false);
   const [estadoParaEditar, setEstadoParaEditar] = useState<typeof estados[0] | null>(null);
 
   // Acordos
-  const { acordos, loading: loadingAcordos, createAcordo, updateAcordo, deleteAcordo } = useAcordosAutorizados();
+  const { acordos, loading: loadingAcordos, createAcordo, updateAcordo, deleteAcordo, refetch } = useAcordosAutorizados();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('todos');
   const [acordoDialogOpen, setAcordoDialogOpen] = useState(false);
   const [acordoParaEditar, setAcordoParaEditar] = useState<AcordoAutorizado | null>(null);
   const [acordoParaDeletar, setAcordoParaDeletar] = useState<AcordoAutorizado | null>(null);
   const [precosMap, setPrecosMap] = useState<Map<string, { P: number; G: number; GG: number }>>(new Map());
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
 
   // Buscar preços padrões dos autorizados
   useEffect(() => {
@@ -173,6 +179,47 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     ));
   };
 
+  const handleAprovar = useCallback(async (acordoId: string) => {
+    try {
+      setApprovingId(acordoId);
+      const { error } = await supabase
+        .from('acordos_instalacao_autorizados')
+        .update({
+          aprovado_direcao: true,
+          aprovado_direcao_por: user?.id,
+          aprovado_direcao_em: new Date().toISOString(),
+        } as any)
+        .eq('id', acordoId);
+      if (error) throw error;
+      toast({ title: 'Sucesso', description: 'Acordo aprovado com sucesso' });
+      await refetch();
+    } catch (error: any) {
+      console.error('Erro ao aprovar acordo:', error);
+      toast({ title: 'Erro', description: 'Não foi possível aprovar o acordo', variant: 'destructive' });
+    } finally {
+      setApprovingId(null);
+    }
+  }, [user?.id, toast]);
+
+  const handleReprovar = useCallback(async (acordoId: string) => {
+    try {
+      setRejectingId(acordoId);
+      const { error } = await supabase
+        .from('acordos_instalacao_autorizados')
+        .update({
+          reprovado_direcao: true,
+        } as any)
+        .eq('id', acordoId);
+      if (error) throw error;
+      toast({ title: 'Sucesso', description: 'Acordo reprovado' });
+      await refetch();
+    } catch (error: any) {
+      console.error('Erro ao reprovar acordo:', error);
+      toast({ title: 'Erro', description: 'Não foi possível reprovar o acordo', variant: 'destructive' });
+    } finally {
+      setRejectingId(null);
+    }
+  }, [toast]);
 
 
   const headerActions = (
@@ -314,6 +361,9 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                               <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
                               <TableHead className="text-xs text-white/70 text-right">Valor excesso</TableHead>
                               <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
+                              {contexto === 'direcao' && (
+                                <TableHead className="text-xs text-white/70 text-center">Aprovação</TableHead>
+                              )}
                               {contexto === 'logistica' && (
                                 <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
                               )}
@@ -368,6 +418,43 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                                         {STATUS_LABELS[acordo.status]}
                                       </Badge>
                                     </TableCell>
+                                    {contexto === 'direcao' && (
+                                      <TableCell className="text-center">
+                                        {acordo.aprovado_direcao ? (
+                                          <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-500/30 gap-1">
+                                            <CheckCircle2 className="h-3 w-3" />
+                                            Aprovado
+                                          </Badge>
+                                        ) : acordo.reprovado_direcao ? (
+                                          <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30 gap-1">
+                                            <XCircle className="h-3 w-3" />
+                                            Reprovado
+                                          </Badge>
+                                        ) : (
+                                          <div className="flex items-center justify-center gap-1">
+                                            <Button
+                                              size="sm"
+                                              disabled={approvingId === acordo.id}
+                                              onClick={(e) => { e.stopPropagation(); handleAprovar(acordo.id); }}
+                                              className="h-7 px-2 text-xs bg-green-500/20 border border-green-500/30 text-green-400 hover:bg-green-500/30 gap-1"
+                                            >
+                                              <Check className="h-3 w-3" />
+                                              Aprovar
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              disabled={rejectingId === acordo.id}
+                                              onClick={(e) => { e.stopPropagation(); handleReprovar(acordo.id); }}
+                                              className="h-7 px-2 text-xs border border-red-500/30 text-red-400 hover:bg-red-500/20 gap-1"
+                                            >
+                                              <X className="h-3 w-3" />
+                                              Reprovar
+                                            </Button>
+                                          </div>
+                                        )}
+                                      </TableCell>
+                                    )}
                                     {contexto === 'logistica' && (
                                       <TableCell className="text-right">
                                         <DropdownMenu>

@@ -94,6 +94,7 @@ export type Database = {
           id: string
           observacoes: string | null
           quantidade_portas: number
+          reprovado_direcao: boolean | null
           status: string
           updated_at: string
           valor_acordado: number
@@ -112,6 +113,7 @@ export type Database = {
           id?: string
           observacoes?: string | null
           quantidade_portas?: number
+          reprovado_direcao?: boolean | null
           status?: string
           updated_at?: string
           valor_acordado?: number
@@ -130,6 +132,7 @@ export type Database = {
           id?: string
           observacoes?: string | null
           quantidade_portas?: number
+          reprovado_direcao?: boolean | null
           status?: string
           updated_at?: string
           valor_acordado?: number

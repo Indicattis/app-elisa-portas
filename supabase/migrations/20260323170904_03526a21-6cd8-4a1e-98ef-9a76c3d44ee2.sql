@@ -1,0 +1,1 @@
+ALTER TABLE acordos_instalacao_autorizados ADD COLUMN IF NOT EXISTS reprovado_direcao boolean DEFAULT false;
