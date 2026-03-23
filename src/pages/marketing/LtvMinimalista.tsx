@@ -214,8 +214,8 @@ export default function LtvMinimalista() {
         })}
       </div>
 
-      {/* Busca */}
-      <div className="mb-4">
+      {/* Busca + Filtro Canal */}
+      <div className="mb-4 flex flex-wrap gap-3">
         <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 max-w-sm">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
@@ -227,6 +227,19 @@ export default function LtvMinimalista() {
               className="w-full pl-9 pr-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500/40"
             />
           </div>
+        </div>
+        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+          <select
+            value={canalFiltro}
+            onChange={e => setCanalFiltro(e.target.value)}
+            className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-blue-500/40 appearance-none cursor-pointer pr-8"
+            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
+          >
+            <option value="todos" className="bg-zinc-900 text-white">Todos os canais</option>
+            {canaisUnicos.map(c => (
+              <option key={c} value={c} className="bg-zinc-900 text-white">{c}</option>
+            ))}
+          </select>
         </div>
       </div>
 
