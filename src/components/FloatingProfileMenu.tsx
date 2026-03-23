@@ -104,9 +104,14 @@ export function FloatingProfileMenu({ mounted = true }: FloatingProfileMenuProps
         {/* Botão Minhas Tarefas */}
         <button
           onClick={() => setMinhasTarefasOpen(true)}
-          className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg shadow-black/50 flex items-center justify-center text-white/70 hover:text-white hover:border-blue-500/50 transition-colors active:scale-95"
+          className="relative w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg shadow-black/50 flex items-center justify-center text-white/70 hover:text-white hover:border-blue-500/50 transition-colors active:scale-95"
         >
           <ClipboardList className="w-5 h-5" />
+          {tarefasCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
+              {tarefasCount}
+            </span>
+          )}
         </button>
 
         <button
