@@ -1,24 +1,32 @@
 
 
-## Plano: Adicionar filtro de canal de aquisição na página LTV
+## Plano: Separar Programação e adicionar Calendário de Tarefas
 
-### O que será feito
+### Resumo
 
-Adicionar um select/dropdown ao lado da barra de busca para filtrar clientes por canal de aquisição. Os cards de resumo também serão recalculados com base no filtro selecionado.
+1. Criar nova página `ChecklistProgramacao.tsx` com a seção "Programação Semanal" (movida de `ChecklistLideranca.tsx`)
+2. Adicionar rota `/direcao/checklist-lideranca/programacao`
+3. Adicionar botão "Programação" no header do `ChecklistLideranca.tsx`
+4. Substituir a seção removida por um calendário semanal de tarefas (usando `useTarefasCalendario`)
 
-### Alterações em `src/pages/marketing/LtvMinimalista.tsx`
+### Alterações
 
-1. **Novo state**: `canalFiltro` (string, default `'todos'`)
+#### 1. Nova página `src/pages/ChecklistProgramacao.tsx`
+- Mover toda a seção "Programação Semanal" (grid de 7 colunas, filtro de responsável, modais de template) para esta nova página
+- Usar `MinimalistLayout` com breadcrumb incluindo "Checklist Liderança" como pai
+- Manter os botões de ação relevantes (Nova Tarefa, Recorrentes) no header
+- Mover states e lógica associados: `filtroResponsavel`, `templateParaDeletar`, `modalRecorrenteAberto`, `modalRecorrentes`, `templateSelecionado`, e seus modais
 
-2. **Extrair lista de canais únicos** dos dados carregados via `useMemo` a partir de `clientesLtv`
+#### 2. `src/App.tsx`
+- Adicionar rota: `/direcao/checklist-lideranca/programacao` → `ChecklistProgramacao`
+- Adicionar import do novo componente
 
-3. **Adicionar select dropdown** ao lado do input de busca, com estilo glassmorphism consistente (bg-white/5, border-white/10, backdrop-blur), opção "Todos os canais" + canais dinâmicos
-
-4. **Filtrar no `filtered` useMemo**: além da busca por nome, aplicar filtro por canal quando `canalFiltro !== 'todos'`
-
-5. **Recalcular resumo** com base na lista filtrada (não na lista completa) para que os cards reflitam o canal selecionado
-
-### Estilo visual
-
-O dropdown seguirá o mesmo padrão da barra de busca: `select` nativo estilizado com classes `bg-white/5 border border-white/10 text-white text-sm rounded-lg`, dentro do mesmo container glassmorphism.
+#### 3. `src/pages/ChecklistLideranca.tsx`
+- Adicionar botão "Programação" no `headerActions` (com ícone `CalendarDays`, navega para `/direcao/checklist-lideranca/programacao`)
+- Remover a seção "Programação Semanal" (linhas ~152-338) e states/lógica associados
+- Adicionar nova seção "Calendário de Tarefas" no lugar, usando `useTarefasCalendario`:
+  - Navegação semanal (anterior/próxima semana, botão "Hoje")
+  - Grid de 7 dias mostrando tarefas com status (pendente/concluída), avatar do responsável
+  - Estilo glassmorphism consistente (bg-white/5, border-white/10)
+  - Reutilizar padrão visual do `CalendarioSemanalTarefasMobile` / `DiaCardTarefa` adaptado ao tema escuro
 
