@@ -5,6 +5,7 @@ import { LogOut, LayoutDashboard, PanelLeft, Settings, Lock, Factory, User, Clip
 import { MinhasTarefasFullscreen } from '@/components/MinhasTarefasFullscreen';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
+import { useTarefasCount } from '@/hooks/useTarefasCount';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
