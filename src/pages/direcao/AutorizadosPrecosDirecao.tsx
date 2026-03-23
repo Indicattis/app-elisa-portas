@@ -1,7 +1,9 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, MoreHorizontal } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
