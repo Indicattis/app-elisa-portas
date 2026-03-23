@@ -538,6 +538,7 @@ const App = () => (
 
                 {/* Checklist Liderança */}
                 <Route path="/direcao/checklist-lideranca" element={<ProtectedRoute routeKey="direcao_hub"><ChecklistLideranca /></ProtectedRoute>} />
+                <Route path="/direcao/checklist-lideranca/programacao" element={<ProtectedRoute routeKey="direcao_hub"><ChecklistProgramacao /></ProtectedRoute>} />
                 <Route path="/direcao/checklist-lideranca/historico" element={<ProtectedRoute routeKey="direcao_hub"><ChecklistHistorico /></ProtectedRoute>} />
 
                 {/* Hub de Logística Minimalista */}
