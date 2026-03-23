@@ -9,7 +9,7 @@ import { DetalhesMissaoModal } from "@/components/todo/DetalhesMissaoModal";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, CalendarDays, History, Target, CheckCircle2, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { Plus, CalendarDays, History, Target, CheckCircle2, ChevronLeft, ChevronRight, Clock, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { format, isPast, startOfDay, startOfWeek, addDays, isSameDay, addWeeks, subWeeks } from "date-fns";
@@ -128,8 +128,11 @@ export default function ChecklistLideranca() {
               const diaStr = format(dia, 'yyyy-MM-dd');
               const dadosDia = calendarioData?.tarefasPorDia[diaStr];
               const tarefasDia = dadosDia?.tarefas || [];
-              const pendentes = dadosDia?.totalPendentes || 0;
-              const concluidas = dadosDia?.totalConcluidas || 0;
+               const diaPassado = dia < startOfDay(hoje);
+              const atrasadasNaoConcluidas = tarefasDia.filter(t => t.status !== 'concluida' && diaPassado).length;
+              const concluidasAtrasadas = tarefasDia.filter(t => t.status === 'concluida' && diaPassado).length;
+              const concluidasNoPrazo = tarefasDia.filter(t => t.status === 'concluida' && !diaPassado).length;
+              const pendentesNoPrazo = tarefasDia.filter(t => t.status !== 'concluida' && !diaPassado).length;
 
               return (
                 <div
@@ -158,16 +161,26 @@ export default function ChecklistLideranca() {
                     )}>
                       {format(dia, "dd")}
                     </p>
-                    {(pendentes > 0 || concluidas > 0) && (
-                      <div className="flex items-center justify-center gap-2 mt-1">
-                        {pendentes > 0 && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400">
-                            {pendentes} pend.
+                    {tarefasDia.length > 0 && (
+                      <div className="flex items-center justify-center gap-1.5 mt-1 flex-wrap">
+                        {atrasadasNaoConcluidas > 0 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400">
+                            {atrasadasNaoConcluidas} atras.
                           </span>
                         )}
-                        {concluidas > 0 && (
+                        {concluidasAtrasadas > 0 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400">
+                            {concluidasAtrasadas} ✓
+                          </span>
+                        )}
+                        {concluidasNoPrazo > 0 && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">
-                            {concluidas} ✓
+                            {concluidasNoPrazo} ✓
+                          </span>
+                        )}
+                        {pendentesNoPrazo > 0 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/50">
+                            {pendentesNoPrazo} pend.
                           </span>
                         )}
                       </div>
@@ -187,14 +200,23 @@ export default function ChecklistLideranca() {
                     ) : (
                       tarefasDia.map((tarefa) => {
                         const isConcluida = tarefa.status === 'concluida';
+                        const isAtrasada = diaPassado;
+                        const isConcluidaAtrasada = isConcluida && isAtrasada;
+                        const isNaoConcluidaAtrasada = !isConcluida && isAtrasada;
+                        const isConcluidaNoPrazo = isConcluida && !isAtrasada;
+
                         return (
                           <div
                             key={tarefa.id}
                             className={cn(
                               "p-2 rounded-lg border transition-all duration-200",
-                              isConcluida
-                                ? "bg-emerald-500/10 border-emerald-500/20"
-                                : "bg-white/5 border-white/10"
+                              isNaoConcluidaAtrasada
+                                ? "bg-red-500/10 border-red-500/20"
+                                : isConcluidaAtrasada
+                                  ? "bg-amber-500/10 border-amber-500/20"
+                                  : isConcluidaNoPrazo
+                                    ? "bg-emerald-500/10 border-emerald-500/20"
+                                    : "bg-white/5 border-white/10"
                             )}
                           >
                             <div className="flex items-start gap-2">
@@ -207,7 +229,10 @@ export default function ChecklistLideranca() {
                               <div className="flex-1 min-w-0">
                                 <p className={cn(
                                   "text-xs font-medium leading-tight line-clamp-2",
-                                  isConcluida ? "text-emerald-400/70 line-through" : "text-white/80"
+                                  isNaoConcluidaAtrasada ? "text-red-400" :
+                                  isConcluidaAtrasada ? "text-amber-400/70 line-through" :
+                                  isConcluidaNoPrazo ? "text-emerald-400/70 line-through" :
+                                  "text-white/80"
                                 )}>
                                   {tarefa.descricao}
                                 </p>
@@ -215,7 +240,13 @@ export default function ChecklistLideranca() {
                                   {tarefa.responsavel_nome.split(' ')[0]}
                                 </p>
                               </div>
-                              {isConcluida && (
+                              {isNaoConcluidaAtrasada && (
+                                <AlertCircle className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />
+                              )}
+                              {isConcluidaAtrasada && (
+                                <CheckCircle2 className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+                              )}
+                              {isConcluidaNoPrazo && (
                                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0" />
                               )}
                               {tarefa.recorrente && (
