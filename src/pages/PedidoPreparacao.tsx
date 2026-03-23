@@ -172,7 +172,7 @@ export default function PedidoPreparacao() {
     return null;
   };
 
-  const isReadOnly = pedido.etapa_atual !== 'aberto';
+  const isReadOnly = pedido.etapa_atual !== 'aberto' && pedido.etapa_atual !== 'aprovacao_ceo';
   const temAlteracoesPendentes = linhasEditadas.size > 0;
 
   const handleSalvarAlteracoes = async () => {
