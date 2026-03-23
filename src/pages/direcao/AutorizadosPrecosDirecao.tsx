@@ -73,7 +73,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
   const [estadoParaEditar, setEstadoParaEditar] = useState<typeof estados[0] | null>(null);
 
   // Acordos
-  const { acordos, loading: loadingAcordos, createAcordo, updateAcordo, deleteAcordo } = useAcordosAutorizados();
+  const { acordos, loading: loadingAcordos, createAcordo, updateAcordo, deleteAcordo, refetch } = useAcordosAutorizados();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('todos');
   const [acordoDialogOpen, setAcordoDialogOpen] = useState(false);
