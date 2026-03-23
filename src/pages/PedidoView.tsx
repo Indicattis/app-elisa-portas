@@ -629,6 +629,7 @@ export default function PedidoView() {
   if (!pedido) return <div className="text-center py-8"><p>Pedido não encontrado</p></div>;
 
   const isAberto = pedido.etapa_atual === 'aberto';
+  const isEditavel = isAberto || pedido.etapa_atual === 'aprovacao_ceo';
   const temPendentesSalvamento = linhasEditadas.size > 0;
 
   return (

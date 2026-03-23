@@ -360,10 +360,10 @@ export default function PedidosAdminMinimalista() {
                   pedido={pedido}
                   isAberto={etapaConfig.id === 'aberto'}
                   viewMode="list"
-                  readOnly={etapaConfig.id !== 'aberto'}
+                  readOnly={etapaConfig.id !== 'aberto' && etapaConfig.id !== 'aprovacao_ceo'}
                   onMoverEtapa={handleMoverEtapa}
                   onRetrocederEtapa={handleRetrocederEtapa}
-                  onDeletar={etapaConfig.id === 'aberto' ? handleDeletarPedido : undefined}
+                  onDeletar={etapaConfig.id === 'aberto' || etapaConfig.id === 'aprovacao_ceo' ? handleDeletarPedido : undefined}
                   
                 />
               ))}
