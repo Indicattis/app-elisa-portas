@@ -1,30 +1,23 @@
 
 
-## Plano: Adicionar checklists extras nas downbars de Qualidade e Carregamento
+## Plano: Adicionar badge de contagem de tarefas no botão "Minhas Tarefas"
 
-### Contexto
-- **Qualidade** usa `OrdemDetalhesSheet` — o usuário marca linhas individuais e depois clica "Concluir Ordem". Precisa de 1 checkbox extra de verificação.
-- **Carregamento** usa `CarregamentoDownbar` — o usuário marca itens do pedido e depois clica "Concluir Carregamento". Precisa de 2 checkboxes extras de verificação.
+### O que será feito
+Adicionar um badge numérico no botão de "Minhas Tarefas" do `FloatingProfileMenu` mostrando quantas tarefas pendentes o usuário tem na semana atual.
 
 ### Alterações
 
-#### 1. `src/components/production/OrdemDetalhesSheet.tsx`
+#### 1. `src/hooks/useTarefasCount.ts`
+Atualizar a query para filtrar tarefas da semana atual (segunda a domingo), usando `data_referencia` entre `startOfWeek` e `endOfWeek`, mantendo o filtro `status = 'em_andamento'`.
 
-Quando `tipoOrdem === 'qualidade'`:
-- Adicionar estado `checklistExtra` com 1 item: `"Verifiquei que a testeira é compatível com motor"`
-- Renderizar seção de checklist extra acima do botão "Concluir Ordem" (após os itens de linha)
-- O botão "Concluir Ordem" só fica habilitado quando todas as linhas E o checklist extra estiverem marcados
+#### 2. `src/components/FloatingProfileMenu.tsx`
+- Importar `useTarefasCount`
+- No botão do `ClipboardList` (linha 103-108), adicionar um badge vermelho posicionado no canto superior direito (`absolute -top-1 -right-1`) com o número de tarefas, visível apenas quando `count > 0`
+- Tornar o botão `relative` para posicionamento do badge
 
-#### 2. `src/components/carregamento/CarregamentoDownbar.tsx`
-
-- Adicionar estado `checklistExtra` com 2 itens:
-  - `"Verifiquei que a testeira é compatível com motor"`
-  - `"Placa Soleira Elisa"`
-- Renderizar seção "Verificações" entre os itens do carregamento e os botões
-- O botão "Concluir Carregamento" só fica habilitado quando todos os itens E todos os checkboxes extras estiverem marcados (atualizar condição `todosMarcados`)
-
-### Comportamento
-- Os checkboxes extras são locais (não persistidos no banco) — resetam ao fechar a downbar
-- Visual consistente com os checkboxes de itens existentes, mas com seção separada "Verificações"
-- Cor diferenciada (amber/warning) para distinguir das linhas de produto
+```text
+┌──────────┐
+│  📋  (5) │  ← badge vermelho no canto
+└──────────┘
+```
 
