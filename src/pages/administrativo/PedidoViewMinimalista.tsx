@@ -360,7 +360,7 @@ export default function PedidoViewMinimalista() {
 
   const getEtapaLabel = (etapa: string) => {
     const etapas: Record<string, string> = {
-      aberto: "Aberto", em_producao: "Em Produção", inspecao_qualidade: "Inspeção de Qualidade",
+      aberto: "Aberto", aprovacao_ceo: "Aprovação CEO", em_producao: "Em Produção", inspecao_qualidade: "Inspeção de Qualidade",
       aguardando_pintura: "Aguardando Pintura", aguardando_coleta: "Expedição Coleta",
       aguardando_instalacao: "Expedição Instalação", finalizado: "Finalizado",
     };
@@ -370,6 +370,7 @@ export default function PedidoViewMinimalista() {
   const getEtapaBadgeColor = (etapa: string) => {
     const colors: Record<string, string> = {
       aberto: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+      aprovacao_ceo: "bg-orange-500/20 text-orange-400 border-orange-500/30",
       em_producao: "bg-blue-500/20 text-blue-400 border-blue-500/30",
       inspecao_qualidade: "bg-purple-500/20 text-purple-400 border-purple-500/30",
       aguardando_pintura: "bg-orange-500/20 text-orange-400 border-orange-500/30",
@@ -443,9 +444,10 @@ export default function PedidoViewMinimalista() {
   }
 
   const isAberto = pedido.etapa_atual === 'aberto';
+  const isAprovacaoCeo = pedido.etapa_atual === 'aprovacao_ceo';
   const isEmProducao = pedido.etapa_atual === 'em_producao';
-  const podeEditarLinhas = isAberto || isEmProducao;
-  const podeEditarObservacoes = isAberto || isEmProducao;
+  const podeEditarLinhas = isAberto || isAprovacaoCeo || isEmProducao;
+  const podeEditarObservacoes = isAberto || isAprovacaoCeo || isEmProducao;
   const temPendentesSalvamento = linhasEditadas.size > 0;
 
   return (
