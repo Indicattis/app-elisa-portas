@@ -114,8 +114,17 @@ export default function LtvMinimalista() {
     },
   });
 
+  const canaisUnicos = useMemo(() => {
+    const set = new Set<string>();
+    clientesLtv.forEach(c => { if (c.canalAquisicaoNome) set.add(c.canalAquisicaoNome); });
+    return Array.from(set).sort();
+  }, [clientesLtv]);
+
   const filtered = useMemo(() => {
     let list = clientesLtv;
+    if (canalFiltro !== 'todos') {
+      list = list.filter(c => c.canalAquisicaoNome === canalFiltro);
+    }
     if (busca) {
       const term = busca.toLowerCase();
       list = list.filter(c => c.nome.toLowerCase().includes(term));
@@ -132,17 +141,17 @@ export default function LtvMinimalista() {
       return sortAsc ? (valA as number) - (valB as number) : (valB as number) - (valA as number);
     });
     return list;
-  }, [clientesLtv, busca, sortKey, sortAsc]);
+  }, [clientesLtv, busca, canalFiltro, sortKey, sortAsc]);
 
   const resumo = useMemo(() => {
-    const comCompras = clientesLtv.filter(c => c.numeroCompras > 0);
+    const comCompras = filtered.filter(c => c.numeroCompras > 0);
     const ltvTotal = comCompras.reduce((s, c) => s + c.totalVendas, 0);
     const ltvMedio = comCompras.length ? ltvTotal / comCompras.length : 0;
     const ticketGeral = comCompras.length
       ? comCompras.reduce((s, c) => s + c.ticketMedio, 0) / comCompras.length
       : 0;
-    return { ltvTotal, ltvMedio, totalClientes: clientesLtv.length, ticketGeral };
-  }, [clientesLtv]);
+    return { ltvTotal, ltvMedio, totalClientes: filtered.length, ticketGeral };
+  }, [filtered]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);
