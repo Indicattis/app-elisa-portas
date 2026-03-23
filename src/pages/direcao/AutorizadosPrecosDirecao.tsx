@@ -388,10 +388,8 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                   </Card>
                 )}
               </div>
-        </div>
       </div>
 
-      {/* Dialogs */}
       <NovoEstadoDialog
         open={novoEstadoOpen}
         onOpenChange={handleCloseEstadoDialog}
@@ -411,7 +409,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
           />
 
           <AlertDialog open={!!acordoParaDeletar} onOpenChange={() => setAcordoParaDeletar(null)}>
-            <AlertDialogContent className="bg-zinc-900 border-zinc-700">
+            <AlertDialogContent className="bg-black/90 border-white/10 backdrop-blur-xl">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-white">Confirmar Exclusão</AlertDialogTitle>
                 <AlertDialogDescription className="text-white/60">
@@ -420,13 +418,13 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="bg-zinc-800 border-zinc-600 text-white hover:bg-zinc-700">Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleConfirmarDelete} className="bg-red-600 hover:bg-red-700 text-white">Excluir</AlertDialogAction>
+                <AlertDialogCancel className="border-white/20 bg-white/10 text-white hover:bg-white/15">Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmarDelete} className="bg-red-500/80 hover:bg-red-500 text-white">Excluir</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         </>
       )}
-    </div>
+    </MinimalistLayout>
   );
 }
