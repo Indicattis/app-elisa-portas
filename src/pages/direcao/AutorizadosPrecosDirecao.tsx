@@ -237,9 +237,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
           )}
 
           {/* Separador */}
-          <div className="border-t border-primary/10" />
-              {/* Separador */}
-              <div className="border-t border-primary/10" />
+          <div className="border-t border-blue-500/10" />
 
               {/* Seção Acordos */}
               <div>
