@@ -168,6 +168,7 @@ import DirecaoHome from "./pages/DirecaoHome";
 import DirecaoChecklist from "./pages/DirecaoChecklist";
 import DirecaoChecklistProgramacao from "./pages/DirecaoChecklistProgramacao";
 import ChecklistLideranca from "./pages/ChecklistLideranca";
+import ChecklistProgramacao from "./pages/ChecklistProgramacao";
 import ChecklistHistorico from "./pages/ChecklistHistorico";
 import Caixa from "./pages/Caixa";
 import ContasReceber from "./pages/ContasReceber";
@@ -537,6 +538,7 @@ const App = () => (
 
                 {/* Checklist Liderança */}
                 <Route path="/direcao/checklist-lideranca" element={<ProtectedRoute routeKey="direcao_hub"><ChecklistLideranca /></ProtectedRoute>} />
+                <Route path="/direcao/checklist-lideranca/programacao" element={<ProtectedRoute routeKey="direcao_hub"><ChecklistProgramacao /></ProtectedRoute>} />
                 <Route path="/direcao/checklist-lideranca/historico" element={<ProtectedRoute routeKey="direcao_hub"><ChecklistHistorico /></ProtectedRoute>} />
 
                 {/* Hub de Logística Minimalista */}
