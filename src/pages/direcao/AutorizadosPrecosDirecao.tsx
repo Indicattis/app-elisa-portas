@@ -361,6 +361,9 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                               <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
                               <TableHead className="text-xs text-white/70 text-right">Valor excesso</TableHead>
                               <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
+                              {contexto === 'direcao' && (
+                                <TableHead className="text-xs text-white/70 text-center">Aprovação</TableHead>
+                              )}
                               {contexto === 'logistica' && (
                                 <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
                               )}
@@ -415,6 +418,43 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                                         {STATUS_LABELS[acordo.status]}
                                       </Badge>
                                     </TableCell>
+                                    {contexto === 'direcao' && (
+                                      <TableCell className="text-center">
+                                        {acordo.aprovado_direcao ? (
+                                          <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-500/30 gap-1">
+                                            <CheckCircle2 className="h-3 w-3" />
+                                            Aprovado
+                                          </Badge>
+                                        ) : acordo.reprovado_direcao ? (
+                                          <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30 gap-1">
+                                            <XCircle className="h-3 w-3" />
+                                            Reprovado
+                                          </Badge>
+                                        ) : (
+                                          <div className="flex items-center justify-center gap-1">
+                                            <Button
+                                              size="sm"
+                                              disabled={approvingId === acordo.id}
+                                              onClick={(e) => { e.stopPropagation(); handleAprovar(acordo.id); }}
+                                              className="h-7 px-2 text-xs bg-green-500/20 border border-green-500/30 text-green-400 hover:bg-green-500/30 gap-1"
+                                            >
+                                              <Check className="h-3 w-3" />
+                                              Aprovar
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              disabled={rejectingId === acordo.id}
+                                              onClick={(e) => { e.stopPropagation(); handleReprovar(acordo.id); }}
+                                              className="h-7 px-2 text-xs border border-red-500/30 text-red-400 hover:bg-red-500/20 gap-1"
+                                            >
+                                              <X className="h-3 w-3" />
+                                              Reprovar
+                                            </Button>
+                                          </div>
+                                        )}
+                                      </TableCell>
+                                    )}
                                     {contexto === 'logistica' && (
                                       <TableCell className="text-right">
                                         <DropdownMenu>
