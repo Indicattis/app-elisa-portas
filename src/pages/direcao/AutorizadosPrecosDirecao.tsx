@@ -1,13 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Search, Edit2, Trash2, MoreHorizontal } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
+import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { useEstadosCidades } from '@/hooks/useEstadosCidades';
 import { SortableEstadoCard } from '@/components/autorizados/EstadoCard';
 import { NovoEstadoDialog } from '@/components/autorizados/NovoEstadoDialog';
@@ -63,8 +63,6 @@ const PORTA_COLORS: Record<string, string> = {
 
 export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props) {
   const navigate = useNavigate();
-  const [mounted, setMounted] = useState(false);
-
   // Estados
   const { estados, loading: loadingEstados, criarEstado, editarEstado, reordenarEstados } = useEstadosCidades();
   const [novoEstadoOpen, setNovoEstadoOpen] = useState(false);
@@ -82,11 +80,6 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   );
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 50);
-    return () => clearTimeout(timer);
-  }, []);
 
   const backPath = contexto === 'logistica' ? '/logistica' : '/direcao';
   const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : 'Direção';
