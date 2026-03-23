@@ -30,6 +30,7 @@ interface FloatingProfileMenuProps {
 export function FloatingProfileMenu({ mounted = true }: FloatingProfileMenuProps) {
   const navigate = useNavigate();
   const { user, userRole, signOut, hasBypassPermissions } = useAuth();
+  const { data: tarefasCount = 0 } = useTarefasCount();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [minhasTarefasOpen, setMinhasTarefasOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
