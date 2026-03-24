@@ -11,8 +11,8 @@ import { Missao, MissaoCheckbox } from "@/hooks/useMissoes";
 import { cn } from "@/lib/utils";
 import { format, isPast, startOfDay, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Trash2, CalendarDays, Clock, AlertTriangle, CheckCircle2, User, Pencil, Check, GripVertical, X } from "lucide-react";
-import { useState, useCallback, useEffect } from "react";
+import { Trash2, CalendarDays, Clock, AlertTriangle, CheckCircle2, User, Pencil, Check, GripVertical, X, Plus } from "lucide-react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
@@ -28,6 +28,7 @@ interface DetalhesMissaoModalProps {
   onReordenarCheckboxes?: (items: { id: string; ordem: number }[]) => void;
   onDeletarCheckbox?: (id: string) => void;
   onEditarPrazoCheckbox?: (params: { id: string; prazo: string | null }) => void;
+  onAdicionarCheckbox?: (params: { missao_id: string; descricao: string; ordem: number }) => void;
 }
 
 // Helper for prazo display
@@ -208,7 +209,7 @@ function SortableEditItem({
   );
 }
 
-export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckbox, onDelete, onEditarCheckbox, onReordenarCheckboxes, onDeletarCheckbox, onEditarPrazoCheckbox }: DetalhesMissaoModalProps) {
+export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckbox, onDelete, onEditarCheckbox, onReordenarCheckboxes, onDeletarCheckbox, onEditarPrazoCheckbox, onAdicionarCheckbox }: DetalhesMissaoModalProps) {
   const [confirmarExclusao, setConfirmarExclusao] = useState(false);
   const [editando, setEditando] = useState(false);
   const [localCheckboxes, setLocalCheckboxes] = useState<MissaoCheckbox[]>([]);

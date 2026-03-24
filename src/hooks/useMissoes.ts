@@ -20,6 +20,7 @@ export interface Missao {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  ordem: number;
   missao_checkboxes: MissaoCheckbox[];
   responsavel?: { nome: string; foto_perfil_url: string | null } | null;
 }
@@ -34,6 +35,7 @@ export function useMissoes() {
       const { data, error } = await (supabase as any)
         .from("missoes")
         .select("*, missao_checkboxes(*)")
+        .order("ordem", { ascending: true })
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -207,5 +209,43 @@ export function useMissoes() {
     },
   });
 
-  return { missoes, isLoading, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes, deletarCheckbox, editarPrazoCheckbox };
+  const adicionarCheckbox = useMutation({
+    mutationFn: async (params: { missao_id: string; descricao: string; ordem: number; prazo?: string }) => {
+      const { error } = await (supabase as any)
+        .from("missao_checkboxes")
+        .insert({
+          missao_id: params.missao_id,
+          descricao: params.descricao,
+          ordem: params.ordem,
+          prazo: params.prazo || null,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["missoes"] });
+    },
+    onError: (error: any) => {
+      toast({ variant: "destructive", title: "Erro ao adicionar item", description: error.message });
+    },
+  });
+
+  const reordenarMissoes = useMutation({
+    mutationFn: async (items: { id: string; ordem: number }[]) => {
+      for (const item of items) {
+        const { error } = await (supabase as any)
+          .from("missoes")
+          .update({ ordem: item.ordem })
+          .eq("id", item.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["missoes"] });
+    },
+    onError: (error: any) => {
+      toast({ variant: "destructive", title: "Erro ao reordenar", description: error.message });
+    },
+  });
+
+  return { missoes, isLoading, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes, deletarCheckbox, editarPrazoCheckbox, adicionarCheckbox, reordenarMissoes };
 }
