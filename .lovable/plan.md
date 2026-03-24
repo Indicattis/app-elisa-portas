@@ -1,28 +1,18 @@
 
 
-## Plano: Grid de meses para acordos em /direcao/autorizados
+## Plano: Corrigir sincronização entre Custos e DRE
 
-### Objetivo
-Substituir a listagem direta de acordos por um grid de 3 colunas com os 12 meses do ano. Ao clicar em um mês, abre-se um dialog/sheet mostrando os acordos daquele mês.
+### Problema identificado
+A página de Custos (`useCustosMensais.ts`) salva despesas variáveis com `modalidade = "projetada"`, mas o hook `useDRE.ts` (usado para validar e gerar o DRE formal) filtra por `modalidade = "variavel"` — que nunca encontra registros.
 
-### Alterações em `src/pages/direcao/AutorizadosPrecosDirecao.tsx`
+Dados no banco confirmam: todas as despesas variáveis têm `modalidade = "projetada"`.
 
-1. **Adicionar seletor de ano** — um controle simples (botões < ano >) acima do grid de meses
+### Correção em `src/hooks/useDRE.ts`
 
-2. **Substituir a tabela de acordos pelo grid de meses** — grid 3 colunas (Jan-Dez), cada card mostra:
-   - Nome do mês
-   - Quantidade de acordos no mês
-   - Valor total dos acordos
-   - Indicador visual de pendentes (badge com contagem)
+1. **Validação** (linhas ~106-109): trocar `.eq("modalidade", "variavel")` por `.eq("modalidade", "projetada")`
 
-3. **Agrupar acordos por mês** — usar `useMemo` para criar um map `mês → acordos[]` baseado no campo `data_acordo`
-
-4. **Dialog/Sheet ao clicar no mês** — abre um `Dialog` com:
-   - Título: nome do mês + ano
-   - Filtros existentes (busca + status) dentro do dialog
-   - A mesma tabela de acordos atual, mas filtrada pelo mês selecionado
-   - Botões de aprovar/reprovar mantidos
+2. **Geração** (linhas ~183-185): trocar o filtro `d.modalidade === 'variavel'` por `d.modalidade === 'projetada'` ao calcular `despesasVariaveis`
 
 ### Arquivo alterado
-- `src/pages/direcao/AutorizadosPrecosDirecao.tsx`
+- `src/hooks/useDRE.ts` — 2 pontos de correção (validação + geração)
 
