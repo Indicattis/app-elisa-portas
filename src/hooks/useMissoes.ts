@@ -141,5 +141,39 @@ export function useMissoes() {
     },
   });
 
-  return { missoes, isLoading, criarMissao, deletarMissao, toggleCheckbox };
+  const editarCheckbox = useMutation({
+    mutationFn: async ({ id, descricao }: { id: string; descricao: string }) => {
+      const { error } = await (supabase as any)
+        .from("missao_checkboxes")
+        .update({ descricao })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["missoes"] });
+    },
+    onError: (error: any) => {
+      toast({ variant: "destructive", title: "Erro ao editar", description: error.message });
+    },
+  });
+
+  const reordenarCheckboxes = useMutation({
+    mutationFn: async (items: { id: string; ordem: number }[]) => {
+      for (const item of items) {
+        const { error } = await (supabase as any)
+          .from("missao_checkboxes")
+          .update({ ordem: item.ordem })
+          .eq("id", item.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["missoes"] });
+    },
+    onError: (error: any) => {
+      toast({ variant: "destructive", title: "Erro ao reordenar", description: error.message });
+    },
+  });
+
+  return { missoes, isLoading, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes };
 }
