@@ -1,33 +1,15 @@
 
 
-## Plano: Adicionar botão "Leads" no hub de Vendas
+## Plano: Adicionar data de cadastro nos leads
 
 ### Alteração
 
-**`src/pages/vendas/VendasHub.tsx`**
+**`src/pages/vendas/LeadsList.tsx`**
 
-Adicionar um novo item ao array `menuItems`:
+1. Importar `Calendar` de `lucide-react`
+2. Na seção de info de cada lead (linha ~196-205), adicionar a `data_envio` formatada ao lado do telefone e cidade:
+   - Formato: `dd/mm/aaaa` usando `new Date(lead.data_envio).toLocaleDateString('pt-BR')`
+   - Ícone `Calendar` com mesmo estilo dos outros (`w-3.5 h-3.5`)
 
-```ts
-{ label: 'Leads', icon: UserPlus, path: '/vendas/leads' }
-```
-
-- Importar `UserPlus` de `lucide-react`
-- O botão aparecerá no mobile (lista) e desktop (grid) automaticamente
-
-### Rota
-
-Será necessário criar a rota `/vendas/leads` no router. Ela apontará para uma nova página que lista os leads da tabela `elisaportas_leads`.
-
-### Nova página `src/pages/vendas/LeadsList.tsx`
-
-- Buscar leads de `elisaportas_leads` filtrados pelo usuário logado (se houver campo `atendente_id` ou similar)
-- Exibir lista com nome, telefone, cidade, status
-- Botão voltar para `/vendas`
-- Estilo consistente com as outras páginas de vendas (fundo escuro, cards com glassmorphism)
-
-### Arquivos alterados
-1. `src/pages/vendas/VendasHub.tsx` — novo item no menu
-2. `src/pages/vendas/LeadsList.tsx` — nova página (criar)
-3. `src/App.tsx` — nova rota `/vendas/leads`
+Nenhuma alteração de dados necessária — o campo `data_envio` já é buscado na query.
 
