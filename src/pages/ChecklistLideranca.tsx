@@ -474,6 +474,7 @@ export default function ChecklistLideranca() {
         onReordenarCheckboxes={(items) => reordenarCheckboxes.mutate(items)}
         onDeletarCheckbox={(id) => deletarCheckbox.mutate(id)}
         onEditarPrazoCheckbox={(params) => editarPrazoCheckbox.mutate(params)}
+        onAdicionarCheckbox={(params) => adicionarCheckbox.mutate(params)}
       />
     </MinimalistLayout>
   );
