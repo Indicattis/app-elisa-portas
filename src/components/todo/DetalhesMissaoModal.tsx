@@ -11,8 +11,8 @@ import { Missao, MissaoCheckbox } from "@/hooks/useMissoes";
 import { cn } from "@/lib/utils";
 import { format, isPast, startOfDay, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Trash2, CalendarDays, Clock, AlertTriangle, CheckCircle2, User, Pencil, Check, GripVertical, X } from "lucide-react";
-import { useState, useCallback, useEffect } from "react";
+import { Trash2, CalendarDays, Clock, AlertTriangle, CheckCircle2, User, Pencil, Check, GripVertical, X, Plus } from "lucide-react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
@@ -28,6 +28,7 @@ interface DetalhesMissaoModalProps {
   onReordenarCheckboxes?: (items: { id: string; ordem: number }[]) => void;
   onDeletarCheckbox?: (id: string) => void;
   onEditarPrazoCheckbox?: (params: { id: string; prazo: string | null }) => void;
+  onAdicionarCheckbox?: (params: { missao_id: string; descricao: string; ordem: number }) => void;
 }
 
 // Helper for prazo display
@@ -208,11 +209,14 @@ function SortableEditItem({
   );
 }
 
-export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckbox, onDelete, onEditarCheckbox, onReordenarCheckboxes, onDeletarCheckbox, onEditarPrazoCheckbox }: DetalhesMissaoModalProps) {
+export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckbox, onDelete, onEditarCheckbox, onReordenarCheckboxes, onDeletarCheckbox, onEditarPrazoCheckbox, onAdicionarCheckbox }: DetalhesMissaoModalProps) {
   const [confirmarExclusao, setConfirmarExclusao] = useState(false);
   const [editando, setEditando] = useState(false);
   const [localCheckboxes, setLocalCheckboxes] = useState<MissaoCheckbox[]>([]);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const [novoItemDescricao, setNovoItemDescricao] = useState("");
+  const [adicionandoItem, setAdicionandoItem] = useState(false);
+  const novoItemRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -281,6 +285,15 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
     setLocalCheckboxes(prev => prev.map(cb => cb.id === id ? { ...cb, prazo } : cb));
   }, [onEditarPrazoCheckbox]);
 
+  const handleAdicionarItem = useCallback(() => {
+    const trimmed = novoItemDescricao.trim();
+    if (!trimmed || !missao) return;
+    const ordem = localCheckboxes.length;
+    onAdicionarCheckbox?.({ missao_id: missao.id, descricao: trimmed, ordem });
+    setNovoItemDescricao("");
+    setAdicionandoItem(false);
+  }, [novoItemDescricao, missao, localCheckboxes.length, onAdicionarCheckbox]);
+
   if (!missao) return null;
 
   const total = missao.missao_checkboxes.length;
@@ -340,26 +353,70 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
 
             {/* Checkboxes */}
             {editando ? (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                modifiers={[restrictToVerticalAxis]}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext items={localCheckboxes.map(cb => cb.id)} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-1">
-                    {localCheckboxes.map((cb) => (
-                      <SortableEditItem
-                        key={cb.id}
-                        cb={cb}
-                        onSaveDescricao={handleSaveDescricao}
-                        onDeleteItem={handleDeleteCheckbox}
-                        onEditarPrazo={handleEditarPrazo}
-                      />
-                    ))}
+              <>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  modifiers={[restrictToVerticalAxis]}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext items={localCheckboxes.map(cb => cb.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-1">
+                      {localCheckboxes.map((cb) => (
+                        <SortableEditItem
+                          key={cb.id}
+                          cb={cb}
+                          onSaveDescricao={handleSaveDescricao}
+                          onDeleteItem={handleDeleteCheckbox}
+                          onEditarPrazo={handleEditarPrazo}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+
+                {adicionandoItem ? (
+                  <div className="flex items-center gap-2 mt-2">
+                    <Input
+                      ref={novoItemRef}
+                      value={novoItemDescricao}
+                      onChange={(e) => setNovoItemDescricao(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleAdicionarItem();
+                        if (e.key === "Escape") { setAdicionandoItem(false); setNovoItemDescricao(""); }
+                      }}
+                      placeholder="Descrição do item..."
+                      className="h-7 text-xs bg-white/5 border-white/10 text-white flex-1"
+                      autoFocus
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                      onClick={handleAdicionarItem}
+                      disabled={!novoItemDescricao.trim()}
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10"
+                      onClick={() => { setAdicionandoItem(false); setNovoItemDescricao(""); }}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
-                </SortableContext>
-              </DndContext>
+                ) : (
+                  <button
+                    onClick={() => setAdicionandoItem(true)}
+                    className="flex items-center gap-1.5 mt-2 text-xs text-white/40 hover:text-white/70 transition-colors"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Adicionar item
+                  </button>
+                )}
+              </>
             ) : (
               <div className="space-y-1">
                 {checkboxes.map((cb) => (

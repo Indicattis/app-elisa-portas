@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTarefas } from "@/hooks/useTarefas";
 import { useMissoes } from "@/hooks/useMissoes";
@@ -9,11 +9,133 @@ import { DetalhesMissaoModal } from "@/components/todo/DetalhesMissaoModal";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, CalendarDays, History, Target, CheckCircle2, ChevronLeft, ChevronRight, Clock, AlertCircle } from "lucide-react";
+import { Plus, CalendarDays, History, Target, CheckCircle2, ChevronLeft, ChevronRight, Clock, AlertCircle, GripVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { format, isPast, startOfDay, startOfWeek, addDays, isSameDay, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import type { Missao } from "@/hooks/useMissoes";
+
+function SortableMissaoCard({ missao, onClick }: { missao: Missao; onClick: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: missao.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined,
+    opacity: isDragging ? 0.7 : undefined,
+  };
+
+  const total = missao.missao_checkboxes.length;
+  const concluidas = missao.missao_checkboxes.filter(c => c.concluida).length;
+  const progresso = total > 0 ? Math.round((concluidas / total) * 100) : 0;
+  const prazosNaoConcluidos = missao.missao_checkboxes
+    .filter(c => !c.concluida && c.prazo)
+    .map(c => new Date(c.prazo + "T12:00:00"));
+  const maiorPrazo = prazosNaoConcluidos.length > 0
+    ? new Date(Math.max(...prazosNaoConcluidos.map(d => d.getTime())))
+    : null;
+  const vencida = maiorPrazo ? isPast(startOfDay(maiorPrazo)) && progresso < 100 : false;
+  const primeiros5 = missao.missao_checkboxes.slice(0, 5);
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "rounded-xl p-3 border transition-all duration-200 cursor-pointer hover:border-amber-500/40",
+        vencida
+          ? "bg-red-500/5 border-red-500/20"
+          : progresso === 100
+            ? "bg-emerald-500/5 border-emerald-500/20"
+            : "bg-white/5 border-white/10"
+      )}
+    >
+      <div className="flex items-start gap-1.5 mb-2">
+        <button
+          className="mt-0.5 cursor-grab active:cursor-grabbing text-white/20 hover:text-white/50 touch-none shrink-0"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+        <div className="flex-1 min-w-0" onClick={onClick}>
+          <h3 className="text-sm font-semibold text-white line-clamp-2 leading-tight">{missao.titulo}</h3>
+          <div className="flex items-center justify-between mt-1.5">
+            {missao.responsavel ? (
+              <div className="flex items-center gap-1">
+                <Avatar className="h-4 w-4">
+                  <AvatarImage src={missao.responsavel.foto_perfil_url || undefined} />
+                  <AvatarFallback className="text-[8px] bg-blue-500/20 text-blue-400">
+                    {missao.responsavel.nome.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-[10px] text-white/50 truncate max-w-[80px]">
+                  {missao.responsavel.nome.split(' ')[0]}
+                </span>
+              </div>
+            ) : (
+              <span className="text-[10px] text-white/30">Sem responsável</span>
+            )}
+            <span className="text-[10px] text-white/40">{concluidas}/{total}</span>
+          </div>
+        </div>
+      </div>
+
+      <div onClick={onClick}>
+        <div className="h-1 rounded-full bg-white/10 mb-2 overflow-hidden">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all duration-300",
+              progresso === 100
+                ? "bg-emerald-500"
+                : vencida
+                  ? "bg-red-500"
+                  : "bg-amber-500"
+            )}
+            style={{ width: `${progresso}%` }}
+          />
+        </div>
+
+        <div className="space-y-1">
+          {primeiros5.map((cb) => (
+            <div key={cb.id} className="flex items-center gap-1.5">
+              <div className={cn(
+                "h-3 w-3 rounded-sm border flex-shrink-0 flex items-center justify-center",
+                cb.concluida
+                  ? "bg-emerald-500/20 border-emerald-500/40"
+                  : "border-white/20"
+              )}>
+                {cb.concluida && <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400" />}
+              </div>
+              <span className={cn(
+                "text-[11px] leading-tight line-clamp-1 flex-1",
+                cb.concluida ? "text-white/30 line-through" : "text-white/60"
+              )}>
+                {cb.descricao}
+              </span>
+              {cb.prazo && (
+                <span className={cn(
+                  "text-[9px] flex-shrink-0",
+                  !cb.concluida && isPast(startOfDay(new Date(cb.prazo + "T12:00:00")))
+                    ? "text-red-400"
+                    : "text-white/30"
+                )}>
+                  {format(new Date(cb.prazo + "T12:00:00"), "dd/MM")}
+                </span>
+              )}
+            </div>
+          ))}
+          {total > 5 && (
+            <p className="text-[10px] text-white/30 pl-5">+{total - 5} mais</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function ChecklistLideranca() {
   const navigate = useNavigate();
@@ -27,9 +149,22 @@ export default function ChecklistLideranca() {
   const [semanaBase, setSemanaBase] = useState(new Date());
 
   const { criarTemplate } = useTarefas();
-  const { missoes, isLoading: loadingMissoes, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes, deletarCheckbox, editarPrazoCheckbox } = useMissoes();
+  const { missoes, isLoading: loadingMissoes, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes, deletarCheckbox, editarPrazoCheckbox, adicionarCheckbox, reordenarMissoes } = useMissoes();
   const [missaoSelecionadaId, setMissaoSelecionadaId] = useState<string | null>(null);
   const missaoSelecionada = missoes?.find(m => m.id === missaoSelecionadaId) || null;
+
+  const missoesSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const handleMissoesDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = missoes.findIndex(m => m.id === active.id);
+    const newIndex = missoes.findIndex(m => m.id === over.id);
+    const reordered = arrayMove(missoes, oldIndex, newIndex);
+    reordenarMissoes.mutate(reordered.map((m, i) => ({ id: m.id, ordem: i })));
+  }, [missoes, reordenarMissoes]);
 
   const { data: calendarioData, isLoading: loadingCalendario } = useTarefasCalendario(semanaBase);
 
@@ -291,106 +426,23 @@ export default function ChecklistLideranca() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-              {missoes.map((missao) => {
-                const total = missao.missao_checkboxes.length;
-                const concluidas = missao.missao_checkboxes.filter(c => c.concluida).length;
-                const progresso = total > 0 ? Math.round((concluidas / total) * 100) : 0;
-                const prazosNaoConcluidos = missao.missao_checkboxes
-                  .filter(c => !c.concluida && c.prazo)
-                  .map(c => new Date(c.prazo + "T12:00:00"));
-                const maiorPrazo = prazosNaoConcluidos.length > 0
-                  ? new Date(Math.max(...prazosNaoConcluidos.map(d => d.getTime())))
-                  : null;
-                const vencida = maiorPrazo ? isPast(startOfDay(maiorPrazo)) && progresso < 100 : false;
-                const primeiros5 = missao.missao_checkboxes.slice(0, 5);
-
-                return (
-                  <div
-                    key={missao.id}
-                    onClick={() => setMissaoSelecionadaId(missao.id)}
-                    className={cn(
-                      "rounded-xl p-3 border transition-all duration-200 cursor-pointer hover:border-amber-500/40",
-                      vencida
-                        ? "bg-red-500/5 border-red-500/20"
-                        : progresso === 100
-                          ? "bg-emerald-500/5 border-emerald-500/20"
-                          : "bg-white/5 border-white/10"
-                    )}
-                  >
-                    <div className="mb-2">
-                      <h3 className="text-sm font-semibold text-white line-clamp-2 leading-tight">{missao.titulo}</h3>
-                      <div className="flex items-center justify-between mt-1.5">
-                        {missao.responsavel ? (
-                          <div className="flex items-center gap-1">
-                            <Avatar className="h-4 w-4">
-                              <AvatarImage src={missao.responsavel.foto_perfil_url || undefined} />
-                              <AvatarFallback className="text-[8px] bg-blue-500/20 text-blue-400">
-                                {missao.responsavel.nome.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-[10px] text-white/50 truncate max-w-[80px]">
-                              {missao.responsavel.nome.split(' ')[0]}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-[10px] text-white/30">Sem responsável</span>
-                        )}
-                        <span className="text-[10px] text-white/40">{concluidas}/{total}</span>
-                      </div>
-                    </div>
-
-                    <div className="h-1 rounded-full bg-white/10 mb-2 overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all duration-300",
-                          progresso === 100
-                            ? "bg-emerald-500"
-                            : vencida
-                              ? "bg-red-500"
-                              : "bg-amber-500"
-                        )}
-                        style={{ width: `${progresso}%` }}
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      {primeiros5.map((cb) => (
-                        <div key={cb.id} className="flex items-center gap-1.5">
-                          <div className={cn(
-                            "h-3 w-3 rounded-sm border flex-shrink-0 flex items-center justify-center",
-                            cb.concluida
-                              ? "bg-emerald-500/20 border-emerald-500/40"
-                              : "border-white/20"
-                          )}>
-                            {cb.concluida && <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400" />}
-                          </div>
-                          <span className={cn(
-                            "text-[11px] leading-tight line-clamp-1 flex-1",
-                            cb.concluida ? "text-white/30 line-through" : "text-white/60"
-                          )}>
-                            {cb.descricao}
-                          </span>
-                          {cb.prazo && (
-                            <span className={cn(
-                              "text-[9px] flex-shrink-0",
-                              !cb.concluida && isPast(startOfDay(new Date(cb.prazo + "T12:00:00")))
-                                ? "text-red-400"
-                                : "text-white/30"
-                            )}>
-                              {format(new Date(cb.prazo + "T12:00:00"), "dd/MM")}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                      {total > 5 && (
-                        <p className="text-[10px] text-white/30 pl-5">+{total - 5} mais</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <DndContext
+              sensors={missoesSensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleMissoesDragEnd}
+            >
+              <SortableContext items={missoes.map(m => m.id)} strategy={rectSortingStrategy}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                  {missoes.map((missao) => (
+                    <SortableMissaoCard
+                      key={missao.id}
+                      missao={missao}
+                      onClick={() => setMissaoSelecionadaId(missao.id)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </section>
       </div>
@@ -422,6 +474,7 @@ export default function ChecklistLideranca() {
         onReordenarCheckboxes={(items) => reordenarCheckboxes.mutate(items)}
         onDeletarCheckbox={(id) => deletarCheckbox.mutate(id)}
         onEditarPrazoCheckbox={(params) => editarPrazoCheckbox.mutate(params)}
+        onAdicionarCheckbox={(params) => adicionarCheckbox.mutate(params)}
       />
     </MinimalistLayout>
   );
