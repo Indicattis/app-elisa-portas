@@ -218,11 +218,25 @@ export function CarregamentoDownbar({
               <div className="flex justify-center">
                 <CoresPortasEnrolar produtos={ordem.venda?.produtos} />
               </div>
-              {(ordem.venda?.cidade || ordem.venda?.bairro) && (
-                <p className="text-white/40 text-xs">
-                  {[ordem.venda?.bairro, ordem.venda?.cidade, ordem.venda?.estado].filter(Boolean).join(', ')}
-                </p>
-              )}
+              {(() => {
+                const p = ordem.pedido;
+                const v = ordem.venda;
+                const rua = p?.endereco_rua;
+                const numero = p?.endereco_numero;
+                const bairro = p?.endereco_bairro || v?.bairro;
+                const cidade = p?.endereco_cidade || v?.cidade;
+                const estado = p?.endereco_estado || v?.estado;
+                const cep = p?.endereco_cep || v?.cep;
+                const partes: string[] = [];
+                if (rua) partes.push(numero ? `${rua}, Nº ${numero}` : rua);
+                if (bairro) partes.push(bairro);
+                if (cidade && estado) partes.push(`${cidade}/${estado}`);
+                else if (cidade) partes.push(cidade);
+                if (cep) partes.push(`CEP ${cep}`);
+                return partes.length > 0 ? (
+                  <p className="text-white/40 text-xs">{partes.join(' - ')}</p>
+                ) : null;
+              })()}
             </div>
 
             {/* Observações do Pedido */}

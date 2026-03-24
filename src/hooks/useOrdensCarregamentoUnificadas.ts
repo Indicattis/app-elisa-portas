@@ -40,6 +40,12 @@ export interface OrdemCarregamentoUnificada {
     updated_at?: string;
     ficha_visita_url?: string | null;
     ficha_visita_nome?: string | null;
+    endereco_rua?: string | null;
+    endereco_numero?: string | null;
+    endereco_bairro?: string | null;
+    endereco_cidade?: string | null;
+    endereco_estado?: string | null;
+    endereco_cep?: string | null;
   } | null;
   venda?: {
     id: string;
@@ -101,7 +107,13 @@ export const useOrdensCarregamentoUnificadas = () => {
             observacoes,
             updated_at,
             ficha_visita_url,
-            ficha_visita_nome
+            ficha_visita_nome,
+            endereco_rua,
+            endereco_numero,
+            endereco_bairro,
+            endereco_cidade,
+            endereco_estado,
+            endereco_cep
           )
         `)
         .eq("carregamento_concluido", false)
@@ -189,7 +201,13 @@ export const useOrdensCarregamentoUnificadas = () => {
             observacoes,
             updated_at,
             ficha_visita_url,
-            ficha_visita_nome
+            ficha_visita_nome,
+            endereco_rua,
+            endereco_numero,
+            endereco_bairro,
+            endereco_cidade,
+            endereco_estado,
+            endereco_cep
           )
         `)
         .eq("carregamento_concluido", false)
@@ -218,7 +236,13 @@ export const useOrdensCarregamentoUnificadas = () => {
             observacoes,
             updated_at,
             ficha_visita_url,
-            ficha_visita_nome
+            ficha_visita_nome,
+            endereco_rua,
+            endereco_numero,
+            endereco_bairro,
+            endereco_cidade,
+            endereco_estado,
+            endereco_cep
           )
         `)
         .eq("carregamento_concluido", false)
@@ -283,6 +307,12 @@ export const useOrdensCarregamentoUnificadas = () => {
           updated_at,
           ficha_visita_url,
           ficha_visita_nome,
+          endereco_rua,
+          endereco_numero,
+          endereco_bairro,
+          endereco_cidade,
+          endereco_estado,
+          endereco_cep,
           vendas:vendas!inner(
             id, cliente_nome, cliente_telefone, cliente_email,
             cidade, estado, bairro, cep, tipo_entrega, atendente_id,
