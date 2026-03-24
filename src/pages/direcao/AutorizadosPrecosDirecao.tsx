@@ -129,8 +129,24 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
   };
 
   // Acordos logic
-  const acordosFiltrados = useMemo(() => {
-    return acordos.filter((acordo) => {
+  const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+  const acordosPorMes = useMemo(() => {
+    const map: Record<number, AcordoAutorizado[]> = {};
+    for (let i = 0; i < 12; i++) map[i] = [];
+    acordos.forEach((acordo) => {
+      const data = new Date(acordo.data_acordo);
+      if (data.getFullYear() === anoSelecionado) {
+        map[data.getMonth()].push(acordo);
+      }
+    });
+    return map;
+  }, [acordos, anoSelecionado]);
+
+  const acordosDoMesFiltrados = useMemo(() => {
+    if (mesSelecionado === null) return [];
+    const acordosDoMes = acordosPorMes[mesSelecionado] || [];
+    return acordosDoMes.filter((acordo) => {
       const matchSearch =
         acordo.cliente_nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
         acordo.autorizado_nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -138,7 +154,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
       const matchStatus = filterStatus === 'todos' || acordo.status === filterStatus;
       return matchSearch && matchStatus;
     });
-  }, [acordos, searchTerm, filterStatus]);
+  }, [acordosPorMes, mesSelecionado, searchTerm, filterStatus]);
 
   const handleNovoAcordo = () => {
     setAcordoParaEditar(null);
