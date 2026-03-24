@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Wallet, HandCoins, BadgeDollarSign, Lock, ArrowLeft } from "lucide-react";
+import { Wallet, HandCoins, Lock, ArrowLeft } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -20,13 +20,6 @@ const menuItems = [
     path: "/administrativo/financeiro/caixa/contas-a-receber", 
     ativo: true,
     description: "Gestão de parcelas e recebimentos"
-  },
-  { 
-    label: "Contas a Pagar", 
-    icon: BadgeDollarSign, 
-    path: "/administrativo/financeiro/caixa/contas-a-pagar", 
-    ativo: true,
-    description: "Gestão de pagamentos e despesas"
   },
 ];
 
@@ -130,7 +123,7 @@ export default function CaixaHub() {
 
       {/* ========== VERSÃO DESKTOP ========== */}
       <div className="hidden md:flex relative z-10 flex-col items-center gap-8">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const delay = 200 + index * 100;
