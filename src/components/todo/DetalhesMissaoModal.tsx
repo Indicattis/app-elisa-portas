@@ -212,6 +212,7 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
   const [confirmarExclusao, setConfirmarExclusao] = useState(false);
   const [editando, setEditando] = useState(false);
   const [localCheckboxes, setLocalCheckboxes] = useState<MissaoCheckbox[]>([]);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -222,9 +223,9 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
     if (editando && missao) {
       setLocalCheckboxes(prev => {
         const serverIds = new Set(missao.missao_checkboxes.map(cb => cb.id));
-        // Remove items deleted on server, update prazo/concluida from server, keep local ordem
+        // Remove items deleted on server or locally, update prazo/concluida from server, keep local ordem
         const updated = prev
-          .filter(cb => serverIds.has(cb.id))
+          .filter(cb => serverIds.has(cb.id) && !deletedIds.has(cb.id))
           .map(cb => {
             const serverCb = missao.missao_checkboxes.find(s => s.id === cb.id);
             if (!serverCb) return cb;
@@ -233,11 +234,12 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
         return updated;
       });
     }
-  }, [editando, missao?.missao_checkboxes]);
+  }, [editando, missao?.missao_checkboxes, deletedIds]);
 
   const checkboxes = editando ? localCheckboxes : (missao?.missao_checkboxes || []);
 
   const handleStartEditing = () => {
+    setDeletedIds(new Set());
     if (missao) {
       setLocalCheckboxes([...missao.missao_checkboxes]);
     }
@@ -245,6 +247,7 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
   };
 
   const handleStopEditing = () => {
+    setDeletedIds(new Set());
     setEditando(false);
   };
 
@@ -268,6 +271,7 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
   }, [onReordenarCheckboxes]);
 
   const handleDeleteCheckbox = useCallback((id: string) => {
+    setDeletedIds(prev => new Set(prev).add(id));
     onDeletarCheckbox?.(id);
     setLocalCheckboxes(prev => prev.filter(cb => cb.id !== id));
   }, [onDeletarCheckbox]);
