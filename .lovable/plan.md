@@ -1,22 +1,22 @@
 
 
-## Plano: Mostrar endereço completo nas downbars de carregamento
+## Plano: Mostrar endereço completo no PedidoDetalhesSheet
 
 ### Problema
-A downbar mostra apenas bairro, cidade e estado (vindos da tabela `vendas`). O endereço completo (rua, número, complemento, CEP) está na tabela `pedidos_producao` mas não é buscado pelo hook.
+O componente `PedidoDetalhesSheet.tsx` (linha 530-533) mostra apenas `venda.cidade - venda.estado`. O objeto `pedido` já contém campos de endereço completo (`endereco_rua`, `endereco_numero`, `endereco_bairro`, `endereco_cidade`, `endereco_estado`, `endereco_cep`) que não estão sendo usados.
 
-### Alterações
+### Alteração
 
-**1. `src/hooks/useOrdensCarregamentoUnificadas.ts`**
-- Nas 3 queries que buscam `pedidos_producao` (ordens_carregamento, instalacoes, correcoes), adicionar os campos: `endereco_rua, endereco_numero, endereco_bairro, endereco_cidade, endereco_estado, endereco_cep`
-- Na query de pedidos órfãos, adicionar os mesmos campos
-- Atualizar a interface `OrdemCarregamentoUnificada.pedido` para incluir esses campos opcionais
+**`src/components/pedidos/PedidoDetalhesSheet.tsx`** (linhas 528-534)
 
-**2. `src/components/carregamento/CarregamentoDownbar.tsx`**
-- Na seção de endereço (linha ~221-225), montar o endereço completo usando os campos do pedido, com fallback para os campos da venda:
-  - Formato: `Rua X, Nº Y - Bairro, Cidade/UF - CEP`
-  - Priorizar dados de `pedido.endereco_*`, com fallback para `venda.bairro/cidade/estado`
+Substituir a exibição atual por lógica que prioriza os dados do pedido com fallback para dados da venda:
+
+- Montar endereço completo: `{rua}, {numero} - {bairro} - {cidade}/{estado} - CEP {cep}`
+- Priorizar `pedido.endereco_*`, com fallback para `venda.cidade` / `venda.estado`
+- Omitir partes vazias automaticamente
+
+Padrão já usado em `AcaoEtapaModal.tsx` e `HistoricoOrdemDetalhesSheet.tsx` — será consistente com o resto do sistema.
 
 ### Resultado
-O endereço completo aparecerá na downbar de carregamento, incluindo rua, número e CEP quando disponíveis.
+O endereço completo aparecerá na seção hero do sheet de detalhes do pedido.
 
