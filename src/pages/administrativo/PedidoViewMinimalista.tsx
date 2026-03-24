@@ -177,6 +177,19 @@ export default function PedidoViewMinimalista() {
     }
   }, [pedido?.observacoes]);
 
+  useEffect(() => {
+    if (pedido) {
+      setEnderecoForm({
+        endereco_rua: (pedido as any).endereco_rua || '',
+        endereco_numero: (pedido as any).endereco_numero || '',
+        endereco_bairro: (pedido as any).endereco_bairro || '',
+        endereco_cidade: (pedido as any).endereco_cidade || '',
+        endereco_estado: (pedido as any).endereco_estado || '',
+        endereco_cep: (pedido as any).endereco_cep || '',
+      });
+    }
+  }, [pedido?.id]);
+
   const fetchPedidoDetails = async () => {
     if (!id) return;
     
