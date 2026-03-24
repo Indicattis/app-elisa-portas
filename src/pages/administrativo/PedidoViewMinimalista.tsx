@@ -118,6 +118,16 @@ export default function PedidoViewMinimalista() {
   const [pastaObsAberta, setPastaObsAberta] = useState<string | null>(null);
   const [pastaSocialAberta, setPastaSocialAberta] = useState<string | null>(null);
   const [mostrarPreenchimento, setMostrarPreenchimento] = useState(false);
+  const [editandoEndereco, setEditandoEndereco] = useState(false);
+  const [enderecoForm, setEnderecoForm] = useState({
+    endereco_rua: '',
+    endereco_numero: '',
+    endereco_bairro: '',
+    endereco_cidade: '',
+    endereco_estado: '',
+    endereco_cep: '',
+  });
+  const [salvandoEndereco, setSalvandoEndereco] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { coresAtivas } = useCatalogoCores();
