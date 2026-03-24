@@ -3519,6 +3519,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           id: string
+          ordem: number | null
           responsavel_id: string | null
           titulo: string
           updated_at: string | null
@@ -3527,6 +3528,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
+          ordem?: number | null
           responsavel_id?: string | null
           titulo: string
           updated_at?: string | null
@@ -3535,6 +3537,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
+          ordem?: number | null
           responsavel_id?: string | null
           titulo?: string
           updated_at?: string | null
