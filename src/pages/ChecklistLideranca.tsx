@@ -308,7 +308,7 @@ export default function ChecklistLideranca() {
                 return (
                   <div
                     key={missao.id}
-                    onClick={() => setMissaoSelecionada(missao)}
+                    onClick={() => setMissaoSelecionadaId(missao.id)}
                     className={cn(
                       "rounded-xl p-3 border transition-all duration-200 cursor-pointer hover:border-amber-500/40",
                       vencida
@@ -415,12 +415,13 @@ export default function ChecklistLideranca() {
       <DetalhesMissaoModal
         missao={missaoSelecionada}
         open={!!missaoSelecionada}
-        onOpenChange={(open) => !open && setMissaoSelecionada(null)}
+        onOpenChange={(open) => !open && setMissaoSelecionadaId(null)}
         onToggleCheckbox={(params) => toggleCheckbox.mutate(params)}
         onDelete={(id) => deletarMissao.mutate(id)}
         onEditarCheckbox={(params) => editarCheckbox.mutate(params)}
         onReordenarCheckboxes={(items) => reordenarCheckboxes.mutate(items)}
         onDeletarCheckbox={(id) => deletarCheckbox.mutate(id)}
+        onEditarPrazoCheckbox={(params) => editarPrazoCheckbox.mutate(params)}
       />
     </MinimalistLayout>
   );
