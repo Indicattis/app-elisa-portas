@@ -261,6 +261,26 @@ export default function PedidoViewMinimalista() {
     }
   };
 
+  const handleSalvarEndereco = async () => {
+    if (!pedido) return;
+    setSalvandoEndereco(true);
+    try {
+      const { error } = await supabase
+        .from('pedidos_producao')
+        .update(enderecoForm)
+        .eq('id', pedido.id);
+      if (error) throw error;
+      setPedido(prev => prev ? { ...prev, ...enderecoForm } as any : null);
+      setEditandoEndereco(false);
+      sonnerToast.success("Endereço salvo com sucesso!");
+    } catch (error) {
+      console.error("Erro ao salvar endereço:", error);
+      sonnerToast.error("Erro ao salvar endereço");
+    } finally {
+      setSalvandoEndereco(false);
+    }
+  };
+
   const handleSalvarAlteracoes = async () => {
     if (linhasEditadas.size === 0) {
       toast({ title: "Nenhuma alteração", description: "Não há alterações para salvar." });
