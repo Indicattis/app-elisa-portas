@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Missao, MissaoCheckbox } from "@/hooks/useMissoes";
 import { cn } from "@/lib/utils";
 import { format, isPast, startOfDay, differenceInDays } from "date-fns";
@@ -25,6 +27,7 @@ interface DetalhesMissaoModalProps {
   onEditarCheckbox?: (params: { id: string; descricao: string }) => void;
   onReordenarCheckboxes?: (items: { id: string; ordem: number }[]) => void;
   onDeletarCheckbox?: (id: string) => void;
+  onEditarPrazoCheckbox?: (params: { id: string; prazo: string | null }) => void;
 }
 
 function SortableCheckboxItem({
@@ -33,14 +36,17 @@ function SortableCheckboxItem({
   onToggleCheckbox,
   onSaveDescricao,
   onDeleteItem,
+  onEditarPrazo,
 }: {
   cb: MissaoCheckbox;
   editando: boolean;
   onToggleCheckbox: (params: { id: string; concluida: boolean }) => void;
   onSaveDescricao: (id: string, descricao: string) => void;
   onDeleteItem?: (id: string) => void;
+  onEditarPrazo?: (id: string, prazo: string | null) => void;
 }) {
   const [localDescricao, setLocalDescricao] = useState(cb.descricao);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cb.id });
 
   const style = {
@@ -78,14 +84,14 @@ function SortableCheckboxItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-start gap-2.5 rounded-lg px-2.5 py-2 transition-colors",
+        "flex items-start gap-2 rounded-lg px-2.5 py-2 transition-colors",
         editando ? "bg-white/[0.06]" : cb.concluida ? "bg-white/[0.02]" : "bg-white/[0.04] hover:bg-white/[0.06]"
       )}
     >
       {editando ? (
         <>
           <button
-            className="mt-1 cursor-grab active:cursor-grabbing text-white/30 hover:text-white/60 touch-none"
+            className="mt-1.5 cursor-grab active:cursor-grabbing text-white/30 hover:text-white/60 touch-none shrink-0"
             {...attributes}
             {...listeners}
           >
@@ -96,10 +102,37 @@ function SortableCheckboxItem({
             onChange={(e) => setLocalDescricao(e.target.value)}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
-            className="h-7 text-xs bg-white/5 border-white/10 text-white flex-1"
+            className="h-7 text-xs bg-white/5 border-white/10 text-white flex-1 min-w-0"
           />
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <button
+                className={cn(
+                  "mt-0.5 shrink-0 transition-colors",
+                  prazoDate ? "text-amber-400/70 hover:text-amber-400" : "text-white/20 hover:text-white/50"
+                )}
+                title={prazoDate ? format(prazoDate, "dd/MM/yyyy") : "Definir prazo"}
+              >
+                <CalendarDays className="h-3.5 w-3.5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end" side="bottom">
+              <Calendar
+                mode="single"
+                selected={prazoDate || undefined}
+                onSelect={(date) => {
+                  const prazo = date ? format(date, "yyyy-MM-dd") : null;
+                  onEditarPrazo?.(cb.id, prazo);
+                  setCalendarOpen(false);
+                }}
+                locale={ptBR}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
           <button
-            className="mt-0.5 text-white/20 hover:text-red-400 transition-colors"
+            className="mt-0.5 shrink-0 text-white/20 hover:text-red-400 transition-colors"
             onClick={() => onDeleteItem?.(cb.id)}
           >
             <X className="h-3.5 w-3.5" />
@@ -156,7 +189,7 @@ function SortableCheckboxItem({
   );
 }
 
-export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckbox, onDelete, onEditarCheckbox, onReordenarCheckboxes, onDeletarCheckbox }: DetalhesMissaoModalProps) {
+export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckbox, onDelete, onEditarCheckbox, onReordenarCheckboxes, onDeletarCheckbox, onEditarPrazoCheckbox }: DetalhesMissaoModalProps) {
   const [confirmarExclusao, setConfirmarExclusao] = useState(false);
   const [editando, setEditando] = useState(false);
   const [localCheckboxes, setLocalCheckboxes] = useState<MissaoCheckbox[]>([]);
@@ -165,7 +198,6 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
-  // Sync local state when missao changes or edit mode starts
   const checkboxes = editando ? localCheckboxes : (missao?.missao_checkboxes || []);
 
   const handleStartEditing = () => {
@@ -204,6 +236,11 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
     setLocalCheckboxes(prev => prev.filter(cb => cb.id !== id));
   }, [onDeletarCheckbox]);
 
+  const handleEditarPrazo = useCallback((id: string, prazo: string | null) => {
+    onEditarPrazoCheckbox?.({ id, prazo });
+    setLocalCheckboxes(prev => prev.map(cb => cb.id === id ? { ...cb, prazo } : cb));
+  }, [onEditarPrazoCheckbox]);
+
   if (!missao) return null;
 
   const total = missao.missao_checkboxes.length;
@@ -215,7 +252,7 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
       <Dialog open={open} onOpenChange={(v) => { if (!v) setEditando(false); onOpenChange(v); }}>
         <DialogContent className="bg-white/5 border-white/10 backdrop-blur-xl text-white max-w-lg max-h-[85vh] overflow-y-auto p-0 rounded-xl">
           <DialogHeader className="p-4 pb-0">
-            <div className="flex items-center justify-between pr-6">
+            <div className="flex items-center justify-between pr-8">
               <DialogTitle className="text-base font-semibold text-white">{missao.titulo}</DialogTitle>
               <Button
                 variant="ghost"
@@ -279,6 +316,7 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
                         onToggleCheckbox={onToggleCheckbox}
                         onSaveDescricao={handleSaveDescricao}
                         onDeleteItem={handleDeleteCheckbox}
+                        onEditarPrazo={handleEditarPrazo}
                       />
                     ))}
                   </div>
