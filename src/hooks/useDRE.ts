@@ -107,7 +107,7 @@ export const useDRE = () => {
         .from("despesas_mensais")
         .select("valor_real")
         .eq("mes", mes)
-        .eq("modalidade", "variavel");
+        .eq("modalidade", "projetada");
 
       if (variaveisError) throw variaveisError;
 
@@ -186,7 +186,7 @@ export const useDRE = () => {
         .reduce((acc, d) => acc + (d.valor_real || 0), 0) || 0;
 
       const despesasVariaveis = despesas
-        ?.filter(d => d.modalidade === 'variavel')
+        ?.filter(d => d.modalidade === 'projetada')
         .reduce((acc, d) => acc + (d.valor_real || 0), 0) || 0;
 
       const resultadoFinal = lucroTotal - despesasFixas - despesasVariaveis;
