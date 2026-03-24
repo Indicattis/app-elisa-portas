@@ -1,21 +1,19 @@
 
 
-## Plano: Exibir todos os leads e adicionar paginação
-
-### Problema
-A query atual filtra por `.eq('atendente_id', user!.id)`, mostrando apenas leads atribuídos ao usuário logado. Além disso, o Supabase tem limite padrão de 1000 registros por query.
+## Plano: Todos veem todos os leads + mostrar responsável
 
 ### Alterações em `src/pages/vendas/LeadsList.tsx`
 
-1. **Remover filtro por atendente** — trocar `.eq('atendente_id', user!.id)` para buscar todos os leads (ou condicionar ao papel do usuário: admin/gerente vê todos, atendente vê apenas os seus)
-2. **Adicionar paginação** com range do Supabase:
-   - Estado `pagina` (número da página atual) e `totalLeads`
-   - Usar `.range(from, to)` na query com páginas de 50 registros
-   - Usar o componente `Pagination` existente no projeto para navegação entre páginas
-3. **Lógica de visibilidade por papel**:
-   - Se `isAdmin || isGerenteComercial || hasBypassPermissions` → buscar todos
-   - Se `isAtendente` → manter filtro `.eq('atendente_id', user!.id)`
+1. **Remover filtro por papel** — todos os usuários verão todos os leads (remover o bloco `if (!isAdmin && ...)`)
 
-### Resultado
-Todos os leads aparecerão com navegação paginada, respeitando o papel do usuário logado.
+2. **Buscar nome do atendente** — a tabela `elisaportas_leads` tem `atendente_id` (referência a `admin_users`). Após buscar os leads, fazer uma query separada em `admin_users` para mapear `id → nome` dos atendentes presentes nos resultados. Alternativa: usar select com join se possível.
+
+3. **Exibir responsável no card** — adicionar o nome do atendente em cada card com ícone `User`, estilo `text-white/50` consistente com os outros metadados.
+
+4. **Interface Lead** — adicionar `atendente_id: string | null` ao tipo.
+
+5. **Manter paginação** — a paginação de 50 por página já existe e continuará funcionando.
+
+### Arquivos alterados
+- `src/pages/vendas/LeadsList.tsx`
 
