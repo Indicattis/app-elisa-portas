@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserPlus, Phone, MapPin, Search, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, UserPlus, Phone, MapPin, Search, Calendar, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -19,6 +19,7 @@ interface Lead {
   canal_aquisicao: string;
   data_envio: string;
   valor_orcamento: number | null;
+  atendente_id: string | null;
 }
 
 const statusColors: Record<string, string> = {
@@ -41,13 +42,14 @@ const POR_PAGINA = 50;
 
 export default function LeadsList() {
   const navigate = useNavigate();
-  const { user, isAdmin, isGerenteComercial, hasBypassPermissions } = useAuth();
+  const { user } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [busca, setBusca] = useState('');
   const [pagina, setPagina] = useState(1);
   const [totalLeads, setTotalLeads] = useState(0);
+  const [atendentesMap, setAtendentesMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
@@ -64,22 +66,27 @@ export default function LeadsList() {
       const from = (pagina - 1) * POR_PAGINA;
       const to = from + POR_PAGINA - 1;
 
-      let query = supabase
+      const { data, error, count } = await supabase
         .from('elisaportas_leads')
-        .select('id, nome, telefone, email, cidade, novo_status, canal_aquisicao, data_envio, valor_orcamento', { count: 'exact' });
-
-      // Atendente vê apenas seus leads; admin/gerente/bypass vê todos
-      if (!isAdmin && !isGerenteComercial && !hasBypassPermissions) {
-        query = query.eq('atendente_id', user!.id);
-      }
-
-      const { data, error, count } = await query
+        .select('id, nome, telefone, email, cidade, novo_status, canal_aquisicao, data_envio, valor_orcamento, atendente_id', { count: 'exact' })
         .order('data_envio', { ascending: false })
         .range(from, to);
 
       if (error) throw error;
       setLeads(data || []);
       setTotalLeads(count || 0);
+
+      // Buscar nomes dos atendentes
+      const atendenteIds = [...new Set((data || []).map(l => l.atendente_id).filter(Boolean))] as string[];
+      if (atendenteIds.length > 0) {
+        const { data: users } = await supabase
+          .from('admin_users')
+          .select('user_id, nome')
+          .in('user_id', atendenteIds);
+        const map: Record<string, string> = {};
+        (users || []).forEach(u => { map[u.user_id] = u.nome; });
+        setAtendentesMap(map);
+      }
     } catch (error) {
       console.error('Erro ao buscar leads:', error);
     } finally {
@@ -222,6 +229,10 @@ export default function LeadsList() {
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5" />
                           {new Date(lead.data_envio).toLocaleDateString('pt-BR')}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <User className="w-3.5 h-3.5" />
+                          {lead.atendente_id ? (atendentesMap[lead.atendente_id] || '...') : 'Não atribuído'}
                         </span>
                       </div>
                     </div>
