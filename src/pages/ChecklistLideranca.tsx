@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTarefas } from "@/hooks/useTarefas";
 import { useMissoes } from "@/hooks/useMissoes";
@@ -9,11 +9,14 @@ import { DetalhesMissaoModal } from "@/components/todo/DetalhesMissaoModal";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, CalendarDays, History, Target, CheckCircle2, ChevronLeft, ChevronRight, Clock, AlertCircle } from "lucide-react";
+import { Plus, CalendarDays, History, Target, CheckCircle2, ChevronLeft, ChevronRight, Clock, AlertCircle, GripVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { format, isPast, startOfDay, startOfWeek, addDays, isSameDay, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export default function ChecklistLideranca() {
   const navigate = useNavigate();
