@@ -1,23 +1,41 @@
 
 
-## Plano: Adicionar badge de contagem de tarefas no botão "Minhas Tarefas"
+## Plano: Editar missões com reescrita de tarefas e drag-and-drop
 
 ### O que será feito
-Adicionar um badge numérico no botão de "Minhas Tarefas" do `FloatingProfileMenu` mostrando quantas tarefas pendentes o usuário tem na semana atual.
+Adicionar modo de edição no `DetalhesMissaoModal` permitindo reescrever descrições dos checkboxes e reordená-los via drag-and-drop. O projeto já possui `@dnd-kit` instalado.
 
 ### Alterações
 
-#### 1. `src/hooks/useTarefasCount.ts`
-Atualizar a query para filtrar tarefas da semana atual (segunda a domingo), usando `data_referencia` entre `startOfWeek` e `endOfWeek`, mantendo o filtro `status = 'em_andamento'`.
+#### 1. `src/hooks/useMissoes.ts`
+Adicionar duas mutations:
 
-#### 2. `src/components/FloatingProfileMenu.tsx`
-- Importar `useTarefasCount`
-- No botão do `ClipboardList` (linha 103-108), adicionar um badge vermelho posicionado no canto superior direito (`absolute -top-1 -right-1`) com o número de tarefas, visível apenas quando `count > 0`
-- Tornar o botão `relative` para posicionamento do badge
+- **`editarCheckbox`**: atualiza `descricao` de um checkbox via `supabase.from('missao_checkboxes').update({ descricao }).eq('id', id)`
+- **`reordenarCheckboxes`**: recebe array de `{ id, ordem }` e faz batch update (loop de updates) para persistir a nova ordem
 
+#### 2. `src/components/todo/DetalhesMissaoModal.tsx`
+- Adicionar estado `editando` (boolean) com botão de toggle (ícone Pencil/Check)
+- **Modo visualização** (atual): checkboxes com marcação normal
+- **Modo edição**:
+  - Cada descrição vira um `<Input>` editável inline; ao blur/enter salva via `editarCheckbox`
+  - Lista envolvida por `DndContext` + `SortableContext` do `@dnd-kit/sortable`
+  - Cada item ganha um handle de arrastar (ícone GripVertical)
+  - Ao soltar, calcula nova ordem e chama `reordenarCheckboxes`
+  - Checkboxes ficam desabilitados durante edição
+- Importar `DndContext`, `SortableContext`, `useSortable`, `arrayMove`, `closestCenter`, `restrictToVerticalAxis`
+
+### Fluxo do usuário
 ```text
-┌──────────┐
-│  📋  (5) │  ← badge vermelho no canto
-└──────────┘
+┌─────────────────────────────┐
+│ Título da Missão      [✏️] │
+│─────────────────────────────│
+│ ≡  [Input: Tarefa 1]       │  ← arrastar + editar
+│ ≡  [Input: Tarefa 2]       │
+│ ≡  [Input: Tarefa 3]       │
+│─────────────────────────────│
+│ [Excluir missão]            │
+└─────────────────────────────┘
 ```
+
+Nenhuma alteração de banco necessária — as colunas `descricao` e `ordem` já existem em `missao_checkboxes`.
 
