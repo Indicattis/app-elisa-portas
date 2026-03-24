@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +18,7 @@ import { NovoAcordoDialog } from '@/components/autorizados/NovoAcordoDialog';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -82,6 +83,8 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
   const [precosMap, setPrecosMap] = useState<Map<string, { P: number; G: number; GG: number }>>(new Map());
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
+  const [mesSelecionado, setMesSelecionado] = useState<number | null>(null);
 
   // Buscar preços padrões dos autorizados
   useEffect(() => {
@@ -126,8 +129,24 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
   };
 
   // Acordos logic
-  const acordosFiltrados = useMemo(() => {
-    return acordos.filter((acordo) => {
+  const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+  const acordosPorMes = useMemo(() => {
+    const map: Record<number, AcordoAutorizado[]> = {};
+    for (let i = 0; i < 12; i++) map[i] = [];
+    acordos.forEach((acordo) => {
+      const data = new Date(acordo.data_acordo);
+      if (data.getFullYear() === anoSelecionado) {
+        map[data.getMonth()].push(acordo);
+      }
+    });
+    return map;
+  }, [acordos, anoSelecionado]);
+
+  const acordosDoMesFiltrados = useMemo(() => {
+    if (mesSelecionado === null) return [];
+    const acordosDoMes = acordosPorMes[mesSelecionado] || [];
+    return acordosDoMes.filter((acordo) => {
       const matchSearch =
         acordo.cliente_nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
         acordo.autorizado_nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -135,7 +154,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
       const matchStatus = filterStatus === 'todos' || acordo.status === filterStatus;
       return matchSearch && matchStatus;
     });
-  }, [acordos, searchTerm, filterStatus]);
+  }, [acordosPorMes, mesSelecionado, searchTerm, filterStatus]);
 
   const handleNovoAcordo = () => {
     setAcordoParaEditar(null);
@@ -304,212 +323,284 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
           {/* Separador */}
           <div className="border-t border-blue-500/10" />
 
-              {/* Seção Acordos */}
+              {/* Seção Acordos - Grid de Meses */}
               <div>
-                <h2 className="text-sm font-medium text-white/70 mb-3">Acordos com Autorizados</h2>
-
-                {/* Filtros */}
-                <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                    <Input
-                      placeholder="Buscar por cliente, autorizado ou cidade..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
-                    />
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-sm font-medium text-white/70">Acordos com Autorizados</h2>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAnoSelecionado(prev => prev - 1)}
+                      className="h-8 w-8 p-0 text-white/60 hover:text-white hover:bg-white/10"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm font-semibold text-white/90 min-w-[4rem] text-center">{anoSelecionado}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAnoSelecionado(prev => prev + 1)}
+                      className="h-8 w-8 p-0 text-white/60 hover:text-white hover:bg-white/10"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-full sm:w-48 bg-white/5 border-white/10 text-white">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-800 border-zinc-700">
-                      {STATUS_OPTIONS.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
 
                 {loadingAcordos ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
                   </div>
-                ) : acordosFiltrados.length === 0 ? (
-                  <div className="text-center py-8 bg-primary/5 rounded-lg border border-primary/10">
-                    <p className="text-white/60 mb-4">Nenhum acordo encontrado</p>
-                    {contexto === 'logistica' && (
-                      <Button onClick={handleNovoAcordo} variant="outline" className="bg-primary/10 border-primary/20">
-                        <Plus className="h-4 w-4 mr-1" />
-                        Criar Primeiro Acordo
-                      </Button>
-                    )}
-                  </div>
                 ) : (
-                  <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
-                    <CardContent className="p-0">
-                      <div className="overflow-x-auto">
-                        <Table className="text-xs">
-                          <TableHeader>
-                            <TableRow className="border-blue-500/10 hover:bg-white/5">
-                              <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
-                              <TableHead className="text-xs text-white/70 text-center">Medidas</TableHead>
-                              <TableHead className="text-xs text-white/70">Autorizado</TableHead>
-                              <TableHead className="text-xs text-white/70">Cliente</TableHead>
-                              <TableHead className="text-xs text-white/70">Cidade</TableHead>
-                              <TableHead className="text-xs text-white/70 text-center">Data</TableHead>
-                              <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
-                              <TableHead className="text-xs text-white/70 text-right">Valor excesso</TableHead>
-                              <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
-                              {contexto === 'direcao' && (
-                                <TableHead className="text-xs text-white/70 text-center">Aprovação</TableHead>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {MESES.map((mes, index) => {
+                      const acordosDoMes = acordosPorMes[index] || [];
+                      const total = acordosDoMes.length;
+                      const valorTotal = acordosDoMes.reduce((sum, a) => sum + a.valor_acordado, 0);
+                      const pendentes = acordosDoMes.filter(a => !a.aprovado_direcao && !a.reprovado_direcao).length;
+                      const mesAtual = new Date().getMonth() === index && new Date().getFullYear() === anoSelecionado;
+
+                      return (
+                        <Card
+                          key={index}
+                          onClick={() => { setMesSelecionado(index); setSearchTerm(''); setFilterStatus('todos'); }}
+                          className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] backdrop-blur-xl border ${
+                            mesAtual
+                              ? 'bg-blue-500/10 border-blue-400/30 shadow-lg shadow-blue-500/10'
+                              : total > 0
+                                ? 'bg-white/5 border-blue-500/10 hover:bg-white/10'
+                                : 'bg-white/[0.02] border-white/5 hover:bg-white/5'
+                          }`}
+                        >
+                          <CardContent className="p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className={`text-sm font-medium ${mesAtual ? 'text-blue-300' : 'text-white/80'}`}>
+                                {mes}
+                              </span>
+                              {pendentes > 0 && (
+                                <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-[10px] px-1.5 py-0">
+                                  {pendentes} pendente{pendentes > 1 ? 's' : ''}
+                                </Badge>
                               )}
-                              {contexto === 'logistica' && (
-                                <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
+                            </div>
+                            <div className="flex items-end justify-between">
+                              <span className="text-lg font-bold text-white/90">{total}</span>
+                              {valorTotal > 0 && (
+                                <span className="text-xs text-green-400/80">{formatCurrency(valorTotal)}</span>
                               )}
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            <TooltipProvider>
-                            {acordosFiltrados.map((acordo) => {
-                              const precos = precosMap.get(acordo.autorizado_id);
-                              return (
-                              <Tooltip key={acordo.id}>
-                                <TooltipTrigger asChild>
-                                  <TableRow className="border-blue-500/10 hover:bg-white/5 text-white/90 cursor-default">
-                                    <TableCell className="text-center">
-                                      <div className="flex items-center justify-center gap-1">
-                                        {getResumoPortasBadges(acordo)}
-                                      </div>
-                                    </TableCell>
-                                    <TableCell className="text-center text-white/70 text-xs">
-                                      {acordo.portas.map(p =>
-                                        p.largura && p.altura ? `${p.largura}m × ${p.altura}m` : '-'
-                                      ).join(', ')}
-                                    </TableCell>
-                                    <TableCell className="text-white/70">
-                                      {acordo.autorizado_nome}
-                                    </TableCell>
-                                    <TableCell>
-                                      <span className="font-medium">{acordo.cliente_nome}</span>
-                                    </TableCell>
-                                    <TableCell className="text-white/70">
-                                      {acordo.cliente_cidade} - {acordo.cliente_estado}
-                                    </TableCell>
-                                    <TableCell className="text-center text-white/60">
-                                      {format(new Date(acordo.data_acordo), 'dd/MM/yy', { locale: ptBR })}
-                                    </TableCell>
-                                    <TableCell className="text-right font-medium text-green-400">
-                                      {formatCurrency(acordo.valor_acordado)}
-                                    </TableCell>
-                                    <TableCell className="text-right font-medium">
-                                      {acordo.portas.length > 0 ? (() => {
-                                        const totalRef = acordo.portas.reduce((sum, p) => sum + p.valor_unitario, 0);
-                                        const excesso = acordo.valor_acordado - totalRef;
-                                        return (
-                                          <span className={excesso > 0 ? 'text-red-400' : 'text-green-400'}>
-                                            {excesso > 0 ? '+' : ''}{formatCurrency(excesso)}
-                                          </span>
-                                        );
-                                      })() : <span className="text-white/40">—</span>}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                      <Badge variant="outline" className={STATUS_COLORS[acordo.status]}>
-                                        {STATUS_LABELS[acordo.status]}
-                                      </Badge>
-                                    </TableCell>
-                                    {contexto === 'direcao' && (
-                                      <TableCell className="text-center">
-                                        {acordo.aprovado_direcao ? (
-                                          <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-500/30 gap-1">
-                                            <CheckCircle2 className="h-3 w-3" />
-                                            Aprovado
-                                          </Badge>
-                                        ) : acordo.reprovado_direcao ? (
-                                          <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30 gap-1">
-                                            <XCircle className="h-3 w-3" />
-                                            Reprovado
-                                          </Badge>
-                                        ) : (
-                                          <div className="flex items-center justify-center gap-1">
-                                            <Button
-                                              size="sm"
-                                              disabled={approvingId === acordo.id}
-                                              onClick={(e) => { e.stopPropagation(); handleAprovar(acordo.id); }}
-                                              className="h-7 px-2 text-xs bg-green-500/20 border border-green-500/30 text-green-400 hover:bg-green-500/30 gap-1"
-                                            >
-                                              <Check className="h-3 w-3" />
-                                              Aprovar
-                                            </Button>
-                                            <Button
-                                              size="sm"
-                                              variant="ghost"
-                                              disabled={rejectingId === acordo.id}
-                                              onClick={(e) => { e.stopPropagation(); handleReprovar(acordo.id); }}
-                                              className="h-7 px-2 text-xs border border-red-500/30 text-red-400 hover:bg-red-500/20 gap-1"
-                                            >
-                                              <X className="h-3 w-3" />
-                                              Reprovar
-                                            </Button>
-                                          </div>
-                                        )}
-                                      </TableCell>
-                                    )}
-                                    {contexto === 'logistica' && (
-                                      <TableCell className="text-right">
-                                        <DropdownMenu>
-                                          <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-white/10">
-                                              <MoreHorizontal className="h-4 w-4 text-white/60" />
-                                            </Button>
-                                          </DropdownMenuTrigger>
-                                          <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700">
-                                            <DropdownMenuItem className="text-white hover:bg-zinc-700 cursor-pointer" onClick={() => handleEditarAcordo(acordo)}>
-                                              <Edit2 className="h-4 w-4 mr-2" /> Editar
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem className="text-red-400 hover:bg-red-500/20 cursor-pointer" onClick={() => setAcordoParaDeletar(acordo)}>
-                                              <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                                            </DropdownMenuItem>
-                                          </DropdownMenuContent>
-                                        </DropdownMenu>
-                                      </TableCell>
-                                    )}
-                                  </TableRow>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="bg-zinc-900 border-zinc-700">
-                                  <div className="space-y-1 text-xs">
-                                    <p className="font-semibold text-white/80 border-b border-zinc-700 pb-1 mb-1">Preços Padrão</p>
-                                    {precos ? (
-                                      <>
-                                        <div className="flex items-center justify-between gap-6">
-                                          <span className="text-white/60">Porta P</span>
-                                          <span className="text-white font-medium">{formatCurrency(precos.P)}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between gap-6">
-                                          <span className="text-white/60">Porta G</span>
-                                          <span className="text-white font-medium">{formatCurrency(precos.G)}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between gap-6">
-                                          <span className="text-white/60">Porta GG</span>
-                                          <span className="text-white font-medium">{formatCurrency(precos.GG)}</span>
-                                        </div>
-                                      </>
-                                    ) : (
-                                      <p className="text-white/40">Sem preços cadastrados</p>
-                                    )}
-                                  </div>
-                                </TooltipContent>
-                              </Tooltip>
-                              );
-                            })}
-                            </TooltipProvider>
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </CardContent>
-                  </Card>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
+
+        {/* Dialog do mês selecionado */}
+        <Dialog open={mesSelecionado !== null} onOpenChange={(open) => { if (!open) setMesSelecionado(null); }}>
+          <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto bg-black/95 border-white/10 backdrop-blur-xl">
+            <DialogHeader>
+              <DialogTitle className="text-white flex items-center gap-2">
+                <CalendarDays className="h-5 w-5 text-blue-400" />
+                {mesSelecionado !== null ? `${MESES[mesSelecionado]} ${anoSelecionado}` : ''}
+              </DialogTitle>
+            </DialogHeader>
+
+            {/* Filtros dentro do dialog */}
+            <div className="flex flex-col sm:flex-row gap-3 mt-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+                <Input
+                  placeholder="Buscar por cliente, autorizado ou cidade..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                />
+              </div>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-full sm:w-48 bg-white/5 border-white/10 text-white">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  {STATUS_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {acordosDoMesFiltrados.length === 0 ? (
+              <div className="text-center py-8 bg-white/5 rounded-lg border border-white/10">
+                <p className="text-white/60">Nenhum acordo encontrado neste mês</p>
+              </div>
+            ) : (
+              <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <Table className="text-xs">
+                      <TableHeader>
+                        <TableRow className="border-blue-500/10 hover:bg-white/5">
+                          <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
+                          <TableHead className="text-xs text-white/70 text-center">Medidas</TableHead>
+                          <TableHead className="text-xs text-white/70">Autorizado</TableHead>
+                          <TableHead className="text-xs text-white/70">Cliente</TableHead>
+                          <TableHead className="text-xs text-white/70">Cidade</TableHead>
+                          <TableHead className="text-xs text-white/70 text-center">Data</TableHead>
+                          <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
+                          <TableHead className="text-xs text-white/70 text-right">Valor excesso</TableHead>
+                          <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
+                          {contexto === 'direcao' && (
+                            <TableHead className="text-xs text-white/70 text-center">Aprovação</TableHead>
+                          )}
+                          {contexto === 'logistica' && (
+                            <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
+                          )}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <TooltipProvider>
+                        {acordosDoMesFiltrados.map((acordo) => {
+                          const precos = precosMap.get(acordo.autorizado_id);
+                          return (
+                          <Tooltip key={acordo.id}>
+                            <TooltipTrigger asChild>
+                              <TableRow className="border-blue-500/10 hover:bg-white/5 text-white/90 cursor-default">
+                                <TableCell className="text-center">
+                                  <div className="flex items-center justify-center gap-1">
+                                    {getResumoPortasBadges(acordo)}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-center text-white/70 text-xs">
+                                  {acordo.portas.map(p =>
+                                    p.largura && p.altura ? `${p.largura}m × ${p.altura}m` : '-'
+                                  ).join(', ')}
+                                </TableCell>
+                                <TableCell className="text-white/70">
+                                  {acordo.autorizado_nome}
+                                </TableCell>
+                                <TableCell>
+                                  <span className="font-medium">{acordo.cliente_nome}</span>
+                                </TableCell>
+                                <TableCell className="text-white/70">
+                                  {acordo.cliente_cidade} - {acordo.cliente_estado}
+                                </TableCell>
+                                <TableCell className="text-center text-white/60">
+                                  {format(new Date(acordo.data_acordo), 'dd/MM/yy', { locale: ptBR })}
+                                </TableCell>
+                                <TableCell className="text-right font-medium text-green-400">
+                                  {formatCurrency(acordo.valor_acordado)}
+                                </TableCell>
+                                <TableCell className="text-right font-medium">
+                                  {acordo.portas.length > 0 ? (() => {
+                                    const totalRef = acordo.portas.reduce((sum, p) => sum + p.valor_unitario, 0);
+                                    const excesso = acordo.valor_acordado - totalRef;
+                                    return (
+                                      <span className={excesso > 0 ? 'text-red-400' : 'text-green-400'}>
+                                        {excesso > 0 ? '+' : ''}{formatCurrency(excesso)}
+                                      </span>
+                                    );
+                                  })() : <span className="text-white/40">—</span>}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Badge variant="outline" className={STATUS_COLORS[acordo.status]}>
+                                    {STATUS_LABELS[acordo.status]}
+                                  </Badge>
+                                </TableCell>
+                                {contexto === 'direcao' && (
+                                  <TableCell className="text-center">
+                                    {acordo.aprovado_direcao ? (
+                                      <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-500/30 gap-1">
+                                        <CheckCircle2 className="h-3 w-3" />
+                                        Aprovado
+                                      </Badge>
+                                    ) : acordo.reprovado_direcao ? (
+                                      <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30 gap-1">
+                                        <XCircle className="h-3 w-3" />
+                                        Reprovado
+                                      </Badge>
+                                    ) : (
+                                      <div className="flex items-center justify-center gap-1">
+                                        <Button
+                                          size="sm"
+                                          disabled={approvingId === acordo.id}
+                                          onClick={(e) => { e.stopPropagation(); handleAprovar(acordo.id); }}
+                                          className="h-7 px-2 text-xs bg-green-500/20 border border-green-500/30 text-green-400 hover:bg-green-500/30 gap-1"
+                                        >
+                                          <Check className="h-3 w-3" />
+                                          Aprovar
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          disabled={rejectingId === acordo.id}
+                                          onClick={(e) => { e.stopPropagation(); handleReprovar(acordo.id); }}
+                                          className="h-7 px-2 text-xs border border-red-500/30 text-red-400 hover:bg-red-500/20 gap-1"
+                                        >
+                                          <X className="h-3 w-3" />
+                                          Reprovar
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </TableCell>
+                                )}
+                                {contexto === 'logistica' && (
+                                  <TableCell className="text-right">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-white/10">
+                                          <MoreHorizontal className="h-4 w-4 text-white/60" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700">
+                                        <DropdownMenuItem className="text-white hover:bg-zinc-700 cursor-pointer" onClick={() => handleEditarAcordo(acordo)}>
+                                          <Edit2 className="h-4 w-4 mr-2" /> Editar
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="text-red-400 hover:bg-red-500/20 cursor-pointer" onClick={() => setAcordoParaDeletar(acordo)}>
+                                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </TableCell>
+                                )}
+                              </TableRow>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="bg-zinc-900 border-zinc-700">
+                              <div className="space-y-1 text-xs">
+                                <p className="font-semibold text-white/80 border-b border-zinc-700 pb-1 mb-1">Preços Padrão</p>
+                                {precos ? (
+                                  <>
+                                    <div className="flex items-center justify-between gap-6">
+                                      <span className="text-white/60">Porta P</span>
+                                      <span className="text-white font-medium">{formatCurrency(precos.P)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-6">
+                                      <span className="text-white/60">Porta G</span>
+                                      <span className="text-white font-medium">{formatCurrency(precos.G)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-6">
+                                      <span className="text-white/60">Porta GG</span>
+                                      <span className="text-white font-medium">{formatCurrency(precos.GG)}</span>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <p className="text-white/40">Sem preços cadastrados</p>
+                                )}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                          );
+                        })}
+                        </TooltipProvider>
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+           </DialogContent>
+        </Dialog>
       </div>
 
       <NovoEstadoDialog
