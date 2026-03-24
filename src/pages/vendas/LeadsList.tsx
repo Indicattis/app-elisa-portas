@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserPlus, Phone, MapPin, Search } from 'lucide-react';
+import { ArrowLeft, UserPlus, Phone, MapPin, Search, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -201,6 +201,10 @@ export default function LeadsList() {
                             {lead.cidade}
                           </span>
                         )}
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {new Date(lead.data_envio).toLocaleDateString('pt-BR')}
+                        </span>
                       </div>
                     </div>
                     <Badge
