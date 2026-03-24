@@ -83,6 +83,9 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
   const [precosMap, setPrecosMap] = useState<Map<string, { P: number; G: number; GG: number }>>(new Map());
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
+  const [mesSelecionado, setMesSelecionado] = useState<number | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
 
   // Buscar preços padrões dos autorizados
   useEffect(() => {
