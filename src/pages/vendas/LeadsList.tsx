@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserPlus, Phone, MapPin, Search, Calendar, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { ArrowLeft, UserPlus, Search } from 'lucide-react';
+import { DndContext, DragOverlay, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -8,6 +9,9 @@ import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { LeadKanbanColumn } from '@/components/vendas/LeadKanbanColumn';
+import { LeadKanbanCard } from '@/components/vendas/LeadKanbanCard';
+import { toast } from 'sonner';
 
 interface Lead {
   id: string;
@@ -22,23 +26,7 @@ interface Lead {
   atendente_id: string | null;
 }
 
-const statusColors: Record<string, string> = {
-  novo: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  em_atendimento: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-  orcamento_enviado: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-  venda_realizada: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-  perdido: 'bg-red-500/20 text-red-300 border-red-500/30',
-};
-
-const statusLabels: Record<string, string> = {
-  novo: 'Novo',
-  em_atendimento: 'Em Atendimento',
-  orcamento_enviado: 'Orçamento Enviado',
-  venda_realizada: 'Venda Realizada',
-  perdido: 'Perdido',
-};
-
-const POR_PAGINA = 50;
+const STATUSES = ['novo', 'em_atendimento', 'orcamento_enviado', 'venda_realizada', 'perdido'];
 
 export default function LeadsList() {
   const navigate = useNavigate();
@@ -47,9 +35,13 @@ export default function LeadsList() {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [busca, setBusca] = useState('');
-  const [pagina, setPagina] = useState(1);
-  const [totalLeads, setTotalLeads] = useState(0);
   const [atendentesMap, setAtendentesMap] = useState<Record<string, string>>({});
+  const [activeLead, setActiveLead] = useState<Lead | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
@@ -58,25 +50,19 @@ export default function LeadsList() {
 
   useEffect(() => {
     if (user) fetchLeads();
-  }, [user, pagina]);
+  }, [user]);
 
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      const from = (pagina - 1) * POR_PAGINA;
-      const to = from + POR_PAGINA - 1;
-
-      const { data, error, count } = await supabase
+      const { data, error } = await supabase
         .from('elisaportas_leads')
-        .select('id, nome, telefone, email, cidade, novo_status, canal_aquisicao, data_envio, valor_orcamento, atendente_id', { count: 'exact' })
-        .order('data_envio', { ascending: false })
-        .range(from, to);
+        .select('id, nome, telefone, email, cidade, novo_status, canal_aquisicao, data_envio, valor_orcamento, atendente_id')
+        .order('data_envio', { ascending: false });
 
       if (error) throw error;
       setLeads(data || []);
-      setTotalLeads(count || 0);
 
-      // Buscar nomes dos atendentes
       const atendenteIds = [...new Set((data || []).map(l => l.atendente_id).filter(Boolean))] as string[];
       if (atendenteIds.length > 0) {
         const { data: users } = await supabase
@@ -94,13 +80,57 @@ export default function LeadsList() {
     }
   };
 
-  const totalPaginas = Math.ceil(totalLeads / POR_PAGINA);
+  const filteredLeads = useMemo(() => {
+    if (!busca) return leads;
+    const q = busca.toLowerCase();
+    return leads.filter(l =>
+      l.nome.toLowerCase().includes(q) ||
+      l.telefone.includes(q) ||
+      (l.cidade && l.cidade.toLowerCase().includes(q))
+    );
+  }, [leads, busca]);
 
-  const leadsFiltrados = leads.filter(lead =>
-    lead.nome.toLowerCase().includes(busca.toLowerCase()) ||
-    lead.telefone.includes(busca) ||
-    (lead.cidade && lead.cidade.toLowerCase().includes(busca.toLowerCase()))
-  );
+  const groupedLeads = useMemo(() => {
+    const groups: Record<string, Lead[]> = {};
+    STATUSES.forEach(s => { groups[s] = []; });
+    filteredLeads.forEach(lead => {
+      const status = lead.novo_status || 'novo';
+      if (groups[status]) groups[status].push(lead);
+      else groups.novo.push(lead);
+    });
+    return groups;
+  }, [filteredLeads]);
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const lead = leads.find(l => l.id === event.active.id);
+    setActiveLead(lead || null);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveLead(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const leadId = active.id as string;
+    const newStatus = over.id as string;
+    if (!STATUSES.includes(newStatus)) return;
+
+    const lead = leads.find(l => l.id === leadId);
+    if (!lead || (lead.novo_status || 'novo') === newStatus) return;
+
+    // Optimistic update
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, novo_status: newStatus } : l));
+
+    const { error } = await (supabase.from('elisaportas_leads') as any)
+      .update({ novo_status: newStatus })
+      .eq('id', leadId);
+
+    if (error) {
+      console.error('Erro ao atualizar status:', error);
+      toast.error('Erro ao mover lead');
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, novo_status: lead.novo_status } : l));
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black flex flex-col overflow-hidden relative">
@@ -134,10 +164,10 @@ export default function LeadsList() {
       </button>
 
       {/* Conteúdo */}
-      <div className="relative z-10 flex-1 flex flex-col items-center pt-20 pb-10 px-4 md:px-8">
+      <div className="relative z-10 flex-1 flex flex-col pt-20 pb-4 px-4">
         {/* Header */}
         <div
-          className="w-full max-w-3xl mb-6 flex items-center gap-3"
+          className="w-full max-w-full mb-4 flex items-center gap-3 px-2"
           style={{
             opacity: mounted ? 1 : 0,
             transform: mounted ? 'translateY(0)' : 'translateY(20px)',
@@ -148,132 +178,65 @@ export default function LeadsList() {
             <UserPlus className="w-6 h-6" strokeWidth={1.5} />
           </div>
           <h1 className="text-2xl font-bold text-white">Leads</h1>
-          <Badge className="bg-white/10 text-white/70 border-white/10 ml-auto">
-            {totalLeads} {totalLeads === 1 ? 'lead' : 'leads'}
+          <Badge className="bg-white/10 text-white/70 border-white/10">
+            {leads.length} {leads.length === 1 ? 'lead' : 'leads'}
           </Badge>
-        </div>
 
-        {/* Busca */}
-        <div
-          className="w-full max-w-3xl mb-4"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'translateY(0)' : 'translateY(20px)',
-            transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 300ms',
-          }}
-        >
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-            <Input
-              placeholder="Buscar por nome, telefone ou cidade..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-blue-500/50"
-            />
+          {/* Busca */}
+          <div className="ml-auto w-72">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <Input
+                placeholder="Buscar por nome, telefone ou cidade..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-blue-500/50"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Lista */}
-        <div className="w-full max-w-3xl flex flex-col gap-3">
-          {loading ? (
-            [...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className="p-4 rounded-xl bg-white/5 border border-white/10 animate-pulse"
-              >
-                <div className="h-4 bg-white/10 rounded w-1/3 mb-2" />
-                <div className="h-3 bg-white/10 rounded w-1/2" />
+        {/* Kanban Board */}
+        {loading ? (
+          <div className="flex gap-4 overflow-x-auto flex-1 px-2">
+            {STATUSES.map(s => (
+              <div key={s} className="min-w-[260px] w-[260px] rounded-xl bg-white/[0.02] border border-white/10 animate-pulse">
+                <div className="p-3"><div className="h-4 bg-white/10 rounded w-2/3" /></div>
+                <div className="p-2 space-y-2">
+                  {[1,2,3].map(i => <div key={i} className="h-20 bg-white/5 rounded-lg" />)}
+                </div>
               </div>
-            ))
-          ) : leadsFiltrados.length === 0 ? (
+            ))}
+          </div>
+        ) : (
+          <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             <div
-              className="text-center py-16 text-white/40"
+              className="flex gap-4 overflow-x-auto flex-1 px-2 pb-2"
               style={{
                 opacity: mounted ? 1 : 0,
-                transition: 'opacity 0.5s ease 400ms',
+                transition: 'opacity 0.5s ease 300ms',
               }}
             >
-              <UserPlus className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p className="text-lg">Nenhum lead encontrado</p>
+              {STATUSES.map(status => (
+                <LeadKanbanColumn
+                  key={status}
+                  status={status}
+                  leads={groupedLeads[status]}
+                  atendentesMap={atendentesMap}
+                />
+              ))}
             </div>
-          ) : (
-            leadsFiltrados.map((lead, index) => {
-              const delay = 300 + index * 60;
-              const status = lead.novo_status || 'novo';
 
-              return (
-                <div
-                  key={lead.id}
-                  className="p-4 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
-                             hover:bg-white/10 transition-all duration-300 cursor-pointer"
-                  style={{
-                    opacity: mounted ? 1 : 0,
-                    transform: mounted ? 'translateY(0)' : 'translateY(20px)',
-                    transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`,
-                  }}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white font-medium truncate">{lead.nome}</p>
-                      <div className="flex items-center gap-4 mt-1.5 text-sm text-white/50">
-                        <span className="flex items-center gap-1">
-                          <Phone className="w-3.5 h-3.5" />
-                          {lead.telefone}
-                        </span>
-                        {lead.cidade && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3.5 h-3.5" />
-                            {lead.cidade}
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5" />
-                          {new Date(lead.data_envio).toLocaleDateString('pt-BR')}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <User className="w-3.5 h-3.5" />
-                          {lead.atendente_id ? (atendentesMap[lead.atendente_id] || '...') : 'Não atribuído'}
-                        </span>
-                      </div>
-                    </div>
-                    <Badge
-                      className={`text-xs border ${statusColors[status] || 'bg-white/10 text-white/50 border-white/10'}`}
-                    >
-                      {statusLabels[status] || status}
-                    </Badge>
-                  </div>
-                  {lead.valor_orcamento != null && lead.valor_orcamento > 0 && (
-                    <p className="mt-2 text-sm text-blue-400 font-medium">
-                      R$ {lead.valor_orcamento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        {/* Paginação */}
-        {totalPaginas > 1 && (
-          <div className="w-full max-w-3xl mt-6 flex items-center justify-center gap-2">
-            <button
-              onClick={() => setPagina(p => Math.max(1, p - 1))}
-              disabled={pagina === 1}
-              className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="text-sm text-white/50 px-3">
-              {pagina} / {totalPaginas}
-            </span>
-            <button
-              onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}
-              disabled={pagina === totalPaginas}
-              className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+            <DragOverlay>
+              {activeLead ? (
+                <LeadKanbanCard
+                  lead={activeLead}
+                  atendenteName={activeLead.atendente_id ? atendentesMap[activeLead.atendente_id] || '...' : null}
+                  isDragOverlay
+                />
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         )}
       </div>
     </div>
