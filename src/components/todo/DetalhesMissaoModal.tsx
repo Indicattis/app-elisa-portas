@@ -199,6 +199,11 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
     });
   }, [onReordenarCheckboxes]);
 
+  const handleDeleteCheckbox = useCallback((id: string) => {
+    onDeletarCheckbox?.(id);
+    setLocalCheckboxes(prev => prev.filter(cb => cb.id !== id));
+  }, [onDeletarCheckbox]);
+
   if (!missao) return null;
 
   const total = missao.missao_checkboxes.length;
