@@ -526,12 +526,26 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                   {venda.cliente_nome}
                 </h2>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-white/60">
-                  {(venda.cidade || venda.estado) && (
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5 text-blue-400" />
-                      {[venda.cidade, venda.estado].filter(Boolean).join(' - ')}
-                    </span>
-                  )}
+                  {(() => {
+                    const rua = pedido.endereco_rua;
+                    const numero = pedido.endereco_numero;
+                    const bairro = pedido.endereco_bairro || venda.bairro;
+                    const cidade = pedido.endereco_cidade || venda.cidade;
+                    const estado = pedido.endereco_estado || venda.estado;
+                    const cep = pedido.endereco_cep || venda.cep;
+                    const parts = [
+                      rua && `${rua}${numero ? `, ${numero}` : ''}`,
+                      bairro,
+                      cidade && estado ? `${cidade}/${estado}` : cidade || estado,
+                      cep && `CEP ${cep}`,
+                    ].filter(Boolean);
+                    return parts.length > 0 ? (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                        {parts.join(' - ')}
+                      </span>
+                    ) : null;
+                  })()}
                   {venda.cliente_telefone && (
                     <span className="flex items-center gap-1">
                       <Phone className="h-3.5 w-3.5 text-green-400" />
