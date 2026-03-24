@@ -1,34 +1,20 @@
 
 
-## Plano: Corrigir edição de descrição, exclusão de itens e alinhamento de botões
+## Plano: Corrigir exclusão de itens da missão
 
-### Problemas identificados
+### Problema
+Quando o usuário exclui um item e clica em salvar (botão Check), o item reaparece. Isso acontece porque o `useEffect` de sincronização no modal re-sincroniza `localCheckboxes` com os dados do servidor. Se a query re-fetcha antes do delete ser commitado no banco, o item deletado é re-adicionado ao estado local.
 
-1. **Edição de descrição não persiste visualmente**: O `SortableCheckboxItem` usa `useState(cb.descricao)` internamente, que não atualiza quando props mudam. Além disso, após o blur, a query invalida e o componente pode perder o foco antes de salvar.
+### Solução
+Manter um `Set` de IDs deletados localmente durante a edição. O `useEffect` de sincronização vai ignorar esses IDs, e ao sair do modo edição o set é limpo.
 
-2. **Exclusão não funciona visualmente**: Embora a mutation rode, o `localCheckboxes` pode estar sendo sobrescrito pela re-renderização causada pela invalidação da query (o `missaoSelecionada` muda, mas o `localCheckboxes` local não sincroniza corretamente).
+### Alteração: `src/components/todo/DetalhesMissaoModal.tsx`
 
-3. **Botões desalinhados**: O botão de edição (Pencil/Check) precisa ficar alinhado com o X de fechar do Dialog.
+1. Adicionar `const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())`
+2. No `handleDeleteCheckbox`, adicionar o ID ao `deletedIds`
+3. No `useEffect` de sync, filtrar também por `!deletedIds.has(cb.id)` ao construir a lista
+4. No `handleStartEditing`, limpar `deletedIds`
+5. No `handleStopEditing`, limpar `deletedIds`
 
-4. **View mode usa SortableCheckboxItem sem DndContext**: Pode causar erros silenciosos.
-
-### Alterações
-
-#### `src/components/todo/DetalhesMissaoModal.tsx`
-
-1. **Separar componente de view e edit**: No modo visualização, renderizar um componente simples (sem `useSortable`) em vez do `SortableCheckboxItem`. Isso elimina o problema de `useSortable` sem `DndContext`.
-
-2. **Sincronizar `localCheckboxes` com dados do servidor**: Adicionar um `useEffect` que atualiza `localCheckboxes` quando `missao.missao_checkboxes` muda E `editando` é true — mas apenas para mudanças vindas do servidor (delete/prazo), preservando edições locais de descrição em andamento.
-
-3. **Usar `key` com descrição no Input**: Forçar re-mount do Input quando a descrição muda no servidor, garantindo que `localDescricao` reflita o estado correto.
-
-4. **Alinhar botões**: Ajustar posicionamento do botão Pencil/Check para ficar na mesma linha e alinhado com o X do Dialog — usar `absolute right-10 top-3` ou flexbox adequado no header.
-
-5. **Adicionar `onPointerDown={e => e.stopPropagation()}` no Input e no botão X**: Evita que o dnd-kit intercepte cliques nesses elementos.
-
-### Resultado
-- Edição de descrição funciona e salva ao blur/enter
-- Exclusão remove o item imediatamente e persiste
-- Drag-and-drop funciona sem conflito com inputs/botões
-- Botões alinhados corretamente no header
+Isso garante que mesmo que o servidor retorne dados stale, os itens marcados para exclusão não reaparecem durante a edição.
 
