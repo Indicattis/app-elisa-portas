@@ -36,6 +36,12 @@ export interface OrdemCarregamentoUnificada {
     updated_at?: string;
     ficha_visita_url?: string | null;
     ficha_visita_nome?: string | null;
+    endereco_rua?: string | null;
+    endereco_numero?: string | null;
+    endereco_bairro?: string | null;
+    endereco_cidade?: string | null;
+    endereco_estado?: string | null;
+    endereco_cep?: string | null;
   } | null;
   venda?: {
     id: string;
