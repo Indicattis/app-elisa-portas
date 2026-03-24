@@ -1,22 +1,29 @@
 
 
-## Plano: Mostrar endereço completo no PedidoDetalhesSheet
+## Plano: Adicionar seção "Endereço" na página do pedido
 
-### Problema
-O componente `PedidoDetalhesSheet.tsx` (linha 530-533) mostra apenas `venda.cidade - venda.estado`. O objeto `pedido` já contém campos de endereço completo (`endereco_rua`, `endereco_numero`, `endereco_bairro`, `endereco_cidade`, `endereco_estado`, `endereco_cep`) que não estão sendo usados.
+### Contexto
+A tabela `pedidos_producao` já possui os campos `endereco_rua`, `endereco_numero`, `endereco_bairro`, `endereco_cep`, `endereco_cidade`, `endereco_estado`. Eles já são buscados no `fetchPedidoDetails` (que faz `select("*")`), mas não são exibidos nem editáveis na página.
 
 ### Alteração
 
-**`src/components/pedidos/PedidoDetalhesSheet.tsx`** (linhas 528-534)
+**`src/pages/administrativo/PedidoViewMinimalista.tsx`**
 
-Substituir a exibição atual por lógica que prioriza os dados do pedido com fallback para dados da venda:
+1. Adicionar estados para edição do endereço (`editandoEndereco`, `enderecoForm` com os 6 campos)
+2. Inicializar os estados com os dados do pedido via `useEffect`
+3. Adicionar uma nova Card "Endereço" logo após o grid de "Informações do Cliente / Ações Rápidas" (após linha ~562), contendo:
+   - Modo visualização: exibe o endereço formatado (rua, número, bairro, cidade/estado, CEP) com botão "Editar"
+   - Modo edição: inputs para Rua, Número, Bairro, Cidade, Estado, CEP com botões Salvar/Cancelar
+4. Função `handleSalvarEndereco` que faz `supabase.from('pedidos_producao').update({...}).eq('id', pedido.id)` e atualiza o estado local
 
-- Montar endereço completo: `{rua}, {numero} - {bairro} - {cidade}/{estado} - CEP {cep}`
-- Priorizar `pedido.endereco_*`, com fallback para `venda.cidade` / `venda.estado`
-- Omitir partes vazias automaticamente
+### Campos do formulário
+- **Rua** (text, col-span-2)
+- **Número** (text)
+- **Bairro** (text)
+- **Cidade** (text)
+- **Estado** (text, select com UFs ou input curto)
+- **CEP** (text, com máscara xxxxx-xxx)
 
-Padrão já usado em `AcaoEtapaModal.tsx` e `HistoricoOrdemDetalhesSheet.tsx` — será consistente com o resto do sistema.
-
-### Resultado
-O endereço completo aparecerá na seção hero do sheet de detalhes do pedido.
+### Visual
+Card com mesmo estilo das existentes (`bg-white/5 border-blue-500/10 backdrop-blur-xl`), ícone MapPin, título "Endereço". Grid responsivo 2-3 colunas para os campos.
 
