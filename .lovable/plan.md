@@ -1,29 +1,42 @@
 
 
-## Plano: Adicionar seção "Endereço" na página do pedido
+## Plano: Corrigir erro de tipo na trigger de aprovação de acordos
 
-### Contexto
-A tabela `pedidos_producao` já possui os campos `endereco_rua`, `endereco_numero`, `endereco_bairro`, `endereco_cep`, `endereco_cidade`, `endereco_estado`. Eles já são buscados no `fetchPedidoDetails` (que faz `select("*")`), mas não são exibidos nem editáveis na página.
+### Problema raiz
+A trigger `gerar_conta_pagar_acordo_autorizado` (migration `20260324110100`) calcula a data de vencimento com `::date::text`, convertendo o resultado para `text`. A coluna `data_vencimento` na tabela `contas_pagar` é do tipo `DATE`, causando o erro `42804`.
 
-### Alteração
+### Correção
 
-**`src/pages/administrativo/PedidoViewMinimalista.tsx`**
+**Migration SQL** — recriar a função removendo o cast para `text`:
 
-1. Adicionar estados para edição do endereço (`editandoEndereco`, `enderecoForm` com os 6 campos)
-2. Inicializar os estados com os dados do pedido via `useEffect`
-3. Adicionar uma nova Card "Endereço" logo após o grid de "Informações do Cliente / Ações Rápidas" (após linha ~562), contendo:
-   - Modo visualização: exibe o endereço formatado (rua, número, bairro, cidade/estado, CEP) com botão "Editar"
-   - Modo edição: inputs para Rua, Número, Bairro, Cidade, Estado, CEP com botões Salvar/Cancelar
-4. Função `handleSalvarEndereco` que faz `supabase.from('pedidos_producao').update({...}).eq('id', pedido.id)` e atualiza o estado local
+```sql
+CREATE OR REPLACE FUNCTION public.gerar_conta_pagar_acordo_autorizado()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  IF NEW.aprovado_direcao = true AND (OLD.aprovado_direcao IS DISTINCT FROM true) THEN
+    INSERT INTO public.contas_pagar (
+      descricao, valor_parcela, data_vencimento, categoria, status,
+      numero_parcela, total_parcelas, observacoes, created_by
+    ) VALUES (
+      'Acordo Autorizado - ' || NEW.cliente_nome || ' (' || NEW.cliente_cidade || '/' || NEW.cliente_estado || ')',
+      NEW.valor_acordado,
+      (NEW.data_acordo::date + interval '30 days')::date,
+      'Autorizados',
+      'Pendente',
+      1, 1,
+      'Gerado automaticamente pela aprovação do acordo ID: ' || NEW.id,
+      NEW.aprovado_direcao_por
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+```
 
-### Campos do formulário
-- **Rua** (text, col-span-2)
-- **Número** (text)
-- **Bairro** (text)
-- **Cidade** (text)
-- **Estado** (text, select com UFs ou input curto)
-- **CEP** (text, com máscara xxxxx-xxx)
+Única mudança: linha do `data_vencimento` — de `::date::text` para `::date`.
 
-### Visual
-Card com mesmo estilo das existentes (`bg-white/5 border-blue-500/10 backdrop-blur-xl`), ícone MapPin, título "Endereço". Grid responsivo 2-3 colunas para os campos.
+Nenhuma alteração no frontend necessária.
 
