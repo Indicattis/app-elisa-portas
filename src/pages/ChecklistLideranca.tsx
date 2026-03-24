@@ -27,7 +27,7 @@ export default function ChecklistLideranca() {
   const [semanaBase, setSemanaBase] = useState(new Date());
 
   const { criarTemplate } = useTarefas();
-  const { missoes, isLoading: loadingMissoes, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes, deletarCheckbox } = useMissoes();
+  const { missoes, isLoading: loadingMissoes, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes, deletarCheckbox, editarPrazoCheckbox } = useMissoes();
   const [missaoSelecionadaId, setMissaoSelecionadaId] = useState<string | null>(null);
   const missaoSelecionada = missoes?.find(m => m.id === missaoSelecionadaId) || null;
 
