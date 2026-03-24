@@ -1,42 +1,33 @@
 
 
-## Plano: Corrigir erro de tipo na trigger de aprovação de acordos
+## Plano: Adicionar botão "Leads" no hub de Vendas
 
-### Problema raiz
-A trigger `gerar_conta_pagar_acordo_autorizado` (migration `20260324110100`) calcula a data de vencimento com `::date::text`, convertendo o resultado para `text`. A coluna `data_vencimento` na tabela `contas_pagar` é do tipo `DATE`, causando o erro `42804`.
+### Alteração
 
-### Correção
+**`src/pages/vendas/VendasHub.tsx`**
 
-**Migration SQL** — recriar a função removendo o cast para `text`:
+Adicionar um novo item ao array `menuItems`:
 
-```sql
-CREATE OR REPLACE FUNCTION public.gerar_conta_pagar_acordo_autorizado()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  IF NEW.aprovado_direcao = true AND (OLD.aprovado_direcao IS DISTINCT FROM true) THEN
-    INSERT INTO public.contas_pagar (
-      descricao, valor_parcela, data_vencimento, categoria, status,
-      numero_parcela, total_parcelas, observacoes, created_by
-    ) VALUES (
-      'Acordo Autorizado - ' || NEW.cliente_nome || ' (' || NEW.cliente_cidade || '/' || NEW.cliente_estado || ')',
-      NEW.valor_acordado,
-      (NEW.data_acordo::date + interval '30 days')::date,
-      'Autorizados',
-      'Pendente',
-      1, 1,
-      'Gerado automaticamente pela aprovação do acordo ID: ' || NEW.id,
-      NEW.aprovado_direcao_por
-    );
-  END IF;
-  RETURN NEW;
-END;
-$$;
+```ts
+{ label: 'Leads', icon: UserPlus, path: '/vendas/leads' }
 ```
 
-Única mudança: linha do `data_vencimento` — de `::date::text` para `::date`.
+- Importar `UserPlus` de `lucide-react`
+- O botão aparecerá no mobile (lista) e desktop (grid) automaticamente
 
-Nenhuma alteração no frontend necessária.
+### Rota
+
+Será necessário criar a rota `/vendas/leads` no router. Ela apontará para uma nova página que lista os leads da tabela `elisaportas_leads`.
+
+### Nova página `src/pages/vendas/LeadsList.tsx`
+
+- Buscar leads de `elisaportas_leads` filtrados pelo usuário logado (se houver campo `atendente_id` ou similar)
+- Exibir lista com nome, telefone, cidade, status
+- Botão voltar para `/vendas`
+- Estilo consistente com as outras páginas de vendas (fundo escuro, cards com glassmorphism)
+
+### Arquivos alterados
+1. `src/pages/vendas/VendasHub.tsx` — novo item no menu
+2. `src/pages/vendas/LeadsList.tsx` — nova página (criar)
+3. `src/App.tsx` — nova rota `/vendas/leads`
 
