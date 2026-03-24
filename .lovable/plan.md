@@ -1,41 +1,29 @@
 
 
-## Plano: Editar missões com reescrita de tarefas e drag-and-drop
+## Plano: Corrigir exclusão de itens, alinhar botões e adicionar edição de prazos
 
-### O que será feito
-Adicionar modo de edição no `DetalhesMissaoModal` permitindo reescrever descrições dos checkboxes e reordená-los via drag-and-drop. O projeto já possui `@dnd-kit` instalado.
+### Problemas identificados
+
+1. **Exclusão não funciona visualmente**: `missaoSelecionada` é uma cópia estática no state. Quando a query invalida após o delete, o modal continua mostrando dados antigos.
+2. **Botões desalinhados**: O botão de edição (Pencil) e o botão de fechar (X do Dialog) não estão alinhados verticalmente.
+3. **Sem edição de prazos**: No modo edição, não há como alterar as datas de prazo dos itens.
 
 ### Alterações
 
-#### 1. `src/hooks/useMissoes.ts`
-Adicionar duas mutations:
-
-- **`editarCheckbox`**: atualiza `descricao` de um checkbox via `supabase.from('missao_checkboxes').update({ descricao }).eq('id', id)`
-- **`reordenarCheckboxes`**: recebe array de `{ id, ordem }` e faz batch update (loop de updates) para persistir a nova ordem
+#### 1. `src/pages/ChecklistLideranca.tsx`
+- Em vez de guardar o objeto `missao` inteiro no state, guardar apenas o `id` da missão selecionada
+- Derivar a missão atual a partir de `missoes.find(m => m.id === missaoSelecionadaId)` — assim quando a query invalida, o modal recebe dados atualizados automaticamente
 
 #### 2. `src/components/todo/DetalhesMissaoModal.tsx`
-- Adicionar estado `editando` (boolean) com botão de toggle (ícone Pencil/Check)
-- **Modo visualização** (atual): checkboxes com marcação normal
-- **Modo edição**:
-  - Cada descrição vira um `<Input>` editável inline; ao blur/enter salva via `editarCheckbox`
-  - Lista envolvida por `DndContext` + `SortableContext` do `@dnd-kit/sortable`
-  - Cada item ganha um handle de arrastar (ícone GripVertical)
-  - Ao soltar, calcula nova ordem e chama `reordenarCheckboxes`
-  - Checkboxes ficam desabilitados durante edição
-- Importar `DndContext`, `SortableContext`, `useSortable`, `arrayMove`, `closestCenter`, `restrictToVerticalAxis`
+- **Alinhamento dos botões**: Ajustar o `pr-6` do container do título para que o botão Pencil/Check fique alinhado com o X de fechar do Dialog
+- **Edição de prazo**: No modo edição, adicionar um botão de calendário (CalendarIcon) ao lado de cada item que abre um Popover com Calendar para selecionar/alterar o prazo
+- Chamar nova prop `onEditarPrazoCheckbox` ao selecionar data
 
-### Fluxo do usuário
-```text
-┌─────────────────────────────┐
-│ Título da Missão      [✏️] │
-│─────────────────────────────│
-│ ≡  [Input: Tarefa 1]       │  ← arrastar + editar
-│ ≡  [Input: Tarefa 2]       │
-│ ≡  [Input: Tarefa 3]       │
-│─────────────────────────────│
-│ [Excluir missão]            │
-└─────────────────────────────┘
-```
+#### 3. `src/hooks/useMissoes.ts`
+- Adicionar mutation `editarPrazoCheckbox` que faz `update({ prazo }).eq('id', id)` na tabela `missao_checkboxes`
 
-Nenhuma alteração de banco necessária — as colunas `descricao` e `ordem` já existem em `missao_checkboxes`.
+### Resultado
+- Itens excluídos desaparecem imediatamente do modal
+- Botões de edição e fechar ficam alinhados na mesma linha
+- Usuário pode clicar no ícone de calendário em modo edição para alterar o prazo de cada item
 
