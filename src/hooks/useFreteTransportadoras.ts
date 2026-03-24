@@ -29,7 +29,7 @@ export function useFreteTransportadoras(transportadoraId?: string) {
   const { data: fretes, isLoading } = useQuery({
     queryKey: ['frete_transportadoras', transportadoraId],
     queryFn: async () => {
-      let query = supabase.from('frete_transportadoras').select('*').order('estado', { ascending: true });
+      let query = (supabase as any).from('frete_transportadoras').select('*').order('estado', { ascending: true });
       if (transportadoraId) query = query.eq('transportadora_id', transportadoraId);
       const { data, error } = await query;
       if (error) throw error;
@@ -39,7 +39,7 @@ export function useFreteTransportadoras(transportadoraId?: string) {
 
   const createFrete = useMutation({
     mutationFn: async (input: FreteTransportadoraInput) => {
-      const { data, error } = await supabase.from('frete_transportadoras').insert(input).select().single();
+      const { data, error } = await (supabase as any).from('frete_transportadoras').insert(input).select().single();
       if (error) {
         if (error.code === '23505') throw new Error('Já existe valor para este estado/transportadora');
         throw error;
@@ -55,7 +55,7 @@ export function useFreteTransportadoras(transportadoraId?: string) {
 
   const updateFrete = useMutation({
     mutationFn: async ({ id, ...input }: FreteTransportadoraInput & { id: string }) => {
-      const { data, error } = await supabase.from('frete_transportadoras').update(input).eq('id', id).select().single();
+      const { data, error } = await (supabase as any).from('frete_transportadoras').update(input).eq('id', id).select().single();
       if (error) {
         if (error.code === '23505') throw new Error('Já existe valor para este estado/transportadora');
         throw error;
@@ -71,7 +71,7 @@ export function useFreteTransportadoras(transportadoraId?: string) {
 
   const deleteFrete = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('frete_transportadoras').delete().eq('id', id);
+      const { error } = await (supabase as any).from('frete_transportadoras').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {

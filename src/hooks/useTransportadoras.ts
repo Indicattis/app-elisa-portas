@@ -25,7 +25,7 @@ export function useTransportadoras() {
   const { data: transportadoras, isLoading } = useQuery({
     queryKey: ['transportadoras'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('transportadoras')
         .select('*')
         .order('nome', { ascending: true });
@@ -36,7 +36,7 @@ export function useTransportadoras() {
 
   const createTransportadora = useMutation({
     mutationFn: async (input: TransportadoraInput) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('transportadoras')
         .insert(input)
         .select()
@@ -53,7 +53,7 @@ export function useTransportadoras() {
 
   const updateTransportadora = useMutation({
     mutationFn: async ({ id, ...input }: TransportadoraInput & { id: string }) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('transportadoras')
         .update(input)
         .eq('id', id)
@@ -71,7 +71,7 @@ export function useTransportadoras() {
 
   const deleteTransportadora = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('transportadoras').delete().eq('id', id);
+      const { error } = await (supabase as any).from('transportadoras').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -83,7 +83,7 @@ export function useTransportadoras() {
 
   const toggleAtivo = useMutation({
     mutationFn: async ({ id, ativo }: { id: string; ativo: boolean }) => {
-      const { error } = await supabase.from('transportadoras').update({ ativo }).eq('id', id);
+      const { error } = await (supabase as any).from('transportadoras').update({ ativo }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
