@@ -1,34 +1,22 @@
 
 
-## Plano: Corrigir exclusão de itens de missão
+## Plano: Mostrar endereço completo nas downbars de carregamento
 
-### Problema raiz
-A política RLS de DELETE na tabela `missao_checkboxes` só permite exclusão pelo **criador da missão** (`missoes.created_by = auth.uid()`). Se um diretor/administrador que não criou a missão tenta excluir um item, o Supabase retorna sucesso (sem erro), mas nenhuma linha é deletada. A invalidação da query traz os dados do servidor de volta, e o item "reaparece".
+### Problema
+A downbar mostra apenas bairro, cidade e estado (vindos da tabela `vendas`). O endereço completo (rua, número, complemento, CEP) está na tabela `pedidos_producao` mas não é buscado pelo hook.
 
-### Solução
+### Alterações
 
-**Migration SQL**: Atualizar a política RLS de DELETE para permitir que diretores e administradores também possam excluir itens de checkbox:
+**1. `src/hooks/useOrdensCarregamentoUnificadas.ts`**
+- Nas 3 queries que buscam `pedidos_producao` (ordens_carregamento, instalacoes, correcoes), adicionar os campos: `endereco_rua, endereco_numero, endereco_bairro, endereco_cidade, endereco_estado, endereco_cep`
+- Na query de pedidos órfãos, adicionar os mesmos campos
+- Atualizar a interface `OrdemCarregamentoUnificada.pedido` para incluir esses campos opcionais
 
-```sql
-DROP POLICY "Creator can delete missao_checkboxes" ON public.missao_checkboxes;
-
-CREATE POLICY "Creator or admin can delete missao_checkboxes"
-ON public.missao_checkboxes
-FOR DELETE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM missoes
-    WHERE missoes.id = missao_checkboxes.missao_id
-    AND missoes.created_by = auth.uid()
-  )
-  OR public.has_role(auth.uid(), 'diretor')
-  OR public.has_role(auth.uid(), 'administrador')
-);
-```
-
-**Nenhuma alteração no frontend** — o código já está correto (`handleDeleteCheckbox` chama `onDeletarCheckbox` e remove do estado local com `deletedIds`). O problema é 100% na camada de permissão do banco.
+**2. `src/components/carregamento/CarregamentoDownbar.tsx`**
+- Na seção de endereço (linha ~221-225), montar o endereço completo usando os campos do pedido, com fallback para os campos da venda:
+  - Formato: `Rua X, Nº Y - Bairro, Cidade/UF - CEP`
+  - Priorizar dados de `pedido.endereco_*`, com fallback para `venda.bairro/cidade/estado`
 
 ### Resultado
-Diretores e administradores poderão excluir itens de qualquer missão. Criadores continuam podendo excluir itens das próprias missões.
+O endereço completo aparecerá na downbar de carregamento, incluindo rua, número e CEP quando disponíveis.
 
