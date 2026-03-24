@@ -278,6 +278,7 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
                         editando={true}
                         onToggleCheckbox={onToggleCheckbox}
                         onSaveDescricao={handleSaveDescricao}
+                        onDeleteItem={handleDeleteCheckbox}
                       />
                     ))}
                   </div>

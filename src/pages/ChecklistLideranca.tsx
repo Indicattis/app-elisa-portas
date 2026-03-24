@@ -27,7 +27,7 @@ export default function ChecklistLideranca() {
   const [semanaBase, setSemanaBase] = useState(new Date());
 
   const { criarTemplate } = useTarefas();
-  const { missoes, isLoading: loadingMissoes, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes } = useMissoes();
+  const { missoes, isLoading: loadingMissoes, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes, deletarCheckbox } = useMissoes();
   const [missaoSelecionada, setMissaoSelecionada] = useState<import("@/hooks/useMissoes").Missao | null>(null);
 
   const { data: calendarioData, isLoading: loadingCalendario } = useTarefasCalendario(semanaBase);
@@ -419,6 +419,7 @@ export default function ChecklistLideranca() {
         onDelete={(id) => deletarMissao.mutate(id)}
         onEditarCheckbox={(params) => editarCheckbox.mutate(params)}
         onReordenarCheckboxes={(items) => reordenarCheckboxes.mutate(items)}
+        onDeletarCheckbox={(id) => deletarCheckbox.mutate(id)}
       />
     </MinimalistLayout>
   );
