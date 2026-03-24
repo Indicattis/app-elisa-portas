@@ -1,15 +1,21 @@
 
 
-## Plano: Adicionar data de cadastro nos leads
+## Plano: Exibir todos os leads e adicionar paginação
 
-### Alteração
+### Problema
+A query atual filtra por `.eq('atendente_id', user!.id)`, mostrando apenas leads atribuídos ao usuário logado. Além disso, o Supabase tem limite padrão de 1000 registros por query.
 
-**`src/pages/vendas/LeadsList.tsx`**
+### Alterações em `src/pages/vendas/LeadsList.tsx`
 
-1. Importar `Calendar` de `lucide-react`
-2. Na seção de info de cada lead (linha ~196-205), adicionar a `data_envio` formatada ao lado do telefone e cidade:
-   - Formato: `dd/mm/aaaa` usando `new Date(lead.data_envio).toLocaleDateString('pt-BR')`
-   - Ícone `Calendar` com mesmo estilo dos outros (`w-3.5 h-3.5`)
+1. **Remover filtro por atendente** — trocar `.eq('atendente_id', user!.id)` para buscar todos os leads (ou condicionar ao papel do usuário: admin/gerente vê todos, atendente vê apenas os seus)
+2. **Adicionar paginação** com range do Supabase:
+   - Estado `pagina` (número da página atual) e `totalLeads`
+   - Usar `.range(from, to)` na query com páginas de 50 registros
+   - Usar o componente `Pagination` existente no projeto para navegação entre páginas
+3. **Lógica de visibilidade por papel**:
+   - Se `isAdmin || isGerenteComercial || hasBypassPermissions` → buscar todos
+   - Se `isAtendente` → manter filtro `.eq('atendente_id', user!.id)`
 
-Nenhuma alteração de dados necessária — o campo `data_envio` já é buscado na query.
+### Resultado
+Todos os leads aparecerão com navegação paginada, respeitando o papel do usuário logado.
 
