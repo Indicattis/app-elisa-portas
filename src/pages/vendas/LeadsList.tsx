@@ -106,6 +106,24 @@ export default function LeadsList() {
     setActiveLead(lead || null);
   };
 
+  const handleCapture = async (leadId: string) => {
+    if (!user) return;
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, atendente_id: user.id } : l));
+    setAtendentesMap(prev => ({ ...prev, [user.id]: prev[user.id] || 'Você' }));
+
+    const { error } = await (supabase.from('elisaportas_leads') as any)
+      .update({ atendente_id: user.id, novo_status: 'em_atendimento' })
+      .eq('id', leadId);
+
+    if (error) {
+      toast.error('Erro ao capturar lead');
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, atendente_id: null } : l));
+    } else {
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, novo_status: 'em_atendimento' } : l));
+      toast.success('Lead capturado!');
+    }
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     setActiveLead(null);
     const { active, over } = event;
@@ -223,6 +241,8 @@ export default function LeadsList() {
                   status={status}
                   leads={groupedLeads[status]}
                   atendentesMap={atendentesMap}
+                  userId={user?.id}
+                  onCapture={handleCapture}
                 />
               ))}
             </div>

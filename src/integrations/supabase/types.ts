@@ -7625,7 +7625,7 @@ export type Database = {
             foreignKeyName: "whatsapp_roulette_clicks_atendente_id_fkey"
             columns: ["atendente_id"]
             isOneToOne: false
-            referencedRelation: "admin_users"
+            referencedRelation: "whatsapp_distribuicao"
             referencedColumns: ["id"]
           },
         ]

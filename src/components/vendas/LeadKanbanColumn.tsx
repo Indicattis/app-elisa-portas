@@ -36,9 +36,11 @@ interface LeadKanbanColumnProps {
   status: string;
   leads: Lead[];
   atendentesMap: Record<string, string>;
+  userId?: string;
+  onCapture?: (leadId: string) => void;
 }
 
-export function LeadKanbanColumn({ status, leads, atendentesMap }: LeadKanbanColumnProps) {
+export function LeadKanbanColumn({ status, leads, atendentesMap, userId, onCapture }: LeadKanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const style = columnStyles[status] || columnStyles.novo;
 
@@ -74,6 +76,8 @@ export function LeadKanbanColumn({ status, leads, atendentesMap }: LeadKanbanCol
                 key={lead.id}
                 lead={lead}
                 atendenteName={lead.atendente_id ? atendentesMap[lead.atendente_id] || '...' : null}
+                userId={userId}
+                onCapture={onCapture}
               />
             ))
           )}
