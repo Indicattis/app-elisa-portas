@@ -286,7 +286,7 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => { if (!v) setEditando(false); onOpenChange(v); }}>
-        <DialogContent className="bg-white/5 border-white/10 backdrop-blur-xl text-white max-w-lg max-h-[85vh] overflow-y-auto p-0 rounded-xl">
+        <DialogContent className="bg-white/5 border-white/10 backdrop-blur-xl text-white max-w-lg max-h-[85vh] overflow-y-auto p-0 rounded-xl [&>button.absolute]:hidden">
           <DialogHeader className="p-4 pb-0">
             <div className="flex items-center gap-2">
               <DialogTitle className="text-base font-semibold text-white flex-1 min-w-0">{missao.titulo}</DialogTitle>
