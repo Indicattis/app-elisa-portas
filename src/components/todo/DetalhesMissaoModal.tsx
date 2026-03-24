@@ -353,69 +353,70 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
 
             {/* Checkboxes */}
             {editando ? (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                modifiers={[restrictToVerticalAxis]}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext items={localCheckboxes.map(cb => cb.id)} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-1">
-                    {localCheckboxes.map((cb) => (
-                      <SortableEditItem
-                        key={cb.id}
-                        cb={cb}
-                        onSaveDescricao={handleSaveDescricao}
-                        onDeleteItem={handleDeleteCheckbox}
-                        onEditarPrazo={handleEditarPrazo}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
-
-              {/* Adicionar novo item */}
-              {adicionandoItem ? (
-                <div className="flex items-center gap-2 mt-2">
-                  <Input
-                    ref={novoItemRef}
-                    value={novoItemDescricao}
-                    onChange={(e) => setNovoItemDescricao(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleAdicionarItem();
-                      if (e.key === "Escape") { setAdicionandoItem(false); setNovoItemDescricao(""); }
-                    }}
-                    placeholder="Descrição do item..."
-                    className="h-7 text-xs bg-white/5 border-white/10 text-white flex-1"
-                    autoFocus
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
-                    onClick={handleAdicionarItem}
-                    disabled={!novoItemDescricao.trim()}
-                  >
-                    <Check className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10"
-                    onClick={() => { setAdicionandoItem(false); setNovoItemDescricao(""); }}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setAdicionandoItem(true)}
-                  className="flex items-center gap-1.5 mt-2 text-xs text-white/40 hover:text-white/70 transition-colors"
+              <>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  modifiers={[restrictToVerticalAxis]}
+                  onDragEnd={handleDragEnd}
                 >
-                  <Plus className="h-3.5 w-3.5" />
-                  Adicionar item
-                </button>
-              )}
+                  <SortableContext items={localCheckboxes.map(cb => cb.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-1">
+                      {localCheckboxes.map((cb) => (
+                        <SortableEditItem
+                          key={cb.id}
+                          cb={cb}
+                          onSaveDescricao={handleSaveDescricao}
+                          onDeleteItem={handleDeleteCheckbox}
+                          onEditarPrazo={handleEditarPrazo}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+
+                {adicionandoItem ? (
+                  <div className="flex items-center gap-2 mt-2">
+                    <Input
+                      ref={novoItemRef}
+                      value={novoItemDescricao}
+                      onChange={(e) => setNovoItemDescricao(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleAdicionarItem();
+                        if (e.key === "Escape") { setAdicionandoItem(false); setNovoItemDescricao(""); }
+                      }}
+                      placeholder="Descrição do item..."
+                      className="h-7 text-xs bg-white/5 border-white/10 text-white flex-1"
+                      autoFocus
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                      onClick={handleAdicionarItem}
+                      disabled={!novoItemDescricao.trim()}
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10"
+                      onClick={() => { setAdicionandoItem(false); setNovoItemDescricao(""); }}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setAdicionandoItem(true)}
+                    className="flex items-center gap-1.5 mt-2 text-xs text-white/40 hover:text-white/70 transition-colors"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Adicionar item
+                  </button>
+                )}
+              </>
             ) : (
               <div className="space-y-1">
                 {checkboxes.map((cb) => (
