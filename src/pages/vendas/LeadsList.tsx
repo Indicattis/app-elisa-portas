@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserPlus, Phone, MapPin, Search, Calendar } from 'lucide-react';
+import { ArrowLeft, UserPlus, Phone, MapPin, Search, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -37,13 +37,17 @@ const statusLabels: Record<string, string> = {
   perdido: 'Perdido',
 };
 
+const POR_PAGINA = 50;
+
 export default function LeadsList() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin, isGerenteComercial, hasBypassPermissions } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [busca, setBusca] = useState('');
+  const [pagina, setPagina] = useState(1);
+  const [totalLeads, setTotalLeads] = useState(0);
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
@@ -52,24 +56,38 @@ export default function LeadsList() {
 
   useEffect(() => {
     if (user) fetchLeads();
-  }, [user]);
+  }, [user, pagina]);
 
   const fetchLeads = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      const from = (pagina - 1) * POR_PAGINA;
+      const to = from + POR_PAGINA - 1;
+
+      let query = supabase
         .from('elisaportas_leads')
-        .select('id, nome, telefone, email, cidade, novo_status, canal_aquisicao, data_envio, valor_orcamento')
-        .eq('atendente_id', user!.id)
-        .order('data_envio', { ascending: false });
+        .select('id, nome, telefone, email, cidade, novo_status, canal_aquisicao, data_envio, valor_orcamento', { count: 'exact' });
+
+      // Atendente vê apenas seus leads; admin/gerente/bypass vê todos
+      if (!isAdmin && !isGerenteComercial && !hasBypassPermissions) {
+        query = query.eq('atendente_id', user!.id);
+      }
+
+      const { data, error, count } = await query
+        .order('data_envio', { ascending: false })
+        .range(from, to);
 
       if (error) throw error;
       setLeads(data || []);
+      setTotalLeads(count || 0);
     } catch (error) {
       console.error('Erro ao buscar leads:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  const totalPaginas = Math.ceil(totalLeads / POR_PAGINA);
 
   const leadsFiltrados = leads.filter(lead =>
     lead.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -124,7 +142,7 @@ export default function LeadsList() {
           </div>
           <h1 className="text-2xl font-bold text-white">Leads</h1>
           <Badge className="bg-white/10 text-white/70 border-white/10 ml-auto">
-            {leadsFiltrados.length} {leadsFiltrados.length === 1 ? 'lead' : 'leads'}
+            {totalLeads} {totalLeads === 1 ? 'lead' : 'leads'}
           </Badge>
         </div>
 
@@ -223,6 +241,29 @@ export default function LeadsList() {
             })
           )}
         </div>
+
+        {/* Paginação */}
+        {totalPaginas > 1 && (
+          <div className="w-full max-w-3xl mt-6 flex items-center justify-center gap-2">
+            <button
+              onClick={() => setPagina(p => Math.max(1, p - 1))}
+              disabled={pagina === 1}
+              className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-sm text-white/50 px-3">
+              {pagina} / {totalPaginas}
+            </span>
+            <button
+              onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}
+              disabled={pagina === totalPaginas}
+              className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
