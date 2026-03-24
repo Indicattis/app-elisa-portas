@@ -599,9 +599,8 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                 </CardContent>
               </Card>
             )}
-          </DialogContent>
+           </DialogContent>
         </Dialog>
-              </div>
       </div>
 
       <NovoEstadoDialog
