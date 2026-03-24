@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { format, isPast, startOfDay, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Trash2, CalendarDays, Clock, AlertTriangle, CheckCircle2, User, Pencil, Check, GripVertical, X } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
@@ -30,24 +30,101 @@ interface DetalhesMissaoModalProps {
   onEditarPrazoCheckbox?: (params: { id: string; prazo: string | null }) => void;
 }
 
-function SortableCheckboxItem({
+// Helper for prazo display
+function PrazoInfo({ cb }: { cb: MissaoCheckbox }) {
+  const prazoDate = cb.prazo ? new Date(cb.prazo + "T12:00:00") : null;
+  const concluidaEmDate = cb.concluida_em ? new Date(cb.concluida_em) : null;
+  const prazoVencido = prazoDate && isPast(startOfDay(prazoDate));
+  const concluidaComAtraso = cb.concluida && prazoDate && concluidaEmDate && concluidaEmDate > prazoDate;
+  const diasAtraso = concluidaComAtraso
+    ? differenceInDays(concluidaEmDate, prazoDate)
+    : prazoVencido && !cb.concluida && prazoDate
+      ? differenceInDays(new Date(), prazoDate)
+      : 0;
+
+  return (
+    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+      {prazoDate && (
+        <span className={cn(
+          "text-[10px] flex items-center gap-0.5",
+          cb.concluida ? "text-white/25" : prazoVencido ? "text-red-400" : "text-white/35"
+        )}>
+          <CalendarDays className="h-2.5 w-2.5" />
+          {format(prazoDate, "dd/MM/yyyy")}
+        </span>
+      )}
+      {cb.concluida && concluidaEmDate && (
+        <span className="text-[10px] text-emerald-400/60 flex items-center gap-0.5">
+          <CheckCircle2 className="h-2.5 w-2.5" />
+          {format(concluidaEmDate, "dd/MM/yyyy")}
+        </span>
+      )}
+      {concluidaComAtraso && diasAtraso > 0 && (
+        <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4 bg-red-500/20 text-red-400 border-red-500/30">
+          {diasAtraso}d de atraso
+        </Badge>
+      )}
+      {!cb.concluida && prazoVencido && diasAtraso > 0 && (
+        <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4 bg-red-500/20 text-red-400 border-red-500/30 flex items-center gap-0.5">
+          <AlertTriangle className="h-2.5 w-2.5" />
+          Atrasado {diasAtraso}d
+        </Badge>
+      )}
+    </div>
+  );
+}
+
+// View-only item (no useSortable)
+function ViewCheckboxItem({
   cb,
-  editando,
   onToggleCheckbox,
+}: {
+  cb: MissaoCheckbox;
+  onToggleCheckbox: (params: { id: string; concluida: boolean }) => void;
+}) {
+  return (
+    <div className={cn(
+      "flex items-start gap-2 rounded-lg px-2.5 py-2 transition-colors",
+      cb.concluida ? "bg-white/[0.02]" : "bg-white/[0.04] hover:bg-white/[0.06]"
+    )}>
+      <Checkbox
+        checked={cb.concluida}
+        onCheckedChange={(checked) => onToggleCheckbox({ id: cb.id, concluida: !!checked })}
+        className="mt-0.5 h-4 w-4 border-white/20 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+      />
+      <div className="flex-1 min-w-0">
+        <span className={cn(
+          "text-xs leading-relaxed block",
+          cb.concluida ? "text-white/30 line-through" : "text-white/80"
+        )}>
+          {cb.descricao}
+        </span>
+        <PrazoInfo cb={cb} />
+      </div>
+    </div>
+  );
+}
+
+// Sortable edit item (uses useSortable, must be inside DndContext)
+function SortableEditItem({
+  cb,
   onSaveDescricao,
   onDeleteItem,
   onEditarPrazo,
 }: {
   cb: MissaoCheckbox;
-  editando: boolean;
-  onToggleCheckbox: (params: { id: string; concluida: boolean }) => void;
   onSaveDescricao: (id: string, descricao: string) => void;
-  onDeleteItem?: (id: string) => void;
-  onEditarPrazo?: (id: string, prazo: string | null) => void;
+  onDeleteItem: (id: string) => void;
+  onEditarPrazo: (id: string, prazo: string | null) => void;
 }) {
   const [localDescricao, setLocalDescricao] = useState(cb.descricao);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cb.id });
+
+  // Sync local state when server data changes (e.g. after save)
+  useEffect(() => {
+    setLocalDescricao(cb.descricao);
+  }, [cb.descricao]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -70,121 +147,63 @@ function SortableCheckboxItem({
   };
 
   const prazoDate = cb.prazo ? new Date(cb.prazo + "T12:00:00") : null;
-  const concluidaEmDate = cb.concluida_em ? new Date(cb.concluida_em) : null;
-  const prazoVencido = prazoDate && isPast(startOfDay(prazoDate));
-  const concluidaComAtraso = cb.concluida && prazoDate && concluidaEmDate && concluidaEmDate > prazoDate;
-  const diasAtraso = concluidaComAtraso
-    ? differenceInDays(concluidaEmDate, prazoDate)
-    : prazoVencido && !cb.concluida && prazoDate
-      ? differenceInDays(new Date(), prazoDate)
-      : 0;
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(
-        "flex items-start gap-2 rounded-lg px-2.5 py-2 transition-colors",
-        editando ? "bg-white/[0.06]" : cb.concluida ? "bg-white/[0.02]" : "bg-white/[0.04] hover:bg-white/[0.06]"
-      )}
+      className="flex items-start gap-2 rounded-lg px-2.5 py-2 bg-white/[0.06]"
     >
-      {editando ? (
-        <>
+      <button
+        className="mt-1.5 cursor-grab active:cursor-grabbing text-white/30 hover:text-white/60 touch-none shrink-0"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <Input
+        value={localDescricao}
+        onChange={(e) => setLocalDescricao(e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        onPointerDown={(e) => e.stopPropagation()}
+        className="h-7 text-xs bg-white/5 border-white/10 text-white flex-1 min-w-0"
+      />
+      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+        <PopoverTrigger asChild>
           <button
-            className="mt-1.5 cursor-grab active:cursor-grabbing text-white/30 hover:text-white/60 touch-none shrink-0"
-            {...attributes}
-            {...listeners}
+            onPointerDown={(e) => e.stopPropagation()}
+            className={cn(
+              "mt-0.5 shrink-0 transition-colors",
+              prazoDate ? "text-amber-400/70 hover:text-amber-400" : "text-white/20 hover:text-white/50"
+            )}
+            title={prazoDate ? format(prazoDate, "dd/MM/yyyy") : "Definir prazo"}
           >
-            <GripVertical className="h-4 w-4" />
+            <CalendarDays className="h-3.5 w-3.5" />
           </button>
-          <Input
-            value={localDescricao}
-            onChange={(e) => setLocalDescricao(e.target.value)}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            className="h-7 text-xs bg-white/5 border-white/10 text-white flex-1 min-w-0"
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="end" side="bottom">
+          <Calendar
+            mode="single"
+            selected={prazoDate || undefined}
+            onSelect={(date) => {
+              const prazo = date ? format(date, "yyyy-MM-dd") : null;
+              onEditarPrazo(cb.id, prazo);
+              setCalendarOpen(false);
+            }}
+            locale={ptBR}
+            initialFocus
+            className="p-3 pointer-events-auto"
           />
-          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-            <PopoverTrigger asChild>
-              <button
-                className={cn(
-                  "mt-0.5 shrink-0 transition-colors",
-                  prazoDate ? "text-amber-400/70 hover:text-amber-400" : "text-white/20 hover:text-white/50"
-                )}
-                title={prazoDate ? format(prazoDate, "dd/MM/yyyy") : "Definir prazo"}
-              >
-                <CalendarDays className="h-3.5 w-3.5" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end" side="bottom">
-              <Calendar
-                mode="single"
-                selected={prazoDate || undefined}
-                onSelect={(date) => {
-                  const prazo = date ? format(date, "yyyy-MM-dd") : null;
-                  onEditarPrazo?.(cb.id, prazo);
-                  setCalendarOpen(false);
-                }}
-                locale={ptBR}
-                initialFocus
-                className={cn("p-3 pointer-events-auto")}
-              />
-            </PopoverContent>
-          </Popover>
-          <button
-            className="mt-0.5 shrink-0 text-white/20 hover:text-red-400 transition-colors"
-            onClick={() => onDeleteItem?.(cb.id)}
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </>
-      ) : (
-        <>
-          <Checkbox
-            checked={cb.concluida}
-            onCheckedChange={(checked) =>
-              onToggleCheckbox({ id: cb.id, concluida: !!checked })
-            }
-            className="mt-0.5 h-4 w-4 border-white/20 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
-          />
-          <div className="flex-1 min-w-0">
-            <span className={cn(
-              "text-xs leading-relaxed block",
-              cb.concluida ? "text-white/30 line-through" : "text-white/80"
-            )}>
-              {cb.descricao}
-            </span>
-            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              {prazoDate && (
-                <span className={cn(
-                  "text-[10px] flex items-center gap-0.5",
-                  cb.concluida ? "text-white/25" : prazoVencido ? "text-red-400" : "text-white/35"
-                )}>
-                  <CalendarDays className="h-2.5 w-2.5" />
-                  {format(prazoDate, "dd/MM/yyyy")}
-                </span>
-              )}
-              {cb.concluida && concluidaEmDate && (
-                <span className="text-[10px] text-emerald-400/60 flex items-center gap-0.5">
-                  <CheckCircle2 className="h-2.5 w-2.5" />
-                  {format(concluidaEmDate, "dd/MM/yyyy")}
-                </span>
-              )}
-              {concluidaComAtraso && diasAtraso > 0 && (
-                <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4 bg-red-500/20 text-red-400 border-red-500/30">
-                  {diasAtraso}d de atraso
-                </Badge>
-              )}
-              {!cb.concluida && prazoVencido && diasAtraso > 0 && (
-                <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4 bg-red-500/20 text-red-400 border-red-500/30 flex items-center gap-0.5">
-                  <AlertTriangle className="h-2.5 w-2.5" />
-                  Atrasado {diasAtraso}d
-                </Badge>
-              )}
-            </div>
-          </div>
-        </>
-      )}
+        </PopoverContent>
+      </Popover>
+      <button
+        className="mt-0.5 shrink-0 text-white/20 hover:text-red-400 transition-colors"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={() => onDeleteItem(cb.id)}
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }
@@ -197,6 +216,24 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
+
+  // Sync localCheckboxes with server data while editing (for deletes/prazo changes)
+  useEffect(() => {
+    if (editando && missao) {
+      setLocalCheckboxes(prev => {
+        const serverIds = new Set(missao.missao_checkboxes.map(cb => cb.id));
+        // Remove items deleted on server, update prazo/concluida from server, keep local ordem
+        const updated = prev
+          .filter(cb => serverIds.has(cb.id))
+          .map(cb => {
+            const serverCb = missao.missao_checkboxes.find(s => s.id === cb.id);
+            if (!serverCb) return cb;
+            return { ...cb, prazo: serverCb.prazo, concluida: serverCb.concluida, concluida_em: serverCb.concluida_em };
+          });
+        return updated;
+      });
+    }
+  }, [editando, missao?.missao_checkboxes]);
 
   const checkboxes = editando ? localCheckboxes : (missao?.missao_checkboxes || []);
 
@@ -224,7 +261,6 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
       const oldIndex = prev.findIndex(cb => cb.id === active.id);
       const newIndex = prev.findIndex(cb => cb.id === over.id);
       const newOrder = arrayMove(prev, oldIndex, newIndex);
-      
       const reordered = newOrder.map((cb, i) => ({ ...cb, ordem: i }));
       onReordenarCheckboxes?.(reordered.map(cb => ({ id: cb.id, ordem: cb.ordem })));
       return reordered;
@@ -252,12 +288,12 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
       <Dialog open={open} onOpenChange={(v) => { if (!v) setEditando(false); onOpenChange(v); }}>
         <DialogContent className="bg-white/5 border-white/10 backdrop-blur-xl text-white max-w-lg max-h-[85vh] overflow-y-auto p-0 rounded-xl">
           <DialogHeader className="p-4 pb-0">
-            <div className="flex items-center justify-between pr-8">
-              <DialogTitle className="text-base font-semibold text-white">{missao.titulo}</DialogTitle>
+            <div className="flex items-center gap-2">
+              <DialogTitle className="text-base font-semibold text-white flex-1 min-w-0">{missao.titulo}</DialogTitle>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10"
+                className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10 shrink-0"
                 onClick={editando ? handleStopEditing : handleStartEditing}
               >
                 {editando ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
@@ -306,14 +342,12 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
                 modifiers={[restrictToVerticalAxis]}
                 onDragEnd={handleDragEnd}
               >
-                <SortableContext items={checkboxes.map(cb => cb.id)} strategy={verticalListSortingStrategy}>
+                <SortableContext items={localCheckboxes.map(cb => cb.id)} strategy={verticalListSortingStrategy}>
                   <div className="space-y-1">
-                    {checkboxes.map((cb) => (
-                      <SortableCheckboxItem
+                    {localCheckboxes.map((cb) => (
+                      <SortableEditItem
                         key={cb.id}
                         cb={cb}
-                        editando={true}
-                        onToggleCheckbox={onToggleCheckbox}
                         onSaveDescricao={handleSaveDescricao}
                         onDeleteItem={handleDeleteCheckbox}
                         onEditarPrazo={handleEditarPrazo}
@@ -325,12 +359,10 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
             ) : (
               <div className="space-y-1">
                 {checkboxes.map((cb) => (
-                  <SortableCheckboxItem
+                  <ViewCheckboxItem
                     key={cb.id}
                     cb={cb}
-                    editando={false}
                     onToggleCheckbox={onToggleCheckbox}
-                    onSaveDescricao={handleSaveDescricao}
                   />
                 ))}
               </div>
