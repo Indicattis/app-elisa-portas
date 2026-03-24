@@ -118,6 +118,16 @@ export default function PedidoViewMinimalista() {
   const [pastaObsAberta, setPastaObsAberta] = useState<string | null>(null);
   const [pastaSocialAberta, setPastaSocialAberta] = useState<string | null>(null);
   const [mostrarPreenchimento, setMostrarPreenchimento] = useState(false);
+  const [editandoEndereco, setEditandoEndereco] = useState(false);
+  const [enderecoForm, setEnderecoForm] = useState({
+    endereco_rua: '',
+    endereco_numero: '',
+    endereco_bairro: '',
+    endereco_cidade: '',
+    endereco_estado: '',
+    endereco_cep: '',
+  });
+  const [salvandoEndereco, setSalvandoEndereco] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { coresAtivas } = useCatalogoCores();
@@ -166,6 +176,19 @@ export default function PedidoViewMinimalista() {
       setObservacoesTexto(pedido.observacoes || "");
     }
   }, [pedido?.observacoes]);
+
+  useEffect(() => {
+    if (pedido) {
+      setEnderecoForm({
+        endereco_rua: (pedido as any).endereco_rua || '',
+        endereco_numero: (pedido as any).endereco_numero || '',
+        endereco_bairro: (pedido as any).endereco_bairro || '',
+        endereco_cidade: (pedido as any).endereco_cidade || '',
+        endereco_estado: (pedido as any).endereco_estado || '',
+        endereco_cep: (pedido as any).endereco_cep || '',
+      });
+    }
+  }, [pedido?.id]);
 
   const fetchPedidoDetails = async () => {
     if (!id) return;
@@ -235,6 +258,26 @@ export default function PedidoViewMinimalista() {
       toast({ variant: "destructive", title: "Erro", description: "Erro ao carregar pedido" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSalvarEndereco = async () => {
+    if (!pedido) return;
+    setSalvandoEndereco(true);
+    try {
+      const { error } = await supabase
+        .from('pedidos_producao')
+        .update(enderecoForm)
+        .eq('id', pedido.id);
+      if (error) throw error;
+      setPedido(prev => prev ? { ...prev, ...enderecoForm } as any : null);
+      setEditandoEndereco(false);
+      sonnerToast.success("Endereço salvo com sucesso!");
+    } catch (error) {
+      console.error("Erro ao salvar endereço:", error);
+      sonnerToast.error("Erro ao salvar endereço");
+    } finally {
+      setSalvandoEndereco(false);
     }
   };
 
@@ -561,7 +604,101 @@ export default function PedidoViewMinimalista() {
           </Card>
         </div>
 
-        {/* Produtos da Venda */}
+        {/* Endereço */}
+        <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2 text-white">
+                <MapPin className="w-4 h-4" />
+                Endereço
+              </CardTitle>
+              {!editandoEndereco && (
+                <Button variant="ghost" size="sm" className="h-7 text-xs text-white/70 hover:text-white hover:bg-white/10" onClick={() => setEditandoEndereco(true)}>
+                  <Pencil className="w-3 h-3 mr-1" />
+                  Editar
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {editandoEndereco ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="md:col-span-2">
+                    <label className="text-xs text-white/50 mb-1 block">Rua</label>
+                    <Input className="h-8 text-xs bg-white/5 border-white/10 text-white" value={enderecoForm.endereco_rua} onChange={e => setEnderecoForm(f => ({ ...f, endereco_rua: e.target.value }))} placeholder="Nome da rua" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-white/50 mb-1 block">Número</label>
+                    <Input className="h-8 text-xs bg-white/5 border-white/10 text-white" value={enderecoForm.endereco_numero} onChange={e => setEnderecoForm(f => ({ ...f, endereco_numero: e.target.value }))} placeholder="Nº" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-xs text-white/50 mb-1 block">Bairro</label>
+                    <Input className="h-8 text-xs bg-white/5 border-white/10 text-white" value={enderecoForm.endereco_bairro} onChange={e => setEnderecoForm(f => ({ ...f, endereco_bairro: e.target.value }))} placeholder="Bairro" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-white/50 mb-1 block">Cidade</label>
+                    <Input className="h-8 text-xs bg-white/5 border-white/10 text-white" value={enderecoForm.endereco_cidade} onChange={e => setEnderecoForm(f => ({ ...f, endereco_cidade: e.target.value }))} placeholder="Cidade" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-white/50 mb-1 block">UF</label>
+                      <Input className="h-8 text-xs bg-white/5 border-white/10 text-white" value={enderecoForm.endereco_estado} onChange={e => setEnderecoForm(f => ({ ...f, endereco_estado: e.target.value.toUpperCase().slice(0, 2) }))} placeholder="UF" maxLength={2} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-white/50 mb-1 block">CEP</label>
+                      <Input className="h-8 text-xs bg-white/5 border-white/10 text-white" value={enderecoForm.endereco_cep} onChange={e => {
+                        const raw = e.target.value.replace(/\D/g, '').slice(0, 8);
+                        const formatted = raw.length > 5 ? `${raw.slice(0, 5)}-${raw.slice(5)}` : raw;
+                        setEnderecoForm(f => ({ ...f, endereco_cep: formatted }));
+                      }} placeholder="00000-000" />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button variant="ghost" size="sm" className="h-7 text-xs text-white/70 hover:text-white hover:bg-white/10" onClick={() => {
+                    setEditandoEndereco(false);
+                    if (pedido) {
+                      setEnderecoForm({
+                        endereco_rua: (pedido as any).endereco_rua || '',
+                        endereco_numero: (pedido as any).endereco_numero || '',
+                        endereco_bairro: (pedido as any).endereco_bairro || '',
+                        endereco_cidade: (pedido as any).endereco_cidade || '',
+                        endereco_estado: (pedido as any).endereco_estado || '',
+                        endereco_cep: (pedido as any).endereco_cep || '',
+                      });
+                    }
+                  }}>
+                    <X className="w-3 h-3 mr-1" />
+                    Cancelar
+                  </Button>
+                  <Button size="sm" className="h-7 text-xs" onClick={handleSalvarEndereco} disabled={salvandoEndereco}>
+                    <Save className="w-3 h-3 mr-1" />
+                    {salvandoEndereco ? 'Salvando...' : 'Salvar'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-white/80">
+                {(() => {
+                  const p = pedido as any;
+                  const parts = [
+                    p.endereco_rua && `${p.endereco_rua}${p.endereco_numero ? `, ${p.endereco_numero}` : ''}`,
+                    p.endereco_bairro,
+                    (p.endereco_cidade || pedido.venda?.cidade) && (p.endereco_estado || pedido.venda?.estado)
+                      ? `${p.endereco_cidade || pedido.venda?.cidade}/${p.endereco_estado || pedido.venda?.estado}`
+                      : p.endereco_cidade || pedido.venda?.cidade || p.endereco_estado || pedido.venda?.estado,
+                    p.endereco_cep && `CEP ${p.endereco_cep}`,
+                  ].filter(Boolean);
+                  return parts.length > 0 ? parts.join(' - ') : <span className="text-white/40 italic">Nenhum endereço cadastrado</span>;
+                })()}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {pedido.venda?.produtos && pedido.venda.produtos.length > 0 && (
           <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
