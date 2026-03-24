@@ -1,29 +1,34 @@
 
 
-## Plano: Corrigir exclusão de itens, alinhar botões e adicionar edição de prazos
+## Plano: Corrigir edição de descrição, exclusão de itens e alinhamento de botões
 
 ### Problemas identificados
 
-1. **Exclusão não funciona visualmente**: `missaoSelecionada` é uma cópia estática no state. Quando a query invalida após o delete, o modal continua mostrando dados antigos.
-2. **Botões desalinhados**: O botão de edição (Pencil) e o botão de fechar (X do Dialog) não estão alinhados verticalmente.
-3. **Sem edição de prazos**: No modo edição, não há como alterar as datas de prazo dos itens.
+1. **Edição de descrição não persiste visualmente**: O `SortableCheckboxItem` usa `useState(cb.descricao)` internamente, que não atualiza quando props mudam. Além disso, após o blur, a query invalida e o componente pode perder o foco antes de salvar.
+
+2. **Exclusão não funciona visualmente**: Embora a mutation rode, o `localCheckboxes` pode estar sendo sobrescrito pela re-renderização causada pela invalidação da query (o `missaoSelecionada` muda, mas o `localCheckboxes` local não sincroniza corretamente).
+
+3. **Botões desalinhados**: O botão de edição (Pencil/Check) precisa ficar alinhado com o X de fechar do Dialog.
+
+4. **View mode usa SortableCheckboxItem sem DndContext**: Pode causar erros silenciosos.
 
 ### Alterações
 
-#### 1. `src/pages/ChecklistLideranca.tsx`
-- Em vez de guardar o objeto `missao` inteiro no state, guardar apenas o `id` da missão selecionada
-- Derivar a missão atual a partir de `missoes.find(m => m.id === missaoSelecionadaId)` — assim quando a query invalida, o modal recebe dados atualizados automaticamente
+#### `src/components/todo/DetalhesMissaoModal.tsx`
 
-#### 2. `src/components/todo/DetalhesMissaoModal.tsx`
-- **Alinhamento dos botões**: Ajustar o `pr-6` do container do título para que o botão Pencil/Check fique alinhado com o X de fechar do Dialog
-- **Edição de prazo**: No modo edição, adicionar um botão de calendário (CalendarIcon) ao lado de cada item que abre um Popover com Calendar para selecionar/alterar o prazo
-- Chamar nova prop `onEditarPrazoCheckbox` ao selecionar data
+1. **Separar componente de view e edit**: No modo visualização, renderizar um componente simples (sem `useSortable`) em vez do `SortableCheckboxItem`. Isso elimina o problema de `useSortable` sem `DndContext`.
 
-#### 3. `src/hooks/useMissoes.ts`
-- Adicionar mutation `editarPrazoCheckbox` que faz `update({ prazo }).eq('id', id)` na tabela `missao_checkboxes`
+2. **Sincronizar `localCheckboxes` com dados do servidor**: Adicionar um `useEffect` que atualiza `localCheckboxes` quando `missao.missao_checkboxes` muda E `editando` é true — mas apenas para mudanças vindas do servidor (delete/prazo), preservando edições locais de descrição em andamento.
+
+3. **Usar `key` com descrição no Input**: Forçar re-mount do Input quando a descrição muda no servidor, garantindo que `localDescricao` reflita o estado correto.
+
+4. **Alinhar botões**: Ajustar posicionamento do botão Pencil/Check para ficar na mesma linha e alinhado com o X do Dialog — usar `absolute right-10 top-3` ou flexbox adequado no header.
+
+5. **Adicionar `onPointerDown={e => e.stopPropagation()}` no Input e no botão X**: Evita que o dnd-kit intercepte cliques nesses elementos.
 
 ### Resultado
-- Itens excluídos desaparecem imediatamente do modal
-- Botões de edição e fechar ficam alinhados na mesma linha
-- Usuário pode clicar no ícone de calendário em modo edição para alterar o prazo de cada item
+- Edição de descrição funciona e salva ao blur/enter
+- Exclusão remove o item imediatamente e persiste
+- Drag-and-drop funciona sem conflito com inputs/botões
+- Botões alinhados corretamente no header
 
