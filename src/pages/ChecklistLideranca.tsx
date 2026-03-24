@@ -28,7 +28,8 @@ export default function ChecklistLideranca() {
 
   const { criarTemplate } = useTarefas();
   const { missoes, isLoading: loadingMissoes, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes, deletarCheckbox } = useMissoes();
-  const [missaoSelecionada, setMissaoSelecionada] = useState<import("@/hooks/useMissoes").Missao | null>(null);
+  const [missaoSelecionadaId, setMissaoSelecionadaId] = useState<string | null>(null);
+  const missaoSelecionada = missoes?.find(m => m.id === missaoSelecionadaId) || null;
 
   const { data: calendarioData, isLoading: loadingCalendario } = useTarefasCalendario(semanaBase);
 

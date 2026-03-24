@@ -191,5 +191,21 @@ export function useMissoes() {
     },
   });
 
-  return { missoes, isLoading, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes, deletarCheckbox };
+  const editarPrazoCheckbox = useMutation({
+    mutationFn: async ({ id, prazo }: { id: string; prazo: string | null }) => {
+      const { error } = await (supabase as any)
+        .from("missao_checkboxes")
+        .update({ prazo })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["missoes"] });
+    },
+    onError: (error: any) => {
+      toast({ variant: "destructive", title: "Erro ao editar prazo", description: error.message });
+    },
+  });
+
+  return { missoes, isLoading, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes, deletarCheckbox, editarPrazoCheckbox };
 }
