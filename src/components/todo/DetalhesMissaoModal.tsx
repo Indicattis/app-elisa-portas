@@ -214,6 +214,9 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
   const [editando, setEditando] = useState(false);
   const [localCheckboxes, setLocalCheckboxes] = useState<MissaoCheckbox[]>([]);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const [novoItemDescricao, setNovoItemDescricao] = useState("");
+  const [adicionandoItem, setAdicionandoItem] = useState(false);
+  const novoItemRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -281,6 +284,15 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
     onEditarPrazoCheckbox?.({ id, prazo });
     setLocalCheckboxes(prev => prev.map(cb => cb.id === id ? { ...cb, prazo } : cb));
   }, [onEditarPrazoCheckbox]);
+
+  const handleAdicionarItem = useCallback(() => {
+    const trimmed = novoItemDescricao.trim();
+    if (!trimmed || !missao) return;
+    const ordem = localCheckboxes.length;
+    onAdicionarCheckbox?.({ missao_id: missao.id, descricao: trimmed, ordem });
+    setNovoItemDescricao("");
+    setAdicionandoItem(false);
+  }, [novoItemDescricao, missao, localCheckboxes.length, onAdicionarCheckbox]);
 
   if (!missao) return null;
 
