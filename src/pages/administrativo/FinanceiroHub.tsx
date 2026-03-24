@@ -9,9 +9,10 @@ import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 const menuItems = [
   { label: "Faturamento", icon: Receipt, path: "/administrativo/financeiro/faturamento", ativo: true },
   { label: "Custos", icon: Coins, path: "/administrativo/financeiro/custos", ativo: true },
-  { label: "Caixa", icon: Wallet, path: "/administrativo/financeiro/caixa", ativo: true },
+  { label: "Gestão de Caixa", icon: Wallet, path: "/administrativo/financeiro/caixa/gestao", ativo: true },
   { label: "Cobranças", icon: HandCoins, path: "/administrativo/financeiro/cobrancas", ativo: true },
   { label: "Contas a Pagar", icon: BadgeDollarSign, path: "/administrativo/financeiro/caixa/contas-a-pagar", ativo: true },
+  { label: "Contas a Receber", icon: Receipt, path: "/administrativo/financeiro/caixa/contas-a-receber", ativo: true },
 ];
 
 export default function FinanceiroHub() {
@@ -110,7 +111,7 @@ export default function FinanceiroHub() {
 
       {/* ========== VERSÃO DESKTOP ========== */}
       <div className="hidden md:flex relative z-10 flex-col items-center gap-8">
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const delay = 200 + index * 100;

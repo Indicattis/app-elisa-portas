@@ -6,22 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 
-const menuItems = [
-  { 
-    label: "Gestão de Caixa", 
-    icon: Wallet, 
-    path: "/administrativo/financeiro/caixa/gestao", 
-    ativo: true,
-    description: "Controle de depósitos e movimentações"
-  },
-  { 
-    label: "Contas a Receber", 
-    icon: HandCoins, 
-    path: "/administrativo/financeiro/caixa/contas-a-receber", 
-    ativo: true,
-    description: "Gestão de parcelas e recebimentos"
-  },
-];
+const menuItems: { label: string; icon: any; path: string; ativo: boolean; description: string }[] = [];
 
 export default function CaixaHub() {
   const navigate = useNavigate();
