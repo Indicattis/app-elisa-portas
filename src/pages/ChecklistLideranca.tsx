@@ -30,9 +30,22 @@ export default function ChecklistLideranca() {
   const [semanaBase, setSemanaBase] = useState(new Date());
 
   const { criarTemplate } = useTarefas();
-  const { missoes, isLoading: loadingMissoes, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes, deletarCheckbox, editarPrazoCheckbox } = useMissoes();
+  const { missoes, isLoading: loadingMissoes, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes, deletarCheckbox, editarPrazoCheckbox, adicionarCheckbox, reordenarMissoes } = useMissoes();
   const [missaoSelecionadaId, setMissaoSelecionadaId] = useState<string | null>(null);
   const missaoSelecionada = missoes?.find(m => m.id === missaoSelecionadaId) || null;
+
+  const missoesSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const handleMissoesDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = missoes.findIndex(m => m.id === active.id);
+    const newIndex = missoes.findIndex(m => m.id === over.id);
+    const reordered = arrayMove(missoes, oldIndex, newIndex);
+    reordenarMissoes.mutate(reordered.map((m, i) => ({ id: m.id, ordem: i })));
+  }, [missoes, reordenarMissoes]);
 
   const { data: calendarioData, isLoading: loadingCalendario } = useTarefasCalendario(semanaBase);
 
