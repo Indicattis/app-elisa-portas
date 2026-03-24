@@ -118,11 +118,12 @@ export default function FreteMinimalista() {
     <MinimalistLayout
       title="Frete por Cidade"
       subtitle="Gerencie os valores de frete"
-      backPath="/logistica"
+      backPath="/logistica/frete"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Logística", path: "/logistica" },
-        { label: "Frete" }
+        { label: "Frete", path: "/logistica/frete" },
+        { label: "Valores Internos" }
       ]}
       headerActions={headerActions}
     >

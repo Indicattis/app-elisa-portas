@@ -2867,6 +2867,50 @@ export type Database = {
         }
         Relationships: []
       }
+      frete_transportadoras: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          estado: string
+          id: string
+          transportadora_id: string
+          updated_at: string
+          valor_porta_g: number
+          valor_porta_gg: number
+          valor_porta_p: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          estado: string
+          id?: string
+          transportadora_id: string
+          updated_at?: string
+          valor_porta_g?: number
+          valor_porta_gg?: number
+          valor_porta_p?: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          estado?: string
+          id?: string
+          transportadora_id?: string
+          updated_at?: string
+          valor_porta_g?: number
+          valor_porta_gg?: number
+          valor_porta_p?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "frete_transportadoras_transportadora_id_fkey"
+            columns: ["transportadora_id"]
+            isOneToOne: false
+            referencedRelation: "transportadoras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instalacoes: {
         Row: {
           carregamento_concluido: boolean | null
@@ -6819,6 +6863,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      transportadoras: {
+        Row: {
+          ativo: boolean
+          cnpj: string | null
+          created_at: string
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
