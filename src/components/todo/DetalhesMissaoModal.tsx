@@ -9,7 +9,7 @@ import { Missao, MissaoCheckbox } from "@/hooks/useMissoes";
 import { cn } from "@/lib/utils";
 import { format, isPast, startOfDay, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Trash2, CalendarDays, Clock, AlertTriangle, CheckCircle2, User, Pencil, Check, GripVertical } from "lucide-react";
+import { Trash2, CalendarDays, Clock, AlertTriangle, CheckCircle2, User, Pencil, Check, GripVertical, X } from "lucide-react";
 import { useState, useCallback } from "react";
 import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
@@ -24,6 +24,7 @@ interface DetalhesMissaoModalProps {
   onDelete: (id: string) => void;
   onEditarCheckbox?: (params: { id: string; descricao: string }) => void;
   onReordenarCheckboxes?: (items: { id: string; ordem: number }[]) => void;
+  onDeletarCheckbox?: (id: string) => void;
 }
 
 function SortableCheckboxItem({
@@ -31,11 +32,13 @@ function SortableCheckboxItem({
   editando,
   onToggleCheckbox,
   onSaveDescricao,
+  onDeleteItem,
 }: {
   cb: MissaoCheckbox;
   editando: boolean;
   onToggleCheckbox: (params: { id: string; concluida: boolean }) => void;
   onSaveDescricao: (id: string, descricao: string) => void;
+  onDeleteItem?: (id: string) => void;
 }) {
   const [localDescricao, setLocalDescricao] = useState(cb.descricao);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cb.id });
@@ -95,6 +98,12 @@ function SortableCheckboxItem({
             onKeyDown={handleKeyDown}
             className="h-7 text-xs bg-white/5 border-white/10 text-white flex-1"
           />
+          <button
+            className="mt-0.5 text-white/20 hover:text-red-400 transition-colors"
+            onClick={() => onDeleteItem?.(cb.id)}
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </>
       ) : (
         <>
@@ -147,7 +156,7 @@ function SortableCheckboxItem({
   );
 }
 
-export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckbox, onDelete, onEditarCheckbox, onReordenarCheckboxes }: DetalhesMissaoModalProps) {
+export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckbox, onDelete, onEditarCheckbox, onReordenarCheckboxes, onDeletarCheckbox }: DetalhesMissaoModalProps) {
   const [confirmarExclusao, setConfirmarExclusao] = useState(false);
   const [editando, setEditando] = useState(false);
   const [localCheckboxes, setLocalCheckboxes] = useState<MissaoCheckbox[]>([]);
@@ -189,6 +198,11 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
       return reordered;
     });
   }, [onReordenarCheckboxes]);
+
+  const handleDeleteCheckbox = useCallback((id: string) => {
+    onDeletarCheckbox?.(id);
+    setLocalCheckboxes(prev => prev.filter(cb => cb.id !== id));
+  }, [onDeletarCheckbox]);
 
   if (!missao) return null;
 
@@ -264,6 +278,7 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
                         editando={true}
                         onToggleCheckbox={onToggleCheckbox}
                         onSaveDescricao={handleSaveDescricao}
+                        onDeleteItem={handleDeleteCheckbox}
                       />
                     ))}
                   </div>

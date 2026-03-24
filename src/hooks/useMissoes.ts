@@ -175,5 +175,21 @@ export function useMissoes() {
     },
   });
 
-  return { missoes, isLoading, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes };
+  const deletarCheckbox = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any)
+        .from("missao_checkboxes")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["missoes"] });
+    },
+    onError: (error: any) => {
+      toast({ variant: "destructive", title: "Erro ao excluir item", description: error.message });
+    },
+  });
+
+  return { missoes, isLoading, criarMissao, deletarMissao, toggleCheckbox, editarCheckbox, reordenarCheckboxes, deletarCheckbox };
 }
