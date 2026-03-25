@@ -26,7 +26,7 @@ interface DetalhesMissaoModalProps {
   onDelete: (id: string) => void;
   onEditarCheckbox?: (params: { id: string; descricao: string }) => void;
   onReordenarCheckboxes?: (items: { id: string; ordem: number }[]) => void;
-  onDeletarCheckbox?: (id: string) => void;
+  onDeletarCheckbox?: (id: string) => Promise<void>;
   onEditarPrazoCheckbox?: (params: { id: string; prazo: string | null }) => void;
   onAdicionarCheckbox?: (params: { missao_id: string; descricao: string; ordem: number }) => void;
 }
@@ -282,11 +282,26 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
     });
   }, [onReordenarCheckboxes]);
 
-  const handleDeleteCheckbox = useCallback((id: string) => {
+  const handleDeleteCheckbox = useCallback(async (id: string) => {
+    // Salvar item antes de remover para possível rollback
+    const removedItem = localCheckboxes.find(cb => cb.id === id);
     setDeletedIds(prev => new Set(prev).add(id));
-    onDeletarCheckbox?.(id);
     setLocalCheckboxes(prev => prev.filter(cb => cb.id !== id));
-  }, [onDeletarCheckbox]);
+
+    try {
+      await onDeletarCheckbox?.(id);
+    } catch {
+      // Rollback: restaurar item no estado local se a exclusão falhou
+      setDeletedIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      if (removedItem) {
+        setLocalCheckboxes(prev => [...prev, removedItem].sort((a, b) => a.ordem - b.ordem));
+      }
+    }
+  }, [onDeletarCheckbox, localCheckboxes]);
 
   const handleEditarPrazo = useCallback((id: string, prazo: string | null) => {
     onEditarPrazoCheckbox?.({ id, prazo });
