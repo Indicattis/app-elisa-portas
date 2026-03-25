@@ -53,6 +53,8 @@ export default function MinhasVendasEditar() {
   });
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isCadastrando, setIsCadastrando] = useState(false);
 
   // Se não pode editar, mostrar dialog
   useEffect(() => {
