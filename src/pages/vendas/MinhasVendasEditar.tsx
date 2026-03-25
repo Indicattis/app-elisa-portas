@@ -919,6 +919,22 @@ export default function MinhasVendasEditar() {
                 <Save className="w-3.5 h-3.5 mr-1.5" />
                 {isSaving ? 'Salvando...' : 'Salvar'}
               </Button>
+              {venda.is_rascunho && (
+                <Button 
+                  type="button"
+                  size="sm"
+                  onClick={handleCadastrarVenda}
+                  disabled={isCadastrando}
+                  className="bg-gradient-to-r from-green-500 to-green-700 text-white hover:from-green-600 hover:to-green-800"
+                >
+                  {isCadastrando ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  ) : (
+                    <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                  )}
+                  {isCadastrando ? 'Cadastrando...' : 'Cadastrar Venda'}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
