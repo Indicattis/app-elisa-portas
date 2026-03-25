@@ -1,28 +1,42 @@
 
 
-## Plano: Permitir cadastrar vendas a partir de rascunhos
+## Plano: Permitir reset de senha para usuários autorizados em /admin/users
 
 ### Problema
-Quando um vendedor clica "Continuar" em um rascunho, abre a página de edição (`MinhasVendasEditar`), que só tem um botão "Salvar" que navega de volta sem nunca mudar `is_rascunho` para `false`. Não existe botão para finalizar/cadastrar o rascunho como venda real.
+A Edge Function `reset-user-password` restringe o reset de senha exclusivamente ao role `administrador` (linha 86: `adminUser.role !== 'administrador'`). Qualquer outro usuário, mesmo com acesso à rota `/admin/users`, recebe erro 403 "Insufficient permissions".
 
 ### Solução
-Adicionar um botão "Cadastrar Venda" na página `MinhasVendasEditar` que:
-1. Executa as validações obrigatórias (endereço completo, produtos, comprovante se aplicável)
-2. Atualiza `is_rascunho = false` no banco de dados
-3. Recalcula e atualiza os totais da venda (`valor_venda`, `valor_a_receber`, etc.)
-4. Invalida as queries de rascunhos e vendas
+Flexibilizar a verificação na Edge Function para aceitar qualquer usuário ativo que tenha acesso à rota `/admin/users` (via `user_route_access`) OU que seja administrador. Isso mantém a segurança usando o mesmo sistema de permissões já existente no projeto.
 
-### Arquivos alterados
-- `src/pages/vendas/MinhasVendasEditar.tsx` — Adicionar botão "Cadastrar Venda" e lógica de finalização
+### Arquivo alterado
+- `supabase/functions/reset-user-password/index.ts`
 
 ### Detalhes técnicos
 
-**Nova função `handleCadastrarVenda`** em `MinhasVendasEditar.tsx`:
-- Validar campos obrigatórios: `estado`, `cidade`, `cep`, `bairro`, `endereco`, e pelo menos 1 produto
-- Recalcular `valor_venda` com base nos produtos atuais + frete + crédito
-- Executar `supabase.from('vendas').update({ is_rascunho: false, valor_venda: ..., valor_a_receber: ... }).eq('id', id)`
-- Invalidar queries `['vendas']`, `['rascunhos-vendas']`, `['minhas-vendas']`
-- Navegar para `/vendas/minhas-vendas` com toast de sucesso
+Substituir a verificação rígida de role por uma consulta que verifica:
+1. Se o usuário é administrador (`role = 'administrador'`), OU
+2. Se o usuário tem `bypass_permissions = true`, OU  
+3. Se o usuário tem acesso à rota `/admin/users` na tabela `user_route_access`
 
-**Botão na UI**: Ao lado do "Salvar", adicionar botão verde/destaque "Cadastrar Venda" visível apenas quando `venda.is_rascunho === true`.
+```typescript
+// Antes (restritivo):
+if (adminUser.role !== 'administrador' || !adminUser.ativo) { return 403 }
+
+// Depois (flexível):
+if (!adminUser.ativo) { return 403 }
+
+const isAdmin = adminUser.role === 'administrador' || adminUser.bypass_permissions === true;
+
+if (!isAdmin) {
+  // Verificar acesso à rota /admin/users
+  const { data: routeAccess } = await supabaseAdmin
+    .from('user_route_access')
+    .select('id')
+    .eq('user_id', requestingUser.id)
+    .eq('route_key', 'admin_users')
+    .single();
+  
+  if (!routeAccess) { return 403 }
+}
+```
 
