@@ -420,16 +420,19 @@ export default function MinhasVendasEditar() {
       const valorVenda = valorProdutos + valorFrete + valorCredito;
       const valorAReceber = valorVenda;
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('vendas')
         .update({
           is_rascunho: false,
           valor_venda: valorVenda,
           valor_a_receber: valorAReceber,
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select('id')
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error('Não foi possível registrar a venda. Verifique suas permissões.');
 
       queryClient.invalidateQueries({ queryKey: ['vendas'] });
       queryClient.invalidateQueries({ queryKey: ['rascunhos-vendas'] });
