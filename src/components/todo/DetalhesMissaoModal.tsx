@@ -226,8 +226,10 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
   useEffect(() => {
     if (editando && missao) {
       setLocalCheckboxes(prev => {
+        const localIds = new Set(prev.map(cb => cb.id));
         const serverIds = new Set(missao.missao_checkboxes.map(cb => cb.id));
-        // Remove items deleted on server or locally, update prazo/concluida from server, keep local ordem
+        
+        // Update existing items
         const updated = prev
           .filter(cb => serverIds.has(cb.id) && !deletedIds.has(cb.id))
           .map(cb => {
@@ -235,7 +237,13 @@ export function DetalhesMissaoModal({ missao, open, onOpenChange, onToggleCheckb
             if (!serverCb) return cb;
             return { ...cb, prazo: serverCb.prazo, concluida: serverCb.concluida, concluida_em: serverCb.concluida_em };
           });
-        return updated;
+        
+        // Add new items from server (not in local, not deleted)
+        const newItems = missao.missao_checkboxes.filter(
+          cb => !localIds.has(cb.id) && !deletedIds.has(cb.id)
+        );
+        
+        return [...updated, ...newItems];
       });
     }
   }, [editando, missao?.missao_checkboxes, deletedIds]);
