@@ -393,7 +393,6 @@ export default function MinhasVendasEditar() {
     if (!venda.cidade) erros.push("Cidade");
     if (!venda.cep) erros.push("CEP");
     if (!venda.bairro) erros.push("Bairro");
-    if (!venda.endereco) erros.push("Endereço");
     
     if (erros.length > 0) {
       toast({
