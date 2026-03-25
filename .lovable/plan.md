@@ -1,31 +1,45 @@
 
 
-## Plano: Permitir leitura da tabela `clientes` pelo role `anon`
+## Plano: Corrigir registro de venda a partir de rascunho
 
-### Situação atual
-A tabela `clientes` tem RLS ativo com política SELECT que exige `auth.uid() IS NOT NULL`. O CRM externo usa a `anon key`, que não tem sessão autenticada, resultando em array vazio.
+### Problema identificado
 
-### Alerta de segurança
-A tabela `clientes` contém dados pessoais sensíveis (nome, telefone, email, CPF/CNPJ, endereço). Liberar acesso ao role `anon` significa que **qualquer pessoa com a anon key** (que é pública) poderá ler esses dados. 
+Ao analisar o código de `MinhasVendasEditar.tsx`, identifiquei que a função `handleSalvar` (botão "Salvar") **não faz nenhuma chamada ao banco** — ela apenas exibe um toast e navega de volta. Por isso, "salvar" sempre funciona.
 
-**Recomendação**: Em vez de liberar para `anon`, o CRM deveria autenticar-se com um usuário real (email/senha via `supabase.auth.signInWithPassword`). Assim a política existente já funcionaria sem expor dados pessoais publicamente.
+Já a função `handleCadastrarVenda` (botão "Cadastrar Venda") faz um `UPDATE` real no Supabase para definir `is_rascunho: false`. Se o RLS bloquear esse update silenciosamente, o Supabase retorna `{ data: null, error: null }` — sem erro, mas sem atualizar nada. O código atual só verifica `error`, então parece ter sucesso mas o rascunho não é convertido.
 
-### Opção 1 (Recomendada - Segura): Autenticar o CRM
-Não requer mudança neste projeto. No CRM, fazer login com credenciais de um usuário existente antes de consultar a tabela. A política atual já permite SELECT para usuários autenticados.
+A causa raiz provável: o update pode estar falhando silenciosamente via RLS, ou a validação de campos obrigatórios (estado, cidade, CEP, bairro) está bloqueando sem que o toast de erro seja visível para o usuário.
 
-### Opção 2 (Rápida - Menos segura): Criar política para `anon`
-Criar uma nova política permitindo leitura apenas de clientes ativos pelo role `anon`:
+### Correções
 
-```sql
-CREATE POLICY "Anon can read active clientes"
-ON public.clientes
-FOR SELECT
-TO anon
-USING (ativo = true);
+**1. Adicionar verificação de resultado no update**
+
+Na função `handleCadastrarVenda`, adicionar `.select()` ao update e verificar se dados foram retornados:
+
+```typescript
+const { data, error } = await supabase
+  .from('vendas')
+  .update({ is_rascunho: false, valor_venda: valorVenda, valor_a_receber: valorAReceber })
+  .eq('id', id)
+  .select()
+  .single();
+
+if (error) throw error;
+if (!data) throw new Error('Não foi possível atualizar a venda. Verifique suas permissões.');
 ```
 
-Isso expõe dados pessoais a qualquer portador da anon key.
+**2. Melhorar feedback de validação**
 
-### Qual caminho seguir?
-Se você quer a solução rápida (Opção 2), posso aplicar a migração imediatamente. Se preferir a opção segura (Opção 1), a mudança será feita no projeto CRM.
+Tornar as mensagens de validação mais visíveis e adicionar scroll para o campo faltante, para que o usuário entenda o que está impedindo o registro.
+
+**3. Garantir que o botão "Cadastrar Venda" é visível e clicável**
+
+Verificar que o estado `venda.is_rascunho` está sendo lido corretamente do banco e que o botão aparece para rascunhos.
+
+### Detalhes técnicos
+
+- Arquivo alterado: `src/pages/vendas/MinhasVendasEditar.tsx`
+- Função afetada: `handleCadastrarVenda` (linhas 387-452)
+- A adição de `.select().single()` permite detectar quando o RLS bloqueia silenciosamente o update
+- Nenhuma alteração de RLS é necessária — as políticas atuais permitem update para usuários autenticados
 
