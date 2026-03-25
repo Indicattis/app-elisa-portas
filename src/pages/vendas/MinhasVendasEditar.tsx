@@ -384,6 +384,75 @@ export default function MinhasVendasEditar() {
     navigate('/vendas/minhas-vendas');
   };
 
+  const handleCadastrarVenda = async () => {
+    if (!id || !venda) return;
+
+    // Validações obrigatórias
+    const erros: string[] = [];
+    if (!venda.estado) erros.push("Estado");
+    if (!venda.cidade) erros.push("Cidade");
+    if (!venda.cep) erros.push("CEP");
+    if (!venda.bairro) erros.push("Bairro");
+    if (!venda.endereco) erros.push("Endereço");
+    
+    if (erros.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "Campos obrigatórios faltando",
+        description: `Preencha: ${erros.join(", ")}`,
+      });
+      return;
+    }
+
+    if (!produtosFormatados || produtosFormatados.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Nenhum produto",
+        description: "Adicione pelo menos um produto à venda",
+      });
+      return;
+    }
+
+    setIsCadastrando(true);
+    try {
+      const valorProdutos = calcularValorTotalProdutos();
+      const valorFrete = venda.valor_frete || 0;
+      const valorCredito = venda.valor_credito || 0;
+      const valorVenda = valorProdutos + valorFrete + valorCredito;
+      const valorAReceber = valorVenda;
+
+      const { error } = await supabase
+        .from('vendas')
+        .update({
+          is_rascunho: false,
+          valor_venda: valorVenda,
+          valor_a_receber: valorAReceber,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['rascunhos-vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['minhas-vendas'] });
+
+      toast({
+        title: "Venda cadastrada!",
+        description: "O rascunho foi convertido em venda com sucesso.",
+      });
+      navigate('/vendas/minhas-vendas');
+    } catch (error) {
+      console.error('Erro ao cadastrar venda:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível cadastrar a venda",
+      });
+    } finally {
+      setIsCadastrando(false);
+    }
+  };
+
   // Estilos azuis consistentes com a área de vendas
   const cardClass = "bg-gradient-to-br from-blue-500/5 to-blue-900/10 border-blue-500/20 backdrop-blur-xl";
 
