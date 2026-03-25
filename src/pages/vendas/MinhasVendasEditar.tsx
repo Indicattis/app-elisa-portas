@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCanEditVenda } from "@/hooks/useCanEditVenda";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Calendar as CalendarIcon, User, MapPin, CreditCard, Truck, MessageSquare, Store, Percent, Save, Loader2, Paperclip, FileText, ExternalLink } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Plus, Calendar as CalendarIcon, User, MapPin, CreditCard, Truck, MessageSquare, Store, Percent, Save, Loader2, Paperclip, FileText, ExternalLink, CheckCircle } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,8 @@ export default function MinhasVendasEditar() {
   });
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isCadastrando, setIsCadastrando] = useState(false);
 
   // Se não pode editar, mostrar dialog
   useEffect(() => {
@@ -379,6 +382,74 @@ export default function MinhasVendasEditar() {
       description: "As alterações foram salvas automaticamente"
     });
     navigate('/vendas/minhas-vendas');
+  };
+
+  const handleCadastrarVenda = async () => {
+    if (!id || !venda) return;
+
+    // Validações obrigatórias
+    const erros: string[] = [];
+    if (!venda.estado) erros.push("Estado");
+    if (!venda.cidade) erros.push("Cidade");
+    if (!venda.cep) erros.push("CEP");
+    if (!venda.bairro) erros.push("Bairro");
+    
+    if (erros.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "Campos obrigatórios faltando",
+        description: `Preencha: ${erros.join(", ")}`,
+      });
+      return;
+    }
+
+    if (!produtosFormatados || produtosFormatados.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Nenhum produto",
+        description: "Adicione pelo menos um produto à venda",
+      });
+      return;
+    }
+
+    setIsCadastrando(true);
+    try {
+      const valorProdutos = calcularValorTotalProdutos();
+      const valorFrete = venda.valor_frete || 0;
+      const valorCredito = venda.valor_credito || 0;
+      const valorVenda = valorProdutos + valorFrete + valorCredito;
+      const valorAReceber = valorVenda;
+
+      const { error } = await supabase
+        .from('vendas')
+        .update({
+          is_rascunho: false,
+          valor_venda: valorVenda,
+          valor_a_receber: valorAReceber,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['rascunhos-vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['minhas-vendas'] });
+
+      toast({
+        title: "Venda cadastrada!",
+        description: "O rascunho foi convertido em venda com sucesso.",
+      });
+      navigate('/vendas/minhas-vendas');
+    } catch (error) {
+      console.error('Erro ao cadastrar venda:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível cadastrar a venda",
+      });
+    } finally {
+      setIsCadastrando(false);
+    }
   };
 
   // Estilos azuis consistentes com a área de vendas
@@ -848,6 +919,22 @@ export default function MinhasVendasEditar() {
                 <Save className="w-3.5 h-3.5 mr-1.5" />
                 {isSaving ? 'Salvando...' : 'Salvar'}
               </Button>
+              {venda.is_rascunho && (
+                <Button 
+                  type="button"
+                  size="sm"
+                  onClick={handleCadastrarVenda}
+                  disabled={isCadastrando}
+                  className="bg-gradient-to-r from-green-500 to-green-700 text-white hover:from-green-600 hover:to-green-800"
+                >
+                  {isCadastrando ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  ) : (
+                    <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                  )}
+                  {isCadastrando ? 'Cadastrando...' : 'Cadastrar Venda'}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
