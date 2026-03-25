@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     // Check if requesting user is an admin
     const { data: adminUser, error: adminCheckError } = await supabaseAdmin
       .from('admin_users')
-      .select('role, ativo')
+      .select('role, ativo, bypass_permissions')
       .eq('user_id', requestingUser.id)
       .single()
 
