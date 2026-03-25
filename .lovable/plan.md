@@ -1,36 +1,43 @@
 
 
-## Plano: Adicionar checkboxes e reordenar missões com drag-and-drop
+## Plano: Corrigir sincronização de itens no modo edição
 
-### 1. Adicionar novos checkboxes no modo edição (`DetalhesMissaoModal.tsx`)
+### Problema
+O `useEffect` de sincronização no `DetalhesMissaoModal.tsx` (linhas 226-241) apenas filtra e atualiza itens já existentes em `localCheckboxes`. Quando um novo checkbox é adicionado via `handleAdicionarItem`, ele é inserido no banco e a query refetcha, mas o novo item do servidor **nunca é adicionado** ao `localCheckboxes` — porque o efeito só opera sobre `prev` existente.
 
-- Adicionar botão "+ Adicionar item" abaixo da lista de checkboxes quando `editando === true`
-- Ao clicar, inserir um novo Input vazio no `localCheckboxes` com ID temporário
-- Ao confirmar (blur/Enter), chamar nova mutation `adicionarCheckbox` no hook `useMissoes`
-- Novo checkbox recebe `ordem` = último + 1, `missao_id` = missão atual
+O botão de excluir (X) funciona corretamente: remove do estado local e chama a mutation. O problema real está na sincronização de novos itens.
 
-### 2. Nova mutation `adicionarCheckbox` (`src/hooks/useMissoes.ts`)
+### Correção em `src/components/todo/DetalhesMissaoModal.tsx`
 
-- `mutationFn`: insert em `missao_checkboxes` com `{ missao_id, descricao, ordem, prazo }`
-- `onSuccess`: invalidar query `["missoes"]`
-- Prop nova `onAdicionarCheckbox` passada ao modal
+**1. Atualizar o `useEffect` de sync (linhas 226-241)** para também detectar e adicionar novos itens do servidor que não existam em `localCheckboxes`:
 
-### 3. Drag-and-drop para reordenar missões (`ChecklistLideranca.tsx`)
-
-- Envolver o grid de missões com `DndContext` + `SortableContext` (já usado nos checkboxes)
-- Criar componente `SortableMissaoCard` com `useSortable` e handle de arrasto (ícone `GripVertical`)
-- Nova mutation `reordenarMissoes` no `useMissoes.ts`: atualiza campo `ordem` na tabela `missoes`
-- Requer coluna `ordem integer default 0` na tabela `missoes` (migration SQL)
-
-### 4. Migration SQL
-
-```sql
-ALTER TABLE missoes ADD COLUMN ordem integer DEFAULT 0;
+```tsx
+useEffect(() => {
+  if (editando && missao) {
+    setLocalCheckboxes(prev => {
+      const localIds = new Set(prev.map(cb => cb.id));
+      const serverIds = new Set(missao.missao_checkboxes.map(cb => cb.id));
+      
+      // Update existing items
+      const updated = prev
+        .filter(cb => serverIds.has(cb.id) && !deletedIds.has(cb.id))
+        .map(cb => {
+          const serverCb = missao.missao_checkboxes.find(s => s.id === cb.id);
+          if (!serverCb) return cb;
+          return { ...cb, prazo: serverCb.prazo, concluida: serverCb.concluida, concluida_em: serverCb.concluida_em };
+        });
+      
+      // Add new items from server (not in local, not deleted)
+      const newItems = missao.missao_checkboxes.filter(
+        cb => !localIds.has(cb.id) && !deletedIds.has(cb.id)
+      );
+      
+      return [...updated, ...newItems];
+    });
+  }
+}, [editando, missao?.missao_checkboxes, deletedIds]);
 ```
 
-### Arquivos alterados
-- `src/components/todo/DetalhesMissaoModal.tsx` — botão adicionar item, prop `onAdicionarCheckbox`
-- `src/hooks/useMissoes.ts` — mutations `adicionarCheckbox` e `reordenarMissoes`, ordenar por `ordem`
-- `src/pages/ChecklistLideranca.tsx` — DndContext no grid de missões, `SortableMissaoCard`, passar nova prop
-- Migration: adicionar coluna `ordem` em `missoes`
+### Arquivo alterado
+- `src/components/todo/DetalhesMissaoModal.tsx` — corrigir useEffect de sync para incluir novos itens do servidor
 
