@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
         .from('user_route_access')
         .select('id')
         .eq('user_id', requestingUser.id)
-        .eq('route_key', 'admin_users')
+        .eq('route_key', 'users')
         .eq('can_access', true)
         .single()
 
