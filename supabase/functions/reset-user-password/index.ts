@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    if (adminUser.role !== 'administrador' || !adminUser.ativo) {
+    if (!adminUser.ativo) {
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions' }),
         { 
@@ -91,6 +91,28 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       )
+    }
+
+    const isAdmin = adminUser.role === 'administrador' || adminUser.bypass_permissions === true
+
+    if (!isAdmin) {
+      const { data: routeAccess } = await supabaseAdmin
+        .from('user_route_access')
+        .select('id')
+        .eq('user_id', requestingUser.id)
+        .eq('route_key', 'admin_users')
+        .eq('can_access', true)
+        .single()
+
+      if (!routeAccess) {
+        return new Response(
+          JSON.stringify({ error: 'Insufficient permissions' }),
+          { 
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
+      }
     }
 
     // Update the user's password
