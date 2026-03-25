@@ -1,37 +1,28 @@
 
 
-## Plano: Corrigir policy RLS de INSERT em `missao_checkboxes`
+## Plano: Permitir cadastrar vendas a partir de rascunhos
 
 ### Problema
-Existem duas versões da função `has_role`:
-- `has_role(uuid, text)` → consulta `admin_users` (onde o usuário tem `gerente_marketing`)
-- `has_role(uuid, user_role)` → consulta `user_roles` (onde o usuário tem `administrador`)
+Quando um vendedor clica "Continuar" em um rascunho, abre a página de edição (`MinhasVendasEditar`), que só tem um botão "Salvar" que navega de volta sem nunca mudar `is_rascunho` para `false`. Não existe botão para finalizar/cadastrar o rascunho como venda real.
 
-A policy atual usa `has_role(auth.uid(), 'diretor')` que resolve para a versão `text` → `admin_users`, onde o papel é diferente. Por isso o INSERT falha.
+### Solução
+Adicionar um botão "Cadastrar Venda" na página `MinhasVendasEditar` que:
+1. Executa as validações obrigatórias (endereço completo, produtos, comprovante se aplicável)
+2. Atualiza `is_rascunho = false` no banco de dados
+3. Recalcula e atualiza os totais da venda (`valor_venda`, `valor_a_receber`, etc.)
+4. Invalida as queries de rascunhos e vendas
 
-### Correção — Migration SQL
+### Arquivos alterados
+- `src/pages/vendas/MinhasVendasEditar.tsx` — Adicionar botão "Cadastrar Venda" e lógica de finalização
 
-Recriar a policy usando a versão correta da função (cast para `user_role`) OU verificar diretamente na tabela `user_roles`:
+### Detalhes técnicos
 
-```sql
-DROP POLICY IF EXISTS "Creator or admin can insert missao_checkboxes" ON public.missao_checkboxes;
+**Nova função `handleCadastrarVenda`** em `MinhasVendasEditar.tsx`:
+- Validar campos obrigatórios: `estado`, `cidade`, `cep`, `bairro`, `endereco`, e pelo menos 1 produto
+- Recalcular `valor_venda` com base nos produtos atuais + frete + crédito
+- Executar `supabase.from('vendas').update({ is_rascunho: false, valor_venda: ..., valor_a_receber: ... }).eq('id', id)`
+- Invalidar queries `['vendas']`, `['rascunhos-vendas']`, `['minhas-vendas']`
+- Navegar para `/vendas/minhas-vendas` com toast de sucesso
 
-CREATE POLICY "Creator or admin can insert missao_checkboxes"
-ON public.missao_checkboxes FOR INSERT
-TO authenticated
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM missoes
-    WHERE missoes.id = missao_checkboxes.missao_id
-      AND missoes.created_by = auth.uid()
-  )
-  OR has_role(auth.uid(), 'diretor'::user_role)
-  OR has_role(auth.uid(), 'administrador'::user_role)
-);
-```
-
-Isso força o Postgres a usar o overload que consulta `user_roles`, onde o usuário de fato tem o papel `administrador`.
-
-### Arquivo alterado
-- Migration SQL (1 arquivo)
+**Botão na UI**: Ao lado do "Salvar", adicionar botão verde/destaque "Cadastrar Venda" visível apenas quando `venda.is_rascunho === true`.
 
