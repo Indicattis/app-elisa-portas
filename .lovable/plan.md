@@ -1,42 +1,31 @@
 
 
-## Plano: Permitir reset de senha para usuários autorizados em /admin/users
+## Plano: Permitir leitura da tabela `clientes` pelo role `anon`
 
-### Problema
-A Edge Function `reset-user-password` restringe o reset de senha exclusivamente ao role `administrador` (linha 86: `adminUser.role !== 'administrador'`). Qualquer outro usuário, mesmo com acesso à rota `/admin/users`, recebe erro 403 "Insufficient permissions".
+### Situação atual
+A tabela `clientes` tem RLS ativo com política SELECT que exige `auth.uid() IS NOT NULL`. O CRM externo usa a `anon key`, que não tem sessão autenticada, resultando em array vazio.
 
-### Solução
-Flexibilizar a verificação na Edge Function para aceitar qualquer usuário ativo que tenha acesso à rota `/admin/users` (via `user_route_access`) OU que seja administrador. Isso mantém a segurança usando o mesmo sistema de permissões já existente no projeto.
+### Alerta de segurança
+A tabela `clientes` contém dados pessoais sensíveis (nome, telefone, email, CPF/CNPJ, endereço). Liberar acesso ao role `anon` significa que **qualquer pessoa com a anon key** (que é pública) poderá ler esses dados. 
 
-### Arquivo alterado
-- `supabase/functions/reset-user-password/index.ts`
+**Recomendação**: Em vez de liberar para `anon`, o CRM deveria autenticar-se com um usuário real (email/senha via `supabase.auth.signInWithPassword`). Assim a política existente já funcionaria sem expor dados pessoais publicamente.
 
-### Detalhes técnicos
+### Opção 1 (Recomendada - Segura): Autenticar o CRM
+Não requer mudança neste projeto. No CRM, fazer login com credenciais de um usuário existente antes de consultar a tabela. A política atual já permite SELECT para usuários autenticados.
 
-Substituir a verificação rígida de role por uma consulta que verifica:
-1. Se o usuário é administrador (`role = 'administrador'`), OU
-2. Se o usuário tem `bypass_permissions = true`, OU  
-3. Se o usuário tem acesso à rota `/admin/users` na tabela `user_route_access`
+### Opção 2 (Rápida - Menos segura): Criar política para `anon`
+Criar uma nova política permitindo leitura apenas de clientes ativos pelo role `anon`:
 
-```typescript
-// Antes (restritivo):
-if (adminUser.role !== 'administrador' || !adminUser.ativo) { return 403 }
-
-// Depois (flexível):
-if (!adminUser.ativo) { return 403 }
-
-const isAdmin = adminUser.role === 'administrador' || adminUser.bypass_permissions === true;
-
-if (!isAdmin) {
-  // Verificar acesso à rota /admin/users
-  const { data: routeAccess } = await supabaseAdmin
-    .from('user_route_access')
-    .select('id')
-    .eq('user_id', requestingUser.id)
-    .eq('route_key', 'admin_users')
-    .single();
-  
-  if (!routeAccess) { return 403 }
-}
+```sql
+CREATE POLICY "Anon can read active clientes"
+ON public.clientes
+FOR SELECT
+TO anon
+USING (ativo = true);
 ```
+
+Isso expõe dados pessoais a qualquer portador da anon key.
+
+### Qual caminho seguir?
+Se você quer a solução rápida (Opção 2), posso aplicar a migração imediatamente. Se preferir a opção segura (Opção 1), a mudança será feita no projeto CRM.
 
