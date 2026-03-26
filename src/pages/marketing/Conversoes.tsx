@@ -41,7 +41,16 @@ export default function Conversoes() {
       }
       const { data, error } = await query.order('data_venda', { ascending: true });
       if (error) throw error;
-      return data || [];
+      // Limpar telefones e filtrar únicos
+      const cleanPhone = (t: string | null) => t ? t.replace(/[\s\-\(\)]/g, '') : '';
+      const seen = new Set<string>();
+      const unique = (data || []).filter(v => {
+        const phone = cleanPhone(v.cliente_telefone);
+        if (!phone || seen.has(phone)) return false;
+        seen.add(phone);
+        return true;
+      }).map(v => ({ ...v, cliente_telefone: cleanPhone(v.cliente_telefone) }));
+      return unique;
     },
   });
 
