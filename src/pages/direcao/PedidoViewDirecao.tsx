@@ -251,6 +251,36 @@ export default function PedidoViewDirecao() {
       }
 
       const venda = vendaObj;
+      const isCorrecao = !!(pedidoData as any).is_correcao;
+
+      // Buscar dados de correção se for pedido de correção
+      let correcaoInfo: CorrecaoData | null = null;
+      if (isCorrecao) {
+        const { data: correcaoRow } = await supabase
+          .from('correcoes')
+          .select('id, custo_correcao, setor_causador, justificativa, etapa_causadora')
+          .eq('pedido_id', id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (correcaoRow) {
+          const { data: correcaoLinhas } = await supabase
+            .from('correcao_linhas')
+            .select('id, descricao, quantidade')
+            .eq('correcao_id', correcaoRow.id)
+            .order('created_at', { ascending: true });
+
+          correcaoInfo = {
+            custo_correcao: correcaoRow.custo_correcao,
+            setor_causador: correcaoRow.setor_causador,
+            justificativa: correcaoRow.justificativa,
+            etapa_causadora: correcaoRow.etapa_causadora,
+            linhas: (correcaoLinhas || []) as any,
+          };
+        }
+      }
+      setCorrecaoData(correcaoInfo);
       
       setPedido({
         id: pedidoData.id,
@@ -272,6 +302,7 @@ export default function PedidoViewDirecao() {
         linhas: ((linhasData as any) || []) as PedidoLinha[],
         ordens: ordensResult,
         produtos_venda: produtosVenda,
+        is_correcao: isCorrecao,
       });
     } catch (error) {
       console.error('Erro ao buscar pedido:', error);
