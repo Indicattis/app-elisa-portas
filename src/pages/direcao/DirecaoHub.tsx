@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, DollarSign, Factory, Truck, Target, ArrowLeft, Users, Warehouse, ShieldCheck, Calculator, Network, ClipboardCheck } from 'lucide-react';
+import { ShoppingCart, DollarSign, Factory, Truck, Target, ArrowLeft, Users, Warehouse, ShieldCheck, Calculator, Network, ClipboardCheck, ExternalLink } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
@@ -8,6 +8,7 @@ import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
   { label: 'Vendas', icon: ShoppingCart, path: '/direcao/vendas' },
+  { label: 'CRM', icon: ExternalLink, path: 'https://crm.elisaportas.com/', external: true },
   { label: 'DRE', icon: Calculator, path: '/direcao/dre' },
   { label: 'Faturamento', icon: DollarSign, path: '/direcao/faturamento' },
   { label: 'Checklist Liderança', icon: ClipboardCheck, path: '/direcao/checklist-lideranca' },
