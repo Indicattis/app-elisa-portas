@@ -12,7 +12,8 @@ const menuItems = [
   { label: "Investimentos", icon: DollarSign, path: "/marketing/investimentos", ativo: true },
   { label: "Mídias", icon: Image, path: "/marketing/midias", ativo: true },
   { label: "LTV", icon: Users, path: "/marketing/ltv", ativo: true },
-  { label: "Conversões", icon: Copy, path: "/marketing/conversoes", ativo: true },
+  { label: "Conversões Google", icon: Copy, path: "/marketing/conversoes", ativo: true },
+  { label: "Conversões Meta", icon: Copy, path: "/marketing/conversoes-meta", ativo: true },
 ];
 
 export default function MarketingHub() {
