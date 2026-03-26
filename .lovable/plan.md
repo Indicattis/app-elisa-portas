@@ -1,32 +1,28 @@
 
 
-## Plano: Adicionar "Visitas Técnicas" ao hub de Vendas
+## Plano: Registrar novas rotas em `app_routes`
 
-### Objetivo
-Criar um novo botão "Visitas Técnicas" no hub `/vendas` e uma nova página que lista os anexos de fichas de visita técnica dos pedidos, agrupados por venda (cliente).
+### Problema
+As páginas "Visitas Técnicas" (`/vendas/visitas-tecnicas`) e "Leads" (`/vendas/leads`) existem no código mas não foram adicionadas à tabela `app_routes`. Por isso, não aparecem no gerenciador de permissões em `/admin/permissions`.
 
-### Dados disponíveis
-A tabela `pedidos_producao` já possui as colunas `ficha_visita_url`, `ficha_visita_nome` e `venda_id`. Basta consultar pedidos que tenham `ficha_visita_url IS NOT NULL` e agrupar pelo `venda_id` + `cliente_nome`.
+### Solução
+Criar uma migration SQL que insere as duas rotas como sub-rotas de `vendas_hub`:
 
-### Alterações
+```sql
+INSERT INTO app_routes (key, path, label, interface, parent_key, sort_order, icon, active)
+VALUES
+  ('vendas_leads', '/vendas/leads', 'Leads', 'minimalista', 'vendas_hub', 7, 'UserPlus', true),
+  ('vendas_visitas_tecnicas', '/vendas/visitas-tecnicas', 'Visitas Técnicas', 'minimalista', 'vendas_hub', 8, 'ClipboardCheck', true)
+ON CONFLICT (key) DO UPDATE SET active = true, path = EXCLUDED.path, label = EXCLUDED.label;
+```
 
-**1. `src/pages/vendas/VendasHub.tsx`**
-- Importar ícone `ClipboardCheck` do lucide-react
-- Adicionar item ao array `menuItems`: `{ label: 'Visitas Técnicas', icon: ClipboardCheck, path: '/vendas/visitas-tecnicas' }`
+Adicionalmente, atualizar as rotas no `App.tsx` para usar `routeKey` específico em vez do genérico `vendas_hub`:
+- `/vendas/leads` → `routeKey="vendas_leads"`
+- `/vendas/visitas-tecnicas` → `routeKey="vendas_visitas_tecnicas"`
 
-**2. Nova página `src/pages/vendas/VisitasTecnicas.tsx`**
-- Query Supabase: `pedidos_producao` filtrando `ficha_visita_url` not null, selecionando `id, numero_pedido, cliente_nome, venda_id, ficha_visita_url, ficha_visita_nome, created_at`
-- Agrupar resultados por `venda_id` (ou `cliente_nome` quando `venda_id` é null)
-- Exibir cards colapsáveis por cliente/venda, cada um listando os pedidos com links para abrir/baixar a ficha de visita
-- Incluir campo de busca por nome do cliente
-- Layout responsivo seguindo o padrão existente (fundo escuro, breadcrumb, botão voltar)
-
-**3. `src/App.tsx`**
-- Importar `VisitasTecnicas` com lazy loading
-- Adicionar rota: `<Route path="/vendas/visitas-tecnicas" element={<ProtectedRoute routeKey="vendas_hub"><VisitasTecnicas /></ProtectedRoute>} />`
+E propagar o acesso automaticamente para usuários que já têm `vendas_hub`.
 
 ### Arquivos alterados
-- `src/pages/vendas/VendasHub.tsx` — novo item no menu
-- `src/pages/vendas/VisitasTecnicas.tsx` — nova página (criação)
-- `src/App.tsx` — nova rota
+- Migration SQL (1 arquivo novo)
+- `src/App.tsx` — atualizar routeKey das duas rotas
 
