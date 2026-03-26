@@ -254,6 +254,11 @@ export default function PedidoCorrecaoNovo() {
               produtos={produtos}
               onRemoveProduto={handleRemoveProduto}
               onEditProduto={handleEditProduto}
+              onUpdateQuantidade={(index, quantidade) => {
+                const novosProdutos = [...produtos];
+                novosProdutos[index] = { ...novosProdutos[index], quantidade };
+                setProdutos(novosProdutos);
+              }}
             />
           </div>
         </Section>
