@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Copy, Check } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, parseISO, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
@@ -46,7 +46,8 @@ export default function Conversoes() {
   const handleCopy = async () => {
     const header = 'Data\tE-mail\tTelefone';
     const rows = vendas.map(v => {
-      const dataFormatada = v.data_venda ? format(new Date(v.data_venda + 'T00:00:00'), 'dd/MM/yyyy') : '';
+      const d = v.data_venda ? parseISO(String(v.data_venda)) : null;
+      const dataFormatada = d && isValid(d) ? format(d, 'dd/MM/yyyy') : '';
       return `${dataFormatada}\t${v.cliente_email || ''}\t${v.cliente_telefone || ''}`;
     });
     const tsv = [header, ...rows].join('\n');
@@ -146,7 +147,7 @@ export default function Conversoes() {
                 vendas.map((v, i) => (
                   <TableRow key={i} className="border-white/10 hover:bg-white/5">
                     <TableCell className="text-white/90">
-                      {v.data_venda ? format(new Date(v.data_venda + 'T00:00:00'), 'dd/MM/yyyy') : '-'}
+                      {(() => { const d = v.data_venda ? parseISO(String(v.data_venda)) : null; return d && isValid(d) ? format(d, 'dd/MM/yyyy') : '-'; })()}
                     </TableCell>
                     <TableCell className="text-white/90">{v.cliente_email || '-'}</TableCell>
                     <TableCell className="text-white/90">{v.cliente_telefone || '-'}</TableCell>
