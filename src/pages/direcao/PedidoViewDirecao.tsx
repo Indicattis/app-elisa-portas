@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, User, Package, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCw, Hammer, Paintbrush, Truck, FileDown, Printer, ExternalLink, FileText, FolderOpen, Folder, ClipboardList, Trash2 } from "lucide-react";
+import { MapPin, User, Package, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCw, Hammer, Paintbrush, Truck, FileDown, Printer, ExternalLink, FileText, FolderOpen, Folder, ClipboardList, Trash2, Wrench } from "lucide-react";
+import { SETOR_LABELS } from "@/utils/setorMapping";
 import { ExcluirPedidoModal } from "@/components/pedidos/ExcluirPedidoModal";
 import { toast as sonnerToast } from "sonner";
 import { baixarPedidoProducaoPDF, imprimirPedidoProducaoPDF, type PedidoProducaoPDFData } from "@/utils/pedidoProducaoPDFGenerator";
@@ -109,6 +110,15 @@ interface Pedido {
   linhas: PedidoLinha[];
   ordens: Ordem[];
   produtos_venda?: any[];
+  is_correcao?: boolean;
+}
+
+interface CorrecaoData {
+  custo_correcao: number | null;
+  setor_causador: string | null;
+  justificativa: string | null;
+  etapa_causadora: string | null;
+  linhas: { id: string; descricao: string; quantidade: number | null }[];
 }
 
 export default function PedidoViewDirecao() {
@@ -120,6 +130,7 @@ export default function PedidoViewDirecao() {
   const [pastaAberta, setPastaAberta] = useState<string | null>(null);
   const [showExcluir, setShowExcluir] = useState(false);
   const [isExcluindo, setIsExcluindo] = useState(false);
+  const [correcaoData, setCorrecaoData] = useState<CorrecaoData | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -149,7 +160,7 @@ export default function PedidoViewDirecao() {
         .from('pedidos_producao')
         .select(`
           id, numero_pedido, etapa_atual, created_at, venda_id,
-          ficha_visita_url, ficha_visita_nome, observacoes, updated_at,
+          ficha_visita_url, ficha_visita_nome, observacoes, updated_at, is_correcao,
           vendas!inner(id, cliente_nome, cidade, estado, valor_venda, forma_pagamento, tipo_entrega, data_prevista_entrega)
         `)
         .eq('id', id)
