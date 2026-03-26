@@ -21,23 +21,25 @@ export default function Conversoes() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const now = new Date();
-  const [mes, setMes] = useState(now.getMonth());
-  const [ano, setAno] = useState(now.getFullYear());
+  const [mes, setMes] = useState<number | 'all'>(now.getMonth());
+  const [ano, setAno] = useState<number | 'all'>(now.getFullYear());
   const [copiedCol, setCopiedCol] = useState<string | null>(null);
+  const todoTempo = mes === 'all' || ano === 'all';
 
-  const dataInicio = format(startOfMonth(new Date(ano, mes)), 'yyyy-MM-dd');
-  const dataFim = format(endOfMonth(new Date(ano, mes)), 'yyyy-MM-dd');
+  const dataInicio = !todoTempo ? format(startOfMonth(new Date(ano as number, mes as number)), 'yyyy-MM-dd') : null;
+  const dataFim = !todoTempo ? format(endOfMonth(new Date(ano as number, mes as number)), 'yyyy-MM-dd') : null;
 
   const { data: vendas = [], isLoading } = useQuery({
     queryKey: ['conversoes', mes, ano],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('vendas')
         .select('data_venda, cliente_email, cliente_telefone')
-        .eq('is_rascunho', false)
-        .gte('data_venda', dataInicio)
-        .lte('data_venda', dataFim)
-        .order('data_venda', { ascending: true });
+        .eq('is_rascunho', false);
+      if (dataInicio && dataFim) {
+        query = query.gte('data_venda', dataInicio).lte('data_venda', dataFim);
+      }
+      const { data, error } = await query.order('data_venda', { ascending: true });
       if (error) throw error;
       return data || [];
     },
@@ -92,33 +94,36 @@ export default function Conversoes() {
 
         {/* Filtros */}
         <div className="flex gap-3 mb-6 items-center">
-          <Select value={String(mes)} onValueChange={v => setMes(Number(v))}>
-            <SelectTrigger className="w-[160px] bg-white/5 border-white/10 text-white">
+          <Select value={String(mes)} onValueChange={v => setMes(v === 'all' ? 'all' : Number(v))}>
+            <SelectTrigger className="w-[180px] bg-white/5 border-white/10 text-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">Todo o tempo</SelectItem>
               {meses.map((m, i) => (
                 <SelectItem key={i} value={String(i)}>{m}</SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Select value={String(ano)} onValueChange={v => setAno(Number(v))}>
-            <SelectTrigger className="w-[100px] bg-white/5 border-white/10 text-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {anos.map(a => (
-                <SelectItem key={a} value={String(a)}>{a}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {mes !== 'all' && (
+            <Select value={String(ano)} onValueChange={v => setAno(v === 'all' ? 'all' : Number(v))}>
+              <SelectTrigger className="w-[100px] bg-white/5 border-white/10 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {anos.map(a => (
+                  <SelectItem key={a} value={String(a)}>{a}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
         </div>
 
         {/* Contador */}
         <p className="text-white/50 text-xs mb-4">
-          {isLoading ? 'Carregando...' : `${vendas.length} conversão(ões) em ${meses[mes]} ${ano}`}
+          {isLoading ? 'Carregando...' : `${vendas.length} conversão(ões)${todoTempo ? ' no total' : ` em ${meses[mes as number]} ${ano}`}`}
         </p>
 
         {/* Tabela */}
