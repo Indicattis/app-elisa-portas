@@ -1,0 +1,1 @@
+UPDATE app_routes SET active = false WHERE key = 'vendas_catalogo';
