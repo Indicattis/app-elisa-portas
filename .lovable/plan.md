@@ -1,40 +1,34 @@
 
 
-## Plano: Página de Conversões para Google Ads
+## Plano: Página de Conversões para Meta Ads
 
 ### Objetivo
-Criar uma nova página em `/marketing/conversoes` que lista vendas filtráveis por mês, exibindo data da venda, e-mail e telefone do cliente. O usuário pode copiar os dados em formato TSV (tab-separated) para colar diretamente em uma planilha.
+Criar uma nova página em `/marketing/conversoes-meta` com o mesmo layout da página Google (`/marketing/conversoes`), mas adaptada ao formato de importação do Meta Ads. Colunas: **email** e **phone** (com código de país `+55` prefixado automaticamente).
 
-### Dados disponíveis
-A tabela `vendas` já possui `data_venda`, `cliente_email` e `cliente_telefone`. Basta consultar vendas onde `is_rascunho = false`, filtrando por mês/ano.
+### Diferenças em relação à página Google
+- Sem coluna de data (Meta não usa)
+- Header das colunas usa os identificadores do Meta: `email` e `phone`
+- Telefone formatado com `+55` no início, sem espaços/parênteses/hífens (ex: `+5511999999999`)
+- Subtítulo: "Dados de vendas para importação no Meta Ads"
 
 ### Alterações
 
-**1. `src/pages/marketing/Conversoes.tsx`** (novo arquivo)
-- Seletor de mês/ano (default: mês atual)
-- Query Supabase: `vendas` filtradas por `data_venda` no mês selecionado, `is_rascunho = false`
-- Tabela com colunas: Data da Venda, E-mail, Telefone
-- Botão "Copiar tudo" que copia os dados como TSV (tab entre colunas, newline entre linhas) — formato que planilhas reconhecem automaticamente
-- Indicador de quantidade de conversões no mês
+**1. `src/pages/marketing/ConversoesMeta.tsx`** (novo)
+- Mesma estrutura da `Conversoes.tsx`: filtros mês/ano, "Todo o tempo", tabela com cópia por coluna
+- Query idêntica: `vendas` com `is_rascunho = false`, telefones únicos
+- Colunas: `email` e `phone`
+- Formatação do telefone: limpar caracteres especiais e prefixar `+55` se não começar com `+`
+- Breadcrumb: Home > Marketing > Conversões Meta
 
 **2. `src/pages/marketing/MarketingHub.tsx`**
-- Adicionar item no menu: `{ label: "Conversões", icon: Copy, path: "/marketing/conversoes", ativo: true }`
+- Novo item no menu: `{ label: "Conversões Meta", icon: Copy, path: "/marketing/conversoes-meta", ativo: true }`
+- Renomear o item existente "Conversões" para "Conversões Google"
 
 **3. `src/App.tsx`**
-- Importar `Conversoes` com lazy loading
-- Adicionar rota: `/marketing/conversoes`
-
-### Formato da cópia
-Ao clicar "Copiar tudo", o conteúdo copiado será:
-```
-Data	E-mail	Telefone
-15/03/2026	cliente@email.com	11999999999
-16/03/2026	outro@email.com	21988888888
-```
-Cada coluna separada por tab (`\t`), cada linha por `\n` — ao colar no Google Sheets ou Excel, cada valor vai para sua célula correta.
+- Nova rota lazy: `/marketing/conversoes-meta` → `ConversoesMeta`
 
 ### Arquivos alterados
-- `src/pages/marketing/Conversoes.tsx` (novo)
-- `src/pages/marketing/MarketingHub.tsx` — novo item no menu
-- `src/App.tsx` — nova rota
+- `src/pages/marketing/ConversoesMeta.tsx` (novo)
+- `src/pages/marketing/MarketingHub.tsx`
+- `src/App.tsx`
 
