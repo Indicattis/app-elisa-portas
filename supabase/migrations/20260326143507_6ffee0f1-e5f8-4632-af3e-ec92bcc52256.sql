@@ -1,0 +1,1 @@
+UPDATE app_routes SET interface = 'padrao' WHERE key IN ('vendas_leads', 'vendas_visitas_tecnicas');
