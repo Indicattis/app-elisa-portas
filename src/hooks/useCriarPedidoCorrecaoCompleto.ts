@@ -82,6 +82,7 @@ export function useCriarPedidoCorrecaoCompleto() {
           descricao: produto.descricao || `Correção - ${produto.tipo_produto}`,
           valor_credito: produto.valor_credito || 0,
           percentual_credito: produto.percentual_credito || 0,
+          pedido_correcao_id: novoPedido.id,
         }));
 
         const { error: produtosError } = await supabase

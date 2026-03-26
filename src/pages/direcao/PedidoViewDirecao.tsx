@@ -695,23 +695,13 @@ export default function PedidoViewDirecao() {
           </>
         )}
 
-        {/* Produtos da Venda — destacados em roxo quando correção */}
+        {/* Produtos da Venda */}
         {pedido.produtos_venda && pedido.produtos_venda.length > 0 && (
-          <Card className={cn(
-            "backdrop-blur-xl",
-            pedido.is_correcao
-              ? "bg-purple-500/5 border-purple-500/20"
-              : "bg-primary/5 border-primary/10"
-          )}>
+          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2 text-white">
-                <Package className={cn("w-4 h-4", pedido.is_correcao && "text-purple-400")} />
+                <Package className="w-4 h-4" />
                 Produtos da Venda
-                {pedido.is_correcao && (
-                  <Badge variant="outline" className="text-[10px] bg-purple-500/20 text-purple-400 border-purple-500/30 ml-1">
-                    Correção
-                  </Badge>
-                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -719,7 +709,7 @@ export default function PedidoViewDirecao() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className={cn("border-b text-xs", pedido.is_correcao ? "border-purple-500/20" : "border-white/10")}>
+                      <tr className="border-b border-white/10 text-xs">
                         <th className="text-left p-2 font-medium text-white/50">Tipo</th>
                         <th className="text-left p-2 font-medium text-white/50">Descrição</th>
                         <th className="text-left p-2 font-medium text-white/50">Tamanho</th>
@@ -731,52 +721,74 @@ export default function PedidoViewDirecao() {
                       </tr>
                     </thead>
                     <tbody>
-                      {pedido.produtos_venda.map((produto: any) => (
-                        <tr key={produto.id} className={cn(
-                          "border-b transition-colors",
-                          pedido.is_correcao
-                            ? "border-purple-500/10 hover:bg-purple-500/10"
-                            : "border-white/5 hover:bg-white/5"
-                        )}>
-                          <td className="p-2 text-xs text-white/80">{produto.tipo_produto || '-'}</td>
-                          <td className="p-2 text-xs text-white/80">{produto.descricao || '-'}</td>
-                          <td className="p-2 text-xs text-white/80">{produto.tamanho || '-'}</td>
-                          <td className="p-2 text-xs text-white/80">{produto.cor?.nome || '-'}</td>
-                          <td className="p-2 text-xs">
-                            <Badge variant={produto.tipo_fabricacao === 'terceirizado' ? 'secondary' : 'outline'} className={`text-xs ${produto.tipo_fabricacao === 'terceirizado' ? 'bg-orange-500/20 text-orange-400' : 'border-white/20 text-white/60'}`}>
-                              {produto.tipo_fabricacao === 'terceirizado' ? 'Terceirizado' : 'Interno'}
-                            </Badge>
-                          </td>
-                          <td className="p-2 text-xs text-right text-white/80">{calcularPeso(produto) || '-'}</td>
-                          <td className="p-2 text-xs text-right text-white/80">{calcularMeiaCanas(produto) || '-'}</td>
-                          <td className="p-2 text-center">
-                            <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
-                          </td>
-                        </tr>
-                      ))}
+                      {pedido.produtos_venda.map((produto: any) => {
+                        const isCorrecaoItem = !!produto.pedido_correcao_id;
+                        return (
+                          <tr key={produto.id} className={cn(
+                            "border-b transition-colors",
+                            isCorrecaoItem
+                              ? "border-purple-500/10 bg-purple-500/10 hover:bg-purple-500/15"
+                              : "border-white/5 hover:bg-white/5"
+                          )}>
+                            <td className="p-2 text-xs text-white/80">
+                              <span className="flex items-center gap-1.5">
+                                {produto.tipo_produto || '-'}
+                                {isCorrecaoItem && (
+                                  <Badge variant="outline" className="text-[10px] bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                    Correção
+                                  </Badge>
+                                )}
+                              </span>
+                            </td>
+                            <td className="p-2 text-xs text-white/80">{produto.descricao || '-'}</td>
+                            <td className="p-2 text-xs text-white/80">{produto.tamanho || '-'}</td>
+                            <td className="p-2 text-xs text-white/80">{produto.cor?.nome || '-'}</td>
+                            <td className="p-2 text-xs">
+                              <Badge variant={produto.tipo_fabricacao === 'terceirizado' ? 'secondary' : 'outline'} className={`text-xs ${produto.tipo_fabricacao === 'terceirizado' ? 'bg-orange-500/20 text-orange-400' : 'border-white/20 text-white/60'}`}>
+                                {produto.tipo_fabricacao === 'terceirizado' ? 'Terceirizado' : 'Interno'}
+                              </Badge>
+                            </td>
+                            <td className="p-2 text-xs text-right text-white/80">{calcularPeso(produto) || '-'}</td>
+                            <td className="p-2 text-xs text-right text-white/80">{calcularMeiaCanas(produto) || '-'}</td>
+                            <td className="p-2 text-center">
+                              <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {pedido.produtos_venda.map((produto: any) => (
-                    <div key={produto.id} className={cn(
-                      "p-3 border rounded-lg space-y-2",
-                      pedido.is_correcao ? "border-purple-500/20" : "border-white/10"
-                    )}>
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm text-white">{produto.tipo_produto || '-'}</span>
-                        <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
+                  {pedido.produtos_venda.map((produto: any) => {
+                    const isCorrecaoItem = !!produto.pedido_correcao_id;
+                    return (
+                      <div key={produto.id} className={cn(
+                        "p-3 border rounded-lg space-y-2",
+                        isCorrecaoItem ? "border-purple-500/20 bg-purple-500/10" : "border-white/10"
+                      )}>
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-sm text-white flex items-center gap-1.5">
+                            {produto.tipo_produto || '-'}
+                            {isCorrecaoItem && (
+                              <Badge variant="outline" className="text-[10px] bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                Correção
+                              </Badge>
+                            )}
+                          </span>
+                          <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
+                        </div>
+                        {produto.descricao && <p className="text-xs text-white/50">{produto.descricao}</p>}
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div><span className="text-white/50">Tamanho: </span><span className="font-medium text-white/80">{produto.tamanho || '-'}</span></div>
+                          <div><span className="text-white/50">Cor: </span><span className="font-medium text-white/80">{produto.cor?.nome || '-'}</span></div>
+                          <div><span className="text-white/50">Peso: </span><span className="font-medium text-white/80">{calcularPeso(produto) || '-'} kg</span></div>
+                          <div><span className="text-white/50">M. Canas: </span><span className="font-medium text-white/80">{calcularMeiaCanas(produto) || '-'}</span></div>
+                        </div>
                       </div>
-                      {produto.descricao && <p className="text-xs text-white/50">{produto.descricao}</p>}
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div><span className="text-white/50">Tamanho: </span><span className="font-medium text-white/80">{produto.tamanho || '-'}</span></div>
-                        <div><span className="text-white/50">Cor: </span><span className="font-medium text-white/80">{produto.cor?.nome || '-'}</span></div>
-                        <div><span className="text-white/50">Peso: </span><span className="font-medium text-white/80">{calcularPeso(produto) || '-'} kg</span></div>
-                        <div><span className="text-white/50">M. Canas: </span><span className="font-medium text-white/80">{calcularMeiaCanas(produto) || '-'}</span></div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
