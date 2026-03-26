@@ -1,28 +1,28 @@
 
 
-## Plano: Registrar novas rotas em `app_routes`
+## Diagnóstico: Duas rotas "Catálogo" duplicadas
 
-### Problema
-As páginas "Visitas Técnicas" (`/vendas/visitas-tecnicas`) e "Leads" (`/vendas/leads`) existem no código mas não foram adicionadas à tabela `app_routes`. Por isso, não aparecem no gerenciador de permissões em `/admin/permissions`.
+Existem duas entradas na tabela `app_routes` com o label "Catálogo" dentro de `vendas_hub`:
 
-### Solução
-Criar uma migration SQL que insere as duas rotas como sub-rotas de `vendas_hub`:
+| key | path | sort_order |
+|-----|------|------------|
+| `vendas_catalogo_minimalista` | `/vendas/catalogo` | 5 |
+| `vendas_catalogo` | `/dashboard/vendas/vendas-catalogo` | 13 |
+
+Uma é a rota antiga (`/dashboard/vendas/vendas-catalogo`) e a outra é a versão mais recente (`/vendas/catalogo`). Ambas estão ativas e com `interface = 'padrao'`, por isso aparecem duplicadas.
+
+## Solução
+
+Criar uma migration que desativa a rota obsoleta:
 
 ```sql
-INSERT INTO app_routes (key, path, label, interface, parent_key, sort_order, icon, active)
-VALUES
-  ('vendas_leads', '/vendas/leads', 'Leads', 'minimalista', 'vendas_hub', 7, 'UserPlus', true),
-  ('vendas_visitas_tecnicas', '/vendas/visitas-tecnicas', 'Visitas Técnicas', 'minimalista', 'vendas_hub', 8, 'ClipboardCheck', true)
-ON CONFLICT (key) DO UPDATE SET active = true, path = EXCLUDED.path, label = EXCLUDED.label;
+UPDATE app_routes SET active = false WHERE key = 'vendas_catalogo';
 ```
 
-Adicionalmente, atualizar as rotas no `App.tsx` para usar `routeKey` específico em vez do genérico `vendas_hub`:
-- `/vendas/leads` → `routeKey="vendas_leads"`
-- `/vendas/visitas-tecnicas` → `routeKey="vendas_visitas_tecnicas"`
+Isso remove a entrada antiga do gerenciador de permissões, mantendo apenas `vendas_catalogo_minimalista` (`/vendas/catalogo`).
 
-E propagar o acesso automaticamente para usuários que já têm `vendas_hub`.
+Se a rota antiga ainda estiver em uso no código, será necessário verificar e redirecionar para a nova.
 
-### Arquivos alterados
-- Migration SQL (1 arquivo novo)
-- `src/App.tsx` — atualizar routeKey das duas rotas
+### Arquivo alterado
+- Migration SQL (1 arquivo)
 
