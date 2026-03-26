@@ -23,7 +23,7 @@ export default function Conversoes() {
   const now = new Date();
   const [mes, setMes] = useState(now.getMonth());
   const [ano, setAno] = useState(now.getFullYear());
-  const [copied, setCopied] = useState(false);
+  const [copiedCol, setCopiedCol] = useState<string | null>(null);
 
   const dataInicio = format(startOfMonth(new Date(ano, mes)), 'yyyy-MM-dd');
   const dataFim = format(endOfMonth(new Date(ano, mes)), 'yyyy-MM-dd');
@@ -43,18 +43,23 @@ export default function Conversoes() {
     },
   });
 
-  const handleCopy = async () => {
-    const header = 'Data\tE-mail\tTelefone';
-    const rows = vendas.map(v => {
-      const d = v.data_venda ? parseISO(String(v.data_venda)) : null;
-      const dataFormatada = d && isValid(d) ? format(d, 'dd/MM/yyyy') : '';
-      return `${dataFormatada}\t${v.cliente_email || ''}\t${v.cliente_telefone || ''}`;
+  const formatDate = (dataVenda: string | null) => {
+    if (!dataVenda) return '-';
+    const d = parseISO(String(dataVenda));
+    return isValid(d) ? format(d, 'dd.MM.yyyy') : '-';
+  };
+
+  const handleCopyColumn = async (col: 'data' | 'email' | 'telefone') => {
+    const values = vendas.map(v => {
+      if (col === 'data') return formatDate(v.data_venda);
+      if (col === 'email') return v.cliente_email || '';
+      return v.cliente_telefone || '';
     });
-    const tsv = [header, ...rows].join('\n');
-    await navigator.clipboard.writeText(tsv);
-    setCopied(true);
-    toast({ title: 'Copiado!', description: `${vendas.length} conversões copiadas para a área de transferência.` });
-    setTimeout(() => setCopied(false), 2000);
+    await navigator.clipboard.writeText(values.join('\n'));
+    setCopiedCol(col);
+    const labels = { data: 'Datas', email: 'E-mails', telefone: 'Telefones' };
+    toast({ title: 'Copiado!', description: `${values.length} ${labels[col]} copiados.` });
+    setTimeout(() => setCopiedCol(null), 2000);
   };
 
   const anos = Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i);
@@ -109,14 +114,6 @@ export default function Conversoes() {
             </SelectContent>
           </Select>
 
-          <button
-            onClick={handleCopy}
-            disabled={vendas.length === 0}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            {copied ? 'Copiado!' : 'Copiar tudo'}
-          </button>
         </div>
 
         {/* Contador */}
@@ -129,9 +126,21 @@ export default function Conversoes() {
           <Table>
             <TableHeader>
               <TableRow className="border-white/10 hover:bg-transparent">
-                <TableHead className="text-white/70">Data</TableHead>
-                <TableHead className="text-white/70">E-mail</TableHead>
-                <TableHead className="text-white/70">Telefone</TableHead>
+                <TableHead className="text-white/70">
+                  <button onClick={() => handleCopyColumn('data')} disabled={vendas.length === 0} className="flex items-center gap-1.5 hover:text-white transition-colors disabled:opacity-40">
+                    Data {copiedCol === 'data' ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5 opacity-50" />}
+                  </button>
+                </TableHead>
+                <TableHead className="text-white/70">
+                  <button onClick={() => handleCopyColumn('email')} disabled={vendas.length === 0} className="flex items-center gap-1.5 hover:text-white transition-colors disabled:opacity-40">
+                    E-mail {copiedCol === 'email' ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5 opacity-50" />}
+                  </button>
+                </TableHead>
+                <TableHead className="text-white/70">
+                  <button onClick={() => handleCopyColumn('telefone')} disabled={vendas.length === 0} className="flex items-center gap-1.5 hover:text-white transition-colors disabled:opacity-40">
+                    Telefone {copiedCol === 'telefone' ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5 opacity-50" />}
+                  </button>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -147,7 +156,7 @@ export default function Conversoes() {
                 vendas.map((v, i) => (
                   <TableRow key={i} className="border-white/10 hover:bg-white/5">
                     <TableCell className="text-white/90">
-                      {(() => { const d = v.data_venda ? parseISO(String(v.data_venda)) : null; return d && isValid(d) ? format(d, 'dd/MM/yyyy') : '-'; })()}
+                      {formatDate(v.data_venda)}
                     </TableCell>
                     <TableCell className="text-white/90">{v.cliente_email || '-'}</TableCell>
                     <TableCell className="text-white/90">{v.cliente_telefone || '-'}</TableCell>
