@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 
 interface PedidoVisita {
   id: string;
-  numero_pedido: number;
+  numero_pedido: string;
   cliente_nome: string;
   venda_id: string | null;
   ficha_visita_url: string;
