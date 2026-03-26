@@ -6039,6 +6039,7 @@ export type Database = {
           lucro_produto: number | null
           margem_pintura: number | null
           margem_produto: number | null
+          pedido_correcao_id: string | null
           percentual_credito: number | null
           quantidade: number | null
           tamanho: string
@@ -6077,6 +6078,7 @@ export type Database = {
           lucro_produto?: number | null
           margem_pintura?: number | null
           margem_produto?: number | null
+          pedido_correcao_id?: string | null
           percentual_credito?: number | null
           quantidade?: number | null
           tamanho: string
@@ -6115,6 +6117,7 @@ export type Database = {
           lucro_produto?: number | null
           margem_pintura?: number | null
           margem_produto?: number | null
+          pedido_correcao_id?: string | null
           percentual_credito?: number | null
           quantidade?: number | null
           tamanho?: string
@@ -6160,6 +6163,20 @@ export type Database = {
             columns: ["venda_id"]
             isOneToOne: false
             referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_vendas_pedido_correcao_id_fkey"
+            columns: ["pedido_correcao_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "produtos_vendas_pedido_correcao_id_fkey"
+            columns: ["pedido_correcao_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
             referencedColumns: ["id"]
           },
           {
