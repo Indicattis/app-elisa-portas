@@ -64,6 +64,7 @@ import InvestimentosMinimalista from "./pages/marketing/InvestimentosMinimalista
 import LtvMinimalista from "./pages/marketing/LtvMinimalista";
 import MidiasMinimalista from "./pages/marketing/MidiasMinimalista";
 import Conversoes from "./pages/marketing/Conversoes";
+import ConversoesMeta from "./pages/marketing/ConversoesMeta";
 
 import FabricaHome from "./pages/FabricaHome";
 import InstalacoesHome from "./pages/InstalacoesHome";
@@ -450,6 +451,7 @@ const App = () => (
             <Route path="/marketing/midias" element={<ProtectedRoute routeKey="marketing_midias"><MidiasMinimalista /></ProtectedRoute>} />
             <Route path="/marketing/ltv" element={<ProtectedRoute routeKey="marketing_ltv"><LtvMinimalista /></ProtectedRoute>} />
             <Route path="/marketing/conversoes" element={<ProtectedRoute routeKey="marketing_hub"><Conversoes /></ProtectedRoute>} />
+            <Route path="/marketing/conversoes-meta" element={<ProtectedRoute routeKey="marketing_hub"><ConversoesMeta /></ProtectedRoute>} />
 
                 {/* Hub de Vendas Minimalista */}
                 <Route path="/vendas" element={<ProtectedRoute routeKeyPrefix="vendas_"><VendasHub /></ProtectedRoute>} />
