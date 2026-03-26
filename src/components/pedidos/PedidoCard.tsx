@@ -1177,9 +1177,14 @@ export function PedidoCard({
               
               <div className="flex items-center justify-center">
                 {(pedido as any).is_correcao && (
-                  <Badge variant="outline" className="h-5 px-1 text-[8px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/50">
-                    CORREÇÃO
-                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center justify-center h-5 w-5 rounded bg-purple-500/10 border border-purple-500/50">
+                        <Wrench className="h-3 w-3 text-purple-700 dark:text-purple-400" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>Correção</TooltipContent>
+                  </Tooltip>
                 )}
               </div>
               
