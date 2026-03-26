@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, User, Package, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCw, Hammer, Paintbrush, Truck, FileDown, Printer, ExternalLink, FileText, FolderOpen, Folder, ClipboardList, Trash2 } from "lucide-react";
+import { MapPin, User, Package, CheckCircle2, Clock, AlertCircle, XCircle, RefreshCw, Hammer, Paintbrush, Truck, FileDown, Printer, ExternalLink, FileText, FolderOpen, Folder, ClipboardList, Trash2, Wrench } from "lucide-react";
+import { SETOR_LABELS } from "@/utils/setorMapping";
 import { ExcluirPedidoModal } from "@/components/pedidos/ExcluirPedidoModal";
 import { toast as sonnerToast } from "sonner";
 import { baixarPedidoProducaoPDF, imprimirPedidoProducaoPDF, type PedidoProducaoPDFData } from "@/utils/pedidoProducaoPDFGenerator";
@@ -109,6 +110,15 @@ interface Pedido {
   linhas: PedidoLinha[];
   ordens: Ordem[];
   produtos_venda?: any[];
+  is_correcao?: boolean;
+}
+
+interface CorrecaoData {
+  custo_correcao: number | null;
+  setor_causador: string | null;
+  justificativa: string | null;
+  etapa_causadora: string | null;
+  linhas: { id: string; descricao: string; quantidade: number | null }[];
 }
 
 export default function PedidoViewDirecao() {
@@ -120,6 +130,7 @@ export default function PedidoViewDirecao() {
   const [pastaAberta, setPastaAberta] = useState<string | null>(null);
   const [showExcluir, setShowExcluir] = useState(false);
   const [isExcluindo, setIsExcluindo] = useState(false);
+  const [correcaoData, setCorrecaoData] = useState<CorrecaoData | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -149,7 +160,7 @@ export default function PedidoViewDirecao() {
         .from('pedidos_producao')
         .select(`
           id, numero_pedido, etapa_atual, created_at, venda_id,
-          ficha_visita_url, ficha_visita_nome, observacoes, updated_at,
+          ficha_visita_url, ficha_visita_nome, observacoes, updated_at, is_correcao,
           vendas!inner(id, cliente_nome, cidade, estado, valor_venda, forma_pagamento, tipo_entrega, data_prevista_entrega)
         `)
         .eq('id', id)
@@ -240,6 +251,36 @@ export default function PedidoViewDirecao() {
       }
 
       const venda = vendaObj;
+      const isCorrecao = !!(pedidoData as any).is_correcao;
+
+      // Buscar dados de correção se for pedido de correção
+      let correcaoInfo: CorrecaoData | null = null;
+      if (isCorrecao) {
+        const { data: correcaoRow } = await supabase
+          .from('correcoes')
+          .select('id, custo_correcao, setor_causador, justificativa, etapa_causadora')
+          .eq('pedido_id', id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (correcaoRow) {
+          const { data: correcaoLinhas } = await supabase
+            .from('correcao_linhas')
+            .select('id, descricao, quantidade')
+            .eq('correcao_id', correcaoRow.id)
+            .order('created_at', { ascending: true });
+
+          correcaoInfo = {
+            custo_correcao: correcaoRow.custo_correcao,
+            setor_causador: correcaoRow.setor_causador,
+            justificativa: correcaoRow.justificativa,
+            etapa_causadora: correcaoRow.etapa_causadora,
+            linhas: (correcaoLinhas || []) as any,
+          };
+        }
+      }
+      setCorrecaoData(correcaoInfo);
       
       setPedido({
         id: pedidoData.id,
@@ -261,6 +302,7 @@ export default function PedidoViewDirecao() {
         linhas: ((linhasData as any) || []) as PedidoLinha[],
         ordens: ordensResult,
         produtos_venda: produtosVenda,
+        is_correcao: isCorrecao,
       });
     } catch (error) {
       console.error('Erro ao buscar pedido:', error);
@@ -457,6 +499,12 @@ export default function PedidoViewDirecao() {
           <Button variant="ghost" size="sm" onClick={() => fetchPedidoDetails()} className="text-white/70 hover:text-white hover:bg-white/10">
             <RefreshCw className="w-4 h-4" />
           </Button>
+          {pedido.is_correcao && (
+            <Badge variant="outline" className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs px-2 py-0.5">
+              <Wrench className="w-3 h-3 mr-1" />
+              Correção
+            </Badge>
+          )}
           <Badge variant="outline" className={`${getEtapaBadgeColor(pedido.etapa_atual)} text-xs px-2 py-0.5`}>
             {getEtapaLabel(pedido.etapa_atual)}
           </Badge>
@@ -488,12 +536,17 @@ export default function PedidoViewDirecao() {
                     </div>
                   </div>
                 )}
-                {pedido.valor_venda && (
+                {pedido.is_correcao && correcaoData ? (
+                  <div>
+                    <p className="text-xs text-white/50">Valor da Correção</p>
+                    <p className="font-medium text-purple-400">R$ {Number(correcaoData.custo_correcao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  </div>
+                ) : pedido.valor_venda ? (
                   <div>
                     <p className="text-xs text-white/50">Valor da Venda</p>
                     <p className="font-medium text-white">R$ {Number(pedido.valor_venda).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                   </div>
-                )}
+                ) : null}
                 {pedido.forma_pagamento && (
                   <div>
                     <p className="text-xs text-white/50">Forma de Pagamento</p>
@@ -579,156 +632,221 @@ export default function PedidoViewDirecao() {
           </Card>
         )}
 
-        {/* Produtos da Venda */}
-        {pedido.produtos_venda && pedido.produtos_venda.length > 0 && (
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2 text-white">
-                <Package className="w-4 h-4" />
-                Produtos da Venda
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!isMobile ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-white/10 text-xs">
-                        <th className="text-left p-2 font-medium text-white/50">Tipo</th>
-                        <th className="text-left p-2 font-medium text-white/50">Descrição</th>
-                        <th className="text-left p-2 font-medium text-white/50">Tamanho</th>
-                        <th className="text-left p-2 font-medium text-white/50">Cor</th>
-                        <th className="text-left p-2 font-medium text-white/50">Fabricação</th>
-                        <th className="text-right p-2 font-medium text-white/50">Peso (kg)</th>
-                        <th className="text-right p-2 font-medium text-white/50">M. Canas</th>
-                        <th className="text-center p-2 font-medium text-white/50">Qtd</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pedido.produtos_venda.map((produto: any) => (
-                        <tr key={produto.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                          <td className="p-2 text-xs text-white/80">{produto.tipo_produto || '-'}</td>
-                          <td className="p-2 text-xs text-white/80">{produto.descricao || '-'}</td>
-                          <td className="p-2 text-xs text-white/80">{produto.tamanho || '-'}</td>
-                          <td className="p-2 text-xs text-white/80">{produto.cor?.nome || '-'}</td>
-                          <td className="p-2 text-xs">
-                            <Badge variant={produto.tipo_fabricacao === 'terceirizado' ? 'secondary' : 'outline'} className={`text-xs ${produto.tipo_fabricacao === 'terceirizado' ? 'bg-orange-500/20 text-orange-400' : 'border-white/20 text-white/60'}`}>
-                              {produto.tipo_fabricacao === 'terceirizado' ? 'Terceirizado' : 'Interno'}
-                            </Badge>
-                          </td>
-                          <td className="p-2 text-xs text-right text-white/80">{calcularPeso(produto) || '-'}</td>
-                          <td className="p-2 text-xs text-right text-white/80">{calcularMeiaCanas(produto) || '-'}</td>
-                          <td className="p-2 text-center">
-                            <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {pedido.produtos_venda.map((produto: any) => (
-                    <div key={produto.id} className="p-3 border border-white/10 rounded-lg space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm text-white">{produto.tipo_produto || '-'}</span>
-                        <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
+        {/* Seção condicional: Correção vs Normal */}
+        {pedido.is_correcao && correcaoData ? (
+          <>
+            {/* Itens da Correção */}
+            <Card className="bg-purple-500/5 border-purple-500/20 backdrop-blur-xl">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2 text-white">
+                  <Wrench className="w-4 h-4 text-purple-400" />
+                  Itens da Correção
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {correcaoData.linhas.length > 0 ? (
+                  <div className="space-y-2">
+                    {correcaoData.linhas.map((linha) => (
+                      <div key={linha.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 text-sm">
+                        <p className="font-medium text-white">{linha.descricao}</p>
+                        <Badge variant="outline" className="text-xs bg-white/5 text-white/70 border-white/20">
+                          Qtd: {linha.quantidade ?? 1}
+                        </Badge>
                       </div>
-                      {produto.descricao && <p className="text-xs text-white/50">{produto.descricao}</p>}
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div><span className="text-white/50">Tamanho: </span><span className="font-medium text-white/80">{produto.tamanho || '-'}</span></div>
-                        <div><span className="text-white/50">Cor: </span><span className="font-medium text-white/80">{produto.cor?.nome || '-'}</span></div>
-                        <div><span className="text-white/50">Peso: </span><span className="font-medium text-white/80">{calcularPeso(produto) || '-'} kg</span></div>
-                        <div><span className="text-white/50">M. Canas: </span><span className="font-medium text-white/80">{calcularMeiaCanas(produto) || '-'}</span></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-white/40 text-center italic py-4">Nenhum item de correção cadastrado</p>
+                )}
+              </CardContent>
+            </Card>
 
-        {/* Itens do Pedido */}
-        {gruposPortas.length > 0 && (
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2 text-white">
-                <Package className="w-4 h-4" />
-                Itens do Pedido ({pedido.linhas.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {/* Grid de pastas */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                {gruposPortas.map((grupo) => {
-                  const isOpen = pastaAberta === grupo.key;
-                  const isSemProduto = grupo.key === 'sem_porta';
-                  return (
-                    <div
-                      key={grupo.key}
-                      className={cn(
-                        "p-3 rounded-lg cursor-pointer transition-all border-2",
-                        isSemProduto ? "border-dashed" : "",
-                        isOpen
-                          ? "border-blue-500/50 bg-blue-500/10"
-                          : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
-                      )}
-                      onClick={() => setPastaAberta(isOpen ? null : grupo.key)}
-                    >
-                      <div className="flex items-start gap-2">
-                        {isOpen ? (
-                          <FolderOpen className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
-                        ) : (
-                          <Folder className="h-5 w-5 text-white/50 shrink-0 mt-0.5" />
-                        )}
-                        <div className="min-w-0 flex-1 space-y-1">
-                          <p className="text-sm font-semibold text-white leading-tight truncate">{grupo.label}</p>
-                          {grupo.dimensoes && (
-                            <p className="text-xs font-medium text-white/80">{grupo.dimensoes}</p>
-                          )}
-                          <Badge variant="outline" className="text-[10px] h-5 bg-white/5 text-white/70 border-white/20">
-                            {grupo.linhas.length} {grupo.linhas.length === 1 ? 'item' : 'itens'}
-                          </Badge>
-                        </div>
+            {/* Detalhes da Correção */}
+            {(correcaoData.setor_causador || correcaoData.etapa_causadora || correcaoData.justificativa) && (
+              <Card className="bg-purple-500/5 border-purple-500/20 backdrop-blur-xl">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2 text-white">
+                    <FileText className="w-4 h-4 text-purple-400" />
+                    Detalhes da Correção
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    {correcaoData.setor_causador && (
+                      <div>
+                        <p className="text-xs text-white/50">Setor Responsável</p>
+                        <p className="font-medium text-white">{SETOR_LABELS[correcaoData.setor_causador as keyof typeof SETOR_LABELS] || correcaoData.setor_causador}</p>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Lista expandida da pasta selecionada */}
-              {pastaAberta && (() => {
-                const grupo = gruposPortas.find(g => g.key === pastaAberta);
-                if (!grupo) return null;
-                return (
-                  <div className="space-y-2 pt-2 border-t border-white/10">
-                    <p className="text-xs text-white/50 font-medium">{grupo.label}</p>
-                    {grupo.linhas.length === 0 ? (
-                      <div className="p-3 rounded-lg bg-white/5 text-sm text-white/40 text-center italic">
-                        Nenhum item de produção vinculado
+                    )}
+                    {correcaoData.etapa_causadora && (
+                      <div>
+                        <p className="text-xs text-white/50">Etapa Causadora</p>
+                        <p className="font-medium text-white capitalize">{correcaoData.etapa_causadora.replace(/_/g, ' ')}</p>
                       </div>
-                    ) : (
-                      grupo.linhas.map((linha) => (
-                        <div key={linha.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-sm">
-                          <div className="flex-1">
-                            <p className="font-medium text-white">{linha.nome_produto}</p>
-                            {linha.descricao_produto && (
-                              <p className="text-xs text-white/60">{linha.descricao_produto}</p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-4 text-white/60 text-xs">
-                            {linha.tamanho && <span>{linha.tamanho}</span>}
-                            <span>Qtd: {linha.quantidade}</span>
-                          </div>
-                        </div>
-                      ))
+                    )}
+                    {correcaoData.justificativa && (
+                      <div className="sm:col-span-2">
+                        <p className="text-xs text-white/50">Justificativa</p>
+                        <p className="font-medium text-white/80 whitespace-pre-wrap">{correcaoData.justificativa}</p>
+                      </div>
                     )}
                   </div>
-                );
-              })()}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Produtos da Venda */}
+            {pedido.produtos_venda && pedido.produtos_venda.length > 0 && (
+              <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2 text-white">
+                    <Package className="w-4 h-4" />
+                    Produtos da Venda
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {!isMobile ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-white/10 text-xs">
+                            <th className="text-left p-2 font-medium text-white/50">Tipo</th>
+                            <th className="text-left p-2 font-medium text-white/50">Descrição</th>
+                            <th className="text-left p-2 font-medium text-white/50">Tamanho</th>
+                            <th className="text-left p-2 font-medium text-white/50">Cor</th>
+                            <th className="text-left p-2 font-medium text-white/50">Fabricação</th>
+                            <th className="text-right p-2 font-medium text-white/50">Peso (kg)</th>
+                            <th className="text-right p-2 font-medium text-white/50">M. Canas</th>
+                            <th className="text-center p-2 font-medium text-white/50">Qtd</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pedido.produtos_venda.map((produto: any) => (
+                            <tr key={produto.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                              <td className="p-2 text-xs text-white/80">{produto.tipo_produto || '-'}</td>
+                              <td className="p-2 text-xs text-white/80">{produto.descricao || '-'}</td>
+                              <td className="p-2 text-xs text-white/80">{produto.tamanho || '-'}</td>
+                              <td className="p-2 text-xs text-white/80">{produto.cor?.nome || '-'}</td>
+                              <td className="p-2 text-xs">
+                                <Badge variant={produto.tipo_fabricacao === 'terceirizado' ? 'secondary' : 'outline'} className={`text-xs ${produto.tipo_fabricacao === 'terceirizado' ? 'bg-orange-500/20 text-orange-400' : 'border-white/20 text-white/60'}`}>
+                                  {produto.tipo_fabricacao === 'terceirizado' ? 'Terceirizado' : 'Interno'}
+                                </Badge>
+                              </td>
+                              <td className="p-2 text-xs text-right text-white/80">{calcularPeso(produto) || '-'}</td>
+                              <td className="p-2 text-xs text-right text-white/80">{calcularMeiaCanas(produto) || '-'}</td>
+                              <td className="p-2 text-center">
+                                <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {pedido.produtos_venda.map((produto: any) => (
+                        <div key={produto.id} className="p-3 border border-white/10 rounded-lg space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-sm text-white">{produto.tipo_produto || '-'}</span>
+                            <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
+                          </div>
+                          {produto.descricao && <p className="text-xs text-white/50">{produto.descricao}</p>}
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div><span className="text-white/50">Tamanho: </span><span className="font-medium text-white/80">{produto.tamanho || '-'}</span></div>
+                            <div><span className="text-white/50">Cor: </span><span className="font-medium text-white/80">{produto.cor?.nome || '-'}</span></div>
+                            <div><span className="text-white/50">Peso: </span><span className="font-medium text-white/80">{calcularPeso(produto) || '-'} kg</span></div>
+                            <div><span className="text-white/50">M. Canas: </span><span className="font-medium text-white/80">{calcularMeiaCanas(produto) || '-'}</span></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Itens do Pedido */}
+            {gruposPortas.length > 0 && (
+              <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2 text-white">
+                    <Package className="w-4 h-4" />
+                    Itens do Pedido ({pedido.linhas.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                    {gruposPortas.map((grupo) => {
+                      const isOpen = pastaAberta === grupo.key;
+                      const isSemProduto = grupo.key === 'sem_porta';
+                      return (
+                        <div
+                          key={grupo.key}
+                          className={cn(
+                            "p-3 rounded-lg cursor-pointer transition-all border-2",
+                            isSemProduto ? "border-dashed" : "",
+                            isOpen
+                              ? "border-blue-500/50 bg-blue-500/10"
+                              : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                          )}
+                          onClick={() => setPastaAberta(isOpen ? null : grupo.key)}
+                        >
+                          <div className="flex items-start gap-2">
+                            {isOpen ? (
+                              <FolderOpen className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
+                            ) : (
+                              <Folder className="h-5 w-5 text-white/50 shrink-0 mt-0.5" />
+                            )}
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <p className="text-sm font-semibold text-white leading-tight truncate">{grupo.label}</p>
+                              {grupo.dimensoes && (
+                                <p className="text-xs font-medium text-white/80">{grupo.dimensoes}</p>
+                              )}
+                              <Badge variant="outline" className="text-[10px] h-5 bg-white/5 text-white/70 border-white/20">
+                                {grupo.linhas.length} {grupo.linhas.length === 1 ? 'item' : 'itens'}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {pastaAberta && (() => {
+                    const grupo = gruposPortas.find(g => g.key === pastaAberta);
+                    if (!grupo) return null;
+                    return (
+                      <div className="space-y-2 pt-2 border-t border-white/10">
+                        <p className="text-xs text-white/50 font-medium">{grupo.label}</p>
+                        {grupo.linhas.length === 0 ? (
+                          <div className="p-3 rounded-lg bg-white/5 text-sm text-white/40 text-center italic">
+                            Nenhum item de produção vinculado
+                          </div>
+                        ) : (
+                          grupo.linhas.map((linha) => (
+                            <div key={linha.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-sm">
+                              <div className="flex-1">
+                                <p className="font-medium text-white">{linha.nome_produto}</p>
+                                {linha.descricao_produto && (
+                                  <p className="text-xs text-white/60">{linha.descricao_produto}</p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-4 text-white/60 text-xs">
+                                {linha.tamanho && <span>{linha.tamanho}</span>}
+                                <span>Qtd: {linha.quantidade}</span>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            )}
+          </>
         )}
 
         {/* Observações do Pedido */}
