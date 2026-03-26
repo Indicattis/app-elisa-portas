@@ -8,7 +8,8 @@ import {
   Handshake,
   ArrowLeft,
   Search,
-  UserPlus
+  UserPlus,
+  ClipboardCheck
 } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -23,6 +24,7 @@ const menuItems = [
   { label: 'Meus Parceiros', icon: Handshake, path: '/vendas/meus-parceiros' },
   { label: 'Acompanhar Pedido', icon: Search, path: '/vendas/acompanhar-pedido' },
   { label: 'Leads', icon: UserPlus, path: '/vendas/leads' },
+  { label: 'Visitas Técnicas', icon: ClipboardCheck, path: '/vendas/visitas-tecnicas' },
 ];
 
 export default function VendasHub() {
