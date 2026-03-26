@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserPlus, Search } from 'lucide-react';
-import { DndContext, DragOverlay, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
+import { ArrowLeft, UserPlus, Search, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -9,9 +8,8 @@ import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { LeadKanbanColumn } from '@/components/vendas/LeadKanbanColumn';
-import { LeadKanbanCard } from '@/components/vendas/LeadKanbanCard';
-import { toast } from 'sonner';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
+import { handleWhatsAppClick } from '@/utils/timeUtils';
 
 interface Lead {
   id: string;
@@ -26,7 +24,21 @@ interface Lead {
   atendente_id: string | null;
 }
 
-const STATUSES = ['novo', 'em_atendimento', 'orcamento_enviado', 'venda_realizada', 'perdido'];
+const statusLabels: Record<string, string> = {
+  novo: 'Novo',
+  em_atendimento: 'Em Atendimento',
+  orcamento_enviado: 'Orçamento Enviado',
+  venda_realizada: 'Venda Realizada',
+  perdido: 'Perdido',
+};
+
+const statusColors: Record<string, string> = {
+  novo: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  em_atendimento: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+  orcamento_enviado: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+  venda_realizada: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+  perdido: 'bg-red-500/20 text-red-300 border-red-500/30',
+};
 
 export default function LeadsList() {
   const navigate = useNavigate();
@@ -36,12 +48,6 @@ export default function LeadsList() {
   const [mounted, setMounted] = useState(false);
   const [busca, setBusca] = useState('');
   const [atendentesMap, setAtendentesMap] = useState<Record<string, string>>({});
-  const [activeLead, setActiveLead] = useState<Lead | null>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
-  );
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
@@ -90,66 +96,6 @@ export default function LeadsList() {
     );
   }, [leads, busca]);
 
-  const groupedLeads = useMemo(() => {
-    const groups: Record<string, Lead[]> = {};
-    STATUSES.forEach(s => { groups[s] = []; });
-    filteredLeads.forEach(lead => {
-      const status = lead.novo_status || 'novo';
-      if (groups[status]) groups[status].push(lead);
-      else groups.novo.push(lead);
-    });
-    return groups;
-  }, [filteredLeads]);
-
-  const handleDragStart = (event: DragStartEvent) => {
-    const lead = leads.find(l => l.id === event.active.id);
-    setActiveLead(lead || null);
-  };
-
-  const handleCapture = async (leadId: string) => {
-    if (!user) return;
-    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, atendente_id: user.id } : l));
-    setAtendentesMap(prev => ({ ...prev, [user.id]: prev[user.id] || 'Você' }));
-
-    const { error } = await (supabase.from('elisaportas_leads') as any)
-      .update({ atendente_id: user.id, novo_status: 'em_atendimento' })
-      .eq('id', leadId);
-
-    if (error) {
-      toast.error('Erro ao capturar lead');
-      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, atendente_id: null } : l));
-    } else {
-      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, novo_status: 'em_atendimento' } : l));
-      toast.success('Lead capturado!');
-    }
-  };
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    setActiveLead(null);
-    const { active, over } = event;
-    if (!over) return;
-
-    const leadId = active.id as string;
-    const newStatus = over.id as string;
-    if (!STATUSES.includes(newStatus)) return;
-
-    const lead = leads.find(l => l.id === leadId);
-    if (!lead || (lead.novo_status || 'novo') === newStatus) return;
-
-    // Optimistic update
-    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, novo_status: newStatus } : l));
-
-    const { error } = await (supabase.from('elisaportas_leads') as any)
-      .update({ novo_status: newStatus })
-      .eq('id', leadId);
-
-    if (error) {
-      console.error('Erro ao atualizar status:', error);
-      toast.error('Erro ao mover lead');
-      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, novo_status: lead.novo_status } : l));
-    }
-  };
-
   return (
     <div className="min-h-screen bg-black flex flex-col overflow-hidden relative">
       <DelayedParticles />
@@ -165,7 +111,6 @@ export default function LeadsList() {
 
       <FloatingProfileMenu mounted={mounted} />
 
-      {/* Botão Voltar */}
       <button
         onClick={() => navigate('/vendas')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
@@ -181,9 +126,7 @@ export default function LeadsList() {
         </div>
       </button>
 
-      {/* Conteúdo */}
       <div className="relative z-10 flex-1 flex flex-col pt-20 pb-4 px-4">
-        {/* Header */}
         <div
           className="w-full max-w-full mb-4 flex items-center gap-3 px-2"
           style={{
@@ -197,10 +140,9 @@ export default function LeadsList() {
           </div>
           <h1 className="text-2xl font-bold text-white">Leads</h1>
           <Badge className="bg-white/10 text-white/70 border-white/10">
-            {leads.length} {leads.length === 1 ? 'lead' : 'leads'}
+            {filteredLeads.length} {filteredLeads.length === 1 ? 'lead' : 'leads'}
           </Badge>
 
-          {/* Busca */}
           <div className="ml-auto w-72">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
@@ -214,50 +156,83 @@ export default function LeadsList() {
           </div>
         </div>
 
-        {/* Kanban Board */}
-        {loading ? (
-          <div className="flex gap-4 overflow-x-auto flex-1 px-2">
-            {STATUSES.map(s => (
-              <div key={s} className="min-w-[260px] w-[260px] rounded-xl bg-white/[0.02] border border-white/10 animate-pulse">
-                <div className="p-3"><div className="h-4 bg-white/10 rounded w-2/3" /></div>
-                <div className="p-2 space-y-2">
-                  {[1,2,3].map(i => <div key={i} className="h-20 bg-white/5 rounded-lg" />)}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <div
-              className="flex gap-4 overflow-x-auto flex-1 px-2 pb-2"
-              style={{
-                opacity: mounted ? 1 : 0,
-                transition: 'opacity 0.5s ease 300ms',
-              }}
-            >
-              {STATUSES.map(status => (
-                <LeadKanbanColumn
-                  key={status}
-                  status={status}
-                  leads={groupedLeads[status]}
-                  atendentesMap={atendentesMap}
-                  userId={user?.id}
-                  onCapture={handleCapture}
-                />
+        <div
+          className="rounded-xl border border-white/10 bg-white/[0.02] backdrop-blur-xl overflow-hidden"
+          style={{
+            opacity: mounted ? 1 : 0,
+            transition: 'opacity 0.5s ease 300ms',
+          }}
+        >
+          {loading ? (
+            <div className="p-8 space-y-3">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="h-10 bg-white/5 rounded animate-pulse" />
               ))}
             </div>
-
-            <DragOverlay>
-              {activeLead ? (
-                <LeadKanbanCard
-                  lead={activeLead}
-                  atendenteName={activeLead.atendente_id ? atendentesMap[activeLead.atendente_id] || '...' : null}
-                  isDragOverlay
-                />
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        )}
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/10 hover:bg-transparent">
+                  <TableHead className="text-white/50">Nome</TableHead>
+                  <TableHead className="text-white/50">Telefone</TableHead>
+                  <TableHead className="text-white/50">Cidade</TableHead>
+                  <TableHead className="text-white/50">Canal</TableHead>
+                  <TableHead className="text-white/50">Data</TableHead>
+                  <TableHead className="text-white/50">Status</TableHead>
+                  <TableHead className="text-white/50">Valor</TableHead>
+                  <TableHead className="text-white/50">Atendente</TableHead>
+                  <TableHead className="text-white/50 w-10"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredLeads.length === 0 ? (
+                  <TableRow className="border-white/10">
+                    <TableCell colSpan={9} className="text-center text-white/30 py-12">
+                      Nenhum lead encontrado
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredLeads.map(lead => {
+                    const status = lead.novo_status || 'novo';
+                    return (
+                      <TableRow key={lead.id} className="border-white/10 hover:bg-white/5">
+                        <TableCell className="text-white font-medium">{lead.nome}</TableCell>
+                        <TableCell className="text-white/70">{lead.telefone}</TableCell>
+                        <TableCell className="text-white/70">{lead.cidade || '—'}</TableCell>
+                        <TableCell className="text-white/70">{lead.canal_aquisicao}</TableCell>
+                        <TableCell className="text-white/70">
+                          {new Date(lead.data_envio).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full border ${statusColors[status] || statusColors.novo}`}>
+                            {statusLabels[status] || status}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-white/70">
+                          {lead.valor_orcamento != null && lead.valor_orcamento > 0
+                            ? `R$ ${lead.valor_orcamento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                            : '—'}
+                        </TableCell>
+                        <TableCell className="text-white/70">
+                          {lead.atendente_id ? atendentesMap[lead.atendente_id] || '...' : '—'}
+                        </TableCell>
+                        <TableCell>
+                          <button
+                            onClick={() => handleWhatsAppClick(lead.telefone, lead.nome)}
+                            className="p-1.5 rounded-md bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30 transition-colors"
+                            title="WhatsApp"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                          </button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </div>
       </div>
     </div>
   );
