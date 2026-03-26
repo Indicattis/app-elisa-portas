@@ -499,6 +499,12 @@ export default function PedidoViewDirecao() {
           <Button variant="ghost" size="sm" onClick={() => fetchPedidoDetails()} className="text-white/70 hover:text-white hover:bg-white/10">
             <RefreshCw className="w-4 h-4" />
           </Button>
+          {pedido.is_correcao && (
+            <Badge variant="outline" className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs px-2 py-0.5">
+              <Wrench className="w-3 h-3 mr-1" />
+              Correção
+            </Badge>
+          )}
           <Badge variant="outline" className={`${getEtapaBadgeColor(pedido.etapa_atual)} text-xs px-2 py-0.5`}>
             {getEtapaLabel(pedido.etapa_atual)}
           </Badge>
