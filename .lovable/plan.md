@@ -1,33 +1,40 @@
 
 
-## Plano: Destacar em roxo apenas os itens adicionados na correção
+## Plano: Página de Conversões para Google Ads
 
-### Problema
-Atualmente, quando `is_correcao = true`, **todos** os produtos da venda recebem estilo roxo. O correto é destacar apenas os produtos que foram inseridos pelo pedido de correção.
+### Objetivo
+Criar uma nova página em `/marketing/conversoes` que lista vendas filtráveis por mês, exibindo data da venda, e-mail e telefone do cliente. O usuário pode copiar os dados em formato TSV (tab-separated) para colar diretamente em uma planilha.
 
-### Causa raiz
-A tabela `produtos_vendas` não possui nenhuma coluna que identifique quais itens vieram de uma correção. Ao criar um pedido de correção, os novos produtos são inseridos com o mesmo `venda_id` do pedido original, sem marcação.
+### Dados disponíveis
+A tabela `vendas` já possui `data_venda`, `cliente_email` e `cliente_telefone`. Basta consultar vendas onde `is_rascunho = false`, filtrando por mês/ano.
 
-### Solução (2 partes)
+### Alterações
 
-**1. Migration: Adicionar coluna `pedido_correcao_id` em `produtos_vendas`**
+**1. `src/pages/marketing/Conversoes.tsx`** (novo arquivo)
+- Seletor de mês/ano (default: mês atual)
+- Query Supabase: `vendas` filtradas por `data_venda` no mês selecionado, `is_rascunho = false`
+- Tabela com colunas: Data da Venda, E-mail, Telefone
+- Botão "Copiar tudo" que copia os dados como TSV (tab entre colunas, newline entre linhas) — formato que planilhas reconhecem automaticamente
+- Indicador de quantidade de conversões no mês
 
-```sql
-ALTER TABLE public.produtos_vendas
-  ADD COLUMN pedido_correcao_id uuid REFERENCES pedidos_producao(id) ON DELETE SET NULL;
+**2. `src/pages/marketing/MarketingHub.tsx`**
+- Adicionar item no menu: `{ label: "Conversões", icon: Copy, path: "/marketing/conversoes", ativo: true }`
+
+**3. `src/App.tsx`**
+- Importar `Conversoes` com lazy loading
+- Adicionar rota: `/marketing/conversoes`
+
+### Formato da cópia
+Ao clicar "Copiar tudo", o conteúdo copiado será:
 ```
-
-**2. Atualizar `useCriarPedidoCorrecaoCompleto.ts`** — ao inserir produtos da correção, gravar o `pedido_correcao_id` (ID do novo pedido de correção) em cada produto inserido.
-
-**3. Atualizar `PedidoViewDirecao.tsx`**:
-- Remover o estilo roxo do card inteiro — voltar ao estilo padrão (`bg-primary/5 border-primary/10`)
-- Na renderização de cada linha da tabela, verificar se `produto.pedido_correcao_id` existe — se sim, aplicar fundo/borda roxo naquela linha específica + um badge "Correção" ao lado da descrição
-- Manter o card com estilo neutro e o ícone/badge "Correção" apenas no header
-
-**4. Backfill dos dados existentes** — atualizar os 2 produtos de correção já existentes (criados em 2026-03-26) com o `pedido_correcao_id` correto via migration.
+Data	E-mail	Telefone
+15/03/2026	cliente@email.com	11999999999
+16/03/2026	outro@email.com	21988888888
+```
+Cada coluna separada por tab (`\t`), cada linha por `\n` — ao colar no Google Sheets ou Excel, cada valor vai para sua célula correta.
 
 ### Arquivos alterados
-- Migration SQL (1 arquivo novo)
-- `src/hooks/useCriarPedidoCorrecaoCompleto.ts` — adicionar `pedido_correcao_id` no insert
-- `src/pages/direcao/PedidoViewDirecao.tsx` — estilo roxo por linha, não por card
+- `src/pages/marketing/Conversoes.tsx` (novo)
+- `src/pages/marketing/MarketingHub.tsx` — novo item no menu
+- `src/App.tsx` — nova rota
 
