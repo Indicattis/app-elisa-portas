@@ -63,7 +63,7 @@ import CanaisAquisicaoMinimalista from "./pages/marketing/CanaisAquisicaoMinimal
 import InvestimentosMinimalista from "./pages/marketing/InvestimentosMinimalista";
 import LtvMinimalista from "./pages/marketing/LtvMinimalista";
 import MidiasMinimalista from "./pages/marketing/MidiasMinimalista";
-const Conversoes = lazy(() => import("./pages/marketing/Conversoes"));
+import Conversoes from "./pages/marketing/Conversoes";
 
 import FabricaHome from "./pages/FabricaHome";
 import InstalacoesHome from "./pages/InstalacoesHome";
