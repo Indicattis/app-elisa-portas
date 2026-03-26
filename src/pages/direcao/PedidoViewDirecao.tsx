@@ -174,7 +174,7 @@ export default function PedidoViewDirecao() {
       if (vendaObj?.id) {
         const { data: produtos } = await supabase
           .from('produtos_vendas')
-          .select(`*, cor:catalogo_cores(nome)`)
+          .select(`*, cor:catalogo_cores(nome), pedido_correcao_id`)
           .eq('venda_id', vendaObj.id)
           .order('created_at');
         produtosVenda = produtos || [];
