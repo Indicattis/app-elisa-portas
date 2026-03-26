@@ -862,10 +862,6 @@ export default function PedidoViewDirecao() {
             </CardContent>
           </Card>
         )}
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2 text-white">
-                  <Wrench className="w-4 h-4 text-purple-400" />
-                  Itens da Correção
                 </CardTitle>
               </CardHeader>
               <CardContent>
