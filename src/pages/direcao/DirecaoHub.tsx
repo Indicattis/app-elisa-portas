@@ -84,7 +84,7 @@ export default function DirecaoHub() {
                 }}
               >
                 <button
-                  onClick={() => navigate(item.path)}
+                  onClick={() => item.external ? window.open(item.path, '_blank') : navigate(item.path)}
                   className={`w-full h-12 rounded-lg
                              active:scale-[0.98]
                              flex items-center gap-4 px-5
@@ -124,7 +124,7 @@ export default function DirecaoHub() {
                 }}
               >
                 <button
-                  onClick={() => navigate(item.path)}
+                  onClick={() => item.external ? window.open(item.path, '_blank') : navigate(item.path)}
                   className={`w-full h-12 rounded-lg
                              active:scale-[0.98]
                              flex items-center gap-4 px-5
