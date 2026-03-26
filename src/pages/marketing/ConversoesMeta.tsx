@@ -69,6 +69,14 @@ export default function ConversoesMeta() {
     setTimeout(() => setCopiedCol(null), 2000);
   };
 
+  const handleCopyAll = async () => {
+    const lines = vendas.map(v => `${v.cliente_email || ''},${v.cliente_telefone || ''}`);
+    await navigator.clipboard.writeText(lines.join('\n'));
+    setCopiedCol('all');
+    toast({ title: 'Copiado!', description: `${vendas.length} registros copiados.` });
+    setTimeout(() => setCopiedCol(null), 2000);
+  };
+
   const anos = Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i);
 
   return (
@@ -129,6 +137,16 @@ export default function ConversoesMeta() {
         <p className="text-white/50 text-xs mb-4">
           {isLoading ? 'Carregando...' : `${vendas.length} conversão(ões)${todoTempo ? ' no total' : ` em ${meses[mes as number]} ${ano}`}`}
         </p>
+
+        {/* Botão Copiar Tudo */}
+        <button
+          onClick={handleCopyAll}
+          disabled={vendas.length === 0}
+          className="mb-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all disabled:opacity-40 text-sm"
+        >
+          {copiedCol === 'all' ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+          Copiar tudo
+        </button>
 
         {/* Tabela */}
         <div className="w-full max-w-2xl rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
