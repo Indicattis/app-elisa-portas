@@ -1,45 +1,32 @@
 
 
-## Plano: Corrigir registro de venda a partir de rascunho
+## Plano: Adicionar "Visitas Técnicas" ao hub de Vendas
 
-### Problema identificado
+### Objetivo
+Criar um novo botão "Visitas Técnicas" no hub `/vendas` e uma nova página que lista os anexos de fichas de visita técnica dos pedidos, agrupados por venda (cliente).
 
-Ao analisar o código de `MinhasVendasEditar.tsx`, identifiquei que a função `handleSalvar` (botão "Salvar") **não faz nenhuma chamada ao banco** — ela apenas exibe um toast e navega de volta. Por isso, "salvar" sempre funciona.
+### Dados disponíveis
+A tabela `pedidos_producao` já possui as colunas `ficha_visita_url`, `ficha_visita_nome` e `venda_id`. Basta consultar pedidos que tenham `ficha_visita_url IS NOT NULL` e agrupar pelo `venda_id` + `cliente_nome`.
 
-Já a função `handleCadastrarVenda` (botão "Cadastrar Venda") faz um `UPDATE` real no Supabase para definir `is_rascunho: false`. Se o RLS bloquear esse update silenciosamente, o Supabase retorna `{ data: null, error: null }` — sem erro, mas sem atualizar nada. O código atual só verifica `error`, então parece ter sucesso mas o rascunho não é convertido.
+### Alterações
 
-A causa raiz provável: o update pode estar falhando silenciosamente via RLS, ou a validação de campos obrigatórios (estado, cidade, CEP, bairro) está bloqueando sem que o toast de erro seja visível para o usuário.
+**1. `src/pages/vendas/VendasHub.tsx`**
+- Importar ícone `ClipboardCheck` do lucide-react
+- Adicionar item ao array `menuItems`: `{ label: 'Visitas Técnicas', icon: ClipboardCheck, path: '/vendas/visitas-tecnicas' }`
 
-### Correções
+**2. Nova página `src/pages/vendas/VisitasTecnicas.tsx`**
+- Query Supabase: `pedidos_producao` filtrando `ficha_visita_url` not null, selecionando `id, numero_pedido, cliente_nome, venda_id, ficha_visita_url, ficha_visita_nome, created_at`
+- Agrupar resultados por `venda_id` (ou `cliente_nome` quando `venda_id` é null)
+- Exibir cards colapsáveis por cliente/venda, cada um listando os pedidos com links para abrir/baixar a ficha de visita
+- Incluir campo de busca por nome do cliente
+- Layout responsivo seguindo o padrão existente (fundo escuro, breadcrumb, botão voltar)
 
-**1. Adicionar verificação de resultado no update**
+**3. `src/App.tsx`**
+- Importar `VisitasTecnicas` com lazy loading
+- Adicionar rota: `<Route path="/vendas/visitas-tecnicas" element={<ProtectedRoute routeKey="vendas_hub"><VisitasTecnicas /></ProtectedRoute>} />`
 
-Na função `handleCadastrarVenda`, adicionar `.select()` ao update e verificar se dados foram retornados:
-
-```typescript
-const { data, error } = await supabase
-  .from('vendas')
-  .update({ is_rascunho: false, valor_venda: valorVenda, valor_a_receber: valorAReceber })
-  .eq('id', id)
-  .select()
-  .single();
-
-if (error) throw error;
-if (!data) throw new Error('Não foi possível atualizar a venda. Verifique suas permissões.');
-```
-
-**2. Melhorar feedback de validação**
-
-Tornar as mensagens de validação mais visíveis e adicionar scroll para o campo faltante, para que o usuário entenda o que está impedindo o registro.
-
-**3. Garantir que o botão "Cadastrar Venda" é visível e clicável**
-
-Verificar que o estado `venda.is_rascunho` está sendo lido corretamente do banco e que o botão aparece para rascunhos.
-
-### Detalhes técnicos
-
-- Arquivo alterado: `src/pages/vendas/MinhasVendasEditar.tsx`
-- Função afetada: `handleCadastrarVenda` (linhas 387-452)
-- A adição de `.select().single()` permite detectar quando o RLS bloqueia silenciosamente o update
-- Nenhuma alteração de RLS é necessária — as políticas atuais permitem update para usuários autenticados
+### Arquivos alterados
+- `src/pages/vendas/VendasHub.tsx` — novo item no menu
+- `src/pages/vendas/VisitasTecnicas.tsx` — nova página (criação)
+- `src/App.tsx` — nova rota
 
