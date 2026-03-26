@@ -536,12 +536,17 @@ export default function PedidoViewDirecao() {
                     </div>
                   </div>
                 )}
-                {pedido.valor_venda && (
+                {pedido.is_correcao && correcaoData ? (
+                  <div>
+                    <p className="text-xs text-white/50">Valor da Correção</p>
+                    <p className="font-medium text-purple-400">R$ {Number(correcaoData.custo_correcao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  </div>
+                ) : pedido.valor_venda ? (
                   <div>
                     <p className="text-xs text-white/50">Valor da Venda</p>
                     <p className="font-medium text-white">R$ {Number(pedido.valor_venda).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                   </div>
-                )}
+                ) : null}
                 {pedido.forma_pagamento && (
                   <div>
                     <p className="text-xs text-white/50">Forma de Pagamento</p>
