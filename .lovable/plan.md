@@ -1,28 +1,24 @@
 
 
-## Diagnóstico: Duas rotas "Catálogo" duplicadas
+## Plano: Substituir Kanban por listagem simples de leads
 
-Existem duas entradas na tabela `app_routes` com o label "Catálogo" dentro de `vendas_hub`:
+### O que será feito
+Reescrever `src/pages/vendas/LeadsList.tsx` removendo todo o Kanban (drag-and-drop, colunas, cards) e substituindo por uma tabela/lista simples com as colunas: Nome, Telefone, Cidade, Canal, Data, Status, Valor, Atendente.
 
-| key | path | sort_order |
-|-----|------|------------|
-| `vendas_catalogo_minimalista` | `/vendas/catalogo` | 5 |
-| `vendas_catalogo` | `/dashboard/vendas/vendas-catalogo` | 13 |
+### Alterações
 
-Uma é a rota antiga (`/dashboard/vendas/vendas-catalogo`) e a outra é a versão mais recente (`/vendas/catalogo`). Ambas estão ativas e com `interface = 'padrao'`, por isso aparecem duplicadas.
+**1. `src/pages/vendas/LeadsList.tsx`** — Reescrita completa:
+- Remover imports de `@dnd-kit/core`, `LeadKanbanColumn`, `LeadKanbanCard`
+- Remover lógica de drag (sensors, handleDragStart, handleDragEnd, groupedLeads, activeLead)
+- Manter: fetch de leads, busca, atendentesMap, layout base (fundo escuro, breadcrumb, botão voltar, particles)
+- Renderizar uma tabela com `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableCell` do shadcn
+- Cada linha mostra: nome, telefone, cidade, canal_aquisicao, data_envio formatada, status com badge colorido, valor_orcamento, nome do atendente
+- Botão WhatsApp em cada linha
 
-## Solução
-
-Criar uma migration que desativa a rota obsoleta:
-
-```sql
-UPDATE app_routes SET active = false WHERE key = 'vendas_catalogo';
-```
-
-Isso remove a entrada antiga do gerenciador de permissões, mantendo apenas `vendas_catalogo_minimalista` (`/vendas/catalogo`).
-
-Se a rota antiga ainda estiver em uso no código, será necessário verificar e redirecionar para a nova.
+**2. Arquivos não mais necessários** (podem ser mantidos ou removidos):
+- `src/components/vendas/LeadKanbanColumn.tsx`
+- `src/components/vendas/LeadKanbanCard.tsx`
 
 ### Arquivo alterado
-- Migration SQL (1 arquivo)
+- `src/pages/vendas/LeadsList.tsx` (reescrita)
 
