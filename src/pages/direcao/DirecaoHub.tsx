@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, DollarSign, Factory, Truck, Target, ArrowLeft, Users, Warehouse, ShieldCheck, Calculator, Network, ClipboardCheck } from 'lucide-react';
+import { ShoppingCart, DollarSign, Factory, Truck, Target, ArrowLeft, Users, Warehouse, ShieldCheck, Calculator, Network, ClipboardCheck, ExternalLink } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
@@ -8,6 +8,7 @@ import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
   { label: 'Vendas', icon: ShoppingCart, path: '/direcao/vendas' },
+  { label: 'CRM', icon: ExternalLink, path: 'https://crm.elisaportas.com/', external: true },
   { label: 'DRE', icon: Calculator, path: '/direcao/dre' },
   { label: 'Faturamento', icon: DollarSign, path: '/direcao/faturamento' },
   { label: 'Checklist Liderança', icon: ClipboardCheck, path: '/direcao/checklist-lideranca' },
@@ -83,7 +84,7 @@ export default function DirecaoHub() {
                 }}
               >
                 <button
-                  onClick={() => navigate(item.path)}
+                  onClick={() => item.external ? window.open(item.path, '_blank') : navigate(item.path)}
                   className={`w-full h-12 rounded-lg
                              active:scale-[0.98]
                              flex items-center gap-4 px-5
@@ -123,7 +124,7 @@ export default function DirecaoHub() {
                 }}
               >
                 <button
-                  onClick={() => navigate(item.path)}
+                  onClick={() => item.external ? window.open(item.path, '_blank') : navigate(item.path)}
                   className={`w-full h-12 rounded-lg
                              active:scale-[0.98]
                              flex items-center gap-4 px-5
