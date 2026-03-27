@@ -1,0 +1,1 @@
+UPDATE produtos_vendas SET valor_pintura = 1.00 WHERE id = 'be2b7b77-ed6a-469c-b178-230097d33ca2';
