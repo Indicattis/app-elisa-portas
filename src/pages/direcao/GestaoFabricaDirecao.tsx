@@ -951,66 +951,114 @@ export default function GestaoFabricaDirecao() {
                       {items.length === 0 ? (
                         <p className="text-xs text-muted-foreground text-center py-4">Nenhum pedido</p>
                       ) : (
-                        <div className="space-y-2">
-                          {items.map((pedido) => (
-                            <div
-                              key={pedido.id}
-                              className="flex flex-col gap-2 p-3 rounded-lg bg-white/5 border border-blue-500/10 hover:bg-white/10 transition-colors"
-                            >
-                              <div className="flex items-center justify-between gap-2">
-                                <div>
-                                  <div className="flex items-center gap-2 mb-0.5">
-                                    <span className="font-semibold text-sm text-foreground">{pedido.numero_pedido}</span>
+                        <div className="space-y-1.5">
+                          {items.map((pedido) => {
+                            // Get size labels for portas
+                            const getSizeLabel = (tamanho: string) => {
+                              const t = tamanho?.toUpperCase();
+                              if (t?.includes('GG') || t === '3.0' || t === '3.00' || parseFloat(tamanho) >= 3) return 'GG';
+                              if (t?.includes('G') || t === '2.5' || t === '2.50' || (parseFloat(tamanho) >= 2 && parseFloat(tamanho) < 3)) return 'G';
+                              return 'P';
+                            };
+
+                            const portas = pedido.produtos || [];
+                            const sizes = portas.map(p => getSizeLabel(p.tamanho));
+                            const uniqueColors = portas
+                              .filter(p => p.cor_hex)
+                              .reduce((acc, p) => {
+                                if (!acc.find(c => c.hex === p.cor_hex)) {
+                                  acc.push({ hex: p.cor_hex!, nome: p.cor_nome || '' });
+                                }
+                                return acc;
+                              }, [] as { hex: string; nome: string }[]);
+
+                            const responsavel = pedido.responsavel_instalacao_nome || pedido.responsavel_entrega_nome;
+                            const tipoResponsavel = pedido.responsavel_instalacao_nome
+                              ? (pedido.tipo_instalacao === 'autorizados' ? 'Aut.' : '')
+                              : '';
+
+                            return (
+                              <div
+                                key={pedido.id}
+                                className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-white/5 border border-blue-500/10 hover:bg-white/10 transition-colors"
+                                style={{ maxHeight: '50px' }}
+                              >
+                                {/* Client name - main highlight */}
+                                <span className="text-xs font-semibold text-foreground truncate min-w-0 flex-1">
+                                  {pedido.cliente_nome}
+                                </span>
+
+                                {/* Size badges */}
+                                {sizes.length > 0 && (
+                                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                                    {sizes.map((size, i) => (
+                                      <span
+                                        key={i}
+                                        className={`text-[9px] font-bold px-1 py-0.5 rounded ${
+                                          size === 'GG' ? 'bg-red-500/20 text-red-300' :
+                                          size === 'G' ? 'bg-amber-500/20 text-amber-300' :
+                                          'bg-blue-500/20 text-blue-300'
+                                        }`}
+                                      >
+                                        {size}
+                                      </span>
+                                    ))}
                                   </div>
-                                  <p className="text-xs text-muted-foreground">{pedido.cliente_nome}</p>
-                                </div>
+                                )}
+
+                                {/* Color dots */}
+                                {uniqueColors.length > 0 && (
+                                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                                    {uniqueColors.map((cor, i) => (
+                                      <Tooltip key={i}>
+                                        <TooltipTrigger asChild>
+                                          <div
+                                            className="w-3 h-3 rounded-full border border-white/20"
+                                            style={{ backgroundColor: cor.hex }}
+                                          />
+                                        </TooltipTrigger>
+                                        <TooltipContent>{cor.nome}</TooltipContent>
+                                      </Tooltip>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {/* Responsible */}
+                                {responsavel && (
+                                  <span className="text-[10px] text-muted-foreground truncate max-w-[80px] flex-shrink-0">
+                                    {tipoResponsavel ? `${tipoResponsavel} ` : ''}{responsavel.split(' ')[0]}
+                                  </span>
+                                )}
+
+                                {/* Date */}
+                                <span className="text-[10px] text-muted-foreground flex-shrink-0">
+                                  {pedido.data_arquivamento
+                                    ? (() => { try { return format(new Date(pedido.data_arquivamento), "dd/MM", { locale: ptBR }); } catch { return "-"; } })()
+                                    : "-"}
+                                </span>
+
+                                {/* Unarchive button */}
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <Button
-                                      variant="outline"
+                                      variant="ghost"
                                       size="icon"
-                                      className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 flex-shrink-0 h-7 w-7"
+                                      className="h-6 w-6 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 flex-shrink-0"
                                       disabled={desarquivandoId === pedido.id}
                                       onClick={() => handleDesarquivar(pedido.id)}
                                     >
                                       {desarquivandoId === pedido.id ? (
-                                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                        <RefreshCw className="w-3 h-3 animate-spin" />
                                       ) : (
-                                        <Undo2 className="w-3.5 h-3.5" />
+                                        <Undo2 className="w-3 h-3" />
                                       )}
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>Retornar para Finalizado</TooltipContent>
                                 </Tooltip>
                               </div>
-                              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" />
-                                  <span>
-                                    {pedido.data_arquivamento
-                                      ? (() => { try { return format(new Date(pedido.data_arquivamento), "dd/MM/yy", { locale: ptBR }); } catch { return "-"; } })()
-                                      : "-"}
-                                  </span>
-                                </div>
-                                {pedido.valor_venda && (
-                                  <span className="text-emerald-400 font-medium">
-                                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.valor_venda)}
-                                  </span>
-                                )}
-                                {pedido.responsavel_instalacao_nome && (
-                                  <span className="text-blue-400">
-                                    🔧 {pedido.responsavel_instalacao_nome}
-                                    {pedido.tipo_instalacao === 'autorizados' ? ' (Autorizado)' : ''}
-                                  </span>
-                                )}
-                                {pedido.responsavel_entrega_nome && (
-                                  <span className="text-amber-400">
-                                    🚚 {pedido.responsavel_entrega_nome}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>

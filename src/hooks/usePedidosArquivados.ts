@@ -1,6 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface PedidoArquivadoProduto {
+  tamanho: string;
+  tipo_produto: string;
+  quantidade: number | null;
+  cor_nome: string | null;
+  cor_hex: string | null;
+}
+
 export interface PedidoArquivado {
   id: string;
   numero_pedido: string;
@@ -15,10 +23,10 @@ export interface PedidoArquivado {
   valor_venda: number | null;
   created_at: string;
   tipo_entrega?: string | null;
-  // Info de quem instalou/entregou
   responsavel_instalacao_nome?: string | null;
   tipo_instalacao?: string | null;
   responsavel_entrega_nome?: string | null;
+  produtos?: PedidoArquivadoProduto[];
 }
 
 interface UsePedidosArquivadosOptions {
@@ -51,7 +59,15 @@ export function usePedidosArquivados(searchOrOptions: string | UsePedidosArquiva
           venda_id,
           valor_venda,
           created_at,
-          vendas:venda_id(tipo_entrega),
+          vendas:venda_id(
+            tipo_entrega,
+            portas_vendas(
+              tamanho,
+              tipo_produto,
+              quantidade,
+              catalogo_cores:cor_id(nome, codigo_hex)
+            )
+          ),
           instalacoes!instalacoes_pedido_id_fkey(
             responsavel_instalacao_nome,
             tipo_instalacao
@@ -109,9 +125,22 @@ export function usePedidosArquivados(searchOrOptions: string | UsePedidosArquiva
         const instalacaoData = (pedido as any).instalacoes;
         const carregamentoData = (pedido as any).ordens_carregamento;
         
-        // Pegar primeiro registro de instalação e carregamento
         const instalacao = Array.isArray(instalacaoData) ? instalacaoData[0] : instalacaoData;
         const carregamento = Array.isArray(carregamentoData) ? carregamentoData[0] : carregamentoData;
+
+        // Map portas_vendas to produtos
+        const portasVendas = vendaData?.portas_vendas || [];
+        const produtos: PedidoArquivadoProduto[] = Array.isArray(portasVendas)
+          ? portasVendas
+              .filter((p: any) => p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'porta')
+              .map((p: any) => ({
+                tamanho: p.tamanho,
+                tipo_produto: p.tipo_produto,
+                quantidade: p.quantidade,
+                cor_nome: p.catalogo_cores?.nome || null,
+                cor_hex: p.catalogo_cores?.codigo_hex || null,
+              }))
+          : [];
         
         return {
           ...pedido,
@@ -120,6 +149,7 @@ export function usePedidosArquivados(searchOrOptions: string | UsePedidosArquiva
           responsavel_instalacao_nome: instalacao?.responsavel_instalacao_nome || null,
           tipo_instalacao: instalacao?.tipo_instalacao || null,
           responsavel_entrega_nome: carregamento?.responsavel_carregamento_nome || null,
+          produtos,
           vendas: undefined,
           instalacoes: undefined,
           ordens_carregamento: undefined,
