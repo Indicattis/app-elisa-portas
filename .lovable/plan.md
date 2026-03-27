@@ -1,22 +1,30 @@
 
 
-## Plano: Filtrar lista de Ajuste de Pontuação
+## Plano: Filtrar Ajuste de Pontuação pelo período do ranking
 
 ### Problema
-A lista mostra 71 itens incluindo pedidos que ainda não estão na etapa `finalizado` (possivelmente pelo filtro não funcionar como esperado no Supabase) e instalações feitas por autorizados (`tipo_instalacao = 'autorizados'`), que não devem aparecer pois não contam para o ranking de equipes internas.
+A seção "Ajuste de Pontuação" mostra 71 itens de todos os tempos, sem respeitar o filtro de período (mês/ano/todos) selecionado no ranking.
 
 ### Solução
-Alterar a query em `src/hooks/useAjustePontuacaoInstalacao.ts`:
+Passar o período selecionado do ranking para o hook `useAjustePontuacaoInstalacao` e filtrar pela data de criação do pedido (`pedidos_producao.created_at`).
 
-1. **Excluir autorizados**: adicionar filtro `.or('tipo_instalacao.is.null,tipo_instalacao.eq.elisa')` — só mostrar instalações sem tipo definido ou do tipo `elisa` (equipe interna)
-2. **Reforçar filtro de etapa**: adicionar também um filtro `!= 'arquivado'` e garantir que apenas `finalizado` passe. Se o filtro `!inner` do Supabase não estiver funcionando corretamente com nested joins, fazer filtragem client-side adicional removendo itens cuja `etapa_atual !== 'finalizado'`
+### Alterações
 
-### Detalhes técnicos
+**1. `src/hooks/useAjustePontuacaoInstalacao.ts`**
+- Aceitar parâmetro opcional `periodo: 'mes' | 'ano' | 'todos'`
+- Calcular `dataInicio` e `dataFim` com base no período (mesmo cálculo do ranking)
+- Aplicar filtro de data na query: `.gte('pedidos_producao.created_at', dataInicio)` e `.lte('pedidos_producao.created_at', dataFim)`
+- Adicionar `periodo` na dependência do `useEffect`
 
-**`src/hooks/useAjustePontuacaoInstalacao.ts`**
-- Na query (linha 28-49): adicionar `tipo_instalacao` ao select e adicionar filtro `.or('tipo_instalacao.is.null,tipo_instalacao.eq.elisa')`
-- No mapeamento dos resultados (linha 53-58): adicionar filtro client-side para garantir `etapa_atual === 'finalizado'`
+**2. `src/components/ranking/AjustePontuacaoSection.tsx`**
+- Aceitar prop `periodo` no componente
+- Passá-la ao hook
 
-### Arquivo alterado
+**3. `src/pages/logistica/RankingEquipesInstalacao.tsx`**
+- Passar `periodo` à `AjustePontuacaoSection`
+
+### Arquivos alterados
 - `src/hooks/useAjustePontuacaoInstalacao.ts`
+- `src/components/ranking/AjustePontuacaoSection.tsx`
+- `src/pages/logistica/RankingEquipesInstalacao.tsx`
 
