@@ -1,30 +1,30 @@
 
 
-## Plano: Filtrar Ajuste de Pontuação pelo período do ranking
+## Plano: Corrigir query do Arquivo Morto
 
 ### Problema
-A seção "Ajuste de Pontuação" mostra 71 itens de todos os tempos, sem respeitar o filtro de período (mês/ano/todos) selecionado no ranking.
+A query do `usePedidosArquivados` está retornando vazio (provavelmente erro 400 silencioso do PostgREST). A causa mais provável é **ambiguidade de FK** — as tabelas `instalacoes` e `ordens_carregamento` possuem FK para `pedidos_producao`, mas pode existir uma view com o mesmo nome, gerando ambiguidade no PostgREST quando se tenta fazer o join sem especificar a FK.
 
 ### Solução
-Passar o período selecionado do ranking para o hook `useAjustePontuacaoInstalacao` e filtrar pela data de criação do pedido (`pedidos_producao.created_at`).
+Em `src/hooks/usePedidosArquivados.ts`, adicionar hints explícitos de FK nos joins:
 
-### Alterações
+```typescript
+.select(`
+  id, numero_pedido, cliente_nome, data_arquivamento, arquivado_por,
+  etapa_atual, data_entrega, modalidade_instalacao, venda_id, valor_venda, created_at,
+  vendas:venda_id(tipo_entrega),
+  instalacoes!instalacoes_pedido_id_fkey(
+    responsavel_instalacao_nome,
+    tipo_instalacao
+  ),
+  ordens_carregamento!ordens_carregamento_pedido_id_fkey(
+    responsavel_nome
+  )
+`)
+```
 
-**1. `src/hooks/useAjustePontuacaoInstalacao.ts`**
-- Aceitar parâmetro opcional `periodo: 'mes' | 'ano' | 'todos'`
-- Calcular `dataInicio` e `dataFim` com base no período (mesmo cálculo do ranking)
-- Aplicar filtro de data na query: `.gte('pedidos_producao.created_at', dataInicio)` e `.lte('pedidos_producao.created_at', dataFim)`
-- Adicionar `periodo` na dependência do `useEffect`
+Também adicionar tratamento de erro mais visível (console.error no catch) e verificar se o componente mostra estado de erro ao invés de "Nenhum pedido arquivado".
 
-**2. `src/components/ranking/AjustePontuacaoSection.tsx`**
-- Aceitar prop `periodo` no componente
-- Passá-la ao hook
-
-**3. `src/pages/logistica/RankingEquipesInstalacao.tsx`**
-- Passar `periodo` à `AjustePontuacaoSection`
-
-### Arquivos alterados
-- `src/hooks/useAjustePontuacaoInstalacao.ts`
-- `src/components/ranking/AjustePontuacaoSection.tsx`
-- `src/pages/logistica/RankingEquipesInstalacao.tsx`
+### Arquivo alterado
+- `src/hooks/usePedidosArquivados.ts` — adicionar FK hints nos joins
 
