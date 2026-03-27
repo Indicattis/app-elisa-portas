@@ -32,6 +32,7 @@ export function useAjustePontuacaoInstalacao() {
           nome_cliente,
           responsavel_instalacao_id,
           instalacao_concluida,
+          tipo_instalacao,
           pedido_id,
           pedidos_producao!inner (
             id,
@@ -46,16 +47,19 @@ export function useAjustePontuacaoInstalacao() {
         `)
         .eq('pedidos_producao.etapa_atual', 'finalizado')
         .in('pedidos_producao.vendas.tipo_entrega', ['instalacao', 'manutencao'])
+        .or('tipo_instalacao.is.null,tipo_instalacao.eq.elisa')
         .or('responsavel_instalacao_id.is.null,instalacao_concluida.eq.false');
 
       if (error) throw error;
 
-      const items: InstalacaoPendente[] = (data || []).map((row: any) => ({
-        instalacao_id: row.id,
-        pedido_numero: row.pedidos_producao?.numero_pedido || '—',
-        nome_cliente: row.nome_cliente,
-        data_pedido: row.pedidos_producao?.created_at || null,
-      }));
+      const items: InstalacaoPendente[] = (data || [])
+        .filter((row: any) => row.pedidos_producao?.etapa_atual === 'finalizado')
+        .map((row: any) => ({
+          instalacao_id: row.id,
+          pedido_numero: row.pedidos_producao?.numero_pedido || '—',
+          nome_cliente: row.nome_cliente,
+          data_pedido: row.pedidos_producao?.created_at || null,
+        }));
 
       // Ordenar por número do pedido
       items.sort((a, b) => a.pedido_numero.localeCompare(b.pedido_numero));
