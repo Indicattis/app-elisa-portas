@@ -23,7 +23,8 @@ export default function ProducaoInstalacoes() {
   const isMobile = useIsMobile();
   const { user } = useProducaoAuth();
 
-  const isGerente = true;
+  const ROLES_GERENTE = ['administrador', 'gerente_fabril', 'gerente_instalacoes', 'diretor'];
+  const isGerente = ROLES_GERENTE.includes(user?.role || '');
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<'week' | 'month'>('week');
