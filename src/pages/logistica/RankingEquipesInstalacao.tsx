@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trophy, Medal, Calendar, CalendarDays, CalendarRange, Loader2, MapPin } from "lucide-react";
+import { Trophy, Medal, Calendar, CalendarDays, CalendarRange, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AjustePontuacaoSection } from "@/components/ranking/AjustePontuacaoSection";
 
 const periodosOptions: { value: PeriodoFiltro; label: string; icon: React.ElementType }[] = [
   { value: 'mes', label: 'Este Mês', icon: Calendar },
