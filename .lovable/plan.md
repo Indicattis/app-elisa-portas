@@ -1,31 +1,22 @@
 
 
-## Plano: Melhorar aba "Arquivo Morto" na Gestão de Fábrica
+## Plano: Filtrar lista de Ajuste de Pontuação
 
-### Objetivo
-Adicionar filtro de intervalo de datas e substituir a listagem linear por 3 colunas categorizadas: **Instalações**, **Manutenções** e **Entregas**.
+### Problema
+A lista mostra 71 itens incluindo pedidos que ainda não estão na etapa `finalizado` (possivelmente pelo filtro não funcionar como esperado no Supabase) e instalações feitas por autorizados (`tipo_instalacao = 'autorizados'`), que não devem aparecer pois não contam para o ranking de equipes internas.
 
-### Alterações
+### Solução
+Alterar a query em `src/hooks/useAjustePontuacaoInstalacao.ts`:
 
-**1. `src/hooks/usePedidosArquivados.ts`**
-- Adicionar JOIN com `vendas` para trazer `tipo_entrega`: `vendas:venda_id(tipo_entrega)`
-- Adicionar parâmetros opcionais `dataInicio` e `dataFim` para filtrar por `data_arquivamento`
-- Aplicar filtros `.gte()` e `.lte()` quando as datas forem fornecidas
-- Exportar `tipo_entrega` no tipo `PedidoArquivado`
+1. **Excluir autorizados**: adicionar filtro `.or('tipo_instalacao.is.null,tipo_instalacao.eq.elisa')` — só mostrar instalações sem tipo definido ou do tipo `elisa` (equipe interna)
+2. **Reforçar filtro de etapa**: adicionar também um filtro `!= 'arquivado'` e garantir que apenas `finalizado` passe. Se o filtro `!inner` do Supabase não estiver funcionando corretamente com nested joins, fazer filtragem client-side adicional removendo itens cuja `etapa_atual !== 'finalizado'`
 
-**2. `src/pages/direcao/GestaoFabricaDirecao.tsx`**
-- Adicionar estados para `dataInicio` e `dataFim` (DateRange picker)
-- Passar datas ao hook `usePedidosArquivados`
-- Na UI da aba "Arquivo Morto":
-  - Adicionar filtro de datas (2 date pickers: "De" e "Até") ao lado da busca
-  - Substituir a listagem única por 3 colunas lado a lado (responsivas):
-    - **Instalações** (`tipo_entrega === 'instalacao'`) — ícone Wrench
-    - **Manutenções** (`tipo_entrega === 'manutencao'`) — ícone Settings
-    - **Entregas** (`tipo_entrega === 'entrega'` ou outros) — ícone Truck
-  - Cada coluna com header, contagem e lista dos pedidos (mesmo card atual com nº pedido, cliente, data, valor, botão desarquivar)
-  - No mobile: colunas empilham verticalmente
+### Detalhes técnicos
 
-### Arquivos alterados
-- `src/hooks/usePedidosArquivados.ts`
-- `src/pages/direcao/GestaoFabricaDirecao.tsx`
+**`src/hooks/useAjustePontuacaoInstalacao.ts`**
+- Na query (linha 28-49): adicionar `tipo_instalacao` ao select e adicionar filtro `.or('tipo_instalacao.is.null,tipo_instalacao.eq.elisa')`
+- No mapeamento dos resultados (linha 53-58): adicionar filtro client-side para garantir `etapa_atual === 'finalizado'`
+
+### Arquivo alterado
+- `src/hooks/useAjustePontuacaoInstalacao.ts`
 
