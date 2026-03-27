@@ -1,10 +1,20 @@
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { Package, MapPin, Calendar, Clock, User, Phone, Truck, DoorOpen, CreditCard, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Package, MapPin, Calendar, Clock, User, Phone, Truck, DoorOpen, CreditCard, FileText, Paperclip } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getFormaPagamentoLabel } from "@/utils/formatters";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface OrdemCarregamentoDetailsProps {
   ordem: OrdemCarregamento | null;
