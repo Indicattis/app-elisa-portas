@@ -57,7 +57,7 @@ export function usePedidosArquivados(searchOrOptions: string | UsePedidosArquiva
             tipo_instalacao
           ),
           ordens_carregamento!ordens_carregamento_pedido_id_fkey(
-            responsavel_nome
+            responsavel_carregamento_nome
           )
         `)
         .eq('arquivado', true)
