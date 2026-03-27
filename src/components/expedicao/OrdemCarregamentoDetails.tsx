@@ -1,10 +1,20 @@
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { Package, MapPin, Calendar, Clock, User, Phone, Truck, DoorOpen, CreditCard, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Package, MapPin, Calendar, Clock, User, Phone, Truck, DoorOpen, CreditCard, FileText, Paperclip } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getFormaPagamentoLabel } from "@/utils/formatters";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface OrdemCarregamentoDetailsProps {
   ordem: OrdemCarregamento | null;
@@ -17,6 +27,19 @@ export const OrdemCarregamentoDetails = ({
   open,
   onOpenChange,
 }: OrdemCarregamentoDetailsProps) => {
+  const { data: contratos } = useQuery({
+    queryKey: ['contratos-venda-ordem', ordem?.venda_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contratos_vendas')
+        .select('id, arquivo_url, nome_arquivo')
+        .eq('venda_id', ordem!.venda_id!);
+      if (error) throw error;
+      return data;
+    },
+    enabled: open && !!ordem?.venda_id,
+  });
+
   if (!ordem) return null;
 
   const getStatusConfig = (status: string | null) => {
@@ -76,6 +99,72 @@ export const OrdemCarregamentoDetails = ({
                 {getFormaPagamentoLabel((ordem.venda as any).metodo_pagamento)}
               </Badge>
             )}
+            
+            {/* Botão de Contratos/Anexos */}
+            <div className="ml-auto">
+              {contratos && contratos.length > 0 ? (
+                contratos.length === 1 ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10"
+                          onClick={() => window.open(contratos[0].arquivo_url, '_blank')}
+                        >
+                          <Paperclip className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{contratos[0].nome_arquivo}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10"
+                      >
+                        <Paperclip className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {contratos.map((c) => (
+                        <DropdownMenuItem
+                          key={c.id}
+                          onClick={() => window.open(c.arquivo_url, '_blank')}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          {c.nome_arquivo}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )
+              ) : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-white/30 cursor-not-allowed"
+                        disabled
+                      >
+                        <Paperclip className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Sem contratos</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
           </div>
           <SheetTitle className="text-white text-lg font-semibold">
             {ordem.nome_cliente}
