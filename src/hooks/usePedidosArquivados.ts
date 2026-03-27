@@ -57,7 +57,7 @@ export function usePedidosArquivados(searchOrOptions: string | UsePedidosArquiva
             tipo_instalacao
           ),
           ordens_carregamento!ordens_carregamento_pedido_id_fkey(
-            responsavel_nome
+            responsavel_carregamento_nome
           )
         `)
         .eq('arquivado', true)
@@ -119,7 +119,7 @@ export function usePedidosArquivados(searchOrOptions: string | UsePedidosArquiva
           tipo_entrega: vendaData?.tipo_entrega || null,
           responsavel_instalacao_nome: instalacao?.responsavel_instalacao_nome || null,
           tipo_instalacao: instalacao?.tipo_instalacao || null,
-          responsavel_entrega_nome: carregamento?.responsavel_nome || null,
+          responsavel_entrega_nome: carregamento?.responsavel_carregamento_nome || null,
           vendas: undefined,
           instalacoes: undefined,
           ordens_carregamento: undefined,
