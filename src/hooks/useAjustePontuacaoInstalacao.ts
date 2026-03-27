@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { startOfMonth, startOfYear, endOfMonth, endOfYear } from 'date-fns';
+
+export type PeriodoFiltroAjuste = 'mes' | 'ano' | 'todos';
 
 export interface InstalacaoPendente {
   instalacao_id: string;
@@ -14,7 +17,7 @@ export interface EquipeOption {
   nome: string;
 }
 
-export function useAjustePontuacaoInstalacao() {
+export function useAjustePontuacaoInstalacao(periodo: PeriodoFiltroAjuste = 'mes') {
   const [pendentes, setPendentes] = useState<InstalacaoPendente[]>([]);
   const [equipes, setEquipes] = useState<EquipeOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,8 +27,21 @@ export function useAjustePontuacaoInstalacao() {
     try {
       setLoading(true);
 
+      // Calcular datas do período
+      const now = new Date();
+      let dataInicio: string | null = null;
+      let dataFim: string | null = null;
+
+      if (periodo === 'mes') {
+        dataInicio = startOfMonth(now).toISOString();
+        dataFim = endOfMonth(now).toISOString();
+      } else if (periodo === 'ano') {
+        dataInicio = startOfYear(now).toISOString();
+        dataFim = endOfYear(now).toISOString();
+      }
+
       // Buscar instalações vinculadas a pedidos finalizados sem equipe ou não concluídas
-      const { data, error } = await supabase
+      let query = supabase
         .from('instalacoes')
         .select(`
           id,
@@ -49,6 +65,15 @@ export function useAjustePontuacaoInstalacao() {
         .in('pedidos_producao.vendas.tipo_entrega', ['instalacao', 'manutencao'])
         .or('tipo_instalacao.is.null,tipo_instalacao.eq.elisa')
         .or('responsavel_instalacao_id.is.null,instalacao_concluida.eq.false');
+
+      if (dataInicio) {
+        query = query.gte('pedidos_producao.created_at', dataInicio);
+      }
+      if (dataFim) {
+        query = query.lte('pedidos_producao.created_at', dataFim);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -115,7 +140,7 @@ export function useAjustePontuacaoInstalacao() {
   useEffect(() => {
     fetchPendentes();
     fetchEquipes();
-  }, []);
+  }, [periodo]);
 
   return {
     pendentes,

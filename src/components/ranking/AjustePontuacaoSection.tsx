@@ -10,10 +10,11 @@ import { ptBR } from "date-fns/locale";
 
 interface Props {
   onAtribuir?: () => void;
+  periodo?: 'mes' | 'ano' | 'todos';
 }
 
-export function AjustePontuacaoSection({ onAtribuir }: Props) {
-  const { pendentes, equipes, loading, saving, atribuirEquipe } = useAjustePontuacaoInstalacao();
+export function AjustePontuacaoSection({ onAtribuir, periodo = 'mes' }: Props) {
+  const { pendentes, equipes, loading, saving, atribuirEquipe } = useAjustePontuacaoInstalacao(periodo);
   const [selectedEquipes, setSelectedEquipes] = useState<Record<string, string>>({});
 
   if (loading) return null;

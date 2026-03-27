@@ -210,7 +210,7 @@ export default function RankingEquipesInstalacao() {
       )}
 
       {/* Ajuste de Pontuação */}
-      <AjustePontuacaoSection onAtribuir={refetchRanking} />
+      <AjustePontuacaoSection onAtribuir={refetchRanking} periodo={periodo} />
 
       {/* Dialog de Instalações */}
       <Dialog open={!!selectedEquipe} onOpenChange={(open) => !open && setSelectedEquipe(null)}>
