@@ -51,7 +51,14 @@ export function usePedidosArquivados(searchOrOptions: string | UsePedidosArquiva
           venda_id,
           valor_venda,
           created_at,
-          vendas:venda_id(tipo_entrega)
+          vendas:venda_id(tipo_entrega),
+          instalacoes(
+            responsavel_instalacao_nome,
+            tipo_instalacao
+          ),
+          ordens_carregamento(
+            responsavel_nome
+          )
         `)
         .eq('arquivado', true)
         .order('data_arquivamento', { ascending: false });
