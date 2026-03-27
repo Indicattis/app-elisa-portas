@@ -1,19 +1,27 @@
 
 
-## Plano: Corrigir instalação do pedido 0205
+## Plano: Seção "Ajuste de Pontuação" no Ranking
 
-### Problema
-A instalação `e7e4630b-2dfe-4f42-ae13-58746e785f2d` do pedido 0205 está com:
-- `instalacao_concluida = false`
-- `responsavel_instalacao_id = NULL`
+### Objetivo
+Adicionar uma seção colapsável abaixo do ranking que lista todos os pedidos finalizados cujas instalações estão sem equipe atribuída (`responsavel_instalacao_id IS NULL`) ou com `instalacao_concluida = false` (apesar do pedido estar finalizado). O usuário poderá selecionar a equipe responsável para cada um, corrigindo o ranking.
 
-O pedido já está finalizado, mas a conclusão da instalação não foi registrada. Isso impede que a Equipe 2 receba crédito no ranking.
+### Funcionamento
+- Seção em acordeão "Ajuste de Pontuação" com badge mostrando quantidade de pendências
+- Cada item mostra: número do pedido, nome do cliente, data do pedido
+- Select/dropdown com as equipes ativas (usando `useResponsaveisInstalacao` — filtrado só equipes internas)
+- Ao selecionar a equipe e confirmar, faz UPDATE na `instalacoes` setando `responsavel_instalacao_id`, `responsavel_instalacao_nome`, `instalacao_concluida = true`, `instalacao_concluida_em = now()`
+- Após salvar, o item some da lista e o ranking atualiza
 
-### Correção
-Migration SQL para:
-1. Atribuir `responsavel_instalacao_id = 'dae6a19a-e9ba-4fa7-a464-af6f62025d2f'` (Equipe 2) e `responsavel_instalacao_nome = 'Equipe 2'`
-2. Marcar `instalacao_concluida = true` e `instalacao_concluida_em = now()`
+### Arquivos
 
-### Arquivo
-- 1 migration SQL (novo)
+**1. `src/hooks/useAjustePontuacaoInstalacao.ts` (novo)**
+- Query: busca `instalacoes` JOIN `pedidos_producao` onde `pedidos_producao.etapa_atual = 'finalizado'` E (`instalacoes.responsavel_instalacao_id IS NULL` OU `instalacoes.instalacao_concluida = false`)
+- Retorna lista com `instalacao_id`, `pedido_numero`, `nome_cliente`
+- Mutation para atualizar a instalação com equipe e marcar como concluída
+- Busca equipes ativas de `equipes_instalacao`
+
+**2. `src/pages/logistica/RankingEquipesInstalacao.tsx`**
+- Importar novo hook e adicionar seção acordeão após o ranking
+- Cada item: card com info do pedido + select de equipe + botão salvar
+- Invalidar query do ranking ao salvar
 
