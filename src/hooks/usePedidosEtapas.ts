@@ -878,6 +878,12 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
         console.log('[moverParaProximaEtapa] Pedido em aguardando_coleta avançando para finalizado');
       }
 
+      // Pedidos em instalacoes devem ir direto para finalizado (não para correcoes)
+      if (etapaAtualNome === 'instalacoes') {
+        etapaDestino = 'finalizado';
+        console.log('[moverParaProximaEtapa] Pedido em instalacoes avançando para finalizado');
+      }
+
       // ===== CRIAR NOVA ETAPA COM A ETAPA DESTINO CORRETA =====
       if (onProgress) onProgress('criar_nova_etapa', 'in_progress');
       await executarComDelay(async () => {
