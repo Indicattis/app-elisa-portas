@@ -52,11 +52,11 @@ export function usePedidosArquivados(searchOrOptions: string | UsePedidosArquiva
           valor_venda,
           created_at,
           vendas:venda_id(tipo_entrega),
-          instalacoes(
+          instalacoes!instalacoes_pedido_id_fkey(
             responsavel_instalacao_nome,
             tipo_instalacao
           ),
-          ordens_carregamento(
+          ordens_carregamento!ordens_carregamento_pedido_id_fkey(
             responsavel_nome
           )
         `)
