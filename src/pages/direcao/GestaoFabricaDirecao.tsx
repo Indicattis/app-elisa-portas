@@ -2,12 +2,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays, Archive, Search, Calendar, User, Undo2, ChevronDown } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays, Archive, Search, Calendar, User, Undo2, ChevronDown, Truck, Settings, CalendarIcon } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { usePedidosArquivados } from "@/hooks/usePedidosArquivados";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { CalendarioExpedicaoModal } from "@/components/pedidos/CalendarioExpedicaoModal";
 import { SelecionarPedidoInstalacaoModal } from "@/components/instalacoes/SelecionarPedidoInstalacaoModal";
 import { CriarPedidoTesteModal } from "@/components/pedidos/CriarPedidoTesteModal";
@@ -68,6 +71,8 @@ export default function GestaoFabricaDirecao() {
   const [arquivoSearch, setArquivoSearch] = useState('');
   const [debouncedArquivoSearch, setDebouncedArquivoSearch] = useState('');
   const [desarquivandoId, setDesarquivandoId] = useState<string | null>(null);
+  const [arquivoDataInicio, setArquivoDataInicio] = useState<Date | undefined>(undefined);
+  const [arquivoDataFim, setArquivoDataFim] = useState<Date | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
   const viewMode = 'list';
   const [tipoEntrega, setTipoEntrega] = useState('todos');
@@ -90,7 +95,11 @@ export default function GestaoFabricaDirecao() {
   }, [arquivoSearch]);
 
   const contadores = usePedidosContadores();
-  const { data: pedidosArquivados = [], isLoading: isLoadingArquivados } = usePedidosArquivados(debouncedArquivoSearch);
+  const { data: pedidosArquivados = [], isLoading: isLoadingArquivados } = usePedidosArquivados({
+    search: debouncedArquivoSearch,
+    dataInicio: arquivoDataInicio || null,
+    dataFim: arquivoDataFim || null,
+  });
   const { neoInstalacoes, concluirNeoInstalacao, isConcluindo, reorganizarNeoInstalacoes } = useNeoInstalacoesListagem();
   const { neoCorrecoes, concluirNeoCorrecao, reorganizarNeoCorrecoes } = useNeoCorrecoesListagem();
   const { neoInstalacoesFinalizadas, retornarNeoInstalacao, isRetornando: isRetornandoInstalacao, arquivarNeoInstalacao } = useNeoInstalacoesFinalizadas();
@@ -832,22 +841,83 @@ export default function GestaoFabricaDirecao() {
         <TabsContent value="arquivo_morto" className="mt-4">
           <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
             <CardHeader className="pb-3 px-4 py-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <CardTitle className="text-lg flex items-center gap-2 text-white">
-                  <Archive className="h-5 w-5 text-emerald-400" />
-                  <span>Arquivo Morto</span>
-                  <span className="text-sm font-normal text-white/60">
-                    {pedidosArquivados.length} pedido{pedidosArquivados.length !== 1 ? 's' : ''}
-                  </span>
-                </CardTitle>
-                <div className="relative w-full sm:w-72">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por nº ou cliente..."
-                    value={arquivoSearch}
-                    onChange={(e) => setArquivoSearch(e.target.value)}
-                    className="pl-10 bg-white/5 border-blue-500/10 text-foreground placeholder:text-muted-foreground"
-                  />
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <CardTitle className="text-lg flex items-center gap-2 text-white">
+                    <Archive className="h-5 w-5 text-emerald-400" />
+                    <span>Arquivo Morto</span>
+                    <span className="text-sm font-normal text-white/60">
+                      {pedidosArquivados.length} pedido{pedidosArquivados.length !== 1 ? 's' : ''}
+                    </span>
+                  </CardTitle>
+                  <div className="relative w-full sm:w-72">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar por nº ou cliente..."
+                      value={arquivoSearch}
+                      onChange={(e) => setArquivoSearch(e.target.value)}
+                      className="pl-10 bg-white/5 border-blue-500/10 text-foreground placeholder:text-muted-foreground"
+                    />
+                  </div>
+                </div>
+                {/* Filtro de datas */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "h-9 justify-start text-left font-normal text-sm bg-white/5 border-blue-500/10",
+                          !arquivoDataInicio && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                        {arquivoDataInicio ? format(arquivoDataInicio, "dd/MM/yyyy", { locale: ptBR }) : "De"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={arquivoDataInicio}
+                        onSelect={setArquivoDataInicio}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "h-9 justify-start text-left font-normal text-sm bg-white/5 border-blue-500/10",
+                          !arquivoDataFim && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                        {arquivoDataFim ? format(arquivoDataFim, "dd/MM/yyyy", { locale: ptBR }) : "Até"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={arquivoDataFim}
+                        onSelect={setArquivoDataFim}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {(arquivoDataInicio || arquivoDataFim) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 text-muted-foreground hover:text-foreground"
+                      onClick={() => { setArquivoDataInicio(undefined); setArquivoDataFim(undefined); }}
+                    >
+                      Limpar datas
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardHeader>
@@ -864,75 +934,85 @@ export default function GestaoFabricaDirecao() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {pedidosArquivados.map((pedido) => (
-                    <div
-                      key={pedido.id}
-                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-lg bg-white/5 border border-blue-500/10 hover:bg-white/10 transition-colors"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-lg bg-emerald-500/20">
-                          <Package className="w-4 h-4 text-emerald-400" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-foreground">
-                              {pedido.numero_pedido}
-                            </span>
-                            <Badge
-                              variant="outline"
-                              className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs"
-                            >
-                              Arquivado
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{pedido.cliente_nome}</p>
-                        </div>
+                (() => {
+                  const instalacoes = pedidosArquivados.filter(p => p.tipo_entrega === 'instalacao');
+                  const manutencoes = pedidosArquivados.filter(p => p.tipo_entrega === 'manutencao');
+                  const entregas = pedidosArquivados.filter(p => p.tipo_entrega !== 'instalacao' && p.tipo_entrega !== 'manutencao');
+
+                  const renderColumn = (title: string, icon: React.ReactNode, items: typeof pedidosArquivados, colorClass: string) => (
+                    <div className="flex-1 min-w-0">
+                      <div className={`flex items-center gap-2 mb-3 pb-2 border-b border-blue-500/10`}>
+                        {icon}
+                        <span className={`font-semibold text-sm ${colorClass}`}>{title}</span>
+                        <Badge variant="outline" className={`text-xs ${colorClass} border-current/30`}>
+                          {items.length}
+                        </Badge>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex flex-col sm:items-end gap-1 text-sm">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Calendar className="w-3.5 h-3.5" />
-                            <span>
-                              {pedido.data_arquivamento
-                                ? (() => { try { return format(new Date(pedido.data_arquivamento), "dd/MM/yyyy", { locale: ptBR }); } catch { return "-"; } })()
-                                : "-"}
-                            </span>
-                          </div>
-                          {pedido.arquivado_por_nome && (
-                            <div className="flex items-center gap-2 text-muted-foreground/70">
-                              <User className="w-3.5 h-3.5" />
-                              <span className="text-xs">por {pedido.arquivado_por_nome}</span>
+                      {items.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-4">Nenhum pedido</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {items.map((pedido) => (
+                            <div
+                              key={pedido.id}
+                              className="flex flex-col gap-2 p-3 rounded-lg bg-white/5 border border-blue-500/10 hover:bg-white/10 transition-colors"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <div>
+                                  <div className="flex items-center gap-2 mb-0.5">
+                                    <span className="font-semibold text-sm text-foreground">{pedido.numero_pedido}</span>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">{pedido.cliente_nome}</p>
+                                </div>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 flex-shrink-0 h-7 w-7"
+                                      disabled={desarquivandoId === pedido.id}
+                                      onClick={() => handleDesarquivar(pedido.id)}
+                                    >
+                                      {desarquivandoId === pedido.id ? (
+                                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                      ) : (
+                                        <Undo2 className="w-3.5 h-3.5" />
+                                      )}
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Retornar para Finalizado</TooltipContent>
+                                </Tooltip>
+                              </div>
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>
+                                    {pedido.data_arquivamento
+                                      ? (() => { try { return format(new Date(pedido.data_arquivamento), "dd/MM/yy", { locale: ptBR }); } catch { return "-"; } })()
+                                      : "-"}
+                                  </span>
+                                </div>
+                                {pedido.valor_venda && (
+                                  <span className="text-emerald-400 font-medium">
+                                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.valor_venda)}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          )}
-                          {pedido.valor_venda && (
-                            <span className="text-emerald-400 font-medium">
-                              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.valor_venda)}
-                            </span>
-                          )}
+                          ))}
                         </div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 flex-shrink-0"
-                              disabled={desarquivandoId === pedido.id}
-                              onClick={() => handleDesarquivar(pedido.id)}
-                            >
-                              {desarquivandoId === pedido.id ? (
-                                <RefreshCw className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Undo2 className="w-4 h-4" />
-                              )}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Retornar para Finalizado</TooltipContent>
-                        </Tooltip>
-                      </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  );
+
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {renderColumn("Instalações", <Wrench className="h-4 w-4 text-blue-400" />, instalacoes, "text-blue-400")}
+                      {renderColumn("Manutenções", <Settings className="h-4 w-4 text-amber-400" />, manutencoes, "text-amber-400")}
+                      {renderColumn("Entregas", <Truck className="h-4 w-4 text-emerald-400" />, entregas, "text-emerald-400")}
+                    </div>
+                  );
+                })()
               )}
             </CardContent>
           </Card>

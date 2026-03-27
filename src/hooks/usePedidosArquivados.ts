@@ -14,13 +14,25 @@ export interface PedidoArquivado {
   venda_id: string | null;
   valor_venda: number | null;
   created_at: string;
+  tipo_entrega?: string | null;
 }
 
-export function usePedidosArquivados(search: string = '') {
+interface UsePedidosArquivadosOptions {
+  search?: string;
+  dataInicio?: Date | null;
+  dataFim?: Date | null;
+}
+
+export function usePedidosArquivados(searchOrOptions: string | UsePedidosArquivadosOptions = '') {
+  const options: UsePedidosArquivadosOptions = typeof searchOrOptions === 'string'
+    ? { search: searchOrOptions }
+    : searchOrOptions;
+
+  const { search = '', dataInicio = null, dataFim = null } = options;
+
   return useQuery({
-    queryKey: ['pedidos-arquivados', search],
+    queryKey: ['pedidos-arquivados', search, dataInicio?.toISOString(), dataFim?.toISOString()],
     queryFn: async () => {
-      // Buscar pedidos arquivados
       let query = supabase
         .from('pedidos_producao')
         .select(`
@@ -34,14 +46,23 @@ export function usePedidosArquivados(search: string = '') {
           modalidade_instalacao,
           venda_id,
           valor_venda,
-          created_at
+          created_at,
+          vendas:venda_id(tipo_entrega)
         `)
         .eq('arquivado', true)
         .order('data_arquivamento', { ascending: false });
 
-      // Aplicar filtro de busca se fornecido
       if (search.trim()) {
         query = query.or(`numero_pedido.ilike.%${search}%,cliente_nome.ilike.%${search}%`);
+      }
+
+      if (dataInicio) {
+        query = query.gte('data_arquivamento', dataInicio.toISOString());
+      }
+      if (dataFim) {
+        const fim = new Date(dataFim);
+        fim.setHours(23, 59, 59, 999);
+        query = query.lte('data_arquivamento', fim.toISOString());
       }
 
       const { data: pedidos, error } = await query;
@@ -55,10 +76,8 @@ export function usePedidosArquivados(search: string = '') {
         return [];
       }
 
-      // Buscar IDs únicos de quem arquivou
       const arquivadoPorIds = [...new Set(pedidos.map(p => p.arquivado_por).filter(Boolean))] as string[];
       
-      // Buscar nomes de quem arquivou
       let userNames: Record<string, string> = {};
       if (arquivadoPorIds.length > 0) {
         const { data: users } = await supabase
@@ -74,12 +93,16 @@ export function usePedidosArquivados(search: string = '') {
         }
       }
 
-      // Montar resultado final
-      return pedidos.map(pedido => ({
-        ...pedido,
-        arquivado_por_nome: pedido.arquivado_por ? userNames[pedido.arquivado_por] : undefined,
-      })) as PedidoArquivado[];
+      return pedidos.map(pedido => {
+        const vendaData = pedido.vendas as any;
+        return {
+          ...pedido,
+          arquivado_por_nome: pedido.arquivado_por ? userNames[pedido.arquivado_por] : undefined,
+          tipo_entrega: vendaData?.tipo_entrega || null,
+          vendas: undefined,
+        };
+      }) as PedidoArquivado[];
     },
-    staleTime: 30 * 1000, // 30 segundos
+    staleTime: 30 * 1000,
   });
 }
