@@ -99,6 +99,72 @@ export const OrdemCarregamentoDetails = ({
                 {getFormaPagamentoLabel((ordem.venda as any).metodo_pagamento)}
               </Badge>
             )}
+            
+            {/* Botão de Contratos/Anexos */}
+            <div className="ml-auto">
+              {contratos && contratos.length > 0 ? (
+                contratos.length === 1 ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10"
+                          onClick={() => window.open(contratos[0].arquivo_url, '_blank')}
+                        >
+                          <Paperclip className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{contratos[0].nome_arquivo}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10"
+                      >
+                        <Paperclip className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {contratos.map((c) => (
+                        <DropdownMenuItem
+                          key={c.id}
+                          onClick={() => window.open(c.arquivo_url, '_blank')}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          {c.nome_arquivo}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )
+              ) : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-white/30 cursor-not-allowed"
+                        disabled
+                      >
+                        <Paperclip className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Sem contratos</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
           </div>
           <SheetTitle className="text-white text-lg font-semibold">
             {ordem.nome_cliente}
