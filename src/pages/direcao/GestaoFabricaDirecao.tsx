@@ -71,6 +71,8 @@ export default function GestaoFabricaDirecao() {
   const [arquivoSearch, setArquivoSearch] = useState('');
   const [debouncedArquivoSearch, setDebouncedArquivoSearch] = useState('');
   const [desarquivandoId, setDesarquivandoId] = useState<string | null>(null);
+  const [arquivoDataInicio, setArquivoDataInicio] = useState<Date | undefined>(undefined);
+  const [arquivoDataFim, setArquivoDataFim] = useState<Date | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
   const viewMode = 'list';
   const [tipoEntrega, setTipoEntrega] = useState('todos');
