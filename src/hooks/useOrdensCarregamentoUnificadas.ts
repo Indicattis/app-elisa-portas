@@ -124,10 +124,11 @@ export const useOrdensCarregamentoUnificadas = () => {
         throw ocError;
       }
 
-      // Excluir ordens cujo pedido já está finalizado
+      // Excluir ordens cujo pedido já avançou para etapas posteriores ao carregamento
+      const etapasExcluidas = ['finalizado', 'instalacoes', 'correcoes'];
       const todasOrdens = (ordensCarregamento || []).filter(o => {
         const etapa = o.pedido?.etapa_atual;
-        return etapa !== 'finalizado';
+        return !etapa || !etapasExcluidas.includes(etapa);
       });
 
       // Deduplicar por pedido_id dentro de ordens_carregamento
