@@ -73,7 +73,7 @@ function getProgressColor(posicao: number) {
 }
 
 export default function RankingEquipesInstalacao() {
-  const { ranking, loading, periodo, setPeriodo, maxInstalacoes } = useRankingEquipesInstalacao();
+  const { ranking, loading, periodo, setPeriodo, maxInstalacoes, refetch: refetchRanking } = useRankingEquipesInstalacao();
   const { membros } = useEquipesMembros();
   const [selectedEquipe, setSelectedEquipe] = useState<RankingEquipe | null>(null);
 
@@ -208,6 +208,9 @@ export default function RankingEquipesInstalacao() {
           })}
         </div>
       )}
+
+      {/* Ajuste de Pontuação */}
+      <AjustePontuacaoSection onAtribuir={refetchRanking} />
 
       {/* Dialog de Instalações */}
       <Dialog open={!!selectedEquipe} onOpenChange={(open) => !open && setSelectedEquipe(null)}>
