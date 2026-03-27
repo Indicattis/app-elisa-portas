@@ -61,7 +61,7 @@ export function usePedidosArquivados(searchOrOptions: string | UsePedidosArquiva
           created_at,
           vendas:venda_id(
             tipo_entrega,
-            portas_vendas(
+            produtos_vendas(
               tamanho,
               tipo_produto,
               quantidade,
