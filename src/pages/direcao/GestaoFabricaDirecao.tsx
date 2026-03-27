@@ -93,7 +93,11 @@ export default function GestaoFabricaDirecao() {
   }, [arquivoSearch]);
 
   const contadores = usePedidosContadores();
-  const { data: pedidosArquivados = [], isLoading: isLoadingArquivados } = usePedidosArquivados(debouncedArquivoSearch);
+  const { data: pedidosArquivados = [], isLoading: isLoadingArquivados } = usePedidosArquivados({
+    search: debouncedArquivoSearch,
+    dataInicio: arquivoDataInicio || null,
+    dataFim: arquivoDataFim || null,
+  });
   const { neoInstalacoes, concluirNeoInstalacao, isConcluindo, reorganizarNeoInstalacoes } = useNeoInstalacoesListagem();
   const { neoCorrecoes, concluirNeoCorrecao, reorganizarNeoCorrecoes } = useNeoCorrecoesListagem();
   const { neoInstalacoesFinalizadas, retornarNeoInstalacao, isRetornando: isRetornandoInstalacao, arquivarNeoInstalacao } = useNeoInstalacoesFinalizadas();
