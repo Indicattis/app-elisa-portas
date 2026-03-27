@@ -1,29 +1,18 @@
 
 
-## Plano: Botão de anexos (contratos) no header da downbar dos cards em /producao/instalacoes
+## Plano: Alterar cor do produto para "Cinza Escuro"
 
-### Objetivo
-Adicionar um botão no header da `OrdemCarregamentoDetails` (sheet que abre ao clicar num card do calendário) que permite visualizar/baixar os contratos da venda vinculada ao pedido.
+### Situação atual
+- Pedido #0285 (cliente Wladinir Vieira) tem 1 produto: **Caixa de fechamento (1m-3m)** (tipo: adicional)
+- Atualmente **sem cor atribuída** (`cor_id = null`)
+- A cor "Cinza Escuro" existe no catálogo: ID `95f6cc9d-623a-43c3-88a8-3d2f79ed2d9c`, hex `#2b2b2b`
 
-### Alterações
-
-**1. `src/components/expedicao/OrdemCarregamentoDetails.tsx`**
-- No header (linha ~65-89), adicionar um botão com ícone `Paperclip` ao lado dos badges
-- Ao clicar, buscar contratos da `contratos_vendas` filtrando por `venda_id` da ordem
-- Se houver 1 contrato: abrir diretamente em nova aba (`window.open`)
-- Se houver múltiplos: exibir um dropdown/popover listando os contratos com nome e link para download
-- Se não houver contratos: botão desabilitado ou com tooltip "Sem contratos"
-
-**2. Busca dos contratos**
-- Usar query inline com `supabase.from('contratos_vendas').select('id, arquivo_url, nome_arquivo').eq('venda_id', ordem.venda_id)` dentro do componente, via `useQuery` condicionado ao `open` do sheet
-- Ou fazer uma query simples com `useEffect` quando o sheet abre
+### Alteração
+Atualizar o campo `cor_id` do produto `be2b7b77-ed6a-469c-b178-230097d33ca2` na tabela `produtos_vendas` para `95f6cc9d-623a-43c3-88a8-3d2f79ed2d9c` (Cinza Escuro).
 
 ### Detalhes técnicos
-- Importar `Paperclip` do lucide-react
-- Usar `useQuery` com `enabled: open && !!ordem?.venda_id` para buscar contratos apenas quando o sheet estiver aberto
-- Renderizar botão no header: se contratos > 0, botão ativo; senão, ghost/disabled
-- Para múltiplos contratos, usar `DropdownMenu` existente no projeto
-
-### Arquivo alterado
-- `src/components/expedicao/OrdemCarregamentoDetails.tsx`
+- **Tabela**: `produtos_vendas`
+- **Registro**: `id = 'be2b7b77-ed6a-469c-b178-230097d33ca2'`
+- **Campo**: `cor_id` → `'95f6cc9d-623a-43c3-88a8-3d2f79ed2d9c'`
+- Nenhuma alteração de código necessária
 
