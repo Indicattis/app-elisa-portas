@@ -1,18 +1,15 @@
 
 
-## Plano: Alterar cor do produto para "Cinza Escuro"
-
-### Situação atual
-- Pedido #0285 (cliente Wladinir Vieira) tem 1 produto: **Caixa de fechamento (1m-3m)** (tipo: adicional)
-- Atualmente **sem cor atribuída** (`cor_id = null`)
-- A cor "Cinza Escuro" existe no catálogo: ID `95f6cc9d-623a-43c3-88a8-3d2f79ed2d9c`, hex `#2b2b2b`
+## Plano: Ativar etapa de pintura para o pedido #0285
 
 ### Alteração
-Atualizar o campo `cor_id` do produto `be2b7b77-ed6a-469c-b178-230097d33ca2` na tabela `produtos_vendas` para `95f6cc9d-623a-43c3-88a8-3d2f79ed2d9c` (Cinza Escuro).
+Atualizar o campo `valor_pintura` do produto `be2b7b77-ed6a-469c-b178-230097d33ca2` na tabela `produtos_vendas` para `1.00` (valor simbólico).
+
+Isso fará com que a função `determinarFluxograma` detecte `valor_pintura > 0` e inclua as etapas "Aguardando Pintura" e "Embalagem" no fluxo do pedido.
 
 ### Detalhes técnicos
 - **Tabela**: `produtos_vendas`
 - **Registro**: `id = 'be2b7b77-ed6a-469c-b178-230097d33ca2'`
-- **Campo**: `cor_id` → `'95f6cc9d-623a-43c3-88a8-3d2f79ed2d9c'`
+- **Campo**: `valor_pintura` → `1.00`
 - Nenhuma alteração de código necessária
 
