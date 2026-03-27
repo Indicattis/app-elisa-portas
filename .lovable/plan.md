@@ -1,27 +1,42 @@
 
 
-## Plano: Seção "Ajuste de Pontuação" no Ranking
+## Plano: Filtrar ajuste de pontuação por tipo de entrega
 
-### Objetivo
-Adicionar uma seção colapsável abaixo do ranking que lista todos os pedidos finalizados cujas instalações estão sem equipe atribuída (`responsavel_instalacao_id IS NULL`) ou com `instalacao_concluida = false` (apesar do pedido estar finalizado). O usuário poderá selecionar a equipe responsável para cada um, corrigindo o ranking.
+### Problema
+A seção "Ajuste de Pontuação" está listando todos os pedidos finalizados com instalação pendente, incluindo pedidos de **entrega** (que não têm instalação). Devem aparecer apenas vendas com `tipo_entrega = 'instalacao'` ou `tipo_entrega = 'manutencao'`.
 
-### Funcionamento
-- Seção em acordeão "Ajuste de Pontuação" com badge mostrando quantidade de pendências
-- Cada item mostra: número do pedido, nome do cliente, data do pedido
-- Select/dropdown com as equipes ativas (usando `useResponsaveisInstalacao` — filtrado só equipes internas)
-- Ao selecionar a equipe e confirmar, faz UPDATE na `instalacoes` setando `responsavel_instalacao_id`, `responsavel_instalacao_nome`, `instalacao_concluida = true`, `instalacao_concluida_em = now()`
-- Após salvar, o item some da lista e o ranking atualiza
+### Solução
+Alterar a query em `src/hooks/useAjustePontuacaoInstalacao.ts` para fazer JOIN até a tabela `vendas` via `pedidos_producao.venda_id` e filtrar por `tipo_entrega in ('instalacao', 'manutencao')`.
 
-### Arquivos
+### Detalhes técnicos
 
-**1. `src/hooks/useAjustePontuacaoInstalacao.ts` (novo)**
-- Query: busca `instalacoes` JOIN `pedidos_producao` onde `pedidos_producao.etapa_atual = 'finalizado'` E (`instalacoes.responsavel_instalacao_id IS NULL` OU `instalacoes.instalacao_concluida = false`)
-- Retorna lista com `instalacao_id`, `pedido_numero`, `nome_cliente`
-- Mutation para atualizar a instalação com equipe e marcar como concluída
-- Busca equipes ativas de `equipes_instalacao`
+**`src/hooks/useAjustePontuacaoInstalacao.ts`** — alterar o select da query:
 
-**2. `src/pages/logistica/RankingEquipesInstalacao.tsx`**
-- Importar novo hook e adicionar seção acordeão após o ranking
-- Cada item: card com info do pedido + select de equipe + botão salvar
-- Invalidar query do ranking ao salvar
+```typescript
+const { data, error } = await supabase
+  .from('instalacoes')
+  .select(`
+    id,
+    nome_cliente,
+    responsavel_instalacao_id,
+    instalacao_concluida,
+    pedido_id,
+    pedidos_producao!inner (
+      id,
+      numero_pedido,
+      etapa_atual,
+      created_at,
+      venda_id,
+      vendas!inner (
+        tipo_entrega
+      )
+    )
+  `)
+  .eq('pedidos_producao.etapa_atual', 'finalizado')
+  .in('pedidos_producao.vendas.tipo_entrega', ['instalacao', 'manutencao'])
+  .or('responsavel_instalacao_id.is.null,instalacao_concluida.eq.false');
+```
+
+### Arquivo alterado
+- `src/hooks/useAjustePontuacaoInstalacao.ts`
 
