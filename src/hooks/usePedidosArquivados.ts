@@ -15,6 +15,10 @@ export interface PedidoArquivado {
   valor_venda: number | null;
   created_at: string;
   tipo_entrega?: string | null;
+  // Info de quem instalou/entregou
+  responsavel_instalacao_nome?: string | null;
+  tipo_instalacao?: string | null;
+  responsavel_entrega_nome?: string | null;
 }
 
 interface UsePedidosArquivadosOptions {
@@ -47,7 +51,14 @@ export function usePedidosArquivados(searchOrOptions: string | UsePedidosArquiva
           venda_id,
           valor_venda,
           created_at,
-          vendas:venda_id(tipo_entrega)
+          vendas:venda_id(tipo_entrega),
+          instalacoes(
+            responsavel_instalacao_nome,
+            tipo_instalacao
+          ),
+          ordens_carregamento(
+            responsavel_nome
+          )
         `)
         .eq('arquivado', true)
         .order('data_arquivamento', { ascending: false });
@@ -95,11 +106,23 @@ export function usePedidosArquivados(searchOrOptions: string | UsePedidosArquiva
 
       return pedidos.map(pedido => {
         const vendaData = pedido.vendas as any;
+        const instalacaoData = (pedido as any).instalacoes;
+        const carregamentoData = (pedido as any).ordens_carregamento;
+        
+        // Pegar primeiro registro de instalação e carregamento
+        const instalacao = Array.isArray(instalacaoData) ? instalacaoData[0] : instalacaoData;
+        const carregamento = Array.isArray(carregamentoData) ? carregamentoData[0] : carregamentoData;
+        
         return {
           ...pedido,
           arquivado_por_nome: pedido.arquivado_por ? userNames[pedido.arquivado_por] : undefined,
           tipo_entrega: vendaData?.tipo_entrega || null,
+          responsavel_instalacao_nome: instalacao?.responsavel_instalacao_nome || null,
+          tipo_instalacao: instalacao?.tipo_instalacao || null,
+          responsavel_entrega_nome: carregamento?.responsavel_nome || null,
           vendas: undefined,
+          instalacoes: undefined,
+          ordens_carregamento: undefined,
         };
       }) as PedidoArquivado[];
     },
