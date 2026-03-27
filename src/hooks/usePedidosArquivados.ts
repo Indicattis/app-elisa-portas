@@ -15,6 +15,10 @@ export interface PedidoArquivado {
   valor_venda: number | null;
   created_at: string;
   tipo_entrega?: string | null;
+  // Info de quem instalou/entregou
+  responsavel_instalacao_nome?: string | null;
+  tipo_instalacao?: string | null;
+  responsavel_entrega_nome?: string | null;
 }
 
 interface UsePedidosArquivadosOptions {
