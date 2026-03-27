@@ -983,7 +983,7 @@ export default function GestaoFabricaDirecao() {
                                   <TooltipContent>Retornar para Finalizado</TooltipContent>
                                 </Tooltip>
                               </div>
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                                 <div className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
                                   <span>
@@ -995,6 +995,17 @@ export default function GestaoFabricaDirecao() {
                                 {pedido.valor_venda && (
                                   <span className="text-emerald-400 font-medium">
                                     {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.valor_venda)}
+                                  </span>
+                                )}
+                                {pedido.responsavel_instalacao_nome && (
+                                  <span className="text-blue-400">
+                                    🔧 {pedido.responsavel_instalacao_nome}
+                                    {pedido.tipo_instalacao === 'autorizados' ? ' (Autorizado)' : ''}
+                                  </span>
+                                )}
+                                {pedido.responsavel_entrega_nome && (
+                                  <span className="text-amber-400">
+                                    🚚 {pedido.responsavel_entrega_nome}
                                   </span>
                                 )}
                               </div>
