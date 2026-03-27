@@ -106,11 +106,23 @@ export function usePedidosArquivados(searchOrOptions: string | UsePedidosArquiva
 
       return pedidos.map(pedido => {
         const vendaData = pedido.vendas as any;
+        const instalacaoData = (pedido as any).instalacoes;
+        const carregamentoData = (pedido as any).ordens_carregamento;
+        
+        // Pegar primeiro registro de instalação e carregamento
+        const instalacao = Array.isArray(instalacaoData) ? instalacaoData[0] : instalacaoData;
+        const carregamento = Array.isArray(carregamentoData) ? carregamentoData[0] : carregamentoData;
+        
         return {
           ...pedido,
           arquivado_por_nome: pedido.arquivado_por ? userNames[pedido.arquivado_por] : undefined,
           tipo_entrega: vendaData?.tipo_entrega || null,
+          responsavel_instalacao_nome: instalacao?.responsavel_instalacao_nome || null,
+          tipo_instalacao: instalacao?.tipo_instalacao || null,
+          responsavel_entrega_nome: carregamento?.responsavel_nome || null,
           vendas: undefined,
+          instalacoes: undefined,
+          ordens_carregamento: undefined,
         };
       }) as PedidoArquivado[];
     },
