@@ -27,6 +27,19 @@ export const OrdemCarregamentoDetails = ({
   open,
   onOpenChange,
 }: OrdemCarregamentoDetailsProps) => {
+  const { data: contratos } = useQuery({
+    queryKey: ['contratos-venda-ordem', ordem?.venda_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contratos_vendas')
+        .select('id, arquivo_url, nome_arquivo')
+        .eq('venda_id', ordem!.venda_id!);
+      if (error) throw error;
+      return data;
+    },
+    enabled: open && !!ordem?.venda_id,
+  });
+
   if (!ordem) return null;
 
   const getStatusConfig = (status: string | null) => {
