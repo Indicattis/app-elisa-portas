@@ -1,26 +1,19 @@
 
 
-## Plano: Corrigir pedido 0142 e prevenir reaparição de pedidos carregados
+## Plano: Corrigir instalação do pedido 0205
 
-### Diagnóstico
-O pedido 0142 (S E E Engenharia) está com `carregamento_concluido = false` na tabela `ordens_carregamento` e `etapa_atual = 'aguardando_coleta'`. A conclusão do carregamento aparentemente não foi salva. Isso pode ter ocorrido por falha na chamada RPC ou por o usuário não ter completado o fluxo de confirmação.
+### Problema
+A instalação `e7e4630b-2dfe-4f42-ae13-58746e785f2d` do pedido 0205 está com:
+- `instalacao_concluida = false`
+- `responsavel_instalacao_id = NULL`
 
-### Correções
+O pedido já está finalizado, mas a conclusão da instalação não foi registrada. Isso impede que a Equipe 2 receba crédito no ranking.
 
-**1. Migration para corrigir dados do pedido 0142**
-- Atualizar `ordens_carregamento` (id `0dbbf6bb-3f36-40bc-bfb2-46a3892dcaaf`): `carregamento_concluido = true`, `carregamento_concluido_em = now()`
-- Atualizar `pedidos_producao` (id `ef4875b6-9a8e-4094-97f6-efd206265ce0`): `etapa_atual = 'finalizado'`
-- Registrar saída da etapa `aguardando_coleta` e entrada na etapa `finalizado` em `pedidos_etapas`
+### Correção
+Migration SQL para:
+1. Atribuir `responsavel_instalacao_id = 'dae6a19a-e9ba-4fa7-a464-af6f62025d2f'` (Equipe 2) e `responsavel_instalacao_nome = 'Equipe 2'`
+2. Marcar `instalacao_concluida = true` e `instalacao_concluida_em = now()`
 
-**2. Filtro defensivo no hook `useOrdensCarregamentoUnificadas.ts`**
-- Na seção de ordens de carregamento (entregas), além de filtrar `etapa !== 'finalizado'`, também excluir pedidos cujo `etapa_atual` esteja em `['instalacoes', 'correcoes']` — pois se o pedido já avançou para essas etapas, o carregamento da entrega não deveria reaparecer
-- Linha ~128-131: expandir o filtro para:
-  ```typescript
-  const etapasExcluidas = ['finalizado', 'instalacoes', 'correcoes'];
-  return !etapasExcluidas.includes(etapa);
-  ```
-
-### Arquivos alterados
-- Migration SQL (novo) — fix de dados do pedido 0142
-- `src/hooks/useOrdensCarregamentoUnificadas.ts` — filtro defensivo por etapa
+### Arquivo
+- 1 migration SQL (novo)
 
