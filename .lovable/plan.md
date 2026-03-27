@@ -1,34 +1,23 @@
 
 
-## Plano: Página de Conversões para Meta Ads
+## Plano: Corrigir avanço de etapa para pedidos em Instalações
 
-### Objetivo
-Criar uma nova página em `/marketing/conversoes-meta` com o mesmo layout da página Google (`/marketing/conversoes`), mas adaptada ao formato de importação do Meta Ads. Colunas: **email** e **phone** (com código de país `+55` prefixado automaticamente).
+### Problema
+Quando um pedido está na etapa `instalacoes` e o carregamento já foi concluído, ao clicar "Avançar" o pedido vai para `correcoes` em vez de `finalizado`. Isso acontece porque:
 
-### Diferenças em relação à página Google
-- Sem coluna de data (Meta não usa)
-- Header das colunas usa os identificadores do Meta: `email` e `phone`
-- Telefone formatado com `+55` no início, sem espaços/parênteses/hífens (ex: `+5511999999999`)
-- Subtítulo: "Dados de vendas para importação no Meta Ads"
+1. A função `getProximaEtapa` usa a ordem linear do array `ORDEM_ETAPAS`, onde `instalacoes` → `correcoes`
+2. Existe um override explícito para `aguardando_coleta` → `finalizado` (linha 876), mas **não existe** um equivalente para `instalacoes`
 
-### Alterações
+### Solução
+Adicionar um override em `src/hooks/usePedidosEtapas.ts` (após a linha 878) para que pedidos saindo de `instalacoes` vão direto para `finalizado`:
 
-**1. `src/pages/marketing/ConversoesMeta.tsx`** (novo)
-- Mesma estrutura da `Conversoes.tsx`: filtros mês/ano, "Todo o tempo", tabela com cópia por coluna
-- Query idêntica: `vendas` com `is_rascunho = false`, telefones únicos
-- Colunas: `email` e `phone`
-- Formatação do telefone: limpar caracteres especiais e prefixar `+55` se não começar com `+`
-- Breadcrumb: Home > Marketing > Conversões Meta
+```typescript
+if (etapaAtualNome === 'instalacoes') {
+  etapaDestino = 'finalizado';
+  console.log('[moverParaProximaEtapa] Pedido em instalacoes avançando para finalizado');
+}
+```
 
-**2. `src/pages/marketing/MarketingHub.tsx`**
-- Novo item no menu: `{ label: "Conversões Meta", icon: Copy, path: "/marketing/conversoes-meta", ativo: true }`
-- Renomear o item existente "Conversões" para "Conversões Google"
-
-**3. `src/App.tsx`**
-- Nova rota lazy: `/marketing/conversoes-meta` → `ConversoesMeta`
-
-### Arquivos alterados
-- `src/pages/marketing/ConversoesMeta.tsx` (novo)
-- `src/pages/marketing/MarketingHub.tsx`
-- `src/App.tsx`
+### Arquivo alterado
+- `src/hooks/usePedidosEtapas.ts` — adicionar bloco condicional ~linha 880
 
