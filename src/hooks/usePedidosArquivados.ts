@@ -128,8 +128,8 @@ export function usePedidosArquivados(searchOrOptions: string | UsePedidosArquiva
         const instalacao = Array.isArray(instalacaoData) ? instalacaoData[0] : instalacaoData;
         const carregamento = Array.isArray(carregamentoData) ? carregamentoData[0] : carregamentoData;
 
-        // Map portas_vendas to produtos
-        const portasVendas = vendaData?.portas_vendas || [];
+        // Map produtos_vendas to produtos
+        const portasVendas = vendaData?.produtos_vendas || [];
         const produtos: PedidoArquivadoProduto[] = Array.isArray(portasVendas)
           ? portasVendas
               .filter((p: any) => p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'porta')
