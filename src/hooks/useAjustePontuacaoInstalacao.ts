@@ -37,10 +37,15 @@ export function useAjustePontuacaoInstalacao() {
             id,
             numero_pedido,
             etapa_atual,
-            created_at
+            created_at,
+            venda_id,
+            vendas!inner (
+              tipo_entrega
+            )
           )
         `)
         .eq('pedidos_producao.etapa_atual', 'finalizado')
+        .in('pedidos_producao.vendas.tipo_entrega', ['instalacao', 'manutencao'])
         .or('responsavel_instalacao_id.is.null,instalacao_concluida.eq.false');
 
       if (error) throw error;
