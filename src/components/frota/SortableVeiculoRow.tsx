@@ -77,6 +77,7 @@ export function SortableVeiculoRow({ veiculo, onDelete }: Props) {
       <TableCell>{veiculo.placa || "-"}</TableCell>
       <TableCell>{veiculo.ano}</TableCell>
       <TableCell className="font-medium">{veiculo.modelo}</TableCell>
+      <TableCell>{veiculo.motorista || "-"}</TableCell>
       <TableCell>{veiculo.responsavel || "-"}</TableCell>
       <TableCell>{veiculo.mecanico || "-"}</TableCell>
       <TableCell>{veiculo.km_atual.toLocaleString("pt-BR")} km</TableCell>
