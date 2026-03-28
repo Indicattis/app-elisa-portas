@@ -51,6 +51,7 @@ function FrotaTable({ veiculos, onDelete, sensors, onDragEnd }: {
                     <TableHead className="text-xs text-white/70">Placa</TableHead>
                     <TableHead className="text-xs text-white/70">Ano</TableHead>
                     <TableHead className="text-xs text-white/70">Apelido</TableHead>
+                    <TableHead className="text-xs text-white/70">Motorista</TableHead>
                     <TableHead className="text-xs text-white/70">Responsável</TableHead>
                     <TableHead className="text-xs text-white/70">Mecânico</TableHead>
                     <TableHead className="text-xs text-white/70">Km Atual</TableHead>
@@ -72,7 +73,7 @@ function FrotaTable({ veiculos, onDelete, sensors, onDragEnd }: {
                     ))}
                     {veiculos.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={14} className="text-center py-8 text-white/50">
+                        <TableCell colSpan={15} className="text-center py-8 text-white/50">
                           Nenhum veículo cadastrado
                         </TableCell>
                       </TableRow>

@@ -25,6 +25,7 @@ export interface Veiculo {
   created_by: string | null;
   ultima_conferencia_data?: string | null;
   mecanico?: string | null;
+  motorista?: string | null;
   tipo_frota: 'empresa' | 'particular';
 }
 
@@ -40,6 +41,7 @@ export interface VeiculoFormData {
   status: 'rodando' | 'mecanico' | 'parado';
   responsavel?: string;
   mecanico?: string;
+  motorista?: string;
   foto_url?: string;
   documento_url?: string;
   documento_nome?: string;
