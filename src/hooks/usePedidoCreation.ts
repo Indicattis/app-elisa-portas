@@ -56,8 +56,8 @@ export const usePedidoCreation = () => {
       const mesVigencia = numeroMesData?.[0]?.mes;
 
       // Definir etapa e status inicial baseado no tipo de produto
-      const etapaInicial = apenasManutencao ? 'aguardando_instalacao' : 'aberto';
-      const statusInicial = apenasManutencao ? 'aguardando_instalacao' : 'pendente';
+      const etapaInicial = apenasManutencao ? 'instalacoes' : 'aberto';
+      const statusInicial = apenasManutencao ? 'instalacoes' : 'pendente';
 
       // Criar pedido
       const { data: pedido, error: pedidoError } = await supabase
