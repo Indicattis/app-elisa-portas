@@ -980,8 +980,9 @@ export default function GestaoFabricaDirecao() {
                             return (
                               <div
                                 key={pedido.id}
-                                className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-white/5 border border-blue-500/10 hover:bg-white/10 transition-colors"
+                                className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-white/5 border border-blue-500/10 hover:bg-white/10 transition-colors cursor-pointer"
                                 style={{ maxHeight: '50px' }}
+                                onClick={() => navigate(`/administrativo/pedidos/${pedido.id}`)}
                               >
                                 {/* Client name - main highlight */}
                                 <span className="text-xs font-semibold text-foreground truncate min-w-0 flex-1">
