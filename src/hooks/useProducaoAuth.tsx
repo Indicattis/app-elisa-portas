@@ -81,28 +81,34 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
 
         // Apenas atualizações síncronas aqui
         if (event === 'SIGNED_IN' && session?.user) {
-          // Deferir chamadas Supabase com setTimeout
-          setTimeout(() => {
-            if (!mounted) return;
-            
-            supabase
-              .from("admin_users")
-              .select("*")
-              .eq("user_id", session.user.id)
-              .eq("ativo", true)
-              .maybeSingle()
-              .then(({ data: adminUser, error }) => {
-                if (mounted && adminUser && !error) {
-                  setUser({
-                    user_id: adminUser.user_id,
-                    admin_user_id: adminUser.id,
-                    nome: adminUser.nome,
-                    role: adminUser.role,
-                    foto_perfil_url: adminUser.foto_perfil_url,
-                  });
-                }
-              });
-          }, 0);
+          // Ignorar se o user já está carregado (é apenas token refresh, não login real)
+          setUser(prev => {
+            if (prev) return prev; // já logado, não re-buscar
+            // Login real: buscar dados do usuário
+            setTimeout(() => {
+              if (!mounted) return;
+              supabase
+                .from("admin_users")
+                .select("*")
+                .eq("user_id", session.user.id)
+                .eq("ativo", true)
+                .maybeSingle()
+                .then(({ data: adminUser, error }) => {
+                  if (mounted && adminUser && !error) {
+                    setUser({
+                      user_id: adminUser.user_id,
+                      admin_user_id: adminUser.id,
+                      nome: adminUser.nome,
+                      role: adminUser.role,
+                      foto_perfil_url: adminUser.foto_perfil_url,
+                    });
+                  }
+                });
+            }, 0);
+            return prev;
+          });
+        } else if (event === 'TOKEN_REFRESHED') {
+          // Token refreshed - não precisa fazer nada, sessão continua válida
         } else if (event === 'SIGNED_OUT') {
           if (mounted) {
             setUser(null);
