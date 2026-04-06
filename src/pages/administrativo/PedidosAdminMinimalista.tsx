@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Package, RefreshCw, Search, Factory, CheckCircle, Paintbrush, Truck, HardHat, AlertTriangle, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Package, RefreshCw, Search, Factory, CheckCircle, Paintbrush, Truck, HardHat, AlertTriangle, CheckCircle2, ShieldCheck, Archive } from "lucide-react";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 import { supabase } from "@/integrations/supabase/client";
+import { usePedidosArquivados } from "@/hooks/usePedidosArquivados";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 
 const ITEMS_PER_PAGE = 25;
@@ -113,11 +117,13 @@ const ETAPAS_CONFIG: EtapaConfig[] = [
 export default function PedidosAdminMinimalista() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [tipoEntrega, setTipoEntrega] = useState<string>("todos");
   const [activeTab, setActiveTab] = useState<string>("aberto");
   const [currentPages, setCurrentPages] = useState<Record<string, number>>({});
+  const [arquivoPage, setArquivoPage] = useState(1);
   
   // Hooks para cada etapa
   const { 
@@ -136,6 +142,11 @@ export default function PedidosAdminMinimalista() {
   const { pedidos: pedidosInstalacoes, isLoading: isLoadingInstalacoes } = usePedidosEtapas("instalacoes");
   const { pedidos: pedidosCorrecoes, isLoading: isLoadingCorrecoes } = usePedidosEtapas("correcoes");
   const { pedidos: pedidosFinalizados, isLoading: isLoadingFinalizados } = usePedidosEtapas("finalizado");
+
+  // Arquivo morto
+  const { data: pedidosArquivados = [], isLoading: isLoadingArquivados } = usePedidosArquivados(
+    activeTab === 'arquivo_morto' ? searchTerm : ''
+  );
 
   // Mapeamento de pedidos e loading por etapa
   const pedidosPorEtapa: Record<string, any[]> = {
@@ -497,6 +508,15 @@ export default function PedidosAdminMinimalista() {
                 </TabsTrigger>
               );
             })}
+            {/* Arquivo Morto tab trigger */}
+            <TabsTrigger 
+              value="arquivo_morto" 
+              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 px-3"
+            >
+              <Archive className="w-4 h-4 mr-1.5" />
+              <span className="hidden sm:inline">Arquivo Morto</span>
+              <span className="ml-1.5 text-xs opacity-70">({pedidosArquivados.length})</span>
+            </TabsTrigger>
           </TabsList>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
@@ -507,6 +527,99 @@ export default function PedidosAdminMinimalista() {
             {renderEtapaContent(etapa)}
           </TabsContent>
         ))}
+
+        {/* Arquivo Morto Tab Content */}
+        <TabsContent value="arquivo_morto">
+          <Card className="bg-primary/5 border-primary/10">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-white flex items-center gap-2">
+                <Archive className="w-5 h-5 text-emerald-400" />
+                <span>Arquivo Morto</span>
+                <span className="text-sm font-normal text-white/60">
+                  ({pedidosArquivados.length} pedidos)
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingArquivados ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+                </div>
+              ) : pedidosArquivados.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-white/60">
+                  <Archive className="w-12 h-12 mb-4 opacity-50" />
+                  <p>Nenhum pedido arquivado</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {pedidosArquivados
+                    .slice((arquivoPage - 1) * ITEMS_PER_PAGE, arquivoPage * ITEMS_PER_PAGE)
+                    .map((pedido) => (
+                    <div
+                      key={pedido.id}
+                      onClick={() => navigate(`/administrativo/pedidos/${pedido.id}`)}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5 border border-primary/10 hover:bg-white/10 transition-colors cursor-pointer"
+                    >
+                      <span className="text-xs font-mono text-emerald-400 flex-shrink-0">
+                        #{pedido.numero_pedido}
+                      </span>
+                      <span className="text-sm font-medium text-foreground truncate flex-1">
+                        {pedido.cliente_nome}
+                      </span>
+                      {pedido.valor_venda && (
+                        <span className="text-xs text-emerald-400 flex-shrink-0">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pedido.valor_venda)}
+                        </span>
+                      )}
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        {pedido.data_arquivamento
+                          ? (() => { try { return format(new Date(pedido.data_arquivamento), "dd/MM/yyyy", { locale: ptBR }); } catch { return "-"; } })()
+                          : "-"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Paginação */}
+              {Math.ceil(pedidosArquivados.length / ITEMS_PER_PAGE) > 1 && (
+                <div className="mt-4">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setArquivoPage(p => Math.max(1, p - 1))}
+                          className={arquivoPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      {getPageNumbers(arquivoPage, Math.ceil(pedidosArquivados.length / ITEMS_PER_PAGE)).map((page, index) => (
+                        <PaginationItem key={index}>
+                          {page === 'ellipsis' ? (
+                            <PaginationEllipsis />
+                          ) : (
+                            <PaginationLink
+                              onClick={() => setArquivoPage(page as number)}
+                              isActive={arquivoPage === page}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          )}
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setArquivoPage(p => Math.min(Math.ceil(pedidosArquivados.length / ITEMS_PER_PAGE), p + 1))}
+                          className={arquivoPage === Math.ceil(pedidosArquivados.length / ITEMS_PER_PAGE) ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </MinimalistLayout>
   );
