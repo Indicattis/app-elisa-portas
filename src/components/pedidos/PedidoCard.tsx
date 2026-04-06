@@ -1912,8 +1912,13 @@ className="flex h-[20px] w-full rounded-[3px]"
           onOpenChange={setShowEnviarCorrecao}
           pedidoNumero={pedido.numero_pedido ? formatarNumeroPedidoMensal(pedido.numero_pedido) : pedido.id?.slice(0, 8)}
           isLoading={isEnviandoCorrecao}
-          onConfirmar={async () => {
+          onConfirmar={async (comentario: string) => {
             const venda = pedido.venda || pedido.vendas;
+            await supabase.from("pedido_comentarios").insert({
+              pedido_id: pedido.id,
+              comentario,
+              user_id: (await supabase.auth.getUser()).data.user?.id || '',
+            });
             await enviarParaCorrecao({
               pedidoId: pedido.id,
               vendaId: venda?.id || pedido.venda_id,
@@ -1924,6 +1929,7 @@ className="flex h-[20px] w-full rounded-[3px]"
               cep: venda?.cep || null,
               telefoneCliente: venda?.cliente_telefone || null,
               etapaOrigem: etapaAtual,
+              descricaoMovimentacao: comentario,
             });
             setShowEnviarCorrecao(false);
           }}
@@ -2398,8 +2404,13 @@ className="flex h-[20px] w-full rounded-[3px]"
         onOpenChange={setShowEnviarCorrecao}
         pedidoNumero={pedido.numero_pedido ? formatarNumeroPedidoMensal(pedido.numero_pedido) : pedido.id?.slice(0, 8)}
         isLoading={isEnviandoCorrecao}
-        onConfirmar={async () => {
+        onConfirmar={async (comentario: string) => {
           const venda = pedido.venda || pedido.vendas;
+          await supabase.from("pedido_comentarios").insert({
+            pedido_id: pedido.id,
+            comentario,
+            user_id: (await supabase.auth.getUser()).data.user?.id || '',
+          });
           await enviarParaCorrecao({
             pedidoId: pedido.id,
             vendaId: venda?.id || pedido.venda_id,
@@ -2410,6 +2421,7 @@ className="flex h-[20px] w-full rounded-[3px]"
             cep: venda?.cep || null,
             telefoneCliente: venda?.cliente_telefone || null,
             etapaOrigem: etapaAtual,
+            descricaoMovimentacao: comentario,
           });
           setShowEnviarCorrecao(false);
         }}

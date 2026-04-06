@@ -12,6 +12,7 @@ interface EnviarParaCorrecaoParams {
   cep?: string | null;
   telefoneCliente?: string | null;
   etapaOrigem?: string;
+  descricaoMovimentacao?: string;
 }
 
 export const useEnviarParaCorrecao = () => {
@@ -80,7 +81,7 @@ export const useEnviarParaCorrecao = () => {
           etapa_destino: 'correcoes',
           user_id: userId || '',
           teor: 'avanco',
-          descricao: 'Pedido enviado para correção'
+          descricao: params.descricaoMovimentacao || 'Pedido enviado para correção'
         });
     },
     onSuccess: () => {
