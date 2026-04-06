@@ -1,33 +1,29 @@
 
 
-## Plano: Adicionar comentário obrigatório ao enviar pedido para correção
+## Plano: Corrigir cascata de token refresh (429) na página de solda
 
-### Objetivo
-Ao clicar no botão roxo de "Enviar para Correção" na aba finalizado, abrir um modal com campo de comentário (textarea) para o usuário descrever o motivo. O comentário será salvo na tabela `pedido_comentarios` e exibido abaixo do nome do cliente no card (já existe essa funcionalidade via `ultimoComentario`).
+### Diagnóstico
+Os logs de autenticação mostram dezenas de eventos `token_revoked` + `SIGNED_IN` em poucos segundos para o mesmo usuário. A causa raiz é uma cascata:
+
+1. **`useProducaoAuth`** reage a **todo** evento `SIGNED_IN` (incluindo token refreshes) fazendo nova query em `admin_users` → atualiza state → re-render
+2. Re-render causa nova subscrição dos canais realtime em `useOrdemProducao`
+3. Canais realtime disparam `invalidateQueries` → refetch → novo token refresh → loop
 
 ### Alterações
 
-**1. `src/components/pedidos/EnviarCorrecaoModal.tsx`**
-- Trocar de `AlertDialog` para `Dialog` (para suportar textarea)
-- Adicionar campo `Textarea` para descrição/motivo da correção
-- Adicionar state local para o comentário
-- Alterar `onConfirmar` para receber o comentário como parâmetro: `onConfirmar(comentario: string)`
-- Desabilitar botão "Confirmar" se comentário estiver vazio
+**1. `src/hooks/useProducaoAuth.tsx`**
+- No `onAuthStateChange`, ignorar `SIGNED_IN` quando o user já está carregado (é apenas token refresh)
+- Só processar `SIGNED_IN` quando `user === null` (login real)
+- Tratar `TOKEN_REFRESHED` sem re-query desnecessária
 
-**2. `src/components/pedidos/PedidoCard.tsx`**
-- Atualizar as 2 chamadas de `EnviarCorrecaoModal` (linhas ~1910 e ~2396) para:
-  - Receber o `comentario` no `onConfirmar`
-  - Inserir o comentário na tabela `pedido_comentarios` antes de chamar `enviarParaCorrecao`
-
-**3. `src/hooks/useEnviarParaCorrecao.ts`**
-- Adicionar campo opcional `descricaoMovimentacao` ao `EnviarParaCorrecaoParams`
-- Usar esse campo na `descricao` da movimentação (linha 83) em vez do texto fixo
+**2. `src/hooks/useOrdemProducao.ts`**
+- Adicionar `refetchOnWindowFocus: false` e `refetchOnReconnect: false` na query principal para evitar refetchs automáticos que geram mais token refreshes
+- Adicionar `staleTime: 30_000` para reduzir frequência de refetchs
 
 ### Resultado
-O comentário aparece automaticamente abaixo do nome do cliente no card, pois a query `ultimoComentario` já busca o último registro de `pedido_comentarios`.
+Elimina a cascata de refreshes que gera 429. O user só é re-buscado no login real, e a query de ordens não dispara refetchs automáticos excessivos.
 
 ### Arquivos alterados
-- `src/components/pedidos/EnviarCorrecaoModal.tsx`
-- `src/components/pedidos/PedidoCard.tsx`
-- `src/hooks/useEnviarParaCorrecao.ts`
+- `src/hooks/useProducaoAuth.tsx` (3 linhas)
+- `src/hooks/useOrdemProducao.ts` (3 linhas)
 
