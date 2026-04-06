@@ -1,24 +1,23 @@
 
 
-## Plano: Ativar etapa de pintura para o pedido #0317
+## Plano: Corrigir erro 429 (Too Many Requests) na página de solda
 
 ### Problema
-Os 4 produtos do pedido têm `valor_pintura = 0` e `cor_id = null`. O fluxograma não inclui "Aguardando Pintura" porque nenhum produto tem pintura.
+O `useQuery` no hook `useOrdemProducao` não possui guard `enabled` baseado no estado de autenticação. Quando o usuário acessa `/producao/solda`, a query dispara antes da sessão estar restaurada, gerando múltiplas tentativas de refresh de token e resultando em 429.
 
 ### Solução
-Atualizar os 4 registros em `produtos_vendas` via insert tool:
-- `valor_pintura = 1.00` (valor simbólico)
-- `cor_id = 'e1e95174-95c4-4616-88fb-d0aa90e213a0'` (Verde Escuro, hex #2d533a)
+Adicionar `enabled: !!user` ao `useQuery` principal do `useOrdemProducao`, passando o `user` como parâmetro ou utilizando o `useProducaoAuth` internamente.
 
-### IDs dos produtos
-- `7d651aa1-6da7-4f66-8f44-8b6a6f0a8292`
-- `bdeec409-c417-4599-9330-9b30a4729b6d`
-- `e44838c7-6586-491e-848d-513ab6522dbe`
-- `4caba4b1-8f7e-4a86-ab5e-e42d64e7c10f`
+Como o hook `useOrdemProducao` é usado por várias páginas de produção (solda, perfiladeira, separação, qualidade), a correção beneficia todas.
 
-### Resultado
-O `determinarFluxograma` detectará `valor_pintura > 0` e incluirá "Aguardando Pintura" e "Embalagem" no fluxo. Nenhuma alteração de código necessária.
+### Alteração
+
+**`src/hooks/useOrdemProducao.ts`**
+- Importar `useProducaoAuth` 
+- Obter `user` do contexto
+- Adicionar `enabled: !!user` na query principal (linha 83)
+- Incluir `user?.user_id` na `queryKey` para invalidação correta
 
 ### Arquivo alterado
-- Nenhum (apenas UPDATE no banco via insert tool)
+- `src/hooks/useOrdemProducao.ts` — 3 linhas adicionadas/modificadas
 
