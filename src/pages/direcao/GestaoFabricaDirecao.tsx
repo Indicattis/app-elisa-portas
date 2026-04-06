@@ -1046,7 +1046,7 @@ export default function GestaoFabricaDirecao() {
                                       size="icon"
                                       className="h-6 w-6 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 flex-shrink-0"
                                       disabled={desarquivandoId === pedido.id}
-                                      onClick={() => handleDesarquivar(pedido.id)}
+                                      onClick={(e) => { e.stopPropagation(); handleDesarquivar(pedido.id); }}
                                     >
                                       {desarquivandoId === pedido.id ? (
                                         <RefreshCw className="w-3 h-3 animate-spin" />
