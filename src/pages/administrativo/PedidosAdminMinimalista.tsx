@@ -143,6 +143,11 @@ export default function PedidosAdminMinimalista() {
   const { pedidos: pedidosCorrecoes, isLoading: isLoadingCorrecoes } = usePedidosEtapas("correcoes");
   const { pedidos: pedidosFinalizados, isLoading: isLoadingFinalizados } = usePedidosEtapas("finalizado");
 
+  // Arquivo morto
+  const { data: pedidosArquivados = [], isLoading: isLoadingArquivados } = usePedidosArquivados(
+    activeTab === 'arquivo_morto' ? searchTerm : ''
+  );
+
   // Mapeamento de pedidos e loading por etapa
   const pedidosPorEtapa: Record<string, any[]> = {
     aberto: pedidosAberto,
