@@ -117,11 +117,13 @@ const ETAPAS_CONFIG: EtapaConfig[] = [
 export default function PedidosAdminMinimalista() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [tipoEntrega, setTipoEntrega] = useState<string>("todos");
   const [activeTab, setActiveTab] = useState<string>("aberto");
   const [currentPages, setCurrentPages] = useState<Record<string, number>>({});
+  const [arquivoPage, setArquivoPage] = useState(1);
   
   // Hooks para cada etapa
   const { 
