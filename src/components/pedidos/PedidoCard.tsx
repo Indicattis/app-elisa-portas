@@ -1912,8 +1912,17 @@ className="flex h-[20px] w-full rounded-[3px]"
           onOpenChange={setShowEnviarCorrecao}
           pedidoNumero={pedido.numero_pedido ? formatarNumeroPedidoMensal(pedido.numero_pedido) : pedido.id?.slice(0, 8)}
           isLoading={isEnviandoCorrecao}
-          onConfirmar={async () => {
+          onConfirmar={async (comentario: string) => {
             const venda = pedido.venda || pedido.vendas;
+            const { data: { user } } = await supabase.auth.getUser();
+            const userId = user?.id || '';
+            const { data: adminUser } = await supabase.from('admin_users').select('nome').eq('user_id', userId).single();
+            await supabase.from("pedido_comentarios").insert({
+              pedido_id: pedido.id,
+              comentario,
+              autor_id: userId,
+              autor_nome: adminUser?.nome || 'Usuário',
+            });
             await enviarParaCorrecao({
               pedidoId: pedido.id,
               vendaId: venda?.id || pedido.venda_id,
@@ -1924,6 +1933,7 @@ className="flex h-[20px] w-full rounded-[3px]"
               cep: venda?.cep || null,
               telefoneCliente: venda?.cliente_telefone || null,
               etapaOrigem: etapaAtual,
+              descricaoMovimentacao: comentario,
             });
             setShowEnviarCorrecao(false);
           }}
@@ -2398,8 +2408,17 @@ className="flex h-[20px] w-full rounded-[3px]"
         onOpenChange={setShowEnviarCorrecao}
         pedidoNumero={pedido.numero_pedido ? formatarNumeroPedidoMensal(pedido.numero_pedido) : pedido.id?.slice(0, 8)}
         isLoading={isEnviandoCorrecao}
-        onConfirmar={async () => {
+        onConfirmar={async (comentario: string) => {
           const venda = pedido.venda || pedido.vendas;
+          const { data: { user } } = await supabase.auth.getUser();
+          const userId = user?.id || '';
+          const { data: adminUser } = await supabase.from('admin_users').select('nome').eq('user_id', userId).single();
+          await supabase.from("pedido_comentarios").insert({
+            pedido_id: pedido.id,
+            comentario,
+            autor_id: userId,
+            autor_nome: adminUser?.nome || 'Usuário',
+          });
           await enviarParaCorrecao({
             pedidoId: pedido.id,
             vendaId: venda?.id || pedido.venda_id,
@@ -2410,6 +2429,7 @@ className="flex h-[20px] w-full rounded-[3px]"
             cep: venda?.cep || null,
             telefoneCliente: venda?.cliente_telefone || null,
             etapaOrigem: etapaAtual,
+            descricaoMovimentacao: comentario,
           });
           setShowEnviarCorrecao(false);
         }}
