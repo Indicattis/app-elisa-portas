@@ -508,6 +508,15 @@ export default function PedidosAdminMinimalista() {
                 </TabsTrigger>
               );
             })}
+            {/* Arquivo Morto tab trigger */}
+            <TabsTrigger 
+              value="arquivo_morto" 
+              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 px-3"
+            >
+              <Archive className="w-4 h-4 mr-1.5" />
+              <span className="hidden sm:inline">Arquivo Morto</span>
+              <span className="ml-1.5 text-xs opacity-70">({pedidosArquivados.length})</span>
+            </TabsTrigger>
           </TabsList>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
