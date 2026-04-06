@@ -527,6 +527,99 @@ export default function PedidosAdminMinimalista() {
             {renderEtapaContent(etapa)}
           </TabsContent>
         ))}
+
+        {/* Arquivo Morto Tab Content */}
+        <TabsContent value="arquivo_morto">
+          <Card className="bg-primary/5 border-primary/10">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-white flex items-center gap-2">
+                <Archive className="w-5 h-5 text-emerald-400" />
+                <span>Arquivo Morto</span>
+                <span className="text-sm font-normal text-white/60">
+                  ({pedidosArquivados.length} pedidos)
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingArquivados ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+                </div>
+              ) : pedidosArquivados.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-white/60">
+                  <Archive className="w-12 h-12 mb-4 opacity-50" />
+                  <p>Nenhum pedido arquivado</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {pedidosArquivados
+                    .slice((arquivoPage - 1) * ITEMS_PER_PAGE, arquivoPage * ITEMS_PER_PAGE)
+                    .map((pedido) => (
+                    <div
+                      key={pedido.id}
+                      onClick={() => navigate(`/administrativo/pedidos/${pedido.id}`)}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5 border border-primary/10 hover:bg-white/10 transition-colors cursor-pointer"
+                    >
+                      <span className="text-xs font-mono text-emerald-400 flex-shrink-0">
+                        #{pedido.numero_pedido}
+                      </span>
+                      <span className="text-sm font-medium text-foreground truncate flex-1">
+                        {pedido.cliente_nome}
+                      </span>
+                      {pedido.valor_venda && (
+                        <span className="text-xs text-emerald-400 flex-shrink-0">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pedido.valor_venda)}
+                        </span>
+                      )}
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        {pedido.data_arquivamento
+                          ? (() => { try { return format(new Date(pedido.data_arquivamento), "dd/MM/yyyy", { locale: ptBR }); } catch { return "-"; } })()
+                          : "-"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Paginação */}
+              {Math.ceil(pedidosArquivados.length / ITEMS_PER_PAGE) > 1 && (
+                <div className="mt-4">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setArquivoPage(p => Math.max(1, p - 1))}
+                          className={arquivoPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      {getPageNumbers(arquivoPage, Math.ceil(pedidosArquivados.length / ITEMS_PER_PAGE)).map((page, index) => (
+                        <PaginationItem key={index}>
+                          {page === 'ellipsis' ? (
+                            <PaginationEllipsis />
+                          ) : (
+                            <PaginationLink
+                              onClick={() => setArquivoPage(page as number)}
+                              isActive={arquivoPage === page}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          )}
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setArquivoPage(p => Math.min(Math.ceil(pedidosArquivados.length / ITEMS_PER_PAGE), p + 1))}
+                          className={arquivoPage === Math.ceil(pedidosArquivados.length / ITEMS_PER_PAGE) ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </MinimalistLayout>
   );
