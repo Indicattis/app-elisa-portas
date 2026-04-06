@@ -77,12 +77,14 @@ const TABELA_MAP: Record<TipoOrdem, string> = {
 };
 
 export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedidoId: string, tipoOrdem: TipoOrdem) => void) {
+  const { user } = useProducaoAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Buscar todas as ordens do tipo
   const { data: ordens = [], isLoading } = useQuery({
-    queryKey: ['ordens-producao', tipoOrdem],
+    queryKey: ['ordens-producao', tipoOrdem, user?.user_id],
+    enabled: !!user,
     queryFn: async () => {
       const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
       
