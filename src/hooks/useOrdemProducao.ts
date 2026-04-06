@@ -85,6 +85,9 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
   const { data: ordens = [], isLoading } = useQuery({
     queryKey: ['ordens-producao', tipoOrdem, user?.user_id],
     enabled: !!user,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    staleTime: 30_000,
     queryFn: async () => {
       const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
       
