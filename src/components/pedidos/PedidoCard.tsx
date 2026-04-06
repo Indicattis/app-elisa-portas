@@ -1914,10 +1914,14 @@ className="flex h-[20px] w-full rounded-[3px]"
           isLoading={isEnviandoCorrecao}
           onConfirmar={async (comentario: string) => {
             const venda = pedido.venda || pedido.vendas;
+            const { data: { user } } = await supabase.auth.getUser();
+            const userId = user?.id || '';
+            const { data: adminUser } = await supabase.from('admin_users').select('nome').eq('user_id', userId).single();
             await supabase.from("pedido_comentarios").insert({
               pedido_id: pedido.id,
               comentario,
-              user_id: (await supabase.auth.getUser()).data.user?.id || '',
+              autor_id: userId,
+              autor_nome: adminUser?.nome || 'Usuário',
             });
             await enviarParaCorrecao({
               pedidoId: pedido.id,
@@ -2406,10 +2410,14 @@ className="flex h-[20px] w-full rounded-[3px]"
         isLoading={isEnviandoCorrecao}
         onConfirmar={async (comentario: string) => {
           const venda = pedido.venda || pedido.vendas;
+          const { data: { user } } = await supabase.auth.getUser();
+          const userId = user?.id || '';
+          const { data: adminUser } = await supabase.from('admin_users').select('nome').eq('user_id', userId).single();
           await supabase.from("pedido_comentarios").insert({
             pedido_id: pedido.id,
             comentario,
-            user_id: (await supabase.auth.getUser()).data.user?.id || '',
+            autor_id: userId,
+            autor_nome: adminUser?.nome || 'Usuário',
           });
           await enviarParaCorrecao({
             pedidoId: pedido.id,
