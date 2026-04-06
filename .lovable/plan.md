@@ -1,23 +1,33 @@
 
 
-## Plano: Corrigir erro 429 (Too Many Requests) na página de solda
+## Plano: Adicionar comentário obrigatório ao enviar pedido para correção
 
-### Problema
-O `useQuery` no hook `useOrdemProducao` não possui guard `enabled` baseado no estado de autenticação. Quando o usuário acessa `/producao/solda`, a query dispara antes da sessão estar restaurada, gerando múltiplas tentativas de refresh de token e resultando em 429.
+### Objetivo
+Ao clicar no botão roxo de "Enviar para Correção" na aba finalizado, abrir um modal com campo de comentário (textarea) para o usuário descrever o motivo. O comentário será salvo na tabela `pedido_comentarios` e exibido abaixo do nome do cliente no card (já existe essa funcionalidade via `ultimoComentario`).
 
-### Solução
-Adicionar `enabled: !!user` ao `useQuery` principal do `useOrdemProducao`, passando o `user` como parâmetro ou utilizando o `useProducaoAuth` internamente.
+### Alterações
 
-Como o hook `useOrdemProducao` é usado por várias páginas de produção (solda, perfiladeira, separação, qualidade), a correção beneficia todas.
+**1. `src/components/pedidos/EnviarCorrecaoModal.tsx`**
+- Trocar de `AlertDialog` para `Dialog` (para suportar textarea)
+- Adicionar campo `Textarea` para descrição/motivo da correção
+- Adicionar state local para o comentário
+- Alterar `onConfirmar` para receber o comentário como parâmetro: `onConfirmar(comentario: string)`
+- Desabilitar botão "Confirmar" se comentário estiver vazio
 
-### Alteração
+**2. `src/components/pedidos/PedidoCard.tsx`**
+- Atualizar as 2 chamadas de `EnviarCorrecaoModal` (linhas ~1910 e ~2396) para:
+  - Receber o `comentario` no `onConfirmar`
+  - Inserir o comentário na tabela `pedido_comentarios` antes de chamar `enviarParaCorrecao`
 
-**`src/hooks/useOrdemProducao.ts`**
-- Importar `useProducaoAuth` 
-- Obter `user` do contexto
-- Adicionar `enabled: !!user` na query principal (linha 83)
-- Incluir `user?.user_id` na `queryKey` para invalidação correta
+**3. `src/hooks/useEnviarParaCorrecao.ts`**
+- Adicionar campo opcional `descricaoMovimentacao` ao `EnviarParaCorrecaoParams`
+- Usar esse campo na `descricao` da movimentação (linha 83) em vez do texto fixo
 
-### Arquivo alterado
-- `src/hooks/useOrdemProducao.ts` — 3 linhas adicionadas/modificadas
+### Resultado
+O comentário aparece automaticamente abaixo do nome do cliente no card, pois a query `ultimoComentario` já busca o último registro de `pedido_comentarios`.
+
+### Arquivos alterados
+- `src/components/pedidos/EnviarCorrecaoModal.tsx`
+- `src/components/pedidos/PedidoCard.tsx`
+- `src/hooks/useEnviarParaCorrecao.ts`
 
