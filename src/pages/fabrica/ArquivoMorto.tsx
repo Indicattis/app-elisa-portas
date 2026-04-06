@@ -132,7 +132,8 @@ export default function ArquivoMorto() {
               pedidos.map((pedido, index) => (
                 <Card
                   key={pedido.id}
-                  className="bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-300"
+                  className="bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-300 cursor-pointer"
+                  onClick={() => navigate(`/administrativo/pedidos/${pedido.id}`)}
                   style={{
                     opacity: mounted ? 1 : 0,
                     transform: mounted ? "translateY(0)" : "translateY(10px)",
