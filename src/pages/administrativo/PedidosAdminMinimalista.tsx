@@ -15,6 +15,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 import { supabase } from "@/integrations/supabase/client";
+import { usePedidosArquivados } from "@/hooks/usePedidosArquivados";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 
 const ITEMS_PER_PAGE = 25;
