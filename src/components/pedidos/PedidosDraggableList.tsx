@@ -150,6 +150,20 @@ export function PedidosDraggableList({
   hideCorrecaoButton = false,
 }: PedidosDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const overlayContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const div = document.createElement('div');
+    div.id = 'dnd-overlay-container';
+    document.body.appendChild(div);
+    overlayContainerRef.current = div;
+    return () => {
+      if (div.parentNode) {
+        div.parentNode.removeChild(div);
+      }
+      overlayContainerRef.current = null;
+    };
+  }, []);
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
