@@ -2,19 +2,25 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 
 type TipoOrdem = 'pintura';
 
 export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem: TipoOrdem) => void) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useProducaoAuth();
 
   // Buscar todas as ordens de pintura
   const { data: ordens = [], isLoading } = useQuery({
-    queryKey: ["ordens-pintura"],
+    queryKey: ["ordens-pintura", user?.user_id],
+    enabled: !!user?.user_id,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    staleTime: 30_000,
     queryFn: async () => {
-      // Obter usuário atual para filtrar visibilidade
-      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.user_id) return [];
       
       // Buscar as ordens, excluindo histórico
       // Filtrar: (sem responsável OU responsável é o usuário atual) E não está no histórico
@@ -22,7 +28,7 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
         .from("ordens_pintura")
         .select('*, capturada_em, tempo_conclusao_segundos, em_backlog, prioridade')
         .eq('historico', false)
-        .or(`responsavel_id.is.null,responsavel_id.eq.${user?.id || ''}`)
+        .or(`responsavel_id.is.null,responsavel_id.eq.${user.user_id}`)
         .order('prioridade', { ascending: false })
         .order('created_at', { ascending: false });
 
@@ -176,6 +182,8 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
 
   // Subscribe to realtime updates for linhas_ordens
   useEffect(() => {
+    if (!user?.user_id) return;
+
     const channel = supabase
       .channel('linhas-ordens-pintura-changes')
       .on(
@@ -196,7 +204,7 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, user?.user_id]);
 
   // Filtrar ordens por status e ordenar pela prioridade do PEDIDO
   const ordensParaPintar = ordens

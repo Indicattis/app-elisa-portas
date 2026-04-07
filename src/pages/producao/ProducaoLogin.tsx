@@ -64,12 +64,12 @@ export default function ProducaoLogin() {
       const email = setupData.email;
       const password = setupData.password;
       
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (signInError) {
+      if (signInError || !signInData.session) {
         console.error("Erro na autenticação Supabase:", signInError);
         toast({
           title: "Erro de autenticação",

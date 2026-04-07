@@ -15,6 +15,7 @@ export function ProtectedProducaoRoute({ children, routeKey }: ProtectedProducao
   // Verificação de acesso à rota específica
   const { data: hasAccess, isLoading: accessLoading } = useQuery({
     queryKey: ['route-access-producao', user?.user_id, routeKey],
+    retry: false,
     queryFn: async () => {
       if (!user?.user_id || !routeKey) return true;
 

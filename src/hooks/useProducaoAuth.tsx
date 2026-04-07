@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ProducaoUser {
@@ -45,65 +46,83 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const mountedRef = useRef(true);
   const currentUserIdRef = useRef<string | null>(null);
+  const currentProfileRef = useRef<ProducaoUser | null>(null);
+  const syncRequestRef = useRef(0);
+
+  const applyUser = (nextUser: ProducaoUser | null) => {
+    currentProfileRef.current = nextUser;
+    setUser(nextUser);
+  };
 
   useEffect(() => {
     mountedRef.current = true;
 
-    // 1. Register listener FIRST
+    const resetAuthState = () => {
+      currentUserIdRef.current = null;
+      applyUser(null);
+      setInitialized(true);
+      setLoading(false);
+    };
+
+    const hydrateFromSession = (session: Session | null, event: AuthChangeEvent) => {
+      if (!mountedRef.current) return;
+
+      if (!session?.user) {
+        resetAuthState();
+        return;
+      }
+
+      const nextUserId = session.user.id;
+      const alreadyHydrated = currentUserIdRef.current === nextUserId && !!currentProfileRef.current;
+
+      if (alreadyHydrated || (event === 'TOKEN_REFRESHED' && currentUserIdRef.current === nextUserId && !!currentProfileRef.current)) {
+        setInitialized(true);
+        setLoading(false);
+        return;
+      }
+
+      currentUserIdRef.current = nextUserId;
+      setLoading(true);
+
+      const requestId = ++syncRequestRef.current;
+
+      window.setTimeout(async () => {
+        const adminUser = await fetchAdminUser(nextUserId);
+
+        if (!mountedRef.current || requestId !== syncRequestRef.current) {
+          return;
+        }
+
+        applyUser(adminUser);
+        setInitialized(true);
+        setLoading(false);
+      }, 0);
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mountedRef.current) return;
 
         if (event === 'SIGNED_OUT') {
-          currentUserIdRef.current = null;
-          setUser(null);
-          setInitialized(true);
-          setLoading(false);
+          resetAuthState();
+          return;
+        }
+
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+          hydrateFromSession(session, event);
           return;
         }
 
         if (event === 'TOKEN_REFRESHED') {
-          // Session still valid, no action needed
-          return;
-        }
-
-        if (event === 'SIGNED_IN' && session?.user) {
-          // Only process if user changed or not yet loaded
-          if (currentUserIdRef.current === session.user.id) return;
-
-          currentUserIdRef.current = session.user.id;
-          // Use setTimeout to avoid blocking the auth state change callback
-          setTimeout(async () => {
-            if (!mountedRef.current) return;
-            const adminUser = await fetchAdminUser(session.user.id);
-            if (!mountedRef.current) return;
-            if (adminUser) {
-              setUser(adminUser);
-            }
-            // Don't sign out on failure - could be transient
+          if (!currentProfileRef.current && session?.user) {
+            hydrateFromSession(session, event);
+          } else {
             setInitialized(true);
             setLoading(false);
-          }, 0);
+          }
         }
       }
     );
-
-    // 2. THEN check existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!mountedRef.current) return;
-
-      if (session?.user) {
-        currentUserIdRef.current = session.user.id;
-        const adminUser = await fetchAdminUser(session.user.id);
-        if (!mountedRef.current) return;
-        if (adminUser) {
-          setUser(adminUser);
-        }
-        // Don't sign out on transient failure
-      }
-      setInitialized(true);
-      setLoading(false);
-    });
 
     return () => {
       mountedRef.current = false;
@@ -118,7 +137,7 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
       console.error("Erro ao fazer logout:", error);
     }
     currentUserIdRef.current = null;
-    setUser(null);
+    applyUser(null);
     navigate("/producao/login", { replace: true });
   };
 

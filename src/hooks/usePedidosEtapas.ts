@@ -118,11 +118,15 @@ export function usePedidosContadores() {
 export function usePedidosEtapas(etapa?: EtapaPedido) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const shouldLoadPedidos = !!etapa;
 
   // Buscar pedidos por etapa
   const { data: pedidos = [], isLoading } = useQuery({
-    queryKey: ['pedidos-etapas', etapa],
+    queryKey: ['pedidos-etapas', etapa ?? 'disabled'],
+    enabled: shouldLoadPedidos,
     queryFn: async () => {
+      if (!etapa) return [];
+
       // Buscar pedidos
       const { data: pedidosData, error: pedidosError } = await supabase
         .from('pedidos_producao')
