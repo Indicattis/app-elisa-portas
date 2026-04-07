@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 interface AdminUser {
   id: string;
   email: string;
-  role: string; // TEXT in database, validated via FK against system_roles.key
+  role: string;
   setor: 'vendas' | 'marketing' | 'instalacoes' | 'fabrica' | 'administrativo' | null;
   created_at: string;
   ativo: boolean;
@@ -39,11 +39,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRole] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const currentUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
     const fetchUserRole = async (userId: string) => {
+      // Skip if we already loaded this user's role
+      if (currentUserIdRef.current === userId && userRole) return;
+      
       try {
         const { data, error } = await supabase
           .from('admin_users')
@@ -57,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (mounted) {
+          currentUserIdRef.current = userId;
           setUserRole(data);
         }
       } catch (error) {
@@ -64,67 +69,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    const initializeAuth = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          await supabase.auth.signOut();
-          if (mounted) {
-            setUser(null);
-            setUserRole(null);
-          }
+    // Register listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+
+        if (event === 'SIGNED_OUT' || !session) {
+          currentUserIdRef.current = null;
+          setUser(null);
+          setUserRole(null);
+          setLoading(false);
           return;
         }
 
-        if (session?.user && mounted) {
+        if (event === 'SIGNED_IN') {
+          // Ignore repeated SIGNED_IN for the same user
+          if (currentUserIdRef.current === session.user.id && userRole) {
+            setLoading(false);
+            return;
+          }
           setUser(session.user);
-          // Usar setTimeout para evitar loop infinito
-          setTimeout(() => {
-            fetchUserRole(session.user.id);
-          }, 0);
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        if (mounted) {
-          setUser(null);
-          setUserRole(null);
-        }
-      } finally {
-        if (mounted) {
+          setTimeout(() => fetchUserRole(session.user.id), 0);
           setLoading(false);
+          return;
         }
-      }
-    };
 
-    // Configurar listener de mudanças de auth
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-
-        console.log('Auth state changed:', event, session?.user?.id);
-
-        if (event === 'SIGNED_OUT' || !session) {
-          setUser(null);
-          setUserRole(null);
-          setLoading(false);
-        } else if (event === 'SIGNED_IN' && session) {
+        if (event === 'TOKEN_REFRESHED') {
+          // Just update the user object, don't refetch role
           setUser(session.user);
-          // Usar setTimeout para evitar loop infinito
-          setTimeout(() => {
-            fetchUserRole(session.user.id);
-          }, 0);
           setLoading(false);
-        } else if (event === 'TOKEN_REFRESHED' && session) {
-          setUser(session.user);
+          return;
+        }
+
+        if (event === 'INITIAL_SESSION') {
+          if (session?.user) {
+            setUser(session.user);
+            setTimeout(() => fetchUserRole(session.user.id), 0);
+          }
           setLoading(false);
         }
       }
     );
-
-    // Inicializar auth
-    initializeAuth();
 
     return () => {
       mounted = false;
@@ -187,6 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       await supabase.auth.signOut();
+      currentUserIdRef.current = null;
       setUser(null);
       setUserRole(null);
     } catch (error) {

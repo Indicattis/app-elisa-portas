@@ -15,8 +15,9 @@ export default function ProducaoLogin() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Respect origin route if available
-  const from = (location.state as any)?.from?.pathname || "/producao";
+  // Sanitize: never redirect back to login itself
+  const rawFrom = (location.state as any)?.from?.pathname || "/producao";
+  const from = rawFrom === "/producao/login" ? "/producao" : rawFrom;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,7 +85,10 @@ export default function ProducaoLogin() {
         description: `Bem-vindo, ${setupData.user.nome}!`,
       });
 
-      navigate(from, { replace: true });
+      // Small delay to let auth state propagate before navigating
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 100);
     } catch (error) {
       console.error("Erro no login:", error);
       toast({
