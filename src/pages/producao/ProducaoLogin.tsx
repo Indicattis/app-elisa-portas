@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,10 @@ export default function ProducaoLogin() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Respect origin route if available
+  const from = (location.state as any)?.from?.pathname || "/producao";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +30,6 @@ export default function ProducaoLogin() {
       return;
     }
 
-    // Validar que são exatamente 4 dígitos numéricos
     if (!/^\d{4}$/.test(cpfDigitos.trim())) {
       toast({
         title: "CPF inválido",
@@ -39,7 +42,6 @@ export default function ProducaoLogin() {
     setLoading(true);
 
     try {
-      // Validar CPF via edge function (retorna email real do usuário)
       const { data: setupData, error: setupError } = await supabase.functions.invoke('manage-producao-auth', {
         body: { cpf_ultimos_4: cpfDigitos.trim() }
       });
@@ -47,7 +49,6 @@ export default function ProducaoLogin() {
       if (setupError || !setupData?.success) {
         console.error("Erro ao configurar credenciais:", setupError || setupData);
         
-        // Mensagens específicas de erro
         const errorMessage = setupData?.message || setupData?.error || setupError?.message;
         
         toast({
@@ -60,7 +61,6 @@ export default function ProducaoLogin() {
         return;
       }
 
-      // Autenticar com o email real do usuário
       const email = setupData.email;
       const password = setupData.password;
       
@@ -84,7 +84,7 @@ export default function ProducaoLogin() {
         description: `Bem-vindo, ${setupData.user.nome}!`,
       });
 
-      navigate("/producao");
+      navigate(from, { replace: true });
     } catch (error) {
       console.error("Erro no login:", error);
       toast({
