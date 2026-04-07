@@ -135,14 +135,11 @@ Deno.serve(async (req) => {
     // Filtrar usuário pelo CPF (completo ou últimos 4 dígitos)
     const adminUser = adminUsers?.find(u => {
       if (!u.cpf) return false
-      // Remover qualquer formatação
       const cpfUsuario = u.cpf.replace(/\D/g, '')
       
       if (usandoCpfCompleto) {
-        // Match exato do CPF completo
         return cpfUsuario === cpfLimpo
       } else {
-        // Match pelos últimos 4 dígitos
         return cpfUsuario.slice(-4) === cpfLimpo
       }
     })
@@ -158,7 +155,6 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Usar o email real do usuário (com trim para remover caracteres invisíveis)
     if (!adminUser.email) {
       console.error('Usuário sem email cadastrado:', adminUser)
       return new Response(
@@ -169,10 +165,11 @@ Deno.serve(async (req) => {
 
     const email = adminUser.email.trim()
     const password = gerarSenhaPorNome(adminUser.nome)
+    const cpfUltimos4 = cpfLimpo.slice(-4)
 
     console.log('[AUDIT] Configurando autenticação para:', email, '- Setor:', adminUser.setor, '- Role:', adminUser.role)
 
-    // Tentar buscar usuário auth existente pelo email real (considerando paginação)
+    // Buscar usuário auth existente
     const { data: usersData, error: listUsersError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 })
     if (listUsersError) {
       console.error('Erro ao listar usuários:', listUsersError)
@@ -180,36 +177,47 @@ Deno.serve(async (req) => {
     const existingUser = usersData?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase())
 
     let authUser
-    const cpfUltimos4 = cpfLimpo.slice(-4)
 
     if (existingUser) {
-      console.log('[AUDIT] Atualizando senha para usuário via CPF:', email, 'role:', adminUser.role)
+      // User already exists - DO NOT reset password every time
+      // Only update metadata if needed, without touching the password
+      const currentMeta = existingUser.user_metadata || {}
+      const needsMetaUpdate = 
+        currentMeta.nome !== adminUser.nome ||
+        currentMeta.cpf_ultimos_4 !== cpfUltimos4 ||
+        currentMeta.setor !== (adminUser.setor || 'fabrica')
 
-      // Atualizar senha para TODOS os usuários que logam via CPF
-      const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
-        existingUser.id,
-        {
-          password: password,
-          email_confirm: true,
-          user_metadata: {
-            nome: adminUser.nome,
-            cpf_ultimos_4: cpfUltimos4,
-            setor: adminUser.setor || 'fabrica'
+      if (needsMetaUpdate) {
+        console.log('[AUDIT] Atualizando metadata (sem trocar senha) para:', email)
+        const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
+          existingUser.id,
+          {
+            user_metadata: {
+              nome: adminUser.nome,
+              cpf_ultimos_4: cpfUltimos4,
+              setor: adminUser.setor || 'fabrica'
+            }
           }
-        }
-      )
-
-      if (error) {
-        console.error('Erro ao atualizar usuário:', error)
-        return new Response(
-          JSON.stringify({ error: 'Erro ao atualizar credenciais' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
+
+        if (error) {
+          console.error('Erro ao atualizar metadata:', error)
+          // Non-fatal: continue with login anyway
+        }
       }
 
-      authUser = data.user
+      authUser = existingUser
+
+      // Update user_id link if needed
+      if (adminUser.user_id !== existingUser.id) {
+        await supabaseAdmin
+          .from('admin_users')
+          .update({ user_id: existingUser.id })
+          .eq('id', adminUser.id)
+      }
     } else {
-      // Criar novo usuário com email já confirmado
+      // Create new user - only case where we set password
+      console.log('[AUDIT] Criando novo usuário auth para:', email)
       const { data, error } = await supabaseAdmin.auth.admin.createUser({
         email: email,
         password: password,
@@ -230,10 +238,8 @@ Deno.serve(async (req) => {
       }
 
       authUser = data.user
-    }
 
-    // Atualizar user_id em admin_users se necessário
-    if (adminUser.user_id !== authUser.id) {
+      // Link user_id
       await supabaseAdmin
         .from('admin_users')
         .update({ user_id: authUser.id })

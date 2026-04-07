@@ -9,10 +9,9 @@ interface ProtectedProducaoRouteProps {
 }
 
 export function ProtectedProducaoRoute({ children, routeKey }: ProtectedProducaoRouteProps) {
-  const { user, loading, initialized } = useProducaoAuth();
+  const { user, loading, initialized, hasSession } = useProducaoAuth();
   const location = useLocation();
 
-  // Verificação de acesso à rota específica
   const { data: hasAccess, isLoading: accessLoading } = useQuery({
     queryKey: ['route-access-producao', user?.user_id, routeKey],
     retry: false,
@@ -34,7 +33,7 @@ export function ProtectedProducaoRoute({ children, routeKey }: ProtectedProducao
     staleTime: 5 * 60 * 1000,
   });
 
-  // Wait for auth to fully initialize before making any redirect decisions
+  // Wait for auth to fully initialize
   if (!initialized || loading || (routeKey && user && accessLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -43,12 +42,17 @@ export function ProtectedProducaoRoute({ children, routeKey }: ProtectedProducao
     );
   }
 
-  // Não autenticado → login do producao
-  if (!user) {
+  // Only redirect to login if there's truly no session (not just missing profile)
+  if (!hasSession && !user) {
     return <Navigate to="/producao/login" state={{ from: location }} replace />;
   }
 
-  // Sem permissão → forbidden do producao
+  // Has session but no profile found - show forbidden instead of login loop
+  if (hasSession && !user) {
+    return <Navigate to="/producao/forbidden" replace />;
+  }
+
+  // No permission for this route
   if (routeKey && !hasAccess) {
     return <Navigate to="/producao/forbidden" replace />;
   }

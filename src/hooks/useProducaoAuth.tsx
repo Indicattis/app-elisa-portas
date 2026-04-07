@@ -15,6 +15,7 @@ interface ProducaoAuthContextType {
   user: ProducaoUser | null;
   loading: boolean;
   initialized: boolean;
+  hasSession: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -43,6 +44,7 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<ProducaoUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
+  const [hasSession, setHasSession] = useState(false);
   const navigate = useNavigate();
   const mountedRef = useRef(true);
   const currentUserIdRef = useRef<string | null>(null);
@@ -59,39 +61,30 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
 
     const resetAuthState = () => {
       currentUserIdRef.current = null;
+      setHasSession(false);
       applyUser(null);
       setInitialized(true);
       setLoading(false);
     };
 
-    const hydrateFromSession = (session: Session | null, event: AuthChangeEvent) => {
-      if (!mountedRef.current) return;
-
-      if (!session?.user) {
-        resetAuthState();
-        return;
-      }
-
-      const nextUserId = session.user.id;
-      const alreadyHydrated = currentUserIdRef.current === nextUserId && !!currentProfileRef.current;
-
-      if (alreadyHydrated || (event === 'TOKEN_REFRESHED' && currentUserIdRef.current === nextUserId && !!currentProfileRef.current)) {
+    const hydrateProfile = (userId: string) => {
+      // Already hydrated for this user
+      if (currentUserIdRef.current === userId && currentProfileRef.current) {
         setInitialized(true);
         setLoading(false);
         return;
       }
 
-      currentUserIdRef.current = nextUserId;
+      currentUserIdRef.current = userId;
+      setHasSession(true);
       setLoading(true);
 
       const requestId = ++syncRequestRef.current;
 
       window.setTimeout(async () => {
-        const adminUser = await fetchAdminUser(nextUserId);
+        const adminUser = await fetchAdminUser(userId);
 
-        if (!mountedRef.current || requestId !== syncRequestRef.current) {
-          return;
-        }
+        if (!mountedRef.current || requestId !== syncRequestRef.current) return;
 
         applyUser(adminUser);
         setInitialized(true);
@@ -100,7 +93,7 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event: AuthChangeEvent, session: Session | null) => {
         if (!mountedRef.current) return;
 
         if (event === 'SIGNED_OUT') {
@@ -108,18 +101,35 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
-          hydrateFromSession(session, event);
+        if (event === 'INITIAL_SESSION') {
+          if (session?.user) {
+            hydrateProfile(session.user.id);
+          } else {
+            resetAuthState();
+          }
+          return;
+        }
+
+        if (event === 'SIGNED_IN') {
+          if (!session?.user) return;
+          // Ignore repeated SIGNED_IN for the same user that's already loaded
+          if (currentUserIdRef.current === session.user.id && currentProfileRef.current) {
+            return;
+          }
+          hydrateProfile(session.user.id);
           return;
         }
 
         if (event === 'TOKEN_REFRESHED') {
-          if (!currentProfileRef.current && session?.user) {
-            hydrateFromSession(session, event);
-          } else {
-            setInitialized(true);
-            setLoading(false);
+          if (session?.user) {
+            setHasSession(true);
+            // Don't re-fetch profile on token refresh if already loaded
+            if (!currentProfileRef.current) {
+              hydrateProfile(session.user.id);
+            }
           }
+          setInitialized(true);
+          setLoading(false);
         }
       }
     );
@@ -137,12 +147,13 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
       console.error("Erro ao fazer logout:", error);
     }
     currentUserIdRef.current = null;
+    setHasSession(false);
     applyUser(null);
     navigate("/producao/login", { replace: true });
   };
 
   return (
-    <ProducaoAuthContext.Provider value={{ user, loading, initialized, signOut }}>
+    <ProducaoAuthContext.Provider value={{ user, loading, initialized, hasSession, signOut }}>
       {children}
     </ProducaoAuthContext.Provider>
   );
