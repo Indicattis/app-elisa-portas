@@ -1,56 +1,55 @@
 
-Plano: estabilizar a autenticação das rotas de produção
+Plano: corrigir o loop de login do usuário 4063 em /producao
 
-Diagnóstico
-- O cadastro dos dois usuários existe e está ativo em `admin_users`:
-  - `7087` = Elton Luiz de Paula, papel `soldador`
-  - `4063` = Guilherme Martini, papel `coringa`
-- O redirecionamento para `/producao/login` não é um problema de CPF/login em si; ele acontece depois, na restauração da sessão ao entrar nas páginas de produção.
-- Hoje há 2 instâncias separadas de `ProducaoAuthProvider` em `src/App.tsx`: uma para `/producao` e outra para `/producao/*`. Ao sair da home e entrar em `/producao/solda` (ou outra página), o contexto é desmontado e montado de novo.
-- Em `src/hooks/useProducaoAuth.tsx`, o fluxo ainda é frágil:
-  - chama `getSession()` antes de registrar o `onAuthStateChange`
-  - em qualquer falha ao buscar `admin_users`, faz `supabase.auth.signOut()`
-- Isso combina com os logs de `refresh_token_not_found` / `SIGNED_OUT`: em alguns computadores a sessão cai durante essa remontagem e o usuário volta para o login.
+Diagnóstico confirmado
+- O usuário 4063 está ativo em `admin_users`, com `user_id = 340540a5-a5ff-4485-aaaf-27a985c8d934`.
+- Ele já tem `producao_hub`, então o problema não é permissão para entrar em `/producao`.
+- A Edge Function `manage-producao-auth` está sendo chamada para o CPF 4063.
+- Os logs repetidos de `Auth state changed: SIGNED_IN ...` vêm de `src/hooks/useAuth.tsx` (auth global), não do auth específico da produção.
+- Como o `AuthProvider` global envolve todo o app em `src/App.tsx`, ele compartilha a mesma sessão do Supabase com `/producao` e está interferindo no login da produção.
+- Além disso, a função `manage-producao-auth` ainda faz `updateUserById` no usuário existente a cada login, o que aumenta a instabilidade da sessão.
 
-Implementação
-1. `src/App.tsx`
-- Unificar todas as rotas de produção sob um único `ProducaoAuthProvider`.
-- Reestruturar `/producao` como rota pai com filhos (`index`, `solda`, `perfiladeira`, etc.), evitando recriar o contexto a cada troca de página.
+O que vou ajustar
+
+1. `src/hooks/useAuth.tsx`
+- Remover o callback `async` do `onAuthStateChange`.
+- Ignorar `SIGNED_IN` repetido para o mesmo usuário.
+- Ignorar `TOKEN_REFRESHED` sem refazer carga desnecessária.
+- Remover o `supabase.auth.signOut()` no erro de `getSession()`, para o auth global não derrubar a sessão da produção.
+- Adicionar trava por `currentUserId` para evitar refetchs em cascata de `admin_users`.
 
 2. `src/hooks/useProducaoAuth.tsx`
-- Extrair um helper único para carregar o registro de `admin_users`.
-- Registrar `onAuthStateChange` antes de `getSession()`.
-- Processar `SIGNED_IN` apenas quando o usuário local ainda não estiver carregado ou quando o `user.id` mudar.
-- Remover o `signOut()` automático em erro transitório de consulta; só limpar sessão quando realmente não existir sessão válida.
-- Adicionar um estado explícito de “auth inicializada” para as rotas protegidas esperarem a recuperação completa.
+- Separar “sessão existe” de “perfil carregado”.
+- Se a sessão existir, não limpar o usuário para `null` por falha transitória ao buscar `admin_users`.
+- Só mandar para login quando houver ausência real de sessão (`SIGNED_OUT` / sem sessão confirmada).
+- Manter loading/retry curto durante hidratação, em vez de cair direto no redirect.
 
-3. `src/components/ProtectedProducaoRoute.tsx`
-- Passar a usar esse estado de inicialização para não redirecionar cedo demais.
-- Só verificar `routeKey` depois que a sessão estiver estável.
+3. `src/pages/producao/ProducaoLogin.tsx`
+- Sanitizar o `from` para nunca navegar de volta para `/producao/login`.
+- Após `signInWithPassword`, confirmar a sessão antes de navegar.
+- Navegar para `/producao` como fallback seguro.
 
-4. `src/pages/producao/ProducaoLogin.tsx`
-- Após `signInWithPassword`, navegar apenas quando a sessão estiver confirmada.
-- Respeitar a rota de origem (`state.from`) em vez de sempre mandar para `/producao`.
+4. `supabase/functions/manage-producao-auth/index.ts`
+- Parar de resetar a senha do usuário existente em todo login.
+- Atualizar apenas quando realmente necessário (ex.: criar usuário novo ou sincronizar metadados sem trocar senha).
+- Isso reduz revogação de tokens e ajuda a eliminar o loop/429.
 
-5. `src/hooks/useOrdemProducao.ts`
-- Amarrar as subscriptions realtime ao usuário carregado para reduzir reações durante a montagem inicial da página.
-
-Observação importante de permissão
-- O usuário `4063` atualmente não tem acesso a `producao_solda` no `user_route_access`.
-- Então, depois da correção de sessão:
-  - se ele deve acessar Solda, será preciso conceder essa permissão também;
-  - se não deve, o comportamento correto será cair em `/producao/forbidden`, e não voltar para o login.
+5. `src/App.tsx` (se necessário no fechamento)
+- Manter a estrutura atual apenas se os ajustes acima forem suficientes.
+- Se ainda houver interferência, isolar as rotas `/producao` do `AuthProvider` global, após checar os poucos pontos que ainda usam `useAuth` no contexto de produção.
 
 Resultado esperado
-- Os usuários `7087` e `4063` deixam de ser jogados de volta para `/producao/login` ao abrir páginas da produção.
-- O sistema só volta para login quando realmente não houver sessão válida.
-- Falta de permissão passa a resultar em `forbidden`, não em logout aparente.
+- O usuário 4063 consegue autenticar e entrar em `/producao`.
+- O sistema para de retornar automaticamente para `/producao/login`.
+- Falta de permissão passa a resultar em `/producao/forbidden`, não em logout aparente.
+- A frequência de eventos auth e erros 429 cai significativamente.
 
-Detalhes técnicos
-- Arquivos principais:
-  - `src/App.tsx`
-  - `src/hooks/useProducaoAuth.tsx`
-  - `src/components/ProtectedProducaoRoute.tsx`
-  - `src/pages/producao/ProducaoLogin.tsx`
-  - `src/hooks/useOrdemProducao.ts`
-- Ajuste de banco não é obrigatório para o bug principal; apenas pode ser necessário para a permissão do usuário `4063`, dependendo da regra desejada.
+Arquivos-alvo
+- `src/hooks/useAuth.tsx`
+- `src/hooks/useProducaoAuth.tsx`
+- `src/pages/producao/ProducaoLogin.tsx`
+- `supabase/functions/manage-producao-auth/index.ts`
+- `src/App.tsx` (somente se precisar isolar de vez o auth global)
+
+Banco de dados
+- Nenhuma alteração de banco é necessária para este problema.
