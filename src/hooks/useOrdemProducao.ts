@@ -85,10 +85,13 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
   const { data: ordens = [], isLoading } = useQuery({
     queryKey: ['ordens-producao', tipoOrdem, user?.user_id],
     enabled: !!user,
+    retry: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     staleTime: 30_000,
     queryFn: async () => {
+      if (!user?.user_id) return [];
+
       const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
       
       // Buscar todas as ordens ativas (não histórico) - visíveis para todos
