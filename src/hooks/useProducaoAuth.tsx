@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,112 +13,100 @@ interface ProducaoUser {
 interface ProducaoAuthContextType {
   user: ProducaoUser | null;
   loading: boolean;
+  initialized: boolean;
   signOut: () => Promise<void>;
 }
 
 export const ProducaoAuthContext = createContext<ProducaoAuthContextType | undefined>(undefined);
 
+async function fetchAdminUser(userId: string): Promise<ProducaoUser | null> {
+  const { data: adminUser, error } = await supabase
+    .from("admin_users")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("ativo", true)
+    .maybeSingle();
+
+  if (error || !adminUser) return null;
+
+  return {
+    user_id: adminUser.user_id,
+    admin_user_id: adminUser.id,
+    nome: adminUser.nome,
+    role: adminUser.role,
+    foto_perfil_url: adminUser.foto_perfil_url,
+  };
+}
+
 export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<ProducaoUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
   const navigate = useNavigate();
+  const mountedRef = useRef(true);
+  const currentUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    let mounted = true;
+    mountedRef.current = true;
 
-    // Verificar sessão Supabase Auth
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!mounted) return;
-        
-        if (session?.user) {
-          // Buscar dados complementares do usuário
-          const { data: adminUser, error } = await supabase
-            .from("admin_users")
-            .select("*")
-            .eq("user_id", session.user.id)
-            .eq("ativo", true)
-            .maybeSingle();
-
-          if (!mounted) return;
-
-          if (adminUser && !error) {
-            setUser({
-              user_id: adminUser.user_id,
-              admin_user_id: adminUser.id,
-              nome: adminUser.nome,
-              role: adminUser.role,
-              foto_perfil_url: adminUser.foto_perfil_url,
-            });
-          } else {
-            // Se não encontrou admin_user ou teve erro, fazer logout
-            await supabase.auth.signOut();
-            setUser(null);
-          }
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Erro ao verificar sessão:", error);
-        if (mounted) {
-          setUser(null);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    checkSession();
-
-    // Monitorar mudanças na autenticação
+    // 1. Register listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (!mounted) return;
+        if (!mountedRef.current) return;
 
-        // Apenas atualizações síncronas aqui
+        if (event === 'SIGNED_OUT') {
+          currentUserIdRef.current = null;
+          setUser(null);
+          setInitialized(true);
+          setLoading(false);
+          return;
+        }
+
+        if (event === 'TOKEN_REFRESHED') {
+          // Session still valid, no action needed
+          return;
+        }
+
         if (event === 'SIGNED_IN' && session?.user) {
-          // Ignorar se o user já está carregado (é apenas token refresh, não login real)
-          setUser(prev => {
-            if (prev) return prev; // já logado, não re-buscar
-            // Login real: buscar dados do usuário
-            setTimeout(() => {
-              if (!mounted) return;
-              supabase
-                .from("admin_users")
-                .select("*")
-                .eq("user_id", session.user.id)
-                .eq("ativo", true)
-                .maybeSingle()
-                .then(({ data: adminUser, error }) => {
-                  if (mounted && adminUser && !error) {
-                    setUser({
-                      user_id: adminUser.user_id,
-                      admin_user_id: adminUser.id,
-                      nome: adminUser.nome,
-                      role: adminUser.role,
-                      foto_perfil_url: adminUser.foto_perfil_url,
-                    });
-                  }
-                });
-            }, 0);
-            return prev;
-          });
-        } else if (event === 'TOKEN_REFRESHED') {
-          // Token refreshed - não precisa fazer nada, sessão continua válida
-        } else if (event === 'SIGNED_OUT') {
-          if (mounted) {
-            setUser(null);
-          }
+          // Only process if user changed or not yet loaded
+          if (currentUserIdRef.current === session.user.id) return;
+
+          currentUserIdRef.current = session.user.id;
+          // Use setTimeout to avoid blocking the auth state change callback
+          setTimeout(async () => {
+            if (!mountedRef.current) return;
+            const adminUser = await fetchAdminUser(session.user.id);
+            if (!mountedRef.current) return;
+            if (adminUser) {
+              setUser(adminUser);
+            }
+            // Don't sign out on failure - could be transient
+            setInitialized(true);
+            setLoading(false);
+          }, 0);
         }
       }
     );
 
+    // 2. THEN check existing session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mountedRef.current) return;
+
+      if (session?.user) {
+        currentUserIdRef.current = session.user.id;
+        const adminUser = await fetchAdminUser(session.user.id);
+        if (!mountedRef.current) return;
+        if (adminUser) {
+          setUser(adminUser);
+        }
+        // Don't sign out on transient failure
+      }
+      setInitialized(true);
+      setLoading(false);
+    });
+
     return () => {
-      mounted = false;
+      mountedRef.current = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -126,18 +114,16 @@ export function ProducaoAuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      setUser(null);
-      navigate("/producao/login", { replace: true });
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
-      // Mesmo com erro, limpar estado local e redirecionar
-      setUser(null);
-      navigate("/producao/login", { replace: true });
     }
+    currentUserIdRef.current = null;
+    setUser(null);
+    navigate("/producao/login", { replace: true });
   };
 
   return (
-    <ProducaoAuthContext.Provider value={{ user, loading, signOut }}>
+    <ProducaoAuthContext.Provider value={{ user, loading, initialized, signOut }}>
       {children}
     </ProducaoAuthContext.Provider>
   );

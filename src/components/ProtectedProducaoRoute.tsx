@@ -9,7 +9,7 @@ interface ProtectedProducaoRouteProps {
 }
 
 export function ProtectedProducaoRoute({ children, routeKey }: ProtectedProducaoRouteProps) {
-  const { user, loading } = useProducaoAuth();
+  const { user, loading, initialized } = useProducaoAuth();
   const location = useLocation();
 
   // Verificação de acesso à rota específica
@@ -30,11 +30,11 @@ export function ProtectedProducaoRoute({ children, routeKey }: ProtectedProducao
       return data || false;
     },
     enabled: !!user?.user_id && !!routeKey,
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Loading state
-  if (loading || (routeKey && accessLoading)) {
+  // Wait for auth to fully initialize before making any redirect decisions
+  if (!initialized || loading || (routeKey && user && accessLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
