@@ -293,7 +293,7 @@ export function PedidosDraggableList({
         {viewMode === 'list' && <PedidosTotalRow pedidos={pedidosParaTotais || pedidos} etapa={etapa} />}
       </SortableContext>
 
-      {createPortal(
+      {overlayContainerRef.current && createPortal(
         <DragOverlay
           modifiers={[restrictToWindowEdges]}
           dropAnimation={{
@@ -313,7 +313,7 @@ export function PedidosDraggableList({
             </div>
           ) : null}
         </DragOverlay>,
-        document.body
+        overlayContainerRef.current
       )}
     </DndContext>
   );
