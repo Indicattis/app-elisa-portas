@@ -241,8 +241,10 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     },
   });
 
-  // Subscribe to realtime updates for linhas_ordens
+  // Subscribe to realtime updates for linhas_ordens (only when user is loaded)
   useEffect(() => {
+    if (!user) return;
+
     const channel = supabase
       .channel('linhas-ordens-changes')
       .on(
@@ -254,7 +256,6 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
           filter: `tipo_ordem=eq.${tipoOrdem}`
         },
         () => {
-          // Invalidate queries on any update to refresh data
           queryClient.invalidateQueries({ queryKey: ['ordens-producao', tipoOrdem] });
         }
       )
@@ -263,10 +264,12 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [tipoOrdem, queryClient]);
+  }, [tipoOrdem, queryClient, user]);
 
   // Subscribe to realtime updates for the order table itself (priority changes)
   useEffect(() => {
+    if (!user) return;
+
     const tabelaOrdem = TABELA_MAP[tipoOrdem];
     
     const channel = supabase
@@ -279,7 +282,6 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
           table: tabelaOrdem,
         },
         (payload) => {
-          // Verificar se a prioridade mudou
           if (payload.old && payload.new && (payload.old as any).prioridade !== (payload.new as any).prioridade) {
             queryClient.invalidateQueries({ queryKey: ['ordens-producao', tipoOrdem] });
           }
@@ -290,7 +292,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [tipoOrdem, queryClient]);
+  }, [tipoOrdem, queryClient, user]);
 
   // Capturar ordem (atribuir responsável)
   const capturarOrdem = useMutation({
