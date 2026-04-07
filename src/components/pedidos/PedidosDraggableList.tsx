@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
   DndContext,
@@ -151,6 +151,20 @@ export function PedidosDraggableList({
   hideCorrecaoButton = false,
 }: PedidosDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const overlayContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const div = document.createElement('div');
+    div.id = 'dnd-overlay-container';
+    document.body.appendChild(div);
+    overlayContainerRef.current = div;
+    return () => {
+      if (div.parentNode) {
+        div.parentNode.removeChild(div);
+      }
+      overlayContainerRef.current = null;
+    };
+  }, []);
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -280,7 +294,7 @@ export function PedidosDraggableList({
         {viewMode === 'list' && <PedidosTotalRow pedidos={pedidosParaTotais || pedidos} etapa={etapa} />}
       </SortableContext>
 
-      {createPortal(
+      {overlayContainerRef.current && createPortal(
         <DragOverlay
           modifiers={[restrictToWindowEdges]}
           dropAnimation={{
@@ -300,7 +314,7 @@ export function PedidosDraggableList({
             </div>
           ) : null}
         </DragOverlay>,
-        document.body
+        overlayContainerRef.current
       )}
     </DndContext>
   );
