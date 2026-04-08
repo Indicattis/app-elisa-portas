@@ -335,7 +335,7 @@ import ContasReceberMinimalista from "./pages/administrativo/ContasReceberMinima
 import ContasPagarMinimalista from "./pages/administrativo/ContasPagarMinimalista";
 import DocumentosMinimalista from "./pages/administrativo/DocumentosMinimalista";
 import MultasMinimalista from "./pages/administrativo/MultasMinimalista";
-import ProducaoAdminReadOnly from "./pages/administrativo/ProducaoAdminReadOnly";
+
 
 // Hub Fiscal Minimalista
 import FiscalHub from "./pages/administrativo/FiscalHub";
@@ -612,7 +612,7 @@ const App = () => (
                 <Route path="/administrativo/documentos" element={<ProtectedRoute routeKey="administrativo_hub"><DocumentosMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/documentos/novo" element={<ProtectedRoute routeKey="administrativo_hub"><DocumentoNovo /></ProtectedRoute>} />
                 <Route path="/administrativo/multas" element={<ProtectedRoute routeKey="administrativo_hub"><MultasMinimalista /></ProtectedRoute>} />
-                <Route path="/administrativo/producao" element={<ProtectedRoute routeKey="administrativo_hub"><ProducaoAdminReadOnly /></ProtectedRoute>} />
+                
 
                 {/* Hub RH/DP Minimalista */}
                 <Route path="/administrativo/rh-dp" element={<ProtectedRoute routeKey="administrativo_hub"><RhDpHub /></ProtectedRoute>} />
