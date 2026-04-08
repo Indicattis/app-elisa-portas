@@ -7,7 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCanEditVenda } from "@/hooks/useCanEditVenda";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Calendar as CalendarIcon, User, MapPin, CreditCard, Truck, MessageSquare, Store, Percent, Save, Loader2, Paperclip, FileText, ExternalLink, CheckCircle } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, User, MapPin, CreditCard, Truck, MessageSquare, Store, Percent, Save, Loader2, Paperclip, FileText, ExternalLink, CheckCircle, Pencil, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,18 @@ export default function MinhasVendasEditar() {
   const [observacoes, setObservacoes] = useState("");
   const [isSavingObservacoes, setIsSavingObservacoes] = useState(false);
   const [comprovanteModalOpen, setComprovanteModalOpen] = useState(false);
+  const [editandoCliente, setEditandoCliente] = useState(false);
+  const [clienteEdit, setClienteEdit] = useState({
+    cliente_nome: "",
+    cliente_telefone: "",
+    cliente_email: "",
+    cpf_cliente: "",
+    estado: "",
+    cidade: "",
+    bairro: "",
+    cep: "",
+  });
+  const [isSavingCliente, setIsSavingCliente] = useState(false);
   const { produtos, isLoading: isLoadingProdutos, addProduto, deleteProduto, updateProduto } = useProdutosVenda(id);
   const { canais } = useCanaisAquisicao();
 
@@ -376,6 +389,60 @@ export default function MinhasVendasEditar() {
     }
   };
 
+  const handleIniciarEdicaoCliente = () => {
+    if (!venda) return;
+    setClienteEdit({
+      cliente_nome: venda.cliente_nome || "",
+      cliente_telefone: venda.cliente_telefone || "",
+      cliente_email: venda.cliente_email || "",
+      cpf_cliente: venda.cpf_cliente || "",
+      estado: venda.estado || "",
+      cidade: venda.cidade || "",
+      bairro: venda.bairro || "",
+      cep: venda.cep || "",
+    });
+    setEditandoCliente(true);
+  };
+
+  const handleSalvarCliente = async () => {
+    if (!id) return;
+    setIsSavingCliente(true);
+    try {
+      const { error } = await supabase
+        .from('vendas')
+        .update({
+          cliente_nome: clienteEdit.cliente_nome,
+          cliente_telefone: clienteEdit.cliente_telefone,
+          cliente_email: clienteEdit.cliente_email || null,
+          cpf_cliente: clienteEdit.cpf_cliente || null,
+          estado: clienteEdit.estado || null,
+          cidade: clienteEdit.cidade || null,
+          bairro: clienteEdit.bairro || null,
+          cep: clienteEdit.cep || null,
+        })
+        .eq('id', id);
+      if (error) throw error;
+      setVenda(prev => prev ? {
+        ...prev,
+        cliente_nome: clienteEdit.cliente_nome,
+        cliente_telefone: clienteEdit.cliente_telefone,
+        cliente_email: clienteEdit.cliente_email || null,
+        cpf_cliente: clienteEdit.cpf_cliente || null,
+        estado: clienteEdit.estado || null,
+        cidade: clienteEdit.cidade || null,
+        bairro: clienteEdit.bairro || null,
+        cep: clienteEdit.cep || null,
+      } : null);
+      setEditandoCliente(false);
+      toast({ title: "Dados do cliente atualizados" });
+    } catch (error) {
+      console.error('Erro ao salvar dados do cliente:', error);
+      toast({ variant: "destructive", title: "Erro", description: "Não foi possível salvar os dados do cliente" });
+    } finally {
+      setIsSavingCliente(false);
+    }
+  };
+
   const handleSalvar = () => {
     toast({
       title: "Alterações salvas",
@@ -536,10 +603,47 @@ export default function MinhasVendasEditar() {
         {/* Dados da Venda - Somente Visualização */}
         <Card className={cardClass}>
           <CardHeader>
-            <CardTitle className="text-white">Dados da Venda</CardTitle>
-            <CardDescription className="text-blue-300/60">
-              Informações da venda (somente visualização)
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-white">Dados da Venda</CardTitle>
+                <CardDescription className="text-blue-300/60">
+                  {editandoCliente ? "Editando dados do cliente" : "Informações da venda"}
+                </CardDescription>
+              </div>
+              {venda.is_rascunho && !editandoCliente && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleIniciarEdicaoCliente}
+                  className="border-blue-500/30 text-blue-200 hover:bg-blue-500/20"
+                >
+                  <Pencil className="h-4 w-4 mr-1" />
+                  Editar Cliente
+                </Button>
+              )}
+              {editandoCliente && (
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEditandoCliente(false)}
+                    className="border-blue-500/30 text-blue-200 hover:bg-blue-500/20"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Cancelar
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSalvarCliente}
+                    disabled={isSavingCliente}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {isSavingCliente ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+                    Salvar
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -549,13 +653,44 @@ export default function MinhasVendasEditar() {
                   <User className="h-4 w-4" />
                   Cliente
                 </div>
-                <p className="font-medium text-white">{venda.cliente_nome || "-"}</p>
-                <p className="text-sm text-blue-300/60">{venda.cliente_telefone || "-"}</p>
-                {venda.cliente_email && (
-                  <p className="text-sm text-blue-300/60">{venda.cliente_email}</p>
-                )}
-                {venda.cpf_cliente && (
-                  <p className="text-sm text-blue-300/60">CPF: {venda.cpf_cliente}</p>
+                {editandoCliente ? (
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Nome do cliente"
+                      value={clienteEdit.cliente_nome}
+                      onChange={e => setClienteEdit(prev => ({ ...prev, cliente_nome: e.target.value }))}
+                      className="bg-blue-500/10 border-blue-500/20 text-white placeholder:text-blue-300/40"
+                    />
+                    <Input
+                      placeholder="Telefone"
+                      value={clienteEdit.cliente_telefone}
+                      onChange={e => setClienteEdit(prev => ({ ...prev, cliente_telefone: e.target.value }))}
+                      className="bg-blue-500/10 border-blue-500/20 text-white placeholder:text-blue-300/40"
+                    />
+                    <Input
+                      placeholder="Email"
+                      value={clienteEdit.cliente_email}
+                      onChange={e => setClienteEdit(prev => ({ ...prev, cliente_email: e.target.value }))}
+                      className="bg-blue-500/10 border-blue-500/20 text-white placeholder:text-blue-300/40"
+                    />
+                    <Input
+                      placeholder="CPF"
+                      value={clienteEdit.cpf_cliente}
+                      onChange={e => setClienteEdit(prev => ({ ...prev, cpf_cliente: e.target.value }))}
+                      className="bg-blue-500/10 border-blue-500/20 text-white placeholder:text-blue-300/40"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <p className="font-medium text-white">{venda.cliente_nome || "-"}</p>
+                    <p className="text-sm text-blue-300/60">{venda.cliente_telefone || "-"}</p>
+                    {venda.cliente_email && (
+                      <p className="text-sm text-blue-300/60">{venda.cliente_email}</p>
+                    )}
+                    {venda.cpf_cliente && (
+                      <p className="text-sm text-blue-300/60">CPF: {venda.cpf_cliente}</p>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -651,7 +786,6 @@ export default function MinhasVendasEditar() {
                     </PopoverContent>
                   </Popover>
                 </div>
-
               </div>
 
               {/* Endereço */}
@@ -660,16 +794,47 @@ export default function MinhasVendasEditar() {
                   <MapPin className="h-4 w-4" />
                   Endereço
                 </div>
-                <p className="font-medium text-white">
-                  {venda.cidade && venda.estado 
-                    ? `${venda.cidade} - ${venda.estado}` 
-                    : venda.cidade || venda.estado || "-"}
-                </p>
-                {venda.bairro && (
-                  <p className="text-sm text-blue-300/60">{venda.bairro}</p>
-                )}
-                {venda.cep && (
-                  <p className="text-sm text-blue-300/60">CEP: {venda.cep}</p>
+                {editandoCliente ? (
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Estado"
+                      value={clienteEdit.estado}
+                      onChange={e => setClienteEdit(prev => ({ ...prev, estado: e.target.value }))}
+                      className="bg-blue-500/10 border-blue-500/20 text-white placeholder:text-blue-300/40"
+                    />
+                    <Input
+                      placeholder="Cidade"
+                      value={clienteEdit.cidade}
+                      onChange={e => setClienteEdit(prev => ({ ...prev, cidade: e.target.value }))}
+                      className="bg-blue-500/10 border-blue-500/20 text-white placeholder:text-blue-300/40"
+                    />
+                    <Input
+                      placeholder="Bairro"
+                      value={clienteEdit.bairro}
+                      onChange={e => setClienteEdit(prev => ({ ...prev, bairro: e.target.value }))}
+                      className="bg-blue-500/10 border-blue-500/20 text-white placeholder:text-blue-300/40"
+                    />
+                    <Input
+                      placeholder="CEP"
+                      value={clienteEdit.cep}
+                      onChange={e => setClienteEdit(prev => ({ ...prev, cep: e.target.value }))}
+                      className="bg-blue-500/10 border-blue-500/20 text-white placeholder:text-blue-300/40"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <p className="font-medium text-white">
+                      {venda.cidade && venda.estado 
+                        ? `${venda.cidade} - ${venda.estado}` 
+                        : venda.cidade || venda.estado || "-"}
+                    </p>
+                    {venda.bairro && (
+                      <p className="text-sm text-blue-300/60">{venda.bairro}</p>
+                    )}
+                    {venda.cep && (
+                      <p className="text-sm text-blue-300/60">CEP: {venda.cep}</p>
+                    )}
+                  </>
                 )}
               </div>
 
