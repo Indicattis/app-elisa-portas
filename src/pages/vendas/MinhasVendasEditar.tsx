@@ -44,6 +44,18 @@ export default function MinhasVendasEditar() {
   const [observacoes, setObservacoes] = useState("");
   const [isSavingObservacoes, setIsSavingObservacoes] = useState(false);
   const [comprovanteModalOpen, setComprovanteModalOpen] = useState(false);
+  const [editandoCliente, setEditandoCliente] = useState(false);
+  const [clienteEdit, setClienteEdit] = useState({
+    cliente_nome: "",
+    cliente_telefone: "",
+    cliente_email: "",
+    cpf_cliente: "",
+    estado: "",
+    cidade: "",
+    bairro: "",
+    cep: "",
+  });
+  const [isSavingCliente, setIsSavingCliente] = useState(false);
   const { produtos, isLoading: isLoadingProdutos, addProduto, deleteProduto, updateProduto } = useProdutosVenda(id);
   const { canais } = useCanaisAquisicao();
 
