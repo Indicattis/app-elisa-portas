@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Receipt, Coins, Wallet, HandCoins, BadgeDollarSign, Lock, ArrowLeft } from "lucide-react";
+import { Receipt, Coins, Wallet, BadgeDollarSign, Lock, ArrowLeft } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
