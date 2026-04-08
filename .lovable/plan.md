@@ -1,30 +1,29 @@
 
-
-## Plano: Corrigir permissão para marcar linhas em /fabrica/ordens-pedidos
+## Plano: Exibir descrição abaixo do nome nos cards NEO (gestão de fábrica)
 
 ### Diagnóstico
-As políticas RLS da tabela `linhas_ordens` para UPDATE permitem apenas:
-1. **O responsável da ordem** (ou ordens sem responsável) — via `pode_marcar_linhas_ordem`
-2. **Operadores de fábrica** (setor = 'fabrica') — via `is_factory_operator`
+- **NeoInstalacaoCardGestao** (list view): já exibe `descricao` abaixo do nome do cliente (linhas 130-133) — nenhuma alteração necessária.
+- **NeoCorrecaoCardGestao** (list view): a descrição aparece apenas no tooltip, não visualmente abaixo do nome.
 
-Usuários com papel `administrador` ou `diretor` têm `setor = 'administrativo'`, então nenhuma das duas políticas os autoriza. O checkbox marca visualmente (optimistic update) mas reverte quando o update falha no banco.
+### Alteração
 
-### Solução
-Criar uma nova política RLS de UPDATE que permita administradores e usuários com `bypass_permissions` atualizarem linhas de ordens.
+**`src/components/pedidos/NeoCorrecaoCardGestao.tsx`**
+- Na Col 4 (nome do cliente, linhas 108-122), substituir o `<h3>` simples por um wrapper `<div>` com o nome + descrição abaixo, idêntico ao padrão já usado no `NeoInstalacaoCardGestao`:
 
-### Alteração (migração SQL)
+```tsx
+// De:
+<h3 className="font-semibold text-sm truncate">...</h3>
 
-```sql
-CREATE POLICY "Admins can update linhas_ordens"
-ON public.linhas_ordens
-FOR UPDATE
-TO authenticated
-USING (is_admin())
-WITH CHECK (is_admin());
+// Para:
+<div className="min-w-0">
+  <h3 className="font-semibold text-sm truncate">...</h3>
+  {neoCorrecao.descricao && (
+    <p className="text-[9px] text-muted-foreground truncate leading-tight -mt-0.5">
+      {neoCorrecao.descricao}
+    </p>
+  )}
+</div>
 ```
 
-Isso permite que administradores marquem/desmarquem linhas na interface de gestão de fábrica, sem alterar o comportamento para operadores de produção.
-
 ### Arquivo alterado
-- Nova migração SQL (1 arquivo)
-
+- `src/components/pedidos/NeoCorrecaoCardGestao.tsx` (1 bloco, ~5 linhas)
