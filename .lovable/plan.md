@@ -1,29 +1,23 @@
 
-## Plano: Exibir descrição abaixo do nome nos cards NEO (gestão de fábrica)
+
+## Plano: Corrigir botão "Finalizar Direto" na gestão de fábrica
 
 ### Diagnóstico
-- **NeoInstalacaoCardGestao** (list view): já exibe `descricao` abaixo do nome do cliente (linhas 130-133) — nenhuma alteração necessária.
-- **NeoCorrecaoCardGestao** (list view): a descrição aparece apenas no tooltip, não visualmente abaixo do nome.
+Duas causas combinadas:
 
-### Alteração
+1. **Mutation sem tratamento de erro nos passos 1 e 2**: As chamadas de `update` e `upsert` em `pedidos_etapas` não verificam `error` — falhas são engolidas silenciosamente.
 
-**`src/components/pedidos/NeoCorrecaoCardGestao.tsx`**
-- Na Col 4 (nome do cliente, linhas 108-122), substituir o `<h3>` simples por um wrapper `<div>` com o nome + descrição abaixo, idêntico ao padrão já usado no `NeoInstalacaoCardGestao`:
+2. **Crash `removeChild`**: Após a mutation, `queryClient.invalidateQueries` remove o pedido da lista, desmontando o `PedidoCard` enquanto o `AlertDialog` ainda está aberto. O portal do Radix tenta limpar nós DOM que já foram removidos → `removeChild` error.
 
-```tsx
-// De:
-<h3 className="font-semibold text-sm truncate">...</h3>
+### Alterações
 
-// Para:
-<div className="min-w-0">
-  <h3 className="font-semibold text-sm truncate">...</h3>
-  {neoCorrecao.descricao && (
-    <p className="text-[9px] text-muted-foreground truncate leading-tight -mt-0.5">
-      {neoCorrecao.descricao}
-    </p>
-  )}
-</div>
-```
+**1. `src/hooks/usePedidosEtapas.ts`** (~5 linhas)
+- Adicionar verificação de `error` nos passos 1 (fechar etapa atual) e 2 (upsert finalizado), lançando exceção se houver falha
 
-### Arquivo alterado
-- `src/components/pedidos/NeoCorrecaoCardGestao.tsx` (1 bloco, ~5 linhas)
+**2. `src/components/pedidos/PedidoCard.tsx`** (~3 linhas)
+- No `onClick` do AlertDialogAction de "Finalizar Direto", fechar o dialog **antes** de chamar `onFinalizarDireto`, evitando que a desmontagem do card conflite com o portal do AlertDialog
+
+### Resultado
+- Erros de banco são capturados e exibidos ao usuário via toast
+- O dialog fecha antes da mutation, eliminando o crash `removeChild`
+
