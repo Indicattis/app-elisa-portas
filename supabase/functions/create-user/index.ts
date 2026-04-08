@@ -54,7 +54,7 @@ serve(async (req) => {
     // Check if user is admin (using admin client to bypass RLS)
     const { data: adminUser, error: adminCheckError } = await supabaseAdmin
       .from('admin_users')
-      .select('role, ativo')
+      .select('role, ativo, bypass_permissions')
       .eq('user_id', user.id)
       .single();
 
@@ -82,8 +82,10 @@ serve(async (req) => {
       );
     }
 
-    const allowedRoles = ['administrador', 'analista_rh'];
-    if (!allowedRoles.includes(adminUser.role)) {
+    // Check bypass_permissions or allowed roles
+    const allowedRoles = ['administrador', 'analista_rh', 'diretor', 'gerente_marketing', 'gerente_geral'];
+    const hasPermission = adminUser.bypass_permissions === true || allowedRoles.includes(adminUser.role);
+    if (!hasPermission) {
       console.error('Insufficient permissions - role:', adminUser.role);
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions - admin role required' }),
