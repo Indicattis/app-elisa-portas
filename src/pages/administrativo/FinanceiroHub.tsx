@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Receipt, Coins, Wallet, HandCoins, BadgeDollarSign, Lock, ArrowLeft } from "lucide-react";
+import { Receipt, Coins, Wallet, BadgeDollarSign, Lock, ArrowLeft } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -10,7 +10,7 @@ const menuItems = [
   { label: "Faturamento", icon: Receipt, path: "/administrativo/financeiro/faturamento", ativo: true },
   { label: "Custos", icon: Coins, path: "/administrativo/financeiro/custos", ativo: true },
   { label: "Gestão de Caixa", icon: Wallet, path: "/administrativo/financeiro/caixa/gestao", ativo: true },
-  { label: "Cobranças", icon: HandCoins, path: "/administrativo/financeiro/cobrancas", ativo: true },
+  
   { label: "Contas a Pagar", icon: BadgeDollarSign, path: "/administrativo/financeiro/caixa/contas-a-pagar", ativo: true },
   { label: "Contas a Receber", icon: Receipt, path: "/administrativo/financeiro/caixa/contas-a-receber", ativo: true },
 ];
