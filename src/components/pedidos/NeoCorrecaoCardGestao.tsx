@@ -107,11 +107,18 @@ export function NeoCorrecaoCardGestao({
               {/* Col 4: Nome do cliente */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <h3 className="font-semibold text-sm truncate">
-                    {neoCorrecao.nome_cliente && neoCorrecao.nome_cliente.length > 20 
-                      ? `${neoCorrecao.nome_cliente.substring(0, 20)}...` 
-                      : neoCorrecao.nome_cliente}
-                  </h3>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-sm truncate">
+                      {neoCorrecao.nome_cliente && neoCorrecao.nome_cliente.length > 20 
+                        ? `${neoCorrecao.nome_cliente.substring(0, 20)}...` 
+                        : neoCorrecao.nome_cliente}
+                    </h3>
+                    {neoCorrecao.descricao && (
+                      <p className="text-[9px] text-muted-foreground truncate leading-tight -mt-0.5">
+                        {neoCorrecao.descricao}
+                      </p>
+                    )}
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{neoCorrecao.nome_cliente}</p>
