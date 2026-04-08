@@ -1,40 +1,29 @@
 
 
-## Plano: Permitir edição de dados do cliente no rascunho de venda
+## Plano: Mover conteúdo de /administrativo/producao para /administrativo/pedidos
 
-### Contexto
-Atualmente, a seção "Dados da Venda" em `/vendas/minhas-vendas/editar/:id` exibe os dados do cliente (nome, telefone, email, CPF) e endereço (cidade, estado, bairro, CEP) como somente leitura. O usuário precisa editá-los quando a venda é rascunho (`is_rascunho = true`).
+### O que será feito
+Mover a seção "Itens Pendentes por Etapa" (collapsibles com agrupamento por etapa/item) de `ProducaoAdminReadOnly` para baixo das tabs em `PedidosAdminMinimalista`, e remover a rota `/administrativo/producao`.
 
 ### Alterações
 
-**`src/pages/vendas/MinhasVendasEditar.tsx`**
+**1. `src/pages/administrativo/PedidosAdminMinimalista.tsx`**
+- Importar `useItensNaoConcluidosPorEtapa`, `Collapsible`, `Table`, e ícones necessários
+- Adicionar a lógica de agrupamento `itensAgrupadosPorEtapa` (copiada de `ProducaoAdminReadOnly`)
+- Renderizar a seção "Itens Pendentes por Etapa" abaixo do bloco `</Tabs>`, com os collapsibles por etapa contendo tabela de itens agrupados
 
-1. Adicionar estados para controlar o modo de edição dos dados do cliente (ex: `editandoCliente`)
-2. Quando `venda.is_rascunho`, exibir um botão "Editar" ao lado do título "Cliente" e "Endereço"
-3. Ao clicar, trocar os `<p>` por inputs editáveis para:
-   - **Cliente**: nome, telefone, email, CPF
-   - **Endereço**: estado, cidade, bairro, CEP
-4. Adicionar botão "Salvar" que faz `supabase.from('vendas').update(...)` com os campos editados e atualiza o estado local `venda`
-5. Condicionar a edição apenas quando `venda.is_rascunho === true`
+**2. `src/App.tsx`**
+- Remover o import de `ProducaoAdminReadOnly`
+- Remover a `<Route>` de `/administrativo/producao`
 
-### Campos editáveis
-| Campo | Coluna na tabela `vendas` |
-|-------|--------------------------|
-| Nome | `cliente_nome` |
-| Telefone | `cliente_telefone` |
-| Email | `cliente_email` |
-| CPF | `cpf_cliente` |
-| Estado | `estado` |
-| Cidade | `cidade` |
-| Bairro | `bairro` |
-| CEP | `cep` |
+**3. `src/pages/administrativo/AdministrativoHub.tsx`**
+- Remover o item "Produção" do array `menuItems`
 
-### UX
-- Inline editing: ao clicar no ícone de edição, os textos se tornam inputs com estilo consistente (bg-blue-500/10, border-blue-500/20)
-- Botão "Salvar alterações" aparece quando há mudanças
-- Ao salvar, os inputs voltam a ser texto estático
-- Se não for rascunho, mantém o comportamento atual (somente leitura)
+**4. Excluir `src/pages/administrativo/ProducaoAdminReadOnly.tsx`**
 
-### Arquivo alterado
-- `src/pages/vendas/MinhasVendasEditar.tsx`
+### Arquivos alterados
+- `src/pages/administrativo/PedidosAdminMinimalista.tsx` (adicionar seção)
+- `src/App.tsx` (remover rota)
+- `src/pages/administrativo/AdministrativoHub.tsx` (remover menu item)
+- `src/pages/administrativo/ProducaoAdminReadOnly.tsx` (excluir)
 
