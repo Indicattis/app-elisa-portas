@@ -2527,10 +2527,10 @@ className="flex h-[20px] w-full rounded-[3px]"
               onClick={async (e) => {
                 e.preventDefault();
                 if (!onFinalizarDireto) return;
+                setShowFinalizarDireto(false);
                 setIsFinalizandoDireto(true);
                 try {
                   await onFinalizarDireto(pedido.id);
-                  setShowFinalizarDireto(false);
                 } finally {
                   setIsFinalizandoDireto(false);
                 }

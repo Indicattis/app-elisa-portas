@@ -1666,14 +1666,15 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       const now = new Date().toISOString();
 
       // 1. Fechar etapa atual (setar data_saida)
-      await supabase
+      const { error: errorClose } = await supabase
         .from('pedidos_etapas')
         .update({ data_saida: now, updated_at: now })
         .eq('pedido_id', pedidoId)
         .is('data_saida', null);
+      if (errorClose) throw errorClose;
 
       // 2. Upsert etapa finalizado
-      await supabase
+      const { error: errorUpsert } = await supabase
         .from('pedidos_etapas')
         .upsert({
           pedido_id: pedidoId,
@@ -1684,6 +1685,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           created_at: now,
           updated_at: now,
         }, { onConflict: 'pedido_id,etapa' });
+      if (errorUpsert) throw errorUpsert;
 
       // 3. Atualizar etapa_atual no pedidos_producao
       const { error } = await supabase
