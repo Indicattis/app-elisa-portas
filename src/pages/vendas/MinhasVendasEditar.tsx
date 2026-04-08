@@ -389,6 +389,60 @@ export default function MinhasVendasEditar() {
     }
   };
 
+  const handleIniciarEdicaoCliente = () => {
+    if (!venda) return;
+    setClienteEdit({
+      cliente_nome: venda.cliente_nome || "",
+      cliente_telefone: venda.cliente_telefone || "",
+      cliente_email: venda.cliente_email || "",
+      cpf_cliente: venda.cpf_cliente || "",
+      estado: venda.estado || "",
+      cidade: venda.cidade || "",
+      bairro: venda.bairro || "",
+      cep: venda.cep || "",
+    });
+    setEditandoCliente(true);
+  };
+
+  const handleSalvarCliente = async () => {
+    if (!id) return;
+    setIsSavingCliente(true);
+    try {
+      const { error } = await supabase
+        .from('vendas')
+        .update({
+          cliente_nome: clienteEdit.cliente_nome,
+          cliente_telefone: clienteEdit.cliente_telefone,
+          cliente_email: clienteEdit.cliente_email || null,
+          cpf_cliente: clienteEdit.cpf_cliente || null,
+          estado: clienteEdit.estado || null,
+          cidade: clienteEdit.cidade || null,
+          bairro: clienteEdit.bairro || null,
+          cep: clienteEdit.cep || null,
+        })
+        .eq('id', id);
+      if (error) throw error;
+      setVenda(prev => prev ? {
+        ...prev,
+        cliente_nome: clienteEdit.cliente_nome,
+        cliente_telefone: clienteEdit.cliente_telefone,
+        cliente_email: clienteEdit.cliente_email || null,
+        cpf_cliente: clienteEdit.cpf_cliente || null,
+        estado: clienteEdit.estado || null,
+        cidade: clienteEdit.cidade || null,
+        bairro: clienteEdit.bairro || null,
+        cep: clienteEdit.cep || null,
+      } : null);
+      setEditandoCliente(false);
+      toast({ title: "Dados do cliente atualizados" });
+    } catch (error) {
+      console.error('Erro ao salvar dados do cliente:', error);
+      toast({ variant: "destructive", title: "Erro", description: "Não foi possível salvar os dados do cliente" });
+    } finally {
+      setIsSavingCliente(false);
+    }
+  };
+
   const handleSalvar = () => {
     toast({
       title: "Alterações salvas",
