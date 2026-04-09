@@ -125,6 +125,7 @@ export default function GastosPage() {
       data,
       responsavel_id: responsavelId,
       banco_id: bancoId,
+      status: "pago",
       observacoes: observacoes || null,
     };
     const ok = editingGasto
@@ -148,6 +149,17 @@ export default function GastosPage() {
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const tiposAtivos = tiposCustos.filter((t) => t.ativo);
+  const [filtroTipo, setFiltroTipo] = useState("");
+
+  const gastosFiltrados = useMemo(() => {
+    if (!filtroTipo || filtroTipo === "all") return gastos;
+    return gastos.filter((g) => g.tipo_custo_id === filtroTipo);
+  }, [gastos, filtroTipo]);
+
+  const totalGastos = useMemo(
+    () => gastosFiltrados.reduce((sum, g) => sum + g.valor, 0),
+    [gastosFiltrados]
+  );
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center overflow-hidden relative">
@@ -230,6 +242,42 @@ export default function GastosPage() {
           </div>
         </div>
 
+        {/* Filtro por tipo */}
+        <div
+          className="mb-4"
+          style={{
+            opacity: mounted ? 1 : 0,
+            transform: mounted ? "translateY(0)" : "translateY(20px)",
+            transition: "all 0.5s ease 250ms",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+              <SelectTrigger className="w-[250px] bg-white/5 border-white/20 text-white">
+                <SelectValue placeholder="Todos os tipos" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a1a1a] border-white/20">
+                <SelectItem value="all" className="text-white hover:bg-white/10">Todos os tipos</SelectItem>
+                {tiposAtivos.map((t) => (
+                  <SelectItem key={t.id} value={t.id} className="text-white hover:bg-white/10">
+                    {t.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {filtroTipo && filtroTipo !== "all" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setFiltroTipo("")}
+                className="text-white/60 hover:text-white hover:bg-white/10 text-xs"
+              >
+                Limpar filtro
+              </Button>
+            )}
+          </div>
+        </div>
+
         {/* Table */}
         <div
           className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden"
@@ -243,7 +291,7 @@ export default function GastosPage() {
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-6 h-6 text-white/40 animate-spin" />
             </div>
-          ) : gastos.length === 0 ? (
+          ) : gastosFiltrados.length === 0 ? (
             <div className="text-center py-20 text-white/40 text-sm">
               Nenhum gasto registrado neste mês.
             </div>
@@ -257,12 +305,11 @@ export default function GastosPage() {
                   <TableHead className="text-white/60">Data</TableHead>
                   <TableHead className="text-white/60">Banco</TableHead>
                   <TableHead className="text-white/60">Responsável</TableHead>
-                  <TableHead className="text-white/60">Status</TableHead>
                   <TableHead className="text-white/60 w-20"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {gastos.map((g) => (
+                {gastosFiltrados.map((g) => (
                   <TableRow key={g.id} className="border-white/10 hover:bg-white/5">
                     <TableCell className="text-white text-sm font-medium">
                       {g.tipo_custo_nome}
@@ -281,17 +328,6 @@ export default function GastosPage() {
                     </TableCell>
                     <TableCell className="text-white/70 text-sm">
                       {g.responsavel_nome}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${
-                          g.status === "pago"
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-yellow-500/20 text-yellow-400"
-                        }`}
-                      >
-                        {g.status === "pago" ? "Pago" : "Pendente"}
-                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
@@ -314,6 +350,16 @@ export default function GastosPage() {
                     </TableCell>
                   </TableRow>
                 ))}
+                {/* Total row */}
+                <TableRow className="border-white/10 bg-white/5 hover:bg-white/10">
+                  <TableCell className="text-white text-sm font-bold" colSpan={2}>
+                    Total
+                  </TableCell>
+                  <TableCell className="text-white text-sm font-bold">
+                    {formatCurrency(totalGastos)}
+                  </TableCell>
+                  <TableCell colSpan={4}></TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           )}
