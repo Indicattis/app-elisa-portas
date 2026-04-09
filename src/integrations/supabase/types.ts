@@ -2911,6 +2911,56 @@ export type Database = {
           },
         ]
       }
+      gastos: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          data: string
+          descricao: string | null
+          id: string
+          observacoes: string | null
+          responsavel_id: string
+          status: string
+          tipo_custo_id: string
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          data?: string
+          descricao?: string | null
+          id?: string
+          observacoes?: string | null
+          responsavel_id: string
+          status?: string
+          tipo_custo_id: string
+          updated_at?: string | null
+          valor?: number
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          data?: string
+          descricao?: string | null
+          id?: string
+          observacoes?: string | null
+          responsavel_id?: string
+          status?: string
+          tipo_custo_id?: string
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gastos_tipo_custo_id_fkey"
+            columns: ["tipo_custo_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_custos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instalacoes: {
         Row: {
           carregamento_concluido: boolean | null
