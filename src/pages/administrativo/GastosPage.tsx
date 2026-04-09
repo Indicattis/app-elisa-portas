@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 
 import { useGastos, Gasto } from "@/hooks/useGastos";
