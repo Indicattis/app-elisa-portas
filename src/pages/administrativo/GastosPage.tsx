@@ -241,6 +241,42 @@ export default function GastosPage() {
           </div>
         </div>
 
+        {/* Filtro por tipo */}
+        <div
+          className="mb-4"
+          style={{
+            opacity: mounted ? 1 : 0,
+            transform: mounted ? "translateY(0)" : "translateY(20px)",
+            transition: "all 0.5s ease 250ms",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+              <SelectTrigger className="w-[250px] bg-white/5 border-white/20 text-white">
+                <SelectValue placeholder="Todos os tipos" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a1a1a] border-white/20">
+                <SelectItem value="all" className="text-white hover:bg-white/10">Todos os tipos</SelectItem>
+                {tiposAtivos.map((t) => (
+                  <SelectItem key={t.id} value={t.id} className="text-white hover:bg-white/10">
+                    {t.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {filtroTipo && filtroTipo !== "all" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setFiltroTipo("")}
+                className="text-white/60 hover:text-white hover:bg-white/10 text-xs"
+              >
+                Limpar filtro
+              </Button>
+            )}
+          </div>
+        </div>
+
         {/* Table */}
         <div
           className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden"
