@@ -2952,6 +2952,7 @@ export type Database = {
       }
       gastos: {
         Row: {
+          banco_id: string
           created_at: string | null
           created_by: string | null
           data: string
@@ -2965,6 +2966,7 @@ export type Database = {
           valor: number
         }
         Insert: {
+          banco_id: string
           created_at?: string | null
           created_by?: string | null
           data?: string
@@ -2978,6 +2980,7 @@ export type Database = {
           valor?: number
         }
         Update: {
+          banco_id?: string
           created_at?: string | null
           created_by?: string | null
           data?: string
@@ -2991,6 +2994,13 @@ export type Database = {
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "gastos_banco_id_fkey"
+            columns: ["banco_id"]
+            isOneToOne: false
+            referencedRelation: "bancos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "gastos_tipo_custo_id_fkey"
             columns: ["tipo_custo_id"]

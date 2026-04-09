@@ -9,6 +9,7 @@ export interface Gasto {
   valor: number;
   data: string;
   responsavel_id: string;
+  banco_id: string;
   status: string;
   observacoes: string | null;
   created_by: string | null;
@@ -17,6 +18,7 @@ export interface Gasto {
   // joined
   tipo_custo_nome?: string;
   responsavel_nome?: string;
+  banco_nome?: string;
 }
 
 export const useGastos = (mesFiltro?: string) => {
@@ -52,9 +54,11 @@ export const useGastos = (mesFiltro?: string) => {
     // fetch tipo_custo names
     const tipoCustoIds = [...new Set(rows.map((r) => r.tipo_custo_id))];
     const responsavelIds = [...new Set(rows.map((r) => r.responsavel_id))];
+    const bancoIds = [...new Set(rows.map((r) => r.banco_id).filter(Boolean))];
 
     let tiposMap: Record<string, string> = {};
     let responsaveisMap: Record<string, string> = {};
+    let bancosMap: Record<string, string> = {};
 
     if (tipoCustoIds.length > 0) {
       const { data: tipos } = await supabase
@@ -76,10 +80,21 @@ export const useGastos = (mesFiltro?: string) => {
       });
     }
 
+    if (bancoIds.length > 0) {
+      const { data: bancos } = await supabase
+        .from("bancos" as any)
+        .select("id, nome")
+        .in("id", bancoIds);
+      (bancos || []).forEach((b: any) => {
+        bancosMap[b.id] = b.nome;
+      });
+    }
+
     const enriched = rows.map((r) => ({
       ...r,
       tipo_custo_nome: tiposMap[r.tipo_custo_id] || "—",
       responsavel_nome: responsaveisMap[r.responsavel_id] || "—",
+      banco_nome: r.banco_id ? bancosMap[r.banco_id] || "—" : "—",
     }));
 
     setGastos(enriched);
