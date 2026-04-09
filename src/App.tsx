@@ -328,6 +328,7 @@ import FaturamentoVendaMinimalista from "./pages/administrativo/FaturamentoVenda
 import CustosMinimalista from "./pages/administrativo/CustosMinimalista";
 import CustosGridMinimalista from "./pages/administrativo/CustosGridMinimalista";
 import CustosMesMinimalista from "./pages/administrativo/CustosMesMinimalista";
+import GastosPage from "./pages/administrativo/GastosPage";
 
 import CaixaHub from "./pages/administrativo/CaixaHub";
 import GestaoCaixaMinimalista from "./pages/administrativo/GestaoCaixaMinimalista";
@@ -602,6 +603,7 @@ const App = () => (
                 <Route path="/administrativo/financeiro/faturamento/:id" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoVendaMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/custos/:mes" element={<ProtectedRoute routeKey="administrativo_hub"><CustosMesMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/custos" element={<ProtectedRoute routeKey="administrativo_hub"><CustosGridMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/financeiro/gastos" element={<ProtectedRoute routeKey="administrativo_hub"><GastosPage /></ProtectedRoute>} />
                 
                 
                 {/* Hub de Caixa Minimalista */}
