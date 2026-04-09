@@ -45,7 +45,7 @@ export default function CustosGridMinimalista() {
   const [editingTipoCusto, setEditingTipoCusto] = useState<TipoCusto | null>(null);
 
   const [tipoCustoForm, setTipoCustoForm] = useState({
-    nome: "", descricao: "", valor_maximo_mensal: 0, tipo: "fixa" as 'fixa' | 'variavel',
+    nome: "", descricao: "", valor_maximo_mensal: 0, tipo: "fixa" as 'fixa' | 'variavel', aparece_no_dre: true,
   });
 
   useEffect(() => { const timer = setTimeout(() => setMounted(true), 100); return () => clearTimeout(timer); }, []);
@@ -78,12 +78,12 @@ export default function CustosGridMinimalista() {
 
   const handleEditTipoCusto = (tipo: TipoCusto) => {
     setEditingTipoCusto(tipo);
-    setTipoCustoForm({ nome: tipo.nome, descricao: tipo.descricao || "", valor_maximo_mensal: tipo.valor_maximo_mensal, tipo: tipo.tipo });
+    setTipoCustoForm({ nome: tipo.nome, descricao: tipo.descricao || "", valor_maximo_mensal: tipo.valor_maximo_mensal, tipo: tipo.tipo, aparece_no_dre: tipo.aparece_no_dre });
     setTipoCustoDialog(true);
   };
 
   const toggleTipoCustoStatus = async (tipo: TipoCusto) => { await updateTipoCusto(tipo.id, { ativo: !tipo.ativo }); };
-  const resetTipoCustoForm = () => { setEditingTipoCusto(null); setTipoCustoForm({ nome: "", descricao: "", valor_maximo_mensal: 0, tipo: "fixa" }); };
+  const resetTipoCustoForm = () => { setEditingTipoCusto(null); setTipoCustoForm({ nome: "", descricao: "", valor_maximo_mensal: 0, tipo: "fixa", aparece_no_dre: true }); };
 
   const loading = loadingMensais || loadingTipos;
 
@@ -261,6 +261,10 @@ export default function CustosGridMinimalista() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="aparece_no_dre_custos">Aparece no DRE</Label>
+              <Switch id="aparece_no_dre_custos" checked={tipoCustoForm.aparece_no_dre} onCheckedChange={(v) => setTipoCustoForm({ ...tipoCustoForm, aparece_no_dre: v })} />
             </div>
           </div>
           <DialogFooter>
