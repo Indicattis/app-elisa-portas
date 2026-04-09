@@ -1,23 +1,25 @@
 
 
-## Plano: Corrigir botão "Finalizar Direto" na gestão de fábrica
-
-### Diagnóstico
-Duas causas combinadas:
-
-1. **Mutation sem tratamento de erro nos passos 1 e 2**: As chamadas de `update` e `upsert` em `pedidos_etapas` não verificam `error` — falhas são engolidas silenciosamente.
-
-2. **Crash `removeChild`**: Após a mutation, `queryClient.invalidateQueries` remove o pedido da lista, desmontando o `PedidoCard` enquanto o `AlertDialog` ainda está aberto. O portal do Radix tenta limpar nós DOM que já foram removidos → `removeChild` error.
+## Plano: Adicionar campo "Aparece no DRE" aos tipos de custos
 
 ### Alterações
 
-**1. `src/hooks/usePedidosEtapas.ts`** (~5 linhas)
-- Adicionar verificação de `error` nos passos 1 (fechar etapa atual) e 2 (upsert finalizado), lançando exceção se houver falha
+**1. Migração SQL**
+- Adicionar coluna `aparece_no_dre BOOLEAN NOT NULL DEFAULT true` à tabela `tipos_custos`
+- Todos os registros existentes receberão `true` automaticamente pelo default
 
-**2. `src/components/pedidos/PedidoCard.tsx`** (~3 linhas)
-- No `onClick` do AlertDialogAction de "Finalizar Direto", fechar o dialog **antes** de chamar `onFinalizarDireto`, evitando que a desmontagem do card conflite com o portal do AlertDialog
+**2. `src/hooks/useTiposCustos.ts`**
+- Adicionar `aparece_no_dre: boolean` à interface `TipoCusto`
+- Incluir o campo no `select`, `insert` e `update`
 
-### Resultado
-- Erros de banco são capturados e exibidos ao usuário via toast
-- O dialog fecha antes da mutation, eliminando o crash `removeChild`
+**3. `src/pages/direcao/DREDespesasDirecao.tsx`**
+- Adicionar `aparece_no_dre: true` ao estado inicial do form
+- No dialog de criação/edição, adicionar um checkbox/switch "Aparece no DRE" (ativo por padrão)
+- Na edição, carregar o valor atual do campo
+- Na tabela, exibir indicador visual (badge ou ícone) quando `aparece_no_dre = false`
+
+### Arquivos alterados
+- Nova migração SQL (1 arquivo)
+- `src/hooks/useTiposCustos.ts`
+- `src/pages/direcao/DREDespesasDirecao.tsx`
 
