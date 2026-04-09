@@ -436,7 +436,16 @@ export default function GastosPage() {
                       {g.banco_nome || "—"}
                     </TableCell>
                     <TableCell className="text-white/70 text-sm">
-                      {g.responsavel_nome}
+                      <div className="flex items-center gap-2">
+                        {g.responsavel_foto ? (
+                          <img src={g.responsavel_foto} alt="" className="w-6 h-6 rounded-full object-cover ring-1 ring-white/20" />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-white/60 font-medium ring-1 ring-white/20">
+                            {g.responsavel_nome?.charAt(0) || "?"}
+                          </div>
+                        )}
+                        <span>{g.responsavel_nome}</span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
