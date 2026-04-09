@@ -148,6 +148,17 @@ export default function GastosPage() {
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const tiposAtivos = tiposCustos.filter((t) => t.ativo);
+  const [filtroTipo, setFiltroTipo] = useState("");
+
+  const gastosFiltrados = useMemo(() => {
+    if (!filtroTipo) return gastos;
+    return gastos.filter((g) => g.tipo_custo_id === filtroTipo);
+  }, [gastos, filtroTipo]);
+
+  const totalGastos = useMemo(
+    () => gastosFiltrados.reduce((sum, g) => sum + g.valor, 0),
+    [gastosFiltrados]
+  );
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center overflow-hidden relative">
