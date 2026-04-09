@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { Switch } from "@/components/ui/switch";
 import { useTiposCustos, TipoCusto } from "@/hooks/useTiposCustos";
 import { formatCurrency } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ export default function DREDespesasDirecao() {
   const [tipoCustoForm, setTipoCustoForm] = useState({
     nome: "", descricao: "",
     valor_maximo_mensal: 0, tipo: "fixa" as 'fixa' | 'variavel',
+    aparece_no_dre: true,
   });
 
   const filteredTiposCustos = tiposCustos.filter(t =>
@@ -46,11 +48,11 @@ export default function DREDespesasDirecao() {
 
   const handleEditTipoCusto = (tipo: TipoCusto) => {
     setEditingTipoCusto(tipo);
-    setTipoCustoForm({ nome: tipo.nome, descricao: tipo.descricao || "", valor_maximo_mensal: tipo.valor_maximo_mensal, tipo: tipo.tipo });
+    setTipoCustoForm({ nome: tipo.nome, descricao: tipo.descricao || "", valor_maximo_mensal: tipo.valor_maximo_mensal, tipo: tipo.tipo, aparece_no_dre: tipo.aparece_no_dre });
     setTipoCustoDialog(true);
   };
 
-  const resetTipoCustoForm = () => { setEditingTipoCusto(null); setTipoCustoForm({ nome: "", descricao: "", valor_maximo_mensal: 0, tipo: "fixa" }); };
+  const resetTipoCustoForm = () => { setEditingTipoCusto(null); setTipoCustoForm({ nome: "", descricao: "", valor_maximo_mensal: 0, tipo: "fixa", aparece_no_dre: true }); };
 
   return (
     <MinimalistLayout
@@ -106,7 +108,10 @@ export default function DREDespesasDirecao() {
                     ) : (
                       items.map((tipo) => (
                         <TableRow key={tipo.id} className="border-white/10 hover:bg-white/5">
-                          <TableCell className="font-medium text-white">{tipo.nome}</TableCell>
+          <TableCell className="font-medium text-white">
+            {tipo.nome}
+            {!tipo.aparece_no_dre && <span className="ml-2 text-[10px] text-white/40 bg-white/10 px-1.5 py-0.5 rounded">Oculto no DRE</span>}
+          </TableCell>
                           <TableCell className="text-right font-medium text-white">{formatCurrency(tipo.valor_maximo_mensal)}</TableCell>
                           <TableCell className="text-right font-medium text-white">{formatCurrency(tipo.valor_maximo_mensal * 12)}</TableCell>
                           <TableCell className="text-right">
@@ -172,6 +177,10 @@ export default function DREDespesasDirecao() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="aparece_no_dre">Aparece no DRE</Label>
+              <Switch id="aparece_no_dre" checked={tipoCustoForm.aparece_no_dre} onCheckedChange={(v) => setTipoCustoForm({ ...tipoCustoForm, aparece_no_dre: v })} />
             </div>
           </div>
           <DialogFooter>

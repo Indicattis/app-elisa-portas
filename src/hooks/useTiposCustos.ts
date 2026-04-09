@@ -9,6 +9,7 @@ export interface TipoCusto {
   valor_maximo_mensal: number;
   tipo: 'fixa' | 'variavel';
   ativo: boolean;
+  aparece_no_dre: boolean;
 }
 
 export const useTiposCustos = () => {
@@ -19,7 +20,7 @@ export const useTiposCustos = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("tipos_custos" as any)
-      .select("id, nome, descricao, valor_maximo_mensal, tipo, ativo")
+      .select("id, nome, descricao, valor_maximo_mensal, tipo, ativo, aparece_no_dre")
       .order("nome", { ascending: true });
 
     if (error) {
