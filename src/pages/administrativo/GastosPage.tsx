@@ -151,7 +151,7 @@ export default function GastosPage() {
   const [filtroTipo, setFiltroTipo] = useState("");
 
   const gastosFiltrados = useMemo(() => {
-    if (!filtroTipo) return gastos;
+    if (!filtroTipo || filtroTipo === "all") return gastos;
     return gastos.filter((g) => g.tipo_custo_id === filtroTipo);
   }, [gastos, filtroTipo]);
 
