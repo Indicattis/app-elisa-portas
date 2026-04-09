@@ -220,11 +220,17 @@ export default function GastosPage() {
     window.open(doc.output("bloburl"), "_blank");
   };
   const [filtroTipo, setFiltroTipo] = useState("");
+  const [filtroBanco, setFiltroBanco] = useState("");
+  const [filtroResponsavel, setFiltroResponsavel] = useState("");
 
   const gastosFiltrados = useMemo(() => {
-    if (!filtroTipo || filtroTipo === "all") return gastos;
-    return gastos.filter((g) => g.tipo_custo_id === filtroTipo);
-  }, [gastos, filtroTipo]);
+    return gastos.filter((g) => {
+      if (filtroTipo && filtroTipo !== "all" && g.tipo_custo_id !== filtroTipo) return false;
+      if (filtroBanco && filtroBanco !== "all" && g.banco_id !== filtroBanco) return false;
+      if (filtroResponsavel && filtroResponsavel !== "all" && g.responsavel_id !== filtroResponsavel) return false;
+      return true;
+    });
+  }, [gastos, filtroTipo, filtroBanco, filtroResponsavel]);
 
   const totalGastos = useMemo(
     () => gastosFiltrados.reduce((sum, g) => sum + g.valor, 0),
@@ -328,9 +334,9 @@ export default function GastosPage() {
             transition: "all 0.5s ease 250ms",
           }}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-              <SelectTrigger className="w-[250px] bg-white/5 border-white/20 text-white">
+              <SelectTrigger className="w-[200px] bg-white/5 border-white/20 text-white">
                 <SelectValue placeholder="Todos os tipos" />
               </SelectTrigger>
               <SelectContent className="bg-[#1a1a1a] border-white/20">
@@ -342,16 +348,42 @@ export default function GastosPage() {
                 ))}
               </SelectContent>
             </Select>
-            {filtroTipo && filtroTipo !== "all" && (
+            <Select value={filtroBanco} onValueChange={setFiltroBanco}>
+              <SelectTrigger className="w-[200px] bg-white/5 border-white/20 text-white">
+                <SelectValue placeholder="Todos os bancos" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a1a1a] border-white/20">
+                <SelectItem value="all" className="text-white hover:bg-white/10">Todos os bancos</SelectItem>
+                {bancos.filter(b => b.ativo).map((b) => (
+                  <SelectItem key={b.id} value={b.id} className="text-white hover:bg-white/10">
+                    {b.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
+              <SelectTrigger className="w-[200px] bg-white/5 border-white/20 text-white">
+                <SelectValue placeholder="Todos os responsáveis" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a1a1a] border-white/20">
+                <SelectItem value="all" className="text-white hover:bg-white/10">Todos os responsáveis</SelectItem>
+                {colaboradores.map((c) => (
+                  <SelectItem key={c.user_id} value={c.user_id} className="text-white hover:bg-white/10">
+                    {c.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(filtroTipo && filtroTipo !== "all") || (filtroBanco && filtroBanco !== "all") || (filtroResponsavel && filtroResponsavel !== "all") ? (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setFiltroTipo("")}
+                onClick={() => { setFiltroTipo(""); setFiltroBanco(""); setFiltroResponsavel(""); }}
                 className="text-white/60 hover:text-white hover:bg-white/10 text-xs"
               >
-                Limpar filtro
+                Limpar filtros
               </Button>
-            )}
+            ) : null}
           </div>
         </div>
 
