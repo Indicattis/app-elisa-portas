@@ -408,18 +408,30 @@ export default function GastosPage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-white/10 hover:bg-transparent">
+                  <TableHead className="text-white/60">Responsável</TableHead>
                   <TableHead className="text-white/60">Tipo de Custo</TableHead>
                   <TableHead className="text-white/60">Descrição</TableHead>
                   <TableHead className="text-white/60">Valor</TableHead>
                   <TableHead className="text-white/60">Data</TableHead>
                   <TableHead className="text-white/60">Banco</TableHead>
-                  <TableHead className="text-white/60">Responsável</TableHead>
                   <TableHead className="text-white/60 w-20"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {gastosFiltrados.map((g) => (
                   <TableRow key={g.id} className="border-white/10 hover:bg-white/5">
+                    <TableCell className="text-white/70 text-sm">
+                      <div className="flex items-center gap-2">
+                        {g.responsavel_foto ? (
+                          <img src={g.responsavel_foto} alt="" className="w-6 h-6 rounded-full object-cover ring-1 ring-white/20" />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-white/60 font-medium ring-1 ring-white/20">
+                            {g.responsavel_nome?.charAt(0) || "?"}
+                          </div>
+                        )}
+                        <span>{g.responsavel_nome}</span>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-white text-sm font-medium">
                       {g.tipo_custo_nome}
                     </TableCell>
@@ -434,18 +446,6 @@ export default function GastosPage() {
                     </TableCell>
                     <TableCell className="text-white/70 text-sm">
                       {g.banco_nome || "—"}
-                    </TableCell>
-                    <TableCell className="text-white/70 text-sm">
-                      <div className="flex items-center gap-2">
-                        {g.responsavel_foto ? (
-                          <img src={g.responsavel_foto} alt="" className="w-6 h-6 rounded-full object-cover ring-1 ring-white/20" />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-white/60 font-medium ring-1 ring-white/20">
-                            {g.responsavel_nome?.charAt(0) || "?"}
-                          </div>
-                        )}
-                        <span>{g.responsavel_nome}</span>
-                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
@@ -470,13 +470,13 @@ export default function GastosPage() {
                 ))}
                 {/* Total row */}
                 <TableRow className="border-white/10 bg-white/5 hover:bg-white/10">
-                  <TableCell className="text-white text-sm font-bold" colSpan={2}>
+                  <TableCell className="text-white text-sm font-bold" colSpan={3}>
                     Total
                   </TableCell>
                   <TableCell className="text-white text-sm font-bold">
                     {formatCurrency(totalGastos)}
                   </TableCell>
-                  <TableCell colSpan={4}></TableCell>
+                  <TableCell colSpan={3}></TableCell>
                 </TableRow>
               </TableBody>
             </Table>
