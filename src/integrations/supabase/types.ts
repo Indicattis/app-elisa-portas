@@ -6829,6 +6829,7 @@ export type Database = {
       }
       tipos_custos: {
         Row: {
+          aparece_no_dre: boolean
           ativo: boolean
           categoria_id: string | null
           created_at: string | null
@@ -6842,6 +6843,7 @@ export type Database = {
           valor_maximo_mensal: number
         }
         Insert: {
+          aparece_no_dre?: boolean
           ativo?: boolean
           categoria_id?: string | null
           created_at?: string | null
@@ -6855,6 +6857,7 @@ export type Database = {
           valor_maximo_mensal?: number
         }
         Update: {
+          aparece_no_dre?: boolean
           ativo?: boolean
           categoria_id?: string | null
           created_at?: string | null

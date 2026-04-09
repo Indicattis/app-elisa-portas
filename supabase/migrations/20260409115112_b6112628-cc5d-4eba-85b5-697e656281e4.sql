@@ -1,0 +1,1 @@
+ALTER TABLE public.tipos_custos ADD COLUMN aparece_no_dre BOOLEAN NOT NULL DEFAULT true;
