@@ -18,6 +18,7 @@ export interface Gasto {
   // joined
   tipo_custo_nome?: string;
   responsavel_nome?: string;
+  responsavel_foto?: string | null;
   banco_nome?: string;
 }
 
@@ -57,7 +58,7 @@ export const useGastos = (mesFiltro?: string) => {
     const bancoIds = [...new Set(rows.map((r) => r.banco_id).filter(Boolean))];
 
     let tiposMap: Record<string, string> = {};
-    let responsaveisMap: Record<string, string> = {};
+    let responsaveisMap: Record<string, { nome: string; foto: string | null }> = {};
     let bancosMap: Record<string, string> = {};
 
     if (tipoCustoIds.length > 0) {
@@ -73,10 +74,10 @@ export const useGastos = (mesFiltro?: string) => {
     if (responsavelIds.length > 0) {
       const { data: users } = await supabase
         .from("admin_users")
-        .select("user_id, nome")
+        .select("user_id, nome, foto_perfil_url")
         .in("user_id", responsavelIds);
       (users || []).forEach((u: any) => {
-        responsaveisMap[u.user_id] = u.nome;
+        responsaveisMap[u.user_id] = { nome: u.nome, foto: u.foto_perfil_url || null };
       });
     }
 
@@ -93,7 +94,8 @@ export const useGastos = (mesFiltro?: string) => {
     const enriched = rows.map((r) => ({
       ...r,
       tipo_custo_nome: tiposMap[r.tipo_custo_id] || "—",
-      responsavel_nome: responsaveisMap[r.responsavel_id] || "—",
+      responsavel_nome: responsaveisMap[r.responsavel_id]?.nome || "—",
+      responsavel_foto: responsaveisMap[r.responsavel_id]?.foto || null,
       banco_nome: r.banco_id ? bancosMap[r.banco_id] || "—" : "—",
     }));
 
