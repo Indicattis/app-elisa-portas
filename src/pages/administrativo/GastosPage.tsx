@@ -68,13 +68,14 @@ export default function GastosPage() {
 
   useEffect(() => {
     const fetchColaboradores = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("admin_users")
-        .select("user_id, nome")
+        .select("user_id, nome, setor")
         .eq("ativo", true)
         .eq("tipo_usuario", "colaborador")
         .eq("setor", "administrativo")
         .order("nome");
+      console.log("[GastosPage] colaboradores administrativo:", data, "error:", error);
       setColaboradores((data || []) as ColaboradorOption[]);
     };
     fetchColaboradores();
