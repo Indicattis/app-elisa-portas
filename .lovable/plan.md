@@ -1,52 +1,27 @@
 
 
-## Plano: Desabilitar "Contas a Pagar" e adicionar botão "Bancos"
+## Plano: Corrigir e melhorar modal "Finalizar Direto"
 
-### Alterações
+### Problema
+O AlertDialog atual usa `e.preventDefault()` no onClick do `AlertDialogAction`, o que pode causar conflitos com o comportamento padrão do Radix AlertDialog. Além disso, o modal precisa de uma descrição mais clara do que vai acontecer.
 
-**1. `src/pages/administrativo/FinanceiroHub.tsx`**
-- Mudar `ativo: false` no item "Contas a Pagar" (linha 14)
-- Adicionar novo item `{ label: "Bancos", icon: Landmark, path: "/administrativo/financeiro/bancos", ativo: true }` ao array `menuItems`
-- Importar ícone `Landmark` do lucide-react
+### Alteração
 
-**2. Migração SQL — criar tabela `bancos`**
-```sql
-CREATE TABLE public.bancos (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  nome TEXT NOT NULL,
-  codigo TEXT,
-  agencia TEXT,
-  conta TEXT,
-  tipo_conta TEXT DEFAULT 'corrente',
-  observacoes TEXT,
-  ativo BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
--- RLS
-ALTER TABLE public.bancos ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Authenticated users can manage bancos"
-  ON public.bancos FOR ALL TO authenticated
-  USING (true) WITH CHECK (true);
-```
+**`src/components/pedidos/PedidoCard.tsx`** (~20 linhas)
 
-**3. `src/hooks/useBancos.ts`** (novo)
-- Hook CRUD para tabela `bancos` (listar, criar, editar, excluir)
+Substituir o `AlertDialog` por um `Dialog` customizado (já importado no arquivo) com:
 
-**4. `src/pages/administrativo/BancosPage.tsx`** (novo)
-- Tema dark glassmorphism consistente
-- Tabela com colunas: Nome, Código, Agência, Conta, Tipo, Status
-- Dialog de criação/edição com campos: nome, código do banco, agência, conta, tipo (corrente/poupança), observações
-- Toggle de ativo/inativo
-- Breadcrumb e botão voltar
+1. Título claro: "Finalizar Pedido Diretamente"
+2. Descrição detalhada do que vai acontecer:
+   - A etapa atual do pedido (ex: "Pintura") será encerrada
+   - Todas as etapas intermediárias serão puladas
+   - O pedido será movido diretamente para "Finalizado"
+   - Exibir o nome do cliente e número do pedido para confirmação
+3. Aviso visual (ícone de alerta) informando que a ação não pode ser desfeita
+4. Botões "Cancelar" e "Sim, Finalizar" com estado de loading
 
-**5. `src/App.tsx`**
-- Adicionar rota `/administrativo/financeiro/bancos` → `BancosPage`
+A troca de `AlertDialog` para `Dialog` resolve o problema de não funcionar (o `e.preventDefault()` no `AlertDialogAction` impede o fechamento nativo, e a combinação com `setShowFinalizarDireto(false)` manual pode causar conflitos de timing). Com `Dialog` + `Button` padrão, o fluxo fica direto e sem bugs.
 
-### Arquivos alterados
-- Nova migração SQL
-- `src/hooks/useBancos.ts` (novo)
-- `src/pages/administrativo/BancosPage.tsx` (novo)
-- `src/pages/administrativo/FinanceiroHub.tsx` (editar)
-- `src/App.tsx` (adicionar rota)
+### Arquivo alterado
+- `src/components/pedidos/PedidoCard.tsx` (1 bloco, ~25 linhas)
 
