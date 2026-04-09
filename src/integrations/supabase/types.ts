@@ -671,6 +671,45 @@ export type Database = {
         }
         Relationships: []
       }
+      bancos: {
+        Row: {
+          agencia: string | null
+          ativo: boolean
+          codigo: string | null
+          conta: string | null
+          created_at: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          tipo_conta: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agencia?: string | null
+          ativo?: boolean
+          codigo?: string | null
+          conta?: string | null
+          created_at?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          tipo_conta?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agencia?: string | null
+          ativo?: boolean
+          codigo?: string | null
+          conta?: string | null
+          created_at?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          tipo_conta?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       calendario_cores: {
         Row: {
           ativa: boolean
