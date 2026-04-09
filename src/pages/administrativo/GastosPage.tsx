@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, CalendarIcon, FileText } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 
 import { useGastos, Gasto } from "@/hooks/useGastos";
@@ -149,6 +151,74 @@ export default function GastosPage() {
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const tiposAtivos = tiposCustos.filter((t) => t.ativo);
+
+  const gerarPDF = () => {
+    const doc = new jsPDF({ orientation: "landscape", format: "a4" });
+    const [y, m] = mesFiltro.split("-").map(Number);
+    const mesLabel = new Date(y, m - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Relatório de Gastos — ${mesLabel}`, 14, 18);
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")}`, 14, 25);
+
+    const tipoFiltroNome = filtroTipo && filtroTipo !== "all"
+      ? tiposCustos.find((t) => t.id === filtroTipo)?.nome
+      : null;
+    if (tipoFiltroNome) {
+      doc.text(`Filtro: ${tipoFiltroNome}`, 14, 30);
+    }
+
+    const startY = tipoFiltroNome ? 36 : 32;
+
+    const tableData = gastosFiltrados.map((g) => [
+      g.tipo_custo_nome || "—",
+      g.descricao || "—",
+      formatCurrency(g.valor),
+      format(new Date(g.data + "T12:00:00"), "dd/MM/yyyy"),
+      g.banco_nome || "—",
+      g.responsavel_nome || "—",
+    ]);
+
+    tableData.push([
+      "", "", formatCurrency(totalGastos), "", "", "",
+    ]);
+
+    autoTable(doc, {
+      head: [["Tipo de Custo", "Descrição", "Valor", "Data", "Banco", "Responsável"]],
+      body: tableData,
+      startY,
+      theme: "striped",
+      headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 9 },
+      bodyStyles: { fontSize: 8, cellPadding: 2 },
+      columnStyles: {
+        2: { halign: "right" },
+        3: { halign: "center" },
+      },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      margin: { left: 14, right: 14 },
+      didParseCell(data) {
+        if (data.section === "body" && data.row.index === tableData.length - 1) {
+          data.cell.styles.fontStyle = "bold";
+          data.cell.styles.fillColor = [220, 230, 245];
+        }
+      },
+    });
+
+    const pages = doc.getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Página ${i} de ${pages}`, 148, 200, { align: "center" });
+    }
+
+    doc.autoPrint();
+    window.open(doc.output("bloburl"), "_blank");
+  };
   const [filtroTipo, setFiltroTipo] = useState("");
 
   const gastosFiltrados = useMemo(() => {
@@ -233,6 +303,13 @@ export default function GastosPage() {
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
+            <Button
+              onClick={gerarPDF}
+              variant="outline"
+              className="border-white/20 text-white hover:bg-white/10 text-sm gap-1.5"
+            >
+              <FileText className="w-4 h-4" /> PDF
+            </Button>
             <Button
               onClick={openCreate}
               className="bg-blue-600 hover:bg-blue-700 text-white text-sm gap-1.5"
