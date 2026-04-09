@@ -232,30 +232,30 @@ export default function CustosGridMinimalista() {
       </div>
 
       <Dialog open={tipoCustoDialog} onOpenChange={(open) => { setTipoCustoDialog(open); if (!open) resetTipoCustoForm(); }}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] bg-[#111] border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle>{editingTipoCusto ? "Editar" : "Novo"} Tipo de Custo</DialogTitle>
-            <DialogDescription>Preencha os dados do tipo de custo</DialogDescription>
+            <DialogTitle className="text-white">{editingTipoCusto ? "Editar" : "Novo"} Tipo de Custo</DialogTitle>
+            <DialogDescription className="text-white/60">Preencha os dados do tipo de custo</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="nome">Nome</Label>
-              <Input id="nome" value={tipoCustoForm.nome} onChange={(e) => setTipoCustoForm({ ...tipoCustoForm, nome: e.target.value })} />
+              <Label htmlFor="nome" className="text-white/80">Nome</Label>
+              <Input id="nome" value={tipoCustoForm.nome} onChange={(e) => setTipoCustoForm({ ...tipoCustoForm, nome: e.target.value })} className="bg-white/5 border-white/20 text-white placeholder:text-white/40" />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="descricao">Descrição</Label>
-              <Textarea id="descricao" value={tipoCustoForm.descricao} onChange={(e) => setTipoCustoForm({ ...tipoCustoForm, descricao: e.target.value })} />
+              <Label htmlFor="descricao" className="text-white/80">Descrição</Label>
+              <Textarea id="descricao" value={tipoCustoForm.descricao} onChange={(e) => setTipoCustoForm({ ...tipoCustoForm, descricao: e.target.value })} className="bg-white/5 border-white/20 text-white placeholder:text-white/40" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="valor">Valor Máximo Mensal</Label>
-                <Input id="valor" type="number" value={tipoCustoForm.valor_maximo_mensal} onChange={(e) => setTipoCustoForm({ ...tipoCustoForm, valor_maximo_mensal: parseFloat(e.target.value) || 0 })} />
+                <Label htmlFor="valor" className="text-white/80">Valor Máximo Mensal</Label>
+                <Input id="valor" type="number" value={tipoCustoForm.valor_maximo_mensal} onChange={(e) => setTipoCustoForm({ ...tipoCustoForm, valor_maximo_mensal: parseFloat(e.target.value) || 0 })} className="bg-white/5 border-white/20 text-white" />
               </div>
               <div className="grid gap-2">
-                <Label>Tipo</Label>
+                <Label className="text-white/80">Tipo</Label>
                 <Select value={tipoCustoForm.tipo} onValueChange={(v: 'fixa' | 'variavel') => setTipoCustoForm({ ...tipoCustoForm, tipo: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="bg-white/5 border-white/20 text-white"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-[#1a1a1a] border-white/10 text-white">
                     <SelectItem value="fixa">Fixa</SelectItem>
                     <SelectItem value="variavel">Variável</SelectItem>
                   </SelectContent>
@@ -263,25 +263,25 @@ export default function CustosGridMinimalista() {
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <Label htmlFor="aparece_no_dre_custos">Aparece no DRE</Label>
+              <Label htmlFor="aparece_no_dre_custos" className="text-white/80">Aparece no DRE</Label>
               <Switch id="aparece_no_dre_custos" checked={tipoCustoForm.aparece_no_dre} onCheckedChange={(v) => setTipoCustoForm({ ...tipoCustoForm, aparece_no_dre: v })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setTipoCustoDialog(false)}>Cancelar</Button>
-            <Button onClick={handleSaveTipoCusto}>Salvar</Button>
+            <Button variant="outline" onClick={() => setTipoCustoDialog(false)} className="border-white/20 text-white hover:bg-white/10">Cancelar</Button>
+            <Button onClick={handleSaveTipoCusto} className="bg-blue-600 hover:bg-blue-700">Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <AlertDialog open={!!deleteDialog} onOpenChange={() => setDeleteDialog(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-[#111] border-white/10 text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogTitle className="text-white">Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="border-white/20 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">Excluir</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
