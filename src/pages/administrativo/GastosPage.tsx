@@ -290,7 +290,7 @@ export default function GastosPage() {
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-6 h-6 text-white/40 animate-spin" />
             </div>
-          ) : gastos.length === 0 ? (
+          ) : gastosFiltrados.length === 0 ? (
             <div className="text-center py-20 text-white/40 text-sm">
               Nenhum gasto registrado neste mês.
             </div>
@@ -304,12 +304,11 @@ export default function GastosPage() {
                   <TableHead className="text-white/60">Data</TableHead>
                   <TableHead className="text-white/60">Banco</TableHead>
                   <TableHead className="text-white/60">Responsável</TableHead>
-                  <TableHead className="text-white/60">Status</TableHead>
                   <TableHead className="text-white/60 w-20"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {gastos.map((g) => (
+                {gastosFiltrados.map((g) => (
                   <TableRow key={g.id} className="border-white/10 hover:bg-white/5">
                     <TableCell className="text-white text-sm font-medium">
                       {g.tipo_custo_nome}
@@ -328,17 +327,6 @@ export default function GastosPage() {
                     </TableCell>
                     <TableCell className="text-white/70 text-sm">
                       {g.responsavel_nome}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${
-                          g.status === "pago"
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-yellow-500/20 text-yellow-400"
-                        }`}
-                      >
-                        {g.status === "pago" ? "Pago" : "Pendente"}
-                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
@@ -361,6 +349,16 @@ export default function GastosPage() {
                     </TableCell>
                   </TableRow>
                 ))}
+                {/* Total row */}
+                <TableRow className="border-white/10 bg-white/5 hover:bg-white/10">
+                  <TableCell className="text-white text-sm font-bold" colSpan={2}>
+                    Total
+                  </TableCell>
+                  <TableCell className="text-white text-sm font-bold">
+                    {formatCurrency(totalGastos)}
+                  </TableCell>
+                  <TableCell colSpan={4}></TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           )}
