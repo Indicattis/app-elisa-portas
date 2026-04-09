@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, Ca
 import { format } from "date-fns";
 
 import { useGastos, Gasto } from "@/hooks/useGastos";
+import { useBancos } from "@/hooks/useBancos";
 import { useTiposCustos } from "@/hooks/useTiposCustos";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
@@ -42,6 +43,7 @@ export default function GastosPage() {
 
   const { gastos, loading, saveGasto, updateGasto, deleteGasto } = useGastos(mesFiltro);
   const { tiposCustos } = useTiposCustos();
+  const { bancos } = useBancos();
   const [colaboradores, setColaboradores] = useState<ColaboradorOption[]>([]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -55,6 +57,7 @@ export default function GastosPage() {
   const [valor, setValor] = useState("");
   const [data, setData] = useState(new Date().toISOString().split("T")[0]);
   const [responsavelId, setResponsavelId] = useState("");
+  const [bancoId, setBancoId] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -70,6 +73,7 @@ export default function GastosPage() {
         .select("user_id, nome")
         .eq("ativo", true)
         .eq("tipo_usuario", "colaborador")
+        .eq("setor", "administrativo")
         .order("nome");
       setColaboradores((data || []) as ColaboradorOption[]);
     };
@@ -82,6 +86,7 @@ export default function GastosPage() {
     setValor("");
     setData(new Date().toISOString().split("T")[0]);
     setResponsavelId("");
+    setBancoId("");
     setObservacoes("");
     setEditingGasto(null);
   };
@@ -98,6 +103,7 @@ export default function GastosPage() {
     setValor(String(g.valor));
     setData(g.data);
     setResponsavelId(g.responsavel_id);
+    setBancoId(g.banco_id || "");
     setObservacoes(g.observacoes || "");
     setDialogOpen(true);
   };
@@ -111,7 +117,7 @@ export default function GastosPage() {
   };
 
   const handleSave = async () => {
-    if (!tipoCustoId || !valor || !responsavelId) return;
+    if (!tipoCustoId || !valor || !responsavelId || !bancoId) return;
     setSaving(true);
     const payload = {
       tipo_custo_id: tipoCustoId,
@@ -119,6 +125,7 @@ export default function GastosPage() {
       valor: parseFloat(valor),
       data,
       responsavel_id: responsavelId,
+      banco_id: bancoId,
       observacoes: observacoes || null,
     };
     const ok = editingGasto
@@ -249,6 +256,7 @@ export default function GastosPage() {
                   <TableHead className="text-white/60">Descrição</TableHead>
                   <TableHead className="text-white/60">Valor</TableHead>
                   <TableHead className="text-white/60">Data</TableHead>
+                  <TableHead className="text-white/60">Banco</TableHead>
                   <TableHead className="text-white/60">Responsável</TableHead>
                   <TableHead className="text-white/60">Status</TableHead>
                   <TableHead className="text-white/60 w-20"></TableHead>
@@ -268,6 +276,9 @@ export default function GastosPage() {
                     </TableCell>
                     <TableCell className="text-white/70 text-sm">
                       {format(new Date(g.data + "T12:00:00"), "dd/MM/yyyy")}
+                    </TableCell>
+                    <TableCell className="text-white/70 text-sm">
+                      {g.banco_nome || "—"}
                     </TableCell>
                     <TableCell className="text-white/70 text-sm">
                       {g.responsavel_nome}
@@ -386,6 +397,21 @@ export default function GastosPage() {
               </Select>
             </div>
             <div>
+              <Label className="text-white/80 text-sm">Banco *</Label>
+              <Select value={bancoId} onValueChange={setBancoId}>
+                <SelectTrigger className="bg-white/5 border-white/20 text-white">
+                  <SelectValue placeholder="Selecione o banco" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1a1a1a] border-white/20">
+                  {bancos.filter(b => b.ativo).map((b) => (
+                    <SelectItem key={b.id} value={b.id} className="text-white hover:bg-white/10">
+                      {b.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label className="text-white/80 text-sm">Observações</Label>
               <Textarea
                 value={observacoes}
@@ -405,7 +431,7 @@ export default function GastosPage() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={saving || !tipoCustoId || !valor || !responsavelId}
+              disabled={saving || !tipoCustoId || !valor || !responsavelId || !bancoId}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
