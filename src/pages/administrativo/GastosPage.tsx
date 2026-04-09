@@ -182,12 +182,39 @@ export default function GastosPage() {
         >
           <h1 className="text-xl font-semibold text-white">Gastos</h1>
           <div className="flex items-center gap-3">
-            <Input
-              type="month"
-              value={mesFiltro}
-              onChange={(e) => setMesFiltro(e.target.value)}
-              className="w-40 bg-white/5 border-white/20 text-white text-sm"
-            />
+            {/* Month Navigator */}
+            <div className="flex items-center gap-1 bg-white/5 border border-white/20 rounded-lg px-1 py-0.5">
+              <button
+                onClick={() => {
+                  const [y, m] = mesFiltro.split("-").map(Number);
+                  const prev = new Date(y, m - 2, 1);
+                  setMesFiltro(`${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`);
+                }}
+                className="p-1.5 rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <div className="flex items-center gap-1.5 px-2 min-w-[130px] justify-center">
+                <CalendarIcon className="w-3.5 h-3.5 text-blue-400" />
+                <span className="text-sm text-white font-medium capitalize">
+                  {(() => {
+                    const [y, m] = mesFiltro.split("-").map(Number);
+                    const d = new Date(y, m - 1, 1);
+                    return d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+                  })()}
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  const [y, m] = mesFiltro.split("-").map(Number);
+                  const next = new Date(y, m, 1);
+                  setMesFiltro(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`);
+                }}
+                className="p-1.5 rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
             <Button
               onClick={openCreate}
               className="bg-blue-600 hover:bg-blue-700 text-white text-sm gap-1.5"
