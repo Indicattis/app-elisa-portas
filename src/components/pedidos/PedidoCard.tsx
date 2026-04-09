@@ -19,6 +19,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { CriarPedidoCorrecaoModal } from "./CriarPedidoCorrecaoModal";
 import { EnviarCorrecaoModal } from "./EnviarCorrecaoModal";
 import { useEnviarParaCorrecao } from "@/hooks/useEnviarParaCorrecao";
@@ -2511,21 +2519,43 @@ className="flex h-[20px] w-full rounded-[3px]"
         isLoading={isExcluindo}
       />
 
-      <AlertDialog open={showFinalizarDireto} onOpenChange={setShowFinalizarDireto}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Finalizar pedido diretamente?</AlertDialogTitle>
-            <AlertDialogDescription>
-              O pedido será movido diretamente para a etapa "Finalizado", pulando todas as etapas intermediárias. Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isFinalizandoDireto}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
+      <Dialog open={showFinalizarDireto} onOpenChange={(open) => { if (!isFinalizandoDireto) setShowFinalizarDireto(open); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              Finalizar Pedido Diretamente
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3 pt-2">
+                <div className="rounded-lg bg-muted p-3 space-y-1.5">
+                  <p className="text-sm font-medium text-foreground">{pedido.venda?.cliente?.nome || 'Cliente'}</p>
+                  <p className="text-xs text-muted-foreground font-mono">{pedido.numero_pedido_mensal ? formatarNumeroPedidoMensal(pedido.numero_pedido_mensal) : pedido.id.slice(0, 8)}</p>
+                  <p className="text-xs text-muted-foreground">Etapa atual: <span className="font-medium text-foreground">{ETAPAS_CONFIG[pedido.etapa_atual as EtapaPedido]?.label || pedido.etapa_atual}</span></p>
+                </div>
+                <div className="text-sm text-muted-foreground space-y-1.5">
+                  <p>Ao confirmar, as seguintes ações serão realizadas:</p>
+                  <ul className="list-disc list-inside space-y-1 text-xs">
+                    <li>A etapa atual <span className="font-medium">"{ETAPAS_CONFIG[pedido.etapa_atual as EtapaPedido]?.label || pedido.etapa_atual}"</span> será encerrada</li>
+                    <li>Todas as etapas intermediárias serão <span className="font-medium">puladas</span></li>
+                    <li>O pedido será movido diretamente para <span className="font-medium text-emerald-600">"Finalizado"</span></li>
+                  </ul>
+                </div>
+                <p className="text-xs text-amber-600 font-medium flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  Esta ação não pode ser desfeita.
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowFinalizarDireto(false)} disabled={isFinalizandoDireto}>
+              Cancelar
+            </Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
               disabled={isFinalizandoDireto}
-              className="bg-emerald-600 hover:bg-emerald-700"
-              onClick={async (e) => {
-                e.preventDefault();
+              onClick={async () => {
                 if (!onFinalizarDireto) return;
                 setShowFinalizarDireto(false);
                 setIsFinalizandoDireto(true);
@@ -2536,10 +2566,10 @@ className="flex h-[20px] w-full rounded-[3px]"
                 }
               }}
             >
-              {isFinalizandoDireto ? 'Finalizando...' : 'Sim, finalizar'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              {isFinalizandoDireto ? 'Finalizando...' : 'Sim, Finalizar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>;
 }
