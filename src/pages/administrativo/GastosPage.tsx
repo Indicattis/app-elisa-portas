@@ -125,6 +125,7 @@ export default function GastosPage() {
       data,
       responsavel_id: responsavelId,
       banco_id: bancoId,
+      status: "pago",
       observacoes: observacoes || null,
     };
     const ok = editingGasto
