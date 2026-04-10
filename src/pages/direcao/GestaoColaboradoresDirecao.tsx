@@ -443,11 +443,6 @@ export default function GestaoColaboradoresDirecao() {
     queryClient.invalidateQueries({ queryKey: ['system-roles-active'] });
   };
 
-    } else {
-      toast.success('Colaborador desativado com sucesso');
-      queryClient.invalidateQueries({ queryKey: ['all-users'] });
-    }
-  };
 
   const handleDeleteRole = async () => {
     if (!roleToDelete) return;
