@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, Loader2, Plus, UserPlus, ArrowRightLeft, UserX, Trash2, FlaskConical, Pencil } from "lucide-react";
+import { Users, Loader2, Plus, UserPlus, ArrowRightLeft, Trash2, FlaskConical, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
