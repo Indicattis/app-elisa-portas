@@ -52,7 +52,6 @@ interface SortableRoleGroupProps {
   systemRoles: { id: string; key: string; label: string; setor: string | null; descricao: string | null; ativo: boolean; ordem: number }[];
   onEditRole: (role: any) => void;
   onDeleteRole: (roleKey: string) => void;
-  onDeactivateUser: (user: User) => void;
   onChangeUserRole: (user: User) => void;
   onCancelVaga: (vagaId: string) => void;
   onFillVaga: (vaga: Vaga) => void;
@@ -143,7 +142,7 @@ function InlineCustoEditor({ user, onSave }: { user: User; onSave: (userId: stri
   );
 }
 
-function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDeactivateUser, onChangeUserRole, onCancelVaga, onFillVaga, onUpdateCusto, onUserReorder }: SortableRoleGroupProps) {
+function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onChangeUserRole, onCancelVaga, onFillVaga, onUpdateCusto, onUserReorder }: SortableRoleGroupProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: group.role });
 
   const userDndSensors = useSensors(
@@ -267,13 +266,6 @@ function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onDea
                         >
                           <ArrowRightLeft className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => onDeactivateUser(user)}
-                          className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
-                          title="Desativar colaborador"
-                        >
-                          <UserMinus className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -317,8 +309,6 @@ export default function GestaoColaboradoresDirecao() {
   const { vagas, createVaga, updateVagaStatus } = useVagas();
   const queryClient = useQueryClient();
 
-  const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
-  const [deactivating, setDeactivating] = useState(false);
 
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   const [deletingRole, setDeletingRole] = useState(false);
@@ -453,17 +443,6 @@ export default function GestaoColaboradoresDirecao() {
     queryClient.invalidateQueries({ queryKey: ['system-roles-active'] });
   };
 
-  const handleDeactivate = async () => {
-    if (!userToDeactivate) return;
-    setDeactivating(true);
-    const { error } = await supabase
-      .from('admin_users')
-      .update({ ativo: false })
-      .eq('id', userToDeactivate.id);
-    setDeactivating(false);
-    setUserToDeactivate(null);
-    if (error) {
-      toast.error('Erro ao desativar colaborador');
     } else {
       toast.success('Colaborador desativado com sucesso');
       queryClient.invalidateQueries({ queryKey: ['all-users'] });
