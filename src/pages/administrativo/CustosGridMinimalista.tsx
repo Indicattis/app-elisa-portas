@@ -198,20 +198,22 @@ export default function CustosGridMinimalista() {
                   <TableHeader>
                     <TableRow className="border-white/10 hover:bg-white/5">
                       <TableHead className="text-white/70">Nome</TableHead>
-                      <TableHead className="text-white/70 text-right">Valor Máximo Mensal</TableHead>
-                      <TableHead className="text-white/70 text-center">Tipo</TableHead>
-                      <TableHead className="text-white/70 text-center">Status</TableHead>
-                      <TableHead className="text-white/70 text-right">Ações</TableHead>
+                       <TableHead className="text-white/70">Descrição</TableHead>
+                       <TableHead className="text-white/70 text-right">Valor Máximo Mensal</TableHead>
+                       <TableHead className="text-white/70 text-center">Tipo</TableHead>
+                       <TableHead className="text-white/70 text-center">Status</TableHead>
+                       <TableHead className="text-white/70 text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredTiposCustos.length === 0 ? (
-                      <TableRow><TableCell colSpan={5} className="text-center text-white/50 py-8">Nenhum tipo de custo encontrado</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={6} className="text-center text-white/50 py-8">Nenhum tipo de custo encontrado</TableCell></TableRow>
                     ) : (
                       filteredTiposCustos.map((tipo) => (
                         <TableRow key={tipo.id} className="border-white/10 hover:bg-white/5">
                           <TableCell className="font-medium text-white">{tipo.nome}</TableCell>
-                          <TableCell className="text-right font-medium text-white">{formatCurrency(tipo.valor_maximo_mensal)}</TableCell>
+                           <TableCell className="text-white/60 text-sm">{tipo.descricao || "—"}</TableCell>
+                           <TableCell className="text-right font-medium text-white">{formatCurrency(tipo.valor_maximo_mensal)}</TableCell>
                           <TableCell className="text-center"><Badge variant={tipo.tipo === 'fixa' ? 'default' : 'secondary'}>{tipo.tipo === 'fixa' ? 'Fixa' : 'Variável'}</Badge></TableCell>
                           <TableCell className="text-center"><Switch checked={tipo.ativo} onCheckedChange={() => toggleTipoCustoStatus(tipo)} /></TableCell>
                           <TableCell className="text-right">
