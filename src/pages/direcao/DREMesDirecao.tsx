@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Loader2, Plus, Trash2, X } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
-import { toast } from 'sonner';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 
 interface FaturamentoProduto {
@@ -17,178 +16,64 @@ interface FaturamentoProduto {
   total: number;
 }
 
-interface Despesa {
+interface DespesaAgrupada {
   id: string;
   nome: string;
   valor_real: number;
-  tipo_status: 'decretada' | 'em_teste';
 }
 
-interface NewDespesa {
+interface TipoCustoVariavel {
+  id: string;
   nome: string;
-  valor_real: string;
-  tipo_status: 'decretada' | 'em_teste';
+  valor_maximo_mensal: number;
 }
 
-const emptyNewDespesa: NewDespesa = { nome: '', valor_real: '', tipo_status: 'decretada' };
-
-function DespesaSection({
+function DespesaSectionReadOnly({
   title,
   despesas,
   total,
-  onAdd,
-  onToggleStatus,
-  onDelete,
   formatCurrency,
   tiposDisponiveis,
-  hideAddButton,
 }: {
   title: string;
-  despesas: Despesa[];
+  despesas: DespesaAgrupada[];
   total: number;
-  onAdd: (data: NewDespesa) => Promise<void>;
-  onToggleStatus: (id: string, current: string) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
   formatCurrency: (v: number) => string;
   tiposDisponiveis?: TipoCustoVariavel[];
-  hideAddButton?: boolean;
 }) {
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<NewDespesa>(emptyNewDespesa);
-  const [saving, setSaving] = useState(false);
-  const [selectedRef, setSelectedRef] = useState<number | null>(null);
-
-  const handleSelectTipo = (nome: string) => {
-    const tipo = tiposDisponiveis?.find(t => t.nome === nome);
-    setForm(f => ({ ...f, nome }));
-    setSelectedRef(tipo?.valor_maximo_mensal ?? null);
-  };
-
-  const handleSave = async () => {
-    if (!form.nome.trim() || !form.valor_real) return;
-    setSaving(true);
-    await onAdd(form);
-    setForm(emptyNewDespesa);
-    setSelectedRef(null);
-    setShowForm(false);
-    setSaving(false);
-  };
-
   return (
     <div className="rounded-xl bg-white/5 border border-white/10 p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-white/70 uppercase">{title}</h3>
-        {!hideAddButton && (
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="p-1 rounded-md hover:bg-white/10 text-white/40 hover:text-white/80 transition-colors"
-          >
-            {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-          </button>
-        )}
       </div>
 
-      {showForm && (
-        <div className="mb-3 p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
-          <div className="flex gap-2">
-            {tiposDisponiveis ? (
-              <select
-                value={form.nome}
-                onChange={e => handleSelectTipo(e.target.value)}
-                className="flex-1 bg-white/5 border border-white/10 rounded-md px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/20"
-              >
-                <option value="" className="bg-zinc-900">Selecione...</option>
-                {tiposDisponiveis.map(t => (
-                  <option key={t.id} value={t.nome} className="bg-zinc-900">
-                    {t.nome}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                placeholder="Nome"
-                value={form.nome}
-                onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
-                className="flex-1 bg-white/5 border border-white/10 rounded-md px-2 py-1.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20"
-              />
-            )}
-            <input
-              placeholder="Valor"
-              type="number"
-              step="0.01"
-              value={form.valor_real}
-              onChange={e => setForm(f => ({ ...f, valor_real: e.target.value }))}
-              className="w-28 bg-white/5 border border-white/10 rounded-md px-2 py-1.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20"
-            />
-          </div>
-          {selectedRef !== null && (
-            <p className="text-xs text-white/40">
-              Despesa projetada: {formatCurrency(selectedRef)}/mês
-            </p>
-          )}
-          <div className="flex items-center gap-2">
-            <select
-              value={form.tipo_status}
-              onChange={e => setForm(f => ({ ...f, tipo_status: e.target.value as any }))}
-              className="bg-white/5 border border-white/10 rounded-md px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/20"
-            >
-              <option value="decretada">Decretada</option>
-              <option value="em_teste">Em teste</option>
-            </select>
-            <button
-              onClick={handleSave}
-              disabled={saving || !form.nome.trim() || !form.valor_real}
-              className="px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-sm text-white disabled:opacity-40 transition-colors"
-            >
-              {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Salvar'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {despesas.length === 0 && !showForm ? (
+      {despesas.length === 0 ? (
         <p className="text-white/30 text-sm">Nenhuma despesa registrada</p>
       ) : (
         <table className="w-full">
           <thead>
             <tr className="h-[24px]">
-              <th className="w-8 text-left text-[10px] uppercase tracking-wider text-white/40 font-medium"></th>
               <th className="text-left text-[10px] uppercase tracking-wider text-white/40 font-medium">Nome</th>
-              <th className="text-right text-[10px] uppercase tracking-wider text-white/40 font-medium w-28">Despesa real</th>
+              <th className="text-right text-[10px] uppercase tracking-wider text-white/40 font-medium w-28">Valor real</th>
               {tiposDisponiveis && tiposDisponiveis.length > 0 && (
                 <th className="text-right text-[10px] uppercase tracking-wider text-white/40 font-medium w-28">Projetado</th>
               )}
-              <th className="w-8"></th>
             </tr>
           </thead>
           <tbody>
             {despesas.map(d => {
               const tipoRef = tiposDisponiveis?.find(t => t.nome === d.nome);
               return (
-                <tr key={d.id} className="h-[30px] border-b border-white/5 last:border-0 group">
-                  <td className="align-middle">
-                    <button
-                      onClick={() => onToggleStatus(d.id, d.tipo_status)}
-                      title={d.tipo_status === 'decretada' ? 'Decretada' : 'Em teste'}
-                    >
-                      <span className={`block w-2 h-2 rounded-full ${d.tipo_status === 'decretada' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-                    </button>
-                  </td>
+                <tr key={d.id} className="h-[30px] border-b border-white/5 last:border-0">
                   <td className="align-middle text-xs text-white/60">{d.nome}</td>
-                  <td className={`align-middle text-right text-xs font-medium ${tipoRef ? (d.valor_real > tipoRef.valor_maximo_mensal ? 'text-red-400' : d.valor_real < tipoRef.valor_maximo_mensal ? 'text-emerald-400' : 'text-white') : 'text-white'}`}>{formatCurrency(d.valor_real)}</td>
+                  <td className={`align-middle text-right text-xs font-medium ${tipoRef ? (d.valor_real > tipoRef.valor_maximo_mensal ? 'text-red-400' : d.valor_real < tipoRef.valor_maximo_mensal ? 'text-emerald-400' : 'text-white') : 'text-white'}`}>
+                    {formatCurrency(d.valor_real)}
+                  </td>
                   {tiposDisponiveis && tiposDisponiveis.length > 0 && (
                     <td className="align-middle text-right text-xs text-white/40">
                       {tipoRef ? formatCurrency(tipoRef.valor_maximo_mensal) : '—'}
                     </td>
                   )}
-                  <td className="align-middle text-right">
-                    <button
-                      onClick={() => onDelete(d.id)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-white/10 text-white/30 hover:text-red-400 transition-all"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </td>
                 </tr>
               );
             })}
@@ -196,7 +81,6 @@ function DespesaSection({
           {despesas.length > 0 && (
             <tfoot>
               <tr className="h-[30px] border-t border-white/10">
-                <td></td>
                 <td className="text-xs font-semibold text-white/80">Total</td>
                 <td className="text-right text-xs font-bold text-white">{formatCurrency(total)}</td>
                 {tiposDisponiveis && tiposDisponiveis.length > 0 && (
@@ -204,7 +88,6 @@ function DespesaSection({
                     {formatCurrency(tiposDisponiveis.reduce((s, t) => s + t.valor_maximo_mensal, 0))}
                   </td>
                 )}
-                <td></td>
               </tr>
             </tfoot>
           )}
@@ -214,21 +97,14 @@ function DespesaSection({
   );
 }
 
-interface TipoCustoVariavel {
-  id: string;
-  nome: string;
-  valor_maximo_mensal: number;
-}
-
 export default function DREMesDirecao() {
   const { mes } = useParams<{ mes: string }>();
   const [loading, setLoading] = useState(true);
   const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 });
   const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 });
-  const [despesasFixas, setDespesasFixas] = useState<Despesa[]>([]);
-  const [despesasFolha, setDespesasFolha] = useState<Despesa[]>([]);
-  const [despesasProjetadas, setDespesasProjetadas] = useState<Despesa[]>([]);
-  const [despesasNaoEsperadas, setDespesasNaoEsperadas] = useState<Despesa[]>([]);
+  const [despesasFixas, setDespesasFixas] = useState<DespesaAgrupada[]>([]);
+  const [despesasFolha, setDespesasFolha] = useState<DespesaAgrupada[]>([]);
+  const [despesasVariaveis, setDespesasVariaveis] = useState<DespesaAgrupada[]>([]);
   const [tiposCustosFixos, setTiposCustosFixos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosVariaveis, setTiposCustosVariaveis] = useState<TipoCustoVariavel[]>([]);
   const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
@@ -238,31 +114,64 @@ export default function DREMesDirecao() {
   const mesDate = mes ? new Date(mes + '-15') : new Date();
   const mesNome = format(mesDate, 'MMMM yyyy', { locale: ptBR });
 
-  const mapDespesa = (d: any): Despesa => ({
-    id: d.id,
-    nome: d.nome,
-    valor_real: d.valor_real,
-    tipo_status: d.tipo_status || 'decretada',
-  });
-
-  const fetchDespesas = async () => {
+  const fetchDespesasFromGastos = async () => {
     if (!mes) return;
-    const { data, error } = await supabase
-      .from('despesas_mensais')
-      .select('id, nome, valor_real, modalidade, tipo_status')
-      .eq('mes', mes + '-01')
-      .order('nome');
+    const start = `${mes}-01`;
+    const [y, m] = mes.split('-').map(Number);
+    const end = new Date(y, m, 0).toISOString().split('T')[0];
+
+    // Fetch gastos do mês
+    const { data: gastos, error } = await supabase
+      .from('gastos' as any)
+      .select('valor, tipo_custo_id')
+      .gte('data', start)
+      .lte('data', end);
 
     if (error) {
-      console.error('Erro ao buscar despesas:', error);
+      console.error('Erro ao buscar gastos:', error);
       return;
     }
 
-    const all = data || [];
-    setDespesasFixas(all.filter((d: any) => d.modalidade === 'fixa').map(mapDespesa));
-    setDespesasFolha(all.filter((d: any) => d.modalidade === 'folha_salarial').map(mapDespesa));
-    setDespesasProjetadas(all.filter((d: any) => d.modalidade === 'projetada').map(mapDespesa));
-    setDespesasNaoEsperadas(all.filter((d: any) => d.modalidade === 'variavel_nao_esperada').map(mapDespesa));
+    // Fetch tipos_custos que aparecem no DRE
+    const { data: tipos, error: tiposError } = await supabase
+      .from('tipos_custos' as any)
+      .select('id, nome, tipo, aparece_no_dre')
+      .eq('aparece_no_dre', true);
+
+    if (tiposError) {
+      console.error('Erro ao buscar tipos custos:', tiposError);
+      return;
+    }
+
+    const tiposMap: Record<string, { nome: string; tipo: string }> = {};
+    ((tipos || []) as any[]).forEach((t: any) => {
+      tiposMap[t.id] = { nome: t.nome, tipo: t.tipo };
+    });
+
+    // Agrupar gastos por tipo_custo_id
+    const agrupado: Record<string, { nome: string; tipo: string; valor: number }> = {};
+    ((gastos || []) as any[]).forEach((g: any) => {
+      const tipo = tiposMap[g.tipo_custo_id];
+      if (!tipo) return;
+      if (!agrupado[g.tipo_custo_id]) {
+        agrupado[g.tipo_custo_id] = { nome: tipo.nome, tipo: tipo.tipo, valor: 0 };
+      }
+      agrupado[g.tipo_custo_id].valor += g.valor || 0;
+    });
+
+    const items = Object.entries(agrupado).map(([id, v]) => ({
+      id,
+      nome: v.nome,
+      valor_real: v.valor,
+      tipo: v.tipo,
+    }));
+
+    // Separar por tipo — "Salário" ou "Folha" vai para folha salarial
+    const isFolha = (nome: string) => /sal[áa]rio|folha/i.test(nome);
+
+    setDespesasFixas(items.filter(i => i.tipo === 'fixa' && !isFolha(i.nome)));
+    setDespesasFolha(items.filter(i => isFolha(i.nome)));
+    setDespesasVariaveis(items.filter(i => i.tipo === 'variavel' && !isFolha(i.nome)));
   };
 
   const fetchTiposCustosAtivos = async () => {
@@ -279,47 +188,6 @@ export default function DREMesDirecao() {
     const all = (data || []) as unknown as (TipoCustoVariavel & { tipo: string })[];
     setTiposCustosFixos(all.filter(t => t.tipo === 'fixa'));
     setTiposCustosVariaveis(all.filter(t => t.tipo === 'variavel'));
-  };
-
-  const handleAddDespesa = async (modalidade: string, data: NewDespesa) => {
-    const userId = (await supabase.auth.getUser()).data.user?.id || '';
-    const { error } = await supabase.from('despesas_mensais').insert([{
-      mes: mes + '-01',
-      nome: data.nome,
-      categoria: 'geral',
-      modalidade,
-      valor_esperado: parseFloat(data.valor_real) || 0,
-      valor_real: parseFloat(data.valor_real) || 0,
-      tipo_status: data.tipo_status,
-      created_by: userId,
-    }]);
-    if (error) {
-      toast.error('Erro ao salvar despesa');
-      console.error(error);
-    } else {
-      toast.success('Despesa adicionada!');
-      await fetchDespesas();
-    }
-  };
-
-  const handleToggleStatus = async (id: string, current: string) => {
-    const newStatus = current === 'decretada' ? 'em_teste' : 'decretada';
-    const { error } = await supabase.from('despesas_mensais').update({ tipo_status: newStatus }).eq('id', id);
-    if (error) {
-      toast.error('Erro ao atualizar status');
-    } else {
-      await fetchDespesas();
-    }
-  };
-
-  const handleDeleteDespesa = async (id: string) => {
-    const { error } = await supabase.from('despesas_mensais').delete().eq('id', id);
-    if (error) {
-      toast.error('Erro ao excluir despesa');
-    } else {
-      toast.success('Despesa excluída!');
-      await fetchDespesas();
-    }
   };
 
   useEffect(() => {
@@ -362,30 +230,27 @@ export default function DREMesDirecao() {
           const valorTotal = p.valor_total_sem_frete || 0;
 
           if (['porta_enrolar', 'porta_social'].includes(tipo)) {
-            // Calcular valor base da porta SEM pintura e instalação
             const qty = p.quantidade || 1;
             const valorProdutoBase = (p.valor_produto || 0) * qty;
             const valorPinturaBase = (p.valor_pintura || 0) * qty;
             const valorInstalacaoBase = (p.valor_instalacao || 0) * qty;
             const valorBrutoTotal = valorProdutoBase + valorPinturaBase + valorInstalacaoBase;
-            
-            // Calcular desconto proporcional
+
             let descontoTotal = 0;
             if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
               descontoTotal = valorBrutoTotal * (p.desconto_percentual / 100);
             } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
               descontoTotal = p.desconto_valor;
             }
-            
-            // Proporção do desconto para cada componente
+
             const proporcaoProduto = valorBrutoTotal > 0 ? valorProdutoBase / valorBrutoTotal : 1;
             const proporcaoPintura = valorBrutoTotal > 0 ? valorPinturaBase / valorBrutoTotal : 0;
             const proporcaoInstalacao = valorBrutoTotal > 0 ? valorInstalacaoBase / valorBrutoTotal : 0;
-            
+
             const valorPortaLiquido = valorProdutoBase - (descontoTotal * proporcaoProduto);
             const valorPinturaLiquido = valorPinturaBase - (descontoTotal * proporcaoPintura);
             const valorInstalacaoLiquido = valorInstalacaoBase - (descontoTotal * proporcaoInstalacao);
-            
+
             fat.portas += valorPortaLiquido;
             fat.pintura += valorPinturaLiquido;
             fat.instalacoes += valorInstalacaoLiquido;
@@ -409,8 +274,7 @@ export default function DREMesDirecao() {
           .lte('data_venda', end + ' 23:59:59');
 
         const totalCredito = vendas?.reduce((sum, v) => sum + ((v as any).valor_credito || 0), 0) || 0;
-        
-        // Lucro de instalações = 30% sobre o faturamento líquido de instalações (mesma base)
+
         luc.instalacoes = fat.instalacoes * 0.30;
 
         fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.acessorios + fat.adicionais + totalCredito;
@@ -457,7 +321,7 @@ export default function DREMesDirecao() {
           setEstoqueResumo(resumo);
         };
 
-        await Promise.all([fetchDespesas(), fetchTiposCustosAtivos(), fetchEstoque()]);
+        await Promise.all([fetchDespesasFromGastos(), fetchTiposCustosAtivos(), fetchEstoque()]);
       } catch (err) {
         console.error('Erro ao buscar dados DRE:', err);
       } finally {
@@ -482,8 +346,7 @@ export default function DREMesDirecao() {
 
   const totalDespFixas = despesasFixas.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalDespFolha = despesasFolha.reduce((acc, d) => acc + (d.valor_real || 0), 0);
-  const totalDespProjetadas = despesasProjetadas.reduce((acc, d) => acc + (d.valor_real || 0), 0);
-  const totalDespNaoEsperadas = despesasNaoEsperadas.reduce((acc, d) => acc + (d.valor_real || 0), 0);
+  const totalDespVariaveis = despesasVariaveis.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalProjetadoAnual = tiposCustosVariaveis.reduce((acc, t) => acc + (t.valor_maximo_mensal * 12), 0);
 
   return (
@@ -588,37 +451,27 @@ export default function DREMesDirecao() {
             </div>
           </div>
 
-          {/* Despesas: 4 seções + painel lateral */}
+          {/* Despesas: 3 seções + painel lateral */}
           <div className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-4">
-            {/* Coluna esquerda: 4 seções empilhadas */}
+            {/* Coluna esquerda: 3 seções empilhadas */}
             <div className="space-y-4">
-              <DespesaSection
+              <DespesaSectionReadOnly
                 title="Despesas Fixas"
                 despesas={despesasFixas}
                 total={totalDespFixas}
-                onAdd={(data) => handleAddDespesa('fixa', data)}
-                onToggleStatus={handleToggleStatus}
-                onDelete={handleDeleteDespesa}
                 formatCurrency={formatCurrency}
                 tiposDisponiveis={tiposCustosFixos}
               />
-              <DespesaSection
+              <DespesaSectionReadOnly
                 title="Folha Salarial"
                 despesas={despesasFolha}
                 total={totalDespFolha}
-                onAdd={(data) => handleAddDespesa('folha_salarial', data)}
-                onToggleStatus={handleToggleStatus}
-                onDelete={handleDeleteDespesa}
                 formatCurrency={formatCurrency}
-                hideAddButton={true}
               />
-              <DespesaSection
+              <DespesaSectionReadOnly
                 title="Despesas Variáveis"
-                despesas={[...despesasProjetadas, ...despesasNaoEsperadas]}
-                total={totalDespProjetadas + totalDespNaoEsperadas}
-                onAdd={(data) => handleAddDespesa('variavel_nao_esperada', data)}
-                onToggleStatus={handleToggleStatus}
-                onDelete={handleDeleteDespesa}
+                despesas={despesasVariaveis}
+                total={totalDespVariaveis}
                 formatCurrency={formatCurrency}
                 tiposDisponiveis={tiposCustosVariaveis}
               />
@@ -639,7 +492,7 @@ export default function DREMesDirecao() {
                     <span className="text-xs text-white/40 uppercase w-24 text-right">Anual</span>
                   </div>
                   {tiposCustosVariaveis.map(t => {
-                    const despMes = despesasProjetadas.find(d => d.nome === t.nome);
+                    const despMes = despesasVariaveis.find(d => d.nome === t.nome);
                     const valorMes = despMes?.valor_real || 0;
                     return (
                       <div key={t.id} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
@@ -656,7 +509,7 @@ export default function DREMesDirecao() {
                   <div className="flex items-center justify-between pt-2 border-t border-white/10">
                     <span className="text-sm font-semibold text-white/80 flex-1">Total</span>
                     <span className="text-sm font-bold text-white/70 w-24 text-right">
-                      {formatCurrency(totalDespProjetadas)}
+                      {formatCurrency(totalDespVariaveis)}
                     </span>
                     <span className="text-sm font-bold text-white w-24 text-right">
                       {formatCurrency(totalProjetadoAnual)}
@@ -684,7 +537,7 @@ export default function DREMesDirecao() {
 
           {/* Resumo Final */}
           {(() => {
-            const lucroLiquido = lucro.total - totalDespFixas - totalDespFolha - totalDespProjetadas - totalDespNaoEsperadas;
+            const lucroLiquido = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis;
             const percBruto = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
             const percLiquid = faturamento.total > 0 ? (lucroLiquido / faturamento.total) * 100 : 0;
             const colorClass = (v: number) => v >= 0 ? 'text-emerald-400' : 'text-red-400';
@@ -695,7 +548,7 @@ export default function DREMesDirecao() {
               { label: 'Fat. Líquido (Lucro Bruto)', value: formatCurrency(lucro.total), color: colorClass(lucro.total) },
               { label: 'Despesas Fixas', value: formatCurrency(totalDespFixas), color: 'text-red-400' },
               { label: 'Folha Salarial', value: formatCurrency(totalDespFolha), color: 'text-red-400' },
-              { label: 'Desp. Variáveis', value: formatCurrency(totalDespProjetadas + totalDespNaoEsperadas), color: 'text-red-400' },
+              { label: 'Desp. Variáveis', value: formatCurrency(totalDespVariaveis), color: 'text-red-400' },
               { label: 'Lucro Líquido', value: formatCurrency(lucroLiquido), color: colorClass(lucroLiquido) },
               { label: '% Lucro Líquido', value: `${percLiquid.toFixed(1)}%`, color: colorClass(percLiquid) },
             ];
