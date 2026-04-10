@@ -384,6 +384,11 @@ export default function GastosPage() {
                 Limpar filtros
               </Button>
             ) : null}
+            <div className="ml-auto flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
+              <span className="text-xs text-white/50">Total:</span>
+              <span className="text-sm font-bold text-white">{formatCurrency(totalGastos)}</span>
+              <span className="text-xs text-white/40">({gastosFiltrados.length} {gastosFiltrados.length === 1 ? 'registro' : 'registros'})</span>
+            </div>
           </div>
         </div>
 
