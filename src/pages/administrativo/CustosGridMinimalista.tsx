@@ -214,7 +214,40 @@ export default function CustosGridMinimalista() {
                       filteredTiposCustos.map((tipo) => (
                         <TableRow key={tipo.id} className="border-white/10 hover:bg-white/5">
                           <TableCell className="font-medium text-white">{tipo.nome}</TableCell>
-                           <TableCell className="text-white/60 text-sm">{tipo.descricao || "—"}</TableCell>
+                           <TableCell className="text-white/60 text-sm">
+                             {inlineEditId === tipo.id ? (
+                               <input
+                                 autoFocus
+                                 value={inlineEditValue}
+                                 onChange={(e) => setInlineEditValue(e.target.value)}
+                                 onBlur={async () => {
+                                   if (inlineEditValue !== (tipo.descricao || "")) {
+                                     await updateTipoCusto(tipo.id, { descricao: inlineEditValue || null });
+                                   }
+                                   setInlineEditId(null);
+                                 }}
+                                 onKeyDown={async (e) => {
+                                   if (e.key === 'Enter') {
+                                     if (inlineEditValue !== (tipo.descricao || "")) {
+                                       await updateTipoCusto(tipo.id, { descricao: inlineEditValue || null });
+                                     }
+                                     setInlineEditId(null);
+                                   } else if (e.key === 'Escape') {
+                                     setInlineEditId(null);
+                                   }
+                                 }}
+                                 className="w-full bg-white/5 border border-white/20 rounded px-2 py-1 text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30"
+                               />
+                             ) : (
+                               <span
+                                 onClick={() => { setInlineEditId(tipo.id); setInlineEditValue(tipo.descricao || ""); }}
+                                 className="cursor-pointer hover:text-white/80 transition-colors"
+                                 title="Clique para editar"
+                               >
+                                 {tipo.descricao || "—"}
+                               </span>
+                             )}
+                           </TableCell>
                            <TableCell className="text-right font-medium text-white">{formatCurrency(tipo.valor_maximo_mensal)}</TableCell>
                           <TableCell className="text-center"><Badge variant={tipo.tipo === 'fixa' ? 'default' : 'secondary'}>{tipo.tipo === 'fixa' ? 'Fixa' : 'Variável'}</Badge></TableCell>
                           <TableCell className="text-center"><Switch checked={tipo.ativo} onCheckedChange={() => toggleTipoCustoStatus(tipo)} /></TableCell>
