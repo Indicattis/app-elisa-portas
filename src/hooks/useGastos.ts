@@ -32,7 +32,7 @@ export const useGastos = (mesFiltro?: string) => {
     let query = supabase
       .from("gastos" as any)
       .select("*")
-      .order("data", { ascending: false });
+      .order("created_at", { ascending: false });
 
     if (mesFiltro) {
       const start = `${mesFiltro}-01`;
