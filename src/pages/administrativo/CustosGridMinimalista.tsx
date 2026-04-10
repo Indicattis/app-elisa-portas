@@ -43,6 +43,8 @@ export default function CustosGridMinimalista() {
   const [tipoCustoDialog, setTipoCustoDialog] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{ type: string; id: string } | null>(null);
   const [editingTipoCusto, setEditingTipoCusto] = useState<TipoCusto | null>(null);
+  const [inlineEditId, setInlineEditId] = useState<string | null>(null);
+  const [inlineEditValue, setInlineEditValue] = useState("");
 
   const [tipoCustoForm, setTipoCustoForm] = useState({
     nome: "", descricao: "", valor_maximo_mensal: 0, tipo: "fixa" as 'fixa' | 'variavel', aparece_no_dre: true,
