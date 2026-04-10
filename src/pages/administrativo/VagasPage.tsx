@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, Loader2, Plus, UserPlus, ArrowRightLeft, UserX, Trash2, FlaskConical, Pencil } from "lucide-react";
+import { Users, Loader2, Plus, UserPlus, ArrowRightLeft, Trash2, FlaskConical, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
@@ -33,7 +33,7 @@ export default function VagasPage() {
   const [transferUser, setTransferUser] = useState<User | null>(null);
   const [newRole, setNewRole] = useState("");
   const [transferring, setTransferring] = useState(false);
-  const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
+  
   const [vagaToDelete, setVagaToDelete] = useState<Vaga | null>(null);
   const [criarVagaOpen, setCriarVagaOpen] = useState(false);
   const [novaVagaCargo, setNovaVagaCargo] = useState("");
@@ -325,13 +325,6 @@ export default function VagasPage() {
                               <p className="text-xs text-white/40 truncate">{user.email}</p>
                             </div>
                             <button
-                              onClick={() => setUserToDeactivate(user)}
-                              className="opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400"
-                              title="Desativar colaborador"
-                            >
-                              <UserX className="w-3.5 h-3.5" />
-                            </button>
-                            <button
                               onClick={() => handleOpenTransfer(user)}
                               className="opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white/80"
                               title="Transferir função"
@@ -416,13 +409,6 @@ export default function VagasPage() {
                               {(systemRoles || []).find(r => r.key === user.role)?.label || ROLE_LABELS[user.role] || user.role}
                             </p>
                           </div>
-                          <button
-                            onClick={() => setUserToDeactivate(user)}
-                            className="opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400"
-                            title="Desativar colaborador"
-                          >
-                            <UserX className="w-3.5 h-3.5" />
-                          </button>
                           <button
                             onClick={() => handleOpenTransfer(user)}
                             className="opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white/80"
@@ -563,40 +549,6 @@ export default function VagasPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Deactivate User Alert */}
-      <AlertDialog open={!!userToDeactivate} onOpenChange={(open) => !open && setUserToDeactivate(null)}>
-        <AlertDialogContent className="bg-[#1a1a2e] border-white/10 text-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Desativar colaborador</AlertDialogTitle>
-            <AlertDialogDescription className="text-white/60">
-              Deseja realmente desativar <span className="font-semibold text-white/80">{userToDeactivate?.nome}</span>? O colaborador perderá acesso ao sistema.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white">Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700 text-white"
-              onClick={async () => {
-                if (!userToDeactivate) return;
-                try {
-                  const { error } = await supabase
-                    .from("admin_users")
-                    .update({ ativo: false })
-                    .eq("id", userToDeactivate.id);
-                  if (error) throw error;
-                  toast.success(`${userToDeactivate.nome} foi desativado`);
-                  queryClient.invalidateQueries({ queryKey: ["all-users"] });
-                } catch {
-                  toast.error("Erro ao desativar colaborador");
-                }
-                setUserToDeactivate(null);
-              }}
-            >
-              Desativar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Delete Vaga Alert */}
       <AlertDialog open={!!vagaToDelete} onOpenChange={(open) => !open && setVagaToDelete(null)}>
