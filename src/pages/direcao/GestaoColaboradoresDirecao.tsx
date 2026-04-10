@@ -702,7 +702,7 @@ export default function GestaoColaboradoresDirecao() {
                        systemRoles={systemRoles || []}
                        onEditRole={setEditingRole}
                        onDeleteRole={setRoleToDelete}
-                       onDeactivateUser={setUserToDeactivate}
+                       
                        onChangeUserRole={(user) => { setUserToChangeRole(user); setNewRole(user.role); }}
                        onCancelVaga={handleCancelVaga}
                        onFillVaga={(vaga) => { setVagaToFill(vaga); setPreencherVagaEmTeste(false); setPreencherVagaOpen(true); }}
@@ -765,13 +765,6 @@ export default function GestaoColaboradoresDirecao() {
                            >
                              <ArrowRightLeft className="w-4 h-4" />
                            </button>
-                           <button
-                             onClick={() => setUserToDeactivate(user)}
-                             className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
-                             title="Desativar colaborador"
-                           >
-                             <UserMinus className="w-4 h-4" />
-                           </button>
                          </div>
                        </div>
                      </div>
@@ -784,27 +777,6 @@ export default function GestaoColaboradoresDirecao() {
         </div>
       </div>
 
-      {/* Deactivate user confirmation */}
-      <AlertDialog open={!!userToDeactivate} onOpenChange={open => !open && setUserToDeactivate(null)}>
-        <AlertDialogContent className="bg-[#1a1a2e] border-white/10 text-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Desativar colaborador</AlertDialogTitle>
-            <AlertDialogDescription className="text-white/60">
-              Tem certeza que deseja desativar <strong className="text-white">{userToDeactivate?.nome}</strong>? O acesso será bloqueado imediatamente.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeactivate}
-              disabled={deactivating}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {deactivating ? 'Desativando...' : 'Desativar'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Delete role confirmation */}
       <AlertDialog open={!!roleToDelete} onOpenChange={open => !open && setRoleToDelete(null)}>
