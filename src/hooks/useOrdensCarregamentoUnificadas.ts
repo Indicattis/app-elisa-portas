@@ -591,7 +591,7 @@ export const useOrdensCarregamentoUnificadas = () => {
       if (variables.ordem.fonte === 'ordens_carregamento') {
         toast.success("Carregamento concluído! Pedido finalizado.");
       } else if (variables.ordem.fonte === 'correcoes') {
-        toast.success("Carregamento da correção concluído! Pedido finalizado.");
+        toast.success("Carregamento da correção concluído! Aguardando conclusão da correção.");
       } else {
         toast.success("Carregamento concluído! Aguardando finalização da instalação.");
       }
