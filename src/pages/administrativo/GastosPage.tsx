@@ -62,6 +62,18 @@ export default function GastosPage() {
   const [bancoId, setBancoId] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showSugestoes, setShowSugestoes] = useState(false);
+
+  const descricoesUnicas = useMemo(() => {
+    return Array.from(new Set(gastos.map((g) => g.descricao).filter(Boolean))) as string[];
+  }, [gastos]);
+
+  const sugestoesFiltradas = useMemo(() => {
+    if (descricao.length < 1) return [];
+    return descricoesUnicas
+      .filter((s) => s.toLowerCase().includes(descricao.toLowerCase()) && s.toLowerCase() !== descricao.toLowerCase())
+      .slice(0, 5);
+  }, [descricao, descricoesUnicas]);
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 100);
@@ -518,14 +530,38 @@ export default function GastosPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="relative">
               <Label className="text-white/80 text-sm">Descrição</Label>
               <Input
                 value={descricao}
-                onChange={(e) => setDescricao(e.target.value)}
+                onChange={(e) => {
+                  setDescricao(e.target.value);
+                  setShowSugestoes(true);
+                }}
+                onFocus={() => setShowSugestoes(true)}
+                onBlur={() => setTimeout(() => setShowSugestoes(false), 150)}
                 placeholder="Descrição do gasto"
                 className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
+                autoComplete="off"
               />
+              {showSugestoes && sugestoesFiltradas.length > 0 && (
+                <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[#1a1a1a] border border-white/20 rounded-md overflow-hidden shadow-lg">
+                  {sugestoesFiltradas.map((s, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setDescricao(s);
+                        setShowSugestoes(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-white/80 hover:bg-white/10 transition-colors"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
