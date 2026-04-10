@@ -1,42 +1,27 @@
 
-## Plano: Corrigir função `retornar_pedido_para_producao` para registrar movimentação no histórico
 
-### Diagnóstico
+## Plano: Avançar pedidos #0298 e #0309 para Instalações
 
-O pedido `08e4eddf` mostra duas movimentações `em_producao → inspecao_qualidade` sem um retrocesso entre elas. A causa:
+### Contexto
+Ambos os pedidos estão em `inspecao_qualidade` mas deveriam estar em `instalacoes`. Cada um possui uma ordem de qualidade pendente (`status: pendente`) que nunca foi concluída. O fluxo correto para ambos (que têm pintura e tipo_entrega=instalação) é: `inspecao_qualidade → aguardando_pintura → embalagem → instalacoes`.
 
-1. **08/04 17:12** — Pedido avançou para `inspecao_qualidade` (registrado corretamente via `moverParaProximaEtapa`)
-2. **08/04 19:35** — Pedido retornou para `em_producao` via função SQL `retornar_pedido_para_producao` (chamada pelo modal "Retornar para Produção" na tela de Qualidade). **Essa função NÃO insere na tabela `pedidos_movimentacoes`** — apenas faz UPSERT em `pedidos_etapas` e UPDATE em `pedidos_producao`.
-3. **10/04 19:33** — Pedido avançou novamente para `inspecao_qualidade` (registrado corretamente)
+### O que será feito
 
-Resultado: o histórico mostra 2 avanços sem retrocesso no meio.
+**Migration SQL** que, para cada pedido (#0298 e #0309):
 
-A função `retroceder_pedido_unificado` registra a movimentação corretamente (linha 166 da migration). Mas `retornar_pedido_para_producao` não tem esse INSERT.
+1. Concluir a ordem de qualidade pendente (`ordens_qualidade`) marcando `status = 'concluido'`, `historico = true`
+2. Fechar a etapa atual em `pedidos_etapas` (setar `data_saida`)
+3. Criar/reativar registros de etapas intermediárias (`aguardando_pintura`, `embalagem`) com `data_entrada` e `data_saida` preenchidos (passagem instantânea)
+4. Criar/reativar registro da etapa `instalacoes` com `data_entrada` e sem `data_saida`
+5. Atualizar `pedidos_producao.etapa_atual = 'instalacoes'`
+6. Registrar movimentações em `pedidos_movimentacoes` para cada transição (inspecao_qualidade → aguardando_pintura → embalagem → instalacoes)
+7. Criar registro na tabela `instalacoes` (já que ambos não possuem) com os dados do pedido/venda
 
-### Correção
+### Detalhes técnicos
+- IDs dos pedidos: `4a7e6af8-7d58-4ccf-8fc7-5441cf5098a2` (#0298) e `08e4eddf-ca28-40c8-9b86-150db8fdf18b` (#0309)
+- Usar UPSERT (`ON CONFLICT`) em `pedidos_etapas` para respeitar a constraint unique `(pedido_id, etapa)`
+- As ordens de pintura e embalagem não serão criadas (apenas o registro de passagem pela etapa)
 
-**Migration SQL** — Adicionar `INSERT INTO pedidos_movimentacoes` na função `retornar_pedido_para_producao` (overload jsonb), logo antes do fechamento de etapa:
+### Arquivo
+- Nova migration SQL
 
-```sql
-INSERT INTO pedidos_movimentacoes (pedido_id, etapa_origem, etapa_destino, user_id, teor, descricao)
-VALUES (p_pedido_id, 'inspecao_qualidade', 'em_producao', p_user_id, 'backlog', p_motivo);
-```
-
-Para ser mais robusto, buscar a `etapa_atual` do pedido antes de inserir (em vez de hardcodar `inspecao_qualidade`):
-
-```sql
-DECLARE
-  v_etapa_atual TEXT;
-BEGIN
-  SELECT etapa_atual INTO v_etapa_atual FROM pedidos_producao WHERE id = p_pedido_id;
-  
-  -- ... código existente ...
-  
-  INSERT INTO pedidos_movimentacoes (pedido_id, etapa_origem, etapa_destino, user_id, teor, descricao)
-  VALUES (p_pedido_id, v_etapa_atual, 'em_producao', p_user_id, 'backlog', p_motivo);
-```
-
-Também corrigir o overload com `text[]` (primeira versão da função) da mesma forma.
-
-### Arquivo alterado
-- Migration SQL para recriar `retornar_pedido_para_producao` com registro de movimentação
