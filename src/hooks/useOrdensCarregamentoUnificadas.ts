@@ -562,25 +562,8 @@ export const useOrdensCarregamentoUnificadas = () => {
           .eq("id", ordem.id);
         if (updateError) throw updateError;
 
-        // Avançar pedido para finalizado
-        if (ordem.pedido_id) {
-          const { error: pedidoError } = await supabase
-            .from("pedidos_producao")
-            .update({ etapa_atual: 'finalizado', updated_at: new Date().toISOString() })
-            .eq("id", ordem.pedido_id);
-          if (pedidoError) throw pedidoError;
-
-          // Registrar movimentação via RPC se disponível
-          try {
-            await supabase.rpc('registrar_movimentacao_pedido' as any, {
-              p_pedido_id: ordem.pedido_id,
-              p_etapa_anterior: 'correcoes',
-              p_etapa_nova: 'finalizado',
-            });
-          } catch (e) {
-            console.warn('[correcoes] Não foi possível registrar movimentação:', e);
-          }
-        }
+        // Carregamento concluído — pedido permanece em 'correcoes'
+        // O avanço para 'finalizado' ocorre quando o usuário confirma a conclusão em /logistica/instalacoes/ordens-instalacoes
       } else {
         const updateData: Record<string, any> = {};
         if (observacoes) updateData.observacoes = observacoes;
@@ -608,7 +591,7 @@ export const useOrdensCarregamentoUnificadas = () => {
       if (variables.ordem.fonte === 'ordens_carregamento') {
         toast.success("Carregamento concluído! Pedido finalizado.");
       } else if (variables.ordem.fonte === 'correcoes') {
-        toast.success("Carregamento da correção concluído! Pedido finalizado.");
+        toast.success("Carregamento da correção concluído! Aguardando conclusão da correção.");
       } else {
         toast.success("Carregamento concluído! Aguardando finalização da instalação.");
       }
