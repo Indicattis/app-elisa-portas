@@ -7315,6 +7315,41 @@ export type Database = {
           },
         ]
       }
+      venda_comentarios: {
+        Row: {
+          autor_id: string
+          autor_nome: string
+          comentario: string
+          created_at: string | null
+          id: string
+          venda_id: string
+        }
+        Insert: {
+          autor_id: string
+          autor_nome: string
+          comentario: string
+          created_at?: string | null
+          id?: string
+          venda_id: string
+        }
+        Update: {
+          autor_id?: string
+          autor_nome?: string
+          comentario?: string
+          created_at?: string | null
+          id?: string
+          venda_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venda_comentarios_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendas: {
         Row: {
           atendente_id: string
