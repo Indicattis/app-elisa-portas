@@ -1,39 +1,29 @@
 
 
-## Plano: Adicionar coluna Desconto/Crédito no card de vendas pendentes
+## Plano: Adicionar coluna Lucro na lista de vendas pendentes
 
 ### O que será feito
 
-Adicionar uma coluna no card que mostra o valor de desconto e/ou crédito aplicados na venda, entre as colunas "Pago na Entrega" e "Valor Venda".
+Adicionar uma coluna "Lucro" no card exibindo `lucro_total` da venda, entre "Valor Total" e o botão "Criar Pedido".
 
 ### Alterações
 
 **1. `src/hooks/useVendasPendentePedido.ts`**
-- Adicionar campos `desconto_valor`, `desconto_percentual`, `tipo_desconto`, `valor_produto`, `valor_pintura`, `valor_instalacao` no select de `produtos_vendas`
-- Adicionar campo `valor_desconto_total: number` no tipo `VendaPendentePedido`
-- Calcular o desconto total somando os descontos de cada produto no mapeamento final
+- Adicionar `lucro_total` no select da query de vendas
+- Adicionar campo `lucro_total: number | null` no tipo `VendaPendentePedido`
+- Mapear `v.lucro_total` no retorno
 
 **2. `src/components/pedidos/VendaPendentePedidoCard.tsx`**
-- Atualizar `gridTemplateColumns` para incluir nova coluna (~55px) para "Desc/Créd"
-- Adicionar coluna entre "Pago na Entrega" e "Valor Venda" mostrando:
-  - Se tem desconto: valor em vermelho com badge
-  - Se tem crédito (`valor_credito > 0`): valor em azul
-  - Se tem ambos: mostrar os dois
-  - Se nenhum: exibir "—"
+- Atualizar `gridTemplateColumns` adicionando ~60px para a nova coluna
+- Adicionar coluna após "Valor Total" mostrando:
+  - Se `lucro_total > 0`: valor em verde
+  - Se `lucro_total === 0` ou null: "—" em cinza
+  - Tooltip com "Lucro da venda"
 
 **3. `src/components/pedidos/VendaPendenteDetalhesSheet.tsx`**
-- Adicionar info de desconto/crédito na downbar para consistência
+- Adicionar info de lucro na downbar para consistência
 
 ### Detalhe técnico
 
-```text
-Cálculo do desconto por produto:
-- tipo_desconto === 'valor': desconto_valor
-- tipo_desconto === 'percentual': (valor_produto + valor_pintura + valor_instalacao) * quantidade * (desconto_percentual / 100)
-
-Exibição na coluna:
-- Desconto > 0: "-R$ X" em vermelho
-- Crédito > 0: "+R$ X" em azul  
-- Ambos: tooltip com detalhes, exibe o maior
-```
+O campo `lucro_total` já existe na tabela `vendas` (preenchido pelo faturamento). Vendas ainda não faturadas terão valor null — exibir "—".
 
