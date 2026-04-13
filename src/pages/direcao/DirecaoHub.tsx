@@ -15,6 +15,7 @@ const menuItems = [
   { label: 'Checklist Liderança', icon: ClipboardCheck, path: '/direcao/checklist-lideranca', routePrefix: 'direcao_checklist' },
   { label: 'Gestão de Fábrica', icon: Factory, path: '/direcao/gestao-fabrica', routePrefix: 'direcao_gestao_fabrica' },
   { label: 'Gestão de Instalações', icon: Truck, path: '/direcao/gestao-instalacao', routePrefix: 'direcao_gestao_instalacao' },
+  { label: 'Gestão de Frotas', icon: Truck, path: '/direcao/frota', routePrefix: 'direcao_frota' },
   { label: 'Estoque', icon: Warehouse, path: '/direcao/estoque', routePrefix: 'direcao_estoque' },
   { label: 'Metas', icon: Target, path: '/direcao/metas', routePrefix: 'direcao_metas' },
   { label: 'Autorizados', icon: Users, path: '/direcao/autorizados', routePrefix: 'direcao_autorizado' },
