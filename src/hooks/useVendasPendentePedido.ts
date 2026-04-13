@@ -62,9 +62,6 @@ export const useVendasPendentePedido = () => {
           ),
           pedidos_producao (
             id
-          ),
-          contas_receber (
-            metodo_pagamento
           )
         `)
         .eq("is_rascunho", false)
@@ -83,6 +80,31 @@ export const useVendasPendentePedido = () => {
       const atendenteMap = new Map<string, { nome: string; foto: string | null }>();
       if (usuarios) {
         usuarios.forEach((u) => atendenteMap.set(u.user_id, { nome: u.nome, foto: u.foto_perfil_url }));
+      }
+
+      // Fetch payment methods separately so the main vendas query never breaks
+      const pagamentoMetodosPorVenda = new Map<string, string[]>();
+      try {
+        const vendaIds = vendas.map((v: any) => v.id).filter(Boolean);
+
+        if (vendaIds.length > 0) {
+          const { data: contasReceber } = await supabase
+            .from("contas_receber")
+            .select("venda_id, metodo_pagamento")
+            .in("venda_id", vendaIds);
+
+          (contasReceber || []).forEach((conta: any) => {
+            if (!conta?.venda_id || !conta?.metodo_pagamento) return;
+
+            const atuais = pagamentoMetodosPorVenda.get(conta.venda_id) || [];
+            if (!atuais.includes(conta.metodo_pagamento)) {
+              atuais.push(conta.metodo_pagamento);
+              pagamentoMetodosPorVenda.set(conta.venda_id, atuais);
+            }
+          });
+        }
+      } catch (paymentError) {
+        console.error("Erro ao buscar métodos de pagamento das vendas pendentes:", paymentError);
       }
 
       // Filter: faturada + no pedido + not reprovado
@@ -133,17 +155,9 @@ export const useVendasPendentePedido = () => {
             }
           });
 
-          // Derive unique payment methods from contas_receber
-          const contasReceber = v.contas_receber || [];
-          const uniqueMethods = new Set<string>();
-          contasReceber.forEach((cr: any) => {
-            if (cr.metodo_pagamento) uniqueMethods.add(cr.metodo_pagamento);
-          });
-          // The second method is any method from contas_receber different from the main one
-          let metodo2: string | null = null;
-          for (const m of uniqueMethods) {
-            if (m !== v.metodo_pagamento) { metodo2 = m; break; }
-          }
+          const metodosExtras = (pagamentoMetodosPorVenda.get(v.id) || []).filter(
+            (metodo) => metodo !== v.metodo_pagamento
+          );
 
           return {
             id: v.id,
@@ -160,7 +174,7 @@ export const useVendasPendentePedido = () => {
               : null,
             tipo_entrega: v.tipo_entrega || null,
             metodo_pagamento: v.metodo_pagamento || null,
-            metodo_pagamento_entrega: metodo2,
+            metodo_pagamento_entrega: metodosExtras[0] || null,
             numero_parcelas: v.numero_parcelas || null,
             pago_na_instalacao: v.pago_na_instalacao || null,
             cidade: v.cidade || null,
