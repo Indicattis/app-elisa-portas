@@ -34,16 +34,22 @@ const FORMAS_PAGAMENTO_LABELS: Record<string, string> = {
 
 export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaPendenteDetalhesSheetProps) {
   const navigate = useNavigate();
+  const { userRole } = useAuth();
   const [vendaCompleta, setVendaCompleta] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [itensOpen, setItensOpen] = useState(false);
   const [pagamentoOpen, setPagamentoOpen] = useState(false);
   const [contasReceber, setContasReceber] = useState<any[]>([]);
+  const [comentariosOpen, setComentariosOpen] = useState(false);
+  const [comentarios, setComentarios] = useState<any[]>([]);
+  const [novoComentario, setNovoComentario] = useState("");
+  const [enviandoComentario, setEnviandoComentario] = useState(false);
 
   useEffect(() => {
     if (open && venda?.id) {
       fetchVendaCompleta();
       fetchContasReceber();
+      fetchComentarios();
     }
   }, [open, venda?.id]);
 
