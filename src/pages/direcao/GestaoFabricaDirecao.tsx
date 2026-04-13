@@ -464,6 +464,15 @@ export default function GestaoFabricaDirecao() {
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-zinc-900 border-blue-500/10">
+              <SelectItem value="pendente_pedido" className="text-white cursor-pointer">
+                <div className="flex items-center gap-2 w-full">
+                  <DollarSign className="h-4 w-4 flex-shrink-0 text-blue-400" />
+                  <span className="flex-1 text-blue-400">Pend. Faturamento</span>
+                  <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-400">
+                    {vendasPendentePedido.length}
+                  </Badge>
+                </div>
+              </SelectItem>
               {ORDEM_ETAPAS.map(etapa => {
                 const config = ETAPAS_CONFIG[etapa];
                 const count = contadores[etapa] || 0;
