@@ -84,22 +84,35 @@ export const useVendasPendentePedido = () => {
 
       // Fetch payment methods separately so the main vendas query never breaks
       const pagamentoMetodosPorVenda = new Map<string, string[]>();
+      const parcelasPorVenda = new Map<string, number>();
+      const pagoInstalacaoPorVenda = new Map<string, boolean>();
       try {
         const vendaIds = vendas.map((v: any) => v.id).filter(Boolean);
 
         if (vendaIds.length > 0) {
           const { data: contasReceber } = await supabase
             .from("contas_receber")
-            .select("venda_id, metodo_pagamento")
+            .select("venda_id, metodo_pagamento, pago_na_instalacao")
             .in("venda_id", vendaIds);
 
           (contasReceber || []).forEach((conta: any) => {
-            if (!conta?.venda_id || !conta?.metodo_pagamento) return;
+            if (!conta?.venda_id) return;
 
-            const atuais = pagamentoMetodosPorVenda.get(conta.venda_id) || [];
-            if (!atuais.includes(conta.metodo_pagamento)) {
-              atuais.push(conta.metodo_pagamento);
-              pagamentoMetodosPorVenda.set(conta.venda_id, atuais);
+            // Count parcelas
+            parcelasPorVenda.set(conta.venda_id, (parcelasPorVenda.get(conta.venda_id) || 0) + 1);
+
+            // Pago na instalação
+            if (conta.pago_na_instalacao) {
+              pagoInstalacaoPorVenda.set(conta.venda_id, true);
+            }
+
+            // Payment methods
+            if (conta.metodo_pagamento) {
+              const atuais = pagamentoMetodosPorVenda.get(conta.venda_id) || [];
+              if (!atuais.includes(conta.metodo_pagamento)) {
+                atuais.push(conta.metodo_pagamento);
+                pagamentoMetodosPorVenda.set(conta.venda_id, atuais);
+              }
             }
           });
         }
