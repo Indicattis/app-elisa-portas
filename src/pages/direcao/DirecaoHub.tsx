@@ -17,8 +17,8 @@ const menuItems = [
   { label: 'Gestão de Instalações', icon: Truck, path: '/direcao/gestao-instalacao', routePrefix: 'direcao_gestao_instalacao' },
   { label: 'Estoque', icon: Warehouse, path: '/direcao/estoque', routePrefix: 'direcao_estoque' },
   { label: 'Metas', icon: Target, path: '/direcao/metas', routePrefix: 'direcao_metas' },
-  { label: 'Autorizados', icon: Users, path: '/direcao/autorizados', routePrefix: 'direcao_autorizados' },
-  { label: 'Aprovações', icon: ShieldCheck, path: '/direcao/aprovacoes', routePrefix: 'direcao_aprovacoes' },
+  { label: 'Autorizados', icon: Users, path: '/direcao/autorizados', routePrefix: 'direcao_autorizado' },
+  { label: 'Aprovações', icon: ShieldCheck, path: '/direcao/aprovacoes', routePrefix: 'direcao_aprovaco' },
   { label: 'Organograma RH', icon: Network, path: '/direcao/gestao-colaboradores', routePrefix: 'direcao_gestao_colaboradores' },
 ];
 
