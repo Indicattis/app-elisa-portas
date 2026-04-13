@@ -43,6 +43,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
   const queryClient = useQueryClient();
   const { createPedidoFromVenda } = usePedidoCreation();
   const [isCreating, setIsCreating] = useState(false);
+  const [isDispensando, setIsDispensando] = useState(false);
   const [showDetalhes, setShowDetalhes] = useState(false);
 
   const atendenteIniciais = venda.atendente_nome
