@@ -111,7 +111,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
         <CardContent className="p-0 h-full">
           <div
             className="grid items-center gap-1.5 h-full px-2 w-full"
-            style={{ gridTemplateColumns: '20px 24px 1fr 100px 50px 50px 60px 65px 80px 70px 70px 55px 20px' }}
+            style={{ gridTemplateColumns: '20px 24px 1fr 100px 50px 50px 60px 65px 80px 70px 70px 30px 30px 20px' }}
           >
             {/* Drag handle */}
             <div
