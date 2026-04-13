@@ -1,27 +1,26 @@
 
 
-## Plano: Botão "Gestão de Frotas" no Hub da Direção + Página clone
+## Plano: Card de venda estilo PedidoCard na aba Pendente Faturamento
 
 ### Resumo
-Adicionar um botão "Gestão de Frotas" no hub `/direcao` acima de "Estoque", e criar uma página clone de `/logistica/frota` em `/direcao/frota` com breadcrumbs e navegação adaptados para o contexto da Direção.
+Substituir os divs simples da aba "Pendente Faturamento" por cards com o mesmo design visual dos pedidos (Card com h-10, grid layout compacto, avatar do atendente, badges, etc.).
 
 ### Mudanças
 
-**1. `src/pages/direcao/DirecaoHub.tsx`**
-- Adicionar item `{ label: 'Gestão de Frotas', icon: Truck, path: '/direcao/frota', routePrefix: 'direcao_frota' }` no array `menuItems`, antes de "Estoque" (posição index 7)
+**1. Novo componente `src/components/pedidos/VendaPendentePedidoCard.tsx`**
+- Card compacto h-10 idêntico ao layout list do PedidoCard
+- Grid com colunas: avatar atendente | nome cliente | data venda | qtd portas (badge) | valor total | seta/indicador
+- Mesma estilização: `hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden`
+- Click navega para `/administrativo/financeiro/faturamento/{id}?from=vendas`
+- Usar TooltipProvider para tooltips no nome do cliente e atendente
 
-**2. Novo: `src/pages/direcao/FrotaDirecao.tsx`**
-- Clone de `FrotaMinimalista.tsx` com:
-  - `backPath` alterado para `/direcao`
-  - Breadcrumbs: Home > Direção > Gestão de Frotas
-  - Rotas de navegação internas apontando para `/direcao/frota/...` em vez de `/logistica/frota/...`
+**2. Atualizar `src/pages/direcao/GestaoFabricaDirecao.tsx`**
+- Na TabsContent de `pendente_pedido`, substituir os divs atuais (linhas 703-731) pelo novo `VendaPendentePedidoCard`
+- Envolver a lista em `<TooltipProvider>` como o PedidosDraggableList faz
 
-**3. `src/App.tsx`**
-- Adicionar rotas para `/direcao/frota`, `/direcao/frota/novo`, `/direcao/frota/:id/editar`, `/direcao/frota/:id/conferencias`, `/direcao/frota/conferencia`
-- Reutilizar os componentes existentes de edição/conferência (FrotaNovoMinimalista, FrotaEditMinimalista, etc.) com `routeKey="direcao_hub"`
+### Arquivo novo
+- `src/components/pedidos/VendaPendentePedidoCard.tsx`
 
-### Arquivos alterados
-- `src/pages/direcao/DirecaoHub.tsx`
-- Novo: `src/pages/direcao/FrotaDirecao.tsx`
-- `src/App.tsx`
+### Arquivo alterado
+- `src/pages/direcao/GestaoFabricaDirecao.tsx`
 
