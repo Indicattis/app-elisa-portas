@@ -7356,6 +7356,7 @@ export type Database = {
           publico_alvo: string | null
           quantidade_parcelas: number | null
           restante_na_instalacao: boolean | null
+          status_aprovacao: string
           tipo_entrega: string | null
           updated_at: string
           valor_a_receber: number | null
@@ -7409,6 +7410,7 @@ export type Database = {
           publico_alvo?: string | null
           quantidade_parcelas?: number | null
           restante_na_instalacao?: boolean | null
+          status_aprovacao?: string
           tipo_entrega?: string | null
           updated_at?: string
           valor_a_receber?: number | null
@@ -7462,6 +7464,7 @@ export type Database = {
           publico_alvo?: string | null
           quantidade_parcelas?: number | null
           restante_na_instalacao?: boolean | null
+          status_aprovacao?: string
           tipo_entrega?: string | null
           updated_at?: string
           valor_a_receber?: number | null
