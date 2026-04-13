@@ -432,6 +432,56 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
               <p className="text-sm text-white/70 whitespace-pre-wrap">{vendaCompleta.observacoes_venda}</p>
             </div>
           )}
+
+          {/* Comentários */}
+          <Collapsible open={comentariosOpen} onOpenChange={setComentariosOpen}>
+            <CollapsibleTrigger asChild>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-yellow-400" />
+                  <span className="font-medium text-white text-sm">Comentários</span>
+                  <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">
+                    {comentarios.length}
+                  </Badge>
+                </div>
+                <ChevronDown className={cn("h-4 w-4 text-white/60 transition-transform duration-200", comentariosOpen && "rotate-180")} />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 space-y-2 pl-2">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Escreva um comentário..."
+                  value={novoComentario}
+                  onChange={(e) => setNovoComentario(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleEnviarComentario()}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm"
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleEnviarComentario}
+                  disabled={enviandoComentario || !novoComentario.trim()}
+                  className="text-yellow-400 hover:bg-yellow-500/20 shrink-0"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+              {comentarios.map((c: any) => (
+                <div key={c.id} className="p-2.5 bg-white/5 rounded-lg border border-white/5">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium text-white/80">{c.autor_nome}</span>
+                    <span className="text-[10px] text-white/40">
+                      {format(new Date(c.created_at), "dd/MM HH:mm", { locale: ptBR })}
+                    </span>
+                  </div>
+                  <p className="text-sm text-white/70">{c.comentario}</p>
+                </div>
+              ))}
+              {comentarios.length === 0 && (
+                <div className="text-sm text-white/50 p-2">Nenhum comentário</div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </SheetContent>
     </Sheet>
