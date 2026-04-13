@@ -23,6 +23,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 
 const ETAPA_ICONS = {
+  aprovacao_diretor: ShieldCheck,
   aberto: Clock,
   aprovacao_ceo: ShieldCheck,
   em_producao: Factory,
@@ -30,7 +31,6 @@ const ETAPA_ICONS = {
   aguardando_pintura: Paintbrush,
   embalagem: BoxIcon,
   aguardando_coleta: Package,
-  aguardando_instalacao: Wrench,
   instalacoes: HardHat,
   correcoes: AlertTriangle,
   finalizado: CheckCircle2
