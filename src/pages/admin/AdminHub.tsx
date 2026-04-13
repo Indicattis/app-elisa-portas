@@ -7,10 +7,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 
 const menuItems = [
+  { label: "Usuários", icon: Users, path: "/admin/users" },
   { label: "Permissões", icon: Shield, path: "/admin/permissions" },
   { label: "Cargos", icon: Briefcase, path: "/admin/roles" },
   { label: "Empresas", icon: Building2, path: "/admin/companies" },
-  { label: "Usuários", icon: Users, path: "/admin/users" },
   { label: "Logs", icon: FileText, path: "/admin/logs" },
 ];
 
