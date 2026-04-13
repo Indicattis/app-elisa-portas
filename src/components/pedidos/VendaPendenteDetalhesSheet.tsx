@@ -92,6 +92,39 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
     }
   };
 
+  const fetchComentarios = async () => {
+    if (!venda) return;
+    try {
+      const { data } = await (supabase
+        .from("venda_comentarios" as any)
+        .select("*")
+        .eq("venda_id", venda.id)
+        .order("created_at", { ascending: false }) as any);
+      setComentarios(data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleEnviarComentario = async () => {
+    if (!novoComentario.trim() || !venda || !userRole) return;
+    setEnviandoComentario(true);
+    try {
+      await (supabase.from("venda_comentarios" as any) as any).insert({
+        venda_id: venda.id,
+        autor_id: userRole.user_id,
+        autor_nome: userRole.nome,
+        comentario: novoComentario.trim(),
+      });
+      setNovoComentario("");
+      fetchComentarios();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setEnviandoComentario(false);
+    }
+  };
+
   if (!venda) return null;
 
   const produtos = vendaCompleta?.produtos_vendas || [];
