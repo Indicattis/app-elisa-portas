@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ChevronRight, GripVertical, Hammer, Truck, Wrench, Plus, Loader2, CheckCircle } from "lucide-react";
+import { GripVertical, Hammer, Truck, Wrench, Plus, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -419,8 +419,6 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
               </AlertDialog>
             </div>
 
-            {/* Seta */}
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
         </CardContent>
       </Card>
