@@ -83,6 +83,25 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
     }
   };
 
+  const handleDispensarPedido = async () => {
+    setIsDispensando(true);
+    try {
+      const { error } = await supabase
+        .from("vendas")
+        .update({ pedido_dispensado: true } as any)
+        .eq("id", venda.id);
+      if (error) {
+        toast.error("Erro ao dispensar pedido");
+        console.error(error);
+      } else {
+        toast.success("Venda dispensada de pedido");
+        queryClient.invalidateQueries({ queryKey: ["vendas-pendente-pedido"] });
+      }
+    } finally {
+      setIsDispensando(false);
+    }
+  };
+
   return (
     <TooltipProvider>
       <Card
