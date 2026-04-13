@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Factory, ArrowLeft, ShieldCheck, ShoppingCart, Users } from 'lucide-react';
+import { Factory, ArrowLeft, ShieldCheck, ShoppingCart, Users, ClipboardCheck } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -9,6 +9,7 @@ import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
+  { label: 'Aprovações Pedidos', icon: ClipboardCheck, path: '/direcao/aprovacoes/pedidos' },
   { label: 'Aprovações Fábrica', icon: Factory, path: '/direcao/aprovacoes/fabrica' },
   { label: 'Aprovações Vendas', icon: ShoppingCart, path: '/direcao/aprovacoes/vendas' },
   { label: 'Aprovações Autorizados', icon: Users, path: '/direcao/aprovacoes/autorizados' },
@@ -17,6 +18,18 @@ const menuItems = [
 export default function DirecaoAprovacoesHub() {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
+
+  const { data: countPedidos } = useQuery({
+    queryKey: ['aprovacoes-pedidos-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('pedidos_producao')
+        .select('*', { count: 'exact', head: true })
+        .eq('etapa_atual', 'aprovacao_diretor')
+        .eq('arquivado', false);
+      return count || 0;
+    },
+  });
 
   const { data: countFabrica } = useQuery({
     queryKey: ['aprovacoes-fabrica-count'],
@@ -53,6 +66,7 @@ export default function DirecaoAprovacoesHub() {
   });
 
   const countsMap: Record<string, number> = {
+    '/direcao/aprovacoes/pedidos': countPedidos || 0,
     '/direcao/aprovacoes/fabrica': countFabrica || 0,
     '/direcao/aprovacoes/vendas': (countVendas as number) || 0,
     '/direcao/aprovacoes/autorizados': (countAutorizados as number) || 0,

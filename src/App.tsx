@@ -259,6 +259,7 @@ import FornecedoresDirecao from "./pages/direcao/estoque/FornecedoresDirecao";
 // Hub de Aprovações da Direção
 import DirecaoAprovacoesHub from "./pages/direcao/aprovacoes/DirecaoAprovacoesHub";
 import AprovacoesProducao from "./pages/direcao/aprovacoes/AprovacoesProducao";
+import AprovacoesPedidos from "./pages/direcao/aprovacoes/AprovacoesPedidos";
 import AprovacoesVendas from "./pages/direcao/aprovacoes/AprovacoesVendas";
 import AprovacoesAutorizados from "./pages/direcao/aprovacoes/AprovacoesAutorizados";
 
@@ -545,6 +546,7 @@ const App = () => (
 
                 {/* Hub de Aprovações da Direção */}
                 <Route path="/direcao/aprovacoes" element={<ProtectedRoute routeKey="direcao_aprovacoes"><DirecaoAprovacoesHub /></ProtectedRoute>} />
+                <Route path="/direcao/aprovacoes/pedidos" element={<ProtectedRoute routeKey="direcao_aprovacoes_pedidos"><AprovacoesPedidos /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/fabrica" element={<ProtectedRoute routeKey="direcao_aprovacoes"><AprovacoesProducao /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/vendas" element={<ProtectedRoute routeKey="direcao_aprovacoes"><AprovacoesVendas /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/autorizados" element={<ProtectedRoute routeKey="direcao_aprovacoes"><AprovacoesAutorizados /></ProtectedRoute>} />
