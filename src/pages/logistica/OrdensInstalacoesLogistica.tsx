@@ -189,8 +189,8 @@ export default function OrdensInstalacoesLogistica() {
         { label: 'Ordens de Instalação' }
       ]}
     >
-      <div className="min-h-screen p-4 md:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="min-h-screen p-4 md:p-4 lg:p-6">
+        <div className="max-w-[1800px] mx-auto space-y-4">
           {/* Header */}
           <div className={cn(
             "flex flex-col gap-4 transition-all duration-500",
