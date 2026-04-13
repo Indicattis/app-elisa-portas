@@ -13,6 +13,9 @@ export interface VendaPendentePedido {
   atendente_foto_url: string | null;
   tipo_entrega: string | null;
   metodo_pagamento: string | null;
+  metodo_pagamento_entrega: string | null;
+  numero_parcelas: number | null;
+  pago_na_instalacao: boolean | null;
   cidade: string | null;
   estado: string | null;
   cores: Array<{ nome: string; codigo_hex: string }>;
@@ -40,6 +43,9 @@ export const useVendasPendentePedido = () => {
           atendente_id,
           tipo_entrega,
           metodo_pagamento,
+          metodo_pagamento_entrega,
+          numero_parcelas,
+          pago_na_instalacao,
           cidade,
           estado,
           produtos_vendas (
@@ -140,6 +146,9 @@ export const useVendasPendentePedido = () => {
               : null,
             tipo_entrega: v.tipo_entrega || null,
             metodo_pagamento: v.metodo_pagamento || null,
+            metodo_pagamento_entrega: v.metodo_pagamento_entrega || null,
+            numero_parcelas: v.numero_parcelas || null,
+            pago_na_instalacao: v.pago_na_instalacao || null,
             cidade: v.cidade || null,
             estado: v.estado || null,
             cores: Array.from(coresUnicas.values()),

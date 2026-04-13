@@ -52,7 +52,19 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
 
   const valorTotal = (venda.valor_venda || 0) + (venda.valor_credito || 0);
   const diasPendente = differenceInDays(new Date(), new Date(venda.data_venda));
-  const pagamentoLabel = venda.metodo_pagamento ? (FORMAS_PAGAMENTO_LABELS[venda.metodo_pagamento] || venda.metodo_pagamento) : null;
+
+  // Combined payment methods label
+  const pagamentoLabel = (() => {
+    const methods: string[] = [];
+    if (venda.metodo_pagamento) {
+      methods.push(FORMAS_PAGAMENTO_LABELS[venda.metodo_pagamento] || venda.metodo_pagamento);
+    }
+    if (venda.metodo_pagamento_entrega) {
+      const label2 = FORMAS_PAGAMENTO_LABELS[venda.metodo_pagamento_entrega] || venda.metodo_pagamento_entrega;
+      if (!methods.includes(label2)) methods.push(label2);
+    }
+    return methods.length > 0 ? methods.join('/') : null;
+  })();
 
   const tipoEntregaIcon = (() => {
     if (!venda.tipo_entrega) return null;
@@ -111,7 +123,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
         <CardContent className="p-0 h-full">
           <div
             className="grid items-center gap-1.5 h-full px-2 w-full"
-            style={{ gridTemplateColumns: '20px 24px 1fr 100px 50px 50px 60px 65px 80px 70px 70px 30px 30px 20px' }}
+            style={{ gridTemplateColumns: '20px 24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 70px 70px 30px 30px 20px' }}
           >
             {/* Drag handle */}
             <div
@@ -277,7 +289,32 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
             {/* Forma pagamento */}
             <div className="text-center">
               {pagamentoLabel ? (
-                <span className="text-[10px] text-muted-foreground truncate">{pagamentoLabel}</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-[10px] text-muted-foreground truncate block">{pagamentoLabel}</span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">{pagamentoLabel}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <span className="text-[9px] text-muted-foreground/50">—</span>
+              )}
+            </div>
+
+            {/* Parcelas */}
+            <div className="text-center">
+              <span className="text-[10px] text-muted-foreground">
+                {venda.numero_parcelas ? `${venda.numero_parcelas}x` : '—'}
+              </span>
+            </div>
+
+            {/* Pago na entrega */}
+            <div className="text-center">
+              {venda.pago_na_instalacao ? (
+                <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-emerald-500/10 text-emerald-600 border-emerald-500/50">
+                  Sim
+                </Badge>
               ) : (
                 <span className="text-[9px] text-muted-foreground/50">—</span>
               )}
