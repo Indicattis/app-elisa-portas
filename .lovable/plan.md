@@ -1,26 +1,33 @@
 
 
-## Plano: Layout em colunas para Ordens de Instalação
+## Plano: Aba "Pendente Faturamento" na Gestão de Fábrica
 
 ### Resumo
-Substituir o layout atual de accordions empilhados por um layout de **3 colunas** lado a lado (Aguardando Carregamento, Carregadas, Concluídas) para as ordens normais, e abaixo **2 colunas** (Instalações Avulsas, Correções Avulsas) para os itens Neo.
+Adicionar uma nova aba antes de "Aprovação Diretor" que lista vendas faturadas que ainda não possuem pedido de produção vinculado. Agrupar esta aba junto com "Aprovação Diretor" em uma borda azul, separada do grupo vermelho de produção.
 
 ### Mudanças
 
-**`src/pages/logistica/OrdensInstalacoesLogistica.tsx`**
+**1. Novo hook `src/hooks/useVendasPendentePedido.ts`**
+- Buscar vendas onde `frete_aprovado = true`, todos os `produtos_vendas` com `faturamento = true`, e que NÃO possuem registro em `pedidos_producao` (via left join ou filtro client-side)
+- Também excluir vendas com `status_aprovacao = 'reprovado'` e `is_rascunho = true`
+- Retornar lista com dados do cliente, produtos, valores e contagem
 
-- Remover o `Accordion` wrapper
-- Criar grid de 3 colunas (`grid-cols-1 lg:grid-cols-3`) com cards fixos:
-  - Coluna 1: **Aguardando Carregamento** (amber) — `ordensNaoCarregadas`
-  - Coluna 2: **Carregadas** (green) — `ordensCarregadas` com botão concluir
-  - Coluna 3: **Concluídas** (emerald) — `finalizados` (itens finalizados)
-- Abaixo, grid de 2 colunas (`grid-cols-1 lg:grid-cols-2`):
-  - Coluna 1: **Instalações Avulsas** (orange) — `neoInstalacoes`
-  - Coluna 2: **Correções Avulsas** (purple) — `neoCorrecoes`
-- Cada coluna será um `Card` com header colorido (icon + title + badge de contagem) e conteúdo scrollável (`max-h-[600px] overflow-y-auto`)
-- Manter todos os handlers, dialogs e filtros existentes intactos
-- Responsivo: empilha em coluna única no mobile
+**2. Atualizar `src/pages/direcao/GestaoFabricaDirecao.tsx`**
+- Adicionar estado para a nova aba virtual `'pendente_pedido'` (não é uma etapa de pedido)
+- Alterar o tipo de `etapaAtiva` para incluir `'pendente_pedido'`
+- No desktop, criar novo grupo azul (`border-2 border-blue-500/50`) ANTES do grupo vermelho, contendo:
+  - Aba "Pend. Faturamento" (ícone DollarSign ou similar)
+  - Aba "Aprovação Diretor" (movida do grupo vermelho)
+- Ajustar o grupo vermelho para começar em "Aberto"
+- Adicionar `TabsContent` para `pendente_pedido` com card listando as vendas pendentes (nome do cliente, produtos, valor total, data da venda)
+- No seletor mobile, incluir a nova opção no início
 
-### Arquivo alterado
-- `src/pages/logistica/OrdensInstalacoesLogistica.tsx`
+**3. Conteúdo da aba**
+- Card com lista de vendas faturadas sem pedido
+- Cada item mostra: cliente, data, valor total, quantidade de portas
+- Informação visual simples (sem ações de criação de pedido nesta aba — apenas visualização)
+
+### Arquivos alterados
+- Novo: `src/hooks/useVendasPendentePedido.ts`
+- `src/pages/direcao/GestaoFabricaDirecao.tsx`
 
