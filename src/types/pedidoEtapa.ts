@@ -1,4 +1,5 @@
 export type EtapaPedido = 
+  | 'aprovacao_diretor'
   | 'aberto'
   | 'aprovacao_ceo'
   | 'em_producao'
@@ -123,6 +124,7 @@ export const ETAPAS_CONFIG: Record<EtapaPedido, {
 };
 
 export const ORDEM_ETAPAS: EtapaPedido[] = [
+  'aprovacao_diretor',
   'aberto',
   'aprovacao_ceo',
   'em_producao',
@@ -161,6 +163,7 @@ export type DirecaoPrioridade = 'frente' | 'tras';
 
 // Limites de tempo por etapa em segundos comerciais (1 dia comercial = 10h = 36000s)
 export const LIMITES_ETAPA_SEGUNDOS: Record<EtapaPedido, number> = {
+  aprovacao_diretor: 6 * 3600,     // 6h comerciais
   aberto: 6 * 3600,                // 6h comerciais
   aprovacao_ceo: 6 * 3600,         // 6h comerciais
   em_producao: 4 * 10 * 3600,      // 4 dias comerciais (40h)
