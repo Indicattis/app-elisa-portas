@@ -133,6 +133,18 @@ export const useVendasPendentePedido = () => {
             }
           });
 
+          // Derive unique payment methods from contas_receber
+          const contasReceber = v.contas_receber || [];
+          const uniqueMethods = new Set<string>();
+          contasReceber.forEach((cr: any) => {
+            if (cr.metodo_pagamento) uniqueMethods.add(cr.metodo_pagamento);
+          });
+          // The second method is any method from contas_receber different from the main one
+          let metodo2: string | null = null;
+          for (const m of uniqueMethods) {
+            if (m !== v.metodo_pagamento) { metodo2 = m; break; }
+          }
+
           return {
             id: v.id,
             data_venda: v.data_venda,
@@ -148,7 +160,7 @@ export const useVendasPendentePedido = () => {
               : null,
             tipo_entrega: v.tipo_entrega || null,
             metodo_pagamento: v.metodo_pagamento || null,
-            metodo_pagamento_entrega: v.metodo_pagamento_entrega || null,
+            metodo_pagamento_entrega: metodo2,
             numero_parcelas: v.numero_parcelas || null,
             pago_na_instalacao: v.pago_na_instalacao || null,
             cidade: v.cidade || null,
