@@ -2,16 +2,19 @@ import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Package, Phone, MapPin, Calendar, DollarSign,
-  ShoppingCart, ChevronDown, User, Hammer, Truck, Wrench, Clock, CreditCard, ExternalLink
+  ShoppingCart, ChevronDown, User, Hammer, Truck, Wrench, Clock, CreditCard, ExternalLink,
+  MessageSquare, Send
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import type { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 
 interface VendaPendenteDetalhesSheetProps {
