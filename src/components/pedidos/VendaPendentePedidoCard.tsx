@@ -1,13 +1,18 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronRight, DoorOpen, GripVertical, Hammer, Truck, Wrench } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ChevronRight, GripVertical, Hammer, Truck, Wrench, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
+import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { formatCurrency } from "@/lib/utils";
 
 interface VendaPendentePedidoCardProps {
@@ -32,6 +37,9 @@ const isAcoGalvanizado = (corNome: string) => {
 
 export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: VendaPendentePedidoCardProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { createPedidoFromVenda } = usePedidoCreation();
+  const [isCreating, setIsCreating] = useState(false);
 
   const atendenteIniciais = venda.atendente_nome
     ? venda.atendente_nome.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
@@ -56,8 +64,20 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
     return null;
   })();
 
-  // Grid: drag | avatar | nome | cidade | tempo | entrega | cores | pagamento | valor | seta
-  // Matching PedidoCard column sizes
+  const handleCriarPedido = async () => {
+    setIsCreating(true);
+    try {
+      const pedidoId = await createPedidoFromVenda(venda.id);
+      if (pedidoId) {
+        queryClient.invalidateQueries({ queryKey: ["vendas-pendente-pedido"] });
+        queryClient.invalidateQueries({ queryKey: ["pedidos-etapas"] });
+        queryClient.invalidateQueries({ queryKey: ["pedidos-contadores"] });
+      }
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
     <TooltipProvider>
       <Card
@@ -67,7 +87,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
         <CardContent className="p-0 h-full">
           <div
             className="grid items-center gap-1.5 h-full px-2 w-full"
-            style={{ gridTemplateColumns: '20px 24px 180px 100px 50px 50px 50px 65px 80px 65px 65px 20px' }}
+            style={{ gridTemplateColumns: '20px 24px 180px 100px 50px 50px 50px 65px 80px 65px 65px 55px 20px' }}
           >
             {/* Drag handle */}
             <div
@@ -152,7 +172,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
               </TooltipContent>
             </Tooltip>
 
-            {/* Tipo entrega icon - matching PedidoCard style */}
+            {/* Tipo entrega icon */}
             <div className="flex items-center justify-center gap-1">
               {tipoEntregaIcon ? (
                 <Badge variant="outline" className={`text-[10px] px-1 py-0 h-5 ${tipoEntregaIcon.className}`}>
@@ -199,7 +219,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
               )}
             </div>
 
-            {/* Cores - matching PedidoCard pill style */}
+            {/* Cores */}
             <div className="flex items-center gap-1">
               {venda.cores.length > 0 ? (
                 <>
@@ -251,6 +271,48 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
               <span className="text-[10px] font-medium text-muted-foreground">
                 {formatCurrency(valorTotal)}
               </span>
+            </div>
+
+            {/* Criar Pedido */}
+            <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+              <AlertDialog>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="icon"
+                        disabled={isCreating}
+                        className="flex h-[20px] w-full rounded-[3px]"
+                      >
+                        {isCreating ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Plus className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Criar Pedido de Produção</p>
+                  </TooltipContent>
+                </Tooltip>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Criar Pedido de Produção</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Deseja criar um pedido de produção para esta venda?
+                      <br />
+                      Cliente: <strong>{venda.cliente_nome}</strong>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleCriarPedido}>
+                      Criar Pedido
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
 
             {/* Seta */}
