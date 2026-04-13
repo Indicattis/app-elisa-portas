@@ -339,6 +339,49 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
               </AlertDialog>
             </div>
 
+            {/* Dispensar Pedido */}
+            <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+              <AlertDialog>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        disabled={isDispensando}
+                        className="flex h-[20px] w-full rounded-[3px] border-green-500/50 text-green-600 hover:bg-green-500/10"
+                      >
+                        {isDispensando ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <CheckCircle className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Concluir sem pedido</p>
+                  </TooltipContent>
+                </Tooltip>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Dispensar Pedido de Produção</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta venda será marcada como concluída e não aparecerá mais nesta aba.
+                      <br />
+                      Cliente: <strong>{venda.cliente_nome}</strong>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDispensarPedido}>
+                      Confirmar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+
             {/* Seta */}
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
