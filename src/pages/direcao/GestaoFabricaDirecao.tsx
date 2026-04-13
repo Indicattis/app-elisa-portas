@@ -2,7 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays, Archive, Search, Calendar, User, Undo2, ChevronDown, Truck, Settings, CalendarIcon } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, FlaskConical, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays, Archive, Search, Calendar, User, Undo2, ChevronDown, Truck, Settings, CalendarIcon, DollarSign } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { usePedidosArquivados } from "@/hooks/usePedidosArquivados";
@@ -22,6 +22,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
+import { useVendasPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { useNeoInstalacoesListagem, useNeoInstalacoesFinalizadas } from "@/hooks/useNeoInstalacoes";
 import { useNeoCorrecoesListagem, useNeoCorrecoesFinalizadas } from "@/hooks/useNeoCorrecoes";
 import { useEtapaResponsaveis } from "@/hooks/useEtapaResponsaveis";
@@ -68,7 +69,7 @@ export default function GestaoFabricaDirecao() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido | 'arquivo_morto'>('aprovacao_diretor');
+  const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido | 'arquivo_morto' | 'pendente_pedido'>('aprovacao_diretor');
   const [arquivoSearch, setArquivoSearch] = useState('');
   const [debouncedArquivoSearch, setDebouncedArquivoSearch] = useState('');
   const [desarquivandoId, setDesarquivandoId] = useState<string | null>(null);
@@ -96,6 +97,7 @@ export default function GestaoFabricaDirecao() {
   }, [arquivoSearch]);
 
   const contadores = usePedidosContadores();
+  const { data: vendasPendentePedido = [], isLoading: isLoadingPendentes } = useVendasPendentePedido();
   const { data: pedidosArquivados = [], isLoading: isLoadingArquivados } = usePedidosArquivados({
     search: debouncedArquivoSearch,
     dataInicio: arquivoDataInicio || null,
@@ -111,7 +113,7 @@ export default function GestaoFabricaDirecao() {
     removerResponsavel, 
     isAtribuindo 
   } = useEtapaResponsaveis();
-  const etapaParaQuery = etapaAtiva === 'arquivo_morto' ? 'aberto' : etapaAtiva;
+  const etapaParaQuery = (etapaAtiva === 'arquivo_morto' || etapaAtiva === 'pendente_pedido') ? 'aberto' : etapaAtiva;
   const {
     pedidos,
     isLoading,
@@ -417,13 +419,24 @@ export default function GestaoFabricaDirecao() {
       </div>
 
       {/* Tabs de Etapas */}
-      <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto')}>
+      <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto' | 'pendente_pedido')}>
         {/* Seletor mobile */}
         <div className="md:hidden mb-4">
-          <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto')}>
+          <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto' | 'pendente_pedido')}>
             <SelectTrigger className="w-full h-12 bg-white/5 border-blue-500/10 text-white">
               <SelectValue>
                 {(() => {
+                  if (etapaAtiva === 'pendente_pedido') {
+                    return (
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-5 w-5" />
+                        <span className="font-medium">Pend. Faturamento</span>
+                        <Badge variant="secondary" className="ml-auto bg-blue-500/20 text-blue-400">
+                          {vendasPendentePedido.length}
+                        </Badge>
+                      </div>
+                    );
+                  }
                   if (etapaAtiva === 'arquivo_morto') {
                     return (
                       <div className="flex items-center gap-2">
@@ -451,6 +464,15 @@ export default function GestaoFabricaDirecao() {
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-zinc-900 border-blue-500/10">
+              <SelectItem value="pendente_pedido" className="text-white cursor-pointer">
+                <div className="flex items-center gap-2 w-full">
+                  <DollarSign className="h-4 w-4 flex-shrink-0 text-blue-400" />
+                  <span className="flex-1 text-blue-400">Pend. Faturamento</span>
+                  <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-400">
+                    {vendasPendentePedido.length}
+                  </Badge>
+                </div>
+              </SelectItem>
               {ORDEM_ETAPAS.map(etapa => {
                 const config = ETAPAS_CONFIG[etapa];
                 const count = contadores[etapa] || 0;
@@ -483,9 +505,58 @@ export default function GestaoFabricaDirecao() {
         {/* Tabs - Desktop */}
         <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-2 bg-white/5 border border-blue-500/10">
           <TooltipProvider>
+            {/* Grupo Azul: Pré-Produção */}
+            <div className="flex gap-1 border-2 border-blue-500/50 rounded-lg p-1">
+              <TabsTrigger 
+                value="pendente_pedido" 
+                className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
+              >
+                <DollarSign className="h-4 w-4 flex-shrink-0" />
+                <span className="text-xs">Pend. Faturamento</span>
+                <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
+                  {vendasPendentePedido.length}
+                </span>
+              </TabsTrigger>
+              {(['aprovacao_diretor'] as const).map(etapa => {
+                const config = ETAPAS_CONFIG[etapa];
+                const count = contadores[etapa] || 0;
+                const IconComponent = ETAPA_ICONS[etapa];
+                const responsavel = getResponsavel(etapa);
+                return (
+                  <TabsTrigger 
+                    key={etapa} 
+                    value={etapa} 
+                    className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
+                  >
+                    {responsavel ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Avatar className="h-5 w-5 border border-blue-500/30">
+                            <AvatarImage src={responsavel.foto_perfil_url || undefined} />
+                            <AvatarFallback className="text-[10px] bg-blue-500/20">
+                              {responsavel.nome.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">Responsável: {responsavel.nome}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <IconComponent className="h-4 w-4 flex-shrink-0" />
+                    )}
+                    <span className="text-xs">{config.label}</span>
+                    <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
+                      {count}
+                    </span>
+                  </TabsTrigger>
+                );
+              })}
+            </div>
+
             {/* Grupo Vermelho: Produção */}
             <div className="flex gap-1 border-2 border-red-500/50 rounded-lg p-1">
-              {(['aprovacao_diretor', 'aberto', 'aprovacao_ceo', 'em_producao', 'inspecao_qualidade', 'aguardando_pintura', 'embalagem'] as const).map(etapa => {
+              {(['aberto', 'aprovacao_ceo', 'em_producao', 'inspecao_qualidade', 'aguardando_pintura', 'embalagem'] as const).map(etapa => {
                 const config = ETAPAS_CONFIG[etapa];
                 const count = contadores[etapa] || 0;
                 const IconComponent = ETAPA_ICONS[etapa];
@@ -608,6 +679,62 @@ export default function GestaoFabricaDirecao() {
             </div>
           </TooltipProvider>
         </TabsList>
+
+        {/* Aba Pendente Faturamento */}
+        <TabsContent value="pendente_pedido" className="mt-4">
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
+            <CardHeader className="pb-3 px-4 py-4">
+              <CardTitle className="text-lg flex items-center gap-2 text-white">
+                <DollarSign className="h-5 w-5 text-blue-400" />
+                <span>Vendas Faturadas Aguardando Pedido</span>
+                <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
+                  {vendasPendentePedido.length}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingPendentes ? (
+                <div className="text-center py-8 text-white/50">Carregando...</div>
+              ) : vendasPendentePedido.length === 0 ? (
+                <div className="text-center py-8 text-white/50">
+                  Nenhuma venda faturada pendente de pedido
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {vendasPendentePedido.map(venda => (
+                    <div
+                      key={venda.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/administrativo/financeiro/faturamento/${venda.id}?from=vendas`)}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <p className="text-white font-medium text-sm">
+                            {venda.cliente_nome || "Cliente não informado"}
+                          </p>
+                          <p className="text-white/50 text-xs">
+                            {format(new Date(venda.data_venda), "dd/MM/yyyy", { locale: ptBR })}
+                            {venda.atendente_nome && ` • ${venda.atendente_nome}`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        {venda.quantidade_portas > 0 && (
+                          <Badge variant="secondary" className="bg-white/10 text-white/70 text-xs">
+                            🚪 {venda.quantidade_portas}
+                          </Badge>
+                        )}
+                        <span className="text-white font-semibold text-sm">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(venda.valor_venda + venda.valor_credito)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {ORDEM_ETAPAS.map(etapa => (
           <TabsContent key={etapa} value={etapa} className="mt-4">
