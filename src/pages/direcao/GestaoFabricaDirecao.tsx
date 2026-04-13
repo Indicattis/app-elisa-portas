@@ -258,6 +258,16 @@ export default function GestaoFabricaDirecao() {
     return filtered;
   }, [pedidos, searchTerm, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
 
+  const vendasPendenteFiltradas = useMemo(() => {
+    if (!searchTerm.trim()) return vendasPendentePedido;
+    const termo = searchTerm.toLowerCase().trim();
+    return vendasPendentePedido.filter(venda => {
+      const nome = venda.cliente_nome?.toLowerCase() || '';
+      const atendente = venda.atendente_nome?.toLowerCase() || '';
+      return nome.includes(termo) || atendente.includes(termo);
+    });
+  }, [vendasPendentePedido, searchTerm]);
+
   const totalPortasEtapa = useMemo(() => {
     return pedidosFiltrados.reduce((total, pedido: any) => {
       const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
