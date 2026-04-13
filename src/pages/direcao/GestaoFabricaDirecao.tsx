@@ -505,9 +505,58 @@ export default function GestaoFabricaDirecao() {
         {/* Tabs - Desktop */}
         <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-2 bg-white/5 border border-blue-500/10">
           <TooltipProvider>
+            {/* Grupo Azul: Pré-Produção */}
+            <div className="flex gap-1 border-2 border-blue-500/50 rounded-lg p-1">
+              <TabsTrigger 
+                value="pendente_pedido" 
+                className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
+              >
+                <DollarSign className="h-4 w-4 flex-shrink-0" />
+                <span className="text-xs">Pend. Faturamento</span>
+                <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
+                  {vendasPendentePedido.length}
+                </span>
+              </TabsTrigger>
+              {(['aprovacao_diretor'] as const).map(etapa => {
+                const config = ETAPAS_CONFIG[etapa];
+                const count = contadores[etapa] || 0;
+                const IconComponent = ETAPA_ICONS[etapa];
+                const responsavel = getResponsavel(etapa);
+                return (
+                  <TabsTrigger 
+                    key={etapa} 
+                    value={etapa} 
+                    className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
+                  >
+                    {responsavel ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Avatar className="h-5 w-5 border border-blue-500/30">
+                            <AvatarImage src={responsavel.foto_perfil_url || undefined} />
+                            <AvatarFallback className="text-[10px] bg-blue-500/20">
+                              {responsavel.nome.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">Responsável: {responsavel.nome}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <IconComponent className="h-4 w-4 flex-shrink-0" />
+                    )}
+                    <span className="text-xs">{config.label}</span>
+                    <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
+                      {count}
+                    </span>
+                  </TabsTrigger>
+                );
+              })}
+            </div>
+
             {/* Grupo Vermelho: Produção */}
             <div className="flex gap-1 border-2 border-red-500/50 rounded-lg p-1">
-              {(['aprovacao_diretor', 'aberto', 'aprovacao_ceo', 'em_producao', 'inspecao_qualidade', 'aguardando_pintura', 'embalagem'] as const).map(etapa => {
+              {(['aberto', 'aprovacao_ceo', 'em_producao', 'inspecao_qualidade', 'aguardando_pintura', 'embalagem'] as const).map(etapa => {
                 const config = ETAPAS_CONFIG[etapa];
                 const count = contadores[etapa] || 0;
                 const IconComponent = ETAPA_ICONS[etapa];
