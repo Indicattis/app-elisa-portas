@@ -52,7 +52,19 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
 
   const valorTotal = (venda.valor_venda || 0) + (venda.valor_credito || 0);
   const diasPendente = differenceInDays(new Date(), new Date(venda.data_venda));
-  const pagamentoLabel = venda.metodo_pagamento ? (FORMAS_PAGAMENTO_LABELS[venda.metodo_pagamento] || venda.metodo_pagamento) : null;
+
+  // Combined payment methods label
+  const pagamentoLabel = (() => {
+    const methods: string[] = [];
+    if (venda.metodo_pagamento) {
+      methods.push(FORMAS_PAGAMENTO_LABELS[venda.metodo_pagamento] || venda.metodo_pagamento);
+    }
+    if (venda.metodo_pagamento_entrega) {
+      const label2 = FORMAS_PAGAMENTO_LABELS[venda.metodo_pagamento_entrega] || venda.metodo_pagamento_entrega;
+      if (!methods.includes(label2)) methods.push(label2);
+    }
+    return methods.length > 0 ? methods.join('/') : null;
+  })();
 
   const tipoEntregaIcon = (() => {
     if (!venda.tipo_entrega) return null;
