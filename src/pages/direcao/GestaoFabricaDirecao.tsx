@@ -113,7 +113,7 @@ export default function GestaoFabricaDirecao() {
     removerResponsavel, 
     isAtribuindo 
   } = useEtapaResponsaveis();
-  const etapaParaQuery = etapaAtiva === 'arquivo_morto' ? 'aberto' : etapaAtiva;
+  const etapaParaQuery = (etapaAtiva === 'arquivo_morto' || etapaAtiva === 'pendente_pedido') ? 'aberto' : etapaAtiva;
   const {
     pedidos,
     isLoading,
