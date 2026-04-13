@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronRight, DoorOpen, GripVertical, Hammer, Truck, MapPin, Wrench } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -73,6 +73,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
             <Tooltip>
               <TooltipTrigger asChild>
                 <Avatar className="h-5 w-5">
+                  <AvatarImage src={venda.atendente_foto_url || undefined} />
                   <AvatarFallback className="text-[8px] bg-blue-500/20 text-blue-400 border border-blue-500/50">
                     {atendenteIniciais}
                   </AvatarFallback>
