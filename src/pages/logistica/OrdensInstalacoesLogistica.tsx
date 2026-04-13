@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -260,31 +260,25 @@ export default function OrdensInstalacoesLogistica() {
             </Select>
           </div>
 
-          {/* Accordion de Seções */}
-          <Accordion type="single" collapsible className={cn(
-            "space-y-3 transition-all duration-500 delay-200",
+          {/* Grid 3 colunas: Aguardando, Carregadas, Concluídas */}
+          <div className={cn(
+            "grid grid-cols-1 lg:grid-cols-3 gap-4 transition-all duration-500 delay-200",
             mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           )}>
-            {/* SEÇÃO 1: Aguardando Carregamento */}
-            <AccordionItem value="aguardando" className="border rounded-lg px-3">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <Truck className="h-5 w-5 text-amber-500" />
-                  <span className="text-lg font-semibold">Aguardando Carregamento</span>
-                  <Badge variant="secondary" className="bg-amber-500/20 text-amber-600">
-                    {ordensNaoCarregadas.length}
-                  </Badge>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
+            {/* Coluna 1: Aguardando Carregamento */}
+            <Card className="border-amber-500/30">
+              <div className="flex items-center gap-2 p-3 border-b border-amber-500/20 bg-amber-500/5 rounded-t-lg">
+                <Truck className="h-5 w-5 text-amber-500" />
+                <span className="text-sm font-semibold">Aguardando Carregamento</span>
+                <Badge variant="secondary" className="bg-amber-500/20 text-amber-600 ml-auto">
+                  {ordensNaoCarregadas.length}
+                </Badge>
+              </div>
+              <CardContent className="p-2 max-h-[600px] overflow-y-auto">
                 {isLoading ? (
-                  <div className="text-center py-8 text-muted-foreground text-sm">
-                    Carregando ordens...
-                  </div>
+                  <div className="text-center py-8 text-muted-foreground text-sm">Carregando...</div>
                 ) : ordensNaoCarregadas.length === 0 ? (
-                  <div className="py-8 text-center text-muted-foreground text-sm">
-                    Nenhuma instalação aguardando carregamento.
-                  </div>
+                  <div className="py-8 text-center text-muted-foreground text-sm">Nenhuma instalação aguardando.</div>
                 ) : (
                   <div className="space-y-1">
                     {ordensNaoCarregadas.map((ordem) => (
@@ -298,25 +292,21 @@ export default function OrdensInstalacoesLogistica() {
                     ))}
                   </div>
                 )}
-              </AccordionContent>
-            </AccordionItem>
+              </CardContent>
+            </Card>
 
-            {/* SEÇÃO 2: Carregadas */}
-            <AccordionItem value="carregadas" className="border rounded-lg px-3">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-green-500" />
-                  <span className="text-lg font-semibold">Carregadas</span>
-                  <Badge variant="secondary" className="bg-green-500/20 text-green-600">
-                    {ordensCarregadas.length}
-                  </Badge>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
+            {/* Coluna 2: Carregadas */}
+            <Card className="border-green-500/30">
+              <div className="flex items-center gap-2 p-3 border-b border-green-500/20 bg-green-500/5 rounded-t-lg">
+                <Package className="h-5 w-5 text-green-500" />
+                <span className="text-sm font-semibold">Carregadas</span>
+                <Badge variant="secondary" className="bg-green-500/20 text-green-600 ml-auto">
+                  {ordensCarregadas.length}
+                </Badge>
+              </div>
+              <CardContent className="p-2 max-h-[600px] overflow-y-auto">
                 {ordensCarregadas.length === 0 ? (
-                  <div className="py-8 text-center text-muted-foreground text-sm">
-                    Nenhuma instalação carregada.
-                  </div>
+                  <div className="py-8 text-center text-muted-foreground text-sm">Nenhuma instalação carregada.</div>
                 ) : (
                   <div className="space-y-1">
                     {ordensCarregadas.map((ordem) => (
@@ -331,29 +321,53 @@ export default function OrdensInstalacoesLogistica() {
                     ))}
                   </div>
                 )}
-              </AccordionContent>
-            </AccordionItem>
+              </CardContent>
+            </Card>
 
-            {/* SEÇÃO 4: Instalações Avulsas */}
-            <AccordionItem value="avulsas" className="border rounded-lg px-3">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <Hammer className="h-5 w-5 text-orange-500" />
-                  <span className="text-lg font-semibold">Instalações Avulsas</span>
-                  <Badge variant="secondary" className="bg-orange-500/20 text-orange-600">
-                    {neoInstalacoes.length}
-                  </Badge>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
+            {/* Coluna 3: Concluídas */}
+            <Card className="border-emerald-500/30">
+              <div className="flex items-center gap-2 p-3 border-b border-emerald-500/20 bg-emerald-500/5 rounded-t-lg">
+                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                <span className="text-sm font-semibold">Concluídas</span>
+                <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-600 ml-auto">
+                  {finalizados.length}
+                </Badge>
+              </div>
+              <CardContent className="p-2 max-h-[600px] overflow-y-auto">
+                {isLoadingFinalizados ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">Carregando...</div>
+                ) : finalizados.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground text-sm">Nenhuma concluída nos últimos 30 dias.</div>
+                ) : (
+                  <div className="space-y-1">
+                    {finalizados.map((item) => (
+                      <NeoFinalizadoRow key={item.id} item={item} />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Grid 2 colunas: Avulsas */}
+          <div className={cn(
+            "grid grid-cols-1 lg:grid-cols-2 gap-4 transition-all duration-500 delay-300",
+            mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          )}>
+            {/* Instalações Avulsas */}
+            <Card className="border-orange-500/30">
+              <div className="flex items-center gap-2 p-3 border-b border-orange-500/20 bg-orange-500/5 rounded-t-lg">
+                <Hammer className="h-5 w-5 text-orange-500" />
+                <span className="text-sm font-semibold">Instalações Avulsas</span>
+                <Badge variant="secondary" className="bg-orange-500/20 text-orange-600 ml-auto">
+                  {neoInstalacoes.length}
+                </Badge>
+              </div>
+              <CardContent className="p-2 max-h-[600px] overflow-y-auto">
                 {isLoadingNeoInstalacoes ? (
-                  <div className="text-center py-8 text-muted-foreground text-sm">
-                    Carregando instalações avulsas...
-                  </div>
+                  <div className="text-center py-8 text-muted-foreground text-sm">Carregando...</div>
                 ) : neoInstalacoes.length === 0 ? (
-                  <div className="py-8 text-center text-muted-foreground text-sm">
-                    Nenhuma instalação avulsa pendente.
-                  </div>
+                  <div className="py-8 text-center text-muted-foreground text-sm">Nenhuma instalação avulsa pendente.</div>
                 ) : (
                   <div className="space-y-1">
                     {neoInstalacoes.map((neo) => (
@@ -366,29 +380,23 @@ export default function OrdensInstalacoesLogistica() {
                     ))}
                   </div>
                 )}
-              </AccordionContent>
-            </AccordionItem>
+              </CardContent>
+            </Card>
 
-            {/* SEÇÃO 5: Correções Avulsas */}
-            <AccordionItem value="correcoes" className="border rounded-lg px-3">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <Wrench className="h-5 w-5 text-purple-500" />
-                  <span className="text-lg font-semibold">Correções Avulsas</span>
-                  <Badge variant="secondary" className="bg-purple-500/20 text-purple-600">
-                    {neoCorrecoes.length}
-                  </Badge>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
+            {/* Correções Avulsas */}
+            <Card className="border-purple-500/30">
+              <div className="flex items-center gap-2 p-3 border-b border-purple-500/20 bg-purple-500/5 rounded-t-lg">
+                <Wrench className="h-5 w-5 text-purple-500" />
+                <span className="text-sm font-semibold">Correções Avulsas</span>
+                <Badge variant="secondary" className="bg-purple-500/20 text-purple-600 ml-auto">
+                  {neoCorrecoes.length}
+                </Badge>
+              </div>
+              <CardContent className="p-2 max-h-[600px] overflow-y-auto">
                 {isLoadingNeoCorrecoes ? (
-                  <div className="text-center py-8 text-muted-foreground text-sm">
-                    Carregando correções avulsas...
-                  </div>
+                  <div className="text-center py-8 text-muted-foreground text-sm">Carregando...</div>
                 ) : neoCorrecoes.length === 0 ? (
-                  <div className="py-8 text-center text-muted-foreground text-sm">
-                    Nenhuma correção avulsa pendente.
-                  </div>
+                  <div className="py-8 text-center text-muted-foreground text-sm">Nenhuma correção avulsa pendente.</div>
                 ) : (
                   <div className="space-y-1">
                     {neoCorrecoes.map((neo) => (
@@ -401,39 +409,9 @@ export default function OrdensInstalacoesLogistica() {
                     ))}
                   </div>
                 )}
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* SEÇÃO 6: Concluídas */}
-            <AccordionItem value="concluidas" className="border rounded-lg px-3">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                  <span className="text-lg font-semibold">Concluídas</span>
-                  <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-600">
-                    {finalizados.length}
-                  </Badge>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                {isLoadingFinalizados ? (
-                  <div className="text-center py-8 text-muted-foreground text-sm">
-                    Carregando concluídas...
-                  </div>
-                ) : finalizados.length === 0 ? (
-                  <div className="py-8 text-center text-muted-foreground text-sm">
-                    Nenhuma instalação ou correção concluída nos últimos 30 dias.
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {finalizados.map((item) => (
-                      <NeoFinalizadoRow key={item.id} item={item} />
-                    ))}
-                  </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 
