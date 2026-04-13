@@ -41,6 +41,7 @@ export function usePedidosContadores() {
       if (error) throw error;
 
       const counts: Record<EtapaPedido, number> = {
+        aprovacao_diretor: 0,
         aberto: 0,
         aprovacao_ceo: 0,
         em_producao: 0,

@@ -48,6 +48,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { GestaoFabricaMobile } from "@/components/direcao/GestaoFabricaMobile";
 
 const ETAPA_ICONS = {
+  aprovacao_diretor: ShieldCheck,
   aberto: Clock,
   aprovacao_ceo: ShieldCheck,
   em_producao: Factory,
@@ -67,7 +68,7 @@ export default function GestaoFabricaDirecao() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido | 'arquivo_morto'>('aberto');
+  const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido | 'arquivo_morto'>('aprovacao_diretor');
   const [arquivoSearch, setArquivoSearch] = useState('');
   const [debouncedArquivoSearch, setDebouncedArquivoSearch] = useState('');
   const [desarquivandoId, setDesarquivandoId] = useState<string | null>(null);
@@ -484,7 +485,7 @@ export default function GestaoFabricaDirecao() {
           <TooltipProvider>
             {/* Grupo Vermelho: Produção */}
             <div className="flex gap-1 border-2 border-red-500/50 rounded-lg p-1">
-              {(['aberto', 'aprovacao_ceo', 'em_producao', 'inspecao_qualidade', 'aguardando_pintura', 'embalagem'] as const).map(etapa => {
+              {(['aprovacao_diretor', 'aberto', 'aprovacao_ceo', 'em_producao', 'inspecao_qualidade', 'aguardando_pintura', 'embalagem'] as const).map(etapa => {
                 const config = ETAPAS_CONFIG[etapa];
                 const count = contadores[etapa] || 0;
                 const IconComponent = ETAPA_ICONS[etapa];
