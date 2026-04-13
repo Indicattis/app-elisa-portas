@@ -319,6 +319,14 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                 </div>
               </div>
             )}
+
+            <div className="bg-white/5 rounded-xl border border-white/10 p-3 text-center">
+              <DollarSign className="h-4 w-4 text-emerald-400 mx-auto mb-1" />
+              <p className="text-[10px] text-white/50 uppercase">Lucro</p>
+              <p className={cn("text-sm font-semibold", venda.lucro_total && venda.lucro_total > 0 ? "text-emerald-400" : "text-white/40")}>
+                {venda.lucro_total && venda.lucro_total > 0 ? formatCurrency(venda.lucro_total) : '—'}
+              </p>
+            </div>
           </div>
 
           {/* Portas Info */}
