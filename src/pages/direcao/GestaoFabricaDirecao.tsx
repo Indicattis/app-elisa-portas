@@ -258,6 +258,16 @@ export default function GestaoFabricaDirecao() {
     return filtered;
   }, [pedidos, searchTerm, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
 
+  const vendasPendenteFiltradas = useMemo(() => {
+    if (!searchTerm.trim()) return vendasPendentePedido;
+    const termo = searchTerm.toLowerCase().trim();
+    return vendasPendentePedido.filter(venda => {
+      const nome = venda.cliente_nome?.toLowerCase() || '';
+      const atendente = venda.atendente_nome?.toLowerCase() || '';
+      return nome.includes(termo) || atendente.includes(termo);
+    });
+  }, [vendasPendentePedido, searchTerm]);
+
   const totalPortasEtapa = useMemo(() => {
     return pedidosFiltrados.reduce((total, pedido: any) => {
       const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
@@ -685,24 +695,85 @@ export default function GestaoFabricaDirecao() {
         <TabsContent value="pendente_pedido" className="mt-4">
           <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
             <CardHeader className="pb-3 px-4 py-4">
-              <CardTitle className="text-lg flex items-center gap-2 text-white">
-                <DollarSign className="h-5 w-5 text-blue-400" />
-                <span>Vendas Faturadas Aguardando Pedido</span>
-                <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
-                  {vendasPendentePedido.length}
-                </Badge>
-              </CardTitle>
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                <CardTitle className="text-lg flex items-center gap-2 text-white">
+                  <DollarSign className="h-5 w-5 text-blue-400" />
+                  <span>Vendas Faturadas Aguardando Pedido</span>
+                  <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
+                    {vendasPendenteFiltradas.length}
+                  </Badge>
+
+                  {/* Responsável da Etapa */}
+                  <div className="flex items-center gap-2 ml-4">
+                    {(() => {
+                      const responsavel = getResponsavel('pendente_pedido' as any);
+                      return responsavel ? (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button 
+                                onClick={() => handleAbrirModalResponsavel('pendente_pedido' as any)}
+                                className="flex items-center gap-2 px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
+                              >
+                                <Avatar className="h-6 w-6 border border-blue-500/30">
+                                  <AvatarImage src={responsavel.foto_perfil_url || undefined} />
+                                  <AvatarFallback className="text-[10px] bg-blue-500/20">
+                                    {responsavel.nome.charAt(0).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-xs text-white/80">{responsavel.nome.split(' ')[0]}</span>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">Clique para alterar o responsável</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleAbrirModalResponsavel('pendente_pedido' as any)}
+                                className="h-7 px-2 text-white/50 hover:text-white hover:bg-white/10"
+                              >
+                                <UserPlus className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">Atribuir responsável</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    })()}
+                  </div>
+                </CardTitle>
+
+                <PedidosFiltrosMinimalista 
+                  searchTerm={searchTerm} 
+                  onSearchChange={setSearchTerm} 
+                  tipoEntrega={tipoEntrega} 
+                  onTipoEntregaChange={setTipoEntrega} 
+                  corPintura={corPintura} 
+                  onCorPinturaChange={setCorPintura} 
+                  mostrarProntos={mostrarProntos} 
+                  onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)} 
+                />
+              </div>
             </CardHeader>
             <CardContent>
               {isLoadingPendentes ? (
                 <div className="text-center py-8 text-white/50">Carregando...</div>
-              ) : vendasPendentePedido.length === 0 ? (
+              ) : vendasPendenteFiltradas.length === 0 ? (
                 <div className="text-center py-8 text-white/50">
-                  Nenhuma venda faturada pendente de pedido
+                  {searchTerm ? 'Nenhuma venda encontrada' : 'Nenhuma venda faturada pendente de pedido'}
                 </div>
               ) : (
                 <div className="space-y-1">
-                  {vendasPendentePedido.map(venda => (
+                  {vendasPendenteFiltradas.map(venda => (
                     <VendaPendentePedidoCard key={venda.id} venda={venda} />
                   ))}
                 </div>
