@@ -1,0 +1,1 @@
+ALTER TABLE public.vendas ADD COLUMN pedido_dispensado boolean NOT NULL DEFAULT false;
