@@ -13,6 +13,9 @@ export interface VendaPendentePedido {
   atendente_foto_url: string | null;
   tipo_entrega: string | null;
   metodo_pagamento: string | null;
+  metodo_pagamento_entrega: string | null;
+  numero_parcelas: number | null;
+  pago_na_instalacao: boolean | null;
   cidade: string | null;
   estado: string | null;
   cores: Array<{ nome: string; codigo_hex: string }>;
