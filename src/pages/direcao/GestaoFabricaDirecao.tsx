@@ -680,6 +680,62 @@ export default function GestaoFabricaDirecao() {
           </TooltipProvider>
         </TabsList>
 
+        {/* Aba Pendente Faturamento */}
+        <TabsContent value="pendente_pedido" className="mt-4">
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
+            <CardHeader className="pb-3 px-4 py-4">
+              <CardTitle className="text-lg flex items-center gap-2 text-white">
+                <DollarSign className="h-5 w-5 text-blue-400" />
+                <span>Vendas Faturadas Aguardando Pedido</span>
+                <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
+                  {vendasPendentePedido.length}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingPendentes ? (
+                <div className="text-center py-8 text-white/50">Carregando...</div>
+              ) : vendasPendentePedido.length === 0 ? (
+                <div className="text-center py-8 text-white/50">
+                  Nenhuma venda faturada pendente de pedido
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {vendasPendentePedido.map(venda => (
+                    <div
+                      key={venda.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/administrativo/financeiro/faturamento/${venda.id}?from=vendas`)}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <p className="text-white font-medium text-sm">
+                            {venda.cliente_nome || "Cliente não informado"}
+                          </p>
+                          <p className="text-white/50 text-xs">
+                            {format(new Date(venda.data_venda), "dd/MM/yyyy", { locale: ptBR })}
+                            {venda.atendente_nome && ` • ${venda.atendente_nome}`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        {venda.quantidade_portas > 0 && (
+                          <Badge variant="secondary" className="bg-white/10 text-white/70 text-xs">
+                            🚪 {venda.quantidade_portas}
+                          </Badge>
+                        )}
+                        <span className="text-white font-semibold text-sm">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(venda.valor_venda + venda.valor_credito)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {ORDEM_ETAPAS.map(etapa => (
           <TabsContent key={etapa} value={etapa} className="mt-4">
             <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
