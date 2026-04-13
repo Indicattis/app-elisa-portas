@@ -419,10 +419,10 @@ export default function GestaoFabricaDirecao() {
       </div>
 
       {/* Tabs de Etapas */}
-      <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto')}>
+      <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto' | 'pendente_pedido')}>
         {/* Seletor mobile */}
         <div className="md:hidden mb-4">
-          <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto')}>
+          <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto' | 'pendente_pedido')}>
             <SelectTrigger className="w-full h-12 bg-white/5 border-blue-500/10 text-white">
               <SelectValue>
                 {(() => {
