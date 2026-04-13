@@ -426,6 +426,17 @@ export default function GestaoFabricaDirecao() {
             <SelectTrigger className="w-full h-12 bg-white/5 border-blue-500/10 text-white">
               <SelectValue>
                 {(() => {
+                  if (etapaAtiva === 'pendente_pedido') {
+                    return (
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-5 w-5" />
+                        <span className="font-medium">Pend. Faturamento</span>
+                        <Badge variant="secondary" className="ml-auto bg-blue-500/20 text-blue-400">
+                          {vendasPendentePedido.length}
+                        </Badge>
+                      </div>
+                    );
+                  }
                   if (etapaAtiva === 'arquivo_morto') {
                     return (
                       <div className="flex items-center gap-2">
