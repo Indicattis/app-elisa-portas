@@ -43,6 +43,9 @@ export const useVendasPendentePedido = () => {
           atendente_id,
           tipo_entrega,
           metodo_pagamento,
+          metodo_pagamento_entrega,
+          numero_parcelas,
+          pago_na_instalacao,
           cidade,
           estado,
           produtos_vendas (
