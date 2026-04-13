@@ -1,36 +1,26 @@
 
 
-## Plano: Corrigir erro React #130 na página /home/pedidos-producao
+## Plano: Restaurar botão de desativar usuário em /direcao/gestao-colaboradores
 
-### Causa raiz
-O objeto `ETAPA_ICONS` em `PedidosProducaoReadOnly.tsx` não possui todas as chaves de `ORDEM_ETAPAS`. Faltam:
-- `aprovacao_diretor` (não existe no objeto)
-- `instalacoes` (existe como `aguardando_instalacao`, nome errado)
+### O que será feito
 
-Quando o Select ou TabsTrigger tenta renderizar `<IconComponent />` com valor `undefined`, o React lança o erro #130.
+Adicionar um botão de desativação no card de cada colaborador na página de gestão, ao lado do botão "Alterar função" já existente. Incluir um diálogo de confirmação antes de desativar.
 
-### Correção
+### Alterações
 
-**Arquivo**: `src/pages/home/PedidosProducaoReadOnly.tsx`
+**Arquivo**: `src/pages/direcao/GestaoColaboradoresDirecao.tsx`
 
-Atualizar `ETAPA_ICONS` (linhas 25-37):
-- Adicionar `aprovacao_diretor: ShieldCheck`
-- Renomear `aguardando_instalacao` para `instalacoes`
-- Importar `ShieldCheck` (já importado, verificar) — sim, `ShieldCheck` já está na linha 5
+1. Adicionar import do ícone `UserX` do lucide-react
+2. Adicionar estado para controle do diálogo de confirmação de desativação (`userToDeactivate`)
+3. No card do usuário (linhas ~261-269), adicionar botão com ícone `UserX` ao lado do botão `ArrowRightLeft`
+4. Adicionar `AlertDialog` de confirmação com mensagem clara
+5. Implementar função de desativação que faz `update` na tabela `admin_users` setando `ativo = false`
+6. Após desativação, invalidar queries relevantes e exibir toast de sucesso
 
-```typescript
-const ETAPA_ICONS = {
-  aprovacao_diretor: ShieldCheck,
-  aberto: Clock,
-  aprovacao_ceo: ShieldCheck,
-  em_producao: Factory,
-  inspecao_qualidade: ClipboardCheck,
-  aguardando_pintura: Paintbrush,
-  embalagem: BoxIcon,
-  aguardando_coleta: Package,
-  instalacoes: HardHat,
-  correcoes: AlertTriangle,
-  finalizado: CheckCircle2
-};
-```
+### Detalhe técnico
+
+- O botão aparece no hover do card, junto com o botão de transferência
+- Cor vermelha no hover para indicar ação destrutiva
+- Diálogo de confirmação obrigatório antes de executar
+- Query invalidada: `all-users`
 
