@@ -10,6 +10,7 @@ export interface VendaPendentePedido {
   valor_credito: number;
   quantidade_portas: number;
   atendente_nome: string | null;
+  atendente_foto_url: string | null;
   tipo_entrega: string | null;
   metodo_pagamento: string | null;
   cidade: string | null;
