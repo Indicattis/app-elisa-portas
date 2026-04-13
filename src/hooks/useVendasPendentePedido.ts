@@ -16,6 +16,7 @@ export interface VendaPendentePedido {
   cidade: string | null;
   estado: string | null;
   cores: Array<{ nome: string; codigo_hex: string }>;
+  portas_info: Array<{ tamanho: 'P' | 'G'; largura: number; altura: number; area: number }>;
 }
 
 export const useVendasPendentePedido = () => {
@@ -46,6 +47,9 @@ export const useVendasPendentePedido = () => {
             faturamento,
             quantidade,
             tipo_produto,
+            largura,
+            altura,
+            tamanho,
             catalogo_cores (
               nome,
               codigo_hex
