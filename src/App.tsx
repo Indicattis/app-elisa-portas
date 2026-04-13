@@ -339,6 +339,9 @@ import ContasPagarMinimalista from "./pages/administrativo/ContasPagarMinimalist
 import DocumentosMinimalista from "./pages/administrativo/DocumentosMinimalista";
 import MultasMinimalista from "./pages/administrativo/MultasMinimalista";
 
+// Hub de Frotas da Direção
+import FrotaDirecao from "./pages/direcao/FrotaDirecao";
+
 
 // Hub Fiscal Minimalista
 import FiscalHub from "./pages/administrativo/FiscalHub";
@@ -524,6 +527,13 @@ const App = () => (
                 <Route path="/direcao/autorizados/novo" element={<ProtectedRoute routeKey="direcao_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados/:id/editar" element={<ProtectedRoute routeKey="direcao_autorizados"><EditarAutorizadoDirecao /></ProtectedRoute>} />
                 
+{/* Hub de Frotas da Direção */}
+                <Route path="/direcao/frota" element={<ProtectedRoute routeKey="direcao_hub"><FrotaDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/frota/novo" element={<ProtectedRoute routeKey="direcao_hub"><FrotaNovoMinimalista /></ProtectedRoute>} />
+                <Route path="/direcao/frota/:id/editar" element={<ProtectedRoute routeKey="direcao_hub"><FrotaEditMinimalista /></ProtectedRoute>} />
+                <Route path="/direcao/frota/:id/conferencias" element={<ProtectedRoute routeKey="direcao_hub"><FrotaConferenciasHistoricoMinimalista /></ProtectedRoute>} />
+                <Route path="/direcao/frota/conferencia" element={<ProtectedRoute routeKey="direcao_hub"><FrotaConferenciaMinimalista /></ProtectedRoute>} />
+
 {/* Hub de Estoque da Direção */}
                 <Route path="/direcao/estoque" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoEstoqueHub /></ProtectedRoute>} />
                 <Route path="/direcao/estoque/auditoria/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><AuditoriaFabrica /></ProtectedRoute>} />
