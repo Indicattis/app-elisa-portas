@@ -1,26 +1,36 @@
 
 
-## Plano: Card de venda estilo PedidoCard na aba Pendente Faturamento
+## Plano: Enriquecer aba "Pendente Faturamento" com dados e funcionalidades dos pedidos
 
 ### Resumo
-Substituir os divs simples da aba "Pendente Faturamento" por cards com o mesmo design visual dos pedidos (Card com h-10, grid layout compacto, avatar do atendente, badges, etc.).
+Adicionar ao card e hook de vendas pendentes: filtro por ano atual, tempo pendente, forma de pagamento, cores dos produtos, tipo de entrega (instalação/entrega), localização (cidade/estado), e drag-and-drop para reordenação.
 
 ### Mudanças
 
-**1. Novo componente `src/components/pedidos/VendaPendentePedidoCard.tsx`**
-- Card compacto h-10 idêntico ao layout list do PedidoCard
-- Grid com colunas: avatar atendente | nome cliente | data venda | qtd portas (badge) | valor total | seta/indicador
-- Mesma estilização: `hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden`
-- Click navega para `/administrativo/financeiro/faturamento/{id}?from=vendas`
-- Usar TooltipProvider para tooltips no nome do cliente e atendente
+**1. `src/hooks/useVendasPendentePedido.ts`**
+- Adicionar filtro `.gte("data_venda", "2026-01-01")` para trazer somente vendas do ano atual
+- Expandir select para incluir: `tipo_entrega`, `metodo_pagamento`, `cidade`, `estado`, `created_at`
+- Expandir select de `produtos_vendas` para incluir: `cor:catalogo_cores(nome, codigo_hex)`, `valor_pintura`
+- Atualizar interface `VendaPendentePedido` com novos campos: `tipo_entrega`, `metodo_pagamento`, `cidade`, `estado`, `cores` (array de {nome, codigo_hex}), `data_faturamento` (usar data_venda como referência de tempo pendente)
+- Mapear cores únicas dos produtos no `.map()`
 
-**2. Atualizar `src/pages/direcao/GestaoFabricaDirecao.tsx`**
-- Na TabsContent de `pendente_pedido`, substituir os divs atuais (linhas 703-731) pelo novo `VendaPendentePedidoCard`
-- Envolver a lista em `<TooltipProvider>` como o PedidosDraggableList faz
+**2. `src/components/pedidos/VendaPendentePedidoCard.tsx`**
+- Expandir grid para incluir novas colunas: tempo pendente | forma pagamento | tipo entrega (badge Hammer/Truck) | cores (círculos coloridos) | cidade/estado
+- Adicionar prop `dragHandleProps` opcional para suportar drag-and-drop (ícone GripVertical)
+- Calcular tempo pendente com `differenceInDays` do date-fns
+- Badge de tipo entrega: azul com Hammer para instalação, verde com Truck para entrega
+- Cores: círculos coloridos como no PedidoCard (até 2 cores com pill shape)
+- Localização: texto `cidade/estado` como no PedidoCard
+- Grid atualizado: `20px 24px 1fr 70px 50px 30px 80px 70px 100px 20px` (grip | avatar | nome | cidade | tempo | entrega | cores | pagamento | valor | seta)
 
-### Arquivo novo
+**3. `src/pages/direcao/GestaoFabricaDirecao.tsx`**
+- Implementar drag-and-drop na aba pendente_pedido usando `DndContext` + `SortableContext` similar ao `PedidosDraggableList`
+- Adicionar state para ordem das vendas pendentes
+- Adicionar mutation para salvar prioridade (pode usar localStorage ou campo na tabela vendas)
+- Envolver cards em SortableContext com verticalListSortingStrategy
+
+### Arquivos alterados
+- `src/hooks/useVendasPendentePedido.ts`
 - `src/components/pedidos/VendaPendentePedidoCard.tsx`
-
-### Arquivo alterado
 - `src/pages/direcao/GestaoFabricaDirecao.tsx`
 
