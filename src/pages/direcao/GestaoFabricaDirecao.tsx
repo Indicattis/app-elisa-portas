@@ -822,11 +822,10 @@ export default function GestaoFabricaDirecao() {
                   {searchTerm ? 'Nenhuma venda encontrada' : 'Nenhuma venda faturada pendente de pedido'}
                 </div>
               ) : (
-                <div className="space-y-1">
-                  {vendasPendenteFiltradas.map(venda => (
-                    <VendaPendentePedidoCard key={venda.id} venda={venda} />
-                  ))}
-                </div>
+                <VendasPendenteDraggableList
+                  vendas={vendasPendenteFiltradas}
+                  onReorganizar={handleReorganizarVendas}
+                />
               )}
             </CardContent>
           </Card>
