@@ -1,56 +1,71 @@
 
 
-## Plano: Sincronizar rotas de permissões com todas as rotas do site
+## Plano: Nova etapa "Aprovação Diretor" e tela de aprovação
 
-### Problema
-A tabela `app_routes` está desatualizada em relação às rotas reais do `App.tsx`. Muitas rotas existentes no código não aparecem na tela de permissões, e diversas sub-rotas compartilham a mesma permissão do hub pai (ex: `direcao_hub`), impedindo controle granular.
+### Resumo
+Adicionar uma nova etapa `aprovacao_diretor` como primeira etapa do fluxo de produção (antes de "Pedidos em Aberto"). Pedidos criados via faturamento entram nessa etapa aguardando aprovação do diretor. O diretor aprova ou reprova pela tela `/direcao/aprovacoes/pedidos`. Reprovação atualiza a venda com status "reprovado" e remove o pedido.
 
-### Rotas faltando na tabela `app_routes`
+### Mudanças necessárias
 
-**Fábrica** (2 rotas):
-- `fabrica_embalagem` — /fabrica/producao/embalagem
-- `fabrica_arquivo_morto` — /fabrica/arquivo-morto
+**1. Migration SQL**
+- Adicionar `aprovacao_diretor` ao fluxo: nenhuma alteração de schema necessária pois `etapa_atual` é campo texto livre
+- Adicionar coluna `status_aprovacao` (text, default 'aprovado') na tabela `vendas` para marcar vendas reprovadas
+- Inserir rota `direcao_aprovacoes_pedidos` em `app_routes`
+- Propagar permissão para quem já tem `direcao_aprovacoes`
 
-**Direção** (8 rotas):
-- `direcao_dre` — /direcao/dre
-- `direcao_autorizados` — /direcao/autorizados
-- `direcao_aprovacoes` — /direcao/aprovacoes
-- `direcao_checklist` — /direcao/checklist-lideranca
-- `direcao_gestao_colaboradores` — /direcao/gestao-colaboradores
-- `direcao_metas_instalacoes` — /direcao/metas/instalacoes
-- `direcao_regras_vendas` — /direcao/vendas/regras-vendas
-- `direcao_tabela_precos` — /direcao/vendas/tabela-precos
+**2. `src/types/pedidoEtapa.ts`**
+- Adicionar `'aprovacao_diretor'` ao tipo `EtapaPedido`
+- Adicionar config em `ETAPAS_CONFIG` (label: "Aprovação Diretor", color: orange, icon: ShieldCheck, checkboxes: [])
+- Inserir `'aprovacao_diretor'` como primeiro item de `ORDEM_ETAPAS`
+- Atualizar `LIMITES_ETAPA_SEGUNDOS` com limite para a nova etapa
 
-**Logística** (3 rotas):
-- `logistica_autorizados` — /logistica/autorizados
-- `logistica_pedidos_sem_entrega` — /logistica/pedidos-sem-entrega
-- `logistica_ranking` — /logistica/instalacoes/ranking
+**3. `src/utils/pedidoFluxograma.ts`**
+- Adicionar `aprovacao_diretor` ao `FLUXOGRAMA_ETAPAS`
+- Incluir no fluxo base de `determinarFluxograma`
 
-**Administrativo** (8 rotas):
-- `admin_multas` — /administrativo/multas
-- `admin_gastos` — /administrativo/financeiro/gastos
-- `admin_bancos` — /administrativo/financeiro/bancos
-- `admin_rh_dp_vagas` — /administrativo/rh-dp/vagas
-- `admin_rh_dp_responsabilidades` — /administrativo/rh-dp/responsabilidades
-- `admin_rh_dp_funcoes` — /administrativo/rh-dp/funcoes
-- `admin_rh_dp_folha` — /administrativo/rh-dp/colaboradores/folha-pagamento
+**4. `src/hooks/usePedidoCreation.ts`**
+- Alterar etapa inicial de `'aberto'` para `'aprovacao_diretor'` (exceto manutenção que vai direto para instalações)
 
-**Estoque** (2 rotas):
-- `estoque_conferencia` — /estoque/conferencia
-- `estoque_auditoria` — /estoque/auditoria
+**5. `src/pages/direcao/GestaoFabricaDirecao.tsx`**
+- Adicionar `aprovacao_diretor` na lista de tabs do grupo vermelho (Produção)
+- Adicionar ícone no `ETAPA_ICONS`
 
-**Marketing** (1 rota):
-- `marketing_conversoes` — /marketing/conversoes
+**6. `src/components/direcao/GestaoFabricaMobile.tsx`**
+- A nova etapa já aparecerá automaticamente via `ORDEM_ETAPAS`
 
-### Ações
+**7. Novo hook `src/hooks/usePedidosAprovacaoDiretor.ts`**
+- Buscar pedidos com `etapa_atual = 'aprovacao_diretor'`
+- Join com vendas → produtos_vendas para obter: portas (quantidade, tamanho), outros itens, preço tabela vs preço vendido
+- Mutation `aprovarPedido`: avança etapa para `aberto` (via `moverParaProximaEtapa`)
+- Mutation `reprovarPedido`: atualiza `vendas.status_aprovacao = 'reprovado'`, arquiva ou deleta o pedido de produção
 
-1. **Migration SQL** — Inserir ~24 novas rotas em `app_routes` com `interface = 'padrao'`, `parent_key` correto e `sort_order` adequado.
+**8. Nova página `src/pages/direcao/aprovacoes/AprovacoesPedidos.tsx`**
+- Lista pedidos pendentes com informações expandidas:
+  - Portas de enrolar: quantidade e tamanho (P/G/GG)
+  - Outros itens (acessórios, catálogo, adicionais)
+  - Preço da tabela e preço vendido de cada item
+- Botões Aprovar (verde) e Reprovar (vermelho)
+- Layout similar ao `AprovacoesProducao.tsx`
 
-2. **Atualizar `App.tsx`** — Trocar `routeKey="direcao_hub"` / `routeKey="logistica_hub"` / `routeKey="administrativo_hub"` pelas chaves granulares nas rotas que agora têm entrada própria.
+**9. `src/pages/direcao/aprovacoes/DirecaoAprovacoesHub.tsx`**
+- Adicionar botão "Aprovações Pedidos" com ícone `ClipboardCheck` como primeiro item
+- Contador de pedidos em `aprovacao_diretor`
 
-3. **Propagar permissões existentes** — Na mesma migration, copiar `user_route_access` de quem já tem acesso ao hub pai para as novas sub-rotas, evitando que usuários percam acesso.
+**10. `src/App.tsx`**
+- Adicionar rota `/direcao/aprovacoes/pedidos` → `AprovacoesPedidos`
+
+**11. Faturamento Vendas**
+- Na listagem `/administrativo/financeiro/faturamento/vendas`, exibir badge "Reprovado" quando `status_aprovacao = 'reprovado'` e impedir criação de novo pedido
 
 ### Arquivos alterados
 - Nova migration SQL
-- `src/App.tsx` — routeKeys atualizados (~20 linhas)
+- `src/types/pedidoEtapa.ts`
+- `src/utils/pedidoFluxograma.ts`
+- `src/hooks/usePedidoCreation.ts`
+- `src/pages/direcao/GestaoFabricaDirecao.tsx`
+- `src/pages/direcao/aprovacoes/DirecaoAprovacoesHub.tsx`
+- `src/App.tsx`
+- Novo: `src/hooks/usePedidosAprovacaoDiretor.ts`
+- Novo: `src/pages/direcao/aprovacoes/AprovacoesPedidos.tsx`
+- `src/pages/administrativo/FaturamentoVendasMinimalista.tsx` (badge reprovado)
 
