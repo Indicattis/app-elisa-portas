@@ -16,6 +16,7 @@ export interface VendaPendentePedido {
   metodo_pagamento_entrega: string | null;
   numero_parcelas: number | null;
   pago_na_instalacao: boolean | null;
+  pagamento_na_entrega: boolean | null;
   cidade: string | null;
   estado: string | null;
   cores: Array<{ nome: string; codigo_hex: string }>;
