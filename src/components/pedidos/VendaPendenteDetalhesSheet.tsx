@@ -236,7 +236,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
           </div>
 
           {/* Info Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="bg-white/5 rounded-xl border border-white/10 p-3 text-center">
               <Calendar className="h-4 w-4 text-blue-400 mx-auto mb-1" />
               <p className="text-[10px] text-white/50 uppercase">Data Venda</p>
@@ -273,7 +273,31 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
               <CreditCard className="h-4 w-4 text-purple-400 mx-auto mb-1" />
               <p className="text-[10px] text-white/50 uppercase">Pagamento</p>
               <p className="text-sm font-semibold text-white">
-                {venda.metodo_pagamento ? (FORMAS_PAGAMENTO_LABELS[venda.metodo_pagamento] || venda.metodo_pagamento) : '—'}
+                {(() => {
+                  const methods: string[] = [];
+                  if (venda.metodo_pagamento) methods.push(FORMAS_PAGAMENTO_LABELS[venda.metodo_pagamento] || venda.metodo_pagamento);
+                  if (venda.metodo_pagamento_entrega) {
+                    const l2 = FORMAS_PAGAMENTO_LABELS[venda.metodo_pagamento_entrega] || venda.metodo_pagamento_entrega;
+                    if (!methods.includes(l2)) methods.push(l2);
+                  }
+                  return methods.length > 0 ? methods.join('/') : '—';
+                })()}
+              </p>
+            </div>
+
+            <div className="bg-white/5 rounded-xl border border-white/10 p-3 text-center">
+              <CreditCard className="h-4 w-4 text-blue-400 mx-auto mb-1" />
+              <p className="text-[10px] text-white/50 uppercase">Parcelas</p>
+              <p className="text-sm font-semibold text-white">
+                {venda.numero_parcelas ? `${venda.numero_parcelas}x` : '—'}
+              </p>
+            </div>
+
+            <div className="bg-white/5 rounded-xl border border-white/10 p-3 text-center">
+              <DollarSign className="h-4 w-4 text-emerald-400 mx-auto mb-1" />
+              <p className="text-[10px] text-white/50 uppercase">Pago na Entrega</p>
+              <p className={cn("text-sm font-semibold", venda.pago_na_instalacao ? "text-emerald-400" : "text-white/40")}>
+                {venda.pago_na_instalacao ? 'Sim' : 'Não'}
               </p>
             </div>
           </div>
