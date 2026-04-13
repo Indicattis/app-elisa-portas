@@ -24,6 +24,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
 import { useVendasPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { VendaPendentePedidoCard } from "@/components/pedidos/VendaPendentePedidoCard";
+import { VendasPendenteDraggableList } from "@/components/pedidos/VendasPendenteDraggableList";
 import { useNeoInstalacoesListagem, useNeoInstalacoesFinalizadas } from "@/hooks/useNeoInstalacoes";
 import { useNeoCorrecoesListagem, useNeoCorrecoesFinalizadas } from "@/hooks/useNeoCorrecoes";
 import { useEtapaResponsaveis } from "@/hooks/useEtapaResponsaveis";
