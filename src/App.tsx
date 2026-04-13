@@ -567,18 +567,18 @@ const App = () => (
                 <Route path="/logistica/frete/internos" element={<ProtectedRoute routeKey="logistica_hub"><FreteMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/frete/transportadoras" element={<ProtectedRoute routeKey="logistica_hub"><FreteTransportadoras /></ProtectedRoute>} />
                 <Route path="/logistica/frete/valores" element={<ProtectedRoute routeKey="logistica_hub"><FreteValoresTransportadoras /></ProtectedRoute>} />
-                <Route path="/logistica/autorizados" element={<ProtectedRoute routeKey="logistica_hub"><AutorizadosLogistica /></ProtectedRoute>} />
-                <Route path="/logistica/autorizados/estado/:estadoId" element={<ProtectedRoute routeKey="logistica_hub"><EstadoAutorizadosDirecao /></ProtectedRoute>} />
-                <Route path="/logistica/autorizados/estado/:estadoId/novo" element={<ProtectedRoute routeKey="logistica_hub"><NovoAutorizadoDirecao /></ProtectedRoute>} />
-                <Route path="/logistica/autorizados/novo" element={<ProtectedRoute routeKey="logistica_hub"><NovoAutorizadoDirecao /></ProtectedRoute>} />
-                <Route path="/logistica/autorizados/:id/editar" element={<ProtectedRoute routeKey="logistica_hub"><EditarAutorizadoDirecao /></ProtectedRoute>} />
-                <Route path="/logistica/pedidos-sem-entrega" element={<ProtectedRoute routeKey="logistica_hub"><PedidosPagosSemEntrega /></ProtectedRoute>} />
+                <Route path="/logistica/autorizados" element={<ProtectedRoute routeKey="logistica_autorizados"><AutorizadosLogistica /></ProtectedRoute>} />
+                <Route path="/logistica/autorizados/estado/:estadoId" element={<ProtectedRoute routeKey="logistica_autorizados"><EstadoAutorizadosDirecao /></ProtectedRoute>} />
+                <Route path="/logistica/autorizados/estado/:estadoId/novo" element={<ProtectedRoute routeKey="logistica_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />
+                <Route path="/logistica/autorizados/novo" element={<ProtectedRoute routeKey="logistica_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />
+                <Route path="/logistica/autorizados/:id/editar" element={<ProtectedRoute routeKey="logistica_autorizados"><EditarAutorizadoDirecao /></ProtectedRoute>} />
+                <Route path="/logistica/pedidos-sem-entrega" element={<ProtectedRoute routeKey="logistica_pedidos_sem_entrega"><PedidosPagosSemEntrega /></ProtectedRoute>} />
                 
                 <Route path="/logistica/instalacoes" element={<ProtectedRoute routeKey="logistica_hub"><InstalacoesHub /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/ordens-instalacoes" element={<ProtectedRoute routeKey="logistica_hub"><OrdensInstalacoesLogistica /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/equipes" element={<ProtectedRoute routeKey="logistica_hub"><EquipesMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/cronograma" element={<ProtectedRoute routeKey="logistica_hub"><CronogramaMinimalista /></ProtectedRoute>} />
-                <Route path="/logistica/instalacoes/ranking" element={<ProtectedRoute routeKey="logistica_hub"><RankingEquipesInstalacao /></ProtectedRoute>} />
+                <Route path="/logistica/instalacoes/ranking" element={<ProtectedRoute routeKey="logistica_ranking"><RankingEquipesInstalacao /></ProtectedRoute>} />
                 <Route path="/logistica/expedicao/nova-neo" element={<ProtectedRoute routeKey="logistica_hub"><NovaNeoForm /></ProtectedRoute>} />
                 <Route path="/logistica/expedicao/editar-neo/:id" element={<ProtectedRoute routeKey="logistica_hub"><NovaNeoForm /></ProtectedRoute>} />
 
@@ -588,9 +588,9 @@ const App = () => (
                 <Route path="/estoque/fabrica/editar-item/:id" element={<ProtectedRoute routeKey="estoque_fabrica"><EstoqueFabricaEdit /></ProtectedRoute>} />
                 <Route path="/estoque/almoxarifado" element={<ProtectedRoute routeKey="estoque_almoxarifado"><AlmoxarifadoPage /></ProtectedRoute>} />
                 <Route path="/estoque/fornecedores" element={<ProtectedRoute routeKey="estoque_fornecedores"><EstoqueFornecedores /></ProtectedRoute>} />
-                <Route path="/estoque/conferencia" element={<ProtectedRoute routeKey="estoque_hub"><ConferenciaHub /></ProtectedRoute>} />
-                <Route path="/estoque/conferencia/:id" element={<ProtectedRoute routeKey="estoque_hub"><ConferenciaExecucao /></ProtectedRoute>} />
-                <Route path="/estoque/auditoria" element={<ProtectedRoute routeKey="estoque_hub"><AuditoriaEstoque /></ProtectedRoute>} />
+                <Route path="/estoque/conferencia" element={<ProtectedRoute routeKey="estoque_conferencia"><ConferenciaHub /></ProtectedRoute>} />
+                <Route path="/estoque/conferencia/:id" element={<ProtectedRoute routeKey="estoque_conferencia"><ConferenciaExecucao /></ProtectedRoute>} />
+                <Route path="/estoque/auditoria" element={<ProtectedRoute routeKey="estoque_auditoria"><AuditoriaEstoque /></ProtectedRoute>} />
 
                 {/* Hub Administrativo Minimalista */}
                 <Route path="/administrativo" element={<ProtectedRoute routeKeyPrefix="administrativo_"><AdministrativoHub /></ProtectedRoute>} />
@@ -604,8 +604,8 @@ const App = () => (
                 <Route path="/administrativo/financeiro/faturamento/:id" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoVendaMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/custos/:mes" element={<ProtectedRoute routeKey="administrativo_hub"><CustosMesMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/custos" element={<ProtectedRoute routeKey="administrativo_hub"><CustosGridMinimalista /></ProtectedRoute>} />
-                <Route path="/administrativo/financeiro/gastos" element={<ProtectedRoute routeKey="administrativo_hub"><GastosPage /></ProtectedRoute>} />
-                <Route path="/administrativo/financeiro/bancos" element={<ProtectedRoute routeKey="administrativo_hub"><BancosPage /></ProtectedRoute>} />
+                <Route path="/administrativo/financeiro/gastos" element={<ProtectedRoute routeKey="admin_gastos"><GastosPage /></ProtectedRoute>} />
+                <Route path="/administrativo/financeiro/bancos" element={<ProtectedRoute routeKey="admin_bancos"><BancosPage /></ProtectedRoute>} />
                 
                 
                 {/* Hub de Caixa Minimalista */}
@@ -615,18 +615,18 @@ const App = () => (
                 <Route path="/administrativo/financeiro/caixa/contas-a-pagar" element={<ProtectedRoute routeKey="administrativo_hub"><ContasPagarMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/documentos" element={<ProtectedRoute routeKey="administrativo_hub"><DocumentosMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/documentos/novo" element={<ProtectedRoute routeKey="administrativo_hub"><DocumentoNovo /></ProtectedRoute>} />
-                <Route path="/administrativo/multas" element={<ProtectedRoute routeKey="administrativo_hub"><MultasMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/multas" element={<ProtectedRoute routeKey="admin_multas"><MultasMinimalista /></ProtectedRoute>} />
                 
 
                 {/* Hub RH/DP Minimalista */}
                 <Route path="/administrativo/rh-dp" element={<ProtectedRoute routeKey="administrativo_hub"><RhDpHub /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/colaboradores" element={<ProtectedRoute routeKey="administrativo_hub"><ColaboradoresMinimalista /></ProtectedRoute>} />
-                <Route path="/administrativo/rh-dp/colaboradores/folha-pagamento" element={<ProtectedRoute routeKey="administrativo_hub"><FolhaPagamentoNova /></ProtectedRoute>} />
+                <Route path="/administrativo/rh-dp/colaboradores/folha-pagamento" element={<ProtectedRoute routeKey="admin_rh_dp_folha"><FolhaPagamentoNova /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/colaboradores/novo" element={<ProtectedRoute routeKey="administrativo_hub"><NovoColaborador /></ProtectedRoute>} />
-                <Route path="/administrativo/rh-dp/vagas" element={<ProtectedRoute routeKey="administrativo_hub"><VagasPage /></ProtectedRoute>} />
-                <Route path="/administrativo/rh-dp/vagas/preencher/:vagaId" element={<ProtectedRoute routeKey="administrativo_hub"><PreencherVagaPage /></ProtectedRoute>} />
-                <Route path="/administrativo/rh-dp/responsabilidades" element={<ProtectedRoute routeKey="administrativo_hub"><ResponsabilidadesPage /></ProtectedRoute>} />
-                <Route path="/administrativo/rh-dp/funcoes" element={<ProtectedRoute routeKey="administrativo_hub"><FuncoesPage /></ProtectedRoute>} />
+                <Route path="/administrativo/rh-dp/vagas" element={<ProtectedRoute routeKey="admin_rh_dp_vagas"><VagasPage /></ProtectedRoute>} />
+                <Route path="/administrativo/rh-dp/vagas/preencher/:vagaId" element={<ProtectedRoute routeKey="admin_rh_dp_vagas"><PreencherVagaPage /></ProtectedRoute>} />
+                <Route path="/administrativo/rh-dp/responsabilidades" element={<ProtectedRoute routeKey="admin_rh_dp_responsabilidades"><ResponsabilidadesPage /></ProtectedRoute>} />
+                <Route path="/administrativo/rh-dp/funcoes" element={<ProtectedRoute routeKey="admin_rh_dp_funcoes"><FuncoesPage /></ProtectedRoute>} />
 
                 {/* Hub de Compras Minimalista */}
                 <Route path="/administrativo/compras" element={<ProtectedRoute routeKey="administrativo_hub"><ComprasHub /></ProtectedRoute>} />
