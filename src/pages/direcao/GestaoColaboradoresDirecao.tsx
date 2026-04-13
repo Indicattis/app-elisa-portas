@@ -32,6 +32,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import type { User } from '@/hooks/useAllUsers';
 import { PreencherVagaDialog } from '@/components/vagas/PreencherVagaDialog';
+import { SelecionarUsuarioVagaDialog } from '@/components/vagas/SelecionarUsuarioVagaDialog';
 
 const SETOR_KEYS = Object.keys(SETOR_LABELS);
 
@@ -333,6 +334,7 @@ export default function GestaoColaboradoresDirecao() {
   const [preencherVagaOpen, setPreencherVagaOpen] = useState(false);
   const [preencherVagaEmTeste, setPreencherVagaEmTeste] = useState(false);
   const [vagaToFill, setVagaToFill] = useState<Vaga | null>(null);
+  const [selecionarUsuarioOpen, setSelecionarUsuarioOpen] = useState(false);
 
   const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
   const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
@@ -716,7 +718,7 @@ export default function GestaoColaboradoresDirecao() {
                        
                        onChangeUserRole={(user) => { setUserToChangeRole(user); setNewRole(user.role); }}
                        onCancelVaga={handleCancelVaga}
-                       onFillVaga={(vaga) => { setVagaToFill(vaga); setPreencherVagaEmTeste(false); setPreencherVagaOpen(true); }}
+                       onFillVaga={(vaga) => { setVagaToFill(vaga); setPreencherVagaEmTeste(false); setSelecionarUsuarioOpen(true); }}
                          onUpdateCusto={handleUpdateCusto}
                          onUserReorder={handleUserReorder}
                          onDeactivateUser={setUserToDeactivate}
@@ -944,7 +946,28 @@ export default function GestaoColaboradoresDirecao() {
         role={editingRole}
       />
 
-      {/* Preencher vaga dialog */}
+      {/* Selecionar usuário existente para vaga */}
+      <SelecionarUsuarioVagaDialog
+        open={selecionarUsuarioOpen}
+        onOpenChange={(open) => { setSelecionarUsuarioOpen(open); if (!open) setVagaToFill(null); }}
+        vagaCargo={vagaToFill?.cargo || ''}
+        vagaId={vagaToFill?.id}
+        onSelectExisting={async () => {
+          if (vagaToFill) {
+            await updateVagaStatus(vagaToFill.id, 'preenchida');
+          }
+          queryClient.invalidateQueries({ queryKey: ['all-users'] });
+          setSelecionarUsuarioOpen(false);
+          setVagaToFill(null);
+        }}
+        onCreateNew={() => {
+          setSelecionarUsuarioOpen(false);
+          setPreencherVagaEmTeste(false);
+          setPreencherVagaOpen(true);
+        }}
+      />
+
+      {/* Preencher vaga dialog (criar novo) */}
       <PreencherVagaDialog
         open={preencherVagaOpen}
         onOpenChange={(open) => { setPreencherVagaOpen(open); if (!open) { setVagaToFill(null); setPreencherVagaEmTeste(false); } }}
