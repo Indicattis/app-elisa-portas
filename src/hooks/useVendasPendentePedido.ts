@@ -60,6 +60,7 @@ export const useVendasPendentePedido = () => {
           )
         `)
         .eq("is_rascunho", false)
+        .eq("pedido_dispensado", false)
         .gte("data_venda", startOfYear)
         .order("data_venda", { ascending: false });
 

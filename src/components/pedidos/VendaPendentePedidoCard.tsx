@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ChevronRight, GripVertical, Hammer, Truck, Wrench, Plus, Loader2 } from "lucide-react";
+import { ChevronRight, GripVertical, Hammer, Truck, Wrench, Plus, Loader2, CheckCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -41,6 +43,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
   const queryClient = useQueryClient();
   const { createPedidoFromVenda } = usePedidoCreation();
   const [isCreating, setIsCreating] = useState(false);
+  const [isDispensando, setIsDispensando] = useState(false);
   const [showDetalhes, setShowDetalhes] = useState(false);
 
   const atendenteIniciais = venda.atendente_nome
@@ -80,6 +83,25 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
     }
   };
 
+  const handleDispensarPedido = async () => {
+    setIsDispensando(true);
+    try {
+      const { error } = await supabase
+        .from("vendas")
+        .update({ pedido_dispensado: true } as any)
+        .eq("id", venda.id);
+      if (error) {
+        toast.error("Erro ao dispensar pedido");
+        console.error(error);
+      } else {
+        toast.success("Venda dispensada de pedido");
+        queryClient.invalidateQueries({ queryKey: ["vendas-pendente-pedido"] });
+      }
+    } finally {
+      setIsDispensando(false);
+    }
+  };
+
   return (
     <TooltipProvider>
       <Card
@@ -89,7 +111,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
         <CardContent className="p-0 h-full">
           <div
             className="grid items-center gap-1.5 h-full px-2 w-full"
-            style={{ gridTemplateColumns: '20px 24px 1fr 100px 50px 50px 60px 65px 80px 70px 70px 55px 20px' }}
+            style={{ gridTemplateColumns: '20px 24px 1fr 100px 50px 50px 60px 65px 80px 70px 70px 30px 30px 20px' }}
           >
             {/* Drag handle */}
             <div
@@ -311,6 +333,49 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
                     <AlertDialogAction onClick={handleCriarPedido}>
                       Criar Pedido
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+
+            {/* Dispensar Pedido */}
+            <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+              <AlertDialog>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        disabled={isDispensando}
+                        className="flex h-[20px] w-full rounded-[3px] border-green-500/50 text-green-600 hover:bg-green-500/10"
+                      >
+                        {isDispensando ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <CheckCircle className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Concluir sem pedido</p>
+                  </TooltipContent>
+                </Tooltip>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Dispensar Pedido de Produção</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta venda será marcada como concluída e não aparecerá mais nesta aba.
+                      <br />
+                      Cliente: <strong>{venda.cliente_nome}</strong>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDispensarPedido}>
+                      Confirmar
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

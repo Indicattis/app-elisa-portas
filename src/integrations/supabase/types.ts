@@ -7352,6 +7352,7 @@ export type Database = {
           pago_na_instalacao: boolean | null
           parcelas_dinheiro: number | null
           parcelas_geradas: boolean | null
+          pedido_dispensado: boolean
           percentual_credito: number | null
           publico_alvo: string | null
           quantidade_parcelas: number | null
@@ -7406,6 +7407,7 @@ export type Database = {
           pago_na_instalacao?: boolean | null
           parcelas_dinheiro?: number | null
           parcelas_geradas?: boolean | null
+          pedido_dispensado?: boolean
           percentual_credito?: number | null
           publico_alvo?: string | null
           quantidade_parcelas?: number | null
@@ -7460,6 +7462,7 @@ export type Database = {
           pago_na_instalacao?: boolean | null
           parcelas_dinheiro?: number | null
           parcelas_geradas?: boolean | null
+          pedido_dispensado?: boolean
           percentual_credito?: number | null
           publico_alvo?: string | null
           quantidade_parcelas?: number | null
