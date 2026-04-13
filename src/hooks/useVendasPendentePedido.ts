@@ -18,6 +18,7 @@ export interface VendaPendentePedido {
   numero_parcelas: number | null;
   pago_na_instalacao: boolean | null;
   pagamento_na_entrega: boolean | null;
+  lucro_total: number | null;
   cidade: string | null;
   estado: string | null;
   cores: Array<{ nome: string; codigo_hex: string }>;
@@ -41,6 +42,7 @@ export const useVendasPendentePedido = () => {
           valor_credito,
           frete_aprovado,
           status_aprovacao,
+          lucro_total,
           is_rascunho,
           atendente_id,
           tipo_entrega,
@@ -214,6 +216,7 @@ export const useVendasPendentePedido = () => {
             numero_parcelas: parcelasPorVenda.get(v.id) || v.quantidade_parcelas || v.numero_parcelas || null,
             pago_na_instalacao: pagoInstalacaoPorVenda.get(v.id) || false,
             pagamento_na_entrega: v.pagamento_na_entrega || false,
+            lucro_total: v.lucro_total ?? null,
             cidade: v.cidade || null,
             estado: v.estado || null,
             cores: Array.from(coresUnicas.values()),

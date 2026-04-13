@@ -123,7 +123,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
         <CardContent className="p-0 h-full">
           <div
             className="grid items-center gap-1.5 h-full px-2 w-full"
-            style={{ gridTemplateColumns: '20px 24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 30px 30px 20px' }}
+            style={{ gridTemplateColumns: '20px 24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 30px 30px 20px' }}
           >
             {/* Drag handle */}
             <div
@@ -362,6 +362,24 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
               <span className="text-[10px] font-medium text-muted-foreground">
                 {formatCurrency(valorTotal)}
               </span>
+            </div>
+
+            {/* Lucro */}
+            <div className="text-center">
+              {venda.lucro_total && venda.lucro_total > 0 ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-[9px] font-medium text-emerald-500 truncate block">
+                      {formatCurrency(venda.lucro_total)}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Lucro da venda</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <span className="text-[9px] text-muted-foreground/50">—</span>
+              )}
             </div>
 
             {/* Criar Pedido */}
