@@ -494,9 +494,9 @@ const App = () => (
                 {/* Hub da Direção Minimalista */}
                 <Route path="/direcao" element={<ProtectedRoute routeKeyPrefix="direcao_"><DirecaoHub /></ProtectedRoute>} />
                 <Route path="/direcao/vendas" element={<ProtectedRoute routeKey="direcao_hub"><VendasDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/vendas/regras-vendas" element={<ProtectedRoute routeKey="direcao_hub"><RegrasVendasDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/vendas/clientes" element={<ProtectedRoute routeKey="direcao_hub"><ClientesDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/vendas/tabela-precos" element={<ProtectedRoute routeKey="direcao_hub"><TabelaPrecos /></ProtectedRoute>} />
+                <Route path="/direcao/vendas/regras-vendas" element={<ProtectedRoute routeKey="direcao_regras_vendas"><RegrasVendasDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/vendas/clientes" element={<ProtectedRoute routeKey="direcao_vendas"><ClientesDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/vendas/tabela-precos" element={<ProtectedRoute routeKey="direcao_tabela_precos"><TabelaPrecos /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/:id" element={<ProtectedRoute routeKey="direcao_hub"><VendaDetalhesDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/:id/editar" element={<ProtectedRoute routeKey="direcao_hub"><VendaEditarDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/faturamento" element={<ProtectedRoute routeKey="direcao_hub"><FaturamentoDirecao /></ProtectedRoute>} />
@@ -513,15 +513,15 @@ const App = () => (
                 <Route path="/direcao/calendario-expedicao" element={<ProtectedRoute routeKey="direcao_hub"><CalendarioExpedicaoDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/metas" element={<ProtectedRoute routeKey="direcao_hub"><MetasHubDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/metas/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><MetasFabricaDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/metas/instalacoes" element={<ProtectedRoute routeKey="direcao_hub"><MetasInstalacoesDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/metas/instalacoes/:userId" element={<ProtectedRoute routeKey="direcao_hub"><MetasColaboradorIndividual /></ProtectedRoute>} />
+                <Route path="/direcao/metas/instalacoes" element={<ProtectedRoute routeKey="direcao_metas_instalacoes"><MetasInstalacoesDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/metas/instalacoes/:userId" element={<ProtectedRoute routeKey="direcao_metas_instalacoes"><MetasColaboradorIndividual /></ProtectedRoute>} />
                 <Route path="/direcao/metas/fabrica/:userId" element={<ProtectedRoute routeKey="direcao_hub"><MetasColaboradorIndividual /></ProtectedRoute>} />
                 <Route path="/direcao/pedidos/:id" element={<ProtectedRoute routeKey="direcao_hub"><PedidoViewDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/autorizados" element={<ProtectedRoute routeKey="direcao_hub"><AutorizadosPrecosDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/autorizados/estado/:estadoId" element={<ProtectedRoute routeKey="direcao_hub"><EstadoAutorizadosDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/autorizados/estado/:estadoId/novo" element={<ProtectedRoute routeKey="direcao_hub"><NovoAutorizadoDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/autorizados/novo" element={<ProtectedRoute routeKey="direcao_hub"><NovoAutorizadoDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/autorizados/:id/editar" element={<ProtectedRoute routeKey="direcao_hub"><EditarAutorizadoDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/autorizados" element={<ProtectedRoute routeKey="direcao_autorizados"><AutorizadosPrecosDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/autorizados/estado/:estadoId" element={<ProtectedRoute routeKey="direcao_autorizados"><EstadoAutorizadosDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/autorizados/estado/:estadoId/novo" element={<ProtectedRoute routeKey="direcao_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/autorizados/novo" element={<ProtectedRoute routeKey="direcao_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/autorizados/:id/editar" element={<ProtectedRoute routeKey="direcao_autorizados"><EditarAutorizadoDirecao /></ProtectedRoute>} />
                 
 {/* Hub de Estoque da Direção */}
                 <Route path="/direcao/estoque" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoEstoqueHub /></ProtectedRoute>} />
@@ -535,24 +535,24 @@ const App = () => (
                 <Route path="/direcao/estoque/configuracoes/fornecedores" element={<ProtectedRoute routeKey="direcao_hub"><FornecedoresDirecao /></ProtectedRoute>} />
 
                 {/* DRE da Direção */}
-                <Route path="/direcao/dre" element={<ProtectedRoute routeKey="direcao_hub"><DREDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/dre/despesas" element={<ProtectedRoute routeKey="direcao_hub"><DREDespesasDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/dre/custos" element={<ProtectedRoute routeKey="direcao_hub"><DRECustosDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/dre/:mes" element={<ProtectedRoute routeKey="direcao_hub"><DREMesDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/dre" element={<ProtectedRoute routeKey="direcao_dre"><DREDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/dre/despesas" element={<ProtectedRoute routeKey="direcao_dre"><DREDespesasDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/dre/custos" element={<ProtectedRoute routeKey="direcao_dre"><DRECustosDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/dre/:mes" element={<ProtectedRoute routeKey="direcao_dre"><DREMesDirecao /></ProtectedRoute>} />
 
                 {/* Organograma RH */}
-                <Route path="/direcao/gestao-colaboradores" element={<ProtectedRoute routeKey="direcao_hub"><GestaoColaboradoresDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/gestao-colaboradores" element={<ProtectedRoute routeKey="direcao_gestao_colaboradores"><GestaoColaboradoresDirecao /></ProtectedRoute>} />
 
                 {/* Hub de Aprovações da Direção */}
-                <Route path="/direcao/aprovacoes" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoAprovacoesHub /></ProtectedRoute>} />
-                <Route path="/direcao/aprovacoes/fabrica" element={<ProtectedRoute routeKey="direcao_hub"><AprovacoesProducao /></ProtectedRoute>} />
-                <Route path="/direcao/aprovacoes/vendas" element={<ProtectedRoute routeKey="direcao_hub"><AprovacoesVendas /></ProtectedRoute>} />
-                <Route path="/direcao/aprovacoes/autorizados" element={<ProtectedRoute routeKey="direcao_hub"><AprovacoesAutorizados /></ProtectedRoute>} />
+                <Route path="/direcao/aprovacoes" element={<ProtectedRoute routeKey="direcao_aprovacoes"><DirecaoAprovacoesHub /></ProtectedRoute>} />
+                <Route path="/direcao/aprovacoes/fabrica" element={<ProtectedRoute routeKey="direcao_aprovacoes"><AprovacoesProducao /></ProtectedRoute>} />
+                <Route path="/direcao/aprovacoes/vendas" element={<ProtectedRoute routeKey="direcao_aprovacoes"><AprovacoesVendas /></ProtectedRoute>} />
+                <Route path="/direcao/aprovacoes/autorizados" element={<ProtectedRoute routeKey="direcao_aprovacoes"><AprovacoesAutorizados /></ProtectedRoute>} />
 
                 {/* Checklist Liderança */}
-                <Route path="/direcao/checklist-lideranca" element={<ProtectedRoute routeKey="direcao_hub"><ChecklistLideranca /></ProtectedRoute>} />
-                <Route path="/direcao/checklist-lideranca/programacao" element={<ProtectedRoute routeKey="direcao_hub"><ChecklistProgramacao /></ProtectedRoute>} />
-                <Route path="/direcao/checklist-lideranca/historico" element={<ProtectedRoute routeKey="direcao_hub"><ChecklistHistorico /></ProtectedRoute>} />
+                <Route path="/direcao/checklist-lideranca" element={<ProtectedRoute routeKey="direcao_checklist"><ChecklistLideranca /></ProtectedRoute>} />
+                <Route path="/direcao/checklist-lideranca/programacao" element={<ProtectedRoute routeKey="direcao_checklist"><ChecklistProgramacao /></ProtectedRoute>} />
+                <Route path="/direcao/checklist-lideranca/historico" element={<ProtectedRoute routeKey="direcao_checklist"><ChecklistHistorico /></ProtectedRoute>} />
 
                 {/* Hub de Logística Minimalista */}
                 <Route path="/logistica" element={<ProtectedRoute routeKeyPrefix="logistica_"><LogisticaHub /></ProtectedRoute>} />
