@@ -189,6 +189,7 @@ export function usePedidosAprovacaoDiretor() {
         pedido_id: pedidoId,
         user_id: user.id,
         etapa_origem: 'aprovacao_diretor',
+        etapa_destino: 'reprovado',
         teor: 'reprovacao',
         descricao: 'Pedido reprovado pelo diretor',
       });
