@@ -37,6 +37,12 @@ export const ETAPAS_CONFIG: Record<EtapaPedido, {
   icon: string;
   checkboxes: Omit<PedidoCheckbox, 'checked' | 'checked_at' | 'checked_by'>[];
 }> = {
+  aprovacao_diretor: {
+    label: 'Aprovação Diretor',
+    color: 'bg-orange-600',
+    icon: 'ShieldCheck',
+    checkboxes: []
+  },
   aberto: {
     label: 'Pedidos em Aberto',
     color: 'bg-yellow-500',

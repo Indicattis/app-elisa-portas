@@ -19,6 +19,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 
 // Mapa de ícones para cada etapa
 const ETAPA_ICONS: Record<EtapaPedido, React.ComponentType<{ className?: string }>> = {
+  aprovacao_diretor: ShieldCheck,
   aberto: Clock,
   aprovacao_ceo: ShieldCheck,
   em_producao: Factory,
