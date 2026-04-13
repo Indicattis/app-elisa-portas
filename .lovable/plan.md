@@ -1,27 +1,35 @@
 
 
-## Plano: Botão "Concluir/Dispensar" na aba Pendente Faturamento
+## Plano: Sistema de Comentários na Downbar de Vendas Pendentes
 
 ### Resumo
-Adicionar um botão com ícone de "concluir" (CheckCircle) ao lado do botão "Criar Pedido" que marca a venda como dispensada de virar pedido, removendo-a da listagem.
+Criar uma tabela `venda_comentarios` (similar a `pedido_comentarios`) e adicionar a seção de comentários na `VendaPendenteDetalhesSheet`, replicando o visual e comportamento dos comentários dos pedidos.
 
 ### Mudanças
 
-**1. Migration: adicionar coluna `pedido_dispensado` na tabela `vendas`**
-- `ALTER TABLE vendas ADD COLUMN pedido_dispensado boolean NOT NULL DEFAULT false;`
-- Vendas marcadas com `pedido_dispensado = true` serão filtradas no hook
+**1. Migration: criar tabela `venda_comentarios`**
+```sql
+CREATE TABLE public.venda_comentarios (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  venda_id uuid NOT NULL REFERENCES vendas(id) ON DELETE CASCADE,
+  autor_id uuid NOT NULL,
+  autor_nome text NOT NULL,
+  comentario text NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE public.venda_comentarios ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Authenticated users can manage venda_comentarios"
+  ON public.venda_comentarios FOR ALL TO authenticated USING (true) WITH CHECK (true);
+```
 
-**2. `src/hooks/useVendasPendentePedido.ts`**
-- Adicionar filtro `.eq("pedido_dispensado", false)` na query ou filtrar no `.filter()` local
-
-**3. `src/components/pedidos/VendaPendentePedidoCard.tsx`**
-- Adicionar botão com ícone `CheckCircle` ao lado do botão "Criar Pedido"
-- Ao clicar, abrir AlertDialog de confirmacao
-- Na confirmacao, fazer `supabase.from("vendas").update({ pedido_dispensado: true }).eq("id", venda.id)` e invalidar queries
-- Ajustar gridTemplateColumns para acomodar a nova coluna de acao (combinar ambos botoes numa mesma celula ou adicionar coluna extra)
+**2. `src/components/pedidos/VendaPendenteDetalhesSheet.tsx`**
+- Adicionar states: `comentariosOpen`, `comentarios`, `novoComentario`, `enviandoComentario`
+- Adicionar `fetchComentarios` para buscar de `venda_comentarios`
+- Adicionar `handleEnviarComentario` usando `useAuth` para obter `userRole`
+- Adicionar seção Collapsible de comentários (ícone `MessageSquare`, input + lista) idêntica ao `PedidoDetalhesSheet`
+- Importar `useAuth`, `MessageSquare`, `Input`, `Send`
 
 ### Arquivos alterados
 - Nova migration SQL
-- `src/hooks/useVendasPendentePedido.ts`
-- `src/components/pedidos/VendaPendentePedidoCard.tsx`
+- `src/components/pedidos/VendaPendenteDetalhesSheet.tsx`
 
