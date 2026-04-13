@@ -6,7 +6,7 @@ import { SETOR_LABELS } from '@/utils/setorMapping';
 import { ROLE_LABELS } from '@/types/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Users, Loader2, Plus, Trash2, ArrowRightLeft, Pencil, X, GripVertical, DollarSign } from 'lucide-react';
+import { Users, Loader2, Plus, Trash2, ArrowRightLeft, Pencil, X, GripVertical, DollarSign, UserX } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
@@ -57,6 +57,7 @@ interface SortableRoleGroupProps {
   onFillVaga: (vaga: Vaga) => void;
   onUpdateCusto: (userId: string, value: number | null) => void;
   onUserReorder: (roleKey: string, updates: { id: string; ordem: number }[]) => void;
+  onDeactivateUser: (user: User) => void;
 }
 
 function SortableUserCard({ user, children }: { user: User; children: (dragHandleProps: Record<string, any>, isDragging: boolean) => React.ReactNode }) {
@@ -142,7 +143,7 @@ function InlineCustoEditor({ user, onSave }: { user: User; onSave: (userId: stri
   );
 }
 
-function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onChangeUserRole, onCancelVaga, onFillVaga, onUpdateCusto, onUserReorder }: SortableRoleGroupProps) {
+function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onChangeUserRole, onCancelVaga, onFillVaga, onUpdateCusto, onUserReorder, onDeactivateUser }: SortableRoleGroupProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: group.role });
 
   const userDndSensors = useSensors(
@@ -266,6 +267,13 @@ function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onCha
                         >
                           <ArrowRightLeft className="w-4 h-4" />
                         </button>
+                        <button
+                          onClick={() => onDeactivateUser(user)}
+                          className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
+                          title="Desativar colaborador"
+                        >
+                          <UserX className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -327,6 +335,9 @@ export default function GestaoColaboradoresDirecao() {
   const [vagaToFill, setVagaToFill] = useState<Vaga | null>(null);
 
   const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
+  const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
+  const [deactivating, setDeactivating] = useState(false);
+
   const [editingRole, setEditingRole] = useState<{
     id: string; key: string; label: string; setor: string | null;
     descricao: string | null; ativo: boolean; ordem: number;
@@ -706,9 +717,10 @@ export default function GestaoColaboradoresDirecao() {
                        onChangeUserRole={(user) => { setUserToChangeRole(user); setNewRole(user.role); }}
                        onCancelVaga={handleCancelVaga}
                        onFillVaga={(vaga) => { setVagaToFill(vaga); setPreencherVagaEmTeste(false); setPreencherVagaOpen(true); }}
-                        onUpdateCusto={handleUpdateCusto}
-                        onUserReorder={handleUserReorder}
-                      />
+                         onUpdateCusto={handleUpdateCusto}
+                         onUserReorder={handleUserReorder}
+                         onDeactivateUser={setUserToDeactivate}
+                       />
                    ))}
                  </div>
                </SortableContext>
@@ -765,6 +777,13 @@ export default function GestaoColaboradoresDirecao() {
                            >
                              <ArrowRightLeft className="w-4 h-4" />
                            </button>
+                           <button
+                             onClick={() => setUserToDeactivate(user)}
+                             className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
+                             title="Desativar colaborador"
+                           >
+                             <UserX className="w-4 h-4" />
+                           </button>
                          </div>
                        </div>
                      </div>
@@ -777,6 +796,44 @@ export default function GestaoColaboradoresDirecao() {
         </div>
       </div>
 
+
+      {/* Deactivate user confirmation */}
+      <AlertDialog open={!!userToDeactivate} onOpenChange={open => !open && setUserToDeactivate(null)}>
+        <AlertDialogContent className="bg-[#1a1a2e] border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar colaborador</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Tem certeza que deseja desativar <strong className="text-white">{userToDeactivate?.nome}</strong>? O colaborador perderá acesso ao sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!userToDeactivate) return;
+                setDeactivating(true);
+                const { error } = await supabase
+                  .from('admin_users')
+                  .update({ ativo: false } as any)
+                  .eq('id', userToDeactivate.id);
+                setDeactivating(false);
+                if (error) {
+                  toast.error('Erro ao desativar colaborador');
+                  console.error(error);
+                } else {
+                  toast.success(`${userToDeactivate.nome} foi desativado`);
+                  queryClient.invalidateQueries({ queryKey: ['all-users'] });
+                }
+                setUserToDeactivate(null);
+              }}
+              disabled={deactivating}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deactivating ? 'Desativando...' : 'Desativar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete role confirmation */}
       <AlertDialog open={!!roleToDelete} onOpenChange={open => !open && setRoleToDelete(null)}>
