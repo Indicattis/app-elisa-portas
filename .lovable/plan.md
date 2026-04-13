@@ -1,29 +1,36 @@
 
 
-## Plano: Adicionar coluna Lucro na lista de vendas pendentes
+## Plano: Corrigir erro React #130 na página /home/pedidos-producao
 
-### O que será feito
+### Causa raiz
+O objeto `ETAPA_ICONS` em `PedidosProducaoReadOnly.tsx` não possui todas as chaves de `ORDEM_ETAPAS`. Faltam:
+- `aprovacao_diretor` (não existe no objeto)
+- `instalacoes` (existe como `aguardando_instalacao`, nome errado)
 
-Adicionar uma coluna "Lucro" no card exibindo `lucro_total` da venda, entre "Valor Total" e o botão "Criar Pedido".
+Quando o Select ou TabsTrigger tenta renderizar `<IconComponent />` com valor `undefined`, o React lança o erro #130.
 
-### Alterações
+### Correção
 
-**1. `src/hooks/useVendasPendentePedido.ts`**
-- Adicionar `lucro_total` no select da query de vendas
-- Adicionar campo `lucro_total: number | null` no tipo `VendaPendentePedido`
-- Mapear `v.lucro_total` no retorno
+**Arquivo**: `src/pages/home/PedidosProducaoReadOnly.tsx`
 
-**2. `src/components/pedidos/VendaPendentePedidoCard.tsx`**
-- Atualizar `gridTemplateColumns` adicionando ~60px para a nova coluna
-- Adicionar coluna após "Valor Total" mostrando:
-  - Se `lucro_total > 0`: valor em verde
-  - Se `lucro_total === 0` ou null: "—" em cinza
-  - Tooltip com "Lucro da venda"
+Atualizar `ETAPA_ICONS` (linhas 25-37):
+- Adicionar `aprovacao_diretor: ShieldCheck`
+- Renomear `aguardando_instalacao` para `instalacoes`
+- Importar `ShieldCheck` (já importado, verificar) — sim, `ShieldCheck` já está na linha 5
 
-**3. `src/components/pedidos/VendaPendenteDetalhesSheet.tsx`**
-- Adicionar info de lucro na downbar para consistência
-
-### Detalhe técnico
-
-O campo `lucro_total` já existe na tabela `vendas` (preenchido pelo faturamento). Vendas ainda não faturadas terão valor null — exibir "—".
+```typescript
+const ETAPA_ICONS = {
+  aprovacao_diretor: ShieldCheck,
+  aberto: Clock,
+  aprovacao_ceo: ShieldCheck,
+  em_producao: Factory,
+  inspecao_qualidade: ClipboardCheck,
+  aguardando_pintura: Paintbrush,
+  embalagem: BoxIcon,
+  aguardando_coleta: Package,
+  instalacoes: HardHat,
+  correcoes: AlertTriangle,
+  finalizado: CheckCircle2
+};
+```
 
