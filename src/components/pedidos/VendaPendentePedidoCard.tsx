@@ -311,7 +311,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
 
             {/* Pago na entrega */}
             <div className="text-center">
-              {venda.pago_na_instalacao ? (
+              {venda.pagamento_na_entrega ? (
                 <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-emerald-500/10 text-emerald-600 border-emerald-500/50">
                   Sim
                 </Badge>

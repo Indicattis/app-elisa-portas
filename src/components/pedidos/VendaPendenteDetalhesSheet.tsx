@@ -296,8 +296,8 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
             <div className="bg-white/5 rounded-xl border border-white/10 p-3 text-center">
               <DollarSign className="h-4 w-4 text-emerald-400 mx-auto mb-1" />
               <p className="text-[10px] text-white/50 uppercase">Pago na Entrega</p>
-              <p className={cn("text-sm font-semibold", venda.pago_na_instalacao ? "text-emerald-400" : "text-white/40")}>
-                {venda.pago_na_instalacao ? 'Sim' : 'Não'}
+              <p className={cn("text-sm font-semibold", venda.pagamento_na_entrega ? "text-emerald-400" : "text-white/40")}>
+                {venda.pagamento_na_entrega ? 'Sim' : 'Não'}
               </p>
             </div>
           </div>
