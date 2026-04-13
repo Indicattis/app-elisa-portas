@@ -97,6 +97,7 @@ export default function GestaoFabricaDirecao() {
   }, [arquivoSearch]);
 
   const contadores = usePedidosContadores();
+  const { data: vendasPendentePedido = [], isLoading: isLoadingPendentes } = useVendasPendentePedido();
   const { data: pedidosArquivados = [], isLoading: isLoadingArquivados } = usePedidosArquivados({
     search: debouncedArquivoSearch,
     dataInicio: arquivoDataInicio || null,
