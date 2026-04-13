@@ -123,7 +123,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
         <CardContent className="p-0 h-full">
           <div
             className="grid items-center gap-1.5 h-full px-2 w-full"
-            style={{ gridTemplateColumns: '20px 24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 70px 70px 30px 30px 20px' }}
+            style={{ gridTemplateColumns: '20px 24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 30px 30px 20px' }}
           >
             {/* Drag handle */}
             <div
@@ -318,6 +318,36 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
               ) : (
                 <span className="text-[9px] text-muted-foreground/50">—</span>
               )}
+            </div>
+
+            {/* Desconto/Crédito */}
+            <div className="text-center">
+              {(() => {
+                const desc = venda.valor_desconto_total || 0;
+                const cred = venda.valor_credito || 0;
+                if (desc > 0 && cred > 0) {
+                  return (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-[9px] font-medium text-red-500 truncate block">
+                          -{formatCurrency(desc + cred)}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">Desconto: {formatCurrency(desc)}</p>
+                        <p className="text-xs">Crédito: {formatCurrency(cred)}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                }
+                if (desc > 0) {
+                  return <span className="text-[9px] font-medium text-red-500 truncate block">-{formatCurrency(desc)}</span>;
+                }
+                if (cred > 0) {
+                  return <span className="text-[9px] font-medium text-blue-500 truncate block">-{formatCurrency(cred)}</span>;
+                }
+                return <span className="text-[9px] text-muted-foreground/50">—</span>;
+              })()}
             </div>
 
             {/* Valor da Venda */}
