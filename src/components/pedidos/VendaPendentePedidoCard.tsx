@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronRight, DoorOpen, GripVertical, Hammer, Truck, Wrench } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -66,7 +67,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
         <CardContent className="p-0 h-full">
           <div
             className="grid items-center gap-1.5 h-full px-2 w-full"
-            style={{ gridTemplateColumns: '20px 24px 180px 100px 50px 50px 65px 80px 65px 65px 20px' }}
+            style={{ gridTemplateColumns: '20px 24px 180px 100px 50px 50px 50px 65px 80px 65px 65px 20px' }}
           >
             {/* Drag handle */}
             <div
@@ -157,6 +158,42 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
                 <Badge variant="outline" className={`text-[10px] px-1 py-0 h-5 ${tipoEntregaIcon.className}`}>
                   <tipoEntregaIcon.icon className="h-2.5 w-2.5" />
                 </Badge>
+              ) : (
+                <span className="text-gray-300 text-[10px]">—</span>
+              )}
+            </div>
+
+            {/* Portas P/G */}
+            <div className="flex items-center gap-0.5 overflow-hidden">
+              {venda.portas_info.length > 0 ? (
+                <>
+                  {venda.portas_info.slice(0, 6).map((porta, idx) => (
+                    <Tooltip key={idx}>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[9px] px-1 py-0 h-4 text-white cursor-default",
+                            porta.tamanho === 'P'
+                              ? "bg-blue-500 border-blue-500"
+                              : "bg-orange-500 border-orange-500"
+                          )}
+                          onMouseEnter={(e) => e.stopPropagation()}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {porta.tamanho}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="z-[100]">
+                        <p className="font-medium">{porta.largura.toFixed(2)}m × {porta.altura.toFixed(2)}m</p>
+                        <p className="text-xs text-muted-foreground">{porta.area.toFixed(2)} m²</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                  {venda.portas_info.length > 6 && (
+                    <span className="text-[9px] text-muted-foreground">+{venda.portas_info.length - 6}</span>
+                  )}
+                </>
               ) : (
                 <span className="text-gray-300 text-[10px]">—</span>
               )}

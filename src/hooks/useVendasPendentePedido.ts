@@ -16,6 +16,7 @@ export interface VendaPendentePedido {
   cidade: string | null;
   estado: string | null;
   cores: Array<{ nome: string; codigo_hex: string }>;
+  portas_info: Array<{ tamanho: 'P' | 'G'; largura: number; altura: number; area: number }>;
 }
 
 export const useVendasPendentePedido = () => {
@@ -46,6 +47,9 @@ export const useVendasPendentePedido = () => {
             faturamento,
             quantidade,
             tipo_produto,
+            largura,
+            altura,
+            tamanho,
             catalogo_cores (
               nome,
               codigo_hex
@@ -100,6 +104,26 @@ export const useVendasPendentePedido = () => {
             }
           });
 
+          // Build portas info (P/G)
+          const portasInfo: Array<{ tamanho: 'P' | 'G'; largura: number; altura: number; area: number }> = [];
+          portas.forEach((p: any) => {
+            let largura = p.largura || 0;
+            let altura = p.altura || 0;
+            if (largura === 0 && altura === 0 && p.tamanho) {
+              const match = p.tamanho.match(/(\d+[.,]?\d*)\s*[xX×]\s*(\d+[.,]?\d*)/);
+              if (match) {
+                largura = parseFloat(match[1].replace(',', '.'));
+                altura = parseFloat(match[2].replace(',', '.'));
+              }
+            }
+            const area = largura * altura;
+            const cat = area > 25 ? 'G' as const : 'P' as const;
+            const quantidade = p.quantidade || 1;
+            for (let i = 0; i < quantidade; i++) {
+              portasInfo.push({ tamanho: cat, largura, altura, area });
+            }
+          });
+
           return {
             id: v.id,
             data_venda: v.data_venda,
@@ -118,6 +142,7 @@ export const useVendasPendentePedido = () => {
             cidade: v.cidade || null,
             estado: v.estado || null,
             cores: Array.from(coresUnicas.values()),
+            portas_info: portasInfo,
           };
         });
     },
