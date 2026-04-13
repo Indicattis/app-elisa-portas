@@ -64,11 +64,11 @@ export const useVendasPendentePedido = () => {
       // Fetch atendentes
       const { data: usuarios } = await supabase
         .from("admin_users")
-        .select("user_id, nome");
+        .select("user_id, nome, foto_perfil_url");
 
-      const atendenteMap = new Map<string, string>();
+      const atendenteMap = new Map<string, { nome: string; foto: string | null }>();
       if (usuarios) {
-        usuarios.forEach((u) => atendenteMap.set(u.user_id, u.nome));
+        usuarios.forEach((u) => atendenteMap.set(u.user_id, { nome: u.nome, foto: u.foto_perfil_url }));
       }
 
       // Filter: faturada + no pedido + not reprovado
@@ -107,7 +107,10 @@ export const useVendasPendentePedido = () => {
             valor_credito: v.valor_credito || 0,
             quantidade_portas: qtdPortas,
             atendente_nome: v.atendente_id
-              ? atendenteMap.get(v.atendente_id) || null
+              ? atendenteMap.get(v.atendente_id)?.nome || null
+              : null,
+            atendente_foto_url: v.atendente_id
+              ? atendenteMap.get(v.atendente_id)?.foto || null
               : null,
             tipo_entrega: v.tipo_entrega || null,
             metodo_pagamento: v.metodo_pagamento || null,
