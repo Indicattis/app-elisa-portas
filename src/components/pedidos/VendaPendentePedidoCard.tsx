@@ -289,7 +289,32 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
             {/* Forma pagamento */}
             <div className="text-center">
               {pagamentoLabel ? (
-                <span className="text-[10px] text-muted-foreground truncate">{pagamentoLabel}</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-[10px] text-muted-foreground truncate block">{pagamentoLabel}</span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">{pagamentoLabel}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <span className="text-[9px] text-muted-foreground/50">—</span>
+              )}
+            </div>
+
+            {/* Parcelas */}
+            <div className="text-center">
+              <span className="text-[10px] text-muted-foreground">
+                {venda.numero_parcelas ? `${venda.numero_parcelas}x` : '—'}
+              </span>
+            </div>
+
+            {/* Pago na entrega */}
+            <div className="text-center">
+              {venda.pago_na_instalacao ? (
+                <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-emerald-500/10 text-emerald-600 border-emerald-500/50">
+                  Sim
+                </Badge>
               ) : (
                 <span className="text-[9px] text-muted-foreground/50">—</span>
               )}
