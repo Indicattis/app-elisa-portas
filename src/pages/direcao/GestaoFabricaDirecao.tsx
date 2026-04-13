@@ -522,7 +522,19 @@ export default function GestaoFabricaDirecao() {
                 value="pendente_pedido" 
                 className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
               >
-                <DollarSign className="h-4 w-4 flex-shrink-0" />
+                {(() => {
+                  const resp = getResponsavel('pendente_pedido' as any);
+                  return resp ? (
+                    <Avatar className="h-5 w-5 flex-shrink-0">
+                      <AvatarImage src={resp.foto_perfil_url || undefined} />
+                      <AvatarFallback className="text-[8px] bg-blue-500/20 text-blue-400 border border-blue-500/50">
+                        {resp.nome.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <DollarSign className="h-4 w-4 flex-shrink-0" />
+                  );
+                })()}
                 <span className="text-xs">Pend. Faturamento</span>
                 <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
                   {vendasPendentePedido.length}
@@ -697,7 +709,19 @@ export default function GestaoFabricaDirecao() {
             <CardHeader className="pb-3 px-4 py-4">
               <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                 <CardTitle className="text-lg flex items-center gap-2 text-white">
-                  <DollarSign className="h-5 w-5 text-blue-400" />
+                  {(() => {
+                    const resp = getResponsavel('pendente_pedido' as any);
+                    return resp ? (
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={resp.foto_perfil_url || undefined} />
+                        <AvatarFallback className="text-[8px] bg-blue-500/20 text-blue-400">
+                          {resp.nome.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <DollarSign className="h-5 w-5 text-blue-400" />
+                    );
+                  })()}
                   <span>Vendas Faturadas Aguardando Pedido</span>
                   <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
                     {vendasPendenteFiltradas.length}
