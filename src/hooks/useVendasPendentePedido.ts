@@ -8,6 +8,7 @@ export interface VendaPendentePedido {
   cliente_nome: string | null;
   valor_venda: number;
   valor_credito: number;
+  valor_desconto_total: number;
   quantidade_portas: number;
   atendente_nome: string | null;
   atendente_foto_url: string | null;
@@ -58,6 +59,12 @@ export const useVendasPendentePedido = () => {
             largura,
             altura,
             tamanho,
+            desconto_valor,
+            desconto_percentual,
+            tipo_desconto,
+            valor_produto,
+            valor_pintura,
+            valor_instalacao,
             catalogo_cores (
               nome,
               codigo_hex
@@ -142,6 +149,18 @@ export const useVendasPendentePedido = () => {
             0
           );
 
+          // Calculate total discount from products
+          const descontoTotal = produtos.reduce((sum: number, p: any) => {
+            const qty = p.quantidade || 1;
+            if (p.tipo_desconto === 'valor') {
+              return sum + (p.desconto_valor || 0);
+            } else if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+              const base = ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+              return sum + base * (p.desconto_percentual / 100);
+            }
+            return sum;
+          }, 0);
+
           // Extract unique colors
           const coresUnicas = new Map<string, { nome: string; codigo_hex: string }>();
           produtos.forEach((p: any) => {
@@ -181,6 +200,7 @@ export const useVendasPendentePedido = () => {
             cliente_nome: v.cliente_nome,
             valor_venda: v.valor_venda || 0,
             valor_credito: v.valor_credito || 0,
+            valor_desconto_total: descontoTotal,
             quantidade_portas: qtdPortas,
             atendente_nome: v.atendente_id
               ? atendenteMap.get(v.atendente_id)?.nome || null
