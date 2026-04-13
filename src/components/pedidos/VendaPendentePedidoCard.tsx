@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronRight, DoorOpen, GripVertical, Hammer, Truck, Wrench } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -66,7 +67,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
         <CardContent className="p-0 h-full">
           <div
             className="grid items-center gap-1.5 h-full px-2 w-full"
-            style={{ gridTemplateColumns: '20px 24px 180px 100px 50px 50px 65px 80px 65px 65px 20px' }}
+            style={{ gridTemplateColumns: '20px 24px 180px 100px 50px 50px 50px 65px 80px 65px 65px 20px' }}
           >
             {/* Drag handle */}
             <div
