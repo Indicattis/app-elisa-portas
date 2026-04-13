@@ -2,11 +2,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronRight, DoorOpen, GripVertical, Hammer, Truck, MapPin, Wrench } from "lucide-react";
+import { ChevronRight, DoorOpen, GripVertical, Hammer, Truck, Wrench } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
+import { formatCurrency } from "@/lib/utils";
 
 interface VendaPendentePedidoCardProps {
   venda: VendaPendentePedido;
@@ -21,6 +22,11 @@ const FORMAS_PAGAMENTO_LABELS: Record<string, string> = {
   dinheiro: "Dinheiro",
   avista: "À Vista",
   credito: "Cartão",
+};
+
+const isAcoGalvanizado = (corNome: string) => {
+  const normalized = corNome.toLowerCase().trim();
+  return normalized.includes('aço') || normalized.includes('aco') || normalized.includes('galvanizado');
 };
 
 export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: VendaPendentePedidoCardProps) {
@@ -38,17 +44,19 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
     if (!venda.tipo_entrega) return null;
     const tipo = venda.tipo_entrega.toLowerCase();
     if (tipo.includes('instalacao') || tipo.includes('instalação')) {
-      return { icon: Hammer, label: 'Instalação', className: 'bg-blue-500/20 text-blue-400' };
+      return { icon: Hammer, label: 'Instalação', className: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50' };
     }
     if (tipo.includes('entrega')) {
-      return { icon: Truck, label: 'Entrega', className: 'bg-green-500/20 text-green-400' };
+      return { icon: Truck, label: 'Entrega', className: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50' };
     }
     if (tipo.includes('manutencao') || tipo.includes('manutenção')) {
-      return { icon: Wrench, label: 'Manutenção', className: 'bg-orange-500/20 text-orange-400' };
+      return { icon: Wrench, label: 'Manutenção', className: 'bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/50' };
     }
     return null;
   })();
 
+  // Grid: drag | avatar | nome | cidade | tempo | entrega | cores | pagamento | valor | seta
+  // Matching PedidoCard column sizes
   return (
     <TooltipProvider>
       <Card
@@ -58,7 +66,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
         <CardContent className="p-0 h-full">
           <div
             className="grid items-center gap-1.5 h-full px-2 w-full"
-            style={{ gridTemplateColumns: '20px 24px 1fr 80px 50px 30px 60px 65px 100px 20px' }}
+            style={{ gridTemplateColumns: '20px 24px 180px 100px 50px 50px 65px 80px 65px 65px 20px' }}
           >
             {/* Drag handle */}
             <div
@@ -74,40 +82,53 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
               <TooltipTrigger asChild>
                 <Avatar className="h-5 w-5">
                   <AvatarImage src={venda.atendente_foto_url || undefined} />
-                  <AvatarFallback className="text-[8px] bg-blue-500/20 text-blue-400 border border-blue-500/50">
+                  <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
                     {atendenteIniciais}
                   </AvatarFallback>
                 </Avatar>
               </TooltipTrigger>
               <TooltipContent>
-                <p className="text-xs">{venda.atendente_nome || 'Sem atendente'}</p>
+                <p className="text-xs">Vendedor: {venda.atendente_nome || 'Sem atendente'}</p>
               </TooltipContent>
             </Tooltip>
 
             {/* Nome cliente */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <p className="text-sm font-medium truncate">
-                  {venda.cliente_nome || "Cliente não informado"}
-                </p>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">{venda.cliente_nome || "Cliente não informado"}</p>
-              </TooltipContent>
-            </Tooltip>
+            <div className="min-w-0">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <h3 className="font-semibold text-sm truncate">
+                    {venda.cliente_nome && venda.cliente_nome.length > 20
+                      ? `${venda.cliente_nome.substring(0, 20)}...`
+                      : venda.cliente_nome || "Cliente não informado"}
+                  </h3>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">{venda.cliente_nome || "Cliente não informado"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
 
             {/* Cidade/Estado */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center gap-0.5 text-xs text-muted-foreground truncate">
-                  <MapPin className="h-3 w-3 flex-shrink-0" />
-                  <span className="truncate">
-                    {venda.cidade ? `${venda.cidade}/${venda.estado || ''}` : '-'}
-                  </span>
+                <div className="flex items-center justify-center text-center">
+                  {venda.cidade || venda.estado ? (
+                    <span className="text-[10px] text-muted-foreground truncate">
+                      {venda.cidade && venda.estado
+                        ? `${venda.cidade}/${venda.estado}`
+                        : venda.cidade || venda.estado}
+                    </span>
+                  ) : (
+                    <span className="text-[9px] text-muted-foreground/50">—</span>
+                  )}
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p className="text-xs">{venda.cidade ? `${venda.cidade} - ${venda.estado || ''}` : 'Sem localização'}</p>
+                <p className="text-xs">
+                  {venda.cidade && venda.estado
+                    ? `${venda.cidade}, ${venda.estado}`
+                    : venda.cidade || venda.estado || 'Localização não informada'}
+                </p>
               </TooltipContent>
             </Tooltip>
 
@@ -130,53 +151,70 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
               </TooltipContent>
             </Tooltip>
 
-            {/* Tipo entrega icon */}
-            {tipoEntregaIcon ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className={`flex items-center justify-center h-5 w-5 rounded ${tipoEntregaIcon.className}`}>
-                    <tipoEntregaIcon.icon className="h-3 w-3" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">{tipoEntregaIcon.label}</p>
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <div />
-            )}
+            {/* Tipo entrega icon - matching PedidoCard style */}
+            <div className="flex items-center justify-center gap-1">
+              {tipoEntregaIcon ? (
+                <Badge variant="outline" className={`text-[10px] px-1 py-0 h-5 ${tipoEntregaIcon.className}`}>
+                  <tipoEntregaIcon.icon className="h-2.5 w-2.5" />
+                </Badge>
+              ) : (
+                <span className="text-gray-300 text-[10px]">—</span>
+              )}
+            </div>
 
-            {/* Cores */}
-            <div className="flex items-center gap-0.5 justify-center">
-              {venda.cores.slice(0, 3).map((cor) => (
-                <Tooltip key={cor.nome}>
-                  <TooltipTrigger asChild>
-                    <div
-                      className="h-4 w-4 rounded-full border border-border"
-                      style={{ backgroundColor: cor.codigo_hex }}
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">{cor.nome}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-              {venda.cores.length === 0 && <div />}
+            {/* Cores - matching PedidoCard pill style */}
+            <div className="flex items-center gap-1">
+              {venda.cores.length > 0 ? (
+                <>
+                  {venda.cores.slice(0, 2).map((cor, idx) => (
+                    <Tooltip key={idx}>
+                      <TooltipTrigger asChild>
+                        <div
+                          className="h-5 flex-1 border border-border"
+                          style={{
+                            backgroundColor: isAcoGalvanizado(cor.nome) ? 'transparent' : cor.codigo_hex,
+                            borderRadius: '20px'
+                          }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">{cor.nome}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                  {venda.cores.length > 2 && (
+                    <span className="text-[9px] text-muted-foreground">+{venda.cores.length - 2}</span>
+                  )}
+                </>
+              ) : (
+                <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-gray-200/20 text-gray-500 border-gray-400/30">
+                  Galvanizada
+                </Badge>
+              )}
             </div>
 
             {/* Forma pagamento */}
-            {pagamentoLabel ? (
-              <Badge variant="secondary" className="text-[9px] px-1 py-0 h-5 justify-center truncate">
-                {pagamentoLabel}
-              </Badge>
-            ) : (
-              <div />
-            )}
+            <div className="text-center">
+              {pagamentoLabel ? (
+                <span className="text-[10px] text-muted-foreground truncate">{pagamentoLabel}</span>
+              ) : (
+                <span className="text-[9px] text-muted-foreground/50">—</span>
+              )}
+            </div>
 
-            {/* Valor */}
-            <span className="text-sm font-semibold text-right">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorTotal)}
-            </span>
+            {/* Valor da Venda */}
+            <div className="text-center">
+              <span className="text-[10px] text-muted-foreground">
+                {formatCurrency(venda.valor_venda || 0)}
+              </span>
+            </div>
+
+            {/* Valor Total (com crédito) */}
+            <div className="text-center">
+              <span className="text-[10px] font-medium text-muted-foreground">
+                {formatCurrency(valorTotal)}
+              </span>
+            </div>
 
             {/* Seta */}
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
