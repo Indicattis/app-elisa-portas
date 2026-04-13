@@ -10,13 +10,20 @@ export interface VendaPendentePedido {
   valor_credito: number;
   quantidade_portas: number;
   atendente_nome: string | null;
+  tipo_entrega: string | null;
+  metodo_pagamento: string | null;
+  cidade: string | null;
+  estado: string | null;
+  cores: Array<{ nome: string; codigo_hex: string }>;
 }
 
 export const useVendasPendentePedido = () => {
   return useQuery({
     queryKey: ["vendas-pendente-pedido"],
     queryFn: async (): Promise<VendaPendentePedido[]> => {
-      // Fetch vendas with produtos and check for linked pedidos
+      const currentYear = new Date().getFullYear();
+      const startOfYear = `${currentYear}-01-01`;
+
       const { data: vendas, error } = await supabase
         .from("vendas")
         .select(`
@@ -29,17 +36,26 @@ export const useVendasPendentePedido = () => {
           status_aprovacao,
           is_rascunho,
           atendente_id,
+          tipo_entrega,
+          metodo_pagamento,
+          cidade,
+          estado,
           produtos_vendas (
             id,
             faturamento,
             quantidade,
-            tipo_produto
+            tipo_produto,
+            catalogo_cores (
+              nome,
+              codigo_hex
+            )
           ),
           pedidos_producao (
             id
           )
         `)
         .eq("is_rascunho", false)
+        .gte("data_venda", startOfYear)
         .order("data_venda", { ascending: false });
 
       if (error) throw error;
@@ -60,7 +76,6 @@ export const useVendasPendentePedido = () => {
         .filter((v: any) => {
           if (v.status_aprovacao === "reprovado") return false;
           if (!isVendaFaturada(v)) return false;
-          // No linked pedido
           const pedidos = v.pedidos_producao || [];
           if (pedidos.length > 0) return false;
           return true;
@@ -74,6 +89,16 @@ export const useVendasPendentePedido = () => {
             (sum: number, p: any) => sum + (p.quantidade || 1),
             0
           );
+
+          // Extract unique colors
+          const coresUnicas = new Map<string, { nome: string; codigo_hex: string }>();
+          produtos.forEach((p: any) => {
+            const cor = p.catalogo_cores;
+            if (cor && cor.nome && cor.codigo_hex) {
+              coresUnicas.set(cor.nome, { nome: cor.nome, codigo_hex: cor.codigo_hex });
+            }
+          });
+
           return {
             id: v.id,
             data_venda: v.data_venda,
@@ -84,6 +109,11 @@ export const useVendasPendentePedido = () => {
             atendente_nome: v.atendente_id
               ? atendenteMap.get(v.atendente_id) || null
               : null,
+            tipo_entrega: v.tipo_entrega || null,
+            metodo_pagamento: v.metodo_pagamento || null,
+            cidade: v.cidade || null,
+            estado: v.estado || null,
+            cores: Array.from(coresUnicas.values()),
           };
         });
     },

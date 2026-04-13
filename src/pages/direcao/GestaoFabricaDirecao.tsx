@@ -24,6 +24,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
 import { useVendasPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { VendaPendentePedidoCard } from "@/components/pedidos/VendaPendentePedidoCard";
+import { VendasPendenteDraggableList } from "@/components/pedidos/VendasPendenteDraggableList";
 import { useNeoInstalacoesListagem, useNeoInstalacoesFinalizadas } from "@/hooks/useNeoInstalacoes";
 import { useNeoCorrecoesListagem, useNeoCorrecoesFinalizadas } from "@/hooks/useNeoCorrecoes";
 import { useEtapaResponsaveis } from "@/hooks/useEtapaResponsaveis";
@@ -40,8 +41,9 @@ import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
 import type { NeoInstalacao } from "@/types/neoInstalacao";
 import type { NeoCorrecao } from "@/types/neoCorrecao";
 import type { OrdemCarregamento } from "@/types/ordemCarregamento";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import type { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -258,15 +260,39 @@ export default function GestaoFabricaDirecao() {
     return filtered;
   }, [pedidos, searchTerm, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
 
+  const [vendasOrdemLocal, setVendasOrdemLocal] = useState<VendaPendentePedido[]>([]);
+
+  // Sync local order when data changes
+  useEffect(() => {
+    if (vendasPendentePedido.length > 0 && vendasOrdemLocal.length === 0) {
+      setVendasOrdemLocal(vendasPendentePedido);
+    } else if (vendasPendentePedido.length > 0) {
+      // Merge: keep local order, add new items, remove deleted
+      const idSet = new Set(vendasPendentePedido.map(v => v.id));
+      const existingIds = new Set(vendasOrdemLocal.map(v => v.id));
+      const kept = vendasOrdemLocal.filter(v => idSet.has(v.id)).map(v => {
+        const fresh = vendasPendentePedido.find(f => f.id === v.id);
+        return fresh || v;
+      });
+      const newItems = vendasPendentePedido.filter(v => !existingIds.has(v.id));
+      setVendasOrdemLocal([...kept, ...newItems]);
+    }
+  }, [vendasPendentePedido]);
+
   const vendasPendenteFiltradas = useMemo(() => {
-    if (!searchTerm.trim()) return vendasPendentePedido;
+    const base = vendasOrdemLocal.length > 0 ? vendasOrdemLocal : vendasPendentePedido;
+    if (!searchTerm.trim()) return base;
     const termo = searchTerm.toLowerCase().trim();
-    return vendasPendentePedido.filter(venda => {
+    return base.filter(venda => {
       const nome = venda.cliente_nome?.toLowerCase() || '';
       const atendente = venda.atendente_nome?.toLowerCase() || '';
       return nome.includes(termo) || atendente.includes(termo);
     });
-  }, [vendasPendentePedido, searchTerm]);
+  }, [vendasOrdemLocal, vendasPendentePedido, searchTerm]);
+
+  const handleReorganizarVendas = useCallback((novaOrdem: VendaPendentePedido[]) => {
+    setVendasOrdemLocal(novaOrdem);
+  }, []);
 
   const totalPortasEtapa = useMemo(() => {
     return pedidosFiltrados.reduce((total, pedido: any) => {
@@ -796,11 +822,10 @@ export default function GestaoFabricaDirecao() {
                   {searchTerm ? 'Nenhuma venda encontrada' : 'Nenhuma venda faturada pendente de pedido'}
                 </div>
               ) : (
-                <div className="space-y-1">
-                  {vendasPendenteFiltradas.map(venda => (
-                    <VendaPendentePedidoCard key={venda.id} venda={venda} />
-                  ))}
-                </div>
+                <VendasPendenteDraggableList
+                  vendas={vendasPendenteFiltradas}
+                  onReorganizar={handleReorganizarVendas}
+                />
               )}
             </CardContent>
           </Card>
