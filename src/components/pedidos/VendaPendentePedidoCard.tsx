@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { GripVertical, Hammer, Truck, Wrench, Plus, Loader2, CheckCircle } from "lucide-react";
+import { GripVertical, Hammer, Truck, Wrench, Plus, Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -434,12 +434,12 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
                         size="icon"
                         variant="outline"
                         disabled={isDispensando}
-                        className="flex h-[20px] w-full rounded-[3px] border-green-500/50 text-green-600 hover:bg-green-500/10"
+                        className="flex h-[20px] w-full rounded-[3px] border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
                       >
                         {isDispensando ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
-                          <CheckCircle className="h-3 w-3" />
+                          <AlertTriangle className="h-3 w-3" />
                         )}
                       </Button>
                     </AlertDialogTrigger>
