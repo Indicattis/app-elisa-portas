@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { usePedidoCreation } from "@/hooks/usePedidoCreation";
+import { VendaPendenteDetalhesSheet } from "./VendaPendenteDetalhesSheet";
 import { formatCurrency } from "@/lib/utils";
 
 interface VendaPendentePedidoCardProps {
@@ -40,6 +41,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
   const queryClient = useQueryClient();
   const { createPedidoFromVenda } = usePedidoCreation();
   const [isCreating, setIsCreating] = useState(false);
+  const [showDetalhes, setShowDetalhes] = useState(false);
 
   const atendenteIniciais = venda.atendente_nome
     ? venda.atendente_nome.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
@@ -82,7 +84,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
     <TooltipProvider>
       <Card
         className={`hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden ${isDragging ? 'opacity-50 shadow-2xl' : ''}`}
-        onClick={() => navigate(`/administrativo/financeiro/faturamento/${venda.id}?from=vendas`)}
+        onClick={() => setShowDetalhes(true)}
       >
         <CardContent className="p-0 h-full">
           <div
@@ -320,6 +322,12 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
           </div>
         </CardContent>
       </Card>
+
+      <VendaPendenteDetalhesSheet
+        venda={venda}
+        open={showDetalhes}
+        onOpenChange={setShowDetalhes}
+      />
     </TooltipProvider>
   );
 }
