@@ -319,6 +319,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                 </div>
               </div>
             )}
+          </div>
 
           {/* Portas Info */}
           {venda.portas_info.length > 0 && (
