@@ -452,8 +452,8 @@ const App = () => (
             <Route path="/marketing/investimentos" element={<ProtectedRoute routeKey="marketing_investimentos"><InvestimentosMinimalista /></ProtectedRoute>} />
             <Route path="/marketing/midias" element={<ProtectedRoute routeKey="marketing_midias"><MidiasMinimalista /></ProtectedRoute>} />
             <Route path="/marketing/ltv" element={<ProtectedRoute routeKey="marketing_ltv"><LtvMinimalista /></ProtectedRoute>} />
-            <Route path="/marketing/conversoes" element={<ProtectedRoute routeKey="marketing_hub"><Conversoes /></ProtectedRoute>} />
-            <Route path="/marketing/conversoes-meta" element={<ProtectedRoute routeKey="marketing_hub"><ConversoesMeta /></ProtectedRoute>} />
+            <Route path="/marketing/conversoes" element={<ProtectedRoute routeKey="marketing_conversoes"><Conversoes /></ProtectedRoute>} />
+            <Route path="/marketing/conversoes-meta" element={<ProtectedRoute routeKey="marketing_conversoes"><ConversoesMeta /></ProtectedRoute>} />
 
                 {/* Hub de Vendas Minimalista */}
                 <Route path="/vendas" element={<ProtectedRoute routeKeyPrefix="vendas_"><VendasHub /></ProtectedRoute>} />
