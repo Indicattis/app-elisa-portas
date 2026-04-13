@@ -1,36 +1,27 @@
 
 
-## Plano: Enriquecer aba "Pendente Faturamento" com dados e funcionalidades dos pedidos
+## Plano: Botão "Concluir/Dispensar" na aba Pendente Faturamento
 
 ### Resumo
-Adicionar ao card e hook de vendas pendentes: filtro por ano atual, tempo pendente, forma de pagamento, cores dos produtos, tipo de entrega (instalação/entrega), localização (cidade/estado), e drag-and-drop para reordenação.
+Adicionar um botão com ícone de "concluir" (CheckCircle) ao lado do botão "Criar Pedido" que marca a venda como dispensada de virar pedido, removendo-a da listagem.
 
 ### Mudanças
 
-**1. `src/hooks/useVendasPendentePedido.ts`**
-- Adicionar filtro `.gte("data_venda", "2026-01-01")` para trazer somente vendas do ano atual
-- Expandir select para incluir: `tipo_entrega`, `metodo_pagamento`, `cidade`, `estado`, `created_at`
-- Expandir select de `produtos_vendas` para incluir: `cor:catalogo_cores(nome, codigo_hex)`, `valor_pintura`
-- Atualizar interface `VendaPendentePedido` com novos campos: `tipo_entrega`, `metodo_pagamento`, `cidade`, `estado`, `cores` (array de {nome, codigo_hex}), `data_faturamento` (usar data_venda como referência de tempo pendente)
-- Mapear cores únicas dos produtos no `.map()`
+**1. Migration: adicionar coluna `pedido_dispensado` na tabela `vendas`**
+- `ALTER TABLE vendas ADD COLUMN pedido_dispensado boolean NOT NULL DEFAULT false;`
+- Vendas marcadas com `pedido_dispensado = true` serão filtradas no hook
 
-**2. `src/components/pedidos/VendaPendentePedidoCard.tsx`**
-- Expandir grid para incluir novas colunas: tempo pendente | forma pagamento | tipo entrega (badge Hammer/Truck) | cores (círculos coloridos) | cidade/estado
-- Adicionar prop `dragHandleProps` opcional para suportar drag-and-drop (ícone GripVertical)
-- Calcular tempo pendente com `differenceInDays` do date-fns
-- Badge de tipo entrega: azul com Hammer para instalação, verde com Truck para entrega
-- Cores: círculos coloridos como no PedidoCard (até 2 cores com pill shape)
-- Localização: texto `cidade/estado` como no PedidoCard
-- Grid atualizado: `20px 24px 1fr 70px 50px 30px 80px 70px 100px 20px` (grip | avatar | nome | cidade | tempo | entrega | cores | pagamento | valor | seta)
+**2. `src/hooks/useVendasPendentePedido.ts`**
+- Adicionar filtro `.eq("pedido_dispensado", false)` na query ou filtrar no `.filter()` local
 
-**3. `src/pages/direcao/GestaoFabricaDirecao.tsx`**
-- Implementar drag-and-drop na aba pendente_pedido usando `DndContext` + `SortableContext` similar ao `PedidosDraggableList`
-- Adicionar state para ordem das vendas pendentes
-- Adicionar mutation para salvar prioridade (pode usar localStorage ou campo na tabela vendas)
-- Envolver cards em SortableContext com verticalListSortingStrategy
+**3. `src/components/pedidos/VendaPendentePedidoCard.tsx`**
+- Adicionar botão com ícone `CheckCircle` ao lado do botão "Criar Pedido"
+- Ao clicar, abrir AlertDialog de confirmacao
+- Na confirmacao, fazer `supabase.from("vendas").update({ pedido_dispensado: true }).eq("id", venda.id)` e invalidar queries
+- Ajustar gridTemplateColumns para acomodar a nova coluna de acao (combinar ambos botoes numa mesma celula ou adicionar coluna extra)
 
 ### Arquivos alterados
+- Nova migration SQL
 - `src/hooks/useVendasPendentePedido.ts`
 - `src/components/pedidos/VendaPendentePedidoCard.tsx`
-- `src/pages/direcao/GestaoFabricaDirecao.tsx`
 
