@@ -300,7 +300,25 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                 {venda.pagamento_na_entrega ? 'Sim' : 'Não'}
               </p>
             </div>
-          </div>
+
+            {(venda.valor_desconto_total > 0 || venda.valor_credito > 0) && (
+              <div className="bg-white/5 rounded-xl border border-white/10 p-3 text-center">
+                <DollarSign className="h-4 w-4 text-red-400 mx-auto mb-1" />
+                <p className="text-[10px] text-white/50 uppercase">Desc/Crédito</p>
+                <div className="space-y-0.5">
+                  {venda.valor_desconto_total > 0 && (
+                    <p className="text-sm font-semibold text-red-400">
+                      -{formatCurrency(venda.valor_desconto_total)}
+                    </p>
+                  )}
+                  {venda.valor_credito > 0 && (
+                    <p className="text-xs text-blue-400">
+                      Créd: {formatCurrency(venda.valor_credito)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
           {/* Portas Info */}
           {venda.portas_info.length > 0 && (
