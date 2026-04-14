@@ -106,7 +106,7 @@ export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSecti
           .from('produtos_vendas')
           .select('*')
           .eq('id', porta._originalId)
-          .single();
+          .maybeSingle();
 
         if (fetchError || !original) throw fetchError || new Error('Registro não encontrado');
 
