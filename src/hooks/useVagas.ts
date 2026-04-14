@@ -10,6 +10,7 @@ export interface Vaga {
   justificativa: string;
   status: StatusVaga;
   created_by: string | null;
+  preenchida_por: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -63,11 +64,14 @@ export const useVagas = () => {
     }
   };
 
-  const updateVagaStatus = async (id: string, status: StatusVaga) => {
+  const updateVagaStatus = async (id: string, status: StatusVaga, preenchida_por?: string) => {
     try {
+      const updateData: any = { status };
+      if (preenchida_por) updateData.preenchida_por = preenchida_por;
+      
       const { error } = await supabase
         .from("vagas")
-        .update({ status })
+        .update(updateData)
         .eq("id", id);
 
       if (error) throw error;
