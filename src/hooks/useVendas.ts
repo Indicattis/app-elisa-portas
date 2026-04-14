@@ -327,25 +327,29 @@ export function useVendas() {
       if (vendaError) throw vendaError;
 
       // 6. Criar produtos da venda
-      const produtosComVendaId = portas.map(produto => ({
-        venda_id: venda.id,
-        tipo_produto: produto.tipo_produto,
-        tamanho: produto.tamanho || '',
-        cor_id: produto.cor_id || null,
-        acessorio_id: produto.acessorio_id || null,
-        adicional_id: produto.adicional_id || null,
-        valor_produto: produto.valor_produto,
-        valor_pintura: produto.valor_pintura,
-        valor_instalacao: produto.valor_instalacao,
-        valor_frete: produto.valor_frete,
-        tipo_desconto: produto.tipo_desconto,
-        desconto_percentual: produto.desconto_percentual,
-        desconto_valor: produto.desconto_valor,
-        quantidade: produto.quantidade,
-        descricao: produto.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produto.descricao || null),
-        valor_credito: produto.valor_credito || 0,
-        percentual_credito: produto.percentual_credito || 0
-      }));
+      const produtosComVendaId = portas.flatMap(produto => {
+        const qty = produto.quantidade || 1;
+        const base = {
+          venda_id: venda.id,
+          tipo_produto: produto.tipo_produto,
+          tamanho: produto.tamanho || '',
+          cor_id: produto.cor_id || null,
+          acessorio_id: produto.acessorio_id || null,
+          adicional_id: produto.adicional_id || null,
+          valor_produto: produto.valor_produto,
+          valor_pintura: produto.valor_pintura,
+          valor_instalacao: produto.valor_instalacao,
+          valor_frete: produto.valor_frete,
+          tipo_desconto: produto.tipo_desconto,
+          desconto_percentual: produto.desconto_percentual,
+          desconto_valor: produto.desconto_valor,
+          quantidade: 1,
+          descricao: produto.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produto.descricao || null),
+          valor_credito: produto.valor_credito || 0,
+          percentual_credito: produto.percentual_credito || 0
+        };
+        return Array.from({ length: qty }, () => ({ ...base }));
+      });
       
       const { error: produtosError } = await supabase
         .from('produtos_vendas')
@@ -591,25 +595,29 @@ export function useVendas() {
 
       // 5. Salvar produtos (se houver)
       if (portas.length > 0) {
-        const produtosComVendaId = portas.map(produto => ({
-          venda_id: venda.id,
-          tipo_produto: produto.tipo_produto,
-          tamanho: produto.tamanho || '',
-          cor_id: produto.cor_id || null,
-          acessorio_id: produto.acessorio_id || null,
-          adicional_id: produto.adicional_id || null,
-          valor_produto: produto.valor_produto,
-          valor_pintura: produto.valor_pintura,
-          valor_instalacao: produto.valor_instalacao,
-          valor_frete: produto.valor_frete,
-          tipo_desconto: produto.tipo_desconto,
-          desconto_percentual: produto.desconto_percentual,
-          desconto_valor: produto.desconto_valor,
-          quantidade: produto.quantidade,
-          descricao: produto.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produto.descricao || null),
-          valor_credito: produto.valor_credito || 0,
-          percentual_credito: produto.percentual_credito || 0
-        }));
+        const produtosComVendaId = portas.flatMap(produto => {
+          const qty = produto.quantidade || 1;
+          const base = {
+            venda_id: venda.id,
+            tipo_produto: produto.tipo_produto,
+            tamanho: produto.tamanho || '',
+            cor_id: produto.cor_id || null,
+            acessorio_id: produto.acessorio_id || null,
+            adicional_id: produto.adicional_id || null,
+            valor_produto: produto.valor_produto,
+            valor_pintura: produto.valor_pintura,
+            valor_instalacao: produto.valor_instalacao,
+            valor_frete: produto.valor_frete,
+            tipo_desconto: produto.tipo_desconto,
+            desconto_percentual: produto.desconto_percentual,
+            desconto_valor: produto.desconto_valor,
+            quantidade: 1,
+            descricao: produto.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produto.descricao || null),
+            valor_credito: produto.valor_credito || 0,
+            percentual_credito: produto.percentual_credito || 0
+          };
+          return Array.from({ length: qty }, () => ({ ...base }));
+        });
         
         const { error: produtosError } = await supabase
           .from('produtos_vendas')
