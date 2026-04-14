@@ -1,0 +1,1 @@
+UPDATE public.vendas SET valor_venda = 71000 WHERE id = 'dedb1934-5b5a-4386-834d-4a78930250f0';
