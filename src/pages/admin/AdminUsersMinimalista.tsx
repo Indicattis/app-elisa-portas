@@ -193,6 +193,39 @@ export default function AdminUsersMinimalista() {
     }
   };
 
+  const handleDeleteUser = async (user: AdminUser) => {
+    setIsDeleting(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) throw new Error("Não autenticado");
+
+      const response = await supabase.functions.invoke("delete-user", {
+        body: { user_id: user.user_id },
+      });
+
+      if (response.error) throw response.error;
+      if (response.data?.error) throw new Error(response.data.error);
+
+      toast({
+        title: "Sucesso",
+        description: `Usuário "${user.nome}" excluído com sucesso`,
+      });
+      fetchUsers();
+      if (selectedUser?.id === user.id) setSelectedUser(null);
+    } catch (error: any) {
+      console.error("Erro ao excluir usuário:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error?.message || "Erro ao excluir usuário",
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeletingUser(null);
+    }
+  };
+
   const handleAvatarUpdate = (userId: string, newAvatarUrl: string | null) => {
     setUsers((prevUsers) =>
       prevUsers.map((user) =>
