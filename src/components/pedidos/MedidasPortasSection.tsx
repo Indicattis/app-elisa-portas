@@ -127,7 +127,7 @@ export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSecti
         }
 
         // Insert new individual record with the specific measurements
-        const { id, created_at, updated_at, ...rest } = original;
+        const { id, created_at, updated_at, custo_produto, ...rest } = original;
         const { error: insertError } = await supabase
           .from('produtos_vendas')
           .insert({
