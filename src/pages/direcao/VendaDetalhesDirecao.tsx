@@ -94,6 +94,7 @@ export default function VendaDetalhesDirecao() {
   const [isDeleting, setIsDeleting] = useState(false);
   const { isAdmin } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const handleDeleteVenda = async () => {
