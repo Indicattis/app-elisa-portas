@@ -1,0 +1,1 @@
+UPDATE public.vagas SET status = 'aberta' WHERE status = 'preenchida' AND preenchida_por IS NULL;
