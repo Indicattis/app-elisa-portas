@@ -6,7 +6,7 @@ import { SETOR_LABELS } from '@/utils/setorMapping';
 import { ROLE_LABELS } from '@/types/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Users, Loader2, Plus, Trash2, ArrowRightLeft, Pencil, X, GripVertical, DollarSign, UserX } from 'lucide-react';
+import { Users, Loader2, Plus, Trash2, ArrowRightLeft, Pencil, X, GripVertical, DollarSign, UserX, Check } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
