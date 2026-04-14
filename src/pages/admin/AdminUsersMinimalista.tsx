@@ -12,7 +12,7 @@ import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
 import { ResetPasswordModal } from "@/components/ResetPasswordModal";
 import { UserDetailsModal } from "@/components/admin/UserDetailsModal";
-import { Search, Edit, Save, X, Loader2, KeyRound, FileDown, UserX, UserCheck } from "lucide-react";
+import { Search, Edit, Save, X, Loader2, KeyRound, FileDown, UserX, UserCheck, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
