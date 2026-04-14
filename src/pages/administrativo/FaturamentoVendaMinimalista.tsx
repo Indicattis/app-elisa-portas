@@ -434,7 +434,23 @@ export default function FaturamentoVendaMinimalista() {
       
       setShowConfirmDialog(false);
       await fetchVenda();
-      setShowPedidoDialog(true);
+
+      // Criar pedido de produção automaticamente
+      const pedidoExistente = await checkExistingPedido(venda.id);
+      if (!pedidoExistente) {
+        const pedidoId = await createPedidoFromVenda(venda.id);
+        if (pedidoId) {
+          setHasPedido(true);
+          setPedidoExistenteId(pedidoId);
+          toast({
+            title: "Venda faturada e pedido criado!",
+            description: "O pedido foi enviado para Aprovação do Diretor.",
+          });
+        }
+      } else {
+        setHasPedido(true);
+        setPedidoExistenteId(pedidoExistente);
+      }
     } catch (error) {
       console.error('Erro ao finalizar faturamento:', error);
     }
