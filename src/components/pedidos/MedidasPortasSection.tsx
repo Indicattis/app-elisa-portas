@@ -108,7 +108,16 @@ export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSecti
           .eq('id', porta._originalId)
           .maybeSingle();
 
-        if (fetchError || !original) throw fetchError || new Error('Registro não encontrado');
+        if (fetchError) throw fetchError;
+        
+        // If original no longer exists (already split), fall through to simple update
+        if (!original) {
+          // Record was already split - just do a simple update won't work since ID changed.
+          // Force refresh so user gets fresh data
+          toast.info("Dados atualizados. Tente salvar novamente.");
+          queryClient.invalidateQueries({ queryKey: ['produtos-venda'] });
+          return;
+        }
 
         const novaQuantidade = (original.quantidade || 1) - 1;
 
