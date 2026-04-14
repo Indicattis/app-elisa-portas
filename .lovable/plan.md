@@ -1,30 +1,26 @@
 
 
-## Plano: Corrigir constraint que bloqueia criação de pedido
+## Plano: Criar vaga automaticamente ao desativar colaborador
 
 ### Problema
-
-A tabela `pedidos_producao` tem um CHECK constraint em `etapa_atual` que não inclui o valor `'aprovacao_diretor'`. O hook `usePedidoCreation.ts` tenta inserir com `etapa_atual = 'aprovacao_diretor'`, causando o erro `23514`.
-
-Valores permitidos atualmente:
-`aberto, aprovacao_ceo, em_producao, inspecao_qualidade, aguardando_pintura, embalagem, aguardando_coleta, aguardando_instalacao, instalacoes, correcoes, finalizado`
-
-Valor faltante: `aprovacao_diretor`
+Ao desativar um colaborador em `/direcao/gestao-colaboradores`, ele simplesmente desaparece da lista sem deixar uma vaga aberta no lugar. O gestor perde a visibilidade da posição que precisa ser preenchida.
 
 ### Solução
+Quando um colaborador for desativado, criar automaticamente uma vaga aberta com o cargo (role) desse colaborador, para que a posição continue visível como "vaga aberta" na interface.
 
-**Migration SQL**: Dropar e recriar o check constraint incluindo `'aprovacao_diretor'`:
+### Alteração
 
-```sql
-ALTER TABLE pedidos_producao DROP CONSTRAINT pedidos_producao_etapa_atual_check;
-ALTER TABLE pedidos_producao ADD CONSTRAINT pedidos_producao_etapa_atual_check 
-  CHECK (etapa_atual = ANY (ARRAY[
-    'aprovacao_diretor','aberto','aprovacao_ceo','em_producao',
-    'inspecao_qualidade','aguardando_pintura','embalagem',
-    'aguardando_coleta','aguardando_instalacao','instalacoes',
-    'correcoes','finalizado'
-  ]));
+**Arquivo: `src/pages/direcao/GestaoColaboradoresDirecao.tsx`** (linhas ~814-829)
+
+No handler de desativação do colaborador, após o `update({ ativo: false })` bem-sucedido, chamar `createVaga` com o cargo do colaborador e uma justificativa automática indicando que o colaborador anterior foi desativado:
+
+```
+// Após desativar com sucesso:
+await createVaga({
+  cargo: userToDeactivate.role,
+  justificativa: `Vaga aberta pela desativação de ${userToDeactivate.nome}`
+});
 ```
 
-Nenhuma alteração de código necessária.
+Isso garante que a vaga aparece imediatamente na mesma posição/função onde o colaborador estava, permitindo ao gestor clicar para preencher com outra pessoa.
 
