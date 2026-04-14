@@ -12,7 +12,7 @@ import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
 import { ResetPasswordModal } from "@/components/ResetPasswordModal";
 import { UserDetailsModal } from "@/components/admin/UserDetailsModal";
-import { Search, Edit, Save, X, Loader2, KeyRound, FileDown, UserX, UserCheck } from "lucide-react";
+import { Search, Edit, Save, X, Loader2, KeyRound, FileDown, UserX, UserCheck, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,6 +57,8 @@ export default function AdminUsersMinimalista() {
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [activeTab, setActiveTab] = useState("colaborador");
   const [togglingUser, setTogglingUser] = useState<AdminUser | null>(null);
+  const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   const { data: systemRoles = [], isLoading: loadingRoles } = useQuery({
@@ -188,6 +190,39 @@ export default function AdminUsersMinimalista() {
       });
     } finally {
       setTogglingUser(null);
+    }
+  };
+
+  const handleDeleteUser = async (user: AdminUser) => {
+    setIsDeleting(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) throw new Error("Não autenticado");
+
+      const response = await supabase.functions.invoke("delete-user", {
+        body: { user_id: user.user_id },
+      });
+
+      if (response.error) throw response.error;
+      if (response.data?.error) throw new Error(response.data.error);
+
+      toast({
+        title: "Sucesso",
+        description: `Usuário "${user.nome}" excluído com sucesso`,
+      });
+      fetchUsers();
+      if (selectedUser?.id === user.id) setSelectedUser(null);
+    } catch (error: any) {
+      console.error("Erro ao excluir usuário:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error?.message || "Erro ao excluir usuário",
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeletingUser(null);
     }
   };
 
@@ -414,6 +449,18 @@ export default function AdminUsersMinimalista() {
                       >
                         {user.ativo ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeletingUser(user);
+                        }}
+                        className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                        title="Excluir usuário"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </>
                   )}
                 </div>
@@ -588,6 +635,34 @@ export default function AdminUsersMinimalista() {
               className={togglingUser?.ativo ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
             >
               {togglingUser?.ativo ? "Desativar" : "Ativar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deletingUser} onOpenChange={(open) => !open && setDeletingUser(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir usuário permanentemente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir "{deletingUser?.nome}"? Esta ação é irreversível e removerá todos os dados do usuário do sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingUser && handleDeleteUser(deletingUser)}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                "Excluir permanentemente"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
