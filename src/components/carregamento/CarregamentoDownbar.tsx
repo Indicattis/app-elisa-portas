@@ -13,6 +13,15 @@ import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
 import { gerarPDFEtiquetasProducaoMultiplas, gerarPDFEtiquetaProducao } from "@/utils/etiquetasPDFGenerator";
 import { CarregamentoLoadingModal } from "./CarregamentoLoadingModal";
 import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface CarregamentoDownbarProps {
   ordem: OrdemCarregamentoUnificada | null;
