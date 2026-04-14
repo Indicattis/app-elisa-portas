@@ -1,25 +1,39 @@
 
 
-## Plano: Criar pedido automaticamente ao faturar venda
+## Plano: Separar medidas individuais para portas expandidas
 
-### Problema atual
-Quando uma venda é faturada em `/administrativo/financeiro/faturamento/vendas`, o sistema pergunta se o usuário quer criar o pedido. Se clicar "Não, criar depois", a venda fica presa na aba "Pend. Faturamento" de `/direcao/gestao-fabrica`. O fluxo esperado é que o faturamento já crie o pedido automaticamente e ele vá direto para "Aprovação Diretor".
+### Problema
+O produto `47b3b686` tem `quantidade=2`, gerando duas portas virtuais (#2 e #3). Ambas apontam para o mesmo registro no banco. Ao salvar medidas de uma, o `UPDATE` usa `_originalId`, alterando o registro compartilhado e afetando as duas.
 
 ### Solução
-Remover a pergunta e criar o pedido de produção automaticamente ao concluir o faturamento. A venda faturada nunca ficará em "Pend. Faturamento" -- ela já terá um pedido na etapa "Aprovação Diretor".
+Ao editar medidas de uma porta que pertence a um grupo com `quantidade > 1`, o sistema deve **dividir** ("split") o registro original em registros individuais antes de salvar. Isso garante que cada porta tenha seu próprio registro no `produtos_vendas`.
 
 ### Alterações
 
-**1. `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`**
-- Na função `executarFaturamento`, após faturar com sucesso, chamar `createPedidoFromVenda` automaticamente (sem diálogo de confirmação)
-- Remover o modal "Deseja criar o pedido de produção?" (o `AlertDialog` de criação de pedido)
-- Manter apenas o feedback de sucesso informando que a venda foi faturada e o pedido criado
+**1. `src/components/pedidos/MedidasPortasSection.tsx`**
 
-**2. `src/pages/Faturamento.tsx`** (se houver fluxo similar)
-- Aplicar a mesma lógica: criar pedido automaticamente após faturamento bem-sucedido
+Modificar `handleSalvar` para detectar quando a porta pertence a um grupo (`_totalNoGrupo > 1`):
+
+- **Se `_totalNoGrupo > 1`**: Fazer o split do registro original:
+  1. Reduzir a `quantidade` do registro original em 1 (ex: de 2 para 1)
+  2. Inserir um novo registro em `produtos_vendas` copiando todos os campos do original, com `quantidade=1` e as novas medidas
+  3. Se a quantidade restante do original ficar em 0, deletar o original
+  4. Atualizar o estado local e invalidar as queries para refletir a mudança
+  
+- **Se `_totalNoGrupo === 1`**: Manter o comportamento atual (update simples)
+
+### Lógica do split (pseudocódigo)
+
+```text
+Se porta._totalNoGrupo > 1:
+  1. UPDATE produtos_vendas SET quantidade = quantidade - 1 WHERE id = _originalId
+  2. INSERT INTO produtos_vendas (todos os campos copiados, quantidade=1, novas medidas)
+  3. Invalidar queries
+  4. Se quantidade original era 1 após decremento (ficou 0), DELETE original
+```
 
 ### Resultado
-- Faturar uma venda cria o pedido automaticamente na etapa "Aprovação Diretor"
-- A aba "Pend. Faturamento" só mostrará vendas faturadas que por algum motivo técnico não tiveram pedido criado (casos legados)
-- Fluxo mais limpo: faturou → pedido criado → diretor aprova
+- Cada porta pode ter medidas independentes
+- Portas com mesmas medidas continuam agrupadas até serem editadas individualmente
+- O split é transparente para o usuário -- ele simplesmente edita e salva
 
