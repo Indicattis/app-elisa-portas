@@ -57,6 +57,8 @@ export default function AdminUsersMinimalista() {
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [activeTab, setActiveTab] = useState("colaborador");
   const [togglingUser, setTogglingUser] = useState<AdminUser | null>(null);
+  const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   const { data: systemRoles = [], isLoading: loadingRoles } = useQuery({
