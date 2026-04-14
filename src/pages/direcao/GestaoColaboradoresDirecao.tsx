@@ -6,7 +6,7 @@ import { SETOR_LABELS } from '@/utils/setorMapping';
 import { ROLE_LABELS } from '@/types/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Users, Loader2, Plus, Trash2, ArrowRightLeft, Pencil, X, GripVertical, DollarSign, UserX, Check } from 'lucide-react';
+import { Users, Loader2, Plus, Trash2, ArrowRightLeft, Pencil, X, GripVertical, DollarSign, UserX, Check, ArrowUpRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +33,7 @@ import { Textarea } from '@/components/ui/textarea';
 import type { User } from '@/hooks/useAllUsers';
 import { PreencherVagaDialog } from '@/components/vagas/PreencherVagaDialog';
 import { SelecionarUsuarioVagaDialog } from '@/components/vagas/SelecionarUsuarioVagaDialog';
+import { TransferirParaVagaDialog } from '@/components/vagas/TransferirParaVagaDialog';
 
 const SETOR_KEYS = Object.keys(SETOR_LABELS);
 
@@ -371,6 +372,7 @@ export default function GestaoColaboradoresDirecao() {
   const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
   const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
   const [deactivating, setDeactivating] = useState(false);
+  const [userToTransfer, setUserToTransfer] = useState<User | null>(null);
 
   const [editingRole, setEditingRole] = useState<{
     id: string; key: string; label: string; setor: string | null;
@@ -808,22 +810,29 @@ export default function GestaoColaboradoresDirecao() {
                            <p className="text-xs text-white/40 truncate">{user.email}</p>
                            <p className="text-[10px] text-white/30">{(systemRoles || []).find(r => r.key === user.role)?.label || user.role}</p>
                          </div>
-                         <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all">
-                           <button
-                             onClick={() => { setUserToChangeRole(user); setNewRole(user.role); }}
-                             className="p-1.5 rounded-lg hover:bg-blue-500/20 text-white/30 hover:text-blue-400 transition-all"
-                             title="Alterar função"
-                           >
-                             <ArrowRightLeft className="w-4 h-4" />
-                           </button>
-                           <button
-                             onClick={() => setUserToDeactivate(user)}
-                             className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
-                             title="Desativar colaborador"
-                           >
-                             <UserX className="w-4 h-4" />
-                           </button>
-                         </div>
+                          <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all">
+                            <button
+                              onClick={() => setUserToTransfer(user)}
+                              className="p-1.5 rounded-lg hover:bg-emerald-500/20 text-white/30 hover:text-emerald-400 transition-all"
+                              title="Transferir para vaga"
+                            >
+                              <ArrowUpRight className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => { setUserToChangeRole(user); setNewRole(user.role); }}
+                              className="p-1.5 rounded-lg hover:bg-blue-500/20 text-white/30 hover:text-blue-400 transition-all"
+                              title="Alterar função"
+                            >
+                              <ArrowRightLeft className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setUserToDeactivate(user)}
+                              className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
+                              title="Desativar colaborador"
+                            >
+                              <UserX className="w-4 h-4" />
+                            </button>
+                          </div>
                        </div>
                      </div>
                    ))}
@@ -1026,6 +1035,13 @@ export default function GestaoColaboradoresDirecao() {
           }
           queryClient.invalidateQueries({ queryKey: ['all-users'] });
         }}
+      />
+      {/* Transferir em teste para vaga */}
+      <TransferirParaVagaDialog
+        open={!!userToTransfer}
+        onOpenChange={(o) => { if (!o) setUserToTransfer(null); }}
+        user={userToTransfer}
+        systemRoles={systemRoles || []}
       />
     </MinimalistLayout>
   );
