@@ -977,9 +977,9 @@ export default function GestaoColaboradoresDirecao() {
         onOpenChange={(open) => { setSelecionarUsuarioOpen(open); if (!open) setVagaToFill(null); }}
         vagaCargo={vagaToFill?.cargo || ''}
         vagaId={vagaToFill?.id}
-        onSelectExisting={async () => {
+        onSelectExisting={async (user) => {
           if (vagaToFill) {
-            await updateVagaStatus(vagaToFill.id, 'preenchida');
+            await updateVagaStatus(vagaToFill.id, 'preenchida', user.id);
           }
           queryClient.invalidateQueries({ queryKey: ['all-users'] });
           setSelecionarUsuarioOpen(false);
