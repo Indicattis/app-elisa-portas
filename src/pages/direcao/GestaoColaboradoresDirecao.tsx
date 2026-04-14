@@ -372,6 +372,7 @@ export default function GestaoColaboradoresDirecao() {
   const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
   const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
   const [deactivating, setDeactivating] = useState(false);
+  const [userToTransfer, setUserToTransfer] = useState<User | null>(null);
 
   const [editingRole, setEditingRole] = useState<{
     id: string; key: string; label: string; setor: string | null;
