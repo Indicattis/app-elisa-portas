@@ -461,7 +461,6 @@ export default function AdminUsersMinimalista() {
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
-                      </Button>
                     </>
                   )}
                 </div>
