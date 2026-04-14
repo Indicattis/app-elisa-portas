@@ -14,20 +14,20 @@ export interface User {
   salario?: number | null;
   custo_colaborador?: number | null;
   ordem?: number;
+  setor?: string | null;
 }
 
 export function useAllUsers() {
   return useQuery({
     queryKey: ["all-users"],
     queryFn: async () => {
-      const query = supabase
+      const { data, error } = await supabase
         .from("admin_users")
         .select("*")
         .eq("ativo", true)
-        .eq("tipo_usuario", "colaborador");
-
-      // Filter by visivel_organograma (column added via migration, not yet in generated types)
-      const { data, error } = await (query as any).eq("visivel_organograma", true).order("nome");
+        .eq("tipo_usuario", "colaborador")
+        .eq("visivel_organograma", true)
+        .order("nome");
 
       if (error) {
         console.error("Erro ao buscar usuários:", error);
