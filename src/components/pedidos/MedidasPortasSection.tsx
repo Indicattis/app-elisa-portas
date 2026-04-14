@@ -100,16 +100,57 @@ export function MedidasPortasSection({ produtos, onRefresh }: MedidasPortasSecti
 
     setSalvando(porta._virtualKey);
     try {
-      const { error } = await supabase
-        .from('produtos_vendas')
-        .update({
-          largura: m.largura,
-          altura: m.altura,
-          tamanho: `${m.largura}x${m.altura}`,
-        })
-        .eq('id', porta._originalId);
+      if (porta._totalNoGrupo > 1) {
+        // Split: fetch original record, decrement qty, insert new individual record
+        const { data: original, error: fetchError } = await supabase
+          .from('produtos_vendas')
+          .select('*')
+          .eq('id', porta._originalId)
+          .single();
 
-      if (error) throw error;
+        if (fetchError || !original) throw fetchError || new Error('Registro não encontrado');
+
+        const novaQuantidade = (original.quantidade || 1) - 1;
+
+        if (novaQuantidade > 0) {
+          const { error: updateError } = await supabase
+            .from('produtos_vendas')
+            .update({ quantidade: novaQuantidade })
+            .eq('id', porta._originalId);
+          if (updateError) throw updateError;
+        } else {
+          const { error: deleteError } = await supabase
+            .from('produtos_vendas')
+            .delete()
+            .eq('id', porta._originalId);
+          if (deleteError) throw deleteError;
+        }
+
+        // Insert new individual record with the specific measurements
+        const { id, created_at, updated_at, ...rest } = original;
+        const { error: insertError } = await supabase
+          .from('produtos_vendas')
+          .insert({
+            ...rest,
+            quantidade: 1,
+            largura: m.largura,
+            altura: m.altura,
+            tamanho: `${m.largura}x${m.altura}`,
+          });
+        if (insertError) throw insertError;
+      } else {
+        // Simple update for individual records
+        const { error } = await supabase
+          .from('produtos_vendas')
+          .update({
+            largura: m.largura,
+            altura: m.altura,
+            tamanho: `${m.largura}x${m.altura}`,
+          })
+          .eq('id', porta._originalId);
+        if (error) throw error;
+      }
+
       toast.success("Medidas salvas com sucesso");
       setEditandoPorta(null);
       queryClient.invalidateQueries({ queryKey: ['produtos-venda'] });
