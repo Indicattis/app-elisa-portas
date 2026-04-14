@@ -1,23 +1,30 @@
 
 
-## Plano: Permitir edição da data da venda em /direcao/vendas/:id
+## Plano: Corrigir constraint que bloqueia criação de pedido
 
-### O que será feito
+### Problema
 
-Transformar o campo "Data da Venda" na página de detalhes (`VendaDetalhesDirecao.tsx`) de texto estático para um DatePicker editável inline, permitindo que a direção altere a data diretamente na página de detalhes.
+A tabela `pedidos_producao` tem um CHECK constraint em `etapa_atual` que não inclui o valor `'aprovacao_diretor'`. O hook `usePedidoCreation.ts` tenta inserir com `etapa_atual = 'aprovacao_diretor'`, causando o erro `23514`.
 
-### Alterações
+Valores permitidos atualmente:
+`aberto, aprovacao_ceo, em_producao, inspecao_qualidade, aguardando_pintura, embalagem, aguardando_coleta, aguardando_instalacao, instalacoes, correcoes, finalizado`
 
-**Arquivo**: `src/pages/direcao/VendaDetalhesDirecao.tsx`
+Valor faltante: `aprovacao_diretor`
 
-1. Adicionar imports: `Popover`, `PopoverTrigger`, `PopoverContent`, `Calendar` (do shadcn), `format` do date-fns, ícone `Pencil`
-2. Adicionar estado `editingDate` (boolean) e lógica de atualização da data
-3. Substituir o `<p>` da data da venda (linha ~466) por um Popover com Calendar para seleção de nova data
-4. Ao selecionar nova data: fazer `supabase.from('vendas').update({ data_venda })` com `T12:00:00.000Z` (padrão do projeto para evitar timezone issues)
-5. Atualizar o estado local `venda` e exibir toast de sucesso
-6. Botão de edição (ícone lápis) ao lado da data para indicar que é editável
+### Solução
 
-### Detalhe visual
+**Migration SQL**: Dropar e recriar o check constraint incluindo `'aprovacao_diretor'`:
 
-O campo mostrará a data atual com um pequeno ícone de lápis. Ao clicar, abre um Popover com calendário. Ao selecionar a data, salva automaticamente.
+```sql
+ALTER TABLE pedidos_producao DROP CONSTRAINT pedidos_producao_etapa_atual_check;
+ALTER TABLE pedidos_producao ADD CONSTRAINT pedidos_producao_etapa_atual_check 
+  CHECK (etapa_atual = ANY (ARRAY[
+    'aprovacao_diretor','aberto','aprovacao_ceo','em_producao',
+    'inspecao_qualidade','aguardando_pintura','embalagem',
+    'aguardando_coleta','aguardando_instalacao','instalacoes',
+    'correcoes','finalizado'
+  ]));
+```
+
+Nenhuma alteração de código necessária.
 
