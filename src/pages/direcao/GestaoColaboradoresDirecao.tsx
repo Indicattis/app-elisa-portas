@@ -51,6 +51,7 @@ interface RoleGroup {
 
 interface SortableRoleGroupProps {
   group: RoleGroup;
+  allUsers: User[];
   systemRoles: { id: string; key: string; label: string; setor: string | null; descricao: string | null; ativo: boolean; ordem: number }[];
   onEditRole: (role: any) => void;
   onDeleteRole: (roleKey: string) => void;
