@@ -7,6 +7,11 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmarExclusaoVendaModal } from "@/components/vendas/ConfirmarExclusaoVendaModal";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { 
   DollarSign, 
   Package, 
@@ -21,7 +26,8 @@ import {
   ExternalLink,
   ArrowDown,
   ArrowUp,
-  Trash2
+  Trash2,
+  Pencil
 } from "lucide-react";
 
 interface Produto {
@@ -463,7 +469,36 @@ export default function VendaDetalhesDirecao() {
                   <Calendar className="w-4 h-4" />
                   Data da Venda
                 </div>
-                <p className="text-white">{formatDate(venda.data_venda)}</p>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="flex items-center gap-1.5 text-white hover:text-primary transition-colors group">
+                      <span>{formatDate(venda.data_venda)}</span>
+                      <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <CalendarComponent
+                      mode="single"
+                      selected={new Date(venda.data_venda + (venda.data_venda.includes('T') ? '' : 'T12:00:00'))}
+                      onSelect={async (date) => {
+                        if (!date || !venda) return;
+                        const dataFormatada = format(date, 'yyyy-MM-dd') + 'T12:00:00.000Z';
+                        const { error } = await supabase
+                          .from('vendas')
+                          .update({ data_venda: dataFormatada })
+                          .eq('id', venda.id);
+                        if (error) {
+                          toast({ variant: "destructive", title: "Erro", description: "Erro ao atualizar data da venda" });
+                        } else {
+                          setVenda({ ...venda, data_venda: dataFormatada });
+                          toast({ title: "Data atualizada com sucesso" });
+                        }
+                      }}
+                      locale={ptBR}
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               {venda.previsao_entrega && (
                 <div className="flex items-center justify-between">
