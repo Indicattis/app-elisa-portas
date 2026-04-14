@@ -6,7 +6,7 @@ import { SETOR_LABELS } from '@/utils/setorMapping';
 import { ROLE_LABELS } from '@/types/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Users, Loader2, Plus, Trash2, ArrowRightLeft, Pencil, X, GripVertical, DollarSign, UserX } from 'lucide-react';
+import { Users, Loader2, Plus, Trash2, ArrowRightLeft, Pencil, X, GripVertical, DollarSign, UserX, Check } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,6 +46,7 @@ interface RoleGroup {
   users: User[];
   openVagas: number;
   openVagasList: Vaga[];
+  filledVagasList: Vaga[];
 }
 
 interface SortableRoleGroupProps {
@@ -305,6 +306,22 @@ function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onCha
                 </div>
               </div>
             ))}
+            {group.filledVagasList.map((vaga) => (
+              <div
+                key={vaga.id}
+                className="p-1.5 rounded-xl border border-dashed border-emerald-500/20 bg-emerald-500/5 relative"
+              >
+                <div className="flex items-center gap-3 px-3 py-2.5">
+                  <div className="h-10 w-10 rounded-full border border-dashed border-emerald-500/30 flex items-center justify-center">
+                    <Check className="w-4 h-4 text-emerald-500/50" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-emerald-400/70">Vaga preenchida</p>
+                    <p className="text-[10px] text-emerald-400/40">{vaga.justificativa || 'Preenchida'}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </SortableContext>
       </DndContext>
@@ -391,6 +408,9 @@ export default function GestaoColaboradoresDirecao() {
   const openVagasForRole = (role: string): Vaga[] =>
     (vagas || []).filter(v => v.cargo === role && (v.status === 'aberta' || v.status === 'em_analise'));
 
+  const filledVagasForRole = (role: string): Vaga[] =>
+    (vagas || []).filter(v => v.cargo === role && v.status === 'preenchida');
+
   const openVagasByRole = (role: string) => openVagasForRole(role).length;
 
   const grouped = rolesForSetor.map(role => ({
@@ -401,6 +421,7 @@ export default function GestaoColaboradoresDirecao() {
       .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)),
     openVagas: openVagasByRole(role),
     openVagasList: openVagasForRole(role),
+    filledVagasList: filledVagasForRole(role),
   }));
 
   const emTesteUsers = filteredUsers.filter(u => u.em_teste === true);
