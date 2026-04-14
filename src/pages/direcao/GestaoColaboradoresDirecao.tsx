@@ -430,16 +430,21 @@ export default function GestaoColaboradoresDirecao() {
 
   const openVagasByRole = (role: string) => openVagasForRole(role).length;
 
-  const grouped = rolesForSetor.map(role => ({
-    role,
-    label: (systemRoles || []).find(r => r.key === role)?.label || ROLE_LABELS[role] || role,
-    users: filteredUsers
+  const grouped = rolesForSetor.map(role => {
+    const usersInRole = filteredUsers
       .filter(u => u.role === role && u.em_teste !== true)
-      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)),
-    openVagas: openVagasByRole(role),
-    openVagasList: openVagasForRole(role),
-    filledVagasList: filledVagasForRole(role),
-  }));
+      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
+    const userIds = new Set(usersInRole.map(u => u.id));
+    return {
+      role,
+      label: (systemRoles || []).find(r => r.key === role)?.label || ROLE_LABELS[role] || role,
+      users: usersInRole,
+      openVagas: openVagasByRole(role),
+      openVagasList: openVagasForRole(role),
+      // Hide filled vacancies whose user is already shown in the users list
+      filledVagasList: filledVagasForRole(role).filter(v => !v.preenchida_por || !userIds.has(v.preenchida_por)),
+    };
+  });
 
   const emTesteUsers = filteredUsers.filter(u => u.em_teste === true);
 
