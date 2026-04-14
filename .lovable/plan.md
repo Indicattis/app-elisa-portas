@@ -1,32 +1,23 @@
 
 
-## Plano: Etapa de seleção de usuário existente antes de criar novo
+## Plano: Permitir edição da data da venda em /direcao/vendas/:id
 
 ### O que será feito
 
-Ao clicar em "Preencher Vaga", em vez de abrir diretamente o modal de criação de usuário, será exibido um dialog intermediário listando todos os usuários ativos. O gestor poderá selecionar um usuário existente para atribuir à vaga, ou optar por criar um novo colaborador (abrindo o modal atual).
+Transformar o campo "Data da Venda" na página de detalhes (`VendaDetalhesDirecao.tsx`) de texto estático para um DatePicker editável inline, permitindo que a direção altere a data diretamente na página de detalhes.
 
 ### Alterações
 
-**1. Criar componente `src/components/vagas/SelecionarUsuarioVagaDialog.tsx`**
-- Dialog com lista de usuários ativos (vindos de `useAllUsers`)
-- Campo de busca para filtrar por nome
-- Cada item mostra avatar, nome, cargo atual e setor
-- Botão "Selecionar" ao lado de cada usuário
-- Botão "Criar Novo Colaborador" no rodapé para abrir o `PreencherVagaDialog`
-- Ao selecionar um usuário existente, atualizar o `role` dele na `admin_users` com o cargo da vaga e marcar a vaga como preenchida
+**Arquivo**: `src/pages/direcao/VendaDetalhesDirecao.tsx`
 
-**2. Alterar `src/pages/direcao/GestaoColaboradoresDirecao.tsx`**
-- Ao clicar "Preencher Vaga", abrir o novo `SelecionarUsuarioVagaDialog` em vez do `PreencherVagaDialog`
-- Adicionar estado `selecionarUsuarioOpen` para controlar o novo dialog
-- O botão "Criar Novo" dentro do novo dialog abrirá o `PreencherVagaDialog` existente
-- Ao selecionar usuário existente: atualizar role via supabase, marcar vaga como preenchida, invalidar queries
+1. Adicionar imports: `Popover`, `PopoverTrigger`, `PopoverContent`, `Calendar` (do shadcn), `format` do date-fns, ícone `Pencil`
+2. Adicionar estado `editingDate` (boolean) e lógica de atualização da data
+3. Substituir o `<p>` da data da venda (linha ~466) por um Popover com Calendar para seleção de nova data
+4. Ao selecionar nova data: fazer `supabase.from('vendas').update({ data_venda })` com `T12:00:00.000Z` (padrão do projeto para evitar timezone issues)
+5. Atualizar o estado local `venda` e exibir toast de sucesso
+6. Botão de edição (ícone lápis) ao lado da data para indicar que é editável
 
-### Fluxo
-```text
-Clique "Preencher Vaga"
-  → Abre SelecionarUsuarioVagaDialog (lista usuários ativos)
-    → Opção A: Selecionar usuário existente → Atualiza role → Vaga preenchida
-    → Opção B: "Criar Novo" → Abre PreencherVagaDialog (comportamento atual)
-```
+### Detalhe visual
+
+O campo mostrará a data atual com um pequeno ícone de lápis. Ao clicar, abre um Popover com calendário. Ao selecionar a data, salva automaticamente.
 
