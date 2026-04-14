@@ -392,6 +392,9 @@ export default function GestaoColaboradoresDirecao() {
   const openVagasForRole = (role: string): Vaga[] =>
     (vagas || []).filter(v => v.cargo === role && (v.status === 'aberta' || v.status === 'em_analise'));
 
+  const filledVagasForRole = (role: string): Vaga[] =>
+    (vagas || []).filter(v => v.cargo === role && v.status === 'preenchida');
+
   const openVagasByRole = (role: string) => openVagasForRole(role).length;
 
   const grouped = rolesForSetor.map(role => ({
@@ -402,6 +405,7 @@ export default function GestaoColaboradoresDirecao() {
       .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)),
     openVagas: openVagasByRole(role),
     openVagasList: openVagasForRole(role),
+    filledVagasList: filledVagasForRole(role),
   }));
 
   const emTesteUsers = filteredUsers.filter(u => u.em_teste === true);
