@@ -33,6 +33,7 @@ import { Textarea } from '@/components/ui/textarea';
 import type { User } from '@/hooks/useAllUsers';
 import { PreencherVagaDialog } from '@/components/vagas/PreencherVagaDialog';
 import { SelecionarUsuarioVagaDialog } from '@/components/vagas/SelecionarUsuarioVagaDialog';
+import { TransferirParaVagaDialog } from '@/components/vagas/TransferirParaVagaDialog';
 
 const SETOR_KEYS = Object.keys(SETOR_LABELS);
 
