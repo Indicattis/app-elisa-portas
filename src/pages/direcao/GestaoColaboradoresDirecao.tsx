@@ -51,6 +51,7 @@ interface RoleGroup {
 
 interface SortableRoleGroupProps {
   group: RoleGroup;
+  allUsers: User[];
   systemRoles: { id: string; key: string; label: string; setor: string | null; descricao: string | null; ativo: boolean; ordem: number }[];
   onEditRole: (role: any) => void;
   onDeleteRole: (roleKey: string) => void;
@@ -145,7 +146,7 @@ function InlineCustoEditor({ user, onSave }: { user: User; onSave: (userId: stri
   );
 }
 
-function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onChangeUserRole, onCancelVaga, onFillVaga, onUpdateCusto, onUserReorder, onDeactivateUser }: SortableRoleGroupProps) {
+function SortableRoleGroup({ group, allUsers, systemRoles, onEditRole, onDeleteRole, onChangeUserRole, onCancelVaga, onFillVaga, onUpdateCusto, onUserReorder, onDeactivateUser }: SortableRoleGroupProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: group.role });
 
   const userDndSensors = useSensors(
@@ -306,22 +307,36 @@ function SortableRoleGroup({ group, systemRoles, onEditRole, onDeleteRole, onCha
                 </div>
               </div>
             ))}
-            {group.filledVagasList.map((vaga) => (
-              <div
-                key={vaga.id}
-                className="p-1.5 rounded-xl border border-dashed border-emerald-500/20 bg-emerald-500/5 relative"
-              >
-                <div className="flex items-center gap-3 px-3 py-2.5">
-                  <div className="h-10 w-10 rounded-full border border-dashed border-emerald-500/30 flex items-center justify-center">
-                    <Check className="w-4 h-4 text-emerald-500/50" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-emerald-400/70">Vaga preenchida</p>
-                    <p className="text-[10px] text-emerald-400/40">{vaga.justificativa || 'Preenchida'}</p>
+            {group.filledVagasList.map((vaga) => {
+              const filledUser = vaga.preenchida_por ? allUsers.find(u => u.id === vaga.preenchida_por) : null;
+              return (
+                <div
+                  key={vaga.id}
+                  className="p-1.5 rounded-xl border border-dashed border-emerald-500/20 bg-emerald-500/5 relative"
+                >
+                  <div className="flex items-center gap-3 px-3 py-2.5">
+                    {filledUser?.foto_perfil_url ? (
+                      <Avatar className="h-10 w-10 border border-emerald-500/30">
+                        <AvatarImage src={filledUser.foto_perfil_url} />
+                        <AvatarFallback className="text-xs bg-emerald-500/10 text-emerald-400">
+                          {filledUser.nome.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <div className="h-10 w-10 rounded-full border border-dashed border-emerald-500/30 flex items-center justify-center">
+                        <Check className="w-4 h-4 text-emerald-500/50" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-emerald-400/70">
+                        {filledUser ? filledUser.nome : 'Vaga preenchida'}
+                      </p>
+                      <p className="text-[10px] text-emerald-400/40">Preenchida</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </SortableContext>
       </DndContext>
@@ -732,8 +747,9 @@ export default function GestaoColaboradoresDirecao() {
                    {grouped.map(group => (
                      <SortableRoleGroup
                        key={group.role}
-                       group={group}
-                       systemRoles={systemRoles || []}
+                        group={group}
+                        allUsers={allUsers || []}
+                        systemRoles={systemRoles || []}
                        onEditRole={setEditingRole}
                        onDeleteRole={setRoleToDelete}
                        
@@ -977,9 +993,9 @@ export default function GestaoColaboradoresDirecao() {
         onOpenChange={(open) => { setSelecionarUsuarioOpen(open); if (!open) setVagaToFill(null); }}
         vagaCargo={vagaToFill?.cargo || ''}
         vagaId={vagaToFill?.id}
-        onSelectExisting={async () => {
+        onSelectExisting={async (user) => {
           if (vagaToFill) {
-            await updateVagaStatus(vagaToFill.id, 'preenchida');
+            await updateVagaStatus(vagaToFill.id, 'preenchida', user.id);
           }
           queryClient.invalidateQueries({ queryKey: ['all-users'] });
           setSelecionarUsuarioOpen(false);
@@ -999,9 +1015,14 @@ export default function GestaoColaboradoresDirecao() {
         defaultRole={vagaToFill?.cargo || ''}
         defaultSetor={preencherVagaEmTeste ? selectedSetor : undefined}
         emTeste={preencherVagaEmTeste}
-        onSuccess={async () => {
+        onSuccess={async (createdAuthUserId) => {
           if (vagaToFill && !preencherVagaEmTeste) {
-            await updateVagaStatus(vagaToFill.id, 'preenchida');
+            let adminUserId: string | undefined;
+            if (createdAuthUserId) {
+              const { data } = await supabase.from('admin_users').select('id').eq('user_id', createdAuthUserId).single();
+              adminUserId = data?.id;
+            }
+            await updateVagaStatus(vagaToFill.id, 'preenchida', adminUserId);
           }
           queryClient.invalidateQueries({ queryKey: ['all-users'] });
         }}
