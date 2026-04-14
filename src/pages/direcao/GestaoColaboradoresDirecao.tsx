@@ -810,22 +810,29 @@ export default function GestaoColaboradoresDirecao() {
                            <p className="text-xs text-white/40 truncate">{user.email}</p>
                            <p className="text-[10px] text-white/30">{(systemRoles || []).find(r => r.key === user.role)?.label || user.role}</p>
                          </div>
-                         <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all">
-                           <button
-                             onClick={() => { setUserToChangeRole(user); setNewRole(user.role); }}
-                             className="p-1.5 rounded-lg hover:bg-blue-500/20 text-white/30 hover:text-blue-400 transition-all"
-                             title="Alterar função"
-                           >
-                             <ArrowRightLeft className="w-4 h-4" />
-                           </button>
-                           <button
-                             onClick={() => setUserToDeactivate(user)}
-                             className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
-                             title="Desativar colaborador"
-                           >
-                             <UserX className="w-4 h-4" />
-                           </button>
-                         </div>
+                          <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all">
+                            <button
+                              onClick={() => setUserToTransfer(user)}
+                              className="p-1.5 rounded-lg hover:bg-emerald-500/20 text-white/30 hover:text-emerald-400 transition-all"
+                              title="Transferir para vaga"
+                            >
+                              <ArrowUpRight className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => { setUserToChangeRole(user); setNewRole(user.role); }}
+                              className="p-1.5 rounded-lg hover:bg-blue-500/20 text-white/30 hover:text-blue-400 transition-all"
+                              title="Alterar função"
+                            >
+                              <ArrowRightLeft className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setUserToDeactivate(user)}
+                              className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
+                              title="Desativar colaborador"
+                            >
+                              <UserX className="w-4 h-4" />
+                            </button>
+                          </div>
                        </div>
                      </div>
                    ))}
