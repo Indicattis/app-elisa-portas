@@ -47,6 +47,19 @@ export function CarregamentoDownbar({
   const [checkPlacaSoleira, setCheckPlacaSoleira] = useState(false);
   const { calcularEtiquetasLinha } = useEtiquetasProducao();
 
+  const { data: contratos } = useQuery({
+    queryKey: ['contratos-venda-carregamento', ordem?.venda_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contratos_vendas')
+        .select('id, arquivo_url, nome_arquivo')
+        .eq('venda_id', ordem!.venda_id!);
+      if (error) throw error;
+      return data;
+    },
+    enabled: open && !!ordem?.venda_id,
+  });
+
   const toggleItem = (id: string) => {
     setItensMarcados(prev => {
       const next = new Set(prev);
