@@ -449,6 +449,19 @@ export default function AdminUsersMinimalista() {
                       >
                         {user.ativo ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeletingUser(user);
+                        }}
+                        className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                        title="Excluir usuário"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                      </Button>
                     </>
                   )}
                 </div>
