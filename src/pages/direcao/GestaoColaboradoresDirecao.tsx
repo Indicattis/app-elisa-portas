@@ -46,6 +46,7 @@ interface RoleGroup {
   users: User[];
   openVagas: number;
   openVagasList: Vaga[];
+  filledVagasList: Vaga[];
 }
 
 interface SortableRoleGroupProps {
