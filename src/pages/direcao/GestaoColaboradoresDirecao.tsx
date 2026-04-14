@@ -1036,6 +1036,13 @@ export default function GestaoColaboradoresDirecao() {
           queryClient.invalidateQueries({ queryKey: ['all-users'] });
         }}
       />
+      {/* Transferir em teste para vaga */}
+      <TransferirParaVagaDialog
+        open={!!userToTransfer}
+        onOpenChange={(o) => { if (!o) setUserToTransfer(null); }}
+        user={userToTransfer}
+        systemRoles={systemRoles || []}
+      />
     </MinimalistLayout>
   );
 }
