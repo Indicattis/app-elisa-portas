@@ -196,20 +196,28 @@ export default function AdminUsersMinimalista() {
   const handleDeleteUser = async (user: AdminUser) => {
     setIsDeleting(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      if (!token) throw new Error("Não autenticado");
-
-      const response = await supabase.functions.invoke("delete-user", {
+      const response = await supabase.functions.invoke<{
+        success: boolean;
+        deleted_user_id: string;
+        mode?: "deleted" | "archived";
+        message?: string;
+        error?: string;
+      }>("delete-user", {
         body: { user_id: user.user_id },
       });
 
       if (response.error) throw response.error;
       if (response.data?.error) throw new Error(response.data.error);
 
+      const wasArchived = response.data?.mode === "archived";
+
       toast({
-        title: "Sucesso",
-        description: `Usuário "${user.nome}" excluído com sucesso`,
+        title: wasArchived ? "Usuário arquivado" : "Sucesso",
+        description:
+          response.data?.message ||
+          (wasArchived
+            ? `Usuário "${user.nome}" tinha histórico vinculado e foi arquivado com acesso removido`
+            : `Usuário "${user.nome}" excluído com sucesso`),
       });
       fetchUsers();
       if (selectedUser?.id === user.id) setSelectedUser(null);
