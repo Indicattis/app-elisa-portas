@@ -50,7 +50,7 @@ interface PreencherVagaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultRole: string;
-  onSuccess: () => void;
+  onSuccess: (createdUserId?: string) => void;
   emTeste?: boolean;
   defaultSetor?: string;
 }
@@ -137,7 +137,7 @@ export function PreencherVagaDialog({ open, onOpenChange, defaultRole, onSuccess
       if (response.data?.error) throw new Error(response.data.error);
 
       toast({ title: emTeste ? "Usuário em teste criado!" : "Colaborador criado!", description: emTeste ? `${values.nome} foi cadastrado em teste.` : `${values.nome} foi adicionado e a vaga preenchida.` });
-      onSuccess();
+      onSuccess(response.data?.user?.id);
       onOpenChange(false);
     } catch (error: any) {
       toast({ variant: "destructive", title: "Erro", description: error.message || "Erro ao criar colaborador" });
