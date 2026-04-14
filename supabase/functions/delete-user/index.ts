@@ -116,17 +116,54 @@ serve(async (req) => {
       });
     }
 
+    let deletionMode: 'deleted' | 'archived' = 'deleted';
+
     const { error: deleteAdminError } = await supabaseAdmin
       .from('admin_users')
       .delete()
       .eq('user_id', targetUserId);
 
     if (deleteAdminError) {
-      console.error('[delete-user] Failed deleting admin_users row', deleteAdminError);
-      return new Response(JSON.stringify({ error: `Failed to delete user data: ${deleteAdminError.message}` }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      if (deleteAdminError.code !== '23503') {
+        console.error('[delete-user] Failed deleting admin_users row', deleteAdminError);
+        return new Response(JSON.stringify({ error: `Failed to delete user data: ${deleteAdminError.message}` }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      console.warn('[delete-user] User has related records, archiving profile instead', {
+        targetUserId,
+        message: deleteAdminError.message,
       });
+
+      const archivedName = targetAdminUser.nome?.includes('(Arquivado)')
+        ? targetAdminUser.nome
+        : `${targetAdminUser.nome} (Arquivado)`;
+      const archivedEmail = `deleted+${targetUserId}@archived.local`;
+
+      const { error: archiveAdminError } = await supabaseAdmin
+        .from('admin_users')
+        .update({
+          ativo: false,
+          tipo_usuario: 'arquivado',
+          nome: archivedName,
+          email: archivedEmail,
+          cpf: null,
+          foto_perfil_url: null,
+          visivel_organograma: false,
+        })
+        .eq('user_id', targetUserId);
+
+      if (archiveAdminError) {
+        console.error('[delete-user] Failed archiving referenced user', archiveAdminError);
+        return new Response(JSON.stringify({ error: `Failed to archive referenced user: ${archiveAdminError.message}` }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      deletionMode = 'archived';
     }
 
     const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
@@ -139,9 +176,16 @@ serve(async (req) => {
       });
     }
 
-    console.log('[delete-user] User deleted', { targetUserId, deletedBy: user.id });
+    console.log('[delete-user] User removed', { targetUserId, deletedBy: user.id, mode: deletionMode });
 
-    return new Response(JSON.stringify({ success: true, deleted_user_id: targetUserId }), {
+    return new Response(JSON.stringify({
+      success: true,
+      deleted_user_id: targetUserId,
+      mode: deletionMode,
+      message: deletionMode === 'archived'
+        ? 'O usuário tinha histórico vinculado e foi arquivado, com o acesso removido.'
+        : 'Usuário excluído com sucesso.',
+    }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
