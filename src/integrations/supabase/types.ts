@@ -7082,6 +7082,7 @@ export type Database = {
           created_by: string | null
           id: string
           justificativa: string
+          preenchida_por: string | null
           status: Database["public"]["Enums"]["status_vaga"]
           updated_at: string | null
         }
@@ -7091,6 +7092,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           justificativa: string
+          preenchida_por?: string | null
           status?: Database["public"]["Enums"]["status_vaga"]
           updated_at?: string | null
         }
@@ -7100,10 +7102,19 @@ export type Database = {
           created_by?: string | null
           id?: string
           justificativa?: string
+          preenchida_por?: string | null
           status?: Database["public"]["Enums"]["status_vaga"]
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vagas_preenchida_por_fkey"
+            columns: ["preenchida_por"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       veiculos: {
         Row: {

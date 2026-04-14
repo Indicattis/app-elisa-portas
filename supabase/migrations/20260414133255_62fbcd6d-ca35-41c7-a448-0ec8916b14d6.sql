@@ -1,0 +1,1 @@
+ALTER TABLE public.vagas ADD COLUMN preenchida_por UUID REFERENCES public.admin_users(id) ON DELETE SET NULL;
