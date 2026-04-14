@@ -13,6 +13,15 @@ import { useEtiquetasProducao } from "@/hooks/useEtiquetasProducao";
 import { gerarPDFEtiquetasProducaoMultiplas, gerarPDFEtiquetaProducao } from "@/utils/etiquetasPDFGenerator";
 import { CarregamentoLoadingModal } from "./CarregamentoLoadingModal";
 import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface CarregamentoDownbarProps {
   ordem: OrdemCarregamentoUnificada | null;
@@ -37,6 +46,19 @@ export function CarregamentoDownbar({
   const [checkTesteiraMotor, setCheckTesteiraMotor] = useState(false);
   const [checkPlacaSoleira, setCheckPlacaSoleira] = useState(false);
   const { calcularEtiquetasLinha } = useEtiquetasProducao();
+
+  const { data: contratos } = useQuery({
+    queryKey: ['contratos-venda-carregamento', ordem?.venda_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contratos_vendas')
+        .select('id, arquivo_url, nome_arquivo')
+        .eq('venda_id', ordem!.venda_id!);
+      if (error) throw error;
+      return data;
+    },
+    enabled: open && !!ordem?.venda_id,
+  });
 
   const toggleItem = (id: string) => {
     setItensMarcados(prev => {
@@ -181,18 +203,62 @@ export function CarregamentoDownbar({
                 </div>
                 Carregamento — {tipoLabel}
               </div>
-              {ordem.pedido?.ficha_visita_url && (
-                <a
-                  href={ordem.pedido.ficha_visita_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs font-medium text-blue-300 hover:text-blue-200 transition-colors bg-white/5 hover:bg-white/10 px-2.5 py-1.5 rounded-lg"
-                >
-                  <Paperclip className="h-3.5 w-3.5" />
-                  Visita Técnica
-                  <ExternalLink className="h-3 w-3 opacity-60" />
-                </a>
-              )}
+              <div className="flex items-center gap-2">
+                {ordem.pedido?.ficha_visita_url && (
+                  <a
+                    href={ordem.pedido.ficha_visita_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs font-medium text-blue-300 hover:text-blue-200 transition-colors bg-white/5 hover:bg-white/10 px-2.5 py-1.5 rounded-lg"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    Visita Técnica
+                    <ExternalLink className="h-3 w-3 opacity-60" />
+                  </a>
+                )}
+                {/* Botão de Contratos/Anexos */}
+                <TooltipProvider>
+                  {contratos && contratos.length > 0 ? (
+                    contratos.length === 1 ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => window.open(contratos[0].arquivo_url, '_blank')}
+                            className="flex items-center gap-1.5 text-xs font-medium text-purple-300 hover:text-purple-200 transition-colors bg-white/5 hover:bg-white/10 px-2.5 py-1.5 rounded-lg"
+                          >
+                            <Paperclip className="h-3.5 w-3.5" />
+                            Contrato
+                            <ExternalLink className="h-3 w-3 opacity-60" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{contratos[0].nome_arquivo}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="flex items-center gap-1.5 text-xs font-medium text-purple-300 hover:text-purple-200 transition-colors bg-white/5 hover:bg-white/10 px-2.5 py-1.5 rounded-lg">
+                            <Paperclip className="h-3.5 w-3.5" />
+                            Contratos ({contratos.length})
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {contratos.map((c) => (
+                            <DropdownMenuItem
+                              key={c.id}
+                              onClick={() => window.open(c.arquivo_url, '_blank')}
+                            >
+                              <FileText className="h-4 w-4 mr-2" />
+                              {c.nome_arquivo}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )
+                  ) : null}
+                </TooltipProvider>
+              </div>
             </SheetTitle>
           </SheetHeader>
         </div>
