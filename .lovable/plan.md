@@ -1,39 +1,23 @@
 
 
-## Plano: Separar medidas individuais para portas expandidas
+## Plano: Atualizar quantidade da porta 9.60 × 6.60m para 2
 
-### Problema
-O produto `47b3b686` tem `quantidade=2`, gerando duas portas virtuais (#2 e #3). Ambas apontam para o mesmo registro no banco. Ao salvar medidas de uma, o `UPDATE` usa `_originalId`, alterando o registro compartilhado e afetando as duas.
+### Correção de dados
+Atualizar o registro `01bf7338-c52e-45a7-bec7-9180a8800395` (porta 9.60 × 6.60m) de `quantidade: 1` para `quantidade: 2`.
 
-### Solução
-Ao editar medidas de uma porta que pertence a um grupo com `quantidade > 1`, o sistema deve **dividir** ("split") o registro original em registros individuais antes de salvar. Isso garante que cada porta tenha seu próprio registro no `produtos_vendas`.
+Também corrigir a porta 4.24 × 3.90m conforme solicitado anteriormente: atualizar `94973500` para `quantidade: 2` e deletar o duplicado `663a1699`.
 
-### Alterações
+### Resultado final
+| Porta | Dimensões | Quantidade |
+|-------|-----------|------------|
+| 1 | 9.60 × 6.60m | 2 |
+| 2 | 4.24 × 3.90m | 2 |
+| 3 | 3.00 × 3.45m | 1 |
 
-**1. `src/components/pedidos/MedidasPortasSection.tsx`**
+Total: 5 portas físicas.
 
-Modificar `handleSalvar` para detectar quando a porta pertence a um grupo (`_totalNoGrupo > 1`):
-
-- **Se `_totalNoGrupo > 1`**: Fazer o split do registro original:
-  1. Reduzir a `quantidade` do registro original em 1 (ex: de 2 para 1)
-  2. Inserir um novo registro em `produtos_vendas` copiando todos os campos do original, com `quantidade=1` e as novas medidas
-  3. Se a quantidade restante do original ficar em 0, deletar o original
-  4. Atualizar o estado local e invalidar as queries para refletir a mudança
-  
-- **Se `_totalNoGrupo === 1`**: Manter o comportamento atual (update simples)
-
-### Lógica do split (pseudocódigo)
-
-```text
-Se porta._totalNoGrupo > 1:
-  1. UPDATE produtos_vendas SET quantidade = quantidade - 1 WHERE id = _originalId
-  2. INSERT INTO produtos_vendas (todos os campos copiados, quantidade=1, novas medidas)
-  3. Invalidar queries
-  4. Se quantidade original era 1 após decremento (ficou 0), DELETE original
-```
-
-### Resultado
-- Cada porta pode ter medidas independentes
-- Portas com mesmas medidas continuam agrupadas até serem editadas individualmente
-- O split é transparente para o usuário -- ele simplesmente edita e salva
+### Ações
+1. `UPDATE produtos_vendas SET quantidade = 2 WHERE id = '01bf7338-...'`
+2. `UPDATE produtos_vendas SET quantidade = 2 WHERE id = '94973500-...'`
+3. `DELETE FROM produtos_vendas WHERE id = '663a1699-...'`
 
