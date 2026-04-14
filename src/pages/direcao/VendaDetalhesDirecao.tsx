@@ -493,6 +493,7 @@ export default function VendaDetalhesDirecao() {
                           toast({ variant: "destructive", title: "Erro", description: "Erro ao atualizar data da venda" });
                         } else {
                           setVenda({ ...venda, data_venda: dataFormatada });
+                          queryClient.invalidateQueries({ queryKey: ['vendas'] });
                           toast({ title: "Data atualizada com sucesso" });
                         }
                       }}
