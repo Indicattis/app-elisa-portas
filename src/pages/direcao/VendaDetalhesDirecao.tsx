@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -93,6 +94,7 @@ export default function VendaDetalhesDirecao() {
   const [isDeleting, setIsDeleting] = useState(false);
   const { isAdmin } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const handleDeleteVenda = async () => {
@@ -491,6 +493,7 @@ export default function VendaDetalhesDirecao() {
                           toast({ variant: "destructive", title: "Erro", description: "Erro ao atualizar data da venda" });
                         } else {
                           setVenda({ ...venda, data_venda: dataFormatada });
+                          queryClient.invalidateQueries({ queryKey: ['vendas'] });
                           toast({ title: "Data atualizada com sucesso" });
                         }
                       }}
