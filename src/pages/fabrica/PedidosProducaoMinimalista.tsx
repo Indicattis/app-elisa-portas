@@ -24,7 +24,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 
-const ETAPA_ICONS = {
+const ETAPA_ICONS: Record<string, any> = {
+  aprovacao_diretor: ShieldCheck,
   aberto: Clock,
   aprovacao_ceo: ShieldCheck,
   em_producao: Factory,
