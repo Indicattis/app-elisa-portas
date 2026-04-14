@@ -20,38 +20,100 @@ serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'No authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'No authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Invalid or expired token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      console.error('[delete-user] Invalid token', userError?.message);
+      return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    const { data: adminUser } = await supabaseAdmin
+    const { data: adminUser, error: adminCheckError } = await supabaseAdmin
       .from('admin_users')
       .select('role, ativo, bypass_permissions')
       .eq('user_id', user.id)
       .single();
 
-    const allowedRoles = ['administrador', 'diretor'];
-    if (!adminUser || (!allowedRoles.includes(adminUser.role) && !adminUser.bypass_permissions) || !adminUser.ativo) {
-      return new Response(JSON.stringify({ error: 'Insufficient permissions' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (adminCheckError) {
+      console.error('[delete-user] Failed to verify permissions', adminCheckError);
+      return new Response(JSON.stringify({ error: 'Failed to verify user permissions' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    const { user_id: targetUserId } = await req.json();
+    if (!adminUser) {
+      console.error('[delete-user] User not found in admin_users', user.id);
+      return new Response(JSON.stringify({ error: 'User not found' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!adminUser.ativo) {
+      console.error('[delete-user] Inactive user', user.id);
+      return new Response(JSON.stringify({ error: 'User account is inactive' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const allowedRoles = ['administrador', 'analista_rh', 'diretor', 'gerente_marketing', 'gerente_geral'];
+    const hasPermission = adminUser.bypass_permissions === true || allowedRoles.includes(adminUser.role);
+
+    if (!hasPermission) {
+      console.error('[delete-user] Insufficient permissions', { role: adminUser.role, userId: user.id });
+      return new Response(JSON.stringify({ error: 'Insufficient permissions - admin role required' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const body = await req.json();
+    const targetUserId = typeof body?.user_id === 'string' ? body.user_id.trim() : '';
+
     if (!targetUserId) {
-      return new Response(JSON.stringify({ error: 'user_id is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'user_id is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     if (targetUserId === user.id) {
-      return new Response(JSON.stringify({ error: 'Cannot delete your own account' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Cannot delete your own account' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { data: targetAdminUser, error: targetLookupError } = await supabaseAdmin
+      .from('admin_users')
+      .select('id, user_id, nome, email')
+      .eq('user_id', targetUserId)
+      .maybeSingle();
+
+    if (targetLookupError) {
+      console.error('[delete-user] Target lookup failed', targetLookupError);
+      return new Response(JSON.stringify({ error: 'Failed to locate target user' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!targetAdminUser) {
+      return new Response(JSON.stringify({ error: 'Target user not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const { error: deleteAdminError } = await supabaseAdmin
@@ -60,20 +122,34 @@ serve(async (req) => {
       .eq('user_id', targetUserId);
 
     if (deleteAdminError) {
-      return new Response(JSON.stringify({ error: 'Failed to delete user data: ' + deleteAdminError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      console.error('[delete-user] Failed deleting admin_users row', deleteAdminError);
+      return new Response(JSON.stringify({ error: `Failed to delete user data: ${deleteAdminError.message}` }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
+
     if (deleteAuthError) {
-      return new Response(JSON.stringify({ error: 'User data deleted but failed to remove auth account: ' + deleteAuthError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      console.error('[delete-user] Failed deleting auth user', deleteAuthError);
+      return new Response(JSON.stringify({ error: `User data deleted but failed to remove auth account: ${deleteAuthError.message}` }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    return new Response(JSON.stringify({ success: true }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    console.log('[delete-user] User deleted', { targetUserId, deletedBy: user.id });
+
+    return new Response(JSON.stringify({ success: true, deleted_user_id: targetUserId }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    console.error('[delete-user] Unexpected error', error);
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Internal server error' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });
