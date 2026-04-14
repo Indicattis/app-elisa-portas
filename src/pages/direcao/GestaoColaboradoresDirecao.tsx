@@ -824,6 +824,10 @@ export default function GestaoColaboradoresDirecao() {
                   console.error(error);
                 } else {
                   toast.success(`${userToDeactivate.nome} foi desativado`);
+                  await createVaga({
+                    cargo: userToDeactivate.role,
+                    justificativa: `Vaga aberta pela desativação de ${userToDeactivate.nome}`,
+                  });
                   queryClient.invalidateQueries({ queryKey: ['all-users'] });
                 }
                 setUserToDeactivate(null);
