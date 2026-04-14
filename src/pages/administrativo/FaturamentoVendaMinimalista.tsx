@@ -1308,65 +1308,6 @@ export default function FaturamentoVendaMinimalista() {
         onConfirmar={executarFaturamento}
       />
 
-      {/* Modal de Criação de Pedido */}
-      <AlertDialog open={showPedidoDialog} onOpenChange={setShowPedidoDialog}>
-        <AlertDialogContent className="bg-zinc-900 border-white/10">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">
-              {checkingPedido ? "Verificando..." : "Venda Faturada com Sucesso!"}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-white/60">
-              {checkingPedido 
-                ? "Verificando se já existe um pedido para esta venda..." 
-                : "Deseja criar o pedido de produção para esta venda agora?"
-              }
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          {!checkingPedido && (
-            <AlertDialogFooter>
-              <AlertDialogCancel 
-                onClick={() => setShowPedidoDialog(false)}
-                className="bg-white/5 border-white/20 text-white hover:bg-white/10"
-              >
-                Não, criar depois
-              </AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={async () => {
-                  if (!venda) return;
-                  
-                  setCheckingPedido(true);
-                  const pedidoExistente = await checkExistingPedido(venda.id);
-                  setCheckingPedido(false);
-                  
-                  if (pedidoExistente) {
-                    setPedidoExistenteId(pedidoExistente);
-                    setHasPedido(true);
-                    setShowPedidoDialog(false);
-                    setShowPedidoDuplicadoDialog(true);
-                    return;
-                  }
-                  
-                  setCheckingPedido(true);
-                  const pedidoId = await createPedidoFromVenda(venda.id);
-                  setCheckingPedido(false);
-                  setShowPedidoDialog(false);
-                  if (pedidoId) {
-                    setHasPedido(true);
-                    setPedidoExistenteId(pedidoId);
-                    toast({
-                      title: "Pedido criado com sucesso!",
-                      description: "O pedido está pronto para ser preenchido.",
-                    });
-                  }
-                }}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                Sim, Criar Pedido
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          )}
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Modal de Pedido Duplicado */}
       <AlertDialog open={showPedidoDuplicadoDialog} onOpenChange={setShowPedidoDuplicadoDialog}>
