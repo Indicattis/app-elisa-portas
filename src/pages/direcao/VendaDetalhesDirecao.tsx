@@ -7,6 +7,11 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmarExclusaoVendaModal } from "@/components/vendas/ConfirmarExclusaoVendaModal";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { 
   DollarSign, 
   Package, 
@@ -21,7 +26,8 @@ import {
   ExternalLink,
   ArrowDown,
   ArrowUp,
-  Trash2
+  Trash2,
+  Pencil
 } from "lucide-react";
 
 interface Produto {
