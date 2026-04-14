@@ -1015,9 +1015,14 @@ export default function GestaoColaboradoresDirecao() {
         defaultRole={vagaToFill?.cargo || ''}
         defaultSetor={preencherVagaEmTeste ? selectedSetor : undefined}
         emTeste={preencherVagaEmTeste}
-        onSuccess={async () => {
+        onSuccess={async (createdAuthUserId) => {
           if (vagaToFill && !preencherVagaEmTeste) {
-            await updateVagaStatus(vagaToFill.id, 'preenchida');
+            let adminUserId: string | undefined;
+            if (createdAuthUserId) {
+              const { data } = await supabase.from('admin_users').select('id').eq('user_id', createdAuthUserId).single();
+              adminUserId = data?.id;
+            }
+            await updateVagaStatus(vagaToFill.id, 'preenchida', adminUserId);
           }
           queryClient.invalidateQueries({ queryKey: ['all-users'] });
         }}
