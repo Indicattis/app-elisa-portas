@@ -119,21 +119,26 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
     <TooltipProvider>
       <Card
         className={`hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden ${isDragging ? 'opacity-50 shadow-2xl' : ''}`}
-        onClick={() => setShowDetalhes(true)}
+        onClick={() => mode === 'faturamento' ? navigate(`/administrativo/financeiro/faturamento/${venda.id}`) : setShowDetalhes(true)}
       >
         <CardContent className="p-0 h-full">
           <div
             className="grid items-center gap-1.5 h-full px-2 w-full"
-            style={{ gridTemplateColumns: '20px 24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 30px 30px 20px' }}
+            style={{ gridTemplateColumns: mode === 'faturamento'
+              ? '24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 70px'
+              : '20px 24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 30px 30px 20px'
+            }}
           >
-            {/* Drag handle */}
-            <div
-              {...dragHandleProps}
-              className="flex items-center justify-center cursor-grab active:cursor-grabbing"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-            </div>
+            {/* Drag handle - only in pedido mode */}
+            {mode === 'pedido' && (
+              <div
+                {...dragHandleProps}
+                className="flex items-center justify-center cursor-grab active:cursor-grabbing"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+            )}
 
             {/* Avatar atendente */}
             <Tooltip>
