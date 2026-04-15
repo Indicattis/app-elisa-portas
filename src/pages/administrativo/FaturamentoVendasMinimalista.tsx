@@ -380,6 +380,44 @@ export default function FaturamentoMinimalista() {
     return lucroProdutos + lucroInstalacao;
   };
 
+  const calcDescontoTiers = useCallback((venda: Venda) => {
+    const totalDesconto = (venda.portas || []).reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
+    if (totalDesconto === 0) return { cartao: 0, gelo: 0, responsavel: 0, total: 0 };
+
+    const tabelaTotal = (venda.portas || []).reduce((acc: number, p: any) => {
+      const qty = p.quantidade || 1;
+      return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+    }, 0);
+    if (tabelaTotal === 0) return { cartao: 0, gelo: 0, responsavel: 0, total: totalDesconto };
+
+    const pctTotal = (totalDesconto / tabelaTotal) * 100;
+    const isCartao = venda.forma_pagamento === 'cartao_credito';
+    const isPresencial = venda.venda_presencial === true;
+
+    const limAvista = configLimites.avista;
+    const limPresencial = configLimites.presencial;
+
+    let pctCartao = 0;
+    let pctGelo = 0;
+    let pctResp = 0;
+
+    if (!isCartao) {
+      pctCartao = Math.min(pctTotal, limAvista);
+    }
+    const restante1 = pctTotal - pctCartao;
+    if (isPresencial && restante1 > 0) {
+      pctGelo = Math.min(restante1, limPresencial);
+    }
+    pctResp = Math.max(0, pctTotal - pctCartao - pctGelo);
+
+    return {
+      cartao: tabelaTotal * (pctCartao / 100),
+      gelo: tabelaTotal * (pctGelo / 100),
+      responsavel: tabelaTotal * (pctResp / 100),
+      total: totalDesconto,
+    };
+  }, [configLimites]);
+
   const filteredVendas = useMemo(() => {
     return vendas.filter(venda => {
       if (filtroStatus.length > 0) {
