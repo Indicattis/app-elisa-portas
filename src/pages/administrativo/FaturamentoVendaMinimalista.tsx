@@ -356,7 +356,33 @@ export default function FaturamentoVendaMinimalista() {
     });
   }, [produtos]);
 
-  const fetchVenda = async () => {
+  // Auto-faturar produtos instalacao com 30% de lucro
+  useEffect(() => {
+    if (!produtos || produtos.length === 0 || isUpdatingLucro) return;
+    
+    const instalacoesParaAutoFaturar = produtos.filter(p => 
+      p.tipo_produto === 'instalacao' && 
+      (p.lucro_item === null || p.lucro_item === undefined || p.lucro_item === 0) &&
+      !p.faturamento &&
+      !autoFaturadosRef.current.has(p.id)
+    );
+    
+    if (instalacoesParaAutoFaturar.length === 0) return;
+    
+    instalacoesParaAutoFaturar.forEach(async (produto) => {
+      autoFaturadosRef.current.add(produto.id);
+      
+      const lucroInstalacao = produto.valor_total * 0.30;
+      const custoCalculado = produto.valor_total - lucroInstalacao;
+      
+      await updateLucroItem({ 
+        produtoId: produto.id, 
+        lucroItem: lucroInstalacao,
+        custoProducao: custoCalculado 
+      });
+    });
+  }, [produtos]);
+
     try {
       setLoading(true);
       const { data, error } = await supabase
