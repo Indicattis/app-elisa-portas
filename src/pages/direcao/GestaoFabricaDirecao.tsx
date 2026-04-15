@@ -779,7 +779,7 @@ export default function GestaoFabricaDirecao() {
                 />
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 py-4">
               {isLoadingFaturamento ? (
                 <div className="text-center py-8 text-white/50">Carregando...</div>
               ) : vendasFaturamentoFiltradas.length === 0 ? (
@@ -789,11 +789,10 @@ export default function GestaoFabricaDirecao() {
                     : 'Todas as vendas estão faturadas'}
                 </div>
               ) : (
-                <div className="space-y-1.5">
-                  {vendasFaturamentoFiltradas.map(venda => (
-                    <VendaPendentePedidoCard key={venda.id} venda={venda} mode="faturamento" />
-                  ))}
-                </div>
+                <VendasPendenteDraggableList
+                  vendas={vendasFaturamentoFiltradas}
+                  onReorganizar={handleReorganizarVendas}
+                />
               )}
             </CardContent>
           </Card>
