@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
 import { IndicadorExpandivel } from "@/components/direcao/IndicadorExpandivel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +78,8 @@ interface Venda {
   lucro_total: number;
   frete_aprovado?: boolean;
   metodo_pagamento?: string | null;
+  forma_pagamento?: string | null;
+  venda_presencial?: boolean;
   portas?: any[];
   produtos?: any[];
   justificativa_nao_faturada?: string | null;
@@ -97,7 +100,9 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
   { id: 'tabela', label: 'Tabela', defaultVisible: true },
   { id: 'valor', label: 'Venda', defaultVisible: true },
-  { id: 'desconto_acrescimo', label: 'Desc./Créd.', defaultVisible: true },
+  { id: 'desc_cartao', label: 'Cartão', defaultVisible: true },
+  { id: 'desc_gelo', label: 'Gelo', defaultVisible: true },
+  { id: 'desc_responsavel', label: 'Luan/Alana', defaultVisible: true },
   { id: 'lucro', label: 'Lucro', defaultVisible: true },
   { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
   { id: 'justificativa', label: 'Justificativa', defaultVisible: true },
@@ -126,6 +131,7 @@ export default function FaturamentoMinimalista() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { limites: configLimites } = useConfiguracoesVendas();
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -236,6 +242,8 @@ export default function FaturamentoMinimalista() {
           lucro_total,
           custo_total,
           frete_aprovado,
+          forma_pagamento,
+          venda_presencial,
           justificativa_nao_faturada,
           metodo_pagamento,
           data_prevista_entrega,
@@ -372,6 +380,44 @@ export default function FaturamentoMinimalista() {
     return lucroProdutos + lucroInstalacao;
   };
 
+  const calcDescontoTiers = useCallback((venda: Venda) => {
+    const totalDesconto = (venda.portas || []).reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
+    if (totalDesconto === 0) return { cartao: 0, gelo: 0, responsavel: 0, total: 0 };
+
+    const tabelaTotal = (venda.portas || []).reduce((acc: number, p: any) => {
+      const qty = p.quantidade || 1;
+      return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+    }, 0);
+    if (tabelaTotal === 0) return { cartao: 0, gelo: 0, responsavel: 0, total: totalDesconto };
+
+    const pctTotal = (totalDesconto / tabelaTotal) * 100;
+    const isCartao = venda.forma_pagamento === 'cartao_credito';
+    const isPresencial = venda.venda_presencial === true;
+
+    const limAvista = configLimites.avista;
+    const limPresencial = configLimites.presencial;
+
+    let pctCartao = 0;
+    let pctGelo = 0;
+    let pctResp = 0;
+
+    if (!isCartao) {
+      pctCartao = Math.min(pctTotal, limAvista);
+    }
+    const restante1 = pctTotal - pctCartao;
+    if (isPresencial && restante1 > 0) {
+      pctGelo = Math.min(restante1, limPresencial);
+    }
+    pctResp = Math.max(0, pctTotal - pctCartao - pctGelo);
+
+    return {
+      cartao: tabelaTotal * (pctCartao / 100),
+      gelo: tabelaTotal * (pctGelo / 100),
+      responsavel: tabelaTotal * (pctResp / 100),
+      total: totalDesconto,
+    };
+  }, [configLimites]);
+
   const filteredVendas = useMemo(() => {
     return vendas.filter(venda => {
       if (filtroStatus.length > 0) {
@@ -413,9 +459,13 @@ export default function FaturamentoMinimalista() {
             if (isFaturada(venda)) return -1;
             return differenceInDays(new Date(), new Date(venda.data_venda));
           case 'faturada': return isFaturada(venda) ? 1 : 0;
-          case 'desconto_acrescimo':
-            const desc = (venda.portas || []).reduce((sum: number, p: any) => sum + (p.desconto_valor || 0), 0);
-            return (venda.valor_credito || 0) - desc;
+          case 'desc_cartao':
+          case 'desc_gelo':
+          case 'desc_responsavel':
+            const tiers = calcDescontoTiers(venda);
+            if (sortConfig.column === 'desc_cartao') return tiers.cartao;
+            if (sortConfig.column === 'desc_gelo') return tiers.gelo;
+            return tiers.responsavel;
           default: return 0;
         }
       };
@@ -656,13 +706,13 @@ export default function FaturamentoMinimalista() {
   };
 
   const getColumnResponsiveClass = (columnId: string) => {
-    const hiddenOnMobile = ['cidade', 'expedicao', 'desconto_acrescimo', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela'];
+    const hiddenOnMobile = ['cidade', 'expedicao', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela'];
     if (hiddenOnMobile.includes(columnId)) return 'hidden md:table-cell';
     return '';
   };
 
   const getColumnAlignment = (columnId: string) => {
-    const rightAligned = ['valor', 'lucro', 'desconto_acrescimo', 'tabela'];
+    const rightAligned = ['valor', 'lucro', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tabela'];
     const centerAligned = ['faturada', 'tempo_sem_faturar', 'expedicao'];
     if (rightAligned.includes(columnId)) return 'text-right';
     if (centerAligned.includes(columnId)) return 'text-center';
@@ -695,16 +745,14 @@ export default function FaturamentoMinimalista() {
           return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
         }, 0);
         return <span className="text-blue-400 font-medium">{formatCurrency(tabelaTotal)}</span>;
-      case 'desconto_acrescimo':
-        const totalDesconto = (venda.portas || []).reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
-        const acrescimo = venda.valor_credito || 0;
-        if (totalDesconto === 0 && acrescimo === 0) return <span className="text-white/30">-</span>;
-        return (
-          <div className="flex flex-col items-end gap-0.5">
-            {totalDesconto > 0 && <span className="text-red-400">-{formatCurrency(totalDesconto)}</span>}
-            {acrescimo !== 0 && <span className={acrescimo > 0 ? 'text-green-400' : 'text-red-400'}>{acrescimo > 0 ? '+' : ''}{formatCurrency(acrescimo)}</span>}
-          </div>
-        );
+      case 'desc_cartao':
+      case 'desc_gelo':
+      case 'desc_responsavel': {
+        const tiers = calcDescontoTiers(venda);
+        const val = columnId === 'desc_cartao' ? tiers.cartao : columnId === 'desc_gelo' ? tiers.gelo : tiers.responsavel;
+        if (val === 0) return <span className="text-white/30">-</span>;
+        return <span className="text-red-400">-{formatCurrency(val)}</span>;
+      }
       case 'tempo_sem_faturar':
         if (isFaturada(venda)) return <span className="text-green-400/60 text-xs">Faturada</span>;
         const dias = differenceInDays(new Date(), new Date(venda.data_venda));
@@ -1151,7 +1199,21 @@ export default function FaturamentoMinimalista() {
                         onClick={() => handleSort(column.id)}
                       >
                         <div className={`flex items-center ${getColumnAlignment(column.id) === 'text-right' ? 'justify-end' : getColumnAlignment(column.id) === 'text-center' ? 'justify-center' : ''}`}>
-                          {column.label}
+                          {['desc_cartao', 'desc_gelo', 'desc_responsavel'].includes(column.id) ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="flex items-center gap-0.5">
+                                  {column.label}
+                                  <Info className="h-3 w-3 text-white/30" />
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[200px] text-xs">
+                                {column.id === 'desc_cartao' && `Desconto à vista (até ${configLimites.avista}%) — pagamento fora do cartão`}
+                                {column.id === 'desc_gelo' && `Desconto presencial (até ${configLimites.presencial}%) — venda presencial`}
+                                {column.id === 'desc_responsavel' && `Desconto c/ senha (até ${configLimites.adicionalResponsavel}%) — requer autorização`}
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : column.label}
                           {getSortIcon(column.id)}
                         </div>
                       </TableHead>
