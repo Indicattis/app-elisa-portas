@@ -1,20 +1,22 @@
 
 
-## Plano: Corrigir erro de constraint ao agendar ordem na expedição (mobile)
+## Plano: Corrigir data agendada um dia anterior na expedição mobile
 
 ### Problema
-Ao clicar no "+" e confirmar no `AdicionarOrdemCalendarioModal`, o código define `status: 'agendada'` para todos os tipos de fonte. Porém, a tabela `instalacoes` tem um CHECK constraint que só aceita `'pendente_producao'`, `'pronta_fabrica'` e `'finalizada'`. Isso causa o erro `instalacoes_status_check`.
+A data é salva como `"2026-04-15"` (sem sufixo de hora). O banco interpreta como meia-noite UTC, que no fuso BRT (UTC-3) vira o dia anterior. O padrão do projeto exige `T12:00:00` para evitar esse deslocamento.
 
 ### Solução
 
-**Arquivo: `src/hooks/useOrdensCarregamentoCalendario.ts`**
+**Arquivo: `src/components/expedicao/AdicionarOrdemCalendarioModal.tsx`**
 
-1. No bloco `fonte === 'instalacoes'` (linhas ~295-305), ao fazer UPDATE, **não** aplicar `data.status` se o valor for `'agendada'` — manter o status existente ou usar `'pronta_fabrica'`
-2. No bloco de orphan insert para `instalacoes` (linhas ~273-291), o status já está correto como `'pronta_fabrica'`, mas garantir que `data.status` não sobrescreva com `'agendada'`
+Na função `handleConfirm` (~linha 205), ao montar `data_carregamento`, anexar `T12:00:00`:
 
-**Arquivo: `src/components/expedicao/DiaCardExpedicao.tsx`**
+```typescript
+data_carregamento: dataSelecionadaCalendario + "T12:00:00",
+```
 
-1. Na função `handleConfirmModal` (~linha 108-116), ao montar o objeto `data`, condicionar o `status` com base na `fonte`: se `fonte === 'instalacoes'`, usar `'pronta_fabrica'` ao invés de `'agendada'`; se `fonte === 'correcoes'`, verificar constraint similar
+Isso garante que a data salva no banco não sofra deslocamento de timezone, seguindo o padrão já estabelecido no projeto.
 
-Isso garante que o status enviado respeite o constraint de cada tabela.
+### Escopo
+- 1 arquivo, 1 linha alterada
 
