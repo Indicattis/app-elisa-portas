@@ -758,7 +758,7 @@ export default function GestaoFabricaDirecao() {
               ) : (
                 <div className="space-y-1.5">
                   {vendasPendenteFaturamento.map(venda => (
-                    <VendaPendenteFaturamentoCard key={venda.id} venda={venda} />
+                    <VendaPendentePedidoCard key={venda.id} venda={venda} mode="faturamento" />
                   ))}
                 </div>
               )}
