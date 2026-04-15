@@ -19,6 +19,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { PedidoCard } from "./PedidoCard";
 import { PedidosTotalRow } from "./PedidosTotalRow";
+import { PedidosHeaderRow } from "./PedidosHeaderRow";
 import type { EtapaPedido, DirecaoPrioridade, PrioridadeUpdate } from "@/types/pedidoEtapa";
 
 interface PedidosDraggableListProps {
@@ -215,6 +216,7 @@ export function PedidosDraggableList({
   if (!enableDragAndDrop) {
     return (
       <>
+        {viewMode === 'list' && <PedidosHeaderRow hideOrdensStatus={hideOrdensStatus} />}
         <div className={
           viewMode === 'list' 
             ? "space-y-1" 
@@ -260,6 +262,7 @@ export function PedidosDraggableList({
         items={pedidos.map((p) => p.id)}
         strategy={verticalListSortingStrategy}
       >
+        {viewMode === 'list' && <PedidosHeaderRow hideOrdensStatus={hideOrdensStatus} />}
         <div className={
           viewMode === 'list' 
             ? "space-y-1" 
