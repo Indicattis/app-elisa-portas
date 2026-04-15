@@ -145,6 +145,7 @@ export function DescontoVendaModal({
       case 'acessorio': return 'Acessório';
       case 'adicional': return 'Adicional';
       case 'manutencao': return 'Manutenção';
+      case 'instalacao': return 'Instalação';
       default: return tipo;
     }
   };
