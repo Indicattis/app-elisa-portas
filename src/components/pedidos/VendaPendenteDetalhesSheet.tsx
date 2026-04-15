@@ -76,6 +76,27 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
         .eq("id", venda.id)
         .single();
       setVendaCompleta(data);
+
+      // Fetch table prices for porta/pintura items
+      if (data?.produtos_vendas) {
+        const dimensoesUnicas = new Map<string, { largura: number; altura: number }>();
+        for (const p of data.produtos_vendas) {
+          if ((p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'pintura_epoxi') && p.largura && p.altura) {
+            const key = `${p.largura}-${p.altura}`;
+            if (!dimensoesUnicas.has(key)) {
+              dimensoesUnicas.set(key, { largura: p.largura, altura: p.altura });
+            }
+          }
+        }
+        const precoMap = new Map<string, ItemTabelaPreco>();
+        await Promise.all(
+          Array.from(dimensoesUnicas.entries()).map(async ([key, dims]) => {
+            const result = await buscarPrecosPorMedidas(dims.largura, dims.altura);
+            if (result) precoMap.set(key, result);
+          })
+        );
+        setPrecosTabela(precoMap);
+      }
     } catch (err) {
       console.error(err);
     } finally {
