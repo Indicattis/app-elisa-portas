@@ -537,6 +537,7 @@ export default function FaturamentoVendaMinimalista() {
       'manutencao': 'Manutenção',
       'adicional': 'Adicional',
       'pintura_epoxi': 'Pintura Epóxi',
+      'instalacao': 'Instalação',
     };
     return tipos[tipo || ''] || tipo || '-';
   };
