@@ -281,7 +281,7 @@ export function ProdutoVendaForm({
       return;
     }
     
-    const produtoFinal = { ...formData };
+    const produtoFinal = { ...formData, valor_instalacao: 0 };
 
     // Se for pintura, incluir nome da cor na descrição
     if (produtoFinal.tipo_produto === 'pintura_epoxi' && produtoFinal.cor_id && cores) {
@@ -292,6 +292,29 @@ export function ProdutoVendaForm({
     }
 
     onAddProduto(produtoFinal);
+
+    // Se incluir instalação, criar produto separado de instalação
+    if (incluirInstalacao && (formData.tipo_produto === 'porta_enrolar' || formData.tipo_produto === 'porta_social') && formData.valor_instalacao > 0) {
+      const tipoPortaLabel = formData.tipo_produto === 'porta_social' ? 'Porta Social' : 'Porta de Enrolar';
+      const dimensoes = formData.largura && formData.altura ? ` ${Number(formData.largura).toFixed(2)}x${Number(formData.altura).toFixed(2)}m` : '';
+      const produtoInstalacao: ProdutoVenda = {
+        tipo_produto: 'instalacao',
+        tamanho: formData.tamanho,
+        largura: formData.largura,
+        altura: formData.altura,
+        valor_produto: formData.valor_instalacao,
+        valor_pintura: 0,
+        valor_instalacao: 0,
+        valor_frete: 0,
+        tipo_desconto: 'percentual',
+        desconto_percentual: 0,
+        desconto_valor: 0,
+        quantidade: formData.quantidade,
+        descricao: `Instalação - ${tipoPortaLabel}${dimensoes}`,
+      };
+      onAddProduto(produtoInstalacao);
+    }
+
     onOpenChange(false);
   };
 
