@@ -1,36 +1,24 @@
 
-## Plano: Reorganizar as duas primeiras etapas da Gestão de Fábrica
 
-### Fluxo atual
-1. "Pend. Faturamento" → vendas já faturadas, sem pedido criado → botão "+" cria pedido em `aprovacao_diretor`
-2. "Aprovação Diretor" → pedidos na etapa `aprovacao_diretor`
+## Plano: Adicionar "Finalizar Direto" na aba Pend. Faturamento
 
-### Novo fluxo desejado
-1. "Pend. Faturamento" → vendas que ainda NÃO foram faturadas (sem pedido, sem faturamento completo)
-2. "Aprovação Diretor" → vendas já faturadas sem pedido → diretor confirma e cria o pedido, que vai direto para `aberto` (Pedidos em Aberto)
+### O que será feito
+Adicionar um botão "Finalizar Direto" (ícone CheckCircle2, estilo emerald) no card de vendas em modo `faturamento`, que abre um Dialog detalhado (igual ao padrão do PedidoCard) informando as consequências antes de enviar a venda para "Arquivo Morto" (marcar `pedido_dispensado = true`).
 
 ### Alterações
 
-**1. `src/hooks/useVendasPendentePedido.ts`**
-- Renomear/criar um novo hook `useVendasPendenteFaturamento` que busca vendas NÃO faturadas (inverter o filtro `isVendaFaturada`): vendas sem `is_rascunho`, sem `pedido_dispensado`, sem `status_aprovacao === 'reprovado'`, e que `!isVendaFaturada(v)` e sem pedido vinculado
-- Manter `useVendasPendentePedido` existente como está (vendas faturadas sem pedido) — será usado na tab "Aprovação Diretor"
+**1. `src/components/pedidos/VendaPendentePedidoCard.tsx`**
+- Adicionar estado `showFinalizarDireto` e `isFinalizandoDireto`
+- Adicionar botão emerald (CheckCircle2) no grid do modo `faturamento`, ao lado do botão amarelo existente
+- Ajustar grid columns para acomodar o novo botão (adicionar mais uma coluna de 30px)
+- Adicionar Dialog com informações detalhadas:
+  - Nome do cliente
+  - Valor da venda
+  - Lista de consequências: "A venda será marcada como dispensada", "Não aparecerá mais nas abas de faturamento ou pedidos", "Será enviada para Arquivo Morto"
+  - Aviso de ação irreversível
+- A ação confirma marcando `pedido_dispensado = true` e invalidando queries relevantes
+- Importar `Dialog`, `CheckCircle2` e componentes necessários
 
-**2. `src/hooks/usePedidoCreation.ts`**
-- Alterar `etapaInicial` de `'aprovacao_diretor'` para `'aberto'` (para pedidos normais, não manutenção)
-- Alterar `statusInicial` de `'pendente'` para `'aberto'`
+### Escopo
+- 1 arquivo modificado
 
-**3. `src/pages/direcao/GestaoFabricaDirecao.tsx`**
-- Tab "Pend. Faturamento" (`pendente_pedido`): trocar para usar `useVendasPendenteFaturamento` — mostra vendas sem faturamento, sem botão de criar pedido (apenas visualização/link para faturar)
-- Tab "Aprovação Diretor" (`aprovacao_diretor`): além dos pedidos nesta etapa, exibir acima a lista de vendas faturadas sem pedido (dados do `useVendasPendentePedido` atual) com o botão "+" para criar pedido
-- Atualizar labels e contadores
-
-**4. Criar card simplificado para vendas pendentes de faturamento**
-- Novo componente `VendaPendenteFaturamentoCard` — sem botão de criar pedido, apenas informações da venda e link para a página de faturamento
-
-**5. `src/components/direcao/GestaoFabricaMobile.tsx`**
-- Aplicar as mesmas mudanças de lógica na versão mobile
-
-### Resumo do impacto
-- Vendas não faturadas aparecem na primeira aba como pendentes
-- Ao concluir faturamento, a venda aparece na aba "Aprovação Diretor"
-- Diretor cria o pedido, que vai direto para "Pedidos em Aberto"
