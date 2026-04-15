@@ -42,7 +42,7 @@ export const useProdutosVenda = (vendaId?: string) => {
         acessorio_id: produtoSemExtra.acessorio_id || null,
         adicional_id: produtoSemExtra.adicional_id || null,
         vendas_catalogo_id: produtoSemExtra.vendas_catalogo_id || null,
-        descricao: produtoSemExtra.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produtoSemExtra.descricao || null),
+        descricao: produtoSemExtra.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produtoSemExtra.tipo_produto === 'instalacao' ? (produtoSemExtra.descricao || 'Instalação') : (produtoSemExtra.descricao || null)),
       };
 
       const { data, error } = await supabase
