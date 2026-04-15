@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { ptBR } from "date-fns/locale";
 import {
   Package, Phone, MapPin, Calendar, DollarSign,
   ShoppingCart, ChevronDown, User, Hammer, Truck, Wrench, Clock, CreditCard, ExternalLink,
-  MessageSquare, Send
+  MessageSquare, Send, Percent
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { buscarPrecosPorMedidas } from "@/utils/tabelaPrecosHelper";
 import type { ItemTabelaPreco } from "@/hooks/useTabelaPrecos";
+import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
 
 interface VendaPendenteDetalhesSheetProps {
   venda: VendaPendentePedido | null;
