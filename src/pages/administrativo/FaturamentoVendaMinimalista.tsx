@@ -893,11 +893,8 @@ export default function FaturamentoVendaMinimalista() {
           </Card>
         )}
 
-        {/* Tabela de Produtos */}
-        <Card className="bg-white/5 border-white/10">
-          <CardHeader>
-            <CardTitle className="text-base text-white">Produtos da Venda</CardTitle>
-          </CardHeader>
+
+
           <CardContent>
             <ScrollArea className="w-full">
               <Table>
