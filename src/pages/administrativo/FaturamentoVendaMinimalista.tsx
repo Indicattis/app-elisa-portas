@@ -415,10 +415,11 @@ export default function FaturamentoVendaMinimalista() {
       acc + (p.lucro_item || 0), 0  // valor já é o total da linha
     );
     
-    // Calcular lucro da instalação (30% se houver valor)
-    const valorInstalacao = venda.valor_instalacao || 0;
-    const lucroInstalacao = valorInstalacao > 0 ? valorInstalacao * 0.30 : 0;
-    const custoInstalacao = valorInstalacao - lucroInstalacao;
+    // Instalação legada (não migrada como produto separado)
+    const temProdutoInstalacaoLocal = produtos.some(p => p.tipo_produto === 'instalacao');
+    const valorInstalacaoLocal = temProdutoInstalacaoLocal ? 0 : (venda.valor_instalacao || 0);
+    const lucroInstalacao = valorInstalacaoLocal > 0 ? valorInstalacaoLocal * 0.30 : 0;
+    const custoInstalacao = valorInstalacaoLocal - lucroInstalacao;
     
     const produtosIds = produtos.map(p => p.id);
     
