@@ -18,6 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { VendaPendentePedidoCard } from "./VendaPendentePedidoCard";
+import { VendasHeaderRow } from "./VendasHeaderRow";
 import type { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 
 interface VendasPendenteDraggableListProps {
@@ -107,6 +108,7 @@ export function VendasPendenteDraggableList({
         strategy={verticalListSortingStrategy}
       >
         <div className="space-y-1">
+          <VendasHeaderRow />
           {vendas.map((venda) => (
             <SortableVendaItem key={venda.id} venda={venda} />
           ))}
