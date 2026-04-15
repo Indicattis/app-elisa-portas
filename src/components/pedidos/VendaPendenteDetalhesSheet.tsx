@@ -16,6 +16,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
+import { buscarPrecosPorMedidas } from "@/utils/tabelaPrecosHelper";
+import type { ItemTabelaPreco } from "@/hooks/useTabelaPrecos";
 
 interface VendaPendenteDetalhesSheetProps {
   venda: VendaPendentePedido | null;
