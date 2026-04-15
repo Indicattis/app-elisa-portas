@@ -463,6 +463,30 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                     </AlertDialogContent>
                   </AlertDialog>
                 </div>
+
+                {/* Finalizar Direto */}
+                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        disabled={isFinalizandoDireto}
+                        className="flex h-[20px] w-full rounded-[3px] border-emerald-500/50 text-emerald-600 hover:bg-emerald-500/10"
+                        onClick={() => setShowFinalizarDireto(true)}
+                      >
+                        {isFinalizandoDireto ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Finalizar Direto (Arquivo Morto)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               </>
             ) : (
               <>
