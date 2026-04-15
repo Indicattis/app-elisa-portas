@@ -451,6 +451,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                           <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
                           <TableHead className="text-xs text-white/70 text-right">Valor excesso</TableHead>
                           <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
+                          <TableHead className="text-xs text-white/70">Observações</TableHead>
                           {contexto === 'direcao' && (
                             <TableHead className="text-xs text-white/70 text-center">Aprovação</TableHead>
                           )}
