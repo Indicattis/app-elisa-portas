@@ -501,7 +501,20 @@ export default function FaturamentoVendaMinimalista() {
     ? (venda.lucro_instalacao || 0) 
     : lucroInstalacaoCalculado;
   
-  const totalLucro = lucroProdutos + lucroInstalacao;
+  const totalDescontosCalc = produtos?.reduce((acc, p) => {
+    const qty = p.quantidade || 1;
+    if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+      const base = ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+      return acc + base * (p.desconto_percentual / 100);
+    }
+    if (p.desconto_valor && p.desconto_valor > 0) return acc + p.desconto_valor;
+    return acc;
+  }, 0) || 0;
+  const totalCreditosProdutos = produtos?.reduce((acc, p) => {
+    if (p.desconto_valor && p.desconto_valor < 0) return acc + Math.abs(p.desconto_valor);
+    return acc;
+  }, 0) || 0;
+  const totalLucro = lucroProdutos + lucroInstalacao - totalDescontosCalc + totalCreditosProdutos + (venda?.valor_credito || 0);
   const margem = venda && venda.valor_venda > 0 ? (totalLucro / venda.valor_venda) * 100 : 0;
   // Só conta como faturado se lucro_item > 0 OU se o faturamento já foi finalizado
   const produtosFaturados = produtos?.filter(p => 
