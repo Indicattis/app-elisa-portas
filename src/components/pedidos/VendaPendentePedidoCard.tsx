@@ -462,10 +462,10 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
               })()}
             </div>
 
-            {/* Valor da Venda */}
+            {/* Valor de Tabela */}
             <div className="text-center">
               <span className="text-[10px] text-muted-foreground">
-                {formatCurrency(venda.valor_venda || 0)}
+                {formatCurrency(venda.valor_tabela || 0)}
               </span>
             </div>
 

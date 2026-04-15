@@ -117,6 +117,11 @@ export const useVendasPendenteFaturamento = () => {
           const portas = produtos.filter((p: any) => p.tipo_produto === "porta_enrolar");
           const qtdPortas = portas.reduce((sum: number, p: any) => sum + (p.quantidade || 1), 0);
 
+          const valorTabela = produtos.reduce((sum: number, p: any) => {
+            const qty = p.quantidade || 1;
+            return sum + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+          }, 0);
+
           const descontoTotal = produtos.reduce((sum: number, p: any) => {
             const qty = p.quantidade || 1;
             if (p.tipo_desconto === 'valor') return sum + (p.desconto_valor || 0);
@@ -161,6 +166,7 @@ export const useVendasPendenteFaturamento = () => {
             valor_venda: v.valor_venda || 0,
             valor_credito: v.valor_credito || 0,
             valor_desconto_total: descontoTotal,
+            valor_tabela: valorTabela,
             quantidade_portas: qtdPortas,
             atendente_nome: v.atendente_id ? atendenteMap.get(v.atendente_id)?.nome || null : null,
             atendente_foto_url: v.atendente_id ? atendenteMap.get(v.atendente_id)?.foto || null : null,
