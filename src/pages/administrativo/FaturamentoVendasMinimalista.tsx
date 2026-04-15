@@ -401,7 +401,12 @@ export default function FaturamentoMinimalista() {
           case 'cliente': return venda.cliente_nome?.toLowerCase() || '';
           case 'vendedor': return venda.atendente_nome.toLowerCase();
           case 'cidade': return venda.cidade?.toLowerCase() || '';
-          case 'valor': return (venda.valor_venda || 0) + (venda.valor_credito || 0) + (venda.valor_instalacao || 0);
+          case 'valor': return (venda.valor_venda || 0) + (venda.valor_credito || 0);
+          case 'tabela':
+            return (venda.portas || []).reduce((acc: number, p: any) => {
+              const qty = p.quantidade || 1;
+              return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+            }, 0);
           case 'lucro': return calcularLucroVenda(venda);
           case 'expedicao': return venda.tipo_entrega || '';
           case 'tempo_sem_faturar':
