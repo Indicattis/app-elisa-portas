@@ -462,17 +462,17 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
               })()}
             </div>
 
-            {/* Valor de Tabela */}
-            <div className="text-center">
-              <span className="text-[10px] text-muted-foreground">
-                {formatCurrency(venda.valor_tabela || 0)}
-              </span>
-            </div>
-
             {/* Valor Total (com crédito) */}
             <div className="text-center">
               <span className="text-[10px] font-medium text-muted-foreground">
                 {formatCurrency(valorTotal)}
+              </span>
+            </div>
+
+            {/* Valor de Tabela */}
+            <div className="text-center">
+              <span className="text-[10px] text-muted-foreground">
+                {formatCurrency(venda.valor_tabela || 0)}
               </span>
             </div>
 
