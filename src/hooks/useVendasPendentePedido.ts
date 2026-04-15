@@ -9,6 +9,7 @@ export interface VendaPendentePedido {
   valor_venda: number;
   valor_credito: number;
   valor_desconto_total: number;
+  valor_tabela: number;
   quantidade_portas: number;
   atendente_nome: string | null;
   atendente_foto_url: string | null;
@@ -151,6 +152,12 @@ export const useVendasPendentePedido = () => {
             0
           );
 
+          // Calculate valor tabela (sum of base values before discounts)
+          const valorTabela = produtos.reduce((sum: number, p: any) => {
+            const qty = p.quantidade || 1;
+            return sum + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+          }, 0);
+
           // Calculate total discount from products
           const descontoTotal = produtos.reduce((sum: number, p: any) => {
             const qty = p.quantidade || 1;
@@ -203,6 +210,7 @@ export const useVendasPendentePedido = () => {
             valor_venda: v.valor_venda || 0,
             valor_credito: v.valor_credito || 0,
             valor_desconto_total: descontoTotal,
+            valor_tabela: valorTabela,
             quantidade_portas: qtdPortas,
             atendente_nome: v.atendente_id
               ? atendenteMap.get(v.atendente_id)?.nome || null
