@@ -216,6 +216,7 @@ export function PedidosDraggableList({
   if (!enableDragAndDrop) {
     return (
       <>
+        {viewMode === 'list' && <PedidosHeaderRow hideOrdensStatus={hideOrdensStatus} />}
         <div className={
           viewMode === 'list' 
             ? "space-y-1" 
@@ -261,6 +262,7 @@ export function PedidosDraggableList({
         items={pedidos.map((p) => p.id)}
         strategy={verticalListSortingStrategy}
       >
+        {viewMode === 'list' && <PedidosHeaderRow hideOrdensStatus={hideOrdensStatus} />}
         <div className={
           viewMode === 'list' 
             ? "space-y-1" 
