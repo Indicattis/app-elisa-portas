@@ -225,7 +225,8 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                 {(() => {
                   try {
                     if (!venda.data_venda) return '—';
-                    const d = new Date(venda.data_venda + 'T12:00:00');
+                    const dateStr = venda.data_venda.substring(0, 10);
+                    const d = new Date(dateStr + 'T12:00:00');
                     return isNaN(d.getTime()) ? '—' : format(d, 'dd/MM/yy', { locale: ptBR });
                   } catch { return '—'; }
                 })()}
