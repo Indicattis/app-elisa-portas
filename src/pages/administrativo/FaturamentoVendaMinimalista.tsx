@@ -611,7 +611,7 @@ export default function FaturamentoVendaMinimalista() {
       <AnimatedBreadcrumb items={breadcrumbItems} mounted={mounted} />
       <FloatingProfileMenu mounted={mounted} />
 
-      <div className="max-w-7xl mx-auto p-6 pt-20 space-y-6">
+      <div className="max-w-[1600px] mx-auto p-6 pt-20 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
