@@ -143,7 +143,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
     <TooltipProvider>
       <Card
         className={`hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden ${isDragging ? 'opacity-50 shadow-2xl' : ''}`}
-        onClick={() => mode === 'faturamento' ? navigate(`/administrativo/financeiro/faturamento/${venda.id}`) : setShowDetalhes(true)}
+        onClick={() => setShowDetalhes(true)}
       >
         <CardContent className="p-0 h-full">
           <div
@@ -428,8 +428,8 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
             {mode === 'faturamento' ? (
               <>
                 {/* Faturar link */}
-                <div className="flex items-center justify-center">
-                  <span className="text-[10px] font-medium text-yellow-400/80 group-hover:text-yellow-400 transition-colors whitespace-nowrap">
+                <div className="flex items-center justify-center" onClick={(e) => { e.stopPropagation(); navigate(`/administrativo/financeiro/faturamento/${venda.id}`); }}>
+                  <span className="text-[10px] font-medium text-yellow-400/80 hover:text-yellow-400 transition-colors whitespace-nowrap cursor-pointer">
                     Faturar →
                   </span>
                 </div>
