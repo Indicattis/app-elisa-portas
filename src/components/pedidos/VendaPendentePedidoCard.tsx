@@ -572,48 +572,6 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
               </>
             ) : (
               <>
-                {/* Criar Pedido */}
-                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                  <AlertDialog>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            size="icon"
-                            disabled={isCreating}
-                            className="flex h-[20px] w-full rounded-[3px]"
-                          >
-                            {isCreating ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <Plus className="h-3 w-3" />
-                            )}
-                          </Button>
-                        </AlertDialogTrigger>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs">Criar Pedido de Produção</p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Criar Pedido de Produção</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Deseja criar um pedido de produção para esta venda?
-                          <br />
-                          Cliente: <strong>{venda.cliente_nome}</strong>
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleCriarPedido}>
-                          Criar Pedido
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-
                 {/* Dispensar Pedido */}
                 <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                   <AlertDialog>
