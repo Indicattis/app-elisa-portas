@@ -23,7 +23,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
 import { useVendasPendentePedido } from "@/hooks/useVendasPendentePedido";
+import { useVendasPendenteFaturamento } from "@/hooks/useVendasPendenteFaturamento";
 import { VendaPendentePedidoCard } from "@/components/pedidos/VendaPendentePedidoCard";
+import { VendaPendenteFaturamentoCard } from "@/components/pedidos/VendaPendenteFaturamentoCard";
 import { VendasPendenteDraggableList } from "@/components/pedidos/VendasPendenteDraggableList";
 import { useNeoInstalacoesListagem, useNeoInstalacoesFinalizadas } from "@/hooks/useNeoInstalacoes";
 import { useNeoCorrecoesListagem, useNeoCorrecoesFinalizadas } from "@/hooks/useNeoCorrecoes";
@@ -101,6 +103,7 @@ export default function GestaoFabricaDirecao() {
 
   const contadores = usePedidosContadores();
   const { data: vendasPendentePedido = [], isLoading: isLoadingPendentes } = useVendasPendentePedido();
+  const { data: vendasPendenteFaturamento = [], isLoading: isLoadingFaturamento } = useVendasPendenteFaturamento();
   const { data: pedidosArquivados = [], isLoading: isLoadingArquivados } = usePedidosArquivados({
     search: debouncedArquivoSearch,
     dataInicio: arquivoDataInicio || null,
@@ -307,6 +310,8 @@ export default function GestaoFabricaDirecao() {
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
     queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+    queryClient.invalidateQueries({ queryKey: ['vendas-pendente-pedido'] });
+    queryClient.invalidateQueries({ queryKey: ['vendas-pendente-faturamento'] });
     queryClient.invalidateQueries({ queryKey: ['neo_instalacoes_listagem'] });
     queryClient.invalidateQueries({ queryKey: ['neo_correcoes_listagem'] });
     queryClient.invalidateQueries({ queryKey: ['neo_instalacoes_finalizadas'] });
@@ -469,7 +474,7 @@ export default function GestaoFabricaDirecao() {
                         <DollarSign className="h-5 w-5" />
                         <span className="font-medium">Pend. Faturamento</span>
                         <Badge variant="secondary" className="ml-auto bg-blue-500/20 text-blue-400">
-                          {vendasPendentePedido.length}
+                          {vendasPendenteFaturamento.length}
                         </Badge>
                       </div>
                     );
@@ -506,7 +511,7 @@ export default function GestaoFabricaDirecao() {
                   <DollarSign className="h-4 w-4 flex-shrink-0 text-blue-400" />
                   <span className="flex-1 text-blue-400">Pend. Faturamento</span>
                   <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-400">
-                    {vendasPendentePedido.length}
+                    {vendasPendenteFaturamento.length}
                   </Badge>
                 </div>
               </SelectItem>
@@ -563,7 +568,7 @@ export default function GestaoFabricaDirecao() {
                 })()}
                 <span className="text-xs">Pend. Faturamento</span>
                 <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
-                  {vendasPendentePedido.length}
+                  {vendasPendenteFaturamento.length}
                 </span>
               </TabsTrigger>
               {(['aprovacao_diretor'] as const).map(etapa => {
@@ -596,7 +601,7 @@ export default function GestaoFabricaDirecao() {
                     )}
                     <span className="text-xs">{config.label}</span>
                     <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
-                      {count}
+                      {count + vendasPendentePedido.length}
                     </span>
                   </TabsTrigger>
                 );
@@ -729,103 +734,33 @@ export default function GestaoFabricaDirecao() {
           </TooltipProvider>
         </TabsList>
 
-        {/* Aba Pendente Faturamento */}
+        {/* Aba Pendente Faturamento - vendas NÃO faturadas */}
         <TabsContent value="pendente_pedido" className="mt-4">
           <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
             <CardHeader className="pb-3 px-4 py-4">
               <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                 <CardTitle className="text-lg flex items-center gap-2 text-white">
-                  {(() => {
-                    const resp = getResponsavel('pendente_pedido' as any);
-                    return resp ? (
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={resp.foto_perfil_url || undefined} />
-                        <AvatarFallback className="text-[8px] bg-blue-500/20 text-blue-400">
-                          {resp.nome.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    ) : (
-                      <DollarSign className="h-5 w-5 text-blue-400" />
-                    );
-                  })()}
-                  <span>Vendas Faturadas Aguardando Pedido</span>
-                  <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
-                    {vendasPendenteFiltradas.length}
+                  <DollarSign className="h-5 w-5 text-yellow-400" />
+                  <span>Vendas Pendentes de Faturamento</span>
+                  <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400">
+                    {vendasPendenteFaturamento.length}
                   </Badge>
-
-                  {/* Responsável da Etapa */}
-                  <div className="flex items-center gap-2 ml-4">
-                    {(() => {
-                      const responsavel = getResponsavel('pendente_pedido' as any);
-                      return responsavel ? (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button 
-                                onClick={() => handleAbrirModalResponsavel('pendente_pedido' as any)}
-                                className="flex items-center gap-2 px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
-                              >
-                                <Avatar className="h-6 w-6 border border-blue-500/30">
-                                  <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                                  <AvatarFallback className="text-[10px] bg-blue-500/20">
-                                    {responsavel.nome.charAt(0).toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="text-xs text-white/80">{responsavel.nome.split(' ')[0]}</span>
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-xs">Clique para alterar o responsável</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      ) : (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleAbrirModalResponsavel('pendente_pedido' as any)}
-                                className="h-7 px-2 text-white/50 hover:text-white hover:bg-white/10"
-                              >
-                                <UserPlus className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-xs">Atribuir responsável</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      );
-                    })()}
-                  </div>
                 </CardTitle>
-
-                <PedidosFiltrosMinimalista 
-                  searchTerm={searchTerm} 
-                  onSearchChange={setSearchTerm} 
-                  tipoEntrega={tipoEntrega} 
-                  onTipoEntregaChange={setTipoEntrega} 
-                  corPintura={corPintura} 
-                  onCorPinturaChange={setCorPintura} 
-                  mostrarProntos={mostrarProntos} 
-                  onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)} 
-                />
               </div>
             </CardHeader>
             <CardContent>
-              {isLoadingPendentes ? (
+              {isLoadingFaturamento ? (
                 <div className="text-center py-8 text-white/50">Carregando...</div>
-              ) : vendasPendenteFiltradas.length === 0 ? (
+              ) : vendasPendenteFaturamento.length === 0 ? (
                 <div className="text-center py-8 text-white/50">
-                  {searchTerm ? 'Nenhuma venda encontrada' : 'Nenhuma venda faturada pendente de pedido'}
+                  Todas as vendas estão faturadas
                 </div>
               ) : (
-                <VendasPendenteDraggableList
-                  vendas={vendasPendenteFiltradas}
-                  onReorganizar={handleReorganizarVendas}
-                />
+                <div className="space-y-1.5">
+                  {vendasPendenteFaturamento.map(venda => (
+                    <VendaPendenteFaturamentoCard key={venda.id} venda={venda} />
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -936,11 +871,26 @@ export default function GestaoFabricaDirecao() {
                 </div>
               </CardHeader>
               <CardContent className="px-4 py-4">
+                {/* Vendas faturadas aguardando criação de pedido - apenas na aba aprovacao_diretor */}
+                {etapaAtiva === 'aprovacao_diretor' && vendasPendentePedido.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-medium text-white/70 mb-2 flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-blue-400" />
+                      <span>Vendas Faturadas Aguardando Pedido</span>
+                      <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">{vendasPendentePedido.length}</Badge>
+                    </h3>
+                    <VendasPendenteDraggableList
+                      vendas={vendasPendenteFiltradas}
+                      onReorganizar={handleReorganizarVendas}
+                    />
+                  </div>
+                )}
+
                 {isLoading ? (
                   <div className="text-center py-8 text-white/60">
                     Carregando...
                   </div>
-                ) : pedidosFiltrados.length === 0 && !(etapaAtiva === 'instalacoes' && neoInstalacoes.length > 0) && !(etapaAtiva === 'correcoes' && neoCorrecoes.length > 0) && !(etapaAtiva === 'finalizado' && (neoInstalacoesFinalizadas.length > 0 || neoCorrecoesFinalizadas.length > 0)) ? (
+                ) : pedidosFiltrados.length === 0 && !(etapaAtiva === 'aprovacao_diretor' && vendasPendentePedido.length > 0) && !(etapaAtiva === 'instalacoes' && neoInstalacoes.length > 0) && !(etapaAtiva === 'correcoes' && neoCorrecoes.length > 0) && !(etapaAtiva === 'finalizado' && (neoInstalacoesFinalizadas.length > 0 || neoCorrecoesFinalizadas.length > 0)) ? (
                   <div className="text-center py-8 text-white/60">
                     {searchTerm ? 'Nenhum pedido encontrado' : 'Nenhum pedido nesta etapa'}
                   </div>
