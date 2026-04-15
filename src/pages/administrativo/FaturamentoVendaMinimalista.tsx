@@ -735,21 +735,21 @@ export default function FaturamentoVendaMinimalista() {
           </CardHeader>
           <CardContent>
             <ScrollArea className="w-full">
-              <Table>
+              <Table className="text-xs">
                 <TableHeader>
                   <TableRow className="border-white/10 hover:bg-transparent">
-                    <TableHead className="text-white/70">Tipo</TableHead>
-                    <TableHead className="text-white/70">Produto</TableHead>
-                    <TableHead className="text-white/70">Tamanho</TableHead>
-                    <TableHead className="text-white/70 text-right">Tabela</TableHead>
-                    <TableHead className="text-white/70 text-right">Valor Unit.</TableHead>
-                    <TableHead className="text-white/70 text-center">Qtd</TableHead>
-                    <TableHead className="text-white/70 text-right">Valor Total</TableHead>
-                    <TableHead className="text-white/70 text-right">Desc./Créd.</TableHead>
-                    <TableHead className="text-white/70 text-right">Lucro</TableHead>
-                    <TableHead className="text-white/70 text-right">Margem %</TableHead>
-                    <TableHead className="text-white/70 text-right">Status</TableHead>
-                    <TableHead className="text-white/70 text-center">Ações</TableHead>
+                    <TableHead className="text-white/70 text-xs">Tipo</TableHead>
+                    <TableHead className="text-white/70 text-xs">Produto</TableHead>
+                    <TableHead className="text-white/70 text-xs">Tamanho</TableHead>
+                    <TableHead className="text-white/70 text-right text-xs">Tabela</TableHead>
+                    <TableHead className="text-white/70 text-right text-xs">Valor Unit.</TableHead>
+                    <TableHead className="text-white/70 text-center text-xs">Qtd</TableHead>
+                    <TableHead className="text-white/70 text-right text-xs">Valor Total</TableHead>
+                    <TableHead className="text-white/70 text-right text-xs">Desc./Créd.</TableHead>
+                    <TableHead className="text-white/70 text-right text-xs">Lucro</TableHead>
+                    <TableHead className="text-white/70 text-right text-xs">Margem %</TableHead>
+                    <TableHead className="text-white/70 text-right text-xs">Status</TableHead>
+                    <TableHead className="text-white/70 text-center text-xs">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -783,7 +783,7 @@ export default function FaturamentoVendaMinimalista() {
                     const lucroAjustado = temLucro ? (produto.lucro_item! - descontoValorAbs + creditoValorAbs) : null;
                     return (
                       <TableRow key={produto.id} className="border-white/10 hover:bg-white/5">
-                        <TableCell className="text-sm text-white/80">{getTipoProdutoLabel(produto.tipo_produto)}</TableCell>
+                        <TableCell className="text-white/80">{getTipoProdutoLabel(produto.tipo_produto)}</TableCell>
                         <TableCell className="font-medium text-white">{produto.descricao}</TableCell>
                         <TableCell className="text-white/60">{produto.tamanho || "-"}</TableCell>
                         <TableCell className="text-right text-blue-400">
@@ -820,7 +820,7 @@ export default function FaturamentoVendaMinimalista() {
                   })}
                   {valorInstalacao > 0 && (
                     <TableRow className="border-white/10 hover:bg-white/5">
-                      <TableCell className="text-sm text-cyan-400">Instalação</TableCell>
+                      <TableCell className="text-cyan-400">Instalação</TableCell>
                       <TableCell className="font-medium text-white">Serviço de Instalação</TableCell>
                       <TableCell className="text-white/60">-</TableCell>
                       <TableCell className="text-right text-white/60">-</TableCell>
@@ -841,15 +841,15 @@ export default function FaturamentoVendaMinimalista() {
                     </TableRow>
                   )}
                   <TableRow className="bg-white/5 border-white/10">
-                    <TableCell colSpan={7} className="font-semibold text-white">Frete</TableCell>
+                    <TableCell colSpan={6} className="font-semibold text-white">Frete</TableCell>
                     <TableCell className="text-right font-semibold text-white">{formatCurrency(venda.valor_frete)}</TableCell>
-                    <TableCell colSpan={4} className="text-white/50 text-sm">Apenas visualização</TableCell>
+                    <TableCell colSpan={5} className="text-white/50">Apenas visualização</TableCell>
                   </TableRow>
                   {(venda.valor_credito != null && venda.valor_credito !== 0) && (
                     <TableRow className="bg-white/5 border-white/10">
-                      <TableCell colSpan={7} className="font-semibold text-white">Crédito / Acréscimo</TableCell>
+                      <TableCell colSpan={6} className="font-semibold text-white">Crédito / Acréscimo</TableCell>
                       <TableCell className="text-right font-semibold text-white">{formatCurrency(venda.valor_credito)}</TableCell>
-                      <TableCell colSpan={4} className="text-white/50 text-sm">Apenas visualização</TableCell>
+                      <TableCell colSpan={5} className="text-white/50">Apenas visualização</TableCell>
                     </TableRow>
                   )}
                   {(() => {
