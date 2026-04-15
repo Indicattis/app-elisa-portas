@@ -581,12 +581,59 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                       })}
                     </tbody>
                     <tfoot>
-                      <tr className="bg-white/5 border-t border-white/10">
-                        <td className="px-3 py-2 text-white/60 font-medium" colSpan={3}>Total</td>
-                        <td className="text-right px-3 py-2 font-semibold text-white">
-                          {formatCurrency(produtos.reduce((acc: number, p: any) => acc + (p.valor_total || 0), 0))}
-                        </td>
-                      </tr>
+                      {(() => {
+                        const tipoEntregaNorm = normalizarTexto(vendaCompleta?.tipo_entrega || venda?.tipo_entrega);
+                        const isInst = tipoEntregaNorm === 'instalacao' || tipoEntregaNorm.includes('instalacao');
+
+                        let totalTabela = 0;
+                        let totalVendido = 0;
+
+                        for (const p of produtos) {
+                          const dims = extrairDimensoesProduto(p);
+                          let pt = p.valor_produto || 0;
+
+                          if (p.tipo_produto === 'porta_enrolar') {
+                            const saved = (p.valor_produto || 0) + (isInst ? (p.valor_instalacao || 0) : 0);
+                            pt = saved;
+                            if (dims) {
+                              const ref = precosTabela.get(criarChavePrecoTabela(dims.largura, dims.altura));
+                              if (ref) pt = ref.valor_porta + (isInst ? ref.valor_instalacao : 0);
+                            }
+                          } else if (p.tipo_produto === 'pintura_epoxi') {
+                            pt = p.valor_pintura || 0;
+                            if (dims) {
+                              const ref = precosTabela.get(criarChavePrecoTabela(dims.largura, dims.altura));
+                              if (ref && ref.valor_pintura > 0) pt = ref.valor_pintura;
+                            }
+                          }
+
+                          totalTabela += pt * (p.quantidade || 1);
+                          totalVendido += (p.valor_total || 0);
+                        }
+
+                        const totalDiferenca = totalVendido - totalTabela;
+
+                        return (
+                          <tr className="bg-white/5 border-t border-white/10">
+                            <td className="px-3 py-2 text-white/60 font-medium">Total</td>
+                            <td className="text-right px-2 py-2 font-semibold text-white/50 whitespace-nowrap">
+                              {formatCurrency(totalTabela)}
+                            </td>
+                            <td className="text-right px-2 py-2 font-semibold whitespace-nowrap">
+                              {totalDiferenca !== 0 ? (
+                                <span className={totalDiferenca > 0 ? "text-green-400" : "text-red-400"}>
+                                  {totalDiferenca > 0 ? '+' : ''}{formatCurrency(totalDiferenca)}
+                                </span>
+                              ) : (
+                                <span className="text-white/30">—</span>
+                              )}
+                            </td>
+                            <td className="text-right px-3 py-2 font-semibold text-white whitespace-nowrap">
+                              {formatCurrency(totalVendido)}
+                            </td>
+                          </tr>
+                        );
+                      })()}
                     </tfoot>
                   </table>
                 </div>
