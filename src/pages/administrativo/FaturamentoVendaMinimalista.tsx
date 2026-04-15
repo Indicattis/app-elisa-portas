@@ -894,9 +894,7 @@ export default function FaturamentoVendaMinimalista() {
         )}
 
 
-                    <TableHead className="text-white/70">Produto</TableHead>
-                     <TableHead className="text-white/70">Tamanho</TableHead>
-                    <TableHead className="text-white/70 text-right">Tabela</TableHead>
+
                     <TableHead className="text-white/70 text-right">Desconto</TableHead>
                     <TableHead className="text-white/70 text-right">Valor Unit.</TableHead>
                     <TableHead className="text-white/70 text-center">Qtd</TableHead>
