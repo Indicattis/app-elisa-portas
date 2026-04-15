@@ -95,8 +95,9 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'data', label: 'Data', defaultVisible: true },
   { id: 'cidade', label: 'Cidade', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
-  { id: 'desconto_acrescimo', label: 'Desc./Acrés.', defaultVisible: true },
-  { id: 'valor', label: 'Valor', defaultVisible: true },
+  { id: 'tabela', label: 'Tabela', defaultVisible: true },
+  { id: 'valor', label: 'Venda', defaultVisible: true },
+  { id: 'desconto_acrescimo', label: 'Desc./Créd.', defaultVisible: true },
   { id: 'lucro', label: 'Lucro', defaultVisible: true },
   { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
   { id: 'justificativa', label: 'Justificativa', defaultVisible: true },
@@ -246,12 +247,15 @@ export default function FaturamentoMinimalista() {
             descricao,
             valor_produto,
             valor_pintura,
+            valor_instalacao,
             quantidade,
             lucro_item,
             custo_produto,
             custo_pintura,
             faturamento,
             desconto_valor,
+            desconto_percentual,
+            tipo_desconto,
             tamanho,
             cor_id,
             acessorio_id,
@@ -397,7 +401,12 @@ export default function FaturamentoMinimalista() {
           case 'cliente': return venda.cliente_nome?.toLowerCase() || '';
           case 'vendedor': return venda.atendente_nome.toLowerCase();
           case 'cidade': return venda.cidade?.toLowerCase() || '';
-          case 'valor': return (venda.valor_venda || 0) + (venda.valor_credito || 0) + (venda.valor_instalacao || 0);
+          case 'valor': return (venda.valor_venda || 0) + (venda.valor_credito || 0);
+          case 'tabela':
+            return (venda.portas || []).reduce((acc: number, p: any) => {
+              const qty = p.quantidade || 1;
+              return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+            }, 0);
           case 'lucro': return calcularLucroVenda(venda);
           case 'expedicao': return venda.tipo_entrega || '';
           case 'tempo_sem_faturar':
@@ -647,13 +656,13 @@ export default function FaturamentoMinimalista() {
   };
 
   const getColumnResponsiveClass = (columnId: string) => {
-    const hiddenOnMobile = ['cidade', 'expedicao', 'desconto_acrescimo', 'tempo_sem_faturar', 'justificativa', 'lucro'];
+    const hiddenOnMobile = ['cidade', 'expedicao', 'desconto_acrescimo', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela'];
     if (hiddenOnMobile.includes(columnId)) return 'hidden md:table-cell';
     return '';
   };
 
   const getColumnAlignment = (columnId: string) => {
-    const rightAligned = ['valor', 'lucro', 'desconto_acrescimo'];
+    const rightAligned = ['valor', 'lucro', 'desconto_acrescimo', 'tabela'];
     const centerAligned = ['faturada', 'tempo_sem_faturar', 'expedicao'];
     if (rightAligned.includes(columnId)) return 'text-right';
     if (centerAligned.includes(columnId)) return 'text-center';
@@ -680,12 +689,22 @@ export default function FaturamentoMinimalista() {
       case 'expedicao':
         if (venda.tipo_entrega === 'instalacao') return <Hammer className="h-4 w-4 text-cyan-400 mx-auto" />;
         return <Truck className="h-4 w-4 text-orange-400 mx-auto" />;
+      case 'tabela':
+        const tabelaTotal = (venda.portas || []).reduce((acc: number, p: any) => {
+          const qty = p.quantidade || 1;
+          return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+        }, 0);
+        return <span className="text-blue-400 font-medium">{formatCurrency(tabelaTotal)}</span>;
       case 'desconto_acrescimo':
         const totalDesconto = (venda.portas || []).reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
         const acrescimo = venda.valor_credito || 0;
-        const saldo = acrescimo - totalDesconto;
-        if (saldo === 0) return <span className="text-white/30">-</span>;
-        return <span className={saldo > 0 ? 'text-green-400' : 'text-red-400'}>{saldo > 0 ? `+${formatCurrency(saldo)}` : formatCurrency(saldo)}</span>;
+        if (totalDesconto === 0 && acrescimo === 0) return <span className="text-white/30">-</span>;
+        return (
+          <div className="flex flex-col items-end gap-0.5">
+            {totalDesconto > 0 && <span className="text-red-400">-{formatCurrency(totalDesconto)}</span>}
+            {acrescimo !== 0 && <span className={acrescimo > 0 ? 'text-green-400' : 'text-red-400'}>{acrescimo > 0 ? '+' : ''}{formatCurrency(acrescimo)}</span>}
+          </div>
+        );
       case 'tempo_sem_faturar':
         if (isFaturada(venda)) return <span className="text-green-400/60 text-xs">Faturada</span>;
         const dias = differenceInDays(new Date(), new Date(venda.data_venda));
@@ -718,7 +737,7 @@ export default function FaturamentoMinimalista() {
           ? <span className="text-emerald-400 font-medium">{formatCurrency(calcularLucroVenda(venda))}</span>
           : <span className="text-white/30">-</span>;
       case 'valor':
-        return <span className="text-white font-medium">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</span>;
+        return <span className="text-white font-medium">{formatCurrency(venda.valor_venda || 0)}</span>;
       case 'faturada':
         return isFaturada(venda) 
           ? <Check className="h-4 w-4 text-green-400 mx-auto" />
