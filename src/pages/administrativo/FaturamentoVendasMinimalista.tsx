@@ -78,6 +78,8 @@ interface Venda {
   lucro_total: number;
   frete_aprovado?: boolean;
   metodo_pagamento?: string | null;
+  forma_pagamento?: string | null;
+  venda_presencial?: boolean;
   portas?: any[];
   produtos?: any[];
   justificativa_nao_faturada?: string | null;
@@ -98,7 +100,9 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
   { id: 'tabela', label: 'Tabela', defaultVisible: true },
   { id: 'valor', label: 'Venda', defaultVisible: true },
-  { id: 'desconto_acrescimo', label: 'Desc./Créd.', defaultVisible: true },
+  { id: 'desc_cartao', label: 'Cartão', defaultVisible: true },
+  { id: 'desc_gelo', label: 'Gelo', defaultVisible: true },
+  { id: 'desc_responsavel', label: 'Luan/Alana', defaultVisible: true },
   { id: 'lucro', label: 'Lucro', defaultVisible: true },
   { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
   { id: 'justificativa', label: 'Justificativa', defaultVisible: true },
@@ -127,6 +131,7 @@ export default function FaturamentoMinimalista() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { limites: configLimites } = useConfiguracoesVendas();
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
