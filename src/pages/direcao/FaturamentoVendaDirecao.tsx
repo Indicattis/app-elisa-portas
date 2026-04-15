@@ -209,14 +209,17 @@ export default function FaturamentoVendaDirecao() {
   const totalAcrescimos = venda.valor_credito || 0;
   const totalCustoProducao = venda.produtos_vendas.reduce((acc, p) => acc + (p.custo_producao || 0), 0);
   const lucroItens = venda.produtos_vendas.reduce((acc, p) => acc + (p.lucro_item || 0), 0);
+  // Legado: lucro_instalacao separado. Para vendas novas, instalação é produto com lucro_item
   const lucroInstalacao = venda.lucro_instalacao || 0;
   const lucroBruto = lucroItens + lucroInstalacao;
   const margemLucro = valorTotal > 0 ? (lucroBruto / valorTotal) * 100 : 0;
 
   const produtosFaturados = venda.produtos_vendas.filter(p => p.faturamento).length;
   const totalProdutos = venda.produtos_vendas.length;
-  const instalacaoContada = venda.valor_instalacao > 0 ? 1 : 0;
-  const instalacaoFaturadaContada = venda.instalacao_faturada ? 1 : 0;
+  // Legado: contar instalação separada apenas se não houver produto tipo 'instalacao'
+  const temProdutoInstalacao = venda.produtos_vendas.some(p => p.tipo_produto === 'instalacao');
+  const instalacaoContada = !temProdutoInstalacao && venda.valor_instalacao > 0 ? 1 : 0;
+  const instalacaoFaturadaContada = !temProdutoInstalacao && venda.instalacao_faturada ? 1 : 0;
   const totalItens = totalProdutos + instalacaoContada;
   const itensFaturados = produtosFaturados + instalacaoFaturadaContada;
 
@@ -228,10 +231,13 @@ export default function FaturamentoVendaDirecao() {
   const formatTipoProduto = (tipo: string) => {
     const tipos: Record<string, string> = {
       'porta_enrolar': 'Porta de Enrolar',
+      'porta_social': 'Porta Social',
       'pintura_epoxi': 'Pintura Epóxi',
       'servico': 'Serviço',
       'acessorio': 'Acessório',
-      'adicional': 'Adicional'
+      'adicional': 'Adicional',
+      'manutencao': 'Manutenção',
+      'instalacao': 'Instalação',
     };
     return tipos[tipo] || tipo;
   };
