@@ -306,6 +306,7 @@ import EquipesDirecao from "./pages/direcao/EquipesDirecao";
 import CronogramaMinimalista from "./pages/logistica/CronogramaMinimalista";
 import OrdensInstalacoesLogistica from "./pages/logistica/OrdensInstalacoesLogistica";
 import RankingEquipesInstalacao from "./pages/logistica/RankingEquipesInstalacao";
+import RankingAutorizadosInstalacao from "./pages/logistica/RankingAutorizadosInstalacao";
 
 // Hub de Estoque
 import EstoqueHub from "./pages/estoque/EstoqueHub";
@@ -591,6 +592,7 @@ const App = () => (
                 <Route path="/logistica/instalacoes/equipes" element={<ProtectedRoute routeKey="logistica_hub"><EquipesMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/cronograma" element={<ProtectedRoute routeKey="logistica_hub"><CronogramaMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/ranking" element={<ProtectedRoute routeKey="logistica_ranking"><RankingEquipesInstalacao /></ProtectedRoute>} />
+                <Route path="/logistica/instalacoes/ranking-autorizados" element={<ProtectedRoute routeKey="logistica_ranking"><RankingAutorizadosInstalacao /></ProtectedRoute>} />
                 <Route path="/logistica/expedicao/nova-neo" element={<ProtectedRoute routeKey="logistica_hub"><NovaNeoForm /></ProtectedRoute>} />
                 <Route path="/logistica/expedicao/editar-neo/:id" element={<ProtectedRoute routeKey="logistica_hub"><NovaNeoForm /></ProtectedRoute>} />
 
