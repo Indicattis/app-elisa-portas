@@ -752,7 +752,7 @@ export default function FaturamentoVendaMinimalista() {
                     );
                   })}
                   {valorInstalacao > 0 && (
-                    <TableRow className="bg-cyan-500/5 border-white/10">
+                    <TableRow className="border-white/10 hover:bg-white/5">
                       <TableCell className="text-sm text-cyan-400"><div className="flex items-center gap-2"><Wrench className="h-3 w-3" />Instalação</div></TableCell>
                       <TableCell className="font-medium text-white">Serviço de Instalação</TableCell>
                       <TableCell className="text-white/60">-</TableCell>
