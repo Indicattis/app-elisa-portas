@@ -83,6 +83,7 @@ function criarChavePrecoTabela(largura: number, altura: number) {
 export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaPendenteDetalhesSheetProps) {
   const navigate = useNavigate();
   const { userRole } = useAuth();
+  const { limites: configLimites } = useConfiguracoesVendas();
   const [vendaCompleta, setVendaCompleta] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [itensOpen, setItensOpen] = useState(true);
@@ -93,6 +94,61 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
   const [novoComentario, setNovoComentario] = useState("");
   const [enviandoComentario, setEnviandoComentario] = useState(false);
   const [precosTabela, setPrecosTabela] = useState<Map<string, ItemTabelaPreco>>(new Map());
+
+  // Calculate discount tiers (Cartão / Gelo / Luan-Alana)
+  const descontoTiers = useMemo(() => {
+    if (!vendaCompleta || !venda) return null;
+    const produtos = vendaCompleta.produtos_vendas || [];
+    const valorTabela = produtos.reduce((sum: number, p: any) => {
+      const qty = p.quantidade || 1;
+      return sum + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+    }, 0);
+    if (valorTabela === 0) return null;
+
+    const descontoTotal = produtos.reduce((sum: number, p: any) => {
+      const qty = p.quantidade || 1;
+      if (p.tipo_desconto === 'valor') return sum + (p.desconto_valor || 0);
+      if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+        const base = ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+        return sum + base * (p.desconto_percentual / 100);
+      }
+      return sum;
+    }, 0);
+    if (descontoTotal <= 0) return null;
+
+    const totalPct = (descontoTotal / valorTabela) * 100;
+    const formaPag = vendaCompleta.forma_pagamento || '';
+    const isCartao = formaPag === 'cartao_credito';
+    const isPresencial = vendaCompleta.venda_presencial === true;
+
+    const limAvista = configLimites?.avista ?? 3;
+    const limPresencial = configLimites?.presencial ?? 5;
+
+    let pctCartao = 0;
+    let pctGelo = 0;
+    let pctResp = 0;
+    let remaining = totalPct;
+
+    if (!isCartao) {
+      pctCartao = Math.min(remaining, limAvista);
+      remaining -= pctCartao;
+    }
+    if (isPresencial && remaining > 0) {
+      pctGelo = Math.min(remaining, limPresencial);
+      remaining -= pctGelo;
+    }
+    if (remaining > 0) {
+      pctResp = remaining;
+    }
+
+    return {
+      cartao: { pct: pctCartao, valor: valorTabela * (pctCartao / 100) },
+      gelo: { pct: pctGelo, valor: valorTabela * (pctGelo / 100) },
+      responsavel: { pct: pctResp, valor: valorTabela * (pctResp / 100) },
+      totalPct,
+      totalValor: descontoTotal,
+    };
+  }, [vendaCompleta, venda, configLimites]);
 
   useEffect(() => {
     if (open && venda?.id) {
