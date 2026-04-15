@@ -713,11 +713,14 @@ export default function FaturamentoVendaMinimalista() {
                     const temLucro = produto.lucro_item !== null && produto.lucro_item !== undefined;
                     const valorTotalLinha = produto.valor_total;
                     const valorUnitario = produto.quantidade > 0 ? produto.valor_total / produto.quantidade : 0;
-                    const desconto = produto.desconto_percentual 
-                      ? `${produto.desconto_percentual}%` 
+                    const hasDesconto = (produto.desconto_percentual && produto.desconto_percentual > 0) || (produto.desconto_valor && produto.desconto_valor > 0);
+                    const hasCredito = (produto.desconto_percentual && produto.desconto_percentual < 0) || (produto.desconto_valor && produto.desconto_valor < 0);
+                    const descontoLabel = produto.desconto_percentual 
+                      ? `${Math.abs(produto.desconto_percentual)}%` 
                       : produto.desconto_valor 
-                        ? formatCurrency(produto.desconto_valor)
+                        ? formatCurrency(Math.abs(produto.desconto_valor))
                         : '-';
+                    const isNegative = (produto.desconto_percentual && produto.desconto_percentual < 0) || (produto.desconto_valor && produto.desconto_valor < 0);
                     return (
                       <TableRow key={produto.id} className="border-white/10 hover:bg-white/5">
                         <TableCell className="text-sm text-white/80">{getTipoProdutoLabel(produto.tipo_produto)}</TableCell>
@@ -726,7 +729,11 @@ export default function FaturamentoVendaMinimalista() {
                         <TableCell className="text-right text-white/80">
                           {formatCurrency(((produto.valor_produto || 0) + (produto.valor_pintura || 0) + (produto.tipo_produto !== 'porta_enrolar' ? (produto.valor_instalacao || 0) : 0)) * (produto.quantidade || 1))}
                         </TableCell>
-                        <TableCell className="text-right text-orange-400">{desconto}</TableCell>
+                        <TableCell className={`text-right ${isNegative ? 'text-green-400' : (hasDesconto ? 'text-orange-400' : 'text-white/40')}`}>
+                          {hasDesconto || hasCredito ? (
+                            <span>{isNegative ? '+' : '-'}{descontoLabel}</span>
+                          ) : '-'}
+                        </TableCell>
                         <TableCell className="text-right text-white/80">{formatCurrency(valorUnitario)}</TableCell>
                         <TableCell className="text-center text-white/80">{produto.quantidade}</TableCell>
                         <TableCell className="text-right font-medium text-white">{formatCurrency(valorTotalLinha)}</TableCell>
