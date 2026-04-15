@@ -383,6 +383,7 @@ export default function FaturamentoVendaMinimalista() {
     });
   }, [produtos]);
 
+  const fetchVenda = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
