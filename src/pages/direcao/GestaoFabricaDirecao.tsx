@@ -25,7 +25,7 @@ import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas
 import { useVendasPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { useVendasPendenteFaturamento } from "@/hooks/useVendasPendenteFaturamento";
 import { VendaPendentePedidoCard } from "@/components/pedidos/VendaPendentePedidoCard";
-import { VendaPendenteFaturamentoCard } from "@/components/pedidos/VendaPendenteFaturamentoCard";
+
 import { VendasPendenteDraggableList } from "@/components/pedidos/VendasPendenteDraggableList";
 import { useNeoInstalacoesListagem, useNeoInstalacoesFinalizadas } from "@/hooks/useNeoInstalacoes";
 import { useNeoCorrecoesListagem, useNeoCorrecoesFinalizadas } from "@/hooks/useNeoCorrecoes";
@@ -758,7 +758,7 @@ export default function GestaoFabricaDirecao() {
               ) : (
                 <div className="space-y-1.5">
                   {vendasPendenteFaturamento.map(venda => (
-                    <VendaPendenteFaturamentoCard key={venda.id} venda={venda} />
+                    <VendaPendentePedidoCard key={venda.id} venda={venda} mode="faturamento" />
                   ))}
                 </div>
               )}

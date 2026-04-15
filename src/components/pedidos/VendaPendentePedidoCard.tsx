@@ -22,6 +22,7 @@ interface VendaPendentePedidoCardProps {
   venda: VendaPendentePedido;
   dragHandleProps?: any;
   isDragging?: boolean;
+  mode?: 'pedido' | 'faturamento';
 }
 
 const FORMAS_PAGAMENTO_LABELS: Record<string, string> = {
@@ -38,7 +39,7 @@ const isAcoGalvanizado = (corNome: string) => {
   return normalized.includes('aço') || normalized.includes('aco') || normalized.includes('galvanizado');
 };
 
-export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: VendaPendentePedidoCardProps) {
+export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mode = 'pedido' }: VendaPendentePedidoCardProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { createPedidoFromVenda } = usePedidoCreation();
@@ -118,21 +119,26 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
     <TooltipProvider>
       <Card
         className={`hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden ${isDragging ? 'opacity-50 shadow-2xl' : ''}`}
-        onClick={() => setShowDetalhes(true)}
+        onClick={() => mode === 'faturamento' ? navigate(`/administrativo/financeiro/faturamento/${venda.id}`) : setShowDetalhes(true)}
       >
         <CardContent className="p-0 h-full">
           <div
             className="grid items-center gap-1.5 h-full px-2 w-full"
-            style={{ gridTemplateColumns: '20px 24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 30px 30px 20px' }}
+            style={{ gridTemplateColumns: mode === 'faturamento'
+              ? '24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 70px'
+              : '20px 24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 30px 30px 20px'
+            }}
           >
-            {/* Drag handle */}
-            <div
-              {...dragHandleProps}
-              className="flex items-center justify-center cursor-grab active:cursor-grabbing"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-            </div>
+            {/* Drag handle - only in pedido mode */}
+            {mode === 'pedido' && (
+              <div
+                {...dragHandleProps}
+                className="flex items-center justify-center cursor-grab active:cursor-grabbing"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+            )}
 
             {/* Avatar atendente */}
             <Tooltip>
@@ -382,90 +388,101 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging }: 
               )}
             </div>
 
-            {/* Criar Pedido */}
-            <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-              <AlertDialog>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        size="icon"
-                        disabled={isCreating}
-                        className="flex h-[20px] w-full rounded-[3px]"
-                      >
-                        {isCreating ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Plus className="h-3 w-3" />
-                        )}
-                      </Button>
-                    </AlertDialogTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Criar Pedido de Produção</p>
-                  </TooltipContent>
-                </Tooltip>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Criar Pedido de Produção</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Deseja criar um pedido de produção para esta venda?
-                      <br />
-                      Cliente: <strong>{venda.cliente_nome}</strong>
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleCriarPedido}>
-                      Criar Pedido
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+            {mode === 'faturamento' ? (
+              /* Faturar link */
+              <div className="flex items-center justify-center col-span-1">
+                <span className="text-[10px] font-medium text-yellow-400/80 group-hover:text-yellow-400 transition-colors whitespace-nowrap">
+                  Faturar →
+                </span>
+              </div>
+            ) : (
+              <>
+                {/* Criar Pedido */}
+                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                  <AlertDialog>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="icon"
+                            disabled={isCreating}
+                            className="flex h-[20px] w-full rounded-[3px]"
+                          >
+                            {isCreating ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Plus className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </AlertDialogTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">Criar Pedido de Produção</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Criar Pedido de Produção</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Deseja criar um pedido de produção para esta venda?
+                          <br />
+                          Cliente: <strong>{venda.cliente_nome}</strong>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleCriarPedido}>
+                          Criar Pedido
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
 
-            {/* Dispensar Pedido */}
-            <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-              <AlertDialog>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        disabled={isDispensando}
-                        className="flex h-[20px] w-full rounded-[3px] border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
-                      >
-                        {isDispensando ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <AlertTriangle className="h-3 w-3" />
-                        )}
-                      </Button>
-                    </AlertDialogTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Concluir sem pedido</p>
-                  </TooltipContent>
-                </Tooltip>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Dispensar Pedido de Produção</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Esta venda será marcada como concluída e não aparecerá mais nesta aba.
-                      <br />
-                      Cliente: <strong>{venda.cliente_nome}</strong>
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDispensarPedido}>
-                      Confirmar
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+                {/* Dispensar Pedido */}
+                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                  <AlertDialog>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            disabled={isDispensando}
+                            className="flex h-[20px] w-full rounded-[3px] border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
+                          >
+                            {isDispensando ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <AlertTriangle className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </AlertDialogTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">Concluir sem pedido</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Dispensar Pedido de Produção</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta venda será marcada como concluída e não aparecerá mais nesta aba.
+                          <br />
+                          Cliente: <strong>{venda.cliente_nome}</strong>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDispensarPedido}>
+                          Confirmar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </>
+            )}
 
           </div>
         </CardContent>
