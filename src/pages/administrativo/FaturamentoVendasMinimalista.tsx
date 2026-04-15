@@ -737,7 +737,7 @@ export default function FaturamentoMinimalista() {
           ? <span className="text-emerald-400 font-medium">{formatCurrency(calcularLucroVenda(venda))}</span>
           : <span className="text-white/30">-</span>;
       case 'valor':
-        return <span className="text-white font-medium">{formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}</span>;
+        return <span className="text-white font-medium">{formatCurrency(venda.valor_venda || 0)}</span>;
       case 'faturada':
         return isFaturada(venda) 
           ? <Check className="h-4 w-4 text-green-400 mx-auto" />
