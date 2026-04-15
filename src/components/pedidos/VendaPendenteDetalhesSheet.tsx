@@ -320,6 +320,201 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
             </div>
           </div>
 
+          {/* Itens da Venda */}
+          <Collapsible open={itensOpen} onOpenChange={setItensOpen}>
+            <CollapsibleTrigger asChild>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="h-4 w-4 text-purple-400" />
+                  <span className="font-medium text-white text-sm">Itens da Venda</span>
+                  <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
+                    {loading ? '...' : produtos.length}
+                  </Badge>
+                </div>
+                <ChevronDown className={cn("h-4 w-4 text-white/60 transition-transform duration-200", itensOpen && "rotate-180")} />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 pl-0">
+              {loading ? (
+                <div className="text-sm text-white/50 p-2">Carregando...</div>
+              ) : produtos.length > 0 ? (
+                <div className="rounded-lg border border-white/10 overflow-hidden">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-white/5 border-b border-white/10">
+                        <th className="text-left px-3 py-2 text-white/50 font-medium">Produto</th>
+                        <th className="text-right px-2 py-2 text-white/50 font-medium">Tabela</th>
+                        <th className="text-right px-2 py-2 text-white/50 font-medium">Desc/Acrés</th>
+                        <th className="text-right px-3 py-2 text-white/50 font-medium">Vendido</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {produtos.map((produto: any, idx: number) => {
+                        const tipo = produto.tipo_produto;
+                        const qtd = produto.quantidade || 1;
+                        const cor = produto.catalogo_cores;
+                        const catalogoNome = produto.vendas_catalogo?.nome_produto;
+                        const nomeMap: Record<string, string> = {
+                          porta_enrolar: 'Porta de Enrolar',
+                          pintura_epoxi: 'Pintura Epóxi',
+                          motor: 'Motor',
+                          acessorio: 'Acessório',
+                          adicional: 'Adicional',
+                          manutencao: 'Manutenção',
+                        };
+                        const nome = catalogoNome 
+                          ? catalogoNome
+                          : (tipo === 'acessorio' || tipo === 'adicional') && produto.descricao
+                            ? produto.descricao
+                            : (nomeMap[tipo] || tipo);
+
+                        let tamanhoStr = '';
+                        const dimensoes = extrairDimensoesProduto(produto);
+                        if (tipo === 'porta_enrolar') {
+                          if (dimensoes) {
+                            tamanhoStr = `${dimensoes.largura.toFixed(2)} x ${dimensoes.altura.toFixed(2)}m`;
+                          } else if (produto.tamanho) {
+                            tamanhoStr = produto.tamanho;
+                          }
+                        }
+
+                        const tipoEntregaNormalizado = normalizarTexto(vendaCompleta?.tipo_entrega || venda?.tipo_entrega);
+                        const isInstalacao = tipoEntregaNormalizado === 'instalacao' || tipoEntregaNormalizado.includes('instalacao');
+                        let precoTabela = produto.valor_produto || 0;
+
+                        if (tipo === 'porta_enrolar') {
+                          const precoBaseSalvo = (produto.valor_produto || 0) + (isInstalacao ? (produto.valor_instalacao || 0) : 0);
+                          precoTabela = precoBaseSalvo;
+                          if (dimensoes) {
+                            const ref = precosTabela.get(criarChavePrecoTabela(dimensoes.largura, dimensoes.altura));
+                            if (ref) {
+                              precoTabela = ref.valor_porta + (isInstalacao ? ref.valor_instalacao : 0);
+                            }
+                          }
+                        } else if (tipo === 'pintura_epoxi') {
+                          precoTabela = produto.valor_pintura || 0;
+                          if (dimensoes) {
+                            const ref = precosTabela.get(criarChavePrecoTabela(dimensoes.largura, dimensoes.altura));
+                            if (ref && ref.valor_pintura > 0) {
+                              precoTabela = ref.valor_pintura;
+                            }
+                          }
+                        }
+                        const valorVendido = produto.valor_total || 0;
+                        const descPerc = produto.desconto_percentual || 0;
+                        const descValor = produto.desconto_valor || 0;
+                        const diferenca = valorVendido - precoTabela;
+                        const temDesconto = descPerc > 0 || descValor > 0;
+                        
+                        return (
+                          <tr key={idx} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                            <td className="px-3 py-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Package className="h-3.5 w-3.5 text-purple-400 flex-shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="font-medium text-white text-xs truncate">
+                                    {qtd > 1 && <span className="text-white/60">{qtd}x </span>}
+                                    {nome}
+                                  </p>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    {tamanhoStr && (
+                                      <span className="text-[10px] text-white/40">{tamanhoStr}</span>
+                                    )}
+                                    {cor && (
+                                      <div className="flex items-center gap-1">
+                                        <div className="w-2 h-2 rounded-full border border-white/30" style={{ backgroundColor: cor.codigo_hex }} />
+                                        <span className="text-[10px] text-white/40">{cor.nome}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="text-right px-2 py-2 text-white/50 whitespace-nowrap">
+                              {formatCurrency(precoTabela)}
+                            </td>
+                            <td className="text-right px-2 py-2 whitespace-nowrap">
+                              {temDesconto ? (
+                                <span className="text-red-400">
+                                  {descPerc > 0 ? `-${descPerc}%` : `-${formatCurrency(descValor)}`}
+                                </span>
+                              ) : diferenca !== 0 ? (
+                                <span className={diferenca > 0 ? "text-green-400" : "text-red-400"}>
+                                  {diferenca > 0 ? '+' : ''}{formatCurrency(diferenca)}
+                                </span>
+                              ) : (
+                                <span className="text-white/30">—</span>
+                              )}
+                            </td>
+                            <td className="text-right px-3 py-2 font-medium text-white whitespace-nowrap">
+                              {formatCurrency(valorVendido)}
+                              {produto.faturamento && (
+                                <Badge className="ml-1 bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[8px] px-1 py-0">
+                                  Fat
+                                </Badge>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      {(() => {
+                        const tipoEntregaNorm = normalizarTexto(vendaCompleta?.tipo_entrega || venda?.tipo_entrega);
+                        const isInst = tipoEntregaNorm === 'instalacao' || tipoEntregaNorm.includes('instalacao');
+                        let totalTabela = 0;
+                        let totalVendido = 0;
+                        for (const p of produtos) {
+                          const dims = extrairDimensoesProduto(p);
+                          let pt = p.valor_produto || 0;
+                          if (p.tipo_produto === 'porta_enrolar') {
+                            const saved = (p.valor_produto || 0) + (isInst ? (p.valor_instalacao || 0) : 0);
+                            pt = saved;
+                            if (dims) {
+                              const ref = precosTabela.get(criarChavePrecoTabela(dims.largura, dims.altura));
+                              if (ref) pt = ref.valor_porta + (isInst ? ref.valor_instalacao : 0);
+                            }
+                          } else if (p.tipo_produto === 'pintura_epoxi') {
+                            pt = p.valor_pintura || 0;
+                            if (dims) {
+                              const ref = precosTabela.get(criarChavePrecoTabela(dims.largura, dims.altura));
+                              if (ref && ref.valor_pintura > 0) pt = ref.valor_pintura;
+                            }
+                          }
+                          totalTabela += pt * (p.quantidade || 1);
+                          totalVendido += (p.valor_total || 0);
+                        }
+                        const totalDiferenca = totalVendido - totalTabela;
+                        return (
+                          <tr className="bg-white/5 border-t border-white/10">
+                            <td className="px-3 py-2 text-white/60 font-medium">Total</td>
+                            <td className="text-right px-2 py-2 font-semibold text-white/50 whitespace-nowrap">
+                              {formatCurrency(totalTabela)}
+                            </td>
+                            <td className="text-right px-2 py-2 font-semibold whitespace-nowrap">
+                              {totalDiferenca !== 0 ? (
+                                <span className={totalDiferenca > 0 ? "text-green-400" : "text-red-400"}>
+                                  {totalDiferenca > 0 ? '+' : ''}{formatCurrency(totalDiferenca)}
+                                </span>
+                              ) : (
+                                <span className="text-white/30">—</span>
+                              )}
+                            </td>
+                            <td className="text-right px-3 py-2 font-semibold text-white whitespace-nowrap">
+                              {formatCurrency(totalVendido)}
+                            </td>
+                          </tr>
+                        );
+                      })()}
+                    </tfoot>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-sm text-white/50 p-2">Nenhum item encontrado</div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
+
           {/* Info Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="bg-white/5 rounded-xl border border-white/10 p-3 text-center">
@@ -436,212 +631,6 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
               </div>
             </div>
           )}
-
-          {/* Itens da Venda */}
-          <Collapsible open={itensOpen} onOpenChange={setItensOpen}>
-            <CollapsibleTrigger asChild>
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
-                <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-4 w-4 text-purple-400" />
-                  <span className="font-medium text-white text-sm">Itens da Venda</span>
-                  <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
-                    {loading ? '...' : produtos.length}
-                  </Badge>
-                </div>
-                <ChevronDown className={cn("h-4 w-4 text-white/60 transition-transform duration-200", itensOpen && "rotate-180")} />
-              </div>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 pl-0">
-              {loading ? (
-                <div className="text-sm text-white/50 p-2">Carregando...</div>
-              ) : produtos.length > 0 ? (
-                <div className="rounded-lg border border-white/10 overflow-hidden">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="bg-white/5 border-b border-white/10">
-                        <th className="text-left px-3 py-2 text-white/50 font-medium">Produto</th>
-                        <th className="text-right px-2 py-2 text-white/50 font-medium">Tabela</th>
-                        <th className="text-right px-2 py-2 text-white/50 font-medium">Desc/Acrés</th>
-                        <th className="text-right px-3 py-2 text-white/50 font-medium">Vendido</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {produtos.map((produto: any, idx: number) => {
-                        const tipo = produto.tipo_produto;
-                        const qtd = produto.quantidade || 1;
-                        const cor = produto.catalogo_cores;
-                        const catalogoNome = produto.vendas_catalogo?.nome_produto;
-                        const nomeMap: Record<string, string> = {
-                          porta_enrolar: 'Porta de Enrolar',
-                          pintura_epoxi: 'Pintura Epóxi',
-                          motor: 'Motor',
-                          acessorio: 'Acessório',
-                          adicional: 'Adicional',
-                          manutencao: 'Manutenção',
-                        };
-                        const nome = catalogoNome 
-                          ? catalogoNome
-                          : (tipo === 'acessorio' || tipo === 'adicional') && produto.descricao
-                            ? produto.descricao
-                            : (nomeMap[tipo] || tipo);
-
-                        let tamanhoStr = '';
-                        const dimensoes = extrairDimensoesProduto(produto);
-                        if (tipo === 'porta_enrolar') {
-                          if (dimensoes) {
-                            tamanhoStr = `${dimensoes.largura.toFixed(2)} x ${dimensoes.altura.toFixed(2)}m`;
-                          } else if (produto.tamanho) {
-                            tamanhoStr = produto.tamanho;
-                          }
-                        }
-
-                        // Calculate table price based on item type
-                        const tipoEntregaNormalizado = normalizarTexto(vendaCompleta?.tipo_entrega || venda?.tipo_entrega);
-                        const isInstalacao = tipoEntregaNormalizado === 'instalacao' || tipoEntregaNormalizado.includes('instalacao');
-                        let precoTabela = produto.valor_produto || 0;
-
-                        if (tipo === 'porta_enrolar') {
-                          const precoBaseSalvo = (produto.valor_produto || 0) + (isInstalacao ? (produto.valor_instalacao || 0) : 0);
-                          precoTabela = precoBaseSalvo;
-
-                          if (dimensoes) {
-                            const ref = precosTabela.get(criarChavePrecoTabela(dimensoes.largura, dimensoes.altura));
-                            if (ref) {
-                              precoTabela = ref.valor_porta + (isInstalacao ? ref.valor_instalacao : 0);
-                            }
-                          }
-                        } else if (tipo === 'pintura_epoxi') {
-                          precoTabela = produto.valor_pintura || 0;
-
-                          if (dimensoes) {
-                            const ref = precosTabela.get(criarChavePrecoTabela(dimensoes.largura, dimensoes.altura));
-                            if (ref && ref.valor_pintura > 0) {
-                              precoTabela = ref.valor_pintura;
-                            }
-                          }
-                        }
-                        const valorVendido = produto.valor_total || 0;
-                        const descPerc = produto.desconto_percentual || 0;
-                        const descValor = produto.desconto_valor || 0;
-                        
-                        // Determine discount/markup display
-                        const diferenca = valorVendido - precoTabela;
-                        const temDesconto = descPerc > 0 || descValor > 0;
-                        
-                        return (
-                          <tr key={idx} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
-                            <td className="px-3 py-2">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <Package className="h-3.5 w-3.5 text-purple-400 flex-shrink-0" />
-                                <div className="min-w-0">
-                                  <p className="font-medium text-white text-xs truncate">
-                                    {qtd > 1 && <span className="text-white/60">{qtd}x </span>}
-                                    {nome}
-                                  </p>
-                                  <div className="flex items-center gap-1.5 mt-0.5">
-                                    {tamanhoStr && (
-                                      <span className="text-[10px] text-white/40">{tamanhoStr}</span>
-                                    )}
-                                    {cor && (
-                                      <div className="flex items-center gap-1">
-                                        <div className="w-2 h-2 rounded-full border border-white/30" style={{ backgroundColor: cor.codigo_hex }} />
-                                        <span className="text-[10px] text-white/40">{cor.nome}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="text-right px-2 py-2 text-white/50 whitespace-nowrap">
-                              {formatCurrency(precoTabela)}
-                            </td>
-                            <td className="text-right px-2 py-2 whitespace-nowrap">
-                              {temDesconto ? (
-                                <span className="text-red-400">
-                                  {descPerc > 0 ? `-${descPerc}%` : `-${formatCurrency(descValor)}`}
-                                </span>
-                              ) : diferenca !== 0 ? (
-                                <span className={diferenca > 0 ? "text-green-400" : "text-red-400"}>
-                                  {diferenca > 0 ? '+' : ''}{formatCurrency(diferenca)}
-                                </span>
-                              ) : (
-                                <span className="text-white/30">—</span>
-                              )}
-                            </td>
-                            <td className="text-right px-3 py-2 font-medium text-white whitespace-nowrap">
-                              {formatCurrency(valorVendido)}
-                              {produto.faturamento && (
-                                <Badge className="ml-1 bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[8px] px-1 py-0">
-                                  Fat
-                                </Badge>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                    <tfoot>
-                      {(() => {
-                        const tipoEntregaNorm = normalizarTexto(vendaCompleta?.tipo_entrega || venda?.tipo_entrega);
-                        const isInst = tipoEntregaNorm === 'instalacao' || tipoEntregaNorm.includes('instalacao');
-
-                        let totalTabela = 0;
-                        let totalVendido = 0;
-
-                        for (const p of produtos) {
-                          const dims = extrairDimensoesProduto(p);
-                          let pt = p.valor_produto || 0;
-
-                          if (p.tipo_produto === 'porta_enrolar') {
-                            const saved = (p.valor_produto || 0) + (isInst ? (p.valor_instalacao || 0) : 0);
-                            pt = saved;
-                            if (dims) {
-                              const ref = precosTabela.get(criarChavePrecoTabela(dims.largura, dims.altura));
-                              if (ref) pt = ref.valor_porta + (isInst ? ref.valor_instalacao : 0);
-                            }
-                          } else if (p.tipo_produto === 'pintura_epoxi') {
-                            pt = p.valor_pintura || 0;
-                            if (dims) {
-                              const ref = precosTabela.get(criarChavePrecoTabela(dims.largura, dims.altura));
-                              if (ref && ref.valor_pintura > 0) pt = ref.valor_pintura;
-                            }
-                          }
-
-                          totalTabela += pt * (p.quantidade || 1);
-                          totalVendido += (p.valor_total || 0);
-                        }
-
-                        const totalDiferenca = totalVendido - totalTabela;
-
-                        return (
-                          <tr className="bg-white/5 border-t border-white/10">
-                            <td className="px-3 py-2 text-white/60 font-medium">Total</td>
-                            <td className="text-right px-2 py-2 font-semibold text-white/50 whitespace-nowrap">
-                              {formatCurrency(totalTabela)}
-                            </td>
-                            <td className="text-right px-2 py-2 font-semibold whitespace-nowrap">
-                              {totalDiferenca !== 0 ? (
-                                <span className={totalDiferenca > 0 ? "text-green-400" : "text-red-400"}>
-                                  {totalDiferenca > 0 ? '+' : ''}{formatCurrency(totalDiferenca)}
-                                </span>
-                              ) : (
-                                <span className="text-white/30">—</span>
-                              )}
-                            </td>
-                            <td className="text-right px-3 py-2 font-semibold text-white whitespace-nowrap">
-                              {formatCurrency(totalVendido)}
-                            </td>
-                          </tr>
-                        );
-                      })()}
-                    </tfoot>
-                  </table>
-                </div>
-              ) : (
-                <div className="text-sm text-white/50 p-2">Nenhum item encontrado</div>
-              )}
-            </CollapsibleContent>
-          </Collapsible>
 
           {/* Contas a Receber */}
           <Collapsible open={pagamentoOpen} onOpenChange={setPagamentoOpen}>
