@@ -907,11 +907,6 @@ export default function GestaoFabricaDirecao() {
                 {/* Vendas faturadas aguardando criação de pedido - apenas na aba aprovacao_diretor */}
                 {etapaAtiva === 'aprovacao_diretor' && vendasPendentePedido.length > 0 && (
                   <div className="mb-6">
-                    <h3 className="text-sm font-medium text-white/70 mb-2 flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-blue-400" />
-                      <span>Vendas Faturadas Aguardando Pedido</span>
-                      <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">{vendasPendentePedido.length}</Badge>
-                    </h3>
                     <VendasPendenteDraggableList
                       vendas={vendasPendenteFiltradas}
                       onReorganizar={handleReorganizarVendas}
