@@ -242,6 +242,8 @@ export default function FaturamentoMinimalista() {
           lucro_total,
           custo_total,
           frete_aprovado,
+          forma_pagamento,
+          venda_presencial,
           justificativa_nao_faturada,
           metodo_pagamento,
           data_prevista_entrega,
@@ -419,9 +421,13 @@ export default function FaturamentoMinimalista() {
             if (isFaturada(venda)) return -1;
             return differenceInDays(new Date(), new Date(venda.data_venda));
           case 'faturada': return isFaturada(venda) ? 1 : 0;
-          case 'desconto_acrescimo':
-            const desc = (venda.portas || []).reduce((sum: number, p: any) => sum + (p.desconto_valor || 0), 0);
-            return (venda.valor_credito || 0) - desc;
+          case 'desc_cartao':
+          case 'desc_gelo':
+          case 'desc_responsavel':
+            const tiers = calcDescontoTiers(venda);
+            if (sortConfig.column === 'desc_cartao') return tiers.cartao;
+            if (sortConfig.column === 'desc_gelo') return tiers.gelo;
+            return tiers.responsavel;
           default: return 0;
         }
       };
@@ -662,13 +668,13 @@ export default function FaturamentoMinimalista() {
   };
 
   const getColumnResponsiveClass = (columnId: string) => {
-    const hiddenOnMobile = ['cidade', 'expedicao', 'desconto_acrescimo', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela'];
+    const hiddenOnMobile = ['cidade', 'expedicao', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela'];
     if (hiddenOnMobile.includes(columnId)) return 'hidden md:table-cell';
     return '';
   };
 
   const getColumnAlignment = (columnId: string) => {
-    const rightAligned = ['valor', 'lucro', 'desconto_acrescimo', 'tabela'];
+    const rightAligned = ['valor', 'lucro', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tabela'];
     const centerAligned = ['faturada', 'tempo_sem_faturar', 'expedicao'];
     if (rightAligned.includes(columnId)) return 'text-right';
     if (centerAligned.includes(columnId)) return 'text-center';
