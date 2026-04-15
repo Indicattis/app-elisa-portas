@@ -21,8 +21,8 @@ export function VendasHeaderRow({ mode = 'pedido' }: { mode?: 'pedido' | 'fatura
       <div className="text-center">Parc.</div>
       <div className="text-center">Ent.</div>
       <div className="text-center">Desc.</div>
-      <div className="text-center">Tabela</div>
       <div className="text-center">Total</div>
+      <div className="text-center">Tabela</div>
       <div className="text-center">Lucro</div>
       {mode === 'faturamento' ? (
         <>
