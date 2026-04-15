@@ -438,8 +438,22 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                           else if (produto.tamanho) tamanhoStr = produto.tamanho;
                         }
 
-                        // Calculate table price (valor_produto is the base/table price before discounts)
-                        const precoTabela = produto.valor_produto || 0;
+                        // Calculate table price based on item type
+                        let precoTabela = produto.valor_produto || 0;
+                        const tipoEntrega = vendaCompleta?.tipo_entrega?.toLowerCase() || '';
+                        const isInstalacao = tipoEntrega.includes('instalacao') || tipoEntrega.includes('instalação');
+                        
+                        if (tipo === 'porta_enrolar' && produto.largura && produto.altura) {
+                          const ref = precosTabela.get(`${produto.largura}-${produto.altura}`);
+                          if (ref) {
+                            precoTabela = ref.valor_porta + (isInstalacao ? ref.valor_instalacao : 0);
+                          }
+                        } else if (tipo === 'pintura_epoxi' && produto.largura && produto.altura) {
+                          const ref = precosTabela.get(`${produto.largura}-${produto.altura}`);
+                          if (ref) {
+                            precoTabela = ref.valor_pintura;
+                          }
+                        }
                         const valorVendido = produto.valor_total || 0;
                         const descPerc = produto.desconto_percentual || 0;
                         const descValor = produto.desconto_valor || 0;
