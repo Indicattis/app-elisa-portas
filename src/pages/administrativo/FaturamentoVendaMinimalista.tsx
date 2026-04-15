@@ -1109,22 +1109,25 @@ export default function FaturamentoVendaMinimalista() {
                                       handleUpdatePagamento(parcela.id, 'data_vencimento', newVal);
                                     }
                                   }}
-                                />
-                              </div>
-                              <div className="flex-1 flex items-center justify-end">
-                                <span className="text-white/30 text-sm mr-1">R$</span>
-                                <input
-                                  type="number"
-                                  step="0.01"
-                                  className="w-[100px] text-sm font-semibold text-white bg-transparent border-none focus:outline-none text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                  defaultValue={parcela.valor_parcela}
-                                  onBlur={(e) => {
-                                    const newVal = parseFloat(e.target.value);
-                                    if (!isNaN(newVal) && newVal !== parcela.valor_parcela) {
-                                      handleUpdatePagamento(parcela.id, 'valor_parcela', newVal);
+                                  onFocus={(e) => e.target.showPicker?.()}
+                                  style={{
+                                    colorScheme: 'dark',
+                                  }}
+                                  ref={(el) => {
+                                    if (el) {
+                                      // Display DD/MM/YYYY format
+                                      const parts = parcela.data_vencimento?.split('-');
+                                      if (parts && parts.length === 3) {
+                                        el.title = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                                      }
                                     }
                                   }}
                                 />
+                              </div>
+                              <div className="flex-1 flex items-center justify-end">
+                                <span className="text-sm font-semibold text-white">
+                                  {Number(parcela.valor_parcela).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                </span>
                               </div>
                               <div className="w-[80px] flex justify-center">
                                 <button
