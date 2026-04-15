@@ -376,6 +376,7 @@ export default function FaturamentoMinimalista() {
   const calcularLucroVenda = (venda: Venda) => {
     const portas = venda.portas || [];
     const lucroProdutos = portas.reduce((acc: number, p: any) => acc + (p.lucro_item || 0), 0);
+    // lucro_instalacao é legado - para vendas novas, instalação é produto separado com lucro_item
     const lucroInstalacao = venda.lucro_instalacao || 0;
     return lucroProdutos + lucroInstalacao;
   };
