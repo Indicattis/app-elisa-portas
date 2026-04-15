@@ -1199,7 +1199,21 @@ export default function FaturamentoMinimalista() {
                         onClick={() => handleSort(column.id)}
                       >
                         <div className={`flex items-center ${getColumnAlignment(column.id) === 'text-right' ? 'justify-end' : getColumnAlignment(column.id) === 'text-center' ? 'justify-center' : ''}`}>
-                          {column.label}
+                          {['desc_cartao', 'desc_gelo', 'desc_responsavel'].includes(column.id) ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="flex items-center gap-0.5">
+                                  {column.label}
+                                  <Info className="h-3 w-3 text-white/30" />
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[200px] text-xs">
+                                {column.id === 'desc_cartao' && `Desconto à vista (até ${configLimites.avista}%) — pagamento fora do cartão`}
+                                {column.id === 'desc_gelo' && `Desconto presencial (até ${configLimites.presencial}%) — venda presencial`}
+                                {column.id === 'desc_responsavel' && `Desconto c/ senha (até ${configLimites.adicionalResponsavel}%) — requer autorização`}
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : column.label}
                           {getSortIcon(column.id)}
                         </div>
                       </TableHead>
