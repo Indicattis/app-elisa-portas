@@ -47,6 +47,8 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
   const [isCreating, setIsCreating] = useState(false);
   const [isDispensando, setIsDispensando] = useState(false);
   const [showDetalhes, setShowDetalhes] = useState(false);
+  const [showFinalizarDireto, setShowFinalizarDireto] = useState(false);
+  const [isFinalizandoDireto, setIsFinalizandoDireto] = useState(false);
 
   const atendenteIniciais = venda.atendente_nome
     ? venda.atendente_nome.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
