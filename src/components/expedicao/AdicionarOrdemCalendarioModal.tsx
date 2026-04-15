@@ -202,7 +202,7 @@ export function AdicionarOrdemCalendarioModal({
       await onConfirm({
         ordemId: ordemSelecionada.id,
         fonte: ordemSelecionada.fonte,
-        data_carregamento: dataSelecionadaCalendario,
+        data_carregamento: dataSelecionadaCalendario + "T12:00:00",
         hora: horaFinal,
         tipo_carregamento: responsavelTipo,
         responsavel_carregamento_id: finalResponsavelId,
