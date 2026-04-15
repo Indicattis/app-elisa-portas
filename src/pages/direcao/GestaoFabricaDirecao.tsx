@@ -310,6 +310,8 @@ export default function GestaoFabricaDirecao() {
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
     queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+    queryClient.invalidateQueries({ queryKey: ['vendas-pendente-pedido'] });
+    queryClient.invalidateQueries({ queryKey: ['vendas-pendente-faturamento'] });
     queryClient.invalidateQueries({ queryKey: ['neo_instalacoes_listagem'] });
     queryClient.invalidateQueries({ queryKey: ['neo_correcoes_listagem'] });
     queryClient.invalidateQueries({ queryKey: ['neo_instalacoes_finalizadas'] });
