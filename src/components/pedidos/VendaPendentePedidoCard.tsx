@@ -141,6 +141,72 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
     }
   };
 
+  const handleConcluirDireto = async () => {
+    setIsConcluindoDireto(true);
+    try {
+      // 1. Create pedido from venda
+      const pedidoId = await createPedidoFromVenda(venda.id);
+      if (!pedidoId) {
+        toast.error("Erro ao criar pedido");
+        return;
+      }
+
+      // 2. Get authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Não autenticado');
+
+      // 3. Close aprovacao_diretor etapa
+      await supabase
+        .from('pedidos_etapas')
+        .update({ data_saida: new Date().toISOString() })
+        .eq('pedido_id', pedidoId)
+        .eq('etapa', 'aberto');
+
+      // 4. Upsert finalizado etapa
+      await supabase
+        .from('pedidos_etapas')
+        .upsert({
+          pedido_id: pedidoId,
+          etapa: 'finalizado',
+          checkboxes: [],
+          data_entrada: new Date().toISOString(),
+        }, { onConflict: 'pedido_id,etapa' });
+
+      // 5. Archive the pedido
+      await supabase
+        .from('pedidos_producao')
+        .update({
+          etapa_atual: 'finalizado',
+          arquivado: true,
+          data_arquivamento: new Date().toISOString(),
+          arquivado_por: user.id,
+        })
+        .eq('id', pedidoId);
+
+      // 6. Log movement
+      await supabase.from('pedidos_movimentacoes').insert({
+        pedido_id: pedidoId,
+        user_id: user.id,
+        etapa_origem: 'aprovacao_diretor',
+        etapa_destino: 'finalizado',
+        teor: 'finalizacao_direta',
+        descricao: 'Pedido criado e arquivado diretamente pelo diretor',
+      });
+
+      toast.success("Pedido criado e arquivado com sucesso");
+      queryClient.invalidateQueries({ queryKey: ["vendas-pendente-pedido"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-etapas"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-contadores"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-aprovacao-diretor"] });
+    } catch (error) {
+      console.error('Error in concluir direto:', error);
+      toast.error("Erro ao concluir direto");
+    } finally {
+      setIsConcluindoDireto(false);
+      setShowConcluirDireto(false);
+    }
+  };
+
   return (
     <TooltipProvider>
       <Card
