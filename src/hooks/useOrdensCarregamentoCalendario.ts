@@ -302,7 +302,7 @@ export const useOrdensCarregamentoCalendario = (
           if (data.tipo_carregamento !== undefined) updateData.tipo_carregamento = data.tipo_carregamento;
           if (data.responsavel_carregamento_id !== undefined) updateData.responsavel_carregamento_id = data.responsavel_carregamento_id;
           if (data.responsavel_carregamento_nome !== undefined) updateData.responsavel_carregamento_nome = data.responsavel_carregamento_nome;
-          if (data.status !== undefined) updateData.status = data.status;
+          if (data.status !== undefined && data.status !== 'agendada') updateData.status = data.status;
 
           const { error } = await supabase
             .from("instalacoes")

@@ -111,7 +111,7 @@ export const DiaCardExpedicao = ({
         tipo_carregamento: params.tipo_carregamento,
         responsavel_carregamento_id: params.responsavel_carregamento_id,
         responsavel_carregamento_nome: params.responsavel_carregamento_nome,
-        status: 'agendada'
+        status: params.fonte === 'instalacoes' ? 'pronta_fabrica' : 'agendada'
       },
       fonte: params.fonte || 'ordens_carregamento'
     });
