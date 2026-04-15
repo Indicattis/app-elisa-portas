@@ -149,8 +149,8 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
           <div
             className="grid items-center gap-1.5 h-full px-2 w-full"
             style={{ gridTemplateColumns: mode === 'faturamento'
-              ? '24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 70px 30px 30px'
-              : '20px 24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 30px 30px 20px'
+              ? '24px 1fr 100px 60px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 70px 30px 30px'
+              : '20px 24px 1fr 100px 60px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 30px 30px 20px'
             }}
           >
             {/* Drag handle - only in pedido mode */}
@@ -218,6 +218,19 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                 </p>
               </TooltipContent>
             </Tooltip>
+
+            {/* Data da Venda */}
+            <div className="text-center">
+              <span className="text-[10px] text-muted-foreground">
+                {(() => {
+                  try {
+                    if (!venda.data_venda) return '—';
+                    const d = new Date(venda.data_venda + 'T12:00:00');
+                    return isNaN(d.getTime()) ? '—' : format(d, 'dd/MM/yy', { locale: ptBR });
+                  } catch { return '—'; }
+                })()}
+              </span>
+            </div>
 
             {/* Tempo pendente */}
             <Tooltip>
