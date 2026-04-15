@@ -684,6 +684,145 @@ export default function FaturamentoVendaMinimalista() {
           </Card>
         </div>
 
+        {/* Tabela de Produtos */}
+        <Card className="bg-white/5 border-white/10">
+          <CardHeader>
+            <CardTitle className="text-base text-white">Produtos da Venda</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="w-full">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/10 hover:bg-transparent">
+                    <TableHead className="text-white/70">Tipo</TableHead>
+                    <TableHead className="text-white/70">Produto</TableHead>
+                    <TableHead className="text-white/70">Tamanho</TableHead>
+                    <TableHead className="text-white/70 text-right">Tabela</TableHead>
+                    <TableHead className="text-white/70 text-right">Desconto</TableHead>
+                    <TableHead className="text-white/70 text-right">Valor Unit.</TableHead>
+                    <TableHead className="text-white/70 text-center">Qtd</TableHead>
+                    <TableHead className="text-white/70 text-right">Valor Total</TableHead>
+                    <TableHead className="text-white/70 text-right">Lucro</TableHead>
+                    <TableHead className="text-white/70 text-right">Margem %</TableHead>
+                    <TableHead className="text-white/70 text-right">Status</TableHead>
+                    <TableHead className="text-white/70 text-center">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {produtos?.map((produto) => {
+                    const temLucro = produto.lucro_item !== null && produto.lucro_item !== undefined;
+                    const valorTotalLinha = produto.valor_total;
+                    const valorUnitario = produto.quantidade > 0 ? produto.valor_total / produto.quantidade : 0;
+                    const desconto = produto.desconto_percentual 
+                      ? `${produto.desconto_percentual}%` 
+                      : produto.desconto_valor 
+                        ? formatCurrency(produto.desconto_valor)
+                        : '-';
+                    return (
+                      <TableRow key={produto.id} className={`border-white/10 ${produto.faturamento ? 'bg-emerald-500/10 hover:bg-emerald-500/15' : 'hover:bg-white/5'}`}>
+                        <TableCell className="text-sm text-white/80">{getTipoProdutoLabel(produto.tipo_produto)}</TableCell>
+                        <TableCell className="font-medium text-white">{produto.descricao}</TableCell>
+                        <TableCell className="text-white/60">{produto.tamanho || "-"}</TableCell>
+                        <TableCell className="text-right text-white/80">
+                          {formatCurrency(((produto.valor_produto || 0) + (produto.valor_pintura || 0) + (produto.tipo_produto !== 'porta_enrolar' ? (produto.valor_instalacao || 0) : 0)) * (produto.quantidade || 1))}
+                        </TableCell>
+                        <TableCell className="text-right text-orange-400">{desconto}</TableCell>
+                        <TableCell className="text-right text-white/80">{formatCurrency(valorUnitario)}</TableCell>
+                        <TableCell className="text-center text-white/80">{produto.quantidade}</TableCell>
+                        <TableCell className="text-right font-medium text-white">{formatCurrency(valorTotalLinha)}</TableCell>
+                        <TableCell className="text-right text-white/80">{temLucro ? formatCurrency(produto.lucro_item!) : '-'}</TableCell>
+                        <TableCell className="text-right text-white/80">{temLucro && valorTotalLinha > 0 ? `${((produto.lucro_item! / valorTotalLinha) * 100).toFixed(1)}%` : '-'}</TableCell>
+                        <TableCell className="text-right">
+                          {produto.faturamento ? (
+                            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"><CheckCircle2 className="w-3 h-3 mr-1" />Faturado</Badge>
+                          ) : temLucro ? (
+                            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">{produto.tipo_produto === 'porta_enrolar' ? 'Tabela' : produto.tipo_produto === 'pintura_epoxi' ? 'Fórmula' : 'Informado'}</Badge>
+                          ) : (
+                            <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Pendente</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {(produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'pintura_epoxi') ? (
+                            <CheckCircle2 className="h-4 w-4 text-emerald-400 mx-auto" />
+                          ) : (
+                            <Button variant="ghost" size="sm" onClick={() => setSelectedProduto(produto)} className="text-white/70 hover:text-white hover:bg-white/10"><Edit className="h-4 w-4" /></Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {valorInstalacao > 0 && (
+                    <TableRow className="bg-cyan-500/5 border-white/10">
+                      <TableCell className="text-sm text-cyan-400"><div className="flex items-center gap-2"><Wrench className="h-3 w-3" />Instalação</div></TableCell>
+                      <TableCell className="font-medium text-white">Serviço de Instalação</TableCell>
+                      <TableCell className="text-white/60">-</TableCell>
+                      <TableCell className="text-right text-white/60">-</TableCell>
+                      <TableCell className="text-right text-white/60">-</TableCell>
+                      <TableCell className="text-right text-white/80">{formatCurrency(valorInstalacao)}</TableCell>
+                      <TableCell className="text-center text-white/80">1</TableCell>
+                      <TableCell className="text-right font-medium text-white">{formatCurrency(valorInstalacao)}</TableCell>
+                      <TableCell className="text-right text-white/80">{formatCurrency(lucroInstalacaoCalculado)}</TableCell>
+                      <TableCell className="text-right text-white/80">30.0%</TableCell>
+                      <TableCell className="text-right">
+                        {venda.instalacao_faturada ? (
+                          <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"><CheckCircle2 className="w-3 h-3 mr-1" />Faturado</Badge>
+                        ) : (
+                          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">30%</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center"><CheckCircle2 className="h-4 w-4 text-emerald-400/50 mx-auto" /></TableCell>
+                    </TableRow>
+                  )}
+                  <TableRow className="bg-white/5 border-white/10">
+                    <TableCell colSpan={7} className="font-semibold text-white">Frete</TableCell>
+                    <TableCell className="text-right font-semibold text-white">{formatCurrency(venda.valor_frete)}</TableCell>
+                    <TableCell colSpan={4} className="text-white/50 text-sm">Apenas visualização</TableCell>
+                  </TableRow>
+                  {(venda.valor_credito != null && venda.valor_credito !== 0) && (
+                    <TableRow className="bg-white/5 border-white/10">
+                      <TableCell colSpan={7} className="font-semibold text-white">Crédito / Acréscimo</TableCell>
+                      <TableCell className="text-right font-semibold text-white">{formatCurrency(venda.valor_credito)}</TableCell>
+                      <TableCell colSpan={4} className="text-white/50 text-sm">Apenas visualização</TableCell>
+                    </TableRow>
+                  )}
+                  {(() => {
+                    const totalValor = (produtos?.reduce((acc, p) => acc + (p.valor_total || 0), 0) || 0) + (venda.valor_frete || 0) + (venda.valor_credito || 0) + (valorInstalacao || 0);
+                    const totalLucroGeral = (produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0) + (lucroInstalacaoCalculado || 0);
+                    const margemGeral = totalValor > 0 ? (totalLucroGeral / totalValor) * 100 : 0;
+                    const totalTabela = (produtos?.reduce((acc, p) => {
+                      const qty = p.quantidade || 1;
+                      return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.tipo_produto !== 'porta_enrolar' ? (p.valor_instalacao || 0) : 0)) * qty;
+                    }, 0) || 0) + (valorInstalacao || 0);
+                    const totalDesconto = produtos?.reduce((acc, p) => {
+                      const qty = p.quantidade || 1;
+                      if (p.tipo_desconto === 'valor') return acc + (p.desconto_valor || 0);
+                      if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+                        const base = ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+                        return acc + base * (p.desconto_percentual / 100);
+                      }
+                      if (p.desconto_valor) return acc + p.desconto_valor;
+                      return acc;
+                    }, 0) || 0;
+                    return (
+                      <TableRow className="bg-white/10 border-t border-white/20">
+                        <TableCell colSpan={3} className="font-bold text-white text-sm">Total Geral</TableCell>
+                        <TableCell className="text-right font-bold text-white">{formatCurrency(totalTabela)}</TableCell>
+                        <TableCell className="text-right font-bold text-orange-400">{totalDesconto > 0 ? formatCurrency(totalDesconto) : '-'}</TableCell>
+                        <TableCell colSpan={2} />
+                        <TableCell className="text-right font-bold text-white">{formatCurrency(totalValor)}</TableCell>
+                        <TableCell className="text-right font-bold text-emerald-400">{formatCurrency(totalLucroGeral)}</TableCell>
+                        <TableCell className="text-right font-bold text-emerald-400">{margemGeral.toFixed(1)}%</TableCell>
+                        <TableCell />
+                        <TableCell />
+                      </TableRow>
+                    );
+                  })()}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
         {/* Comprovante Anexado */}
         {venda.comprovante_url && (
           <Card className="bg-white/5 border-white/10">
