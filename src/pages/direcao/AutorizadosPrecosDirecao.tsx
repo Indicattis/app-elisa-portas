@@ -509,6 +509,9 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                                     {STATUS_LABELS[acordo.status]}
                                   </Badge>
                                 </TableCell>
+                                <TableCell className="text-white/60 max-w-[200px] truncate" title={acordo.observacoes || ''}>
+                                  {acordo.observacoes || '—'}
+                                </TableCell>
                                 {contexto === 'direcao' && (
                                   <TableCell className="text-center">
                                     {acordo.aprovado_direcao ? (
