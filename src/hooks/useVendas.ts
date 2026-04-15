@@ -326,9 +326,11 @@ export function useVendas() {
       
       if (vendaError) throw vendaError;
 
-      // 6. Criar produtos da venda
+      // 6. Criar produtos da venda (separando instalação como produto independente)
       const produtosComVendaId = portas.flatMap(produto => {
         const qty = produto.quantidade || 1;
+        const valorInstalacao = produto.valor_instalacao || 0;
+        const isPorta = produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social';
         const base = {
           venda_id: venda.id,
           tipo_produto: produto.tipo_produto,
@@ -338,7 +340,7 @@ export function useVendas() {
           adicional_id: produto.adicional_id || null,
           valor_produto: produto.valor_produto,
           valor_pintura: produto.valor_pintura,
-          valor_instalacao: produto.valor_instalacao,
+          valor_instalacao: isPorta ? 0 : produto.valor_instalacao,
           valor_frete: produto.valor_frete,
           tipo_desconto: produto.tipo_desconto,
           desconto_percentual: produto.desconto_percentual,
@@ -348,7 +350,33 @@ export function useVendas() {
           valor_credito: produto.valor_credito || 0,
           percentual_credito: produto.percentual_credito || 0
         };
-        return Array.from({ length: qty }, () => ({ ...base }));
+        const items = Array.from({ length: qty }, () => ({ ...base }));
+        
+        // Se é porta com instalação, criar produto separado de instalação
+        if (isPorta && valorInstalacao > 0) {
+          const instalacaoItems = Array.from({ length: qty }, () => ({
+            venda_id: venda.id,
+            tipo_produto: 'instalacao' as const,
+            tamanho: produto.tamanho || '',
+            cor_id: null,
+            acessorio_id: null,
+            adicional_id: null,
+            valor_produto: valorInstalacao,
+            valor_pintura: 0,
+            valor_instalacao: 0,
+            valor_frete: 0,
+            tipo_desconto: 'percentual' as const,
+            desconto_percentual: 0,
+            desconto_valor: 0,
+            quantidade: 1,
+            descricao: 'Instalação',
+            valor_credito: 0,
+            percentual_credito: 0
+          }));
+          items.push(...instalacaoItems);
+        }
+        
+        return items;
       });
       
       const { error: produtosError } = await supabase
@@ -597,6 +625,8 @@ export function useVendas() {
       if (portas.length > 0) {
         const produtosComVendaId = portas.flatMap(produto => {
           const qty = produto.quantidade || 1;
+          const valorInstalacao = produto.valor_instalacao || 0;
+          const isPorta = produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social';
           const base = {
             venda_id: venda.id,
             tipo_produto: produto.tipo_produto,
@@ -606,7 +636,7 @@ export function useVendas() {
             adicional_id: produto.adicional_id || null,
             valor_produto: produto.valor_produto,
             valor_pintura: produto.valor_pintura,
-            valor_instalacao: produto.valor_instalacao,
+            valor_instalacao: isPorta ? 0 : produto.valor_instalacao,
             valor_frete: produto.valor_frete,
             tipo_desconto: produto.tipo_desconto,
             desconto_percentual: produto.desconto_percentual,
@@ -616,7 +646,33 @@ export function useVendas() {
             valor_credito: produto.valor_credito || 0,
             percentual_credito: produto.percentual_credito || 0
           };
-          return Array.from({ length: qty }, () => ({ ...base }));
+          const items = Array.from({ length: qty }, () => ({ ...base }));
+          
+          // Se é porta com instalação, criar produto separado de instalação
+          if (isPorta && valorInstalacao > 0) {
+            const instalacaoItems = Array.from({ length: qty }, () => ({
+              venda_id: venda.id,
+              tipo_produto: 'instalacao' as const,
+              tamanho: produto.tamanho || '',
+              cor_id: null,
+              acessorio_id: null,
+              adicional_id: null,
+              valor_produto: valorInstalacao,
+              valor_pintura: 0,
+              valor_instalacao: 0,
+              valor_frete: 0,
+              tipo_desconto: 'percentual' as const,
+              desconto_percentual: 0,
+              desconto_valor: 0,
+              quantidade: 1,
+              descricao: 'Instalação',
+              valor_credito: 0,
+              percentual_credito: 0
+            }));
+            items.push(...instalacaoItems);
+          }
+          
+          return items;
         });
         
         const { error: produtosError } = await supabase
