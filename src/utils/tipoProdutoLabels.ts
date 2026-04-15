@@ -9,6 +9,7 @@ const TIPO_PRODUTO_LABELS: Record<string, string> = {
   adicional: 'Adicional',
   manutencao: 'Manutenção',
   pintura_epoxi: 'Pintura Epóxi',
+  instalacao: 'Instalação',
 };
 
 export function getLabelTipoProduto(tipoProduto?: string | null): string {
