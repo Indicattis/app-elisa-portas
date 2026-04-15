@@ -726,10 +726,10 @@ export default function FaturamentoVendaMinimalista() {
                         <TableCell className="text-sm text-white/80">{getTipoProdutoLabel(produto.tipo_produto)}</TableCell>
                         <TableCell className="font-medium text-white">{produto.descricao}</TableCell>
                         <TableCell className="text-white/60">{produto.tamanho || "-"}</TableCell>
-                        <TableCell className="text-right text-white/80">
+                        <TableCell className="text-right text-blue-400">
                           {formatCurrency(((produto.valor_produto || 0) + (produto.valor_pintura || 0) + (produto.tipo_produto !== 'porta_enrolar' ? (produto.valor_instalacao || 0) : 0)) * (produto.quantidade || 1))}
                         </TableCell>
-                        <TableCell className={`text-right ${isNegative ? 'text-green-400' : (hasDesconto ? 'text-orange-400' : 'text-white/40')}`}>
+                        <TableCell className={`text-right ${isNegative ? 'text-green-400' : (hasDesconto ? 'text-red-400' : 'text-white/40')}`}>
                           {hasDesconto || hasCredito ? (
                             <span>{isNegative ? '+' : '-'}{descontoLabel}</span>
                           ) : '-'}
@@ -737,7 +737,7 @@ export default function FaturamentoVendaMinimalista() {
                         <TableCell className="text-right text-white/80">{formatCurrency(valorUnitario)}</TableCell>
                         <TableCell className="text-center text-white/80">{produto.quantidade}</TableCell>
                         <TableCell className="text-right font-medium text-white">{formatCurrency(valorTotalLinha)}</TableCell>
-                        <TableCell className="text-right text-white/80">{temLucro ? formatCurrency(produto.lucro_item!) : '-'}</TableCell>
+                        <TableCell className={`text-right ${temLucro ? (produto.lucro_item! >= 0 ? 'text-green-400' : 'text-red-400') : 'text-white/40'}`}>{temLucro ? formatCurrency(produto.lucro_item!) : '-'}</TableCell>
                         <TableCell className="text-right text-white/80">{temLucro && valorTotalLinha > 0 ? `${((produto.lucro_item! / valorTotalLinha) * 100).toFixed(1)}%` : '-'}</TableCell>
                         <TableCell className="text-right">
                           {produto.faturamento ? (
