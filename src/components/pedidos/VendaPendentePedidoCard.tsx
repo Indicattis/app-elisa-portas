@@ -22,6 +22,7 @@ interface VendaPendentePedidoCardProps {
   venda: VendaPendentePedido;
   dragHandleProps?: any;
   isDragging?: boolean;
+  mode?: 'pedido' | 'faturamento';
 }
 
 const FORMAS_PAGAMENTO_LABELS: Record<string, string> = {
