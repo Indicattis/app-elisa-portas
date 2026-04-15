@@ -586,6 +586,51 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
         open={showDetalhes}
         onOpenChange={setShowDetalhes}
       />
+
+      {/* Dialog Finalizar Direto */}
+      <Dialog open={showFinalizarDireto} onOpenChange={setShowFinalizarDireto}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base">Finalizar Direto — Arquivo Morto</DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3 pt-2">
+                <p className="text-sm">
+                  Você está prestes a enviar a venda de <strong>{venda.cliente_nome}</strong> diretamente para o <strong>Arquivo Morto</strong>.
+                </p>
+                <p className="text-sm font-medium">Valor: {formatCurrency(venda.valor_venda || 0)}</p>
+                <div className="rounded-md border border-border bg-muted/50 p-3 space-y-1.5">
+                  <p className="text-xs font-semibold text-foreground">O que vai acontecer:</p>
+                  <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>A venda será marcada como <strong>dispensada</strong></li>
+                    <li>Não aparecerá mais nas abas de faturamento ou pedidos</li>
+                    <li>Será enviada para <strong>Arquivo Morto</strong></li>
+                    <li>Nenhum pedido de produção será criado</li>
+                  </ul>
+                </div>
+                <p className="text-xs text-destructive font-medium">⚠ Esta ação não pode ser desfeita facilmente.</p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowFinalizarDireto(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleFinalizarDireto}
+              disabled={isFinalizandoDireto}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              {isFinalizandoDireto ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+              )}
+              Confirmar Finalização
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }
