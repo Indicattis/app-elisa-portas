@@ -651,13 +651,13 @@ export default function FaturamentoMinimalista() {
   };
 
   const getColumnResponsiveClass = (columnId: string) => {
-    const hiddenOnMobile = ['cidade', 'expedicao', 'desconto_acrescimo', 'tempo_sem_faturar', 'justificativa', 'lucro'];
+    const hiddenOnMobile = ['cidade', 'expedicao', 'desconto_acrescimo', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela'];
     if (hiddenOnMobile.includes(columnId)) return 'hidden md:table-cell';
     return '';
   };
 
   const getColumnAlignment = (columnId: string) => {
-    const rightAligned = ['valor', 'lucro', 'desconto_acrescimo'];
+    const rightAligned = ['valor', 'lucro', 'desconto_acrescimo', 'tabela'];
     const centerAligned = ['faturada', 'tempo_sem_faturar', 'expedicao'];
     if (rightAligned.includes(columnId)) return 'text-right';
     if (centerAligned.includes(columnId)) return 'text-center';
