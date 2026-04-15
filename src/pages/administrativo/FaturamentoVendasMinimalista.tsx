@@ -745,16 +745,14 @@ export default function FaturamentoMinimalista() {
           return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
         }, 0);
         return <span className="text-blue-400 font-medium">{formatCurrency(tabelaTotal)}</span>;
-      case 'desconto_acrescimo':
-        const totalDesconto = (venda.portas || []).reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
-        const acrescimo = venda.valor_credito || 0;
-        if (totalDesconto === 0 && acrescimo === 0) return <span className="text-white/30">-</span>;
-        return (
-          <div className="flex flex-col items-end gap-0.5">
-            {totalDesconto > 0 && <span className="text-red-400">-{formatCurrency(totalDesconto)}</span>}
-            {acrescimo !== 0 && <span className={acrescimo > 0 ? 'text-green-400' : 'text-red-400'}>{acrescimo > 0 ? '+' : ''}{formatCurrency(acrescimo)}</span>}
-          </div>
-        );
+      case 'desc_cartao':
+      case 'desc_gelo':
+      case 'desc_responsavel': {
+        const tiers = calcDescontoTiers(venda);
+        const val = columnId === 'desc_cartao' ? tiers.cartao : columnId === 'desc_gelo' ? tiers.gelo : tiers.responsavel;
+        if (val === 0) return <span className="text-white/30">-</span>;
+        return <span className="text-red-400">-{formatCurrency(val)}</span>;
+      }
       case 'tempo_sem_faturar':
         if (isFaturada(venda)) return <span className="text-green-400/60 text-xs">Faturada</span>;
         const dias = differenceInDays(new Date(), new Date(venda.data_venda));
