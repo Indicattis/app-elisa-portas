@@ -486,31 +486,38 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                             : (nomeMap[tipo] || tipo);
 
                         let tamanhoStr = '';
+                        const dimensoes = extrairDimensoesProduto(produto);
                         if (tipo === 'porta_enrolar') {
-                          let larg = produto.largura || 0;
-                          let alt = produto.altura || 0;
-                          if (larg === 0 && alt === 0 && produto.tamanho) {
-                            const m = produto.tamanho.match(/(\d+[.,]?\d*)\s*[xX×]\s*(\d+[.,]?\d*)/);
-                            if (m) { larg = parseFloat(m[1].replace(',', '.')); alt = parseFloat(m[2].replace(',', '.')); }
+                          if (dimensoes) {
+                            tamanhoStr = `${dimensoes.largura.toFixed(2)} x ${dimensoes.altura.toFixed(2)}m`;
+                          } else if (produto.tamanho) {
+                            tamanhoStr = produto.tamanho;
                           }
-                          if (larg && alt) tamanhoStr = `${larg.toFixed(2)} x ${alt.toFixed(2)}m`;
-                          else if (produto.tamanho) tamanhoStr = produto.tamanho;
                         }
 
                         // Calculate table price based on item type
+                        const tipoEntregaNormalizado = normalizarTexto(vendaCompleta?.tipo_entrega || venda?.tipo_entrega);
+                        const isInstalacao = tipoEntregaNormalizado === 'instalacao' || tipoEntregaNormalizado.includes('instalacao');
                         let precoTabela = produto.valor_produto || 0;
-                        const tipoEntrega = vendaCompleta?.tipo_entrega?.toLowerCase() || '';
-                        const isInstalacao = tipoEntrega.includes('instalacao') || tipoEntrega.includes('instalação');
-                        
-                        if (tipo === 'porta_enrolar' && produto.largura && produto.altura) {
-                          const ref = precosTabela.get(`${produto.largura}-${produto.altura}`);
-                          if (ref) {
-                            precoTabela = ref.valor_porta + (isInstalacao ? ref.valor_instalacao : 0);
+
+                        if (tipo === 'porta_enrolar') {
+                          const precoBaseSalvo = (produto.valor_produto || 0) + (isInstalacao ? (produto.valor_instalacao || 0) : 0);
+                          precoTabela = precoBaseSalvo;
+
+                          if (dimensoes) {
+                            const ref = precosTabela.get(criarChavePrecoTabela(dimensoes.largura, dimensoes.altura));
+                            if (ref) {
+                              precoTabela = ref.valor_porta + (isInstalacao ? ref.valor_instalacao : 0);
+                            }
                           }
-                        } else if (tipo === 'pintura_epoxi' && produto.largura && produto.altura) {
-                          const ref = precosTabela.get(`${produto.largura}-${produto.altura}`);
-                          if (ref) {
-                            precoTabela = ref.valor_pintura;
+                        } else if (tipo === 'pintura_epoxi') {
+                          precoTabela = produto.valor_pintura || 0;
+
+                          if (dimensoes) {
+                            const ref = precosTabela.get(criarChavePrecoTabela(dimensoes.largura, dimensoes.altura));
+                            if (ref && ref.valor_pintura > 0) {
+                              precoTabela = ref.valor_pintura;
+                            }
                           }
                         }
                         const valorVendido = produto.valor_total || 0;
