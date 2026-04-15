@@ -293,6 +293,27 @@ export default function GestaoFabricaDirecao() {
     });
   }, [vendasOrdemLocal, vendasPendentePedido, searchTerm]);
 
+  const vendasFaturamentoFiltradas = useMemo(() => {
+    let filtered = vendasPendenteFaturamento;
+    if (searchTerm.trim()) {
+      const termo = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(venda => {
+        const nome = venda.cliente_nome?.toLowerCase() || '';
+        const atendente = venda.atendente_nome?.toLowerCase() || '';
+        return nome.includes(termo) || atendente.includes(termo);
+      });
+    }
+    if (tipoEntrega !== 'todos') {
+      filtered = filtered.filter(venda => venda.tipo_entrega === tipoEntrega);
+    }
+    if (corPintura !== 'todas') {
+      filtered = filtered.filter(venda => {
+        return venda.cores?.some(c => c.nome.toLowerCase().includes(corPintura.toLowerCase()));
+      });
+    }
+    return filtered;
+  }, [vendasPendenteFaturamento, searchTerm, tipoEntrega, corPintura]);
+
   const handleReorganizarVendas = useCallback((novaOrdem: VendaPendentePedido[]) => {
     setVendasOrdemLocal(novaOrdem);
   }, []);
@@ -743,21 +764,33 @@ export default function GestaoFabricaDirecao() {
                   <DollarSign className="h-5 w-5 text-yellow-400" />
                   <span>Vendas Pendentes de Faturamento</span>
                   <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400">
-                    {vendasPendenteFaturamento.length}
+                    {vendasFaturamentoFiltradas.length}
                   </Badge>
                 </CardTitle>
+                <PedidosFiltrosMinimalista 
+                  searchTerm={searchTerm} 
+                  onSearchChange={setSearchTerm} 
+                  tipoEntrega={tipoEntrega} 
+                  onTipoEntregaChange={setTipoEntrega} 
+                  corPintura={corPintura} 
+                  onCorPinturaChange={setCorPintura} 
+                  mostrarProntos={mostrarProntos} 
+                  onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)} 
+                />
               </div>
             </CardHeader>
             <CardContent>
               {isLoadingFaturamento ? (
                 <div className="text-center py-8 text-white/50">Carregando...</div>
-              ) : vendasPendenteFaturamento.length === 0 ? (
+              ) : vendasFaturamentoFiltradas.length === 0 ? (
                 <div className="text-center py-8 text-white/50">
-                  Todas as vendas estão faturadas
+                  {searchTerm || tipoEntrega !== 'todos' || corPintura !== 'todas' 
+                    ? 'Nenhuma venda encontrada com os filtros aplicados' 
+                    : 'Todas as vendas estão faturadas'}
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  {vendasPendenteFaturamento.map(venda => (
+                  {vendasFaturamentoFiltradas.map(venda => (
                     <VendaPendentePedidoCard key={venda.id} venda={venda} mode="faturamento" />
                   ))}
                 </div>
