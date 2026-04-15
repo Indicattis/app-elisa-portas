@@ -34,6 +34,51 @@ const FORMAS_PAGAMENTO_LABELS: Record<string, string> = {
   credito: "Cartão de Crédito",
 };
 
+function normalizarTexto(value: string | null | undefined) {
+  return (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function parseMedida(value: number | string | null | undefined) {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const parsed = parseFloat(value.replace(",", "."));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
+function extrairDimensoesProduto(produto: {
+  largura?: number | string | null;
+  altura?: number | string | null;
+  tamanho?: string | null;
+}) {
+  const largura = parseMedida(produto.largura);
+  const altura = parseMedida(produto.altura);
+
+  if (largura > 0 && altura > 0) {
+    return { largura, altura };
+  }
+
+  if (produto.tamanho) {
+    const match = String(produto.tamanho).match(/(\d+[.,]?\d*)\s*[xX×]\s*(\d+[.,]?\d*)/);
+    if (match) {
+      return {
+        largura: parseFloat(match[1].replace(",", ".")),
+        altura: parseFloat(match[2].replace(",", ".")),
+      };
+    }
+  }
+
+  return null;
+}
+
+function criarChavePrecoTabela(largura: number, altura: number) {
+  return `${largura.toFixed(3)}-${altura.toFixed(3)}`;
+}
+
 export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaPendenteDetalhesSheetProps) {
   const navigate = useNavigate();
   const { userRole } = useAuth();
@@ -59,6 +104,8 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
   const fetchVendaCompleta = async () => {
     if (!venda) return;
     setLoading(true);
+    setPrecosTabela(new Map());
+
     try {
       const { data } = await supabase
         .from("vendas")
@@ -75,26 +122,38 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
         `)
         .eq("id", venda.id)
         .single();
+
       setVendaCompleta(data);
 
-      // Fetch table prices for porta/pintura items
-      if (data?.produtos_vendas) {
-        const dimensoesUnicas = new Map<string, { largura: number; altura: number }>();
-        for (const p of data.produtos_vendas) {
-          if ((p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'pintura_epoxi') && p.largura && p.altura) {
-            const key = `${p.largura}-${p.altura}`;
-            if (!dimensoesUnicas.has(key)) {
-              dimensoesUnicas.set(key, { largura: p.largura, altura: p.altura });
-            }
-          }
+      const produtosVenda = data?.produtos_vendas || [];
+      const dimensoesUnicas = new Map<string, { largura: number; altura: number }>();
+
+      for (const produto of produtosVenda) {
+        if (produto.tipo_produto !== "porta_enrolar" && produto.tipo_produto !== "pintura_epoxi") {
+          continue;
         }
+
+        const dimensoes = extrairDimensoesProduto(produto);
+        if (!dimensoes) continue;
+
+        const key = criarChavePrecoTabela(dimensoes.largura, dimensoes.altura);
+        if (!dimensoesUnicas.has(key)) {
+          dimensoesUnicas.set(key, dimensoes);
+        }
+      }
+
+      if (dimensoesUnicas.size > 0) {
         const precoMap = new Map<string, ItemTabelaPreco>();
+
         await Promise.all(
-          Array.from(dimensoesUnicas.entries()).map(async ([key, dims]) => {
-            const result = await buscarPrecosPorMedidas(dims.largura, dims.altura);
-            if (result) precoMap.set(key, result);
+          Array.from(dimensoesUnicas.entries()).map(async ([key, dimensoes]) => {
+            const result = await buscarPrecosPorMedidas(dimensoes.largura, dimensoes.altura);
+            if (result) {
+              precoMap.set(key, result);
+            }
           })
         );
+
         setPrecosTabela(precoMap);
       }
     } catch (err) {
