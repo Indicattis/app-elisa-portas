@@ -52,7 +52,13 @@ export const VendaPendenteFaturamentoCard = ({ venda }: VendaPendenteFaturamento
           R$ {venda.valor_venda.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
         </span>
         <span className="text-[10px] text-muted-foreground">
-          {venda.data_venda ? format(new Date(venda.data_venda + 'T12:00:00'), 'dd/MM/yy', { locale: ptBR }) : ''}
+          {(() => {
+            try {
+              if (!venda.data_venda) return '';
+              const d = new Date(venda.data_venda + 'T12:00:00');
+              return isNaN(d.getTime()) ? '' : format(d, 'dd/MM/yy', { locale: ptBR });
+            } catch { return ''; }
+          })()}
         </span>
       </div>
 
