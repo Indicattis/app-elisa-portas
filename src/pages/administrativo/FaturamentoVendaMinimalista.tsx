@@ -940,11 +940,37 @@ export default function FaturamentoVendaMinimalista() {
                     const totalLucroGeral = (produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0) +
                       (lucroInstalacaoCalculado || 0);
                     const margemGeral = totalValor > 0 ? (totalLucroGeral / totalValor) * 100 : 0;
+
+                    const totalTabela = (produtos?.reduce((acc, p) => {
+                      const qty = p.quantidade || 1;
+                      return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.tipo_produto !== 'porta_enrolar' ? (p.valor_instalacao || 0) : 0)) * qty;
+                    }, 0) || 0) + (valorInstalacao || 0);
+
+                    const totalDesconto = produtos?.reduce((acc, p) => {
+                      const qty = p.quantidade || 1;
+                      if (p.tipo_desconto === 'valor') return acc + (p.desconto_valor || 0);
+                      if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+                        const base = ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+                        return acc + base * (p.desconto_percentual / 100);
+                      }
+                      if (p.desconto_valor) return acc + p.desconto_valor;
+                      return acc;
+                    }, 0) || 0;
+
+                    const totalCredito = venda.valor_credito || 0;
+
                     return (
                       <TableRow className="bg-white/10 border-t border-white/20">
-                        <TableCell colSpan={7} className="font-bold text-white text-sm">
+                        <TableCell colSpan={3} className="font-bold text-white text-sm">
                           Total Geral
                         </TableCell>
+                        <TableCell className="text-right font-bold text-white">
+                          {formatCurrency(totalTabela)}
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-orange-400">
+                          {totalDesconto > 0 ? formatCurrency(totalDesconto) : '-'}
+                        </TableCell>
+                        <TableCell colSpan={2} />
                         <TableCell className="text-right font-bold text-white">
                           {formatCurrency(totalValor)}
                         </TableCell>
