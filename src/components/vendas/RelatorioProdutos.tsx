@@ -14,9 +14,11 @@ const getTipoProdutoLabel = (tipo: string) => {
   const labels: Record<string, string> = {
     'porta': 'Porta',
     'porta_enrolar': 'Porta Enrolar',
+    'porta_social': 'Porta Social',
     'pintura_epoxi': 'Pintura Epóxi',
     'manutencao': 'Manutenção',
     'acessorios': 'Acessórios',
+    'instalacao': 'Instalação',
   };
   return labels[tipo] || tipo;
 };

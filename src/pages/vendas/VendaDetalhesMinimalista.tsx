@@ -149,9 +149,13 @@ export default function VendaDetalhesMinimalista() {
   const getTipoProdutoLabel = (tipo: string) => {
     const tipos: Record<string, string> = {
       'porta_enrolar': 'Porta de Enrolar',
+      'porta_social': 'Porta Social',
       'porta_automacao': 'Automação',
       'manutencao': 'Manutenção',
       'acessorio': 'Acessório',
+      'adicional': 'Adicional',
+      'pintura_epoxi': 'Pintura Epóxi',
+      'instalacao': 'Instalação',
       'outro': 'Outro'
     };
     return tipos[tipo] || tipo;
