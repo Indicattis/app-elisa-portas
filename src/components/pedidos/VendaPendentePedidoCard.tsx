@@ -118,6 +118,27 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
     }
   };
 
+  const handleFinalizarDireto = async () => {
+    setIsFinalizandoDireto(true);
+    try {
+      const { error } = await supabase
+        .from("vendas")
+        .update({ pedido_dispensado: true } as any)
+        .eq("id", venda.id);
+      if (error) {
+        toast.error("Erro ao finalizar venda");
+        console.error(error);
+      } else {
+        toast.success("Venda enviada para Arquivo Morto");
+        queryClient.invalidateQueries({ queryKey: ["vendas-pendente-faturamento"] });
+        queryClient.invalidateQueries({ queryKey: ["vendas-pendente-pedido"] });
+      }
+    } finally {
+      setIsFinalizandoDireto(false);
+      setShowFinalizarDireto(false);
+    }
+  };
+
   return (
     <TooltipProvider>
       <Card
@@ -128,7 +149,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
           <div
             className="grid items-center gap-1.5 h-full px-2 w-full"
             style={{ gridTemplateColumns: mode === 'faturamento'
-              ? '24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 70px 30px'
+              ? '24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 70px 30px 30px'
               : '20px 24px 1fr 100px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 30px 30px 20px'
             }}
           >
