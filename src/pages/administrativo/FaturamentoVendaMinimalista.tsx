@@ -698,10 +698,10 @@ export default function FaturamentoVendaMinimalista() {
                     <TableHead className="text-white/70">Produto</TableHead>
                     <TableHead className="text-white/70">Tamanho</TableHead>
                     <TableHead className="text-white/70 text-right">Tabela</TableHead>
-                    <TableHead className="text-white/70 text-right">Desc./Créd.</TableHead>
                     <TableHead className="text-white/70 text-right">Valor Unit.</TableHead>
                     <TableHead className="text-white/70 text-center">Qtd</TableHead>
                     <TableHead className="text-white/70 text-right">Valor Total</TableHead>
+                    <TableHead className="text-white/70 text-right">Desc./Créd.</TableHead>
                     <TableHead className="text-white/70 text-right">Lucro</TableHead>
                     <TableHead className="text-white/70 text-right">Margem %</TableHead>
                     <TableHead className="text-white/70 text-right">Status</TableHead>
@@ -729,14 +729,14 @@ export default function FaturamentoVendaMinimalista() {
                         <TableCell className="text-right text-blue-400">
                           {formatCurrency(((produto.valor_produto || 0) + (produto.valor_pintura || 0) + (produto.tipo_produto !== 'porta_enrolar' ? (produto.valor_instalacao || 0) : 0)) * (produto.quantidade || 1))}
                         </TableCell>
+                        <TableCell className="text-right text-white/80">{formatCurrency(valorUnitario)}</TableCell>
+                        <TableCell className="text-center text-white/80">{produto.quantidade}</TableCell>
+                        <TableCell className="text-right font-medium text-white">{formatCurrency(valorTotalLinha)}</TableCell>
                         <TableCell className={`text-right ${isNegative ? 'text-green-400' : (hasDesconto ? 'text-red-400' : 'text-white/40')}`}>
                           {hasDesconto || hasCredito ? (
                             <span>{isNegative ? '+' : '-'}{descontoLabel}</span>
                           ) : '-'}
                         </TableCell>
-                        <TableCell className="text-right text-white/80">{formatCurrency(valorUnitario)}</TableCell>
-                        <TableCell className="text-center text-white/80">{produto.quantidade}</TableCell>
-                        <TableCell className="text-right font-medium text-white">{formatCurrency(valorTotalLinha)}</TableCell>
                         <TableCell className={`text-right ${temLucro ? (produto.lucro_item! >= 0 ? 'text-green-400' : 'text-red-400') : 'text-white/40'}`}>{temLucro ? formatCurrency(produto.lucro_item!) : '-'}</TableCell>
                         <TableCell className="text-right text-white/80">{temLucro && valorTotalLinha > 0 ? `${((produto.lucro_item! / valorTotalLinha) * 100).toFixed(1)}%` : '-'}</TableCell>
                         <TableCell className="text-right">
@@ -764,10 +764,10 @@ export default function FaturamentoVendaMinimalista() {
                       <TableCell className="font-medium text-white">Serviço de Instalação</TableCell>
                       <TableCell className="text-white/60">-</TableCell>
                       <TableCell className="text-right text-white/60">-</TableCell>
-                      <TableCell className="text-right text-white/60">-</TableCell>
                       <TableCell className="text-right text-white/80">{formatCurrency(valorInstalacao)}</TableCell>
                       <TableCell className="text-center text-white/80">1</TableCell>
                       <TableCell className="text-right font-medium text-white">{formatCurrency(valorInstalacao)}</TableCell>
+                      <TableCell className="text-right text-white/60">-</TableCell>
                       <TableCell className="text-right text-white/80">{formatCurrency(lucroInstalacaoCalculado)}</TableCell>
                       <TableCell className="text-right text-white/80">30.0%</TableCell>
                       <TableCell className="text-right">
@@ -816,9 +816,9 @@ export default function FaturamentoVendaMinimalista() {
                       <TableRow className="bg-white/10 border-t border-white/20">
                         <TableCell colSpan={3} className="font-bold text-white text-sm">Total Geral</TableCell>
                         <TableCell className="text-right font-bold text-blue-400">{formatCurrency(totalTabela)}</TableCell>
-                        <TableCell className="text-right font-bold text-red-400">{totalDesconto > 0 ? formatCurrency(totalDesconto) : '-'}</TableCell>
                         <TableCell colSpan={2} />
                         <TableCell className="text-right font-bold text-white">{formatCurrency(totalValor)}</TableCell>
+                        <TableCell className="text-right font-bold text-red-400">{totalDesconto > 0 ? formatCurrency(totalDesconto) : '-'}</TableCell>
                         <TableCell className={`text-right font-bold ${totalLucroGeral >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatCurrency(totalLucroGeral)}</TableCell>
                         <TableCell className={`text-right font-bold ${margemGeral >= 0 ? 'text-green-400' : 'text-red-400'}`}>{margemGeral.toFixed(1)}%</TableCell>
                         <TableCell />
