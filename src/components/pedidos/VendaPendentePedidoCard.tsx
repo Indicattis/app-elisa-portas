@@ -737,6 +737,49 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Dialog Concluir Direto (Aprovação Diretor) */}
+      <Dialog open={showConcluirDireto} onOpenChange={setShowConcluirDireto}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base">Concluir Direto — Arquivo Morto</DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3 pt-2">
+                <p className="text-sm">
+                  Você está prestes a criar o pedido de <strong>{venda.cliente_nome}</strong> e enviá-lo diretamente para o <strong>Arquivo Morto</strong>.
+                </p>
+                <p className="text-sm font-medium">Valor: {formatCurrency(venda.valor_venda || 0)}</p>
+                <div className="rounded-md border border-border bg-muted/50 p-3 space-y-1.5">
+                  <p className="text-xs font-semibold text-foreground">O que vai acontecer:</p>
+                  <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>O pedido de produção será <strong>criado</strong></li>
+                    <li>Será imediatamente <strong>arquivado</strong> (finalizado)</li>
+                    <li>Movimentação registrada no <strong>histórico do pedido</strong></li>
+                    <li>Enviado para <strong>Arquivo Morto</strong></li>
+                  </ul>
+                </div>
+                <p className="text-xs text-destructive font-medium">⚠ Esta ação não pode ser desfeita facilmente.</p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowConcluirDireto(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConcluirDireto}
+              disabled={isConcluindoDireto}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isConcluindoDireto ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Archive className="h-4 w-4 mr-2" />
+              )}
+              Confirmar Arquivamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }
