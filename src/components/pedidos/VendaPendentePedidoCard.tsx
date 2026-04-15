@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { GripVertical, Hammer, Truck, Wrench, Plus, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { GripVertical, Hammer, Truck, Wrench, Plus, Loader2, AlertTriangle, CheckCircle2, Archive } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -49,6 +49,8 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showFinalizarDireto, setShowFinalizarDireto] = useState(false);
   const [isFinalizandoDireto, setIsFinalizandoDireto] = useState(false);
+  const [showConcluirDireto, setShowConcluirDireto] = useState(false);
+  const [isConcluindoDireto, setIsConcluindoDireto] = useState(false);
 
   const atendenteIniciais = venda.atendente_nome
     ? venda.atendente_nome.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
@@ -139,6 +141,72 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
     }
   };
 
+  const handleConcluirDireto = async () => {
+    setIsConcluindoDireto(true);
+    try {
+      // 1. Create pedido from venda
+      const pedidoId = await createPedidoFromVenda(venda.id);
+      if (!pedidoId) {
+        toast.error("Erro ao criar pedido");
+        return;
+      }
+
+      // 2. Get authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Não autenticado');
+
+      // 3. Close aprovacao_diretor etapa
+      await supabase
+        .from('pedidos_etapas')
+        .update({ data_saida: new Date().toISOString() })
+        .eq('pedido_id', pedidoId)
+        .eq('etapa', 'aberto');
+
+      // 4. Upsert finalizado etapa
+      await supabase
+        .from('pedidos_etapas')
+        .upsert({
+          pedido_id: pedidoId,
+          etapa: 'finalizado',
+          checkboxes: [],
+          data_entrada: new Date().toISOString(),
+        }, { onConflict: 'pedido_id,etapa' });
+
+      // 5. Archive the pedido
+      await supabase
+        .from('pedidos_producao')
+        .update({
+          etapa_atual: 'finalizado',
+          arquivado: true,
+          data_arquivamento: new Date().toISOString(),
+          arquivado_por: user.id,
+        })
+        .eq('id', pedidoId);
+
+      // 6. Log movement
+      await supabase.from('pedidos_movimentacoes').insert({
+        pedido_id: pedidoId,
+        user_id: user.id,
+        etapa_origem: 'aprovacao_diretor',
+        etapa_destino: 'finalizado',
+        teor: 'finalizacao_direta',
+        descricao: 'Pedido criado e arquivado diretamente pelo diretor',
+      });
+
+      toast.success("Pedido criado e arquivado com sucesso");
+      queryClient.invalidateQueries({ queryKey: ["vendas-pendente-pedido"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-etapas"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-contadores"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-aprovacao-diretor"] });
+    } catch (error) {
+      console.error('Error in concluir direto:', error);
+      toast.error("Erro ao concluir direto");
+    } finally {
+      setIsConcluindoDireto(false);
+      setShowConcluirDireto(false);
+    }
+  };
+
   return (
     <TooltipProvider>
       <Card
@@ -150,7 +218,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
             className="grid items-center gap-1.5 h-full px-2 w-full"
             style={{ gridTemplateColumns: mode === 'faturamento'
               ? '24px 1fr 100px 60px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 70px 30px 30px'
-              : '20px 24px 1fr 100px 60px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 30px 30px 20px'
+              : '20px 24px 1fr 100px 60px 50px 50px 60px 65px 80px 35px 35px 55px 70px 70px 60px 30px 30px 30px 20px'
             }}
           >
             {/* Drag handle - only in pedido mode */}
@@ -588,6 +656,30 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                     </AlertDialogContent>
                   </AlertDialog>
                 </div>
+
+                {/* Concluir Direto (Arquivo Morto) */}
+                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        disabled={isConcluindoDireto}
+                        className="flex h-[20px] w-full rounded-[3px] border-red-500/50 text-red-600 hover:bg-red-500/10"
+                        onClick={() => setShowConcluirDireto(true)}
+                      >
+                        {isConcluindoDireto ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Archive className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Concluir Direto (Arquivo Morto)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               </>
             )}
 
@@ -641,6 +733,49 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                 <CheckCircle2 className="h-4 w-4 mr-2" />
               )}
               Confirmar Finalização
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Dialog Concluir Direto (Aprovação Diretor) */}
+      <Dialog open={showConcluirDireto} onOpenChange={setShowConcluirDireto}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base">Concluir Direto — Arquivo Morto</DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3 pt-2">
+                <p className="text-sm">
+                  Você está prestes a criar o pedido de <strong>{venda.cliente_nome}</strong> e enviá-lo diretamente para o <strong>Arquivo Morto</strong>.
+                </p>
+                <p className="text-sm font-medium">Valor: {formatCurrency(venda.valor_venda || 0)}</p>
+                <div className="rounded-md border border-border bg-muted/50 p-3 space-y-1.5">
+                  <p className="text-xs font-semibold text-foreground">O que vai acontecer:</p>
+                  <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>O pedido de produção será <strong>criado</strong></li>
+                    <li>Será imediatamente <strong>arquivado</strong> (finalizado)</li>
+                    <li>Movimentação registrada no <strong>histórico do pedido</strong></li>
+                    <li>Enviado para <strong>Arquivo Morto</strong></li>
+                  </ul>
+                </div>
+                <p className="text-xs text-destructive font-medium">⚠ Esta ação não pode ser desfeita facilmente.</p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowConcluirDireto(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConcluirDireto}
+              disabled={isConcluindoDireto}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isConcluindoDireto ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Archive className="h-4 w-4 mr-2" />
+              )}
+              Confirmar Arquivamento
             </Button>
           </DialogFooter>
         </DialogContent>
