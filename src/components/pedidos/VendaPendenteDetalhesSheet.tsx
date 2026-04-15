@@ -666,6 +666,45 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
             </div>
           </div>
 
+          {/* Descontos por Faixa */}
+          {descontoTiers && (
+            <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+              <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <Percent className="h-3.5 w-3.5 text-red-400" />
+                Descontos por Faixa ({descontoTiers.totalPct.toFixed(1)}% total)
+              </h3>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-white/5 rounded-lg border border-white/10 p-2.5 text-center">
+                  <p className="text-[9px] text-white/40 uppercase font-medium mb-1">Cartão</p>
+                  <p className={cn("text-sm font-bold", descontoTiers.cartao.pct > 0 ? "text-red-400" : "text-white/20")}>
+                    {descontoTiers.cartao.pct > 0 ? `${descontoTiers.cartao.pct.toFixed(1)}%` : '—'}
+                  </p>
+                  {descontoTiers.cartao.pct > 0 && (
+                    <p className="text-[10px] text-red-400/70 mt-0.5">-{formatCurrency(descontoTiers.cartao.valor)}</p>
+                  )}
+                </div>
+                <div className="bg-white/5 rounded-lg border border-white/10 p-2.5 text-center">
+                  <p className="text-[9px] text-white/40 uppercase font-medium mb-1">Gelo</p>
+                  <p className={cn("text-sm font-bold", descontoTiers.gelo.pct > 0 ? "text-red-400" : "text-white/20")}>
+                    {descontoTiers.gelo.pct > 0 ? `${descontoTiers.gelo.pct.toFixed(1)}%` : '—'}
+                  </p>
+                  {descontoTiers.gelo.pct > 0 && (
+                    <p className="text-[10px] text-red-400/70 mt-0.5">-{formatCurrency(descontoTiers.gelo.valor)}</p>
+                  )}
+                </div>
+                <div className="bg-white/5 rounded-lg border border-white/10 p-2.5 text-center">
+                  <p className="text-[9px] text-white/40 uppercase font-medium mb-1">Luan/Alana</p>
+                  <p className={cn("text-sm font-bold", descontoTiers.responsavel.pct > 0 ? "text-orange-400" : "text-white/20")}>
+                    {descontoTiers.responsavel.pct > 0 ? `${descontoTiers.responsavel.pct.toFixed(1)}%` : '—'}
+                  </p>
+                  {descontoTiers.responsavel.pct > 0 && (
+                    <p className="text-[10px] text-orange-400/70 mt-0.5">-{formatCurrency(descontoTiers.responsavel.valor)}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Portas Info */}
           {venda.portas_info.length > 0 && (
             <div className="bg-white/5 rounded-xl border border-white/10 p-4">
