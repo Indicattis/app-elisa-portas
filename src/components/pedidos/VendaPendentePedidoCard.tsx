@@ -389,12 +389,57 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
             </div>
 
             {mode === 'faturamento' ? (
-              /* Faturar link */
-              <div className="flex items-center justify-center col-span-1">
-                <span className="text-[10px] font-medium text-yellow-400/80 group-hover:text-yellow-400 transition-colors whitespace-nowrap">
-                  Faturar →
-                </span>
-              </div>
+              <>
+                {/* Faturar link */}
+                <div className="flex items-center justify-center">
+                  <span className="text-[10px] font-medium text-yellow-400/80 group-hover:text-yellow-400 transition-colors whitespace-nowrap">
+                    Faturar →
+                  </span>
+                </div>
+
+                {/* Dispensar Pedido */}
+                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                  <AlertDialog>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            disabled={isDispensando}
+                            className="flex h-[20px] w-full rounded-[3px] border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
+                          >
+                            {isDispensando ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <AlertTriangle className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </AlertDialogTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">Concluir sem pedido</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Dispensar Pedido de Produção</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta venda será marcada como concluída e não aparecerá mais nesta aba.
+                          <br />
+                          Cliente: <strong>{venda.cliente_nome}</strong>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDispensarPedido}>
+                          Confirmar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </>
             ) : (
               <>
                 {/* Criar Pedido */}
