@@ -869,11 +869,26 @@ export default function GestaoFabricaDirecao() {
                 </div>
               </CardHeader>
               <CardContent className="px-4 py-4">
+                {/* Vendas faturadas aguardando criação de pedido - apenas na aba aprovacao_diretor */}
+                {etapaAtiva === 'aprovacao_diretor' && vendasPendentePedido.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-medium text-white/70 mb-2 flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-blue-400" />
+                      <span>Vendas Faturadas Aguardando Pedido</span>
+                      <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">{vendasPendentePedido.length}</Badge>
+                    </h3>
+                    <VendasPendenteDraggableList
+                      vendas={vendasPendenteFiltradas}
+                      onReorganizar={handleReorganizarVendas}
+                    />
+                  </div>
+                )}
+
                 {isLoading ? (
                   <div className="text-center py-8 text-white/60">
                     Carregando...
                   </div>
-                ) : pedidosFiltrados.length === 0 && !(etapaAtiva === 'instalacoes' && neoInstalacoes.length > 0) && !(etapaAtiva === 'correcoes' && neoCorrecoes.length > 0) && !(etapaAtiva === 'finalizado' && (neoInstalacoesFinalizadas.length > 0 || neoCorrecoesFinalizadas.length > 0)) ? (
+                ) : pedidosFiltrados.length === 0 && !(etapaAtiva === 'aprovacao_diretor' && vendasPendentePedido.length > 0) && !(etapaAtiva === 'instalacoes' && neoInstalacoes.length > 0) && !(etapaAtiva === 'correcoes' && neoCorrecoes.length > 0) && !(etapaAtiva === 'finalizado' && (neoInstalacoesFinalizadas.length > 0 || neoCorrecoesFinalizadas.length > 0)) ? (
                   <div className="text-center py-8 text-white/60">
                     {searchTerm ? 'Nenhum pedido encontrado' : 'Nenhum pedido nesta etapa'}
                   </div>
