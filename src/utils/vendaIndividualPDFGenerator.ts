@@ -77,7 +77,8 @@ export const generateVendaPDF = (data: VendaPDFData) => {
       acessorio: 'Acessório',
       manutencao: 'Manutenção',
       adicional: 'Adicional',
-      pintura_epoxi: 'Pintura Epóxi'
+      pintura_epoxi: 'Pintura Epóxi',
+      instalacao: 'Instalação',
     };
     return labels[tipo] || tipo;
   };
