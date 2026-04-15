@@ -656,6 +656,30 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                     </AlertDialogContent>
                   </AlertDialog>
                 </div>
+
+                {/* Concluir Direto (Arquivo Morto) */}
+                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        disabled={isConcluindoDireto}
+                        className="flex h-[20px] w-full rounded-[3px] border-red-500/50 text-red-600 hover:bg-red-500/10"
+                        onClick={() => setShowConcluirDireto(true)}
+                      >
+                        {isConcluindoDireto ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Archive className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Concluir Direto (Arquivo Morto)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               </>
             )}
 
