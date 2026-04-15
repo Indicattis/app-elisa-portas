@@ -801,7 +801,7 @@ export default function FaturamentoVendaMinimalista() {
                           {produto.tamanho || "-"}
                         </TableCell>
                         <TableCell className="text-right text-white/80">
-                          {formatCurrency(((produto.valor_produto || 0) + (produto.valor_pintura || 0) + (produto.valor_instalacao || 0)) * (produto.quantidade || 1))}
+                          {formatCurrency(((produto.valor_produto || 0) + (produto.valor_pintura || 0) + (produto.tipo_produto !== 'porta_enrolar' ? (produto.valor_instalacao || 0) : 0)) * (produto.quantidade || 1))}
                         </TableCell>
                         <TableCell className="text-right text-orange-400">
                           {desconto}
