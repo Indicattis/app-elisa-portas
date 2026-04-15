@@ -1075,18 +1075,33 @@ export default function FaturamentoVendaMinimalista() {
                           {formatCurrency(subtotal)}
                         </span>
                       </div>
-                      <div className="space-y-1">
-                        {parcelas.map((parcela: any) => {
+                      <div className="rounded-lg border border-white/10 overflow-hidden">
+                        {/* Header da lista */}
+                        <div className="flex items-center gap-3 px-4 py-2 bg-white/5 border-b border-white/10 text-xs font-medium text-white/40 uppercase tracking-wider">
+                          <span className="w-10">#</span>
+                          <span className="w-[130px]">Vencimento</span>
+                          <span className="flex-1 text-right">Valor</span>
+                          <span className="w-[80px] text-center">Status</span>
+                          <span className="w-6"></span>
+                        </div>
+                        {parcelas.map((parcela: any, idx: number) => {
                           const isPago = parcela.status === 'pago';
-                          const vencDate = safeParseDate(parcela.data_vencimento);
+                          const isLast = idx === parcelas.length - 1;
                           return (
-                            <div key={parcela.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
-                              <span className="text-xs font-medium text-white/60 w-16 shrink-0">#{parcela.numero_parcela}</span>
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                <CalendarIcon className="h-3 w-3 text-white/40" />
+                            <div
+                              key={parcela.id}
+                              className={cn(
+                                "flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-white/5 group",
+                                !isLast && "border-b border-white/5",
+                                isPago && "bg-emerald-500/[0.03]"
+                              )}
+                            >
+                              <span className="text-sm font-mono font-medium text-white/50 w-10">{parcela.numero_parcela}</span>
+                              <div className="flex items-center gap-1.5 w-[130px] shrink-0">
+                                <CalendarIcon className="h-3.5 w-3.5 text-white/30" />
                                 <input
                                   type="date"
-                                  className="text-xs text-white/80 bg-transparent border-none focus:outline-none w-[110px] [color-scheme:dark]"
+                                  className="text-sm text-white/80 bg-transparent border-none focus:outline-none w-[110px] [color-scheme:dark] cursor-pointer"
                                   defaultValue={parcela.data_vencimento}
                                   onBlur={(e) => {
                                     const newVal = e.target.value;
@@ -1096,38 +1111,40 @@ export default function FaturamentoVendaMinimalista() {
                                   }}
                                 />
                               </div>
-                              <input
-                                type="number"
-                                step="0.01"
-                                className="flex-1 min-w-[100px] max-w-[140px] text-sm font-semibold text-white bg-transparent border-none focus:outline-none text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                defaultValue={parcela.valor_parcela}
-                                onBlur={(e) => {
-                                  const newVal = parseFloat(e.target.value);
-                                  if (!isNaN(newVal) && newVal !== parcela.valor_parcela) {
-                                    handleUpdatePagamento(parcela.id, 'valor_parcela', newVal);
-                                  }
-                                }}
-                              />
-                              <button
-                                onClick={() => handleUpdatePagamento(parcela.id, 'status', isPago ? 'pendente' : 'pago')}
-                                className={cn(
-                                  "text-xs px-2 py-0.5 rounded-full font-medium cursor-pointer transition-colors shrink-0",
-                                  isPago ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30" : "bg-amber-500/20 text-amber-400 hover:bg-amber-500/30"
-                                )}
-                              >
-                                {isPago ? 'Pago' : 'Pendente'}
-                              </button>
-                              {isPago && parcela.data_pagamento && (
-                                <span className="text-xs text-emerald-400/70 shrink-0">
-                                  {(() => { const d = safeParseDate(parcela.data_pagamento); return d ? format(d, 'dd/MM', { locale: ptBR }) : ""; })()}
-                                </span>
-                              )}
+                              <div className="flex-1 flex items-center justify-end">
+                                <span className="text-white/30 text-sm mr-1">R$</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  className="w-[100px] text-sm font-semibold text-white bg-transparent border-none focus:outline-none text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  defaultValue={parcela.valor_parcela}
+                                  onBlur={(e) => {
+                                    const newVal = parseFloat(e.target.value);
+                                    if (!isNaN(newVal) && newVal !== parcela.valor_parcela) {
+                                      handleUpdatePagamento(parcela.id, 'valor_parcela', newVal);
+                                    }
+                                  }}
+                                />
+                              </div>
+                              <div className="w-[80px] flex justify-center">
+                                <button
+                                  onClick={() => handleUpdatePagamento(parcela.id, 'status', isPago ? 'pendente' : 'pago')}
+                                  className={cn(
+                                    "text-xs px-2.5 py-1 rounded-full font-medium cursor-pointer transition-all",
+                                    isPago
+                                      ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 ring-1 ring-emerald-500/20"
+                                      : "bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 ring-1 ring-amber-500/20"
+                                  )}
+                                >
+                                  {isPago ? '✓ Pago' : 'Pendente'}
+                                </button>
+                              </div>
                               <button
                                 onClick={() => setConfirmRemoveId(parcela.id)}
-                                className="text-red-400/50 hover:text-red-400 transition-colors p-0.5 shrink-0"
+                                className="w-6 flex justify-center text-white/0 group-hover:text-red-400/60 hover:!text-red-400 transition-colors"
                                 title="Excluir parcela"
                               >
-                                <Trash2 className="h-3 w-3" />
+                                <Trash2 className="h-3.5 w-3.5" />
                               </button>
                             </div>
                           );
