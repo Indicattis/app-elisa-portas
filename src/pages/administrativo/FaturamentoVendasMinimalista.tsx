@@ -689,12 +689,22 @@ export default function FaturamentoMinimalista() {
       case 'expedicao':
         if (venda.tipo_entrega === 'instalacao') return <Hammer className="h-4 w-4 text-cyan-400 mx-auto" />;
         return <Truck className="h-4 w-4 text-orange-400 mx-auto" />;
+      case 'tabela':
+        const tabelaTotal = (venda.portas || []).reduce((acc: number, p: any) => {
+          const qty = p.quantidade || 1;
+          return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+        }, 0);
+        return <span className="text-blue-400 font-medium">{formatCurrency(tabelaTotal)}</span>;
       case 'desconto_acrescimo':
         const totalDesconto = (venda.portas || []).reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
         const acrescimo = venda.valor_credito || 0;
-        const saldo = acrescimo - totalDesconto;
-        if (saldo === 0) return <span className="text-white/30">-</span>;
-        return <span className={saldo > 0 ? 'text-green-400' : 'text-red-400'}>{saldo > 0 ? `+${formatCurrency(saldo)}` : formatCurrency(saldo)}</span>;
+        if (totalDesconto === 0 && acrescimo === 0) return <span className="text-white/30">-</span>;
+        return (
+          <div className="flex flex-col items-end gap-0.5">
+            {totalDesconto > 0 && <span className="text-red-400">-{formatCurrency(totalDesconto)}</span>}
+            {acrescimo !== 0 && <span className={acrescimo > 0 ? 'text-green-400' : 'text-red-400'}>{acrescimo > 0 ? '+' : ''}{formatCurrency(acrescimo)}</span>}
+          </div>
+        );
       case 'tempo_sem_faturar':
         if (isFaturada(venda)) return <span className="text-green-400/60 text-xs">Faturada</span>;
         const dias = differenceInDays(new Date(), new Date(venda.data_venda));
