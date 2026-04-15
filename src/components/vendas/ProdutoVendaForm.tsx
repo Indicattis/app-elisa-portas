@@ -62,7 +62,7 @@ export function ProdutoVendaForm({
   useEffect(() => {
     if (produtoEditando) {
       setFormData(produtoEditando);
-      setIncluirInstalacao((produtoEditando.valor_instalacao || 0) > 0);
+      setIncluirInstalacao(false); // Instalação agora é produto separado
     } else {
       // Resetar formulário quando não há produto para editar
       setFormData({
