@@ -64,8 +64,10 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
           produtos_vendas (
             id, tipo_produto, tamanho, quantidade, largura, altura,
             valor_produto, valor_pintura, valor_instalacao, valor_total,
+            desconto_percentual, desconto_valor, tipo_desconto,
             descricao, faturamento,
-            catalogo_cores (nome, codigo_hex)
+            catalogo_cores (nome, codigo_hex),
+            vendas_catalogo (nome)
           )
         `)
         .eq("id", venda.id)
