@@ -1,54 +1,38 @@
 
 
-## Fluxo Completo do Sistema de Descontos
+## Dividir Coluna de Desconto em 3 Tiers
 
-### 1. Configuração (Regras de Vendas)
-- **Tabela `configuracoes_vendas`** armazena:
-  - `limite_desconto_avista` (padrão 3%) — para pagamentos que não sejam cartão de crédito
-  - `limite_desconto_presencial` (padrão 5%) — adicional para vendas presenciais
-  - `limite_adicional_responsavel` (padrão 5%) — adicional com senha do responsável
-  - `senha_responsavel` e `senha_master` — senhas para autorização
-- Gerenciado em `/direcao/vendas/regras-vendas`
+### O que muda
+A coluna "Desc./Créd." será substituída por 3 sub-colunas mostrando quanto do desconto total se encaixa em cada faixa de autorização:
 
-### 2. Aplicação do Desconto (Modal `DescontoVendaModal`)
-- Vendedor seleciona produtos e define desconto (% ou valor fixo)
-- O desconto é distribuído proporcionalmente entre os produtos selecionados
-- Cada produto recebe campos: `tipo_desconto` ('percentual' | 'valor'), `desconto_percentual`, `desconto_valor`
-- O modal mostra preview e badges indicando se está dentro do limite, requer senha do responsável ou senha master
+| Cartão (3%) | Gelo (5%) | Luan/Alana (5%) |
+|---|---|---|
+| Desc. à vista | Desc. presencial | Desc. c/ senha responsável |
 
-### 3. Cálculo de Limites (`descontoVendasRules.ts`)
-```text
-Limite Base = pagamento não-cartão? 3% : 0%
-Limite Presencial = venda presencial? 5% : 0%
-Limite Total (sem senha) = Base + Presencial (ex: 8%)
-Limite Máximo (com responsável) = Total + 5% (ex: 13%)
-Com senha master = SEM LIMITE
-```
+### Lógica de cálculo
+Para cada venda, o desconto total (%) é distribuído nas faixas em cascata:
+1. **Cartão**: `min(desconto%, limite_avista)` — só se `forma_pagamento ≠ cartao_credito`
+2. **Gelo**: `min(restante%, limite_presencial)` — só se `venda_presencial = true`
+3. **Luan/Alana**: qualquer excedente acima das 2 faixas anteriores
 
-### 4. Validação no Submit (`VendaNovaMinimalista.tsx`)
-- Ao submeter a venda, `validarDesconto()` calcula o % total de desconto sobre o total da venda
-- Se dentro do limite → venda criada normalmente
-- Se excede limite mas ≤ limite máximo → abre `AutorizacaoDescontoModal` pedindo senha do responsável (líder de vendas)
-- Se excede limite máximo → abre modal pedindo senha master
+Se a venda é com cartão de crédito, a faixa "Cartão" fica zerada e o desconto vai direto para "Gelo" (se presencial) ou "Luan/Alana".
 
-### 5. Persistência no Banco
-- **`produtos_vendas`**: cada linha salva com `tipo_desconto`, `desconto_percentual`, `desconto_valor` (itens com qty ≥ 2 são splitados em linhas individuais com qty=1, mantendo o desconto por unidade)
-- **`vendas`**: `valor_venda` = total já com desconto aplicado; `valor_credito` e `percentual_credito` a nível de venda
-- **`vendas_autorizacoes_desconto`**: registro de autorização com `tipo_autorizacao` (responsavel_setor | master), `autorizado_por`, `solicitado_por`, `percentual_desconto`, `senha_usada`
+### Alterações técnicas
 
-### 6. Fluxo de Edição (`VendaEditarMinimalista.tsx`)
-- O desconto pode ser reaplicado via o mesmo modal
-- Atualiza diretamente os `produtos_vendas` no banco e recalcula `valor_venda`
+**`src/pages/administrativo/FaturamentoVendasMinimalista.tsx`**:
 
-### 7. Restrições Importantes
-- Desconto e crédito são **mutuamente exclusivos** — aplicar desconto zera o crédito e vice-versa
-- Vendas com crédito não podem ter desconto
-- O `valor_total` de cada produto no banco já inclui o desconto aplicado (calculado como `(valor_produto + valor_pintura + valor_instalacao) * qty - desconto`)
+1. **Query**: Adicionar `venda_presencial` e `forma_pagamento` ao select do Supabase
+2. **Interface Venda**: Adicionar campos `venda_presencial?: boolean` e `forma_pagamento?: string`
+3. **Colunas**: Substituir `desconto_acrescimo` por 3 colunas:
+   - `desc_cartao` (label: "Cartão")
+   - `desc_gelo` (label: "Gelo")  
+   - `desc_responsavel` (label: "Luan/Alana")
+4. **Buscar limites**: Usar `useConfiguracoesVendas()` para obter os limites configurados do banco
+5. **Renderização**: Cada sub-coluna mostra o valor em R$ (vermelho) correspondente àquela faixa, ou `-` se zero. Crédito permanece na coluna existente ou será removido (já está no lucro)
+6. **Sorting/alignment**: Manter text-right e hidden-on-mobile para as 3 novas colunas
 
-### Observação sobre `senha_usada`
-No código de `VendaNovaMinimalista.tsx` linha 551, a senha é hardcoded como `'1qazxsw2'` — a senha real digitada pelo autorizador não está sendo passada para o registro. Isso pode ser intencional (não armazenar a senha real) ou um bug.
-
----
-
-Esse é o fluxo completo. Quer que eu faça alguma alteração nesse sistema?
+### Exibição visual
+- Valores em vermelho (`text-red-400`) com prefixo `-`
+- Se o desconto daquela faixa = 0, mostra `-` em `text-white/30`
+- Header com tooltip explicando cada faixa
 
