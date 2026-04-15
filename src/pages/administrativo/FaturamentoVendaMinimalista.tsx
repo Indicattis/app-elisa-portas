@@ -721,6 +721,22 @@ export default function FaturamentoVendaMinimalista() {
                         ? formatCurrency(Math.abs(produto.desconto_valor))
                         : '-';
                     const isNegative = (produto.desconto_percentual && produto.desconto_percentual < 0) || (produto.desconto_valor && produto.desconto_valor < 0);
+                    // Calcular desconto em valor absoluto para subtrair do lucro
+                    const descontoValorAbs = (() => {
+                      const qty = produto.quantidade || 1;
+                      if (produto.tipo_desconto === 'percentual' && produto.desconto_percentual > 0) {
+                        const base = ((produto.valor_produto || 0) + (produto.valor_pintura || 0) + (produto.valor_instalacao || 0)) * qty;
+                        return base * (produto.desconto_percentual / 100);
+                      }
+                      if (produto.desconto_valor && produto.desconto_valor > 0) return produto.desconto_valor;
+                      return 0;
+                    })();
+                    // Crédito (valor negativo no desconto = acréscimo ao lucro)
+                    const creditoValorAbs = (() => {
+                      if (produto.desconto_valor && produto.desconto_valor < 0) return Math.abs(produto.desconto_valor);
+                      return 0;
+                    })();
+                    const lucroAjustado = temLucro ? (produto.lucro_item! - descontoValorAbs + creditoValorAbs) : null;
                     return (
                       <TableRow key={produto.id} className="border-white/10 hover:bg-white/5">
                         <TableCell className="text-sm text-white/80">{getTipoProdutoLabel(produto.tipo_produto)}</TableCell>
@@ -737,8 +753,8 @@ export default function FaturamentoVendaMinimalista() {
                             <span>{isNegative ? '+' : '-'}{descontoLabel}</span>
                           ) : '-'}
                         </TableCell>
-                        <TableCell className={`text-right ${temLucro ? (produto.lucro_item! >= 0 ? 'text-green-400' : 'text-red-400') : 'text-white/40'}`}>{temLucro ? formatCurrency(produto.lucro_item!) : '-'}</TableCell>
-                        <TableCell className="text-right text-white/80">{temLucro && valorTotalLinha > 0 ? `${((produto.lucro_item! / valorTotalLinha) * 100).toFixed(1)}%` : '-'}</TableCell>
+                        <TableCell className={`text-right ${lucroAjustado !== null ? (lucroAjustado >= 0 ? 'text-green-400' : 'text-red-400') : 'text-white/40'}`}>{lucroAjustado !== null ? formatCurrency(lucroAjustado) : '-'}</TableCell>
+                        <TableCell className="text-right text-white/80">{lucroAjustado !== null && valorTotalLinha > 0 ? `${((lucroAjustado / valorTotalLinha) * 100).toFixed(1)}%` : '-'}</TableCell>
                         <TableCell className="text-right">
                           {produto.faturamento ? (
                             <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"><CheckCircle2 className="w-3 h-3 mr-1" />Faturado</Badge>
