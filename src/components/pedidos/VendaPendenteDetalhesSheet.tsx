@@ -64,8 +64,10 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
           produtos_vendas (
             id, tipo_produto, tamanho, quantidade, largura, altura,
             valor_produto, valor_pintura, valor_instalacao, valor_total,
+            desconto_percentual, desconto_valor, tipo_desconto,
             descricao, faturamento,
-            catalogo_cores (nome, codigo_hex)
+            catalogo_cores (nome, codigo_hex),
+            vendas_catalogo (nome)
           )
         `)
         .eq("id", venda.id)
@@ -366,64 +368,124 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                 <ChevronDown className={cn("h-4 w-4 text-white/60 transition-transform duration-200", itensOpen && "rotate-180")} />
               </div>
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 space-y-1.5 pl-2">
+            <CollapsibleContent className="mt-2 pl-0">
               {loading ? (
                 <div className="text-sm text-white/50 p-2">Carregando...</div>
               ) : produtos.length > 0 ? (
-                produtos.map((produto: any, idx: number) => {
-                  const tipo = produto.tipo_produto;
-                  const qtd = produto.quantidade || 1;
-                  const cor = produto.catalogo_cores;
-                  const nomeMap: Record<string, string> = {
-                    porta_enrolar: 'Porta de Enrolar',
-                    pintura_epoxi: 'Pintura Epóxi',
-                    motor: 'Motor',
-                    acessorio: 'Acessório',
-                    adicional: 'Adicional',
-                  };
-                  const nome = (tipo === 'acessorio' || tipo === 'adicional') && produto.descricao
-                    ? produto.descricao
-                    : (nomeMap[tipo] || tipo);
+                <div className="rounded-lg border border-white/10 overflow-hidden">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-white/5 border-b border-white/10">
+                        <th className="text-left px-3 py-2 text-white/50 font-medium">Produto</th>
+                        <th className="text-right px-2 py-2 text-white/50 font-medium">Tabela</th>
+                        <th className="text-right px-2 py-2 text-white/50 font-medium">Desc/Acrés</th>
+                        <th className="text-right px-3 py-2 text-white/50 font-medium">Vendido</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {produtos.map((produto: any, idx: number) => {
+                        const tipo = produto.tipo_produto;
+                        const qtd = produto.quantidade || 1;
+                        const cor = produto.catalogo_cores;
+                        const catalogoNome = produto.vendas_catalogo?.nome;
+                        const nomeMap: Record<string, string> = {
+                          porta_enrolar: 'Porta de Enrolar',
+                          pintura_epoxi: 'Pintura Epóxi',
+                          motor: 'Motor',
+                          acessorio: 'Acessório',
+                          adicional: 'Adicional',
+                          manutencao: 'Manutenção',
+                        };
+                        const nome = catalogoNome 
+                          ? catalogoNome
+                          : (tipo === 'acessorio' || tipo === 'adicional') && produto.descricao
+                            ? produto.descricao
+                            : (nomeMap[tipo] || tipo);
 
-                  let tamanhoStr = '';
-                  if (tipo === 'porta_enrolar') {
-                    let larg = produto.largura || 0;
-                    let alt = produto.altura || 0;
-                    if (larg === 0 && alt === 0 && produto.tamanho) {
-                      const m = produto.tamanho.match(/(\d+[.,]?\d*)\s*[xX×]\s*(\d+[.,]?\d*)/);
-                      if (m) { larg = parseFloat(m[1].replace(',', '.')); alt = parseFloat(m[2].replace(',', '.')); }
-                    }
-                    if (larg && alt) tamanhoStr = `${larg.toFixed(2)} x ${alt.toFixed(2)}m`;
-                    else if (produto.tamanho) tamanhoStr = produto.tamanho;
-                  }
+                        let tamanhoStr = '';
+                        if (tipo === 'porta_enrolar') {
+                          let larg = produto.largura || 0;
+                          let alt = produto.altura || 0;
+                          if (larg === 0 && alt === 0 && produto.tamanho) {
+                            const m = produto.tamanho.match(/(\d+[.,]?\d*)\s*[xX×]\s*(\d+[.,]?\d*)/);
+                            if (m) { larg = parseFloat(m[1].replace(',', '.')); alt = parseFloat(m[2].replace(',', '.')); }
+                          }
+                          if (larg && alt) tamanhoStr = `${larg.toFixed(2)} x ${alt.toFixed(2)}m`;
+                          else if (produto.tamanho) tamanhoStr = produto.tamanho;
+                        }
 
-                  return (
-                    <div key={idx} className="flex items-center gap-3 p-2.5 bg-white/5 rounded-lg border border-white/5">
-                      <Package className="h-4 w-4 text-purple-400 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-white text-sm truncate">
-                          {qtd > 1 && <span>{qtd}x </span>}
-                          {nome}
-                          {tamanhoStr && <span className="text-white/40 ml-1 font-normal">{tamanhoStr}</span>}
-                        </p>
-                        {cor && (
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <div className="w-2.5 h-2.5 rounded-full border border-white/30" style={{ backgroundColor: cor.codigo_hex }} />
-                            <span className="text-[11px] text-white/50">{cor.nome}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <span className="text-sm font-medium text-white/80">{formatCurrency(produto.valor_total || 0)}</span>
-                      </div>
-                      {produto.faturamento && (
-                        <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px]">
-                          Faturado
-                        </Badge>
-                      )}
-                    </div>
-                  );
-                })
+                        // Calculate table price (valor_produto is the base/table price before discounts)
+                        const precoTabela = produto.valor_produto || 0;
+                        const valorVendido = produto.valor_total || 0;
+                        const descPerc = produto.desconto_percentual || 0;
+                        const descValor = produto.desconto_valor || 0;
+                        
+                        // Determine discount/markup display
+                        const diferenca = valorVendido - precoTabela;
+                        const temDesconto = descPerc > 0 || descValor > 0;
+                        
+                        return (
+                          <tr key={idx} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                            <td className="px-3 py-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Package className="h-3.5 w-3.5 text-purple-400 flex-shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="font-medium text-white text-xs truncate">
+                                    {qtd > 1 && <span className="text-white/60">{qtd}x </span>}
+                                    {nome}
+                                  </p>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    {tamanhoStr && (
+                                      <span className="text-[10px] text-white/40">{tamanhoStr}</span>
+                                    )}
+                                    {cor && (
+                                      <div className="flex items-center gap-1">
+                                        <div className="w-2 h-2 rounded-full border border-white/30" style={{ backgroundColor: cor.codigo_hex }} />
+                                        <span className="text-[10px] text-white/40">{cor.nome}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="text-right px-2 py-2 text-white/50 whitespace-nowrap">
+                              {formatCurrency(precoTabela)}
+                            </td>
+                            <td className="text-right px-2 py-2 whitespace-nowrap">
+                              {temDesconto ? (
+                                <span className="text-red-400">
+                                  {descPerc > 0 ? `-${descPerc}%` : `-${formatCurrency(descValor)}`}
+                                </span>
+                              ) : diferenca !== 0 ? (
+                                <span className={diferenca > 0 ? "text-green-400" : "text-red-400"}>
+                                  {diferenca > 0 ? '+' : ''}{formatCurrency(diferenca)}
+                                </span>
+                              ) : (
+                                <span className="text-white/30">—</span>
+                              )}
+                            </td>
+                            <td className="text-right px-3 py-2 font-medium text-white whitespace-nowrap">
+                              {formatCurrency(valorVendido)}
+                              {produto.faturamento && (
+                                <Badge className="ml-1 bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[8px] px-1 py-0">
+                                  Fat
+                                </Badge>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-white/5 border-t border-white/10">
+                        <td className="px-3 py-2 text-white/60 font-medium" colSpan={3}>Total</td>
+                        <td className="text-right px-3 py-2 font-semibold text-white">
+                          {formatCurrency(produtos.reduce((acc: number, p: any) => acc + (p.valor_total || 0), 0))}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
               ) : (
                 <div className="text-sm text-white/50 p-2">Nenhum item encontrado</div>
               )}
