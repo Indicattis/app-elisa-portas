@@ -84,7 +84,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
   const { userRole } = useAuth();
   const [vendaCompleta, setVendaCompleta] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [itensOpen, setItensOpen] = useState(false);
+  const [itensOpen, setItensOpen] = useState(true);
   const [pagamentoOpen, setPagamentoOpen] = useState(false);
   const [contasReceber, setContasReceber] = useState<any[]>([]);
   const [comentariosOpen, setComentariosOpen] = useState(false);
