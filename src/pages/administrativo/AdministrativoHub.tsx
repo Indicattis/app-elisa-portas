@@ -116,8 +116,8 @@ export default function AdministrativoHub() {
       </div>
 
       {/* ========== VERSÃO DESKTOP ========== */}
-      <div className="hidden md:flex relative z-10 flex-col items-center">
-        <div className="w-full max-w-md flex flex-col gap-3">
+      <div className="hidden md:flex relative z-10 flex-col items-center px-6 py-10 w-full max-w-md">
+        <div className="w-full flex flex-col gap-3">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const delay = 200 + index * 80;
