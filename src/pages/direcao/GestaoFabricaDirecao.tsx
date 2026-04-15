@@ -103,6 +103,7 @@ export default function GestaoFabricaDirecao() {
 
   const contadores = usePedidosContadores();
   const { data: vendasPendentePedido = [], isLoading: isLoadingPendentes } = useVendasPendentePedido();
+  const { data: vendasPendenteFaturamento = [], isLoading: isLoadingFaturamento } = useVendasPendenteFaturamento();
   const { data: pedidosArquivados = [], isLoading: isLoadingArquivados } = usePedidosArquivados({
     search: debouncedArquivoSearch,
     dataInicio: arquivoDataInicio || null,
