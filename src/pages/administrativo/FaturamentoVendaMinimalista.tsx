@@ -942,7 +942,7 @@ export default function FaturamentoVendaMinimalista() {
                     const margemGeral = totalValor > 0 ? (totalLucroGeral / totalValor) * 100 : 0;
                     return (
                       <TableRow className="bg-white/10 border-t border-white/20">
-                        <TableCell colSpan={6} className="font-bold text-white text-sm">
+                        <TableCell colSpan={7} className="font-bold text-white text-sm">
                           Total Geral
                         </TableCell>
                         <TableCell className="text-right font-bold text-white">
