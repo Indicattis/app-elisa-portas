@@ -731,7 +731,8 @@ export default function FaturamentoMinimalista() {
           </Avatar>
         );
       case 'cliente':
-        return <span className="text-white font-medium">{venda.cliente_nome || "Não informado"}</span>;
+        const nome = venda.cliente_nome || "Não informado";
+        return <span className="text-white font-medium" title={nome}>{nome.length > 10 ? nome.slice(0, 10) + '...' : nome}</span>;
       case 'data':
         return <span className="text-white/80">{format(new Date(venda.data_venda), "dd/MM/yy", { locale: ptBR })}</span>;
       case 'cidade':
