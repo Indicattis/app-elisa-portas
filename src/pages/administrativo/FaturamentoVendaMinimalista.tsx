@@ -766,7 +766,8 @@ export default function FaturamentoVendaMinimalista() {
                   <TableRow className="border-white/10 hover:bg-transparent">
                     <TableHead className="text-white/70">Tipo</TableHead>
                     <TableHead className="text-white/70">Produto</TableHead>
-                    <TableHead className="text-white/70">Tamanho</TableHead>
+                     <TableHead className="text-white/70">Tamanho</TableHead>
+                    <TableHead className="text-white/70 text-right">Tabela</TableHead>
                     <TableHead className="text-white/70 text-right">Desconto</TableHead>
                     <TableHead className="text-white/70 text-right">Valor Unit.</TableHead>
                     <TableHead className="text-white/70 text-center">Qtd</TableHead>
@@ -798,6 +799,9 @@ export default function FaturamentoVendaMinimalista() {
                         </TableCell>
                         <TableCell className="text-white/60">
                           {produto.tamanho || "-"}
+                        </TableCell>
+                        <TableCell className="text-right text-white/80">
+                          {formatCurrency(((produto.valor_produto || 0) + (produto.valor_pintura || 0) + (produto.valor_instalacao || 0)) * (produto.quantidade || 1))}
                         </TableCell>
                         <TableCell className="text-right text-orange-400">
                           {desconto}
@@ -867,6 +871,7 @@ export default function FaturamentoVendaMinimalista() {
                       </TableCell>
                       <TableCell className="text-white/60">-</TableCell>
                       <TableCell className="text-right text-white/60">-</TableCell>
+                      <TableCell className="text-right text-white/60">-</TableCell>
                       <TableCell className="text-right text-white/80">
                         {formatCurrency(valorInstalacao)}
                       </TableCell>
@@ -900,7 +905,7 @@ export default function FaturamentoVendaMinimalista() {
 
                   {/* Linha do Frete */}
                   <TableRow className="bg-white/5 border-white/10">
-                    <TableCell colSpan={6} className="font-semibold text-white">
+                    <TableCell colSpan={7} className="font-semibold text-white">
                       Frete
                     </TableCell>
                     <TableCell className="text-right font-semibold text-white">
@@ -914,7 +919,7 @@ export default function FaturamentoVendaMinimalista() {
                   {/* Linha do Crédito/Desconto */}
                   {(venda.valor_credito != null && venda.valor_credito !== 0) && (
                     <TableRow className="bg-white/5 border-white/10">
-                      <TableCell colSpan={6} className="font-semibold text-white">
+                      <TableCell colSpan={7} className="font-semibold text-white">
                         Crédito / Acréscimo
                       </TableCell>
                       <TableCell className="text-right font-semibold text-white">
@@ -937,7 +942,7 @@ export default function FaturamentoVendaMinimalista() {
                     const margemGeral = totalValor > 0 ? (totalLucroGeral / totalValor) * 100 : 0;
                     return (
                       <TableRow className="bg-white/10 border-t border-white/20">
-                        <TableCell colSpan={6} className="font-bold text-white text-sm">
+                        <TableCell colSpan={7} className="font-bold text-white text-sm">
                           Total Geral
                         </TableCell>
                         <TableCell className="text-right font-bold text-white">
