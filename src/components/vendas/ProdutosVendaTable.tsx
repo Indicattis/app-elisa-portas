@@ -22,6 +22,7 @@ const getTipoProdutoLabel = (tipo: string) => {
     case 'acessorio': return 'Acessório';
     case 'adicional': return 'Adicional';
     case 'manutencao': return 'Manutenção';
+    case 'instalacao': return 'Instalação';
     // Retrocompatibilidade
     case 'porta': return 'Porta de Enrolar';
     default: return tipo;
@@ -36,6 +37,7 @@ const getTipoProdutoVariant = (tipo: string): "default" | "secondary" | "outline
     case 'acessorio': return 'secondary';
     case 'adicional': return 'outline';
     case 'manutencao': return 'secondary';
+    case 'instalacao': return 'secondary';
     // Retrocompatibilidade
     case 'porta': return 'default';
     default: return 'default';

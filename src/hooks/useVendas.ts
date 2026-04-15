@@ -7,7 +7,7 @@ import { MetodoPagamento } from '@/components/vendas/MetodoPagamentoCard';
 
 export interface ProdutoVenda {
   id?: string;
-  tipo_produto: 'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'porta' | 'manutencao';
+  tipo_produto: 'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'porta' | 'manutencao' | 'instalacao';
   tamanho?: string;
   largura?: number;
   altura?: number;

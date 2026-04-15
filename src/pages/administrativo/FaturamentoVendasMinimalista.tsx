@@ -376,6 +376,7 @@ export default function FaturamentoMinimalista() {
   const calcularLucroVenda = (venda: Venda) => {
     const portas = venda.portas || [];
     const lucroProdutos = portas.reduce((acc: number, p: any) => acc + (p.lucro_item || 0), 0);
+    // lucro_instalacao é legado - para vendas novas, instalação é produto separado com lucro_item
     const lucroInstalacao = venda.lucro_instalacao || 0;
     return lucroProdutos + lucroInstalacao;
   };
@@ -511,7 +512,14 @@ export default function FaturamentoMinimalista() {
       return acc + portas.filter((p: any) => p.tipo_produto === 'pintura_epoxi')
         .reduce((sum: number, p: any) => sum + (p.valor_pintura || 0), 0);
     }, 0);
-    const valorBrutoInstalacoes = filteredVendas.reduce((acc, v) => acc + (v.valor_instalacao || 0), 0);
+    const valorBrutoInstalacoes = filteredVendas.reduce((acc, v) => {
+      // Novo: instalação como produto separado
+      const portas = v.portas || [];
+      const valorInstalacaoProdutos = portas.filter((p: any) => p.tipo_produto === 'instalacao')
+        .reduce((sum: number, p: any) => sum + (p.valor_produto || 0) * (p.quantidade || 1), 0);
+      // Legado: valor_instalacao da venda
+      return acc + valorInstalacaoProdutos + (valorInstalacaoProdutos === 0 ? (v.valor_instalacao || 0) : 0);
+    }, 0);
     const valorBrutoAcessorios = filteredVendas.reduce((acc, v) => {
       const portas = v.portas || [];
       return acc + portas.filter((p: any) => p.tipo_produto === 'acessorio')
@@ -543,7 +551,12 @@ export default function FaturamentoMinimalista() {
           .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
       }, 0),
       valorBrutoInstalacoes,
-      lucroInstalacoes: vendasFaturadas.reduce((acc, v) => acc + (v.lucro_instalacao || 0), 0),
+      lucroInstalacoes: vendasFaturadas.reduce((acc, v) => {
+        const portas = v.portas || [];
+        const lucroInstalacaoProdutos = portas.filter((p: any) => p.tipo_produto === 'instalacao')
+          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
+        return acc + lucroInstalacaoProdutos + (lucroInstalacaoProdutos === 0 ? (v.lucro_instalacao || 0) : 0);
+      }, 0),
       valorBrutoAcessorios,
       lucroAcessorios: vendasFaturadas.reduce((acc, v) => {
         const portas = v.portas || [];

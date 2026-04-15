@@ -42,12 +42,14 @@ const getTipoProdutoLabel = (tipo: string) => {
   const labels: Record<string, string> = {
     'porta': 'Porta',
     'porta_enrolar': 'Porta de Enrolar',
+    'porta_social': 'Porta Social',
     'pintura_epoxi': 'Pintura Epóxi',
     'manutencao': 'Manutenção',
     'acessorios': 'Acessórios',
     'acessorio': 'Acessórios',
     'adicionais': 'Adicionais',
     'adicional': 'Adicionais',
+    'instalacao': 'Instalação',
   };
   return labels[tipo] || tipo;
 };
@@ -62,12 +64,13 @@ const getTipoProdutoIcon = (tipo: string) => {
     'acessorio': { icon: Package, color: 'text-blue-400' },
     'adicionais': { icon: Plus, color: 'text-emerald-400' },
     'adicional': { icon: Plus, color: 'text-emerald-400' },
+    'instalacao': { icon: Wrench, color: 'text-indigo-400' },
   };
   return icons[tipo] || { icon: Package, color: 'text-white/60' };
 };
 
 // Tipos que podem ser expandidos
-const tiposExpandiveis = ['acessorios', 'acessorio', 'adicionais', 'adicional', 'manutencao', 'pintura_epoxi'];
+const tiposExpandiveis = ['acessorios', 'acessorio', 'adicionais', 'adicional', 'manutencao', 'pintura_epoxi', 'instalacao'];
 
 export default function FaturamentoProdutosMinimalista() {
   const navigate = useNavigate();
