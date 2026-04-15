@@ -732,103 +732,33 @@ export default function GestaoFabricaDirecao() {
           </TooltipProvider>
         </TabsList>
 
-        {/* Aba Pendente Faturamento */}
+        {/* Aba Pendente Faturamento - vendas NÃO faturadas */}
         <TabsContent value="pendente_pedido" className="mt-4">
           <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
             <CardHeader className="pb-3 px-4 py-4">
               <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                 <CardTitle className="text-lg flex items-center gap-2 text-white">
-                  {(() => {
-                    const resp = getResponsavel('pendente_pedido' as any);
-                    return resp ? (
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={resp.foto_perfil_url || undefined} />
-                        <AvatarFallback className="text-[8px] bg-blue-500/20 text-blue-400">
-                          {resp.nome.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    ) : (
-                      <DollarSign className="h-5 w-5 text-blue-400" />
-                    );
-                  })()}
-                  <span>Vendas Faturadas Aguardando Pedido</span>
-                  <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
-                    {vendasPendenteFiltradas.length}
+                  <DollarSign className="h-5 w-5 text-yellow-400" />
+                  <span>Vendas Pendentes de Faturamento</span>
+                  <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400">
+                    {vendasPendenteFaturamento.length}
                   </Badge>
-
-                  {/* Responsável da Etapa */}
-                  <div className="flex items-center gap-2 ml-4">
-                    {(() => {
-                      const responsavel = getResponsavel('pendente_pedido' as any);
-                      return responsavel ? (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button 
-                                onClick={() => handleAbrirModalResponsavel('pendente_pedido' as any)}
-                                className="flex items-center gap-2 px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
-                              >
-                                <Avatar className="h-6 w-6 border border-blue-500/30">
-                                  <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                                  <AvatarFallback className="text-[10px] bg-blue-500/20">
-                                    {responsavel.nome.charAt(0).toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="text-xs text-white/80">{responsavel.nome.split(' ')[0]}</span>
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-xs">Clique para alterar o responsável</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      ) : (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleAbrirModalResponsavel('pendente_pedido' as any)}
-                                className="h-7 px-2 text-white/50 hover:text-white hover:bg-white/10"
-                              >
-                                <UserPlus className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-xs">Atribuir responsável</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      );
-                    })()}
-                  </div>
                 </CardTitle>
-
-                <PedidosFiltrosMinimalista 
-                  searchTerm={searchTerm} 
-                  onSearchChange={setSearchTerm} 
-                  tipoEntrega={tipoEntrega} 
-                  onTipoEntregaChange={setTipoEntrega} 
-                  corPintura={corPintura} 
-                  onCorPinturaChange={setCorPintura} 
-                  mostrarProntos={mostrarProntos} 
-                  onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)} 
-                />
               </div>
             </CardHeader>
             <CardContent>
-              {isLoadingPendentes ? (
+              {isLoadingFaturamento ? (
                 <div className="text-center py-8 text-white/50">Carregando...</div>
-              ) : vendasPendenteFiltradas.length === 0 ? (
+              ) : vendasPendenteFaturamento.length === 0 ? (
                 <div className="text-center py-8 text-white/50">
-                  {searchTerm ? 'Nenhuma venda encontrada' : 'Nenhuma venda faturada pendente de pedido'}
+                  Todas as vendas estão faturadas
                 </div>
               ) : (
-                <VendasPendenteDraggableList
-                  vendas={vendasPendenteFiltradas}
-                  onReorganizar={handleReorganizarVendas}
-                />
+                <div className="space-y-1.5">
+                  {vendasPendenteFaturamento.map(venda => (
+                    <VendaPendenteFaturamentoCard key={venda.id} venda={venda} />
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
