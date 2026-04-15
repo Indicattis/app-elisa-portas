@@ -1,21 +1,29 @@
 
 
-## Plano: Adicionar informações da visita técnica na downbar do Carregamento
+## Plano: Ranking de Autorizados em /logistica/instalacoes
 
-### Contexto
-A downbar (`CarregamentoDownbar.tsx`) já exibe um link para a ficha de visita no header, mas faltam os contratos/anexos da venda. O componente `OrdemCarregamentoDetails.tsx` (usado na expedição) já implementa esse padrão com busca de `contratos_vendas` e exibição via Paperclip/DropdownMenu.
+### O que será feito
+Adicionar um novo item "Ranking Autorizados" no hub de instalações (`InstalacoesHub.tsx`) e criar uma nova página com ranking de parceiros autorizados, seguindo o mesmo padrão visual do ranking de equipes existente.
+
+### Fontes de dados
+- **`neo_instalacoes`**: instalações avulsas feitas por autorizados (`tipo_responsavel = 'autorizado'`, usando `autorizado_id` e `autorizado_nome`)
+- **`instalacoes`**: instalações de pedidos feitas por autorizados (via `responsavel_instalacao_id` cruzando com tabela `autorizados`)
 
 ### Alterações
 
-**Arquivo: `src/components/carregamento/CarregamentoDownbar.tsx`**
+**1. Novo hook: `src/hooks/useRankingAutorizadosInstalacao.ts`**
+- Mesmo padrão do `useRankingEquipesInstalacao.ts`: filtro por período (mês/ano/todos), agrupamento por autorizado, contagem de instalações, metragem total, detalhes
+- Busca `autorizados` ativos, depois cruza com `instalacoes` (concluídas, onde `responsavel_instalacao_id` é um autorizado) e `neo_instalacoes` (concluídas, `tipo_responsavel = 'autorizado'`)
 
-1. Adicionar query para buscar contratos da venda (`contratos_vendas`) usando `useQuery`, igual ao padrão do `OrdemCarregamentoDetails.tsx`
-2. No header, ao lado do link da ficha de visita, adicionar botão de Paperclip para contratos:
-   - Se 1 contrato: botão direto que abre o arquivo
-   - Se múltiplos: DropdownMenu listando todos
-   - Se nenhum: botão desabilitado
-3. Importar componentes necessários: `DropdownMenu`, `Tooltip`, `useQuery`, `supabase`
+**2. Nova página: `src/pages/logistica/RankingAutorizadosInstalacao.tsx`**
+- Cópia adaptada do `RankingEquipesInstalacao.tsx`
+- Mesmos componentes visuais: filtros de período, cards com medalhas, barra de progresso, dialog de detalhes
+- Sem seção de ajuste de pontuação e sem membros de equipe
+- Breadcrumb: Home > Logística > Instalações > Ranking Autorizados
 
-### Resultado
-O header da downbar terá: link da ficha de visita técnica (já existente) + botão de contratos/anexos (novo), seguindo o mesmo padrão visual da tela de expedição.
+**3. Atualizar `src/pages/logistica/InstalacoesHub.tsx`**
+- Adicionar item "Ranking Autorizados" com ícone `Award` e path `/logistica/instalacoes/ranking-autorizados`
+
+**4. Atualizar `src/App.tsx`**
+- Adicionar rota `/logistica/instalacoes/ranking-autorizados` apontando para a nova página
 
