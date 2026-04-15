@@ -219,6 +219,19 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
               </TooltipContent>
             </Tooltip>
 
+            {/* Data da Venda */}
+            <div className="text-center">
+              <span className="text-[10px] text-muted-foreground">
+                {(() => {
+                  try {
+                    if (!venda.data_venda) return '—';
+                    const d = new Date(venda.data_venda + 'T12:00:00');
+                    return isNaN(d.getTime()) ? '—' : format(d, 'dd/MM/yy', { locale: ptBR });
+                  } catch { return '—'; }
+                })()}
+              </span>
+            </div>
+
             {/* Tempo pendente */}
             <Tooltip>
               <TooltipTrigger asChild>
