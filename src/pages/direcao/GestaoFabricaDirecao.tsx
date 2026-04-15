@@ -599,7 +599,7 @@ export default function GestaoFabricaDirecao() {
                     )}
                     <span className="text-xs">{config.label}</span>
                     <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
-                      {count}
+                      {count + vendasPendentePedido.length}
                     </span>
                   </TabsTrigger>
                 );
