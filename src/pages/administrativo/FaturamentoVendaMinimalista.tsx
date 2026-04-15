@@ -1316,3 +1316,4 @@ export default function FaturamentoVendaMinimalista() {
     </div>
   );
 }
+
