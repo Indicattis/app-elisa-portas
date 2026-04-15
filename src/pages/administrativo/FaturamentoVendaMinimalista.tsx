@@ -800,6 +800,9 @@ export default function FaturamentoVendaMinimalista() {
                         <TableCell className="text-white/60">
                           {produto.tamanho || "-"}
                         </TableCell>
+                        <TableCell className="text-right text-white/80">
+                          {formatCurrency(((produto.valor_produto || 0) + (produto.valor_pintura || 0) + (produto.valor_instalacao || 0)) * (produto.quantidade || 1))}
+                        </TableCell>
                         <TableCell className="text-right text-orange-400">
                           {desconto}
                         </TableCell>
@@ -868,6 +871,7 @@ export default function FaturamentoVendaMinimalista() {
                       </TableCell>
                       <TableCell className="text-white/60">-</TableCell>
                       <TableCell className="text-right text-white/60">-</TableCell>
+                      <TableCell className="text-right text-white/60">-</TableCell>
                       <TableCell className="text-right text-white/80">
                         {formatCurrency(valorInstalacao)}
                       </TableCell>
@@ -901,7 +905,7 @@ export default function FaturamentoVendaMinimalista() {
 
                   {/* Linha do Frete */}
                   <TableRow className="bg-white/5 border-white/10">
-                    <TableCell colSpan={6} className="font-semibold text-white">
+                    <TableCell colSpan={7} className="font-semibold text-white">
                       Frete
                     </TableCell>
                     <TableCell className="text-right font-semibold text-white">
@@ -915,7 +919,7 @@ export default function FaturamentoVendaMinimalista() {
                   {/* Linha do Crédito/Desconto */}
                   {(venda.valor_credito != null && venda.valor_credito !== 0) && (
                     <TableRow className="bg-white/5 border-white/10">
-                      <TableCell colSpan={6} className="font-semibold text-white">
+                      <TableCell colSpan={7} className="font-semibold text-white">
                         Crédito / Acréscimo
                       </TableCell>
                       <TableCell className="text-right font-semibold text-white">
