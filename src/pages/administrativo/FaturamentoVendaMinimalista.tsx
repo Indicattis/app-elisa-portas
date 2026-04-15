@@ -794,12 +794,7 @@ export default function FaturamentoVendaMinimalista() {
                   )}
                   {(() => {
                     const totalValor = (produtos?.reduce((acc, p) => acc + (p.valor_total || 0), 0) || 0) + (venda.valor_frete || 0) + (venda.valor_credito || 0);
-                    const totalLucroGeral = (produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0) + (lucroInstalacaoCalculado || 0);
-                    const margemGeral = totalValor > 0 ? (totalLucroGeral / totalValor) * 100 : 0;
-                    const totalTabela = (produtos?.reduce((acc, p) => {
-                      const qty = p.quantidade || 1;
-                      return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
-                    }, 0) || 0);
+                    const totalLucroProdutos = (produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0) + (lucroInstalacaoCalculado || 0);
                     const totalDesconto = produtos?.reduce((acc, p) => {
                       const qty = p.quantidade || 1;
                       if (p.tipo_desconto === 'valor') return acc + (p.desconto_valor || 0);
@@ -810,15 +805,22 @@ export default function FaturamentoVendaMinimalista() {
                       if (p.desconto_valor) return acc + p.desconto_valor;
                       return acc;
                     }, 0) || 0;
+                    const valorCredito = venda.valor_credito || 0;
+                    const totalLucroGeral = totalLucroProdutos - totalDesconto + valorCredito;
+                    const margemGeral = totalValor > 0 ? (totalLucroGeral / totalValor) * 100 : 0;
+                    const totalTabela = (produtos?.reduce((acc, p) => {
+                      const qty = p.quantidade || 1;
+                      return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+                    }, 0) || 0);
                     return (
                       <TableRow className="bg-white/10 border-t border-white/20">
                         <TableCell colSpan={3} className="font-bold text-white text-sm">Total Geral</TableCell>
-                        <TableCell className="text-right font-bold text-white">{formatCurrency(totalTabela)}</TableCell>
-                        <TableCell className="text-right font-bold text-orange-400">{totalDesconto > 0 ? formatCurrency(totalDesconto) : '-'}</TableCell>
+                        <TableCell className="text-right font-bold text-blue-400">{formatCurrency(totalTabela)}</TableCell>
+                        <TableCell className="text-right font-bold text-red-400">{totalDesconto > 0 ? formatCurrency(totalDesconto) : '-'}</TableCell>
                         <TableCell colSpan={2} />
                         <TableCell className="text-right font-bold text-white">{formatCurrency(totalValor)}</TableCell>
-                        <TableCell className="text-right font-bold text-emerald-400">{formatCurrency(totalLucroGeral)}</TableCell>
-                        <TableCell className="text-right font-bold text-emerald-400">{margemGeral.toFixed(1)}%</TableCell>
+                        <TableCell className={`text-right font-bold ${totalLucroGeral >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatCurrency(totalLucroGeral)}</TableCell>
+                        <TableCell className={`text-right font-bold ${margemGeral >= 0 ? 'text-green-400' : 'text-red-400'}`}>{margemGeral.toFixed(1)}%</TableCell>
                         <TableCell />
                         <TableCell />
                       </TableRow>
