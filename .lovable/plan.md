@@ -1,29 +1,20 @@
 
 
-## Plano: Ranking de Autorizados em /logistica/instalacoes
+## Plano: Corrigir erro de constraint ao agendar ordem na expedição (mobile)
 
-### O que será feito
-Adicionar um novo item "Ranking Autorizados" no hub de instalações (`InstalacoesHub.tsx`) e criar uma nova página com ranking de parceiros autorizados, seguindo o mesmo padrão visual do ranking de equipes existente.
+### Problema
+Ao clicar no "+" e confirmar no `AdicionarOrdemCalendarioModal`, o código define `status: 'agendada'` para todos os tipos de fonte. Porém, a tabela `instalacoes` tem um CHECK constraint que só aceita `'pendente_producao'`, `'pronta_fabrica'` e `'finalizada'`. Isso causa o erro `instalacoes_status_check`.
 
-### Fontes de dados
-- **`neo_instalacoes`**: instalações avulsas feitas por autorizados (`tipo_responsavel = 'autorizado'`, usando `autorizado_id` e `autorizado_nome`)
-- **`instalacoes`**: instalações de pedidos feitas por autorizados (via `responsavel_instalacao_id` cruzando com tabela `autorizados`)
+### Solução
 
-### Alterações
+**Arquivo: `src/hooks/useOrdensCarregamentoCalendario.ts`**
 
-**1. Novo hook: `src/hooks/useRankingAutorizadosInstalacao.ts`**
-- Mesmo padrão do `useRankingEquipesInstalacao.ts`: filtro por período (mês/ano/todos), agrupamento por autorizado, contagem de instalações, metragem total, detalhes
-- Busca `autorizados` ativos, depois cruza com `instalacoes` (concluídas, onde `responsavel_instalacao_id` é um autorizado) e `neo_instalacoes` (concluídas, `tipo_responsavel = 'autorizado'`)
+1. No bloco `fonte === 'instalacoes'` (linhas ~295-305), ao fazer UPDATE, **não** aplicar `data.status` se o valor for `'agendada'` — manter o status existente ou usar `'pronta_fabrica'`
+2. No bloco de orphan insert para `instalacoes` (linhas ~273-291), o status já está correto como `'pronta_fabrica'`, mas garantir que `data.status` não sobrescreva com `'agendada'`
 
-**2. Nova página: `src/pages/logistica/RankingAutorizadosInstalacao.tsx`**
-- Cópia adaptada do `RankingEquipesInstalacao.tsx`
-- Mesmos componentes visuais: filtros de período, cards com medalhas, barra de progresso, dialog de detalhes
-- Sem seção de ajuste de pontuação e sem membros de equipe
-- Breadcrumb: Home > Logística > Instalações > Ranking Autorizados
+**Arquivo: `src/components/expedicao/DiaCardExpedicao.tsx`**
 
-**3. Atualizar `src/pages/logistica/InstalacoesHub.tsx`**
-- Adicionar item "Ranking Autorizados" com ícone `Award` e path `/logistica/instalacoes/ranking-autorizados`
+1. Na função `handleConfirmModal` (~linha 108-116), ao montar o objeto `data`, condicionar o `status` com base na `fonte`: se `fonte === 'instalacoes'`, usar `'pronta_fabrica'` ao invés de `'agendada'`; se `fonte === 'correcoes'`, verificar constraint similar
 
-**4. Atualizar `src/App.tsx`**
-- Adicionar rota `/logistica/instalacoes/ranking-autorizados` apontando para a nova página
+Isso garante que o status enviado respeite o constraint de cada tabela.
 
