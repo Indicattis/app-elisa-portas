@@ -387,7 +387,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                         const tipo = produto.tipo_produto;
                         const qtd = produto.quantidade || 1;
                         const cor = produto.catalogo_cores;
-                        const catalogoNome = produto.vendas_catalogo?.nome;
+                        const catalogoNome = produto.vendas_catalogo?.nome_produto;
                         const nomeMap: Record<string, string> = {
                           porta_enrolar: 'Porta de Enrolar',
                           pintura_epoxi: 'Pintura Epóxi',
