@@ -46,6 +46,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
   const [comentarios, setComentarios] = useState<any[]>([]);
   const [novoComentario, setNovoComentario] = useState("");
   const [enviandoComentario, setEnviandoComentario] = useState(false);
+  const [precosTabela, setPrecosTabela] = useState<Map<string, ItemTabelaPreco>>(new Map());
 
   useEffect(() => {
     if (open && venda?.id) {
