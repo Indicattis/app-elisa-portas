@@ -16,6 +16,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
+import { buscarPrecosPorMedidas } from "@/utils/tabelaPrecosHelper";
+import type { ItemTabelaPreco } from "@/hooks/useTabelaPrecos";
 
 interface VendaPendenteDetalhesSheetProps {
   venda: VendaPendentePedido | null;
@@ -44,6 +46,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
   const [comentarios, setComentarios] = useState<any[]>([]);
   const [novoComentario, setNovoComentario] = useState("");
   const [enviandoComentario, setEnviandoComentario] = useState(false);
+  const [precosTabela, setPrecosTabela] = useState<Map<string, ItemTabelaPreco>>(new Map());
 
   useEffect(() => {
     if (open && venda?.id) {
@@ -73,6 +76,27 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
         .eq("id", venda.id)
         .single();
       setVendaCompleta(data);
+
+      // Fetch table prices for porta/pintura items
+      if (data?.produtos_vendas) {
+        const dimensoesUnicas = new Map<string, { largura: number; altura: number }>();
+        for (const p of data.produtos_vendas) {
+          if ((p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'pintura_epoxi') && p.largura && p.altura) {
+            const key = `${p.largura}-${p.altura}`;
+            if (!dimensoesUnicas.has(key)) {
+              dimensoesUnicas.set(key, { largura: p.largura, altura: p.altura });
+            }
+          }
+        }
+        const precoMap = new Map<string, ItemTabelaPreco>();
+        await Promise.all(
+          Array.from(dimensoesUnicas.entries()).map(async ([key, dims]) => {
+            const result = await buscarPrecosPorMedidas(dims.largura, dims.altura);
+            if (result) precoMap.set(key, result);
+          })
+        );
+        setPrecosTabela(precoMap);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -414,8 +438,22 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                           else if (produto.tamanho) tamanhoStr = produto.tamanho;
                         }
 
-                        // Calculate table price (valor_produto is the base/table price before discounts)
-                        const precoTabela = produto.valor_produto || 0;
+                        // Calculate table price based on item type
+                        let precoTabela = produto.valor_produto || 0;
+                        const tipoEntrega = vendaCompleta?.tipo_entrega?.toLowerCase() || '';
+                        const isInstalacao = tipoEntrega.includes('instalacao') || tipoEntrega.includes('instalação');
+                        
+                        if (tipo === 'porta_enrolar' && produto.largura && produto.altura) {
+                          const ref = precosTabela.get(`${produto.largura}-${produto.altura}`);
+                          if (ref) {
+                            precoTabela = ref.valor_porta + (isInstalacao ? ref.valor_instalacao : 0);
+                          }
+                        } else if (tipo === 'pintura_epoxi' && produto.largura && produto.altura) {
+                          const ref = precosTabela.get(`${produto.largura}-${produto.altura}`);
+                          if (ref) {
+                            precoTabela = ref.valor_pintura;
+                          }
+                        }
                         const valorVendido = produto.valor_total || 0;
                         const descPerc = produto.desconto_percentual || 0;
                         const descValor = produto.desconto_valor || 0;
