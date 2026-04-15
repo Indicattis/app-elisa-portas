@@ -1,38 +1,71 @@
 
 
-## Dividir Coluna de Desconto em 3 Tiers
+## Separar Instalação como Produto Independente (igual Pintura)
 
-### O que muda
-A coluna "Desc./Créd." será substituída por 3 sub-colunas mostrando quanto do desconto total se encaixa em cada faixa de autorização:
+### Problema atual
+A instalação é armazenada como `valor_instalacao` dentro do produto porta, inflando a base de cálculo de desconto e complicando o faturamento. A pintura já é separada como `tipo_produto = 'pintura_epoxi'` — queremos o mesmo padrão para instalação.
 
-| Cartão (3%) | Gelo (5%) | Luan/Alana (5%) |
-|---|---|---|
-| Desc. à vista | Desc. presencial | Desc. c/ senha responsável |
+### Novo tipo de produto: `instalacao`
 
-### Lógica de cálculo
-Para cada venda, o desconto total (%) é distribuído nas faixas em cascata:
-1. **Cartão**: `min(desconto%, limite_avista)` — só se `forma_pagamento ≠ cartao_credito`
-2. **Gelo**: `min(restante%, limite_presencial)` — só se `venda_presencial = true`
-3. **Luan/Alana**: qualquer excedente acima das 2 faixas anteriores
+Criar um novo tipo `instalacao` que funciona exatamente como `pintura_epoxi`:
+- Produto separado na tabela `produtos_vendas`
+- Vinculado visualmente à porta de origem
+- `valor_produto` = valor da instalação da tabela de preços
+- `valor_instalacao = 0` (o valor já é o produto em si)
+- Descrição automática: "Instalação - Porta de Enrolar 4.72x5.50m"
 
-Se a venda é com cartão de crédito, a faixa "Cartão" fica zerada e o desconto vai direto para "Gelo" (se presencial) ou "Luan/Alana".
+### Plano de implementação
 
-### Alterações técnicas
+**1. Tipo ProdutoVenda** (`src/hooks/useVendas.ts`)
+- Adicionar `'instalacao'` ao union type de `tipo_produto`
 
-**`src/pages/administrativo/FaturamentoVendasMinimalista.tsx`**:
+**2. Formulário de Porta** (`src/components/vendas/ProdutoVendaForm.tsx`)
+- Quando o checkbox "Incluir Instalação" estiver marcado, ao submeter:
+  - Salvar a porta com `valor_instalacao = 0`
+  - Chamar `onAddProduto` uma segunda vez com um produto `tipo_produto: 'instalacao'` contendo o valor da instalação em `valor_produto`, mesmas dimensões da porta, e descrição "Instalação"
+- Ao editar porta com instalação existente, mostrar checkbox marcado mas a instalação é o item separado
 
-1. **Query**: Adicionar `venda_presencial` e `forma_pagamento` ao select do Supabase
-2. **Interface Venda**: Adicionar campos `venda_presencial?: boolean` e `forma_pagamento?: string`
-3. **Colunas**: Substituir `desconto_acrescimo` por 3 colunas:
-   - `desc_cartao` (label: "Cartão")
-   - `desc_gelo` (label: "Gelo")  
-   - `desc_responsavel` (label: "Luan/Alana")
-4. **Buscar limites**: Usar `useConfiguracoesVendas()` para obter os limites configurados do banco
-5. **Renderização**: Cada sub-coluna mostra o valor em R$ (vermelho) correspondente àquela faixa, ou `-` se zero. Crédito permanece na coluna existente ou será removido (já está no lucro)
-6. **Sorting/alignment**: Manter text-right e hidden-on-mobile para as 3 novas colunas
+**3. Labels e badges** (vários arquivos)
+- Adicionar `'instalacao': 'Instalação'` em `getTipoProdutoLabel`, `tipoProdutoLabels`, `FaturamentoProdutosTable`, etc.
 
-### Exibição visual
-- Valores em vermelho (`text-red-400`) com prefixo `-`
-- Se o desconto daquela faixa = 0, mostra `-` em `text-white/30`
-- Header com tooltip explicando cada faixa
+**4. Cálculos de valor total** (~17 arquivos)
+- Em todos os locais que fazem `(valor_produto + valor_pintura + valor_instalacao) * qty`, o `valor_instalacao` será sempre 0 para novos registros, então não quebra nada
+- O produto de instalação separado será somado naturalmente como qualquer outro produto
+
+**5. Faturamento** (`FaturamentoVendaMinimalista.tsx`, `FaturamentoProdutosTable.tsx`)
+- A instalação aparecerá como linha própria na tabela, com lucro próprio
+- Remover lógica especial de `lucro_instalacao` / `custo_instalacao` da finalização (campos legados)
+
+**6. Migração de dados** (SQL migration)
+- Para vendas **não faturadas** (12 vendas, 16 produtos com `valor_instalacao > 0`):
+  - Inserir novo registro `tipo_produto = 'instalacao'` com `valor_produto = valor_instalacao` original
+  - Zerar o `valor_instalacao` do produto porta original
+  - Recalcular `valor_total` da porta (subtraindo a instalação)
+- Vendas já faturadas (336 produtos) permanecem intactas para não corromper dados históricos
+
+**7. Atualizar ProdutosVendaTable** (`src/components/vendas/ProdutosVendaTable.tsx`)
+- Adicionar label/badge para tipo `instalacao`
+
+**8. Atualizar PinturaItemCatalogoModal como referência**
+- Criar modal similar ou reutilizar a mesma lógica do checkbox no form para gerar o produto de instalação automaticamente
+
+### Arquivos impactados
+- `src/hooks/useVendas.ts` — tipo
+- `src/components/vendas/ProdutoVendaForm.tsx` — lógica principal
+- `src/components/vendas/ProdutosVendaTable.tsx` — exibição
+- `src/components/vendas/FaturamentoProdutosTable.tsx` — exibição
+- `src/pages/administrativo/FaturamentoVendasMinimalista.tsx` — cálculos
+- `src/pages/administrativo/FaturamentoProdutosMinimalista.tsx` — cálculos  
+- `src/utils/creditoVendasRules.ts` — cálculo total
+- `src/utils/vendaIndividualPDFGenerator.ts` — PDF
+- `src/pages/VendasNova.tsx` e `src/pages/vendas/VendaNovaMinimalista.tsx` — criação
+- `src/pages/VendaEdit.tsx` — edição
+- `src/hooks/useProdutosVenda.ts` — faturamento
+- `src/lib/faturamentoStatus.ts` — status
+- **Migração SQL** para as 12 vendas pendentes
+
+### O que NÃO muda
+- Vendas já faturadas ficam intactas
+- Pintura continua funcionando igual
+- Estrutura da tabela `produtos_vendas` não precisa de nova coluna
 
