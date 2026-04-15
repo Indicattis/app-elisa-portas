@@ -472,7 +472,7 @@ export default function GestaoFabricaDirecao() {
                         <DollarSign className="h-5 w-5" />
                         <span className="font-medium">Pend. Faturamento</span>
                         <Badge variant="secondary" className="ml-auto bg-blue-500/20 text-blue-400">
-                          {vendasPendentePedido.length}
+                          {vendasPendenteFaturamento.length}
                         </Badge>
                       </div>
                     );
@@ -509,7 +509,7 @@ export default function GestaoFabricaDirecao() {
                   <DollarSign className="h-4 w-4 flex-shrink-0 text-blue-400" />
                   <span className="flex-1 text-blue-400">Pend. Faturamento</span>
                   <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-400">
-                    {vendasPendentePedido.length}
+                    {vendasPendenteFaturamento.length}
                   </Badge>
                 </div>
               </SelectItem>
@@ -566,7 +566,7 @@ export default function GestaoFabricaDirecao() {
                 })()}
                 <span className="text-xs">Pend. Faturamento</span>
                 <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
-                  {vendasPendentePedido.length}
+                  {vendasPendenteFaturamento.length}
                 </span>
               </TabsTrigger>
               {(['aprovacao_diretor'] as const).map(etapa => {
