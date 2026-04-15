@@ -1,71 +1,32 @@
 
 
-## Separar Instalação como Produto Independente (igual Pintura)
+## Diagnóstico
 
-### Problema atual
-A instalação é armazenada como `valor_instalacao` dentro do produto porta, inflando a base de cálculo de desconto e complicando o faturamento. A pintura já é separada como `tipo_produto = 'pintura_epoxi'` — queremos o mesmo padrão para instalação.
+A venda `56e4efeb-3792-408a-9283-297cb21954ec` foi cadastrada **hoje** mas as duas portas ainda têm `valor_instalacao: 2300` e **nenhum produto `tipo_produto: 'instalacao'` foi criado**. Existem duas causas possíveis:
 
-### Novo tipo de produto: `instalacao`
+1. **Cache do navegador**: O usuário pode ter aberto a página antes do deploy e o código antigo ainda estava ativo
+2. **Segundo caminho de save**: O `useVendas.ts` tem dois métodos de criação — `cadastrarVenda` (linha ~170) e `cadastrarRascunho` (linha ~530). Ambos passam `valor_instalacao: produto.valor_instalacao` diretamente (linhas 341 e 609), sem interceptar para criar o produto separado de instalação
 
-Criar um novo tipo `instalacao` que funciona exatamente como `pintura_epoxi`:
-- Produto separado na tabela `produtos_vendas`
-- Vinculado visualmente à porta de origem
-- `valor_produto` = valor da instalação da tabela de preços
-- `valor_instalacao = 0` (o valor já é o produto em si)
-- Descrição automática: "Instalação - Porta de Enrolar 4.72x5.50m"
+O problema principal é que a separação da instalação acontece **apenas no formulário** (`ProdutoVendaForm.tsx`), mas o hook `useVendas.ts` que salva no banco **não valida nem força** a separação. Se por qualquer motivo o `valor_instalacao` chegar populado no array de produtos, ele é salvo assim.
 
-### Plano de implementação
+## Plano de correção
 
-**1. Tipo ProdutoVenda** (`src/hooks/useVendas.ts`)
-- Adicionar `'instalacao'` ao union type de `tipo_produto`
+### 1. Proteção no hook `useVendas.ts` (ambos os métodos de save)
+Antes de inserir os produtos no DB, adicionar lógica que:
+- Para cada produto `porta_enrolar` ou `porta_social` com `valor_instalacao > 0`:
+  - Zerar o `valor_instalacao` do produto original
+  - Criar um produto adicional `tipo_produto: 'instalacao'` com `valor_produto = valor_instalacao`
+- Isso garante que **independente do formulário**, a separação sempre acontece no save
 
-**2. Formulário de Porta** (`src/components/vendas/ProdutoVendaForm.tsx`)
-- Quando o checkbox "Incluir Instalação" estiver marcado, ao submeter:
-  - Salvar a porta com `valor_instalacao = 0`
-  - Chamar `onAddProduto` uma segunda vez com um produto `tipo_produto: 'instalacao'` contendo o valor da instalação em `valor_produto`, mesmas dimensões da porta, e descrição "Instalação"
-- Ao editar porta com instalação existente, mostrar checkbox marcado mas a instalação é o item separado
+### 2. Corrigir os dados desta venda específica
+Usar o insert tool para:
+- Inserir 2 novos produtos `tipo_produto: 'instalacao'` (um para cada porta, valor 2300 cada)
+- Atualizar as 2 portas existentes zerando `valor_instalacao` (o trigger recalcula `valor_total` automaticamente)
 
-**3. Labels e badges** (vários arquivos)
-- Adicionar `'instalacao': 'Instalação'` em `getTipoProdutoLabel`, `tipoProdutoLabels`, `FaturamentoProdutosTable`, etc.
-
-**4. Cálculos de valor total** (~17 arquivos)
-- Em todos os locais que fazem `(valor_produto + valor_pintura + valor_instalacao) * qty`, o `valor_instalacao` será sempre 0 para novos registros, então não quebra nada
-- O produto de instalação separado será somado naturalmente como qualquer outro produto
-
-**5. Faturamento** (`FaturamentoVendaMinimalista.tsx`, `FaturamentoProdutosTable.tsx`)
-- A instalação aparecerá como linha própria na tabela, com lucro próprio
-- Remover lógica especial de `lucro_instalacao` / `custo_instalacao` da finalização (campos legados)
-
-**6. Migração de dados** (SQL migration)
-- Para vendas **não faturadas** (12 vendas, 16 produtos com `valor_instalacao > 0`):
-  - Inserir novo registro `tipo_produto = 'instalacao'` com `valor_produto = valor_instalacao` original
-  - Zerar o `valor_instalacao` do produto porta original
-  - Recalcular `valor_total` da porta (subtraindo a instalação)
-- Vendas já faturadas (336 produtos) permanecem intactas para não corromper dados históricos
-
-**7. Atualizar ProdutosVendaTable** (`src/components/vendas/ProdutosVendaTable.tsx`)
-- Adicionar label/badge para tipo `instalacao`
-
-**8. Atualizar PinturaItemCatalogoModal como referência**
-- Criar modal similar ou reutilizar a mesma lógica do checkbox no form para gerar o produto de instalação automaticamente
+### 3. Atualizar o trigger DB (opcional mas recomendado)
+O trigger `calcular_valores_produto` poderia ignorar `valor_instalacao` para produtos do tipo `porta_enrolar`/`porta_social` como camada extra de proteção, mas isso pode quebrar vendas legadas já faturadas. Melhor não mexer.
 
 ### Arquivos impactados
-- `src/hooks/useVendas.ts` — tipo
-- `src/components/vendas/ProdutoVendaForm.tsx` — lógica principal
-- `src/components/vendas/ProdutosVendaTable.tsx` — exibição
-- `src/components/vendas/FaturamentoProdutosTable.tsx` — exibição
-- `src/pages/administrativo/FaturamentoVendasMinimalista.tsx` — cálculos
-- `src/pages/administrativo/FaturamentoProdutosMinimalista.tsx` — cálculos  
-- `src/utils/creditoVendasRules.ts` — cálculo total
-- `src/utils/vendaIndividualPDFGenerator.ts` — PDF
-- `src/pages/VendasNova.tsx` e `src/pages/vendas/VendaNovaMinimalista.tsx` — criação
-- `src/pages/VendaEdit.tsx` — edição
-- `src/hooks/useProdutosVenda.ts` — faturamento
-- `src/lib/faturamentoStatus.ts` — status
-- **Migração SQL** para as 12 vendas pendentes
-
-### O que NÃO muda
-- Vendas já faturadas ficam intactas
-- Pintura continua funcionando igual
-- Estrutura da tabela `produtos_vendas` não precisa de nova coluna
+- `src/hooks/useVendas.ts` — interceptar nos dois métodos de save (`cadastrarVenda` e `cadastrarRascunho`)
+- Dados da venda `56e4efeb-...` — migração pontual via insert tool
 
