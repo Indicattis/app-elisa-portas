@@ -451,6 +451,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                           <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
                           <TableHead className="text-xs text-white/70 text-right">Valor excesso</TableHead>
                           <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
+                          <TableHead className="text-xs text-white/70">Observações</TableHead>
                           {contexto === 'direcao' && (
                             <TableHead className="text-xs text-white/70 text-center">Aprovação</TableHead>
                           )}
@@ -507,6 +508,9 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                                   <Badge variant="outline" className={STATUS_COLORS[acordo.status]}>
                                     {STATUS_LABELS[acordo.status]}
                                   </Badge>
+                                </TableCell>
+                                <TableCell className="text-white/60 max-w-[200px] truncate" title={acordo.observacoes || ''}>
+                                  {acordo.observacoes || '—'}
                                 </TableCell>
                                 {contexto === 'direcao' && (
                                   <TableCell className="text-center">
