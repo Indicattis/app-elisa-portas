@@ -494,12 +494,14 @@ export default function FaturamentoVendaMinimalista() {
   const vendaFaturada = todosProdutosFaturados && venda?.frete_aprovado === true;
   const lucroProdutos = produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0;  // valor já é o total da linha
   
-  // Lucro da instalação: se já faturada usa o valor salvo, senão calcula 30%
-  const valorInstalacao = venda?.valor_instalacao || 0;
+  // Instalação: para vendas novas, é um produto separado tipo 'instalacao' com lucro_item
+  // Para vendas legadas não migradas, usa valor_instalacao da venda
+  const temProdutoInstalacao = produtos?.some(p => p.tipo_produto === 'instalacao') || false;
+  const valorInstalacao = temProdutoInstalacao ? 0 : (venda?.valor_instalacao || 0);
   const lucroInstalacaoCalculado = valorInstalacao > 0 ? valorInstalacao * 0.30 : 0;
-  const lucroInstalacao = venda?.instalacao_faturada 
+  const lucroInstalacao = temProdutoInstalacao ? 0 : (venda?.instalacao_faturada 
     ? (venda.lucro_instalacao || 0) 
-    : lucroInstalacaoCalculado;
+    : lucroInstalacaoCalculado);
   
   const totalDescontosCalc = produtos?.reduce((acc, p) => {
     const qty = p.quantidade || 1;
@@ -520,10 +522,10 @@ export default function FaturamentoVendaMinimalista() {
   const produtosFaturados = produtos?.filter(p => 
     p.faturamento === true || (p.lucro_item !== null && p.lucro_item !== undefined && p.lucro_item > 0)
   ).length || 0;
-  // Contabilizar instalação se houver
-  const temInstalacao = valorInstalacao > 0;
-  const totalProdutos = (produtos?.length || 0) + (temInstalacao ? 1 : 0);
-  const totalFaturados = produtosFaturados + (temInstalacao && (venda?.instalacao_faturada || lucroInstalacaoCalculado > 0) ? 1 : 0);
+  // Contabilizar instalação legada se houver (não migrada)
+  const temInstalacaoLegada = valorInstalacao > 0;
+  const totalProdutos = (produtos?.length || 0) + (temInstalacaoLegada ? 1 : 0);
+  const totalFaturados = produtosFaturados + (temInstalacaoLegada && (venda?.instalacao_faturada || lucroInstalacaoCalculado > 0) ? 1 : 0);
 
   // Descontos e acréscimos
   const totalDescontos = produtos?.reduce((acc, p) => acc + (p.desconto_valor || 0), 0) || 0;
