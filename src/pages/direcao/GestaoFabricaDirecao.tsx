@@ -443,8 +443,107 @@ export default function GestaoFabricaDirecao() {
     }
   };
 
+  const handleEnviarAguardandoCliente = async (pedidoId: string) => {
+    const agora = new Date().toISOString();
+    try {
+      // 1. Atualizar etapa_atual
+      const { error: errUpdate } = await supabase
+        .from('pedidos_producao')
+        .update({ etapa_atual: 'aguardando_cliente' })
+        .eq('id', pedidoId);
+      if (errUpdate) throw errUpdate;
+
+      // 2. Fechar etapa finalizado
+      await supabase
+        .from('pedidos_etapas')
+        .upsert({
+          pedido_id: pedidoId,
+          etapa: 'finalizado',
+          data_saida: agora,
+          data_entrada: agora,
+          checkboxes: [],
+        }, { onConflict: 'pedido_id,etapa' });
+
+      // 3. Criar etapa aguardando_cliente
+      await supabase
+        .from('pedidos_etapas')
+        .upsert({
+          pedido_id: pedidoId,
+          etapa: 'aguardando_cliente',
+          data_entrada: agora,
+          checkboxes: [],
+        }, { onConflict: 'pedido_id,etapa' });
+
+      // 4. Registrar movimentação
+      await supabase.from('pedidos_movimentacoes').insert({
+        pedido_id: pedidoId,
+        etapa_origem: 'finalizado',
+        etapa_destino: 'aguardando_cliente',
+        descricao: 'Pedido enviado para Aguardando Cliente',
+      });
+
+      toast({ title: 'Pedido enviado para Aguardando Cliente' });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+    } catch (err) {
+      console.error(err);
+      toast({ variant: 'destructive', title: 'Erro ao enviar para Aguardando Cliente' });
+    }
+  };
+
+  const handleRetornarDeAguardandoCliente = async (pedidoId: string) => {
+    const agora = new Date().toISOString();
+    try {
+      const { error: errUpdate } = await supabase
+        .from('pedidos_producao')
+        .update({ etapa_atual: 'finalizado' })
+        .eq('id', pedidoId);
+      if (errUpdate) throw errUpdate;
+
+      // Fechar etapa aguardando_cliente
+      await supabase
+        .from('pedidos_etapas')
+        .upsert({
+          pedido_id: pedidoId,
+          etapa: 'aguardando_cliente',
+          data_saida: agora,
+          data_entrada: agora,
+          checkboxes: [],
+        }, { onConflict: 'pedido_id,etapa' });
+
+      // Registrar movimentação
+      await supabase.from('pedidos_movimentacoes').insert({
+        pedido_id: pedidoId,
+        etapa_origem: 'aguardando_cliente',
+        etapa_destino: 'finalizado',
+        descricao: 'Pedido retornado de Aguardando Cliente para Finalizado',
+      });
+
+      toast({ title: 'Pedido retornado para Finalizado' });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+    } catch (err) {
+      console.error(err);
+      toast({ variant: 'destructive', title: 'Erro ao retornar pedido' });
+    }
+  };
+
   const headerActions = (
     <div className="flex items-center gap-2">
+      <Button 
+        variant="outline" 
+        onClick={() => setEtapaAtiva('aguardando_cliente' as EtapaPedido)} 
+        size="sm" 
+        className="bg-yellow-500/10 border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20"
+      >
+        <Clock className="h-4 w-4 mr-2" />
+        Aguardando Cliente
+        {(contadores.aguardando_cliente || 0) > 0 && (
+          <Badge variant="secondary" className="ml-1 bg-yellow-500/20 text-yellow-400 text-xs px-1.5 py-0">
+            {contadores.aguardando_cliente}
+          </Badge>
+        )}
+      </Button>
       <Button 
         variant="outline" 
         onClick={() => setModalPedidoTesteAberto(true)} 
