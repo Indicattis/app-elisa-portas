@@ -123,6 +123,8 @@ export function PedidoCard({
   const [processos, setProcessos] = useState<Processo[]>([]);
   const [showCriarCorrecao, setShowCriarCorrecao] = useState(false);
   const [showEnviarCorrecao, setShowEnviarCorrecao] = useState(false);
+  const [showAguardandoCliente, setShowAguardandoCliente] = useState(false);
+  const [isEnviandoAguardandoCliente, setIsEnviandoAguardandoCliente] = useState(false);
   const [valorAReceberTemp, setValorAReceberTemp] = useState('');
   const [popoverValorAberto, setPopoverValorAberto] = useState(false);
   const [salvandoValor, setSalvandoValor] = useState(false);
