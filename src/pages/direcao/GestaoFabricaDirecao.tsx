@@ -87,7 +87,7 @@ export default function GestaoFabricaDirecao() {
   const [corPintura, setCorPintura] = useState('todas');
   const [mostrarProntos, setMostrarProntos] = useState(false);
   
-  const [modalPedidoTesteAberto, setModalPedidoTesteAberto] = useState(false);
+  
   const [modalResponsavelAberto, setModalResponsavelAberto] = useState(false);
   const [etapaParaAtribuir, setEtapaParaAtribuir] = useState<EtapaPedido | null>(null);
   const [showCalendarioModal, setShowCalendarioModal] = useState(false);
@@ -549,15 +549,6 @@ export default function GestaoFabricaDirecao() {
             {(contadores as any).aguardando_cliente}
           </Badge>
         )}
-      </Button>
-      <Button 
-        variant="outline" 
-        onClick={() => setModalPedidoTesteAberto(true)} 
-        size="sm" 
-        className="bg-amber-500/10 border-amber-500/20 text-amber-400 hover:bg-amber-500/20"
-      >
-        <FlaskConical className="h-4 w-4 mr-2" />
-        Pedido Teste
       </Button>
       <Button variant="outline" onClick={handleRefresh} size="sm" className="bg-white/5 border-blue-500/10 text-white hover:bg-white/10">
         <RefreshCw className="h-4 w-4" />
@@ -1485,14 +1476,6 @@ export default function GestaoFabricaDirecao() {
         </CollapsibleContent>
       </Collapsible>
 
-      <CriarPedidoTesteModal
-        open={modalPedidoTesteAberto}
-        onOpenChange={setModalPedidoTesteAberto}
-        onSuccess={() => {
-          handleRefresh();
-          setModalPedidoTesteAberto(false);
-        }}
-      />
 
       {/* Modal para atribuir responsável */}
       {etapaParaAtribuir && (
