@@ -240,6 +240,24 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     }
   }, [toast]);
 
+  const handleMarcarPago = useCallback(async (acordoId: string, pagoAtual: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('acordos_instalacao_autorizados')
+        .update({
+          pago: !pagoAtual,
+          pago_em: !pagoAtual ? new Date().toISOString() : null,
+          pago_por: !pagoAtual ? user?.id : null,
+        } as any)
+        .eq('id', acordoId);
+      if (error) throw error;
+      toast({ title: 'Sucesso', description: !pagoAtual ? 'Acordo marcado como pago' : 'Pagamento desmarcado' });
+      await refetch();
+    } catch (error: any) {
+      console.error('Erro ao atualizar pagamento:', error);
+      toast({ title: 'Erro', description: 'Não foi possível atualizar o pagamento', variant: 'destructive' });
+    }
+  }, [user?.id, toast, refetch]);
 
   const headerActions = (
     <>
