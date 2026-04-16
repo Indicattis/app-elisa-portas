@@ -1863,7 +1863,28 @@ className="flex h-[20px] w-full rounded-[3px]"
                       );
                     }
 
-                    // Botão "Finalizar Direto" (pula etapas intermediárias)
+                    // Botão de enviar para aguardando cliente (apenas etapa finalizado)
+                    if (etapaAtual === 'finalizado' && onEnviarAguardandoCliente && !readOnly) {
+                      middleButtons.push(
+                        <Tooltip key="aguardando-cliente">
+                          <TooltipTrigger asChild>
+                            <Button 
+                              size="icon" 
+                              variant="outline" 
+                              onClick={(e) => { e.stopPropagation(); setShowAguardandoCliente(true); }} 
+                              title="Aguardando Cliente" 
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20 border-yellow-500/50"
+                            >
+                              <Clock className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="text-xs">Aguardando Cliente</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
                     if (onFinalizarDireto && etapaAtual !== 'finalizado') {
                       middleButtons.push(
                         <Tooltip key="finalizar-direto">
