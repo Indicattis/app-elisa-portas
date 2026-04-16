@@ -566,6 +566,32 @@ export default function FaturamentoVendaMinimalista() {
   const totalDescontos = produtos?.reduce((acc, p) => acc + (p.desconto_valor || 0), 0) || 0;
   const valorCredito = venda?.valor_credito || 0;
 
+  // Valor de tabela (soma bruta antes de descontos)
+  const valorTabela = produtos?.reduce((acc: number, p: any) => {
+    const qty = p.quantidade || 1;
+    return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+  }, 0) || 0;
+
+  // Desconto tiers (Cartão / Gelo / Luan-Alana)
+  const descontoTiers = (() => {
+    const totalDesc = produtos?.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0) || 0;
+    if (totalDesc === 0 || valorTabela === 0) return { cartao: 0, gelo: 0, responsavel: 0, total: totalDesc };
+    const pctTotal = (totalDesc / valorTabela) * 100;
+    const isCartao = venda?.forma_pagamento === 'cartao_credito';
+    const isPresencial = venda?.venda_presencial === true;
+    let pctCartao = 0, pctGelo = 0;
+    if (!isCartao) pctCartao = Math.min(pctTotal, configLimites.avista);
+    const restante1 = pctTotal - pctCartao;
+    if (isPresencial && restante1 > 0) pctGelo = Math.min(restante1, configLimites.presencial);
+    const pctResp = Math.max(0, pctTotal - pctCartao - pctGelo);
+    return {
+      cartao: valorTabela * (pctCartao / 100),
+      gelo: valorTabela * (pctGelo / 100),
+      responsavel: valorTabela * (pctResp / 100),
+      total: totalDesc,
+    };
+  })();
+
   const getTipoProdutoLabel = (tipo?: string) => {
     const tipos: Record<string, string> = {
       'porta_enrolar': 'Porta Enrolar',
