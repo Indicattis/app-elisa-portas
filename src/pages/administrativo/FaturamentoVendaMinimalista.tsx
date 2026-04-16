@@ -40,6 +40,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
+import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
 
 const safeParseDate = (dateStr: string | null | undefined): Date | null => {
   if (!dateStr) return null;
@@ -68,6 +69,7 @@ interface Venda {
   empresa_receptora_id?: string;
   data_venda?: string;
   forma_pagamento?: string;
+  venda_presencial?: boolean;
   pagamento_na_entrega?: boolean;
   valor_entrada?: number;
   valor_a_receber?: number;
