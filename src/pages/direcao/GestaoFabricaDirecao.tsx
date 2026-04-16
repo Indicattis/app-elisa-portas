@@ -475,10 +475,13 @@ export default function GestaoFabricaDirecao() {
         }, { onConflict: 'pedido_id,etapa' });
 
       // 4. Registrar movimentação
+      const { data: { user } } = await supabase.auth.getUser();
       await supabase.from('pedidos_movimentacoes').insert({
         pedido_id: pedidoId,
         etapa_origem: 'finalizado',
         etapa_destino: 'aguardando_cliente',
+        teor: 'avanco',
+        user_id: user?.id || '',
         descricao: 'Pedido enviado para Aguardando Cliente',
       });
 
@@ -512,10 +515,13 @@ export default function GestaoFabricaDirecao() {
         }, { onConflict: 'pedido_id,etapa' });
 
       // Registrar movimentação
+      const { data: { user } } = await supabase.auth.getUser();
       await supabase.from('pedidos_movimentacoes').insert({
         pedido_id: pedidoId,
         etapa_origem: 'aguardando_cliente',
         etapa_destino: 'finalizado',
+        teor: 'retrocesso',
+        user_id: user?.id || '',
         descricao: 'Pedido retornado de Aguardando Cliente para Finalizado',
       });
 
