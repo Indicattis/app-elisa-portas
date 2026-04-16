@@ -241,6 +241,7 @@ export function PedidosDraggableList({
               onAgendar={onAgendar}
               onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
               onFinalizarDireto={onFinalizarDireto}
+              onEnviarAguardandoCliente={onEnviarAguardandoCliente}
               posicao={showPosicao ? index + 1 : undefined}
               total={showPosicao ? pedidos.length : undefined}
               disableClienteClick={disableClienteClick}
@@ -291,6 +292,7 @@ export function PedidosDraggableList({
               onAgendar={onAgendar}
               onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
               onFinalizarDireto={onFinalizarDireto}
+              onEnviarAguardandoCliente={onEnviarAguardandoCliente}
               disableClienteClick={disableClienteClick}
               hideOrdensStatus={hideOrdensStatus}
               hideCorrecaoButton={hideCorrecaoButton}
