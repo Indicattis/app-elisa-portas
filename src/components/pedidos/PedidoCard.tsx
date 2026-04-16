@@ -96,6 +96,7 @@ export function PedidoCard({
   onDeletar,
   onCorrecaoDetalhesClick,
   onFinalizarDireto,
+  onEnviarAguardandoCliente,
   readOnly = false,
   disableClienteClick = false,
   showEtapaBadge = false,
