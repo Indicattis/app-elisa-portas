@@ -71,6 +71,12 @@ export default function MinhasVendasEditar() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isCadastrando, setIsCadastrando] = useState(false);
+  const { configuracoes, limites: limitesConfig } = useConfiguracoesVendas();
+  const [autorizacaoDescontoOpen, setAutorizacaoDescontoOpen] = useState(false);
+  const [tipoAutorizacaoNecessaria, setTipoAutorizacaoNecessaria] = useState<'responsavel_setor' | 'master'>('responsavel_setor');
+  const [descontoAutorizado, setDescontoAutorizado] = useState(false);
+  const [percentualDescontoAtual, setPercentualDescontoAtual] = useState(0);
+  const [limitePermitidoAtual, setLimitePermitidoAtual] = useState(0);
 
   // Se não pode editar, mostrar dialog
   useEffect(() => {
