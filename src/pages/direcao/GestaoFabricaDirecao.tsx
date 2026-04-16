@@ -66,6 +66,7 @@ const ETAPA_ICONS = {
   instalacoes: HardHat,
   correcoes: AlertTriangle,
   finalizado: CheckCircle2,
+  aguardando_cliente: Clock,
   arquivo_morto: Archive
 };
 
