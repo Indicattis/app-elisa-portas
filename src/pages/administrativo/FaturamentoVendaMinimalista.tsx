@@ -1314,6 +1314,21 @@ export default function FaturamentoVendaMinimalista() {
           </AlertDialogContent>
         </AlertDialog>
 
+        {/* Confirm regenerar parcelas dialog */}
+        <AlertDialog open={showRegenerarParcelasDialog} onOpenChange={setShowRegenerarParcelasDialog}>
+          <AlertDialogContent className="bg-zinc-900 border-white/10">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white">Regenerar parcelas?</AlertDialogTitle>
+              <AlertDialogDescription className="text-white/60">
+                Todas as parcelas existentes serão removidas e novas parcelas serão geradas com base no valor atual da venda ({formatCurrency((venda?.valor_venda || 0) + (venda?.valor_credito || 0))}). Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="border-white/20 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+              <AlertDialogAction className="bg-orange-600 hover:bg-orange-700" onClick={handleRegenerarParcelas}>Regenerar</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <div className="flex justify-end gap-4">
           <Button
