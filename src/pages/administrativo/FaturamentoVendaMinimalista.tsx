@@ -103,6 +103,11 @@ export default function FaturamentoVendaMinimalista() {
   const [contasReceber, setContasReceber] = useState<any[]>([]);
   const { createPedidoFromVenda, checkExistingPedido } = usePedidoCreation();
   const { removerFaturamento, isRemovendo } = useFaturamento();
+  const { configuracoes: configVendas } = useConfiguracoesVendas();
+  const configLimites = {
+    avista: configVendas?.limite_desconto_avista ?? 3,
+    presencial: configVendas?.limite_desconto_presencial ?? 5,
+  };
 
   const {
     produtos,
