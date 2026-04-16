@@ -27,6 +27,9 @@ export interface AcordoAutorizado {
   portas: PortaAcordo[];
   aprovado_direcao: boolean;
   reprovado_direcao: boolean;
+  pago: boolean;
+  pago_em?: string;
+  pago_por?: string;
   criador?: {
     nome: string;
     foto_perfil_url?: string;
