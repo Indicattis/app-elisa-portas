@@ -95,6 +95,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
   const [novoComentario, setNovoComentario] = useState("");
   const [enviandoComentario, setEnviandoComentario] = useState(false);
   const [precosTabela, setPrecosTabela] = useState<Map<string, ItemTabelaPreco>>(new Map());
+  const [produtoSelecionado, setProdutoSelecionado] = useState<any>(null);
 
   // Calculate discount tiers (Cartão / Gelo / Luan-Alana)
   const descontoTiers = useMemo(() => {
@@ -284,6 +285,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
   })();
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
