@@ -997,6 +997,16 @@ export default function FaturamentoVendaMinimalista() {
                   </div>
                 )}
                 <div className="space-y-1">
+                  <p className="text-xs text-white/50">Tipo de Venda</p>
+                  <p className="text-sm font-medium">
+                    {venda.venda_presencial ? (
+                      <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">🔥 Venda Quente</Badge>
+                    ) : (
+                      <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">❄️ Venda Gelo</Badge>
+                    )}
+                  </p>
+                </div>
+                <div className="space-y-1">
                   <p className="text-xs text-white/50">Pgto na Entrega</p>
                   <p className="text-sm font-medium">
                     {venda.pagamento_na_entrega ? (
