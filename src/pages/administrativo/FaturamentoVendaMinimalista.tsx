@@ -40,6 +40,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
+import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
 
 const safeParseDate = (dateStr: string | null | undefined): Date | null => {
   if (!dateStr) return null;
@@ -68,6 +69,7 @@ interface Venda {
   empresa_receptora_id?: string;
   data_venda?: string;
   forma_pagamento?: string;
+  venda_presencial?: boolean;
   pagamento_na_entrega?: boolean;
   valor_entrada?: number;
   valor_a_receber?: number;
@@ -101,6 +103,11 @@ export default function FaturamentoVendaMinimalista() {
   const [contasReceber, setContasReceber] = useState<any[]>([]);
   const { createPedidoFromVenda, checkExistingPedido } = usePedidoCreation();
   const { removerFaturamento, isRemovendo } = useFaturamento();
+  const { configuracoes: configVendas } = useConfiguracoesVendas();
+  const configLimites = {
+    avista: configVendas?.limite_desconto_avista ?? 3,
+    presencial: configVendas?.limite_desconto_presencial ?? 5,
+  };
 
   const {
     produtos,
@@ -388,7 +395,7 @@ export default function FaturamentoVendaMinimalista() {
       setLoading(true);
       const { data, error } = await supabase
         .from("vendas")
-        .select("id, cliente_nome, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas")
+        .select("id, cliente_nome, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, venda_presencial, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas")
         .eq("id", id)
         .single();
 
@@ -559,6 +566,32 @@ export default function FaturamentoVendaMinimalista() {
   const totalDescontos = produtos?.reduce((acc, p) => acc + (p.desconto_valor || 0), 0) || 0;
   const valorCredito = venda?.valor_credito || 0;
 
+  // Valor de tabela (soma bruta antes de descontos)
+  const valorTabela = produtos?.reduce((acc: number, p: any) => {
+    const qty = p.quantidade || 1;
+    return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+  }, 0) || 0;
+
+  // Desconto tiers (Cartão / Gelo / Luan-Alana)
+  const descontoTiers = (() => {
+    const totalDesc = produtos?.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0) || 0;
+    if (totalDesc === 0 || valorTabela === 0) return { cartao: 0, gelo: 0, responsavel: 0, total: totalDesc };
+    const pctTotal = (totalDesc / valorTabela) * 100;
+    const isCartao = venda?.forma_pagamento === 'cartao_credito';
+    const isPresencial = venda?.venda_presencial === true;
+    let pctCartao = 0, pctGelo = 0;
+    if (!isCartao) pctCartao = Math.min(pctTotal, configLimites.avista);
+    const restante1 = pctTotal - pctCartao;
+    if (isPresencial && restante1 > 0) pctGelo = Math.min(restante1, configLimites.presencial);
+    const pctResp = Math.max(0, pctTotal - pctCartao - pctGelo);
+    return {
+      cartao: valorTabela * (pctCartao / 100),
+      gelo: valorTabela * (pctGelo / 100),
+      responsavel: valorTabela * (pctResp / 100),
+      total: totalDesc,
+    };
+  })();
+
   const getTipoProdutoLabel = (tipo?: string) => {
     const tipos: Record<string, string> = {
       'porta_enrolar': 'Porta Enrolar',
@@ -676,56 +709,84 @@ export default function FaturamentoVendaMinimalista() {
           )}
         </div>
 
-        {/* Cards de Resumo */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">Valor Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-emerald-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Indicadores Financeiros */}
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
+          {/* Valor de Tabela */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Tabela</p>
+            <p className="text-sm font-bold text-blue-400">{formatCurrency(valorTabela)}</p>
+          </div>
 
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">Lucro Bruto</CardTitle>
-              <TrendingUp className="h-4 w-4 text-emerald-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-emerald-400">
-                {formatCurrency(totalLucro)}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Desconto Cartão */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Desc. Cartão</p>
+            <p className={cn("text-sm font-bold", descontoTiers.cartao > 0 ? "text-red-400" : "text-white/30")}>
+              {descontoTiers.cartao > 0 ? `-${formatCurrency(descontoTiers.cartao)}` : '-'}
+            </p>
+          </div>
 
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">Margem</CardTitle>
-              <Percent className="h-4 w-4 text-blue-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-400">
-                {margem.toFixed(2)}%
-              </div>
-            </CardContent>
-          </Card>
+          {/* Desconto Gelo */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Desc. Gelo</p>
+            <p className={cn("text-sm font-bold", descontoTiers.gelo > 0 ? "text-red-400" : "text-white/30")}>
+              {descontoTiers.gelo > 0 ? `-${formatCurrency(descontoTiers.gelo)}` : '-'}
+            </p>
+          </div>
 
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">Progresso</CardTitle>
-              <Package className="h-4 w-4 text-amber-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {totalFaturados}/{totalProdutos}
-              </div>
-              <p className="text-xs text-white/50">Itens faturados</p>
-            </CardContent>
-          </Card>
+          {/* Desconto Luan/Alana */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Luan/Alana</p>
+            <p className={cn("text-sm font-bold", descontoTiers.responsavel > 0 ? "text-orange-400" : "text-white/30")}>
+              {descontoTiers.responsavel > 0 ? `-${formatCurrency(descontoTiers.responsavel)}` : '-'}
+            </p>
+          </div>
+
+          {/* Crédito */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Crédito</p>
+            <p className={cn("text-sm font-bold", valorCredito > 0 ? "text-emerald-400" : "text-white/30")}>
+              {valorCredito > 0 ? `+${formatCurrency(valorCredito)}` : '-'}
+            </p>
+          </div>
+
+          {/* Frete */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Frete</p>
+            <p className={cn("text-sm font-bold", (venda.valor_frete || 0) > 0 ? "text-white" : "text-white/30")}>
+              {(venda.valor_frete || 0) > 0 ? formatCurrency(venda.valor_frete) : '-'}
+            </p>
+          </div>
+
+          {/* Valor da Venda */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Venda</p>
+            <p className="text-sm font-bold text-white">{formatCurrency((venda.valor_venda || 0) + valorCredito)}</p>
+          </div>
+        </div>
+
+        {/* Lucro e Progresso */}
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Lucro Bruto</p>
+              <p className="text-lg font-bold text-emerald-400">{formatCurrency(totalLucro)}</p>
+            </div>
+            <TrendingUp className="h-5 w-5 text-emerald-400/50" />
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Margem</p>
+              <p className="text-lg font-bold text-blue-400">{margem.toFixed(2)}%</p>
+            </div>
+            <Percent className="h-5 w-5 text-blue-400/50" />
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Progresso</p>
+              <p className="text-lg font-bold text-white">{totalFaturados}/{totalProdutos}</p>
+            </div>
+            <Package className="h-5 w-5 text-amber-400/50" />
+          </div>
         </div>
 
         {/* Tabela de Produtos */}
