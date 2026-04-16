@@ -29,6 +29,9 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { VendaBloqueadaDialog } from "@/components/vendas/VendaBloqueadaDialog";
+import { validarDesconto, getTipoAutorizacaoNecessaria } from "@/utils/descontoVendasRules";
+import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
+import { AutorizacaoDescontoModal } from "@/components/vendas/AutorizacaoDescontoModal";
 
 export default function MinhasVendasEditar() {
   const { id } = useParams<{ id: string }>();
