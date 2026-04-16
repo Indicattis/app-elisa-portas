@@ -1045,6 +1045,7 @@ export default function GestaoFabricaDirecao() {
                       onAgendar={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleAgendarPedido : undefined}
                       hideOrdensStatus={['aguardando_coleta','instalacoes','correcoes','finalizado'].includes(etapa)}
                       onFinalizarDireto={etapa !== 'finalizado' ? handleFinalizarDireto : undefined}
+                      onEnviarAguardandoCliente={etapa === 'finalizado' ? handleEnviarAguardandoCliente : undefined}
                       showPosicao={true}
                       onAvisoEspera={handleAvisoEspera}
                       enableDragAndDrop={true}
