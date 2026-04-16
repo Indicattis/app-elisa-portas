@@ -38,6 +38,7 @@ interface PedidosDraggableListProps {
   onAgendar?: (pedidoId: string) => void;
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
   onFinalizarDireto?: (pedidoId: string) => Promise<void>;
+  onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>;
   enableDragAndDrop?: boolean;
   showPosicao?: boolean;
   disableClienteClick?: boolean;
@@ -61,6 +62,7 @@ interface SortableItemProps {
   onAgendar?: (pedidoId: string) => void;
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
   onFinalizarDireto?: (pedidoId: string) => Promise<void>;
+  onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>;
   disableClienteClick?: boolean;
   hideOrdensStatus?: boolean;
   hideCorrecaoButton?: boolean;
@@ -82,6 +84,7 @@ function SortableItem({
   onAgendar,
   onCorrecaoDetalhesClick,
   onFinalizarDireto,
+  onEnviarAguardandoCliente,
   disableClienteClick,
   hideOrdensStatus,
   hideCorrecaoButton,
@@ -117,6 +120,7 @@ function SortableItem({
         onAgendar={onAgendar}
         onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
         onFinalizarDireto={onFinalizarDireto}
+        onEnviarAguardandoCliente={onEnviarAguardandoCliente}
         isDragging={isDragging}
         dragHandleProps={{ ...attributes, ...listeners }}
         posicao={posicao}
@@ -145,6 +149,7 @@ export function PedidosDraggableList({
   onAgendar,
   onCorrecaoDetalhesClick,
   onFinalizarDireto,
+  onEnviarAguardandoCliente,
   enableDragAndDrop = true,
   showPosicao = true,
   disableClienteClick = false,
@@ -236,6 +241,7 @@ export function PedidosDraggableList({
               onAgendar={onAgendar}
               onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
               onFinalizarDireto={onFinalizarDireto}
+              onEnviarAguardandoCliente={onEnviarAguardandoCliente}
               posicao={showPosicao ? index + 1 : undefined}
               total={showPosicao ? pedidos.length : undefined}
               disableClienteClick={disableClienteClick}
@@ -286,6 +292,7 @@ export function PedidosDraggableList({
               onAgendar={onAgendar}
               onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
               onFinalizarDireto={onFinalizarDireto}
+              onEnviarAguardandoCliente={onEnviarAguardandoCliente}
               disableClienteClick={disableClienteClick}
               hideOrdensStatus={hideOrdensStatus}
               hideCorrecaoButton={hideCorrecaoButton}

@@ -52,6 +52,7 @@ export function usePedidosContadores() {
         instalacoes: 0,
         correcoes: 0,
         finalizado: 0,
+        aguardando_cliente: 0,
       };
 
       data?.forEach((pedido) => {

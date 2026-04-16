@@ -66,6 +66,7 @@ const ETAPA_ICONS = {
   instalacoes: HardHat,
   correcoes: AlertTriangle,
   finalizado: CheckCircle2,
+  aguardando_cliente: Clock,
   arquivo_morto: Archive
 };
 
@@ -442,8 +443,113 @@ export default function GestaoFabricaDirecao() {
     }
   };
 
+  const handleEnviarAguardandoCliente = async (pedidoId: string) => {
+    const agora = new Date().toISOString();
+    try {
+      // 1. Atualizar etapa_atual
+      const { error: errUpdate } = await supabase
+        .from('pedidos_producao')
+        .update({ etapa_atual: 'aguardando_cliente' })
+        .eq('id', pedidoId);
+      if (errUpdate) throw errUpdate;
+
+      // 2. Fechar etapa finalizado
+      await supabase
+        .from('pedidos_etapas')
+        .upsert({
+          pedido_id: pedidoId,
+          etapa: 'finalizado',
+          data_saida: agora,
+          data_entrada: agora,
+          checkboxes: [],
+        }, { onConflict: 'pedido_id,etapa' });
+
+      // 3. Criar etapa aguardando_cliente
+      await supabase
+        .from('pedidos_etapas')
+        .upsert({
+          pedido_id: pedidoId,
+          etapa: 'aguardando_cliente',
+          data_entrada: agora,
+          checkboxes: [],
+        }, { onConflict: 'pedido_id,etapa' });
+
+      // 4. Registrar movimentação
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('pedidos_movimentacoes').insert({
+        pedido_id: pedidoId,
+        etapa_origem: 'finalizado',
+        etapa_destino: 'aguardando_cliente',
+        teor: 'avanco',
+        user_id: user?.id || '',
+        descricao: 'Pedido enviado para Aguardando Cliente',
+      });
+
+      toast({ title: 'Pedido enviado para Aguardando Cliente' });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+    } catch (err) {
+      console.error(err);
+      toast({ variant: 'destructive', title: 'Erro ao enviar para Aguardando Cliente' });
+    }
+  };
+
+  const handleRetornarDeAguardandoCliente = async (pedidoId: string) => {
+    const agora = new Date().toISOString();
+    try {
+      const { error: errUpdate } = await supabase
+        .from('pedidos_producao')
+        .update({ etapa_atual: 'finalizado' })
+        .eq('id', pedidoId);
+      if (errUpdate) throw errUpdate;
+
+      // Fechar etapa aguardando_cliente
+      await supabase
+        .from('pedidos_etapas')
+        .upsert({
+          pedido_id: pedidoId,
+          etapa: 'aguardando_cliente',
+          data_saida: agora,
+          data_entrada: agora,
+          checkboxes: [],
+        }, { onConflict: 'pedido_id,etapa' });
+
+      // Registrar movimentação
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('pedidos_movimentacoes').insert({
+        pedido_id: pedidoId,
+        etapa_origem: 'aguardando_cliente',
+        etapa_destino: 'finalizado',
+        teor: 'retrocesso',
+        user_id: user?.id || '',
+        descricao: 'Pedido retornado de Aguardando Cliente para Finalizado',
+      });
+
+      toast({ title: 'Pedido retornado para Finalizado' });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+    } catch (err) {
+      console.error(err);
+      toast({ variant: 'destructive', title: 'Erro ao retornar pedido' });
+    }
+  };
+
   const headerActions = (
     <div className="flex items-center gap-2">
+      <Button 
+        variant="outline" 
+        onClick={() => setEtapaAtiva('aguardando_cliente' as EtapaPedido)} 
+        size="sm" 
+        className="bg-yellow-500/10 border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20"
+      >
+        <Clock className="h-4 w-4 mr-2" />
+        Aguardando Cliente
+        {((contadores as any).aguardando_cliente || 0) > 0 && (
+          <Badge variant="secondary" className="ml-1 bg-yellow-500/20 text-yellow-400 text-xs px-1.5 py-0">
+            {(contadores as any).aguardando_cliente}
+          </Badge>
+        )}
+      </Button>
       <Button 
         variant="outline" 
         onClick={() => setModalPedidoTesteAberto(true)} 
@@ -939,6 +1045,7 @@ export default function GestaoFabricaDirecao() {
                       onAgendar={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleAgendarPedido : undefined}
                       hideOrdensStatus={['aguardando_coleta','instalacoes','correcoes','finalizado'].includes(etapa)}
                       onFinalizarDireto={etapa !== 'finalizado' ? handleFinalizarDireto : undefined}
+                      onEnviarAguardandoCliente={etapa === 'finalizado' ? handleEnviarAguardandoCliente : undefined}
                       showPosicao={true}
                       onAvisoEspera={handleAvisoEspera}
                       enableDragAndDrop={true}
@@ -1036,6 +1143,43 @@ export default function GestaoFabricaDirecao() {
             </Card>
           </TabsContent>
         ))}
+
+        {/* Tab Content - Aguardando Cliente */}
+        <TabsContent value="aguardando_cliente" className="mt-4">
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
+            <CardHeader className="pb-3 px-4 py-4">
+              <CardTitle className="text-lg flex items-center gap-2 text-white">
+                <Clock className="h-5 w-5 text-yellow-400" />
+                <span>Aguardando Cliente</span>
+                <span className="text-sm font-normal text-white/60">
+                  {pedidosFiltrados.length} {pedidosFiltrados.length === 1 ? 'pedido' : 'pedidos'}
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 py-4">
+              {isLoading ? (
+                <div className="text-center py-8 text-white/60">Carregando...</div>
+              ) : pedidosFiltrados.length === 0 ? (
+                <div className="text-center py-8 text-white/60">Nenhum pedido aguardando cliente</div>
+              ) : (
+                <PedidosDraggableList
+                  pedidos={pedidosFiltrados}
+                  pedidosParaTotais={pedidosFiltrados}
+                  etapa={'aguardando_cliente' as EtapaPedido}
+                  isAberto={false}
+                  viewMode={viewMode}
+                  onMoverEtapa={(pedidoId) => handleRetornarDeAguardandoCliente(pedidoId)}
+                  onReorganizar={handleReorganizar}
+                  onMoverPrioridade={handleMoverPrioridade}
+                  onArquivar={handleArquivar}
+                  showPosicao={true}
+                  enableDragAndDrop={true}
+                  hideOrdensStatus={true}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Tab Content - Arquivo Morto */}
         <TabsContent value="arquivo_morto" className="mt-4">

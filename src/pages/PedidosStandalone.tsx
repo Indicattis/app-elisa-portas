@@ -29,7 +29,8 @@ const ETAPA_ICONS: Record<EtapaPedido, React.ComponentType<{ className?: string 
   aguardando_coleta: Package,
   instalacoes: HardHat,
   correcoes: AlertTriangle,
-  finalizado: CheckCircle2
+  finalizado: CheckCircle2,
+  aguardando_cliente: Clock
 };
 export default function PedidosStandalone() {
   const navigate = useNavigate();
