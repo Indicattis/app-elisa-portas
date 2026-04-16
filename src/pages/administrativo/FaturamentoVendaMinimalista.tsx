@@ -1084,6 +1084,9 @@ export default function FaturamentoVendaMinimalista() {
                     <Button size="sm" variant="outline" className="h-7 text-xs border-white/20 text-white hover:bg-white/10" onClick={handleAddParcela}>
                       <Plus className="h-3 w-3 mr-1" /> Parcela
                     </Button>
+                    <Button size="sm" variant="outline" className="h-7 text-xs border-orange-500/30 text-orange-400 hover:bg-orange-500/10" onClick={() => setShowRegenerarParcelasDialog(true)}>
+                      <Calculator className="h-3 w-3 mr-1" /> Regenerar
+                    </Button>
                     {(() => {
                       const pendentes = contasReceber.filter(p => p.status !== 'pago');
                       const ultima = pendentes.length > 0 ? pendentes[pendentes.length - 1] : null;
@@ -1262,17 +1265,6 @@ export default function FaturamentoVendaMinimalista() {
                   </div>
                 );
               })()}
-              <div className="mt-3 flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
-                  onClick={() => setShowRegenerarParcelasDialog(true)}
-                >
-                  <Calculator className="h-3.5 w-3.5 mr-1.5" />
-                  Regenerar Parcelas
-                </Button>
-              </div>
               </>
               )}
             </CardContent>
