@@ -1145,6 +1145,19 @@ export default function MinhasVendasEditar() {
           </CardContent>
         </Card>
       </div>
+      <AutorizacaoDescontoModal
+        open={autorizacaoDescontoOpen}
+        onOpenChange={setAutorizacaoDescontoOpen}
+        onAutorizado={() => {
+          setDescontoAutorizado(true);
+          setAutorizacaoDescontoOpen(false);
+          // Re-trigger cadastro após autorização
+          setTimeout(() => handleCadastrarVenda(), 100);
+        }}
+        percentualDesconto={percentualDescontoAtual}
+        tipoAutorizacao={tipoAutorizacaoNecessaria}
+        limitePermitido={limitePermitidoAtual}
+      />
     </MinimalistLayout>
   );
 }
