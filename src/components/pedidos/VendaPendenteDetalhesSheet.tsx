@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -469,7 +470,10 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                               <div className="flex items-center gap-2 min-w-0">
                                 <Package className="h-3.5 w-3.5 text-purple-400 flex-shrink-0" />
                                 <div className="min-w-0">
-                                  <p className="font-medium text-white text-xs truncate">
+                                <p 
+                                    className="font-medium text-white text-xs truncate cursor-pointer hover:text-primary transition-colors"
+                                    onClick={() => setProdutoSelecionado(produto)}
+                                  >
                                     {qtd > 1 && <span className="text-white/60">{qtd}x </span>}
                                     {nome}
                                   </p>
@@ -834,5 +838,60 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
         </div>
       </SheetContent>
     </Sheet>
+
+    {/* Modal de Preço de Tabela */}
+    <Dialog open={!!produtoSelecionado} onOpenChange={(open) => !open && setProdutoSelecionado(null)}>
+      <DialogContent className="bg-background border-white/10 max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-white text-sm">Preço de Tabela</DialogTitle>
+        </DialogHeader>
+        {(() => {
+          if (!produtoSelecionado) return null;
+          const dims = extrairDimensoes(produtoSelecionado);
+          const precoTab = dims ? precosTabela.get(criarChavePrecoTabela(dims.largura, dims.altura)) : null;
+          
+          if (!precoTab) {
+            return (
+              <div className="text-white/50 text-sm py-4 text-center">
+                Sem preço de tabela cadastrado para este item.
+              </div>
+            );
+          }
+          
+          return (
+            <div className="space-y-3">
+              <div className="text-xs text-white/50 mb-2">
+                {precoTab.descricao} — {precoTab.largura}m × {precoTab.altura}m
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                  <span className="text-white/50 text-xs block mb-1">Porta</span>
+                  <span className="text-white font-medium">{formatCurrency(precoTab.valor_porta)}</span>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                  <span className="text-white/50 text-xs block mb-1">Pintura</span>
+                  <span className="text-white font-medium">{formatCurrency(precoTab.valor_pintura)}</span>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                  <span className="text-white/50 text-xs block mb-1">Instalação</span>
+                  <span className="text-white font-medium">{formatCurrency(precoTab.valor_instalacao)}</span>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                  <span className="text-white/50 text-xs block mb-1">Lucro</span>
+                  <span className="text-white font-medium">{formatCurrency(precoTab.lucro)}</span>
+                </div>
+              </div>
+              <div className="bg-primary/10 rounded-lg p-3 border border-primary/20 flex justify-between items-center">
+                <span className="text-white/70 text-xs">Total Tabela</span>
+                <span className="text-primary font-semibold">
+                  {formatCurrency(precoTab.valor_porta + precoTab.valor_pintura + precoTab.valor_instalacao)}
+                </span>
+              </div>
+            </div>
+          );
+        })()}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
