@@ -130,6 +130,9 @@ export function useAcordosAutorizados() {
           })),
         aprovado_direcao: acordo.aprovado_direcao ?? false,
         reprovado_direcao: (acordo as any).reprovado_direcao ?? false,
+        pago: (acordo as any).pago ?? false,
+        pago_em: (acordo as any).pago_em || undefined,
+        pago_por: (acordo as any).pago_por || undefined,
         criador: acordo.created_by ? criadoresMap[acordo.created_by] : undefined
       }));
 
