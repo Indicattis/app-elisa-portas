@@ -38,6 +38,7 @@ interface PedidosDraggableListProps {
   onAgendar?: (pedidoId: string) => void;
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
   onFinalizarDireto?: (pedidoId: string) => Promise<void>;
+  onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>;
   enableDragAndDrop?: boolean;
   showPosicao?: boolean;
   disableClienteClick?: boolean;
