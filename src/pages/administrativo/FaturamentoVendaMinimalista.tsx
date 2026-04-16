@@ -151,6 +151,23 @@ export default function FaturamentoVendaMinimalista() {
     if (!error && data) setContasReceber(data);
   };
 
+  const handleRegenerarParcelas = async () => {
+    if (!id) return;
+    // Deletar parcelas existentes
+    const { error: deleteError } = await supabase
+      .from('contas_receber')
+      .delete()
+      .eq('venda_id', id);
+    if (deleteError) {
+      toast({ variant: 'destructive', title: 'Erro ao remover parcelas existentes' });
+      return;
+    }
+    setContasReceber([]);
+    setShowRegenerarParcelasDialog(false);
+    // Gerar novas
+    await handleGerarParcelas();
+  };
+
   const handleGerarParcelas = async () => {
     if (!venda || !id) return;
     const metodo = venda.metodo_pagamento || 'boleto';
