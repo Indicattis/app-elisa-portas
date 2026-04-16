@@ -544,9 +544,9 @@ export default function GestaoFabricaDirecao() {
       >
         <Clock className="h-4 w-4 mr-2" />
         Aguardando Cliente
-        {(contadores.aguardando_cliente || 0) > 0 && (
+        {((contadores as any).aguardando_cliente || 0) > 0 && (
           <Badge variant="secondary" className="ml-1 bg-yellow-500/20 text-yellow-400 text-xs px-1.5 py-0">
-            {contadores.aguardando_cliente}
+            {(contadores as any).aguardando_cliente}
           </Badge>
         )}
       </Button>
