@@ -709,56 +709,84 @@ export default function FaturamentoVendaMinimalista() {
           )}
         </div>
 
-        {/* Cards de Resumo */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">Valor Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-emerald-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Indicadores Financeiros */}
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
+          {/* Valor de Tabela */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Tabela</p>
+            <p className="text-sm font-bold text-blue-400">{formatCurrency(valorTabela)}</p>
+          </div>
 
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">Lucro Bruto</CardTitle>
-              <TrendingUp className="h-4 w-4 text-emerald-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-emerald-400">
-                {formatCurrency(totalLucro)}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Desconto Cartão */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Desc. Cartão</p>
+            <p className={cn("text-sm font-bold", descontoTiers.cartao > 0 ? "text-red-400" : "text-white/30")}>
+              {descontoTiers.cartao > 0 ? `-${formatCurrency(descontoTiers.cartao)}` : '-'}
+            </p>
+          </div>
 
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">Margem</CardTitle>
-              <Percent className="h-4 w-4 text-blue-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-400">
-                {margem.toFixed(2)}%
-              </div>
-            </CardContent>
-          </Card>
+          {/* Desconto Gelo */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Desc. Gelo</p>
+            <p className={cn("text-sm font-bold", descontoTiers.gelo > 0 ? "text-red-400" : "text-white/30")}>
+              {descontoTiers.gelo > 0 ? `-${formatCurrency(descontoTiers.gelo)}` : '-'}
+            </p>
+          </div>
 
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">Progresso</CardTitle>
-              <Package className="h-4 w-4 text-amber-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {totalFaturados}/{totalProdutos}
-              </div>
-              <p className="text-xs text-white/50">Itens faturados</p>
-            </CardContent>
-          </Card>
+          {/* Desconto Luan/Alana */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Luan/Alana</p>
+            <p className={cn("text-sm font-bold", descontoTiers.responsavel > 0 ? "text-orange-400" : "text-white/30")}>
+              {descontoTiers.responsavel > 0 ? `-${formatCurrency(descontoTiers.responsavel)}` : '-'}
+            </p>
+          </div>
+
+          {/* Crédito */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Crédito</p>
+            <p className={cn("text-sm font-bold", valorCredito > 0 ? "text-emerald-400" : "text-white/30")}>
+              {valorCredito > 0 ? `+${formatCurrency(valorCredito)}` : '-'}
+            </p>
+          </div>
+
+          {/* Frete */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Frete</p>
+            <p className={cn("text-sm font-bold", (venda.valor_frete || 0) > 0 ? "text-white" : "text-white/30")}>
+              {(venda.valor_frete || 0) > 0 ? formatCurrency(venda.valor_frete) : '-'}
+            </p>
+          </div>
+
+          {/* Valor da Venda */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Venda</p>
+            <p className="text-sm font-bold text-white">{formatCurrency((venda.valor_venda || 0) + valorCredito)}</p>
+          </div>
+        </div>
+
+        {/* Lucro e Progresso */}
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Lucro Bruto</p>
+              <p className="text-lg font-bold text-emerald-400">{formatCurrency(totalLucro)}</p>
+            </div>
+            <TrendingUp className="h-5 w-5 text-emerald-400/50" />
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Margem</p>
+              <p className="text-lg font-bold text-blue-400">{margem.toFixed(2)}%</p>
+            </div>
+            <Percent className="h-5 w-5 text-blue-400/50" />
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Progresso</p>
+              <p className="text-lg font-bold text-white">{totalFaturados}/{totalProdutos}</p>
+            </div>
+            <Package className="h-5 w-5 text-amber-400/50" />
+          </div>
         </div>
 
         {/* Tabela de Produtos */}
