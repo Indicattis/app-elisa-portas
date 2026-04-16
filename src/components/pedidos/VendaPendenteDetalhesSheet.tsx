@@ -530,25 +530,47 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                           totalVendido += (p.valor_total || 0);
                         }
                         const totalDiferenca = totalVendido - totalTabela;
+                        const valorFrete = vendaCompleta?.valor_frete || 0;
+                        const totalGeral = totalVendido + valorFrete;
                         return (
-                          <tr className="bg-white/5 border-t border-white/10">
-                            <td className="px-3 py-2 text-white/60 font-medium">Total</td>
-                            <td className="text-right px-2 py-2 font-semibold text-white/50 whitespace-nowrap">
-                              {formatCurrency(totalTabela)}
-                            </td>
-                            <td className="text-right px-2 py-2 font-semibold whitespace-nowrap">
-                              {totalDiferenca !== 0 ? (
-                                <span className={totalDiferenca > 0 ? "text-green-400" : "text-red-400"}>
-                                  {totalDiferenca > 0 ? '+' : ''}{formatCurrency(totalDiferenca)}
-                                </span>
-                              ) : (
-                                <span className="text-white/30">—</span>
-                              )}
-                            </td>
-                            <td className="text-right px-3 py-2 font-semibold text-white whitespace-nowrap">
-                              {formatCurrency(totalVendido)}
-                            </td>
-                          </tr>
+                          <>
+                            <tr className="bg-white/5 border-t border-white/10">
+                              <td className="px-3 py-1.5 text-white/60 font-medium">Produtos</td>
+                              <td className="text-right px-2 py-1.5 font-semibold text-white/50 whitespace-nowrap">
+                                {formatCurrency(totalTabela)}
+                              </td>
+                              <td className="text-right px-2 py-1.5 font-semibold whitespace-nowrap">
+                                {totalDiferenca !== 0 ? (
+                                  <span className={totalDiferenca > 0 ? "text-green-400" : "text-red-400"}>
+                                    {totalDiferenca > 0 ? '+' : ''}{formatCurrency(totalDiferenca)}
+                                  </span>
+                                ) : (
+                                  <span className="text-white/30">—</span>
+                                )}
+                              </td>
+                              <td className="text-right px-3 py-1.5 font-semibold text-white whitespace-nowrap">
+                                {formatCurrency(totalVendido)}
+                              </td>
+                            </tr>
+                            {valorFrete > 0 && (
+                              <tr className="bg-white/5">
+                                <td className="px-3 py-1.5 text-white/60 font-medium">Frete</td>
+                                <td className="text-right px-2 py-1.5 text-white/30">—</td>
+                                <td className="text-right px-2 py-1.5 text-white/30">—</td>
+                                <td className="text-right px-3 py-1.5 font-semibold text-white whitespace-nowrap">
+                                  {formatCurrency(valorFrete)}
+                                </td>
+                              </tr>
+                            )}
+                            <tr className="bg-white/10 border-t border-white/20">
+                              <td className="px-3 py-2 text-white font-bold">Total Geral</td>
+                              <td className="text-right px-2 py-2"></td>
+                              <td className="text-right px-2 py-2"></td>
+                              <td className="text-right px-3 py-2 font-bold text-green-400 whitespace-nowrap">
+                                {formatCurrency(totalGeral)}
+                              </td>
+                            </tr>
+                          </>
                         );
                       })()}
                     </tfoot>
