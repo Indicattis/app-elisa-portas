@@ -1281,6 +1281,17 @@ export default function FaturamentoVendaMinimalista() {
                   </div>
                 );
               })()}
+              <div className="mt-3 flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
+                  onClick={() => setShowRegenerarParcelasDialog(true)}
+                >
+                  <Calculator className="h-3.5 w-3.5 mr-1.5" />
+                  Regenerar Parcelas
+                </Button>
+              </div>
               </>
               )}
             </CardContent>
