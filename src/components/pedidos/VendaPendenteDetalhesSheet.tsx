@@ -849,7 +849,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
         </DialogHeader>
         {(() => {
           if (!produtoSelecionado) return null;
-          const dims = extrairMedidasProduto(produtoSelecionado);
+          const dims = extrairDimensoesProduto(produtoSelecionado);
           const precoTab = dims ? precosTabela.get(criarChavePrecoTabela(dims.largura, dims.altura)) : null;
           
           if (!precoTab) {
