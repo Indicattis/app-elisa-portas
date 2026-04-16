@@ -443,12 +443,11 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                         let precoTabela = produto.valor_produto || 0;
 
                         if (tipo === 'porta_enrolar') {
-                          const precoBaseSalvo = (produto.valor_produto || 0) + (isInstalacao ? (produto.valor_instalacao || 0) : 0);
-                          precoTabela = precoBaseSalvo;
+                          precoTabela = produto.valor_produto || 0;
                           if (dimensoes) {
                             const ref = precosTabela.get(criarChavePrecoTabela(dimensoes.largura, dimensoes.altura));
                             if (ref) {
-                              precoTabela = ref.valor_porta + (isInstalacao ? ref.valor_instalacao : 0);
+                              precoTabela = ref.valor_porta;
                             }
                           }
                         } else if (tipo === 'pintura_epoxi') {
