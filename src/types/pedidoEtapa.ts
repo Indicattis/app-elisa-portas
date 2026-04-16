@@ -9,7 +9,8 @@ export type EtapaPedido =
   | 'aguardando_coleta'
   | 'instalacoes'
   | 'correcoes'
-  | 'finalizado';
+  | 'finalizado'
+  | 'aguardando_cliente';
 
 export interface PedidoCheckbox {
   id: string;
@@ -126,6 +127,12 @@ export const ETAPAS_CONFIG: Record<EtapaPedido, {
     color: 'bg-green-500',
     icon: 'CheckCircle2',
     checkboxes: []
+  },
+  aguardando_cliente: {
+    label: 'Aguardando Cliente',
+    color: 'bg-yellow-500',
+    icon: 'Clock',
+    checkboxes: []
   }
 };
 
@@ -180,4 +187,5 @@ export const LIMITES_ETAPA_SEGUNDOS: Record<EtapaPedido, number> = {
   instalacoes: 3 * 10 * 3600,      // 3 dias comerciais (30h)
   correcoes: 3 * 10 * 3600,        // 3 dias comerciais (30h)
   finalizado: Infinity,
+  aguardando_cliente: Infinity,
 };
