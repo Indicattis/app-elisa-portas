@@ -97,6 +97,7 @@ export default function FaturamentoVendaMinimalista() {
   const [showPedidoDialog, setShowPedidoDialog] = useState(false); // kept for potential future use
   const [showPedidoDuplicadoDialog, setShowPedidoDuplicadoDialog] = useState(false);
   const [showRemoverFaturamentoDialog, setShowRemoverFaturamentoDialog] = useState(false);
+  const [showRegenerarParcelasDialog, setShowRegenerarParcelasDialog] = useState(false);
   const [pedidoExistenteId, setPedidoExistenteId] = useState<string | null>(null);
   const [checkingPedido, setCheckingPedido] = useState(false);
   const [hasPedido, setHasPedido] = useState<boolean | null>(null);
