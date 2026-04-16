@@ -488,6 +488,35 @@ export default function MinhasVendasEditar() {
       return;
     }
 
+    // Validação de desconto
+    if (!descontoAutorizado) {
+      const configLimites = configuracoes ? {
+        avista: configuracoes.limite_desconto_avista,
+        presencial: configuracoes.limite_desconto_presencial,
+        adicionalResponsavel: configuracoes.limite_adicional_responsavel,
+      } : undefined;
+
+      const validacao = validarDesconto(
+        produtosFormatados,
+        venda.forma_pagamento || '',
+        venda.venda_presencial || false,
+        configLimites
+      );
+
+      const tipoAutorizacao = getTipoAutorizacaoNecessaria(validacao);
+
+      if (tipoAutorizacao) {
+        setPercentualDescontoAtual(validacao.percentualDesconto);
+        setLimitePermitidoAtual(validacao.limitePermitido);
+        setTipoAutorizacaoNecessaria(tipoAutorizacao);
+        setAutorizacaoDescontoOpen(true);
+        return;
+      }
+    }
+
+    // Reset flag para próximas vendas
+    setDescontoAutorizado(false);
+
     setIsCadastrando(true);
     try {
       const valorProdutos = calcularValorTotalProdutos();
