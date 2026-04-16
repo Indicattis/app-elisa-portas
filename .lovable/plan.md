@@ -1,17 +1,27 @@
 
 
-## Desconto contemplando Instalação no cadastro da venda
+## Plan: Modal de Tabela de Preços ao Clicar no Produto
 
-### Diagnóstico
+### Objetivo
+Ao clicar no nome do produto na tabela de itens do `VendaPendenteDetalhesSheet`, abrir um modal (Dialog) exibindo os dados da tabela de preços (`tabela_precos_portas`) correspondente às dimensões daquele produto.
 
-O modal `DescontoVendaModal` já recebe **todos** os produtos do array `portas` (incluindo os de `tipo_produto: 'instalacao'`), e já permite selecionar qualquer um para aplicar desconto. Os cálculos de `valor_produto + valor_pintura + valor_instalacao` também funcionam corretamente porque para instalação, o valor está em `valor_produto` e os outros são 0.
+### O que será feito
 
-A única lacuna é que a função `getTipoProdutoLabel` dentro do modal **não tem o case `'instalacao'`**, então o produto aparece com o tipo cru em vez de "Instalação".
+**Arquivo: `src/components/pedidos/VendaPendenteDetalhesSheet.tsx`**
 
-### Alteração necessária
+1. **Adicionar estado para o modal**: Um state `produtoSelecionado` que guarda o produto clicado (com suas dimensões e tipo).
 
-**1 arquivo: `src/components/vendas/DescontoVendaModal.tsx`**
-- Adicionar `case 'instalacao': return 'Instalação';` na função `getTipoProdutoLabel` (linha ~148)
+2. **Tornar o nome do produto clicável**: Envolver o `<p>` do nome (linha ~472) em um botão/cursor-pointer que seta o `produtoSelecionado`.
 
-Isso é tudo — o produto de instalação já aparece na lista de seleção do modal de desconto, já é calculado corretamente na base de desconto, e já pode ser selecionado individualmente. Apenas o label está faltando.
+3. **Adicionar o Dialog**: No final do componente, renderizar um `<Dialog>` que:
+   - Busca na `precosTabela` (Map já existente no componente) o item correspondente às dimensões do produto.
+   - Exibe os valores da tabela: `valor_porta`, `valor_pintura`, `valor_instalacao`, `lucro`, `largura`, `altura`.
+   - Se não houver match na tabela (produto sem dimensões ou sem preço cadastrado), exibe mensagem "Sem preço de tabela cadastrado para este item".
+
+4. **Imports**: Adicionar `Dialog, DialogContent, DialogHeader, DialogTitle` dos componentes UI.
+
+### Detalhes técnicos
+- O Map `precosTabela` já está populado no componente com chaves `largura.toFixed(3)-altura.toFixed(3)` — basta usar `criarChavePrecoTabela()` com as dimensões do produto clicado para buscar os dados.
+- Para produtos sem dimensões (acessórios, adicionais), o modal informará que não há preço de tabela disponível.
+- Layout do modal seguirá o padrão glassmorphism existente (`bg-background`, `border-white/10`).
 
