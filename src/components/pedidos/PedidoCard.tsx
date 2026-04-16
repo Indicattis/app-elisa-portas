@@ -1972,6 +1972,35 @@ className="flex h-[20px] w-full rounded-[3px]"
           }}
         />
 
+        <AlertDialog open={showAguardandoCliente} onOpenChange={setShowAguardandoCliente}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Enviar para Aguardando Cliente</AlertDialogTitle>
+              <AlertDialogDescription>
+                Deseja mover este pedido para "Aguardando Cliente"? O pedido ficará em uma etapa separada até que o cliente esteja pronto.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={isEnviandoAguardandoCliente}
+                onClick={async () => {
+                  if (!onEnviarAguardandoCliente) return;
+                  setIsEnviandoAguardandoCliente(true);
+                  try {
+                    await onEnviarAguardandoCliente(pedido.id);
+                  } finally {
+                    setIsEnviandoAguardandoCliente(false);
+                    setShowAguardandoCliente(false);
+                  }
+                }}
+              >
+                {isEnviandoAguardandoCliente ? 'Enviando...' : 'Confirmar'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <PedidoDetalhesSheet pedido={pedido} open={showDetalhes} onOpenChange={setShowDetalhes} />
 
         <AcaoEtapaModal pedido={pedido} open={showAcaoEtapa} onOpenChange={setShowAcaoEtapa} onAvancar={onMoverEtapa || (() => {})} />
