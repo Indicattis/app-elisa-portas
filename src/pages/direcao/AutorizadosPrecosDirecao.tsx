@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle, ChevronLeft, ChevronRight, CalendarDays, DollarSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -240,6 +240,24 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     }
   }, [toast]);
 
+  const handleMarcarPago = useCallback(async (acordoId: string, pagoAtual: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('acordos_instalacao_autorizados')
+        .update({
+          pago: !pagoAtual,
+          pago_em: !pagoAtual ? new Date().toISOString() : null,
+          pago_por: !pagoAtual ? user?.id : null,
+        } as any)
+        .eq('id', acordoId);
+      if (error) throw error;
+      toast({ title: 'Sucesso', description: !pagoAtual ? 'Acordo marcado como pago' : 'Pagamento desmarcado' });
+      await refetch();
+    } catch (error: any) {
+      console.error('Erro ao atualizar pagamento:', error);
+      toast({ title: 'Erro', description: 'Não foi possível atualizar o pagamento', variant: 'destructive' });
+    }
+  }, [user?.id, toast, refetch]);
 
   const headerActions = (
     <>
@@ -451,6 +469,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                           <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
                           <TableHead className="text-xs text-white/70 text-right">Valor excesso</TableHead>
                           <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
+                          <TableHead className="text-xs text-white/70 text-center">Pagamento</TableHead>
                           <TableHead className="text-xs text-white/70">Observações</TableHead>
                           {contexto === 'direcao' && (
                             <TableHead className="text-xs text-white/70 text-center">Aprovação</TableHead>
@@ -509,6 +528,18 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                                     {STATUS_LABELS[acordo.status]}
                                   </Badge>
                                 </TableCell>
+                                <TableCell className="text-center">
+                                  {acordo.pago ? (
+                                    <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-500/30 gap-1">
+                                      <DollarSign className="h-3 w-3" />
+                                      Pago
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="bg-white/5 text-white/40 border-white/10">
+                                      Pendente
+                                    </Badge>
+                                  )}
+                                </TableCell>
                                 <TableCell className="text-white/60 max-w-[200px] truncate" title={acordo.observacoes || ''}>
                                   {acordo.observacoes || '—'}
                                 </TableCell>
@@ -560,6 +591,12 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                                       <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700">
                                         <DropdownMenuItem className="text-white hover:bg-zinc-700 cursor-pointer" onClick={() => handleEditarAcordo(acordo)}>
                                           <Edit2 className="h-4 w-4 mr-2" /> Editar
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="cursor-pointer hover:bg-zinc-700" onClick={() => handleMarcarPago(acordo.id, acordo.pago)}>
+                                          <DollarSign className={`h-4 w-4 mr-2 ${acordo.pago ? 'text-yellow-400' : 'text-green-400'}`} />
+                                          <span className={acordo.pago ? 'text-yellow-400' : 'text-green-400'}>
+                                            {acordo.pago ? 'Desmarcar Pago' : 'Marcar como Pago'}
+                                          </span>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem className="text-red-400 hover:bg-red-500/20 cursor-pointer" onClick={() => setAcordoParaDeletar(acordo)}>
                                           <Trash2 className="h-4 w-4 mr-2" /> Excluir

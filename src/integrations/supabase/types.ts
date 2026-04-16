@@ -93,6 +93,9 @@ export type Database = {
           data_acordo: string
           id: string
           observacoes: string | null
+          pago: boolean
+          pago_em: string | null
+          pago_por: string | null
           quantidade_portas: number
           reprovado_direcao: boolean | null
           status: string
@@ -112,6 +115,9 @@ export type Database = {
           data_acordo?: string
           id?: string
           observacoes?: string | null
+          pago?: boolean
+          pago_em?: string | null
+          pago_por?: string | null
           quantidade_portas?: number
           reprovado_direcao?: boolean | null
           status?: string
@@ -131,6 +137,9 @@ export type Database = {
           data_acordo?: string
           id?: string
           observacoes?: string | null
+          pago?: boolean
+          pago_em?: string | null
+          pago_por?: string | null
           quantidade_portas?: number
           reprovado_direcao?: boolean | null
           status?: string
