@@ -1144,6 +1144,43 @@ export default function GestaoFabricaDirecao() {
           </TabsContent>
         ))}
 
+        {/* Tab Content - Aguardando Cliente */}
+        <TabsContent value="aguardando_cliente" className="mt-4">
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
+            <CardHeader className="pb-3 px-4 py-4">
+              <CardTitle className="text-lg flex items-center gap-2 text-white">
+                <Clock className="h-5 w-5 text-yellow-400" />
+                <span>Aguardando Cliente</span>
+                <span className="text-sm font-normal text-white/60">
+                  {pedidosFiltrados.length} {pedidosFiltrados.length === 1 ? 'pedido' : 'pedidos'}
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 py-4">
+              {isLoading ? (
+                <div className="text-center py-8 text-white/60">Carregando...</div>
+              ) : pedidosFiltrados.length === 0 ? (
+                <div className="text-center py-8 text-white/60">Nenhum pedido aguardando cliente</div>
+              ) : (
+                <PedidosDraggableList
+                  pedidos={pedidosFiltrados}
+                  pedidosParaTotais={pedidosFiltrados}
+                  etapa={'aguardando_cliente' as EtapaPedido}
+                  isAberto={false}
+                  viewMode={viewMode}
+                  onMoverEtapa={handleRetornarDeAguardandoCliente as any}
+                  onReorganizar={handleReorganizar}
+                  onMoverPrioridade={handleMoverPrioridade}
+                  onArquivar={handleArquivar}
+                  showPosicao={true}
+                  enableDragAndDrop={true}
+                  hideOrdensStatus={true}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Tab Content - Arquivo Morto */}
         <TabsContent value="arquivo_morto" className="mt-4">
           <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
