@@ -728,7 +728,7 @@ export default function FaturamentoVendaMinimalista() {
         </div>
 
         {/* Indicadores Financeiros */}
-        <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
           {/* Valor de Tabela */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
             <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Tabela</p>
@@ -780,30 +780,11 @@ export default function FaturamentoVendaMinimalista() {
             <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Venda</p>
             <p className="text-sm font-bold text-white">{formatCurrency((venda.valor_venda || 0) + valorCredito)}</p>
           </div>
-        </div>
 
-        {/* Lucro e Progresso */}
-        <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
-          <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Lucro Bruto</p>
-              <p className="text-lg font-bold text-emerald-400">{formatCurrency(totalLucro)}</p>
-            </div>
-            <TrendingUp className="h-5 w-5 text-emerald-400/50" />
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Margem</p>
-              <p className="text-lg font-bold text-blue-400">{margem.toFixed(2)}%</p>
-            </div>
-            <Percent className="h-5 w-5 text-blue-400/50" />
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Progresso</p>
-              <p className="text-lg font-bold text-white">{totalFaturados}/{totalProdutos}</p>
-            </div>
-            <Package className="h-5 w-5 text-amber-400/50" />
+          {/* Lucro */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Lucro</p>
+            <p className="text-sm font-bold text-emerald-400">{formatCurrency(totalLucro)}</p>
           </div>
         </div>
 
