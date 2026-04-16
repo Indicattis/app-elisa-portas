@@ -29,6 +29,9 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { VendaBloqueadaDialog } from "@/components/vendas/VendaBloqueadaDialog";
+import { validarDesconto, getTipoAutorizacaoNecessaria } from "@/utils/descontoVendasRules";
+import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
+import { AutorizacaoDescontoModal } from "@/components/vendas/AutorizacaoDescontoModal";
 
 export default function MinhasVendasEditar() {
   const { id } = useParams<{ id: string }>();
@@ -68,6 +71,12 @@ export default function MinhasVendasEditar() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isCadastrando, setIsCadastrando] = useState(false);
+  const { configuracoes, limites: limitesConfig } = useConfiguracoesVendas();
+  const [autorizacaoDescontoOpen, setAutorizacaoDescontoOpen] = useState(false);
+  const [tipoAutorizacaoNecessaria, setTipoAutorizacaoNecessaria] = useState<'responsavel_setor' | 'master'>('responsavel_setor');
+  const [descontoAutorizado, setDescontoAutorizado] = useState(false);
+  const [percentualDescontoAtual, setPercentualDescontoAtual] = useState(0);
+  const [limitePermitidoAtual, setLimitePermitidoAtual] = useState(0);
 
   // Se não pode editar, mostrar dialog
   useEffect(() => {
@@ -478,6 +487,35 @@ export default function MinhasVendasEditar() {
       });
       return;
     }
+
+    // Validação de desconto
+    if (!descontoAutorizado) {
+      const configLimites = configuracoes ? {
+        avista: configuracoes.limite_desconto_avista,
+        presencial: configuracoes.limite_desconto_presencial,
+        adicionalResponsavel: configuracoes.limite_adicional_responsavel,
+      } : undefined;
+
+      const validacao = validarDesconto(
+        produtosFormatados,
+        venda.forma_pagamento || '',
+        venda.venda_presencial || false,
+        configLimites
+      );
+
+      const tipoAutorizacao = getTipoAutorizacaoNecessaria(validacao);
+
+      if (tipoAutorizacao) {
+        setPercentualDescontoAtual(validacao.percentualDesconto);
+        setLimitePermitidoAtual(validacao.limitePermitido);
+        setTipoAutorizacaoNecessaria(tipoAutorizacao);
+        setAutorizacaoDescontoOpen(true);
+        return;
+      }
+    }
+
+    // Reset flag para próximas vendas
+    setDescontoAutorizado(false);
 
     setIsCadastrando(true);
     try {
@@ -1107,6 +1145,19 @@ export default function MinhasVendasEditar() {
           </CardContent>
         </Card>
       </div>
+      <AutorizacaoDescontoModal
+        open={autorizacaoDescontoOpen}
+        onOpenChange={setAutorizacaoDescontoOpen}
+        onAutorizado={() => {
+          setDescontoAutorizado(true);
+          setAutorizacaoDescontoOpen(false);
+          // Re-trigger cadastro após autorização
+          setTimeout(() => handleCadastrarVenda(), 100);
+        }}
+        percentualDesconto={percentualDescontoAtual}
+        tipoAutorizacao={tipoAutorizacaoNecessaria}
+        limitePermitido={limitePermitidoAtual}
+      />
     </MinimalistLayout>
   );
 }
