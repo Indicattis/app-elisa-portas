@@ -1,23 +1,44 @@
 
 
-## Correção: Validação de desconto ao cadastrar venda a partir de rascunho
+## Plano: Botão "Enviar para Aguardando Cliente" na etapa Finalizado
 
-### Problema
-Na página de edição de rascunho (`MinhasVendasEditar.tsx`), o botão "Cadastrar Venda" converte o rascunho em venda sem verificar os limites de desconto. Isso permite que vendedores burlem o sistema: adicionam desconto acima do limite, salvam como rascunho, e depois cadastram sem que a senha seja exigida.
+### Resumo
+Adicionar um botão no PedidoCard (etapa finalizado) que move o pedido para uma nova etapa oculta `aguardando_cliente`. No header da página, substituir o botão "Pedido Teste" por um botão que abre a aba dessa etapa oculta.
 
-### Solução
-Adicionar a mesma lógica de validação de desconto que existe em `VendaNovaMinimalista.tsx`:
+### O que será feito
 
-**Arquivo: `src/pages/vendas/MinhasVendasEditar.tsx`**
+**1. Tipo `EtapaPedido` e configuração** (`src/types/pedidoEtapa.ts`)
+- Adicionar `'aguardando_cliente'` ao tipo `EtapaPedido`
+- Adicionar config em `ETAPAS_CONFIG` (label: "Aguardando Cliente", cor: amarelo, icon: Clock)
+- NÃO adicionar em `ORDEM_ETAPAS` (etapa oculta, fora do fluxo normal)
 
-1. **Imports**: Adicionar `validarDesconto`, `getTipoAutorizacaoNecessaria`, `ConfigLimites` de `descontoVendasRules`, `useConfiguracoesVendas`, e os componentes de modal de autorização (`AutorizacaoDescontoModal` ou `VerificacaoLiderModal` + `SenhaMasterModal`).
+**2. Contadores** (`src/hooks/usePedidosEtapas.ts`)
+- Adicionar `aguardando_cliente: 0` no objeto `counts` do `usePedidosContadores`
 
-2. **Estado**: Adicionar states para controlar o modal de autorização (`autorizacaoDescontoOpen`, `tipoAutorizacaoNecessaria`, `descontoAutorizado`).
+**3. Botão no PedidoCard** (`src/components/pedidos/PedidoCard.tsx`)
+- Adicionar prop `onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>`
+- Na etapa `finalizado`, adicionar botão com ícone (Clock ou UserMinus) ao lado dos existentes (correção, arquivar)
+- Ao clicar, mostra AlertDialog de confirmação e executa a ação
 
-3. **Validação no `handleCadastrarVenda`**: Antes de fazer o update, chamar `validarDesconto(produtosFormatados, venda.forma_pagamento, venda.venda_presencial, configLimites)`. Se o desconto exceder o limite e não tiver sido autorizado, abrir o modal de senha e bloquear o cadastro.
+**4. Prop no PedidosDraggableList** (`src/components/pedidos/PedidosDraggableList.tsx`)
+- Passar `onEnviarAguardandoCliente` do PedidosDraggableList para cada PedidoCard
 
-4. **Callback de autorização**: Quando a senha for confirmada, marcar `descontoAutorizado = true` e prosseguir com o cadastro.
+**5. Lógica de envio** (`src/pages/direcao/GestaoFabricaDirecao.tsx`)
+- Criar `handleEnviarAguardandoCliente`: atualiza `etapa_atual` para `'aguardando_cliente'`, fecha a etapa finalizado em `pedidos_etapas`, cria entrada `aguardando_cliente` em `pedidos_etapas`, registra movimentação
+- Passar a função para `PedidosDraggableList` via prop
 
-5. **Renderizar o modal de autorização** no JSX, da mesma forma que é feito em `VendaNovaMinimalista.tsx`.
+**6. Aba oculta no header** (`src/pages/direcao/GestaoFabricaDirecao.tsx`)
+- Substituir o botão "Pedido Teste" por um botão "Aguardando Cliente" com badge de contagem
+- Ao clicar, definir `etapaAtiva` como `'aguardando_cliente'`
+- Ajustar `etapaParaQuery` para tratar `'aguardando_cliente'` corretamente (usar `usePedidosEtapas('aguardando_cliente' as EtapaPedido)`)
+- Adicionar `TabsContent` para essa etapa com a listagem dos pedidos
+- Manter botão "Pedido Teste" — mover para dentro da aba ou como segundo botão
 
-### Resultado
+**7. Botão de retorno** 
+- Na aba `aguardando_cliente`, os pedidos terão botão para "Retornar para Finalizado" (atualiza `etapa_atual` de volta para `'finalizado'`)
+
+### Detalhes técnicos
+- `etapa_atual` é `string` no banco — não precisa de migration
+- `pedidos_etapas` usa UPSERT com `onConflict: 'pedido_id,etapa'`
+- A etapa não aparece nas tabs normais, apenas é acessível pelo botão no header
+
