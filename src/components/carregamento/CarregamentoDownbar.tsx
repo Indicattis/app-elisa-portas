@@ -68,6 +68,23 @@ export function CarregamentoDownbar({
     enabled: open && !!ordem?.venda_id,
   });
 
+  const { data: observacoesVisita } = useQuery({
+    queryKey: ['observacoes-visita-carregamento', ordem?.pedido_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pedido_porta_observacoes')
+        .select(`
+          *,
+          produto:produtos_vendas!produto_venda_id(largura, altura, tamanho)
+        `)
+        .eq('pedido_id', ordem!.pedido_id!)
+        .order('indice_porta', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: open && !!ordem?.pedido_id,
+  });
+
   const toggleItem = (id: string) => {
     setItensMarcados(prev => {
       const next = new Set(prev);
