@@ -348,6 +348,64 @@ export function CarregamentoDownbar({
               </div>
             )}
 
+            {/* Observações da Visita Técnica */}
+            {observacoesVisita && observacoesVisita.length > 0 && (
+              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <Wrench className="h-3 w-3 text-amber-400" />
+                  <span className="text-xs font-medium text-amber-400">
+                    Especificações da Visita Técnica
+                  </span>
+                  <span className="text-xs text-amber-400/60">
+                    ({observacoesVisita.length} {observacoesVisita.length === 1 ? 'porta' : 'portas'})
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {observacoesVisita.map((obs: any, idx: number) => (
+                    <div key={obs.id || idx} className="p-2 rounded-md bg-amber-500/5 border border-amber-500/10">
+                      <span className="text-[11px] font-medium text-amber-400 mb-1.5 block">
+                        Porta {idx + 1}
+                        {obs.produto && (
+                          <span className="text-amber-300/70 ml-2">
+                            - {obs.produto.largura && obs.produto.altura
+                                ? `${Number(obs.produto.largura).toFixed(2)}m × ${Number(obs.produto.altura).toFixed(2)}m`
+                                : obs.produto.tamanho || ''}
+                          </span>
+                        )}
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {obs.interna_externa && (
+                          <Badge variant="outline" className="text-[10px] py-0 h-5 bg-amber-500/10 border-amber-500/30 text-amber-300">
+                            {OPCOES_INTERNA_EXTERNA[obs.interna_externa as keyof typeof OPCOES_INTERNA_EXTERNA] || obs.interna_externa}
+                          </Badge>
+                        )}
+                        {obs.lado_motor && (
+                          <Badge variant="outline" className="text-[10px] py-0 h-5 bg-blue-500/10 border-blue-500/30 text-blue-300">
+                            Motor: {OPCOES_LADO_MOTOR[obs.lado_motor as keyof typeof OPCOES_LADO_MOTOR] || obs.lado_motor}
+                          </Badge>
+                        )}
+                        {obs.posicao_guia && (
+                          <Badge variant="outline" className="text-[10px] py-0 h-5 bg-purple-500/10 border-purple-500/30 text-purple-300">
+                            {OPCOES_POSICAO_GUIA[obs.posicao_guia as keyof typeof OPCOES_POSICAO_GUIA] || obs.posicao_guia}
+                          </Badge>
+                        )}
+                        {obs.opcao_guia && (
+                          <Badge variant="outline" className="text-[10px] py-0 h-5 bg-green-500/10 border-green-500/30 text-green-300">
+                            {OPCOES_GUIA[obs.opcao_guia as keyof typeof OPCOES_GUIA] || obs.opcao_guia}
+                          </Badge>
+                        )}
+                        {obs.aparencia_testeira && (
+                          <Badge variant="outline" className="text-[10px] py-0 h-5 bg-orange-500/10 border-orange-500/30 text-orange-300">
+                            Testeira: {OPCOES_APARENCIA_TESTEIRA[obs.aparencia_testeira as keyof typeof OPCOES_APARENCIA_TESTEIRA] || obs.aparencia_testeira}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Itens do Carregamento - checklist interativo */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
