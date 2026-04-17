@@ -22,6 +22,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+import {
+  OPCOES_INTERNA_EXTERNA,
+  OPCOES_LADO_MOTOR,
+  OPCOES_POSICAO_GUIA,
+  OPCOES_GUIA,
+  OPCOES_APARENCIA_TESTEIRA,
+} from "@/types/pedidoObservacoes";
 
 interface CarregamentoDownbarProps {
   ordem: OrdemCarregamentoUnificada | null;
