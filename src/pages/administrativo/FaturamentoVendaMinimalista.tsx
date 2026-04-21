@@ -542,7 +542,7 @@ export default function FaturamentoVendaMinimalista() {
     instalacoesParaAutoFaturar.forEach(async (produto) => {
       autoFaturadosRef.current.add(produto.id);
       
-      const lucroInstalacao = produto.valor_total * 0.30;
+      const lucroInstalacao = produto.valor_total * 0.40;
       const custoCalculado = produto.valor_total - lucroInstalacao;
       
       await updateLucroItem({ 
@@ -615,7 +615,7 @@ export default function FaturamentoVendaMinimalista() {
     // Instalação legada (não migrada como produto separado)
     const temProdutoInstalacaoLocal = produtos.some(p => p.tipo_produto === 'instalacao');
     const valorInstalacaoLocal = temProdutoInstalacaoLocal ? 0 : (venda.valor_instalacao || 0);
-    const lucroInstalacao = valorInstalacaoLocal > 0 ? valorInstalacaoLocal * 0.30 : 0;
+    const lucroInstalacao = valorInstalacaoLocal > 0 ? valorInstalacaoLocal * 0.40 : 0;
     const custoInstalacao = valorInstalacaoLocal - lucroInstalacao;
     
     const produtosIds = produtos.map(p => p.id);
@@ -692,7 +692,7 @@ export default function FaturamentoVendaMinimalista() {
   // Para vendas legadas não migradas, usa valor_instalacao da venda
   const temProdutoInstalacao = produtos?.some(p => p.tipo_produto === 'instalacao') || false;
   const valorInstalacao = temProdutoInstalacao ? 0 : (venda?.valor_instalacao || 0);
-  const lucroInstalacaoCalculado = valorInstalacao > 0 ? valorInstalacao * 0.30 : 0;
+  const lucroInstalacaoCalculado = valorInstalacao > 0 ? valorInstalacao * 0.40 : 0;
   const lucroInstalacao = temProdutoInstalacao ? 0 : (venda?.instalacao_faturada 
     ? (venda.lucro_instalacao || 0) 
     : lucroInstalacaoCalculado);
