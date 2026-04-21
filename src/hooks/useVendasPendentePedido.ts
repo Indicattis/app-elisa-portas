@@ -10,6 +10,7 @@ export interface VendaPendentePedido {
   valor_credito: number;
   valor_desconto_total: number;
   valor_tabela: number;
+  valor_frete: number;
   quantidade_portas: number;
   atendente_nome: string | null;
   atendente_foto_url: string | null;
@@ -41,6 +42,7 @@ export const useVendasPendentePedido = () => {
           cliente_nome,
           valor_venda,
           valor_credito,
+          valor_frete,
           frete_aprovado,
           status_aprovacao,
           lucro_total,
@@ -211,6 +213,7 @@ export const useVendasPendentePedido = () => {
             valor_credito: v.valor_credito || 0,
             valor_desconto_total: descontoTotal,
             valor_tabela: valorTabela,
+            valor_frete: v.valor_frete || 0,
             quantidade_portas: qtdPortas,
             atendente_nome: v.atendente_id
               ? atendenteMap.get(v.atendente_id)?.nome || null
