@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   DollarSign, 
   TrendingUp, 
@@ -282,6 +283,47 @@ export default function FaturamentoVendaMinimalista() {
     if (field === 'status') {
       toast({ title: 'Parcela atualizada com sucesso' });
     }
+  };
+
+  const handleUpdateMetodoGrupo = async (parcelas: any[], novoMetodo: string) => {
+    const ids = parcelas.map(p => p.id);
+    const { error } = await supabase
+      .from('contas_receber')
+      .update({ metodo_pagamento: novoMetodo })
+      .in('id', ids);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Erro ao alterar método de pagamento' });
+      return;
+    }
+    await fetchContasReceber();
+    toast({ title: 'Método de pagamento atualizado' });
+  };
+
+  const handleUpdateMetodoParcela = async (parcelaId: string, novoMetodo: string) => {
+    const { error } = await supabase
+      .from('contas_receber')
+      .update({ metodo_pagamento: novoMetodo })
+      .eq('id', parcelaId);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Erro ao alterar método de pagamento' });
+      return;
+    }
+    await fetchContasReceber();
+    toast({ title: 'Método da parcela atualizado' });
+  };
+
+  const handleUpdateMetodoVenda = async (novoMetodo: string) => {
+    if (!id) return;
+    const { error } = await supabase
+      .from('vendas')
+      .update({ metodo_pagamento: novoMetodo })
+      .eq('id', id);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Erro ao alterar método de pagamento da venda' });
+      return;
+    }
+    setVenda(prev => prev ? { ...prev, metodo_pagamento: novoMetodo } : prev);
+    toast({ title: 'Método de pagamento da venda atualizado' });
   };
 
   // Auto-faturar produtos pintura_epoxi com 30% de lucro
@@ -966,14 +1008,21 @@ export default function FaturamentoVendaMinimalista() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-1">
                   <p className="text-xs text-white/50">Método de Pagamento</p>
-                  <p className="text-sm font-medium text-white">
-                    {(() => {
-                      const labels: Record<string, string> = {
-                        boleto: 'Boleto', a_vista: 'À Vista', cartao_credito: 'Cartão', dinheiro: 'Dinheiro', pix: 'Pix'
-                      };
-                      return labels[venda.metodo_pagamento || ''] || venda.metodo_pagamento || '-';
-                    })()}
-                  </p>
+                  <Select
+                    value={venda.metodo_pagamento || ''}
+                    onValueChange={handleUpdateMetodoVenda}
+                  >
+                    <SelectTrigger className="h-8 bg-white/5 border-white/10 text-white text-sm">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="boleto">Boleto</SelectItem>
+                      <SelectItem value="a_vista">À Vista</SelectItem>
+                      <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                      <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                      <SelectItem value="pix">Pix</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 {(venda.metodo_pagamento === 'boleto' || venda.metodo_pagamento === 'cartao_credito') && (
                   <div className="space-y-1">
@@ -1137,9 +1186,21 @@ export default function FaturamentoVendaMinimalista() {
                     <div key={metodo} className="space-y-2">
                       <div className="flex items-center justify-between px-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-white">
-                            {metodoLabels[metodo] || metodo.replace(/_/g, ' ')}
-                          </span>
+                          <Select
+                            value={metodo}
+                            onValueChange={(v) => handleUpdateMetodoGrupo(parcelas, v)}
+                          >
+                            <SelectTrigger className="h-7 w-[170px] bg-white/5 border-white/10 text-white text-sm font-semibold">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="boleto">Boleto</SelectItem>
+                              <SelectItem value="a_vista">À Vista</SelectItem>
+                              <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                              <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                              <SelectItem value="pix">Pix</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60">
                             {pagasCount}/{parcelas.length} pagas
                           </span>
@@ -1155,6 +1216,7 @@ export default function FaturamentoVendaMinimalista() {
                           <span className="w-[130px]">Vencimento</span>
                           <span className="flex-1 text-right">Valor</span>
                           <span className="w-[80px] text-center">Status</span>
+                          <span className="w-[140px] text-center">Método</span>
                           <span className="w-6"></span>
                         </div>
                         {parcelas.map((parcela: any, idx: number) => {
@@ -1214,6 +1276,23 @@ export default function FaturamentoVendaMinimalista() {
                                 >
                                   {isPago ? '✓ Pago' : 'Pendente'}
                                 </button>
+                              </div>
+                              <div className="w-[140px]">
+                                <Select
+                                  value={parcela.metodo_pagamento || ''}
+                                  onValueChange={(v) => handleUpdateMetodoParcela(parcela.id, v)}
+                                >
+                                  <SelectTrigger className="h-7 bg-white/5 border-white/10 text-white/70 text-xs">
+                                    <SelectValue placeholder="Método" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="boleto">Boleto</SelectItem>
+                                    <SelectItem value="a_vista">À Vista</SelectItem>
+                                    <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                                    <SelectItem value="pix">Pix</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </div>
                               <button
                                 onClick={() => setConfirmRemoveId(parcela.id)}
