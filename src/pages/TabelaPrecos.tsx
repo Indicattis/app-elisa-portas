@@ -7,9 +7,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTabelaPrecos, ItemTabelaPreco, ItemTabelaPrecoInput } from "@/hooks/useTabelaPrecos";
 import { ItemModal } from "@/components/tabela-precos/ItemModal";
 import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTabelaPrecos";
+import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab";
 import { useQueryClient } from "@tanstack/react-query";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 
@@ -23,6 +25,7 @@ export default function TabelaPrecos() {
   const [larguraRapida, setLarguraRapida] = useState('');
   const [editingLucroId, setEditingLucroId] = useState<string | null>(null);
   const [editingLucroValue, setEditingLucroValue] = useState('');
+  const [activeTab, setActiveTab] = useState<'portas' | 'catalogo'>('portas');
   const lucroInputRef = useRef<HTMLInputElement>(null);
 
   const queryClient = useQueryClient();
@@ -113,7 +116,7 @@ export default function TabelaPrecos() {
     return itemMaisProximo;
   })();
 
-  const headerActions = (
+  const headerActions = activeTab === 'portas' ? (
     <div className="flex gap-2">
       <Button onClick={() => setBulkUploadModalOpen(true)} variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10">
         <Upload className="h-4 w-4 mr-2" />
@@ -124,7 +127,7 @@ export default function TabelaPrecos() {
         Novo Item
       </Button>
     </div>
-  );
+  ) : null;
 
   return (
     <MinimalistLayout
