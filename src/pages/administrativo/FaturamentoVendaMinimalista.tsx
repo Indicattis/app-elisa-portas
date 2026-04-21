@@ -42,6 +42,8 @@ import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
 import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
+import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from "@/components/vendas/PagamentoSection";
+import { MetodoPagamento, createEmptyMetodo } from "@/components/vendas/MetodoPagamentoCard";
 
 const safeParseDate = (dateStr: string | null | undefined): Date | null => {
   if (!dateStr) return null;
