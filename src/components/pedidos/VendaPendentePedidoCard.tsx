@@ -472,7 +472,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
             {/* Valor de Frete */}
             <div className="text-center">
               {venda.valor_frete && venda.valor_frete > 0 ? (
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[10px] text-yellow-400">
                   {formatCurrency(venda.valor_frete)}
                 </span>
               ) : (
