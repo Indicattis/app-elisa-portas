@@ -720,7 +720,18 @@ export default function FaturamentoVendaMinimalista() {
     if (p.desconto_valor && p.desconto_valor < 0) return acc + Math.abs(p.desconto_valor);
     return acc;
   }, 0) || 0;
-  const totalLucro = lucroProdutos + lucroInstalacao - totalDescontosCalc + totalCreditosProdutos + (venda?.valor_credito || 0);
+  // Valor de tabela bruto — usado para apurar excedente >13% que abate o lucro
+  const _valorTabelaParaExcedente = produtos?.reduce((acc: number, p: any) => {
+    const qty = p.quantidade || 1;
+    return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+  }, 0) || 0;
+  const LIMITE_DESCONTO_LUCRO = 13;
+  const pctDescontoTotal = _valorTabelaParaExcedente > 0
+    ? (totalDescontosCalc / _valorTabelaParaExcedente) * 100
+    : 0;
+  const excedentePct = Math.max(0, pctDescontoTotal - LIMITE_DESCONTO_LUCRO);
+  const excedenteValor = _valorTabelaParaExcedente * (excedentePct / 100);
+  const totalLucro = lucroProdutos + lucroInstalacao - excedenteValor + totalCreditosProdutos + (venda?.valor_credito || 0);
   const margem = venda && venda.valor_venda > 0 ? (totalLucro / venda.valor_venda) * 100 : 0;
   // Só conta como faturado se lucro_item > 0 OU se o faturamento já foi finalizado
   const produtosFaturados = produtos?.filter(p => 
