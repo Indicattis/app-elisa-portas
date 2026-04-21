@@ -217,7 +217,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
           <div
             className="grid items-center gap-1.5 h-full px-2 w-full"
             style={{ gridTemplateColumns: mode === 'faturamento'
-              ? '24px 1fr 100px 60px 50px 50px 60px 65px 80px 35px 35px 55px 70px 60px 70px 60px 70px 30px 30px'
+              ? '24px 1fr 100px 60px 50px 50px 60px 65px 80px 35px 35px 55px 45px 70px 60px 70px 60px 70px 30px 30px'
               : '20px 24px 1fr 100px 60px 50px 50px 60px 65px 80px 35px 35px 55px 70px 60px 70px 60px 30px 30px 30px 20px'
             }}
           >
@@ -461,6 +461,25 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                 return <span className="text-[9px] text-muted-foreground/50">—</span>;
               })()}
             </div>
+
+            {/* % Desconto - apenas no modo faturamento */}
+            {mode === 'faturamento' && (
+              <div className="text-center">
+                {(() => {
+                  const desc = venda.valor_desconto_total || 0;
+                  const tabela = venda.valor_tabela || 0;
+                  if (desc > 0 && tabela > 0) {
+                    const perc = (desc / tabela) * 100;
+                    return (
+                      <span className="text-[10px] font-medium text-red-500">
+                        {perc.toFixed(1)}%
+                      </span>
+                    );
+                  }
+                  return <span className="text-[9px] text-muted-foreground/50">—</span>;
+                })()}
+              </div>
+            )}
 
             {/* Valor Total (com crédito) */}
             <div className="text-center">
