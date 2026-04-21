@@ -1,35 +1,48 @@
 
 
-## Permitir alterar o método de pagamento no faturamento
+## Sessão dedicada de Pagamento no Faturamento
 
-Na página `/administrativo/financeiro/faturamento/:id`, atualmente o método de pagamento de cada grupo de parcelas é apenas exibido como rótulo (Boleto, À Vista, Cartão, Dinheiro, Pix). O objetivo é permitir alterar esse método diretamente, para uma parcela individual ou para o grupo inteiro.
+Substituir os campos avulsos atuais ("Método de Pagamento", "Número de Parcelas", "Intervalo entre Boletos", "Pgto na Entrega", "Valor de Entrada", "Valor a Receber") na página `/administrativo/financeiro/faturamento/:id` por uma seção dedicada de pagamento, no mesmo padrão visual e funcional usado em `/vendas/minhas-vendas/nova`.
 
 ### Comportamento
 
-**No card "Parcelas / Contas a Receber"**, no cabeçalho de cada grupo (onde hoje aparece "Boleto 2/3 pagas R$ X"):
-- Substituir o texto fixo do método por um `Select` com as opções: Boleto, À Vista, Cartão de Crédito, Dinheiro, Pix.
-- Ao trocar, todas as parcelas daquele grupo recebem `update` no campo `metodo_pagamento` em `contas_receber`.
-- Após salvar, os grupos são recalculados automaticamente (já que o agrupamento é feito por `metodo_pagamento`), então o grupo se funde com outro existente do mesmo método ou aparece sob o novo rótulo.
-- Mostrar toast de sucesso/erro.
+**Card "Forma de Pagamento" (novo, dedicado)**, posicionado logo após o card "Informações da Venda":
 
-**Em cada linha de parcela**, adicionar um pequeno seletor de método (ícone discreto + dropdown) para casos em que o usuário queira alterar apenas uma parcela específica sem afetar o restante do grupo.
+- Reusar o componente `PagamentoSection` (`src/components/vendas/PagamentoSection.tsx`) — o mesmo da tela de nova venda.
+- Suporta os mesmos recursos:
+  - Método único ou dois métodos simultâneos (entrada + saldo).
+  - Para cada método: tipo (Boleto, À Vista/PIX, Cartão de Crédito, Dinheiro), valor, número de parcelas, intervalo de boletos, empresa receptora, data de pagamento, marcação "Já Pago".
+  - Toggle "Pagamento na Entrega".
+- Estado inicial preenchido a partir dos campos atuais da venda (`metodo_pagamento`, `numero_parcelas`, `intervalo_boletos`, `valor_entrada`, `valor_a_receber`, `pagamento_na_entrega`, `empresa_receptora_id`).
+- Botão **"Salvar Forma de Pagamento"** ao final do card. Ao salvar:
+  1. Atualiza a venda (`vendas`) com os campos consolidados (mesmo mapeamento usado em `usePedidoCreation`/criação de venda).
+  2. Pergunta via diálogo de confirmação se o usuário deseja **regenerar as parcelas** com base no novo plano (reaproveitando o `handleRegenerarParcelas` existente). Se confirmar, deleta `contas_receber` da venda e gera novas a partir dos métodos. Se recusar, mantém parcelas atuais (apenas o cabeçalho da venda é atualizado).
+- Mensagem informativa: "Alterações aqui podem regenerar as parcelas. Para ajustes finos, use o card Parcelas abaixo."
 
-**No card "Informações de Pagamento"** (campo "Método de Pagamento" da venda):
-- Tornar o campo editável via `Select` no mesmo padrão.
-- Ao alterar, atualizar `vendas.metodo_pagamento` para o valor escolhido.
-- Esse campo é apenas informativo do cabeçalho da venda; não altera as parcelas existentes (a alteração das parcelas é feita no card de Parcelas).
+**Card "Informações de Pagamento" (atual)**:
+- Removido — seus dados migram para o novo card de Forma de Pagamento.
+- O que **não** é forma de pagamento (Tipo de Venda — Quente/Gelo, Data da Venda, Comprovante) sai dali e vai para o card "Informações da Venda" (ou continua num card próprio "Outras Informações", para não inflar o card principal).
+
+**Card "Parcelas / Contas a Receber" (atual)**:
+- Mantido como está, incluindo os seletores de método por grupo e por linha já implementados. Continua sendo o lugar para edição fina parcela a parcela.
 
 ### Detalhes técnicos
 
-- Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`.
-- Reutilizar `Select` de `@/components/ui/select` com as mesmas opções já usadas em `FormaPagamentoSelect`/`MetodoPagamentoCard` (`boleto`, `a_vista`, `cartao_credito`, `dinheiro`, `pix`).
-- Atualização de grupo: novo handler `handleUpdateMetodoGrupo(parcelas, novoMetodo)` que faz `update ... in (ids)` em `contas_receber` e recarrega via `fetchContasReceber()` (em vez do merge incremental do estado, para garantir o reagrupamento correto).
-- Atualização de parcela única: usar o handler existente `handleUpdatePagamento(id, 'metodo_pagamento', valor)` seguido de `fetchContasReceber()` para reagrupar.
-- Atualização do método na venda: novo handler que faz `update vendas set metodo_pagamento = ? where id = ?` e atualiza estado local `setVenda`.
-- Sem mudanças de schema; as colunas `vendas.metodo_pagamento` e `contas_receber.metodo_pagamento` já existem.
+- Arquivo principal alterado: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`.
+- Importar `PagamentoSection`, `PagamentoData`, `createEmptyPagamentoData` de `@/components/vendas/PagamentoSection`.
+- Novo estado local `pagamentoData: PagamentoData`, inicializado em um `useEffect` quando `venda` carrega:
+  - Se `venda.valor_entrada > 0` e `venda.valor_a_receber > 0` → `usar_dois_metodos = true`, método 1 = entrada (valor `valor_entrada`, tipo derivado de `metodo_pagamento` da venda ou `a_vista`), método 2 = saldo (`valor_a_receber`, `numero_parcelas`, `intervalo_boletos`, tipo `metodo_pagamento`).
+  - Caso contrário, método único com `tipo = metodo_pagamento`, `valor = valor_venda + valor_credito`, `parcelas = numero_parcelas`, `intervalo = intervalo_boletos`, `empresa_receptora_id`.
+  - `pagamento_na_entrega = venda.pagamento_na_entrega`.
+- Novo handler `handleSalvarFormaPagamento`:
+  - Faz `update vendas set metodo_pagamento, numero_parcelas, intervalo_boletos, valor_entrada, valor_a_receber, pagamento_na_entrega, empresa_receptora_id where id = ?` consolidando a partir de `pagamentoData` (mesma lógica que `VendaNovaMinimalista` usa ao montar `vendaData`).
+  - Após sucesso, abre `AlertDialog` "Regenerar parcelas?" → confirma chama `handleRegenerarParcelas()`, cancela só atualiza `setVenda`.
+- Remover, do bloco "Informações de Pagamento" atual, todos os campos que passam para `PagamentoSection` (Método, Nº Parcelas, Intervalo, Pgto na Entrega, Valor Entrada, Valor a Receber). Manter Tipo de Venda, Data da Venda e Comprovante movidos para outro card existente (ou renomear o card atual para "Outras Informações").
+- O handler `handleUpdateMetodoVenda` criado anteriormente fica obsoleto e pode ser removido (a edição passa por `handleSalvarFormaPagamento`).
+- Sem mudanças de schema; todos os campos já existem em `vendas` e `contas_receber`.
 
 ### Fora do escopo
 
-- Não recriar parcelas automaticamente ao trocar o método (o usuário pode usar o botão "Regenerar" existente, se desejar refazer com base nos novos dados).
-- Não alterar `numero_parcelas`/`intervalo_boletos` da venda; isso continua via "Regenerar".
+- Não alterar o card "Parcelas / Contas a Receber" nem os seletores por linha/grupo já existentes.
+- Não criar novas tabelas ou colunas.
 
