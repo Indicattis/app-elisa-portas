@@ -803,7 +803,7 @@ export default function PedidoViewDirecao() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {pedido.produtos_venda.map((produto: any) => {
+                  {produtosVendaAgrupados.map((produto: any) => {
                     const isCorrecaoItem = !!produto.pedido_correcao_id;
                     return (
                       <div key={produto.id} className={cn(
