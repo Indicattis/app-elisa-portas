@@ -545,7 +545,6 @@ export default function FaturamentoVendaMinimalista() {
     
     const instalacoesParaAutoFaturar = produtos.filter(p => 
       p.tipo_produto === 'instalacao' && 
-      (p.lucro_item === null || p.lucro_item === undefined || p.lucro_item === 0) &&
       !p.faturamento &&
       !autoFaturadosRef.current.has(p.id)
     );
