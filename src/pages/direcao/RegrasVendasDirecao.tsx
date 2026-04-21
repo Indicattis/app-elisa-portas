@@ -83,6 +83,20 @@ export default function RegrasVendasDirecao() {
     });
   };
 
+  const handleSalvarLimites = () => {
+    updateConfiguracoes({
+      limite_desconto_avista: limiteAvista,
+      limite_desconto_presencial: limitePresencial,
+      limite_adicional_responsavel: limiteAdicionalResponsavel,
+    });
+  };
+
+  const hasLimitesChanges = configuracoes && (
+    limiteAvista !== (configuracoes.limite_desconto_avista ?? 3) ||
+    limitePresencial !== (configuracoes.limite_desconto_presencial ?? 5) ||
+    limiteAdicionalResponsavel !== (configuracoes.limite_adicional_responsavel ?? 5)
+  );
+
   const hasChanges = configuracoes && (
     senhaResponsavel !== configuracoes.senha_responsavel ||
     senhaMaster !== configuracoes.senha_master ||
@@ -271,47 +285,91 @@ export default function RegrasVendasDirecao() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Limites editáveis */}
             <div className="grid gap-3">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
-                <div className="flex items-center gap-3">
-                  <Banknote className="h-4 w-4 text-green-400" />
-                  <span className="text-white/80 text-sm">Pagamento à vista (não cartão)</span>
+              <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <Banknote className="h-4 w-4 text-green-400 shrink-0" />
+                  <span className="text-white/80 text-sm truncate">Pagamento à vista (não cartão)</span>
                 </div>
-                <Badge className="bg-green-500/20 text-green-400 border-green-500/30">+{limites.avista}%</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
-                <div className="flex items-center gap-3">
-                  <User className="h-4 w-4 text-blue-400" />
-                  <span className="text-white/80 text-sm">Venda presencial</span>
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className="text-white/60 text-sm">+</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.5}
+                    value={limiteAvista}
+                    onChange={(e) => setLimiteAvista(Number(e.target.value) || 0)}
+                    className="w-20 h-8 bg-white/5 border-white/20 text-white text-right"
+                  />
+                  <span className="text-white/60 text-sm">%</span>
                 </div>
-                <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">+{limites.presencial}%</Badge>
               </div>
-              
+
+              <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <User className="h-4 w-4 text-blue-400 shrink-0" />
+                  <span className="text-white/80 text-sm truncate">Venda presencial</span>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className="text-white/60 text-sm">+</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.5}
+                    value={limitePresencial}
+                    onChange={(e) => setLimitePresencial(Number(e.target.value) || 0)}
+                    className="w-20 h-8 bg-white/5 border-white/20 text-white text-right"
+                  />
+                  <span className="text-white/60 text-sm">%</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <Shield className="h-4 w-4 text-amber-400 shrink-0" />
+                  <span className="text-white/80 text-sm truncate">Adicional com senha do responsável</span>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className="text-white/60 text-sm">+</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.5}
+                    value={limiteAdicionalResponsavel}
+                    onChange={(e) => setLimiteAdicionalResponsavel(Number(e.target.value) || 0)}
+                    className="w-20 h-8 bg-white/5 border-white/20 text-white text-right"
+                  />
+                  <span className="text-white/60 text-sm">%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Totais calculados (read-only) */}
+            <div className="grid gap-3 pt-2 border-t border-white/10">
               <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
                 <div className="flex items-center gap-3">
                   <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                   <span className="text-white/80 text-sm">Limite sem autorização</span>
                 </div>
-                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">{limites.totalSemSenha}%</Badge>
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                  {(limiteAvista + limitePresencial).toFixed(1)}%
+                </Badge>
               </div>
-              
-              <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
-                <div className="flex items-center gap-3">
-                  <Shield className="h-4 w-4 text-amber-400" />
-                  <span className="text-white/80 text-sm">Com senha do responsável</span>
-                </div>
-                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">+{limites.adicionalResponsavel}%</Badge>
-              </div>
-              
+
               <div className="flex items-center justify-between p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
                 <div className="flex items-center gap-3">
                   <Lock className="h-4 w-4 text-amber-400" />
                   <span className="text-white font-medium text-sm">Limite máximo com responsável</span>
                 </div>
-                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">{limites.totalComResponsavel}%</Badge>
+                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
+                  {(limiteAvista + limitePresencial + limiteAdicionalResponsavel).toFixed(1)}%
+                </Badge>
               </div>
-              
+
               <div className="flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/30">
                 <div className="flex items-center gap-3">
                   <Key className="h-4 w-4 text-red-400" />
@@ -323,12 +381,34 @@ export default function RegrasVendasDirecao() {
                 </Badge>
               </div>
             </div>
-            
+
             <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
               <p className="text-amber-300 text-xs flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                <span>Descontos acima de {limites.totalComResponsavel}% requerem senha master. Apenas a senha master desbloqueia qualquer percentual.</span>
+                <span>
+                  Descontos acima de {(limiteAvista + limitePresencial + limiteAdicionalResponsavel).toFixed(1)}% requerem senha master. Apenas a senha master desbloqueia qualquer percentual.
+                </span>
               </p>
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSalvarLimites}
+                disabled={isUpdating || !hasLimitesChanges}
+                className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30"
+              >
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Salvar Limites
+                  </>
+                )}
+              </Button>
             </div>
           </CardContent>
         </Card>
