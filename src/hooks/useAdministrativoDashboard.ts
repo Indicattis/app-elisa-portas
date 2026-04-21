@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { calcularFaturamentoLiquido, isVendaValida } from '@/utils/faturamentoCalc';
 
 export interface AdministrativoMetrics {
   totalItensEstoque: number;
@@ -54,15 +55,14 @@ export const useAdministrativoDashboard = () => {
 
       const { data: vendas } = await supabase
         .from('vendas')
-        .select('valor_venda, valor_frete')
+        .select('valor_venda, valor_frete, valor_credito')
         .gte('data_venda', inicioMes)
         .lte('data_venda', fimMes)
         .not('custo_total', 'is', null);
 
-      const faturamentoMes = vendas?.reduce((sum, v) => 
-        sum + (Number(v.valor_venda || 0) - Number(v.valor_frete || 0)), 0
-      ) || 0;
-      const vendasMes = vendas?.length || 0;
+      const vendasValidas = (vendas || []).filter(isVendaValida);
+      const faturamentoMes = vendasValidas.reduce((sum, v) => sum + calcularFaturamentoLiquido(v), 0);
+      const vendasMes = vendasValidas.length;
 
       // Usuários do organograma
       const { data: usuariosAtivos } = await supabase

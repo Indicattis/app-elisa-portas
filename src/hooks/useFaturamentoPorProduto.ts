@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
+import { calcularFaturamentoLiquido, isVendaValida } from '@/utils/faturamentoCalc';
 
 interface FaturamentoPorProduto {
   tipo_produto: string;
@@ -32,6 +33,7 @@ export const useFaturamentoPorProduto = ({
           data_venda,
           valor_venda,
           valor_frete,
+          valor_credito,
           atendente_id,
           publico_alvo,
           produtos_vendas(
@@ -73,10 +75,9 @@ export const useFaturamentoPorProduto = ({
       const faturamentoMap = new Map<string, { quantidade: number; valor_total: number; lucro_total: number }>();
 
       vendas?.forEach((venda: any) => {
+        if (!isVendaValida(venda)) return;
         const produtos = venda.produtos_vendas || [];
-        const valorVenda = Number(venda.valor_venda || 0);
-        const valorFrete = Number(venda.valor_frete || 0);
-        const valorSemFrete = valorVenda - valorFrete;
+        const valorSemFrete = calcularFaturamentoLiquido(venda);
         
         // Se não há produtos, não contabilizar
         if (produtos.length === 0) return;

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfYear, endOfYear, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { calcularFaturamentoLiquido, isVendaValida } from "@/utils/faturamentoCalc";
 
 export interface FaturamentoMensal {
   mes: string;
@@ -38,10 +39,8 @@ export function useFaturamentoMensal() {
 
       vendas?.forEach(venda => {
         const mes = new Date(venda.data_venda).getMonth();
-        // Calcular valor sem frete (incluindo crédito para vendas antigas)
-        const valorVendaTotal = (venda.valor_venda || 0) + (venda.valor_credito || 0);
-        const valorSemFrete = valorVendaTotal - (venda.valor_frete || 0);
-        vendasPorMes[mes].valor += valorSemFrete;
+        if (!isVendaValida(venda)) return;
+        vendasPorMes[mes].valor += calcularFaturamentoLiquido(venda);
         vendasPorMes[mes].count += 1;
       });
 
