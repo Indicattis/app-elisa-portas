@@ -105,6 +105,9 @@ export default function FaturamentoVendaMinimalista() {
   const [checkingPedido, setCheckingPedido] = useState(false);
   const [hasPedido, setHasPedido] = useState<boolean | null>(null);
   const [contasReceber, setContasReceber] = useState<any[]>([]);
+  const [pagamentoData, setPagamentoData] = useState<PagamentoData>(createEmptyPagamentoData());
+  const [showRegenerarAposSalvarDialog, setShowRegenerarAposSalvarDialog] = useState(false);
+  const [salvandoFormaPagamento, setSalvandoFormaPagamento] = useState(false);
   const { createPedidoFromVenda, checkExistingPedido } = usePedidoCreation();
   const { removerFaturamento, isRemovendo } = useFaturamento();
   const { configuracoes: configVendas } = useConfiguracoesVendas();
