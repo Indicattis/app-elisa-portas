@@ -561,7 +561,8 @@ export default function FaturamentoVendaMinimalista() {
       await updateLucroItem({ 
         produtoId: produto.id, 
         lucroItem: lucroInstalacao,
-        custoProducao: custoCalculado 
+        custoProducao: custoCalculado,
+        faturamento: true,
       });
     });
   }, [produtos]);
