@@ -372,7 +372,12 @@ export default function TabelaPrecos() {
             )}
           </CardContent>
         </Card>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="catalogo" className="mt-0">
+          <CatalogoPrecosTab />
+        </TabsContent>
+      </Tabs>
 
       {/* Modal de Adicionar/Editar */}
       <ItemModal
