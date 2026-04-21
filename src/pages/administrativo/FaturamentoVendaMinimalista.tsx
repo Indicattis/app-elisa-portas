@@ -1216,6 +1216,7 @@ export default function FaturamentoVendaMinimalista() {
                           <span className="w-[130px]">Vencimento</span>
                           <span className="flex-1 text-right">Valor</span>
                           <span className="w-[80px] text-center">Status</span>
+                          <span className="w-[140px] text-center">Método</span>
                           <span className="w-6"></span>
                         </div>
                         {parcelas.map((parcela: any, idx: number) => {
