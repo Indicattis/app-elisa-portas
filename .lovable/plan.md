@@ -1,34 +1,57 @@
 
+## Regra de desconto sobre o lucro (limite 13%)
 
-## Aumentar margem fixa de instalação de 30% para 40%
+### Regra de negócio
 
-### Alterações de código
+Hoje, em `/administrativo/financeiro/faturamento/:id`, o desconto aplicado em cada produto é **integralmente subtraído do lucro tabelado** (linha 994):
 
-**1. `src/pages/direcao/DREMesDirecao.tsx` (linha 278)**
-- `luc.instalacoes = fat.instalacoes * 0.30` → `* 0.40`
+```
+lucroAjustado = lucro_item - desconto + crédito
+```
 
-**2. `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`**
-Trocar `* 0.30` por `* 0.40` em três pontos:
-- Linha 545 — auto-faturamento de produtos `instalacao` (vendas novas).
-- Linha 618 — cálculo de `lucroInstalacao` no `executarFaturamento` (vendas legadas com `valor_instalacao` na própria venda).
-- Linha 695 — `lucroInstalacaoCalculado` exibido na tela antes do faturamento.
+A nova regra é: **o lucro tabelado só é reduzido pelo valor que excede 13% de desconto sobre o valor de tabela da venda**. Até 13%, o lucro tabelado permanece intacto. Acima de 13%, somente o excedente é abatido.
 
-### Recalcular vendas já faturadas de 2026
+```text
+pctDescontoTotal = totalDescontos / valorTabela * 100
+excedentePct     = max(0, pctDescontoTotal - 13)
+excedenteValor   = valorTabela * (excedentePct / 100)
+```
 
-Para que o DRE de meses já fechados (e a coluna Lucro do detalhe da venda) reflitam 40%, atualizar via SQL:
+O `excedenteValor` é o único valor que reduz o lucro consolidado. Distribuição entre produtos: proporcional ao desconto aplicado em cada item (item sem desconto não perde lucro; item com mais desconto absorve mais do excedente).
 
-1. **Produtos do tipo `instalacao`** (vendas novas, com `faturamento = true`) em vendas de 2026:
-   - `lucro_item = valor_total_sem_frete * 0.40`
-   - `custo_producao = valor_total_sem_frete * 0.60`
+### Mudanças
 
-2. **Vendas legadas** (sem produto `instalacao`, com `valor_instalacao > 0` e `instalacao_faturada = true`) de 2026:
-   - `lucro_instalacao = valor_instalacao * 0.40`
-   - `custo_instalacao = valor_instalacao * 0.60`
+**1. `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`**
 
-3. Recalcular `lucro_total` das vendas afetadas (somando os novos `lucro_item` + `lucro_instalacao`).
+- Adicionar cálculo de excedente sobre 13%:
+  - `pctDescontoTotal`, `excedentePct`, `excedenteValor` (a partir de `valorTabela` e `totalDescontosCalc` já existentes nas linhas 710–718, 738–742).
+- Substituir `totalLucro` (linha 723) para subtrair somente `excedenteValor` em vez de `totalDescontosCalc`:
+  ```
+  totalLucro = lucroProdutos + lucroInstalacao - excedenteValor + totalCreditosProdutos + valor_credito
+  ```
+- Na tabela de produtos (linhas 994 e 1011–1012), recalcular `lucroAjustado` por linha:
+  - Se `excedenteValor === 0` → `lucroAjustado = lucro_item + creditoValorAbs` (sem desconto sobre lucro).
+  - Se `excedenteValor > 0` → distribuir proporcionalmente: `parcelaExcedenteItem = excedenteValor * (descontoValorAbs / totalDescontosCalc)` e `lucroAjustado = lucro_item - parcelaExcedenteItem + creditoValorAbs`.
+- Margem por linha continua a partir do novo `lucroAjustado`.
 
-### Fora de escopo
-- Não altera vendas de anos anteriores (filtro: `data_venda >= '2026-01-01'`).
-- Não altera o `LucroItemModal` (entrada manual continua livre).
-- Não cria configuração dinâmica de margem — segue como constante no código.
+**2. Indicador de Excedente (novo card)**
 
+Adicionar um 9º card no grid de indicadores financeiros (linha 882, `lg:grid-cols-8` → `lg:grid-cols-9`) chamado **"Excedente >13%"**:
+
+- Fica em **vermelho** quando `excedentePct > 0`, mostrando `-{formatCurrency(excedenteValor)}` e abaixo o percentual excedente (ex.: `+2,4% acima de 13%`).
+- Fica em cinza/“-” quando o desconto total estiver ≤ 13%.
+- Tooltip/legenda curta no card explicando: “Desconto acima de 13% — abatido do lucro”.
+
+### Resumo visual
+
+```text
+Tabela | Desc.Cartão | Desc.Gelo | Luan/Alana | Excedente>13% | Crédito | Frete | Venda | Lucro
+                                              ^^^^^^^^^^^^^^^
+                                              novo card vermelho
+```
+
+### Arquivos editados
+
+- `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
+
+Nenhuma mudança de banco ou hook é necessária — o cálculo é feito no front a partir dos dados já disponíveis (`produtos`, `valor_venda`, `valorTabela`, `totalDescontosCalc`).
