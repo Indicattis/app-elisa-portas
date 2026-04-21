@@ -633,22 +633,18 @@ export default function FaturamentoVendaMinimalista() {
       setShowConfirmDialog(false);
       await fetchVenda();
 
-      // Criar pedido de produção automaticamente
+      // NÃO criar pedido automaticamente — o Diretor cria manualmente
+      // a partir da aba "Aprovação Diretor" em /direcao/gestao-fabrica.
       const pedidoExistente = await checkExistingPedido(venda.id);
-      if (!pedidoExistente) {
-        const pedidoId = await createPedidoFromVenda(venda.id);
-        if (pedidoId) {
-          setHasPedido(true);
-          setPedidoExistenteId(pedidoId);
-          toast({
-            title: "Venda faturada e pedido criado!",
-            description: "O pedido foi enviado para Aprovação do Diretor.",
-          });
-        }
-      } else {
+      if (pedidoExistente) {
         setHasPedido(true);
         setPedidoExistenteId(pedidoExistente);
       }
+
+      toast({
+        title: "Venda faturada com sucesso!",
+        description: "Aguardando criação do pedido pela Direção.",
+      });
     } catch (error) {
       console.error('Erro ao finalizar faturamento:', error);
     }
