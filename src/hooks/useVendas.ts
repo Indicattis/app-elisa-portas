@@ -344,7 +344,12 @@ export function useVendas() {
           valor_frete: produto.valor_frete,
           tipo_desconto: produto.tipo_desconto,
           desconto_percentual: produto.desconto_percentual,
-          desconto_valor: produto.desconto_valor,
+          // Quando dividimos um produto com qty>1 em N linhas (quantidade:1),
+          // o desconto absoluto precisa ser dividido por N para não ser
+          // contado N vezes (gerando valor_total_sem_frete negativo).
+          desconto_valor: produto.tipo_desconto === 'valor'
+            ? (produto.desconto_valor || 0) / qty
+            : produto.desconto_valor,
           quantidade: 1,
           descricao: produto.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produto.descricao || null),
           valor_credito: produto.valor_credito || 0,
