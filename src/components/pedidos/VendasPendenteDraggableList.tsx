@@ -27,7 +27,7 @@ interface VendasPendenteDraggableListProps {
   mode?: 'pedido' | 'faturamento';
 }
 
-function SortableVendaItem({ venda }: { venda: VendaPendentePedido }) {
+function SortableVendaItem({ venda, mode }: { venda: VendaPendentePedido; mode?: 'pedido' | 'faturamento' }) {
   const {
     attributes,
     listeners,
@@ -49,6 +49,7 @@ function SortableVendaItem({ venda }: { venda: VendaPendentePedido }) {
         venda={venda}
         isDragging={isDragging}
         dragHandleProps={{ ...attributes, ...listeners }}
+        mode={mode}
       />
     </div>
   );
@@ -57,6 +58,7 @@ function SortableVendaItem({ venda }: { venda: VendaPendentePedido }) {
 export function VendasPendenteDraggableList({
   vendas,
   onReorganizar,
+  mode = 'pedido',
 }: VendasPendenteDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const overlayContainerRef = useRef<HTMLDivElement | null>(null);
@@ -109,9 +111,9 @@ export function VendasPendenteDraggableList({
         strategy={verticalListSortingStrategy}
       >
         <div className="space-y-1">
-          <VendasHeaderRow />
+          <VendasHeaderRow mode={mode} />
           {vendas.map((venda) => (
-            <SortableVendaItem key={venda.id} venda={venda} />
+            <SortableVendaItem key={venda.id} venda={venda} mode={mode} />
           ))}
         </div>
       </SortableContext>
@@ -124,7 +126,7 @@ export function VendasPendenteDraggableList({
           >
             {activeVenda ? (
               <div className="opacity-90 shadow-2xl pointer-events-none">
-                <VendaPendentePedidoCard venda={activeVenda} isDragging />
+                <VendaPendentePedidoCard venda={activeVenda} isDragging mode={mode} />
               </div>
             ) : null}
           </DragOverlay>,
