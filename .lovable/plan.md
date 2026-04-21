@@ -1,53 +1,35 @@
 
 
-## Permitir que Diretor edite "Regras de Vendas"
+## Auto-faturar produtos de instalação em 40%
 
 ### Causa
 
-A página `/direcao/vendas/regras-vendas` salva em `public.configuracoes_vendas`. A política RLS de UPDATE atual só aceita usuários com role `admin` / `administrador` ou `bypass_permissions = true`:
+Em `/administrativo/financeiro/faturamento/:id`, produtos do tipo `instalacao` já têm o lucro pré-preenchido em 40% via `useEffect`, mas o campo `faturamento` permanece `false` — então a coluna **Status** mostra "Pendente" e o item só é marcado como Faturado quando o usuário clica em "Faturar Venda".
 
-```
-EXISTS (SELECT 1 FROM admin_users
-        WHERE user_id = auth.uid()
-          AND (role IN ('admin','administrador') OR bypass_permissions = true)
-          AND ativo = true)
-```
-
-Como a rota está em `/direcao/*`, Diretores também precisam editar — hoje recebem o toast “Você não tem permissão…”.
+Validação no banco para a venda `24b971b0-...`: as 2 instalações têm `lucro_item = 920` (40% de R$ 2.300) mas `faturamento = false`.
 
 ### Mudança
 
-Migração SQL atualizando as políticas de UPDATE e INSERT em `public.configuracoes_vendas` para incluir o role `diretor`:
+No `useEffect` de auto-faturamento de instalação em `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` (linhas 542–567), além de gravar `lucro_item` e `custo_producao`, também gravar `faturamento = true` no `produtos_vendas`.
 
-```sql
-DROP POLICY "Administradores podem atualizar configurações" ON public.configuracoes_vendas;
-DROP POLICY "Administradores podem inserir configurações" ON public.configuracoes_vendas;
+Para isso, atualizar a mutation `updateLucroItem` em `src/hooks/useProdutosVenda.ts` para aceitar um parâmetro opcional `faturamento` (default `undefined`, mantendo o comportamento atual de portas e pintura).
 
-CREATE POLICY "Admins e diretores podem atualizar configurações"
-ON public.configuracoes_vendas FOR UPDATE TO authenticated
-USING (EXISTS (
-  SELECT 1 FROM public.admin_users
-  WHERE user_id = auth.uid() AND ativo = true
-    AND (role IN ('admin','administrador','diretor') OR bypass_permissions = true)
-));
-
-CREATE POLICY "Admins e diretores podem inserir configurações"
-ON public.configuracoes_vendas FOR INSERT TO authenticated
-WITH CHECK (EXISTS (
-  SELECT 1 FROM public.admin_users
-  WHERE user_id = auth.uid() AND ativo = true
-    AND (role IN ('admin','administrador','diretor') OR bypass_permissions = true)
-));
+```text
+useEffect instalacao
+   └─ updateLucroItem({ produtoId, lucroItem, custoProducao, faturamento: true })
+         └─ UPDATE produtos_vendas SET lucro_item, custo_producao, faturamento = true
 ```
 
-A política de SELECT (qualquer autenticado pode ler) permanece inalterada.
+Resultado: ao abrir a tela de faturamento, instalações aparecem direto com badge "Faturado" (verde) sem ação manual, igual portas/pintura passam a "Tabela"/"Fórmula" automaticamente — mas instalação vai além e já marca o `faturamento = true`.
 
 ### Fora de escopo
 
-- Não altera UI nem hook `useConfiguracoesVendas`.
-- Não concede acesso a outros roles (ex.: gerente_comercial). Se desejado, posso incluir depois.
+- Não altera lógica de portas (`porta_enrolar`) nem pintura (`pintura_epoxi`) — continuam com badge "Tabela"/"Fórmula" e `faturamento = false` até o "Faturar Venda".
+- Não altera o cálculo do excedente nem o lucro total da venda.
+- Não altera RLS nem migrações.
 
 ### Arquivos
 
-- nova migração SQL em `supabase/migrations/`.
+- `src/hooks/useProdutosVenda.ts` — adicionar campo opcional `faturamento` à mutation `updateLucroItem`.
+- `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` — passar `faturamento: true` no auto-faturamento de instalação.
 
