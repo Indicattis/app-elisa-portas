@@ -1098,47 +1098,40 @@ export default function FaturamentoVendaMinimalista() {
         </Card>
 
 
-        {/* Informações de Pagamento */}
+        {/* Forma de Pagamento (sessão dedicada — mesmo padrão de /vendas/minhas-vendas/nova) */}
+        {venda && (
+          <div className="space-y-3">
+            <PagamentoSection
+              paymentData={pagamentoData}
+              onChange={setPagamentoData}
+              valorTotal={(venda.valor_venda || 0) + (venda.valor_credito || 0)}
+            />
+            <div className="flex items-center justify-end gap-3">
+              <p className="text-xs text-white/50 mr-auto">
+                Alterações aqui podem regenerar as parcelas. Para ajustes finos, use o card Parcelas abaixo.
+              </p>
+              <Button
+                onClick={handleSalvarFormaPagamento}
+                disabled={salvandoFormaPagamento}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                {salvandoFormaPagamento ? 'Salvando...' : 'Salvar Forma de Pagamento'}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Outras Informações da Venda */}
         {venda && (
           <Card className="bg-white/5 border-white/10">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base text-white">
                 <Receipt className="h-4 w-4 text-blue-400" />
-                Informações de Pagamento
+                Outras Informações
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="space-y-1">
-                  <p className="text-xs text-white/50">Método de Pagamento</p>
-                  <Select
-                    value={venda.metodo_pagamento || ''}
-                    onValueChange={handleUpdateMetodoVenda}
-                  >
-                    <SelectTrigger className="h-8 bg-white/5 border-white/10 text-white text-sm">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="boleto">Boleto</SelectItem>
-                      <SelectItem value="a_vista">À Vista</SelectItem>
-                      <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                      <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                      <SelectItem value="pix">Pix</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {(venda.metodo_pagamento === 'boleto' || venda.metodo_pagamento === 'cartao_credito') && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-white/50">Número de Parcelas</p>
-                    <p className="text-sm font-medium text-white">{venda.numero_parcelas || venda.quantidade_parcelas || '-'}</p>
-                  </div>
-                )}
-                {venda.metodo_pagamento === 'boleto' && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-white/50">Intervalo entre Boletos</p>
-                    <p className="text-sm font-medium text-white">{venda.intervalo_boletos ? `${venda.intervalo_boletos} dias` : '-'}</p>
-                  </div>
-                )}
                 {venda.data_venda && (
                   <div className="space-y-1">
                     <p className="text-xs text-white/50">Data da Venda</p>
@@ -1157,28 +1150,6 @@ export default function FaturamentoVendaMinimalista() {
                     )}
                   </p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-white/50">Pgto na Entrega</p>
-                  <p className="text-sm font-medium">
-                    {venda.pagamento_na_entrega ? (
-                      <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Sim</Badge>
-                    ) : (
-                      <span className="text-white/40">Não</span>
-                    )}
-                  </p>
-                </div>
-                {(venda.valor_entrada != null && venda.valor_entrada > 0) && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-white/50">Valor de Entrada</p>
-                    <p className="text-sm font-medium text-emerald-400">{formatCurrency(venda.valor_entrada)}</p>
-                  </div>
-                )}
-                {(venda.valor_a_receber != null && venda.valor_a_receber > 0) && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-white/50">Valor a Receber</p>
-                    <p className="text-sm font-medium text-blue-400">{formatCurrency(venda.valor_a_receber || 0)}</p>
-                  </div>
-                )}
               </div>
 
               {/* Comprovante */}
