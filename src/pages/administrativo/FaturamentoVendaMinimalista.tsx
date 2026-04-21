@@ -110,11 +110,14 @@ export default function FaturamentoVendaMinimalista() {
   const [salvandoFormaPagamento, setSalvandoFormaPagamento] = useState(false);
   const { createPedidoFromVenda, checkExistingPedido } = usePedidoCreation();
   const { removerFaturamento, isRemovendo } = useFaturamento();
-  const { configuracoes: configVendas } = useConfiguracoesVendas();
+  const { configuracoes: configVendas, limites: limitesVendas } = useConfiguracoesVendas();
   const configLimites = {
     avista: configVendas?.limite_desconto_avista ?? 3,
     presencial: configVendas?.limite_desconto_presencial ?? 5,
   };
+  // Limite máximo de desconto (com senha do responsável) — definido em /direcao/vendas/regras-vendas.
+  // Acima desse percentual o excedente é abatido do lucro.
+  const LIMITE_DESCONTO_LUCRO = limitesVendas.totalComResponsavel;
 
   const {
     produtos,
