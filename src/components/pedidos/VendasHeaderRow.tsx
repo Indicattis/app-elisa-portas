@@ -4,7 +4,7 @@ export function VendasHeaderRow({ mode = 'pedido' }: { mode?: 'pedido' | 'fatura
       className="grid items-center gap-1.5 px-2 h-7 text-[9px] font-medium text-muted-foreground/70 uppercase tracking-wider"
       style={{
         gridTemplateColumns: mode === 'faturamento'
-          ? '24px 1fr 100px 60px 50px 50px 60px 65px 80px 35px 35px 55px 70px 60px 70px 60px 70px 30px 30px'
+          ? '24px 1fr 100px 60px 50px 50px 60px 65px 80px 35px 35px 55px 45px 70px 60px 70px 60px 70px 30px 30px'
           : '20px 24px 1fr 100px 60px 50px 50px 60px 65px 80px 35px 35px 55px 70px 60px 70px 60px 30px 30px 30px 20px'
       }}
     >
@@ -21,6 +21,7 @@ export function VendasHeaderRow({ mode = 'pedido' }: { mode?: 'pedido' | 'fatura
       <div className="text-center">Parc.</div>
       <div className="text-center">Ent.</div>
       <div className="text-center">Desc.</div>
+      {mode === 'faturamento' && <div className="text-center">% Desc</div>}
       <div className="text-center">Total</div>
       <div className="text-center">Frete</div>
       <div className="text-center">Tabela</div>
