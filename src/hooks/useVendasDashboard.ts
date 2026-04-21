@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from "date-fns";
+import { calcularFaturamentoLiquido, isVendaValida } from "@/utils/faturamentoCalc";
 
 export interface VendaDia {
   data: string;
@@ -36,6 +37,7 @@ export const useVendasAgregadas = (year: number) => {
           data_venda,
           valor_venda,
           valor_frete,
+          valor_credito,
           atendente_id,
           admin_users!fk_vendas_atendente(nome)
         `)
@@ -48,7 +50,8 @@ export const useVendasAgregadas = (year: number) => {
       // Agregar por data (excluindo frete)
       const agregado = data.reduce((acc: Record<string, VendaDia>, venda) => {
         const data = venda.data_venda.split('T')[0];
-        
+        if (!isVendaValida(venda)) return acc;
+
         if (!acc[data]) {
           acc[data] = {
             data,
@@ -57,9 +60,7 @@ export const useVendasAgregadas = (year: number) => {
           };
         }
         
-        // Valor sem frete: valor_venda - valor_frete
-        const valorSemFrete = (venda.valor_venda || 0) - (venda.valor_frete || 0);
-        acc[data].valor += valorSemFrete;
+        acc[data].valor += calcularFaturamentoLiquido(venda);
         acc[data].numero_vendas += 1;
         
         return acc;
@@ -115,18 +116,15 @@ export const useVendasMesAtual = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vendas')
-        .select('valor_venda, valor_frete')
+        .select('valor_venda, valor_frete, valor_credito')
         .gte('data_venda', inicio.toISOString())
         .lte('data_venda', fim.toISOString());
 
       if (error) throw error;
 
-      // Total sem frete
-      const total = data.reduce((sum, v) => {
-        const valorSemFrete = (v.valor_venda || 0) - (v.valor_frete || 0);
-        return sum + valorSemFrete;
-      }, 0);
-      const quantidade = data.length;
+      const validas = data.filter(isVendaValida);
+      const total = validas.reduce((sum, v) => sum + calcularFaturamentoLiquido(v), 0);
+      const quantidade = validas.length;
 
       return { total, quantidade };
     },
@@ -144,18 +142,15 @@ export const useVendasSemanaAtual = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vendas')
-        .select('valor_venda, valor_frete')
+        .select('valor_venda, valor_frete, valor_credito')
         .gte('data_venda', inicio.toISOString())
         .lte('data_venda', fim.toISOString());
 
       if (error) throw error;
 
-      // Total sem frete
-      const total = data.reduce((sum, v) => {
-        const valorSemFrete = (v.valor_venda || 0) - (v.valor_frete || 0);
-        return sum + valorSemFrete;
-      }, 0);
-      const quantidade = data.length;
+      const validas = data.filter(isVendaValida);
+      const total = validas.reduce((sum, v) => sum + calcularFaturamentoLiquido(v), 0);
+      const quantidade = validas.length;
 
       return { total, quantidade };
     },
@@ -175,6 +170,7 @@ export function useRankingVendedoresDia(data: string) {
           id,
           valor_venda,
           valor_frete,
+          valor_credito,
           atendente:admin_users!fk_vendas_atendente(nome, foto_perfil_url),
           produtos:produtos_vendas(id)
         `)
@@ -187,6 +183,7 @@ export function useRankingVendedoresDia(data: string) {
       const rankingMap = new Map<string, RankingVendedor>();
 
       vendas?.forEach((venda: any) => {
+        if (!isVendaValida(venda)) return;
         const atendenteNome = venda.atendente?.nome || 'Sem atendente';
         const fotoPerfil = venda.atendente?.foto_perfil_url || null;
         const quantidadeProdutos = venda.produtos?.length || 0;
@@ -204,9 +201,7 @@ export function useRankingVendedoresDia(data: string) {
         const vendedor = rankingMap.get(atendenteNome)!;
         vendedor.quantidade_vendas += 1;
         vendedor.quantidade_portas += quantidadeProdutos;
-        // Valor sem frete
-        const valorSemFrete = (venda.valor_venda || 0) - (venda.valor_frete || 0);
-        vendedor.valor_total += valorSemFrete;
+        vendedor.valor_total += calcularFaturamentoLiquido(venda);
       });
 
       // Ordenar por valor total
