@@ -142,7 +142,13 @@ export default function TabelaPrecos() {
       ]}
       headerActions={headerActions}
     >
-      <div className="space-y-6">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'portas' | 'catalogo')} className="space-y-6">
+        <TabsList className="bg-white/5 border border-white/10">
+          <TabsTrigger value="portas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Portas</TabsTrigger>
+          <TabsTrigger value="catalogo" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Catálogo</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="portas" className="space-y-6 mt-0">
         {/* Card de Pesquisa Rápida */}
         <Card className="border border-blue-500/20 bg-blue-500/5">
           <CardHeader>
