@@ -336,7 +336,7 @@ export default function FaturamentoVendaMinimalista() {
     if (!venda) return;
 
     const tipoVenda = (venda.metodo_pagamento || '') as MetodoPagamento['tipo'];
-    const valorTotal = (venda.valor_venda || 0) + (venda.valor_credito || 0);
+    const valorTotal = (venda.valor_venda || 0) + (venda.valor_credito || 0) + (venda.valor_frete || 0);
     const dataBase = safeParseDate(venda.data_venda) || new Date();
     const empresaId = venda.empresa_receptora_id || '';
     const numParcelas = venda.numero_parcelas || venda.quantidade_parcelas || 1;
