@@ -331,6 +331,104 @@ export default function FaturamentoVendaMinimalista() {
     toast({ title: 'Método de pagamento da venda atualizado' });
   };
 
+  // Sincroniza o estado da seção de Forma de Pagamento com os dados atuais da venda
+  useEffect(() => {
+    if (!venda) return;
+
+    const tipoVenda = (venda.metodo_pagamento || '') as MetodoPagamento['tipo'];
+    const valorTotal = (venda.valor_venda || 0) + (venda.valor_credito || 0);
+    const dataBase = safeParseDate(venda.data_venda) || new Date();
+    const empresaId = venda.empresa_receptora_id || '';
+    const numParcelas = venda.numero_parcelas || venda.quantidade_parcelas || 1;
+    const intervalo = venda.intervalo_boletos || 30;
+
+    const usarDois = !!(venda.valor_entrada && venda.valor_entrada > 0 && venda.valor_a_receber && venda.valor_a_receber > 0);
+
+    const metodo1: MetodoPagamento = {
+      ...createEmptyMetodo(),
+      tipo: usarDois ? 'a_vista' : tipoVenda,
+      valor: usarDois ? (venda.valor_entrada || 0) : valorTotal,
+      data_pagamento: dataBase,
+      empresa_receptora_id: empresaId,
+      parcelas_cartao: tipoVenda === 'cartao_credito' ? numParcelas : 1,
+      parcelas_boleto: tipoVenda === 'boleto' ? numParcelas : 1,
+      intervalo_boletos: intervalo,
+      ja_pago: false,
+    };
+
+    const metodo2: MetodoPagamento = usarDois
+      ? {
+          ...createEmptyMetodo(),
+          tipo: tipoVenda || 'boleto',
+          valor: venda.valor_a_receber || 0,
+          data_pagamento: dataBase,
+          empresa_receptora_id: empresaId,
+          parcelas_cartao: tipoVenda === 'cartao_credito' ? numParcelas : 1,
+          parcelas_boleto: tipoVenda === 'boleto' ? numParcelas : 1,
+          intervalo_boletos: intervalo,
+        }
+      : createEmptyMetodo();
+
+    setPagamentoData({
+      usar_dois_metodos: usarDois,
+      metodos: [metodo1, metodo2],
+      pagamento_na_entrega: !!venda.pagamento_na_entrega,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [venda?.id]);
+
+  const consolidarVendaFromPagamento = (data: PagamentoData) => {
+    const m1 = data.metodos[0];
+    const m2 = data.metodos[1];
+    const usarDois = data.usar_dois_metodos;
+
+    // Tipo "principal" da venda: se usar 2 métodos, prevalece o do saldo (geralmente parcelado)
+    const tipoPrincipal = (usarDois ? (m2.tipo || m1.tipo) : m1.tipo) || '';
+
+    const numeroParcelas =
+      tipoPrincipal === 'cartao_credito'
+        ? (usarDois ? m2.parcelas_cartao : m1.parcelas_cartao)
+        : tipoPrincipal === 'boleto'
+        ? (usarDois ? m2.parcelas_boleto : m1.parcelas_boleto)
+        : 1;
+
+    const intervaloBoletos = tipoPrincipal === 'boleto'
+      ? (usarDois ? m2.intervalo_boletos : m1.intervalo_boletos)
+      : null;
+
+    const empresaReceptora = (usarDois ? (m2.empresa_receptora_id || m1.empresa_receptora_id) : m1.empresa_receptora_id) || null;
+
+    return {
+      metodo_pagamento: tipoPrincipal,
+      numero_parcelas: numeroParcelas,
+      quantidade_parcelas: numeroParcelas,
+      intervalo_boletos: intervaloBoletos,
+      empresa_receptora_id: empresaReceptora,
+      valor_entrada: usarDois ? m1.valor : 0,
+      valor_a_receber: usarDois ? m2.valor : 0,
+      pagamento_na_entrega: data.pagamento_na_entrega,
+    };
+  };
+
+  const handleSalvarFormaPagamento = async () => {
+    if (!id || !venda) return;
+    setSalvandoFormaPagamento(true);
+    try {
+      const updates = consolidarVendaFromPagamento(pagamentoData);
+      const { error } = await supabase.from('vendas').update(updates).eq('id', id);
+      if (error) {
+        toast({ variant: 'destructive', title: 'Erro ao salvar forma de pagamento', description: error.message });
+        return;
+      }
+      setVenda(prev => prev ? { ...prev, ...updates } as Venda : prev);
+      toast({ title: 'Forma de pagamento atualizada' });
+      // Pergunta se deseja regenerar parcelas
+      setShowRegenerarAposSalvarDialog(true);
+    } finally {
+      setSalvandoFormaPagamento(false);
+    }
+  };
+
   // Auto-faturar produtos pintura_epoxi com 30% de lucro
   useEffect(() => {
     if (!produtos || produtos.length === 0 || isUpdatingLucro) return;
