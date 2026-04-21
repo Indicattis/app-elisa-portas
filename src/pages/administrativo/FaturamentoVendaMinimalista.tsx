@@ -1096,7 +1096,6 @@ export default function FaturamentoVendaMinimalista() {
                   )}
                   {(() => {
                     const totalValor = (produtos?.reduce((acc, p) => acc + (p.valor_total || 0), 0) || 0) + (venda.valor_frete || 0) + (venda.valor_credito || 0);
-                    const totalLucroProdutos = (produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0) + (lucroInstalacaoCalculado || 0);
                     const totalDesconto = produtos?.reduce((acc, p) => {
                       const qty = p.quantidade || 1;
                       if (p.tipo_desconto === 'valor') return acc + (p.desconto_valor || 0);
@@ -1107,8 +1106,7 @@ export default function FaturamentoVendaMinimalista() {
                       if (p.desconto_valor) return acc + p.desconto_valor;
                       return acc;
                     }, 0) || 0;
-                    const valorCredito = venda.valor_credito || 0;
-                    const totalLucroGeral = totalLucroProdutos - totalDesconto + valorCredito;
+                    const totalLucroGeral = totalLucro;
                     const margemGeral = totalValor > 0 ? (totalLucroGeral / totalValor) * 100 : 0;
                     const totalTabela = (produtos?.reduce((acc, p) => {
                       const qty = p.quantidade || 1;
