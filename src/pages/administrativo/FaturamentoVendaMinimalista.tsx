@@ -285,6 +285,47 @@ export default function FaturamentoVendaMinimalista() {
     }
   };
 
+  const handleUpdateMetodoGrupo = async (parcelas: any[], novoMetodo: string) => {
+    const ids = parcelas.map(p => p.id);
+    const { error } = await supabase
+      .from('contas_receber')
+      .update({ metodo_pagamento: novoMetodo })
+      .in('id', ids);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Erro ao alterar método de pagamento' });
+      return;
+    }
+    await fetchContasReceber();
+    toast({ title: 'Método de pagamento atualizado' });
+  };
+
+  const handleUpdateMetodoParcela = async (parcelaId: string, novoMetodo: string) => {
+    const { error } = await supabase
+      .from('contas_receber')
+      .update({ metodo_pagamento: novoMetodo })
+      .eq('id', parcelaId);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Erro ao alterar método de pagamento' });
+      return;
+    }
+    await fetchContasReceber();
+    toast({ title: 'Método da parcela atualizado' });
+  };
+
+  const handleUpdateMetodoVenda = async (novoMetodo: string) => {
+    if (!id) return;
+    const { error } = await supabase
+      .from('vendas')
+      .update({ metodo_pagamento: novoMetodo })
+      .eq('id', id);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Erro ao alterar método de pagamento da venda' });
+      return;
+    }
+    setVenda(prev => prev ? { ...prev, metodo_pagamento: novoMetodo } : prev);
+    toast({ title: 'Método de pagamento da venda atualizado' });
+  };
+
   // Auto-faturar produtos pintura_epoxi com 30% de lucro
   useEffect(() => {
     if (!produtos || produtos.length === 0 || isUpdatingLucro) return;
