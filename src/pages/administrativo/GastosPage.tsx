@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, CalendarIcon, FileText } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, CalendarIcon, FileText, ArrowUpDown } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 
-import { useGastos, Gasto } from "@/hooks/useGastos";
+import { useGastos, Gasto, GastosOrdenarPor } from "@/hooks/useGastos";
 import { useBancos } from "@/hooks/useBancos";
 import { useTiposCustos } from "@/hooks/useTiposCustos";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
@@ -43,7 +43,8 @@ export default function GastosPage() {
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
   );
 
-  const { gastos, loading, saveGasto, updateGasto, deleteGasto } = useGastos(mesFiltro);
+  const [ordenarPor, setOrdenarPor] = useState<GastosOrdenarPor>('cadastro');
+  const { gastos, loading, saveGasto, updateGasto, deleteGasto } = useGastos(mesFiltro, ordenarPor);
   const { tiposCustos } = useTiposCustos();
   const { bancos } = useBancos();
   const [colaboradores, setColaboradores] = useState<ColaboradorOption[]>([]);
