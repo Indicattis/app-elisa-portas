@@ -51,12 +51,20 @@ export default function RegrasVendasDirecao() {
   const [showSenhaMaster, setShowSenhaMaster] = useState(false);
   const [senhasIguais, setSenhasIguais] = useState(false);
 
+  // Estados editáveis dos limites de desconto
+  const [limiteAvista, setLimiteAvista] = useState<number>(3);
+  const [limitePresencial, setLimitePresencial] = useState<number>(5);
+  const [limiteAdicionalResponsavel, setLimiteAdicionalResponsavel] = useState<number>(5);
+
   useEffect(() => {
     if (configuracoes) {
       setSenhaResponsavel(configuracoes.senha_responsavel || '');
       setSenhaMaster(configuracoes.senha_master || '');
       setResponsavelSenhaResponsavel(configuracoes.responsavel_senha_responsavel_id || '');
       setResponsavelSenhaMaster(configuracoes.responsavel_senha_master_id || '');
+      setLimiteAvista(configuracoes.limite_desconto_avista ?? 3);
+      setLimitePresencial(configuracoes.limite_desconto_presencial ?? 5);
+      setLimiteAdicionalResponsavel(configuracoes.limite_adicional_responsavel ?? 5);
     }
   }, [configuracoes]);
 
