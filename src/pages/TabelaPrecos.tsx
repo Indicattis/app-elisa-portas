@@ -7,9 +7,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTabelaPrecos, ItemTabelaPreco, ItemTabelaPrecoInput } from "@/hooks/useTabelaPrecos";
 import { ItemModal } from "@/components/tabela-precos/ItemModal";
 import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTabelaPrecos";
+import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab";
 import { useQueryClient } from "@tanstack/react-query";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 
@@ -23,6 +25,7 @@ export default function TabelaPrecos() {
   const [larguraRapida, setLarguraRapida] = useState('');
   const [editingLucroId, setEditingLucroId] = useState<string | null>(null);
   const [editingLucroValue, setEditingLucroValue] = useState('');
+  const [activeTab, setActiveTab] = useState<'portas' | 'catalogo'>('portas');
   const lucroInputRef = useRef<HTMLInputElement>(null);
 
   const queryClient = useQueryClient();
@@ -113,7 +116,7 @@ export default function TabelaPrecos() {
     return itemMaisProximo;
   })();
 
-  const headerActions = (
+  const headerActions = activeTab === 'portas' ? (
     <div className="flex gap-2">
       <Button onClick={() => setBulkUploadModalOpen(true)} variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10">
         <Upload className="h-4 w-4 mr-2" />
@@ -124,7 +127,7 @@ export default function TabelaPrecos() {
         Novo Item
       </Button>
     </div>
-  );
+  ) : null;
 
   return (
     <MinimalistLayout
@@ -139,7 +142,13 @@ export default function TabelaPrecos() {
       ]}
       headerActions={headerActions}
     >
-      <div className="space-y-6">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'portas' | 'catalogo')} className="space-y-6">
+        <TabsList className="bg-white/5 border border-white/10">
+          <TabsTrigger value="portas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Portas</TabsTrigger>
+          <TabsTrigger value="catalogo" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Catálogo</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="portas" className="space-y-6 mt-0">
         {/* Card de Pesquisa Rápida */}
         <Card className="border border-blue-500/20 bg-blue-500/5">
           <CardHeader>
@@ -363,7 +372,12 @@ export default function TabelaPrecos() {
             )}
           </CardContent>
         </Card>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="catalogo" className="mt-0">
+          <CatalogoPrecosTab />
+        </TabsContent>
+      </Tabs>
 
       {/* Modal de Adicionar/Editar */}
       <ItemModal
