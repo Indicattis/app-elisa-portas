@@ -110,11 +110,14 @@ export default function FaturamentoVendaMinimalista() {
   const [salvandoFormaPagamento, setSalvandoFormaPagamento] = useState(false);
   const { createPedidoFromVenda, checkExistingPedido } = usePedidoCreation();
   const { removerFaturamento, isRemovendo } = useFaturamento();
-  const { configuracoes: configVendas } = useConfiguracoesVendas();
+  const { configuracoes: configVendas, limites: limitesVendas } = useConfiguracoesVendas();
   const configLimites = {
     avista: configVendas?.limite_desconto_avista ?? 3,
     presencial: configVendas?.limite_desconto_presencial ?? 5,
   };
+  // Limite máximo de desconto (com senha do responsável) — definido em /direcao/vendas/regras-vendas.
+  // Acima desse percentual o excedente é abatido do lucro.
+  const LIMITE_DESCONTO_LUCRO = limitesVendas.totalComResponsavel;
 
   const {
     produtos,
@@ -720,12 +723,10 @@ export default function FaturamentoVendaMinimalista() {
     if (p.desconto_valor && p.desconto_valor < 0) return acc + Math.abs(p.desconto_valor);
     return acc;
   }, 0) || 0;
-  // Valor de tabela bruto — usado para apurar excedente >13% que abate o lucro
   const _valorTabelaParaExcedente = produtos?.reduce((acc: number, p: any) => {
     const qty = p.quantidade || 1;
     return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
   }, 0) || 0;
-  const LIMITE_DESCONTO_LUCRO = 13;
   const pctDescontoTotal = _valorTabelaParaExcedente > 0
     ? (totalDescontosCalc / _valorTabelaParaExcedente) * 100
     : 0;
@@ -921,17 +922,16 @@ export default function FaturamentoVendaMinimalista() {
             </p>
           </div>
 
-          {/* Excedente >13% (abate do lucro) */}
           <div
             className="bg-white/5 border border-white/10 rounded-lg p-3"
-            title="Desconto acima de 13% do valor de tabela — abatido do lucro"
+            title={`Desconto acima de ${LIMITE_DESCONTO_LUCRO}% do valor de tabela — abatido do lucro`}
           >
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Excedente &gt;13%</p>
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Excedente &gt;{LIMITE_DESCONTO_LUCRO}%</p>
             <p className={cn("text-sm font-bold", excedenteValor > 0 ? "text-red-500" : "text-white/30")}>
               {excedenteValor > 0 ? `-${formatCurrency(excedenteValor)}` : '-'}
             </p>
             {excedenteValor > 0 && (
-              <p className="text-[10px] text-red-400/80 mt-0.5">+{excedentePct.toFixed(1)}% acima de 13%</p>
+              <p className="text-[10px] text-red-400/80 mt-0.5">+{excedentePct.toFixed(1)}% acima de {LIMITE_DESCONTO_LUCRO}%</p>
             )}
           </div>
 
