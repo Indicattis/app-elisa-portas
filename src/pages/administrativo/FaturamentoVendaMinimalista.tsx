@@ -1016,8 +1016,9 @@ export default function FaturamentoVendaMinimalista() {
                       if (produto.desconto_valor && produto.desconto_valor < 0) return Math.abs(produto.desconto_valor);
                       return 0;
                     })();
-                    // Nova regra: o desconto só abate o lucro na parcela que excede 13% do valor de tabela.
-                    // Distribui o excedente proporcionalmente ao desconto de cada item.
+                    // O desconto só abate o lucro na parcela que excede o limite máximo configurado em
+                    // /direcao/vendas/regras-vendas (LIMITE_DESCONTO_LUCRO). Distribui o excedente
+                    // proporcionalmente ao desconto de cada item.
                     const parcelaExcedenteItem = excedenteValor > 0 && totalDescontosCalc > 0
                       ? excedenteValor * (descontoValorAbs / totalDescontosCalc)
                       : 0;
