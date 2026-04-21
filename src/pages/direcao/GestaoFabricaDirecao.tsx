@@ -889,6 +889,7 @@ export default function GestaoFabricaDirecao() {
                 <VendasPendenteDraggableList
                   vendas={vendasFaturamentoFiltradas}
                   onReorganizar={handleReorganizarVendas}
+                  mode="faturamento"
                 />
               )}
             </CardContent>
