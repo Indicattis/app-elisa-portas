@@ -1,38 +1,34 @@
 
 
-## Corrigir fluxo: Faturamento NÃO deve criar pedido automaticamente
+## Aumentar margem fixa de instalação de 30% para 40%
 
-### Diagnóstico
+### Alterações de código
 
-A regra do fluxo é:
-1. **Pend. Faturamento** → vendas ainda não faturadas
-2. Vendedor/Financeiro fatura a venda → ela some de "Pend. Faturamento" e aparece em **Aprovação Diretor** (ainda como **venda**, não como pedido)
-3. **Diretor** clica para criar o pedido manualmente, e ele nasce na etapa `aprovacao_diretor`
+**1. `src/pages/direcao/DREMesDirecao.tsx` (linha 278)**
+- `luc.instalacoes = fat.instalacoes * 0.30` → `* 0.40`
 
-**Problema encontrado:** em `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` (linhas 636-651), logo após `finalizarFaturamento` o código chama `createPedidoFromVenda(venda.id)` automaticamente. Resultado: a venda já vira pedido e cai como "pedido pronto" em Aprovação Diretor, pulando a etapa de validação manual do Diretor.
+**2. `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`**
+Trocar `* 0.30` por `* 0.40` em três pontos:
+- Linha 545 — auto-faturamento de produtos `instalacao` (vendas novas).
+- Linha 618 — cálculo de `lucroInstalacao` no `executarFaturamento` (vendas legadas com `valor_instalacao` na própria venda).
+- Linha 695 — `lucroInstalacaoCalculado` exibido na tela antes do faturamento.
 
-Os 3 pedidos atualmente em `aprovacao_diretor` no banco (#0381, #0382, #0384) foram criados por esse caminho.
+### Recalcular vendas já faturadas de 2026
 
-A página antiga `src/pages/FaturamentoEdit.tsx` **não** tem essa criação automática (já está correta), e o botão "+" em `Faturamento.tsx` é manual (correto).
+Para que o DRE de meses já fechados (e a coluna Lucro do detalhe da venda) reflitam 40%, atualizar via SQL:
 
-### Correção
+1. **Produtos do tipo `instalacao`** (vendas novas, com `faturamento = true`) em vendas de 2026:
+   - `lucro_item = valor_total_sem_frete * 0.40`
+   - `custo_producao = valor_total_sem_frete * 0.60`
 
-**Arquivo:** `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
+2. **Vendas legadas** (sem produto `instalacao`, com `valor_instalacao > 0` e `instalacao_faturada = true`) de 2026:
+   - `lucro_instalacao = valor_instalacao * 0.40`
+   - `custo_instalacao = valor_instalacao * 0.60`
 
-Remover o bloco de auto-criação de pedido após o faturamento (linhas ~636-651). Manter apenas:
-- `finalizarFaturamento(...)` (atualiza venda + produtos + frete_aprovado)
-- `fetchVenda()` para recarregar
-- Toast simplificado: "Venda faturada com sucesso! Aguardando criação de pedido pela Direção."
-
-A venda passará então a aparecer automaticamente na aba "Aprovação Diretor" da Gestão de Fábrica como item da lista `vendasPendentePedido` (já implementado), e o pedido só será criado quando o Diretor clicar no botão "+" do card.
+3. Recalcular `lucro_total` das vendas afetadas (somando os novos `lucro_item` + `lucro_instalacao`).
 
 ### Fora de escopo
-
-- Não mexer em `Faturamento.tsx` (botão manual já está correto)
-- Não alterar `usePedidoCreation` nem a etapa inicial dos pedidos
-- Não excluir os 3 pedidos já criados em `aprovacao_diretor` (#0381, #0382, #0384) — eles seguem o fluxo normal a partir daí. Se desejar, posso movê-los/arquivá-los em uma ação separada, mas não é necessário para corrigir o fluxo daqui pra frente.
-
-### Atualização de memória
-
-Atualizar `mem://features/direcao/aprovacao-diretor-workflow-v2-full-auto-creation` removendo qualquer indicação de auto-criação de pedido no faturamento, deixando explícito: "Faturamento NUNCA cria pedido automaticamente. O Diretor cria manualmente a partir da aba Aprovação Diretor."
+- Não altera vendas de anos anteriores (filtro: `data_venda >= '2026-01-01'`).
+- Não altera o `LucroItemModal` (entrada manual continua livre).
+- Não cria configuração dinâmica de margem — segue como constante no código.
 
