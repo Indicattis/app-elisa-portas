@@ -183,43 +183,53 @@ export default function FaturamentoVendaMinimalista() {
     const dataBase = safeParseDate(venda.data_venda) || new Date();
     const parcelas: any[] = [];
 
-    if (metodo === 'boleto') {
-      const valorParcela = valorTotal / numParcelas;
-      for (let i = 0; i < numParcelas; i++) {
+    // Suporte a 2 métodos de pagamento (entrada à vista + saldo parcelado)
+    const valorEntrada = venda.valor_entrada || 0;
+    const valorAReceber = venda.valor_a_receber || 0;
+    const usarDoisMetodos = valorEntrada > 0 && valorAReceber > 0;
+
+    const gerarParcelasParaMetodo = (
+      metodoTipo: string,
+      valorBase: number,
+      qtdParcelas: number,
+      offsetNumero: number,
+      intervaloDias: number,
+    ) => {
+      if (metodoTipo === 'boleto' || metodoTipo === 'cartao_credito') {
+        const valorParcela = valorBase / qtdParcelas;
+        const intervaloEfetivo = metodoTipo === 'cartao_credito' ? 30 : intervaloDias;
+        for (let i = 0; i < qtdParcelas; i++) {
+          parcelas.push({
+            venda_id: id,
+            numero_parcela: offsetNumero + i + 1,
+            valor_parcela: valorParcela,
+            data_vencimento: addDays(dataBase, intervaloEfetivo * i).toISOString().split('T')[0],
+            metodo_pagamento: metodoTipo,
+            empresa_receptora_id: venda.empresa_receptora_id || null,
+            status: 'pendente',
+          });
+        }
+      } else {
+        // dinheiro, a_vista, pix - parcela única
         parcelas.push({
           venda_id: id,
-          numero_parcela: i + 1,
-          valor_parcela: valorParcela,
-          data_vencimento: addDays(dataBase, intervalo * i).toISOString().split('T')[0],
-          metodo_pagamento: 'boleto',
+          numero_parcela: offsetNumero + 1,
+          valor_parcela: valorBase,
+          data_vencimento: dataBase.toISOString().split('T')[0],
+          metodo_pagamento: metodoTipo,
           empresa_receptora_id: venda.empresa_receptora_id || null,
           status: 'pendente',
         });
       }
-    } else if (metodo === 'cartao_credito') {
-      const valorParcela = valorTotal / numParcelas;
-      for (let i = 0; i < numParcelas; i++) {
-        parcelas.push({
-          venda_id: id,
-          numero_parcela: i + 1,
-          valor_parcela: valorParcela,
-          data_vencimento: addDays(dataBase, 30 * i).toISOString().split('T')[0],
-          metodo_pagamento: 'cartao_credito',
-          empresa_receptora_id: venda.empresa_receptora_id || null,
-          status: 'pendente',
-        });
-      }
+    };
+
+    if (usarDoisMetodos) {
+      // Entrada (à vista, parcela única)
+      gerarParcelasParaMetodo('a_vista', valorEntrada, 1, 0, 0);
+      // Saldo (parcelado conforme método principal)
+      gerarParcelasParaMetodo(metodo, valorAReceber, numParcelas, 1, intervalo);
     } else {
-      // dinheiro, a_vista, pix - parcela única
-      parcelas.push({
-        venda_id: id,
-        numero_parcela: 1,
-        valor_parcela: valorTotal,
-        data_vencimento: dataBase.toISOString().split('T')[0],
-        metodo_pagamento: metodo,
-        empresa_receptora_id: venda.empresa_receptora_id || null,
-        status: 'pendente',
-      });
+      gerarParcelasParaMetodo(metodo, valorTotal, numParcelas, 0, intervalo);
     }
 
     if (parcelas.length > 0) {
@@ -1397,7 +1407,7 @@ export default function FaturamentoVendaMinimalista() {
               {/* Validação: total parcelas vs valor venda */}
               {(() => {
                 const totalParcelas = contasReceber.reduce((sum, p) => sum + (p.valor_parcela || 0), 0);
-                const valorVenda = (venda.valor_venda || 0) + (venda.valor_credito || 0);
+                const valorVenda = (venda.valor_venda || 0) + (venda.valor_credito || 0) + (venda.valor_frete || 0);
                 const match = Math.abs(totalParcelas - valorVenda) < 0.01;
                 return (
                   <div className={cn(
