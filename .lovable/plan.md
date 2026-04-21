@@ -1,44 +1,35 @@
 
 
-## Plano: Botão "Enviar para Aguardando Cliente" na etapa Finalizado
+## Permitir alterar o método de pagamento no faturamento
 
-### Resumo
-Adicionar um botão no PedidoCard (etapa finalizado) que move o pedido para uma nova etapa oculta `aguardando_cliente`. No header da página, substituir o botão "Pedido Teste" por um botão que abre a aba dessa etapa oculta.
+Na página `/administrativo/financeiro/faturamento/:id`, atualmente o método de pagamento de cada grupo de parcelas é apenas exibido como rótulo (Boleto, À Vista, Cartão, Dinheiro, Pix). O objetivo é permitir alterar esse método diretamente, para uma parcela individual ou para o grupo inteiro.
 
-### O que será feito
+### Comportamento
 
-**1. Tipo `EtapaPedido` e configuração** (`src/types/pedidoEtapa.ts`)
-- Adicionar `'aguardando_cliente'` ao tipo `EtapaPedido`
-- Adicionar config em `ETAPAS_CONFIG` (label: "Aguardando Cliente", cor: amarelo, icon: Clock)
-- NÃO adicionar em `ORDEM_ETAPAS` (etapa oculta, fora do fluxo normal)
+**No card "Parcelas / Contas a Receber"**, no cabeçalho de cada grupo (onde hoje aparece "Boleto 2/3 pagas R$ X"):
+- Substituir o texto fixo do método por um `Select` com as opções: Boleto, À Vista, Cartão de Crédito, Dinheiro, Pix.
+- Ao trocar, todas as parcelas daquele grupo recebem `update` no campo `metodo_pagamento` em `contas_receber`.
+- Após salvar, os grupos são recalculados automaticamente (já que o agrupamento é feito por `metodo_pagamento`), então o grupo se funde com outro existente do mesmo método ou aparece sob o novo rótulo.
+- Mostrar toast de sucesso/erro.
 
-**2. Contadores** (`src/hooks/usePedidosEtapas.ts`)
-- Adicionar `aguardando_cliente: 0` no objeto `counts` do `usePedidosContadores`
+**Em cada linha de parcela**, adicionar um pequeno seletor de método (ícone discreto + dropdown) para casos em que o usuário queira alterar apenas uma parcela específica sem afetar o restante do grupo.
 
-**3. Botão no PedidoCard** (`src/components/pedidos/PedidoCard.tsx`)
-- Adicionar prop `onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>`
-- Na etapa `finalizado`, adicionar botão com ícone (Clock ou UserMinus) ao lado dos existentes (correção, arquivar)
-- Ao clicar, mostra AlertDialog de confirmação e executa a ação
-
-**4. Prop no PedidosDraggableList** (`src/components/pedidos/PedidosDraggableList.tsx`)
-- Passar `onEnviarAguardandoCliente` do PedidosDraggableList para cada PedidoCard
-
-**5. Lógica de envio** (`src/pages/direcao/GestaoFabricaDirecao.tsx`)
-- Criar `handleEnviarAguardandoCliente`: atualiza `etapa_atual` para `'aguardando_cliente'`, fecha a etapa finalizado em `pedidos_etapas`, cria entrada `aguardando_cliente` em `pedidos_etapas`, registra movimentação
-- Passar a função para `PedidosDraggableList` via prop
-
-**6. Aba oculta no header** (`src/pages/direcao/GestaoFabricaDirecao.tsx`)
-- Substituir o botão "Pedido Teste" por um botão "Aguardando Cliente" com badge de contagem
-- Ao clicar, definir `etapaAtiva` como `'aguardando_cliente'`
-- Ajustar `etapaParaQuery` para tratar `'aguardando_cliente'` corretamente (usar `usePedidosEtapas('aguardando_cliente' as EtapaPedido)`)
-- Adicionar `TabsContent` para essa etapa com a listagem dos pedidos
-- Manter botão "Pedido Teste" — mover para dentro da aba ou como segundo botão
-
-**7. Botão de retorno** 
-- Na aba `aguardando_cliente`, os pedidos terão botão para "Retornar para Finalizado" (atualiza `etapa_atual` de volta para `'finalizado'`)
+**No card "Informações de Pagamento"** (campo "Método de Pagamento" da venda):
+- Tornar o campo editável via `Select` no mesmo padrão.
+- Ao alterar, atualizar `vendas.metodo_pagamento` para o valor escolhido.
+- Esse campo é apenas informativo do cabeçalho da venda; não altera as parcelas existentes (a alteração das parcelas é feita no card de Parcelas).
 
 ### Detalhes técnicos
-- `etapa_atual` é `string` no banco — não precisa de migration
-- `pedidos_etapas` usa UPSERT com `onConflict: 'pedido_id,etapa'`
-- A etapa não aparece nas tabs normais, apenas é acessível pelo botão no header
+
+- Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`.
+- Reutilizar `Select` de `@/components/ui/select` com as mesmas opções já usadas em `FormaPagamentoSelect`/`MetodoPagamentoCard` (`boleto`, `a_vista`, `cartao_credito`, `dinheiro`, `pix`).
+- Atualização de grupo: novo handler `handleUpdateMetodoGrupo(parcelas, novoMetodo)` que faz `update ... in (ids)` em `contas_receber` e recarrega via `fetchContasReceber()` (em vez do merge incremental do estado, para garantir o reagrupamento correto).
+- Atualização de parcela única: usar o handler existente `handleUpdatePagamento(id, 'metodo_pagamento', valor)` seguido de `fetchContasReceber()` para reagrupar.
+- Atualização do método na venda: novo handler que faz `update vendas set metodo_pagamento = ? where id = ?` e atualiza estado local `setVenda`.
+- Sem mudanças de schema; as colunas `vendas.metodo_pagamento` e `contas_receber.metodo_pagamento` já existem.
+
+### Fora do escopo
+
+- Não recriar parcelas automaticamente ao trocar o método (o usuário pode usar o botão "Regenerar" existente, se desejar refazer com base nos novos dados).
+- Não alterar `numero_parcelas`/`intervalo_boletos` da venda; isso continua via "Regenerar".
 
