@@ -1276,6 +1276,23 @@ export default function FaturamentoVendaMinimalista() {
                                   {isPago ? '✓ Pago' : 'Pendente'}
                                 </button>
                               </div>
+                              <div className="w-[140px]">
+                                <Select
+                                  value={parcela.metodo_pagamento || ''}
+                                  onValueChange={(v) => handleUpdateMetodoParcela(parcela.id, v)}
+                                >
+                                  <SelectTrigger className="h-7 bg-white/5 border-white/10 text-white/70 text-xs">
+                                    <SelectValue placeholder="Método" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="boleto">Boleto</SelectItem>
+                                    <SelectItem value="a_vista">À Vista</SelectItem>
+                                    <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                                    <SelectItem value="pix">Pix</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                               <button
                                 onClick={() => setConfirmRemoveId(parcela.id)}
                                 className="w-6 flex justify-center text-white/0 group-hover:text-red-400/60 hover:!text-red-400 transition-colors"
