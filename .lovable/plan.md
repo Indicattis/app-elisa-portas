@@ -1,35 +1,40 @@
 
 
-## Auto-faturar produtos de instalação em 40%
+## Aba "Catálogo" em Tabela de Preços
 
-### Causa
+Adicionar uma segunda aba na página `/direcao/vendas/tabela-precos` permitindo editar **preço de venda** e **custo do produto** dos itens cadastrados em `/vendas/catalogo`.
 
-Em `/administrativo/financeiro/faturamento/:id`, produtos do tipo `instalacao` já têm o lucro pré-preenchido em 40% via `useEffect`, mas o campo `faturamento` permanece `false` — então a coluna **Status** mostra "Pendente" e o item só é marcado como Faturado quando o usuário clica em "Faturar Venda".
+### Estrutura
 
-Validação no banco para a venda `24b971b0-...`: as 2 instalações têm `lucro_item = 920` (40% de R$ 2.300) mas `faturamento = false`.
+A página atual ganha um `Tabs` no topo com duas abas:
 
-### Mudança
-
-No `useEffect` de auto-faturamento de instalação em `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` (linhas 542–567), além de gravar `lucro_item` e `custo_producao`, também gravar `faturamento = true` no `produtos_vendas`.
-
-Para isso, atualizar a mutation `updateLucroItem` em `src/hooks/useProdutosVenda.ts` para aceitar um parâmetro opcional `faturamento` (default `undefined`, mantendo o comportamento atual de portas e pintura).
+1. **Portas** — todo o conteúdo atual (pesquisa rápida + tabela de itens da tabela de preços de portas).
+2. **Catálogo** — nova aba com listagem dos produtos do `vendas_catalogo` (ativos), em tabela enxuta com edição inline de **Preço de Venda** e **Custo**.
 
 ```text
-useEffect instalacao
-   └─ updateLucroItem({ produtoId, lucroItem, custoProducao, faturamento: true })
-         └─ UPDATE produtos_vendas SET lucro_item, custo_producao, faturamento = true
+[ Portas ] [ Catálogo ]
+─────────────────────────────────────────────
+Catálogo
+─────────────────────────────────────────────
+Imagem | Produto | Categoria | SKU | Custo (editável) | Preço Venda (editável) | Margem | Estoque
 ```
 
-Resultado: ao abrir a tela de faturamento, instalações aparecem direto com badge "Faturado" (verde) sem ação manual, igual portas/pintura passam a "Tabela"/"Fórmula" automaticamente — mas instalação vai além e já marca o `faturamento = true`.
+### Comportamento
+
+- Reaproveita `useVendasCatalogo` (já existente) para listar e `editarProduto` para salvar.
+- Edição inline igual ao padrão atual do "Lucro" em portas: clicar no valor abre input, Enter salva, Esc cancela.
+- Margem (%) calculada localmente: `(preco_venda - custo_produto) / preco_venda * 100`.
+- Busca por nome/SKU acima da tabela.
+- Sem criação/exclusão nesta aba — para isso o usuário continua usando `/vendas/catalogo`.
 
 ### Fora de escopo
 
-- Não altera lógica de portas (`porta_enrolar`) nem pintura (`pintura_epoxi`) — continuam com badge "Tabela"/"Fórmula" e `faturamento = false` até o "Faturar Venda".
-- Não altera o cálculo do excedente nem o lucro total da venda.
-- Não altera RLS nem migrações.
+- Não altera `/vendas/catalogo`.
+- Não muda permissões/RLS — quem já edita `vendas_catalogo` continua editando.
+- Não altera campos além de `custo_produto` e `preco_venda`.
 
 ### Arquivos
 
-- `src/hooks/useProdutosVenda.ts` — adicionar campo opcional `faturamento` à mutation `updateLucroItem`.
-- `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` — passar `faturamento: true` no auto-faturamento de instalação.
+- `src/pages/TabelaPrecos.tsx` — envolver conteúdo atual em `<Tabs>` e adicionar aba "Catálogo".
+- `src/components/tabela-precos/CatalogoPrecosTab.tsx` (novo) — componente da nova aba, usa `useVendasCatalogo`.
 
