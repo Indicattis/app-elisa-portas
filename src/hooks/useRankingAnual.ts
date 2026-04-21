@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { calcularFaturamentoLiquido, isVendaValida } from "@/utils/faturamentoCalc";
 
 export interface RankingVendedor {
   atendente_id: string;
@@ -21,6 +22,7 @@ export const useRankingAnual = (year: number) => {
           atendente_id,
           valor_venda,
           valor_frete,
+          valor_credito,
           data_venda,
           admin_users!fk_vendas_atendente(nome, foto_perfil_url),
           produtos_vendas(id)
@@ -34,11 +36,12 @@ export const useRankingAnual = (year: number) => {
       const rankingMap = new Map<string, RankingVendedor>();
 
       vendas?.forEach((venda: any) => {
+        if (!isVendaValida(venda)) return;
         const atendenteId = venda.atendente_id;
         const atendenteNome = venda.admin_users?.nome || 'Sem atendente';
         const fotoPerfil = venda.admin_users?.foto_perfil_url || null;
         const quantidadeProdutos = venda.produtos_vendas?.length || 0;
-        const valorSemFrete = (venda.valor_venda || 0) - (venda.valor_frete || 0);
+        const valorSemFrete = calcularFaturamentoLiquido(venda);
 
         if (!rankingMap.has(atendenteId)) {
           rankingMap.set(atendenteId, {
