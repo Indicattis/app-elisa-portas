@@ -1016,7 +1016,12 @@ export default function FaturamentoVendaMinimalista() {
                       if (produto.desconto_valor && produto.desconto_valor < 0) return Math.abs(produto.desconto_valor);
                       return 0;
                     })();
-                    const lucroAjustado = temLucro ? (produto.lucro_item! - descontoValorAbs + creditoValorAbs) : null;
+                    // Nova regra: o desconto só abate o lucro na parcela que excede 13% do valor de tabela.
+                    // Distribui o excedente proporcionalmente ao desconto de cada item.
+                    const parcelaExcedenteItem = excedenteValor > 0 && totalDescontosCalc > 0
+                      ? excedenteValor * (descontoValorAbs / totalDescontosCalc)
+                      : 0;
+                    const lucroAjustado = temLucro ? (produto.lucro_item! - parcelaExcedenteItem + creditoValorAbs) : null;
                     return (
                       <TableRow key={produto.id} className="border-white/10 hover:bg-white/5">
                         <TableCell className="text-white/80">{getTipoProdutoLabel(produto.tipo_produto)}</TableCell>
