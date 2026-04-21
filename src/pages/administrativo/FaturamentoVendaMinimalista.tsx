@@ -1008,14 +1008,21 @@ export default function FaturamentoVendaMinimalista() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-1">
                   <p className="text-xs text-white/50">Método de Pagamento</p>
-                  <p className="text-sm font-medium text-white">
-                    {(() => {
-                      const labels: Record<string, string> = {
-                        boleto: 'Boleto', a_vista: 'À Vista', cartao_credito: 'Cartão', dinheiro: 'Dinheiro', pix: 'Pix'
-                      };
-                      return labels[venda.metodo_pagamento || ''] || venda.metodo_pagamento || '-';
-                    })()}
-                  </p>
+                  <Select
+                    value={venda.metodo_pagamento || ''}
+                    onValueChange={handleUpdateMetodoVenda}
+                  >
+                    <SelectTrigger className="h-8 bg-white/5 border-white/10 text-white text-sm">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="boleto">Boleto</SelectItem>
+                      <SelectItem value="a_vista">À Vista</SelectItem>
+                      <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                      <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                      <SelectItem value="pix">Pix</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 {(venda.metodo_pagamento === 'boleto' || venda.metodo_pagamento === 'cartao_credito') && (
                   <div className="space-y-1">
