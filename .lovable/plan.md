@@ -1,48 +1,50 @@
 
 
-## Sessão dedicada de Pagamento no Faturamento
+## Padronizar cálculo de faturamento e auditar vendas de janeiro
 
-Substituir os campos avulsos atuais ("Método de Pagamento", "Número de Parcelas", "Intervalo entre Boletos", "Pgto na Entrega", "Valor de Entrada", "Valor a Receber") na página `/administrativo/financeiro/faturamento/:id` por uma seção dedicada de pagamento, no mesmo padrão visual e funcional usado em `/vendas/minhas-vendas/nova`.
+### Diagnóstico
 
-### Comportamento
+- A mudança "instalação como item separado" **não alterou vendas de janeiro/2026**: nenhuma delas tem item `tipo_produto='instalacao'`. Todas seguem o formato antigo (instalação embutida em `produtos_vendas.valor_instalacao` da porta).
+- O valor exibido no dashboard (R$ 395.434,13) **bate com a soma real dos itens** das vendas de janeiro. A soma de `vendas.valor_venda` (R$ 423.934) inclui frete (R$ 28.500); subtraindo o frete chega-se a R$ 395.434, idêntico à soma de `produtos_vendas.valor_total`. Portanto não há perda de instalação no total.
+- Os problemas reais encontrados:
+  1. **Hooks divergem** sobre incluir `valor_credito`: `useFaturamentoMensal` soma; `useVendasMesAtual`, `useVendasSemanaAtual`, `useVendasAgregadas`, `useFaturamentoPorProduto`, `useAdministrativoDashboard` **não somam**. Isso faz cards diferentes mostrarem valores diferentes para o mesmo período.
+  2. **Vendas-teste/rascunho** com `valor_venda` simbólico (R$ 100, R$ 130, R$ 160) entram no faturamento de janeiro: Sidnei Bizotto, Daiane Camargo, Lucas Buffon, Delmar Koch, Deliz Viagens, Adelar Schaefer, etc. (~6 vendas).
+  3. Diferenças de centavos por arredondamento entre `valor_venda` e soma dos itens em ~20 vendas (irrelevantes no agregado).
 
-**Card "Forma de Pagamento" (novo, dedicado)**, posicionado logo após o card "Informações da Venda":
+### O que fazer
 
-- Reusar o componente `PagamentoSection` (`src/components/vendas/PagamentoSection.tsx`) — o mesmo da tela de nova venda.
-- Suporta os mesmos recursos:
-  - Método único ou dois métodos simultâneos (entrada + saldo).
-  - Para cada método: tipo (Boleto, À Vista/PIX, Cartão de Crédito, Dinheiro), valor, número de parcelas, intervalo de boletos, empresa receptora, data de pagamento, marcação "Já Pago".
-  - Toggle "Pagamento na Entrega".
-- Estado inicial preenchido a partir dos campos atuais da venda (`metodo_pagamento`, `numero_parcelas`, `intervalo_boletos`, `valor_entrada`, `valor_a_receber`, `pagamento_na_entrega`, `empresa_receptora_id`).
-- Botão **"Salvar Forma de Pagamento"** ao final do card. Ao salvar:
-  1. Atualiza a venda (`vendas`) com os campos consolidados (mesmo mapeamento usado em `usePedidoCreation`/criação de venda).
-  2. Pergunta via diálogo de confirmação se o usuário deseja **regenerar as parcelas** com base no novo plano (reaproveitando o `handleRegenerarParcelas` existente). Se confirmar, deleta `contas_receber` da venda e gera novas a partir dos métodos. Se recusar, mantém parcelas atuais (apenas o cabeçalho da venda é atualizado).
-- Mensagem informativa: "Alterações aqui podem regenerar as parcelas. Para ajustes finos, use o card Parcelas abaixo."
+**1. Padronizar o cálculo de faturamento (uma única fórmula em todos os hooks)**
 
-**Card "Informações de Pagamento" (atual)**:
-- Removido — seus dados migram para o novo card de Forma de Pagamento.
-- O que **não** é forma de pagamento (Tipo de Venda — Quente/Gelo, Data da Venda, Comprovante) sai dali e vai para o card "Informações da Venda" (ou continua num card próprio "Outras Informações", para não inflar o card principal).
+Definir e aplicar a fórmula canônica:
 
-**Card "Parcelas / Contas a Receber" (atual)**:
-- Mantido como está, incluindo os seletores de método por grupo e por linha já implementados. Continua sendo o lugar para edição fina parcela a parcela.
+```text
+faturamento_liquido = valor_venda + valor_credito - valor_frete
+```
+
+Aplicar em: `useFaturamentoMensal`, `useVendasMesAtual`, `useVendasSemanaAtual`, `useVendasAgregadas`, `useVendasDoDia` (ranking), `useRankingVendedoresDia`, `useFaturamentoPorProduto`, `useAdministrativoDashboard`. Hoje só `useFaturamentoMensal` inclui `valor_credito`.
+
+**2. Excluir vendas-teste do faturamento**
+
+Adicionar filtro nos hooks acima para ignorar vendas com `valor_venda < 500` (limite configurável; janeiro tem 5–6 dessas, todas claramente rascunhos). Alternativa mais segura: filtrar por uma flag explícita (`status` ou um novo campo `is_teste`), mas isso exige migração — começar pelo limite por valor.
+
+**3. Auditar e limpar as 6 vendas-teste de janeiro**
+
+Apresentar a lista para o usuário decidir caso a caso: deletar, marcar como cancelada, ou manter. Sem mudanças automáticas no banco até decisão.
+
+**4. Conferir o título/rótulo dos cards**
+
+Garantir que cards rotulados como "Faturamento" usem a fórmula canônica e cards rotulados como "Vendas Brutas" (se houver) deixem claro que incluem frete. Hoje os rótulos dizem "faturamento" mas a fórmula varia.
 
 ### Detalhes técnicos
 
-- Arquivo principal alterado: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`.
-- Importar `PagamentoSection`, `PagamentoData`, `createEmptyPagamentoData` de `@/components/vendas/PagamentoSection`.
-- Novo estado local `pagamentoData: PagamentoData`, inicializado em um `useEffect` quando `venda` carrega:
-  - Se `venda.valor_entrada > 0` e `venda.valor_a_receber > 0` → `usar_dois_metodos = true`, método 1 = entrada (valor `valor_entrada`, tipo derivado de `metodo_pagamento` da venda ou `a_vista`), método 2 = saldo (`valor_a_receber`, `numero_parcelas`, `intervalo_boletos`, tipo `metodo_pagamento`).
-  - Caso contrário, método único com `tipo = metodo_pagamento`, `valor = valor_venda + valor_credito`, `parcelas = numero_parcelas`, `intervalo = intervalo_boletos`, `empresa_receptora_id`.
-  - `pagamento_na_entrega = venda.pagamento_na_entrega`.
-- Novo handler `handleSalvarFormaPagamento`:
-  - Faz `update vendas set metodo_pagamento, numero_parcelas, intervalo_boletos, valor_entrada, valor_a_receber, pagamento_na_entrega, empresa_receptora_id where id = ?` consolidando a partir de `pagamentoData` (mesma lógica que `VendaNovaMinimalista` usa ao montar `vendaData`).
-  - Após sucesso, abre `AlertDialog` "Regenerar parcelas?" → confirma chama `handleRegenerarParcelas()`, cancela só atualiza `setVenda`.
-- Remover, do bloco "Informações de Pagamento" atual, todos os campos que passam para `PagamentoSection` (Método, Nº Parcelas, Intervalo, Pgto na Entrega, Valor Entrada, Valor a Receber). Manter Tipo de Venda, Data da Venda e Comprovante movidos para outro card existente (ou renomear o card atual para "Outras Informações").
-- O handler `handleUpdateMetodoVenda` criado anteriormente fica obsoleto e pode ser removido (a edição passa por `handleSalvarFormaPagamento`).
-- Sem mudanças de schema; todos os campos já existem em `vendas` e `contas_receber`.
+- Criar utilitário `src/utils/faturamentoCalc.ts` exportando `calcularFaturamentoLiquido(venda)` e `VENDA_TESTE_LIMITE = 500`, e uma função `isVendaValida(venda)`.
+- Substituir as expressões inline `valor_venda - valor_frete` em cada hook listado pela função utilitária.
+- A mudança não toca em schema; apenas lógica de leitura.
+- Recalcular: após o deploy, o card de janeiro deve cair de R$ 395.434 para algo próximo de R$ 395.434 + créditos − vendas-teste (impacto líquido pequeno, mas todos os cards passarão a bater entre si).
 
 ### Fora do escopo
 
-- Não alterar o card "Parcelas / Contas a Receber" nem os seletores por linha/grupo já existentes.
-- Não criar novas tabelas ou colunas.
+- Não migrar vendas antigas de janeiro para o novo formato de instalação como item separado (não há ganho — o valor total já está correto).
+- Não alterar `vendas.valor_venda` no banco.
+- Não criar nova coluna `is_teste` nesta etapa.
 
