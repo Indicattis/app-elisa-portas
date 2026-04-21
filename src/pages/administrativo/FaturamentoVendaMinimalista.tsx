@@ -42,6 +42,8 @@ import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
 import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
+import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from "@/components/vendas/PagamentoSection";
+import { MetodoPagamento, createEmptyMetodo } from "@/components/vendas/MetodoPagamentoCard";
 
 const safeParseDate = (dateStr: string | null | undefined): Date | null => {
   if (!dateStr) return null;
@@ -103,6 +105,9 @@ export default function FaturamentoVendaMinimalista() {
   const [checkingPedido, setCheckingPedido] = useState(false);
   const [hasPedido, setHasPedido] = useState<boolean | null>(null);
   const [contasReceber, setContasReceber] = useState<any[]>([]);
+  const [pagamentoData, setPagamentoData] = useState<PagamentoData>(createEmptyPagamentoData());
+  const [showRegenerarAposSalvarDialog, setShowRegenerarAposSalvarDialog] = useState(false);
+  const [salvandoFormaPagamento, setSalvandoFormaPagamento] = useState(false);
   const { createPedidoFromVenda, checkExistingPedido } = usePedidoCreation();
   const { removerFaturamento, isRemovendo } = useFaturamento();
   const { configuracoes: configVendas } = useConfiguracoesVendas();
@@ -324,6 +329,104 @@ export default function FaturamentoVendaMinimalista() {
     }
     setVenda(prev => prev ? { ...prev, metodo_pagamento: novoMetodo } : prev);
     toast({ title: 'Método de pagamento da venda atualizado' });
+  };
+
+  // Sincroniza o estado da seção de Forma de Pagamento com os dados atuais da venda
+  useEffect(() => {
+    if (!venda) return;
+
+    const tipoVenda = (venda.metodo_pagamento || '') as MetodoPagamento['tipo'];
+    const valorTotal = (venda.valor_venda || 0) + (venda.valor_credito || 0);
+    const dataBase = safeParseDate(venda.data_venda) || new Date();
+    const empresaId = venda.empresa_receptora_id || '';
+    const numParcelas = venda.numero_parcelas || venda.quantidade_parcelas || 1;
+    const intervalo = venda.intervalo_boletos || 30;
+
+    const usarDois = !!(venda.valor_entrada && venda.valor_entrada > 0 && venda.valor_a_receber && venda.valor_a_receber > 0);
+
+    const metodo1: MetodoPagamento = {
+      ...createEmptyMetodo(),
+      tipo: usarDois ? 'a_vista' : tipoVenda,
+      valor: usarDois ? (venda.valor_entrada || 0) : valorTotal,
+      data_pagamento: dataBase,
+      empresa_receptora_id: empresaId,
+      parcelas_cartao: tipoVenda === 'cartao_credito' ? numParcelas : 1,
+      parcelas_boleto: tipoVenda === 'boleto' ? numParcelas : 1,
+      intervalo_boletos: intervalo,
+      ja_pago: false,
+    };
+
+    const metodo2: MetodoPagamento = usarDois
+      ? {
+          ...createEmptyMetodo(),
+          tipo: tipoVenda || 'boleto',
+          valor: venda.valor_a_receber || 0,
+          data_pagamento: dataBase,
+          empresa_receptora_id: empresaId,
+          parcelas_cartao: tipoVenda === 'cartao_credito' ? numParcelas : 1,
+          parcelas_boleto: tipoVenda === 'boleto' ? numParcelas : 1,
+          intervalo_boletos: intervalo,
+        }
+      : createEmptyMetodo();
+
+    setPagamentoData({
+      usar_dois_metodos: usarDois,
+      metodos: [metodo1, metodo2],
+      pagamento_na_entrega: !!venda.pagamento_na_entrega,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [venda?.id]);
+
+  const consolidarVendaFromPagamento = (data: PagamentoData) => {
+    const m1 = data.metodos[0];
+    const m2 = data.metodos[1];
+    const usarDois = data.usar_dois_metodos;
+
+    // Tipo "principal" da venda: se usar 2 métodos, prevalece o do saldo (geralmente parcelado)
+    const tipoPrincipal = (usarDois ? (m2.tipo || m1.tipo) : m1.tipo) || '';
+
+    const numeroParcelas =
+      tipoPrincipal === 'cartao_credito'
+        ? (usarDois ? m2.parcelas_cartao : m1.parcelas_cartao)
+        : tipoPrincipal === 'boleto'
+        ? (usarDois ? m2.parcelas_boleto : m1.parcelas_boleto)
+        : 1;
+
+    const intervaloBoletos = tipoPrincipal === 'boleto'
+      ? (usarDois ? m2.intervalo_boletos : m1.intervalo_boletos)
+      : null;
+
+    const empresaReceptora = (usarDois ? (m2.empresa_receptora_id || m1.empresa_receptora_id) : m1.empresa_receptora_id) || null;
+
+    return {
+      metodo_pagamento: tipoPrincipal,
+      numero_parcelas: numeroParcelas,
+      quantidade_parcelas: numeroParcelas,
+      intervalo_boletos: intervaloBoletos,
+      empresa_receptora_id: empresaReceptora,
+      valor_entrada: usarDois ? m1.valor : 0,
+      valor_a_receber: usarDois ? m2.valor : 0,
+      pagamento_na_entrega: data.pagamento_na_entrega,
+    };
+  };
+
+  const handleSalvarFormaPagamento = async () => {
+    if (!id || !venda) return;
+    setSalvandoFormaPagamento(true);
+    try {
+      const updates = consolidarVendaFromPagamento(pagamentoData);
+      const { error } = await supabase.from('vendas').update(updates).eq('id', id);
+      if (error) {
+        toast({ variant: 'destructive', title: 'Erro ao salvar forma de pagamento', description: error.message });
+        return;
+      }
+      setVenda(prev => prev ? { ...prev, ...updates } as Venda : prev);
+      toast({ title: 'Forma de pagamento atualizada' });
+      // Pergunta se deseja regenerar parcelas
+      setShowRegenerarAposSalvarDialog(true);
+    } finally {
+      setSalvandoFormaPagamento(false);
+    }
   };
 
   // Auto-faturar produtos pintura_epoxi com 30% de lucro
@@ -995,47 +1098,40 @@ export default function FaturamentoVendaMinimalista() {
         </Card>
 
 
-        {/* Informações de Pagamento */}
+        {/* Forma de Pagamento (sessão dedicada — mesmo padrão de /vendas/minhas-vendas/nova) */}
+        {venda && (
+          <div className="space-y-3">
+            <PagamentoSection
+              paymentData={pagamentoData}
+              onChange={setPagamentoData}
+              valorTotal={(venda.valor_venda || 0) + (venda.valor_credito || 0)}
+            />
+            <div className="flex items-center justify-end gap-3">
+              <p className="text-xs text-white/50 mr-auto">
+                Alterações aqui podem regenerar as parcelas. Para ajustes finos, use o card Parcelas abaixo.
+              </p>
+              <Button
+                onClick={handleSalvarFormaPagamento}
+                disabled={salvandoFormaPagamento}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                {salvandoFormaPagamento ? 'Salvando...' : 'Salvar Forma de Pagamento'}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Outras Informações da Venda */}
         {venda && (
           <Card className="bg-white/5 border-white/10">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base text-white">
                 <Receipt className="h-4 w-4 text-blue-400" />
-                Informações de Pagamento
+                Outras Informações
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="space-y-1">
-                  <p className="text-xs text-white/50">Método de Pagamento</p>
-                  <Select
-                    value={venda.metodo_pagamento || ''}
-                    onValueChange={handleUpdateMetodoVenda}
-                  >
-                    <SelectTrigger className="h-8 bg-white/5 border-white/10 text-white text-sm">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="boleto">Boleto</SelectItem>
-                      <SelectItem value="a_vista">À Vista</SelectItem>
-                      <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                      <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                      <SelectItem value="pix">Pix</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {(venda.metodo_pagamento === 'boleto' || venda.metodo_pagamento === 'cartao_credito') && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-white/50">Número de Parcelas</p>
-                    <p className="text-sm font-medium text-white">{venda.numero_parcelas || venda.quantidade_parcelas || '-'}</p>
-                  </div>
-                )}
-                {venda.metodo_pagamento === 'boleto' && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-white/50">Intervalo entre Boletos</p>
-                    <p className="text-sm font-medium text-white">{venda.intervalo_boletos ? `${venda.intervalo_boletos} dias` : '-'}</p>
-                  </div>
-                )}
                 {venda.data_venda && (
                   <div className="space-y-1">
                     <p className="text-xs text-white/50">Data da Venda</p>
@@ -1054,28 +1150,6 @@ export default function FaturamentoVendaMinimalista() {
                     )}
                   </p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-white/50">Pgto na Entrega</p>
-                  <p className="text-sm font-medium">
-                    {venda.pagamento_na_entrega ? (
-                      <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Sim</Badge>
-                    ) : (
-                      <span className="text-white/40">Não</span>
-                    )}
-                  </p>
-                </div>
-                {(venda.valor_entrada != null && venda.valor_entrada > 0) && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-white/50">Valor de Entrada</p>
-                    <p className="text-sm font-medium text-emerald-400">{formatCurrency(venda.valor_entrada)}</p>
-                  </div>
-                )}
-                {(venda.valor_a_receber != null && venda.valor_a_receber > 0) && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-white/50">Valor a Receber</p>
-                    <p className="text-sm font-medium text-blue-400">{formatCurrency(venda.valor_a_receber || 0)}</p>
-                  </div>
-                )}
               </div>
 
               {/* Comprovante */}
@@ -1378,6 +1452,30 @@ export default function FaturamentoVendaMinimalista() {
             <AlertDialogFooter>
               <AlertDialogCancel className="border-white/20 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
               <AlertDialogAction className="bg-orange-600 hover:bg-orange-700" onClick={handleRegenerarParcelas}>Regenerar</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Pergunta sobre regenerar após salvar Forma de Pagamento */}
+        <AlertDialog open={showRegenerarAposSalvarDialog} onOpenChange={setShowRegenerarAposSalvarDialog}>
+          <AlertDialogContent className="bg-zinc-900 border-white/10">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white">Regenerar parcelas com a nova forma de pagamento?</AlertDialogTitle>
+              <AlertDialogDescription className="text-white/60">
+                A forma de pagamento da venda foi atualizada. Deseja regenerar as parcelas (contas a receber) com base na nova configuração? As parcelas existentes serão removidas e novas serão criadas. Caso prefira manter as parcelas atuais, escolha "Manter parcelas".
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="border-white/20 text-white hover:bg-white/10">Manter parcelas</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-orange-600 hover:bg-orange-700"
+                onClick={async () => {
+                  setShowRegenerarAposSalvarDialog(false);
+                  await handleRegenerarParcelas();
+                }}
+              >
+                Regenerar parcelas
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
