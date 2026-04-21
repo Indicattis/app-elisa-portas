@@ -615,7 +615,7 @@ export default function FaturamentoVendaMinimalista() {
     // Instalação legada (não migrada como produto separado)
     const temProdutoInstalacaoLocal = produtos.some(p => p.tipo_produto === 'instalacao');
     const valorInstalacaoLocal = temProdutoInstalacaoLocal ? 0 : (venda.valor_instalacao || 0);
-    const lucroInstalacao = valorInstalacaoLocal > 0 ? valorInstalacaoLocal * 0.30 : 0;
+    const lucroInstalacao = valorInstalacaoLocal > 0 ? valorInstalacaoLocal * 0.40 : 0;
     const custoInstalacao = valorInstalacaoLocal - lucroInstalacao;
     
     const produtosIds = produtos.map(p => p.id);
