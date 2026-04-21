@@ -22,17 +22,20 @@ export interface Gasto {
   banco_nome?: string;
 }
 
-export const useGastos = (mesFiltro?: string) => {
+export type GastosOrdenarPor = 'cadastro' | 'pagamento';
+
+export const useGastos = (mesFiltro?: string, ordenarPor: GastosOrdenarPor = 'cadastro') => {
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchGastos = async () => {
     setLoading(true);
 
+    const orderColumn = ordenarPor === 'pagamento' ? 'data' : 'created_at';
     let query = supabase
       .from("gastos" as any)
       .select("*")
-      .order("created_at", { ascending: false });
+      .order(orderColumn, { ascending: false });
 
     if (mesFiltro) {
       const start = `${mesFiltro}-01`;
@@ -158,7 +161,7 @@ export const useGastos = (mesFiltro?: string) => {
 
   useEffect(() => {
     fetchGastos();
-  }, [mesFiltro]);
+  }, [mesFiltro, ordenarPor]);
 
   return { gastos, loading, refetch: fetchGastos, saveGasto, updateGasto, deleteGasto };
 };

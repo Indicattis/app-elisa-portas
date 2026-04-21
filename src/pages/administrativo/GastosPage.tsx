@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, CalendarIcon, FileText } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, CalendarIcon, FileText, ArrowUpDown } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 
-import { useGastos, Gasto } from "@/hooks/useGastos";
+import { useGastos, Gasto, GastosOrdenarPor } from "@/hooks/useGastos";
 import { useBancos } from "@/hooks/useBancos";
 import { useTiposCustos } from "@/hooks/useTiposCustos";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
@@ -43,7 +43,8 @@ export default function GastosPage() {
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
   );
 
-  const { gastos, loading, saveGasto, updateGasto, deleteGasto } = useGastos(mesFiltro);
+  const [ordenarPor, setOrdenarPor] = useState<GastosOrdenarPor>('cadastro');
+  const { gastos, loading, saveGasto, updateGasto, deleteGasto } = useGastos(mesFiltro, ordenarPor);
   const { tiposCustos } = useTiposCustos();
   const { bancos } = useBancos();
   const [colaboradores, setColaboradores] = useState<ColaboradorOption[]>([]);
@@ -401,10 +402,22 @@ export default function GastosPage() {
                 Limpar filtros
               </Button>
             ) : null}
-            <div className="ml-auto flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
+            <div className="ml-auto flex items-center gap-3">
+              <Select value={ordenarPor} onValueChange={(v) => setOrdenarPor(v as GastosOrdenarPor)}>
+                <SelectTrigger className="w-[210px] bg-white/5 border-white/20 text-white">
+                  <ArrowUpDown className="w-3.5 h-3.5 mr-1.5 text-blue-400" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1a1a1a] border-white/20">
+                  <SelectItem value="cadastro" className="text-white hover:bg-white/10">Data de Cadastro</SelectItem>
+                  <SelectItem value="pagamento" className="text-white hover:bg-white/10">Data de Pagamento</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
               <span className="text-xs text-white/50">Total:</span>
               <span className="text-sm font-bold text-white">{formatCurrency(totalGastos)}</span>
               <span className="text-xs text-white/40">({gastosFiltrados.length} {gastosFiltrados.length === 1 ? 'registro' : 'registros'})</span>
+              </div>
             </div>
           </div>
         </div>
