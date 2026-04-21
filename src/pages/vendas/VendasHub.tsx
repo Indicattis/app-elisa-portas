@@ -8,7 +8,6 @@ import {
   Handshake,
   ArrowLeft,
   Search,
-  UserPlus,
   ClipboardCheck
 } from 'lucide-react';
 
@@ -23,7 +22,6 @@ const menuItems = [
   { label: 'Meus Orçamentos', icon: FileText, path: '/vendas/meus-orcamentos' },
   { label: 'Meus Parceiros', icon: Handshake, path: '/vendas/meus-parceiros' },
   { label: 'Acompanhar Pedido', icon: Search, path: '/vendas/acompanhar-pedido' },
-  { label: 'Leads', icon: UserPlus, path: '/vendas/leads' },
   { label: 'Visitas Técnicas', icon: ClipboardCheck, path: '/vendas/visitas-tecnicas' },
 ];
 
