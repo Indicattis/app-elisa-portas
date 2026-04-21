@@ -383,6 +383,48 @@ export default function PedidoViewDirecao() {
     return grupos;
   }, [pedido, portasInfo]);
 
+  // Agrupar acessórios e adicionais idênticos somando quantidades
+  const produtosVendaAgrupados = useMemo(() => {
+    if (!pedido?.produtos_venda) return [];
+    const tiposAgrupaveis = new Set(['acessorio', 'acessorios', 'adicional', 'adicionais']);
+    const agrupados: any[] = [];
+    const grupoMap = new Map<string, any>();
+
+    pedido.produtos_venda.forEach((produto: any) => {
+      const tipo = produto.tipo_produto;
+      if (!tiposAgrupaveis.has(tipo)) {
+        agrupados.push(produto);
+        return;
+      }
+      // Não agrupar itens de correção (mantém visibilidade individual)
+      if (produto.pedido_correcao_id) {
+        agrupados.push(produto);
+        return;
+      }
+      const chave = [
+        tipo,
+        produto.acessorio_id || '',
+        produto.adicional_id || '',
+        produto.descricao || '',
+        produto.tamanho || '',
+        produto.cor?.nome || '',
+        produto.tipo_fabricacao || '',
+      ].join('|');
+
+      const existente = grupoMap.get(chave);
+      if (existente) {
+        existente.quantidade = (existente.quantidade || 0) + (produto.quantidade || 0);
+        existente._agrupados = (existente._agrupados || 1) + 1;
+      } else {
+        const clone = { ...produto, _agrupados: 1 };
+        grupoMap.set(chave, clone);
+        agrupados.push(clone);
+      }
+    });
+
+    return agrupados;
+  }, [pedido?.produtos_venda]);
+
   const getEtapaLabel = (etapa: string) => {
     const labels: Record<string, string> = {
       aberto: 'Aberto',
@@ -721,7 +763,7 @@ export default function PedidoViewDirecao() {
                       </tr>
                     </thead>
                     <tbody>
-                      {pedido.produtos_venda.map((produto: any) => {
+                       {produtosVendaAgrupados.map((produto: any) => {
                         const isCorrecaoItem = !!produto.pedido_correcao_id;
                         return (
                           <tr key={produto.id} className={cn(
@@ -761,7 +803,7 @@ export default function PedidoViewDirecao() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {pedido.produtos_venda.map((produto: any) => {
+                  {produtosVendaAgrupados.map((produto: any) => {
                     const isCorrecaoItem = !!produto.pedido_correcao_id;
                     return (
                       <div key={produto.id} className={cn(
