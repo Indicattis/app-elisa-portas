@@ -275,7 +275,8 @@ export default function DREMesDirecao() {
 
         const totalCredito = vendas?.reduce((sum, v) => sum + ((v as any).valor_credito || 0), 0) || 0;
 
-        luc.instalacoes = fat.instalacoes * 0.30;
+        // Margem fixa de instalação: 40% (alterada de 30% em 2026)
+        luc.instalacoes = fat.instalacoes * 0.40;
 
         fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.acessorios + fat.adicionais + totalCredito;
         luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.acessorios + luc.adicionais;
