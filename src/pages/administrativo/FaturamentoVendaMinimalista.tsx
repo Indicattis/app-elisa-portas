@@ -542,7 +542,7 @@ export default function FaturamentoVendaMinimalista() {
     instalacoesParaAutoFaturar.forEach(async (produto) => {
       autoFaturadosRef.current.add(produto.id);
       
-      const lucroInstalacao = produto.valor_total * 0.30;
+      const lucroInstalacao = produto.valor_total * 0.40;
       const custoCalculado = produto.valor_total - lucroInstalacao;
       
       await updateLucroItem({ 
