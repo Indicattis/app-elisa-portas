@@ -1456,6 +1456,30 @@ export default function FaturamentoVendaMinimalista() {
           </AlertDialogContent>
         </AlertDialog>
 
+        {/* Pergunta sobre regenerar após salvar Forma de Pagamento */}
+        <AlertDialog open={showRegenerarAposSalvarDialog} onOpenChange={setShowRegenerarAposSalvarDialog}>
+          <AlertDialogContent className="bg-zinc-900 border-white/10">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white">Regenerar parcelas com a nova forma de pagamento?</AlertDialogTitle>
+              <AlertDialogDescription className="text-white/60">
+                A forma de pagamento da venda foi atualizada. Deseja regenerar as parcelas (contas a receber) com base na nova configuração? As parcelas existentes serão removidas e novas serão criadas. Caso prefira manter as parcelas atuais, escolha "Manter parcelas".
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="border-white/20 text-white hover:bg-white/10">Manter parcelas</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-orange-600 hover:bg-orange-700"
+                onClick={async () => {
+                  setShowRegenerarAposSalvarDialog(false);
+                  await handleRegenerarParcelas();
+                }}
+              >
+                Regenerar parcelas
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <div className="flex justify-end gap-4">
           <Button
             variant="outline"
