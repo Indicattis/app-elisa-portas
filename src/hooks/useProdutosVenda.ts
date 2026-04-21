@@ -91,19 +91,23 @@ export const useProdutosVenda = (vendaId?: string) => {
     mutationFn: async ({ 
       produtoId, 
       lucroItem,
-      custoProducao
+      custoProducao,
+      faturamento
     }: { 
       produtoId: string; 
       lucroItem: number;
       custoProducao: number;
+      faturamento?: boolean;
     }) => {
       // Simplesmente atualizar os valores sem recalcular
+      const updatePayload: any = { 
+        lucro_item: lucroItem,
+        custo_producao: custoProducao
+      };
+      if (faturamento !== undefined) updatePayload.faturamento = faturamento;
       const { data, error } = await supabase
         .from('produtos_vendas')
-        .update({ 
-          lucro_item: lucroItem,
-          custo_producao: custoProducao
-        })
+        .update(updatePayload)
         .eq('id', produtoId)
         .select()
         .single();
