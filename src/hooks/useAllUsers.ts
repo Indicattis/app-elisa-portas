@@ -25,7 +25,7 @@ export function useAllUsers() {
         .from("admin_users")
         .select("*")
         .eq("ativo", true)
-        .eq("tipo_usuario", "colaborador")
+        .in("tipo_usuario", ["colaborador", "metamorfo"])
         .eq("visivel_organograma", true)
         .order("nome");
 
