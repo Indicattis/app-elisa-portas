@@ -391,12 +391,16 @@ export function useVendas() {
           ? pagamentoData.metodos.filter(m => m.tipo)
           : [pagamentoData.metodos[0]].filter(m => m.tipo);
         
+        // Offset acumulado de numero_parcela para que múltiplos métodos não gerem
+        // parcelas com numero_parcela repetido (ex.: entrada à vista = 1, restante = 2,3,...).
+        let offsetParcela = 0;
         for (const metodo of metodosParaProcessar) {
           if (!metodo.tipo || metodo.valor <= 0) continue;
           
           const dataBase = metodo.data_pagamento || new Date(vendaData.data_venda || new Date().toISOString());
           
-          await gerarContasReceberPorMetodo(venda.id, metodo, dataBase);
+          const qtdGerada = await gerarContasReceberPorMetodo(venda.id, metodo, dataBase, offsetParcela);
+          offsetParcela += qtdGerada;
         }
         
         // Upload de comprovantes (para à vista ou qualquer método marcado como já pago)
@@ -718,8 +722,9 @@ export function useVendas() {
 async function gerarContasReceberPorMetodo(
   vendaId: string, 
   metodo: MetodoPagamento, 
-  dataBase: Date
-) {
+  dataBase: Date,
+  offset: number = 0
+): Promise<number> {
   const parcelas: any[] = [];
   
   switch (metodo.tipo) {
@@ -730,7 +735,7 @@ async function gerarContasReceberPorMetodo(
         const dataVenc = dataVencimento.toISOString().split('T')[0];
         parcelas.push({
           venda_id: vendaId,
-          numero_parcela: i + 1,
+          numero_parcela: offset + i + 1,
           valor_parcela: valorParcela,
           data_vencimento: dataVenc,
           metodo_pagamento: 'boleto',
@@ -749,7 +754,7 @@ async function gerarContasReceberPorMetodo(
         const dataVenc = dataVencimento.toISOString().split('T')[0];
         parcelas.push({
           venda_id: vendaId,
-          numero_parcela: i + 1,
+          numero_parcela: offset + i + 1,
           valor_parcela: valorParcela,
           data_vencimento: dataVenc,
           metodo_pagamento: 'cartao_credito',
@@ -765,7 +770,7 @@ async function gerarContasReceberPorMetodo(
       const dataVenc = dataBase.toISOString().split('T')[0];
       parcelas.push({
         venda_id: vendaId,
-        numero_parcela: 1,
+        numero_parcela: offset + 1,
         valor_parcela: metodo.valor,
         data_vencimento: dataVenc,
         metodo_pagamento: 'dinheiro',
@@ -780,7 +785,7 @@ async function gerarContasReceberPorMetodo(
       // À vista gera 1 conta já paga
       parcelas.push({
         venda_id: vendaId,
-        numero_parcela: 1,
+        numero_parcela: offset + 1,
         valor_parcela: metodo.valor,
         data_vencimento: dataBase.toISOString().split('T')[0],
         data_pagamento: dataBase.toISOString().split('T')[0],
@@ -802,4 +807,6 @@ async function gerarContasReceberPorMetodo(
       console.error('Erro ao criar contas a receber:', error);
     }
   }
+  
+  return parcelas.length;
 }
