@@ -692,7 +692,7 @@ export default function FaturamentoVendaMinimalista() {
   // Para vendas legadas não migradas, usa valor_instalacao da venda
   const temProdutoInstalacao = produtos?.some(p => p.tipo_produto === 'instalacao') || false;
   const valorInstalacao = temProdutoInstalacao ? 0 : (venda?.valor_instalacao || 0);
-  const lucroInstalacaoCalculado = valorInstalacao > 0 ? valorInstalacao * 0.30 : 0;
+  const lucroInstalacaoCalculado = valorInstalacao > 0 ? valorInstalacao * 0.40 : 0;
   const lucroInstalacao = temProdutoInstalacao ? 0 : (venda?.instalacao_faturada 
     ? (venda.lucro_instalacao || 0) 
     : lucroInstalacaoCalculado);
