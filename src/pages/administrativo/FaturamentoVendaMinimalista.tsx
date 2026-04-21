@@ -723,12 +723,10 @@ export default function FaturamentoVendaMinimalista() {
     if (p.desconto_valor && p.desconto_valor < 0) return acc + Math.abs(p.desconto_valor);
     return acc;
   }, 0) || 0;
-  // Valor de tabela bruto — usado para apurar excedente >13% que abate o lucro
   const _valorTabelaParaExcedente = produtos?.reduce((acc: number, p: any) => {
     const qty = p.quantidade || 1;
     return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
   }, 0) || 0;
-  const LIMITE_DESCONTO_LUCRO = 13;
   const pctDescontoTotal = _valorTabelaParaExcedente > 0
     ? (totalDescontosCalc / _valorTabelaParaExcedente) * 100
     : 0;
