@@ -1186,9 +1186,21 @@ export default function FaturamentoVendaMinimalista() {
                     <div key={metodo} className="space-y-2">
                       <div className="flex items-center justify-between px-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-white">
-                            {metodoLabels[metodo] || metodo.replace(/_/g, ' ')}
-                          </span>
+                          <Select
+                            value={metodo}
+                            onValueChange={(v) => handleUpdateMetodoGrupo(parcelas, v)}
+                          >
+                            <SelectTrigger className="h-7 w-[170px] bg-white/5 border-white/10 text-white text-sm font-semibold">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="boleto">Boleto</SelectItem>
+                              <SelectItem value="a_vista">À Vista</SelectItem>
+                              <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                              <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                              <SelectItem value="pix">Pix</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60">
                             {pagasCount}/{parcelas.length} pagas
                           </span>
