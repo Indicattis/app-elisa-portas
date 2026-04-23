@@ -395,11 +395,21 @@ export default function GastosPage() {
                 ))}
               </SelectContent>
             </Select>
-            {(filtroTipo && filtroTipo !== "all") || (filtroBanco && filtroBanco !== "all") || (filtroResponsavel && filtroResponsavel !== "all") ? (
+            <Select value={filtroDre} onValueChange={(v) => setFiltroDre(v as "all" | "sim" | "nao")}>
+              <SelectTrigger className="w-[200px] bg-white/5 border-white/20 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a1a1a] border-white/20">
+                <SelectItem value="all" className="text-white hover:bg-white/10">DRE: Todos</SelectItem>
+                <SelectItem value="sim" className="text-white hover:bg-white/10">Aparece no DRE</SelectItem>
+                <SelectItem value="nao" className="text-white hover:bg-white/10">Não aparece no DRE</SelectItem>
+              </SelectContent>
+            </Select>
+            {(filtroTipo && filtroTipo !== "all") || (filtroBanco && filtroBanco !== "all") || (filtroResponsavel && filtroResponsavel !== "all") || filtroDre !== "all" ? (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => { setFiltroTipo(""); setFiltroBanco(""); setFiltroResponsavel(""); }}
+                onClick={() => { setFiltroTipo(""); setFiltroBanco(""); setFiltroResponsavel(""); setFiltroDre("all"); }}
                 className="text-white/60 hover:text-white hover:bg-white/10 text-xs"
               >
                 Limpar filtros
