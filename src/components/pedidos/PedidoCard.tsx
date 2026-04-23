@@ -1526,9 +1526,15 @@ export function PedidoCard({
 
               {/* Col 6: Tags/Badges (Instalação/Entrega) */}
               <div className="flex items-center justify-center gap-1">
-                {isInstalacao && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
+                {isInstalacao && (apenasManutencao ? (
+                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/50">
+                    <Wrench className="h-2.5 w-2.5" />
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
                     <Hammer className="h-2.5 w-2.5" />
-                  </Badge>}
+                  </Badge>
+                ))}
                 
                 {isEntrega && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
                     <Truck className="h-2.5 w-2.5" />
