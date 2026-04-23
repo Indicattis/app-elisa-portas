@@ -122,7 +122,7 @@ export function useProgressoMetasVendas() {
               foto_perfil_url: u?.foto_perfil_url ?? null,
               total_vendido: total,
               tier_atingido: tier,
-              bonificacao_calculada: calcularBonificacao(porVendedorMes.get(meta.vendedor_id) || 0, tierBonus, !!tier),
+              bonificacao_calculada: calcularBonificacao(total, tierBonus, !!tier),
               total_vendido_mes: porVendedorMes.get(meta.vendedor_id) || 0,
             }];
           } else {
@@ -139,7 +139,7 @@ export function useProgressoMetasVendas() {
                   foto_perfil_url: u.foto_perfil_url ?? null,
                   total_vendido: total,
                   tier_atingido: tier,
-                  bonificacao_calculada: calcularBonificacao(totalMes, tier || primeiroTier, !!tier),
+                  bonificacao_calculada: calcularBonificacao(total, tier || primeiroTier, !!tier),
                   total_vendido_mes: totalMes,
                 };
               })
@@ -154,7 +154,7 @@ export function useProgressoMetasVendas() {
             foto_perfil_url: null,
             total_vendido: totalGlobal,
             tier_atingido: tier,
-            bonificacao_calculada: calcularBonificacao(totalGlobalMes, tier || primeiroTier, !!tier),
+            bonificacao_calculada: calcularBonificacao(totalGlobal, tier || primeiroTier, !!tier),
             total_vendido_mes: totalGlobalMes,
           }];
         }
