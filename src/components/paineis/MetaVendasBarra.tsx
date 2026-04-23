@@ -85,20 +85,33 @@ function BarraVendedor({
           </div>
         </div>
 
-        {/* Barra do segmento atual (entre tier anterior e próximo) */}
-        <div className="relative h-7 rounded-md bg-white/5 overflow-hidden border border-white/10">
-          <div
-            className="absolute inset-y-0 left-0 transition-[width] duration-700 ease-out"
-            style={{
-              width: `${pct}%`,
-              background: `linear-gradient(90deg, ${corPreenchimento}55, ${corPreenchimento})`,
-            }}
-          />
-          {/* Rótulos de base e alvo do segmento */}
-          <div className="absolute inset-0 flex items-center justify-between px-2 text-[10px] text-white/60 tabular-nums pointer-events-none">
-            <span>{formatCurrency(baseAnterior)}</span>
-            <span>{formatCurrency(alvoAtual)}</span>
-          </div>
+        {/* Barra segmentada: cada tier ocupa uma fatia proporcional ao seu intervalo */}
+        <div className="relative h-7 rounded-md bg-white/5 overflow-hidden border border-white/10 flex">
+          {tiersSorted.map((t, i) => {
+            const base = i === 0 ? 0 : Number(tiersSorted[i - 1].valor_alvo);
+            const alvo = Number(t.valor_alvo);
+            const range = Math.max(alvo - base, 1);
+            const widthPct = (range / maxAlvo) * 100;
+            const segPct = Math.min(Math.max(((total - base) / range) * 100, 0), 100);
+            return (
+              <div
+                key={t.id || t.nome}
+                className="relative h-full border-r border-white/20 last:border-r-0"
+                style={{ width: `${widthPct}%` }}
+              >
+                <div
+                  className="absolute inset-y-0 left-0 transition-[width] duration-700 ease-out"
+                  style={{
+                    width: `${segPct}%`,
+                    background: `linear-gradient(90deg, ${t.cor}55, ${t.cor})`,
+                  }}
+                />
+                <div className="absolute inset-0 flex items-center justify-end pr-1.5 text-[10px] text-white/60 tabular-nums pointer-events-none">
+                  {formatCurrency(alvo)}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
       </div>
