@@ -48,6 +48,7 @@ import { useNavigate } from "react-router-dom";
 import type { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { enviarParaAguardandoCliente } from "@/lib/aguardandoCliente";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -446,46 +447,9 @@ export default function GestaoFabricaDirecao() {
   };
 
   const handleEnviarAguardandoCliente = async (pedidoId: string) => {
-    const agora = new Date().toISOString();
     try {
-      // 1. Atualizar etapa_atual
-      const { error: errUpdate } = await supabase
-        .from('pedidos_producao')
-        .update({ etapa_atual: 'aguardando_cliente' })
-        .eq('id', pedidoId);
-      if (errUpdate) throw errUpdate;
-
-      // 2. Fechar etapa finalizado preservando data_entrada original
-      const { error: errCloseFinalizado } = await supabase
-        .from('pedidos_etapas')
-        .update({ data_saida: agora })
-        .eq('pedido_id', pedidoId)
-        .eq('etapa', 'finalizado');
-      if (errCloseFinalizado) throw errCloseFinalizado;
-
-      // 3. Criar/abrir etapa aguardando_cliente
-      const { error: errCreateAguardando } = await supabase
-        .from('pedidos_etapas')
-        .upsert({
-          pedido_id: pedidoId,
-          etapa: 'aguardando_cliente',
-          data_entrada: agora,
-          data_saida: null,
-          checkboxes: [],
-        }, { onConflict: 'pedido_id,etapa' });
-      if (errCreateAguardando) throw errCreateAguardando;
-
-      // 4. Registrar movimentação
       const { data: { user } } = await supabase.auth.getUser();
-      const { error: errMov } = await supabase.from('pedidos_movimentacoes').insert({
-        pedido_id: pedidoId,
-        etapa_origem: 'finalizado',
-        etapa_destino: 'aguardando_cliente',
-        teor: 'avanco',
-        user_id: user?.id || '',
-        descricao: 'Pedido enviado para Aguardando Cliente',
-      });
-      if (errMov) throw errMov;
+      await enviarParaAguardandoCliente(supabase, pedidoId, user?.id || '');
 
       toast({ title: 'Pedido enviado para Aguardando Cliente' });
       queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
