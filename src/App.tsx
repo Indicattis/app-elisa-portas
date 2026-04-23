@@ -234,6 +234,7 @@ import CalendarioExpedicaoDirecao from "./pages/direcao/CalendarioExpedicaoDirec
 import MetasHubDirecao from "./pages/direcao/MetasHubDirecao";
 import MetasFabricaDirecao from "./pages/direcao/MetasFabricaDirecao";
 import MetasInstalacoesDirecao from "./pages/direcao/MetasInstalacoesDirecao";
+import MetasVendasDirecao from "./pages/direcao/MetasVendasDirecao";
 import VendaEditarDirecao from "./pages/direcao/VendaEditarDirecao";
 import ClientesDirecao from "./pages/direcao/ClientesDirecao";
 import PedidoViewDirecao from "./pages/direcao/PedidoViewDirecao";
@@ -519,6 +520,7 @@ const App = () => (
                 <Route path="/direcao/metas/instalacoes" element={<ProtectedRoute routeKey="direcao_metas_instalacoes"><MetasInstalacoesDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/metas/instalacoes/:userId" element={<ProtectedRoute routeKey="direcao_metas_instalacoes"><MetasColaboradorIndividual /></ProtectedRoute>} />
                 <Route path="/direcao/metas/fabrica/:userId" element={<ProtectedRoute routeKey="direcao_hub"><MetasColaboradorIndividual /></ProtectedRoute>} />
+                <Route path="/direcao/metas/vendas" element={<ProtectedRoute routeKey="direcao_hub"><MetasVendasDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/pedidos/:id" element={<ProtectedRoute routeKey="direcao_hub"><PedidoViewDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados" element={<ProtectedRoute routeKey="direcao_autorizados"><AutorizadosPrecosDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados/estado/:estadoId" element={<ProtectedRoute routeKey="direcao_autorizados"><EstadoAutorizadosDirecao /></ProtectedRoute>} />
