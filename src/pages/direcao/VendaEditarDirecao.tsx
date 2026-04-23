@@ -255,7 +255,7 @@ export default function VendaEditarDirecao() {
     navigate(`/direcao/vendas/${id}`);
   };
 
-  const cardClass = "bg-primary/5 border-primary/10 backdrop-blur-xl";
+  const cardClass = "bg-white/5 border-blue-500/10 backdrop-blur-xl";
 
   if (!canEdit && !loadingPermission) {
     return (
