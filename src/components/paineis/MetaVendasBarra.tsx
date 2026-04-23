@@ -49,10 +49,12 @@ function BarraVendedor({
   const pct = Math.min(Math.max(((total - baseAnterior) / denom) * 100, 0), 100);
   const corPreenchimento = proximoTier?.cor || tierAtual?.cor || '#3B82F6';
 
+  const mesLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date());
+
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 flex gap-5 items-stretch">
+    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 flex flex-col lg:flex-row gap-5 items-stretch">
       {/* Foto grande */}
-      <Avatar className="h-28 w-28 rounded-2xl shrink-0 border border-white/10">
+      <Avatar className="h-32 w-32 rounded-2xl shrink-0 border border-white/10">
         <AvatarImage src={vendedor.foto_perfil_url || undefined} alt={vendedor.nome} className="object-cover" />
         <AvatarFallback
           className="rounded-2xl text-2xl font-semibold text-white"
@@ -65,18 +67,18 @@ function BarraVendedor({
       <div className="flex-1 min-w-0 space-y-3">
         <div className="flex items-baseline justify-between gap-3 flex-wrap">
           <div className="min-w-0">
-            <div className="text-xl font-semibold text-white truncate">{vendedor.nome}</div>
-            <div className="text-xs text-white/50 truncate">{metaNome} — {escopoLabel}</div>
+            <div className="text-2xl font-bold text-white truncate">{vendedor.nome}</div>
+            <div className="text-sm text-white/50 truncate">{metaNome} — {escopoLabel}</div>
           </div>
           <div className="flex items-baseline gap-4 flex-wrap">
-            <div className="text-sm tabular-nums">
-              <span className="font-semibold text-white">{formatCurrency(total)}</span>
-              <span className="text-white/40"> / {formatCurrency(maxAlvo)}</span>
+            <div className="tabular-nums">
+              <span className="text-2xl font-bold text-white">{formatCurrency(total)}</span>
+              <span className="text-base text-white/40"> / {formatCurrency(maxAlvo)}</span>
             </div>
             <div className="text-right">
-              <div className="text-[10px] uppercase tracking-wider text-white/40">Comissão atual</div>
+              <div className="text-xs uppercase tracking-wider text-white/40">Comissão atual</div>
               <div
-                className="text-base font-bold tabular-nums"
+                className="text-3xl font-extrabold tabular-nums"
                 style={{ color: tierAtual?.cor || 'rgba(255,255,255,0.5)' }}
               >
                 {formatCurrency(vendedor.bonificacao_calculada)}
@@ -86,7 +88,7 @@ function BarraVendedor({
         </div>
 
         {/* Barra segmentada: cada tier ocupa uma fatia proporcional ao seu intervalo */}
-        <div className="relative h-7 rounded-md bg-white/5 overflow-hidden border border-white/10 flex">
+        <div className="relative h-10 rounded-md bg-white/5 overflow-hidden border border-white/10 flex">
           {tiersSorted.map((t, i) => {
             const base = i === 0 ? 0 : Number(tiersSorted[i - 1].valor_alvo);
             const alvo = Number(t.valor_alvo);
@@ -106,7 +108,7 @@ function BarraVendedor({
                     background: `linear-gradient(90deg, ${t.cor}55, ${t.cor})`,
                   }}
                 />
-                <div className="absolute inset-0 flex items-center justify-end pr-1.5 text-[10px] text-white/60 tabular-nums pointer-events-none">
+                <div className="absolute inset-0 flex items-center justify-end pr-2 text-sm font-semibold text-white/70 tabular-nums pointer-events-none">
                   {formatCurrency(alvo)}
                 </div>
               </div>
@@ -114,6 +116,15 @@ function BarraVendedor({
           })}
         </div>
 
+      </div>
+
+      {/* Painel lateral: total vendido no mês */}
+      <div className="lg:w-56 shrink-0 lg:border-l lg:border-t-0 border-t border-white/10 lg:pl-5 pt-4 lg:pt-0 flex flex-col justify-center">
+        <div className="text-xs uppercase tracking-wider text-white/50">Vendido no mês</div>
+        <div className="text-3xl font-extrabold tabular-nums text-white mt-1">
+          {formatCurrency(vendedor.total_vendido_mes)}
+        </div>
+        <div className="text-xs text-white/40 mt-1 capitalize">{mesLabel}</div>
       </div>
     </div>
   );
