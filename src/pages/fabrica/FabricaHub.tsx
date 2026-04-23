@@ -10,7 +10,6 @@ import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
-  { label: 'Gestão de Pedidos', icon: Package, path: '/fabrica/pedidos-producao' },
   { label: 'Ordens por Pedido', icon: ClipboardList, path: '/fabrica/ordens-pedidos' },
   { label: 'Cronograma Produção', icon: Calendar, path: '/fabrica/cronograma-producao' },
   { label: 'Controle de Estoque', icon: Boxes, path: '/fabrica/controle-estoque' },
@@ -19,7 +18,6 @@ const menuItems = [
 ];
 
 const routeKeyMap: Record<string, string> = {
-  '/fabrica/pedidos-producao': 'fabrica_pedidos',
   '/fabrica/ordens-pedidos': 'fabrica_ordens_pedidos',
   '/fabrica/cronograma-producao': 'fabrica_cronograma_producao',
   '/fabrica/controle-estoque': 'fabrica_estoque',
