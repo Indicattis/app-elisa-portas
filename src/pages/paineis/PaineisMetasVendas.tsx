@@ -3,11 +3,13 @@ import { ArrowLeft, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MetaVendasBarra } from '@/components/paineis/MetaVendasBarra';
 import { useProgressoMetasVendas } from '@/hooks/useProgressoMetasVendas';
+import { useVendasSemanaAtual } from '@/hooks/useVendasDashboard';
 import { formatarPeriodo } from '@/lib/periodoMeta';
 import { formatCurrency } from '@/lib/utils';
 
 export default function PaineisMetasVendas() {
   const { data: progressos, isLoading } = useProgressoMetasVendas();
+  const { data: vendasSemana } = useVendasSemanaAtual();
   const [now, setNow] = useState(new Date());
   const navigate = useNavigate();
 
@@ -42,8 +44,13 @@ export default function PaineisMetasVendas() {
               <div className="text-xs uppercase tracking-wider text-white/50">
                 {formatarPeriodo(p.meta.periodo, now)}
               </div>
-              <div className="text-xs text-white/60">
-                Total no período: <span className="text-white font-semibold">{formatCurrency(p.totalGlobal)}</span>
+              <div className="flex items-baseline gap-4 text-xs text-white/60">
+                <div>
+                  Semana: <span className="text-white font-semibold">{formatCurrency(vendasSemana?.total ?? 0)}</span>
+                </div>
+                <div>
+                  Total no período: <span className="text-white font-semibold">{formatCurrency(p.totalGlobal)}</span>
+                </div>
               </div>
             </div>
             <MetaVendasBarra progresso={p} />
