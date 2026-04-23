@@ -39,6 +39,7 @@ interface PedidosDraggableListProps {
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
   onFinalizarDireto?: (pedidoId: string) => Promise<void>;
   onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>;
+  onDevolverParaFinalizado?: (pedidoId: string) => Promise<void>;
   enableDragAndDrop?: boolean;
   showPosicao?: boolean;
   disableClienteClick?: boolean;
@@ -63,6 +64,7 @@ interface SortableItemProps {
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
   onFinalizarDireto?: (pedidoId: string) => Promise<void>;
   onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>;
+  onDevolverParaFinalizado?: (pedidoId: string) => Promise<void>;
   disableClienteClick?: boolean;
   hideOrdensStatus?: boolean;
   hideCorrecaoButton?: boolean;
@@ -85,6 +87,7 @@ function SortableItem({
   onCorrecaoDetalhesClick,
   onFinalizarDireto,
   onEnviarAguardandoCliente,
+  onDevolverParaFinalizado,
   disableClienteClick,
   hideOrdensStatus,
   hideCorrecaoButton,
@@ -121,6 +124,7 @@ function SortableItem({
         onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
         onFinalizarDireto={onFinalizarDireto}
         onEnviarAguardandoCliente={onEnviarAguardandoCliente}
+        onDevolverParaFinalizado={onDevolverParaFinalizado}
         isDragging={isDragging}
         dragHandleProps={{ ...attributes, ...listeners }}
         posicao={posicao}
@@ -150,6 +154,7 @@ export function PedidosDraggableList({
   onCorrecaoDetalhesClick,
   onFinalizarDireto,
   onEnviarAguardandoCliente,
+  onDevolverParaFinalizado,
   enableDragAndDrop = true,
   showPosicao = true,
   disableClienteClick = false,
@@ -242,6 +247,7 @@ export function PedidosDraggableList({
               onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
               onFinalizarDireto={onFinalizarDireto}
               onEnviarAguardandoCliente={onEnviarAguardandoCliente}
+              onDevolverParaFinalizado={onDevolverParaFinalizado}
               posicao={showPosicao ? index + 1 : undefined}
               total={showPosicao ? pedidos.length : undefined}
               disableClienteClick={disableClienteClick}
@@ -293,6 +299,7 @@ export function PedidosDraggableList({
               onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
               onFinalizarDireto={onFinalizarDireto}
               onEnviarAguardandoCliente={onEnviarAguardandoCliente}
+              onDevolverParaFinalizado={onDevolverParaFinalizado}
               disableClienteClick={disableClienteClick}
               hideOrdensStatus={hideOrdensStatus}
               hideCorrecaoButton={hideCorrecaoButton}

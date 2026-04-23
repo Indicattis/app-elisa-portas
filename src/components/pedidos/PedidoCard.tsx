@@ -76,6 +76,7 @@ interface PedidoCardProps {
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
   onFinalizarDireto?: (pedidoId: string) => Promise<void>;
   onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>;
+  onDevolverParaFinalizado?: (pedidoId: string) => Promise<void>;
   basePath?: string;
   readOnly?: boolean;
   disableClienteClick?: boolean;
@@ -101,6 +102,7 @@ export function PedidoCard({
   onCorrecaoDetalhesClick,
   onFinalizarDireto,
   onEnviarAguardandoCliente,
+  onDevolverParaFinalizado,
   readOnly = false,
   disableClienteClick = false,
   showEtapaBadge = false,
@@ -130,6 +132,8 @@ export function PedidoCard({
   const [showEnviarCorrecao, setShowEnviarCorrecao] = useState(false);
   const [showAguardandoCliente, setShowAguardandoCliente] = useState(false);
   const [isEnviandoAguardandoCliente, setIsEnviandoAguardandoCliente] = useState(false);
+  const [showDevolverFinalizado, setShowDevolverFinalizado] = useState(false);
+  const [isDevolvendoFinalizado, setIsDevolvendoFinalizado] = useState(false);
   const [valorAReceberTemp, setValorAReceberTemp] = useState('');
   const [popoverValorAberto, setPopoverValorAberto] = useState(false);
   const [salvandoValor, setSalvandoValor] = useState(false);
@@ -2095,6 +2099,28 @@ className="flex h-[20px] w-full rounded-[3px]"
                       );
                     }
 
+                    // Botão de devolver para Finalizado (apenas etapa aguardando_cliente)
+                    if (etapaAtual === 'aguardando_cliente' && onDevolverParaFinalizado && !readOnly) {
+                      middleButtons.push(
+                        <Tooltip key="devolver-finalizado">
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={(e) => { e.stopPropagation(); setShowDevolverFinalizado(true); }}
+                              title="Devolver para Finalizado"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-500/50"
+                            >
+                              <CheckCircle className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="text-xs">Devolver para Finalizado</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
                     if (onFinalizarDireto && etapaAtual !== 'finalizado') {
                       middleButtons.push(
                         <Tooltip key="finalizar-direto">
@@ -2206,6 +2232,35 @@ className="flex h-[20px] w-full rounded-[3px]"
                 }}
               >
                 {isEnviandoAguardandoCliente ? 'Enviando...' : 'Confirmar'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={showDevolverFinalizado} onOpenChange={setShowDevolverFinalizado}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Devolver para Finalizado</AlertDialogTitle>
+              <AlertDialogDescription>
+                Deseja devolver este pedido para a etapa "Finalizado"? Ele sairá de "Aguardando Cliente" e voltará para o fluxo normal.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={isDevolvendoFinalizado}
+                onClick={async () => {
+                  if (!onDevolverParaFinalizado) return;
+                  setIsDevolvendoFinalizado(true);
+                  try {
+                    await onDevolverParaFinalizado(pedido.id);
+                  } finally {
+                    setIsDevolvendoFinalizado(false);
+                    setShowDevolverFinalizado(false);
+                  }
+                }}
+              >
+                {isDevolvendoFinalizado ? 'Devolvendo...' : 'Confirmar'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -2671,6 +2726,22 @@ className="flex h-[20px] w-full rounded-[3px]"
                 );
               }
 
+              // Botão devolver para Finalizado (etapa aguardando_cliente)
+              if (etapaAtual === 'aguardando_cliente' && onDevolverParaFinalizado && !readOnly) {
+                actionButtons.push(
+                  <Button
+                    key="devolver-finalizado"
+                    size="icon"
+                    variant="outline"
+                    onClick={(e) => { e.stopPropagation(); setShowDevolverFinalizado(true); }}
+                    title="Devolver para Finalizado"
+                    className="flex w-full h-[35px] bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-500/50"
+                  >
+                    <CheckCircle className="h-3.5 w-3.5" />
+                  </Button>
+                );
+              }
+
               // Backlog button removed - users should view order details page
 
               // Add retroceder button (para todos a partir de em_producao)
@@ -2735,6 +2806,35 @@ className="flex h-[20px] w-full rounded-[3px]"
       <RetrocederPedidoUnificadoModal pedido={pedido} open={showRetrocederEtapa} onOpenChange={setShowRetrocederEtapa} />
 
       <VisualizarBacklogModal pedido={pedido} open={showVisualizarBacklog} onOpenChange={setShowVisualizarBacklog} />
+
+      <AlertDialog open={showDevolverFinalizado} onOpenChange={setShowDevolverFinalizado}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Devolver para Finalizado</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja devolver este pedido para a etapa "Finalizado"? Ele sairá de "Aguardando Cliente" e voltará para o fluxo normal.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isDevolvendoFinalizado}
+              onClick={async () => {
+                if (!onDevolverParaFinalizado) return;
+                setIsDevolvendoFinalizado(true);
+                try {
+                  await onDevolverParaFinalizado(pedido.id);
+                } finally {
+                  setIsDevolvendoFinalizado(false);
+                  setShowDevolverFinalizado(false);
+                }
+              }}
+            >
+              {isDevolvendoFinalizado ? 'Devolvendo...' : 'Confirmar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {onAvisoEspera && (
         <AvisoEsperaModal
