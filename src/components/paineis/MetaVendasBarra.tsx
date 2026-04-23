@@ -71,10 +71,6 @@ function BarraVendedor({
             <div className="text-sm text-white/50 truncate">{metaNome} — {escopoLabel}</div>
           </div>
           <div className="flex items-baseline gap-4 flex-wrap">
-            <div className="tabular-nums">
-              <span className="text-2xl font-bold text-white">{formatCurrency(total)}</span>
-              <span className="text-base text-white/40"> / {formatCurrency(maxAlvo)}</span>
-            </div>
             <div className="text-right">
               <div className="text-xs uppercase tracking-wider text-white/40">Comissão atual</div>
               <div
