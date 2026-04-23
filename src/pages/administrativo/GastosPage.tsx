@@ -240,15 +240,18 @@ export default function GastosPage() {
   const [filtroTipo, setFiltroTipo] = useState("");
   const [filtroBanco, setFiltroBanco] = useState("");
   const [filtroResponsavel, setFiltroResponsavel] = useState("");
+  const [filtroDre, setFiltroDre] = useState<"all" | "sim" | "nao">("all");
 
   const gastosFiltrados = useMemo(() => {
     return gastos.filter((g) => {
       if (filtroTipo && filtroTipo !== "all" && g.tipo_custo_id !== filtroTipo) return false;
       if (filtroBanco && filtroBanco !== "all" && g.banco_id !== filtroBanco) return false;
       if (filtroResponsavel && filtroResponsavel !== "all" && g.responsavel_id !== filtroResponsavel) return false;
+      if (filtroDre === "sim" && g.tipo_custo_aparece_no_dre === false) return false;
+      if (filtroDre === "nao" && g.tipo_custo_aparece_no_dre !== false) return false;
       return true;
     });
-  }, [gastos, filtroTipo, filtroBanco, filtroResponsavel]);
+  }, [gastos, filtroTipo, filtroBanco, filtroResponsavel, filtroDre]);
 
   const totalGastos = useMemo(
     () => gastosFiltrados.reduce((sum, g) => sum + g.valor, 0),
@@ -392,11 +395,21 @@ export default function GastosPage() {
                 ))}
               </SelectContent>
             </Select>
-            {(filtroTipo && filtroTipo !== "all") || (filtroBanco && filtroBanco !== "all") || (filtroResponsavel && filtroResponsavel !== "all") ? (
+            <Select value={filtroDre} onValueChange={(v) => setFiltroDre(v as "all" | "sim" | "nao")}>
+              <SelectTrigger className="w-[200px] bg-white/5 border-white/20 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a1a1a] border-white/20">
+                <SelectItem value="all" className="text-white hover:bg-white/10">DRE: Todos</SelectItem>
+                <SelectItem value="sim" className="text-white hover:bg-white/10">Aparece no DRE</SelectItem>
+                <SelectItem value="nao" className="text-white hover:bg-white/10">Não aparece no DRE</SelectItem>
+              </SelectContent>
+            </Select>
+            {(filtroTipo && filtroTipo !== "all") || (filtroBanco && filtroBanco !== "all") || (filtroResponsavel && filtroResponsavel !== "all") || filtroDre !== "all" ? (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => { setFiltroTipo(""); setFiltroBanco(""); setFiltroResponsavel(""); }}
+                onClick={() => { setFiltroTipo(""); setFiltroBanco(""); setFiltroResponsavel(""); setFiltroDre("all"); }}
                 className="text-white/60 hover:text-white hover:bg-white/10 text-xs"
               >
                 Limpar filtros

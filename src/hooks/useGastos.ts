@@ -17,6 +17,7 @@ export interface Gasto {
   updated_at: string;
   // joined
   tipo_custo_nome?: string;
+  tipo_custo_aparece_no_dre?: boolean;
   responsavel_nome?: string;
   responsavel_foto?: string | null;
   banco_nome?: string;
@@ -61,16 +62,18 @@ export const useGastos = (mesFiltro?: string, ordenarPor: GastosOrdenarPor = 'ca
     const bancoIds = [...new Set(rows.map((r) => r.banco_id).filter(Boolean))];
 
     let tiposMap: Record<string, string> = {};
+    let tiposDreMap: Record<string, boolean> = {};
     let responsaveisMap: Record<string, { nome: string; foto: string | null }> = {};
     let bancosMap: Record<string, string> = {};
 
     if (tipoCustoIds.length > 0) {
       const { data: tipos } = await supabase
         .from("tipos_custos" as any)
-        .select("id, nome")
+        .select("id, nome, aparece_no_dre")
         .in("id", tipoCustoIds);
       (tipos || []).forEach((t: any) => {
         tiposMap[t.id] = t.nome;
+        tiposDreMap[t.id] = t.aparece_no_dre !== false;
       });
     }
 
@@ -97,6 +100,7 @@ export const useGastos = (mesFiltro?: string, ordenarPor: GastosOrdenarPor = 'ca
     const enriched = rows.map((r) => ({
       ...r,
       tipo_custo_nome: tiposMap[r.tipo_custo_id] || "—",
+      tipo_custo_aparece_no_dre: tiposDreMap[r.tipo_custo_id] ?? true,
       responsavel_nome: responsaveisMap[r.responsavel_id]?.nome || "—",
       responsavel_foto: responsaveisMap[r.responsavel_id]?.foto || null,
       banco_nome: r.banco_id ? bancosMap[r.banco_id] || "—" : "—",
