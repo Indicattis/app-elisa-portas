@@ -1070,6 +1070,7 @@ export default function GestaoFabricaDirecao() {
                                 showConcluido
                                 onRetornar={handleRetornarNeoInstalacao}
                                 onArquivar={handleArquivarNeoInstalacao}
+                                onEnviarAguardandoCliente={(id) => enviarAguardandoClienteNeoInstalacao(id)}
                               />
                             ))}
                           {neoCorrecoesFinalizadas
@@ -1087,6 +1088,7 @@ export default function GestaoFabricaDirecao() {
                                 showConcluido
                                 onRetornar={handleRetornarNeoCorrecao}
                                 onArquivar={handleArquivarNeoCorrecao}
+                                onEnviarAguardandoCliente={(id) => enviarAguardandoClienteNeoCorrecao(id)}
                               />
                             ))}
                         </div>
