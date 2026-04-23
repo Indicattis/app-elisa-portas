@@ -85,37 +85,6 @@ function BarraVendedor({
           })}
         </div>
 
-      {/* Tiers */}
-      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${tiersSorted.length}, minmax(0,1fr))` }}>
-        {tiersSorted.map((t) => {
-          const atingido = total >= Number(t.valor_alvo);
-          const valorPct = Number(t.bonificacao_valor) / 10; // 0,X
-          const bonifTexto =
-            t.bonificacao_tipo === 'fixo'
-              ? formatCurrency(Number(t.bonificacao_valor))
-              : `${valorPct.toLocaleString('pt-BR', { minimumFractionDigits: 1 })} × vendido = ${formatCurrency(total * valorPct)}`;
-          return (
-            <div
-              key={t.id || t.nome}
-              className={`rounded-md border p-2 text-xs transition-opacity ${atingido ? 'border-white/20 bg-white/5' : 'border-white/5 opacity-50'}`}
-              style={atingido ? { borderColor: t.cor } : undefined}
-            >
-              <div className="flex items-center gap-1.5">
-                {atingido ? (
-                  <CheckCircle2 className="h-3.5 w-3.5" style={{ color: t.cor }} />
-                ) : (
-                  <Circle className="h-3.5 w-3.5 text-white/30" />
-                )}
-                <span className="font-medium text-white truncate" style={atingido ? { color: t.cor } : undefined}>
-                  {t.nome}
-                </span>
-              </div>
-              <div className="text-white/50 mt-0.5">{formatCurrency(Number(t.valor_alvo))}</div>
-              <div className={`mt-0.5 ${atingido ? 'text-white' : 'text-white/40'}`}>+ {bonifTexto}</div>
-            </div>
-          );
-        })}
-      </div>
       </div>
     </div>
   );
