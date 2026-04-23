@@ -1,4 +1,3 @@
-import { CheckCircle2, Circle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatCurrency } from '@/lib/utils';
 import type { MetaProgresso, VendedorProgresso } from '@/hooks/useProgressoMetasVendas';
