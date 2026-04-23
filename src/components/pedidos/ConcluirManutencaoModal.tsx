@@ -132,10 +132,7 @@ export function ConcluirManutencaoModal({
           .eq("id", instExist.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from("instalacoes")
-          .insert([{ pedido_id: pedidoId, ...payload }]);
-        if (error) throw error;
+        throw new Error("Registro de instalação não encontrado para este pedido.");
       }
 
       toast.success("Manutenção concluída");
