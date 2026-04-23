@@ -122,7 +122,7 @@ export function useProgressoMetasVendas() {
               foto_perfil_url: u?.foto_perfil_url ?? null,
               total_vendido: total,
               tier_atingido: tier,
-              bonificacao_calculada: calcularBonificacao(total, tierBonus, !!tier),
+              bonificacao_calculada: calcularBonificacao(porVendedorMes.get(meta.vendedor_id) || 0, tierBonus, !!tier),
               total_vendido_mes: porVendedorMes.get(meta.vendedor_id) || 0,
             }];
           } else {
@@ -132,14 +132,15 @@ export function useProgressoMetasVendas() {
               .map((u) => {
                 const total = porVendedor.get(u.user_id) || 0;
                 const tier = calcularTier(total, tiers);
+                const totalMes = porVendedorMes.get(u.user_id) || 0;
                 return {
                   vendedor_id: u.user_id,
                   nome: u.nome,
                   foto_perfil_url: u.foto_perfil_url ?? null,
                   total_vendido: total,
                   tier_atingido: tier,
-                  bonificacao_calculada: calcularBonificacao(total, tier || primeiroTier, !!tier),
-                  total_vendido_mes: porVendedorMes.get(u.user_id) || 0,
+                  bonificacao_calculada: calcularBonificacao(totalMes, tier || primeiroTier, !!tier),
+                  total_vendido_mes: totalMes,
                 };
               })
               .sort((a, b) => b.total_vendido - a.total_vendido || a.nome.localeCompare(b.nome));
@@ -153,7 +154,7 @@ export function useProgressoMetasVendas() {
             foto_perfil_url: null,
             total_vendido: totalGlobal,
             tier_atingido: tier,
-            bonificacao_calculada: calcularBonificacao(totalGlobal, tier || primeiroTier, !!tier),
+            bonificacao_calculada: calcularBonificacao(totalGlobalMes, tier || primeiroTier, !!tier),
             total_vendido_mes: totalGlobalMes,
           }];
         }
