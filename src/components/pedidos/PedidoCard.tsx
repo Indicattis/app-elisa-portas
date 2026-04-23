@@ -1825,7 +1825,7 @@ export function PedidoCard({
                           </Button>
                         </ButtonWithTooltip>
                       );
-                    } else if ((etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes') && carregamentoConcluido) {
+                    } else if ((etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes') && (carregamentoConcluido || (etapaAtual === 'instalacoes' && apenasManutencao))) {
                       const validacao = getValidacaoAvancoEtapa(etapaAtual);
                       avancarButtons.push(
                         <ButtonWithTooltip key="avançar-expedicao" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
@@ -1833,7 +1833,11 @@ export function PedidoCard({
                             size="icon" 
                             onClick={(e) => { 
                               e.stopPropagation(); 
-                              setShowConfirmarExpedicao(true); 
+                              if (etapaAtual === 'instalacoes' && apenasManutencao) {
+                                setShowConcluirManutencao(true);
+                              } else {
+                                setShowConfirmarExpedicao(true);
+                              }
                             }} 
                             disabled={!validacao.podeAvancar} 
 className="flex h-[20px] w-full rounded-[3px]"
