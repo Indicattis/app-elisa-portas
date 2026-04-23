@@ -22,6 +22,7 @@ export default function ProducaoEmbalagem() {
     capturarOrdem,
     finalizarEmbalagem,
     marcarLinhaConcluida,
+    pausarOrdem,
   } = useOrdemEmbalagem(tentarAvancoAutomatico);
 
   const selectedOrdem = ordens.find(o => o.id === selectedOrdemId) || null;
@@ -73,6 +74,11 @@ export default function ProducaoEmbalagem() {
         isCapturing={capturarOrdem.isPending}
         onFinalizarPintura={handleFinalizarEmbalagem}
         isFinalizando={finalizarEmbalagem.isPending}
+        onPausarOrdem={async (ordemId, justificativa, linhasIds, comentarioPedido) => {
+          await pausarOrdem.mutateAsync({ ordemId, justificativa, linhasProblemaIds: linhasIds, comentarioPedido });
+          setDetailsOpen(false);
+        }}
+        isPausing={pausarOrdem.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal

@@ -23,6 +23,7 @@ export default function EmbalagemMinimalista() {
     capturarOrdem,
     finalizarEmbalagem,
     marcarLinhaConcluida,
+    pausarOrdem,
   } = useOrdemEmbalagem(tentarAvancoAutomatico);
 
   const selectedOrdem = ordens.find(o => o.id === selectedOrdemId) || null;
@@ -78,6 +79,11 @@ export default function EmbalagemMinimalista() {
         isCapturing={capturarOrdem.isPending}
         onFinalizarPintura={handleFinalizarEmbalagem}
         isFinalizando={finalizarEmbalagem.isPending}
+        onPausarOrdem={async (ordemId, justificativa, linhasIds, comentarioPedido) => {
+          await pausarOrdem.mutateAsync({ ordemId, justificativa, linhasProblemaIds: linhasIds, comentarioPedido });
+          setDetailsOpen(false);
+        }}
+        isPausing={pausarOrdem.isPending}
       />
 
       <ProcessoAvancoAutomaticoModal
