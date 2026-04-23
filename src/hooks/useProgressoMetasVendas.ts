@@ -28,9 +28,8 @@ function calcularTier(total: number, tiers: MetaVendasTier[]): MetaVendasTier | 
 function calcularBonificacao(total: number, tier: MetaVendasTier | null, atingido: boolean = true): number {
   if (!tier) return 0;
   if (tier.bonificacao_tipo === 'fixo') return atingido ? Number(tier.bonificacao_valor) : 0;
-  // Regra: "0,X × valor vendido" — bonificacao_valor representa décimos.
-  // Ex.: bonificacao_valor=2 ⇒ 0,2 × total
-  return total * (Number(tier.bonificacao_valor) / 10);
+  // Regra: bonificacao_valor é a porcentagem direta (ex.: 0.3 ⇒ 0,3% ⇒ multiplicador 0.003)
+  return total * (Number(tier.bonificacao_valor) / 100);
 }
 
 export function useProgressoMetasVendas() {
