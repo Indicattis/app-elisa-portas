@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, ArrowLeft } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, ORDEM_ETAPAS } from "@/types/pedidoEtapa";
 
@@ -65,9 +65,20 @@ export function RetrocederEtapaModal({
         // Excluir expedição coleta/entrega se não tem entrega
         if (etapa === 'aguardando_coleta' && !temEntrega) return false;
         
+        // Aprovação CEO só pode ser destino se etapa atual for Instalações ou Expedição Coleta
+        if (etapa === 'aprovacao_ceo' && etapaAtual !== 'instalacoes' && etapaAtual !== 'aguardando_coleta') {
+          return false;
+        }
+
         return true;
       });
   }, [etapaAtual, temPintura, temInstalacao, temEntrega]);
+
+  useEffect(() => {
+    if (open && etapasDisponiveis.length > 0 && !etapasDisponiveis.includes(etapaDestino)) {
+      setEtapaDestino(etapasDisponiveis[0]);
+    }
+  }, [open, etapasDisponiveis, etapaDestino]);
 
   const handleConfirmar = () => {
     if (!motivo.trim()) {
