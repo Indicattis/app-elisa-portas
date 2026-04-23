@@ -48,6 +48,7 @@ import { useNavigate } from "react-router-dom";
 import type { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { enviarParaAguardandoCliente } from "@/lib/aguardandoCliente";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
