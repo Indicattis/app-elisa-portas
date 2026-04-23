@@ -777,11 +777,54 @@ export function PedidoCard({
   };
 
   const renderOrdemStatus = (ordem: any, nomeSetor: string) => {
+    const tipoOrdemProducao =
+      ordem?.tipo_ordem === 'soldagem' ||
+      ordem?.tipo_ordem === 'perfiladeira' ||
+      ordem?.tipo_ordem === 'separacao';
+    const podeGerirPause = isDirecao && tipoOrdemProducao;
+
     if (!ordem?.existe) {
+      if (podeGerirPause) {
+        // Permitir pausar mesmo se a ordem não existe? Não — sem ordem nada a fazer.
+        return <span className="text-gray-300 text-[10px]">—</span>;
+      }
       return <span className="text-gray-300 text-[10px]">—</span>;
     }
 
     if (ordem.pausada) {
+      if (podeGerirPause) {
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className={`h-5 w-5 rounded-full ${getStatusBorder(ordem.status, ordem.pausada)} bg-orange-500/10 flex items-center justify-center cursor-pointer`}
+              >
+                <PauseCircle className="h-3 w-3 text-orange-600" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="top" className="w-64 p-3" onClick={(e) => e.stopPropagation()}>
+              <p className="text-xs font-semibold mb-1">{nomeSetor} — Pausada</p>
+              {ordem.justificativa_pausa && (
+                <p className="text-xs text-muted-foreground mb-3">{ordem.justificativa_pausa}</p>
+              )}
+              <Button
+                size="sm"
+                className="w-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRetomarOrdem(ordem);
+                }}
+                disabled={despausarOrdemDirecao.isPending}
+              >
+                <PlayCircle className="h-3.5 w-3.5 mr-2" />
+                Retomar ordem
+              </Button>
+            </PopoverContent>
+          </Popover>
+        );
+      }
       return (
         <Tooltip>
           <TooltipTrigger asChild>
