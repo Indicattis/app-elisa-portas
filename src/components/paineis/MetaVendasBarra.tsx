@@ -31,7 +31,13 @@ function BarraVendedor({
   const total = vendedor.total_vendido;
   const tierAtual = vendedor.tier_atingido;
   const pct = Math.min((total / maxAlvo) * 100, 100);
-  const corPreenchimento = tierAtual?.cor || '#3B82F6';
+  // Próximo tier (objetivo): primeiro tier ainda não atingido.
+  // Se já atingiu todos, usa a cor do último (tier máximo).
+  const proximoTier =
+    tiersSorted.find((t) => total < Number(t.valor_alvo)) ||
+    tiersSorted[tiersSorted.length - 1] ||
+    null;
+  const corPreenchimento = proximoTier?.cor || tierAtual?.cor || '#3B82F6';
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 flex gap-5 items-stretch">
