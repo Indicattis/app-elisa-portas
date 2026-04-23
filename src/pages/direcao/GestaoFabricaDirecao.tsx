@@ -27,8 +27,8 @@ import { useVendasPendenteFaturamento } from "@/hooks/useVendasPendenteFaturamen
 import { VendaPendentePedidoCard } from "@/components/pedidos/VendaPendentePedidoCard";
 
 import { VendasPendenteDraggableList } from "@/components/pedidos/VendasPendenteDraggableList";
-import { useNeoInstalacoesListagem, useNeoInstalacoesFinalizadas } from "@/hooks/useNeoInstalacoes";
-import { useNeoCorrecoesListagem, useNeoCorrecoesFinalizadas } from "@/hooks/useNeoCorrecoes";
+import { useNeoInstalacoesListagem, useNeoInstalacoesFinalizadas, useNeoInstalacoesAguardandoCliente } from "@/hooks/useNeoInstalacoes";
+import { useNeoCorrecoesListagem, useNeoCorrecoesFinalizadas, useNeoCorrecoesAguardandoCliente } from "@/hooks/useNeoCorrecoes";
 import { useEtapaResponsaveis } from "@/hooks/useEtapaResponsaveis";
 import { useOrdensCarregamentoCalendario } from "@/hooks/useOrdensCarregamentoCalendario";
 import { useOrdensCarregamentoUnificadas } from "@/hooks/useOrdensCarregamentoUnificadas";
