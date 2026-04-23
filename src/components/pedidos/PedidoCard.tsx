@@ -533,6 +533,7 @@ export function PedidoCard({
   // Identificar características do pedido
   const temPintura = produtos.some((p: any) => p.valor_pintura > 0);
   const temTerceirizacao = produtos.some((p: any) => p.tipo_fabricacao === 'terceirizado' || p.tipo_produto === 'porta_social');
+  const apenasManutencao = produtos.length > 0 && produtos.every((p: any) => p.tipo_produto === 'manutencao');
   const tipoEntrega = venda?.tipo_entrega;
   const isInstalacao = tipoEntrega === 'instalacao';
   const isEntrega = tipoEntrega === 'entrega';
