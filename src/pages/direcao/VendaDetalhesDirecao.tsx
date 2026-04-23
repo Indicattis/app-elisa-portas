@@ -246,21 +246,28 @@ export default function VendaDetalhesDirecao() {
     );
   }
 
-  const cardClass = "bg-primary/5 border border-primary/10 backdrop-blur-xl rounded-xl p-4";
+  const cardClass = "bg-white/5 border border-blue-500/10 backdrop-blur-xl rounded-xl p-4";
 
   return (
     <MinimalistLayout 
       title="Detalhes da Venda" 
+      subtitle={venda.cliente_nome}
       backPath="/direcao/vendas"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Direção", path: "/direcao" },
+        { label: "Vendas", path: "/direcao/vendas" },
+        { label: "Detalhes" },
+      ]}
       headerActions={
         <div className="flex items-center gap-2">
           {isAdmin && (
             <Button 
               onClick={() => navigate(`/direcao/vendas/${id}/editar`)}
               size="sm"
-              className="bg-primary/20 hover:bg-primary/30 border border-primary/30"
+              className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 border border-blue-400/30 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
             >
-              <Edit className="w-4 h-4 mr-2" />
+              <Edit className="w-4 h-4" />
               Editar
             </Button>
           )}
@@ -268,9 +275,9 @@ export default function VendaDetalhesDirecao() {
             onClick={() => setExcluirModalOpen(true)}
             size="sm"
             variant="destructive"
-            className="bg-destructive/20 hover:bg-destructive/30 border border-destructive/30 text-destructive"
+            className="h-10 px-5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 text-red-300 text-xs gap-1.5"
           >
-            <Trash2 className="w-4 h-4 mr-2" />
+            <Trash2 className="w-4 h-4" />
             Excluir
           </Button>
         </div>
