@@ -6,6 +6,7 @@ import { getInicioFimSemana, getInicioFimMes } from '@/lib/periodoMeta';
 export interface VendedorProgresso {
   vendedor_id: string;
   nome: string;
+  foto_perfil_url: string | null;
   total_vendido: number;
   tier_atingido: MetaVendasTier | null;
   bonificacao_calculada: number;
@@ -26,7 +27,9 @@ function calcularTier(total: number, tiers: MetaVendasTier[]): MetaVendasTier | 
 function calcularBonificacao(total: number, tier: MetaVendasTier | null): number {
   if (!tier) return 0;
   if (tier.bonificacao_tipo === 'fixo') return Number(tier.bonificacao_valor);
-  return total * (Number(tier.bonificacao_valor) / 100);
+  // Regra: "0,X × valor vendido" — bonificacao_valor representa décimos.
+  // Ex.: bonificacao_valor=2 ⇒ 0,2 × total
+  return total * (Number(tier.bonificacao_valor) / 10);
 }
 
 export function useProgressoMetasVendas() {
@@ -51,10 +54,14 @@ export function useProgressoMetasVendas() {
       // Buscar nomes de atendentes
       const { data: usuarios } = await supabase
         .from('admin_users')
-        .select('user_id, nome')
+        .select('user_id, nome, foto_perfil_url, role')
         .eq('ativo', true);
-      const nomeMap = new Map<string, string>();
-      (usuarios || []).forEach((u: any) => nomeMap.set(u.user_id, u.nome));
+      const userMap = new Map<string, { nome: string; foto_perfil_url: string | null; role: string }>();
+      (usuarios || []).forEach((u: any) =>
+        userMap.set(u.user_id, { nome: u.nome, foto_perfil_url: u.foto_perfil_url ?? null, role: u.role }),
+      );
+      // Vendedores elegíveis = todos os ativos (mesma fonte de useVendedoresElegiveis)
+      const elegiveis = (usuarios || []) as any[];
 
       const resultados: MetaProgresso[] = [];
 
@@ -89,32 +96,38 @@ export function useProgressoMetasVendas() {
           if (meta.vendedor_id) {
             const total = porVendedor.get(meta.vendedor_id) || 0;
             const tier = calcularTier(total, tiers);
+            const u = userMap.get(meta.vendedor_id);
             vendedores = [{
               vendedor_id: meta.vendedor_id,
-              nome: nomeMap.get(meta.vendedor_id) || 'Vendedor',
+              nome: u?.nome || 'Vendedor',
+              foto_perfil_url: u?.foto_perfil_url ?? null,
               total_vendido: total,
               tier_atingido: tier,
               bonificacao_calculada: calcularBonificacao(total, tier),
             }];
           } else {
-            vendedores = Array.from(porVendedor.entries())
-              .map(([vid, total]) => {
+            // Inclui todos os vendedores elegíveis, mesmo sem vendas
+            vendedores = elegiveis
+              .map((u) => {
+                const total = porVendedor.get(u.user_id) || 0;
                 const tier = calcularTier(total, tiers);
                 return {
-                  vendedor_id: vid,
-                  nome: nomeMap.get(vid) || 'Vendedor',
+                  vendedor_id: u.user_id,
+                  nome: u.nome,
+                  foto_perfil_url: u.foto_perfil_url ?? null,
                   total_vendido: total,
                   tier_atingido: tier,
                   bonificacao_calculada: calcularBonificacao(total, tier),
                 };
               })
-              .sort((a, b) => b.total_vendido - a.total_vendido);
+              .sort((a, b) => b.total_vendido - a.total_vendido || a.nome.localeCompare(b.nome));
           }
         } else {
           const tier = calcularTier(totalGlobal, tiers);
           vendedores = [{
             vendedor_id: 'global',
             nome: 'Equipe',
+            foto_perfil_url: null,
             total_vendido: totalGlobal,
             tier_atingido: tier,
             bonificacao_calculada: calcularBonificacao(totalGlobal, tier),
