@@ -55,7 +55,8 @@ export function useProgressoMetasVendas() {
       const { data: usuarios } = await supabase
         .from('admin_users')
         .select('user_id, nome, foto_perfil_url, role')
-        .eq('ativo', true);
+        .eq('ativo', true)
+        .in('role', ['atendente', 'vendedor']);
       const userMap = new Map<string, { nome: string; foto_perfil_url: string | null; role: string }>();
       (usuarios || []).forEach((u: any) =>
         userMap.set(u.user_id, { nome: u.nome, foto_perfil_url: u.foto_perfil_url ?? null, role: u.role }),
