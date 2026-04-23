@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { VendaPendenteDetalhesSheet } from "./VendaPendenteDetalhesSheet";
@@ -48,6 +48,20 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
   const [isDispensando, setIsDispensando] = useState(false);
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showFinalizarDireto, setShowFinalizarDireto] = useState(false);
+
+  const { data: ultimoComentario } = useQuery({
+    queryKey: ['venda-ultimo-comentario', venda.id],
+    queryFn: async () => {
+      const { data } = await (supabase
+        .from('venda_comentarios' as any)
+        .select('comentario, created_at')
+        .eq('venda_id', venda.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle() as any);
+      return data as { comentario: string } | null;
+    },
+  });
   const [isFinalizandoDireto, setIsFinalizandoDireto] = useState(false);
   const [showConcluirDireto, setShowConcluirDireto] = useState(false);
   const [isConcluindoDireto, setIsConcluindoDireto] = useState(false);
@@ -261,6 +275,11 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                   <p className="text-xs">{venda.cliente_nome || "Cliente não informado"}</p>
                 </TooltipContent>
               </Tooltip>
+              {ultimoComentario?.comentario && (
+                <p className="text-[9px] text-muted-foreground truncate" title={ultimoComentario.comentario}>
+                  {ultimoComentario.comentario}
+                </p>
+              )}
             </div>
 
             {/* Cidade/Estado */}

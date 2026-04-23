@@ -3,6 +3,8 @@ import { ptBR } from "date-fns/locale";
 import { DollarSign } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import type { VendaPendenteFaturamento } from "@/hooks/useVendasPendenteFaturamento";
 
 interface VendaPendenteFaturamentoCardProps {
@@ -15,6 +17,20 @@ export const VendaPendenteFaturamentoCard = ({ venda }: VendaPendenteFaturamento
   const handleClick = () => {
     navigate(`/administrativo/financeiro/faturamento/${venda.id}`);
   };
+
+  const { data: ultimoComentario } = useQuery({
+    queryKey: ['venda-ultimo-comentario', venda.id],
+    queryFn: async () => {
+      const { data } = await (supabase
+        .from('venda_comentarios' as any)
+        .select('comentario, created_at')
+        .eq('venda_id', venda.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle() as any);
+      return data as { comentario: string } | null;
+    },
+  });
 
   return (
     <button
@@ -40,6 +56,11 @@ export const VendaPendenteFaturamentoCard = ({ venda }: VendaPendenteFaturamento
         <p className="text-sm font-medium text-foreground truncate">
           {venda.cliente_nome || 'Sem nome'}
         </p>
+        {ultimoComentario?.comentario && (
+          <p className="text-[10px] text-muted-foreground truncate" title={ultimoComentario.comentario}>
+            {ultimoComentario.comentario}
+          </p>
+        )}
         <p className="text-xs text-muted-foreground truncate">
           {venda.cidade}{venda.estado ? ` - ${venda.estado}` : ''}
           {venda.quantidade_portas > 0 && ` • ${venda.quantidade_portas} porta${venda.quantidade_portas > 1 ? 's' : ''}`}
