@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench, CalendarPlus } from "lucide-react";
+import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, PlayCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench, CalendarPlus } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +32,9 @@ import { EnviarCorrecaoModal } from "./EnviarCorrecaoModal";
 import { useEnviarParaCorrecao } from "@/hooks/useEnviarParaCorrecao";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
 import React, { useState, useMemo } from "react";
+import { AvisoFaltaModal } from "@/components/production/AvisoFaltaModal";
+import { useGestaoOrdensProducao } from "@/hooks/useGestaoOrdensProducao";
+import type { TipoOrdemProducao } from "@/lib/pausarOrdemProducao";
 
 import { useNavigate, useLocation } from "react-router-dom";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
@@ -130,6 +133,13 @@ export function PedidoCard({
   const [valorAReceberTemp, setValorAReceberTemp] = useState('');
   const [popoverValorAberto, setPopoverValorAberto] = useState(false);
   const [salvandoValor, setSalvandoValor] = useState(false);
+  const [avisoFaltaOpen, setAvisoFaltaOpen] = useState(false);
+  const [ordemParaPausar, setOrdemParaPausar] = useState<{
+    ordemId: string;
+    tipoOrdem: TipoOrdemProducao;
+    pedidoId: string | null;
+    numeroOrdem: string;
+  } | null>(null);
 
   const handleAbrirPopoverValor = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -188,6 +198,63 @@ export function PedidoCard({
   const isProducao = location.pathname.startsWith('/producao');
   const isAdministrativo = location.pathname.startsWith('/administrativo');
   const isDirecao = location.pathname.startsWith('/direcao');
+
+  const { pausarOrdem: pausarOrdemDirecao, despausarOrdem: despausarOrdemDirecao } = useGestaoOrdensProducao();
+
+  // Carregar linhas da ordem que será pausada (sob demanda quando modal abre)
+  const { data: linhasOrdemPausar = [] } = useQuery({
+    queryKey: ['linhas-ordem-pausar', ordemParaPausar?.ordemId, ordemParaPausar?.tipoOrdem],
+    enabled: !!ordemParaPausar && avisoFaltaOpen,
+    queryFn: async () => {
+      if (!ordemParaPausar) return [];
+      const { data, error } = await supabase
+        .from('linhas_ordens')
+        .select('id, item, quantidade, tamanho, estoque:estoque_id (nome_produto)')
+        .eq('ordem_id', ordemParaPausar.ordemId)
+        .eq('tipo_ordem', ordemParaPausar.tipoOrdem);
+      if (error) throw error;
+      return (data || []).map((l: any) => ({
+        id: l.id,
+        item: l.estoque?.nome_produto || l.item,
+        quantidade: l.quantidade,
+        tamanho: l.tamanho,
+      }));
+    },
+  });
+
+  const handleAbrirPausarOrdem = (ordem: any) => {
+    setOrdemParaPausar({
+      ordemId: ordem.ordem_id,
+      tipoOrdem: ordem.tipo_ordem as TipoOrdemProducao,
+      pedidoId: ordem.pedido_id || pedido.id,
+      numeroOrdem: pedido.numero_pedido || '',
+    });
+    setAvisoFaltaOpen(true);
+  };
+
+  const handleConfirmarPausa = async (
+    justificativa: string,
+    linhasProblemaIds?: string[],
+    comentarioPedido?: string,
+  ) => {
+    if (!ordemParaPausar) return;
+    await pausarOrdemDirecao.mutateAsync({
+      ordemId: ordemParaPausar.ordemId,
+      tipoOrdem: ordemParaPausar.tipoOrdem,
+      justificativa,
+      linhasProblemaIds,
+      comentarioPedido,
+    });
+    setAvisoFaltaOpen(false);
+    setOrdemParaPausar(null);
+  };
+
+  const handleRetomarOrdem = (ordem: any) => {
+    despausarOrdemDirecao.mutate({
+      ordemId: ordem.ordem_id,
+      tipoOrdem: ordem.tipo_ordem as TipoOrdemProducao,
+    });
+  };
 
 
   // Mutation para remover responsável
@@ -710,11 +777,54 @@ export function PedidoCard({
   };
 
   const renderOrdemStatus = (ordem: any, nomeSetor: string) => {
+    const tipoOrdemProducao =
+      ordem?.tipo_ordem === 'soldagem' ||
+      ordem?.tipo_ordem === 'perfiladeira' ||
+      ordem?.tipo_ordem === 'separacao';
+    const podeGerirPause = isDirecao && tipoOrdemProducao;
+
     if (!ordem?.existe) {
+      if (podeGerirPause) {
+        // Permitir pausar mesmo se a ordem não existe? Não — sem ordem nada a fazer.
+        return <span className="text-gray-300 text-[10px]">—</span>;
+      }
       return <span className="text-gray-300 text-[10px]">—</span>;
     }
 
     if (ordem.pausada) {
+      if (podeGerirPause) {
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className={`h-5 w-5 rounded-full ${getStatusBorder(ordem.status, ordem.pausada)} bg-orange-500/10 flex items-center justify-center cursor-pointer`}
+              >
+                <PauseCircle className="h-3 w-3 text-orange-600" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="top" className="w-64 p-3" onClick={(e) => e.stopPropagation()}>
+              <p className="text-xs font-semibold mb-1">{nomeSetor} — Pausada</p>
+              {ordem.justificativa_pausa && (
+                <p className="text-xs text-muted-foreground mb-3">{ordem.justificativa_pausa}</p>
+              )}
+              <Button
+                size="sm"
+                className="w-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRetomarOrdem(ordem);
+                }}
+                disabled={despausarOrdemDirecao.isPending}
+              >
+                <PlayCircle className="h-3.5 w-3.5 mr-2" />
+                Retomar ordem
+              </Button>
+            </PopoverContent>
+          </Popover>
+        );
+      }
       return (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -749,68 +859,133 @@ export function PedidoCard({
         </div>
       );
 
+      const infoBlock = (
+        <>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              {ordem.capturada_por_foto && (
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={ordem.capturada_por_foto} />
+                  <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                </Avatar>
+              )}
+              <div>
+                <p className="text-xs font-semibold">{ordem.capturada_por_nome || 'Responsável'}</p>
+                <p className="text-[10px] text-muted-foreground">{nomeSetor}</p>
+              </div>
+            </div>
+            {isAdmin && ordem.ordem_id && ordem.status !== 'concluido' && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoverResponsavel(ordem, nomeSetor);
+                }}
+                title="Remover responsável"
+              >
+                <UserMinus className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+
+          {temLinhasConcluidas ? (
+            <div className="space-y-1 border-t pt-2">
+              <p className="text-[10px] font-medium text-muted-foreground">
+                Linhas concluídas ({ordem.linhas_concluidas.length}):
+              </p>
+              {ordem.linhas_concluidas.slice(0, 5).map((linha: any, idx: number) => (
+                <div key={idx} className="flex items-center gap-1 text-[10px]">
+                  <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                  <span className="truncate">
+                    {linha.quantidade}x {linha.item}
+                    {linha.tamanho && ` (${linha.tamanho})`}
+                  </span>
+                </div>
+              ))}
+              {ordem.linhas_concluidas.length > 5 && (
+                <p className="text-[10px] text-muted-foreground">
+                  +{ordem.linhas_concluidas.length - 5} mais...
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-[10px] text-muted-foreground border-t pt-2">
+              Nenhuma linha concluída ainda
+            </p>
+          )}
+        </>
+      );
+
+      if (podeGerirPause && ordem.status !== 'concluido') {
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button type="button" onClick={(e) => e.stopPropagation()} className="cursor-pointer">
+                {avatarContent}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="top" className="w-72 p-3" onClick={(e) => e.stopPropagation()}>
+              {infoBlock}
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full mt-3"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAbrirPausarOrdem(ordem);
+                }}
+              >
+                <PauseCircle className="h-3.5 w-3.5 mr-2" />
+                Pausar ordem
+              </Button>
+            </PopoverContent>
+          </Popover>
+        );
+      }
+
       return (
         <Tooltip>
           <TooltipTrigger asChild>
             {avatarContent}
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-[280px] p-3">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2">
-                {ordem.capturada_por_foto && (
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={ordem.capturada_por_foto} />
-                    <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
-                  </Avatar>
-                )}
-                <div>
-                  <p className="text-xs font-semibold">{ordem.capturada_por_nome || 'Responsável'}</p>
-                  <p className="text-[10px] text-muted-foreground">{nomeSetor}</p>
-                </div>
-              </div>
-              {isAdmin && ordem.ordem_id && ordem.status !== 'concluido' && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoverResponsavel(ordem, nomeSetor);
-                  }}
-                  title="Remover responsável"
-                >
-                  <UserMinus className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </div>
-            
-            {temLinhasConcluidas ? (
-              <div className="space-y-1 border-t pt-2">
-                <p className="text-[10px] font-medium text-muted-foreground">
-                  Linhas concluídas ({ordem.linhas_concluidas.length}):
-                </p>
-                {ordem.linhas_concluidas.slice(0, 5).map((linha: any, idx: number) => (
-                  <div key={idx} className="flex items-center gap-1 text-[10px]">
-                    <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
-                    <span className="truncate">
-                      {linha.quantidade}x {linha.item}
-                      {linha.tamanho && ` (${linha.tamanho})`}
-                    </span>
-                  </div>
-                ))}
-                {ordem.linhas_concluidas.length > 5 && (
-                  <p className="text-[10px] text-muted-foreground">
-                    +{ordem.linhas_concluidas.length - 5} mais...
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-[10px] text-muted-foreground border-t pt-2">
-                Nenhuma linha concluída ainda
-              </p>
-            )}
+            {infoBlock}
           </TooltipContent>
         </Tooltip>
+      );
+    }
+
+    if (podeGerirPause && ordem.ordem_id) {
+      return (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              onClick={(e) => e.stopPropagation()}
+              className="h-5 w-5 rounded-full bg-yellow-500/10 flex items-center justify-center cursor-pointer"
+            >
+              <AlertCircle className="h-3.5 w-3.5 text-yellow-600" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent side="top" className="w-64 p-3" onClick={(e) => e.stopPropagation()}>
+            <p className="text-xs font-semibold mb-1">{nomeSetor}</p>
+            <p className="text-xs text-muted-foreground mb-3">Aguardando captura por um operador.</p>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAbrirPausarOrdem(ordem);
+              }}
+            >
+              <PauseCircle className="h-3.5 w-3.5 mr-2" />
+              Pausar ordem
+            </Button>
+          </PopoverContent>
+        </Popover>
       );
     }
 
@@ -2638,6 +2813,20 @@ className="flex h-[20px] w-full rounded-[3px]"
         pedido={pedido}
         isLoading={isExcluindo}
       />
+
+      {ordemParaPausar && (
+        <AvisoFaltaModal
+          open={avisoFaltaOpen}
+          onOpenChange={(open) => {
+            setAvisoFaltaOpen(open);
+            if (!open) setOrdemParaPausar(null);
+          }}
+          numeroOrdem={ordemParaPausar.numeroOrdem}
+          linhas={linhasOrdemPausar}
+          onConfirm={handleConfirmarPausa}
+          isPausing={pausarOrdemDirecao.isPending}
+        />
+      )}
 
       <Dialog open={showFinalizarDireto} onOpenChange={(open) => { if (!isFinalizandoDireto) setShowFinalizarDireto(open); }}>
         <DialogContent className="max-w-md">
