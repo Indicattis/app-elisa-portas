@@ -11,6 +11,7 @@ export interface VendedorProgresso {
   tier_atingido: MetaVendasTier | null;
   bonificacao_calculada: number;
   total_vendido_mes: number;
+  total_vendido_semana: number;
 }
 
 export interface MetaProgresso {
@@ -81,6 +82,23 @@ export function useProgressoMetasVendas() {
         porVendedorMes.set(v.atendente_id, (porVendedorMes.get(v.atendente_id) || 0) + valor);
       }
 
+      // Total vendido na semana corrente
+      const periodoSemana = getInicioFimSemana(hoje);
+      const { data: vendasSemana, error: errSemana } = await supabase
+        .from('vendas')
+        .select('atendente_id, valor_venda')
+        .eq('is_rascunho', false)
+        .gte('data_venda', periodoSemana.inicioIso)
+        .lte('data_venda', periodoSemana.fimIso);
+      if (errSemana) throw errSemana;
+      const porVendedorSemana = new Map<string, number>();
+      let totalGlobalSemana = 0;
+      for (const v of (vendasSemana as any[]) || []) {
+        const valor = Number(v.valor_venda || 0);
+        totalGlobalSemana += valor;
+        porVendedorSemana.set(v.atendente_id, (porVendedorSemana.get(v.atendente_id) || 0) + valor);
+      }
+
       const resultados: MetaProgresso[] = [];
 
       for (const meta of ativas) {
@@ -124,6 +142,7 @@ export function useProgressoMetasVendas() {
               tier_atingido: tier,
               bonificacao_calculada: calcularBonificacao(total, tierBonus, !!tier),
               total_vendido_mes: porVendedorMes.get(meta.vendedor_id) || 0,
+              total_vendido_semana: porVendedorSemana.get(meta.vendedor_id) || 0,
             }];
           } else {
             // Inclui todos os vendedores elegíveis, mesmo sem vendas
@@ -141,6 +160,7 @@ export function useProgressoMetasVendas() {
                   tier_atingido: tier,
                   bonificacao_calculada: calcularBonificacao(total, tier || primeiroTier, !!tier),
                   total_vendido_mes: totalMes,
+                  total_vendido_semana: porVendedorSemana.get(u.user_id) || 0,
                 };
               })
               .sort((a, b) => b.total_vendido - a.total_vendido || a.nome.localeCompare(b.nome));
@@ -156,6 +176,7 @@ export function useProgressoMetasVendas() {
             tier_atingido: tier,
             bonificacao_calculada: calcularBonificacao(totalGlobal, tier || primeiroTier, !!tier),
             total_vendido_mes: totalGlobalMes,
+            total_vendido_semana: totalGlobalSemana,
           }];
         }
 
