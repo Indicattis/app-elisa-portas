@@ -196,7 +196,6 @@ import VendaDetalhesMinimalista from "./pages/vendas/VendaDetalhesMinimalista";
 
 // Hub da Fábrica Minimalista
 import FabricaHub from "./pages/fabrica/FabricaHub";
-import PedidosProducaoMinimalista from "./pages/fabrica/PedidosProducaoMinimalista";
 import ControleEstoqueMinimalista from "./pages/fabrica/ControleEstoqueMinimalista";
 import ProducaoMinimalista from "./pages/fabrica/ProducaoMinimalista";
 import SoldaMinimalista from "./pages/fabrica/producao/SoldaMinimalista";
