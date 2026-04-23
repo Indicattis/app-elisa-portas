@@ -2069,6 +2069,16 @@ className="flex h-[20px] w-full rounded-[3px]"
           etapaAtual={config?.label || ''} 
         />
 
+        <ConcluirManutencaoModal
+          open={showConcluirManutencao}
+          onOpenChange={setShowConcluirManutencao}
+          pedidoId={pedido.id}
+          pedidoNumero={pedido.numero_pedido}
+          onConcluido={() => {
+            if (onMoverEtapa) onMoverEtapa(pedido.id, true);
+          }}
+        />
+
         <ExcluirPedidoModal
           open={showExcluirPedido}
           onOpenChange={setShowExcluirPedido}
