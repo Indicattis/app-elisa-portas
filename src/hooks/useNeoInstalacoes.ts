@@ -385,6 +385,8 @@ export const useNeoInstalacoesFinalizadas = () => {
         .from("neo_instalacoes")
         .select("*")
         .eq("concluida", true)
+        .neq("status", "aguardando_cliente")
+        .neq("status", "arquivada")
         .gte("concluida_em", dataLimite.toISOString())
         .order("concluida_em", { ascending: false });
 
