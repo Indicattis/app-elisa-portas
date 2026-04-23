@@ -1,40 +1,64 @@
 
 
-## Aba "Catálogo" em Tabela de Preços
+## Pedido apenas-manutenção em Instalações
 
-Adicionar uma segunda aba na página `/direcao/vendas/tabela-precos` permitindo editar **preço de venda** e **custo do produto** dos itens cadastrados em `/vendas/catalogo`.
+Diferenciar pedidos cuja venda só contém produtos de manutenção (ex.: AID IMOVEIS LTDA) na aba **Instalações** de `/direcao/gestao-fabrica`. Esses pedidos não envolvem fabricação nem carregamento — só registrar a equipe/autorizado que fez o serviço e finalizar.
 
-### Estrutura
+### Detecção
 
-A página atual ganha um `Tabs` no topo com duas abas:
+O pedido é "apenas manutenção" quando todos os `produtos_vendas` têm `tipo_produto = 'manutencao'` (mesma regra já usada em `usePedidoCreation` e `pedidoFluxograma`).
 
-1. **Portas** — todo o conteúdo atual (pesquisa rápida + tabela de itens da tabela de preços de portas).
-2. **Catálogo** — nova aba com listagem dos produtos do `vendas_catalogo` (ativos), em tabela enxuta com edição inline de **Preço de Venda** e **Custo**.
-
-```text
-[ Portas ] [ Catálogo ]
-─────────────────────────────────────────────
-Catálogo
-─────────────────────────────────────────────
-Imagem | Produto | Categoria | SKU | Custo (editável) | Preço Venda (editável) | Margem | Estoque
+Como `produtos_vendas` já é carregado em `venda.produtos_vendas` no `PedidoCard`, basta derivar:
+```ts
+const apenasManutencao = produtos.length > 0 
+  && produtos.every((p: any) => p.tipo_produto === 'manutencao');
 ```
 
-### Comportamento
+### Mudanças visuais (PedidoCard, etapa = `instalacoes`)
 
-- Reaproveita `useVendasCatalogo` (já existente) para listar e `editarProduto` para salvar.
-- Edição inline igual ao padrão atual do "Lucro" em portas: clicar no valor abre input, Enter salva, Esc cancela.
-- Margem (%) calculada localmente: `(preco_venda - custo_produto) / preco_venda * 100`.
-- Busca por nome/SKU acima da tabela.
-- Sem criação/exclusão nesta aba — para isso o usuário continua usando `/vendas/catalogo`.
+- Quando `apenasManutencao`, substituir o badge `Hammer` (Instalação, azul) por um badge `Wrench` (Manutenção, laranja) — mesmo estilo já usado em `VendaPendentePedidoCard` (`bg-orange-500/10 text-orange-700 border-orange-500/50`).
+- Aplicar tanto na linha compacta (col 6, ~linha 1518) quanto no bloco de flags da view detalhada (~linha 2223).
+
+### Mudanças funcionais (etapa = `instalacoes`)
+
+Hoje o botão "Avançar" só fica ativo se `carregamentoConcluido = true` (vindo de `instalacoes.carregamento_concluido`). Para pedidos apenas-manutenção:
+
+1. **Pular validação de carregamento.** Em `getValidacaoAvancoEtapa('instalacoes')`, se `apenasManutencao`, considerar `podeAvancar = instalacao_concluida === true` (em vez de `carregamentoConcluido`). Mensagem: "Selecione a equipe/autorizado que executou o serviço para finalizar".
+2. **Substituir o fluxo de "Avançar".** Em vez de abrir `ConfirmarExpedicaoModal` (que assume carregamento), abrir um novo modal `ConcluirManutencaoModal` que pede:
+   - Tipo: Equipe Elisa / Autorizado (radio).
+   - Responsável: select alimentado por `equipes_instalacao` (ativas) ou `autorizados` (ativos), conforme tipo.
+   - Botão "Concluir e Finalizar".
+3. **Ao confirmar**, atualizar `instalacoes` do pedido com:
+   ```ts
+   tipo_instalacao, responsavel_instalacao_id, responsavel_instalacao_nome,
+   instalacao_concluida: true, instalacao_concluida_em: now(), instalacao_concluida_por: user.id,
+   carregamento_concluido: true  // marca como concluído para satisfazer a fonte unificada
+   ```
+   Em seguida chamar `onMoverEtapa(pedido.id)` (mesma rota que leva a etapa `instalacoes` → `finalizado`, já existente).
+
+4. **Esconder/ocultar** o botão "Definir data de carregamento" e o aviso "Defina data de carregamento" para esses pedidos (linha ~2457).
+
+### Fluxo resultante
+
+```text
+Pedido apenas-manutenção em "Instalações"
+   └─ badge laranja Manutenção (em vez de azul Instalação)
+   └─ botão Avançar abre ConcluirManutencaoModal
+        ├─ Tipo + Responsável
+        └─ Confirma → UPDATE instalacoes + moveParaFinalizado
+```
+
+Pedidos com portas/produtos normais continuam exatamente como hoje (carregar ordem em Expedição → confirmar → finalizar).
 
 ### Fora de escopo
 
-- Não altera `/vendas/catalogo`.
-- Não muda permissões/RLS — quem já edita `vendas_catalogo` continua editando.
-- Não altera campos além de `custo_produto` e `preco_venda`.
+- Não muda criação do pedido (`usePedidoCreation` já direciona manutenção pra `instalacoes`).
+- Não muda fluxo em `/logistica/expedicao` nem cards Neo.
+- Não muda regras de pedidos com mistura (manutenção + portas) — esses seguem o fluxo normal.
+- Sem migração de banco — usa colunas existentes em `instalacoes`.
 
 ### Arquivos
 
-- `src/pages/TabelaPrecos.tsx` — envolver conteúdo atual em `<Tabs>` e adicionar aba "Catálogo".
-- `src/components/tabela-precos/CatalogoPrecosTab.tsx` (novo) — componente da nova aba, usa `useVendasCatalogo`.
+- `src/components/pedidos/PedidoCard.tsx` — derivar `apenasManutencao`, trocar badge, ajustar `getValidacaoAvancoEtapa('instalacoes')`, trocar abertura do modal e ocultar aviso de data.
+- `src/components/pedidos/ConcluirManutencaoModal.tsx` (novo) — modal com seleção de tipo + responsável (reaproveita pattern de `InstalacaoDetailsSheet` para carregar `equipes_instalacao` e `autorizados`), faz `UPDATE` em `instalacoes` e dispara `onMoverEtapa`.
 
