@@ -133,6 +133,13 @@ export function PedidoCard({
   const [valorAReceberTemp, setValorAReceberTemp] = useState('');
   const [popoverValorAberto, setPopoverValorAberto] = useState(false);
   const [salvandoValor, setSalvandoValor] = useState(false);
+  const [avisoFaltaOpen, setAvisoFaltaOpen] = useState(false);
+  const [ordemParaPausar, setOrdemParaPausar] = useState<{
+    ordemId: string;
+    tipoOrdem: TipoOrdemProducao;
+    pedidoId: string | null;
+    numeroOrdem: string;
+  } | null>(null);
 
   const handleAbrirPopoverValor = (e: React.MouseEvent) => {
     e.stopPropagation();
