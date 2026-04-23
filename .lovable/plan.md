@@ -1,64 +1,64 @@
 
 
-## Pedido apenas-manutenção em Instalações
+## Pedidos "apenas separação" finalizam como manutenção
 
-Diferenciar pedidos cuja venda só contém produtos de manutenção (ex.: AID IMOVEIS LTDA) na aba **Instalações** de `/direcao/gestao-fabrica`. Esses pedidos não envolvem fabricação nem carregamento — só registrar a equipe/autorizado que fez o serviço e finalizar.
+Permitir que pedidos cujas linhas de produção sejam **todas** de `categoria_linha = 'separacao'` (sem solda nem perfiladeira) sejam finalizados na etapa **Instalações** pelo mesmo fluxo dos pedidos apenas-manutenção: sem exigir carregamento, abrindo o `ConcluirManutencaoModal` para registrar a equipe/autorizado responsável.
 
 ### Detecção
 
-O pedido é "apenas manutenção" quando todos os `produtos_vendas` têm `tipo_produto = 'manutencao'` (mesma regra já usada em `usePedidoCreation` e `pedidoFluxograma`).
+Adicionar uma nova query em `PedidoCard.tsx` (ao lado de `pedido-linhas-count`) que conta linhas por categoria do pedido:
 
-Como `produtos_vendas` já é carregado em `venda.produtos_vendas` no `PedidoCard`, basta derivar:
 ```ts
-const apenasManutencao = produtos.length > 0 
-  && produtos.every((p: any) => p.tipo_produto === 'manutencao');
+const { data: temApenasSeparacao = false } = useQuery({
+  queryKey: ['pedido-linhas-categorias', pedido.id],
+  queryFn: async () => {
+    const { data } = await supabase
+      .from('pedido_linhas')
+      .select('categoria_linha')
+      .eq('pedido_id', pedido.id);
+    if (!data || data.length === 0) return false;
+    return data.every(l => l.categoria_linha === 'separacao');
+  },
+  enabled: pedido.etapa_atual === 'instalacoes',
+});
 ```
 
-### Mudanças visuais (PedidoCard, etapa = `instalacoes`)
+Derivar então:
+```ts
+const finalizaSemCarregamento = apenasManutencao || temApenasSeparacao;
+```
 
-- Quando `apenasManutencao`, substituir o badge `Hammer` (Instalação, azul) por um badge `Wrench` (Manutenção, laranja) — mesmo estilo já usado em `VendaPendentePedidoCard` (`bg-orange-500/10 text-orange-700 border-orange-500/50`).
-- Aplicar tanto na linha compacta (col 6, ~linha 1518) quanto no bloco de flags da view detalhada (~linha 2223).
+### Mudanças no `PedidoCard.tsx`
 
-### Mudanças funcionais (etapa = `instalacoes`)
+Substituir as referências a `apenasManutencao` que controlam **fluxo de finalização sem carregamento** por `finalizaSemCarregamento`:
 
-Hoje o botão "Avançar" só fica ativo se `carregamentoConcluido = true` (vindo de `instalacoes.carregamento_concluido`). Para pedidos apenas-manutenção:
+1. **Validação de avanço** (linhas ~330-343): `etapa === 'instalacoes' && finalizaSemCarregamento` → libera Avançar com mensagem "Selecione a equipe/autorizado que executou o serviço para finalizar".
+2. **Botão Avançar** (linhas ~1828 e ~2429): condição `(carregamentoConcluido || (etapaAtual === 'instalacoes' && finalizaSemCarregamento))` e `if (etapaAtual === 'instalacoes' && finalizaSemCarregamento) setShowConcluirManutencao(true)`.
+3. **Esconder botão de agendar carregamento e aviso "Defina data de carregamento"** (linhas ~1713 e ~2497): trocar `!apenasManutencao` por `!finalizaSemCarregamento`.
 
-1. **Pular validação de carregamento.** Em `getValidacaoAvancoEtapa('instalacoes')`, se `apenasManutencao`, considerar `podeAvancar = instalacao_concluida === true` (em vez de `carregamentoConcluido`). Mensagem: "Selecione a equipe/autorizado que executou o serviço para finalizar".
-2. **Substituir o fluxo de "Avançar".** Em vez de abrir `ConfirmarExpedicaoModal` (que assume carregamento), abrir um novo modal `ConcluirManutencaoModal` que pede:
-   - Tipo: Equipe Elisa / Autorizado (radio).
-   - Responsável: select alimentado por `equipes_instalacao` (ativas) ou `autorizados` (ativos), conforme tipo.
-   - Botão "Concluir e Finalizar".
-3. **Ao confirmar**, atualizar `instalacoes` do pedido com:
-   ```ts
-   tipo_instalacao, responsavel_instalacao_id, responsavel_instalacao_nome,
-   instalacao_concluida: true, instalacao_concluida_em: now(), instalacao_concluida_por: user.id,
-   carregamento_concluido: true  // marca como concluído para satisfazer a fonte unificada
-   ```
-   Em seguida chamar `onMoverEtapa(pedido.id)` (mesma rota que leva a etapa `instalacoes` → `finalizado`, já existente).
-
-4. **Esconder/ocultar** o botão "Definir data de carregamento" e o aviso "Defina data de carregamento" para esses pedidos (linha ~2457).
+**Não alterar** o badge laranja de "Manutenção" (linhas 1529 e 2261) — esse continua usando `apenasManutencao` puro, pois pedidos de separação seguem com seu badge de Instalação azul normal.
 
 ### Fluxo resultante
 
 ```text
-Pedido apenas-manutenção em "Instalações"
-   └─ badge laranja Manutenção (em vez de azul Instalação)
-   └─ botão Avançar abre ConcluirManutencaoModal
-        ├─ Tipo + Responsável
-        └─ Confirma → UPDATE instalacoes + moveParaFinalizado
+Pedido na etapa Instalações com linhas só de separação
+  └─ badge Instalação (azul) — normal
+  └─ botão Avançar abre ConcluirManutencaoModal
+       ├─ Tipo + Responsável (Equipe Elisa / Autorizado)
+       └─ Confirma → UPDATE instalacoes (instalacao_concluida + carregamento_concluido = true)
+                  → onMoverEtapa → Finalizado
 ```
 
-Pedidos com portas/produtos normais continuam exatamente como hoje (carregar ordem em Expedição → confirmar → finalizar).
+Pedidos com qualquer linha de solda ou perfiladeira continuam exigindo carregamento concluído como hoje.
 
 ### Fora de escopo
 
-- Não muda criação do pedido (`usePedidoCreation` já direciona manutenção pra `instalacoes`).
-- Não muda fluxo em `/logistica/expedicao` nem cards Neo.
-- Não muda regras de pedidos com mistura (manutenção + portas) — esses seguem o fluxo normal.
-- Sem migração de banco — usa colunas existentes em `instalacoes`.
+- Sem migração de banco — usa `pedido_linhas.categoria_linha` e `instalacoes` existentes.
+- Não altera fluxo nas etapas anteriores (Aberto, Em Produção, Inspeção, etc.). O pedido ainda passa pela produção da separação normalmente; o atalho é só na finalização.
+- Não muda `/logistica/expedicao` nem o badge visual.
+- Pedidos `apenasManutencao` continuam exatamente como hoje.
 
 ### Arquivos
 
-- `src/components/pedidos/PedidoCard.tsx` — derivar `apenasManutencao`, trocar badge, ajustar `getValidacaoAvancoEtapa('instalacoes')`, trocar abertura do modal e ocultar aviso de data.
-- `src/components/pedidos/ConcluirManutencaoModal.tsx` (novo) — modal com seleção de tipo + responsável (reaproveita pattern de `InstalacaoDetailsSheet` para carregar `equipes_instalacao` e `autorizados`), faz `UPDATE` em `instalacoes` e dispara `onMoverEtapa`.
+- `src/components/pedidos/PedidoCard.tsx` — nova query `pedido-linhas-categorias`, derivar `finalizaSemCarregamento`, trocar 5 referências indicadas.
 
