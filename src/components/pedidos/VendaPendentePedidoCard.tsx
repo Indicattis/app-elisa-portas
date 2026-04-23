@@ -602,6 +602,30 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
               </>
             ) : (
               <>
+                {/* Criar Pedido */}
+                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        disabled={isCreating}
+                        className="flex h-[20px] w-full rounded-[3px] border-primary/50 text-primary hover:bg-primary/10"
+                        onClick={handleCriarPedido}
+                      >
+                        {isCreating ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Plus className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Criar Pedido de Produção</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+
                 {/* Dispensar Pedido */}
                 <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                   <AlertDialog>
