@@ -30,13 +30,23 @@ function BarraVendedor({
   const maxAlvo = Math.max(...tiersSorted.map((t) => Number(t.valor_alvo)), 1);
   const total = vendedor.total_vendido;
   const tierAtual = vendedor.tier_atingido;
-  const pct = Math.min((total / maxAlvo) * 100, 100);
   // Próximo tier (objetivo): primeiro tier ainda não atingido.
-  // Se já atingiu todos, usa a cor do último (tier máximo).
+  // Se já atingiu todos, usa o último (tier máximo).
+  const proximoIdx = tiersSorted.findIndex((t) => total < Number(t.valor_alvo));
   const proximoTier =
-    tiersSorted.find((t) => total < Number(t.valor_alvo)) ||
-    tiersSorted[tiersSorted.length - 1] ||
-    null;
+    proximoIdx >= 0
+      ? tiersSorted[proximoIdx]
+      : tiersSorted[tiersSorted.length - 1] || null;
+  // Tier anterior ao próximo (base do segmento atual). Se não existe, base = 0.
+  const baseAnterior =
+    proximoIdx > 0
+      ? Number(tiersSorted[proximoIdx - 1].valor_alvo)
+      : proximoIdx === -1 && tiersSorted.length > 1
+        ? Number(tiersSorted[tiersSorted.length - 2].valor_alvo)
+        : 0;
+  const alvoAtual = proximoTier ? Number(proximoTier.valor_alvo) : maxAlvo;
+  const denom = Math.max(alvoAtual - baseAnterior, 1);
+  const pct = Math.min(Math.max(((total - baseAnterior) / denom) * 100, 0), 100);
   const corPreenchimento = proximoTier?.cor || tierAtual?.cor || '#3B82F6';
 
   return (
@@ -75,30 +85,20 @@ function BarraVendedor({
           </div>
         </div>
 
-        {/* Barra segmentada por tier */}
+        {/* Barra do segmento atual (entre tier anterior e próximo) */}
         <div className="relative h-7 rounded-md bg-white/5 overflow-hidden border border-white/10">
-          {/* Preenchimento principal com cor do tier atual */}
           <div
             className="absolute inset-y-0 left-0 transition-[width] duration-700 ease-out"
             style={{
               width: `${pct}%`,
-              background: tierAtual
-                ? `linear-gradient(90deg, ${corPreenchimento}55, ${corPreenchimento})`
-                : 'linear-gradient(90deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.35))',
+              background: `linear-gradient(90deg, ${corPreenchimento}55, ${corPreenchimento})`,
             }}
           />
-          {/* Marcadores de tier (linhas verticais) */}
-          {tiersSorted.map((t) => {
-            const left = (Number(t.valor_alvo) / maxAlvo) * 100;
-            const atingido = total >= Number(t.valor_alvo);
-            return (
-              <div
-                key={t.id || t.nome}
-                className="absolute top-0 bottom-0 w-px"
-                style={{ left: `${left}%`, background: atingido ? t.cor : 'rgba(255,255,255,0.25)' }}
-              />
-            );
-          })}
+          {/* Rótulos de base e alvo do segmento */}
+          <div className="absolute inset-0 flex items-center justify-between px-2 text-[10px] text-white/60 tabular-nums pointer-events-none">
+            <span>{formatCurrency(baseAnterior)}</span>
+            <span>{formatCurrency(alvoAtual)}</span>
+          </div>
         </div>
 
       </div>
