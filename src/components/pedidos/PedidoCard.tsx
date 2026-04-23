@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench, CalendarPlus } from "lucide-react";
+import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, PlayCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench, CalendarPlus } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +32,9 @@ import { EnviarCorrecaoModal } from "./EnviarCorrecaoModal";
 import { useEnviarParaCorrecao } from "@/hooks/useEnviarParaCorrecao";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
 import React, { useState, useMemo } from "react";
+import { AvisoFaltaModal } from "@/components/production/AvisoFaltaModal";
+import { useGestaoOrdensProducao } from "@/hooks/useGestaoOrdensProducao";
+import type { TipoOrdemProducao } from "@/lib/pausarOrdemProducao";
 
 import { useNavigate, useLocation } from "react-router-dom";
 import { PedidoDetalhesSheet } from "./PedidoDetalhesSheet";
