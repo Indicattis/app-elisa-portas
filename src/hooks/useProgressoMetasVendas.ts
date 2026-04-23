@@ -97,6 +97,7 @@ export function useProgressoMetasVendas() {
           if (meta.vendedor_id) {
             const total = porVendedor.get(meta.vendedor_id) || 0;
             const tier = calcularTier(total, tiers);
+            const tierBonus = tier || [...tiers].sort((a, b) => Number(a.valor_alvo) - Number(b.valor_alvo))[0] || null;
             const u = userMap.get(meta.vendedor_id);
             vendedores = [{
               vendedor_id: meta.vendedor_id,
@@ -104,10 +105,11 @@ export function useProgressoMetasVendas() {
               foto_perfil_url: u?.foto_perfil_url ?? null,
               total_vendido: total,
               tier_atingido: tier,
-              bonificacao_calculada: calcularBonificacao(total, tier),
+              bonificacao_calculada: calcularBonificacao(total, tierBonus),
             }];
           } else {
             // Inclui todos os vendedores elegíveis, mesmo sem vendas
+            const primeiroTier = [...tiers].sort((a, b) => Number(a.valor_alvo) - Number(b.valor_alvo))[0] || null;
             vendedores = elegiveis
               .map((u) => {
                 const total = porVendedor.get(u.user_id) || 0;
@@ -118,20 +120,21 @@ export function useProgressoMetasVendas() {
                   foto_perfil_url: u.foto_perfil_url ?? null,
                   total_vendido: total,
                   tier_atingido: tier,
-                  bonificacao_calculada: calcularBonificacao(total, tier),
+                  bonificacao_calculada: calcularBonificacao(total, tier || primeiroTier),
                 };
               })
               .sort((a, b) => b.total_vendido - a.total_vendido || a.nome.localeCompare(b.nome));
           }
         } else {
           const tier = calcularTier(totalGlobal, tiers);
+          const primeiroTier = [...tiers].sort((a, b) => Number(a.valor_alvo) - Number(b.valor_alvo))[0] || null;
           vendedores = [{
             vendedor_id: 'global',
             nome: 'Equipe',
             foto_perfil_url: null,
             total_vendido: totalGlobal,
             tier_atingido: tier,
-            bonificacao_calculada: calcularBonificacao(totalGlobal, tier),
+            bonificacao_calculada: calcularBonificacao(totalGlobal, tier || primeiroTier),
           }];
         }
 
