@@ -105,7 +105,14 @@ function BarraVendedor({
                   }}
                 />
                 <div className="absolute inset-0 flex items-center justify-end pr-2 text-sm font-semibold text-white/70 tabular-nums pointer-events-none">
-                  {formatCurrency(alvo)}
+                  <div className="flex flex-col items-end leading-tight">
+                    <span>{formatCurrency(alvo)}</span>
+                    <span className="text-[10px] font-medium" style={{ color: t.cor }}>
+                      {t.bonificacao_tipo === 'fixo'
+                        ? formatCurrency(Number(t.bonificacao_valor))
+                        : `${Number(t.bonificacao_valor)}%`}
+                    </span>
+                  </div>
                 </div>
               </div>
             );
