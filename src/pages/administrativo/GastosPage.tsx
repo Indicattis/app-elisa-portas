@@ -240,15 +240,18 @@ export default function GastosPage() {
   const [filtroTipo, setFiltroTipo] = useState("");
   const [filtroBanco, setFiltroBanco] = useState("");
   const [filtroResponsavel, setFiltroResponsavel] = useState("");
+  const [filtroDre, setFiltroDre] = useState<"all" | "sim" | "nao">("all");
 
   const gastosFiltrados = useMemo(() => {
     return gastos.filter((g) => {
       if (filtroTipo && filtroTipo !== "all" && g.tipo_custo_id !== filtroTipo) return false;
       if (filtroBanco && filtroBanco !== "all" && g.banco_id !== filtroBanco) return false;
       if (filtroResponsavel && filtroResponsavel !== "all" && g.responsavel_id !== filtroResponsavel) return false;
+      if (filtroDre === "sim" && g.tipo_custo_aparece_no_dre === false) return false;
+      if (filtroDre === "nao" && g.tipo_custo_aparece_no_dre !== false) return false;
       return true;
     });
-  }, [gastos, filtroTipo, filtroBanco, filtroResponsavel]);
+  }, [gastos, filtroTipo, filtroBanco, filtroResponsavel, filtroDre]);
 
   const totalGastos = useMemo(
     () => gastosFiltrados.reduce((sum, g) => sum + g.valor, 0),
