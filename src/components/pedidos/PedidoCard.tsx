@@ -329,6 +329,12 @@ export function PedidoCard({
       case 'aguardando_coleta':
       case 'instalacoes':
       case 'correcoes':
+        if (etapa === 'instalacoes' && apenasManutencao) {
+          return {
+            podeAvancar: true,
+            mensagem: "Selecione a equipe/autorizado que executou o serviço para finalizar"
+          };
+        }
         return {
           podeAvancar: carregamentoConcluido,
           mensagem: carregamentoConcluido 
