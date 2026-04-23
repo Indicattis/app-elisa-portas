@@ -1,51 +1,46 @@
 
 
-## Adicionar botão "Criar Pedido" na aba Aprovação Diretor
+## Diagnóstico: Venda 641a1ff0 sem produtos
 
-Em `/direcao/gestao-fabrica` aba **Aprovação Diretor**, as vendas faturadas aguardando criação de pedido (renderizadas pelo `VendaPendentePedidoCard` em `mode='pedido'`) hoje só têm 2 botões de ação: **Dispensar** (amarelo) e **Concluir Direto / Arquivo Morto** (vermelho). Falta o botão principal — **Criar Pedido** — que efetivamente chama `handleCriarPedido` (já implementado no componente, função `createPedidoFromVenda`).
+A venda `WDL Vanderlei da Silva Esquadrias` (R$ 9.080,00, `frete_aprovado=true`, `custo_total=0`) **não tem nenhum registro na tabela `produtos_vendas`**:
 
-A grid já reserva 3 slots de ação (`30px 30px 30px`), portanto há espaço; basta renderizar o botão.
-
-### Mudança
-
-Em `src/components/pedidos/VendaPendentePedidoCard.tsx`, no bloco `mode === 'pedido'` (a partir da linha ~603), adicionar um terceiro botão **antes** do "Dispensar" e do "Concluir Direto":
-
-```tsx
-{/* Criar Pedido */}
-<div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <Button
-        size="icon"
-        variant="outline"
-        disabled={isCreating}
-        className="flex h-[20px] w-full rounded-[3px] border-primary/50 text-primary hover:bg-primary/10"
-        onClick={handleCriarPedido}
-      >
-        {isCreating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
-      </Button>
-    </TooltipTrigger>
-    <TooltipContent><p className="text-xs">Criar Pedido de Produção</p></TooltipContent>
-  </Tooltip>
-</div>
+```
+SELECT * FROM produtos_vendas WHERE venda_id = '641a1ff0...' → 0 linhas
 ```
 
-A função `handleCriarPedido`, o estado `isCreating` e os ícones `Plus`/`Loader2` já estão importados e implementados no arquivo — o botão apenas estava faltando.
+Por isso a seção **Produtos da Venda** aparece vazia em `/administrativo/financeiro/faturamento/641a1ff0...`. O frete foi marcado como aprovado e a venda tem valor, mas os itens nunca foram persistidos (ou foram excluídos).
 
-### Resultado
+### Possíveis causas
 
-Aba Aprovação Diretor → cada venda pendente passa a mostrar 3 ações:
-1. **Criar Pedido** (azul, ícone +) — gera pedido na etapa `aprovacao_diretor` via `createPedidoFromVenda`.
-2. **Dispensar** (amarelo, ícone ⚠) — marca `pedido_dispensado` e remove da lista.
-3. **Concluir Direto** (vermelho, ícone Archive) — cria pedido e arquiva imediatamente.
+1. **Cadastro de venda interrompido** — a venda foi gravada (linha em `vendas` criada) mas o passo seguinte de inserir os itens em `produtos_vendas` falhou silenciosamente. Não há nenhum log recente em `postgres_logs` mencionando essa venda nem `produtos_vendas`.
+2. **Exclusão manual posterior** — `updated_at` da venda é `2026-04-23 11:24:17` (hoje), bem depois do `created_at` (`2026-04-17 14:24:41`). Alguém pode ter editado/removido itens em algum fluxo administrativo.
+3. **Origem em rascunho/outro fluxo** — a tabela `orcamentos` não tem coluna `venda_id` (apenas `lead_id`), portanto não dá pra rastrear o orçamento de origem por aqui.
 
-### Fora de escopo
+### O que pode ser feito (escolha do usuário)
 
-- Não altera `mode='faturamento'` (que já tem link "Faturar →").
-- Não muda hook `usePedidoCreation` nem fluxo do pedido criado.
-- Sem migrações.
+**Opção A — Corrigir esta venda manualmente**
+Abrir a venda em `/vendas/minhas-vendas/<id>` (modo edição) e re-cadastrar as portas/produtos. Depois reabrir o faturamento.
 
-### Arquivos
+**Opção B — Restaurar dos backups do Supabase**
+Se houver backup PITR anterior a `2026-04-17 14:24:41`, restaurar as linhas de `produtos_vendas` daquela venda.
 
-- `src/components/pedidos/VendaPendentePedidoCard.tsx` — adicionar botão "Criar Pedido" no bloco `mode === 'pedido'`.
+**Opção C — Investigar a origem (recomendado antes de A/B)**
+Adicionar logs / verificar se há outras vendas afetadas:
+```sql
+SELECT v.id, v.cliente_nome, v.valor_venda, v.created_at
+FROM vendas v
+LEFT JOIN produtos_vendas p ON p.venda_id = v.id
+WHERE v.is_rascunho = false
+  AND v.valor_venda > 0
+  AND p.id IS NULL;
+```
+Se aparecerem várias, é bug recorrente no cadastro/edição. Se for só esta, foi caso isolado.
+
+### Próximo passo
+
+Se quiser, posso:
+- Rodar a query de auditoria (Opção C) para ver se outras vendas estão no mesmo estado, e
+- Em seguida abrir um plano para corrigir esta venda específica (Opção A) ou implementar uma proteção (ex.: bloquear faturamento quando `produtos_vendas` está vazio).
+
+Confirme qual caminho seguir.
 
