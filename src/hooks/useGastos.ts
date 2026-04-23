@@ -17,6 +17,7 @@ export interface Gasto {
   updated_at: string;
   // joined
   tipo_custo_nome?: string;
+  tipo_custo_aparece_no_dre?: boolean;
   responsavel_nome?: string;
   responsavel_foto?: string | null;
   banco_nome?: string;
