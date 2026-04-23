@@ -702,3 +702,67 @@ export const useNeoInstalacoesSemData = () => {
     reorganizarNeoInstalacoes: reorganizarMutation.mutate,
   };
 };
+
+// Hook para Neo Instalações em "Aguardando Cliente"
+export const useNeoInstalacoesAguardandoCliente = () => {
+  const queryClient = useQueryClient();
+
+  const { data: neoInstalacoesAguardandoCliente = [], isLoading } = useQuery({
+    queryKey: ["neo_instalacoes_aguardando_cliente"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("neo_instalacoes")
+        .select("*")
+        .eq("concluida", true)
+        .eq("status", "aguardando_cliente")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+
+      const { data: equipes } = await supabase
+        .from("equipes_instalacao")
+        .select("id, nome, cor")
+        .eq("ativa", true);
+      const equipesMap = new Map(equipes?.map(e => [e.id, e]) || []);
+
+      return (data || []).map(item => ({
+        ...item,
+        _tipo: 'neo_instalacao' as const,
+        tipo_responsavel: (item.tipo_responsavel as 'equipe_interna' | 'autorizado' | null) || 'equipe_interna',
+        equipe: item.equipe_id ? equipesMap.get(item.equipe_id) || null : null,
+      })) as NeoInstalacao[];
+    },
+  });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('neo-instalacoes-aguardando-cliente-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'neo_instalacoes' }, () => {
+        queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_aguardando_cliente"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
+  const retornarParaFinalizadoMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("neo_instalacoes")
+        .update({ status: 'concluida', updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_aguardando_cliente"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_finalizadas"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-contadores"] });
+      toast.success("Retornado para Finalizado!");
+    },
+    onError: () => toast.error("Erro ao retornar para Finalizado"),
+  });
+
+  return {
+    neoInstalacoesAguardandoCliente,
+    isLoading,
+    retornarParaFinalizadoNeoInstalacao: retornarParaFinalizadoMutation.mutateAsync,
+  };
+};
