@@ -11,6 +11,7 @@ export interface VendedorProgresso {
   tier_atingido: MetaVendasTier | null;
   bonificacao_calculada: number;
   total_vendido_mes: number;
+  total_vendido_semana: number;
 }
 
 export interface MetaProgresso {
@@ -79,6 +80,23 @@ export function useProgressoMetasVendas() {
         const valor = Number(v.valor_venda || 0);
         totalGlobalMes += valor;
         porVendedorMes.set(v.atendente_id, (porVendedorMes.get(v.atendente_id) || 0) + valor);
+      }
+
+      // Total vendido na semana corrente
+      const periodoSemana = getInicioFimSemana(hoje);
+      const { data: vendasSemana, error: errSemana } = await supabase
+        .from('vendas')
+        .select('atendente_id, valor_venda')
+        .eq('is_rascunho', false)
+        .gte('data_venda', periodoSemana.inicioIso)
+        .lte('data_venda', periodoSemana.fimIso);
+      if (errSemana) throw errSemana;
+      const porVendedorSemana = new Map<string, number>();
+      let totalGlobalSemana = 0;
+      for (const v of (vendasSemana as any[]) || []) {
+        const valor = Number(v.valor_venda || 0);
+        totalGlobalSemana += valor;
+        porVendedorSemana.set(v.atendente_id, (porVendedorSemana.get(v.atendente_id) || 0) + valor);
       }
 
       const resultados: MetaProgresso[] = [];
