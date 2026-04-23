@@ -33,10 +33,13 @@ interface NeoInstalacaoCardGestaoProps {
   onConcluir?: (id: string) => void;
   isConcluindo?: boolean;
   showConcluido?: boolean;
+  showAguardandoCliente?: boolean;
   onRetornar?: (id: string) => void;
   onAgendar?: (id: string) => void;
   onArquivar?: (id: string) => void;
   onEditar?: (neo: NeoInstalacao) => void;
+  onEnviarAguardandoCliente?: (id: string) => void;
+  onRetornarParaFinalizado?: (id: string) => void;
   onUpdateValor?: (id: string, data: { valor_a_receber: number | null; valor_a_receber_texto: string }) => Promise<void>;
   dragHandleProps?: Record<string, any>;
   isDragging?: boolean;
@@ -48,10 +51,13 @@ export function NeoInstalacaoCardGestao({
   onConcluir,
   isConcluindo,
   showConcluido = false,
+  showAguardandoCliente = false,
   onRetornar,
   onAgendar,
   onArquivar,
   onEditar,
+  onEnviarAguardandoCliente,
+  onRetornarParaFinalizado,
   onUpdateValor,
   dragHandleProps,
   isDragging,
