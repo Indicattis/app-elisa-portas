@@ -1,6 +1,16 @@
 import { CheckCircle2, Circle } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatCurrency } from '@/lib/utils';
 import type { MetaProgresso, VendedorProgresso } from '@/hooks/useProgressoMetasVendas';
+
+function getInitials(nome: string) {
+  return nome
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join('');
+}
 
 interface Props {
   progresso: MetaProgresso;
@@ -21,52 +31,69 @@ function BarraVendedor({
   const maxAlvo = Math.max(...tiersSorted.map((t) => Number(t.valor_alvo)), 1);
   const total = vendedor.total_vendido;
   const tierAtual = vendedor.tier_atingido;
-  const corPreenchimento = tierAtual?.cor || '#3B82F6';
   const pct = Math.min((total / maxAlvo) * 100, 100);
+  const corPreenchimento = tierAtual?.cor || '#3B82F6';
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 space-y-3">
-      <div className="flex items-baseline justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-sm text-white/60 truncate">{metaNome} — {escopoLabel}:</span>
-          <span className="text-sm font-semibold text-white truncate">{vendedor.nome}</span>
-        </div>
-        <div className="text-sm tabular-nums">
-          <span className="font-semibold text-white">{formatCurrency(total)}</span>
-          <span className="text-white/40"> / {formatCurrency(maxAlvo)}</span>
-        </div>
-      </div>
+    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 flex gap-5 items-stretch">
+      {/* Foto grande */}
+      <Avatar className="h-28 w-28 rounded-2xl shrink-0 border border-white/10">
+        <AvatarImage src={vendedor.foto_perfil_url || undefined} alt={vendedor.nome} className="object-cover" />
+        <AvatarFallback
+          className="rounded-2xl text-2xl font-semibold text-white"
+          style={{ background: `linear-gradient(135deg, ${corPreenchimento}55, ${corPreenchimento}22)` }}
+        >
+          {getInitials(vendedor.nome) || '?'}
+        </AvatarFallback>
+      </Avatar>
 
-      {/* Barra */}
-      <div className="relative h-6 rounded-md bg-white/5 overflow-hidden border border-white/10">
-        <div
-          className="h-full rounded-md transition-[width] duration-700 ease-out"
-          style={{
-            width: `${pct}%`,
-            background: `linear-gradient(90deg, ${corPreenchimento}66, ${corPreenchimento})`,
-          }}
-        />
-        {/* Marcadores de tier */}
-        {tiersSorted.map((t) => {
-          const left = (Number(t.valor_alvo) / maxAlvo) * 100;
-          return (
-            <div
-              key={t.id || t.nome}
-              className="absolute top-0 bottom-0 w-px bg-white/40"
-              style={{ left: `${left}%` }}
-            />
-          );
-        })}
-      </div>
+      <div className="flex-1 min-w-0 space-y-3">
+        <div className="flex items-baseline justify-between gap-3 flex-wrap">
+          <div className="min-w-0">
+            <div className="text-xl font-semibold text-white truncate">{vendedor.nome}</div>
+            <div className="text-xs text-white/50 truncate">{metaNome} — {escopoLabel}</div>
+          </div>
+          <div className="text-sm tabular-nums">
+            <span className="font-semibold text-white">{formatCurrency(total)}</span>
+            <span className="text-white/40"> / {formatCurrency(maxAlvo)}</span>
+          </div>
+        </div>
+
+        {/* Barra segmentada por tier */}
+        <div className="relative h-7 rounded-md bg-white/5 overflow-hidden border border-white/10">
+          {/* Preenchimento principal com cor do tier atual */}
+          <div
+            className="absolute inset-y-0 left-0 transition-[width] duration-700 ease-out"
+            style={{
+              width: `${pct}%`,
+              background: tierAtual
+                ? `linear-gradient(90deg, ${corPreenchimento}55, ${corPreenchimento})`
+                : 'linear-gradient(90deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.35))',
+            }}
+          />
+          {/* Marcadores de tier (linhas verticais) */}
+          {tiersSorted.map((t) => {
+            const left = (Number(t.valor_alvo) / maxAlvo) * 100;
+            const atingido = total >= Number(t.valor_alvo);
+            return (
+              <div
+                key={t.id || t.nome}
+                className="absolute top-0 bottom-0 w-px"
+                style={{ left: `${left}%`, background: atingido ? t.cor : 'rgba(255,255,255,0.25)' }}
+              />
+            );
+          })}
+        </div>
 
       {/* Tiers */}
       <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${tiersSorted.length}, minmax(0,1fr))` }}>
         {tiersSorted.map((t) => {
           const atingido = total >= Number(t.valor_alvo);
+          const valorPct = Number(t.bonificacao_valor) / 10; // 0,X
           const bonifTexto =
             t.bonificacao_tipo === 'fixo'
               ? formatCurrency(Number(t.bonificacao_valor))
-              : `${Number(t.bonificacao_valor)}% = ${formatCurrency(total * (Number(t.bonificacao_valor) / 100))}`;
+              : `${valorPct.toLocaleString('pt-BR', { minimumFractionDigits: 1 })} × vendido = ${formatCurrency(total * valorPct)}`;
           return (
             <div
               key={t.id || t.nome}
@@ -88,6 +115,7 @@ function BarraVendedor({
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );
