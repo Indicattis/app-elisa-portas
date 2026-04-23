@@ -142,6 +142,7 @@ export function useProgressoMetasVendas() {
               tier_atingido: tier,
               bonificacao_calculada: calcularBonificacao(total, tierBonus, !!tier),
               total_vendido_mes: porVendedorMes.get(meta.vendedor_id) || 0,
+              total_vendido_semana: porVendedorSemana.get(meta.vendedor_id) || 0,
             }];
           } else {
             // Inclui todos os vendedores elegíveis, mesmo sem vendas
@@ -159,6 +160,7 @@ export function useProgressoMetasVendas() {
                   tier_atingido: tier,
                   bonificacao_calculada: calcularBonificacao(total, tier || primeiroTier, !!tier),
                   total_vendido_mes: totalMes,
+                  total_vendido_semana: porVendedorSemana.get(u.user_id) || 0,
                 };
               })
               .sort((a, b) => b.total_vendido - a.total_vendido || a.nome.localeCompare(b.nome));
@@ -174,6 +176,7 @@ export function useProgressoMetasVendas() {
             tier_atingido: tier,
             bonificacao_calculada: calcularBonificacao(totalGlobal, tier || primeiroTier, !!tier),
             total_vendido_mes: totalGlobalMes,
+            total_vendido_semana: totalGlobalSemana,
           }];
         }
 
