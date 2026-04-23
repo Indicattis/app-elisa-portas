@@ -384,6 +384,8 @@ export const useNeoCorrecoesFinalizadas = () => {
         .from("neo_correcoes")
         .select("*")
         .eq("concluida", true)
+        .neq("status", "aguardando_cliente")
+        .neq("status", "arquivada")
         .gte("concluida_em", dataLimite.toISOString())
         .order("concluida_em", { ascending: false });
 
