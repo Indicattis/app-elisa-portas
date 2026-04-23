@@ -83,6 +83,10 @@ function OrdemCard({
   const linhasConcluidas = linhas.filter((l: any) => l.concluida).length;
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 100;
   const todasConcluidas = linhas.length === 0 || linhas.every((l: any) => l.concluida);
+  const podeAbrirDetalhes = !!ordem.responsavel_id;
+  const handleAbrirDetalhes = () => {
+    if (podeAbrirDetalhes) onOrdemClick(ordem);
+  };
   
   const { data: ordemProgress } = useOrdemProgress(ordem.pedido_id);
   const { tempoDecorrido, deveAnimar } = useCronometroOrdem({
@@ -140,8 +144,11 @@ function OrdemCard({
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4">
           {/* LATERAL ESQUERDA - Foto do responsável (oculta em mobile pequeno) */}
           <div 
-            className="hidden sm:block flex-shrink-0 cursor-pointer"
-            onClick={() => onOrdemClick(ordem)}
+            className={cn(
+              "hidden sm:block flex-shrink-0",
+              podeAbrirDetalhes ? "cursor-pointer" : "cursor-default"
+            )}
+            onClick={handleAbrirDetalhes}
           >
             {ordem.responsavel_id ? (
               <Avatar className="h-16 w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] ring-2 ring-primary/20">
@@ -162,8 +169,11 @@ function OrdemCard({
 
           {/* CENTRO - Informações */}
           <div 
-            className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 cursor-pointer min-w-0 w-full"
-            onClick={() => onOrdemClick(ordem)}
+            className={cn(
+              "flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 min-w-0 w-full",
+              podeAbrirDetalhes ? "cursor-pointer" : "cursor-default"
+            )}
+            onClick={handleAbrirDetalhes}
           >
             {ordem.responsavel_id && ordem.admin_users?.nome && (
               <div>
@@ -272,8 +282,11 @@ function OrdemCard({
               </Button>
             ) : ordem.capturada_em && tempoDecorrido !== '--:--:--' ? (
               <div 
-                className="h-12 w-full sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] sm:rounded-full rounded-lg bg-primary/10 flex flex-row sm:flex-col items-center justify-center gap-2 sm:gap-1 border-2 border-primary cursor-pointer hover:bg-primary/20 transition-colors relative overflow-hidden"
-                onClick={() => onOrdemClick(ordem)}
+                className={cn(
+                  "h-12 w-full sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] sm:rounded-full rounded-lg bg-primary/10 flex flex-row sm:flex-col items-center justify-center gap-2 sm:gap-1 border-2 border-primary transition-colors relative overflow-hidden",
+                  podeAbrirDetalhes ? "cursor-pointer hover:bg-primary/20" : "cursor-default"
+                )}
+                onClick={handleAbrirDetalhes}
               >
                 {deveAnimar && (
                   <div className="absolute inset-0 sm:rounded-full rounded-lg border-4 border-transparent border-t-primary/50 animate-spin" style={{ animationDuration: '3s' }} />
@@ -283,8 +296,11 @@ function OrdemCard({
               </div>
             ) : (
               <div 
-                className="h-12 w-full sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] rounded-lg bg-muted/30 flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => onOrdemClick(ordem)}
+                className={cn(
+                  "h-12 w-full sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] rounded-lg bg-muted/30 flex items-center justify-center transition-colors",
+                  podeAbrirDetalhes ? "cursor-pointer hover:bg-muted/50" : "cursor-default"
+                )}
+                onClick={handleAbrirDetalhes}
               >
                 <Paintbrush className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground/50" />
               </div>
