@@ -76,6 +76,7 @@ interface PedidoCardProps {
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
   onFinalizarDireto?: (pedidoId: string) => Promise<void>;
   onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>;
+  onDevolverParaFinalizado?: (pedidoId: string) => Promise<void>;
   basePath?: string;
   readOnly?: boolean;
   disableClienteClick?: boolean;
@@ -101,6 +102,7 @@ export function PedidoCard({
   onCorrecaoDetalhesClick,
   onFinalizarDireto,
   onEnviarAguardandoCliente,
+  onDevolverParaFinalizado,
   readOnly = false,
   disableClienteClick = false,
   showEtapaBadge = false,
@@ -130,6 +132,8 @@ export function PedidoCard({
   const [showEnviarCorrecao, setShowEnviarCorrecao] = useState(false);
   const [showAguardandoCliente, setShowAguardandoCliente] = useState(false);
   const [isEnviandoAguardandoCliente, setIsEnviandoAguardandoCliente] = useState(false);
+  const [showDevolverFinalizado, setShowDevolverFinalizado] = useState(false);
+  const [isDevolvendoFinalizado, setIsDevolvendoFinalizado] = useState(false);
   const [valorAReceberTemp, setValorAReceberTemp] = useState('');
   const [popoverValorAberto, setPopoverValorAberto] = useState(false);
   const [salvandoValor, setSalvandoValor] = useState(false);
