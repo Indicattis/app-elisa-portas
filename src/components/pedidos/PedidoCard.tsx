@@ -1710,7 +1710,7 @@ export function PedidoCard({
 
 
                     // Botão de agendar no calendário
-                    if (onAgendar && !temDataCarregamento && !carregamentoConcluido && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes')) {
+                    if (onAgendar && !temDataCarregamento && !carregamentoConcluido && !apenasManutencao && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes')) {
                       middleButtons.push(
                         <Tooltip key="agendar">
                           <TooltipTrigger asChild>
