@@ -1,51 +1,52 @@
 
 
-## Corrigir envio de pedidos para "Aguardando Cliente"
+## Adicionar pause + comentário em /producao/embalagem
 
-O toast aparece como sucesso, mas o pedido permanece em "Finalizado" e nunca chega à aba "Aguardando Cliente". Há três problemas concorrentes em `handleEnviarAguardandoCliente` (em `src/pages/direcao/GestaoFabricaDirecao.tsx`):
-
-### Causa raiz
-
-1. **CHECK constraint da tabela `pedidos_etapas`** não inclui `'aguardando_cliente'` — então o upsert da nova etapa falha silenciosamente (o erro do `await` não é checado e não é propagado).
-2. **O upsert da etapa `finalizado`** está com `data_saida = data_entrada = agora`, o que **sobrescreve** a `data_entrada` original (perdendo o histórico real da finalização).
-3. **Erros silenciosos**: as etapas 2, 3 e 4 não checam `error` do retorno, mascarando falhas e sempre exibindo toast de sucesso.
-
-A combinação faz com que mesmo quando o `update` em `pedidos_producao` é executado, falhas downstream impedem que o estado da UI fique correto e a etapa `aguardando_cliente` nunca exista no histórico — por isso o pedido não aparece na nova aba.
+Hoje a aba de Embalagem não tem botão "Aviso de Falta" (pausar) na downbar do `OrdemDetalhesSheet`. Os outros setores (Soldagem, Perfiladeira, Separação) já têm. Vou habilitar embalagem no mesmo padrão e adicionar um campo opcional de **comentário no pedido** dentro do modal de pausa, gravado em `pedido_comentarios`.
 
 ### Mudanças
 
-**1. Migration SQL** — atualizar a CHECK da `pedidos_etapas` para incluir `'aguardando_cliente'`:
+**1. `src/hooks/useOrdemEmbalagem.ts`** — adicionar mutation `pausarOrdem`
+- Mesma lógica do `pausarOrdem` em `useOrdemProducao.ts`, mas sobre a tabela `ordens_embalagem`.
+- Aceita `{ ordemId, justificativa, linhasProblemaIds?, comentarioPedido? }`.
+- Marca linhas selecionadas com `com_problema=true` em `linhas_ordens` (tipo_ordem='embalagem').
+- Calcula `tempo_acumulado_segundos` via `calcularTempoExpediente` e atualiza ordem com `pausada=true`, `pausada_em`, `justificativa_pausa`, `responsavel_id=null`.
+- Se `comentarioPedido` for informado e não vazio, faz `INSERT` em `pedido_comentarios` (`pedido_id`, `autor_id`, `autor_nome`, `comentario`).
+- Invalida `['ordens-embalagem']` no sucesso, toast de confirmação.
 
-```sql
-ALTER TABLE public.pedidos_etapas DROP CONSTRAINT IF EXISTS pedidos_etapas_etapa_check;
-ALTER TABLE public.pedidos_etapas ADD CONSTRAINT pedidos_etapas_etapa_check
-CHECK (etapa = ANY (ARRAY[
-  'aprovacao_diretor','aberto','aprovacao_ceo','em_producao',
-  'inspecao_qualidade','aguardando_pintura','embalagem',
-  'aguardando_coleta','aguardando_instalacao','instalacoes',
-  'correcoes','aguardando_cliente','finalizado'
-]));
-```
+**2. `src/components/production/AvisoFaltaModal.tsx`** — adicionar campo de comentário
+- Novo `Textarea` opcional "Adicionar comentário ao pedido (opcional)" abaixo da justificativa, com hint explicando que ficará registrado no histórico do pedido.
+- Ampliar a assinatura: `onConfirm: (justificativa, linhasProblemaIds?, comentarioPedido?) => Promise<void>`.
+- Reset do campo no `resetForm`.
+- Mudança 100% retrocompatível: o terceiro parâmetro é opcional, callers existentes (Soldagem/Perfiladeira/Separação) continuam funcionando sem alteração; eles simplesmente passam a ter o campo extra disponível também (consistente entre setores).
 
-**2. `src/pages/direcao/GestaoFabricaDirecao.tsx`** — refatorar `handleEnviarAguardandoCliente` e `handleRetornarDeAguardandoCliente`:
+**3. `src/components/production/OrdemDetalhesSheet.tsx`** — habilitar fluxo para embalagem
+- Incluir `'embalagem'` nas duas condições que renderizam:
+  - O botão "Aviso de Falta" (linha 1141).
+  - O `<AvisoFaltaModal>` (linha 1183).
+- Repassar o novo argumento `comentarioPedido` ao callback `onPausarOrdem(ordem.id, justificativa, linhasIds, comentarioPedido)`.
 
-- Em `handleEnviarAguardandoCliente`:
-  - Etapa 2 (fechar `finalizado`): trocar o `upsert` por um `update` que apenas seta `data_saida = agora` na linha existente (preserva `data_entrada` original).
-  - Etapa 3 (criar `aguardando_cliente`): manter `upsert` mas checar `error`.
-  - Checar `error` em todas as operações; se qualquer uma falhar, lançar para cair no `catch`.
-- Em `handleRetornarDeAguardandoCliente`:
-  - Trocar o `upsert` de `aguardando_cliente` por `update` para apenas fechar `data_saida`.
-  - Reabrir a etapa `finalizado` via `upsert` com `data_saida=null` (`onConflict: 'pedido_id,etapa'`).
-  - O `teor` da movimentação deve ser `'avanco'` ou outro permitido (a tabela só aceita `'avanco' | 'backlog' | 'reorganizacao' | 'criacao'` — `'retrocesso'` quebra a inserção).
-  - Checar `error` em todas as operações.
+**4. `src/pages/producao/ProducaoEmbalagem.tsx`** e **`src/pages/fabrica/producao/EmbalagemMinimalista.tsx`**
+- Desestruturar `pausarOrdem` do `useOrdemEmbalagem`.
+- Passar ao `OrdemDetalhesSheet`:
+  - `onPausarOrdem={async (ordemId, justificativa, linhasIds, comentarioPedido) => { await pausarOrdem.mutateAsync({ ordemId, justificativa, linhasProblemaIds: linhasIds, comentarioPedido }); setDetailsOpen(false); }}`
+  - `isPausing={pausarOrdem.isPending}`
+
+### Banco
+
+Sem migration. Reutilizamos `pedido_comentarios` (já existente: `pedido_id`, `autor_id`, `autor_nome`, `comentario`, `created_at`) e os campos de pausa já presentes em `ordens_embalagem` (`pausada`, `pausada_em`, `justificativa_pausa`, `tempo_acumulado_segundos`).
 
 ### Fora de escopo
 
-- Outras telas/fluxos.
-- Qualquer mudança em `instalacoes`/Neo (já funcionando via tabelas próprias).
+- Tela de visualização do comentário (já existe na UI atual de comentários do pedido).
+- Retomar ordem pausada (fluxo já tratado pela captura existente).
+- Mudanças no painel da Pintura.
 
 ### Arquivos
 
-- `supabase/migrations/<novo>.sql` (criar)
-- `src/pages/direcao/GestaoFabricaDirecao.tsx` (editar)
+- `src/hooks/useOrdemEmbalagem.ts` (editar)
+- `src/components/production/AvisoFaltaModal.tsx` (editar)
+- `src/components/production/OrdemDetalhesSheet.tsx` (editar)
+- `src/pages/producao/ProducaoEmbalagem.tsx` (editar)
+- `src/pages/fabrica/producao/EmbalagemMinimalista.tsx` (editar)
 
