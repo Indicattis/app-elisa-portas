@@ -45,6 +45,7 @@ import { AvisoEsperaModal } from "./AvisoEsperaModal";
 import { ArquivarPedidoModal } from "./ArquivarPedidoModal";
 import { ArquivamentoLoadingModal } from "./ArquivamentoLoadingModal";
 import { ConfirmarExpedicaoModal } from "./ConfirmarExpedicaoModal";
+import { ConcluirManutencaoModal } from "./ConcluirManutencaoModal";
 import { RemoverResponsavelModal } from "./RemoverResponsavelModal";
 import { ExcluirPedidoModal } from "./ExcluirPedidoModal";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
