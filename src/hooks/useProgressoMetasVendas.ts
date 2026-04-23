@@ -24,9 +24,9 @@ function calcularTier(total: number, tiers: MetaVendasTier[]): MetaVendasTier | 
   return ordenados.find((t) => total >= Number(t.valor_alvo)) || null;
 }
 
-function calcularBonificacao(total: number, tier: MetaVendasTier | null): number {
+function calcularBonificacao(total: number, tier: MetaVendasTier | null, atingido: boolean = true): number {
   if (!tier) return 0;
-  if (tier.bonificacao_tipo === 'fixo') return Number(tier.bonificacao_valor);
+  if (tier.bonificacao_tipo === 'fixo') return atingido ? Number(tier.bonificacao_valor) : 0;
   // Regra: "0,X × valor vendido" — bonificacao_valor representa décimos.
   // Ex.: bonificacao_valor=2 ⇒ 0,2 × total
   return total * (Number(tier.bonificacao_valor) / 10);
@@ -97,6 +97,7 @@ export function useProgressoMetasVendas() {
           if (meta.vendedor_id) {
             const total = porVendedor.get(meta.vendedor_id) || 0;
             const tier = calcularTier(total, tiers);
+            const tierBonus = tier || [...tiers].sort((a, b) => Number(a.valor_alvo) - Number(b.valor_alvo))[0] || null;
             const u = userMap.get(meta.vendedor_id);
             vendedores = [{
               vendedor_id: meta.vendedor_id,
@@ -104,10 +105,11 @@ export function useProgressoMetasVendas() {
               foto_perfil_url: u?.foto_perfil_url ?? null,
               total_vendido: total,
               tier_atingido: tier,
-              bonificacao_calculada: calcularBonificacao(total, tier),
+              bonificacao_calculada: calcularBonificacao(total, tierBonus, !!tier),
             }];
           } else {
             // Inclui todos os vendedores elegíveis, mesmo sem vendas
+            const primeiroTier = [...tiers].sort((a, b) => Number(a.valor_alvo) - Number(b.valor_alvo))[0] || null;
             vendedores = elegiveis
               .map((u) => {
                 const total = porVendedor.get(u.user_id) || 0;
@@ -118,20 +120,21 @@ export function useProgressoMetasVendas() {
                   foto_perfil_url: u.foto_perfil_url ?? null,
                   total_vendido: total,
                   tier_atingido: tier,
-                  bonificacao_calculada: calcularBonificacao(total, tier),
+                  bonificacao_calculada: calcularBonificacao(total, tier || primeiroTier, !!tier),
                 };
               })
               .sort((a, b) => b.total_vendido - a.total_vendido || a.nome.localeCompare(b.nome));
           }
         } else {
           const tier = calcularTier(totalGlobal, tiers);
+          const primeiroTier = [...tiers].sort((a, b) => Number(a.valor_alvo) - Number(b.valor_alvo))[0] || null;
           vendedores = [{
             vendedor_id: 'global',
             nome: 'Equipe',
             foto_perfil_url: null,
             total_vendido: totalGlobal,
             tier_atingido: tier,
-            bonificacao_calculada: calcularBonificacao(totalGlobal, tier),
+            bonificacao_calculada: calcularBonificacao(totalGlobal, tier || primeiroTier, !!tier),
           }];
         }
 
