@@ -329,7 +329,7 @@ export function PedidoCard({
       case 'aguardando_coleta':
       case 'instalacoes':
       case 'correcoes':
-        if (etapa === 'instalacoes' && apenasManutencao) {
+        if (etapa === 'instalacoes' && finalizaSemCarregamento) {
           return {
             podeAvancar: true,
             mensagem: "Selecione a equipe/autorizado que executou o serviço para finalizar"
@@ -363,6 +363,21 @@ export function PedidoCard({
       if (error) throw error;
       return count || 0;
     }
+  });
+
+  // Detectar se o pedido contém apenas linhas de separação (sem solda nem perfiladeira)
+  const { data: temApenasSeparacao = false } = useQuery({
+    queryKey: ['pedido-linhas-categorias', pedido.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pedido_linhas')
+        .select('categoria_linha')
+        .eq('pedido_id', pedido.id);
+      if (error) throw error;
+      if (!data || data.length === 0) return false;
+      return data.every((l: any) => l.categoria_linha === 'separacao');
+    },
+    enabled: pedido.etapa_atual === 'instalacoes',
   });
 
   // Buscar último comentário do pedido
@@ -540,6 +555,7 @@ export function PedidoCard({
   const temPintura = produtos.some((p: any) => p.valor_pintura > 0);
   const temTerceirizacao = produtos.some((p: any) => p.tipo_fabricacao === 'terceirizado' || p.tipo_produto === 'porta_social');
   const apenasManutencao = produtos.length > 0 && produtos.every((p: any) => p.tipo_produto === 'manutencao');
+  const finalizaSemCarregamento = apenasManutencao || temApenasSeparacao;
   const tipoEntrega = venda?.tipo_entrega;
   const isInstalacao = tipoEntrega === 'instalacao';
   const isEntrega = tipoEntrega === 'entrega';
@@ -1710,7 +1726,7 @@ export function PedidoCard({
 
 
                     // Botão de agendar no calendário
-                    if (onAgendar && !temDataCarregamento && !carregamentoConcluido && !apenasManutencao && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes')) {
+                    if (onAgendar && !temDataCarregamento && !carregamentoConcluido && !finalizaSemCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes')) {
                       middleButtons.push(
                         <Tooltip key="agendar">
                           <TooltipTrigger asChild>
@@ -1825,7 +1841,7 @@ export function PedidoCard({
                           </Button>
                         </ButtonWithTooltip>
                       );
-                    } else if ((etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes') && (carregamentoConcluido || (etapaAtual === 'instalacoes' && apenasManutencao))) {
+                    } else if ((etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes') && (carregamentoConcluido || (etapaAtual === 'instalacoes' && finalizaSemCarregamento))) {
                       const validacao = getValidacaoAvancoEtapa(etapaAtual);
                       avancarButtons.push(
                         <ButtonWithTooltip key="avançar-expedicao" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
@@ -1833,7 +1849,7 @@ export function PedidoCard({
                             size="icon" 
                             onClick={(e) => { 
                               e.stopPropagation(); 
-                              if (etapaAtual === 'instalacoes' && apenasManutencao) {
+                              if (etapaAtual === 'instalacoes' && finalizaSemCarregamento) {
                                 setShowConcluirManutencao(true);
                               } else {
                                 setShowConfirmarExpedicao(true);
@@ -2426,7 +2442,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                       size="icon" 
                       onClick={(e) => { 
                         e.stopPropagation(); 
-                        if (etapaAtual === 'instalacoes' && apenasManutencao) {
+                        if (etapaAtual === 'instalacoes' && finalizaSemCarregamento) {
                           setShowConcluirManutencao(true);
                         } else {
                           setShowConfirmarExpedicao(true);
@@ -2494,7 +2510,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                     {actionButtons.length > 0 && <div className="grid grid-cols-4 gap-1.5 w-full">
                         {actionButtons}
                       </div>}
-                    {!temDataCarregamento && !apenasManutencao && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes') && <span className="text-xs text-warning text-center block">
+                    {!temDataCarregamento && !finalizaSemCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes') && <span className="text-xs text-warning text-center block">
                         Defina data de carregamento
                       </span>}
                   </div>;
