@@ -45,6 +45,7 @@ import { AvisoEsperaModal } from "./AvisoEsperaModal";
 import { ArquivarPedidoModal } from "./ArquivarPedidoModal";
 import { ArquivamentoLoadingModal } from "./ArquivamentoLoadingModal";
 import { ConfirmarExpedicaoModal } from "./ConfirmarExpedicaoModal";
+import { ConcluirManutencaoModal } from "./ConcluirManutencaoModal";
 import { RemoverResponsavelModal } from "./RemoverResponsavelModal";
 import { ExcluirPedidoModal } from "./ExcluirPedidoModal";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
@@ -113,6 +114,7 @@ export function PedidoCard({
   const [showArquivar, setShowArquivar] = useState(false);
   const [showArquivamentoLoading, setShowArquivamentoLoading] = useState(false);
   const [showConfirmarExpedicao, setShowConfirmarExpedicao] = useState(false);
+  const [showConcluirManutencao, setShowConcluirManutencao] = useState(false);
   const [showRemoverResponsavel, setShowRemoverResponsavel] = useState(false);
   const [showExcluirPedido, setShowExcluirPedido] = useState(false);
   const [isExcluindo, setIsExcluindo] = useState(false);
@@ -327,6 +329,12 @@ export function PedidoCard({
       case 'aguardando_coleta':
       case 'instalacoes':
       case 'correcoes':
+        if (etapa === 'instalacoes' && apenasManutencao) {
+          return {
+            podeAvancar: true,
+            mensagem: "Selecione a equipe/autorizado que executou o serviço para finalizar"
+          };
+        }
         return {
           podeAvancar: carregamentoConcluido,
           mensagem: carregamentoConcluido 
@@ -531,6 +539,7 @@ export function PedidoCard({
   // Identificar características do pedido
   const temPintura = produtos.some((p: any) => p.valor_pintura > 0);
   const temTerceirizacao = produtos.some((p: any) => p.tipo_fabricacao === 'terceirizado' || p.tipo_produto === 'porta_social');
+  const apenasManutencao = produtos.length > 0 && produtos.every((p: any) => p.tipo_produto === 'manutencao');
   const tipoEntrega = venda?.tipo_entrega;
   const isInstalacao = tipoEntrega === 'instalacao';
   const isEntrega = tipoEntrega === 'entrega';
@@ -1517,9 +1526,15 @@ export function PedidoCard({
 
               {/* Col 6: Tags/Badges (Instalação/Entrega) */}
               <div className="flex items-center justify-center gap-1">
-                {isInstalacao && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
+                {isInstalacao && (apenasManutencao ? (
+                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/50">
+                    <Wrench className="h-2.5 w-2.5" />
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
                     <Hammer className="h-2.5 w-2.5" />
-                  </Badge>}
+                  </Badge>
+                ))}
                 
                 {isEntrega && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
                     <Truck className="h-2.5 w-2.5" />
@@ -1695,7 +1710,7 @@ export function PedidoCard({
 
 
                     // Botão de agendar no calendário
-                    if (onAgendar && !temDataCarregamento && !carregamentoConcluido && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes')) {
+                    if (onAgendar && !temDataCarregamento && !carregamentoConcluido && !apenasManutencao && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes')) {
                       middleButtons.push(
                         <Tooltip key="agendar">
                           <TooltipTrigger asChild>
@@ -1810,7 +1825,7 @@ export function PedidoCard({
                           </Button>
                         </ButtonWithTooltip>
                       );
-                    } else if ((etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes') && carregamentoConcluido) {
+                    } else if ((etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes') && (carregamentoConcluido || (etapaAtual === 'instalacoes' && apenasManutencao))) {
                       const validacao = getValidacaoAvancoEtapa(etapaAtual);
                       avancarButtons.push(
                         <ButtonWithTooltip key="avançar-expedicao" tooltip={validacao.mensagem} disabled={!validacao.podeAvancar}>
@@ -1818,7 +1833,11 @@ export function PedidoCard({
                             size="icon" 
                             onClick={(e) => { 
                               e.stopPropagation(); 
-                              setShowConfirmarExpedicao(true); 
+                              if (etapaAtual === 'instalacoes' && apenasManutencao) {
+                                setShowConcluirManutencao(true);
+                              } else {
+                                setShowConfirmarExpedicao(true);
+                              }
                             }} 
                             disabled={!validacao.podeAvancar} 
 className="flex h-[20px] w-full rounded-[3px]"
@@ -2050,6 +2069,16 @@ className="flex h-[20px] w-full rounded-[3px]"
           etapaAtual={config?.label || ''} 
         />
 
+        <ConcluirManutencaoModal
+          open={showConcluirManutencao}
+          onOpenChange={setShowConcluirManutencao}
+          pedidoId={pedido.id}
+          pedidoNumero={pedido.numero_pedido}
+          onConcluido={() => {
+            if (onMoverEtapa) onMoverEtapa(pedido.id, true);
+          }}
+        />
+
         <ExcluirPedidoModal
           open={showExcluirPedido}
           onOpenChange={setShowExcluirPedido}
@@ -2229,10 +2258,17 @@ className="flex h-[20px] w-full rounded-[3px]"
                     <Paintbrush className="h-2.5 w-2.5 mr-0.5" />
                     Pintura
                   </Badge>}
-                {isInstalacao && <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
+                {isInstalacao && (apenasManutencao ? (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/50">
+                    <Wrench className="h-2.5 w-2.5 mr-0.5" />
+                    Manutenção
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
                     <Hammer className="h-2.5 w-2.5 mr-0.5" />
                     Instalação
-                  </Badge>}
+                  </Badge>
+                ))}
                 {isEntrega && <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
                     <Truck className="h-2.5 w-2.5 mr-0.5" />
                     Entrega
@@ -2390,7 +2426,11 @@ className="flex h-[20px] w-full rounded-[3px]"
                       size="icon" 
                       onClick={(e) => { 
                         e.stopPropagation(); 
-                        setShowConfirmarExpedicao(true); 
+                        if (etapaAtual === 'instalacoes' && apenasManutencao) {
+                          setShowConcluirManutencao(true);
+                        } else {
+                          setShowConfirmarExpedicao(true);
+                        }
                       }} 
                       disabled={!validacao.podeAvancar} 
                       className="flex w-full h-[35px]"
@@ -2454,7 +2494,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                     {actionButtons.length > 0 && <div className="grid grid-cols-4 gap-1.5 w-full">
                         {actionButtons}
                       </div>}
-                    {!temDataCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes') && <span className="text-xs text-warning text-center block">
+                    {!temDataCarregamento && !apenasManutencao && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes') && <span className="text-xs text-warning text-center block">
                         Defina data de carregamento
                       </span>}
                   </div>;
@@ -2553,6 +2593,16 @@ className="flex h-[20px] w-full rounded-[3px]"
         onConfirmar={handleConfirmarExpedicao} 
         pedido={pedido} 
         etapaAtual={config?.label || ''} 
+      />
+
+      <ConcluirManutencaoModal
+        open={showConcluirManutencao}
+        onOpenChange={setShowConcluirManutencao}
+        pedidoId={pedido.id}
+        pedidoNumero={pedido.numero_pedido}
+        onConcluido={() => {
+          if (onMoverEtapa) onMoverEtapa(pedido.id, true);
+        }}
       />
 
       <RemoverResponsavelModal
