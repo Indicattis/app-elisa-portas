@@ -52,9 +52,9 @@ function BarraVendedor({
   const mesLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date());
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 flex flex-col lg:flex-row gap-5 items-stretch">
+    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 flex flex-col lg:flex-row gap-6 items-center">
       {/* Foto grande */}
-      <Avatar className="h-32 w-32 rounded-2xl shrink-0 border border-white/10">
+      <Avatar className="h-32 w-32 rounded-2xl shrink-0 border border-white/10 self-start">
         <AvatarImage src={vendedor.foto_perfil_url || undefined} alt={vendedor.nome} className="object-cover" />
         <AvatarFallback
           className="rounded-2xl text-2xl font-semibold text-white"
@@ -64,27 +64,25 @@ function BarraVendedor({
         </AvatarFallback>
       </Avatar>
 
-      <div className="flex-1 min-w-0 space-y-3">
-        <div className="flex items-baseline justify-between gap-3 flex-wrap">
+      <div className="flex-1 min-w-0 w-full space-y-4">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0">
             <div className="text-2xl font-bold text-white truncate">{vendedor.nome}</div>
-            <div className="text-sm text-white/50 truncate">{metaNome} — {escopoLabel}</div>
+            <div className="text-sm text-white/50 truncate mt-0.5">{metaNome} — {escopoLabel}</div>
           </div>
-          <div className="flex items-baseline gap-4 flex-wrap">
-            <div className="text-right">
-              <div className="text-xs uppercase tracking-wider text-white/40">Comissão atual</div>
-              <div
-                className="text-3xl font-extrabold tabular-nums"
-                style={{ color: tierAtual?.cor || 'rgba(255,255,255,0.5)' }}
-              >
-                {formatCurrency(vendedor.bonificacao_calculada)}
-              </div>
+          <div className="text-right shrink-0">
+            <div className="text-xs uppercase tracking-wider text-white/40">Comissão atual</div>
+            <div
+              className="text-3xl font-extrabold tabular-nums mt-1"
+              style={{ color: tierAtual?.cor || 'rgba(255,255,255,0.5)' }}
+            >
+              {formatCurrency(vendedor.bonificacao_calculada)}
             </div>
           </div>
         </div>
 
         {/* Barra segmentada: cada tier ocupa uma fatia proporcional ao seu intervalo */}
-        <div className="relative h-16 rounded-md bg-white/5 overflow-hidden border border-white/10 flex">
+        <div className="relative h-16 rounded-lg bg-white/5 overflow-hidden border border-white/10 flex">
           {tiersSorted.map((t, i) => {
             const base = i === 0 ? 0 : Number(tiersSorted[i - 1].valor_alvo);
             const alvo = Number(t.valor_alvo);
@@ -104,10 +102,10 @@ function BarraVendedor({
                     background: `linear-gradient(90deg, ${t.cor}55, ${t.cor})`,
                   }}
                 />
-                <div className="absolute inset-0 flex items-center justify-end pr-2 text-sm font-semibold text-white/70 tabular-nums pointer-events-none">
-                  <div className="flex flex-col items-end leading-tight">
+                <div className="absolute inset-0 flex items-center justify-end pr-2.5 text-sm font-semibold text-white/70 tabular-nums pointer-events-none">
+                  <div className="flex flex-col items-end leading-tight gap-0.5">
                     <span>{formatCurrency(alvo)}</span>
-                    <span className="text-[10px] font-medium" style={{ color: t.cor }}>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: t.cor }}>
                       {t.bonificacao_tipo === 'fixo'
                         ? formatCurrency(Number(t.bonificacao_valor))
                         : `${Number(t.bonificacao_valor)}%`}
@@ -122,15 +120,19 @@ function BarraVendedor({
       </div>
 
       {/* Painel lateral: total vendido no mês */}
-      <div className="lg:w-56 shrink-0 lg:border-l lg:border-t-0 border-t border-white/10 lg:pl-5 pt-4 lg:pt-0 flex flex-col justify-center">
-        <div className="text-xs uppercase tracking-wider text-sky-300/70">Vendido no mês</div>
-        <div className="text-3xl font-extrabold tabular-nums text-sky-300 mt-1">
-          {formatCurrency(vendedor.total_vendido_mes)}
+      <div className="w-full lg:w-56 shrink-0 lg:border-l lg:border-t-0 border-t border-white/10 lg:pl-6 pt-5 lg:pt-0 flex flex-col gap-5 self-stretch justify-center">
+        <div className="text-right">
+          <div className="text-xs uppercase tracking-wider text-sky-300/70">Vendido no mês</div>
+          <div className="text-3xl font-extrabold tabular-nums text-sky-300 mt-1">
+            {formatCurrency(vendedor.total_vendido_mes)}
+          </div>
+          <div className="text-xs text-white/40 mt-1 capitalize">{mesLabel}</div>
         </div>
-        <div className="text-xs text-white/40 mt-1 capitalize">{mesLabel}</div>
-        <div className="text-xs uppercase tracking-wider text-amber-300/70 mt-4">Vendido na semana</div>
-        <div className="text-2xl font-bold tabular-nums text-amber-300 mt-1">
-          {formatCurrency(vendedor.total_vendido_semana)}
+        <div className="text-right">
+          <div className="text-xs uppercase tracking-wider text-amber-300/70">Vendido na semana</div>
+          <div className="text-2xl font-bold tabular-nums text-amber-300 mt-1">
+            {formatCurrency(vendedor.total_vendido_semana)}
+          </div>
         </div>
       </div>
     </div>
