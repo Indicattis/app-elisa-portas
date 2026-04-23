@@ -114,6 +114,10 @@ export default function GestaoFabricaDirecao() {
   const { neoCorrecoes, concluirNeoCorrecao, reorganizarNeoCorrecoes } = useNeoCorrecoesListagem();
   const { neoInstalacoesFinalizadas, retornarNeoInstalacao, isRetornando: isRetornandoInstalacao, arquivarNeoInstalacao } = useNeoInstalacoesFinalizadas();
   const { neoCorrecoesFinalizadas, retornarNeoCorrecao, isRetornando: isRetornandoCorrecao, arquivarNeoCorrecao } = useNeoCorrecoesFinalizadas();
+  const { enviarAguardandoClienteNeoInstalacao, arquivarNeoInstalacao: arquivarNeoInstalacaoBase } = useNeoInstalacoesFinalizadas();
+  const { enviarAguardandoClienteNeoCorrecao, arquivarNeoCorrecao: arquivarNeoCorrecaoBase } = useNeoCorrecoesFinalizadas();
+  const { neoInstalacoesAguardandoCliente, retornarParaFinalizadoNeoInstalacao } = useNeoInstalacoesAguardandoCliente();
+  const { neoCorrecoesAguardandoCliente, retornarParaFinalizadoNeoCorrecao } = useNeoCorrecoesAguardandoCliente();
   const { 
     getResponsavel, 
     atribuirResponsavel, 
