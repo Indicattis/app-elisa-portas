@@ -275,6 +275,11 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                   <p className="text-xs">{venda.cliente_nome || "Cliente não informado"}</p>
                 </TooltipContent>
               </Tooltip>
+              {ultimoComentario?.comentario && (
+                <p className="text-[9px] text-muted-foreground truncate" title={ultimoComentario.comentario}>
+                  {ultimoComentario.comentario}
+                </p>
+              )}
             </div>
 
             {/* Cidade/Estado */}
