@@ -2416,7 +2416,11 @@ className="flex h-[20px] w-full rounded-[3px]"
                       size="icon" 
                       onClick={(e) => { 
                         e.stopPropagation(); 
-                        setShowConfirmarExpedicao(true); 
+                        if (etapaAtual === 'instalacoes' && apenasManutencao) {
+                          setShowConcluirManutencao(true);
+                        } else {
+                          setShowConfirmarExpedicao(true);
+                        }
                       }} 
                       disabled={!validacao.podeAvancar} 
                       className="flex w-full h-[35px]"
