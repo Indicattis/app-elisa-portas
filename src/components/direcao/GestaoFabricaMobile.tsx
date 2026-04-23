@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Clock, ShieldCheck, Factory, ClipboardCheck, Paintbrush, Package, HardHat, AlertTriangle, CheckCircle2, Cog, Flame, Truck } from "lucide-react";
+import { RefreshCw, Clock, ShieldCheck, Factory, ClipboardCheck, Paintbrush, Package, HardHat, AlertTriangle, CheckCircle2, Cog, Flame, Truck, UserCheck, Hourglass, Circle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
 import { useNeoInstalacoesListagem } from "@/hooks/useNeoInstalacoes";
@@ -18,15 +18,18 @@ import { format, startOfWeek, startOfMonth } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
 const ETAPA_ICONS: Record<string, React.ElementType> = {
+  aprovacao_diretor: UserCheck,
   aberto: Clock,
   aprovacao_ceo: ShieldCheck,
   em_producao: Factory,
   inspecao_qualidade: ClipboardCheck,
   aguardando_pintura: Paintbrush,
+  embalagem: Package,
   aguardando_coleta: Package,
   instalacoes: HardHat,
   correcoes: AlertTriangle,
   finalizado: CheckCircle2,
+  aguardando_cliente: Hourglass,
 };
 
 type Periodo = 'hoje' | 'semana' | 'mes';
@@ -137,7 +140,7 @@ function EtapaPills({
   return (
     <div ref={scrollRef} className="flex gap-1.5 overflow-x-auto px-3 py-2 scrollbar-none">
       {ORDEM_ETAPAS.map((etapa, i) => {
-        const Icon = ETAPA_ICONS[etapa];
+        const Icon = ETAPA_ICONS[etapa] || Circle;
         const count = contadores[etapa] || 0;
         const isActive = etapa === etapaAtiva;
         return (
