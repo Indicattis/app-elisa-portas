@@ -2244,10 +2244,17 @@ className="flex h-[20px] w-full rounded-[3px]"
                     <Paintbrush className="h-2.5 w-2.5 mr-0.5" />
                     Pintura
                   </Badge>}
-                {isInstalacao && <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
+                {isInstalacao && (apenasManutencao ? (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/50">
+                    <Wrench className="h-2.5 w-2.5 mr-0.5" />
+                    Manutenção
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/50">
                     <Hammer className="h-2.5 w-2.5 mr-0.5" />
                     Instalação
-                  </Badge>}
+                  </Badge>
+                ))}
                 {isEntrega && <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/50">
                     <Truck className="h-2.5 w-2.5 mr-0.5" />
                     Entrega
