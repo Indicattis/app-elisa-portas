@@ -2099,6 +2099,28 @@ className="flex h-[20px] w-full rounded-[3px]"
                       );
                     }
 
+                    // Botão de devolver para Finalizado (apenas etapa aguardando_cliente)
+                    if (etapaAtual === 'aguardando_cliente' && onDevolverParaFinalizado && !readOnly) {
+                      middleButtons.push(
+                        <Tooltip key="devolver-finalizado">
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={(e) => { e.stopPropagation(); setShowDevolverFinalizado(true); }}
+                              title="Devolver para Finalizado"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-500/50"
+                            >
+                              <CheckCircle className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="text-xs">Devolver para Finalizado</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
                     if (onFinalizarDireto && etapaAtual !== 'finalizado') {
                       middleButtons.push(
                         <Tooltip key="finalizar-direto">
