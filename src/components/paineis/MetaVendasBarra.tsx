@@ -116,13 +116,13 @@ function BarraVendedor({
 
       {/* Painel lateral: total vendido no mês */}
       <div className="lg:w-56 shrink-0 lg:border-l lg:border-t-0 border-t border-white/10 lg:pl-5 pt-4 lg:pt-0 flex flex-col justify-center">
-        <div className="text-xs uppercase tracking-wider text-white/50">Vendido no mês</div>
-        <div className="text-3xl font-extrabold tabular-nums text-white mt-1">
+        <div className="text-xs uppercase tracking-wider text-sky-300/70">Vendido no mês</div>
+        <div className="text-3xl font-extrabold tabular-nums text-sky-300 mt-1">
           {formatCurrency(vendedor.total_vendido_mes)}
         </div>
         <div className="text-xs text-white/40 mt-1 capitalize">{mesLabel}</div>
-        <div className="text-xs uppercase tracking-wider text-white/50 mt-4">Vendido na semana</div>
-        <div className="text-2xl font-bold tabular-nums text-white mt-1">
+        <div className="text-xs uppercase tracking-wider text-amber-300/70 mt-4">Vendido na semana</div>
+        <div className="text-2xl font-bold tabular-nums text-amber-300 mt-1">
           {formatCurrency(vendedor.total_vendido_semana)}
         </div>
       </div>
