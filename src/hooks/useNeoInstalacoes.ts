@@ -535,6 +535,29 @@ export const useNeoInstalacoesFinalizadas = () => {
     },
   });
 
+  const enviarAguardandoClienteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("neo_instalacoes")
+        .update({
+          status: 'aguardando_cliente',
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_finalizadas"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_instalacoes_aguardando_cliente"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-contadores"] });
+      toast.success("Enviado para Aguardando Cliente!");
+    },
+    onError: (error) => {
+      console.error("Erro ao enviar para Aguardando Cliente:", error);
+      toast.error("Erro ao enviar para Aguardando Cliente");
+    },
+  });
+
   return {
     neoInstalacoesFinalizadas,
     isLoading,
@@ -542,6 +565,8 @@ export const useNeoInstalacoesFinalizadas = () => {
     isRetornando: retornarMutation.isPending,
     arquivarNeoInstalacao: arquivarMutation.mutateAsync,
     isArquivando: arquivarMutation.isPending,
+    enviarAguardandoClienteNeoInstalacao: enviarAguardandoClienteMutation.mutateAsync,
+    isEnviandoAguardandoCliente: enviarAguardandoClienteMutation.isPending,
   };
 };
 
