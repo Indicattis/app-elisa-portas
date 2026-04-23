@@ -216,17 +216,17 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           const [soldagem, perfiladeira, separacao, qualidade, pintura, embalagem] = await Promise.all([
             supabase
               .from('ordens_soldagem')
-              .select('id, status, responsavel_id, pausada, justificativa_pausa, qtd_portas_p, qtd_portas_g')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa, pausada_em, capturada_em, tempo_acumulado_segundos, pedido_id, qtd_portas_p, qtd_portas_g')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
             supabase
               .from('ordens_perfiladeira')
-              .select('id, status, responsavel_id, pausada, justificativa_pausa, metragem_linear')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa, pausada_em, capturada_em, tempo_acumulado_segundos, pedido_id, metragem_linear')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
             supabase
               .from('ordens_separacao')
-              .select('id, status, responsavel_id, pausada, justificativa_pausa')
+              .select('id, status, responsavel_id, pausada, justificativa_pausa, pausada_em, capturada_em, tempo_acumulado_segundos, pedido_id')
               .eq('pedido_id', pedido.id)
               .maybeSingle(),
             supabase
@@ -315,6 +315,10 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               linhas_concluidas: linhasConcluidas,
               pausada: result.data?.pausada || false,
               justificativa_pausa: result.data?.justificativa_pausa || null,
+              pausada_em: result.data?.pausada_em || null,
+              capturada_em: result.data?.capturada_em || null,
+              tempo_acumulado_segundos: result.data?.tempo_acumulado_segundos || 0,
+              pedido_id: result.data?.pedido_id || null,
               // Campos de métricas
               qtd_portas_p: result.data?.qtd_portas_p || 0,
               qtd_portas_g: result.data?.qtd_portas_g || 0,
