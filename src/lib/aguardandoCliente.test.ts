@@ -15,10 +15,6 @@ function createSupabaseMock(opts: {
   const makeChain = (table: string) => {
     const state: any = { table, op: null, payload: null, filters: [], options: null };
 
-    const result = {
-      then: undefined as any,
-    };
-
     const resolve = () => {
       calls.push(state);
       const err =
@@ -43,21 +39,15 @@ function createSupabaseMock(opts: {
       insert: (payload: any) => {
         state.op = "insert";
         state.payload = payload;
-        // insert finaliza imediatamente
         return resolve();
       },
       eq: (col: string, val: any) => {
         state.filters.push([col, val]);
-        // após o último .eq, .update/.upsert encadeados também precisam resolver
-        // expomos um thenable para que await funcione
-        chain.then = (onFulfilled: any, onRejected: any) =>
-          resolve().then(onFulfilled, onRejected);
         return chain;
       },
-      then: undefined as any,
     };
 
-    // upsert sem .eq deve ser awaitable diretamente
+    // Torna o chain "thenable" — await chain dispara resolve()
     Object.defineProperty(chain, "then", {
       configurable: true,
       get() {
