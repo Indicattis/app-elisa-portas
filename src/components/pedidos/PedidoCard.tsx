@@ -2484,7 +2484,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                     {actionButtons.length > 0 && <div className="grid grid-cols-4 gap-1.5 w-full">
                         {actionButtons}
                       </div>}
-                    {!temDataCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes') && <span className="text-xs text-warning text-center block">
+                    {!temDataCarregamento && !apenasManutencao && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes') && <span className="text-xs text-warning text-center block">
                         Defina data de carregamento
                       </span>}
                   </div>;
