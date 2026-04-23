@@ -3581,6 +3581,95 @@ export type Database = {
         }
         Relationships: []
       }
+      metas_vendas: {
+        Row: {
+          ativa: boolean
+          created_at: string
+          created_by: string | null
+          data_fim_vigencia: string | null
+          data_inicio_vigencia: string
+          escopo: string
+          id: string
+          nome: string
+          periodo: string
+          updated_at: string
+          vendedor_id: string | null
+        }
+        Insert: {
+          ativa?: boolean
+          created_at?: string
+          created_by?: string | null
+          data_fim_vigencia?: string | null
+          data_inicio_vigencia?: string
+          escopo: string
+          id?: string
+          nome: string
+          periodo: string
+          updated_at?: string
+          vendedor_id?: string | null
+        }
+        Update: {
+          ativa?: boolean
+          created_at?: string
+          created_by?: string | null
+          data_fim_vigencia?: string | null
+          data_inicio_vigencia?: string
+          escopo?: string
+          id?: string
+          nome?: string
+          periodo?: string
+          updated_at?: string
+          vendedor_id?: string | null
+        }
+        Relationships: []
+      }
+      metas_vendas_tiers: {
+        Row: {
+          bonificacao_tipo: string
+          bonificacao_valor: number
+          cor: string
+          created_at: string
+          id: string
+          meta_id: string
+          nome: string
+          ordem: number
+          updated_at: string
+          valor_alvo: number
+        }
+        Insert: {
+          bonificacao_tipo?: string
+          bonificacao_valor?: number
+          cor?: string
+          created_at?: string
+          id?: string
+          meta_id: string
+          nome: string
+          ordem?: number
+          updated_at?: string
+          valor_alvo?: number
+        }
+        Update: {
+          bonificacao_tipo?: string
+          bonificacao_valor?: number
+          cor?: string
+          created_at?: string
+          id?: string
+          meta_id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
+          valor_alvo?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metas_vendas_tiers_meta_id_fkey"
+            columns: ["meta_id"]
+            isOneToOne: false
+            referencedRelation: "metas_vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       missao_checkboxes: {
         Row: {
           concluida: boolean | null
