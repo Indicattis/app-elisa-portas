@@ -52,9 +52,20 @@ function BarraVendedor({
             <div className="text-xl font-semibold text-white truncate">{vendedor.nome}</div>
             <div className="text-xs text-white/50 truncate">{metaNome} — {escopoLabel}</div>
           </div>
-          <div className="text-sm tabular-nums">
-            <span className="font-semibold text-white">{formatCurrency(total)}</span>
-            <span className="text-white/40"> / {formatCurrency(maxAlvo)}</span>
+          <div className="flex items-baseline gap-4 flex-wrap">
+            <div className="text-sm tabular-nums">
+              <span className="font-semibold text-white">{formatCurrency(total)}</span>
+              <span className="text-white/40"> / {formatCurrency(maxAlvo)}</span>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] uppercase tracking-wider text-white/40">Comissão atual</div>
+              <div
+                className="text-base font-bold tabular-nums"
+                style={{ color: tierAtual?.cor || 'rgba(255,255,255,0.5)' }}
+              >
+                {formatCurrency(vendedor.bonificacao_calculada)}
+              </div>
+            </div>
           </div>
         </div>
 
