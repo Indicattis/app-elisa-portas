@@ -384,6 +384,8 @@ export const useNeoCorrecoesFinalizadas = () => {
         .from("neo_correcoes")
         .select("*")
         .eq("concluida", true)
+        .neq("status", "aguardando_cliente")
+        .neq("status", "arquivada")
         .gte("concluida_em", dataLimite.toISOString())
         .order("concluida_em", { ascending: false });
 
@@ -501,6 +503,29 @@ export const useNeoCorrecoesFinalizadas = () => {
     },
   });
 
+  const enviarAguardandoClienteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("neo_correcoes")
+        .update({
+          status: 'aguardando_cliente',
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_finalizadas"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_aguardando_cliente"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-contadores"] });
+      toast.success("Enviado para Aguardando Cliente!");
+    },
+    onError: (error) => {
+      console.error("Erro ao enviar para Aguardando Cliente:", error);
+      toast.error("Erro ao enviar para Aguardando Cliente");
+    },
+  });
+
   return {
     neoCorrecoesFinalizadas,
     isLoading,
@@ -508,6 +533,8 @@ export const useNeoCorrecoesFinalizadas = () => {
     isRetornando: retornarMutation.isPending,
     arquivarNeoCorrecao: arquivarMutation.mutateAsync,
     isArquivando: arquivarMutation.isPending,
+    enviarAguardandoClienteNeoCorrecao: enviarAguardandoClienteMutation.mutateAsync,
+    isEnviandoAguardandoCliente: enviarAguardandoClienteMutation.isPending,
   };
 };
 
@@ -641,5 +668,69 @@ export const useNeoCorrecoesSemData = () => {
     updateNeoCorrecao: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
     reorganizarNeoCorrecoes: reorganizarMutation.mutate,
+  };
+};
+
+// Hook para Neo Correções em "Aguardando Cliente"
+export const useNeoCorrecoesAguardandoCliente = () => {
+  const queryClient = useQueryClient();
+
+  const { data: neoCorrecoesAguardandoCliente = [], isLoading } = useQuery({
+    queryKey: ["neo_correcoes_aguardando_cliente"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("neo_correcoes")
+        .select("*")
+        .eq("concluida", true)
+        .eq("status", "aguardando_cliente")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+
+      const { data: equipes } = await supabase
+        .from("equipes_instalacao")
+        .select("id, nome, cor")
+        .eq("ativa", true);
+      const equipesMap = new Map(equipes?.map(e => [e.id, e]) || []);
+
+      return (data || []).map(item => ({
+        ...item,
+        _tipo: 'neo_correcao' as const,
+        tipo_responsavel: (item.tipo_responsavel as 'equipe_interna' | 'autorizado' | null) || 'equipe_interna',
+        equipe: item.equipe_id ? equipesMap.get(item.equipe_id) || null : null,
+      })) as NeoCorrecao[];
+    },
+  });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('neo-correcoes-aguardando-cliente-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'neo_correcoes' }, () => {
+        queryClient.invalidateQueries({ queryKey: ["neo_correcoes_aguardando_cliente"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
+  const retornarParaFinalizadoMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("neo_correcoes")
+        .update({ status: 'concluida', updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_aguardando_cliente"] });
+      queryClient.invalidateQueries({ queryKey: ["neo_correcoes_finalizadas"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-contadores"] });
+      toast.success("Retornado para Finalizado!");
+    },
+    onError: () => toast.error("Erro ao retornar para Finalizado"),
+  });
+
+  return {
+    neoCorrecoesAguardandoCliente,
+    isLoading,
+    retornarParaFinalizadoNeoCorrecao: retornarParaFinalizadoMutation.mutateAsync,
   };
 };

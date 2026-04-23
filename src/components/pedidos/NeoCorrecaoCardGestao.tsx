@@ -19,10 +19,13 @@ interface NeoCorrecaoCardGestaoProps {
   onConcluir?: (id: string) => void;
   isConcluindo?: boolean;
   showConcluido?: boolean;
+  showAguardandoCliente?: boolean;
   onRetornar?: (id: string) => void;
   onAgendar?: (id: string) => void;
   onArquivar?: (id: string) => void;
   onEditar?: (neo: NeoCorrecao) => void;
+  onEnviarAguardandoCliente?: (id: string) => void;
+  onRetornarParaFinalizado?: (id: string) => void;
   onUpdateValor?: (id: string, data: { valor_a_receber: number | null; valor_a_receber_texto: string }) => Promise<void>;
   dragHandleProps?: Record<string, any>;
   isDragging?: boolean;
@@ -34,10 +37,13 @@ export function NeoCorrecaoCardGestao({
   onConcluir,
   isConcluindo,
   showConcluido = false,
+  showAguardandoCliente = false,
   onRetornar,
   onAgendar,
   onArquivar,
   onEditar,
+  onEnviarAguardandoCliente,
+  onRetornarParaFinalizado,
   onUpdateValor,
   dragHandleProps,
   isDragging,
@@ -377,6 +383,51 @@ export function NeoCorrecaoCardGestao({
                           onRetornar(neoCorrecao.id);
                         }}
                         title="Retornar para correções"
+                      >
+                        <Undo2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                    {onEnviarAguardandoCliente && (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="flex h-[20px] w-[20px] rounded-[3px] bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 border-yellow-500/50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEnviarAguardandoCliente(neoCorrecao.id);
+                        }}
+                        title="Aguardando Cliente"
+                      >
+                        <Clock className="h-3 w-3" />
+                      </Button>
+                    )}
+                    {onArquivar && (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="flex h-[20px] w-[20px] rounded-[3px] bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border-orange-500/50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onArquivar(neoCorrecao.id);
+                        }}
+                        title="Arquivar"
+                      >
+                        <Archive className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </>
+                ) : showAguardandoCliente ? (
+                  <>
+                    {onRetornarParaFinalizado && (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="flex h-[20px] w-[20px] rounded-[3px] bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRetornarParaFinalizado(neoCorrecao.id);
+                        }}
+                        title="Retornar para Finalizado"
                       >
                         <Undo2 className="h-3 w-3" />
                       </Button>

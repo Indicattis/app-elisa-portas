@@ -92,6 +92,8 @@ export function usePedidosContadores() {
         .from('neo_instalacoes')
         .select('*', { count: 'exact', head: true })
         .eq('concluida', true)
+        .neq('status', 'aguardando_cliente')
+        .neq('status', 'arquivada')
         .gte('concluida_em', dataLimiteContador.toISOString());
 
       if (!neoInstalacaoFinalizadaError && neoInstalacaoFinalizadaCount) {
@@ -103,11 +105,24 @@ export function usePedidosContadores() {
         .from('neo_correcoes')
         .select('*', { count: 'exact', head: true })
         .eq('concluida', true)
+        .neq('status', 'aguardando_cliente')
+        .neq('status', 'arquivada')
         .gte('concluida_em', dataLimiteContador.toISOString());
 
       if (!neoCorrecaoFinalizadaError && neoCorrecaoFinalizadaCount) {
         counts.finalizado += neoCorrecaoFinalizadaCount;
       }
+
+      // Neos em Aguardando Cliente
+      const { count: neoInstAgCli } = await supabase
+        .from('neo_instalacoes')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'aguardando_cliente');
+      const { count: neoCorrAgCli } = await supabase
+        .from('neo_correcoes')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'aguardando_cliente');
+      counts.aguardando_cliente += (neoInstAgCli || 0) + (neoCorrAgCli || 0);
 
       return counts;
     },

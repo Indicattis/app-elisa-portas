@@ -27,8 +27,8 @@ import { useVendasPendenteFaturamento } from "@/hooks/useVendasPendenteFaturamen
 import { VendaPendentePedidoCard } from "@/components/pedidos/VendaPendentePedidoCard";
 
 import { VendasPendenteDraggableList } from "@/components/pedidos/VendasPendenteDraggableList";
-import { useNeoInstalacoesListagem, useNeoInstalacoesFinalizadas } from "@/hooks/useNeoInstalacoes";
-import { useNeoCorrecoesListagem, useNeoCorrecoesFinalizadas } from "@/hooks/useNeoCorrecoes";
+import { useNeoInstalacoesListagem, useNeoInstalacoesFinalizadas, useNeoInstalacoesAguardandoCliente } from "@/hooks/useNeoInstalacoes";
+import { useNeoCorrecoesListagem, useNeoCorrecoesFinalizadas, useNeoCorrecoesAguardandoCliente } from "@/hooks/useNeoCorrecoes";
 import { useEtapaResponsaveis } from "@/hooks/useEtapaResponsaveis";
 import { useOrdensCarregamentoCalendario } from "@/hooks/useOrdensCarregamentoCalendario";
 import { useOrdensCarregamentoUnificadas } from "@/hooks/useOrdensCarregamentoUnificadas";
@@ -112,8 +112,10 @@ export default function GestaoFabricaDirecao() {
   });
   const { neoInstalacoes, concluirNeoInstalacao, isConcluindo, reorganizarNeoInstalacoes } = useNeoInstalacoesListagem();
   const { neoCorrecoes, concluirNeoCorrecao, reorganizarNeoCorrecoes } = useNeoCorrecoesListagem();
-  const { neoInstalacoesFinalizadas, retornarNeoInstalacao, isRetornando: isRetornandoInstalacao, arquivarNeoInstalacao } = useNeoInstalacoesFinalizadas();
-  const { neoCorrecoesFinalizadas, retornarNeoCorrecao, isRetornando: isRetornandoCorrecao, arquivarNeoCorrecao } = useNeoCorrecoesFinalizadas();
+  const { neoInstalacoesFinalizadas, retornarNeoInstalacao, isRetornando: isRetornandoInstalacao, arquivarNeoInstalacao, enviarAguardandoClienteNeoInstalacao } = useNeoInstalacoesFinalizadas();
+  const { neoCorrecoesFinalizadas, retornarNeoCorrecao, isRetornando: isRetornandoCorrecao, arquivarNeoCorrecao, enviarAguardandoClienteNeoCorrecao } = useNeoCorrecoesFinalizadas();
+  const { neoInstalacoesAguardandoCliente, retornarParaFinalizadoNeoInstalacao } = useNeoInstalacoesAguardandoCliente();
+  const { neoCorrecoesAguardandoCliente, retornarParaFinalizadoNeoCorrecao } = useNeoCorrecoesAguardandoCliente();
   const { 
     getResponsavel, 
     atribuirResponsavel, 
@@ -1068,6 +1070,7 @@ export default function GestaoFabricaDirecao() {
                                 showConcluido
                                 onRetornar={handleRetornarNeoInstalacao}
                                 onArquivar={handleArquivarNeoInstalacao}
+                                onEnviarAguardandoCliente={(id) => enviarAguardandoClienteNeoInstalacao(id)}
                               />
                             ))}
                           {neoCorrecoesFinalizadas
@@ -1085,6 +1088,7 @@ export default function GestaoFabricaDirecao() {
                                 showConcluido
                                 onRetornar={handleRetornarNeoCorrecao}
                                 onArquivar={handleArquivarNeoCorrecao}
+                                onEnviarAguardandoCliente={(id) => enviarAguardandoClienteNeoCorrecao(id)}
                               />
                             ))}
                         </div>
@@ -1144,30 +1148,64 @@ export default function GestaoFabricaDirecao() {
                 <Clock className="h-5 w-5 text-yellow-400" />
                 <span>Aguardando Cliente</span>
                 <span className="text-sm font-normal text-white/60">
-                  {pedidosFiltrados.length} {pedidosFiltrados.length === 1 ? 'pedido' : 'pedidos'}
+                  {pedidosFiltrados.length + neoInstalacoesAguardandoCliente.length + neoCorrecoesAguardandoCliente.length} {(pedidosFiltrados.length + neoInstalacoesAguardandoCliente.length + neoCorrecoesAguardandoCliente.length) === 1 ? 'item' : 'itens'}
                 </span>
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 py-4">
               {isLoading ? (
                 <div className="text-center py-8 text-white/60">Carregando...</div>
-              ) : pedidosFiltrados.length === 0 ? (
-                <div className="text-center py-8 text-white/60">Nenhum pedido aguardando cliente</div>
+              ) : (pedidosFiltrados.length === 0 && neoInstalacoesAguardandoCliente.length === 0 && neoCorrecoesAguardandoCliente.length === 0) ? (
+                <div className="text-center py-8 text-white/60">Nenhum item aguardando cliente</div>
               ) : (
-                <PedidosDraggableList
-                  pedidos={pedidosFiltrados}
-                  pedidosParaTotais={pedidosFiltrados}
-                  etapa={'aguardando_cliente' as EtapaPedido}
-                  isAberto={false}
-                  viewMode={viewMode}
-                  onMoverEtapa={(pedidoId) => handleRetornarDeAguardandoCliente(pedidoId)}
-                  onReorganizar={handleReorganizar}
-                  onMoverPrioridade={handleMoverPrioridade}
-                  onArquivar={handleArquivar}
-                  showPosicao={true}
-                  enableDragAndDrop={true}
-                  hideOrdensStatus={true}
-                />
+                <>
+                  {pedidosFiltrados.length > 0 && (
+                    <PedidosDraggableList
+                      pedidos={pedidosFiltrados}
+                      pedidosParaTotais={pedidosFiltrados}
+                      etapa={'aguardando_cliente' as EtapaPedido}
+                      isAberto={false}
+                      viewMode={viewMode}
+                      onMoverEtapa={(pedidoId) => handleRetornarDeAguardandoCliente(pedidoId)}
+                      onReorganizar={handleReorganizar}
+                      onMoverPrioridade={handleMoverPrioridade}
+                      onArquivar={handleArquivar}
+                      showPosicao={true}
+                      enableDragAndDrop={true}
+                      hideOrdensStatus={true}
+                    />
+                  )}
+                  {(neoInstalacoesAguardandoCliente.length > 0 || neoCorrecoesAguardandoCliente.length > 0) && (
+                    <div className="mt-4 space-y-2">
+                      <h3 className="text-sm font-medium text-white/70 mb-2 flex items-center gap-2">
+                        <span>Serviços Avulsos Aguardando Cliente</span>
+                        <span className="text-yellow-400">({neoInstalacoesAguardandoCliente.length + neoCorrecoesAguardandoCliente.length})</span>
+                      </h3>
+                      <div className="space-y-1">
+                        {neoInstalacoesAguardandoCliente.map((neo) => (
+                          <NeoInstalacaoCardGestao
+                            key={neo.id}
+                            neoInstalacao={neo}
+                            viewMode="list"
+                            showAguardandoCliente
+                            onRetornarParaFinalizado={(id) => retornarParaFinalizadoNeoInstalacao(id)}
+                            onArquivar={handleArquivarNeoInstalacao}
+                          />
+                        ))}
+                        {neoCorrecoesAguardandoCliente.map((neo) => (
+                          <NeoCorrecaoCardGestao
+                            key={neo.id}
+                            neoCorrecao={neo}
+                            viewMode="list"
+                            showAguardandoCliente
+                            onRetornarParaFinalizado={(id) => retornarParaFinalizadoNeoCorrecao(id)}
+                            onArquivar={handleArquivarNeoCorrecao}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
