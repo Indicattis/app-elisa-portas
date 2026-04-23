@@ -479,7 +479,6 @@ const App = () => (
 
                 {/* Hub da Fábrica Minimalista */}
                 <Route path="/fabrica" element={<ProtectedRoute routeKeyPrefix="fabrica_"><FabricaHub /></ProtectedRoute>} />
-                <Route path="/fabrica/pedidos-producao" element={<ProtectedRoute routeKey="fabrica_pedidos"><PedidosProducaoMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/ordens-pedidos" element={<ProtectedRoute routeKey="fabrica_ordens_pedidos"><OrdensPorPedido /></ProtectedRoute>} />
                 <Route path="/fabrica/controle-estoque" element={<ProtectedRoute routeKey="fabrica_estoque"><ControleEstoqueMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/producao" element={<ProtectedRoute routeKey="fabrica_producao"><ProducaoMinimalista /></ProtectedRoute>} />
