@@ -166,6 +166,7 @@ import MetasColaboradorIndividual from "./pages/MetasColaboradorIndividual";
 import FinanceiroHome from "./pages/FinanceiroHome";
 import RHHome from "./pages/RHHome";
 import PaineisHome from "./pages/PaineisHome";
+import PaineisMetasVendas from "./pages/paineis/PaineisMetasVendas";
 import DirecaoHome from "./pages/DirecaoHome";
 import DirecaoChecklist from "./pages/DirecaoChecklist";
 import DirecaoChecklistProgramacao from "./pages/DirecaoChecklistProgramacao";

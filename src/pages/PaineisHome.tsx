@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tv, Map, BookOpen, Calendar, Calculator, LogOut, Home, LayoutDashboard, Lock } from "lucide-react";
+import { Tv, Map, BookOpen, Calendar, Calculator, LogOut, Home, LayoutDashboard, Lock, Target } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -14,6 +14,7 @@ const routeKeyMap: Record<string, string> = {
   '/paineis/diario-bordo': 'diario_bordo',
   '/paineis/calendario': 'calendario',
   '/paineis/contador-vendas': 'contador_vendas',
+  '/paineis/metas-vendas': 'paineis_metas_vendas',
 };
 
 const paineis = [
@@ -51,6 +52,13 @@ const paineis = [
     icon: Calculator,
     path: "/paineis/contador-vendas",
     color: "from-pink-500/10 to-pink-600/10 hover:from-pink-500/20 hover:to-pink-600/20",
+  },
+  {
+    title: "Metas de Vendas",
+    description: "Progresso de metas com tiers e bonificações",
+    icon: Target,
+    path: "/paineis/metas-vendas",
+    color: "from-amber-500/10 to-yellow-600/10 hover:from-amber-500/20 hover:to-yellow-600/20",
   },
 ];
 
