@@ -859,68 +859,133 @@ export function PedidoCard({
         </div>
       );
 
+      const infoBlock = (
+        <>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              {ordem.capturada_por_foto && (
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={ordem.capturada_por_foto} />
+                  <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                </Avatar>
+              )}
+              <div>
+                <p className="text-xs font-semibold">{ordem.capturada_por_nome || 'Responsável'}</p>
+                <p className="text-[10px] text-muted-foreground">{nomeSetor}</p>
+              </div>
+            </div>
+            {isAdmin && ordem.ordem_id && ordem.status !== 'concluido' && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoverResponsavel(ordem, nomeSetor);
+                }}
+                title="Remover responsável"
+              >
+                <UserMinus className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+
+          {temLinhasConcluidas ? (
+            <div className="space-y-1 border-t pt-2">
+              <p className="text-[10px] font-medium text-muted-foreground">
+                Linhas concluídas ({ordem.linhas_concluidas.length}):
+              </p>
+              {ordem.linhas_concluidas.slice(0, 5).map((linha: any, idx: number) => (
+                <div key={idx} className="flex items-center gap-1 text-[10px]">
+                  <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                  <span className="truncate">
+                    {linha.quantidade}x {linha.item}
+                    {linha.tamanho && ` (${linha.tamanho})`}
+                  </span>
+                </div>
+              ))}
+              {ordem.linhas_concluidas.length > 5 && (
+                <p className="text-[10px] text-muted-foreground">
+                  +{ordem.linhas_concluidas.length - 5} mais...
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-[10px] text-muted-foreground border-t pt-2">
+              Nenhuma linha concluída ainda
+            </p>
+          )}
+        </>
+      );
+
+      if (podeGerirPause && ordem.status !== 'concluido') {
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button type="button" onClick={(e) => e.stopPropagation()} className="cursor-pointer">
+                {avatarContent}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="top" className="w-72 p-3" onClick={(e) => e.stopPropagation()}>
+              {infoBlock}
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full mt-3"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAbrirPausarOrdem(ordem);
+                }}
+              >
+                <PauseCircle className="h-3.5 w-3.5 mr-2" />
+                Pausar ordem
+              </Button>
+            </PopoverContent>
+          </Popover>
+        );
+      }
+
       return (
         <Tooltip>
           <TooltipTrigger asChild>
             {avatarContent}
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-[280px] p-3">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2">
-                {ordem.capturada_por_foto && (
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={ordem.capturada_por_foto} />
-                    <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
-                  </Avatar>
-                )}
-                <div>
-                  <p className="text-xs font-semibold">{ordem.capturada_por_nome || 'Responsável'}</p>
-                  <p className="text-[10px] text-muted-foreground">{nomeSetor}</p>
-                </div>
-              </div>
-              {isAdmin && ordem.ordem_id && ordem.status !== 'concluido' && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoverResponsavel(ordem, nomeSetor);
-                  }}
-                  title="Remover responsável"
-                >
-                  <UserMinus className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </div>
-            
-            {temLinhasConcluidas ? (
-              <div className="space-y-1 border-t pt-2">
-                <p className="text-[10px] font-medium text-muted-foreground">
-                  Linhas concluídas ({ordem.linhas_concluidas.length}):
-                </p>
-                {ordem.linhas_concluidas.slice(0, 5).map((linha: any, idx: number) => (
-                  <div key={idx} className="flex items-center gap-1 text-[10px]">
-                    <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
-                    <span className="truncate">
-                      {linha.quantidade}x {linha.item}
-                      {linha.tamanho && ` (${linha.tamanho})`}
-                    </span>
-                  </div>
-                ))}
-                {ordem.linhas_concluidas.length > 5 && (
-                  <p className="text-[10px] text-muted-foreground">
-                    +{ordem.linhas_concluidas.length - 5} mais...
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-[10px] text-muted-foreground border-t pt-2">
-                Nenhuma linha concluída ainda
-              </p>
-            )}
+            {infoBlock}
           </TooltipContent>
         </Tooltip>
+      );
+    }
+
+    if (podeGerirPause && ordem.ordem_id) {
+      return (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              onClick={(e) => e.stopPropagation()}
+              className="h-5 w-5 rounded-full bg-yellow-500/10 flex items-center justify-center cursor-pointer"
+            >
+              <AlertCircle className="h-3.5 w-3.5 text-yellow-600" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent side="top" className="w-64 p-3" onClick={(e) => e.stopPropagation()}>
+            <p className="text-xs font-semibold mb-1">{nomeSetor}</p>
+            <p className="text-xs text-muted-foreground mb-3">Aguardando captura por um operador.</p>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAbrirPausarOrdem(ordem);
+              }}
+            >
+              <PauseCircle className="h-3.5 w-3.5 mr-2" />
+              Pausar ordem
+            </Button>
+          </PopoverContent>
+        </Popover>
       );
     }
 
