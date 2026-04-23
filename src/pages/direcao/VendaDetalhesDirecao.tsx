@@ -381,52 +381,83 @@ export default function VendaDetalhesDirecao() {
           return null;
         })()}
 
-        {/* Produtos */}
-        {venda.produtos && venda.produtos.length > 0 && (
-          <div className={cardClass}>
-            <h3 className="text-white font-medium mb-4 flex items-center gap-2">
-              <Package className="w-5 h-5 text-primary" />
-              Produtos da Venda ({venda.produtos.length})
-            </h3>
-            <div className="space-y-3">
-              {venda.produtos.map((produto) => (
-                <div 
-                  key={produto.id} 
-                  className="bg-primary/5 border border-primary/10 rounded-lg p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
-                >
-                  <div className="flex items-start gap-3">
-                    {getTipoProdutoBadge(produto.tipo_produto)}
-                    <div>
-                      <div className="flex items-center gap-2 text-white/80 text-sm">
-                        <span>Qtd: {produto.quantidade}x</span>
-                        {produto.largura > 0 && produto.altura > 0 && (
-                          <span className="text-white/60">
-                            ({produto.largura.toFixed(2)} x {produto.altura.toFixed(2)}m)
-                          </span>
-                        )}
-                      </div>
-                      {produto.catalogo_cores && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <div 
-                            className="w-3 h-3 rounded-full border border-white/20" 
-                            style={{ backgroundColor: produto.catalogo_cores.codigo_hex }}
-                          />
-                          <span className="text-xs text-white/60">{produto.catalogo_cores.nome}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-white font-medium">{formatCurrency(produto.valor_total)}</p>
-                    {produto.desconto_percentual > 0 && (
-                      <p className="text-xs text-orange-400">-{produto.desconto_percentual}% desconto</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* Produtos da Venda */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-blue-400" />
+            <h2 className="text-sm font-semibold text-white/90 tracking-wide uppercase">
+              Produtos da Venda
+            </h2>
+            <span className="text-xs text-white/40 ml-1">
+              ({venda.produtos?.length || 0})
+            </span>
           </div>
-        )}
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table className="text-xs">
+                  <TableHeader>
+                    <TableRow className="border-blue-500/10 hover:bg-white/5">
+                      <TableHead className="text-xs text-white/70">Tipo</TableHead>
+                      <TableHead className="text-xs text-white/70">Cor</TableHead>
+                      <TableHead className="text-xs text-white/70">Qtd</TableHead>
+                      <TableHead className="text-xs text-white/70">Medidas (L × A)</TableHead>
+                      <TableHead className="text-xs text-white/70 text-right">Valor Unit.</TableHead>
+                      <TableHead className="text-xs text-white/70 text-right">Desconto</TableHead>
+                      <TableHead className="text-xs text-white/70 text-right">Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(!venda.produtos || venda.produtos.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-white/50">
+                          Nenhum produto cadastrado nesta venda
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {venda.produtos?.map((produto: Produto) => (
+                      <TableRow key={produto.id} className="border-blue-500/10 hover:bg-white/5">
+                        <TableCell>{getTipoProdutoBadge(produto.tipo_produto)}</TableCell>
+                        <TableCell>
+                          {produto.catalogo_cores ? (
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-3 h-3 rounded-full border border-white/20"
+                                style={{ backgroundColor: produto.catalogo_cores.codigo_hex }}
+                              />
+                              <span className="text-white/80">{produto.catalogo_cores.nome}</span>
+                            </div>
+                          ) : (
+                            <span className="text-white/40">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-white/80">{produto.quantidade}x</TableCell>
+                        <TableCell className="text-white/80">
+                          {produto.largura > 0 && produto.altura > 0
+                            ? `${produto.largura.toFixed(2)} × ${produto.altura.toFixed(2)} m`
+                            : "—"}
+                        </TableCell>
+                        <TableCell className="text-right text-white/80">
+                          {formatCurrency((produto as any).valor_produto || produto.valor_unitario || 0)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {produto.desconto_percentual > 0 ? (
+                            <span className="text-orange-400">-{produto.desconto_percentual}%</span>
+                          ) : (
+                            <span className="text-white/40">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right text-white font-medium">
+                          {formatCurrency(produto.valor_total)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Grid cliente e informações */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
