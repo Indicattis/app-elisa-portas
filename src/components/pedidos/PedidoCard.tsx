@@ -2814,6 +2814,20 @@ className="flex h-[20px] w-full rounded-[3px]"
         isLoading={isExcluindo}
       />
 
+      {ordemParaPausar && (
+        <AvisoFaltaModal
+          open={avisoFaltaOpen}
+          onOpenChange={(open) => {
+            setAvisoFaltaOpen(open);
+            if (!open) setOrdemParaPausar(null);
+          }}
+          numeroOrdem={ordemParaPausar.numeroOrdem}
+          linhas={linhasOrdemPausar}
+          onConfirm={handleConfirmarPausa}
+          isPausing={pausarOrdemDirecao.isPending}
+        />
+      )}
+
       <Dialog open={showFinalizarDireto} onOpenChange={(open) => { if (!isFinalizandoDireto) setShowFinalizarDireto(open); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
