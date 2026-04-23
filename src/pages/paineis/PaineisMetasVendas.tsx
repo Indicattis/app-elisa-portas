@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Target } from 'lucide-react';
-import { MinimalistLayout } from '@/components/MinimalistLayout';
+import { ArrowLeft, Target } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { MetaVendasBarra } from '@/components/paineis/MetaVendasBarra';
 import { useProgressoMetasVendas } from '@/hooks/useProgressoMetasVendas';
 import { formatarPeriodo } from '@/lib/periodoMeta';
@@ -9,6 +9,7 @@ import { formatCurrency } from '@/lib/utils';
 export default function PaineisMetasVendas() {
   const { data: progressos, isLoading } = useProgressoMetasVendas();
   const [now, setNow] = useState(new Date());
+  const navigate = useNavigate();
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 60000);
@@ -16,17 +17,16 @@ export default function PaineisMetasVendas() {
   }, []);
 
   return (
-    <MinimalistLayout
-      title="Metas de Vendas"
-      subtitle="Progresso em tempo real com tiers de bonificação"
-      backPath="/paineis"
-      breadcrumbItems={[
-        { label: 'Home', path: '/home' },
-        { label: 'Painéis', path: '/paineis' },
-        { label: 'Metas de Vendas' },
-      ]}
-    >
-      <div className="space-y-4">
+    <div className="min-h-screen bg-black text-white p-6">
+      <button
+        onClick={() => navigate('/paineis')}
+        className="fixed top-4 left-4 z-50 h-10 w-10 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl flex items-center justify-center hover:bg-white/10 transition-colors"
+        aria-label="Voltar"
+      >
+        <ArrowLeft className="h-5 w-5 text-white/80" />
+      </button>
+
+      <div className="max-w-6xl mx-auto space-y-6 pt-12">
         {isLoading && <p className="text-sm text-white/50">Carregando metas...</p>}
 
         {!isLoading && (progressos?.length ?? 0) === 0 && (
@@ -37,7 +37,7 @@ export default function PaineisMetasVendas() {
         )}
 
         {(progressos || []).map((p) => (
-          <div key={p.meta.id} className="space-y-2">
+          <div key={p.meta.id} className="space-y-3">
             <div className="flex items-baseline justify-between gap-2 px-1">
               <div className="text-xs uppercase tracking-wider text-white/50">
                 {formatarPeriodo(p.meta.periodo, now)}
@@ -50,6 +50,6 @@ export default function PaineisMetasVendas() {
           </div>
         ))}
       </div>
-    </MinimalistLayout>
+    </div>
   );
 }
