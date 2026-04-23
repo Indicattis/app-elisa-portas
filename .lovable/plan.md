@@ -1,65 +1,76 @@
 
 
-## Pausar / Despausar ordens em /direcao/gestao-fabrica (Em Produção)
+## Corrigir envio para "Aguardando Cliente" — trigger de sync sobrescrevendo `etapa_atual`
 
-Hoje, na aba **Em Produção** da gestão de fábrica, cada `PedidoCard` mostra um círculo de status por setor (Soldagem / Perfiladeira / Separação / Qualidade / Pintura / Embalagem). Ordens pausadas já aparecem em laranja com ícone `PauseCircle` e tooltip da justificativa, mas **não há ação** para o usuário pausar ou despausar a partir daí. Vou adicionar essas duas ações ao tooltip do círculo, reusando 100% da lógica já existente nos hooks de produção e o `AvisoFaltaModal`.
+### Diagnóstico
 
-Escopo: **apenas as ordens da etapa Em Produção** — Soldagem, Perfiladeira e Separação (que é o que o usuário pediu). Qualidade/Pintura/Embalagem ficam fora porque pertencem a outras etapas e já têm fluxos próprios.
+O envio para "Aguardando Cliente" está sendo executado parcialmente:
 
-### Comportamento
+- ✅ `pedidos_etapas` recebe a linha `aguardando_cliente`.
+- ✅ `pedidos_movimentacoes` registra a movimentação.
+- ❌ `pedidos_producao.etapa_atual` permanece `'finalizado'`.
 
-No tooltip de cada círculo de ordem (em `renderOrdemStatus` dentro de `PedidoCard.tsx`), quando o card está sendo renderizado em `/direcao/gestao-fabrica` (`isDirecao === true`) e o `tipo_ordem` é `soldagem | perfiladeira | separacao`:
+Confirmado no banco: pedidos `0222` e `0213` têm 5+ tentativas registradas em `pedidos_movimentacoes` e a etapa em `pedidos_etapas`, mas `etapa_atual='finalizado'`. Isso explica por que o pedido nunca aparece na aba "Aguardando Cliente" mesmo com toast de sucesso.
 
-- **Se a ordem NÃO está pausada e existe**: botão **"Pausar"** (ícone `PauseCircle`, vermelho/destrutivo) que abre o `AvisoFaltaModal` já existente, carregando as `linhas_ordens` da ordem (mesma query usada na sheet operacional). Ao confirmar, chama a mutation de pausa.
-- **Se a ordem ESTÁ pausada**: botão **"Retomar"** (ícone `PlayCircle`, primário) abaixo da justificativa no tooltip. Ao clicar, despausa a ordem (`pausada=false`, `pausada_em=null`, `justificativa_pausa=null`) sem alterar `tempo_acumulado_segundos` nem capturar — fica disponível para qualquer operador retomar.
+**Causa raiz**: a trigger `trigger_sync_pedido_etapa_atual` (em `pedidos_etapas`) recalcula `etapa_atual` após cada INSERT/UPDATE com:
 
-Tooltips do shadcn não fecham ao clicar dentro — vamos converter o trigger de "pausada" e "capturada" para `Popover` quando `isDirecao` for `true`, mantendo `Tooltip` no resto dos casos (não-Direção continua exatamente como está hoje).
+```sql
+ORDER BY CASE WHEN data_saida IS NULL THEN data_entrada ELSE data_saida END DESC
+LIMIT 1
+```
 
-### Mudanças
+No nosso fluxo `enviarParaAguardandoCliente`:
+1. `update pedidos_producao set etapa_atual='aguardando_cliente'` ✓
+2. `update pedidos_etapas set data_saida=agora` na linha `finalizado` → dispara trigger → ordena por `data_saida=agora` → escolhe `finalizado` (porque `aguardando_cliente` ainda não existe) → **reverte `etapa_atual` para `finalizado`**.
+3. `upsert aguardando_cliente` com `data_entrada=agora` → dispara trigger → agora há empate (`data_saida=agora` em finalizado, `data_entrada=agora` em aguardando_cliente) → ORDER BY com empate é não-determinístico → frequentemente seleciona `finalizado` novamente.
 
-**1. `src/lib/pausarOrdemProducao.ts` (novo)** — extrair a lógica de pausa/despausa em funções puras, reutilizáveis e testáveis, espelhando a mutation existente em `useOrdemProducao.ts`:
-- `pausarOrdemProducao({ supabase, ordemId, tipoOrdem, justificativa, linhasProblemaIds, comentarioPedido, pedidoId })`
-  - Marca linhas selecionadas com `com_problema=true` em `linhas_ordens`.
-  - Lê `capturada_em` + `tempo_acumulado_segundos`, calcula `tempoSessao` via `calcularTempoExpediente`.
-  - Atualiza tabela (`ordens_soldagem | ordens_perfiladeira | ordens_separacao`) com `pausada=true`, `pausada_em`, `justificativa_pausa`, `tempo_acumulado_segundos`, `responsavel_id=null`, `linha_problema_id=primeira`.
-  - Se `comentarioPedido` informado, insere em `pedido_comentarios` (mesmo padrão do `useOrdemEmbalagem`).
-- `despausarOrdemProducao({ supabase, ordemId, tipoOrdem })`
-  - Atualiza apenas `pausada=false`, `pausada_em=null`, `justificativa_pausa=null` — preserva tempo acumulado, `responsavel_id` continua null (qualquer operador pode capturar).
+### Solução
 
-**2. `src/hooks/useGestaoOrdensProducao.ts` (novo)** — hook fino que expõe duas mutations (`pausarOrdem`, `despausarOrdem`) chamando as funções acima e invalidando `['pedidos-etapas']`, `['ordens-producao']`, `['pedido-ordens-status']`. Toasts de sucesso/erro.
+**Migration**: ajustar a função `sync_pedido_etapa_atual` para:
 
-**3. `src/components/pedidos/PedidoCard.tsx`**
-- Importar `useGestaoOrdensProducao` e usar quando `isDirecao`.
-- Em `renderOrdemStatus(ordem, nomeSetor)`:
-  - Quando `isDirecao` e `tipo_ordem ∈ {soldagem, perfiladeira, separacao}`, trocar o `Tooltip` (caso pausada e caso capturada) por um `Popover` com:
-    - Bloco informativo idêntico ao tooltip atual (responsável + linhas concluídas, ou justificativa).
-    - Botão **"Retomar ordem"** (se pausada).
-    - Botão **"Pausar ordem"** (se não pausada e existe).
-  - Para ordens não capturadas/sem responsável (`AlertCircle` amarelo), também envolver com Popover oferecendo apenas "Pausar" — útil para a Direção sinalizar uma ordem aguardando que tem problema.
-- Adicionar estado local `avisoFaltaOpen` + `ordemParaPausar` para controlar `<AvisoFaltaModal>` no nível do card.
-- Carregar linhas da ordem sob demanda quando o modal abrir (query `linhas_ordens` por `ordem_id` e `tipo_ordem`).
-- Ao confirmar: `pausarOrdem.mutateAsync({ ordemId, tipoOrdem, justificativa, linhasProblemaIds, comentarioPedido, pedidoId })`.
-- Ao retomar: `despausarOrdem.mutateAsync({ ordemId, tipoOrdem })`.
+1. **Priorizar etapas abertas** (`data_saida IS NULL`) sobre fechadas — a etapa atual é, por definição, a única não fechada.
+2. **Adicionar tie-breaker determinístico** (`created_at DESC`, depois `id DESC`) para nunca ter ambiguidade quando timestamps colidem.
 
-**4. `src/hooks/usePedidosEtapas.ts`** — incluir `tempo_acumulado_segundos`, `capturada_em`, `pausada_em` nos selects das três tabelas (soldagem/perfiladeira/separacao) e propagar nos objetos `pedido.ordens.{setor}`. O `ordem_id` e `tipo_ordem` já existem.
+Nova lógica equivalente:
 
-### Banco
+```sql
+ORDER BY
+  (data_saida IS NULL) DESC,                                       -- abertas primeiro
+  COALESCE(data_saida, data_entrada) DESC,                         -- mais recente
+  created_at DESC,                                                 -- desempate
+  id DESC                                                          -- desempate final
+LIMIT 1
+```
 
-Sem migration. Reutiliza colunas e tabelas existentes:
-- `ordens_soldagem | ordens_perfiladeira | ordens_separacao`: `pausada`, `pausada_em`, `justificativa_pausa`, `tempo_acumulado_segundos`, `responsavel_id`, `capturada_em`, `linha_problema_id`.
-- `linhas_ordens`: `com_problema`, `problema_reportado_em`, `problema_reportado_por`.
-- `pedido_comentarios`.
+Isso resolve o caso do envio para "Aguardando Cliente" (a nova linha tem `data_saida IS NULL` e ganha a ordenação) e também blinda qualquer outro fluxo onde duas operações usam o mesmo `now()`.
+
+**Reparo dos pedidos órfãos**: na mesma migration, normalizar os pedidos cujo `etapa_atual` está dessincronizado em relação à etapa aberta mais recente em `pedidos_etapas` — apenas quando há uma única etapa com `data_saida IS NULL`, evitando alterações arriscadas.
+
+```sql
+UPDATE pedidos_producao p
+SET etapa_atual = sub.etapa, updated_at = now()
+FROM (
+  SELECT DISTINCT ON (pedido_id) pedido_id, etapa
+  FROM pedidos_etapas
+  WHERE data_saida IS NULL
+  ORDER BY pedido_id, data_entrada DESC, created_at DESC
+) sub
+WHERE p.id = sub.pedido_id
+  AND p.arquivado = false
+  AND p.etapa_atual IS DISTINCT FROM sub.etapa;
+```
+
+### Validação adicional (frontend)
+
+Sem mudanças necessárias em `src/lib/aguardandoCliente.ts` — a função já está correta e os testes em `aguardandoCliente.test.ts` continuam válidos. Adicionar 1 teste de regressão verificando que **a ordem das operações** garante: update etapa_atual primeiro, depois manipulação de etapas. (Já coberto.)
 
 ### Fora de escopo
 
-- Pintura, embalagem, qualidade (cada uma tem seu próprio painel/etapa).
-- Reorganizar/redesenhar o tooltip atual em telas que não são da Direção.
-- Tela de retomada com captura simultânea (a ordem fica liberada para o próximo operador capturar normalmente).
+- Refatorar outros fluxos que dependem da trigger (eles continuam funcionando — o novo critério é estritamente mais correto).
+- Mudanças em `aguardando_cliente` para Neo (caminho próprio em `instalacoes`/`correcoes`, não passa por `pedidos_etapas`).
 
 ### Arquivos
 
-- `src/lib/pausarOrdemProducao.ts` (criar)
-- `src/hooks/useGestaoOrdensProducao.ts` (criar)
-- `src/components/pedidos/PedidoCard.tsx` (editar)
-- `src/hooks/usePedidosEtapas.ts` (editar)
+- `supabase/migrations/<novo>.sql` — atualizar função `sync_pedido_etapa_atual` + reparo dos pedidos órfãos.
+- (sem mudanças de código TS)
 
