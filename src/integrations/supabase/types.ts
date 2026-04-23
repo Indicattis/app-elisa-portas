@@ -4584,11 +4584,15 @@ export type Database = {
           em_backlog: boolean
           historico: boolean
           id: string
+          justificativa_pausa: string | null
           numero_ordem: string
+          pausada: boolean | null
+          pausada_em: string | null
           pedido_id: string
           prioridade: number
           responsavel_id: string | null
           status: string
+          tempo_acumulado_segundos: number | null
           tempo_conclusao_segundos: number | null
           updated_at: string
         }
@@ -4599,11 +4603,15 @@ export type Database = {
           em_backlog?: boolean
           historico?: boolean
           id?: string
+          justificativa_pausa?: string | null
           numero_ordem: string
+          pausada?: boolean | null
+          pausada_em?: string | null
           pedido_id: string
           prioridade?: number
           responsavel_id?: string | null
           status?: string
+          tempo_acumulado_segundos?: number | null
           tempo_conclusao_segundos?: number | null
           updated_at?: string
         }
@@ -4614,11 +4622,15 @@ export type Database = {
           em_backlog?: boolean
           historico?: boolean
           id?: string
+          justificativa_pausa?: string | null
           numero_ordem?: string
+          pausada?: boolean | null
+          pausada_em?: string | null
           pedido_id?: string
           prioridade?: number
           responsavel_id?: string | null
           status?: string
+          tempo_acumulado_segundos?: number | null
           tempo_conclusao_segundos?: number | null
           updated_at?: string
         }
