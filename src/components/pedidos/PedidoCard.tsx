@@ -2237,6 +2237,35 @@ className="flex h-[20px] w-full rounded-[3px]"
           </AlertDialogContent>
         </AlertDialog>
 
+        <AlertDialog open={showDevolverFinalizado} onOpenChange={setShowDevolverFinalizado}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Devolver para Finalizado</AlertDialogTitle>
+              <AlertDialogDescription>
+                Deseja devolver este pedido para a etapa "Finalizado"? Ele sairá de "Aguardando Cliente" e voltará para o fluxo normal.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={isDevolvendoFinalizado}
+                onClick={async () => {
+                  if (!onDevolverParaFinalizado) return;
+                  setIsDevolvendoFinalizado(true);
+                  try {
+                    await onDevolverParaFinalizado(pedido.id);
+                  } finally {
+                    setIsDevolvendoFinalizado(false);
+                    setShowDevolverFinalizado(false);
+                  }
+                }}
+              >
+                {isDevolvendoFinalizado ? 'Devolvendo...' : 'Confirmar'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <PedidoDetalhesSheet pedido={pedido} open={showDetalhes} onOpenChange={setShowDetalhes} />
 
         <AcaoEtapaModal pedido={pedido} open={showAcaoEtapa} onOpenChange={setShowAcaoEtapa} onAvancar={onMoverEtapa || (() => {})} />
