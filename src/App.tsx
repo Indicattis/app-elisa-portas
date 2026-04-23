@@ -932,6 +932,7 @@ const App = () => (
                 <Route path="/paineis/diario-bordo" element={<ProtectedRoute routeKey="diario_bordo"><DiarioBordo /></ProtectedRoute>} />
                 <Route path="/paineis/calendario" element={<ProtectedRoute routeKey="calendario"><Calendario /></ProtectedRoute>} />
                 <Route path="/paineis/contador-vendas" element={<ProtectedRoute routeKey="contador_vendas"><ContadorVendas /></ProtectedRoute>} />
+                <Route path="/paineis/metas-vendas" element={<ProtectedRoute routeKey="paineis_metas_vendas"><PaineisMetasVendas /></ProtectedRoute>} />
                 
                 {/* Redirect TV Dashboard */}
                 <Route path="/tv-dashboard" element={<Navigate to="/paineis/tv-dashboard" replace />} />
