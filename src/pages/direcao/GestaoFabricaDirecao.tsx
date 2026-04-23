@@ -455,30 +455,29 @@ export default function GestaoFabricaDirecao() {
         .eq('id', pedidoId);
       if (errUpdate) throw errUpdate;
 
-      // 2. Fechar etapa finalizado
-      await supabase
+      // 2. Fechar etapa finalizado preservando data_entrada original
+      const { error: errCloseFinalizado } = await supabase
         .from('pedidos_etapas')
-        .upsert({
-          pedido_id: pedidoId,
-          etapa: 'finalizado',
-          data_saida: agora,
-          data_entrada: agora,
-          checkboxes: [],
-        }, { onConflict: 'pedido_id,etapa' });
+        .update({ data_saida: agora })
+        .eq('pedido_id', pedidoId)
+        .eq('etapa', 'finalizado');
+      if (errCloseFinalizado) throw errCloseFinalizado;
 
-      // 3. Criar etapa aguardando_cliente
-      await supabase
+      // 3. Criar/abrir etapa aguardando_cliente
+      const { error: errCreateAguardando } = await supabase
         .from('pedidos_etapas')
         .upsert({
           pedido_id: pedidoId,
           etapa: 'aguardando_cliente',
           data_entrada: agora,
+          data_saida: null,
           checkboxes: [],
         }, { onConflict: 'pedido_id,etapa' });
+      if (errCreateAguardando) throw errCreateAguardando;
 
       // 4. Registrar movimentação
       const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('pedidos_movimentacoes').insert({
+      const { error: errMov } = await supabase.from('pedidos_movimentacoes').insert({
         pedido_id: pedidoId,
         etapa_origem: 'finalizado',
         etapa_destino: 'aguardando_cliente',
@@ -486,6 +485,7 @@ export default function GestaoFabricaDirecao() {
         user_id: user?.id || '',
         descricao: 'Pedido enviado para Aguardando Cliente',
       });
+      if (errMov) throw errMov;
 
       toast({ title: 'Pedido enviado para Aguardando Cliente' });
       queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
@@ -505,27 +505,37 @@ export default function GestaoFabricaDirecao() {
         .eq('id', pedidoId);
       if (errUpdate) throw errUpdate;
 
-      // Fechar etapa aguardando_cliente
-      await supabase
+      // Fechar etapa aguardando_cliente preservando data_entrada
+      const { error: errCloseAguardando } = await supabase
+        .from('pedidos_etapas')
+        .update({ data_saida: agora })
+        .eq('pedido_id', pedidoId)
+        .eq('etapa', 'aguardando_cliente');
+      if (errCloseAguardando) throw errCloseAguardando;
+
+      // Reabrir etapa finalizado
+      const { error: errReopenFinalizado } = await supabase
         .from('pedidos_etapas')
         .upsert({
           pedido_id: pedidoId,
-          etapa: 'aguardando_cliente',
-          data_saida: agora,
+          etapa: 'finalizado',
           data_entrada: agora,
+          data_saida: null,
           checkboxes: [],
         }, { onConflict: 'pedido_id,etapa' });
+      if (errReopenFinalizado) throw errReopenFinalizado;
 
       // Registrar movimentação
       const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('pedidos_movimentacoes').insert({
+      const { error: errMov } = await supabase.from('pedidos_movimentacoes').insert({
         pedido_id: pedidoId,
         etapa_origem: 'aguardando_cliente',
         etapa_destino: 'finalizado',
-        teor: 'retrocesso',
+        teor: 'avanco',
         user_id: user?.id || '',
         descricao: 'Pedido retornado de Aguardando Cliente para Finalizado',
       });
+      if (errMov) throw errMov;
 
       toast({ title: 'Pedido retornado para Finalizado' });
       queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
