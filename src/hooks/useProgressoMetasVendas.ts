@@ -10,6 +10,7 @@ export interface VendedorProgresso {
   total_vendido: number;
   tier_atingido: MetaVendasTier | null;
   bonificacao_calculada: number;
+  total_vendido_mes: number;
 }
 
 export interface MetaProgresso {
@@ -64,6 +65,23 @@ export function useProgressoMetasVendas() {
       // Vendedores elegíveis = todos os ativos (mesma fonte de useVendedoresElegiveis)
       const elegiveis = (usuarios || []) as any[];
 
+      // Total vendido no mês corrente (independente do período de cada meta)
+      const periodoMes = getInicioFimMes(hoje);
+      const { data: vendasMes, error: errMes } = await supabase
+        .from('vendas')
+        .select('atendente_id, valor_venda')
+        .eq('is_rascunho', false)
+        .gte('data_venda', periodoMes.inicioIso)
+        .lte('data_venda', periodoMes.fimIso);
+      if (errMes) throw errMes;
+      const porVendedorMes = new Map<string, number>();
+      let totalGlobalMes = 0;
+      for (const v of (vendasMes as any[]) || []) {
+        const valor = Number(v.valor_venda || 0);
+        totalGlobalMes += valor;
+        porVendedorMes.set(v.atendente_id, (porVendedorMes.get(v.atendente_id) || 0) + valor);
+      }
+
       const resultados: MetaProgresso[] = [];
 
       for (const meta of ativas) {
@@ -106,6 +124,7 @@ export function useProgressoMetasVendas() {
               total_vendido: total,
               tier_atingido: tier,
               bonificacao_calculada: calcularBonificacao(total, tierBonus, !!tier),
+              total_vendido_mes: porVendedorMes.get(meta.vendedor_id) || 0,
             }];
           } else {
             // Inclui todos os vendedores elegíveis, mesmo sem vendas
@@ -121,6 +140,7 @@ export function useProgressoMetasVendas() {
                   total_vendido: total,
                   tier_atingido: tier,
                   bonificacao_calculada: calcularBonificacao(total, tier || primeiroTier, !!tier),
+                  total_vendido_mes: porVendedorMes.get(u.user_id) || 0,
                 };
               })
               .sort((a, b) => b.total_vendido - a.total_vendido || a.nome.localeCompare(b.nome));
@@ -135,6 +155,7 @@ export function useProgressoMetasVendas() {
             total_vendido: totalGlobal,
             tier_atingido: tier,
             bonificacao_calculada: calcularBonificacao(totalGlobal, tier || primeiroTier, !!tier),
+            total_vendido_mes: totalGlobalMes,
           }];
         }
 
