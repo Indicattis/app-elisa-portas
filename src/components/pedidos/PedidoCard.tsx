@@ -199,6 +199,63 @@ export function PedidoCard({
   const isAdministrativo = location.pathname.startsWith('/administrativo');
   const isDirecao = location.pathname.startsWith('/direcao');
 
+  const { pausarOrdem: pausarOrdemDirecao, despausarOrdem: despausarOrdemDirecao } = useGestaoOrdensProducao();
+
+  // Carregar linhas da ordem que será pausada (sob demanda quando modal abre)
+  const { data: linhasOrdemPausar = [] } = useQuery({
+    queryKey: ['linhas-ordem-pausar', ordemParaPausar?.ordemId, ordemParaPausar?.tipoOrdem],
+    enabled: !!ordemParaPausar && avisoFaltaOpen,
+    queryFn: async () => {
+      if (!ordemParaPausar) return [];
+      const { data, error } = await supabase
+        .from('linhas_ordens')
+        .select('id, item, quantidade, tamanho, estoque:estoque_id (nome_produto)')
+        .eq('ordem_id', ordemParaPausar.ordemId)
+        .eq('tipo_ordem', ordemParaPausar.tipoOrdem);
+      if (error) throw error;
+      return (data || []).map((l: any) => ({
+        id: l.id,
+        item: l.estoque?.nome_produto || l.item,
+        quantidade: l.quantidade,
+        tamanho: l.tamanho,
+      }));
+    },
+  });
+
+  const handleAbrirPausarOrdem = (ordem: any) => {
+    setOrdemParaPausar({
+      ordemId: ordem.ordem_id,
+      tipoOrdem: ordem.tipo_ordem as TipoOrdemProducao,
+      pedidoId: ordem.pedido_id || pedido.id,
+      numeroOrdem: pedido.numero_pedido || '',
+    });
+    setAvisoFaltaOpen(true);
+  };
+
+  const handleConfirmarPausa = async (
+    justificativa: string,
+    linhasProblemaIds?: string[],
+    comentarioPedido?: string,
+  ) => {
+    if (!ordemParaPausar) return;
+    await pausarOrdemDirecao.mutateAsync({
+      ordemId: ordemParaPausar.ordemId,
+      tipoOrdem: ordemParaPausar.tipoOrdem,
+      justificativa,
+      linhasProblemaIds,
+      comentarioPedido,
+    });
+    setAvisoFaltaOpen(false);
+    setOrdemParaPausar(null);
+  };
+
+  const handleRetomarOrdem = (ordem: any) => {
+    despausarOrdemDirecao.mutate({
+      ordemId: ordem.ordem_id,
+      tipoOrdem: ordem.tipo_ordem as TipoOrdemProducao,
+    });
+  };
+
 
   // Mutation para remover responsável
   const removerResponsavelMutation = useMutation({
