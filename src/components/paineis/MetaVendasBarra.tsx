@@ -84,7 +84,7 @@ function BarraVendedor({
         </div>
 
         {/* Barra segmentada: cada tier ocupa uma fatia proporcional ao seu intervalo */}
-        <div className="relative h-10 rounded-md bg-white/5 overflow-hidden border border-white/10 flex">
+        <div className="relative h-16 rounded-md bg-white/5 overflow-hidden border border-white/10 flex">
           {tiersSorted.map((t, i) => {
             const base = i === 0 ? 0 : Number(tiersSorted[i - 1].valor_alvo);
             const alvo = Number(t.valor_alvo);
