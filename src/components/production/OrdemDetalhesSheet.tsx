@@ -124,7 +124,7 @@ interface OrdemDetalhesSheetProps {
   isIniciando?: boolean;
   isFinalizando?: boolean;
   onRetornarProducao?: () => void;
-  onPausarOrdem?: (ordemId: string, justificativa: string, linhasProblemaIds?: string[]) => Promise<void>;
+  onPausarOrdem?: (ordemId: string, justificativa: string, linhasProblemaIds?: string[], comentarioPedido?: string) => Promise<void>;
   isPausing?: boolean;
   onMarcarLinhaProblema?: (linhaId: string, ordemId: string, descricao: string) => void;
   isMarkingProblem?: boolean;
@@ -1138,7 +1138,7 @@ export function OrdemDetalhesSheet({
               )}
 
               {/* Botão Aviso de Falta - para separação, perfiladeira, soldagem e qualidade */}
-              {(tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira' || tipoOrdem === 'soldagem') && podeMarcarLinhas && !ordem.pausada && onPausarOrdem && (
+              {(tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira' || tipoOrdem === 'soldagem' || tipoOrdem === 'embalagem') && podeMarcarLinhas && !ordem.pausada && onPausarOrdem && (
                 <Button
                   variant="destructive"
                   className="w-full"
@@ -1180,7 +1180,7 @@ export function OrdemDetalhesSheet({
         )}
 
         {/* Modal de Aviso de Falta (ordem inteira) */}
-      {(tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira' || tipoOrdem === 'soldagem') && ordem && onPausarOrdem && (
+      {(tipoOrdem === 'separacao' || tipoOrdem === 'perfiladeira' || tipoOrdem === 'soldagem' || tipoOrdem === 'embalagem') && ordem && onPausarOrdem && (
         <AvisoFaltaModal
           open={avisoFaltaModalOpen}
           onOpenChange={setAvisoFaltaModalOpen}
@@ -1191,8 +1191,8 @@ export function OrdemDetalhesSheet({
             quantidade: l.quantidade,
             tamanho: l.tamanho || null,
           }))}
-          onConfirm={async (justificativa, linhaProblemaId) => {
-            await onPausarOrdem(ordem.id, justificativa, linhaProblemaId);
+          onConfirm={async (justificativa, linhaProblemaId, comentarioPedido) => {
+            await onPausarOrdem(ordem.id, justificativa, linhaProblemaId, comentarioPedido);
             onOpenChange(false);
           }}
           isPausing={isPausing}

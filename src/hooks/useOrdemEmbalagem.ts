@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { calcularTempoExpediente } from "@/utils/calcularTempoExpediente";
 
 type TipoOrdem = 'embalagem';
 
@@ -253,6 +254,107 @@ export function useOrdemEmbalagem(onOrdemConcluida?: (pedidoId: string, tipoOrde
     },
   });
 
+  // Pausar ordem de embalagem (Aviso de Falta) com comentário opcional no pedido
+  const pausarOrdem = useMutation({
+    mutationFn: async ({
+      ordemId,
+      justificativa,
+      linhasProblemaIds,
+      comentarioPedido,
+    }: {
+      ordemId: string;
+      justificativa: string;
+      linhasProblemaIds?: string[];
+      comentarioPedido?: string;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Marcar linhas selecionadas como com_problema
+      if (linhasProblemaIds && linhasProblemaIds.length > 0) {
+        const { error: linhasError } = await supabase
+          .from('linhas_ordens')
+          .update({
+            com_problema: true,
+            problema_reportado_em: new Date().toISOString(),
+            problema_reportado_por: user.id,
+          })
+          .in('id', linhasProblemaIds);
+
+        if (linhasError) throw linhasError;
+      }
+
+      // Buscar ordem para calcular tempo trabalhado e obter pedido_id
+      const { data: ordem, error: ordemError } = await supabase
+        .from('ordens_embalagem')
+        .select('capturada_em, tempo_acumulado_segundos, pedido_id')
+        .eq('id', ordemId)
+        .single();
+
+      if (ordemError) throw ordemError;
+      if (!ordem) throw new Error('Ordem não encontrada');
+
+      // Calcular tempo desta sessão (apenas expediente)
+      let tempoSessao = 0;
+      if (ordem.capturada_em) {
+        tempoSessao = calcularTempoExpediente(new Date(ordem.capturada_em), new Date());
+      }
+      const tempoTotal = ((ordem as any).tempo_acumulado_segundos || 0) + tempoSessao;
+
+      const { error } = await supabase
+        .from('ordens_embalagem')
+        .update({
+          pausada: true,
+          pausada_em: new Date().toISOString(),
+          justificativa_pausa: justificativa,
+          tempo_acumulado_segundos: tempoTotal,
+          responsavel_id: null,
+        } as any)
+        .eq('id', ordemId);
+
+      if (error) throw error;
+
+      // Inserir comentário no pedido, se informado
+      const comentarioTrim = comentarioPedido?.trim();
+      if (comentarioTrim && ordem.pedido_id) {
+        const { data: adminUser } = await supabase
+          .from('admin_users')
+          .select('nome')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const autorNome = adminUser?.nome || user.email || 'Operador';
+
+        const { error: comentarioError } = await supabase
+          .from('pedido_comentarios')
+          .insert({
+            pedido_id: ordem.pedido_id,
+            autor_id: user.id,
+            autor_nome: autorNome,
+            comentario: comentarioTrim,
+          });
+
+        if (comentarioError) throw comentarioError;
+      }
+
+      return ordemId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordens-embalagem'] });
+      toast({
+        title: "Ordem pausada",
+        description: "A ordem foi pausada e está disponível para outro operador.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao pausar",
+        description: error.message || "Não foi possível pausar a ordem.",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     ordens,
     ordensPendentes,
@@ -261,5 +363,6 @@ export function useOrdemEmbalagem(onOrdemConcluida?: (pedidoId: string, tipoOrde
     capturarOrdem,
     finalizarEmbalagem,
     marcarLinhaConcluida,
+    pausarOrdem,
   };
 }

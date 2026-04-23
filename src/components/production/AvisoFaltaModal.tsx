@@ -26,7 +26,7 @@ interface AvisoFaltaModalProps {
   onOpenChange: (open: boolean) => void;
   numeroOrdem: string;
   linhas?: LinhaSimples[];
-  onConfirm: (justificativa: string, linhasProblemaIds?: string[]) => Promise<void>;
+  onConfirm: (justificativa: string, linhasProblemaIds?: string[], comentarioPedido?: string) => Promise<void>;
   isPausing?: boolean;
 }
 
@@ -41,6 +41,7 @@ export function AvisoFaltaModal({
   const [justificativa, setJustificativa] = useState("");
   const [linhasSelecionadas, setLinhasSelecionadas] = useState<string[]>([]);
   const [modoOutros, setModoOutros] = useState(false);
+  const [comentarioPedido, setComentarioPedido] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const linhasInfo = useMemo(() => {
@@ -91,7 +92,8 @@ export function AvisoFaltaModal({
     
     await onConfirm(
       justificativaFinal, 
-      modoOutros ? undefined : linhasSelecionadas
+      modoOutros ? undefined : linhasSelecionadas,
+      comentarioPedido.trim() || undefined
     );
     resetForm();
     onOpenChange(false);
@@ -101,6 +103,7 @@ export function AvisoFaltaModal({
     setJustificativa("");
     setLinhasSelecionadas([]);
     setModoOutros(false);
+    setComentarioPedido("");
     setError(null);
   };
 
@@ -232,6 +235,24 @@ export function AvisoFaltaModal({
           {error && (
             <p className="text-sm text-destructive">{error}</p>
           )}
+
+          {/* Comentário no pedido (opcional) */}
+          <div className="space-y-2">
+            <Label htmlFor="comentario-pedido">
+              Adicionar comentário ao pedido (opcional)
+            </Label>
+            <Textarea
+              id="comentario-pedido"
+              placeholder="Ex: Cliente já avisado, aguardando reposição da cor X..."
+              value={comentarioPedido}
+              onChange={(e) => setComentarioPedido(e.target.value)}
+              rows={2}
+              className="resize-none"
+            />
+            <p className="text-xs text-muted-foreground">
+              Se preenchido, ficará registrado no histórico de comentários do pedido.
+            </p>
+          </div>
 
           <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
             <p className="text-sm text-amber-700 dark:text-amber-300">
