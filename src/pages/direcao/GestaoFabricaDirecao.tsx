@@ -112,10 +112,8 @@ export default function GestaoFabricaDirecao() {
   });
   const { neoInstalacoes, concluirNeoInstalacao, isConcluindo, reorganizarNeoInstalacoes } = useNeoInstalacoesListagem();
   const { neoCorrecoes, concluirNeoCorrecao, reorganizarNeoCorrecoes } = useNeoCorrecoesListagem();
-  const { neoInstalacoesFinalizadas, retornarNeoInstalacao, isRetornando: isRetornandoInstalacao, arquivarNeoInstalacao } = useNeoInstalacoesFinalizadas();
-  const { neoCorrecoesFinalizadas, retornarNeoCorrecao, isRetornando: isRetornandoCorrecao, arquivarNeoCorrecao } = useNeoCorrecoesFinalizadas();
-  const { enviarAguardandoClienteNeoInstalacao, arquivarNeoInstalacao: arquivarNeoInstalacaoBase } = useNeoInstalacoesFinalizadas();
-  const { enviarAguardandoClienteNeoCorrecao, arquivarNeoCorrecao: arquivarNeoCorrecaoBase } = useNeoCorrecoesFinalizadas();
+  const { neoInstalacoesFinalizadas, retornarNeoInstalacao, isRetornando: isRetornandoInstalacao, arquivarNeoInstalacao, enviarAguardandoClienteNeoInstalacao } = useNeoInstalacoesFinalizadas();
+  const { neoCorrecoesFinalizadas, retornarNeoCorrecao, isRetornando: isRetornandoCorrecao, arquivarNeoCorrecao, enviarAguardandoClienteNeoCorrecao } = useNeoCorrecoesFinalizadas();
   const { neoInstalacoesAguardandoCliente, retornarParaFinalizadoNeoInstalacao } = useNeoInstalacoesAguardandoCliente();
   const { neoCorrecoesAguardandoCliente, retornarParaFinalizadoNeoCorrecao } = useNeoCorrecoesAguardandoCliente();
   const { 
