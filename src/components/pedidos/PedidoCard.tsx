@@ -114,6 +114,7 @@ export function PedidoCard({
   const [showArquivar, setShowArquivar] = useState(false);
   const [showArquivamentoLoading, setShowArquivamentoLoading] = useState(false);
   const [showConfirmarExpedicao, setShowConfirmarExpedicao] = useState(false);
+  const [showConcluirManutencao, setShowConcluirManutencao] = useState(false);
   const [showRemoverResponsavel, setShowRemoverResponsavel] = useState(false);
   const [showExcluirPedido, setShowExcluirPedido] = useState(false);
   const [isExcluindo, setIsExcluindo] = useState(false);
