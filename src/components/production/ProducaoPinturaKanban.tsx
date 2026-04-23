@@ -83,6 +83,10 @@ function OrdemCard({
   const linhasConcluidas = linhas.filter((l: any) => l.concluida).length;
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 100;
   const todasConcluidas = linhas.length === 0 || linhas.every((l: any) => l.concluida);
+  const podeAbrirDetalhes = !!ordem.responsavel_id;
+  const handleAbrirDetalhes = () => {
+    if (podeAbrirDetalhes) onOrdemClick(ordem);
+  };
   
   const { data: ordemProgress } = useOrdemProgress(ordem.pedido_id);
   const { tempoDecorrido, deveAnimar } = useCronometroOrdem({
@@ -140,8 +144,11 @@ function OrdemCard({
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4">
           {/* LATERAL ESQUERDA - Foto do responsável (oculta em mobile pequeno) */}
           <div 
-            className="hidden sm:block flex-shrink-0 cursor-pointer"
-            onClick={() => onOrdemClick(ordem)}
+            className={cn(
+              "hidden sm:block flex-shrink-0",
+              podeAbrirDetalhes ? "cursor-pointer" : "cursor-default"
+            )}
+            onClick={handleAbrirDetalhes}
           >
             {ordem.responsavel_id ? (
               <Avatar className="h-16 w-16 md:h-20 md:w-20 lg:h-[100px] lg:w-[100px] ring-2 ring-primary/20">

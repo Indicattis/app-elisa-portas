@@ -23,12 +23,11 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
       if (!user?.user_id) return [];
       
       // Buscar as ordens, excluindo histórico
-      // Filtrar: (sem responsável OU responsável é o usuário atual) E não está no histórico
+      // Todos os usuários veem todas as ordens ativas (não está no histórico)
       const { data: ordensData, error: ordensError } = await supabase
         .from("ordens_pintura")
         .select('*, capturada_em, tempo_conclusao_segundos, em_backlog, prioridade')
         .eq('historico', false)
-        .or(`responsavel_id.is.null,responsavel_id.eq.${user.user_id}`)
         .order('prioridade', { ascending: false })
         .order('created_at', { ascending: false });
 
