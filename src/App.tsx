@@ -166,6 +166,7 @@ import MetasColaboradorIndividual from "./pages/MetasColaboradorIndividual";
 import FinanceiroHome from "./pages/FinanceiroHome";
 import RHHome from "./pages/RHHome";
 import PaineisHome from "./pages/PaineisHome";
+import PaineisMetasVendas from "./pages/paineis/PaineisMetasVendas";
 import DirecaoHome from "./pages/DirecaoHome";
 import DirecaoChecklist from "./pages/DirecaoChecklist";
 import DirecaoChecklistProgramacao from "./pages/DirecaoChecklistProgramacao";
@@ -234,6 +235,7 @@ import CalendarioExpedicaoDirecao from "./pages/direcao/CalendarioExpedicaoDirec
 import MetasHubDirecao from "./pages/direcao/MetasHubDirecao";
 import MetasFabricaDirecao from "./pages/direcao/MetasFabricaDirecao";
 import MetasInstalacoesDirecao from "./pages/direcao/MetasInstalacoesDirecao";
+import MetasVendasDirecao from "./pages/direcao/MetasVendasDirecao";
 import VendaEditarDirecao from "./pages/direcao/VendaEditarDirecao";
 import ClientesDirecao from "./pages/direcao/ClientesDirecao";
 import PedidoViewDirecao from "./pages/direcao/PedidoViewDirecao";
@@ -519,6 +521,7 @@ const App = () => (
                 <Route path="/direcao/metas/instalacoes" element={<ProtectedRoute routeKey="direcao_metas_instalacoes"><MetasInstalacoesDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/metas/instalacoes/:userId" element={<ProtectedRoute routeKey="direcao_metas_instalacoes"><MetasColaboradorIndividual /></ProtectedRoute>} />
                 <Route path="/direcao/metas/fabrica/:userId" element={<ProtectedRoute routeKey="direcao_hub"><MetasColaboradorIndividual /></ProtectedRoute>} />
+                <Route path="/direcao/metas/vendas" element={<ProtectedRoute routeKey="direcao_hub"><MetasVendasDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/pedidos/:id" element={<ProtectedRoute routeKey="direcao_hub"><PedidoViewDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados" element={<ProtectedRoute routeKey="direcao_autorizados"><AutorizadosPrecosDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados/estado/:estadoId" element={<ProtectedRoute routeKey="direcao_autorizados"><EstadoAutorizadosDirecao /></ProtectedRoute>} />
@@ -930,6 +933,7 @@ const App = () => (
                 <Route path="/paineis/diario-bordo" element={<ProtectedRoute routeKey="diario_bordo"><DiarioBordo /></ProtectedRoute>} />
                 <Route path="/paineis/calendario" element={<ProtectedRoute routeKey="calendario"><Calendario /></ProtectedRoute>} />
                 <Route path="/paineis/contador-vendas" element={<ProtectedRoute routeKey="contador_vendas"><ContadorVendas /></ProtectedRoute>} />
+                <Route path="/paineis/metas-vendas" element={<ProtectedRoute routeKey="paineis_metas_vendas"><PaineisMetasVendas /></ProtectedRoute>} />
                 
                 {/* Redirect TV Dashboard */}
                 <Route path="/tv-dashboard" element={<Navigate to="/paineis/tv-dashboard" replace />} />
