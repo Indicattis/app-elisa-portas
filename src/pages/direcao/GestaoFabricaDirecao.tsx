@@ -1140,7 +1140,7 @@ export default function GestaoFabricaDirecao() {
                       etapa={'aguardando_cliente' as EtapaPedido}
                       isAberto={false}
                       viewMode={viewMode}
-                      onMoverEtapa={(pedidoId) => handleRetornarDeAguardandoCliente(pedidoId)}
+                      onDevolverParaFinalizado={async (pedidoId) => { await handleRetornarDeAguardandoCliente(pedidoId); }}
                       onReorganizar={handleReorganizar}
                       onMoverPrioridade={handleMoverPrioridade}
                       onArquivar={handleArquivar}
