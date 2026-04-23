@@ -154,6 +154,7 @@ export function PedidosDraggableList({
   onCorrecaoDetalhesClick,
   onFinalizarDireto,
   onEnviarAguardandoCliente,
+  onDevolverParaFinalizado,
   enableDragAndDrop = true,
   showPosicao = true,
   disableClienteClick = false,
@@ -246,6 +247,7 @@ export function PedidosDraggableList({
               onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
               onFinalizarDireto={onFinalizarDireto}
               onEnviarAguardandoCliente={onEnviarAguardandoCliente}
+              onDevolverParaFinalizado={onDevolverParaFinalizado}
               posicao={showPosicao ? index + 1 : undefined}
               total={showPosicao ? pedidos.length : undefined}
               disableClienteClick={disableClienteClick}
@@ -297,6 +299,7 @@ export function PedidosDraggableList({
               onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
               onFinalizarDireto={onFinalizarDireto}
               onEnviarAguardandoCliente={onEnviarAguardandoCliente}
+              onDevolverParaFinalizado={onDevolverParaFinalizado}
               disableClienteClick={disableClienteClick}
               hideOrdensStatus={hideOrdensStatus}
               hideCorrecaoButton={hideCorrecaoButton}
