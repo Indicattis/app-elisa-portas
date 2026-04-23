@@ -2697,6 +2697,22 @@ className="flex h-[20px] w-full rounded-[3px]"
                 );
               }
 
+              // Botão devolver para Finalizado (etapa aguardando_cliente)
+              if (etapaAtual === 'aguardando_cliente' && onDevolverParaFinalizado && !readOnly) {
+                actionButtons.push(
+                  <Button
+                    key="devolver-finalizado"
+                    size="icon"
+                    variant="outline"
+                    onClick={(e) => { e.stopPropagation(); setShowDevolverFinalizado(true); }}
+                    title="Devolver para Finalizado"
+                    className="flex w-full h-[35px] bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-500/50"
+                  >
+                    <CheckCircle className="h-3.5 w-3.5" />
+                  </Button>
+                );
+              }
+
               // Backlog button removed - users should view order details page
 
               // Add retroceder button (para todos a partir de em_producao)
