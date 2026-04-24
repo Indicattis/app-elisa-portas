@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, PanelLeft, Settings, Lock, Factory, User, ClipboardList } from 'lucide-react';
+import { LogOut, LayoutDashboard, PanelLeft, Settings, Lock, Factory, User, ClipboardList, Sun, Moon, Monitor } from 'lucide-react';
 import { MinhasTarefasFullscreen } from '@/components/MinhasTarefasFullscreen';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useTarefasCount } from '@/hooks/useTarefasCount';
+import { useTheme } from '@/components/ThemeProvider';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -31,6 +32,7 @@ export function FloatingProfileMenu({ mounted = true }: FloatingProfileMenuProps
   const navigate = useNavigate();
   const { user, userRole, signOut, hasBypassPermissions } = useAuth();
   const { data: tarefasCount = 0 } = useTarefasCount();
+  const { theme, setTheme } = useTheme();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [minhasTarefasOpen, setMinhasTarefasOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -194,6 +196,30 @@ export function FloatingProfileMenu({ mounted = true }: FloatingProfileMenuProps
             <LogOut className="w-4 h-4" />
             <span className="text-sm">Sair</span>
           </button>
+        </div>
+
+        <div className="border-t border-white/10 px-3 py-2">
+          <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1.5">Tema</p>
+          <div className="flex items-center gap-1">
+            {([
+              { value: 'light', icon: Sun, label: 'Claro' },
+              { value: 'dark', icon: Moon, label: 'Escuro' },
+              { value: 'system', icon: Monitor, label: 'Sistema' },
+            ] as const).map(({ value, icon: Icon, label }) => (
+              <button
+                key={value}
+                onClick={() => setTheme(value)}
+                title={label}
+                aria-label={label}
+                className={`flex-1 h-8 rounded-md flex items-center justify-center transition-colors
+                  ${theme === value
+                    ? 'bg-white/15 text-white'
+                    : 'text-white/50 hover:text-white hover:bg-white/10'}`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
