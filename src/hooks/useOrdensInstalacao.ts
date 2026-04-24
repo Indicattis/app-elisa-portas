@@ -21,6 +21,9 @@ export interface OrdemInstalacao {
   cep: string | null;
   observacoes: string | null;
   created_at: string;
+
+  // Tipo de ordem derivado da etapa do pedido
+  tipo_ordem?: 'instalacao' | 'correcao';
   
   // Campos de carregamento
   carregamento_concluido: boolean;
@@ -108,9 +111,10 @@ export const useOrdensInstalacao = () => {
         throw error;
       }
 
-      // Filtrar apenas pedidos na etapa 'instalacoes'
-      const ordensFiltered = (data || []).filter((ordem: any) => 
-        ordem.pedido?.etapa_atual === 'instalacoes'
+      // Filtrar pedidos nas etapas 'instalacoes' ou 'correcoes'
+      const ordensFiltered = (data || []).filter((ordem: any) =>
+        ordem.pedido?.etapa_atual === 'instalacoes' ||
+        ordem.pedido?.etapa_atual === 'correcoes'
       );
 
       // Buscar equipes para mapear cores
@@ -141,6 +145,7 @@ export const useOrdensInstalacao = () => {
 
       return ordensFiltered.map((ordem: any) => ({
         ...ordem,
+        tipo_ordem: ordem.pedido?.etapa_atual === 'correcoes' ? 'correcao' : 'instalacao',
         equipe: ordem.responsavel_instalacao_id 
           ? equipesMap.get(ordem.responsavel_instalacao_id) || null 
           : null,

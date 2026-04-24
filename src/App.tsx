@@ -288,7 +288,6 @@ import AutorizadosPrecosDirecao from "./pages/direcao/AutorizadosPrecosDirecao";
 import EstadoAutorizadosDirecao from "./pages/direcao/EstadoAutorizadosDirecao";
 import NovoAutorizadoDirecao from "./pages/direcao/NovoAutorizadoDirecao";
 import EditarAutorizadoDirecao from "./pages/direcao/EditarAutorizadoDirecao";
-import InstalacoesHub from "./pages/logistica/InstalacoesHub";
 import InstalacoesHubDirecao from "./pages/direcao/InstalacoesHubDirecao";
 import EquipesMinimalista from "./pages/logistica/EquipesMinimalista";
 import EquipesDirecao from "./pages/direcao/EquipesDirecao";

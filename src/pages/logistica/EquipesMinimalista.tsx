@@ -27,6 +27,7 @@ import { useEquipesInstalacao } from "@/hooks/useEquipesInstalacao";
 import { useEquipesMembros } from "@/hooks/useEquipesMembros";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { InstalacoesHeaderActions } from "@/components/instalacoes/InstalacoesHeaderActions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -184,11 +185,11 @@ export default function EquipesMinimalista() {
     return (
       <MinimalistLayout
         title="Gestão de Equipes"
-        backPath="/logistica/instalacoes"
+        backPath="/logistica"
+        headerActions={<InstalacoesHeaderActions />}
         breadcrumbItems={[
           { label: "Home", path: "/home" },
           { label: "Logística", path: "/logistica" },
-          { label: "Instalações", path: "/logistica/instalacoes" },
           { label: "Equipes" }
         ]}
       >
@@ -203,11 +204,11 @@ export default function EquipesMinimalista() {
     <MinimalistLayout
       title="Gestão de Equipes"
       subtitle="Gerenciar equipes e membros"
-      backPath="/logistica/instalacoes"
+      backPath="/logistica"
+      headerActions={<InstalacoesHeaderActions />}
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Logística", path: "/logistica" },
-        { label: "Instalações", path: "/logistica/instalacoes" },
         { label: "Equipes" }
       ]}
     >

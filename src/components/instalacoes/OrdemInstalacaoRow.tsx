@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CheckCircle2, Truck, MapPin } from "lucide-react";
+import { CheckCircle2, Truck, MapPin, Wrench, Hammer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -78,17 +78,21 @@ export function OrdemInstalacaoRow({
   };
   
   const atrasado = isAtrasado();
+  const isCorrecao = ordem.tipo_ordem === 'correcao';
   
   return (
     <div 
       className={cn(
-        "h-[35px] grid items-center gap-2 px-3 rounded-md border bg-card/50 text-sm transition-colors hover:bg-muted/50",
+        "h-[35px] grid items-center gap-2 px-3 rounded-md border border-l-4 bg-card/50 text-sm transition-colors hover:bg-muted/50",
+        isCorrecao
+          ? "border-l-purple-500"
+          : "border-l-blue-500",
         atrasado && "border-red-500/50 bg-red-500/5",
         onClick && "cursor-pointer"
       )}
       onClick={() => onClick?.(ordem)}
       style={{ 
-        gridTemplateColumns: "28px 70px 1fr 100px 60px 80px 80px 50px" 
+        gridTemplateColumns: "28px 86px 70px 1fr 100px 60px 80px 80px 50px" 
       }}
     >
       {/* Avatar */}
@@ -119,6 +123,21 @@ export function OrdemInstalacaoRow({
         )}
       </div>
       
+      {/* Tipo: Instalação x Correção */}
+      <div className="flex items-center">
+        {isCorrecao ? (
+          <Badge className="h-5 px-1.5 text-[10px] gap-1 bg-purple-500/20 text-purple-600 border-purple-500/40 hover:bg-purple-500/20">
+            <Wrench className="h-3 w-3" />
+            Correção
+          </Badge>
+        ) : (
+          <Badge className="h-5 px-1.5 text-[10px] gap-1 bg-blue-500/20 text-blue-600 border-blue-500/40 hover:bg-blue-500/20">
+            <Hammer className="h-3 w-3" />
+            Instalação
+          </Badge>
+        )}
+      </div>
+
       {/* Número do Pedido */}
       <div className="flex items-center">
         <Badge variant="outline" className="font-mono text-xs h-5 px-1.5">
