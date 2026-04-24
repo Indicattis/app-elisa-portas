@@ -695,6 +695,9 @@ export default function DREMesDirecao() {
           } else if (['adicional', 'manutencao'].includes(tipo)) {
             fat.adicionais += valorTotal;
             luc.adicionais += p.lucro_item || 0;
+          } else if (tipo === 'instalacao') {
+            fat.instalacoes += valorTotal;
+            luc.instalacoes += p.lucro_item || 0;
           }
         });
 
@@ -705,11 +708,6 @@ export default function DREMesDirecao() {
           .lte('data_venda', end + ' 23:59:59');
 
         const totalCredito = vendas?.reduce((sum, v) => sum + ((v as any).valor_credito || 0), 0) || 0;
-
-        // Soma lucro de instalação vindo das vendas (campo lucro_instalacao da venda)
-        // mais o lucro proporcional já distribuído acima das linhas de porta legadas.
-        const lucroInstalacaoVendas = vendas?.reduce((sum, v) => sum + ((v as any).lucro_instalacao || 0), 0) || 0;
-        luc.instalacoes += lucroInstalacaoVendas;
 
         fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.acessorios + fat.adicionais + totalCredito;
         luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.acessorios + luc.adicionais;
