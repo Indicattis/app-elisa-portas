@@ -144,9 +144,6 @@ export const OrdensSemData = () => {
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
                     <p className="font-medium">{ordem.venda?.cliente_nome}</p>
-                    <Badge variant="outline" className="text-xs">
-                      {ordem.pedido?.numero_pedido}
-                    </Badge>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
