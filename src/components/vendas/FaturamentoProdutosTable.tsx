@@ -72,15 +72,21 @@ export function FaturamentoProdutosTable({
           {produtos?.map((produto) => {
             const temLucro = produto.lucro_item !== null && produto.lucro_item !== undefined;
             const valorTotalLinha = produto.valor_total; // Já é o total da linha no banco
-            const valorUnitario = produto.quantidade > 0 ? produto.valor_total / produto.quantidade : 0;
+            const unidadeLower = (produto.unidade || '').toLowerCase();
+            const isDecimal = ['metro', 'kg', 'litro'].includes(unidadeLower);
+            const tamanhoNum = parseFloat(produto.tamanho || '') || 0;
+            const unidadeShort = unidadeLower === 'metro' ? 'm'
+              : unidadeLower === 'kg' ? 'kg'
+              : unidadeLower === 'litro' ? 'L' : '';
+            const valorUnitario = isDecimal && tamanhoNum > 0 && produto.quantidade > 0
+              ? produto.valor_total / (produto.quantidade * tamanhoNum)
+              : produto.quantidade > 0 ? produto.valor_total / produto.quantidade : 0;
             const desconto = produto.desconto_percentual
               ? `${produto.desconto_percentual}%` 
               : produto.desconto_valor 
                 ? `R$ ${produto.desconto_valor.toFixed(2)}`
                 : '-';
-            const unidadeLabel = (produto.unidade || '').toLowerCase() === 'metro' ? ' m'
-              : (produto.unidade || '').toLowerCase() === 'kg' ? ' kg'
-              : (produto.unidade || '').toLowerCase() === 'litro' ? ' L' : '';
+            const unidadeLabel = unidadeShort ? ` ${unidadeShort}` : '';
             
             return (
               <TableRow key={produto.id}>
@@ -97,7 +103,7 @@ export function FaturamentoProdutosTable({
                   {desconto}
                 </TableCell>
                 <TableCell className="text-right">
-                  R$ {valorUnitario.toFixed(2)}
+                  R$ {valorUnitario.toFixed(2)}{isDecimal && unidadeShort ? `/${unidadeShort}` : ''}
                 </TableCell>
                 <TableCell className="text-center">
                   {produto.quantidade}
