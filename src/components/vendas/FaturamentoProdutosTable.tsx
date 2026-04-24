@@ -24,6 +24,7 @@ interface Produto {
   lucro_item?: number;
   custo_producao?: number;
   faturamento?: boolean;
+  unidade?: string | null;
 }
 
 interface FaturamentoProdutosTableProps {
@@ -77,6 +78,9 @@ export function FaturamentoProdutosTable({
               : produto.desconto_valor 
                 ? `R$ ${produto.desconto_valor.toFixed(2)}`
                 : '-';
+            const unidadeLabel = (produto.unidade || '').toLowerCase() === 'metro' ? ' m'
+              : (produto.unidade || '').toLowerCase() === 'kg' ? ' kg'
+              : (produto.unidade || '').toLowerCase() === 'litro' ? ' L' : '';
             
             return (
               <TableRow key={produto.id}>
@@ -87,7 +91,7 @@ export function FaturamentoProdutosTable({
                   {produto.descricao}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {produto.tamanho || "-"}
+                  {produto.tamanho ? `${produto.tamanho}${unidadeLabel}` : "-"}
                 </TableCell>
                 <TableCell className="text-right text-orange-600">
                   {desconto}
