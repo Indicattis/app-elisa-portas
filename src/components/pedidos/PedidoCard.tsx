@@ -2125,7 +2125,10 @@ className="flex h-[20px] w-full rounded-[3px]"
                       );
                     }
 
-                    if (onFinalizarDireto && etapaAtual !== 'finalizado') {
+                    const etapasCarregamento: EtapaPedido[] = ['aguardando_coleta', 'instalacoes', 'correcoes'];
+                    const isEtapaCarregamento = etapasCarregamento.includes(etapaAtual);
+
+                    if (onFinalizarDireto && etapaAtual !== 'finalizado' && !isEtapaCarregamento) {
                       middleButtons.push(
                         <Tooltip key="finalizar-direto">
                           <TooltipTrigger asChild>
@@ -2141,6 +2144,33 @@ className="flex h-[20px] w-full rounded-[3px]"
                           </TooltipTrigger>
                           <TooltipContent side="top">
                             <span className="text-xs">Finalizar Direto</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
+                    // Botão Carregar Ordem: somente para etapas de carregamento, com ordem agendada e ainda não carregada
+                    if (
+                      onCarregarOrdem &&
+                      isEtapaCarregamento &&
+                      temDataCarregamento &&
+                      !carregamentoConcluido
+                    ) {
+                      middleButtons.push(
+                        <Tooltip key="carregar-ordem">
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={(e) => { e.stopPropagation(); setShowCarregarOrdem(true); }}
+                              title="Carregar Ordem"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-sky-500/10 text-sky-700 hover:bg-sky-500/20 border-sky-500/50"
+                            >
+                              <Truck className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="text-xs">Carregar Ordem</span>
                           </TooltipContent>
                         </Tooltip>
                       );
