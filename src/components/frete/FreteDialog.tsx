@@ -67,6 +67,7 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
     valor_frete: "",
     observacoes: "",
     ativo: true,
+    quilometragem: "",
   });
 
   useEffect(() => {
@@ -77,6 +78,7 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
         valor_frete: frete.valor_frete.toString(),
         observacoes: frete.observacoes || "",
         ativo: frete.ativo,
+        quilometragem: frete.quilometragem != null ? frete.quilometragem.toString() : "",
       });
     } else {
       setFormData({
@@ -85,6 +87,7 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
         valor_frete: "",
         observacoes: "",
         ativo: true,
+        quilometragem: "",
       });
     }
   }, [frete, open]);
@@ -102,6 +105,7 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
       valor_frete: parseFloat(formData.valor_frete),
       observacoes: formData.observacoes.trim() || null,
       ativo: formData.ativo,
+      quilometragem: formData.quilometragem ? parseFloat(formData.quilometragem) : null,
     };
 
     try {
@@ -186,6 +190,22 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
                 valor_frete: formatCurrencyInput(e.target.value) 
               }))}
               placeholder="0.00"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="quilometragem">Quilometragem (km)</Label>
+            <Input
+              id="quilometragem"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.quilometragem}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                quilometragem: formatCurrencyInput(e.target.value)
+              }))}
+              placeholder="0"
             />
           </div>
 
