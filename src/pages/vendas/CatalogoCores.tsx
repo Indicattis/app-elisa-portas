@@ -55,8 +55,8 @@ export default function CatalogoCores() {
       subtitle={`${cores.length} cor${cores.length !== 1 ? "es" : ""} cadastrada${cores.length !== 1 ? "s" : ""}`}
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        { label: "Vendas", path: "/vendas" },
-        { label: "Catálogo", path: "/vendas/catalogo" },
+        { label: "Marketing", path: "/marketing" },
+        { label: "Catálogo", path: "/marketing/catalogo" },
         { label: "Cores" },
       ]}
       headerActions={

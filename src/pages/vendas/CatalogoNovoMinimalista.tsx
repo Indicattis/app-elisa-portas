@@ -132,7 +132,7 @@ export default function CatalogoNovoMinimalista() {
     setIsSubmitting(true);
     try {
       await adicionarProduto.mutateAsync(formData);
-      navigate("/vendas/catalogo");
+      navigate("/marketing/catalogo");
     } catch (error) {
       console.error("Erro ao criar produto:", error);
     } finally {
@@ -146,8 +146,8 @@ export default function CatalogoNovoMinimalista() {
       subtitle="Adicionar ao catálogo"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        { label: "Vendas", path: "/vendas" },
-        { label: "Catálogo", path: "/vendas/catalogo" },
+        { label: "Marketing", path: "/marketing" },
+        { label: "Catálogo", path: "/marketing/catalogo" },
         { label: "Novo" },
       ]}
     >
@@ -156,7 +156,7 @@ export default function CatalogoNovoMinimalista() {
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
-            onClick={() => navigate("/vendas/catalogo")}
+            onClick={() => navigate("/marketing/catalogo")}
             className="text-white/70 hover:text-white"
           >
             <ChevronLeft className="w-4 h-4 mr-2" />

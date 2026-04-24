@@ -457,10 +457,14 @@ const App = () => (
                 <Route path="/vendas/minhas-vendas/editar/:id" element={<ProtectedRoute routeKey="vendas_hub"><MinhasVendasEditar /></ProtectedRoute>} />
                 <Route path="/vendas/meus-clientes" element={<ProtectedRoute routeKey="vendas_hub"><MeusClientes /></ProtectedRoute>} />
                 <Route path="/vendas/meus-clientes/:id" element={<ProtectedRoute routeKey="vendas_hub"><MeuClienteDetalhe /></ProtectedRoute>} />
-                <Route path="/vendas/catalogo" element={<ProtectedRoute routeKey="vendas_hub"><CatalogoMinimalista /></ProtectedRoute>} />
-                <Route path="/vendas/catalogo/new" element={<ProtectedRoute routeKey="vendas_hub"><CatalogoNovoMinimalista /></ProtectedRoute>} />
-                <Route path="/vendas/catalogo/editar/:id" element={<ProtectedRoute routeKey="vendas_hub"><CatalogoEditMinimalista /></ProtectedRoute>} />
-                <Route path="/vendas/catalogo/cores" element={<ProtectedRoute routeKey="vendas_hub"><CatalogoCoresMinimalista /></ProtectedRoute>} />
+                <Route path="/vendas/catalogo" element={<Navigate to="/marketing/catalogo" replace />} />
+                <Route path="/vendas/catalogo/new" element={<Navigate to="/marketing/catalogo/new" replace />} />
+                <Route path="/vendas/catalogo/editar/:id" element={<Navigate to="/marketing/catalogo/editar/:id" replace />} />
+                <Route path="/vendas/catalogo/cores" element={<Navigate to="/marketing/catalogo/cores" replace />} />
+                <Route path="/marketing/catalogo" element={<ProtectedRoute routeKeyPrefix="marketing_"><CatalogoMinimalista /></ProtectedRoute>} />
+                <Route path="/marketing/catalogo/new" element={<ProtectedRoute routeKeyPrefix="marketing_"><CatalogoNovoMinimalista /></ProtectedRoute>} />
+                <Route path="/marketing/catalogo/editar/:id" element={<ProtectedRoute routeKeyPrefix="marketing_"><CatalogoEditMinimalista /></ProtectedRoute>} />
+                <Route path="/marketing/catalogo/cores" element={<ProtectedRoute routeKeyPrefix="marketing_"><CatalogoCoresMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/meus-orcamentos" element={<ProtectedRoute routeKey="vendas_hub"><MeusOrcamentos /></ProtectedRoute>} />
                 <Route path="/vendas/meus-parceiros" element={<ProtectedRoute routeKey="vendas_hub"><MeusParceiros /></ProtectedRoute>} />
                 <Route path="/vendas/acompanhar-pedido" element={<ProtectedRoute routeKey="vendas_hub"><AcompanharPedido /></ProtectedRoute>} />
