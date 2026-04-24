@@ -138,10 +138,10 @@ export function OrdemInstalacaoRow({
         )}
       </div>
 
-      {/* Número do Pedido */}
-      <div className="flex items-center">
-        <Badge variant="outline" className="font-mono text-xs h-5 px-1.5">
-          #{ordem.pedido?.numero_pedido || "—"}
+      {/* Cliente (substitui número do pedido) */}
+      <div className="flex items-center min-w-0">
+        <Badge variant="outline" className="text-xs h-5 px-1.5 truncate max-w-full">
+          {clienteNome || "—"}
         </Badge>
       </div>
       
