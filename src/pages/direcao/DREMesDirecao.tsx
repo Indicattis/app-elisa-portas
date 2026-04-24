@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Printer } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
@@ -351,6 +351,36 @@ export default function DREMesDirecao() {
   const totalProjetadoAnual = tiposCustosVariaveis.reduce((acc, t) => acc + (t.valor_maximo_mensal * 12), 0);
 
   return (
+    <>
+    <style>{`
+      @media print {
+        @page { size: A4; margin: 12mm; }
+        body * { visibility: hidden !important; }
+        #dre-print-area, #dre-print-area * { visibility: visible !important; }
+        #dre-print-area {
+          position: absolute !important;
+          left: 0; top: 0;
+          width: 100%;
+          padding: 0 !important;
+          background: white !important;
+          color: black !important;
+        }
+        #dre-print-area * {
+          color: black !important;
+          background: transparent !important;
+          border-color: #ccc !important;
+          box-shadow: none !important;
+          text-shadow: none !important;
+        }
+        #dre-print-area .text-emerald-400 { color: #047857 !important; }
+        #dre-print-area .text-red-400 { color: #b91c1c !important; }
+        #dre-print-area .text-yellow-400 { color: #a16207 !important; }
+        #dre-print-area table { page-break-inside: auto; }
+        #dre-print-area tr { page-break-inside: avoid; page-break-after: auto; }
+        #dre-print-area .rounded-xl { page-break-inside: avoid; }
+        #dre-print-area .lg\\:sticky { position: static !important; }
+      }
+    `}</style>
     <MinimalistLayout
       title="D.R.E"
       subtitle={mesNome}
@@ -361,13 +391,30 @@ export default function DREMesDirecao() {
         { label: 'DRE', path: '/direcao/dre' },
         { label: mesNome },
       ]}
+      headerActions={
+        !loading ? (
+          <button
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 border border-white/10 text-white text-sm hover:bg-white/20 transition-colors print:hidden"
+          >
+            <Printer className="w-4 h-4" strokeWidth={1.5} />
+            Imprimir PDF
+          </button>
+        ) : undefined
+      }
     >
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-6 h-6 animate-spin text-white/40" />
         </div>
       ) : (
-        <div className="space-y-6">
+        <div id="dre-print-area" className="space-y-6">
+          {/* Cabeçalho exclusivo da impressão */}
+          <div className="hidden print:block mb-4 border-b pb-3">
+            <h1 className="text-xl font-bold">Demonstrativo de Resultados</h1>
+            <p className="text-sm capitalize">{mesNome}</p>
+            <p className="text-xs">Emitido em {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}</p>
+          </div>
           {/* Grid de Faturamento e Lucro */}
           <div className="rounded-xl bg-white/5 border border-white/10 overflow-hidden">
             <div className="overflow-x-auto">
@@ -586,5 +633,6 @@ export default function DREMesDirecao() {
         </div>
       )}
     </MinimalistLayout>
+    </>
   );
 }

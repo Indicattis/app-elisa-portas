@@ -1,58 +1,42 @@
 ## Objetivo
+Adicionar no header da página `/direcao/dre/:mes` um botão **"Imprimir PDF"** que gera um PDF para impressão contendo o demonstrativo de resultados (faturamento por categoria, lucro, margens, despesas fixas/folha/variáveis, projetadas, estoque e resumo final).
 
-Garantir que o menu suspenso de perfil — incluindo o seletor de tema (Claro/Escuro/Sistema) — esteja disponível em **todas** as páginas do site, exceto:
-- Painéis (`/paineis/*`, `PaineisLayout`)
-- Páginas de login (`/auth`, `/producao/login`, `/forbidden`, `ForbiddenProducao`)
+## Abordagem
+Usar a estratégia nativa do navegador (`window.print()`) com CSS `@media print`. É a forma mais leve e fiel ao conteúdo já renderizado — sem dependências adicionais, e o usuário pode salvar como PDF direto no diálogo de impressão (recurso padrão de qualquer navegador moderno em `Ctrl+P` → "Salvar como PDF").
 
-## Diagnóstico atual
+## Mudanças
 
-Hoje o `FloatingProfileMenu` (componente que recebeu o seletor de tema) só está incluído manualmente em ~36 páginas "hub minimalistas" (ex.: `VendasHub`, `FabricaHub`, `MarketingHub`, `AdministrativoHub`, `LogisticaHub`, `DirecaoHub`, etc.). As demais páginas usam um destes três cabeçalhos, **nenhum dos quais possui o seletor de tema**:
+### 1. `src/pages/direcao/DREMesDirecao.tsx`
+- Importar ícone `Printer` de `lucide-react`.
+- Adicionar prop `headerActions` no `<MinimalistLayout>` com um `<button>` "Imprimir PDF" que chama `window.print()`. Estilo glassmorphism consistente (bg-white/10, border-white/10, hover:bg-white/20, ícone + texto), exibido somente quando `!loading`.
+- Envolver todo o conteúdo do DRE (a `<div className="space-y-6">` interna) numa `<div id="dre-print-area">` para servir de alvo do CSS de impressão.
+- Adicionar um cabeçalho de impressão dentro de `#dre-print-area`, oculto na tela e visível apenas no PDF: título "Demonstrativo de Resultados", subtítulo com `mesNome`, e data de emissão (`format(new Date(), "dd/MM/yyyy 'às' HH:mm")`). Usa classes `hidden print:block`.
+- Adicionar um bloco `<style>` (ou classes utilitárias) com regras `@media print`:
+  - `body { background: white; color: black; }`
+  - Esconder elementos não pertencentes ao DRE: `header (do layout), botão voltar, breadcrumb, headerActions (o próprio botão de imprimir), tooltips`. Implementação: marcar esses elementos do layout via classe `print:hidden` é inviável (o layout é compartilhado). Solução: usar regra global `@media print { body > div > *:not(#dre-print-area-wrapper) { display: none; } }` é frágil. **Melhor abordagem**: usar `@media print` para forçar exibir SOMENTE `#dre-print-area`:
+    ```css
+    @media print {
+      body * { visibility: hidden; }
+      #dre-print-area, #dre-print-area * { visibility: visible; }
+      #dre-print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 16px; background: white; color: black; }
+    }
+    ```
+  - Sobrescrever cores escuras dentro de `#dre-print-area` para impressão preto/branco: `color: black`, `background: white`, bordas `border-color: #ddd`, manter cores semânticas (verde/vermelho/amarelo) em tons mais escuros para legibilidade no papel (`text-emerald-400` → `color: #047857 !important` etc.) via CSS direcionado.
+  - Desabilitar `sticky` e `overflow:hidden` para permitir paginação correta.
+  - `@page { size: A4; margin: 12mm; }`
+- O CSS `@media print` será adicionado num `<style>` inline ao final do componente (escopo global, ativa só na impressão) — abordagem simples e localizada na página.
 
-1. **`HeaderUserInfo`** em `src/App.tsx` (linhas 359–421) — usado no layout global com `AppSidebar`. Cobre praticamente todas as páginas "internas" não-minimalistas (VendaNova, Faturamento, Pedidos, Estoque, Vagas, Caixa, etc.). Tem avatar visível mas botões soltos (Tarefas, Settings, Sair) — sem dropdown e sem tema.
-2. **`AdminHeader`** em `src/components/admin/AdminHeader.tsx` — usado no `AdminLayout` (rotas `/admin/*` que usam o layout). Sem dropdown e sem tema.
-3. **`AdminHub`** (`src/pages/admin/AdminHub.tsx`) — tem dropdown próprio inline, mas sem tema.
-4. **`ProducaoLayout`** — cabeçalho próprio para `/producao/*` (sem tema, mas usuário não excluiu produção; manteremos).
+### 2. (Opcional) Garantir que o tooltip de "Top 5" não atrapalhe
+Os `TooltipContent` são renderizados em portal e ficam fora do `#dre-print-area`, então a regra `visibility: hidden` no `body *` já os esconde — comportamento correto.
 
-Conclusão: precisamos adicionar o seletor de tema (e padronizar para um menu suspenso) em todos esses cabeçalhos, em vez de espalhar `<FloatingProfileMenu />` em centenas de páginas.
+## Comportamento esperado
+1. Usuário acessa `/direcao/dre/2026-01`.
+2. No canto direito do header aparece o botão **🖨 Imprimir PDF**.
+3. Clique → abre o diálogo nativo de impressão do navegador com o DRE renderizado em fundo branco, texto preto, com cabeçalho "Demonstrativo de Resultados — Janeiro 2026", incluindo todas as tabelas (Faturamento/Lucro/Margem, Despesas Fixas, Folha Salarial, Despesas Variáveis, Projetadas do Ano, Estoque, Resumo Final).
+4. Usuário pode imprimir ou "Salvar como PDF".
 
-## Estratégia
+## Não incluso
+- Geração server-side de PDF (jsPDF, pdfmake, edge function): desnecessário para o caso de uso e adicionaria peso. Caso o usuário prefira um PDF gerado programaticamente (sem passar pelo diálogo do navegador), informar e iremos para essa rota.
 
-Em vez de adicionar `<FloatingProfileMenu />` página por página, vamos **embutir o mesmo dropdown (com seletor de tema)** nos cabeçalhos compartilhados que já cobrem as páginas. Isso garante cobertura universal sem regressões.
-
-### Etapas
-
-1. **Extrair um componente reutilizável `ProfileDropdownMenu`** a partir do conteúdo do dropdown atual de `FloatingProfileMenu.tsx`:
-   - Conteúdo: header com nome/email + "Meu Perfil" + atalhos (Produção, Painéis, Admin com checagem de permissão) + Sair + bloco "Tema" (Claro/Escuro/Sistema usando `useTheme`).
-   - O `FloatingProfileMenu` continua existindo e passa a renderizar o novo `ProfileDropdownMenu` (sem mudança visual onde já é usado).
-
-2. **`HeaderUserInfo` (em `src/App.tsx`)** — substituir o avatar atual por um `Avatar` clicável que abre o `ProfileDropdownMenu`. Manter o botão de Tarefas existente. Remover os botões soltos de Settings/Sair (já estarão no dropdown). Isso cobre todas as páginas que usam o `AppSidebar` global (a grande maioria do sistema).
-
-3. **`AdminHeader` (`src/components/admin/AdminHeader.tsx`)** — mesmo tratamento: o avatar passa a abrir o `ProfileDropdownMenu`. Cobre as rotas `/admin/*` que usam o `AdminLayout`.
-
-4. **`AdminHub` (`src/pages/admin/AdminHub.tsx`)** — substituir o dropdown inline customizado (que atualmente só tem "Painéis" e "Sair") pelo `ProfileDropdownMenu`, mantendo o posicionamento flutuante atual.
-
-5. **`ProducaoLayout`** — adicionar o `ProfileDropdownMenu` no cabeçalho (ou um `FloatingProfileMenu` se for preferível manter o estilo). Usuário não excluiu produção, então incluímos.
-
-6. **Páginas avulsas sem qualquer layout** — após as alterações acima, restam pouquíssimas páginas sem cabeçalho compartilhado (ex.: `Index.tsx`, `NotFound.tsx`, telas standalone como `TvDashboard`, `PedidoPreparacao`). Vamos:
-   - **Manter sem menu**: `Index`, `NotFound`, `Auth`, `Forbidden`, `ForbiddenProducao`, `ProducaoLogin`, `TvDashboard` (display público), `Painéis`.
-   - Para o restante (se houver alguma página standalone protegida), incluiremos `<FloatingProfileMenu />` diretamente.
-
-### Exclusões confirmadas
-
-- `PaineisLayout` e tudo sob `/paineis/*` — **não** receberá o menu.
-- `Auth.tsx`, `ProducaoLogin.tsx`, `Forbidden.tsx`, `ForbiddenProducao.tsx` — **não** receberão.
-
-## Resultado esperado
-
-Após a implementação, qualquer página autenticada do sistema (fora Painéis) exibirá um avatar no topo que, ao ser clicado, abre o mesmo dropdown padronizado contendo Meu Perfil, atalhos com permissão, Sair e o seletor de tema (Claro/Escuro/Sistema) que persiste em `localStorage` via `ThemeProvider`.
-
-## Arquivos a serem alterados
-
-- **Novo**: `src/components/ProfileDropdownMenu.tsx` (extração do conteúdo do dropdown)
-- **Editado**: `src/components/FloatingProfileMenu.tsx` (passa a usar o novo componente)
-- **Editado**: `src/App.tsx` (`HeaderUserInfo` passa a abrir o dropdown)
-- **Editado**: `src/components/admin/AdminHeader.tsx`
-- **Editado**: `src/pages/admin/AdminHub.tsx`
-- **Editado**: `src/components/ProducaoLayout.tsx` (adicionar dropdown no cabeçalho)
-
-Posso prosseguir com a implementação?
+## Arquivos afetados
+- `src/pages/direcao/DREMesDirecao.tsx` (única edição)
