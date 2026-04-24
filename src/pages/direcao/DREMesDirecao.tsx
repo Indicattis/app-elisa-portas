@@ -680,8 +680,12 @@ export default function DREMesDirecao() {
             fat.portas += valorPortaLiquido;
             fat.pintura += valorPinturaLiquido;
             fat.instalacoes += valorInstalacaoLiquido;
-            luc.portas += p.lucro_produto || 0;
-            luc.pintura += p.lucro_pintura || 0;
+            // Distribui lucro_item proporcionalmente entre porta/pintura/instalação
+            // (vendas legadas trazem porta+pintura+instalação embutidas na mesma linha)
+            const lucroLinha = p.lucro_item || 0;
+            luc.portas += lucroLinha * proporcaoProduto;
+            luc.pintura += lucroLinha * proporcaoPintura;
+            luc.instalacoes += lucroLinha * proporcaoInstalacao;
           } else if (tipo === 'pintura_epoxi') {
             fat.pintura += valorTotal;
             luc.pintura += p.lucro_item || 0;
@@ -702,8 +706,10 @@ export default function DREMesDirecao() {
 
         const totalCredito = vendas?.reduce((sum, v) => sum + ((v as any).valor_credito || 0), 0) || 0;
 
-        // Margem fixa de instalação: 40% (alterada de 30% em 2026)
-        luc.instalacoes = fat.instalacoes * 0.40;
+        // Soma lucro de instalação vindo das vendas (campo lucro_instalacao da venda)
+        // mais o lucro proporcional já distribuído acima das linhas de porta legadas.
+        const lucroInstalacaoVendas = vendas?.reduce((sum, v) => sum + ((v as any).lucro_instalacao || 0), 0) || 0;
+        luc.instalacoes += lucroInstalacaoVendas;
 
         fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.acessorios + fat.adicionais + totalCredito;
         luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.acessorios + luc.adicionais;
