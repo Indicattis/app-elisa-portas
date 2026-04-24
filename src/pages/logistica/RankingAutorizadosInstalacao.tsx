@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Trophy, Medal, Calendar, CalendarDays, CalendarRange, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { InstalacoesHeaderActions } from "@/components/instalacoes/InstalacoesHeaderActions";
 
 const periodosOptions: { value: PeriodoFiltro; label: string; icon: React.ElementType }[] = [
   { value: 'mes', label: 'Este Mês', icon: Calendar },
@@ -72,7 +73,6 @@ export default function RankingAutorizadosInstalacao() {
   const breadcrumbItems = [
     { label: 'Home', path: '/home' },
     { label: 'Logística', path: '/logistica' },
-    { label: 'Instalações', path: '/logistica/instalacoes' },
     { label: 'Ranking Autorizados' }
   ];
 
@@ -80,7 +80,8 @@ export default function RankingAutorizadosInstalacao() {
     <MinimalistLayout
       title="Ranking de Autorizados"
       subtitle="Desempenho dos parceiros autorizados nas instalações"
-      backPath="/logistica/instalacoes"
+      backPath="/logistica"
+      headerActions={<InstalacoesHeaderActions />}
       breadcrumbItems={breadcrumbItems}
     >
       {/* Filtros de Período */}

@@ -12,6 +12,7 @@ import { Trophy, Medal, Calendar, CalendarDays, CalendarRange, Loader2 } from "l
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AjustePontuacaoSection } from "@/components/ranking/AjustePontuacaoSection";
+import { InstalacoesHeaderActions } from "@/components/instalacoes/InstalacoesHeaderActions";
 
 const periodosOptions: { value: PeriodoFiltro; label: string; icon: React.ElementType }[] = [
   { value: 'mes', label: 'Este Mês', icon: Calendar },
@@ -80,7 +81,6 @@ export default function RankingEquipesInstalacao() {
   const breadcrumbItems = [
     { label: 'Home', path: '/home' },
     { label: 'Logística', path: '/logistica' },
-    { label: 'Instalações', path: '/logistica/instalacoes' },
     { label: 'Ranking Equipes' }
   ];
 
@@ -88,7 +88,8 @@ export default function RankingEquipesInstalacao() {
     <MinimalistLayout
       title="Ranking de Equipes"
       subtitle="Desempenho das equipes de instalação"
-      backPath="/logistica/instalacoes"
+      backPath="/logistica"
+      headerActions={<InstalacoesHeaderActions />}
       breadcrumbItems={breadcrumbItems}
     >
       {/* Filtros de Período */}
