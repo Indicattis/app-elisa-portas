@@ -75,6 +75,7 @@ interface PedidoCardProps {
   onDeletar?: (pedidoId: string) => Promise<void>;
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
   onFinalizarDireto?: (pedidoId: string) => Promise<void>;
+  onCarregarOrdem?: (pedidoId: string) => Promise<void>;
   onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>;
   onDevolverParaFinalizado?: (pedidoId: string) => Promise<void>;
   basePath?: string;
@@ -101,6 +102,7 @@ export function PedidoCard({
   onDeletar,
   onCorrecaoDetalhesClick,
   onFinalizarDireto,
+  onCarregarOrdem,
   onEnviarAguardandoCliente,
   onDevolverParaFinalizado,
   readOnly = false,
