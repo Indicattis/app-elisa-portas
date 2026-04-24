@@ -16,13 +16,18 @@ export const useProdutosVenda = (vendaId?: string) => {
         .from('produtos_vendas')
         .select(`
           *,
-          catalogo_cores(nome, codigo_hex)
+          catalogo_cores(nome, codigo_hex),
+          vendas_catalogo(unidade)
         `)
         .eq('venda_id', vendaId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data || [];
+      // Expor unidade do catálogo no nível do produto para renderização.
+      return (data || []).map((p: any) => ({
+        ...p,
+        unidade: p.vendas_catalogo?.unidade ?? p.unidade ?? null,
+      }));
     },
     enabled: !!vendaId,
   });
