@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Edit, Trash2, Search, Package } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Package, Upload } from "lucide-react";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Switch } from "@/components/ui/switch";
 import { useFretesCidades, FreteCidade } from "@/hooks/useFretesCidades";
 import { FreteDialog } from "@/components/frete/FreteDialog";
+import { BulkUploadFretesCidades } from "@/components/frete/BulkUploadFretesCidades";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,7 @@ export default function FreteMinimalista() {
   const [editingFrete, setEditingFrete] = useState<FreteCidade | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterEstado, setFilterEstado] = useState<string>("todos");
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const fretesFiltrados = useMemo(() => {
     if (!fretes) return [];
@@ -103,6 +105,15 @@ export default function FreteMinimalista() {
           ))}
         </SelectContent>
       </Select>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setBulkOpen(true)}
+        className="h-10 px-4 rounded-lg bg-white/5 border-white/10 text-white hover:bg-white/10 text-xs gap-1.5"
+      >
+        <Upload className="h-4 w-4" />
+        <span className="hidden sm:inline">Importar</span>
+      </Button>
       <Button
         size="sm"
         onClick={handleNew}
@@ -216,6 +227,8 @@ export default function FreteMinimalista() {
         onOpenChange={handleDialogClose}
         frete={editingFrete}
       />
+
+      <BulkUploadFretesCidades open={bulkOpen} onOpenChange={setBulkOpen} />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent className="bg-black/90 border-white/10 backdrop-blur-xl">
