@@ -63,6 +63,7 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
           <TableHead>Detalhes</TableHead>
           <TableHead>Cor</TableHead>
           <TableHead>Qtd</TableHead>
+          <TableHead>Tamanho</TableHead>
           <TableHead>Valor Unit.</TableHead>
           <TableHead>Desconto</TableHead>
           <TableHead>Total</TableHead>
@@ -71,6 +72,7 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
       </TableHeader>
       <TableBody>
         {produtos.map((produto, index) => {
+          // valor_produto já considera o tamanho unitário para itens decimais (armazenado como preco * tamanho).
           const valorBase = (produto.valor_produto + produto.valor_pintura + produto.valor_instalacao) * produto.quantidade;
           const descontoAplicado = produto.tipo_desconto === 'valor' 
             ? produto.desconto_valor 
@@ -81,6 +83,11 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
           const detalhes = (produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social' || produto.tipo_produto === 'porta')
             ? (produto.largura && produto.altura ? `${Number(produto.largura).toFixed(2)}m x ${Number(produto.altura).toFixed(2)}m` : produto.tamanho)
             : produto.descricao || '-';
+          const isCatalogoDecimal = ['acessorio', 'adicional', 'manutencao'].includes(produto.tipo_produto)
+            && ['metro', 'kg', 'litro'].includes((produto.unidade || '').toLowerCase());
+          const unidadeShort = (produto.unidade || '').toLowerCase() === 'metro' ? 'm'
+            : (produto.unidade || '').toLowerCase() === 'kg' ? 'kg'
+            : (produto.unidade || '').toLowerCase() === 'litro' ? 'L' : '';
           
           return (
             <TableRow key={index}>
@@ -115,34 +122,36 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
                       <div className="flex items-center gap-1">
                         <Input
                           type="number"
-                          min={permiteDecimal ? "0.01" : "1"}
-                          step={permiteDecimal ? "0.01" : "1"}
+                          min="1"
+                          step="1"
                           value={produto.quantidade}
                           onChange={(e) => {
-                            const novaQtd = parseFloat(e.target.value);
-                            if (novaQtd >= 0.01) {
+                            const novaQtd = parseInt(e.target.value);
+                            if (novaQtd >= 1) {
                               onUpdateQuantidade(index, novaQtd);
                             }
                           }}
                           className="w-20"
                         />
-                        {produto.unidade && produto.unidade !== 'Unitário' && (
-                          <span className="text-xs text-muted-foreground">
-                            {produto.unidade === 'Metro' ? 'm' : produto.unidade.toLowerCase()}
-                          </span>
-                        )}
                       </div>
                     );
                   })()
                 ) : (
                   <span>
                     {produto.quantidade}
-                    {produto.unidade && produto.unidade !== 'Unitário' && (
-                      <span className="text-xs text-muted-foreground ml-1">
-                        {produto.unidade === 'Metro' ? 'm' : produto.unidade.toLowerCase()}
-                      </span>
-                    )}
                   </span>
+                )}
+              </TableCell>
+              <TableCell>
+                {isCatalogoDecimal ? (
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm">{produto.tamanho || '-'}</span>
+                    {produto.tamanho && unidadeShort && (
+                      <span className="text-xs text-muted-foreground">{unidadeShort}</span>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted-foreground">—</span>
                 )}
               </TableCell>
               <TableCell>R$ {((produto.valor_produto + produto.valor_pintura + produto.valor_instalacao)).toFixed(2)}</TableCell>

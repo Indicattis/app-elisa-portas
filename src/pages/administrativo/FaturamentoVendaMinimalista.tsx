@@ -600,7 +600,11 @@ export default function FaturamentoVendaMinimalista() {
         autoFaturadosRef.current.add(produto.id);
 
         const quantidade = Number(produto.quantidade) || 1;
-        const custoTotal = Number(cat.custo_produto) * quantidade;
+        // Para itens medidos por unidades decimais (Metro/Kg/Litro), o tamanho unitário
+        // é armazenado em `tamanho`. Custo = custo_unitario * quantidade * tamanho.
+        const tamanhoUnit = parseFloat((produto as any).tamanho || '') || 0;
+        const fatorTamanho = tamanhoUnit > 0 ? tamanhoUnit : 1;
+        const custoTotal = Number(cat.custo_produto) * quantidade * fatorTamanho;
         const valorTotal = Number(produto.valor_total) || 0;
         const lucroCalculado = Math.max(0, valorTotal - custoTotal);
 
@@ -776,7 +780,8 @@ export default function FaturamentoVendaMinimalista() {
         resultado.push({ ...p, ids: [p.id] });
         return;
       }
-      const chave = `${p.tipo_produto}|${(p.descricao || '').trim()}|${p.acessorio_id || ''}|${p.adicional_id || ''}`;
+      // Agrupa também por tamanho — itens com tamanhos unitários diferentes ficam em linhas distintas.
+      const chave = `${p.tipo_produto}|${(p.descricao || '').trim()}|${p.acessorio_id || ''}|${p.adicional_id || ''}|${p.tamanho || ''}`;
       const existente = grupos.get(chave);
       if (!existente) {
         const novo = { ...p, ids: [p.id] };
@@ -1131,7 +1136,13 @@ export default function FaturamentoVendaMinimalista() {
                       <TableRow key={produto.id} className="border-white/10 hover:bg-white/5">
                         <TableCell className="text-white/80">{getTipoProdutoLabel(produto.tipo_produto)}</TableCell>
                         <TableCell className="font-medium text-white">{produto.descricao}</TableCell>
-                        <TableCell className="text-white/60">{produto.tamanho || "-"}</TableCell>
+                        <TableCell className="text-white/60">
+                          {produto.tamanho
+                            ? (['acessorio', 'adicional', 'manutencao'].includes(produto.tipo_produto)
+                                ? `${produto.tamanho}${(produto as any).unidade?.toLowerCase() === 'metro' ? ' m' : (produto as any).unidade?.toLowerCase() === 'kg' ? ' kg' : (produto as any).unidade?.toLowerCase() === 'litro' ? ' L' : ''}`
+                                : produto.tamanho)
+                            : '-'}
+                        </TableCell>
                         <TableCell className="text-right text-blue-400">
                           {formatCurrency(((produto.valor_produto || 0) + (produto.valor_pintura || 0) + (produto.tipo_produto !== 'porta_enrolar' ? (produto.valor_instalacao || 0) : 0)) * (produto.quantidade || 1))}
                         </TableCell>
@@ -1139,7 +1150,7 @@ export default function FaturamentoVendaMinimalista() {
                         <TableCell className="text-center text-white/80">
                           {Number.isInteger(produto.quantidade)
                             ? produto.quantidade
-                            : `${Number(produto.quantidade).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m`}
+                            : Number(produto.quantidade).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </TableCell>
                         <TableCell className="text-right font-medium text-white">{formatCurrency(valorTotalLinha)}</TableCell>
                         <TableCell className={`text-right ${isNegative ? 'text-green-400' : (hasDesconto ? 'text-red-400' : 'text-white/40')}`}>

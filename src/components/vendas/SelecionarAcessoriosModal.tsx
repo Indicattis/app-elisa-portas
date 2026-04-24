@@ -35,6 +35,9 @@ export function SelecionarAcessoriosModal({
 }: SelecionarAcessoriosModalProps) {
   const [itensSelecionados, setItensSelecionados] = useState<Set<string>>(new Set());
   const [busca, setBusca] = useState('');
+  // Para itens com unidade decimal (Metro/Kg/Litro), o usuário informa Qtd e Tamanho separadamente.
+  const [quantidades, setQuantidades] = useState<Record<string, number>>({});
+  const [tamanhos, setTamanhos] = useState<Record<string, string>>({});
 
   const { data: produtosEstoque = [], isLoading } = useQuery({
     queryKey: ['vendas-catalogo-modal'],
@@ -85,22 +88,33 @@ export function SelecionarAcessoriosModal({
   const handleConfirmar = () => {
     const itensSelecionadosArray = produtosEstoque.filter(item => itensSelecionados.has(item.id));
     
-    const produtos: ProdutoVenda[] = itensSelecionadosArray.map(item => ({
-      tipo_produto: item.tipo === 'acessorio' ? 'acessorio' : 'adicional',
-      largura: 0,
-      altura: 0,
-      valor_produto: item.preco,
-      valor_pintura: 0,
-      valor_instalacao: 0,
-      valor_frete: 0,
-      quantidade: 1,
-      descricao: item.nome,
-      desconto_valor: 0,
-      desconto_percentual: 0,
-      tipo_desconto: 'valor' as const,
-      vendas_catalogo_id: item.id,
-      unidade: item.unidade
-    }));
+    const produtos: ProdutoVenda[] = itensSelecionadosArray.map(item => {
+      const isDecimal = ['metro', 'kg', 'litro'].includes((item.unidade || '').toLowerCase());
+      const qtd = quantidades[item.id] ?? 1;
+      const tam = isDecimal ? (tamanhos[item.id] || '') : '';
+      const tamanhoNum = isDecimal ? (parseFloat(tam) || 0) : 0;
+      // Para itens medidos por unidade decimal, o valor unitário armazenado considera o tamanho
+      // (preco_venda * tamanho_unitario), permitindo que o trigger do DB calcule valor_total
+      // como valor_unitario_efetivo * quantidade.
+      const valorUnitario = isDecimal && tamanhoNum > 0 ? item.preco * tamanhoNum : item.preco;
+      return {
+        tipo_produto: item.tipo === 'acessorio' ? 'acessorio' : 'adicional',
+        largura: 0,
+        altura: 0,
+        valor_produto: valorUnitario,
+        valor_pintura: 0,
+        valor_instalacao: 0,
+        valor_frete: 0,
+        quantidade: qtd,
+        descricao: item.nome,
+        tamanho: tam,
+        desconto_valor: 0,
+        desconto_percentual: 0,
+        tipo_desconto: 'valor' as const,
+        vendas_catalogo_id: item.id,
+        unidade: item.unidade
+      } as ProdutoVenda;
+    });
 
     onConfirm(produtos);
     resetState();
@@ -109,6 +123,8 @@ export function SelecionarAcessoriosModal({
   const resetState = () => {
     setItensSelecionados(new Set());
     setBusca('');
+    setQuantidades({});
+    setTamanhos({});
     onOpenChange(false);
   };
 
@@ -171,18 +187,27 @@ export function SelecionarAcessoriosModal({
                   <TableHead>Produto</TableHead>
                   <TableHead className="w-24">Categoria</TableHead>
                   <TableHead className="text-right w-24">Preço</TableHead>
+                  <TableHead className="text-right w-20">Qtd</TableHead>
+                  <TableHead className="text-right w-24">Tamanho</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {produtosFiltrados.map((item) => (
-                  <TableRow 
+                {produtosFiltrados.map((item) => {
+                  const isDecimal = ['metro', 'kg', 'litro'].includes((item.unidade || '').toLowerCase());
+                  const selected = itensSelecionados.has(item.id);
+                  const unidadeLabel = (item.unidade || '').toLowerCase() === 'metro' ? 'm'
+                    : (item.unidade || '').toLowerCase() === 'kg' ? 'kg'
+                    : (item.unidade || '').toLowerCase() === 'litro' ? 'L'
+                    : '';
+                  return (
+                  <TableRow
                     key={item.id} 
                     className="h-[52px] cursor-pointer hover:bg-accent/50 transition-colors"
                     onClick={() => toggleItem(item.id)}
                   >
                     <TableCell className="py-1 px-3">
                       <Checkbox
-                        checked={itensSelecionados.has(item.id)}
+                        checked={selected}
                         onCheckedChange={() => toggleItem(item.id)}
                         onClick={(e) => e.stopPropagation()}
                       />
@@ -214,8 +239,39 @@ export function SelecionarAcessoriosModal({
                     <TableCell className="py-1 text-right font-semibold text-primary text-sm">
                       R$ {item.preco.toFixed(2)}
                     </TableCell>
+                    <TableCell className="py-1 text-right" onClick={(e) => e.stopPropagation()}>
+                      <Input
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={quantidades[item.id] ?? 1}
+                        disabled={!selected}
+                        onChange={(e) => setQuantidades(prev => ({ ...prev, [item.id]: Math.max(1, parseInt(e.target.value) || 1) }))}
+                        className="h-7 w-16 text-right text-xs px-1.5"
+                      />
+                    </TableCell>
+                    <TableCell className="py-1 text-right" onClick={(e) => e.stopPropagation()}>
+                      {isDecimal ? (
+                        <div className="flex items-center justify-end gap-1">
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            placeholder="0,00"
+                            value={tamanhos[item.id] ?? ''}
+                            disabled={!selected}
+                            onChange={(e) => setTamanhos(prev => ({ ...prev, [item.id]: e.target.value }))}
+                            className="h-7 w-20 text-right text-xs px-1.5"
+                          />
+                          <span className="text-[10px] text-muted-foreground">{unidadeLabel}</span>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           )}
