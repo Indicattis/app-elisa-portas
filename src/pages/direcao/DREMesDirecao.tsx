@@ -351,6 +351,36 @@ export default function DREMesDirecao() {
   const totalProjetadoAnual = tiposCustosVariaveis.reduce((acc, t) => acc + (t.valor_maximo_mensal * 12), 0);
 
   return (
+    <>
+    <style>{`
+      @media print {
+        @page { size: A4; margin: 12mm; }
+        body * { visibility: hidden !important; }
+        #dre-print-area, #dre-print-area * { visibility: visible !important; }
+        #dre-print-area {
+          position: absolute !important;
+          left: 0; top: 0;
+          width: 100%;
+          padding: 0 !important;
+          background: white !important;
+          color: black !important;
+        }
+        #dre-print-area * {
+          color: black !important;
+          background: transparent !important;
+          border-color: #ccc !important;
+          box-shadow: none !important;
+          text-shadow: none !important;
+        }
+        #dre-print-area .text-emerald-400 { color: #047857 !important; }
+        #dre-print-area .text-red-400 { color: #b91c1c !important; }
+        #dre-print-area .text-yellow-400 { color: #a16207 !important; }
+        #dre-print-area table { page-break-inside: auto; }
+        #dre-print-area tr { page-break-inside: avoid; page-break-after: auto; }
+        #dre-print-area .rounded-xl { page-break-inside: avoid; }
+        #dre-print-area .lg\\:sticky { position: static !important; }
+      }
+    `}</style>
     <MinimalistLayout
       title="D.R.E"
       subtitle={mesNome}
@@ -603,5 +633,6 @@ export default function DREMesDirecao() {
         </div>
       )}
     </MinimalistLayout>
+    </>
   );
 }
