@@ -127,6 +127,8 @@ export function PedidoCard({
   const [isExcluindo, setIsExcluindo] = useState(false);
   const [showFinalizarDireto, setShowFinalizarDireto] = useState(false);
   const [isFinalizandoDireto, setIsFinalizandoDireto] = useState(false);
+  const [showCarregarOrdem, setShowCarregarOrdem] = useState(false);
+  const [isCarregando, setIsCarregando] = useState(false);
   const [showAvisoEspera, setShowAvisoEspera] = useState(false);
   const [ordemParaRemover, setOrdemParaRemover] = useState<{ ordem: any; nomeSetor: string } | null>(null);
   const [processos, setProcessos] = useState<Processo[]>([]);
