@@ -387,7 +387,7 @@ export function UserRouteAccessManager() {
               return (
                 <button
                   key={iface.value}
-                  onClick={() => setSelectedInterface(iface.value)}
+                  onClick={() => { setSelectedInterface(iface.value); setFolderPath([]); }}
                   className={`p-3 rounded-lg border transition-all flex flex-col items-center gap-1
                              ${isSelected 
                                ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-500/40 shadow-lg shadow-blue-500/20' 
