@@ -39,6 +39,8 @@ export default function FrotaEditMinimalista() {
     documento_nome: "",
     status: "rodando" as "rodando" | "mecanico" | "parado",
     aviso_justificativa: "" as string,
+    km_proxima_troca_oleo: "" as string,
+    data_proxima_troca_oleo: "" as string,
   });
 
   const [statusOriginal, setStatusOriginal] = useState<string>("rodando");
@@ -61,6 +63,8 @@ export default function FrotaEditMinimalista() {
         documento_nome: veiculo.documento_nome || "",
         status: veiculo.status,
         aviso_justificativa: veiculo.aviso_justificativa || "",
+        km_proxima_troca_oleo: veiculo.km_proxima_troca_oleo != null ? String(veiculo.km_proxima_troca_oleo) : "",
+        data_proxima_troca_oleo: veiculo.data_proxima_troca_oleo || "",
       });
       setStatusOriginal(veiculo.status);
     }
@@ -134,6 +138,8 @@ export default function FrotaEditMinimalista() {
           status: form.status,
           aviso_justificativa: isParadoOuMecanico ? form.aviso_justificativa || null : null,
           aviso_data: isParadoOuMecanico && form.aviso_justificativa ? new Date().toISOString() : null,
+          km_proxima_troca_oleo: form.km_proxima_troca_oleo ? parseInt(form.km_proxima_troca_oleo) : undefined,
+          data_proxima_troca_oleo: form.data_proxima_troca_oleo || undefined,
         },
       });
       navigate("/logistica/frota");
@@ -321,7 +327,22 @@ export default function FrotaEditMinimalista() {
                     </div>
                     <div className="space-y-1.5">
                       <Label className={labelClass}>Próx. Troca de Óleo</Label>
-                      <Input value={veiculo.data_proxima_troca_oleo || "—"} disabled className="bg-white/[0.02] border-white/5 text-white/50 cursor-not-allowed" />
+                      <Input
+                        type="date"
+                        value={form.data_proxima_troca_oleo}
+                        onChange={(e) => setForm((f) => ({ ...f, data_proxima_troca_oleo: e.target.value }))}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className={labelClass}>Km Próx. Troca de Óleo</Label>
+                      <Input
+                        type="number"
+                        value={form.km_proxima_troca_oleo}
+                        onChange={(e) => setForm((f) => ({ ...f, km_proxima_troca_oleo: e.target.value }))}
+                        className={inputClass}
+                        placeholder="Ex: 50000"
+                      />
                     </div>
                   </div>
                 </div>
