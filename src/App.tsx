@@ -23,6 +23,7 @@ import { useState } from "react";
 import { Menu, Settings, LogOut, Tv, Map, Network, BookOpen, Calendar as CalendarIcon, Calculator, CheckSquare } from "lucide-react";
 import { MinhasTarefasSheet } from "@/components/todo/MinhasTarefasSheet";
 import { useTarefasCount } from "@/hooks/useTarefasCount";
+import { ProfileDropdownMenu } from "@/components/ProfileDropdownMenu";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
@@ -357,62 +358,33 @@ const queryClient = new QueryClient({
 // DashboardLayout foi removido - interface dashboard descontinuada
 
 function HeaderUserInfo() {
-  const { user, userRole, isAdmin, signOut } = useAuth();
+  const { user } = useAuth();
   const { data: tarefasCount = 0 } = useTarefasCount();
   const [tarefasOpen, setTarefasOpen] = useState(false);
 
   if (!user) return null;
 
-  const getUserInitials = (email: string) => {
-    return email.substring(0, 2).toUpperCase();
-  };
-
   return (
     <>
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <Avatar className="h-8 w-8 border border-white/20">
-            <AvatarImage src={userRole?.foto_perfil_url} alt="Foto de perfil" />
-            <AvatarFallback className="text-xs bg-primary/20 text-white">
-              {getUserInitials(user.email || '')}
-            </AvatarFallback>
-          </Avatar>
-          <div className="hidden md:flex flex-col text-sm">
-            <span className="font-medium leading-none text-white">{user.email}</span>
-            <span className="text-xs text-white/60 capitalize leading-none mt-1">
-              {userRole?.role?.replace("_", " ")}
-            </span>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-1">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="relative text-white hover:bg-white/10"
-            onClick={() => setTarefasOpen(true)}
-          >
-            <CheckSquare className="h-4 w-4" />
-            {tarefasCount > 0 && (
-              <Badge 
-                variant="destructive" 
-                className="absolute -top-1 -right-1 h-5 min-w-5 px-1 text-xs flex items-center justify-center"
-              >
-                {tarefasCount}
-              </Badge>
-            )}
-          </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="relative text-white hover:bg-white/10"
+          onClick={() => setTarefasOpen(true)}
+        >
+          <CheckSquare className="h-4 w-4" />
+          {tarefasCount > 0 && (
+            <Badge
+              variant="destructive"
+              className="absolute -top-1 -right-1 h-5 min-w-5 px-1 text-xs flex items-center justify-center"
+            >
+              {tarefasCount}
+            </Badge>
+          )}
+        </Button>
 
-          <Button variant="ghost" size="sm" asChild className="text-white hover:bg-white/10">
-            <NavLink to="/admin">
-              <Settings className="h-4 w-4" />
-            </NavLink>
-          </Button>
-          
-          <Button variant="ghost" size="sm" onClick={signOut} className="text-white hover:bg-white/10">
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
+        <ProfileDropdownMenu variant="glass" avatarSize={32} />
       </div>
 
       <MinhasTarefasSheet open={tarefasOpen} onOpenChange={setTarefasOpen} />

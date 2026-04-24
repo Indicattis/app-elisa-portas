@@ -1,10 +1,11 @@
 import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 import { Button } from "@/components/ui/button";
-import { LogOut, ArrowLeft, Package } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { ProfileDropdownMenu } from "@/components/ProfileDropdownMenu";
 
 export function ProducaoHeader() {
-  const { user, signOut } = useProducaoAuth();
+  const { user } = useProducaoAuth();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -37,9 +38,7 @@ export function ProducaoHeader() {
           <span className="text-sm text-muted-foreground hidden sm:block">
             {user.nome}
           </span>
-          <Button variant="ghost" size="sm" onClick={signOut}>
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <ProfileDropdownMenu variant="popover" avatarSize={32} />
         </div>
       </div>
     </header>
