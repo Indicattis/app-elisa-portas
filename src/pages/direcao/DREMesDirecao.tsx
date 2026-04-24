@@ -97,6 +97,432 @@ function DespesaSectionReadOnly({
   );
 }
 
+// =============== Layout dedicado para impressão (PDF) ===============
+function PrintReport({
+  mesNome,
+  faturamento,
+  lucro,
+  despesasFixas,
+  despesasFolha,
+  despesasVariaveis,
+  tiposCustosVariaveis,
+  totalDespFixas,
+  totalDespFolha,
+  totalDespVariaveis,
+  totalProjetadoAnual,
+  topAcessorios,
+  topAdicionais,
+  estoqueResumo,
+  lucroLiquidoFinal,
+  percBrutoFinal,
+  percLiquidFinal,
+  formatCurrency,
+}: {
+  mesNome: string;
+  faturamento: FaturamentoProduto;
+  lucro: FaturamentoProduto;
+  despesasFixas: DespesaAgrupada[];
+  despesasFolha: DespesaAgrupada[];
+  despesasVariaveis: DespesaAgrupada[];
+  tiposCustosVariaveis: TipoCustoVariavel[];
+  totalDespFixas: number;
+  totalDespFolha: number;
+  totalDespVariaveis: number;
+  totalProjetadoAnual: number;
+  topAcessorios: { nome: string; qtd: number }[];
+  topAdicionais: { nome: string; qtd: number }[];
+  estoqueResumo: { valorTotal: number; totalItens: number };
+  lucroLiquidoFinal: number;
+  percBrutoFinal: number;
+  percLiquidFinal: number;
+  formatCurrency: (v: number) => string;
+}) {
+  const SECTION: React.CSSProperties = { marginTop: 18, pageBreakInside: 'avoid' };
+  const H2: React.CSSProperties = {
+    fontSize: '11pt',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    color: '#1e3a8a',
+    borderBottom: '2px solid #1e3a8a',
+    paddingBottom: 4,
+    marginBottom: 8,
+  };
+  const TH: React.CSSProperties = {
+    background: '#f1f5f9',
+    color: '#475569',
+    fontSize: '8pt',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
+    padding: '6px 8px',
+    textAlign: 'left',
+    borderBottom: '1px solid #cbd5e1',
+  };
+  const TD: React.CSSProperties = {
+    fontSize: '9.5pt',
+    padding: '5px 8px',
+    borderBottom: '1px solid #e2e8f0',
+  };
+  const tdRight = { ...TD, textAlign: 'right' as const, fontVariantNumeric: 'tabular-nums' };
+  const trZebra = (i: number): React.CSSProperties => ({
+    background: i % 2 === 0 ? '#ffffff' : '#fafbfc',
+  });
+  const positive = (v: number) => (v >= 0 ? '#047857' : '#b91c1c');
+
+  const kpiBox = (label: string, value: string, color = '#0f172a', accent = '#1e3a8a'): React.CSSProperties => ({});
+
+  return (
+    <div style={{ padding: 0, color: '#0f172a' }}>
+      {/* CABEÇALHO */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
+          borderBottom: '3px solid #1e3a8a',
+          paddingBottom: 10,
+          marginBottom: 4,
+        }}
+      >
+        <div>
+          <div style={{ fontSize: '8pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>
+            Relatório Gerencial
+          </div>
+          <h1 style={{ fontSize: '20pt', fontWeight: 800, margin: '2px 0 0 0', color: '#0f172a', letterSpacing: '-0.02em' }}>
+            Demonstrativo de Resultados
+          </h1>
+          <div style={{ fontSize: '11pt', color: '#1e3a8a', fontWeight: 600, marginTop: 2, textTransform: 'capitalize' }}>
+            {mesNome}
+          </div>
+        </div>
+        <div style={{ textAlign: 'right', fontSize: '8pt', color: '#64748b', lineHeight: 1.5 }}>
+          <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '9pt' }}>D.R.E</div>
+          <div>Emitido em</div>
+          <div>{format(new Date(), "dd/MM/yyyy 'às' HH:mm")}</div>
+        </div>
+      </div>
+
+      {/* KPIs PRINCIPAIS */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 14, ...{ pageBreakInside: 'avoid' } as any }}>
+        {[
+          { label: 'Faturamento Bruto', value: formatCurrency(faturamento.total), color: '#0f172a', accent: '#1e3a8a' },
+          { label: 'Lucro Bruto', value: formatCurrency(lucro.total), color: positive(lucro.total), accent: '#1e3a8a' },
+          { label: 'Margem Bruta', value: `${percBrutoFinal.toFixed(1)}%`, color: positive(percBrutoFinal), accent: '#1e3a8a' },
+          { label: 'Lucro Líquido', value: formatCurrency(lucroLiquidoFinal), color: positive(lucroLiquidoFinal), accent: '#047857' },
+          { label: 'Margem Líquida', value: `${percLiquidFinal.toFixed(1)}%`, color: positive(percLiquidFinal), accent: '#047857' },
+        ].map((k, i) => (
+          <div
+            key={i}
+            style={{
+              flex: 1,
+              border: '1px solid #e2e8f0',
+              borderTop: `3px solid ${k.accent}`,
+              padding: '8px 10px',
+              background: '#fafbfc',
+            }}
+          >
+            <div style={{ fontSize: '7pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+              {k.label}
+            </div>
+            <div style={{ fontSize: '11pt', fontWeight: 800, color: k.color, marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>
+              {k.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* FATURAMENTO POR CATEGORIA */}
+      <div style={SECTION}>
+        <div style={H2}>1. Faturamento por Categoria</div>
+        <table>
+          <thead>
+            <tr>
+              <th style={TH}>Categoria</th>
+              <th style={{ ...TH, textAlign: 'right' }}>Faturamento</th>
+              <th style={{ ...TH, textAlign: 'right' }}>Lucro</th>
+              <th style={{ ...TH, textAlign: 'right' }}>Margem %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              { key: 'portas', label: 'Portas' },
+              { key: 'pintura', label: 'Pintura' },
+              { key: 'instalacoes', label: 'Instalações' },
+              { key: 'acessorios', label: 'Acessórios' },
+              { key: 'adicionais', label: 'Itens Avulso' },
+            ].map((c, i) => {
+              const f = faturamento[c.key as keyof FaturamentoProduto];
+              const l = lucro[c.key as keyof FaturamentoProduto];
+              const m = f > 0 ? (l / f) * 100 : 0;
+              return (
+                <tr key={c.key} style={trZebra(i)}>
+                  <td style={{ ...TD, fontWeight: 600 }}>{c.label}</td>
+                  <td style={tdRight}>{formatCurrency(f)}</td>
+                  <td style={{ ...tdRight, color: positive(l), fontWeight: 600 }}>{formatCurrency(l)}</td>
+                  <td style={{ ...tdRight, color: positive(m), fontWeight: 600 }}>{m.toFixed(1)}%</td>
+                </tr>
+              );
+            })}
+            <tr style={{ background: '#1e3a8a', color: '#fff' }}>
+              <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>TOTAL</td>
+              <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
+                {formatCurrency(faturamento.total)}
+              </td>
+              <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
+                {formatCurrency(lucro.total)}
+              </td>
+              <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
+                {percBrutoFinal.toFixed(1)}%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* TOP 5 lado a lado */}
+      {(topAcessorios.length > 0 || topAdicionais.length > 0) && (
+        <div style={{ ...SECTION, display: 'flex', gap: 12 }}>
+          {topAcessorios.length > 0 && (
+            <div style={{ flex: 1 }}>
+              <div style={H2}>Top 5 Acessórios</div>
+              <table>
+                <thead>
+                  <tr>
+                    <th style={{ ...TH, width: 30 }}>#</th>
+                    <th style={TH}>Produto</th>
+                    <th style={{ ...TH, textAlign: 'right' }}>Qtd</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topAcessorios.map((it, i) => (
+                    <tr key={i} style={trZebra(i)}>
+                      <td style={{ ...TD, color: '#64748b' }}>{i + 1}</td>
+                      <td style={TD}>{it.nome}</td>
+                      <td style={tdRight}>{it.qtd}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {topAdicionais.length > 0 && (
+            <div style={{ flex: 1 }}>
+              <div style={H2}>Top 5 Itens Avulso</div>
+              <table>
+                <thead>
+                  <tr>
+                    <th style={{ ...TH, width: 30 }}>#</th>
+                    <th style={TH}>Produto</th>
+                    <th style={{ ...TH, textAlign: 'right' }}>Qtd</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topAdicionais.map((it, i) => (
+                    <tr key={i} style={trZebra(i)}>
+                      <td style={{ ...TD, color: '#64748b' }}>{i + 1}</td>
+                      <td style={TD}>{it.nome}</td>
+                      <td style={tdRight}>{it.qtd}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* DESPESAS — nova página */}
+      <div className="pdf-page-break" />
+
+      <div style={{ marginTop: 0 }}>
+        <div style={H2}>2. Despesas Fixas</div>
+        <PrintDespesaTable items={despesasFixas} total={totalDespFixas} formatCurrency={formatCurrency} />
+      </div>
+
+      <div style={SECTION}>
+        <div style={H2}>3. Folha Salarial</div>
+        <PrintDespesaTable items={despesasFolha} total={totalDespFolha} formatCurrency={formatCurrency} />
+      </div>
+
+      <div style={SECTION}>
+        <div style={H2}>4. Despesas Variáveis</div>
+        <PrintDespesaTable items={despesasVariaveis} total={totalDespVariaveis} formatCurrency={formatCurrency} />
+      </div>
+
+      {/* PROJETADAS DO ANO */}
+      {tiposCustosVariaveis.length > 0 && (
+        <div style={SECTION}>
+          <div style={H2}>5. Despesas Projetadas do Ano</div>
+          <table>
+            <thead>
+              <tr>
+                <th style={TH}>Tipo de Custo</th>
+                <th style={{ ...TH, textAlign: 'right', width: 110 }}>Realizado (Mês)</th>
+                <th style={{ ...TH, textAlign: 'right', width: 110 }}>Projetado (Mês)</th>
+                <th style={{ ...TH, textAlign: 'right', width: 110 }}>Projetado (Ano)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tiposCustosVariaveis.map((t, i) => {
+                const dm = despesasVariaveis.find(d => d.nome === t.nome);
+                const realizado = dm?.valor_real || 0;
+                return (
+                  <tr key={t.id} style={trZebra(i)}>
+                    <td style={{ ...TD, fontWeight: 600 }}>{t.nome}</td>
+                    <td style={tdRight}>{formatCurrency(realizado)}</td>
+                    <td style={tdRight}>{formatCurrency(t.valor_maximo_mensal)}</td>
+                    <td style={{ ...tdRight, fontWeight: 600 }}>{formatCurrency(t.valor_maximo_mensal * 12)}</td>
+                  </tr>
+                );
+              })}
+              <tr style={{ background: '#1e3a8a', color: '#fff' }}>
+                <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>TOTAL</td>
+                <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
+                  {formatCurrency(totalDespVariaveis)}
+                </td>
+                <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
+                  {formatCurrency(tiposCustosVariaveis.reduce((s, t) => s + t.valor_maximo_mensal, 0))}
+                </td>
+                <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
+                  {formatCurrency(totalProjetadoAnual)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ESTOQUE */}
+      <div style={SECTION}>
+        <div style={H2}>6. Estoque</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ flex: 1, border: '1px solid #e2e8f0', padding: '10px 12px', background: '#fafbfc' }}>
+            <div style={{ fontSize: '7pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+              Total de Itens
+            </div>
+            <div style={{ fontSize: '13pt', fontWeight: 800, marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>
+              {estoqueResumo.totalItens.toLocaleString('pt-BR')}
+            </div>
+          </div>
+          <div style={{ flex: 1, border: '1px solid #e2e8f0', padding: '10px 12px', background: '#fafbfc' }}>
+            <div style={{ fontSize: '7pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+              Valor Total
+            </div>
+            <div style={{ fontSize: '13pt', fontWeight: 800, marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>
+              {formatCurrency(estoqueResumo.valorTotal)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* RESUMO FINAL */}
+      <div style={{ ...SECTION, marginTop: 24 }}>
+        <div style={H2}>7. Resumo Final</div>
+        <table>
+          <tbody>
+            {[
+              { l: 'Faturamento Bruto', v: formatCurrency(faturamento.total), c: '#0f172a', b: false },
+              { l: 'Margem Bruta', v: `${percBrutoFinal.toFixed(1)}%`, c: positive(percBrutoFinal), b: false },
+              { l: 'Lucro Bruto', v: formatCurrency(lucro.total), c: positive(lucro.total), b: true },
+              { l: '(–) Despesas Fixas', v: formatCurrency(totalDespFixas), c: '#b91c1c', b: false },
+              { l: '(–) Folha Salarial', v: formatCurrency(totalDespFolha), c: '#b91c1c', b: false },
+              { l: '(–) Despesas Variáveis', v: formatCurrency(totalDespVariaveis), c: '#b91c1c', b: false },
+            ].map((r, i) => (
+              <tr key={i} style={trZebra(i)}>
+                <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>{r.l}</td>
+                <td style={{ ...tdRight, color: r.c, fontWeight: r.b ? 800 : 600 }}>{r.v}</td>
+              </tr>
+            ))}
+            <tr style={{ background: lucroLiquidoFinal >= 0 ? '#047857' : '#b91c1c', color: '#fff' }}>
+              <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none', fontSize: '11pt' }}>
+                LUCRO LÍQUIDO
+              </td>
+              <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none', fontSize: '11pt' }}>
+                {formatCurrency(lucroLiquidoFinal)}  ({percLiquidFinal.toFixed(1)}%)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* RODAPÉ */}
+      <div
+        style={{
+          marginTop: 24,
+          paddingTop: 8,
+          borderTop: '1px solid #cbd5e1',
+          fontSize: '7pt',
+          color: '#94a3b8',
+          textAlign: 'center',
+        }}
+      >
+        Documento gerado automaticamente • {format(new Date(), "dd/MM/yyyy HH:mm")} • D.R.E {mesNome}
+      </div>
+    </div>
+  );
+}
+
+function PrintDespesaTable({
+  items,
+  total,
+  formatCurrency,
+}: {
+  items: DespesaAgrupada[];
+  total: number;
+  formatCurrency: (v: number) => string;
+}) {
+  const TH: React.CSSProperties = {
+    background: '#f1f5f9',
+    color: '#475569',
+    fontSize: '8pt',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
+    padding: '6px 8px',
+    textAlign: 'left',
+    borderBottom: '1px solid #cbd5e1',
+  };
+  const TD: React.CSSProperties = {
+    fontSize: '9.5pt',
+    padding: '5px 8px',
+    borderBottom: '1px solid #e2e8f0',
+  };
+  if (items.length === 0) {
+    return (
+      <div style={{ fontSize: '9pt', color: '#94a3b8', fontStyle: 'italic', padding: '6px 0' }}>
+        Nenhuma despesa registrada.
+      </div>
+    );
+  }
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th style={TH}>Descrição</th>
+          <th style={{ ...TH, textAlign: 'right', width: 140 }}>Valor</th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((d, i) => (
+          <tr key={d.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#fafbfc' }}>
+            <td style={TD}>{d.nome}</td>
+            <td style={{ ...TD, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+              {formatCurrency(d.valor_real)}
+            </td>
+          </tr>
+        ))}
+        <tr style={{ background: '#1e3a8a', color: '#fff' }}>
+          <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>TOTAL</td>
+          <td style={{ ...TD, textAlign: 'right', fontWeight: 800, color: '#fff', borderBottom: 'none', fontVariantNumeric: 'tabular-nums' }}>
+            {formatCurrency(total)}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
+
 export default function DREMesDirecao() {
   const { mes } = useParams<{ mes: string }>();
   const [loading, setLoading] = useState(true);
