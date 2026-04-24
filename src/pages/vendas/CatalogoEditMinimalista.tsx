@@ -163,7 +163,7 @@ export default function CatalogoEditMinimalista() {
         backPath="/marketing/catalogo"
         breadcrumbItems={[
           { label: "Home", path: "/home" },
-          { label: "Vendas", path: "/vendas" },
+          { label: "Marketing", path: "/marketing" },
           { label: "Catálogo", path: "/marketing/catalogo" },
           { label: "Editar" },
         ]}
@@ -181,7 +181,7 @@ export default function CatalogoEditMinimalista() {
       backPath="/marketing/catalogo"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        { label: "Vendas", path: "/vendas" },
+        { label: "Marketing", path: "/marketing" },
         { label: "Catálogo", path: "/marketing/catalogo" },
         { label: "Editar" },
       ]}

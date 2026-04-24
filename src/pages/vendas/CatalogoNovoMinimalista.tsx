@@ -146,7 +146,7 @@ export default function CatalogoNovoMinimalista() {
       subtitle="Adicionar ao catálogo"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        { label: "Vendas", path: "/vendas" },
+        { label: "Marketing", path: "/marketing" },
         { label: "Catálogo", path: "/marketing/catalogo" },
         { label: "Novo" },
       ]}
