@@ -56,7 +56,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Migration error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: (error instanceof Error ? error.message : String(error)) }),
       { 
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -134,7 +134,7 @@ async function migrateAdminUsers(supabase: any) {
 
     } catch (error) {
       results.failed++
-      results.errors.push(`User ${user.nome} (${user.id}): ${error.message}`)
+      results.errors.push(`User ${user.nome} (${user.id}): ${(error instanceof Error ? error.message : String(error))}`)
       console.error(`Failed to migrate user ${user.nome}:`, error)
     }
   }
@@ -219,7 +219,7 @@ async function migrateAutorizados(supabase: any) {
 
     } catch (error) {
       results.failed++
-      results.errors.push(`Autorizado ${autorizado.nome} (${autorizado.id}): ${error.message}`)
+      results.errors.push(`Autorizado ${autorizado.nome} (${autorizado.id}): ${(error instanceof Error ? error.message : String(error))}`)
       console.error(`Failed to migrate autorizado ${autorizado.nome}:`, error)
     }
   }
