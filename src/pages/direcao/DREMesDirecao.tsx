@@ -350,35 +350,64 @@ export default function DREMesDirecao() {
   const totalDespVariaveis = despesasVariaveis.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalProjetadoAnual = tiposCustosVariaveis.reduce((acc, t) => acc + (t.valor_maximo_mensal * 12), 0);
 
+  const lucroLiquidoFinal = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis;
+  const percBrutoFinal = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
+  const percLiquidFinal = faturamento.total > 0 ? (lucroLiquidoFinal / faturamento.total) * 100 : 0;
+
   return (
     <>
     <style>{`
       @media print {
-        @page { size: A4; margin: 12mm; }
+        @page { size: A4; margin: 14mm 12mm; }
         body * { visibility: hidden !important; }
-        #dre-print-area, #dre-print-area * { visibility: visible !important; }
-        #dre-print-area {
+        #dre-screen-area { display: none !important; }
+        #dre-print-document, #dre-print-document * { visibility: visible !important; }
+        #dre-print-document {
+          display: block !important;
           position: absolute !important;
           left: 0; top: 0;
           width: 100%;
           padding: 0 !important;
           background: white !important;
-          color: black !important;
+          color: #0f172a !important;
+          font-family: 'Helvetica Neue', Arial, sans-serif;
+          font-size: 10pt;
+          line-height: 1.4;
         }
-        #dre-print-area * {
-          color: black !important;
-          background: transparent !important;
-          border-color: #ccc !important;
-          box-shadow: none !important;
-          text-shadow: none !important;
-        }
-        #dre-print-area .text-emerald-400 { color: #047857 !important; }
-        #dre-print-area .text-red-400 { color: #b91c1c !important; }
-        #dre-print-area .text-yellow-400 { color: #a16207 !important; }
-        #dre-print-area table { page-break-inside: auto; }
-        #dre-print-area tr { page-break-inside: avoid; page-break-after: auto; }
-        #dre-print-area .rounded-xl { page-break-inside: avoid; }
-        #dre-print-area .lg\\:sticky { position: static !important; }
+        #dre-print-document .pdf-page-break { page-break-before: always; }
+        #dre-print-document .pdf-avoid-break { page-break-inside: avoid; }
+        #dre-print-document table { border-collapse: collapse; width: 100%; }
+      }
+      #dre-print-document { display: none; }
+    `}</style>
+
+    {/* ============ DOCUMENTO DE IMPRESSÃO (oculto na tela) ============ */}
+    <div id="dre-print-document">
+      <PrintReport
+        mesNome={mesNome}
+        faturamento={faturamento}
+        lucro={lucro}
+        despesasFixas={despesasFixas}
+        despesasFolha={despesasFolha}
+        despesasVariaveis={despesasVariaveis}
+        tiposCustosVariaveis={tiposCustosVariaveis}
+        totalDespFixas={totalDespFixas}
+        totalDespFolha={totalDespFolha}
+        totalDespVariaveis={totalDespVariaveis}
+        totalProjetadoAnual={totalProjetadoAnual}
+        topAcessorios={topAcessorios}
+        topAdicionais={topAdicionais}
+        estoqueResumo={estoqueResumo}
+        lucroLiquidoFinal={lucroLiquidoFinal}
+        percBrutoFinal={percBrutoFinal}
+        percLiquidFinal={percLiquidFinal}
+        formatCurrency={formatCurrency}
+      />
+    </div>
+
+    <style>{`
+      @media screen {
+        #dre-print-document { display: none !important; }
       }
     `}</style>
     <MinimalistLayout
@@ -408,13 +437,7 @@ export default function DREMesDirecao() {
           <Loader2 className="w-6 h-6 animate-spin text-white/40" />
         </div>
       ) : (
-        <div id="dre-print-area" className="space-y-6">
-          {/* Cabeçalho exclusivo da impressão */}
-          <div className="hidden print:block mb-4 border-b pb-3">
-            <h1 className="text-xl font-bold">Demonstrativo de Resultados</h1>
-            <p className="text-sm capitalize">{mesNome}</p>
-            <p className="text-xs">Emitido em {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}</p>
-          </div>
+        <div id="dre-screen-area" className="space-y-6">
           {/* Grid de Faturamento e Lucro */}
           <div className="rounded-xl bg-white/5 border border-white/10 overflow-hidden">
             <div className="overflow-x-auto">
