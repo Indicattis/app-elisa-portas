@@ -1088,7 +1088,11 @@ export default function FaturamentoVendaMinimalista() {
                           {formatCurrency(((produto.valor_produto || 0) + (produto.valor_pintura || 0) + (produto.tipo_produto !== 'porta_enrolar' ? (produto.valor_instalacao || 0) : 0)) * (produto.quantidade || 1))}
                         </TableCell>
                         <TableCell className="text-right text-white/80">{formatCurrency(valorUnitario)}</TableCell>
-                        <TableCell className="text-center text-white/80">{produto.quantidade}</TableCell>
+                        <TableCell className="text-center text-white/80">
+                          {Number.isInteger(produto.quantidade)
+                            ? produto.quantidade
+                            : `${Number(produto.quantidade).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m`}
+                        </TableCell>
                         <TableCell className="text-right font-medium text-white">{formatCurrency(valorTotalLinha)}</TableCell>
                         <TableCell className={`text-right ${isNegative ? 'text-green-400' : (hasDesconto ? 'text-red-400' : 'text-white/40')}`}>
                           {hasDesconto || hasCredito ? (
