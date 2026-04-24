@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -592,6 +592,21 @@ export default function FaturamentoVendaMinimalista() {
     const produto = produtos?.find(p => p.id === produtoId);
     if (!produto) return;
 
+    // Se o item pertence a um grupo visual (acessorio/adicional/manutencao com mesma descrição),
+    // distribuir lucro proporcionalmente ao valor_total de cada linha do grupo.
+    const grupo = produtosAgrupados.find(g => g.ids.includes(produtoId));
+    if (grupo && grupo.ids.length > 1) {
+      const itensGrupo = produtos!.filter(p => grupo.ids.includes(p.id));
+      const somaValor = itensGrupo.reduce((acc, p) => acc + (p.valor_total || 0), 0);
+      await Promise.all(itensGrupo.map(p => {
+        const proporcao = somaValor > 0 ? (p.valor_total || 0) / somaValor : 1 / itensGrupo.length;
+        const lucroItem = lucro * proporcao;
+        const custoProducao = (p.valor_total || 0) - lucroItem;
+        return updateLucroItem({ produtoId: p.id, lucroItem, custoProducao });
+      }));
+      return;
+    }
+
     const custoCalculado = produto.valor_total - lucro;
     await updateLucroItem({ 
       produtoId, 
@@ -698,6 +713,48 @@ export default function FaturamentoVendaMinimalista() {
 
   // Cálculos
   const todosProdutosFaturados = produtos?.every(p => p.faturamento === true) || false;
+
+  // Agrupamento visual: itens do tipo acessorio/adicional/manutencao com a mesma descrição
+  // são exibidos em uma única linha (somando quantidade, valores, lucro e desconto).
+  // Portas, pintura e instalação NÃO são agrupadas (precisam de medidas/lucro individuais).
+  const produtosAgrupados = useMemo(() => {
+    if (!produtos) return [] as Array<any & { ids: string[] }>;
+    const TIPOS_AGRUPAVEIS = new Set(['acessorio', 'adicional', 'manutencao']);
+    const grupos = new Map<string, any>();
+    const resultado: any[] = [];
+
+    produtos.forEach((p: any) => {
+      if (!TIPOS_AGRUPAVEIS.has(p.tipo_produto)) {
+        resultado.push({ ...p, ids: [p.id] });
+        return;
+      }
+      const chave = `${p.tipo_produto}|${(p.descricao || '').trim()}|${p.acessorio_id || ''}|${p.adicional_id || ''}`;
+      const existente = grupos.get(chave);
+      if (!existente) {
+        const novo = { ...p, ids: [p.id] };
+        grupos.set(chave, novo);
+        resultado.push(novo);
+      } else {
+        existente.quantidade = (existente.quantidade || 0) + (p.quantidade || 0);
+        existente.valor_total = (existente.valor_total || 0) + (p.valor_total || 0);
+        existente.valor_produto = (existente.valor_produto || 0) + (p.valor_produto || 0);
+        existente.valor_pintura = (existente.valor_pintura || 0) + (p.valor_pintura || 0);
+        existente.valor_instalacao = (existente.valor_instalacao || 0) + (p.valor_instalacao || 0);
+        existente.desconto_valor = (existente.desconto_valor || 0) + (p.desconto_valor || 0);
+        const lucroExistente = existente.lucro_item;
+        const lucroAtual = p.lucro_item;
+        if (lucroExistente != null || lucroAtual != null) {
+          existente.lucro_item = (lucroExistente || 0) + (lucroAtual || 0);
+        }
+        existente.custo_producao = (existente.custo_producao || 0) + (p.custo_producao || 0);
+        // faturamento: só marca como faturado se TODAS as linhas do grupo estiverem faturadas
+        existente.faturamento = existente.faturamento && p.faturamento;
+        existente.ids.push(p.id);
+      }
+    });
+    return resultado;
+  }, [produtos]);
+
   const vendaFaturada = todosProdutosFaturados && venda?.frete_aprovado === true;
   const lucroProdutos = produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0;  // valor já é o total da linha
   
@@ -989,7 +1046,7 @@ export default function FaturamentoVendaMinimalista() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {produtos?.map((produto) => {
+                  {produtosAgrupados.map((produto) => {
                     const temLucro = produto.lucro_item !== null && produto.lucro_item !== undefined;
                     const valorTotalLinha = produto.valor_total;
                     const valorUnitario = produto.quantidade > 0 ? produto.valor_total / produto.quantidade : 0;
