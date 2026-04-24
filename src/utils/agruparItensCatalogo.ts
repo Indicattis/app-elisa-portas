@@ -11,11 +11,6 @@ export function isCatalogoTipo(tipo?: string | null): boolean {
   return !!tipo && TIPOS_CATALOGO.has(tipo);
 }
 
-/**
- * Cria a chave de agrupamento para um item de catálogo.
- * Considera tipo + descrição (se houver) + valor unitário + cor, para que
- * itens diferentes (ex: dois acessórios distintos) não sejam fundidos.
- */
 function chaveCatalogo(p: any): string {
   const desc = (p.descricao ?? '').toString().trim().toLowerCase();
   const valorUnit =
@@ -26,11 +21,6 @@ function chaveCatalogo(p: any): string {
   return `${p.tipo_produto}|${desc}|${Number(valorUnit).toFixed(2)}|${corId}`;
 }
 
-/**
- * Agrupa um array de itens. Itens não-catálogo são mantidos como estão
- * (preservando sua ordem relativa). Itens de catálogo são agrupados pelo
- * helper `chaveCatalogo`.
- */
 export function agruparItensCatalogo<T extends Record<string, any>>(itens: T[] | undefined | null): T[] {
   if (!itens || itens.length === 0) return [];
 
@@ -45,7 +35,6 @@ export function agruparItensCatalogo<T extends Record<string, any>>(itens: T[] |
     const key = chaveCatalogo(item);
     const existente = grupos.get(key);
     if (!existente) {
-      // clona para evitar mutar dados originais
       const clone = { ...item } as T;
       grupos.set(key, clone);
       resultado.push(clone);
@@ -65,12 +54,9 @@ export function agruparItensCatalogo<T extends Record<string, any>>(itens: T[] |
       if (item.lucro_item !== undefined) {
         e.lucro_item = (Number(e.lucro_item) || 0) + (Number(item.lucro_item) || 0);
       }
-      // Status faturamento: agrupado fica "Faturado" só se TODOS os itens originais foram faturados.
       if (item.faturamento === false) {
         e.faturamento = false;
       }
-      // Desconto percentual perde sentido ao agrupar — manter o existente apenas
-      // se for igual; caso contrário zerar e confiar em desconto_valor.
       if (
         item.desconto_percentual !== undefined &&
         e.desconto_percentual !== undefined &&

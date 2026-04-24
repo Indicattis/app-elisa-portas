@@ -44,6 +44,7 @@ interface Produto {
   valor_total: number;
   desconto_percentual: number;
   desconto_valor?: number;
+  descricao?: string | null;
   catalogo_cores?: { nome: string; codigo_hex: string } | null;
 }
 
@@ -154,6 +155,7 @@ export default function VendaDetalhesDirecao() {
             valor_total,
             desconto_percentual,
             desconto_valor,
+            descricao,
             catalogo_cores(nome, codigo_hex)
           ),
           autorizacao_desconto:vendas_autorizacoes_desconto(
@@ -400,6 +402,7 @@ export default function VendaDetalhesDirecao() {
                   <TableHeader>
                     <TableRow className="border-blue-500/10 hover:bg-white/5">
                       <TableHead className="text-xs text-white/70">Tipo</TableHead>
+                      <TableHead className="text-xs text-white/70">Produto</TableHead>
                       <TableHead className="text-xs text-white/70">Cor</TableHead>
                       <TableHead className="text-xs text-white/70">Qtd</TableHead>
                       <TableHead className="text-xs text-white/70">Medidas (L × A)</TableHead>
@@ -411,7 +414,7 @@ export default function VendaDetalhesDirecao() {
                   <TableBody>
                     {(!venda.produtos || venda.produtos.length === 0) && (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-white/50">
+                        <TableCell colSpan={8} className="text-center py-8 text-white/50">
                           Nenhum produto cadastrado nesta venda
                         </TableCell>
                       </TableRow>
@@ -419,6 +422,15 @@ export default function VendaDetalhesDirecao() {
                     {agruparItensCatalogo(venda.produtos)?.map((produto: Produto) => (
                       <TableRow key={produto.id} className="border-blue-500/10 hover:bg-white/5">
                         <TableCell>{getTipoProdutoBadge(produto.tipo_produto)}</TableCell>
+                        <TableCell className="text-white/80 max-w-[260px]">
+                          <span className="block truncate" title={produto.descricao || ''}>
+                            {produto.descricao && produto.descricao.trim().length > 0 ? (
+                              produto.descricao
+                            ) : (
+                              <span className="text-white/40">—</span>
+                            )}
+                          </span>
+                        </TableCell>
                         <TableCell>
                           {produto.catalogo_cores ? (
                             <div className="flex items-center gap-2">
