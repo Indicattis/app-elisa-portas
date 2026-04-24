@@ -43,6 +43,7 @@ interface Produto {
   valor_total: number;
   desconto_percentual: number;
   desconto_valor?: number;
+  descricao?: string | null;
   catalogo_cores?: { nome: string; codigo_hex: string } | null;
 }
 
@@ -153,6 +154,7 @@ export default function VendaDetalhesDirecao() {
             valor_total,
             desconto_percentual,
             desconto_valor,
+            descricao,
             catalogo_cores(nome, codigo_hex)
           ),
           autorizacao_desconto:vendas_autorizacoes_desconto(
