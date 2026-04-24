@@ -600,7 +600,11 @@ export default function FaturamentoVendaMinimalista() {
         autoFaturadosRef.current.add(produto.id);
 
         const quantidade = Number(produto.quantidade) || 1;
-        const custoTotal = Number(cat.custo_produto) * quantidade;
+        // Para itens medidos por unidades decimais (Metro/Kg/Litro), o tamanho unitário
+        // é armazenado em `tamanho`. Custo = custo_unitario * quantidade * tamanho.
+        const tamanhoUnit = parseFloat((produto as any).tamanho || '') || 0;
+        const fatorTamanho = tamanhoUnit > 0 ? tamanhoUnit : 1;
+        const custoTotal = Number(cat.custo_produto) * quantidade * fatorTamanho;
         const valorTotal = Number(produto.valor_total) || 0;
         const lucroCalculado = Math.max(0, valorTotal - custoTotal);
 
@@ -776,7 +780,8 @@ export default function FaturamentoVendaMinimalista() {
         resultado.push({ ...p, ids: [p.id] });
         return;
       }
-      const chave = `${p.tipo_produto}|${(p.descricao || '').trim()}|${p.acessorio_id || ''}|${p.adicional_id || ''}`;
+      // Agrupa também por tamanho — itens com tamanhos unitários diferentes ficam em linhas distintas.
+      const chave = `${p.tipo_produto}|${(p.descricao || '').trim()}|${p.acessorio_id || ''}|${p.adicional_id || ''}|${p.tamanho || ''}`;
       const existente = grupos.get(chave);
       if (!existente) {
         const novo = { ...p, ids: [p.id] };
