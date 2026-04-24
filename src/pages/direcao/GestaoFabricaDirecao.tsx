@@ -136,7 +136,7 @@ export default function GestaoFabricaDirecao() {
     finalizarDireto
   } = usePedidosEtapas(etapaParaQuery);
   const { updateOrdem } = useOrdensCarregamentoCalendario(new Date(), 'month');
-  const { ordens: ordensUnificadas } = useOrdensCarregamentoUnificadas();
+  const { ordens: ordensUnificadas, concluirCarregamento } = useOrdensCarregamentoUnificadas();
 
   const handleDesarquivar = async (pedidoId: string) => {
     try {
@@ -423,6 +423,15 @@ export default function GestaoFabricaDirecao() {
 
   const handleFinalizarDireto = async (pedidoId: string) => {
     await finalizarDireto.mutateAsync(pedidoId);
+  };
+
+  const handleCarregarOrdem = async (pedidoId: string) => {
+    const ordem = ordensUnificadas.find(o => o.pedido_id === pedidoId && !o.carregamento_concluido);
+    if (!ordem) {
+      toast({ title: "Ordem não encontrada", description: "Nenhuma ordem agendada disponível para carregar.", variant: "destructive" });
+      return;
+    }
+    await concluirCarregamento({ ordem });
   };
 
   const handleDeletarPedido = async (pedidoId: string) => {
