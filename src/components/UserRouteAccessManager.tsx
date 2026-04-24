@@ -12,7 +12,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { 
   Loader2, Search, ChevronRight, ChevronDown, Folder, FolderOpen, 
-  Home, Globe, Shield, Users, Minus, Plus, User, Settings, PanelLeft, Factory
+  Home, Globe, Shield, Users, Minus, Plus, User, Settings, PanelLeft, Factory,
+  ArrowLeft
 } from "lucide-react";
 
 // Rotas do Menu Flutuante - aparecem em todas as interfaces
@@ -63,6 +64,7 @@ export function UserRouteAccessManager() {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedInterface, setSelectedInterface] = useState<string>('padrao');
   const [searchTerm, setSearchTerm] = useState("");
+  const [folderPath, setFolderPath] = useState<RouteTreeNode[]>([]);
 
   // Função para construir árvore de rotas
   const buildRouteTree = (routes: AppRoute[], parentKey: string | null): RouteTreeNode[] => {
