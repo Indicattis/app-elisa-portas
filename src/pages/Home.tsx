@@ -37,6 +37,7 @@ export default function Home() {
   
   
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
   const [minhasTarefasOpen, setMinhasTarefasOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
