@@ -26,6 +26,7 @@ import {
   Package
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { agruparItensCatalogo } from '@/utils/agruparItensCatalogo';
 
 interface VendaDetalhes {
   id: string;
@@ -408,7 +409,7 @@ export default function FaturamentoVendaDirecao() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {venda.produtos_vendas.map((produto) => (
+                    {agruparItensCatalogo(venda.produtos_vendas).map((produto) => (
                       <TableRow key={produto.id} className="border-white/5">
                         <TableCell className="text-sm text-white/70">
                           {formatTipoProduto(produto.tipo_produto)}
