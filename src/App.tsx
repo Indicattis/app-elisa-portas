@@ -196,22 +196,10 @@ import VendaDetalhesMinimalista from "./pages/vendas/VendaDetalhesMinimalista";
 
 // Hub da Fábrica Minimalista
 import FabricaHub from "./pages/fabrica/FabricaHub";
-import ControleEstoqueMinimalista from "./pages/fabrica/ControleEstoqueMinimalista";
-import ProducaoMinimalista from "./pages/fabrica/ProducaoMinimalista";
-import SoldaMinimalista from "./pages/fabrica/producao/SoldaMinimalista";
-import PerfiladeiraMinimalista from "./pages/fabrica/producao/PerfiladeiraMinimalista";
-import SeparacaoMinimalista from "./pages/fabrica/producao/SeparacaoMinimalista";
-import QualidadeMinimalista from "./pages/fabrica/producao/QualidadeMinimalista";
-import PinturaMinimalista from "./pages/fabrica/producao/PinturaMinimalista";
-import EmbalagemMinimalista from "./pages/fabrica/producao/EmbalagemMinimalista";
 import ProducaoEmbalagem from "./pages/producao/ProducaoEmbalagem";
 import ProducaoInstalacoes from "./pages/producao/ProducaoInstalacoes";
-import CarregamentoMinimalista from "./pages/fabrica/producao/CarregamentoMinimalista";
-import TerceirizacaoMinimalista from "./pages/fabrica/producao/TerceirizacaoMinimalista";
-import MeuHistoricoMinimalista from "./pages/fabrica/producao/MeuHistoricoMinimalista";
 import OrdensPorPedido from "./pages/fabrica/OrdensPorPedido";
 import CronogramaProducao from "./pages/fabrica/CronogramaProducao";
-import ArquivoMorto from "./pages/fabrica/ArquivoMorto";
 
 import MeuPerfil from "./pages/MeuPerfil";
 
@@ -480,19 +468,7 @@ const App = () => (
                 {/* Hub da Fábrica Minimalista */}
                 <Route path="/fabrica" element={<ProtectedRoute routeKeyPrefix="fabrica_"><FabricaHub /></ProtectedRoute>} />
                 <Route path="/fabrica/ordens-pedidos" element={<ProtectedRoute routeKey="fabrica_ordens_pedidos"><OrdensPorPedido /></ProtectedRoute>} />
-                <Route path="/fabrica/controle-estoque" element={<ProtectedRoute routeKey="fabrica_estoque"><ControleEstoqueMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao" element={<ProtectedRoute routeKey="fabrica_producao"><ProducaoMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/solda" element={<ProtectedRoute routeKey="fabrica_solda"><SoldaMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/perfiladeira" element={<ProtectedRoute routeKey="fabrica_perfiladeira"><PerfiladeiraMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/separacao" element={<ProtectedRoute routeKey="fabrica_separacao"><SeparacaoMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/qualidade" element={<ProtectedRoute routeKey="fabrica_qualidade"><QualidadeMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/pintura" element={<ProtectedRoute routeKey="fabrica_pintura"><PinturaMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/embalagem" element={<ProtectedRoute routeKey="fabrica_embalagem"><EmbalagemMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/carregamento" element={<ProtectedRoute routeKey="fabrica_carregamento"><CarregamentoMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/terceirizacao" element={<ProtectedRoute routeKey="fabrica_terceirizacao"><TerceirizacaoMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/producao/meu-historico" element={<ProtectedRoute routeKey="fabrica_meu_historico"><MeuHistoricoMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/cronograma-producao" element={<ProtectedRoute routeKey="fabrica_cronograma_producao"><CronogramaProducao /></ProtectedRoute>} />
-                <Route path="/fabrica/arquivo-morto" element={<ProtectedRoute routeKey="fabrica_arquivo_morto"><ArquivoMorto /></ProtectedRoute>} />
 
                 {/* Hub da Direção Minimalista */}
                 <Route path="/direcao" element={<ProtectedRoute routeKeyPrefix="direcao_"><DirecaoHub /></ProtectedRoute>} />
