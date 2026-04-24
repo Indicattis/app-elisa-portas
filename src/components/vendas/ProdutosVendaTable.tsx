@@ -72,7 +72,10 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
       </TableHeader>
       <TableBody>
         {produtos.map((produto, index) => {
-          const valorBase = (produto.valor_produto + produto.valor_pintura + produto.valor_instalacao) * produto.quantidade;
+          const isCatalogoDecimalItem = ['acessorio', 'adicional', 'manutencao'].includes(produto.tipo_produto)
+            && ['metro', 'kg', 'litro'].includes((produto.unidade || '').toLowerCase());
+          const fatorTamanho = isCatalogoDecimalItem ? (parseFloat(produto.tamanho || '') || 1) : 1;
+          const valorBase = (produto.valor_produto + produto.valor_pintura + produto.valor_instalacao) * produto.quantidade * fatorTamanho;
           const descontoAplicado = produto.tipo_desconto === 'valor' 
             ? produto.desconto_valor 
             : valorBase * (produto.desconto_percentual / 100);
