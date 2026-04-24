@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Printer } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
@@ -361,13 +361,30 @@ export default function DREMesDirecao() {
         { label: 'DRE', path: '/direcao/dre' },
         { label: mesNome },
       ]}
+      headerActions={
+        !loading ? (
+          <button
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 border border-white/10 text-white text-sm hover:bg-white/20 transition-colors print:hidden"
+          >
+            <Printer className="w-4 h-4" strokeWidth={1.5} />
+            Imprimir PDF
+          </button>
+        ) : undefined
+      }
     >
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-6 h-6 animate-spin text-white/40" />
         </div>
       ) : (
-        <div className="space-y-6">
+        <div id="dre-print-area" className="space-y-6">
+          {/* Cabeçalho exclusivo da impressão */}
+          <div className="hidden print:block mb-4 border-b pb-3">
+            <h1 className="text-xl font-bold">Demonstrativo de Resultados</h1>
+            <p className="text-sm capitalize">{mesNome}</p>
+            <p className="text-xs">Emitido em {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}</p>
+          </div>
           {/* Grid de Faturamento e Lucro */}
           <div className="rounded-xl bg-white/5 border border-white/10 overflow-hidden">
             <div className="overflow-x-auto">
