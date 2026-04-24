@@ -41,14 +41,14 @@ export default function Catalogo() {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            onClick={() => navigate('/vendas/catalogo/cores')}
+            onClick={() => navigate('/marketing/catalogo/cores')}
             className="border-white/20 text-white hover:bg-white/10"
           >
             <Palette className="w-4 h-4 mr-2" />
             Cores
           </Button>
           <Button
-            onClick={() => navigate('/vendas/catalogo/new')}
+            onClick={() => navigate('/marketing/catalogo/new')}
             className="bg-gradient-to-r from-green-500 to-green-700 hover:from-green-400 hover:to-green-600 text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -109,7 +109,7 @@ export default function Catalogo() {
           produtos.map((produto) => (
             <div
               key={produto.id}
-              onClick={() => navigate(`/vendas/catalogo/editar/${produto.id}`)}
+              onClick={() => navigate(`/marketing/catalogo/editar/${produto.id}`)}
               className="bg-primary/5 border border-primary/10 rounded-xl overflow-hidden backdrop-blur-xl
                          hover:bg-primary/10 hover:border-blue-500/30 transition-all group cursor-pointer"
             >

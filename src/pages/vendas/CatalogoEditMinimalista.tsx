@@ -72,7 +72,7 @@ export default function CatalogoEditMinimalista() {
       
       if (error) {
         toast.error("Erro ao carregar produto");
-        navigate("/vendas/catalogo");
+        navigate("/marketing/catalogo");
         return;
       }
       
@@ -139,7 +139,7 @@ export default function CatalogoEditMinimalista() {
     
     try {
       await editarProduto.mutateAsync({ id, ...formData });
-      navigate("/vendas/catalogo");
+      navigate("/marketing/catalogo");
     } catch (error) {
       console.error("Erro ao salvar:", error);
     }
@@ -150,7 +150,7 @@ export default function CatalogoEditMinimalista() {
     
     try {
       await inativarProduto.mutateAsync(id);
-      navigate("/vendas/catalogo");
+      navigate("/marketing/catalogo");
     } catch (error) {
       console.error("Erro ao excluir:", error);
     }
@@ -160,11 +160,11 @@ export default function CatalogoEditMinimalista() {
     return (
       <MinimalistLayout
         title="Editar Produto"
-        backPath="/vendas/catalogo"
+        backPath="/marketing/catalogo"
         breadcrumbItems={[
           { label: "Home", path: "/home" },
           { label: "Vendas", path: "/vendas" },
-          { label: "Catálogo", path: "/vendas/catalogo" },
+          { label: "Catálogo", path: "/marketing/catalogo" },
           { label: "Editar" },
         ]}
       >
@@ -178,11 +178,11 @@ export default function CatalogoEditMinimalista() {
   return (
     <MinimalistLayout
       title="Editar Produto"
-      backPath="/vendas/catalogo"
+      backPath="/marketing/catalogo"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Vendas", path: "/vendas" },
-        { label: "Catálogo", path: "/vendas/catalogo" },
+        { label: "Catálogo", path: "/marketing/catalogo" },
         { label: "Editar" },
       ]}
     >
@@ -427,7 +427,7 @@ export default function CatalogoEditMinimalista() {
           <div className="flex gap-3">
             <Button
               variant="ghost"
-              onClick={() => navigate("/vendas/catalogo")}
+              onClick={() => navigate("/marketing/catalogo")}
               className="text-white/70 hover:text-white hover:bg-white/10"
             >
               Cancelar

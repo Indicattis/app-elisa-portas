@@ -56,7 +56,7 @@ export default function CatalogoCores() {
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Vendas", path: "/vendas" },
-        { label: "Catálogo", path: "/vendas/catalogo" },
+        { label: "Catálogo", path: "/marketing/catalogo" },
         { label: "Cores" },
       ]}
       headerActions={
