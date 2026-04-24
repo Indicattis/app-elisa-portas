@@ -88,6 +88,11 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
           const unidadeShort = (produto.unidade || '').toLowerCase() === 'metro' ? 'm'
             : (produto.unidade || '').toLowerCase() === 'kg' ? 'kg'
             : (produto.unidade || '').toLowerCase() === 'litro' ? 'L' : '';
+          const tamanhoNumPV = parseFloat(produto.tamanho || '') || 0;
+          const valorUnitBase = produto.valor_produto + produto.valor_pintura + produto.valor_instalacao;
+          const valorUnitDisplay = isCatalogoDecimal && tamanhoNumPV > 0
+            ? valorUnitBase / tamanhoNumPV
+            : valorUnitBase;
           
           return (
             <TableRow key={index}>
@@ -154,7 +159,7 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
                   <span className="text-xs text-muted-foreground">—</span>
                 )}
               </TableCell>
-              <TableCell>R$ {((produto.valor_produto + produto.valor_pintura + produto.valor_instalacao)).toFixed(2)}</TableCell>
+              <TableCell>R$ {valorUnitDisplay.toFixed(2)}{isCatalogoDecimal && unidadeShort ? `/${unidadeShort}` : ''}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-1">
                   <span>
