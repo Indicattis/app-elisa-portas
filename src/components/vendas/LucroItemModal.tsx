@@ -9,7 +9,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { HandHeart } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { HandHeart, Sparkles } from "lucide-react";
 
 interface LucroItemModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ interface LucroItemModalProps {
     valor_total: number;
     lucro_item?: number;
     quantidade: number;
+    vendas_catalogo_id?: string | null;
   };
   onSave: (produtoId: string, lucro: number) => Promise<void>;
   isSaving: boolean;
@@ -49,6 +51,7 @@ export function LucroItemModal({
   const custoCalculado = valorTotal - lucroValido;
   const margem = valorTotal > 0 ? (lucroValido / valorTotal) * 100 : 0;
   const isLucroInvalido = lucroValido > valorTotal || lucroValido < 0;
+  const calculadoDoCatalogo = !!produto.vendas_catalogo_id && (produto.lucro_item ?? 0) > 0;
 
   const handleSave = async () => {
     if (isLucroInvalido) return;
@@ -70,6 +73,15 @@ export function LucroItemModal({
             {produto.descricao}
           </DialogDescription>
         </DialogHeader>
+
+        {calculadoDoCatalogo && (
+          <div className="flex">
+            <Badge variant="secondary" className="gap-1">
+              <Sparkles className="h-3 w-3" />
+              Calculado do catálogo
+            </Badge>
+          </div>
+        )}
 
         <div className="space-y-4 py-4">
           {/* Input de Lucro */}
