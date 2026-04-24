@@ -416,7 +416,7 @@ export default function VendaDetalhesDirecao() {
                         </TableCell>
                       </TableRow>
                     )}
-                    {venda.produtos?.map((produto: Produto) => (
+                    {agruparItensCatalogo(venda.produtos)?.map((produto: Produto) => (
                       <TableRow key={produto.id} className="border-blue-500/10 hover:bg-white/5">
                         <TableCell>{getTipoProdutoBadge(produto.tipo_produto)}</TableCell>
                         <TableCell>
