@@ -32,6 +32,7 @@ import {
   Trash2,
   Pencil
 } from "lucide-react";
+import { agruparItensCatalogo } from "@/utils/agruparItensCatalogo";
 
 interface Produto {
   id: string;
