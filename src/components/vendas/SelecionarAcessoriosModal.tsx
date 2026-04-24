@@ -92,11 +92,16 @@ export function SelecionarAcessoriosModal({
       const isDecimal = ['metro', 'kg', 'litro'].includes((item.unidade || '').toLowerCase());
       const qtd = quantidades[item.id] ?? 1;
       const tam = isDecimal ? (tamanhos[item.id] || '') : '';
+      const tamanhoNum = isDecimal ? (parseFloat(tam) || 0) : 0;
+      // Para itens medidos por unidade decimal, o valor unitário armazenado considera o tamanho
+      // (preco_venda * tamanho_unitario), permitindo que o trigger do DB calcule valor_total
+      // como valor_unitario_efetivo * quantidade.
+      const valorUnitario = isDecimal && tamanhoNum > 0 ? item.preco * tamanhoNum : item.preco;
       return {
         tipo_produto: item.tipo === 'acessorio' ? 'acessorio' : 'adicional',
         largura: 0,
         altura: 0,
-        valor_produto: item.preco,
+        valor_produto: valorUnitario,
         valor_pintura: 0,
         valor_instalacao: 0,
         valor_frete: 0,
