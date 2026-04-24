@@ -737,9 +737,8 @@ export default function FaturamentoVendaMinimalista() {
       } else {
         existente.quantidade = (existente.quantidade || 0) + (p.quantidade || 0);
         existente.valor_total = (existente.valor_total || 0) + (p.valor_total || 0);
-        existente.valor_produto = (existente.valor_produto || 0) + (p.valor_produto || 0);
-        existente.valor_pintura = (existente.valor_pintura || 0) + (p.valor_pintura || 0);
-        existente.valor_instalacao = (existente.valor_instalacao || 0) + (p.valor_instalacao || 0);
+        // valor_produto/pintura/instalacao são UNITÁRIOS — não somar entre linhas iguais.
+        // O total agregado já é refletido em valor_total e quantidade.
         existente.desconto_valor = (existente.desconto_valor || 0) + (p.desconto_valor || 0);
         const lucroExistente = existente.lucro_item;
         const lucroAtual = p.lucro_item;
