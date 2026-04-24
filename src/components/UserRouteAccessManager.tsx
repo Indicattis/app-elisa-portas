@@ -12,7 +12,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { 
   Loader2, Search, ChevronRight, ChevronDown, Folder, FolderOpen, 
-  Home, Globe, Shield, Users, Minus, Plus, User, Settings, PanelLeft, Factory
+  Home, Globe, Shield, Users, Minus, Plus, User, Settings, PanelLeft, Factory,
+  ArrowLeft
 } from "lucide-react";
 
 // Rotas do Menu Flutuante - aparecem em todas as interfaces
@@ -63,6 +64,7 @@ export function UserRouteAccessManager() {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedInterface, setSelectedInterface] = useState<string>('padrao');
   const [searchTerm, setSearchTerm] = useState("");
+  const [folderPath, setFolderPath] = useState<RouteTreeNode[]>([]);
 
   // Função para construir árvore de rotas
   const buildRouteTree = (routes: AppRoute[], parentKey: string | null): RouteTreeNode[] => {
@@ -385,7 +387,7 @@ export function UserRouteAccessManager() {
               return (
                 <button
                   key={iface.value}
-                  onClick={() => setSelectedInterface(iface.value)}
+                  onClick={() => { setSelectedInterface(iface.value); setFolderPath([]); }}
                   className={`p-3 rounded-lg border transition-all flex flex-col items-center gap-1
                              ${isSelected 
                                ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-500/40 shadow-lg shadow-blue-500/20' 
@@ -611,17 +613,209 @@ export function UserRouteAccessManager() {
                 )}
               </div>
             ) : (
-              <div className="space-y-1">
-                {routeTree.length > 0 ? (
-                  routeTree.map(node => (
-                    <RouteTreeItem key={node.key} node={node} />
-                  ))
-                ) : (
-                  <p className="text-center py-8 text-white/40">
-                    Nenhuma rota encontrada para esta interface
-                  </p>
-                )}
-              </div>
+              (() => {
+                // Determinar nós atuais com base no folderPath
+                const currentNodes = folderPath.length === 0
+                  ? routeTree
+                  : folderPath[folderPath.length - 1].children;
+
+                const folders = currentNodes.filter(n => n.children.length > 0);
+                const leaves = currentNodes.filter(n => n.children.length === 0);
+
+                // Contar acessos recursivos numa pasta
+                const countAccess = (node: RouteTreeNode): { granted: number; total: number } => {
+                  let granted = hasAccess(node.key) ? 1 : 0;
+                  let total = 1;
+                  node.children.forEach(child => {
+                    const c = countAccess(child);
+                    granted += c.granted;
+                    total += c.total;
+                  });
+                  return { granted, total };
+                };
+
+                return (
+                  <div className="space-y-4">
+                    {/* Breadcrumbs */}
+                    <div className="flex items-center gap-1.5 flex-wrap text-sm">
+                      <button
+                        onClick={() => setFolderPath([])}
+                        className={`px-2 py-1 rounded-md transition-colors flex items-center gap-1.5
+                                   ${folderPath.length === 0
+                                     ? 'bg-blue-500/20 text-blue-300'
+                                     : 'text-white/60 hover:bg-white/5 hover:text-white'}`}
+                      >
+                        <Home className="h-3.5 w-3.5" />
+                        <span>Raiz</span>
+                      </button>
+                      {folderPath.map((node, idx) => (
+                        <div key={node.key} className="flex items-center gap-1.5">
+                          <ChevronRight className="h-3.5 w-3.5 text-white/30" />
+                          <button
+                            onClick={() => setFolderPath(folderPath.slice(0, idx + 1))}
+                            className={`px-2 py-1 rounded-md transition-colors
+                                       ${idx === folderPath.length - 1
+                                         ? 'bg-blue-500/20 text-blue-300'
+                                         : 'text-white/60 hover:bg-white/5 hover:text-white'}`}
+                          >
+                            {node.label}
+                          </button>
+                        </div>
+                      ))}
+                      {folderPath.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setFolderPath(folderPath.slice(0, -1))}
+                          className="ml-auto h-7 text-xs text-white/60 hover:text-white hover:bg-white/5"
+                        >
+                          <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+                          Voltar
+                        </Button>
+                      )}
+                    </div>
+
+                    {currentNodes.length === 0 && (
+                      <p className="text-center py-8 text-white/40">
+                        Nenhuma rota encontrada para esta interface
+                      </p>
+                    )}
+
+                    {/* Grid de Pastas (Hubs) */}
+                    {folders.length > 0 && (
+                      <div>
+                        <div className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2 px-1">
+                          Pastas ({folders.length})
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                          {folders.map(node => {
+                            const { granted, total } = countAccess(node);
+                            const folderHasAccess = hasFolderAccess(node);
+                            const isHub = node.key.endsWith('_hub');
+                            const percent = total > 0 ? Math.round((granted / total) * 100) : 0;
+
+                            return (
+                              <div
+                                key={node.key}
+                                className={`group relative rounded-xl border-2 transition-all overflow-hidden
+                                           ${isHub
+                                             ? folderHasAccess
+                                               ? 'bg-gradient-to-br from-amber-500/20 to-amber-600/5 border-amber-500/40 shadow-lg shadow-amber-500/10'
+                                               : 'bg-gradient-to-br from-amber-500/5 to-amber-600/0 border-amber-500/20'
+                                             : folderHasAccess
+                                               ? 'bg-gradient-to-br from-blue-500/20 to-blue-600/5 border-blue-500/40 shadow-lg shadow-blue-500/10'
+                                               : 'bg-white/5 border-white/10 hover:border-blue-500/30'}`}
+                              >
+                                <button
+                                  onClick={() => setFolderPath([...folderPath, node])}
+                                  className="w-full p-4 flex flex-col items-start gap-3 text-left"
+                                >
+                                  <div className="flex items-center justify-between w-full">
+                                    <div className={`p-2 rounded-lg ${isHub ? 'bg-amber-500/20' : 'bg-blue-500/20'}`}>
+                                      {folderHasAccess ? (
+                                        <FolderOpen className={`h-5 w-5 ${isHub ? 'text-amber-300' : 'text-blue-300'}`} />
+                                      ) : (
+                                        <Folder className={`h-5 w-5 ${isHub ? 'text-amber-400/70' : 'text-white/50'}`} />
+                                      )}
+                                    </div>
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                      <Checkbox
+                                        id={`gridfolder-${node.key}`}
+                                        checked={folderHasAccess}
+                                        onCheckedChange={(checked) => handleToggleFolder(node, checked as boolean)}
+                                        className={isHub
+                                          ? "border-amber-500/50 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                                          : "border-blue-500/50 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="w-full">
+                                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                                      <span className={`text-sm font-semibold ${isHub ? 'text-amber-100' : 'text-white'}`}>
+                                        {node.label}
+                                      </span>
+                                      {isHub && (
+                                        <span className="px-1.5 py-0.5 text-[9px] font-medium rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                          Hub
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-[11px] text-white/40">
+                                      {granted} de {total} liberadas
+                                    </p>
+                                  </div>
+
+                                  {/* Barra de progresso */}
+                                  <div className="w-full h-1 rounded-full bg-white/5 overflow-hidden">
+                                    <div
+                                      className={`h-full transition-all ${isHub ? 'bg-gradient-to-r from-amber-500 to-amber-400' : 'bg-gradient-to-r from-blue-500 to-blue-400'}`}
+                                      style={{ width: `${percent}%` }}
+                                    />
+                                  </div>
+
+                                  <div className="flex items-center gap-1 text-[11px] text-white/50 mt-auto">
+                                    <span>Abrir</span>
+                                    <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+                                  </div>
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Lista de Rotas (folhas) */}
+                    {leaves.length > 0 && (
+                      <div>
+                        <div className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2 px-1">
+                          Rotas ({leaves.length})
+                        </div>
+                        <div className="space-y-1.5">
+                          {leaves.map(node => {
+                            const isHomeRoute = node.key === 'home';
+                            const routeHasAccess = hasAccess(node.key);
+                            return (
+                              <div
+                                key={node.key}
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all
+                                           ${isHomeRoute
+                                             ? 'bg-gradient-to-r from-green-500/20 to-emerald-600/10 border border-green-500/30'
+                                             : routeHasAccess
+                                               ? 'bg-gradient-to-r from-blue-500/15 to-blue-600/5 border border-blue-500/25'
+                                               : 'bg-white/5 border border-white/10 hover:border-white/20'}`}
+                              >
+                                {isHomeRoute ? (
+                                  <Globe className="h-4 w-4 text-green-400" />
+                                ) : (
+                                  <Checkbox
+                                    id={`leaf-${node.key}`}
+                                    checked={routeHasAccess}
+                                    onCheckedChange={(checked) => handleToggle(node.key, checked as boolean)}
+                                    className="border-blue-500/50 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                  />
+                                )}
+                                <label htmlFor={`leaf-${node.key}`} className="flex-1 cursor-pointer">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm text-white">{node.label}</span>
+                                    {isHomeRoute && (
+                                      <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                                        Acesso Universal
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[11px] text-white/40 mt-0.5">{node.path}</div>
+                                </label>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()
             )}
           </div>
         </div>
