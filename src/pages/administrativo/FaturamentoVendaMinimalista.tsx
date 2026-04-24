@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -591,6 +591,21 @@ export default function FaturamentoVendaMinimalista() {
   const handleSaveLucroItem = async (produtoId: string, lucro: number) => {
     const produto = produtos?.find(p => p.id === produtoId);
     if (!produto) return;
+
+    // Se o item pertence a um grupo visual (acessorio/adicional/manutencao com mesma descrição),
+    // distribuir lucro proporcionalmente ao valor_total de cada linha do grupo.
+    const grupo = produtosAgrupados.find(g => g.ids.includes(produtoId));
+    if (grupo && grupo.ids.length > 1) {
+      const itensGrupo = produtos!.filter(p => grupo.ids.includes(p.id));
+      const somaValor = itensGrupo.reduce((acc, p) => acc + (p.valor_total || 0), 0);
+      await Promise.all(itensGrupo.map(p => {
+        const proporcao = somaValor > 0 ? (p.valor_total || 0) / somaValor : 1 / itensGrupo.length;
+        const lucroItem = lucro * proporcao;
+        const custoProducao = (p.valor_total || 0) - lucroItem;
+        return updateLucroItem({ produtoId: p.id, lucroItem, custoProducao });
+      }));
+      return;
+    }
 
     const custoCalculado = produto.valor_total - lucro;
     await updateLucroItem({ 
