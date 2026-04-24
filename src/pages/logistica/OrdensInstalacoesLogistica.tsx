@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, Search, Filter, MapPin, Truck, Package, Hammer, Wrench, CheckCircle2, Users, CalendarDays, Trophy, Award } from "lucide-react";
+import { RefreshCw, Search, Filter, MapPin, Truck, Package, Hammer, Wrench, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { InstalacoesHeaderActions } from "@/components/instalacoes/InstalacoesHeaderActions";
 
 import { useOrdensInstalacao, OrdemInstalacao } from "@/hooks/useOrdensInstalacao";
 import { useNeoInstalacoesListagem } from "@/hooks/useNeoInstalacoes";
@@ -119,11 +120,13 @@ export default function OrdensInstalacoesLogistica() {
     });
   }, [ordens, searchTerm, filterEquipe, filterEstado]);
 
-  // Separar ordens por status de carregamento
-  const { ordensNaoCarregadas, ordensCarregadas } = useMemo(() => {
+  // Separar ordens por status de carregamento e por tipo
+  const { ordensNaoCarregadas, ordensCarregadas, totalInstalacoes, totalCorrecoes } = useMemo(() => {
     return {
       ordensNaoCarregadas: ordensFiltradas.filter(o => !o.carregamento_concluido),
-      ordensCarregadas: ordensFiltradas.filter(o => o.carregamento_concluido)
+      ordensCarregadas: ordensFiltradas.filter(o => o.carregamento_concluido),
+      totalInstalacoes: ordensFiltradas.filter(o => o.tipo_ordem !== 'correcao').length,
+      totalCorrecoes: ordensFiltradas.filter(o => o.tipo_ordem === 'correcao').length,
     };
   }, [ordensFiltradas]);
 
@@ -199,45 +202,17 @@ export default function OrdensInstalacoesLogistica() {
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Instalações</h1>
                 <p className="text-muted-foreground text-sm">
-                  {ordensNaoCarregadas.length} aguardando • {ordensCarregadas.length} carregadas
+                  <span className="text-blue-500 font-medium">{totalInstalacoes} instalações</span>
+                  {' • '}
+                  <span className="text-purple-500 font-medium">{totalCorrecoes} correções</span>
+                  {` • ${ordensNaoCarregadas.length} aguardando • ${ordensCarregadas.length} carregadas`}
                   {neoInstalacoes.length > 0 && ` • ${neoInstalacoes.length} avulsas`}
-                  {neoCorrecoes.length > 0 && ` • ${neoCorrecoes.length} correções`}
+                  {neoCorrecoes.length > 0 && ` • ${neoCorrecoes.length} correções avulsas`}
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate('/logistica/instalacoes/equipes')}
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Equipes
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate('/logistica/instalacoes/cronograma')}
-                >
-                  <CalendarDays className="h-4 w-4 mr-2" />
-                  Cronograma
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate('/logistica/instalacoes/ranking')}
-                >
-                  <Trophy className="h-4 w-4 mr-2" />
-                  Ranking Equipes
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate('/logistica/instalacoes/ranking-autorizados')}
-                >
-                  <Award className="h-4 w-4 mr-2" />
-                  Ranking Autorizados
-                </Button>
+                <InstalacoesHeaderActions />
                 <Button
                   variant="outline"
                   size="sm"
