@@ -680,8 +680,12 @@ export default function DREMesDirecao() {
             fat.portas += valorPortaLiquido;
             fat.pintura += valorPinturaLiquido;
             fat.instalacoes += valorInstalacaoLiquido;
-            luc.portas += p.lucro_produto || 0;
-            luc.pintura += p.lucro_pintura || 0;
+            // Distribui lucro_item proporcionalmente entre porta/pintura/instalação
+            // (vendas legadas trazem porta+pintura+instalação embutidas na mesma linha)
+            const lucroLinha = p.lucro_item || 0;
+            luc.portas += lucroLinha * proporcaoProduto;
+            luc.pintura += lucroLinha * proporcaoPintura;
+            luc.instalacoes += lucroLinha * proporcaoInstalacao;
           } else if (tipo === 'pintura_epoxi') {
             fat.pintura += valorTotal;
             luc.pintura += p.lucro_item || 0;
