@@ -198,6 +198,7 @@ import VendaDetalhesMinimalista from "./pages/vendas/VendaDetalhesMinimalista";
 import FabricaHub from "./pages/fabrica/FabricaHub";
 import ProducaoEmbalagem from "./pages/producao/ProducaoEmbalagem";
 import ProducaoInstalacoes from "./pages/producao/ProducaoInstalacoes";
+import MeuHistoricoMinimalista from "./pages/fabrica/producao/MeuHistoricoMinimalista";
 import OrdensPorPedido from "./pages/fabrica/OrdensPorPedido";
 import CronogramaProducao from "./pages/fabrica/CronogramaProducao";
 
