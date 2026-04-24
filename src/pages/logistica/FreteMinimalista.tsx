@@ -141,6 +141,7 @@ export default function FreteMinimalista() {
                     <TableHead className="text-xs text-white/70">Estado</TableHead>
                     <TableHead className="text-xs text-white/70">Cidade</TableHead>
                     <TableHead className="text-xs text-white/70">Valor do Frete</TableHead>
+                    <TableHead className="text-xs text-white/70">Km</TableHead>
                     <TableHead className="text-xs text-white/70">Observações</TableHead>
                     <TableHead className="text-xs text-white/70">Ativo</TableHead>
                     <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
@@ -156,6 +157,9 @@ export default function FreteMinimalista() {
                       <TableCell>{frete.cidade}</TableCell>
                       <TableCell className="font-medium text-green-400">
                         {formatCurrency(frete.valor_frete)}
+                      </TableCell>
+                      <TableCell className="text-white/80">
+                        {frete.quilometragem != null ? `${frete.quilometragem} km` : '-'}
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate text-white/60">
                         {frete.observacoes || '-'}
@@ -192,7 +196,7 @@ export default function FreteMinimalista() {
                   ))}
                   {fretesFiltrados.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-white/50">
+                      <TableCell colSpan={7} className="text-center py-8 text-white/50">
                         <div className="flex flex-col items-center gap-2">
                           <Package className="h-8 w-8 text-white/30" />
                           <span>Nenhum frete cadastrado</span>

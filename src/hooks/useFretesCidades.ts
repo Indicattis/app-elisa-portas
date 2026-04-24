@@ -9,6 +9,7 @@ export interface FreteCidade {
   valor_frete: number;
   observacoes: string | null;
   ativo: boolean;
+  quilometragem: number | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -20,6 +21,7 @@ export interface FreteCidadeInput {
   valor_frete: number;
   observacoes?: string | null;
   ativo?: boolean;
+  quilometragem?: number | null;
 }
 
 export function useFretesCidades() {

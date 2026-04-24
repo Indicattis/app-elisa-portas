@@ -2888,6 +2888,7 @@ export type Database = {
           estado: string
           id: string
           observacoes: string | null
+          quilometragem: number | null
           updated_at: string | null
           valor_frete: number
         }
@@ -2899,6 +2900,7 @@ export type Database = {
           estado: string
           id?: string
           observacoes?: string | null
+          quilometragem?: number | null
           updated_at?: string | null
           valor_frete?: number
         }
@@ -2910,6 +2912,7 @@ export type Database = {
           estado?: string
           id?: string
           observacoes?: string | null
+          quilometragem?: number | null
           updated_at?: string | null
           valor_frete?: number
         }
