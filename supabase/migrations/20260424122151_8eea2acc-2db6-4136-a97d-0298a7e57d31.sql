@@ -1,0 +1,1 @@
+ALTER TABLE public.frete_cidades ADD COLUMN IF NOT EXISTS quilometragem numeric;
