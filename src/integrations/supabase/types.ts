@@ -6400,6 +6400,126 @@ export type Database = {
           },
         ]
       }
+      produtos_vendas_backup_pre_split_instalacao: {
+        Row: {
+          acessorio_id: string | null
+          adicional_id: string | null
+          altura: number | null
+          cor_id: string | null
+          created_at: string | null
+          custo_pintura: number | null
+          custo_producao: number | null
+          custo_produto: number | null
+          desconto_percentual: number | null
+          desconto_valor: number | null
+          descricao: string | null
+          faturamento: boolean | null
+          id: string | null
+          largura: number | null
+          lucro_item: number | null
+          lucro_pintura: number | null
+          lucro_produto: number | null
+          margem_pintura: number | null
+          margem_produto: number | null
+          pedido_correcao_id: string | null
+          percentual_credito: number | null
+          quantidade: number | null
+          tamanho: string | null
+          tipo_desconto: string | null
+          tipo_fabricacao: string | null
+          tipo_pintura: string | null
+          tipo_produto: string | null
+          updated_at: string | null
+          valor_credito: number | null
+          valor_frete: number | null
+          valor_instalacao: number | null
+          valor_pintura: number | null
+          valor_produto: number | null
+          valor_total: number | null
+          valor_total_sem_frete: number | null
+          venda_id: string | null
+          vendas_catalogo_id: string | null
+        }
+        Insert: {
+          acessorio_id?: string | null
+          adicional_id?: string | null
+          altura?: number | null
+          cor_id?: string | null
+          created_at?: string | null
+          custo_pintura?: number | null
+          custo_producao?: number | null
+          custo_produto?: number | null
+          desconto_percentual?: number | null
+          desconto_valor?: number | null
+          descricao?: string | null
+          faturamento?: boolean | null
+          id?: string | null
+          largura?: number | null
+          lucro_item?: number | null
+          lucro_pintura?: number | null
+          lucro_produto?: number | null
+          margem_pintura?: number | null
+          margem_produto?: number | null
+          pedido_correcao_id?: string | null
+          percentual_credito?: number | null
+          quantidade?: number | null
+          tamanho?: string | null
+          tipo_desconto?: string | null
+          tipo_fabricacao?: string | null
+          tipo_pintura?: string | null
+          tipo_produto?: string | null
+          updated_at?: string | null
+          valor_credito?: number | null
+          valor_frete?: number | null
+          valor_instalacao?: number | null
+          valor_pintura?: number | null
+          valor_produto?: number | null
+          valor_total?: number | null
+          valor_total_sem_frete?: number | null
+          venda_id?: string | null
+          vendas_catalogo_id?: string | null
+        }
+        Update: {
+          acessorio_id?: string | null
+          adicional_id?: string | null
+          altura?: number | null
+          cor_id?: string | null
+          created_at?: string | null
+          custo_pintura?: number | null
+          custo_producao?: number | null
+          custo_produto?: number | null
+          desconto_percentual?: number | null
+          desconto_valor?: number | null
+          descricao?: string | null
+          faturamento?: boolean | null
+          id?: string | null
+          largura?: number | null
+          lucro_item?: number | null
+          lucro_pintura?: number | null
+          lucro_produto?: number | null
+          margem_pintura?: number | null
+          margem_produto?: number | null
+          pedido_correcao_id?: string | null
+          percentual_credito?: number | null
+          quantidade?: number | null
+          tamanho?: string | null
+          tipo_desconto?: string | null
+          tipo_fabricacao?: string | null
+          tipo_pintura?: string | null
+          tipo_produto?: string | null
+          updated_at?: string | null
+          valor_credito?: number | null
+          valor_frete?: number | null
+          valor_instalacao?: number | null
+          valor_pintura?: number | null
+          valor_produto?: number | null
+          valor_total?: number | null
+          valor_total_sem_frete?: number | null
+          venda_id?: string | null
+          vendas_catalogo_id?: string | null
+        }
+        Relationships: []
+      }
       regras_etiquetas: {
         Row: {
           ativo: boolean | null
