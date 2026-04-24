@@ -2,13 +2,14 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
-import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList } from "lucide-react";
+import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList, Sun, Moon, Monitor } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { DelayedParticles } from "@/components/DelayedParticles";
 import { MinhasTarefasFullscreen } from "@/components/MinhasTarefasFullscreen";
+import { useTheme } from "@/components/ThemeProvider";
 
 // Mapeamento de path para prefixo de route_key no banco
 const routePrefixMap: Record<string, string> = {
@@ -36,6 +37,7 @@ export default function Home() {
   
   
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
   const [minhasTarefasOpen, setMinhasTarefasOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -207,6 +209,30 @@ export default function Home() {
                 <LogOut className="w-4 h-4" />
                 <span className="text-sm">Sair</span>
               </button>
+            </div>
+
+            <div className="border-t border-white/10 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-white/40 mb-1.5">Tema</p>
+              <div className="flex items-center gap-1">
+                {[
+                  { value: 'light', icon: Sun, label: 'Claro' },
+                  { value: 'dark', icon: Moon, label: 'Escuro' },
+                  { value: 'system', icon: Monitor, label: 'Sistema' },
+                ].map(({ value, icon: Icon, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => setTheme(value as 'light' | 'dark' | 'system')}
+                    title={label}
+                    className={`flex-1 flex items-center justify-center py-1.5 rounded-md transition-colors ${
+                      theme === value
+                        ? 'bg-white/15 text-white'
+                        : 'text-white/50 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
