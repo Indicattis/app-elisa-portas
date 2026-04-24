@@ -331,7 +331,9 @@ export function useVendas() {
         const qty = produto.quantidade || 1;
         const valorInstalacao = produto.valor_instalacao || 0;
         const isPorta = produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social';
-        const base = {
+        // Apenas portas são divididas em N linhas (uma por porta) para permitir
+        // medidas individuais. Demais tipos ficam em 1 linha com quantidade real.
+        const baseSplit = {
           venda_id: venda.id,
           tipo_produto: produto.tipo_produto,
           tamanho: produto.tamanho || '',
@@ -344,18 +346,23 @@ export function useVendas() {
           valor_frete: produto.valor_frete,
           tipo_desconto: produto.tipo_desconto,
           desconto_percentual: produto.desconto_percentual,
-          // Quando dividimos um produto com qty>1 em N linhas (quantidade:1),
-          // o desconto absoluto precisa ser dividido por N para não ser
-          // contado N vezes (gerando valor_total_sem_frete negativo).
-          desconto_valor: produto.tipo_desconto === 'valor'
-            ? (produto.desconto_valor || 0) / qty
-            : produto.desconto_valor,
-          quantidade: 1,
           descricao: produto.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produto.descricao || null),
           valor_credito: produto.valor_credito || 0,
-          percentual_credito: produto.percentual_credito || 0
+          percentual_credito: produto.percentual_credito || 0,
         };
-        const items = Array.from({ length: qty }, () => ({ ...base }));
+        const items = isPorta
+          ? Array.from({ length: qty }, () => ({
+              ...baseSplit,
+              quantidade: 1,
+              desconto_valor: produto.tipo_desconto === 'valor'
+                ? (produto.desconto_valor || 0) / qty
+                : produto.desconto_valor,
+            }))
+          : [{
+              ...baseSplit,
+              quantidade: qty,
+              desconto_valor: produto.desconto_valor,
+            }];
         
         // Se é porta com instalação, criar produto separado de instalação
         if (isPorta && valorInstalacao > 0) {
@@ -636,7 +643,9 @@ export function useVendas() {
           const qty = produto.quantidade || 1;
           const valorInstalacao = produto.valor_instalacao || 0;
           const isPorta = produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social';
-          const base = {
+          // Apenas portas são divididas em N linhas (uma por porta) para permitir
+          // medidas individuais. Demais tipos ficam em 1 linha com quantidade real.
+          const baseSplit = {
             venda_id: venda.id,
             tipo_produto: produto.tipo_produto,
             tamanho: produto.tamanho || '',
@@ -649,18 +658,23 @@ export function useVendas() {
             valor_frete: produto.valor_frete,
             tipo_desconto: produto.tipo_desconto,
             desconto_percentual: produto.desconto_percentual,
-            // Quando dividimos um produto com qty>1 em N linhas (quantidade:1),
-            // o desconto absoluto precisa ser dividido por N para não ser
-            // contado N vezes (gerando valor_total_sem_frete negativo).
-            desconto_valor: produto.tipo_desconto === 'valor'
-              ? (produto.desconto_valor || 0) / qty
-              : produto.desconto_valor,
-            quantidade: 1,
             descricao: produto.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produto.descricao || null),
             valor_credito: produto.valor_credito || 0,
-            percentual_credito: produto.percentual_credito || 0
+            percentual_credito: produto.percentual_credito || 0,
           };
-          const items = Array.from({ length: qty }, () => ({ ...base }));
+          const items = isPorta
+            ? Array.from({ length: qty }, () => ({
+                ...baseSplit,
+                quantidade: 1,
+                desconto_valor: produto.tipo_desconto === 'valor'
+                  ? (produto.desconto_valor || 0) / qty
+                  : produto.desconto_valor,
+              }))
+            : [{
+                ...baseSplit,
+                quantidade: qty,
+                desconto_valor: produto.desconto_valor,
+              }];
           
           // Se é porta com instalação, criar produto separado de instalação
           if (isPorta && valorInstalacao > 0) {
