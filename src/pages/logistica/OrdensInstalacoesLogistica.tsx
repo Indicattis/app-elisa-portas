@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, Search, Filter, MapPin, Truck, Package, Hammer, Wrench, CheckCircle2 } from "lucide-react";
+import { RefreshCw, Search, Filter, MapPin, Truck, Package, Hammer, Wrench, CheckCircle2, Users, CalendarDays, Trophy, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -181,12 +181,11 @@ export default function OrdensInstalacoesLogistica() {
   return (
     <MinimalistLayout 
       title="Ordens de Instalação" 
-      backPath="/logistica/instalacoes"
+      backPath="/logistica"
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
         { label: 'Logística', path: '/logistica' },
-        { label: 'Instalações', path: '/logistica/instalacoes' },
-        { label: 'Ordens de Instalação' }
+        { label: 'Instalações' }
       ]}
     >
       <div className="min-h-screen p-4 md:p-4 lg:p-6">
@@ -198,7 +197,7 @@ export default function OrdensInstalacoesLogistica() {
           )}>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Ordens de Instalação</h1>
+                <h1 className="text-2xl font-bold text-foreground">Instalações</h1>
                 <p className="text-muted-foreground text-sm">
                   {ordensNaoCarregadas.length} aguardando • {ordensCarregadas.length} carregadas
                   {neoInstalacoes.length > 0 && ` • ${neoInstalacoes.length} avulsas`}
@@ -206,15 +205,48 @@ export default function OrdensInstalacoesLogistica() {
                 </p>
               </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.location.reload()}
-                className="w-fit"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Atualizar
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/logistica/instalacoes/equipes')}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Equipes
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/logistica/instalacoes/cronograma')}
+                >
+                  <CalendarDays className="h-4 w-4 mr-2" />
+                  Cronograma
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/logistica/instalacoes/ranking')}
+                >
+                  <Trophy className="h-4 w-4 mr-2" />
+                  Ranking Equipes
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/logistica/instalacoes/ranking-autorizados')}
+                >
+                  <Award className="h-4 w-4 mr-2" />
+                  Ranking Autorizados
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.location.reload()}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Atualizar
+                </Button>
+              </div>
             </div>
           </div>
 
