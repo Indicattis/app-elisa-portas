@@ -345,27 +345,39 @@ export default function PedidosAdminMinimalista() {
     const Icon = etapaConfig.icon;
 
     return (
-      <Card className="bg-primary/5 border-primary/10">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-white flex items-center justify-between">
-            <div className="flex items-center gap-2">
+      <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
+        <CardHeader className="pb-3 px-4 py-4">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+            <CardTitle className="text-lg flex items-center gap-2 text-white">
               <Icon className={`w-5 h-5 ${etapaConfig.color}`} />
               <span>{etapaConfig.label}</span>
               <span className="text-sm font-normal text-white/60">
-                ({pedidosFiltrados.length} pedidos • {totalPortas} portas)
+                {pedidosFiltrados.length} {pedidosFiltrados.length === 1 ? 'pedido' : 'pedidos'}
               </span>
-            </div>
-          </CardTitle>
+              {totalPortas > 0 && (
+                <Badge variant="secondary" className="text-xs ml-2 bg-blue-500/10 text-white">
+                  🚪 {totalPortas} {totalPortas === 1 ? 'porta' : 'portas'}
+                </Badge>
+              )}
+            </CardTitle>
+            <PedidosFiltrosMinimalista
+              searchTerm={searchTerm}
+              onSearchChange={(v) => { setSearchTerm(v); setCurrentPages({}); }}
+              tipoEntrega={tipoEntrega}
+              onTipoEntregaChange={(v) => { setTipoEntrega(v); setCurrentPages({}); }}
+              corPintura="todas"
+              onCorPinturaChange={() => {}}
+              mostrarProntos={false}
+              onMostrarProntosToggle={() => {}}
+            />
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 py-4">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${etapaConfig.color.replace('text-', 'border-')}`} />
-            </div>
+            <div className="text-center py-8 text-white/60">Carregando...</div>
           ) : pedidosPaginados.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-white/60">
-              <Icon className="w-12 h-12 mb-4 opacity-50" />
-              <p>Nenhum pedido encontrado nesta etapa</p>
+            <div className="text-center py-8 text-white/60">
+              {searchTerm ? 'Nenhum pedido encontrado' : 'Nenhum pedido nesta etapa'}
             </div>
           ) : (
             <div className="space-y-2">
@@ -448,112 +460,169 @@ export default function PedidosAdminMinimalista() {
         { label: "Administrativo", path: "/administrativo" },
         { label: "Pedidos" }
       ]}
-    >
-      {/* Header com botão de refresh */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-white">Pedidos</h2>
+      headerActions={
         <button
           onClick={handleRefresh}
-          className="p-2 rounded-lg bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-all"
+          className="p-2 rounded-lg bg-white/5 border border-blue-500/10 hover:bg-white/10 transition-all"
+          title="Atualizar"
         >
           <RefreshCw className="w-4 h-4 text-white/70" />
         </button>
-      </div>
-
-      {/* Filtros globais */}
-      <div className="flex flex-wrap gap-3 mb-4">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
-          <Input
-            placeholder="Buscar por cliente ou número..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPages({});
-            }}
-            className="pl-10 bg-primary/5 border-primary/10 text-white placeholder:text-white/40"
-          />
-        </div>
-        <Select 
-          value={tipoEntrega} 
-          onValueChange={(value) => {
-            setTipoEntrega(value);
-            setCurrentPages({});
-          }}
-        >
-          <SelectTrigger className="w-[160px] bg-primary/5 border-primary/10 text-white">
-            <SelectValue placeholder="Tipo de entrega" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos</SelectItem>
-            <SelectItem value="instalacao">Instalação</SelectItem>
-            <SelectItem value="entrega">Entrega</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-
-      {/* Tabs para alternar entre etapas */}
+      }
+    >
+      {/* Tabs para alternar entre etapas - estilo Gestão de Fábrica */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <ScrollArea className="w-full whitespace-nowrap">
-          <TabsList className="inline-flex w-max mb-4 bg-primary/5 border border-primary/10 p-1">
-            {ETAPAS_CONFIG.map((etapa) => {
+        {/* Seletor mobile */}
+        <div className="md:hidden mb-4">
+          <Select value={activeTab} onValueChange={setActiveTab}>
+            <SelectTrigger className="w-full h-12 bg-white/5 border-blue-500/10 text-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-900 border-blue-500/10">
+              {ETAPAS_CONFIG.map((etapa) => {
+                const Icon = etapa.icon;
+                const count = pedidosFiltradosPorEtapa[etapa.id]?.length || 0;
+                return (
+                  <SelectItem key={etapa.id} value={etapa.id} className="text-white cursor-pointer">
+                    <div className="flex items-center gap-2 w-full">
+                      <Icon className="h-4 w-4 flex-shrink-0" />
+                      <span className="flex-1">{etapa.label}</span>
+                      <Badge variant="secondary" className="text-xs bg-blue-500/10">{count}</Badge>
+                    </div>
+                  </SelectItem>
+                );
+              })}
+              <SelectItem value="arquivo_morto" className="text-white cursor-pointer">
+                <div className="flex items-center gap-2 w-full">
+                  <Archive className="h-4 w-4 flex-shrink-0 text-emerald-400" />
+                  <span className="flex-1 text-emerald-400">Arquivo Morto</span>
+                  <Badge variant="secondary" className="text-xs bg-emerald-500/20 text-emerald-400">
+                    {pedidosArquivados.length}
+                  </Badge>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Tabs - Desktop com grupos coloridos */}
+        <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-2 bg-white/5 border border-blue-500/10">
+          {/* Grupo Vermelho: Produção */}
+          <div className="flex gap-1 border-2 border-red-500/50 rounded-lg p-1">
+            {(['aberto', 'aprovacao_ceo', 'em_producao', 'inspecao_qualidade', 'aguardando_pintura', 'embalagem'] as const).map((etapaId) => {
+              const etapa = ETAPAS_CONFIG.find(e => e.id === etapaId);
+              if (!etapa) return null;
               const Icon = etapa.icon;
               const count = pedidosFiltradosPorEtapa[etapa.id]?.length || 0;
               return (
-                <TabsTrigger 
+                <TabsTrigger
                   key={etapa.id}
-                  value={etapa.id} 
-                  className={`data-[state=active]:${etapa.bgColor} data-[state=active]:${etapa.color} px-3`}
+                  value={etapa.id}
+                  className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
                 >
-                  <Icon className="w-4 h-4 mr-1.5" />
-                  <span className="hidden sm:inline">{etapa.shortLabel}</span>
-                  <span className="ml-1.5 text-xs opacity-70">({count})</span>
+                  <Icon className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs">{etapa.shortLabel}</span>
+                  <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
+                    {count}
+                  </span>
                 </TabsTrigger>
               );
             })}
-            {/* Arquivo Morto tab trigger */}
-            <TabsTrigger 
-              value="arquivo_morto" 
-              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 px-3"
+          </div>
+
+          {/* Grupo Amarelo: Expedição */}
+          <div className="flex gap-1 border-2 border-yellow-500/50 rounded-lg p-1">
+            {(['aguardando_coleta', 'instalacoes', 'correcoes'] as const).map((etapaId) => {
+              const etapa = ETAPAS_CONFIG.find(e => e.id === etapaId);
+              if (!etapa) return null;
+              const Icon = etapa.icon;
+              const count = pedidosFiltradosPorEtapa[etapa.id]?.length || 0;
+              return (
+                <TabsTrigger
+                  key={etapa.id}
+                  value={etapa.id}
+                  className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
+                >
+                  <Icon className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs">{etapa.shortLabel}</span>
+                  <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
+                    {count}
+                  </span>
+                </TabsTrigger>
+              );
+            })}
+          </div>
+
+          {/* Grupo Verde: Finalizados */}
+          <div className="flex gap-1 border-2 border-green-500/50 rounded-lg p-1">
+            {(['finalizado'] as const).map((etapaId) => {
+              const etapa = ETAPAS_CONFIG.find(e => e.id === etapaId);
+              if (!etapa) return null;
+              const Icon = etapa.icon;
+              const count = pedidosFiltradosPorEtapa[etapa.id]?.length || 0;
+              return (
+                <TabsTrigger
+                  key={etapa.id}
+                  value={etapa.id}
+                  className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
+                >
+                  <Icon className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs">{etapa.shortLabel}</span>
+                  <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
+                    {count}
+                  </span>
+                </TabsTrigger>
+              );
+            })}
+            <TabsTrigger
+              value="arquivo_morto"
+              className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-emerald-400/60 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-400"
             >
-              <Archive className="w-4 h-4 mr-1.5" />
-              <span className="hidden sm:inline">Arquivo Morto</span>
-              <span className="ml-1.5 text-xs opacity-70">({pedidosArquivados.length})</span>
+              <Archive className="h-4 w-4 flex-shrink-0" />
+              <span className="text-xs">Arquivo Morto</span>
+              <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">
+                {pedidosArquivados.length}
+              </span>
             </TabsTrigger>
-          </TabsList>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+          </div>
+        </TabsList>
 
         {/* Conteúdo de cada tab */}
         {ETAPAS_CONFIG.map((etapa) => (
-          <TabsContent key={etapa.id} value={etapa.id}>
+          <TabsContent key={etapa.id} value={etapa.id} className="mt-4">
             {renderEtapaContent(etapa)}
           </TabsContent>
         ))}
 
         {/* Arquivo Morto Tab Content */}
-        <TabsContent value="arquivo_morto">
-          <Card className="bg-primary/5 border-primary/10">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-white flex items-center gap-2">
-                <Archive className="w-5 h-5 text-emerald-400" />
-                <span>Arquivo Morto</span>
-                <span className="text-sm font-normal text-white/60">
-                  ({pedidosArquivados.length} pedidos)
-                </span>
-              </CardTitle>
+        <TabsContent value="arquivo_morto" className="mt-4">
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
+            <CardHeader className="pb-3 px-4 py-4">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                <CardTitle className="text-lg flex items-center gap-2 text-white">
+                  <Archive className="w-5 h-5 text-emerald-400" />
+                  <span>Arquivo Morto</span>
+                  <span className="text-sm font-normal text-white/60">
+                    {pedidosArquivados.length} {pedidosArquivados.length === 1 ? 'pedido' : 'pedidos'}
+                  </span>
+                </CardTitle>
+                <PedidosFiltrosMinimalista
+                  searchTerm={searchTerm}
+                  onSearchChange={(v) => { setSearchTerm(v); setArquivoPage(1); }}
+                  tipoEntrega={tipoEntrega}
+                  onTipoEntregaChange={setTipoEntrega}
+                  corPintura="todas"
+                  onCorPinturaChange={() => {}}
+                  mostrarProntos={false}
+                  onMostrarProntosToggle={() => {}}
+                />
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 py-4">
               {isLoadingArquivados ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
-                </div>
+                <div className="text-center py-8 text-white/60">Carregando...</div>
               ) : pedidosArquivados.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-white/60">
-                  <Archive className="w-12 h-12 mb-4 opacity-50" />
-                  <p>Nenhum pedido arquivado</p>
-                </div>
+                <div className="text-center py-8 text-white/60">Nenhum pedido arquivado</div>
               ) : (
                 <div className="space-y-1">
                   {pedidosArquivados
@@ -562,12 +631,12 @@ export default function PedidosAdminMinimalista() {
                     <div
                       key={pedido.id}
                       onClick={() => navigate(`/administrativo/pedidos/${pedido.id}`)}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5 border border-primary/10 hover:bg-white/10 transition-colors cursor-pointer"
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5 border border-blue-500/10 hover:bg-white/10 transition-colors cursor-pointer"
                     >
                       <span className="text-xs font-mono text-emerald-400 flex-shrink-0">
                         #{pedido.numero_pedido}
                       </span>
-                      <span className="text-sm font-medium text-foreground truncate flex-1">
+                      <span className="text-sm font-medium text-white truncate flex-1">
                         {pedido.cliente_nome}
                       </span>
                       {pedido.valor_venda && (
@@ -575,7 +644,7 @@ export default function PedidosAdminMinimalista() {
                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pedido.valor_venda)}
                         </span>
                       )}
-                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                      <span className="text-xs text-white/50 flex-shrink-0">
                         {pedido.data_arquivamento
                           ? (() => { try { return format(new Date(pedido.data_arquivamento), "dd/MM/yyyy", { locale: ptBR }); } catch { return "-"; } })()
                           : "-"}
