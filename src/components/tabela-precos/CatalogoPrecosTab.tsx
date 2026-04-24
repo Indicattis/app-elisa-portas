@@ -5,9 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useVendasCatalogo, ProdutoCatalogo } from "@/hooks/useVendasCatalogo";
 
-type EditField = "preco_venda" | "custo_produto";
+type EditField = "preco_venda" | "custo_produto" | "unidade";
+
+const UNIDADES = ["Unitário", "Metro", "Kg", "Litro"] as const;
 
 const formatCurrency = (value: number) =>
   (value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -29,16 +32,22 @@ export function CatalogoPrecosTab() {
 
   const startEdit = (produto: ProdutoCatalogo, field: EditField) => {
     setEditing({ id: produto.id, field });
-    setEditValue(String(produto[field] ?? 0));
+    setEditValue(String(produto[field] ?? (field === "unidade" ? "Unitário" : 0)));
   };
 
   const cancelEdit = () => setEditing(null);
 
   const saveEdit = async () => {
     if (!editing) return;
-    const valor = parseFloat(editValue);
-    if (!isNaN(valor) && valor >= 0) {
-      await editarProduto.mutateAsync({ id: editing.id, [editing.field]: valor } as any);
+    if (editing.field === "unidade") {
+      if (editValue) {
+        await editarProduto.mutateAsync({ id: editing.id, unidade: editValue } as any);
+      }
+    } else {
+      const valor = parseFloat(editValue);
+      if (!isNaN(valor) && valor >= 0) {
+        await editarProduto.mutateAsync({ id: editing.id, [editing.field]: valor } as any);
+      }
     }
     setEditing(null);
   };
@@ -53,7 +62,7 @@ export function CatalogoPrecosTab() {
     [produtos]
   );
 
-  const renderEditableCell = (produto: ProdutoCatalogo, field: EditField) => {
+  const renderEditableCell = (produto: ProdutoCatalogo, field: "preco_venda" | "custo_produto") => {
     const isEditing = editing?.id === produto.id && editing.field === field;
     const value = produto[field] ?? 0;
     if (isEditing) {
@@ -87,6 +96,45 @@ export function CatalogoPrecosTab() {
         title="Clique para editar"
       >
         {formatCurrency(value as number)}
+      </span>
+    );
+  };
+
+  const renderUnidadeCell = (produto: ProdutoCatalogo) => {
+    const isEditing = editing?.id === produto.id && editing.field === "unidade";
+    const value = produto.unidade || "Unitário";
+    if (isEditing) {
+      return (
+        <div className="flex items-center justify-center gap-1">
+          <Select
+            value={editValue}
+            onValueChange={async (val) => {
+              setEditValue(val);
+              await editarProduto.mutateAsync({ id: produto.id, unidade: val } as any);
+              setEditing(null);
+            }}
+            open
+            onOpenChange={(o) => { if (!o) setEditing(null); }}
+          >
+            <SelectTrigger className="w-32 h-7 bg-white/10 border-white/20 text-white text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {UNIDADES.map((u) => (
+                <SelectItem key={u} value={u}>{u}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      );
+    }
+    return (
+      <span
+        className="cursor-pointer text-white/70 hover:text-white hover:underline decoration-dashed underline-offset-4 transition-colors text-xs"
+        onClick={() => startEdit(produto, "unidade")}
+        title="Clique para editar"
+      >
+        {value}
       </span>
     );
   };
@@ -130,6 +178,7 @@ export function CatalogoPrecosTab() {
                   <TableHead className="text-white/60">Produto</TableHead>
                   <TableHead className="text-white/60 hidden md:table-cell">Categoria</TableHead>
                   <TableHead className="text-white/60 hidden lg:table-cell">SKU</TableHead>
+                  <TableHead className="text-center text-white/60 hidden md:table-cell">Unidade</TableHead>
                   <TableHead className="text-right text-white/60">Custo</TableHead>
                   <TableHead className="text-right text-white/60">Preço Venda</TableHead>
                   <TableHead className="text-right text-white/60 hidden md:table-cell">Margem</TableHead>
@@ -153,6 +202,7 @@ export function CatalogoPrecosTab() {
                       <TableCell className="font-medium text-white">{produto.nome_produto}</TableCell>
                       <TableCell className="text-white/60 hidden md:table-cell">{produto.categoria || "—"}</TableCell>
                       <TableCell className="text-white/60 hidden lg:table-cell">{produto.sku || "—"}</TableCell>
+                      <TableCell className="text-center hidden md:table-cell">{renderUnidadeCell(produto)}</TableCell>
                       <TableCell className="text-right">{renderEditableCell(produto, "custo_produto")}</TableCell>
                       <TableCell className="text-right">{renderEditableCell(produto, "preco_venda")}</TableCell>
                       <TableCell className="text-right hidden md:table-cell">
