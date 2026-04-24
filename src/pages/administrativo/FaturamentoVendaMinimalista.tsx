@@ -1046,7 +1046,7 @@ export default function FaturamentoVendaMinimalista() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {produtos?.map((produto) => {
+                  {produtosAgrupados.map((produto) => {
                     const temLucro = produto.lucro_item !== null && produto.lucro_item !== undefined;
                     const valorTotalLinha = produto.valor_total;
                     const valorUnitario = produto.quantidade > 0 ? produto.valor_total / produto.quantidade : 0;
