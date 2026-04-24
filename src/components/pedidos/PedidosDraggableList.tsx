@@ -38,6 +38,7 @@ interface PedidosDraggableListProps {
   onAgendar?: (pedidoId: string) => void;
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
   onFinalizarDireto?: (pedidoId: string) => Promise<void>;
+  onCarregarOrdem?: (pedidoId: string) => Promise<void>;
   onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>;
   onDevolverParaFinalizado?: (pedidoId: string) => Promise<void>;
   enableDragAndDrop?: boolean;
@@ -63,6 +64,7 @@ interface SortableItemProps {
   onAgendar?: (pedidoId: string) => void;
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
   onFinalizarDireto?: (pedidoId: string) => Promise<void>;
+  onCarregarOrdem?: (pedidoId: string) => Promise<void>;
   onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>;
   onDevolverParaFinalizado?: (pedidoId: string) => Promise<void>;
   disableClienteClick?: boolean;
@@ -86,6 +88,7 @@ function SortableItem({
   onAgendar,
   onCorrecaoDetalhesClick,
   onFinalizarDireto,
+  onCarregarOrdem,
   onEnviarAguardandoCliente,
   onDevolverParaFinalizado,
   disableClienteClick,
@@ -123,6 +126,7 @@ function SortableItem({
         onAgendar={onAgendar}
         onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
         onFinalizarDireto={onFinalizarDireto}
+        onCarregarOrdem={onCarregarOrdem}
         onEnviarAguardandoCliente={onEnviarAguardandoCliente}
         onDevolverParaFinalizado={onDevolverParaFinalizado}
         isDragging={isDragging}
@@ -153,6 +157,7 @@ export function PedidosDraggableList({
   onAgendar,
   onCorrecaoDetalhesClick,
   onFinalizarDireto,
+  onCarregarOrdem,
   onEnviarAguardandoCliente,
   onDevolverParaFinalizado,
   enableDragAndDrop = true,
@@ -246,6 +251,7 @@ export function PedidosDraggableList({
               onAgendar={onAgendar}
               onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
               onFinalizarDireto={onFinalizarDireto}
+              onCarregarOrdem={onCarregarOrdem}
               onEnviarAguardandoCliente={onEnviarAguardandoCliente}
               onDevolverParaFinalizado={onDevolverParaFinalizado}
               posicao={showPosicao ? index + 1 : undefined}
@@ -298,6 +304,7 @@ export function PedidosDraggableList({
               onAgendar={onAgendar}
               onCorrecaoDetalhesClick={onCorrecaoDetalhesClick}
               onFinalizarDireto={onFinalizarDireto}
+              onCarregarOrdem={onCarregarOrdem}
               onEnviarAguardandoCliente={onEnviarAguardandoCliente}
               onDevolverParaFinalizado={onDevolverParaFinalizado}
               disableClienteClick={disableClienteClick}

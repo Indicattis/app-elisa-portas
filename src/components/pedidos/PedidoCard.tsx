@@ -75,6 +75,7 @@ interface PedidoCardProps {
   onDeletar?: (pedidoId: string) => Promise<void>;
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
   onFinalizarDireto?: (pedidoId: string) => Promise<void>;
+  onCarregarOrdem?: (pedidoId: string) => Promise<void>;
   onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>;
   onDevolverParaFinalizado?: (pedidoId: string) => Promise<void>;
   basePath?: string;
@@ -101,6 +102,7 @@ export function PedidoCard({
   onDeletar,
   onCorrecaoDetalhesClick,
   onFinalizarDireto,
+  onCarregarOrdem,
   onEnviarAguardandoCliente,
   onDevolverParaFinalizado,
   readOnly = false,
@@ -125,6 +127,8 @@ export function PedidoCard({
   const [isExcluindo, setIsExcluindo] = useState(false);
   const [showFinalizarDireto, setShowFinalizarDireto] = useState(false);
   const [isFinalizandoDireto, setIsFinalizandoDireto] = useState(false);
+  const [showCarregarOrdem, setShowCarregarOrdem] = useState(false);
+  const [isCarregando, setIsCarregando] = useState(false);
   const [showAvisoEspera, setShowAvisoEspera] = useState(false);
   const [ordemParaRemover, setOrdemParaRemover] = useState<{ ordem: any; nomeSetor: string } | null>(null);
   const [processos, setProcessos] = useState<Processo[]>([]);
@@ -2121,7 +2125,10 @@ className="flex h-[20px] w-full rounded-[3px]"
                       );
                     }
 
-                    if (onFinalizarDireto && etapaAtual !== 'finalizado') {
+                    const etapasCarregamento: EtapaPedido[] = ['aguardando_coleta', 'instalacoes', 'correcoes'];
+                    const isEtapaCarregamento = etapasCarregamento.includes(etapaAtual);
+
+                    if (onFinalizarDireto && etapaAtual !== 'finalizado' && !isEtapaCarregamento) {
                       middleButtons.push(
                         <Tooltip key="finalizar-direto">
                           <TooltipTrigger asChild>
@@ -2137,6 +2144,33 @@ className="flex h-[20px] w-full rounded-[3px]"
                           </TooltipTrigger>
                           <TooltipContent side="top">
                             <span className="text-xs">Finalizar Direto</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
+                    // Botão Carregar Ordem: somente para etapas de carregamento, com ordem agendada e ainda não carregada
+                    if (
+                      onCarregarOrdem &&
+                      isEtapaCarregamento &&
+                      temDataCarregamento &&
+                      !carregamentoConcluido
+                    ) {
+                      middleButtons.push(
+                        <Tooltip key="carregar-ordem">
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={(e) => { e.stopPropagation(); setShowCarregarOrdem(true); }}
+                              title="Carregar Ordem"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-sky-500/10 text-sky-700 hover:bg-sky-500/20 border-sky-500/50"
+                            >
+                              <Truck className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="text-xs">Carregar Ordem</span>
                           </TooltipContent>
                         </Tooltip>
                       );
@@ -2976,6 +3010,50 @@ className="flex h-[20px] w-full rounded-[3px]"
               }}
             >
               {isFinalizandoDireto ? 'Finalizando...' : 'Sim, Finalizar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCarregarOrdem} onOpenChange={(open) => { if (!isCarregando) setShowCarregarOrdem(open); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Truck className="w-5 h-5 text-sky-600" />
+              Carregar Ordem
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3 pt-2">
+                <div className="rounded-lg bg-muted p-3 space-y-1.5">
+                  <p className="text-sm font-medium text-foreground">{pedido.venda?.cliente?.nome || 'Cliente'}</p>
+                  <p className="text-xs text-muted-foreground font-mono">{pedido.numero_pedido_mensal ? formatarNumeroPedidoMensal(pedido.numero_pedido_mensal) : pedido.id.slice(0, 8)}</p>
+                  <p className="text-xs text-muted-foreground">Etapa atual: <span className="font-medium text-foreground">{ETAPAS_CONFIG[pedido.etapa_atual as EtapaPedido]?.label || pedido.etapa_atual}</span></p>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Ao confirmar, a ordem agendada será marcada como <span className="font-medium text-foreground">carregada</span>. Você passa a ser o responsável pela conclusão.
+                </div>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowCarregarOrdem(false)} disabled={isCarregando}>
+              Cancelar
+            </Button>
+            <Button
+              className="bg-sky-600 hover:bg-sky-700 text-white"
+              disabled={isCarregando}
+              onClick={async () => {
+                if (!onCarregarOrdem) return;
+                setIsCarregando(true);
+                try {
+                  await onCarregarOrdem(pedido.id);
+                  setShowCarregarOrdem(false);
+                } finally {
+                  setIsCarregando(false);
+                }
+              }}
+            >
+              {isCarregando ? 'Carregando...' : 'Sim, Carregar'}
             </Button>
           </DialogFooter>
         </DialogContent>
