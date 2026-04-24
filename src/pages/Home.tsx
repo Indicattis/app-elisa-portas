@@ -210,6 +210,30 @@ export default function Home() {
                 <span className="text-sm">Sair</span>
               </button>
             </div>
+
+            <div className="border-t border-white/10 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-white/40 mb-1.5">Tema</p>
+              <div className="flex items-center gap-1">
+                {[
+                  { value: 'light', icon: Sun, label: 'Claro' },
+                  { value: 'dark', icon: Moon, label: 'Escuro' },
+                  { value: 'system', icon: Monitor, label: 'Sistema' },
+                ].map(({ value, icon: Icon, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => setTheme(value as 'light' | 'dark' | 'system')}
+                    title={label}
+                    className={`flex-1 flex items-center justify-center py-1.5 rounded-md transition-colors ${
+                      theme === value
+                        ? 'bg-white/15 text-white'
+                        : 'text-white/50 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
