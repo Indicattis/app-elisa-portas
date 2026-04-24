@@ -56,7 +56,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Cleanup error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: (error instanceof Error ? error.message : String(error)) }),
       { 
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -88,7 +88,7 @@ async function vacuumDatabase(supabase: any) {
       }
     )
   } catch (error) {
-    throw new Error(`Vacuum operation failed: ${error.message}`)
+    throw new Error(`Vacuum operation failed: ${(error instanceof Error ? error.message : String(error))}`)
   }
 }
 
@@ -123,6 +123,6 @@ async function analyzeStorage(supabase: any) {
       }
     )
   } catch (error) {
-    throw new Error(`Storage analysis failed: ${error.message}`)
+    throw new Error(`Storage analysis failed: ${(error instanceof Error ? error.message : String(error))}`)
   }
 }

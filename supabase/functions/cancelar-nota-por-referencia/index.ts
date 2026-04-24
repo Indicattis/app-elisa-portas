@@ -160,7 +160,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('[cancelar-nota-por-referencia] Erro:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'Erro interno do servidor' }),
+      JSON.stringify({ error: (error instanceof Error ? error.message : String(error)) || 'Erro interno do servidor' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
