@@ -18,7 +18,6 @@ import { DelayedParticles } from '@/components/DelayedParticles';
 const menuItems = [
   { label: 'Minhas Vendas', icon: ShoppingCart, path: '/vendas/minhas-vendas' },
   { label: 'Meus Clientes', icon: Users, path: '/vendas/meus-clientes' },
-  { label: 'Catálogo', icon: BookOpen, path: '/vendas/catalogo' },
   { label: 'Meus Orçamentos', icon: FileText, path: '/vendas/meus-orcamentos' },
   { label: 'Meus Parceiros', icon: Handshake, path: '/vendas/meus-parceiros' },
   { label: 'Acompanhar Pedido', icon: Search, path: '/vendas/acompanhar-pedido' },
