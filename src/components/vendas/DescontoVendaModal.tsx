@@ -124,10 +124,12 @@ export function DescontoVendaModal({
         };
       } else {
         const percentualProduto = (descontoProduto / valorBaseProduto) * 100;
+        const novoPercentual = (produto.desconto_percentual || 0) + percentualProduto;
         return {
           ...produto,
           tipo_desconto: 'percentual' as const,
-          desconto_percentual: (produto.desconto_percentual || 0) + percentualProduto,
+          // Arredondar para 2 casas decimais para compatibilidade com numeric(6,2) no banco
+          desconto_percentual: Math.round(novoPercentual * 100) / 100,
           desconto_valor: 0
         };
       }
