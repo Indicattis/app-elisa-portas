@@ -23,6 +23,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { baixarCronogramaMinimalistaPDF } from "@/utils/cronogramaMinimalistaPDF";
 import { useAutorizadosAptos } from "@/hooks/useAutorizadosAptos";
+import { InstalacoesHeaderActions } from "@/components/instalacoes/InstalacoesHeaderActions";
 
 
 export default function CronogramaMinimalista() {
@@ -204,7 +205,6 @@ export default function CronogramaMinimalista() {
         items={[
           { label: "Home", path: "/home" },
           { label: "Logística", path: "/logistica" },
-          { label: "Instalações", path: "/logistica/instalacoes" },
           { label: "Cronograma" }
         ]} 
         mounted={mounted} 
@@ -217,7 +217,7 @@ export default function CronogramaMinimalista() {
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => navigate('/logistica/instalacoes')}
+                onClick={() => navigate('/logistica')}
                 className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
               >
                 <ArrowLeft className="w-5 h-5 text-white/80" />
@@ -335,6 +335,9 @@ export default function CronogramaMinimalista() {
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
+          </div>
+          <div className="max-w-7xl mx-auto mt-3">
+            <InstalacoesHeaderActions />
           </div>
         </header>
 
