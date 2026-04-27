@@ -13,7 +13,7 @@ export function VendasHeaderRow({ mode = 'pedido' }: { mode?: 'pedido' | 'fatura
       <div>Cliente</div>
       <div className="text-center">Cidade</div>
       <div className="text-center">Data</div>
-      <div className="text-center">Dias</div>
+      <div className="text-center">Tempo</div>
       <div className="text-center">Tipo</div>
       <div className="text-center">Portas</div>
       <div className="text-center">Cores</div>
