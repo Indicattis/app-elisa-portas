@@ -71,7 +71,26 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
     : '??';
 
   const valorTotal = (venda.valor_venda || 0) + (venda.valor_credito || 0);
-  const diasPendente = differenceInDays(new Date(), new Date(venda.data_venda));
+  // Tempo decorrido desde a criação da venda (fallback: data_venda)
+  const tempoBase = venda.created_at
+    ? new Date(venda.created_at)
+    : new Date((venda.data_venda || '').substring(0, 10) + 'T12:00:00');
+  const diffMs = Math.max(0, Date.now() - tempoBase.getTime());
+  const totalHoras = Math.floor(diffMs / (1000 * 60 * 60));
+  const diasPendente = Math.floor(totalHoras / 24);
+  const horasResto = totalHoras % 24;
+  const semanas = Math.floor(diasPendente / 7);
+  const tempoLabel = (() => {
+    if (totalHoras < 1) {
+      const min = Math.max(1, Math.floor(diffMs / (1000 * 60)));
+      return `${min}min`;
+    }
+    if (diasPendente < 1) return `${totalHoras}h`;
+    if (diasPendente < 7) return horasResto > 0 ? `${diasPendente}d ${horasResto}h` : `${diasPendente}d`;
+    const diasResto = diasPendente % 7;
+    return diasResto > 0 ? `${semanas}sem ${diasResto}d` : `${semanas}sem`;
+  })();
+  const tempoTooltip = `${diasPendente} dia${diasPendente === 1 ? '' : 's'} e ${horasResto}h desde ${venda.created_at ? 'a criação' : 'a data da venda'} (${format(tempoBase, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })})`;
 
   // Combined payment methods label
   const pagamentoLabel = (() => {
@@ -331,11 +350,11 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                     'border-muted text-muted-foreground'
                   }`}
                 >
-                  {diasPendente}d
+                  {tempoLabel}
                 </Badge>
               </TooltipTrigger>
               <TooltipContent>
-                <p className="text-xs">{diasPendente} dias pendente (desde {format(new Date(venda.data_venda), "dd/MM/yyyy", { locale: ptBR })})</p>
+                <p className="text-xs">{tempoTooltip}</p>
               </TooltipContent>
             </Tooltip>
 
