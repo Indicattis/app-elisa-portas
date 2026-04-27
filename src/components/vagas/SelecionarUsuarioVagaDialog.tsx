@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAllUsers, type User } from "@/hooks/useAllUsers";
-import { useQueryClient } from "@tanstack/react-query";
+import { type User } from "@/hooks/useAllUsers";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -32,8 +32,24 @@ export function SelecionarUsuarioVagaDialog({
 }: SelecionarUsuarioVagaDialogProps) {
   const [search, setSearch] = useState("");
   const [selecting, setSelecting] = useState<string | null>(null);
-  const { data: users = [], isLoading } = useAllUsers();
   const queryClient = useQueryClient();
+
+  // Inclui usuários ativos mesmo que estejam fora do organograma,
+  // para permitir reanexá-los a uma vaga.
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ["all-users-including-hidden"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("*")
+        .eq("ativo", true)
+        .in("tipo_usuario", ["colaborador", "metamorfo"])
+        .order("nome");
+      if (error) throw error;
+      return (data || []) as unknown as (User & { visivel_organograma?: boolean })[];
+    },
+    enabled: open,
+  });
 
   const filtered = users.filter(u =>
     u.nome.toLowerCase().includes(search.toLowerCase())
@@ -44,12 +60,14 @@ export function SelecionarUsuarioVagaDialog({
     try {
       const { error } = await supabase
         .from("admin_users")
-        .update({ role: vagaCargo } as any)
+        .update({ role: vagaCargo, visivel_organograma: true } as any)
         .eq("id", user.id);
 
       if (error) throw error;
 
       toast.success(`${user.nome} foi atribuído à vaga`);
+      queryClient.invalidateQueries({ queryKey: ["all-users"] });
+      queryClient.invalidateQueries({ queryKey: ["all-users-including-hidden"] });
       onSelectExisting(user);
       onOpenChange(false);
     } catch (err: any) {
@@ -101,7 +119,14 @@ export function SelecionarUsuarioVagaDialog({
                   <AvatarFallback className="text-xs">{getInitials(user.nome)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{user.nome}</p>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <p className="text-sm font-medium truncate">{user.nome}</p>
+                    {(user as any).visivel_organograma === false && (
+                      <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-500">
+                        Fora do organograma
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground truncate">
                     {(ROLE_LABELS as any)[user.role] || user.role}
                   </p>
