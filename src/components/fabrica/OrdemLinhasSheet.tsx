@@ -176,52 +176,14 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
   const removerResponsavel = useMutation({
     mutationFn: async () => {
       if (!ordem?.id || !ordem?.tipo) throw new Error('Ordem inválida');
-      
-      const tableName = TABLE_MAP[ordem.tipo];
 
-      let updatePayload: Record<string, any>;
-
-      if (ordem.tipo === 'carregamento') {
-        updatePayload = {
-          responsavel_carregamento_id: null,
-          responsavel_carregamento_nome: null,
-          status: 'pendente',
-        };
-      } else if (ordem.tipo === 'instalacao') {
-        updatePayload = {
-          responsavel_instalacao_id: null,
-          responsavel_instalacao_nome: null,
-          status: 'pendente',
-        };
-      } else {
-        updatePayload = {
-          responsavel_id: null,
-          capturada_em: null,
-          status: 'pendente',
-          historico: false,
-          data_conclusao: null,
-        };
-
-        if (ordem.tipo !== 'pintura') {
-          updatePayload.pausada = false;
-          updatePayload.pausada_em = null;
-          updatePayload.justificativa_pausa = null;
-        }
-
-        if (['soldagem', 'perfiladeira', 'separacao'].includes(ordem.tipo)) {
-          updatePayload.linha_problema_id = null;
-        }
-      }
-
-      const { data, error } = await supabase
-        .from(tableName as any)
-        .update(updatePayload)
-        .eq('id', ordem.id)
-        .select('id')
-        .maybeSingle();
+      const { data, error } = await (supabase.rpc as any)('remover_responsavel_ordem_producao', {
+        p_ordem_id: ordem.id,
+        p_tipo_ordem: ordem.tipo,
+      });
 
       if (error) throw error;
-      if (!data) throw new Error('Nenhuma ordem foi alterada. Verifique se seu usuário tem permissão para remover o responsável.');
+      if (!data?.success) throw new Error('Não foi possível remover o responsável da ordem.');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
