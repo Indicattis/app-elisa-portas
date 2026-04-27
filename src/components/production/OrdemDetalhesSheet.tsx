@@ -610,7 +610,7 @@ export function OrdemDetalhesSheet({
               </div>
               <p className="text-xs text-muted-foreground">
                 Para marcar as linhas desta ordem você precisa capturá-la primeiro.
-                {ordem.em_backlog && " Esta ordem voltou ao backlog (pode ter sido retrocedida) e precisa ser recapturada."}
+                {(ordem as any).em_backlog && " Esta ordem voltou ao backlog (pode ter sido retrocedida) e precisa ser recapturada."}
               </p>
               <Button
                 className="w-full"
