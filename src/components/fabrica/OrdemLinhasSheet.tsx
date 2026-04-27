@@ -178,29 +178,45 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
       if (!ordem?.id || !ordem?.tipo) throw new Error('Ordem inválida');
       
       const tableName = TABLE_MAP[ordem.tipo];
-      
+
+      // Liberar a ordem para nova captura: limpa responsável, volta para 'pendente'
+      // e remove flag de pausa (mantém tempo acumulado e linhas concluídas).
+      const updatePayload: Record<string, any> = {
+        responsavel_id: null,
+        capturada_em: null,
+        status: 'pendente',
+        pausada: false,
+        justificativa_pausa: null,
+      };
+
+      // ordens_pintura não possui coluna 'pausada'/'justificativa_pausa'
+      if (ordem.tipo === 'pintura') {
+        delete updatePayload.pausada;
+        delete updatePayload.justificativa_pausa;
+      }
+
       const { error } = await supabase
         .from(tableName as any)
-        .update({
-          responsavel_id: null,
-          capturada_em: null,
-        })
+        .update(updatePayload)
         .eq('id', ordem.id);
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+      queryClient.invalidateQueries({ queryKey: ['linhas-ordem', ordem?.id, ordem?.tipo] });
       setShowRemoverModal(false);
       toastHook({
         title: "Responsável removido",
         description: "A ordem está disponível para captura novamente.",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('[removerResponsavel] erro:', error);
       toastHook({
         title: "Erro",
-        description: "Não foi possível remover o responsável.",
+        description: error instanceof Error ? error.message : "Não foi possível remover o responsável.",
         variant: "destructive",
       });
     },
