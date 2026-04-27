@@ -11,6 +11,7 @@ import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Pri
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
+import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 import {
   OPCOES_INTERNA_EXTERNA,
   OPCOES_LADO_MOTOR,
@@ -174,7 +175,12 @@ export function OrdemDetalhesSheet({
   onResolverProblemaLinha,
   isResolvingProblem = false,
 }: OrdemDetalhesSheetProps) {
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
+  const { user: producaoUser } = useProducaoAuth();
+  // Em rotas /producao/* o usuário está logado via useProducaoAuth (CPF),
+  // enquanto em /fabrica/* está via useAuth (email). Usamos o que estiver disponível.
+  const currentUserId = authUser?.id || producaoUser?.user_id;
+  const user = currentUserId ? { id: currentUserId } : null;
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const [retornarModalOpen, setRetornarModalOpen] = useState(false);
   const [avisoFaltaModalOpen, setAvisoFaltaModalOpen] = useState(false);
