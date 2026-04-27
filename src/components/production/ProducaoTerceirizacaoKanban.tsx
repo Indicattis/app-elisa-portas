@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Package, Clock, UserPlus, Timer, AlertTriangle, RefreshCw, CheckCircle, FileText } from "lucide-react";
+import { Package, Clock, UserPlus, Timer, AlertTriangle, RefreshCw, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 import { useOrdemProgress } from "@/hooks/useOrdemProgress";
@@ -51,17 +51,15 @@ interface OrdemPortaSocial {
 interface OrdemCardProps {
   ordem: OrdemPortaSocial;
   onDelegarOrdem: (ordemId: string) => void;
-  onConcluirOrdem: (ordemId: string) => void;
+  onCardClick: (ordem: OrdemPortaSocial) => void;
   isDelegating?: boolean;
-  isConcluindo?: boolean;
 }
 
 function OrdemCard({
   ordem,
   onDelegarOrdem,
-  onConcluirOrdem,
+  onCardClick,
   isDelegating = false,
-  isConcluindo = false,
 }: OrdemCardProps) {
   const todasConcluidas = ordem.status === 'concluido';
   const { data: ordemProgress } = useOrdemProgress(ordem.pedido_id);
@@ -83,8 +81,9 @@ function OrdemCard({
 
   return (
     <Card 
+      onClick={() => onCardClick(ordem)}
       className={cn(
-        "hover:shadow-md transition-all overflow-hidden",
+        "hover:shadow-md hover:border-primary/40 transition-all overflow-hidden cursor-pointer",
         ordem.em_backlog && "border-2 border-red-500 shadow-lg shadow-red-500/20"
       )}
     >
@@ -222,23 +221,6 @@ function OrdemCard({
         </div>
       </CardContent>
 
-      {/* FOOTER - Botão Concluir */}
-      {estaDelegada && (
-        <div className="border-t bg-muted/20 px-3 sm:px-4 py-2">
-          <div className="flex items-center justify-end">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => onConcluirOrdem(ordem.id)}
-              disabled={isConcluindo}
-              className="gap-2"
-            >
-              <CheckCircle className="h-4 w-4" />
-              Concluir Ordem
-            </Button>
-          </div>
-        </div>
-      )}
     </Card>
   );
 }
@@ -247,19 +229,19 @@ interface ProducaoTerceirizacaoKanbanProps {
   ordensAFazer: OrdemPortaSocial[];
   isLoading: boolean;
   onDelegarOrdem: (ordemId: string) => void;
-  onConcluirOrdem: (ordemId: string) => void;
+  onCardClick: (ordem: OrdemPortaSocial) => void;
   isDelegating?: boolean;
-  isConcluindo?: boolean;
   onRefresh?: () => void;
 }
+
+export type { OrdemPortaSocial };
 
 export function ProducaoTerceirizacaoKanban({
   ordensAFazer,
   isLoading,
   onDelegarOrdem,
-  onConcluirOrdem,
+  onCardClick,
   isDelegating = false,
-  isConcluindo = false,
   onRefresh,
 }: ProducaoTerceirizacaoKanbanProps) {
 
@@ -309,9 +291,8 @@ export function ProducaoTerceirizacaoKanban({
               key={ordem.id}
               ordem={ordem}
               onDelegarOrdem={onDelegarOrdem}
-              onConcluirOrdem={onConcluirOrdem}
+              onCardClick={onCardClick}
               isDelegating={isDelegating}
-              isConcluindo={isConcluindo}
             />
           ))
         ) : (
