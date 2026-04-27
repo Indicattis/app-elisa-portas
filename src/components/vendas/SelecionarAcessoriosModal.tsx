@@ -272,11 +272,15 @@ export function SelecionarAcessoriosModal({
                             type="number"
                             min={0}
                             step="0.01"
-                            placeholder="0,00"
+                            placeholder={selected ? "obrigatório" : "0,00"}
                             value={tamanhos[item.id] ?? ''}
                             disabled={!selected}
                             onChange={(e) => setTamanhos(prev => ({ ...prev, [item.id]: e.target.value }))}
-                            className="h-7 w-20 text-right text-xs px-1.5"
+                            className={`h-7 w-20 text-right text-xs px-1.5 ${
+                              selected && (!(parseFloat(tamanhos[item.id] || '') > 0))
+                                ? 'border-destructive focus-visible:ring-destructive'
+                                : ''
+                            }`}
                           />
                           <span className="text-[10px] text-muted-foreground">{unidadeLabel}</span>
                         </div>
