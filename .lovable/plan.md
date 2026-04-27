@@ -1,30 +1,30 @@
 ## Problema
 
-Em `/vendas/minhas-vendas/nova`, o modal de Pintura Eletrostática ainda transmite a obrigação de selecionar/vincular um item. A opção de pintura avulsa existe, mas a implementação atual tem inconsistência de estado no `RadioGroup`: o estado interno usa `''` para “sem vínculo”, enquanto o item visual usa `value="__none__"`. Isso pode fazer a opção avulsa não ficar corretamente selecionada/entendida e manter a experiência como se fosse obrigatório escolher outro produto.
+Na venda `453f0691...` foi aplicado **5% de desconto** no produto "Meia cana lisa" (`tipo_desconto = 'percentual'`, `desconto_percentual = 5`, `desconto_valor = 0`).
 
-## Correção proposta
+Os indicadores **Desc. Cartão / Desc. Gelo / Luan-Alana** aparecem zerados porque o cálculo desses tiers em `FaturamentoVendaMinimalista.tsx` soma apenas o campo `desconto_valor`, ignorando descontos do tipo percentual.
 
-1. Padronizar o estado de seleção no modal:
-   - Usar um valor explícito, por exemplo `avulsa`, para representar pintura sem vínculo.
-   - Fazer o `RadioGroup` iniciar em `avulsa`.
-   - Fazer a opção “Pintura avulsa (não vincular)” aparecer sempre, inclusive quando houver itens disponíveis.
+## Causa técnica
 
-2. Ajustar a lógica de confirmação:
-   - Se `selectedIndex === 'avulsa'`, criar a pintura sem buscar item vinculado.
-   - Se for um índice numérico, manter o vínculo com o item escolhido.
+Em `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`:
 
-3. Ajustar a busca automática de preço:
-   - Só buscar preço por medidas quando o valor selecionado for um índice numérico e o item tiver largura/altura.
-   - Nunca tentar buscar preço quando a opção for avulsa.
+- Linha 856 — `totalDescontos`: `produtos.reduce((acc, p) => acc + (p.desconto_valor || 0), 0)` → 0 quando o desconto é percentual.
+- Linha 867 — dentro de `descontoTiers`: idêntico, soma apenas `desconto_valor` para obter `totalDesc`, então todos os tiers ficam em 0.
 
-4. Melhorar o texto visual:
-   - Deixar claro que “Pintura avulsa” é a opção padrão.
-   - Manter o botão “Adicionar Pintura” habilitado apenas com cor + valor preenchidos.
+A variável `totalDescontosCalc` (linha 822) já faz o cálculo correto convertendo percentual em valor — basta reaproveitá-la.
 
-## Arquivo afetado
+## Correção
 
-- `src/components/vendas/PinturaItemCatalogoModal.tsx`
+Em `FaturamentoVendaMinimalista.tsx`:
 
-## Resultado esperado
+1. Substituir o cálculo de `totalDescontos` (linha 856) por `totalDescontosCalc` (que já considera percentual + valor).
+2. No bloco `descontoTiers` (linha 866), trocar a soma direta de `desconto_valor` por uma soma que, para cada produto, calcule:
+   - Se `tipo_desconto === 'percentual'` e `desconto_percentual > 0`: `base * (desconto_percentual/100)` onde `base = (valor_produto + valor_pintura + valor_instalacao) * quantidade`.
+   - Senão: `Math.max(0, desconto_valor)`.
+3. Manter o tratamento de créditos (`desconto_valor < 0`) como está, já que crédito não usa percentual.
 
-Na nova venda, ao clicar em “Pintura Eletrostática”, o modal abrirá já em modo avulso. O vendedor poderá selecionar a cor, informar o valor e adicionar a pintura sem selecionar manutenção, porta ou qualquer outro produto.
+Resultado: os cards "Desc. Cartão", "Desc. Gelo", "Luan/Alana" e "Excedente >X%" passarão a refletir corretamente os descontos percentuais (no caso desta venda, R$ 19,25 distribuídos no tier "Cartão" / "Gelo" conforme regras de pagamento e venda presencial).
+
+## Verificação pós-fix
+
+Recarregar `/administrativo/financeiro/faturamento/453f0691-bb72-4236-a696-a927fa287800` e confirmar que a soma dos tiers = 5% × (55 × 7) = R$ 19,25.

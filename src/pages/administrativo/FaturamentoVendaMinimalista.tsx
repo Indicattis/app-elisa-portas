@@ -852,8 +852,8 @@ export default function FaturamentoVendaMinimalista() {
   const totalProdutos = (produtos?.length || 0) + (temInstalacaoLegada ? 1 : 0);
   const totalFaturados = produtosFaturados + (temInstalacaoLegada && (venda?.instalacao_faturada || lucroInstalacaoCalculado > 0) ? 1 : 0);
 
-  // Descontos e acréscimos
-  const totalDescontos = produtos?.reduce((acc, p) => acc + (p.desconto_valor || 0), 0) || 0;
+  // Descontos e acréscimos (considera tanto desconto percentual quanto valor)
+  const totalDescontos = totalDescontosCalc;
   const valorCredito = venda?.valor_credito || 0;
 
   // Valor de tabela (soma bruta antes de descontos)
@@ -864,7 +864,15 @@ export default function FaturamentoVendaMinimalista() {
 
   // Desconto tiers (Cartão / Gelo / Luan-Alana)
   const descontoTiers = (() => {
-    const totalDesc = produtos?.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0) || 0;
+    const totalDesc = produtos?.reduce((acc: number, p: any) => {
+      const qty = p.quantidade || 1;
+      if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+        const base = ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+        return acc + base * (p.desconto_percentual / 100);
+      }
+      if (p.desconto_valor && p.desconto_valor > 0) return acc + p.desconto_valor;
+      return acc;
+    }, 0) || 0;
     if (totalDesc === 0 || valorTabela === 0) return { cartao: 0, gelo: 0, responsavel: 0, total: totalDesc };
     const pctTotal = (totalDesc / valorTabela) * 100;
     const isCartao = venda?.forma_pagamento === 'cartao_credito';
