@@ -102,20 +102,6 @@ export function SelecionarAcessoriosModal({
       );
       return;
     }
-
-    // Validar tamanho obrigatório para itens decimais (metro/kg/litro)
-    const semTamanho = itensSelecionadosArray.filter(item => {
-      const isDecimal = ['metro', 'kg', 'litro'].includes((item.unidade || '').toLowerCase());
-      const tam = parseFloat(tamanhos[item.id] || '') || 0;
-      return isDecimal && tam <= 0;
-    });
-
-    if (semTamanho.length > 0) {
-      toast.error(
-        `Informe o tamanho para: ${semTamanho.map(i => i.nome).join(', ')}`
-      );
-      return;
-    }
     
     const produtos: ProdutoVenda[] = itensSelecionadosArray.map(item => {
       const isDecimal = ['metro', 'kg', 'litro'].includes((item.unidade || '').toLowerCase());
