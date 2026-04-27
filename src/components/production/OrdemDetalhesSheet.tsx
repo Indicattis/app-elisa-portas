@@ -34,6 +34,8 @@ import { InformarFaltaLinhaModal } from "./InformarFaltaLinhaModal";
 import { ImprimirEtiquetasModal } from "@/components/ordens/ImprimirEtiquetasModal";
 import { formatarTamanho, formatarDimensoes } from "@/utils/formatters";
 import { getLabelTipoProduto } from "@/utils/tipoProdutoLabels";
+import { usePedidoPortaSocialStatus } from "@/hooks/usePedidoPortaSocialStatus";
+import { DoorOpen } from "lucide-react";
 
 type TipoOrdem = 'soldagem' | 'perfiladeira' | 'separacao' | 'qualidade' | 'pintura' | 'embalagem';
 
