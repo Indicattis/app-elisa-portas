@@ -13,11 +13,10 @@ function toIsoMidday(d: Date): string {
 
 export function getInicioFimSemana(ref: Date = new Date()) {
   const d = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate());
-  // Segunda = 1; getDay() Domingo=0
+  // Semana de Domingo (0) a Sábado (6)
   const day = d.getDay();
-  const diffToMonday = day === 0 ? -6 : 1 - day;
   const inicio = new Date(d);
-  inicio.setDate(d.getDate() + diffToMonday);
+  inicio.setDate(d.getDate() - day);
   const fim = new Date(inicio);
   fim.setDate(inicio.getDate() + 6);
   return {
