@@ -610,6 +610,63 @@ export function OrdemDetalhesSheet({
 
         {/* Conteúdo scrollável */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          {/* Destaque: Pedido com Porta Social (terceirizada) */}
+          {portaSocialStatus && (() => {
+            const status = portaSocialStatus.status;
+            const statusMap: Record<string, { label: string; classes: string }> = {
+              pendente: {
+                label: 'Aguardando produção',
+                classes: 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300',
+              },
+              capturada: {
+                label: 'Em produção pelo fornecedor',
+                classes: 'bg-blue-500/10 border-blue-500/30 text-blue-700 dark:text-blue-300',
+              },
+              em_producao: {
+                label: 'Em produção pelo fornecedor',
+                classes: 'bg-blue-500/10 border-blue-500/30 text-blue-700 dark:text-blue-300',
+              },
+              concluido: {
+                label: 'Concluída',
+                classes: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300',
+              },
+              concluida: {
+                label: 'Concluída',
+                classes: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300',
+              },
+            };
+            const meta = statusMap[status] ?? {
+              label: status,
+              classes: 'bg-muted/40 border-border text-muted-foreground',
+            };
+            return (
+              <div className={`p-4 rounded-lg border-2 ${meta.classes}`}>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <DoorOpen className="h-5 w-5 flex-shrink-0" />
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-semibold truncate">
+                        Pedido com Porta Social (Terceirizada)
+                      </span>
+                      <span className="text-xs opacity-80 truncate">
+                        Ordem {portaSocialStatus.numero_ordem}
+                        {portaSocialStatus.admin_users?.nome && ` • ${portaSocialStatus.admin_users.nome}`}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {portaSocialStatus.em_backlog && (
+                      <Badge variant="destructive" className="text-[10px]">Em backlog</Badge>
+                    )}
+                    <Badge variant="secondary" className="text-xs">
+                      {meta.label}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Banner: ordem disponível para captura (inclui ordens recém retrocedidas) */}
           {!temResponsavel && ordem.status !== 'concluido' && ordem.status !== 'pronta' && onCapturarOrdem && (
             <div className="p-4 rounded-lg border border-primary/30 bg-primary/5 space-y-3">
