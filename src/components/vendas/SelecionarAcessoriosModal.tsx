@@ -143,6 +143,16 @@ export function SelecionarAcessoriosModal({
     onOpenChange(false);
   };
 
+  const temItemDecimalSemTamanho = useMemo(() => {
+    return produtosEstoque.some(item => {
+      if (!itensSelecionados.has(item.id)) return false;
+      const isDecimal = ['metro', 'kg', 'litro'].includes((item.unidade || '').toLowerCase());
+      if (!isDecimal) return false;
+      const tam = parseFloat(tamanhos[item.id] || '') || 0;
+      return tam <= 0;
+    });
+  }, [itensSelecionados, tamanhos, produtosEstoque]);
+
   const getCategoriaColor = (categoria: string) => {
     switch (categoria) {
       case 'acessório': return 'bg-blue-100 text-blue-800 border-blue-200';
