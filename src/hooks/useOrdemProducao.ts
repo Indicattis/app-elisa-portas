@@ -300,8 +300,8 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
   // Capturar ordem (atribuir responsável)
   const capturarOrdem = useMutation({
     mutationFn: async (ordemId: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
+      const currentUserId = user?.user_id;
+      if (!currentUserId) throw new Error('Usuário não autenticado');
 
       const tabelaOrdem = TABELA_MAP[tipoOrdem] as any;
       
@@ -309,7 +309,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       const { data: ordemExistente, error: checkError } = await supabase
         .from(tabelaOrdem)
         .select('id, numero_ordem')
-        .eq('responsavel_id', user.id)
+        .eq('responsavel_id', currentUserId)
         .eq('historico', false)
         .eq('status', 'pendente')
         .maybeSingle() as { data: { id: string; numero_ordem: string } | null; error: any };
@@ -329,7 +329,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
       
       // Se está em backlog e já tem capturada_em, manter o tempo original
       const updateData: any = {
-        responsavel_id: user.id,
+        responsavel_id: currentUserId,
       };
       
       // Se a ordem estava pausada, resetar os campos de pausa mas manter tempo_acumulado
@@ -386,7 +386,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
   // Marcar linha como concluída com atualização otimista
   const marcarLinhaConcluida = useMutation({
     mutationFn: async ({ linhaId, concluida }: { linhaId: string; concluida: boolean }) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const currentUserId = user?.user_id;
       
       // Atualizar linha como concluída
       // A pontuação será registrada automaticamente pelo trigger do banco
@@ -395,7 +395,7 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
         .update({
           concluida,
           concluida_em: concluida ? new Date().toISOString() : null,
-          concluida_por: concluida ? user?.id : null,
+          concluida_por: concluida ? currentUserId || null : null,
         })
         .eq('id', linhaId);
 

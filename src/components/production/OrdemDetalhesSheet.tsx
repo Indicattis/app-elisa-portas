@@ -177,9 +177,9 @@ export function OrdemDetalhesSheet({
 }: OrdemDetalhesSheetProps) {
   const { user: authUser } = useAuth();
   const { user: producaoUser } = useProducaoAuth();
-  // Em rotas /producao/* o usuário está logado via useProducaoAuth (CPF),
-  // enquanto em /fabrica/* está via useAuth (email). Usamos o que estiver disponível.
-  const currentUserId = authUser?.id || producaoUser?.user_id;
+  // Em rotas /producao/* o usuário está logado via useProducaoAuth (CPF).
+  // Priorizamos esse contexto para evitar que o AuthProvider global deixe as linhas bloqueadas.
+  const currentUserId = producaoUser?.user_id || authUser?.id;
   const user = currentUserId ? { id: currentUserId } : null;
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const [retornarModalOpen, setRetornarModalOpen] = useState(false);
