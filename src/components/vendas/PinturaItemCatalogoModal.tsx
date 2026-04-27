@@ -58,23 +58,25 @@ export function PinturaItemCatalogoModal({
   }
 
   const handleConfirmar = () => {
-    const idx = Number(selectedIndex);
-    const item = portas[idx];
-    if (!item) return;
+    const idx = selectedIndex !== '' ? Number(selectedIndex) : -1;
+    const item = idx >= 0 ? portas[idx] : null;
 
     const corSelecionada = coresAtivas.find(c => c.id === corId);
     const corNome = corSelecionada?.nome || '';
+    const baseDesc = item
+      ? (item.descricao || getLabelTipoProduto(item.tipo_produto))
+      : 'Avulsa';
 
     const pintura: ProdutoVenda = {
       tipo_produto: 'pintura_epoxi',
-      largura: item.largura || 0,
-      altura: item.altura || 0,
+      largura: item?.largura || 0,
+      altura: item?.altura || 0,
       valor_produto: Number(valorPintura) || 0,
       valor_pintura: Number(valorPintura) || 0,
       valor_instalacao: 0,
       valor_frete: 0,
       quantidade: 1,
-      descricao: `Pintura Eletrostática${corNome ? ` (${corNome})` : ''} - ${item.descricao || getLabelTipoProduto(item.tipo_produto)}`,
+      descricao: `Pintura Eletrostática${corNome ? ` (${corNome})` : ''} - ${baseDesc}`,
       desconto_valor: 0,
       desconto_percentual: 0,
       tipo_desconto: 'valor',
@@ -92,7 +94,7 @@ export function PinturaItemCatalogoModal({
     onOpenChange(false);
   };
 
-  const isValid = selectedIndex !== '' && corId && Number(valorPintura) > 0;
+  const isValid = !!corId && Number(valorPintura) > 0;
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetState(); else onOpenChange(v); }}>
@@ -103,23 +105,29 @@ export function PinturaItemCatalogoModal({
             Pintura Eletrostática
           </DialogTitle>
           <DialogDescription>
-            Selecione o item que receberá pintura, escolha a cor e informe o valor
+            Escolha a cor e informe o valor. Vincular a um item da venda é opcional.
           </DialogDescription>
         </DialogHeader>
 
-        {itensDisponiveis.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground text-sm">
-            Nenhum item adicionado à venda ainda.
-            <br />
-            <span className="text-xs">Adicione pelo menos um produto antes de configurar pintura.</span>
-          </div>
-        ) : (
-          <div className="space-y-4">
+        <div className="space-y-4">
+          {itensDisponiveis.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Item para pintar</Label>
+              <Label className="text-sm font-medium">
+                Vincular a um item <span className="text-muted-foreground font-normal">(opcional)</span>
+              </Label>
               <ScrollArea className="max-h-[180px]">
                 <RadioGroup value={selectedIndex} onValueChange={setSelectedIndex}>
                   <div className="space-y-1.5">
+                    <label
+                      className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                        selectedIndex === ''
+                          ? 'border-primary/50 bg-primary/5'
+                          : 'border-border hover:bg-accent/50'
+                      }`}
+                    >
+                      <RadioGroupItem value="__none__" checked={selectedIndex === ''} onClick={() => setSelectedIndex('')} />
+                      <span className="text-sm">Pintura avulsa (não vincular)</span>
+                    </label>
                     {itensDisponiveis.map(({ index, label }) => (
                       <label
                         key={index}
@@ -137,6 +145,7 @@ export function PinturaItemCatalogoModal({
                 </RadioGroup>
               </ScrollArea>
             </div>
+          )}
 
             <div className="space-y-2">
               <Label className="text-sm font-medium">Cor</Label>
@@ -178,8 +187,7 @@ export function PinturaItemCatalogoModal({
                 )}
               </div>
             </div>
-          </div>
-        )}
+        </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={resetState}>
