@@ -201,6 +201,8 @@ export function OrdemDetalhesSheet({
   const todasConcluidas = linhas.length === 0 || linhas.every(l => l.concluida);
   const temLinhaComProblema = linhasComProblema > 0;
   const progresso = linhas.length > 0 ? Math.round((linhasConcluidas / linhas.length) * 100) : 0;
+
+  const { data: portaSocialStatus } = usePedidoPortaSocialStatus(ordem?.pedido_id, open);
   
   const { tempoDecorrido, deveAnimar } = useCronometroOrdem({
     capturada_em: ordem?.capturada_em,
