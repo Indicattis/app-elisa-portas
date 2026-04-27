@@ -8492,6 +8492,10 @@ export type Database = {
         Args: { p_ordem_id: string; p_tipo_ordem: string }
         Returns: Json
       }
+      remover_responsavel_ordem_producao: {
+        Args: { p_ordem_id: string; p_tipo_ordem: string }
+        Returns: Json
+      }
       resetar_pedido_para_aberto: {
         Args: { p_pedido_id: string }
         Returns: undefined
