@@ -344,7 +344,9 @@ export default function FaturamentoVendaMinimalista() {
     toast({ title: 'Método de pagamento da venda atualizado' });
   };
 
-  // Sincroniza o estado da seção de Forma de Pagamento com os dados atuais da venda
+  // Sincroniza o estado da seção de Forma de Pagamento com os dados atuais da venda.
+  // Prioriza a fonte da verdade: as parcelas reais em `contasReceber`. Caso não existam,
+  // faz fallback para as colunas escalares da tabela `vendas`.
   useEffect(() => {
     if (!venda) return;
 
@@ -355,6 +357,110 @@ export default function FaturamentoVendaMinimalista() {
     const numParcelas = venda.numero_parcelas || venda.quantidade_parcelas || 1;
     const intervalo = venda.intervalo_boletos || 30;
 
+    // ---- Caminho A: hidratar a partir de contasReceber (fonte da verdade) ----
+    if (contasReceber && contasReceber.length > 0) {
+      // Agrupa por método_pagamento, ordenando cada grupo por data_vencimento asc
+      const groups = new Map<string, any[]>();
+      [...contasReceber]
+        .sort((a, b) => {
+          const da = a.data_vencimento ? new Date(a.data_vencimento).getTime() : 0;
+          const db = b.data_vencimento ? new Date(b.data_vencimento).getTime() : 0;
+          return da - db;
+        })
+        .forEach((p: any) => {
+          const key = p.metodo_pagamento || 'a_vista';
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key)!.push(p);
+        });
+
+      // Constrói uma "unidade" por grupo (já consolidando soma, datas, etc.)
+      const buildFromGroup = (tipo: string, parcelas: any[]): MetodoPagamento => {
+        const soma = parcelas.reduce((s, p) => s + (Number(p.valor_parcela) || 0), 0);
+        const primeira = parcelas[0];
+        const dataPag = primeira?.data_vencimento
+          ? safeParseDate(primeira.data_vencimento) || dataBase
+          : dataBase;
+        const empresa = primeira?.empresa_receptora_id || empresaId;
+        let intervaloCalc = intervalo;
+        if (parcelas.length >= 2 && parcelas[0]?.data_vencimento && parcelas[1]?.data_vencimento) {
+          const d1 = new Date(parcelas[0].data_vencimento).getTime();
+          const d2 = new Date(parcelas[1].data_vencimento).getTime();
+          const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+          if (diff > 0) intervaloCalc = diff;
+        }
+        const todasPagas = parcelas.every(p => p.status === 'pago');
+        return {
+          ...createEmptyMetodo(),
+          tipo: (tipo as MetodoPagamento['tipo']) || 'a_vista',
+          valor: soma,
+          data_pagamento: dataPag,
+          empresa_receptora_id: empresa,
+          parcelas_cartao: tipo === 'cartao_credito' ? parcelas.length : 1,
+          parcelas_boleto: tipo === 'boleto' ? parcelas.length : 1,
+          intervalo_boletos: intervaloCalc,
+          ja_pago: todasPagas,
+        };
+      };
+
+      const entries = Array.from(groups.entries());
+      // Considera "split" quando temos métodos distintos OU quando o mesmo método
+      // foi quebrado em parcelas de valores claramente desiguais (ex: entrada + saldo).
+      const isUniformParcelas = (parcelas: any[]) => {
+        if (parcelas.length < 2) return true;
+        const valores = parcelas.map(p => Number(p.valor_parcela) || 0);
+        const max = Math.max(...valores);
+        const min = Math.min(...valores);
+        // Tolerância de 1 centavo (arredondamento)
+        return max - min <= 0.01;
+      };
+
+      let m1: MetodoPagamento;
+      let m2: MetodoPagamento;
+      let usarDois: boolean;
+
+      if (entries.length >= 2) {
+        // Dois (ou mais) métodos distintos — pega os 2 maiores por valor total.
+        const ordenados = entries
+          .map(([tipo, parcelas]) => ({
+            tipo,
+            parcelas,
+            soma: parcelas.reduce((s, p) => s + (Number(p.valor_parcela) || 0), 0),
+          }))
+          .sort((a, b) => b.soma - a.soma)
+          .slice(0, 2)
+          // Reordena: o de menor data_vencimento primeiro (entrada)
+          .sort((a, b) => {
+            const da = a.parcelas[0]?.data_vencimento ? new Date(a.parcelas[0].data_vencimento).getTime() : 0;
+            const db = b.parcelas[0]?.data_vencimento ? new Date(b.parcelas[0].data_vencimento).getTime() : 0;
+            return da - db;
+          });
+        m1 = buildFromGroup(ordenados[0].tipo, ordenados[0].parcelas);
+        m2 = buildFromGroup(ordenados[1].tipo, ordenados[1].parcelas);
+        usarDois = true;
+      } else {
+        const [tipoUnico, parcelasUnicas] = entries[0];
+        if (parcelasUnicas.length >= 2 && !isUniformParcelas(parcelasUnicas)) {
+          // Mesmo método, mas parcelas de valores distintos → tratar como split (entrada + saldo)
+          const [primeira, ...resto] = parcelasUnicas;
+          m1 = buildFromGroup(tipoUnico, [primeira]);
+          m2 = buildFromGroup(tipoUnico, resto);
+          usarDois = true;
+        } else {
+          m1 = buildFromGroup(tipoUnico, parcelasUnicas);
+          m2 = createEmptyMetodo();
+          usarDois = false;
+        }
+      }
+
+      setPagamentoData({
+        usar_dois_metodos: usarDois,
+        metodos: [m1, m2],
+        pagamento_na_entrega: !!venda.pagamento_na_entrega,
+      });
+      return;
+    }
+
+    // ---- Caminho B (fallback): hidratar a partir das colunas escalares de `vendas` ----
     const usarDois = !!(venda.valor_entrada && venda.valor_entrada > 0 && venda.valor_a_receber && venda.valor_a_receber > 0);
 
     const metodo1: MetodoPagamento = {
@@ -388,7 +494,7 @@ export default function FaturamentoVendaMinimalista() {
       pagamento_na_entrega: !!venda.pagamento_na_entrega,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [venda?.id]);
+  }, [venda?.id, contasReceber]);
 
   const consolidarVendaFromPagamento = (data: PagamentoData) => {
     const m1 = data.metodos[0];
