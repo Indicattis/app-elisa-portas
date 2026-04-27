@@ -600,31 +600,35 @@ export function OrdemDetalhesSheet({
 
         {/* Conteúdo scrollável */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-          {/* Responsável */}
-          {!temResponsavel && (
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-              <span className="text-sm text-muted-foreground">Responsável</span>
-              <Badge variant="secondary">Não atribuído</Badge>
-            </div>
-          )}
-
-          {/* Botão de capturar ordem */}
+          {/* Banner: ordem disponível para captura (inclui ordens recém retrocedidas) */}
           {!temResponsavel && ordem.status !== 'concluido' && ordem.status !== 'pronta' && onCapturarOrdem && (
-            <>
-              <Separator />
+            <div className="p-4 rounded-lg border border-primary/30 bg-primary/5 space-y-3">
+              <div className="flex items-center gap-2">
+                <UserCheck className="h-5 w-5 text-primary" />
+                <span className="text-sm font-semibold">Ordem disponível</span>
+                <Badge variant="secondary" className="ml-auto">Sem responsável</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Para marcar as linhas desta ordem você precisa capturá-la primeiro.
+                {ordem.em_backlog && " Esta ordem voltou ao backlog (pode ter sido retrocedida) e precisa ser recapturada."}
+              </p>
               <Button
                 className="w-full"
-                variant="outline"
                 disabled={isCapturing}
                 onClick={() => onCapturarOrdem(ordem.id)}
               >
                 <UserCheck className="h-4 w-4 mr-2" />
                 {isCapturing ? "Capturando..." : "Capturar Ordem"}
               </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                Capture esta ordem para começar a trabalhar nela
-              </p>
-            </>
+            </div>
+          )}
+
+          {/* Responsável não atribuído (quando já concluída/pronta) */}
+          {!temResponsavel && (ordem.status === 'concluido' || ordem.status === 'pronta') && (
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <span className="text-sm text-muted-foreground">Responsável</span>
+              <Badge variant="secondary">Não atribuído</Badge>
+            </div>
           )}
 
           {/* Alerta quando não pode marcar */}
