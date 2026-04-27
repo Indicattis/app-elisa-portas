@@ -17,6 +17,7 @@ export const useVendasPendenteFaturamento = () => {
         .select(`
           id,
           data_venda,
+          created_at,
           cliente_nome,
           valor_venda,
           valor_credito,
@@ -163,6 +164,7 @@ export const useVendasPendenteFaturamento = () => {
           return {
             id: v.id,
             data_venda: v.data_venda,
+            created_at: v.created_at || null,
             cliente_nome: v.cliente_nome,
             valor_venda: v.valor_venda || 0,
             valor_credito: v.valor_credito || 0,

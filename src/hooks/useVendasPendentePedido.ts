@@ -5,6 +5,7 @@ import { isVendaFaturada } from "@/lib/faturamentoStatus";
 export interface VendaPendentePedido {
   id: string;
   data_venda: string;
+  created_at: string | null;
   cliente_nome: string | null;
   valor_venda: number;
   valor_credito: number;
@@ -39,6 +40,7 @@ export const useVendasPendentePedido = () => {
         .select(`
           id,
           data_venda,
+          created_at,
           cliente_nome,
           valor_venda,
           valor_credito,
@@ -208,6 +210,7 @@ export const useVendasPendentePedido = () => {
           return {
             id: v.id,
             data_venda: v.data_venda,
+            created_at: v.created_at || null,
             cliente_nome: v.cliente_nome,
             valor_venda: v.valor_venda || 0,
             valor_credito: v.valor_credito || 0,
