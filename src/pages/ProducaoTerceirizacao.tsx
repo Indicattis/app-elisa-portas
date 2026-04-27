@@ -2,18 +2,23 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useOrdemPortaSocial } from "@/hooks/useOrdemPortaSocial";
 import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
-import { ProducaoTerceirizacaoKanban } from "@/components/production/ProducaoTerceirizacaoKanban";
+import {
+  ProducaoTerceirizacaoKanban,
+  type OrdemPortaSocial,
+} from "@/components/production/ProducaoTerceirizacaoKanban";
 import { DelegacaoModal } from "@/components/production/DelegacaoModal";
 import { ProcessoAvancoAutomaticoModal } from "@/components/pedidos/ProcessoAvancoAutomaticoModal";
+import { TerceirizacaoDownbar } from "@/components/production/TerceirizacaoDownbar";
 
 export default function ProducaoTerceirizacao() {
   const queryClient = useQueryClient();
   const [delegacaoOrdemId, setDelegacaoOrdemId] = useState<string | null>(null);
+  const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemPortaSocial | null>(null);
 
   const { tentarAvancoAutomatico, processos, modalOpen, setModalOpen } = usePedidoAutoAvanco();
 
   const { ordensAFazer, isLoading, delegarOrdem, concluirOrdem } = useOrdemPortaSocial(
-    (pedidoId) => tentarAvancoAutomatico(pedidoId, 'porta_social')
+    (pedidoId) => tentarAvancoAutomatico(pedidoId, "porta_social")
   );
 
   const handleDelegarOrdem = (ordemId: string) => {
@@ -33,8 +38,16 @@ export default function ProducaoTerceirizacao() {
     }
   };
 
+  const handleCardClick = (ordem: OrdemPortaSocial) => {
+    setOrdemSelecionada(ordem);
+  };
+
   const handleConcluirOrdem = (ordemId: string) => {
-    concluirOrdem.mutate(ordemId);
+    concluirOrdem.mutate(ordemId, {
+      onSuccess: () => {
+        setOrdemSelecionada(null);
+      },
+    });
   };
 
   const handleRefresh = () => {
@@ -47,9 +60,8 @@ export default function ProducaoTerceirizacao() {
         ordensAFazer={ordensAFazer}
         isLoading={isLoading}
         onDelegarOrdem={handleDelegarOrdem}
-        onConcluirOrdem={handleConcluirOrdem}
+        onCardClick={handleCardClick}
         isDelegating={delegarOrdem.isPending}
-        isConcluindo={concluirOrdem.isPending}
         onRefresh={handleRefresh}
       />
 
@@ -61,11 +73,19 @@ export default function ProducaoTerceirizacao() {
         isLoading={delegarOrdem.isPending}
       />
 
-      {/* Modal de Avanço Automático */}
-      <ProcessoAvancoAutomaticoModal
-        open={modalOpen}
-        processos={processos}
+      {/* Downbar de detalhes / conclusão */}
+      <TerceirizacaoDownbar
+        ordem={ordemSelecionada}
+        open={!!ordemSelecionada}
+        onOpenChange={(open) => {
+          if (!open) setOrdemSelecionada(null);
+        }}
+        onConcluir={handleConcluirOrdem}
+        isConcluindo={concluirOrdem.isPending}
       />
+
+      {/* Modal de Avanço Automático */}
+      <ProcessoAvancoAutomaticoModal open={modalOpen} processos={processos} />
     </div>
   );
 }
