@@ -1,32 +1,33 @@
-## Problema identificado
+## Diagnóstico
 
-Ao verificar `SelecionarAcessoriosModal.tsx` (modal usado para adicionar acessórios/adicionais/manutenção em vendas), confirmei que:
+A rota `/direcao/gestao-fabrica` em `src/App.tsx` (linha 459) está protegida com a `routeKey` errada:
 
-- O campo `tamanho` **é salvo** no banco quando o usuário o digita.
-- **Porém, não é obrigatório.** Se o usuário selecionar um item medido em Metro/Kg/Litro e clicar em "Adicionar" sem preencher o tamanho, o item é gravado com `tamanho = ''` (string vazia) e `valor_produto = preço base` (sem multiplicar pelo tamanho).
+```tsx
+<Route path="/direcao/gestao-fabrica" element={
+  <ProtectedRoute routeKey="direcao_hub">    {/* ← chave errada */}
+    <GestaoFabricaDirecao />
+  </ProtectedRoute>
+} />
+```
 
-Foi exatamente isso que aconteceu na venda `2d33704b...` — 109 linhas de "Meia cana lisa - 0,70mm" sem tamanho registrado.
+`direcao_hub` é a permissão da página principal `/direcao` (Hub da Direção). Já existe no banco a chave correta `direcao_gestao_fabrica` (cadastrada em `app_routes`), e o William **já tem essa permissão concedida** em `user_route_access`. Por isso a tela `/admin/permissions` mostra que ele tem acesso, mas o `ProtectedRoute` continua negando — porque está checando a permissão do hub, não a da página.
 
-## Solução
+## Correção
 
-Tornar o tamanho **obrigatório** para itens com unidade decimal (Metro / Kg / Litro) no modal de seleção de acessórios/adicionais/manutenção, garantindo que esse problema não se repita.
+Trocar a `routeKey` da rota `/direcao/gestao-fabrica` em `src/App.tsx` de `direcao_hub` para `direcao_gestao_fabrica`:
 
-### Mudanças em `src/components/vendas/SelecionarAcessoriosModal.tsx`
+```tsx
+<Route path="/direcao/gestao-fabrica" element={
+  <ProtectedRoute routeKey="direcao_gestao_fabrica">
+    <GestaoFabricaDirecao />
+  </ProtectedRoute>
+} />
+```
 
-1. **Validação no `handleConfirmar`**: antes de montar a lista de produtos, verificar se todos os itens selecionados que são decimais (`metro`, `kg`, `litro`) possuem `tamanhos[item.id]` preenchido e `> 0`. Se algum estiver faltando, exibir `toast.error` listando o(s) item(ns) com tamanho pendente e abortar.
+## Verificação adicional
 
-2. **Feedback visual no input de tamanho**: quando o item está selecionado, é decimal e o tamanho está vazio/zero, aplicar borda destacada (ex.: `border-destructive`) no `Input` de tamanho para indicar que o campo é obrigatório.
+Vou também varrer rapidamente o `App.tsx` em busca de outras rotas `/direcao/*` que estejam usando `routeKey="direcao_hub"` indevidamente (mesmo padrão de bug). Se encontrar, corrijo cada uma para a `routeKey` específica correspondente já cadastrada em `app_routes` (ex.: `direcao_dre`, `direcao_faturamento`, `direcao_metas`, etc.). Caso a rota seja realmente o hub principal `/direcao`, mantenho `direcao_hub`.
 
-3. **Desabilitar botão "Adicionar"** quando houver pelo menos um item decimal selecionado sem tamanho válido (mesma checagem usada na validação), além da condição atual `itensSelecionados.size === 0`.
+## Resultado
 
-4. **Placeholder/label**: trocar o placeholder `"0,00"` por algo mais explícito como `"obrigatório"` quando o item é decimal e está selecionado.
-
-### Pontos não alterados
-
-- A estrutura do banco (`produtos_vendas.tamanho`) permanece a mesma.
-- Os 109 itens já existentes na venda `2d33704b...` continuam pendentes — eles precisam ser corrigidos separadamente (assunto da conversa anterior, aguardando sua decisão sobre qual tamanho aplicar).
-- O fluxo de portas (que usa `largura x altura`) e itens não-decimais (unidade) não são afetados.
-
-## Resultado esperado
-
-A partir desta alteração, será **impossível** salvar uma venda com item de catálogo decimal sem informar o tamanho — eliminando a recorrência do problema em vendas futuras.
+Após a correção, o William (e qualquer outro usuário com `direcao_gestao_fabrica` concedido em `/admin/permissions`) conseguirá acessar `/direcao/gestao-fabrica` normalmente.
