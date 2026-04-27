@@ -1897,7 +1897,7 @@ export function PedidoCard({
                     const avancarButtons: React.ReactNode[] = [];
 
                     // Botão de retroceder (vai para a esquerda)
-                    const podeRetroceder = etapaAtual !== 'aberto' && etapaAtual !== 'finalizado' && etapaAtual !== 'instalacoes' && etapaAtual !== 'aguardando_coleta' && etapaAtual !== 'aguardando_pintura' && etapaAtual !== 'embalagem' && etapaAtual !== 'correcoes' && etapaAnterior && onRetrocederEtapa;
+                    const podeRetroceder = etapaAtual !== 'aberto' && etapaAtual !== 'finalizado' && etapaAtual !== 'correcoes' && etapaAnterior && onRetrocederEtapa;
                     if (podeRetroceder) {
                       retrocederButtons.push(
                         <Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="flex h-[20px] w-[20px] rounded-[3px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
