@@ -274,7 +274,7 @@ function SortableRoleGroup({ group, allUsers, systemRoles, onEditRole, onDeleteR
                         <button
                           onClick={() => onDeactivateUser(user)}
                           className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
-                          title="Desativar colaborador"
+                          title="Remover do organograma"
                         >
                           <UserX className="w-4 h-4" />
                         </button>
@@ -833,7 +833,7 @@ export default function GestaoColaboradoresDirecao() {
                             <button
                               onClick={() => setUserToDeactivate(user)}
                               className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all"
-                              title="Desativar colaborador"
+                              title="Remover do organograma"
                             >
                               <UserX className="w-4 h-4" />
                             </button>
@@ -850,13 +850,13 @@ export default function GestaoColaboradoresDirecao() {
       </div>
 
 
-      {/* Deactivate user confirmation */}
+      {/* Remove from organograma confirmation */}
       <AlertDialog open={!!userToDeactivate} onOpenChange={open => !open && setUserToDeactivate(null)}>
         <AlertDialogContent className="bg-[#1a1a2e] border-white/10 text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle>Desativar colaborador</AlertDialogTitle>
+            <AlertDialogTitle>Remover do organograma</AlertDialogTitle>
             <AlertDialogDescription className="text-white/60">
-              Tem certeza que deseja desativar <strong className="text-white">{userToDeactivate?.nome}</strong>? O colaborador perderá acesso ao sistema.
+              Tem certeza que deseja remover <strong className="text-white">{userToDeactivate?.nome}</strong> do organograma? O colaborador continuará ativo no sistema, mas deixará de aparecer no organograma. Para exibi-lo novamente, anexe-o a uma vaga.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -867,17 +867,17 @@ export default function GestaoColaboradoresDirecao() {
                 setDeactivating(true);
                 const { error } = await supabase
                   .from('admin_users')
-                  .update({ ativo: false } as any)
+                  .update({ visivel_organograma: false } as any)
                   .eq('id', userToDeactivate.id);
                 setDeactivating(false);
                 if (error) {
-                  toast.error('Erro ao desativar colaborador');
+                  toast.error('Erro ao remover do organograma');
                   console.error(error);
                 } else {
-                  toast.success(`${userToDeactivate.nome} foi desativado`);
+                  toast.success(`${userToDeactivate.nome} foi removido do organograma`);
                   await createVaga({
                     cargo: userToDeactivate.role,
-                    justificativa: `Vaga aberta pela desativação de ${userToDeactivate.nome}`,
+                    justificativa: `Vaga aberta pela remoção de ${userToDeactivate.nome} do organograma`,
                   });
                   queryClient.invalidateQueries({ queryKey: ['all-users'] });
                 }
@@ -886,7 +886,7 @@ export default function GestaoColaboradoresDirecao() {
               disabled={deactivating}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              {deactivating ? 'Desativando...' : 'Desativar'}
+              {deactivating ? 'Removendo...' : 'Remover'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
