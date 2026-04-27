@@ -1,47 +1,58 @@
-## Objetivo
+## Problema
 
-Em `/direcao/gestao-colaboradores`, mudar o comportamento do botão "Desativar colaborador" (ícone `UserX`) para apenas **remover do organograma** sem desativar a conta. O colaborador continua ativo no sistema (mantém acesso) e volta a aparecer no organograma quando for anexado novamente a uma vaga.
+Em `/producao/separacao`, a ordem **OSE-2026-0159** apareceu após o retrocesso, mas as linhas estão com checkboxes desabilitados — não é possível clicar para concluí-las.
 
-## Mudanças
+## Causa Raiz
 
-### 1. `src/pages/direcao/GestaoColaboradoresDirecao.tsx`
+Quando o pedido é retrocedido (via `retroceder_pedido_unificado` ou `retornar_pedido_para_producao`), o SQL faz reset da ordem de separação:
 
-- Renomear o estado/ação de "desativar" para "remover do organograma" (UI textual e tooltip).
-- Trocar o ícone (manter `UserX` ou usar algo neutro — manter `UserX` por simplicidade) e atualizar o `title` para "Remover do organograma".
-- Atualizar o `AlertDialog` de confirmação:
-  - Título: "Remover do organograma"
-  - Descrição: "O colaborador continuará ativo no sistema, mas deixará de aparecer no organograma. Para exibi-lo novamente, anexe-o a uma vaga."
-  - Botão de ação: "Remover"
-- No `onClick` do `AlertDialogAction`, alterar o update no Supabase de:
-  ```ts
-  .update({ ativo: false })
-  ```
-  para:
-  ```ts
-  .update({ visivel_organograma: false })
-  ```
-- Manter a criação automática da vaga (`createVaga(...)`) com justificativa atualizada para "Vaga aberta pela remoção de {nome} do organograma".
-- Invalidar `['all-users']` para recarregar a listagem.
+```sql
+UPDATE ordens_separacao
+SET status = 'pendente', em_backlog = true,
+    responsavel_id = NULL,   -- <-- aqui
+    data_conclusao = NULL, ...
+```
 
-### 2. `src/components/vagas/SelecionarUsuarioVagaDialog.tsx`
+Já em `src/components/production/OrdemDetalhesSheet.tsx`:
 
-Hoje o seletor usa `useAllUsers`, que filtra `visivel_organograma=true`, então usuários removidos do organograma não apareceriam para reanexar. Ajustar:
+```ts
+const isResponsavel = ordem.responsavel_id === user?.id;
+const temResponsavel = !!ordem.responsavel_id;
+const podeMarcarLinhas = temResponsavel && isResponsavel;  // false após retrocesso
 
-- Criar/usar uma busca local que inclua usuários ativos **independente** de `visivel_organograma` (consultar `admin_users` diretamente neste dialog, filtrando `ativo=true` e `tipo_usuario in ('colaborador','metamorfo')`), OU adicionar um parâmetro/hook alternativo `useAllUsersIncludingHidden`.
-- Abordagem escolhida: query local dentro deste dialog (mais simples, sem afetar o resto do app que depende de `useAllUsers`).
-- No `handleSelect`, ao atribuir o usuário à vaga, atualizar também `visivel_organograma: true` junto com o `role`:
-  ```ts
-  .update({ role: vagaCargo, visivel_organograma: true })
-  ```
-- Marcar visualmente (badge "Fora do organograma") os usuários que estão com `visivel_organograma=false` para deixar claro ao gerente.
-- Invalidar `['all-users']` após o select.
+// linha 994
+disabled={... || !podeMarcarLinhas || ...}
+```
 
-### 3. `src/components/vagas/PreencherVagaDialog.tsx` (verificar)
+Como `responsavel_id` é `NULL` após o retrocesso, ninguém é responsável → checkboxes ficam permanentemente bloqueados até alguém **capturar** a ordem novamente. O usuário hoje não percebe que precisa clicar em "Capturar" porque a ordem aparece direto na visualização que ele tinha antes (provavelmente cache/sheet aberta) ou não há feedback claro de que está sem responsável.
 
-Se este dialog também atribui usuário existente a uma vaga, garantir o mesmo comportamento (`visivel_organograma: true` no update). Caso só crie usuário novo (via `create-user` edge function que já define `visivel_organograma: true`), nenhuma mudança é necessária.
+## Comportamento esperado
 
-## Resultado esperado
+A ordem retrocedida volta ao estado "A Fazer" (sem responsável) — esse é o comportamento correto e desejado, pois qualquer colaborador da separação pode pegá-la. O que está faltando é deixar evidente no sheet que a ordem precisa ser **recapturada** antes de marcar linhas.
 
-- Clicar em "Remover do organograma" em um card de colaborador: remove do organograma, mantém acesso ativo, abre vaga automaticamente para o cargo.
-- Ao preencher uma vaga selecionando um colaborador existente (mesmo que esteja fora do organograma), ele volta a aparecer e assume o cargo da vaga.
-- Nenhuma conta é desativada por essa ação — apenas oculta do organograma.
+## Solução
+
+### 1. Mostrar aviso e botão "Capturar" no sheet quando ordem está sem responsável
+
+Em `src/components/production/OrdemDetalhesSheet.tsx`:
+
+- Quando `!temResponsavel` (ordem em backlog/sem responsável), exibir um banner no topo do sheet:
+  > "Esta ordem está disponível. Clique em **Capturar Ordem** para começar a trabalhar."
+- Renderizar um botão grande "Capturar Ordem" usando o handler `onCapturarOrdem` já existente (passado como prop e implementado em `ProducaoSeparacao.tsx`).
+- Manter os checkboxes desabilitados (correto), mas adicionar `title`/tooltip explicativo: *"Capture a ordem para marcar as linhas"*.
+
+### 2. Garantir que a ordem retrocedida apareça corretamente no Kanban "A Fazer"
+
+Verificar em `useOrdemProducao.ts` que ordens com `em_backlog = true` e `responsavel_id = NULL` são listadas na coluna "A Fazer" (já é o caso pelo filtro `historico = false`). Apenas confirmar via teste manual após o fix.
+
+### 3. Invalidação de cache reforçada após retrocesso
+
+`useRetrocederPedido.ts` já invalida `['ordens-producao']`. Confirmar que `['ordens-producao', 'separacao', user_id]` está sendo invalidado (key prefix match já deve cobrir).
+
+## Arquivos afetados
+
+- **Editar**: `src/components/production/OrdemDetalhesSheet.tsx` — adicionar banner + botão "Capturar Ordem" quando `!temResponsavel`, e tooltip nos checkboxes.
+
+## Resultado
+
+Após o retrocesso, o usuário abre a ordem OSE-2026-0159 e vê claramente um banner de "Capturar Ordem". Ao clicar, ele se torna responsável e pode marcar as linhas normalmente. O fluxo respeita a regra de que ordens retrocedidas voltam ao backlog para serem recapturadas (memória `retrocesso-pedidos-unificado`).
