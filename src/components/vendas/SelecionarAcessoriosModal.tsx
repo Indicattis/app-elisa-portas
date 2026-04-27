@@ -312,7 +312,8 @@ export function SelecionarAcessoriosModal({
           </Button>
           <Button 
             onClick={handleConfirmar}
-            disabled={itensSelecionados.size === 0}
+            disabled={itensSelecionados.size === 0 || temItemDecimalSemTamanho}
+            title={temItemDecimalSemTamanho ? 'Informe o tamanho dos itens medidos por metro, kg ou litro' : undefined}
           >
             Adicionar {itensSelecionados.size > 0 && `(${itensSelecionados.size})`}
           </Button>
