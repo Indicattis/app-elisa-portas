@@ -179,34 +179,56 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
       
       const tableName = TABLE_MAP[ordem.tipo];
 
-      // Liberar a ordem para nova captura: limpa responsável, volta para 'pendente'
-      // e remove flag de pausa (mantém tempo acumulado e linhas concluídas).
-      const updatePayload: Record<string, any> = {
-        responsavel_id: null,
-        capturada_em: null,
-        status: 'pendente',
-        pausada: false,
-        justificativa_pausa: null,
-      };
+      let updatePayload: Record<string, any>;
 
-      // ordens_pintura não possui coluna 'pausada'/'justificativa_pausa'
-      if (ordem.tipo === 'pintura') {
-        delete updatePayload.pausada;
-        delete updatePayload.justificativa_pausa;
+      if (ordem.tipo === 'carregamento') {
+        updatePayload = {
+          responsavel_carregamento_id: null,
+          responsavel_carregamento_nome: null,
+          status: 'pendente',
+        };
+      } else if (ordem.tipo === 'instalacao') {
+        updatePayload = {
+          responsavel_instalacao_id: null,
+          responsavel_instalacao_nome: null,
+          status: 'pendente',
+        };
+      } else {
+        updatePayload = {
+          responsavel_id: null,
+          capturada_em: null,
+          status: 'pendente',
+          historico: false,
+          data_conclusao: null,
+        };
+
+        if (ordem.tipo !== 'pintura') {
+          updatePayload.pausada = false;
+          updatePayload.pausada_em = null;
+          updatePayload.justificativa_pausa = null;
+        }
+
+        if (['soldagem', 'perfiladeira', 'separacao'].includes(ordem.tipo)) {
+          updatePayload.linha_problema_id = null;
+        }
       }
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from(tableName as any)
         .update(updatePayload)
-        .eq('id', ordem.id);
+        .eq('id', ordem.id)
+        .select('id')
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error('Nenhuma ordem foi alterada. Verifique se seu usuário tem permissão para remover o responsável.');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ordens-por-pedido'] });
       queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
       queryClient.invalidateQueries({ queryKey: ['linhas-ordem', ordem?.id, ordem?.tipo] });
       setShowRemoverModal(false);
+      onOpenChange(false);
       toastHook({
         title: "Responsável removido",
         description: "A ordem está disponível para captura novamente.",
@@ -356,9 +378,10 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
   const totalLinhas = linhas.length;
   const isOrdemConcluida = ordem?.status === 'concluido';
   
-  // Pode remover responsável se: tem responsável E (está pausada OU status é pendente)
-  const podeRemoverResponsavel = ordem?.responsavel && 
-    (ordem?.pausada || ordem?.status === 'pendente');
+  const temResponsavel = !!(ordem?.responsavel_id || ordem?.responsavel || ordem?.responsavel_nome);
+
+  // Pode remover responsável se a ordem tem responsável e ainda não foi concluída.
+  const podeRemoverResponsavel = temResponsavel && !isOrdemConcluida;
 
   // Pode delegar se: NÃO tem responsável e NÃO está concluída
   const podeDelegarResponsavel = !ordem?.responsavel && !isOrdemConcluida;
