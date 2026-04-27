@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Package, Clock, UserPlus, Timer, AlertTriangle, RefreshCw, CheckCircle, FileText } from "lucide-react";
+import { Package, Clock, UserPlus, Timer, AlertTriangle, RefreshCw, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCronometroOrdem } from "@/hooks/useCronometroOrdem";
 import { useOrdemProgress } from "@/hooks/useOrdemProgress";
