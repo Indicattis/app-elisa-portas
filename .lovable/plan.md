@@ -1,49 +1,47 @@
-## Problema
+## Objetivo
 
-Na venda `453f0691...` foram cadastradas 2 formas de pagamento (R$ 200 + R$ 185,75 = R$ 385,75 + frete). Porém, na seção "Forma de Pagamento" do faturamento aparece apenas 1 método (À Vista), com a opção "Usar dois métodos" desativada.
+Em `/direcao/gestao-colaboradores`, mudar o comportamento do botão "Desativar colaborador" (ícone `UserX`) para apenas **remover do organograma** sem desativar a conta. O colaborador continua ativo no sistema (mantém acesso) e volta a aparecer no organograma quando for anexado novamente a uma vaga.
 
-## Causa técnica
+## Mudanças
 
-Em `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` (linhas 347-391), o `useEffect` que hidrata `pagamentoData` decide se há 2 métodos com base nestas colunas da tabela `vendas`:
+### 1. `src/pages/direcao/GestaoColaboradoresDirecao.tsx`
 
-```ts
-const usarDois = !!(venda.valor_entrada > 0 && venda.valor_a_receber > 0);
-```
+- Renomear o estado/ação de "desativar" para "remover do organograma" (UI textual e tooltip).
+- Trocar o ícone (manter `UserX` ou usar algo neutro — manter `UserX` por simplicidade) e atualizar o `title` para "Remover do organograma".
+- Atualizar o `AlertDialog` de confirmação:
+  - Título: "Remover do organograma"
+  - Descrição: "O colaborador continuará ativo no sistema, mas deixará de aparecer no organograma. Para exibi-lo novamente, anexe-o a uma vaga."
+  - Botão de ação: "Remover"
+- No `onClick` do `AlertDialogAction`, alterar o update no Supabase de:
+  ```ts
+  .update({ ativo: false })
+  ```
+  para:
+  ```ts
+  .update({ visivel_organograma: false })
+  ```
+- Manter a criação automática da vaga (`createVaga(...)`) com justificativa atualizada para "Vaga aberta pela remoção de {nome} do organograma".
+- Invalidar `['all-users']` para recarregar a listagem.
 
-Mas no banco essa venda tem:
-- `valor_entrada = 0`
-- `valor_a_receber = 465,75`
-- `metodo_pagamento = 'a_vista'`
-- `forma_pagamento = 'a_vista'`
+### 2. `src/components/vagas/SelecionarUsuarioVagaDialog.tsx`
 
-Ou seja, **o cadastro original em `/vendas/minhas-vendas/nova` (e a "finalização" em `MinhasVendasEditar.tsx` linha 528-537) não persistiu o split de pagamentos** nas colunas `valor_entrada` / `valor_a_receber` / segundo método. As parcelas reais ficaram apenas em `contas_receber` (2 linhas: R$ 200 paga em 27/04 + R$ 185 a vencer em 30/04, ambas marcadas como `a_vista`).
+Hoje o seletor usa `useAllUsers`, que filtra `visivel_organograma=true`, então usuários removidos do organograma não apareceriam para reanexar. Ajustar:
 
-Como a fonte da verdade dos pagamentos da venda (após cadastro) é `contas_receber`, o card "Forma de Pagamento" precisa derivar de lá — não só das colunas escalares de `vendas`.
+- Criar/usar uma busca local que inclua usuários ativos **independente** de `visivel_organograma` (consultar `admin_users` diretamente neste dialog, filtrando `ativo=true` e `tipo_usuario in ('colaborador','metamorfo')`), OU adicionar um parâmetro/hook alternativo `useAllUsersIncludingHidden`.
+- Abordagem escolhida: query local dentro deste dialog (mais simples, sem afetar o resto do app que depende de `useAllUsers`).
+- No `handleSelect`, ao atribuir o usuário à vaga, atualizar também `visivel_organograma: true` junto com o `role`:
+  ```ts
+  .update({ role: vagaCargo, visivel_organograma: true })
+  ```
+- Marcar visualmente (badge "Fora do organograma") os usuários que estão com `visivel_organograma=false` para deixar claro ao gerente.
+- Invalidar `['all-users']` após o select.
 
-## Correção
+### 3. `src/components/vagas/PreencherVagaDialog.tsx` (verificar)
 
-Em `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`, alterar o `useEffect` de hidratação (linhas 347-391) para:
+Se este dialog também atribui usuário existente a uma vaga, garantir o mesmo comportamento (`visivel_organograma: true` no update). Caso só crie usuário novo (via `create-user` edge function que já define `visivel_organograma: true`), nenhuma mudança é necessária.
 
-1. Esperar `contasReceber` carregar junto com `venda` (adicionar `contasReceber` às dependências, ou rodar quando `contasReceber.length > 0`).
-2. **Agrupar `contasReceber` por `metodo_pagamento`** e somar `valor_parcela` de cada grupo.
-3. Decidir os métodos exibidos a partir desses grupos:
-   - **0 grupos** → fallback ao comportamento atual (usa colunas da venda).
-   - **1 grupo com >1 parcela do mesmo método** → 1 método único; `parcelas_cartao`/`parcelas_boleto` = nº de parcelas do grupo; `valor` = soma do grupo.
-   - **1 grupo "a_vista"/"dinheiro" com 2+ parcelas de valores distintos** (caso desta venda) → tratar como `usar_dois_metodos = true`, com `metodo1.valor` = 1ª parcela e `metodo2.valor` = soma das demais (ambos com tipo `a_vista`). Alternativa mais simples e correta: sempre que houver ≥ 2 parcelas e a soma não for divisível em iguais, considerar split.
-   - **2 grupos distintos** → `usar_dois_metodos = true`; método 1 = grupo cuja primeira parcela tem `data_vencimento` mais antiga (entrada), método 2 = o outro (saldo). Para cada grupo, `parcelas_*` = `count` do grupo e `valor` = soma.
-   - **3+ grupos** → exibir os 2 grupos de maior valor e mostrar aviso textual ("Esta venda possui mais de 2 métodos de pagamento; ajuste manual recomendado.").
-4. Em cada método, popular também: `data_pagamento` = `data_vencimento` da 1ª parcela do grupo, `empresa_receptora_id` = da 1ª parcela do grupo, `intervalo_boletos` = diferença em dias entre 1ª e 2ª parcela quando aplicável, `ja_pago` = todas pagas do grupo.
+## Resultado esperado
 
-Isso faz a seção "Forma de Pagamento" refletir fielmente as parcelas reais já lançadas em `contas_receber`, inclusive para o caso desta venda (2 parcelas À Vista — R$ 200 + R$ 185,75).
-
-## Verificação pós-fix
-
-Recarregar `/administrativo/financeiro/faturamento/453f0691-bb72-4236-a696-a927fa287800`:
-- Toggle "Usar dois métodos" deve aparecer ativo.
-- Método 1: À Vista, R$ 200,00, 27/04/2026.
-- Método 2: À Vista, R$ 185,75 (ou conforme valor real), 30/04/2026.
-- Nenhuma alteração deve ser disparada nas colunas da venda até o usuário clicar em "Salvar Forma de Pagamento" (preserva `consolidarVendaFromPagamento`).
-
-## Observação adicional (fora do escopo)
-
-O fluxo de cadastro em `MinhasVendasEditar.tsx` (linhas 528-537) também não persiste `valor_entrada`/`metodo_pagamento` corretamente quando o vendedor escolhe 2 métodos. Posso corrigir isso depois — esta correção foca apenas em fazer o faturamento ler corretamente o estado atual.
+- Clicar em "Remover do organograma" em um card de colaborador: remove do organograma, mantém acesso ativo, abre vaga automaticamente para o cargo.
+- Ao preencher uma vaga selecionando um colaborador existente (mesmo que esteja fora do organograma), ele volta a aparecer e assume o cargo da vaga.
+- Nenhuma conta é desativada por essa ação — apenas oculta do organograma.
