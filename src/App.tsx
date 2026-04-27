@@ -456,7 +456,7 @@ const App = () => (
                 <Route path="/direcao/vendas/:id/editar" element={<ProtectedRoute routeKey="direcao_hub"><VendaEditarDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/faturamento" element={<ProtectedRoute routeKey="direcao_hub"><FaturamentoDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/faturamento/venda/:id" element={<ProtectedRoute routeKey="direcao_hub"><FaturamentoVendaDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/gestao-fabrica" element={<ProtectedRoute routeKey="direcao_hub"><GestaoFabricaDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/gestao-fabrica" element={<ProtectedRoute routeKey="direcao_gestao_fabrica"><GestaoFabricaDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/gestao-instalacao" element={<ProtectedRoute routeKey="direcao_hub"><GestaoInstalacaoDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/gestao-instalacao/ordens-instalacoes" element={<ProtectedRoute routeKey="direcao_hub"><OrdensInstalacoesDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/gestao-instalacao/instalacoes" element={<ProtectedRoute routeKey="direcao_hub"><InstalacoesHubDirecao /></ProtectedRoute>} />
