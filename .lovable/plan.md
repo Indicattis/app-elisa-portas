@@ -1,33 +1,50 @@
-## Diagnóstico
+## Problema
 
-A rota `/direcao/gestao-fabrica` em `src/App.tsx` (linha 459) está protegida com a `routeKey` errada:
+Em `/vendas/minhas-vendas/nova`, ao adicionar Pintura Eletrostática, o modal `PinturaItemCatalogoModal` **obriga** o usuário a selecionar um item da venda (porta/manutenção) para vincular a pintura. Isso impede adicionar pintura como item independente — situação comum quando a venda contém apenas manutenção (sem porta com largura/altura definidas) ou quando se quer cobrar pintura avulsa.
+
+Hoje a validação `isValid = selectedIndex !== '' && corId && Number(valorPintura) > 0` bloqueia o botão "Adicionar Pintura" enquanto nenhum item for marcado, e a busca automática de preço depende de `largura`/`altura` do item selecionado.
+
+## Solução
+
+Tornar a seleção do item **opcional** em `PinturaItemCatalogoModal.tsx`:
+
+1. **Adicionar opção "Pintura avulsa (sem vincular a item)"** no topo do `RadioGroup` — quando selecionada, a pintura é criada sem descrição vinculada a outro item e sem medidas obrigatórias.
+2. **Remover obrigatoriedade do `selectedIndex`** na validação: passar a exigir apenas `corId` e `valorPintura > 0`. A seleção continua disponível para quem quiser vincular a uma porta específica (mantém o cálculo automático de preço por medidas).
+3. **Renderizar o modal mesmo sem itens disponíveis**: hoje, se `itensDisponiveis.length === 0`, aparece a mensagem "Nenhum item adicionado". Substituir esse bloqueio para sempre exibir os campos de cor/valor, deixando o seletor de item visível apenas quando houver itens.
+4. **Ajustar `handleConfirmar`**:
+   - Se nenhum item for selecionado → criar `ProdutoVenda` com `largura: 0`, `altura: 0`, `descricao: 'Pintura Eletrostática (Cor)'`.
+   - Se item selecionado → manter o comportamento atual (herda medidas e descrição).
+5. **Texto explicativo**: atualizar a `DialogDescription` para indicar que a vinculação a um item é opcional.
+
+Nenhuma mudança de schema ou em outras telas — apenas UX do modal.
+
+## Arquivo afetado
+
+- `src/components/vendas/PinturaItemCatalogoModal.tsx` (edição única)
+
+## Detalhes técnicos
 
 ```tsx
-<Route path="/direcao/gestao-fabrica" element={
-  <ProtectedRoute routeKey="direcao_hub">    {/* ← chave errada */}
-    <GestaoFabricaDirecao />
-  </ProtectedRoute>
-} />
+// Validação relaxada
+const isValid = corId && Number(valorPintura) > 0;
+
+// handleConfirmar
+const idx = selectedIndex !== '' ? Number(selectedIndex) : -1;
+const item = idx >= 0 ? portas[idx] : null;
+const corNome = coresAtivas.find(c => c.id === corId)?.nome || '';
+const baseDesc = item
+  ? `${item.descricao || getLabelTipoProduto(item.tipo_produto)}`
+  : 'Avulsa';
+const pintura: ProdutoVenda = {
+  tipo_produto: 'pintura_epoxi',
+  largura: item?.largura || 0,
+  altura: item?.altura || 0,
+  valor_produto: Number(valorPintura) || 0,
+  valor_pintura: Number(valorPintura) || 0,
+  // ...
+  descricao: `Pintura Eletrostática${corNome ? ` (${corNome})` : ''} - ${baseDesc}`,
+  cor_id: corId || undefined,
+};
 ```
 
-`direcao_hub` é a permissão da página principal `/direcao` (Hub da Direção). Já existe no banco a chave correta `direcao_gestao_fabrica` (cadastrada em `app_routes`), e o William **já tem essa permissão concedida** em `user_route_access`. Por isso a tela `/admin/permissions` mostra que ele tem acesso, mas o `ProtectedRoute` continua negando — porque está checando a permissão do hub, não a da página.
-
-## Correção
-
-Trocar a `routeKey` da rota `/direcao/gestao-fabrica` em `src/App.tsx` de `direcao_hub` para `direcao_gestao_fabrica`:
-
-```tsx
-<Route path="/direcao/gestao-fabrica" element={
-  <ProtectedRoute routeKey="direcao_gestao_fabrica">
-    <GestaoFabricaDirecao />
-  </ProtectedRoute>
-} />
-```
-
-## Verificação adicional
-
-Vou também varrer rapidamente o `App.tsx` em busca de outras rotas `/direcao/*` que estejam usando `routeKey="direcao_hub"` indevidamente (mesmo padrão de bug). Se encontrar, corrijo cada uma para a `routeKey` específica correspondente já cadastrada em `app_routes` (ex.: `direcao_dre`, `direcao_faturamento`, `direcao_metas`, etc.). Caso a rota seja realmente o hub principal `/direcao`, mantenho `direcao_hub`.
-
-## Resultado
-
-Após a correção, o William (e qualquer outro usuário com `direcao_gestao_fabrica` concedido em `/admin/permissions`) conseguirá acessar `/direcao/gestao-fabrica` normalmente.
+A busca automática via `buscarPrecosPorMedidas` continua só rodando quando um item com medidas for selecionado.
